@@ -13,12 +13,81 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.5.0, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.10.0, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.10.0 · 2026-10-16
+
+A date of the date matrix only for the release level (collect item 8 of 2026-10-16).
+
+- **Matrix cells:** a cell gets `rel` (true: only for rows on the release level). `matrixCellHtml` shows a checkbox `data-f="dm-rel"` (`.dci-dm-rel`, label `dm.rel`, title `dm.relTitle`), passed to `cellTracksHtml(c, extra)` so it sits right after the track groups (no extra line per cell); the change handler sets `c.rel`, clears `c.auto` and calls `dmChanged()`. Stored with the matrix in `dci-date-matrix:<MBID>` (no new key; old cells without `rel` count as false).
+- **`applyMatrixColumn(group, cells, report)`:** rows on the release level take the cells with `rel` when the column has any, else the cells without tracks as before; rows on recordings and works leave out the cells with `rel` (`!c.rel` in the per-track filter).
+- **New:** `matrixDateForLevel(row)` – for a row with a matrix date (`row.date.mx`) and not "skip": applies the column of its date group again (`applyMatrixColumn` with an empty report, then `saveMatrix()`) and logs `dmRelDate`; true when it applied. A date typed by hand (`!row.date.mx`) is left alone, as `applyMatrixColumn` already does.
+- **Changed:** `setLevel` calls `matrixDateForLevel(row)`; when true it draws groups, works matrix and dates again instead of only the row.
+- **Texts:** `dm.rel`, `dm.relTitle`, `log.dmRelDate`, `ms.3.10.0`; `MILESTONES` gets 3.10.0 (the notice of a fresh install now shows 3.10.0, 3.5.0, 3.3.0).
+- **Tests:** new `t_reldate.py` (A apply, B switching the level, C own date stays, D stored); `t_notice.py` (milestones 3.10.0 / 3.5.0 / 3.3.0); `t_pools.py` and `t_trackpool.py` click "Apply" by script (in the test window the floating log covered it once the cells got taller).
+- **Watch out:** `compareVersions` compares the parts as numbers, so 3.10.0 comes after 3.5.0 (and after 3.9.x).
+
+## Import 3.9.0 · 2026-10-16
+
+Narrow rows (collect item 7, the mockup of 2026-10-16) and a compact date.
+
+- **`groupHtml`:** the rows table is `<div class="dci-tablewrap dci-rowswrap"><table class="dci-table dci-rows"><tbody>` – no `thead` any more.
+- **`rowHtml`:** each cell starts with its caption `<div class="dci-cap">` (texts `th.type`, `th.attrs`, `th.level`, `th.date`, `th.tracks`, reused); the cells get the classes `dci-c-role`, `dci-c-type`, `dci-c-attr`, `dci-c-level`, `dci-c-date`, `dci-c-tracks`.
+- **CSS:** `.dci-rowswrap { container-type: inline-size }`; `tr.dci-row` is a CSS grid with `grid-template-areas` (default three columns: role | type above attr | level above date above tracks); `@container (min-width: 1150px)` one line, `(max-width: 699px)` two columns, `(max-width: 459px)` one. The table stays valid HTML (`tr`/`td` with `display: grid`/`block`). `.dci-cap` (12 px, 600, `#4a4658`), `.dci-datechip*`.
+- **`dateCell(row)`:** a date with a pool entry (`d.poolId`) is a chip `<span class="dci-datechip" data-date="…">` with `poolLabel`, ✎ (`date-edit`) and ✕ (`date-clear`), and the line `date.fromMatrixShort` / `date.fromPoolShort`; with `row.dateEdit === d.poolId` the fields are shown, plus `date-done`. Dates without a pool entry show the fields as before.
+- **`mbDateFields(prefix, v, compact)`:** `compact` may be `'rows'`: the grid of the works matrix (year above year, month above month, day above day) with the labels `date.beginRow` / `date.endRow` instead of "BD" / "ED".
+- **New:** `fieldsText(d)` ("2001-03-01 – 2001-03-03", for `data-date`).
+- **State:** row `dateEdit` (pool id whose fields are open; not stored).
+- **Handlers:** click `date-edit` (`row.dateEdit = row.date && row.date.poolId`), `date-done` (deletes it).
+- **Texts:** `date.edit`, `date.done`, `date.fromMatrixShort`, `date.fromPoolShort`, `date.beginRow`, `date.endRow`.
+- **Tests:** `common_rows.py` – `rows_of` reads a chip's `data-date`, new `date_field(row, f)` (opens the chip when needed); `t_bar.py`, `t_dragdates.py` use it; `t_keepplace.py` scrolls the element into view before measuring (Playwright scrolled on click and the test saw 8 px).
+- **Watch out:** tests that read `[data-f=rd-*]` of a pool-linked row must open the chip first (`date_field`).
+
+## Import 3.8.0 · 2026-10-16
+
+Supplement with a source the release does not link to (collect item 5).
+
+- **`suppBarHtml`:** a field `data-f="supp-url"` (`supp.urlPh`) and a button `data-act="supp-url"` (`supp.urlLoad`) in `.dci-supp-url`; a loaded typed source shows as "… ✓ supplemented" (`typedOn`).
+- **Handler `supp-url`:** `BANDCAMP.albumUrl(value)`, else `DISCOGS.parseReleaseId(value)`; nothing → `msg.badDiscogsId`; the loaded source → `supp.sameAsLoaded`; otherwise `loadSupplement(source, id, null, typed)` with `typed` = not among `S.sourceLinks`. Enter in the field clicks it (map of Enter keys).
+- **Changed:** `loadSupplement(source, id, input, typed = false)`; `S.supp.typed`.
+- **Texts:** `supp.urlPh`, `supp.urlLoad`, `supp.sameAsLoaded`.
+- **Tests:** `t_supp.py` part G (a typed Bandcamp album); the selector for the bar buttons is `.dci-suppbar .dci-supp-btn` now (the new button has no such class).
+
+## Import 3.7.0 · 2026-10-16
+
+Recording place and dates in Bandcamp's "about" text; places with an area (collect item 2).
+
+- **`TEXT.parse`:** new `placeOf(text)` → `{ name, area }` ("Loft in Cologne, june 16/17 2018", "Loft, Cologne"; parts with digits left out); the "by … at …" branch (`left.match(/^(.*?)\s+at\s+(.+)$/i)`) and the place-only form (`/^(\p{L}+)\b.*?\s+at\s+(.+)$/iu`) use it; `place(verb, where)` gives the company's `who` an `area`.
+- **`groupCompanies`** keeps `area`; the company entry gets `area` (also an entry of a supplement).
+- **`loadRelease`:** a company with an area whose roles allow a place becomes a place (`setCompanyEntityType(c, 'place')`, before "Media choice").
+- **`suggestByName`:** places with an area are searched as `place:(words) AND area:(words)`; the area goes into the hit's disambiguation. The group header shows "(area)".
+- **`BANDCAMP.toRelease`:** the about text is read with `TEXT.parse` too, but only its companies with a role ending in "at" are taken (`/\bat$/i`); its other lines are not listed as not recognized. The about text was already part of `notes` (dates).
+- **Dates:** `DAYLIST` also takes "/" between days ("16/17"), so "june 16/17 2018" and "16/17 June 2018" are found like "June 16 & 17, 2018".
+- **Tests:** new `t_about.py` (A place, B date, C "Studio Nord, Bremen", D "mixed at home in Oslo" gives no entry); harness `PLACE_AREAS` (areas of the mock places), `ws_search` filters by words and by `area:(…)`; `t_freetext.py` (Abbey Road with its area London).
+- **New:** `PRIVATE_PLACE` – `placeOf` gives `null` for "home …" and "my / his / her / their / our (own) home, house, flat, place, studio …", so no place is made of them (found with a probe of "Recorded at home during lockdown").
+- **Watch out:** "at" as a word is enough for a place ("recorded at …"); other prose after "at" in an about text still gives an entry – only a suggestion, nothing is assigned.
+
+## Import 3.6.0 · 2026-10-16
+
+Shared instrument words, lists with an unknown part, flexible name suggestions (collect items 1 and 3).
+
+- **`TEXT.parse`:** new `AND_SEP`, `INSTRUMENT_MODIFIER` (soprano, alto, tenor, baritone, acoustic, electric, fretless, upright …; not "bass"), `splitRoles(side)` (splits by `,` `&` `+` `/` and by "and/und/et" only between spaces – lookbehind – and gives the noun of the last part to the modifiers before it, as long as the result is a known role), `roleParts(side)` (`parts`, `known`, `unknown`); `listRoles` uses `splitRoles`. New branch: name on the left, some roles on the right known → the known ones are credited, the line goes to `unrecognized` as "<line> → ? “unknown”" (`unknownParts`).
+- **Names:** new `nameWords(x)` (no case, accents, ß → ss, punctuation), `nameFit(mbName, srcName)` → `'same'` / `'similar'` (same first and last word, middle names or initials more or less) / `''`, `luceneWords(name)` (all words required).
+- **`suggestByName`:** people are searched as `artist:(words) OR alias:(words)`, companies as before by phrase; `limit=25`; hits (names and aliases) by `nameFit`, same before similar, the best 5; `nameHits[].similar`.
+- **`nameSuggestHtml`:** a similar hit gets `<span class="dci-similar">` (`match.similarName`) and the title `match.similarTitle`; the log `nameSuggested` names it too.
+- **Texts:** `match.similarName`, `match.similarTitle`.
+- **Tests:** new `t_names.py` (A shared word, B unknown part, C suggestions); harness `fold()` (accents out) for `ws_search`.
+- **Watch out:** the real MusicBrainz search does not find "T. Snekkestad" for "Torben Snekkestad" (Lucene has no prefix match here); `nameFit` would accept it, the search does not deliver it.
+
+## Import 3.5.1 · 2026-10-16
+
+- **`applyPlacement()`:** without the dashboard (`S.overlay` not yet built) it draws the launcher again (`renderLauncher()`) and returns; before, it returned early and the switch "Window / in the page" kept showing "window" (collect item 4).
+- **Tests:** `t_inline.py` step 0 (the switch before the dashboard was opened).
 
 ## Import 3.5.0 · 2026-10-13
 

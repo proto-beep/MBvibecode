@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
 | 2026-10-11 | 2.8.0 – 2.16.0 | 1.4.1 – 1.5.0 |
@@ -33,6 +34,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-16 | Import 3.10.0 | The rows of an entry rearrange with the width of the dashboard (relationship above attributes, level above date above tracks), with captions instead of the table head; a date from the pool or the matrix is a chip, its fields open with ✎, begin above end. Dates of the date matrix can be marked "Release level"; a row switched to the release level takes that date. Texts: "tenor & soprano sax", recording place and dates in Bandcamp's "about" text, places with their area, name suggestions without accents and with middle names; supplement with any Discogs or Bandcamp URL |
 | 2026-10-13 | Import 3.5.0 · COMPANION 1.7.0 | Supplement with a second source, on request only: another linked source or a pasted text is compared with the rows; what it adds (new roles, new entries) and where it differs is listed to take over by choice, rows it confirms get its mark (variant B). "Delete stored import …" starts the import of a release afresh. The Bandcamp spelling next to the release's artist credit and MusicBrainz. A fresh start: all stored data reset once |
 | 2026-10-13 | Import 3.3.0 · COMPANION 1.6.0 | New names: Credits Importer and Credits Importer Companion. Besides Discogs the main script reads Bandcamp albums (credits of the album, optionally of each track page) and pasted texts (booklet, liner notes, a list of musicians); names from there are only suggested. A preference list for physical and digital media decides which linked source is loaded, for digital releases Bandcamp first; a source chosen for a release is remembered |
 | 2026-10-12 | Import 3.0.0 | Rebuilt inside: Discogs is read by a source adapter that delivers a neutral list of credits (person with links, role as written, details, tracks, source); the rest of the script works only with that list. Nothing changes for you; it prepares other sources |
@@ -64,6 +66,63 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-16
+
+### Import 3.10.0
+
+#### Added
+
+- **Release level in the date matrix:** every date of the date matrix has a checkbox **Release level** (next to its track groups). A date marked so is only for rows on the release level (release, release group); rows on recordings and works take the other dates of the column. Example: the performance dates of the studio days (March) and of a release concert (June) in one column, June marked "Release level" – "Apply" gives the instrument rows on recordings the March dates and a row on the release level the June date.
+- **Switching the level takes the matching matrix date:** a row whose date came from the matrix and that is switched to the release level gets the date marked "Release level" of its column at once; switched back to recordings, the dates of its tracks again. The log says so ("Bass Man: new level – date from the matrix column Performance: …"). A date entered by hand stays.
+- The mark is stored with the matrix (`dci-date-matrix:<release>`, field `rel` of a cell).
+
+### Import 3.9.0
+
+#### Changed
+
+- **The rows of an entry rearrange with the width of the dashboard** (as in the mockup of 2026-10-16):
+  - From about 1150 px wide: everything in one line, as before.
+  - Narrower: three columns – role | MusicBrainz relationship above attributes & credits | level above date above tracks.
+  - Below about 700 px: two columns, below about 460 px: one.
+  - It follows the width of the dashboard (window or in the page), not of the screen; widening it rearranges the rows again.
+- **Captions instead of the table head:** each field has its caption above it ("MB relationship", "Attributes & credits", "Level", "Date", "Tracks"), a little bolder and darker than before; the table head is gone.
+- **A date from the pool or the date matrix is a compact chip** ("Performance 1 · 2001-03-01 – 2001-03-03"), with "from the matrix" or "from the date pool" below it. **✎** opens its fields, **done** closes them again, **✕** removes the date.
+- **Begin and end exactly one above the other:** the open date fields are a grid with "Begin" and "End" in front – year above year, month above month, day above day.
+
+### Import 3.8.0
+
+#### Added
+
+- **Supplement with a source the release does not link to:** next to the buttons of "Supplement with" a field for any Discogs release (URL or ID) or Bandcamp album URL, with **Supplement**. It works like a linked source; while loaded it shows as "Bandcamp … ✓ supplemented" with "remove". The source loaded already is refused ("That is the source loaded already."). Enter in the field loads it too.
+
+### Import 3.7.0
+
+#### Added
+
+- **Recording place and dates in Bandcamp's "about" text:** "recorded at Loft in Cologne, june 16/17 2018" gives an entry **Loft** (Cologne) with "Recorded At", and the dates go into the date pool as a period (2018-06-16 – 2018-06-17) that can be split into the single days. Only the places of the about text are taken (roles ending in "at"); its prose is neither read as credits nor listed as not recognized. A private place is no place: "recorded at home", "at home in Oslo", "at my place", "in their living room" give no entry.
+- **Places with their area:** "Loft, Cologne" and "Loft in Cologne" (in a text and in Bandcamp credits) are the place "Loft" in the area "Cologne". MusicBrainz places of that name are suggested only in that area (a "Loft" in New York is not), with the area next to the name; the entry shows the area too ("Loft (Cologne)"). A company with an area is always a place (not a label).
+- **More date forms:** "june 16/17 2018" and "16/17 June 2018" (two days with "/") like "June 16 & 17, 2018".
+
+### Import 3.6.0
+
+#### Added
+
+- **A shared instrument word:** "tenor & soprano sax, trumpet and clarinet" → tenor saxophone, soprano saxophone, trumpet, clarinet. The noun after the last word goes to the words before when they only name a kind of the instrument (tenor, soprano, alto, baritone, acoustic, electric, fretless, upright …): "acoustic & electric guitar" → acoustic guitar, electric guitar; "bass & electric guitar" stays bass and electric guitar.
+- **Lists with an unknown part:** "Barry Guy – double bass, sticks-and-stones" takes double bass and lists the line as not recognized with the part it does not know ("→ ? “sticks-and-stones”"). "and" separates only as a word between spaces ("sticks-and-stones" stays one).
+
+#### Changed
+
+- **Name suggestions are more flexible:**
+  - Accents, case and punctuation do not count: "Agusti Fernández" finds "Agustí Fernández" (same name).
+  - A middle name or an initial more or less is a **similar name**: "Barry Guy" finds "Barry John Guy" (and an initial such as "Barry J. Guy" counts as well). Similar names come after same names and are marked "similar name" (a check before assigning).
+  - Names are searched by their words (aliases too), up to 25 hits, the best 5 shown. Nothing is assigned by itself.
+
+### Import 3.5.1
+
+#### Fixed
+
+- **"Window / in the page" could not be switched** before the dashboard was open: the switch stayed on "window". It changes the launcher at once now.
 
 ## 2026-10-13
 
