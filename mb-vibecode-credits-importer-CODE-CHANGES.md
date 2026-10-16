@@ -1,0 +1,460 @@
+# MB x Vibecode – Code changes
+
+What changed **in the code** with each version of both scripts, newest first. It is meant for whoever works on the scripts (the maintainer, or the AI that writes them): which parts, functions, stored data, texts and tests a version touched. What a version means **for users** is in the [changelog](mb-vibecode-credits-importer-CHANGELOG.md).
+
+- **Import** = MB x Vibecode: Credits Importer (`mb-vibecode-credits-importer.user.js`; until 3.3.0 `mb-discogs-credits-import.user.js`)
+- **Companion** = MB x Vibecode: Credits Importer Companion (`mb-vibecode-credits-importer-companion.user.js`; until 1.6.0 `mb-discogs-credits-sync.user.js`)
+
+## How this file is kept
+
+From 3.5.0 on, every change to the code comes as a pull request that also adds an entry here, at the top: the version, then what changed in the code – parts and functions (new, changed, removed), state (`S`), browser storage, texts (i18n keys), rules of the register, CSS, event handlers, edit note, tests – and anything to watch out for. Functions are named as in the code, so they can be found with a search.
+
+How far back the entries go:
+
+| Versions | Source | Detail |
+|---|---|---|
+| Import 3.0.0 – 3.5.0, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
+| Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
+| Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
+
+The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.5.0 · 2026-10-13
+
+Stage 2: a second source supplements the loaded one, on request only (variant B of the mockup).
+
+- **New, in section 7 ("Stage 2"):** `trackSetText` (tracks as "1–3, 5", several media "1.1–1.3"), `suppSig` (entity, relationship type, attribute of a row), `sameTracks`, `nameKey` (names without case, accents, punctuation), `rowRelText`, `suppEntryFor` (entry of the dashboard for a name: same MBID, else same name, also variants and aliases), `suppTracks`, `loadSupplement(source, id, input)`, `compareSupplement` (confirmed / new role / new entry / differs / not recognized; MB lookups of linked names, name search for new entries), `suppRow`, `applySupplement`, `discardSupplement`, `dropSupplementMarks`, `suppBarHtml`, `renderSupp`, `srcMarksHtml`, `sourceByShort`, `suppNoteLines`, `sourceLinkLabel`.
+- **Changed:** `resolveArtists({ source, only })` – per call the source of the entries (URL lookups with `source.urlKey`, `strictNames`, `nameSearch`) and only the entries given; `resolveViaAliases(list, source)`; `loadRelease` resets the supplement and draws the source bar again once rows exist; `renderSource` (supplement bar, text form in supplement mode with `supp-text-load`); `roleCell` (marks); `editNoteBlock` ("Also from:", lines of `suppNoteLines` after "Done"); `groupCredits` keeps `lines`, `groupCompanies` keeps `line`; `TEXT.parse` gives each credit and company the `line` it comes from; each adapter has `short` (`DG`, `BC`, `TXT`); `groupHtml` and `matchHtmlInner` use the entry's own source (`a.src`).
+- **State:** `S.supp` (`source`, `id`, `rel`, `open`, `items`, `url`, `confirmed`, `mismatch`), `S.suppSources` (Map short → `{ name, url }`); rows: `confirmedBy` (Set of shorts), `differ`, `supp`, `suppName`, `suppTook`; entries: `src`.
+- **Storage:** none – supplements are not stored.
+- **Texts:** `supp.*` (42), `busy.supp`, `log.suppLoaded`, `log.suppApplied`, `log.suppDiscarded`, `ms.3.5.0`; `MILESTONES` gets 3.5.0.
+- **CSS:** `.dci-suppbar`, `.dci-supp*`, `.dci-srcmark*`, `.dci-vh`.
+- **Handlers:** click `supp-load`, `supp-text`, `supp-text-load`, `supp-remove`, `supp-fold`, `supp-apply`, `supp-discard`; change `supp-sel`, `supp-all`.
+- **Tests:** new `t_supp.py` (A–F); `t_notice.py` (milestones, generation 4), `t_adapter.py` part D (update from 2.19.1 now resets once; no reset within generation 4).
+- **Watch out:** a row is "the same" only with the same MB relationship type and the same instrument or vocal (`suppSig`); "bass" and "bass guitar" count as different.
+
+## Import 3.4.0 · Companion 1.7.0 · 2026-10-13
+
+- **New:** `startImport()` (taken out of `init`: chosen source, else the preference list), `forgetImport()` ("Delete stored import": removes this release's entries in `dci-source-pick` and `dci-media-sel`, its date pool, track pool and date matrix, its log, the supplement, and asks the companion to forget its status, then calls `startImport`); button and confirmation panel in `renderSource` (`forget-open`, `forget-cancel`, `forget-do`).
+- **Storage generation 4:** `STORE_EPOCH` 3 → 4 and `EPOCH_KEEPS_CREATED = false` – the update clears everything once, this time `dci-created-works:<MBID>` too (asked for by the maintainer). Text `notice.reset` says so.
+- **Companion 1.7.0:** `STORE_EPOCH` 4; message `forget-release` deletes `statusMap:<MBID>`, takes it out of `statusMapIndex` and clears `statusMap` if it belongs to that release.
+- **Texts:** `forget.*` (7), `log.importForgotten`.
+- **Tests:** `t_notice.py` (generation 4, created works cleared, companion epoch 4), `t_supp.py` part E.
+
+## Import 3.3.2 · 2026-10-13
+
+- **Spelling check (rule 4):** `resolveArtists` stores `a.spell` (`src`, `srcName`, `release`, `mb`) for entries of a source with `strictNames`; new `spellHtml(a)`, shown in `variantsHtml` (`[data-spell]`) and refreshed by `updateGroupHeader`; "No alternative spelling on …" is left out for such sources. CSS `.dci-spell*`; texts `spell.*` (5).
+- **The old script on the page:** `showTwiceWarning()`; at start the script stays out when `#dci-styles` already exists; 3 s after start it warns when a second `#dci-styles` appeared. Text `old.twice`.
+- **Tests:** `t_bandcamp.py` part F (spelling line), `t_supp.py` part F.
+
+## Import 3.3.1 · Companion 1.6.1 · 2026-10-13
+
+- **New file names** (`@downloadURL`, `@updateURL`, `CHANGELOG_URL`); READMEs and changelog renamed.
+- **Rule 4 against the release's artist credit:** the release is read with `inc=artist-credits` into `S.releaseCredit` (`mbid`, `name`, `join`); `releaseCreditName(mbid)`, `releaseCreditText()`; in `resolveArtists` an artist found through its link is assigned only when the release credits it exactly as the source names it (companies: their MB name); otherwise `a.strictMiss`, `a.strictSpelled`, log `artistCreditSpelling`, and `nameSuggestHtml` heads the suggestion with `match.linkSuggest`.
+- **Tests:** harness `RELEASE_AC`; `t_bandcamp.py` parts E and F.
+
+## Import 3.3.0 · Companion 1.6.0 · 2026-10-13
+
+- **Bandcamp adapter** `BANDCAMP` (section 2): `albumUrl`, `bandUrl`, `pageData` (the `data-tralbum` JSON), `toRelease` (credits text read with `TEXT.parse`, track pages for their track only, the band linked to its page), `release` (track pages when `ctx.settings.bandcampTracks`). `httpGet(url)` (`GM_xmlhttpRequest`, else `fetch`). Header: `@grant GM_xmlhttpRequest`, `@grant unsafeWindow`, `@connect bandcamp.com`, `@sandbox raw`.
+- **Order of the sources:** `SOURCE_ORDER_KEY` (`dci-source-order`), `SOURCE_PICK_KEY` (`dci-source-pick`, the last 200 releases), `SOURCE_ORDER_DEFAULT`, `readSourceOrder`, `keepSourcePick`, `moveSourceOrder`, `startSource`, `sourceOrderHtml`, drag & drop branch `srcorder` in `dmTargetOf` / `onDropOn`; `S.digital` (all media "Digital Media").
+- **Bandcamp menu:** `bandcampSettingsHtml`, `testBandcampPage`, `dci-bc-tracks`.
+- **Rule 4, first form:** adapter flag `strictNames` – a linked entry only with the exact name.
+- `LINKED_SOURCES`; `SOURCES` gets `bandcamp`; picker values `source|id`.
+- **Texts:** `srcorder.*`, `bc.*`, `err.bandcampData`, `err.pageHttp`, `err.pageNet`, `log.artistSpelling`, `log.sourceKept`, `log.sourceOrder`, `log.bcTest`, `ms.3.3.0`.
+- **Tests:** new `t_bandcamp.py`; harness `BC_PAGES`, `BC_ARTISTS`, `bc_page`, `GM_XHR_SHIM`, `open_mb_edit(gm_xhr=True)`, `MB_SEARCH`, `ws_search`.
+
+## Import 3.2.0 · 2026-10-13
+
+- **Text adapter** `TEXT` (section 2): `parse(text, { isRole, isCompanyRole, resolveTracks })` (track lists before or after a line, ℗ / ©, clauses, "… by …" with "at Place", "Name – roles", "Role: names", "Name (roles)", "Strings arranged" → "Arranged By [Strings]") and `toRelease`; flags `readsTrackLists`, `nameSearch`, `usesMbTracks`.
+- **Core:** `isKnownRole`, `isTextCompanyRole` (`TEXT_COMPANY_RE`), `mbTracksAsSource`, `tracksInText(text, srcTracks)`, `suggestByName`, `nameSuggestHtml`, handler `name-use`; the text form and the list of lines not recognized in `renderSource`; rule S014 leaves a company alone that the source gives for some tracks only (`row.dAllTracks === false`); edit note `noteSource`.
+- **Texts:** `source.text*`, `textsrc.*`, `unrec.*`, `match.nameSuggest`, `match.nameUseTitle`, `match.byName`, `log.sourceLoaded`, `log.nameSuggested`, `log.nameLookup`, `msg.textEmpty`, `busy.source`.
+- **Tests:** new `t_freetext.py`.
+
+## Import 3.1.0 · Companion 1.6.0 · 2026-10-13
+
+- New names: `@name`, `EDIT_NOTE_SCRIPT_NAME`, texts `title`, `launcher.open`, `notice.title`; companion descriptions.
+- `tr()` passes `src` (the name of the loaded source, `SOURCE_NAME`) to every text; about 40 texts say `{src}` instead of "Discogs"; `msg.noDiscogsLink` removed.
+
+## Import 3.0.0 · 2026-10-12
+
+- **Adapters:** section 2 is new. The adapter `DISCOGS` is the only part that reads Discogs (`cleanName`, `getJson`, `parseTrackSpec`, `toRelease`, `personType`, `person`, `aliases`, `seriesParent`, `releaseLinks`, `parseReleaseId`) and delivers a neutral release (tracks, credits, companies, series, notes, format words). The core works with that only: `groupCredits`, `groupCompanies`, `lookupUrls(urls, kind, urlKey)`, `sourceUrlLtId`, `sourceContext`, `loadRelease(id, { source })`.
+- **Removed from the core:** `cleanDiscogsName`, `collectCompanies`, `collectCredits`, `discogsArtistUrl`, `discogsCreditFor`, `discogsLabelUrl`, `discogsWritersOf`, `fetchDiscogsArtist`, `fetchDiscogsRelease`, `flattenDiscogsTracks`, `guessArtistType`, `loadDiscogs`, `lookupDiscogsArtistUrls`, `lookupDiscogsUrls`, `parseTrackSpec`, `syncDiscogsCredits`.
+- **State:** `S.discogs`, `S.discogsId`, `S.discogsLinks`, `S.dTracks` → `S.source`, `S.release`, `S.sourceLinks`, `S.srcTracks`.
+- No visible change, no reset.
+- **Tests:** new `t_adapter.py` (A: no Discogs data outside the adapter; B: the adapter in Node; C: everything that goes through the adapter in the dashboard; D: update without reset).
+
+## Import 3.0.0 – 3.5.0 together: comparison of the code of 2.19.1 and 3.5.0
+
+- Size: 16,001 → 17,848 lines; functions and constants: 609 → 658
+- New functions/constants (65): `applySupplement`, `BANDCAMP`, `bandcampSettingsHtml`, `companionReleaseId`, `compareSupplement`, `creditedWritersOf`, `discardSupplement`, `DISCOGS`, `dropSupplementMarks`, `EPOCH_KEEPS_CREATED`, `forgetImport`, `groupCompanies`, `groupCredits`, `httpGet`, `isKnownRole`, `isTextCompanyRole`, `keepSourcePick`, `LINKED_SOURCES`, `loadRelease`, `loadSupplement`, `lookupUrls`, `mbTracksAsSource`, `moveSourceOrder`, `nameKey`, `nameSuggestHtml`, `noteSourceUrl`, `parseRoleNotation`, `prefilledBy`, `readSourceOrder`, `releaseCreditName`, `releaseCreditText`, `renderSupp`, `rowRelText`, `sameTracks`, `showTwiceWarning`, `SOURCE_NAME`, `SOURCE_ORDER_DEFAULT`, `SOURCE_ORDER_KEY`, `SOURCE_PICK_KEY`, `sourceByShort` … (+25)
+- Removed (16): `cleanDiscogsName`, `collectCompanies`, `collectCredits`, `discogsArtistUrl`, `discogsCreditFor`, `discogsLabelUrl`, `discogsWritersOf`, `fetchDiscogsArtist`, `fetchDiscogsRelease`, `flattenDiscogsTracks`, `guessArtistType`, `loadDiscogs`, `lookupDiscogsArtistUrls`, `lookupDiscogsUrls`, `parseTrackSpec`, `syncDiscogsCredits`
+- Changed (85): `aliasSuggestHtml`, `applyLiveDefault`, `applyNotesTrackCredits`, `applyPlan`, `artistVariants`, `autoPlaceFoundDates`, `buildArtistSeed`, `buildOverlay`, `buildWorkQuery`, `CHANGELOG_URL`, `computePublisherEvidence`, `continueWorkQueue`, `dateFindListHtml`, `dateFinds`, `dateSuggestions`, `dmTargetOf`, `EDIT_NOTE_SCRIPT_NAME`, `editNoteBlock`, `entityPath`, `fetchJsEntity`, `groupHtml`, `I18N`, `idx`, `init`, `injectStyles`, `insertLauncher`, `loadSeries`, `loadSeriesLabel`, `loadWorkOptions`, `matchHtml` … (+55)
+- Texts (English keys): 1008 → 1117; new: `supp.*` (42), `log.*` (13), `bc.*` (7), `forget.*` (7), `srcorder.*` (7), `textsrc.*` (6), `source.*` (5), `spell.*` (5), `match.*` (4), `err.*` (3), `ms.*` (3), `unrec.*` (3), `busy.*` (2), `msg.*` (2), `old.*` (1); removed: 1
+- State `S`: new `bcOpen`, `bcTest`, `bcTracks`, `digital`, `release`, `source`, `sourceLinks`, `sourceOrder`, `srcOrderOpen`, `srcTracks`, `supp`, `suppSources`, `textForm`, `textInput`; removed `discogs`, `discogsId`, `discogsLinks`, `dTracks`
+- Browser storage: new `dci-bc-tracks`, `dci-source-order`, `dci-source-pick`; removed –
+
+## Companion 1.5.0 → 1.7.0
+
+- Size: 806 → 815 lines; functions and constants: 29 → 29
+- New functions/constants (0): –
+- Removed (0): –
+- Changed (3): `initMusicBrainzSide`, `norm`, `STORE_EPOCH`
+
+## Import 2.19.1 · 2026-10-12
+
+- `liveWhyText`: the reason for "live" names the source's role as written and the name (`matrix.liveWhy.credit`, `matrix.liveWhy.creditAll`); `matrix.liveOfferRec`.
+
+## Import 2.19.0 · 2026-10-12
+
+- One look for every suggestion: CSS variables `--sugg-bg`, `--sugg-line`, `--sugg-ink`, class `dci-suggbtn`.
+- "Commissioned By" (rules R099, C037, S024) and "Live Recording By" (R031, W007, a hint for S021); entries of the notes stay suggestions in the pools until used (`markPoolUsed`); `row.dAllTracks` for credits without tracks.
+- Tests: new `t_v219.py`.
+
+## Reconstructed: main script 0.9.2 – 2.19.1
+
+Compared snapshot by snapshot (the versions uploaded to this repository, and 2.19.1 kept from the working session). Versions between two snapshots are listed under "Covers"; what each of them does is in the [changelog](mb-vibecode-credits-importer-CHANGELOG.md).
+
+### 2.16.0 → 2.19.1 · 2026-10-12
+
+Covers Import 2.17.0, Import 2.18.0, Import 2.19.0, Import 2.19.1.
+
+- Size: 14,334 → 16,001 lines; functions and constants: 540 → 609
+- New functions/constants (69): `applyLiveDefault`, `applyLogPlace`, `applyMediaChoice`, `applyNotesTrackCredits`, `applySongDefault`, `ATTR_ABBR`, `attrAbbr`, `attrPillHtml`, `chooseMedia`, `COPYRIGHT_SIGN`, `dropTracksOnMatrix`, `editNoteEl`, `editNoteWidth`, `formatMediaList`, `gotoIncomplete`, `inPlacedCell`, `inSelection`, `isSuggestedCell`, `linkAttrsHeadHtml`, `linkAttrsHtml`, `linkAttrsOf`, `linkAttrsOpen`, `linkAttrsToggleHtml`, `linkAttrTypes`, `linkKey`, `liveHint`, `liveOfferText`, `liveReason`, `liveWhyText`, `LOCK_SVG`, `LOG_DOCK_MIN_H`, `LOG_DOCK_SIDE_SHARE`, `LOG_PLACES`, `LOG_SIDE_MIN_PX`, `logDocked`, `logPlaceFrame`, `logPlaceNow`, `looseName`, `markPoolUsed`, `matchEntry` … (+29)
+- Removed (0): –
+- Changed (74): `addManualEntry`, `applyPlan`, `autoPlaceFoundDates`, `buildLogWindow`, `buildOverlay`, `cellEntry`, `cellHtml`, `cellMenuHtml`, `clampWindow`, `columnDate`, `columnHeadHtml`, `COMPANY_ROLES`, `computePlan`, `computePublisherEvidence`, `DATE_HINTS`, `DATE_RULES`, `datePoolHtml`, `DETAIL_FLAGS`, `dmDragEnd`, `dmMarkOver`, `dmTargetOf`, `dropTracksOn`, `editNoteBlock`, `findDates`, `I18N`, `init`, `injectStyles`, `inMedium`, `loadDiscogs`, `makeMovable` … (+44)
+- Texts (English keys): 909 → 1008; new: `matrix.*` (42), `media.*` (23), `log.*` (20), `msg.*` (4), `ms.*` (3), `sum.*` (3), `medium.*` (2), `note.*` (1), `pools.*` (1), `preview.*` (1); removed: 1
+- State `S`: new `linkAttrOff`, `linkAttrOn`, `linkAttrStaged`, `liveAuto`, `mediaSel`, `mxColMenu`, `mxOptsOpen`, `wattrLong`, `wattrOpen`, `wattrOpenAll`; removed –
+- Browser storage: new `dci-log-dock-h`, `dci-log-place`, `dci-media-sel`, `dci-wattr-long`; removed –
+- New rule ids: `C037`, `D015`, `Q004`, `R098`, `R099`, `S019`, `S020`, `S021`, `S022`, `S023`, `S024`
+
+### 2.15.0 → 2.16.0 · 2026-10-11
+
+Covers Import 2.16.0.
+
+- Size: 14,102 → 14,334 lines; functions and constants: 532 → 540
+- New functions/constants (9): `AUTOSCROLL_DELAY_MS`, `AUTOSCROLL_MAX`, `AUTOSCROLL_RAMP_MS`, `AUTOSCROLL_ZONE`, `columnFills`, `planFill`, `TYPE_QUESTIONS`, `typeAskHtml`, `typeQuestionFor`
+- Removed (1): `UP_DWELL_MS`
+- Changed (24): `applyColumnDate`, `ARRANGER_TYPES`, `cellHtml`, `columnHeadHtml`, `computePlan`, `dragAutoScroll`, `fillKey`, `I18N`, `injectStyles`, `instrumentAskHtml`, `matrixAction`, `matrixColumns`, `MILESTONES`, `onClick`, `onDragStart`, `QUESTION_RULES`, `remapRow`, `roleRules`, `rowHtml`, `rulesOfRow`, `rulesTables`, `sendDiscogsStatus`, `setCellDate`, `VERSION`
+- Texts (English keys): 897 → 909; new: `log.*` (4), `matrix.*` (4), `typeAsk.*` (3), `ms.*` (1); removed: 0
+- New rule ids: `Q003`, `R097`
+
+### 2.14.0 → 2.15.0 · 2026-10-11
+
+Covers Import 2.15.0.
+
+- Size: 14,032 → 14,102 lines; functions and constants: 528 → 532
+- New functions/constants (4): `ENGINEER_TASK_RE`, `focusRule`, `splitEngineerTasks`, `UP_DWELL_MS`
+- Removed (0): –
+- Changed (16): `dragAutoScroll`, `I18N`, `injectStyles`, `loadDiscogs`, `onClick`, `onDragStart`, `openRules`, `parseRoles`, `roleCell`, `ruleInfoHtml`, `rulesOfRow`, `SPECIAL_RULES`, `VERSION`, `WORDING_RULES`, `WORDING_SYNONYMS`, `wordingCredit`
+- Texts (English keys): 895 → 897; new: `role.*` (1), `rules.*` (1); removed: 0
+- New rule ids: `S018`, `W006`, `W007`
+
+### 2.12.0 → 2.14.0 · 2026-10-11
+
+Covers Import 2.13.0, Import 2.14.0.
+
+- Size: 13,760 → 14,032 lines; functions and constants: 522 → 528
+- New functions/constants (6): `datelessExisting`, `dropTracksOn`, `fillKey`, `fillsOfCell`, `setCellDate`, `tracksDropFits`
+- Removed (0): –
+- Changed (25): `applyPlan`, `cellHtml`, `cellOwnDate`, `computePlan`, `datePoolHtml`, `discogsLabelUrl`, `dmMarkOver`, `dmTargetOf`, `dropDateOn`, `editNoteBlock`, `I18N`, `init`, `injectStyles`, `matrixAction`, `mergeDates`, `MILESTONES`, `onDragOver`, `onDragStart`, `onDrop`, `renderDates`, `renderPreview`, `sendDiscogsStatus`, `STORE_EPOCH`, `trackPoolHtml`, `VERSION`
+- Texts (English keys): 873 → 895; new: `msg.*` (7), `log.*` (6), `matrix.*` (3), `tracks.*` (3), `ms.*` (2), `preview.*` (1); removed: 0
+- State `S`: new `dateFills`, `filledDates`; removed –
+
+### 2.10.0 → 2.12.0 · 2026-10-11
+
+Covers Import 2.11.0, Import 2.12.0.
+
+- Size: 13,539 → 13,760 lines; functions and constants: 513 → 522
+- New functions/constants (11): `addCommonDate`, `applyDateToTracks`, `CHANGELOG_URL`, `commonDate`, `compareVersions`, `MILESTONES`, `NOTICE_KEY`, `noticeMilestones`, `renderNotice`, `STORE_EPOCH`, `versionParts`
+- Removed (2): `applyDateToRows`, `OLD_DATES_KEY`
+- Changed (40): `autoPlaceFoundDates`, `clearPools`, `cloneRow`, `closeDashboard`, `COMPANY_ROLES`, `DATE_MATCHERS`, `DATE_RULES`, `datePoolHtml`, `discogsLabelUrl`, `dispatchAddRelationship`, `dm`, `dmClean`, `dropDateOn`, `gripHtml`, `I18N`, `init`, `injectStyles`, `insertLauncher`, `INSTRUMENT_ALIASES`, `mapCompanyRole`, `matrixChooseHtml`, `onChangeInner`, `onClick`, `placeSeparateDays`, `poolDateFor`, `renderDates`, `renderLauncher`, `resetSettings`, `roleRules`, `saveMatrix` … (+10)
+- Texts (English keys): 849 → 873; new: `ms.*` (22), `date.*` (4), `dm.*` (4), `notice.*` (4), `pools.*` (3), `trackpool.*` (2), `log.*` (1); removed: 16
+- State `S`: new –; removed `releaseLanguage`
+- Browser storage: new `dci-notice-version`, `dci-pools-keep`, `dci-store-epoch`, `dci-updated-from`; removed `dci-dates:<MBID>`, `dci-stamp-overwrite`
+- New rule ids: `C036`, `D014`, `S017`, `W004`, `W005`
+
+### 2.8.0 → 2.10.0 · 2026-10-11
+
+Covers Import 2.9.0, Import 2.10.0.
+
+- Size: 13,206 → 13,539 lines; functions and constants: 506 → 513
+- New functions/constants (13): `applyPlacement`, `cellTracksHtml`, `dragAutoScroll`, `dropDateOn`, `inPage`, `matrixChooseHtml`, `mergeDates`, `placeSeparateDays`, `reloadPools`, `revealDashboard`, `scrollDashboardTop`, `setPlace`, `updatePageScrollPadding`
+- Removed (6): `onStampClick`, `plannedLinks`, `refocusField`, `stampApplyAll`, `stampBarHtml`, `stampTypeOptions`
+- Changed (47): `applyMatrix`, `applyMatrixColumn`, `applyPlan`, `ARRANGER_TYPES`, `autoPlaceFoundDates`, `buildOverlay`, `clampWindow`, `clearPools`, `closeDashboard`, `dateFindListHtml`, `datePoolHtml`, `dmClean`, `dmDragEnd`, `dmTargetOf`, `ensureTrackGroup`, `groupRowCounts`, `I18N`, `injectStyles`, `insertLauncher`, `makeMovable`, `matrixCellHtml`, `matrixHtml`, `mbUsesEscape`, `onChangeInner`, `onClick`, `onDragOver`, `onDragStart`, `onDrop`, `openDashboard`, `poolClearHtml` … (+17)
+- Texts (English keys): 830 → 849; new: `dm.*` (12), `place.*` (8), `pools.*` (6), `log.*` (4), `datefind.*` (2), `date.*` (1); removed: 14
+- State `S`: new –; removed `stampId`
+- Browser storage: new `dci-place`; removed –
+
+### 2.7.0 → 2.8.0 · 2026-10-11
+
+Covers Import 2.8.0.
+
+- Size: 12,307 → 13,206 lines; functions and constants: 470 → 506
+- New functions/constants (42): `applyMatrix`, `applyMatrixColumn`, `autoPlaceFoundDates`, `cellEntry`, `cellTracks`, `clearPools`, `datePoolHtml`, `dm`, `dmAddTracks`, `dmChanged`, `dmClean`, `dmDragEnd`, `dmMarkOver`, `dmMessage`, `dmPlace`, `dmTargetOf`, `gripHtml`, `groupRowCounts`, `MATRIX_KEY`, `matrixCellHtml`, `matrixEditorHtml`, `matrixHtml`, `mediumGroupName`, `newCellId`, `newTrackGroupFrom`, `onDragOver`, `onDragStart`, `onDrop`, `otherPoolKeys`, `poolClearHtml`, `poolDateFor`, `poolsOpen`, `rebuildDashboard`, `renderReset`, `resetSettings`, `rowSig`, `saveMatrix`, `SETTINGS_KEYS`, `stampBarHtml`, `studioId` … (+2)
+- Removed (6): `fillSimilar`, `guessDateGroup`, `linkPanelHtml`, `linkTagHtml`, `saveAndCopyDate`, `setDateTrackGroup`
+- Changed (28): `autoGroupDate`, `buildOverlay`, `dateCell`, `dateFinderHtml`, `dateFindListHtml`, `ensureTrackGroup`, `I18N`, `injectStyles`, `loadDiscogs`, `mbUsesEscape`, `onChangeInner`, `onClick`, `onInput`, `onStampClick`, `openPoolForm`, `poolFormHtml`, `removePoolEntry`, `renderAll`, `renderDates`, `rowShort`, `savePoolForm`, `saveTrackPool`, `setLanguage`, `SPECIAL_RULES`, `trackPoolHtml`, `useFoundDate`, `VERSION`, `workDateCell`
+- Texts (English keys): 787 → 830; new: `dm.*` (32), `pools.*` (16), `reset.*` (9), `log.*` (7), `trackpool.*` (2), `date.*` (1), `datefind.*` (1); removed: 25
+- Browser storage: new `dci-date-matrix:<MBID>`, `dci-dm-auto`, `dci-pools-open`; removed –
+
+### 2.6.0 → 2.7.0 · 2026-10-10
+
+Covers Import 2.7.0.
+
+- Size: 12,163 → 12,307 lines; functions and constants: 466 → 470
+- New functions/constants (4): `guessDateGroup`, `linkPanelHtml`, `linkTagHtml`, `setDateTrackGroup`
+- Removed (0): –
+- Changed (9): `applyDateToRows`, `I18N`, `injectStyles`, `onChangeInner`, `onClick`, `onStampClick`, `renderDates`, `trackPoolHtml`, `VERSION`
+- Texts (English keys): 773 → 787; new: `link.*` (13), `log.*` (1); removed: 0
+
+### 2.5.0 → 2.6.0 · 2026-10-10
+
+Covers Import 2.6.0.
+
+- Size: 12,054 → 12,163 lines; functions and constants: 463 → 466
+- New functions/constants (3): `groupKindOf`, `kindTagHtml`, `restoreRow`
+- Removed (0): –
+- Changed (11): `buildOverlay`, `groupHtml`, `I18N`, `injectStyles`, `onClick`, `remapManualRow`, `removeRow`, `roleCell`, `updateGroupHeader`, `variantsHtml`, `VERSION`
+- Texts (English keys): 766 → 773; new: `log.*` (2), `msg.*` (2), `toolbar.*` (2), `role.*` (1); removed: 0
+
+### 2.4.1 → 2.5.0 · 2026-10-10
+
+Covers Import 2.4.2, Import 2.4.3, Import 2.5.0.
+
+- Size: 11,440 → 12,054 lines; functions and constants: 443 → 463
+- New functions/constants (20): `applyDateToRows`, `cloneRow`, `datesWithContext`, `DAYLIST`, `DAYP`, `ensureTrackGroup`, `isPersonalPublisherRel`, `multiDays`, `multiMedium`, `plainNo`, `refocusField`, `saveTrackForm`, `saveTrackPool`, `sentenceAround`, `studiosInText`, `trackFormHtml`, `trackListLabel`, `TRACKPOOL_KEY`, `trackPoolHtml`, `tracksInText`
+- Removed (0): –
+- Changed (35): `ARRANGER_TYPES`, `columnDate`, `computePlan`, `computePublisherEvidence`, `DATE_MATCHERS`, `DATE_RULES`, `dateFindListHtml`, `dateFinds`, `findDates`, `I18N`, `injectStyles`, `insertLauncher`, `nextGroupNumber`, `onChangeInner`, `onClick`, `onInput`, `onStampClick`, `openPoolForm`, `poolFormHtml`, `removeRow`, `renderDates`, `roleRules`, `savePool`, `savePoolForm`, `sendDiscogsStatus`, `span`, `SPECIAL_RULES`, `syncModeHtml`, `toQuery`, `tracksPicker` … (+5)
+- Texts (English keys): 728 → 766; new: `trackpool.*` (16), `datefind.*` (7), `date.*` (5), `dgStatus.*` (5), `log.*` (3), `sync.*` (2); removed: 0
+- Browser storage: new `dci-dg-artwork`, `dci-track-pool:<MBID>`; removed –
+- New rule ids: `D013`, `S013`, `S014`, `S015`, `S016`
+
+### 2.4.0 → 2.4.1 · 2026-10-07
+
+Covers Import 2.4.1.
+
+- Size: 11,336 → 11,440 lines; functions and constants: 440 → 443
+- New functions/constants (3): `onChangeInner`, `refreshPoolSelects`, `renderWorksInner`
+- Removed (0): –
+- Changed (29): `ARRANGER_TYPES`, `attrCell`, `DATE_HINTS`, `DATE_MATCHERS`, `DATE_RULES`, `findDates`, `I18N`, `injectStyles`, `insertLauncher`, `instrumentVocabulary`, `matrixAction`, `onChange`, `onClick`, `onStampClick`, `questionRuleFor`, `renderDates`, `renderWorks`, `rerenderRow`, `roleCell`, `roleCreditOptions`, `roleRules`, `sendDiscogsStatus`, `stampApplyAll`, `suggestRoleCredit`, `syncModeHtml`, `updateSyncArea`, `VERSION`, `withoutBy`, `wordingCredit`
+- Texts (English keys): 721 → 728; new: `date.*` (4), `matrix.*` (2), `sync.*` (2), `log.*` (1), `roleCredit.*` (1); removed: 3
+- Browser storage: new `dci-dg-release`, `dci-stamp-overwrite`; removed –
+- New rule ids: `D012`
+
+### 2.1.0 → 2.4.0 · 2026-10-07
+
+Covers Import 2.1.1, Import 2.2.0, Import 2.2.1, Import 2.3.0, Import 2.4.0.
+
+- Size: 10,475 → 11,336 lines; functions and constants: 396 → 440
+- New functions/constants (44): `aliasesFor`, `applyRulesChange`, `CHECKBOX_DETAILS`, `DATE_HINTS`, `DATE_MATCHERS`, `DATE_RULES`, `dateFinderHtml`, `dateFindListHtml`, `dateFinds`, `exportRules`, `findDates`, `importRules`, `loadStore`, `MONTH_BY_NAME`, `MONTH_NAMES`, `monthNo`, `nextUserRuleId`, `ORDINALS`, `ownRuleResult`, `ownRulesHtml`, `reAlt`, `remapRow`, `renderRulesBody`, `roleCreditForInner`, `ruleInfoHtml`, `ruleNotes`, `ruleNotesCache`, `ruleOn`, `RULES_OFF_KEY`, `rulesOff`, `rulesOffCache`, `rulesOfRow`, `saveRuleForm`, `saveRules`, `setRulesStatus`, `single`, `span`, `typo`, `usDateOrder`, `useFoundDate` … (+4)
+- Removed (0): –
+- Changed (38): `applyPlan`, `dateGroupOf`, `defaultGeom`, `discogsCreditFor`, `GEOM_KEYS`, `I18N`, `injectStyles`, `insertLauncher`, `instrumentCandidates`, `loadDiscogs`, `makeRow`, `manualTypeTimer`, `mapCompanyRole`, `mapRole`, `mapRoleInner`, `onChange`, `onClick`, `onFromDiscogs`, `onInput`, `openRules`, `primaryIsValid`, `questionRuleFor`, `relFields`, `renderDates`, `renderPreview`, `roleCell`, `roleCreditFor`, `roleRules`, `rulesTables`, `ruleTestHtml` … (+8)
+- Texts (English keys): 662 → 721; new: `rules.*` (34), `datefind.*` (13), `msg.*` (4), `sync.*` (4), `log.*` (3), `preview.*` (1); removed: 0
+- Browser storage: new `dci-geom:rules`, `dci-rules-off`, `dci-user-rules`; removed –
+- New rule ids: `D001`, `D002`, `D003`, `D004`, `D005`, `D006`, `D007`, `D008`, `D009`, `D010`, `D011`, `S012`
+
+### 1.9.2 → 2.1.0 · 2026-10-07
+
+Covers Import 2.0.0, Import 2.0.1, Import 2.1.0.
+
+- Size: 10,062 → 10,475 lines; functions and constants: 385 → 396
+- New functions/constants (12): `instrumentAskHtml`, `openRules`, `patternText`, `QUESTION_RULES`, `questionRuleFor`, `roleRules`, `rulesTables`, `ruleTestHtml`, `SPECIAL_RULES`, `TABLES`, `WORDING_RULES`, `wordingRuleFor`
+- Removed (1): `bassAskHtml`
+- Changed (24): `ART_TYPES`, `bringToFront`, `buildOverlay`, `caseWord`, `collectCompanies`, `COMPANY_ROLES`, `entityPath`, `GENERIC_WORDS`, `I18N`, `injectStyles`, `INSTRUMENT_ALIASES`, `instrumentCandidates`, `instrumentVocabulary`, `loadDiscogs`, `mapRoleInner`, `onClick`, `remainingMods`, `roleCreditFor`, `rowHtml`, `sameWording`, `stopDiag`, `toQuery`, `unmappedHtml`, `VERSION`
+- Texts (English keys): 636 → 662; new: `rules.*` (26), `instrAsk.*` (2), `log.*` (1); removed: 3
+- New rule ids: `C001`, `C002`, `C003`, `C004`, `C005`, `C006`, `C007`, `C008`, `C009`, `C010`, `C011`, `C012`, `C013`, `C014`, `C015`, `C016`, `C017`, `C018`, `C019`, `C020`, `C021`, `C022`, `C023`, `C024`, `C025`, `C026`, `C027`, `C028`, `C029`, `C030`, `C031`, `C032`, `C033`, `C034`, `C035`, `Q001`, `Q002`, `R001`, `R002`, `R003` … (+111)
+
+### 1.9.0 → 1.9.2 · 2026-10-05
+
+Covers Import 1.9.1, Import 1.9.2.
+
+- Size: 9,908 → 10,062 lines; functions and constants: 380 → 385
+- New functions/constants (5): `aliasSuggestHtml`, `discogsCreditFor`, `matchHtmlInner`, `resolveViaAliases`, `syncDiscogsCredits`
+- Removed (0): –
+- Changed (21): `addExistingArtistRels`, `applyPlan`, `buildOverlay`, `computePlan`, `creditsToFill`, `entityPath`, `I18N`, `indexExistingRelationships`, `injectStyles`, `insertLauncher`, `loadDiscogs`, `matchHtml`, `matrixAction`, `matrixChange`, `onChange`, `onClick`, `onInput`, `refresh`, `resolveArtists`, `syncStatusHtml`, `VERSION`
+- Texts (English keys): 629 → 636; new: `log.*` (3), `match.*` (3), `sync.*` (1); removed: 0
+
+### 1.8.0 → 1.9.0 · 2026-10-05
+
+Covers Import 1.9.0.
+
+- Size: 9,703 → 9,908 lines; functions and constants: 376 → 380
+- New functions/constants (4): `creditsToFill`, `mapRoleInner`, `mediumLabel`, `statesBetween`
+- Removed (0): –
+- Changed (21): `addExistingArtistRels`, `applyPlan`, `ARRANGER_TYPES`, `attrCell`, `autoSkipExisting`, `buildOverlay`, `computePlan`, `editNoteBlock`, `I18N`, `indexExistingRelationships`, `injectStyles`, `instrumentCandidates`, `makeRow`, `mapRole`, `onChange`, `onClick`, `renderMediumFilter`, `renderPreview`, `tracksCell`, `tracksPicker`, `VERSION`
+- Texts (English keys): 618 → 629; new: `msg.*` (6), `footer.*` (2), `log.*` (1), `picker.*` (1), `preview.*` (1); removed: 0
+- State `S`: new `fillCredits`, `filled`; removed –
+- Browser storage: new `dci-fill-credits`; removed –
+
+### 1.7.0 → 1.8.0 · 2026-10-05
+
+Covers Import 1.8.0.
+
+- Size: 9,649 → 9,703 lines; functions and constants: 376 → 376
+- New functions/constants (0): –
+- Removed (0): –
+- Changed (10): `ARRANGER_TYPES`, `I18N`, `insertLauncher`, `loadDiscogs`, `matrixAction`, `onFromDiscogs`, `renderWorks`, `syncModeHtml`, `updateSyncArea`, `VERSION`
+- Texts (English keys): 610 → 618; new: `log.*` (3), `matrix.*` (2), `sync.*` (2), `nav.*` (1); removed: 0
+- Browser storage: new `dci-dg-hover`; removed –
+
+### 1.5.4 → 1.7.0 · 2026-10-05
+
+Covers Import 1.6.0, Import 1.7.0.
+
+- Size: 9,322 → 9,649 lines; functions and constants: 369 → 376
+- New functions/constants (7): `addColumnHtml`, `ARRANGER_TYPES`, `autoGroupDate`, `dgStatusTimer`, `recordingDateOf`, `remainingMods`, `sendDiscogsStatus`
+- Removed (0): –
+- Changed (30): `applyRoleText`, `attrCell`, `bassAskHtml`, `columnHeadHtml`, `computePlan`, `dateCell`, `I18N`, `injectStyles`, `insertLauncher`, `levelCell`, `loadDiscogs`, `mapRole`, `matrixAction`, `matrixChange`, `onFromDiscogs`, `openInBackground`, `planPendingWork`, `refresh`, `renderWorks`, `roleCreditFor`, `saveAndCopyDate`, `setLevel`, `setType`, `syncModeHtml`, `unmappedHtml`, `updateSyncArea`, `VERSION`, `workDateCell`, `workFrontCell`, `WRITER_TYPES`
+- Texts (English keys): 579 → 610; new: `matrix.*` (14), `dgStatus.*` (6), `log.*` (4), `common.*` (2), `date.*` (2), `sync.*` (2), `roleCredit.*` (1); removed: 0
+- Browser storage: new `dci-dg-status`; removed –
+
+### 1.5.3 → 1.5.4 · 2026-10-04
+
+Covers Import 1.5.4.
+
+- Size: 9,279 → 9,322 lines; functions and constants: 369 → 369
+- New functions/constants (0): –
+- Removed (0): –
+- Changed (5): `applyPlan`, `computePlan`, `I18N`, `renderPreview`, `VERSION`
+- Texts (English keys): 578 → 579; new: `log.*` (1); removed: 0
+
+### 0.9.2 → 1.5.3 · 2026-10-04
+
+Covers Import 0.9.3, Import 0.9.4, Import 0.9.5, Import 0.9.6, Import 0.9.7, Import 0.9.8, Import 1.0.0, Import 1.0.1, Import 1.0.2, Import 1.0.3, Import 1.0.4, Import 1.0.5, Import 1.0.6, Import 1.0.7, Import 1.1.0, Import 1.2.0, Import 1.3.0, Import 1.4.0, Import 1.5.0, Import 1.5.1, Import 1.5.2, Import 1.5.3.
+
+- Size: 6,438 → 9,279 lines; functions and constants: 262 → 369
+- New functions/constants (108): `addCell`, `allWorkGids`, `applyColumnDate`, `applyPoolToPlan`, `ART_TYPES`, `autoSearchWorks`, `bassAskHtml`, `buildVocabulary`, `canRoleCredit`, `caseCredit`, `caseWord`, `cellHtml`, `cellMenuHtml`, `cellOwnDate`, `cellState`, `columnDate`, `columnHeadHtml`, `computePublisherEvidence`, `CREATABLE`, `DATE_GROUPS`, `dateGroupOf`, `defaultRowsOf`, `DIAG`, `diagDialog`, `diagEntity`, `diagLog`, `diagRel`, `diagScan`, `diagShape`, `diagTick`, `discogsWritersOf`, `emptyDate`, `fillSimilar`, `findMediumToggle`, `finishWorkRun`, `GENERIC_WORDS`, `inMedium`, `instrumentVocabulary`, `isPending`, `isPlaceholderTitle` … (+68)
+- Removed (1): `workRowHtml`
+- Changed (82): `addManualEntry`, `applyDetailFlags`, `applyPlan`, `attrCell`, `autoSkipExisting`, `buildLogWindow`, `buildOverlay`, `buildWorkQuery`, `buildWorkSeed`, `COMPANY_ROLES`, `computePlan`, `continueWorkQueue`, `dateCell`, `describeItem`, `dispatchAddRelationship`, `editNoteBlock`, `FALLBACK_LANGUAGES`, `fetchDiscogsArtist`, `flagForDetail`, `groupHtml`, `I18N`, `idx`, `init`, `injectStyles`, `insertLauncher`, `instrumentCandidates`, `levelCell`, `levelsOfType`, `loadDiscogs`, `loadWorkOptions` … (+52)
+- Texts (English keys): 395 → 578; new: `matrix.*` (44), `log.*` (34), `msg.*` (28), `works.*` (22), `date.*` (9), `medium.*` (6), `unmapped.*` (6), `scope.*` (5), `busy.*` (3), `note.*` (3), `otherDlg.*` (3), `preview.*` (3), `seriesLabel.*` (3), `bass.*` (2), `footer.*` (2), `link.*` (2), `match.*` (2), `common.*` (1), `group.*` (1), `issue.*` (1), `kind.*` (1), `launcher.*` (1), `level.*` (1); removed: 0
+- State `S`: new `capLimit`, `capOn`, `mediumFilter`, `staged`; removed –
+- Browser storage: new `dci-role-codes`, `dci-stage-cap`, `dci-stage-cap-on`, `dci-work-options`; removed –
+
+## Reconstructed: companion 0.2.2 – 1.5.0
+
+The companion keeps most of its code inside two functions (MusicBrainz side and Discogs side), so "changed" often names only those.
+
+### 1.4.5 → 1.5.0
+
+Covers COMPANION 1.5.0.
+
+- Size: 762 → 806 lines; functions and constants: 28 → 29
+- New functions/constants (1): `findCreditAt`
+- Removed (0): –
+- Changed (2): `initReleasePage`, `renderStatus`
+
+### 1.4.4 → 1.4.5
+
+Covers COMPANION 1.4.5.
+
+- Size: 760 → 762 lines; functions and constants: 28 → 28
+- New functions/constants (0): –
+- Removed (0): –
+- Changed (1): `ensureStyle`
+
+### 1.4.2 → 1.4.4
+
+Covers COMPANION 1.4.3, COMPANION 1.4.4.
+
+- Size: 698 → 760 lines; functions and constants: 28 → 28
+- New functions/constants (0): –
+- Removed (0): –
+- Changed (3): `initReleasePage`, `norm`, `STORE_EPOCH`
+
+### 1.4.1 → 1.4.2
+
+Covers COMPANION 1.4.2.
+
+- Size: 680 → 698 lines; functions and constants: 27 → 28
+- New functions/constants (1): `STORE_EPOCH`
+- Removed (0): –
+- Changed (1): `norm`
+- Browser storage: new `dci-store-epoch`; removed –
+
+### 1.4.0 → 1.4.1
+
+Covers COMPANION 1.4.1.
+
+- Size: 658 → 680 lines; functions and constants: 26 → 27
+- New functions/constants (1): `resetArt`
+- Removed (0): –
+- Changed (3): `initDiscogsSide`, `initMusicBrainzSide`, `renderArtwork`
+- Browser storage: new `dci-art-reset`; removed –
+
+### 1.3.0 → 1.4.0
+
+Covers COMPANION 1.4.0.
+
+- Size: 594 → 658 lines; functions and constants: 24 → 26
+- New functions/constants (2): `makeArtMovable`, `placeArt`
+- Removed (0): –
+- Changed (2): `ensureStyle`, `renderArtwork`
+- Browser storage: new `dci-art-pos`; removed –
+
+### 1.1.0 → 1.3.0
+
+Covers COMPANION 1.2.0, COMPANION 1.3.0.
+
+- Size: 439 → 594 lines; functions and constants: 18 → 24
+- New functions/constants (6): `artLabels`, `artworkUrl`, `keepPerRelease`, `openDiscogsImages`, `PER_RELEASE_MAX`, `renderArtwork`
+- Removed (0): –
+- Changed (9): `ensureStyle`, `initDiscogsSide`, `initMusicBrainzSide`, `initReleasePage`, `inTracklist`, `locateWithRetry`, `MARK_SYMBOL`, `norm`, `renderStatus`
+- Browser storage: new `dci-art-collapsed`; removed –
+
+### 1.0.3 → 1.1.0
+
+Covers –.
+
+- Size: 419 → 439 lines; functions and constants: 17 → 18
+- New functions/constants (1): `initReleasePage`
+- Removed (0): –
+- Changed (3): `initDiscogsSide`, `initMusicBrainzSide`, `locateWithRetry`
+
+### 1.0.2 → 1.0.3
+
+Covers –.
+
+- Size: 408 → 419 lines; functions and constants: 17 → 17
+- New functions/constants (0): –
+- Removed (0): –
+- Changed (2): `initDiscogsSide`, `initMusicBrainzSide`
+
+### 1.0.1 → 1.0.2
+
+Covers –.
+
+- Size: 401 → 408 lines; functions and constants: 17 → 17
+- New functions/constants (0): –
+- Removed (0): –
+- Changed (2): `initDiscogsSide`, `initMusicBrainzSide`
+
+### 1.0.0 → 1.0.1
+
+Covers –.
+
+- Size: 377 → 401 lines; functions and constants: 17 → 17
+- New functions/constants (0): –
+- Removed (0): –
+- Changed (2): `initDiscogsSide`, `initMusicBrainzSide`
+
+### 0.3.0 → 1.0.0
+
+Covers COMPANION 1.0.0.
+
+- Size: 284 → 377 lines; functions and constants: 14 → 17
+- New functions/constants (3): `findCredit`, `MARK_SYMBOL`, `renderStatus`
+- Removed (0): –
+- Changed (4): `ensureStyle`, `initDiscogsSide`, `initMusicBrainzSide`, `inTracklist`
+
+### 0.2.2 → 0.3.0
+
+Covers COMPANION 0.3.0.
+
+- Size: 275 → 284 lines; functions and constants: 14 → 14
+- New functions/constants (0): –
+- Removed (0): –
+- Changed (1): `initMusicBrainzSide`
+
+## Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1
+
+The code of these versions was not kept (the first upload to this repository is Import 0.9.2 with Companion 0.2.2). What they did is in the [changelog](mb-vibecode-credits-importer-CHANGELOG.md).

@@ -1,18 +1,18 @@
 // ==UserScript==
-// @name         MB x Vibecode: Import Discogs credits COMPANION
+// @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.5.0
-// @date         2026-10-11
-// @description  Companion for "MB x Vibecode: Import Discogs credits": connects the import dashboard with a Discogs tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
-// @description:de Ergänzung zu „MB x Vibecode: Import Discogs credits“: verbindet das Import-Dashboard mit einem Discogs-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
-// @description:es Complemento de «MB x Vibecode: Import Discogs credits»: conecta el panel de importación con una pestaña de Discogs (p. ej. la otra mitad de una vista dividida), carga allí la publicación y resalta de dónde viene cada crédito.
-// @description:fr Complément de « MB x Vibecode: Import Discogs credits » : relie le tableau d'import à un onglet Discogs (p. ex. l'autre moitié d'un écran partagé), y charge la parution et met en évidence l'origine de chaque crédit.
+// @version      1.7.0
+// @date         2026-10-13
+// @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
+// @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
+// @description:es Complemento de «MB x Vibecode: Credits Importer»: conecta el panel de importación con una pestaña de Discogs (p. ej. la otra mitad de una vista dividida), carga allí la publicación y resalta de dónde viene cada crédito.
+// @description:fr Complément de « MB x Vibecode: Credits Importer » : relie le tableau d'import à un onglet Discogs (p. ex. l'autre moitié d'un écran partagé), y charge la parution et met en évidence l'origine de chaque crédit.
 // @author       proto-beep
 // @license      CC0-1.0
 // @homepageURL  https://github.com/proto-beep/MBvibecode
 // @supportURL   https://github.com/proto-beep/MBvibecode/issues
-// @downloadURL  https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-discogs-credits-sync.user.js
-// @updateURL    https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-discogs-credits-sync.user.js
+// @downloadURL  https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-companion.user.js
+// @updateURL    https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-companion.user.js
 // @match        *://musicbrainz.org/release/*/edit-relationships*
 // @match        *://*.musicbrainz.org/release/*/edit-relationships*
 // @match        *://musicbrainz.org/release/*
@@ -46,9 +46,10 @@
   const isMusicBrainz = /(^|\.)musicbrainz\.org$/i.test(location.hostname);
 
   // Stored data of the companion has a generation; an update that raises it clears it once
-  // (2: COMPANION 1.4.2, together with Import 2.11.0; 3: COMPANION 1.4.3, together with Import 2.13.0): the shared
-  // storage and, on Discogs, the cover box settings. Raised only after asking the maintainer.
-  const STORE_EPOCH = 3;
+  // (2: COMPANION 1.4.2, together with Import 2.11.0; 3: COMPANION 1.4.3, together with Import 2.13.0; 4: Companion
+  // 1.7.0, together with Credits Importer 3.4.0, a fresh start): the shared storage and, on Discogs, the cover box
+  // settings. Raised only after asking the maintainer.
+  const STORE_EPOCH = 4;
   try {
     if ((Number(GM_getValue('storeEpoch')) || 0) < STORE_EPOCH) {
       GM_listValues().forEach((key) => GM_deleteValue(key));
@@ -152,6 +153,14 @@
         if (msg.mbRelease) keepPerRelease(map);
         statusBeat();
         if (!beatTimer) beatTimer = setInterval(statusBeat, 2000);
+      } else if (msg.type === 'forget-release') {
+        // "Delete stored import" in the dashboard (Credits Importer 3.4.0): the kept status of this release goes
+        const id = String(msg.mbRelease || '');
+        if (!id) return;
+        GM_deleteValue(`statusMap:${id}`);
+        GM_setValue('statusMapIndex', (GM_getValue('statusMapIndex') || []).filter((x) => x !== id));
+        const map = GM_getValue('statusMap');
+        if (map && map.mbRelease === id) GM_setValue('statusMap', { pageId, enabled: false, items: [], ts: Date.now() });
       } else if (msg.type === 'reset-settings') {
         // "Defaults" in the dashboard: every Discogs tab (now or when opened next) forgets the cover's place and folding
         GM_setValue('artReset', Date.now());
