@@ -1,0 +1,638 @@
+"""Test harness: a mock MusicBrainz relationship editor, MB release page and Discogs release page.
+
+The userscript manager's shared storage (GM_*) is replaced by a small local HTTP server, so the
+companion script on several pages shares its values as it does in Tampermonkey.
+"""
+import json
+import re
+import threading
+import unicodedata
+import urllib.parse
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+MAIN = (ROOT / 'mb-vibecode-credits-importer.user.js').read_text()
+SYNC = (ROOT / 'mb-vibecode-credits-importer-companion.user.js').read_text()
+
+REL = 'aaaaaaaa-1111-4111-8111-000000000001'
+RG = 'aaaaaaaa-1111-4111-8111-0000000000ff'
+DISCOGS_ID = 1234
+
+
+def uid(prefix, n):
+    return f'{prefix}-0000-4000-8000-{n:012d}'
+
+
+REC = [uid('bbbbbbbb', i) for i in range(1, 5)]
+WORK1 = uid('cccccccc', 1)
+TITLES = ['Song One', 'Song Two', 'Song Three', 'Song Four']
+
+# Discogs artist id -> (MB gid, name)
+ARTISTS = {
+    3001: (uid('dddddddd', 1), 'Bass Man'), 3002: (uid('dddddddd', 2), 'Guitar Guy'), 3003: (uid('dddddddd', 3), 'Keys Guy'),
+    3004: (uid('dddddddd', 4), 'Drum Guy'), 3005: (uid('dddddddd', 5), 'Bob Producer'), 3006: (uid('dddddddd', 6), 'Photo Guy'),
+    3007: (uid('dddddddd', 7), 'Writer W'), 3008: (uid('dddddddd', 8), 'Ann Rep'), 3009: (uid('dddddddd', 9), 'Writer Z'),
+}
+# Discogs label id -> (entity type, MB gid, name)
+COMPANIES = {
+    1001: ('label', uid('eeeeeeee', 1), 'Sony'), 1002: ('place', uid('eeeeeeee', 2), 'Abbey Road Studios'),
+    1003: ('label', uid('eeeeeeee', 3), 'Pub Co'), 1004: ('label', uid('eeeeeeee', 4), 'Other Pub'),
+}
+
+# --- MB.linkedEntities -------------------------------------------------------------------------
+ATTRS = {}
+
+
+def attr(i, name, root, parent=None, free=False, aliases=None):
+    ATTRS[i] = {'id': i, 'gid': uid('a77a0000', i), 'name': name, 'root_id': root, 'parent_id': parent,
+                'free_text': free, 'creditable': not free, 'instrument_aliases': aliases or []}
+
+
+attr(14, 'instrument', 14)
+for i, n, al in [(229, 'guitar', []), (78, 'electric guitar', []), (75, 'acoustic guitar', []), (70, 'bass', []),
+                 (9102, 'double bass', ['upright bass', 'contrabass']), (74, 'electric bass guitar', []),
+                 (9103, 'acoustic bass guitar', []), (9104, 'synthesizer', ['synth']), (9105, 'drums (drum set)', ['drums', 'drum set']),
+                 (180, 'piano', []), (9106, 'saxophone', []), (9107, 'alto saxophone', [])]:
+    attr(i, n, 14, 14, aliases=al)
+attr(3, 'vocal', 3)
+attr(4, 'lead vocals', 3, 3)
+attr(5, 'background vocals', 3, 3)
+attr(1, 'additional', 1)
+attr(526, 'assistant', 526)
+attr(194, 'guest', 194)
+attr(596, 'solo', 596)
+attr(1150, 'task', 1150, free=True)
+
+LTS = {}
+
+
+def lt(i, gid, name, t0, t1, attrs=(), dates=True):
+    LTS[i] = {'id': i, 'gid': gid, 'name': name, 'type0': t0, 'type1': t1, 'has_dates': dates, 'description': name,
+              'deprecated': False, 'attributes': {str(a): {'min': 0, 'max': None} for a in attrs},
+              'link_phrase': name, 'reverse_link_phrase': name, 'long_link_phrase': name}
+
+
+lt(148, '59054b12-01ac-43ee-a618-285fd397e461', 'instrument', 'artist', 'recording', (14, 1, 194, 596))
+lt(149, '0fdbe3c6-7700-4a31-ae54-b53f06ae1cfa', 'vocal', 'artist', 'recording', (3, 1, 194, 596))
+lt(141, '5c0ceac3-feb4-41f0-868d-dc06f6e27fc0', 'producer', 'artist', 'recording', (1, 526))
+lt(143, '3e3102e1-1896-4f50-b5b2-dd9824e46efe', 'mix', 'artist', 'recording', (1, 526))
+lt(128, 'a01ee869-80a8-45ef-9447-c59e91aa7926', 'recording', 'artist', 'recording', (1, 526))
+lt(136, '30adb2d7-dbcb-4393-9230-2098510ddd64', 'mastering', 'artist', 'recording', (1, 526))
+lt(129, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cffc', 'miscellaneous support', 'artist', 'recording', (1150,))
+lt(156, '628a9658-f54c-4142-b0c0-95f031b544da', 'performer', 'artist', 'recording', (1, 194, 596))
+lt(928, '9c02ea37-7680-4fb5-8555-e330c7aa885b', 'design', 'artist', 'release', (1, 526, 1150))
+lt(20, '0b58dc9b-9c49-4b19-bb58-9c06d41c8fbf', 'photography', 'artist', 'release', (1, 1150))
+lt(24, '01323b2c-6f62-4b7e-af29-7e0d7d6f7b20', 'liner notes', 'artist', 'release', (1150,))
+lt(30, '8bf377ba-8d71-4ecc-97f2-7bb2d8a2a75f', 'producer', 'artist', 'release', (1, 526))
+lt(62, '25dd0db4-189f-436c-a610-aacb979f13e2', 'artists and repertoire', 'artist', 'release', (1150,))
+lt(1010, '25dd0db4-189f-436c-a610-aacb979f1300', 'artists and repertoire', 'artist', 'release_group', (1150,))
+lt(63, '0b63af5e-85b2-4891-8234-f4b0ea7d6d0f', 'miscellaneous support', 'artist', 'release', (1150,))
+lt(168, 'd59d99ea-23d4-4a80-b066-edca32ee158f', 'composer', 'artist', 'work', (1,))
+lt(165, '3e48faba-ec01-47fd-8e89-30e81161661c', 'lyricist', 'artist', 'work', (1,))
+lt(167, 'a255bca1-b157-4518-9108-7b147dc3fc68', 'writer', 'artist', 'work', (1,))
+lt(297, 'd3fd781c-5894-47e2-8c12-86cc0e2c8d08', 'arranger', 'artist', 'work', (1,))
+lt(208, 'c2b5f9b1-9b8b-4c45-8a2e-6b9c5f6a1b01', 'publishing', 'label', 'work', ())
+lt(711, '7387c5a2-9abe-4515-b667-9eb5ed4dd4ce', 'phonographic copyright', 'label', 'release', ())
+lt(708, '2ed5b5e5-1a2b-4c8b-9b5b-1c2d3e4f5a6b', 'copyright', 'label', 'release', ())
+lt(693, 'ad462279-14b0-4180-9b58-571d0eef7c51', 'recorded at', 'place', 'recording', ())
+lt(694, '11d74801-1493-4a5d-bc0f-4ddc537acddb', 'mixed at', 'place', 'recording', ())
+lt(278, 'a3005666-a872-32c3-ad06-98af558e99b0', 'performance', 'recording', 'work', ())
+lt(180, '04a5b104-a4c2-4bac-99a1-7b837c37d9e4', 'discogs', 'artist', 'url', (), False)
+lt(217, '5b987f87-25bc-4a2d-b3f1-3618795b8207', 'discogs', 'label', 'url', (), False)
+lt(705, '1c140ac8-8dc2-449e-92cb-52c90d525640', 'discogs', 'place', 'url', (), False)
+
+LINKED = {
+    'link_type': {str(k): v for k, v in LTS.items()},
+    'link_attribute_type': {str(k): v for k, v in ATTRS.items()},
+    'work_type': {'17': {'id': 17, 'name': 'Song'}, '1': {'id': 1, 'name': 'Aria'}},
+    'language': {'120': {'id': 120, 'name': 'English', 'frequency': 2}, '486': {'id': 486, 'name': '[No lyrics]', 'frequency': 2}},
+}
+
+# --- MusicBrainz web service -------------------------------------------------------------------
+
+
+def ws_release():
+    tracks = []
+    for i, gid in enumerate(REC):
+        rels = []
+        if i == 0:
+            rels.append({'target-type': 'work', 'type': 'performance', 'type-id': LTS[278]['gid'], 'attributes': [],
+                         'work': {'id': WORK1, 'title': TITLES[0], 'relations': [
+                             {'target-type': 'artist', 'type': 'composer', 'type-id': LTS[168]['gid'], 'attributes': [],
+                              'artist': {'id': ARTISTS[3007][0], 'name': 'Writer W'}}] + ([] if WORK_RELS_DIRECT_ONLY else MB_EXTRA.get(WORK1, []))}})
+        # Already in MusicBrainz: Drum Guy plays drums on track 1
+        if i == 0:
+            rels.append({'target-type': 'artist', 'type': 'instrument', 'type-id': LTS[148]['gid'], 'attributes': ['drums (drum set)'],
+                         'attribute-values': {}, 'artist': {'id': ARTISTS[3004][0], 'name': 'Drum Guy'}})
+        tracks.append({'position': i + 1, 'number': str(i + 1), 'title': TITLES[i],
+                       'recording': {'id': gid, 'title': TITLES[i], 'relations': rels + MB_EXTRA.get(gid, [])}})
+    return {'id': REL, 'title': 'Testalbum', 'date': '2001', 'text-representation': {'language': 'eng'},
+            'release-group': {'id': RG, 'title': 'Testalbum', 'relations': MB_EXTRA.get(RG, [])},
+            'artist-credit': [{'name': n, 'joinphrase': j, 'artist': {'id': g, 'name': mbn}} for g, mbn, n, j in RELEASE_AC],
+            'relations': [{'target-type': 'url', 'type': 'discogs', 'url': {'resource': f'https://www.discogs.com/release/{DISCOGS_ID}'}}]
+            + MB_EXTRA.get(REL, []),
+            'media': split_media(tracks, 'title')}
+
+
+# MB artist–label "personal publisher" relationships (as the web service names them)
+PP_TYPE = 'personal publisher'
+PERSONAL_PUBLISHERS = [
+    {'label': uid('eeeeeeee', 3), 'lname': 'Pub Co', 'artist': uid('dddddddd', 7), 'name': 'Writer W'},
+    # a personal publisher of Writer W that Discogs does not name (suggestion only)
+    {'label': uid('eeeeeeee', 9), 'lname': 'Hidden Pub', 'artist': uid('dddddddd', 7), 'name': 'Writer W'},
+]
+
+# Track counts per medium (None: one medium with all tracks)
+MEDIA = None
+
+# Answers of the Discogs API for a test: path ("/artists/3030") → JSON (None: 404)
+DG_API = {}
+# Bandcamp for a test: page URL ("https://band.bandcamp.com/album/x") → HTML; band page URL → (MB gid, MB name)
+BC_PAGES = {}
+BC_ARTISTS = {}
+# The release's artist credit (below its title): [(MB gid, MB name, name as credited, join phrase)]
+RELEASE_AC = []
+
+
+def bc_page(data):
+    """A Bandcamp album or track page with its data in "data-tralbum" (as Bandcamp writes it, HTML-escaped)."""
+    import html as _html
+    return ('<!doctype html><html><head><title>Bandcamp</title></head><body>'
+            f'<script type="text/javascript" src="tralbum.js" data-tralbum="{_html.escape(json.dumps(data), quote=True)}"></script>'
+            '<h2 class="trackTitle">x</h2></body></html>')
+
+
+# GM_xmlhttpRequest as a userscript manager gives it (with fetch); the calls are recorded in window.__gmXhr
+GM_XHR_SHIM = """window.__gmXhr = [];
+window.GM_xmlhttpRequest = (d) => { window.__gmXhr.push(d.url);
+  fetch(d.url).then((r) => r.text().then((t) => d.onload({ status: r.status, responseText: t }))).catch(() => d.onerror && d.onerror()); };"""
+
+
+def split_media(tracks, title_key):
+    sizes = MEDIA or [len(tracks)]
+    out, k = [], 0
+    for pos, n in enumerate(sizes, 1):
+        part = []
+        for j, t in enumerate(tracks[k:k + n]):
+            t = dict(t)
+            t['position'] = j + 1
+            t['number'] = str(j + 1)
+            part.append(t)
+        out.append({'position': pos, 'format': 'CD', title_key: '', 'tracks': part})
+        k += n
+    return out
+
+
+# Relationships "submitted" in a test (as if "Enter edit" had been clicked): target gid -> relations
+MB_EXTRA = {}
+# True: submitted relationships of the work are missing in the release lookup (e.g. its link is still an open
+# edit) and only a lookup of the work itself has them. WORK_LOOKUPS records those lookups.
+WORK_RELS_DIRECT_ONLY = False
+WORK_LOOKUPS = []
+
+
+def ws_work(gid):
+    WORK_LOOKUPS.append(gid)
+    rels = list(MB_EXTRA.get(gid, []))
+    if gid == WORK1:
+        rels = [{'target-type': 'artist', 'type': 'composer', 'type-id': LTS[168]['gid'], 'attributes': [],
+                 'artist': {'id': ARTISTS[3007][0], 'name': 'Writer W'}}] + rels
+    return {'id': gid, 'title': TITLES[0] if gid == WORK1 else 'x', 'relations': rels}
+
+
+# MB search answers beyond ARTISTS / COMPANIES for a test: kind → [{'id', 'name', 'disambiguation', 'aliases'}]
+MB_SEARCH = {}
+# Areas of the places in COMPANIES, for the search with an area ("Abbey Road Studios, London")
+PLACE_AREAS = {'Abbey Road Studios': 'London'}
+
+
+def fold(x):
+    """A name as MusicBrainz' search compares it: lower case, without accents and punctuation."""
+    x = unicodedata.normalize('NFD', str(x).lower())
+    return ' '.join(re.sub(r'[^\w]+', ' ', ''.join(c for c in x if not unicodedata.combining(c))).split())
+
+
+def ws_search(kind, query):
+    """MB search over the known artists and companies, and MB_SEARCH: a phrase ("artist:"Name"") finds that name,
+    words ("artist:(a AND b) OR alias:(a AND b)") every name or alias with all of them (accents do not count)."""
+    q = urllib.parse.parse_qs(query).get('query', [''])[0]
+    words = re.search(r':\(([^)]*)\)', q)
+    if words:
+        need = [fold(w) for w in words.group(1).split(' AND ') if w.strip()]
+        names = lambda x: [x['name']] + [a['name'] for a in x.get('aliases', [])]
+        hit = lambda x: any(all(w in fold(n).split() for w in need) for n in names(x))
+    m = re.search(r'"(.*)"', q)
+    name = (m.group(1) if m else q.split(':', 1)[-1]).replace('\\"', '"').strip().lower()
+    items = []
+    if kind == 'artist':
+        items += [{'id': g, 'name': n, 'disambiguation': '', 'score': 100} for g, n in ARTISTS.values()]
+    else:
+        items += [{'id': g, 'name': n, 'disambiguation': '', 'score': 100, **({'area': {'name': PLACE_AREAS[n]}} if n in PLACE_AREAS else {})}
+                  for et, g, n in COMPANIES.values() if et == kind]
+    items += MB_SEARCH.get(kind, [])
+    if words:
+        hits = [x for x in items if hit(x)]
+        area = re.search(r'area:\(([^)]*)\)', q)
+        if area:
+            want = [fold(w) for w in area.group(1).split(' AND ') if w.strip()]
+            hits = [x for x in hits if all(w in fold((x.get('area') or {}).get('name', '')).split() for w in want)]
+    else:
+        hits = [x for x in items if x['name'].lower() == name or any(a['name'].lower() == name for a in x.get('aliases', []))]
+    return {kind + 's': hits, 'count': len(hits)}
+
+
+def ws_url(query):
+    qs = urllib.parse.parse_qs(query)
+    out = []
+    for res in qs.get('resource', []):
+        bc = re.match(r'https?://([a-z0-9-]+\.bandcamp\.com)/?$', res)
+        if bc and res in BC_ARTISTS:
+            gid, name = BC_ARTISTS[res]
+            out.append({'resource': res, 'relations': [{'target-type': 'artist', 'artist': {'id': gid, 'name': name, 'disambiguation': ''}}]})
+            continue
+        m = re.search(r'discogs\.com/(artist|label)/(\d+)', res)
+        if not m:
+            continue
+        kind, i = m.group(1), int(m.group(2))
+        rels = []
+        if kind == 'artist' and i in ARTISTS:
+            rels.append({'target-type': 'artist', 'artist': {'id': ARTISTS[i][0], 'name': ARTISTS[i][1], 'disambiguation': ''}})
+        if kind == 'label' and i in COMPANIES:
+            et, gid, name = COMPANIES[i]
+            rels.append({'target-type': et, et: {'id': gid, 'name': name, 'disambiguation': ''}})
+        if rels:
+            out.append({'resource': res, 'relations': rels})
+    return {'urls': out} if out else None
+
+
+def js_entity(gid):
+    for i, (g, n) in ARTISTS.items():
+        if g == gid:
+            return {'entityType': 'artist', 'id': i, 'gid': g, 'name': n, 'comment': '', 'sort_name': n}
+    for i, (et, g, n) in COMPANIES.items():
+        if g == gid:
+            return {'entityType': et, 'id': i, 'gid': g, 'name': n, 'comment': ''}
+    if gid == WORK1:
+        return {'entityType': 'work', 'id': 7001, 'gid': gid, 'name': TITLES[0], 'comment': ''}
+    return None
+
+
+WORK_FORM = """<html><body><form>
+<select name="edit-work.type_id"><option value=""></option><option value="17">Song</option><option value="1">Aria</option></select>
+<select name="edit-work.languages.0"><optgroup label="Frequently used"><option value="120">English</option>
+<option value="486">[No lyrics]</option></optgroup></select></form></body></html>"""
+
+# --- Discogs -------------------------------------------------------------------------------------
+
+
+def discogs_release():
+    ex = lambda name, role, i, tracks='': {'name': name, 'anv': '', 'role': role, 'tracks': tracks, 'id': i, 'join': ''}
+    return {
+        'id': DISCOGS_ID, 'title': 'Testalbum', 'country': 'UK', 'year': 2001,
+        'notes': 'Recorded March 1–3, 2001 at Abbey Road Studios. Mixed May 2001.',
+        'artists': [{'name': 'Test Band', 'id': 2999, 'anv': '', 'role': '', 'join': ''}],
+        'labels': [{'name': 'Sony', 'id': 1001, 'catno': 'X1', 'entity_type_name': 'Label'}],
+        'companies': [{'name': 'Sony', 'entity_type_name': 'Phonographic Copyright (p)', 'id': 1001, 'catno': ''},
+                      {'name': 'Abbey Road Studios', 'entity_type_name': 'Recorded At', 'id': 1002, 'catno': ''},
+                      {'name': 'Pub Co', 'entity_type_name': 'Published By', 'id': 1003, 'catno': ''},
+                      {'name': 'Other Pub', 'entity_type_name': 'Published By', 'id': 1004, 'catno': ''},
+                      {'name': 'Ghost Pub', 'entity_type_name': 'Published By', 'id': 1005, 'catno': ''}],
+        'extraartists': [ex('Bass Man', 'Bass', 3001), ex('Guitar Guy', 'Guitar', 3002), ex('Keys Guy', 'Synth', 3003, '2'),
+                         ex('Drum Guy', 'Drums', 3004), ex('Bob Producer', 'Produced By', 3005), ex('Photo Guy', 'Photography By', 3006),
+                         ex('Ann Rep', 'A&R Consultant', 3008)],
+        'tracklist': [{'position': str(i + 1), 'title': t, 'type_': 'track', 'duration': '3:00',
+                       'extraartists': [ex('Writer W', 'Written-By', 3007)] if i < 2 else [ex('Writer Z', 'Composed By', 3009)] if i == 2 else []}
+                      for i, t in enumerate(TITLES)],
+    }
+
+
+def discogs_page():
+    rows = ''.join(
+        f'<tr data-track-position="{i + 1}"><td>{i + 1}</td><td>{t}'
+        + ('<div>Written-By – <a href="/artist/3007-Writer-W">Writer W</a></div>' if i < 2 else '') + '</td></tr>'
+        for i, t in enumerate(TITLES))
+    credits = [('Bass', 3001, 'Bass Man'), ('Guitar', 3002, 'Guitar Guy'), ('Synth', 3003, 'Keys Guy'), ('Drums', 3004, 'Drum Guy'),
+               ('Produced By', 3005, 'Bob Producer'), ('Photography By', 3006, 'Photo Guy'), ('A&amp;R Consultant', 3008, 'Ann Rep')]
+    lis = ''.join(f'<li><span>{r}</span> – <a href="/artist/{i}-{n.replace(" ", "-")}">{n}</a></li>' for r, i, n in credits)
+    comp = ''.join(f'<li><span>{r}</span> – <a href="/label/{i}-x">{n}</a></li>' for r, i, n in
+                   [('Phonographic Copyright (p)', 1001, 'Sony'), ('Recorded At', 1002, 'Abbey Road Studios'), ('Published By', 1003, 'Pub Co')])
+    return (f'<!doctype html><html><head><meta charset="utf-8"><title>Discogs</title>'
+            f'<meta property="og:image" content="https://i.discogs.com/cover-{DISCOGS_ID}.png"></head><body><h1>Test Band – Testalbum</h1>'
+            f'<div class="gallery"><a href="/release/{DISCOGS_ID}-Test-Band-Testalbum/image/1"><img src="https://i.discogs.com/cover-{DISCOGS_ID}.png" width="40"></a></div>'
+            f'<section id="release-tracklist"><table>{rows}</table></section>'
+            f'<section id="release-credits"><ul>{lis}</ul><h2>Companies, etc.</h2><ul>{comp}</ul></section></body></html>')
+
+
+# --- Pages ---------------------------------------------------------------------------------------
+
+def mb_edit_page():
+    mediums = split_media([
+        {'position': i + 1, 'number': str(i + 1), 'name': t,
+         'recording': {'entityType': 'recording', 'gid': g, 'id': 5001 + i, 'name': t}} for i, (t, g) in enumerate(zip(TITLES, REC))], 'name')
+    entity = {'entityType': 'release', 'gid': REL, 'id': 4001, 'name': 'Testalbum', 'mediums': mediums,
+              'releaseGroup': {'entityType': 'release_group', 'gid': RG, 'id': 4101, 'name': 'Testalbum'}}
+    return f"""<!doctype html><html lang="en"><head><title>Edit relationships</title></head><body>
+<div id="content"><h1>Testalbum</h1><div class="tabs"><a href="#">Overview</a></div>
+<div id="editor">relationship editor</div><textarea id="edit-note-text"></textarea></div>
+<script>
+window.__dispatched = []; window.__removed = [];
+let nextRelId = -1;
+window.MB = {{
+  linkedEntities: {json.dumps(LINKED)},
+  tree: {{ fromDistinctAscArray: (a) => ({{ __tree: a }}) }},
+  relationshipEditor: {{
+    state: {{ entity: {json.dumps(entity)}, added: [], expandedMediums: new Map(), loadedTracks: new Map() }},
+    getRelationshipStateId: () => nextRelId--,
+    dispatch(a) {{
+      window.__dispatched.push(a);
+      const st = this.state;
+      if (a.type === 'update-relationship-state') {{
+        const added = [...st.added];
+        const oldId = a.oldRelationshipState ? a.oldRelationshipState.id : (a.newRelationshipState || {{}}).id;
+        const i = added.findIndex((x) => x.id === oldId);
+        if (a.newRelationshipState) {{ if (i >= 0) added[i] = a.newRelationshipState; else added.push(a.newRelationshipState); }}
+        else if (i >= 0) added.splice(i, 1);
+        // Relationships already in MusicBrainz (a test may put some into "existingRels"): changed ones leave it
+        const existingRels = (st.existingRels || []).filter((x) => x.id !== oldId);
+        this.state = {{ ...st, added, existingRels }};
+      }} else if (a.type === 'remove-relationship') {{
+        window.__removed.push(a.relationship);
+        this.state = {{ ...st, added: st.added.filter((x) => x.id !== a.relationship.id) }};
+      }}
+    }},
+  }},
+}};
+</script></body></html>"""
+
+
+def mb_release_page():
+    return '<!doctype html><html lang="en"><head><title>Testalbum</title></head><body><div id="content"><h1>Testalbum</h1></div></body></html>'
+
+
+# --- Shared GM storage ---------------------------------------------------------------------------
+
+class Store:
+    def __init__(self):
+        self.data = {}
+        self.changes = []
+        self.v = 0
+        self.lock = threading.Lock()
+
+    def set(self, k, val):
+        with self.lock:
+            old = self.data.get(k)
+            self.data[k] = val
+            self.v += 1
+            self.changes.append({'v': self.v, 'k': k, 'old': old, 'new': val})
+
+    def delete(self, k):
+        with self.lock:
+            old = self.data.pop(k, None)
+            self.v += 1
+            self.changes.append({'v': self.v, 'k': k, 'old': old, 'new': None})
+
+
+STORE = Store()
+
+
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def _send(self, obj):
+        body = json.dumps(obj).encode()
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST')
+        self.send_header('Access-Control-Allow-Headers', '*')
+        self.send_header('Access-Control-Allow-Private-Network', 'true')
+        self.end_headers()
+
+    def do_GET(self):
+        u = urllib.parse.urlparse(self.path)
+        q = urllib.parse.parse_qs(u.query)
+        if u.path == '/get':
+            self._send(STORE.data.get(q['k'][0]))
+        elif u.path == '/list':
+            self._send(list(STORE.data.keys()))
+        elif u.path == '/version':
+            self._send(STORE.v)
+        elif u.path == '/changes':
+            since = int(q['since'][0])
+            self._send([c for c in STORE.changes if c['v'] > since])
+        else:
+            self._send(None)
+
+    def do_POST(self):
+        u = urllib.parse.urlparse(self.path)
+        q = urllib.parse.parse_qs(u.query)
+        n = int(self.headers.get('Content-Length') or 0)
+        body = self.rfile.read(n).decode() if n else ''
+        if u.path == '/set':
+            STORE.set(q['k'][0], json.loads(body) if body else None)
+        elif u.path == '/del':
+            STORE.delete(q['k'][0])
+        self._send(True)
+
+
+SERVER = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+threading.Thread(target=SERVER.serve_forever, daemon=True).start()
+PORT = SERVER.server_address[1]
+
+GM_SHIM = """(function () {
+  const BASE = 'http://127.0.0.1:%d';
+  const req = (m, p, body) => { const x = new XMLHttpRequest(); x.open(m, BASE + p, false); x.send(body == null ? null : body); return x.responseText; };
+  window.GM_getValue = (k, d) => { const v = JSON.parse(req('GET', '/get?k=' + encodeURIComponent(k))); return v == null ? d : v; };
+  window.GM_setValue = (k, v) => { req('POST', '/set?k=' + encodeURIComponent(k), JSON.stringify(v === undefined ? null : v)); };
+  window.GM_deleteValue = (k) => { req('POST', '/del?k=' + encodeURIComponent(k), ''); };
+  window.GM_listValues = () => JSON.parse(req('GET', '/list'));
+  const listeners = [];
+  window.GM_addValueChangeListener = (k, fn) => { listeners.push([k, fn]); return listeners.length; };
+  let since = JSON.parse(req('GET', '/version'));
+  setInterval(() => {
+    const ch = JSON.parse(req('GET', '/changes?since=' + since));
+    for (const c of ch) {
+      since = Math.max(since, c.v);
+      listeners.filter(([k]) => k === c.k).forEach(([, fn]) => { try { fn(c.k, c.old, c.new, true); } catch (e) { console.error(e); } });
+    }
+  }, 150);
+  window.GM_openInTab = (url) => { (window.__opened = window.__opened || []).push(url); };
+})();""" % PORT
+
+
+def json_route(route, obj, status=200):
+    if obj is None:
+        route.fulfill(status=404, body='{}', content_type='application/json', headers={'Access-Control-Allow-Origin': '*'})
+    else:
+        route.fulfill(status=status, body=json.dumps(obj), content_type='application/json', headers={'Access-Control-Allow-Origin': '*'})
+
+
+def install_routes(ctx):
+    def mb(route):
+        u = urllib.parse.urlparse(route.request.url)
+        p = u.path
+        if p == f'/release/{REL}/edit-relationships':
+            return route.fulfill(body=mb_edit_page(), content_type='text/html')
+        if p == f'/release/{REL}':
+            return route.fulfill(body=mb_release_page(), content_type='text/html')
+        if p == f'/ws/2/release/{REL}':
+            return json_route(route, ws_release())
+        m = re.match(r'/ws/2/label/([0-9a-f-]{36})', p)
+        if m:
+            return json_route(route, {'id': m.group(1), 'relations': [r for r in PERSONAL_PUBLISHERS if r['label'] == m.group(1) and False] or [
+                {'target-type': 'artist', 'type': PP_TYPE, 'direction': 'backward', 'begin': r.get('begin'), 'end': r.get('end'),
+                 'artist': {'id': r['artist'], 'name': r['name']}} for r in PERSONAL_PUBLISHERS if r['label'] == m.group(1)]})
+        m = re.match(r'/ws/2/artist/([0-9a-f-]{36})', p)
+        if m:
+            return json_route(route, {'id': m.group(1), 'relations': [
+                {'target-type': 'label', 'type': PP_TYPE, 'direction': 'forward', 'label': {'id': r['label'], 'name': r['lname']}}
+                for r in PERSONAL_PUBLISHERS if r['artist'] == m.group(1)]})
+        m = re.match(r'/ws/2/work/([0-9a-f-]{36})', p)
+        if m:
+            return json_route(route, ws_work(m.group(1)))
+        if p.startswith('/ws/2/release-group/'):
+            return json_route(route, {'id': RG, 'relations': MB_EXTRA.get(RG, [])})
+        m = re.match(r'/ws/2/(artist|label|place)$', p)
+        if m:
+            return json_route(route, ws_search(m.group(1), u.query))
+        if p == '/ws/2/url':
+            return json_route(route, ws_url(u.query))
+        m = re.match(r'/ws/js/entity/([0-9a-f-]{36})', p)
+        if m:
+            return json_route(route, js_entity(m.group(1)))
+        if p == '/work/create':
+            return route.fulfill(body=WORK_FORM, content_type='text/html')
+        return route.fulfill(status=404, body='')
+
+    def dg_api(route):
+        p = urllib.parse.urlparse(route.request.url).path
+        # a test's own answers (path → JSON, None: 404)
+        if p in DG_API:
+            return json_route(route, DG_API[p])
+        if p == f'/releases/{DISCOGS_ID}':
+            return json_route(route, discogs_release())
+        m = re.match(r'/(artists|labels)/(\d+)', p)
+        if m:
+            return json_route(route, {'id': int(m.group(2)), 'name': 'x', 'aliases': [], 'members': [], 'groups': []})
+        return json_route(route, None)
+
+    def dg_web(route):
+        p = urllib.parse.urlparse(route.request.url).path
+        if p.startswith(f'/release/{DISCOGS_ID}'):
+            return route.fulfill(body=discogs_page(), content_type='text/html')
+        return route.fulfill(body='<!doctype html><html><body><h1>Discogs</h1></body></html>', content_type='text/html')
+
+    ctx.route('https://musicbrainz.org/**', mb)
+    ctx.route('https://api.discogs.com/**', dg_api)
+    ctx.route('https://www.discogs.com/**', dg_web)
+
+    def bc_web(route):
+        u = urllib.parse.urlparse(route.request.url)
+        page = BC_PAGES.get(f'{u.scheme}://{u.netloc}{u.path}')
+        if page is None:
+            return route.fulfill(status=404, body='', headers={'Access-Control-Allow-Origin': '*'})
+        return route.fulfill(body=page, content_type='text/html', headers={'Access-Control-Allow-Origin': '*'})
+
+    ctx.route(re.compile(r'https://[a-z0-9-]+\.bandcamp\.com/.*'), bc_web)
+    png = bytes.fromhex('89504e470d0a1a0a0000000d4948445200000001000000010806000000'
+                        '1f15c4890000000d49444154789c6360f8cf00000301010018dd8db40000000049454e44ae426082')
+    ctx.route('https://i.discogs.com/**', lambda route: route.fulfill(body=png, content_type='image/png'))
+
+
+LAUNCH_ARGS = ['--disable-web-security',
+               '--disable-features=BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessSendPreflights,PrivateNetworkAccessRespectPreflightResults']
+
+
+def new_context(browser):
+    ctx = browser.new_context(viewport={'width': 1500, 'height': 1000}, accept_downloads=True)
+    install_routes(ctx)
+    return ctx
+
+
+def errors_of(pg):
+    errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    return errs
+
+
+def with_companion(pg):
+    pg.add_script_tag(content=GM_SHIM)
+    pg.add_script_tag(content=SYNC)
+
+
+def open_mb_edit(ctx, companion=True, gm_xhr=False):
+    pg = ctx.new_page()
+    errs = errors_of(pg)
+    pg.goto(f'https://musicbrainz.org/release/{REL}/edit-relationships')
+    if companion:
+        with_companion(pg)
+    if gm_xhr:
+        pg.add_script_tag(content=GM_XHR_SHIM)
+    pg.add_script_tag(content=MAIN)
+    return pg, errs
+
+
+def open_discogs(ctx):
+    pg = ctx.new_page()
+    errs = errors_of(pg)
+    pg.goto(f'https://www.discogs.com/release/{DISCOGS_ID}-Test-Band-Testalbum')
+    with_companion(pg)
+    return pg, errs
+
+
+def submit_staged(pg, leave_out=0):
+    """As if "Enter edit" had been clicked: MusicBrainz gets what is staged (except the last \"leave_out\")."""
+    added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity1 && r.entity1.gid && r.entity0 && r.entity0.gid)"
+                        ".map(r => ({lt: r.linkTypeID, e0: r.entity0.gid, e0t: r.entity0.entityType, e1: r.entity1.gid}))")
+    keep = added[:len(added) - leave_out] if leave_out else added
+    for r in keep:
+        lt = LTS[r['lt']]
+        et = r['e0t']
+        MB_EXTRA.setdefault(r['e1'], []).append({'target-type': et, 'type': lt['name'], 'type-id': lt['gid'], 'attributes': [],
+                                                 et: {'id': r['e0'], 'name': 'x'}})
+    return added[len(keep):]
+
+
+def open_mb_release(ctx):
+    pg = ctx.new_page()
+    errs = errors_of(pg)
+    pg.goto(f'https://musicbrainz.org/release/{REL}')
+    with_companion(pg)
+    return pg, errs
+
+
+def wait_for(pg, js, timeout=30):
+    pg.wait_for_function(js, timeout=timeout * 1000)
+
+
+def answer_media(pg, text=None, release=True, remember=False):
+    """Media choice before the import (releases with several media): media as text ("1-2, 4"), release level, remember."""
+    pg.wait_for_selector('[data-el=media] [data-mact=ok]', timeout=30000)
+    if text is not None:
+        pg.fill('[data-el=media] [data-mf=text]', text)
+    box = pg.locator('[data-el=media] [data-mf=release]')
+    if box.is_checked() != release:
+        box.click()
+    if remember:
+        pg.check('[data-el=media] [data-mf=remember]')
+    pg.click('[data-el=media] [data-mact=ok]')
+
+
+def open_dashboard(pg, media=None):
+    """Opens the dashboard and waits until the import is checked; with several media the choice is answered
+    (default: all media with the release level, as before; media=False leaves the dialog open)."""
+    pg.click('#dci-open')
+    if MEDIA and len(MEDIA) > 1 and media is not False:
+        answer_media(pg, **(media or {}))
+    if media is False:
+        return
+    wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete|Prüfungen abgeschlossen/.test(li.textContent))", 60)
