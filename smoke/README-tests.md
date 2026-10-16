@@ -21,6 +21,8 @@ MBvibecode/ (this repository)
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
   smoke/t_*.py                        tests (each prints OK/FEHLER lines)
+  smoke/register_corpus.json          frozen input of the register's golden test (t_register.py)
+  smoke/register_golden.json          its expected results (written with UPDATE=1)
 ```
 
 ## Running
@@ -94,7 +96,16 @@ python3 t_about.py        # Bandcamp "about" text (3.7.0): "recorded at Loft in 
                           # "mixed at home in Oslo" gives no entry
 python3 t_reldate.py      # date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level
                           # takes the matching date, a date typed by hand stays, the mark stored with the matrix
+python3 t_register.py     # the mapping register stays the same (3.11.0, golden test): a frozen corpus (register_corpus.json:
+                          # ~1,200 roles, ~100 company roles, ~50 date phrases, pasted texts) through the register in Node, the
+                          # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
+                          # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
 ```
+
+**Golden test of the register:** `register_corpus.json` was made once from Import 3.10.0 and stays as it is (more roles
+can be added; then write the golden file anew). `register_golden.json` holds the results. A refactoring of the register
+must leave `t_register.py` OK without `UPDATE=1`; a change of a rule that is meant shows exactly the roles it changes –
+check them, then write the file anew and say so in the code changes.
 
 The rows of the dashboard rearrange with its width (3.9.0) and a pool or matrix date is a chip: tests that type into a
 row's date fields use `common_rows.date_field(row, f)`, `rows_of` reads the chip's `data-date`. A button the floating
