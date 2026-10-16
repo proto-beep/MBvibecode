@@ -13,12 +13,36 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.10.0, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.12.0, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.12.0 · 2026-10-17
+
+The role rules as data (collect item 4, step 2). Milestone.
+
+- **New:** `ROLE_RULE_DATA` (section 2c) – all 99 role rules in their order (first hit wins): `id`, `kind`, `note`, `re`, `types`, `level`, R062 also `special: 'S004'`; a simple rule also `work`, `flags` (checkbox names), `eng` (engineer details → `engFlags()`), `credit` (`true` or a text), `primaryCands`, `notes`. `DESIGN_TYPES` (the types of R062, R064–R067).
+- **Changed:** `roleRules(c)` builds the list from `ROLE_RULE_DATA`: `test` is `is(r.re)` and `run` is `out(r.types, extraOf(r))` unless the object `code` has them under the rule's id. `code` holds the 25 special rules (R001, R009, R011, R012, R018, R019, R025, R026, R031, R033, R034, R036, R038, R039, R041, R042, R043, R046, R051, R097, R062, R063, R086, R095, R096; their bodies unchanged) and 5 simple ones whose result needs code (R040 and R089: role credit only for some words; R065: "lithography" only without details; R069: the role as written; R084: the word after "A&R" as task). The pattern of a simple rule is written once now (before: `re` for the window and again in `test`). The local `wrk` is gone (only data used it).
+- **Metadata = behaviour:** `types` and `level` of a simple rule are what it gives; before, 27 rules showed something else in "Mapping rules" (R002–R004, R006, R007: recording → work; R070–R072, R076–R080, R082, R083, R087, R088, R090–R094: recording → release; R084: recording → release_group; R064–R067: no types → `DESIGN_TYPES`). The mapping did not change.
+- **Texts:** `ms.3.12.0`; `MILESTONES` gets 3.12.0.
+- **Tests:** `register_golden.json` written anew – only the 27 rules' `level`/`types` and the "roles" section of the window differ from 3.10.0, every mapped role, company role, date and text is the same; `t_notice.py` (milestones 3.12.0 / 3.10.0 / 3.5.0).
+- **Watch out:** a new simple rule is a data line; it needs code only when its test or result depends on more than its pattern. Keep the order (R098 before R003: "Music and lyrics by" before "Music by").
+
+## Import 3.11.0 · 2026-10-17
+
+The mapping register in one section (collect item 4, step 1; the maintainer: "vor den Punkten 1-3").
+
+- **Sections:** new **2. Mapping register** before the sources (the sources are **3** now, the date and MusicBrainz form helpers that stayed behind them **3b**), with 2a role notation (`splitTopLevel`, `parseRoleNotation`, `parseRoles`, `splitEngineerTasks` – from the old section 2), 2b own rules and switches, 2c rule lists, 2d tables and word lists, 2e functions that apply the rules (`mapRole`, `mapCompanyRole`, wording, role credits …), 2f dates in free text (`DATE_MATCHERS`, `findDates`). Everything of the old sections 3/3a moved there unchanged; orphaned doc comments went to their functions (`mapRole`, `suggestRoleCredit`, `caseWord`, `COMPANY_ROLES`, `lucenePhrase`).
+- **Moved into 2d:** from the text adapter `NAME_SEP`, `ROLE_SEP`, `AND_SEP`, `TRACK_WORDS`, `MONTHS` (renamed `TEXT_NAME_SEP`, `TEXT_ROLE_SEP`, `TEXT_AND_SEP`, `TEXT_TRACK_WORDS`, `TEXT_MONTHS`), `INSTRUMENT_MODIFIER`, `PRIVATE_PLACE`; `ENGINEER_TASK_RE` (from section 2); `TEXT_COMPANY_RE` (from the core; `isTextCompanyRole` stays there); `DATE_GROUPS` (from the date matrix); `LIVE_TITLE` (was local in `applyLiveDefault`); `NOTE_ROLES` (from the notes' track lists). The adapters read these directly (the register is defined before them); `isRole`/`isCompanyRole` still come through the context, as they need MusicBrainz.
+- **`DATE_GROUPS` as data:** `types` (MusicBrainz type names) per group, `only`/`onlyNote` for Remastering; `test(n, row)` is made from them once at load (same results as the old functions).
+- **Table ids T005–T018** in comments and in `TABLES`, which has `show()` for T003 and T005–T018 (words, pairs or a pattern).
+- **Window "Mapping rules":** new section `lists` (`rules.lists`, `rules.listsHint`) with `patternWords(re)` (a plain pattern as a list of words, "track(s)") and `tableShowHtml(t)`; CSS `#dci-rules h4`, `.dci-rules-list`.
+- **Texts:** `rules.lists`, `rules.listsHint` (4 languages).
+- **Tests:** new `t_register.py` with `register_corpus.json` (frozen from 3.10.0: 1,204 roles, 101 company roles, 52 date phrases, 6 texts, 70 instrument names) and `register_golden.json` (A Node: `parseRoles`, `mapRole`, candidates, role credits, wording, questions, flags, the rule list, `mapCompanyRole`, `findDates`, `parseDate`, `parseDatePeriod`, the text adapter; B the texts in the dashboard; C the window "Mapping rules"). `UPDATE=1` writes the golden file anew. `t_adapter.py` part A: the boundary starts at "2. Mapping register".
+- **Watch out:** a word list used while the script loads (e.g. `TEXT_TRACK_WORDS` in the adapter's `PREFIX`) must stay in section 2, before the sources.
 
 ## Import 3.10.0 · 2026-10-16
 

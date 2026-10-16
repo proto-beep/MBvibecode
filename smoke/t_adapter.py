@@ -28,7 +28,7 @@ if 'A' in PARTS:
     src = H.MAIN
     a0 = src.index('// --- Source adapter: Discogs')
     a1 = src.index('// --- From the neutral release to the dashboard')
-    i18n_end = src.index('  // 2. Sources: an adapter')
+    i18n_end = src.index('  // 2. Mapping register')
     outside = src[i18n_end:a0] + src[a1:]
     code = '\n'.join(l for l in outside.splitlines() if not l.strip().startswith(('//', '*', '/*')))
     hits = {w: len(re.findall(w, code)) for w in [r'api\.discogs\.com', r'discogs\.com/', r'extraartists', r'entity_type_name', r'tracklist',
