@@ -28,7 +28,7 @@ with sync_playwright() as p:
     print('   Nachricht:', notice())
     n = notice() or ''
     ok2 = keys() == ['dci-notice-version', 'dci-store-epoch', 'dci-updated-from'] or set(keys()) == {'dci-store-epoch', 'dci-updated-from'}
-    ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.10.0' in n and 'Credits Importer 3.5.0' in n and 'Credits Importer 3.3.0' in n and 'Import 3.0.0' not in n and 'reset once' in n
+    ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.12.0' in n and 'Credits Importer 3.10.0' in n and 'Credits Importer 3.5.0' in n and 'Credits Importer 3.3.0' not in n and 'reset once' in n
     # 3) closing is remembered
     pg.click('#dci-notice .dci-notice-x'); pg.wait_for_timeout(200)
     reload()

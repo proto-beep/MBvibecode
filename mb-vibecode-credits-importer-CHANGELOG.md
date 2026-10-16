@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-17 | 3.11.0 – 3.12.0 | – |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -34,6 +35,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-17 | Import 3.12.0 | Rebuilt inside: all mapping rules and word lists in one place of the script (the mapping register), the role rules as plain data; what the script makes of a source stays the same (checked with about 1,200 roles, 100 company roles, 50 date phrases and pasted texts). "Mapping rules" lists the tables and word lists (read only) and shows the right level for 27 rules |
 | 2026-10-16 | Import 3.10.0 | The rows of an entry rearrange with the width of the dashboard (relationship above attributes, level above date above tracks), with captions instead of the table head; a date from the pool or the matrix is a chip, its fields open with ✎, begin above end. Dates of the date matrix can be marked "Release level"; a row switched to the release level takes that date. Texts: "tenor & soprano sax", recording place and dates in Bandcamp's "about" text, places with their area, name suggestions without accents and with middle names; supplement with any Discogs or Bandcamp URL |
 | 2026-10-13 | Import 3.5.0 · COMPANION 1.7.0 | Supplement with a second source, on request only: another linked source or a pasted text is compared with the rows; what it adds (new roles, new entries) and where it differs is listed to take over by choice, rows it confirms get its mark (variant B). "Delete stored import …" starts the import of a release afresh. The Bandcamp spelling next to the release's artist credit and MusicBrainz. A fresh start: all stored data reset once |
 | 2026-10-13 | Import 3.3.0 · COMPANION 1.6.0 | New names: Credits Importer and Credits Importer Companion. Besides Discogs the main script reads Bandcamp albums (credits of the album, optionally of each track page) and pasted texts (booklet, liner notes, a list of musicians); names from there are only suggested. A preference list for physical and digital media decides which linked source is loaded, for digital releases Bandcamp first; a source chosen for a release is remembered |
@@ -66,6 +68,30 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-17
+
+### Import 3.12.0
+
+#### Changed
+
+- **The role rules are plain data** (asked for by the maintainer: "das Mapping-Register soll an einem Ort zusammengelegt werden"). Each rule R001 … is one line of a table: its pattern, the MusicBrainz types and level it leads to, and what goes with it (a credit on the works, checkboxes, the role as role credit, an instrument or vocal). Only the rules that need more – 25 special rules and 5 simple ones (e.g. "A&R Consultant" → task "consultant") – have code. Before, the pattern of each simple rule was written twice, once for "Mapping rules" and once for the mapping itself.
+- What the script makes of a source is the same as in 3.10.0. A new test checks it: about 1,200 roles as Discogs writes them, 100 company roles, 50 date phrases and pasted texts give exactly the same results.
+
+#### Fixed
+
+- **"Mapping rules" showed the wrong level for 27 rules**, because what it showed and what the rule did were written separately: "Written-By", "Composed By", "Lyrics By", "Translated By", "Libretto By" said "recording" but go onto the works; artwork, photography, design, illustration, art direction, liner notes, booklet editor, video and audio director, booking, legal representation, copyright, phonographic copyright, publishing and licensor said "recording" but go onto the release; "A&R" goes onto the release group; the design rules R064–R067 (sleeve, lithography, cover concept, cover design) listed no type. The mapping itself was always right; only the overview was wrong.
+
+### Import 3.11.0
+
+#### Changed
+
+- **The mapping register in one place:** every rule and word list the sources are read with is now one section of the script (section 2, before the sources): the role notation, your own rules and switched-off rules, the rule lists (W, S, Q, C, R), the tables and word lists, the functions that apply them, and the dates (D). Before, parts of it were spread over the script – the word lists of pasted texts in the text adapter, the date groups next to the date matrix, "live" in titles in the works matrix, roles in the notes next to the publisher evidence. Nothing changes in what the script does.
+- The word lists got ids, T005 … T018: details that tick checkboxes (T005), words that are no role credit (T006), fixed role credits (T007), engineer tasks (T008), the separators of texts (T009), track words (T010), instrument prefixes such as tenor, soprano, acoustic (T011), private places (T012), company roles of texts (T013), month names and ordinal words (T014), words that name a date group (T015), the date groups (T016), "live" in titles (T017), roles in the notes (T018).
+
+#### Added
+
+- **"Mapping rules" lists the tables and word lists** in a new section **Tables and word lists (read only)**: T003 and T005 … T018 with what they hold – a list of words, pairs, or the pattern as the script uses it. They cannot be switched off; they change with an update of the script.
 
 ## 2026-10-16
 
