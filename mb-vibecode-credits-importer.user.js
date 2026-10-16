@@ -1,25 +1,28 @@
 // ==UserScript==
-// @name         MB x Vibecode: Import Discogs credits
+// @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      2.16.0
-// @date         2026-10-11
-// @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release, match artists via their Discogs links, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
-// @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases prüfen, Artists über Discogs-Links zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
-// @description:es Panel de importación en el editor de relaciones de la publicación: revisa los créditos de la publicación de Discogs enlazada, asigna artistas mediante sus enlaces de Discogs, elige roles, nivel y pistas y prepáralos como relaciones. El envío («Enter edit») siempre lo haces tú.
-// @description:fr Tableau d'import dans l'éditeur de relations de la parution : vérifiez les crédits de la parution Discogs liée, associez les artistes via leurs liens Discogs, choisissez rôles, niveau et pistes et préparez-les comme relations. L'envoi (« Enter edit ») reste toujours à vous.
+// @version      3.5.0
+// @date         2026-10-13
+// @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
+// @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
+// @description:es Panel de importación en el editor de relaciones de la publicación: revisa los créditos de la publicación de Discogs o del álbum de Bandcamp enlazados (o de un texto pegado), asigna artistas mediante enlaces o nombres, elige roles, nivel y pistas y prepáralos como relaciones. El envío («Enter edit») siempre lo haces tú.
+// @description:fr Tableau d'import dans l'éditeur de relations de la parution : vérifiez les crédits de la parution Discogs ou de l'album Bandcamp liés (ou d'un texte collé), associez les artistes via leurs liens ou leurs noms, choisissez rôles, niveau et pistes et préparez-les comme relations. L'envoi (« Enter edit ») reste toujours à vous.
 // @author       proto-beep
 // @license      CC0-1.0
 // @homepageURL  https://github.com/proto-beep/MBvibecode
 // @supportURL   https://github.com/proto-beep/MBvibecode/issues
-// @downloadURL  https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-discogs-credits-import.user.js
-// @updateURL    https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-discogs-credits-import.user.js
+// @downloadURL  https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js
+// @updateURL    https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js
 // @match        *://musicbrainz.org/release/*/edit-relationships*
 // @match        *://*.musicbrainz.org/release/*/edit-relationships*
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @grant        unsafeWindow
+// @connect      bandcamp.com
+// @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
 
-/* global GM_info, unsafeWindow, module */
+/* global GM_info, unsafeWindow, module, GM_xmlhttpRequest */
 (function () {
   'use strict';
 
@@ -27,8 +30,8 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '2.16.0';
-  const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Import Discogs credits';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.5.0';
+  const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
   const IS_NODE_TEST = typeof module !== 'undefined' && module.exports && typeof window === 'undefined';
@@ -41,22 +44,22 @@
   const uniq = (arr) => [...new Set(arr)];
   let idCounter = 0;
   const nextId = (prefix) => `${prefix}${++idCounter}`;
-  const cleanDiscogsName = (name) => String(name || '').replace(/\s\(\d+\)$/, '').trim();
-  const discogsArtistUrl = (id) => `https://www.discogs.com/artist/${id}`;
-  const discogsLabelUrl = (id) => `https://www.discogs.com/label/${id}`;
 
   /**
    * Stored data of this script (browser storage of musicbrainz.org) has a generation. An update that raises it
    * clears all settings and stored data once – except the list of created works, which guards new works that
    * are not linked yet. 2: from Import 2.11.0 (so also an update from 2.10.0 or older straight to a later version);
-   * 3: from Import 2.13.0 (asked for by the maintainer).
+   * 3: from Import 2.13.0 (asked for by the maintainer); 4: from Credits Importer 3.4.0 – a fresh start with the new
+   * names and files, asked for by the maintainer, this time the list of created works too.
    * "dci-updated-from" tells the update notice that an older version ran. Raise it only after asking the maintainer.
    */
-  const STORE_EPOCH = 3;
+  const STORE_EPOCH = 4;
+  /** Whether this generation keeps the list of created works (it guards new works that are not linked yet). */
+  const EPOCH_KEEPS_CREATED = false;
   (function clearOldStorage() {
     try {
       if (Number(window.localStorage.getItem('dci-store-epoch') || 0) >= STORE_EPOCH) return;
-      const keep = (k) => k.startsWith('dci-created-works:') || k === 'dci-notice-version';
+      const keep = (k) => (EPOCH_KEEPS_CREATED && k.startsWith('dci-created-works:')) || k === 'dci-notice-version';
       const old = [];
       for (let k = 0; k < window.localStorage.length; k++) {
         const key = window.localStorage.key(k);
@@ -94,22 +97,121 @@
   /* eslint-disable quote-props */
   const I18N = {
     en: {
-      "title": "Import Discogs credits",
-      "launcher.open": "Import Discogs credits …",
-      "launcher.status.one": "{n} relationship from Discogs staged, not submitted yet.",
-      "launcher.status.other": "{n} relationships from Discogs staged, not submitted yet.",
+      "title": "Credits Importer",
+      "launcher.open": "Import credits …",
+      "launcher.status.one": "{n} relationship from {src} staged, not submitted yet.",
+      "launcher.status.other": "{n} relationships from {src} staged, not submitted yet.",
       "lang.label": "Language",
       "common.close": "Close",
       "common.cancel": "Cancel",
       "common.quoted": "“{text}”",
       "raw": "{text}",
       "source.current": "{title} (Discogs {id})",
-      "source.none": "No Discogs release loaded yet",
-      "source.pick": "Choose linked Discogs release …",
-      "source.other": "Other Discogs release URL or ID",
+      "source.none": "No source loaded yet",
+      "source.pick": "Choose a linked source …",
+      "source.other": "Other source: Discogs release (URL or ID) or Bandcamp album URL",
       "source.load": "Load",
+      "source.currentLink": "{title} ({src})",
+      "msg.noSourceLink": "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text.",
+      "srcorder.toggle": "Order of the sources",
+      "forget.button": "Delete stored import …",
+      "supp.with": "Supplement with",
+      "supp.text": "Text …",
+      "supp.textTitle": "Supplement the loaded source with a pasted text (booklet, liner notes …)",
+      "supp.hint": "The loaded source stays decisive. What only the second one has is a suggestion; nothing is taken over by itself.",
+      "supp.on": "supplemented",
+      "supp.remove": "remove",
+      "supp.title": "Supplements from {name}",
+      "supp.summary": "confirmed: {confirmed} · new: {added} · differing: {differ} · not recognized: {unrec}",
+      "supp.selectAll": "select all",
+      "supp.th.select": "Take over",
+      "supp.th.kind": "Kind",
+      "supp.th.name": "Name",
+      "supp.th.says": "{name} says",
+      "supp.th.rel": "MB relationship",
+      "supp.th.tracks": "Tracks",
+      "supp.th.mb": "MusicBrainz",
+      "supp.kind.role": "new role",
+      "supp.kind.entry": "new entry",
+      "supp.kind.differ": "differs",
+      "supp.kind.unrec": "not recognized",
+      "supp.hasEntry": "entry exists",
+      "supp.onlyHere": "only in {name}",
+      "supp.asEntry": "as the entry:",
+      "supp.noMbYet": "the entry has no MusicBrainz match yet",
+      "supp.suggest": "suggestion:",
+      "supp.searchLater": "looked up when taken over (suggestions only)",
+      "supp.byLink": "via the {name} link:",
+      "supp.differKeep": "not selected: {first} stays",
+      "supp.differTake": "selected: the tracks from {name}",
+      "supp.differWas": "{first}: {tracks}",
+      "supp.byHand": "by hand (“Add entry manually”)",
+      "supp.nSelected": "{n} selected",
+      "supp.apply": "Take over selected",
+      "supp.discard": "Discard all",
+      "supp.applyHint": "What is taken over goes into the entries, marked {short}.",
+      "supp.empty": "Nothing left to take over. Rows {name} confirms are marked {short}.",
+      "supp.mismatch": "{name} has {n} tracks, MusicBrainz {m}: check the track numbers.",
+      "supp.allTracks": "all",
+      "supp.textLoad": "Read text and supplement",
+      "supp.badgeConfirm": "{name} says the same",
+      "supp.badgeAdded": "taken over from {name}",
+      "supp.badgeDiffer": "{name} gives other tracks: {tracks}",
+      "busy.supp": "Reading {source} to supplement …",
+      "log.suppLoaded": "Supplement from {name}: {confirmed} confirmed, {added} new, {differ} differing, {unrec} not recognized",
+      "log.suppApplied": "Taken over from {name}: {n}",
+      "log.suppDiscarded": "Supplements from {name} discarded: {n}",
+      "forget.title": "Deletes what the script stored for the import of this release and imports it anew",
+      "forget.ask": "Delete the stored import of this release?",
+      "forget.what": "Deleted: the date pool, track pool and date matrix of this release, the source chosen for it, its media choice, the supplements, its log and – with the companion – its status marks. Then the source is imported anew, as the first time.",
+      "forget.keeps": "What is staged in the relationship editor stays (discard it with MusicBrainz’s own buttons or by reloading the page), and so does the list of created works.",
+      "forget.do": "Delete and import again",
+      "forget.done": "The stored import of this release was deleted; the source is imported anew.",
+      "log.importForgotten": "Stored import of this release deleted (pools, matrix, chosen source, media choice, supplements, log, status marks)",
+      "srcorder.physical": "Physical media",
+      "srcorder.digital": "Digital media",
+      "srcorder.thisRelease": "(this release)",
+      "srcorder.up": "{src} up",
+      "srcorder.down": "{src} down",
+      "srcorder.hint": "The first source in the list that the release links to is loaded (digital: all its media are “Digital Media”). A source you choose for a release yourself is remembered and comes first.",
+      "bc.tracks": "Read the credits of the track pages too",
+      "bc.tracksTitle": "One request to Bandcamp per track; credits there count only for their track",
+      "bc.testPh": "Bandcamp album URL to test",
+      "bc.test": "Test page",
+      "bc.testBadUrl": "That is no Bandcamp album URL (https://artist.bandcamp.com/album/name).",
+      "bc.testRunning": "Loading the page …",
+      "bc.testOk": "Read: “{title}”, {n} tracks, {lines} lines of credits, {pages} track pages (via {via}).",
+      "err.bandcampData": "No album data found on {url}.",
+      "err.pageHttp": "The page answered with HTTP {status}: {url}",
+      "err.pageNet": "The page could not be loaded (blocked or offline): {url}",
+      "log.artistSpelling": "{name}: found via its {src} link, but MusicBrainz spells it differently ({mb}) – only a suggestion",
+      "log.artistCreditSpelling": "{name}: found via its {src} link, but the release names it differently in its artist credit ({mb}) – only a suggestion",
+      "log.sourceKept": "Source chosen for this release before: {src}",
+      "log.sourceOrder": "Order of the sources for {kind}: {list}",
+      "log.bcTest": "Bandcamp test: {text}",
+      "source.text": "Paste text …",
+      "source.textTitle": "Credits from a text: Bandcamp credits, a booklet, liner notes, a list of musicians",
+      "source.currentText": "Text: {title}",
+      "source.textNoTitle": "pasted",
+      "textsrc.title": "Credits from a text",
+      "textsrc.label": "Credits text",
+      "textsrc.origin": "Where is it from? (for the edit note)",
+      "textsrc.originPh": "e.g. booklet, https://…",
+      "textsrc.load": "Read text",
+      "textsrc.hint": "One credit per line works best: “Mixed by X”, “X – guitar, vocals”, “Guitar: X, Y”, “Tracks 3–5: Strings arranged by Z”. Names are only suggested; you assign them.",
+      "unrec.title.one": "{n} line not recognized",
+      "unrec.title.other": "{n} lines not recognized",
+      "unrec.hint": "Add what is missing by hand (“Add entry manually”) or rewrite the line and read the text again.",
+      "msg.textEmpty": "The text is empty.",
+      "busy.source": "Reading {source} …",
+      "log.sourceLoaded.one": "{source} read: {artists} entries, {n} role, {u} lines not recognized",
+      "log.sourceLoaded.other": "{source} read: {artists} entries, {n} roles, {u} lines not recognized",
+      "log.nameSuggested": "{name}: same name in MusicBrainz (only a suggestion): {list}",
+      "match.nameSuggest": "Same name in MusicBrainz (a suggestion – check before assigning):",
+      "match.linkSuggest": "Found via the {src} link, but spelled differently ({mb}) – a suggestion, check before assigning:",
+      "match.nameUseTitle": "Assign this MusicBrainz entry",
       "sync.off": "Discogs view: off",
-      "sync.offTitle": "The companion script “MB x Vibecode: Import Discogs credits COMPANION” is not installed or not active.",
+      "sync.offTitle": "The companion script “MB x Vibecode: Credits Importer Companion” is not installed or not active.",
       "sync.noTab": "Discogs view: no Discogs tab",
       "sync.openTab": "open in background",
       "sync.connected": "Discogs view: connected ({where})",
@@ -126,25 +228,30 @@
       "toolbar.onlyMissing": "Only show artists without an MB match",
       "toolbar.roleCredits": "Role credits:",
       "toolbar.artistCredits": "Artist credits:",
-      "toolbar.asOnDiscogs": "as on Discogs",
+      "toolbar.asOnDiscogs": "as on {src}",
       "toolbar.clearAll": "clear all",
       "level.recording": "Recording",
       "level.release": "Release",
       "level.work": "Work",
       "level.skip": "Skip",
-      "th.role": "Discogs role",
+      "th.role": "{src} role",
       "th.type": "MB relationship",
       "th.attrs": "Attributes and credits",
       "th.level": "Level",
       "th.tracks": "Tracks and status",
-      "group.spelling": "Spelling on Discogs:",
-      "group.noVariant": "No alternative spelling on Discogs",
+      "group.spelling": "Spelling on {src}:",
+      "group.noVariant": "No alternative spelling on {src}",
+      "spell.title": "Spelling:",
+      "spell.release": "release (artist credit)",
+      "spell.notInRelease": "not in the artist credit",
+      "spell.same": "the same everywhere",
+      "spell.differs": "differs – please check: spelling on the artwork, a typo, or does MusicBrainz name it differently?",
       "group.creditAll": "Artist credit for all roles",
       "group.creditAllAria": "Artist credit for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
       "match.searching": "Looking up MB artist …",
-      "match.linked": "found via Discogs link",
+      "match.linked": "found via {src} link",
       "match.manual": "set manually",
       "match.created": "newly created",
       "match.change": "change",
@@ -154,10 +261,12 @@
       "match.apply": "Apply",
       "match.search": "Search MB",
       "match.create": "Create artist …",
-      "match.ambiguous": "several MB artists have this Discogs link",
+      "match.ambiguous": "several MB artists have this {src} link",
       "match.pick": "Please choose …",
-      "match.noLink": "no MB artist with this Discogs link",
+      "match.noLink": "no MB artist with this {src} link",
       "match.noId": "no Discogs ID",
+      "match.byName": "not assigned yet (no link) – check the suggestions or enter an MBID",
+      "log.nameLookup": "{name}: no link to MusicBrainz – looking for the same name",
       "role.placeholder": "e.g. Keyboards",
       "role.aria": "Role",
       "role.remove": "Remove row",
@@ -168,14 +277,14 @@
       "log.rowRestored": "Row brought back: {text}",
       "toolbar.onlyWorks": "only works",
       "toolbar.onlyWorksTitle": "Skips everything except the work relationships of the works matrix (composers, lyricists, writers, publishers, arrangers …)",
-      "role.source": "Discogs: {where}",
+      "role.source": "{src}: {where}",
       "role.tracks": "track {list}",
-      "role.wholeRelease": "Discogs: whole release",
-      "role.splitFrom": "on Discogs: “{raw}” (one row per task)",
+      "role.wholeRelease": "{src}: whole release",
+      "role.splitFrom": "on {src}: “{raw}” (one row per task)",
       "role.unresolved": "Not matched: {list}",
-      "note.uncredited": "According to Discogs not named on the release (Uncredited).",
+      "note.uncredited": "According to {src} not named on the release (Uncredited).",
       "note.featuring": "“Featuring” is usually part of the artist credit already. Please check.",
-      "note.misc": "MusicBrainz has no specific relationship for this role. It is added as “miscellaneous support” with the Discogs role as task; set it to Skip if you do not want it.",
+      "note.misc": "MusicBrainz has no specific relationship for this role. It is added as “miscellaneous support” with the {src} role as task; set it to Skip if you do not want it.",
       "type.skipped": "not applied",
       "type.choose": "Choose type …",
       "type.aria": "MusicBrainz relationship type",
@@ -197,11 +306,11 @@
       "picker.all": "All",
       "picker.none": "None",
       "picker.invert": "Invert",
-      "picker.discogs": "Discogs suggestion",
-      "picker.legend": "Numbers marked with {dot} come from Discogs.",
+      "picker.discogs": "{src} suggestion",
+      "picker.legend": "Numbers marked with {dot} come from {src}.",
       "picker.medium": "Medium {n}",
-      "picker.dpos": "Discogs position {pos}",
-      "picker.noDpos": "no Discogs counterpart",
+      "picker.dpos": "{src} position {pos}",
+      "picker.noDpos": "no {src} counterpart",
       "status.new.one": "{n} new",
       "status.new.other": "{n} new",
       "status.existing.one": "{n} already exists",
@@ -227,6 +336,9 @@
       "kind.workLink.other": "{n} work links",
       "sum.incomplete.one": "{n} row incomplete",
       "sum.incomplete.other": "{n} rows incomplete",
+      "sum.incPrev": "Previous incomplete row",
+      "sum.incNext": "Next incomplete row",
+      "sum.incTitle": "Go to the incomplete rows one by one; what is missing is highlighted",
       "sum.existing.one": "{n} already on MB",
       "sum.existing.other": "{n} already on MB",
       "footer.preview": "Preview all relationships",
@@ -271,17 +383,17 @@
       "sub.popupBlocked": "The browser blocked the window.",
       "sub.popupOpen": "The form is open in its own window. After you submit it, the dashboard picks up the result.",
       "artistDlg.title": "Create artist: {name}",
-      "artistDlg.prefilled": "Prefilled from Discogs: {list}.",
+      "artistDlg.prefilled": "Prefilled from {src}: {list}.",
       "part.name": "name",
       "part.type": "type {type}",
       "type.group": "group",
       "type.person": "person",
-      "part.urls.one": "{n} web link (including the Discogs link)",
-      "part.urls.other": "{n} web links (including the Discogs link)",
+      "part.urls.one": "{n} web link (including the {src} link)",
+      "part.urls.other": "{n} web links (including the {src} link)",
       "part.members.one": "a “member of band” relationship to {names}",
       "part.members.other": "{n} “member of band” relationships to {names}",
       "artistDlg.notInMb": "Not in MusicBrainz and therefore not linked: {list}.",
-      "artistDlg.loadFailed": "Discogs data not loaded: {msg}",
+      "artistDlg.loadFailed": "{src} data not loaded: {msg}",
       "artistDlg.check": "Check the form and click “Enter edit” at the bottom yourself. The dashboard then picks up the new artist automatically. Web links without a detected type must be assigned in the form.",
       "artistDlg.done": "Artist “{name}” has been created and is assigned in the dashboard.",
       "workDlg.title": "Create work: {title}",
@@ -294,16 +406,15 @@
       "workDlg.done": "Work “{title}” has been created. The link with track {track} is staged.",
       "busy.mb": "Loading tracks and existing relationships from MusicBrainz …",
       "busy.discogs": "Loading Discogs release {id} …",
-      "busy.artists": "Looking up MB artists via their Discogs links …",
-      "busy.discogsArtist": "Loading Discogs data for {name} …",
+      "busy.artists": "Looking up MB artists via their {src} links …",
+      "busy.discogsArtist": "Loading {src} data for {name} …",
       "busy.apply.one": "Staging {n} relationship in the editor …",
       "busy.apply.other": "Staging {n} relationships in the editor …",
-      "msg.noDiscogsLink": "This release is not linked to Discogs yet. Enter a Discogs release URL above.",
-      "msg.multiLinks": "This release is linked to {n} Discogs releases. Choose one above.",
-      "msg.trackMismatch": "Discogs lists {d} tracks, MusicBrainz {m}. Tracks are matched in order. Check the track selection of recording and work relationships.",
-      "msg.noCredits": "Discogs has no credits for this release. You can add entries manually below.",
+      "msg.multiLinks": "This release is linked to {n} {src} releases. Choose one above.",
+      "msg.trackMismatch": "{src} lists {d} tracks, MusicBrainz {m}. Tracks are matched in order. Check the track selection of recording and work relationships.",
+      "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
-      "msg.badDiscogsId": "No Discogs release ID recognized. Example: https://www.discogs.com/release/1234567",
+      "msg.badDiscogsId": "No Discogs release or Bandcamp album recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
       "msg.badMbid": "No MBID recognized. Paste the URL of an MB artist page or an MBID.",
       "msg.notArtist": "This MBID does not belong to an artist.",
       "msg.editorNotReady": "The relationship editor is not ready yet. Wait until the page has fully loaded and try again.",
@@ -313,7 +424,7 @@
       "msg.notLoaded.other": "{n} relationships skipped because medium {media} is not loaded in the editor yet. Expand the medium in the editor and stage again; anything already staged is left out.",
       "msg.errors.one": "Error with {n} relationship: {list}",
       "msg.errors.other": "Errors with {n} relationships: {list}",
-      "msg.noteMissing": "The edit note field was not found. Please add the Discogs source yourself.",
+      "msg.noteMissing": "The edit note field was not found. Please add the {src} source yourself.",
       "msg.pendingWorks.one": "{n} work created here earlier is not linked to its recording in MusicBrainz yet. Its link is staged in the dashboard again.",
       "msg.pendingWorks.other": "{n} works created here earlier are not linked to their recordings in MusicBrainz yet. Their links are staged in the dashboard again.",
       "msg.toEditor": "To the editor",
@@ -331,15 +442,24 @@
       "log.copied": "Copied",
       "log.clear": "Clear",
       "log.hide": "Hide",
+      "log.place": "Place:",
+      "log.placeTitle": "Where the log is shown: as its own window, or in the page next to the edit note (the edit note keeps its place).",
+      "log.place.window": "window",
+      "log.place.left": "left of edit note",
+      "log.place.right": "right of edit note",
+      "log.place.above": "above edit note",
+      "log.placeNarrow": "Not enough room beside the edit note: the log is shown above it until the page is wider.",
+      "log.placeNoNote": "No edit note on this page yet: the log is shown as a window until it appears.",
+      "log.logPlaced": "Log shown: {place}",
       "log.start": "Dashboard opened for release {mbid}",
-      "log.mbLoaded.one": "MusicBrainz loaded: {n} track ({works} with a work), Discogs links: {links}",
-      "log.mbLoaded.other": "MusicBrainz loaded: {n} tracks ({works} with a work), Discogs links: {links}",
-      "log.trackMismatch": "Track count differs: Discogs {d}, MusicBrainz {m}",
+      "log.mbLoaded.one": "MusicBrainz loaded: {n} track ({works} with a work), linked sources: {links}",
+      "log.mbLoaded.other": "MusicBrainz loaded: {n} tracks ({works} with a work), linked sources: {links}",
+      "log.trackMismatch": "Track count differs: {src} {d}, MusicBrainz {m}",
       "log.discogsLoaded.one": "Discogs release {id} loaded: {artists} artists, {n} role",
       "log.discogsLoaded.other": "Discogs release {id} loaded: {artists} artists, {n} roles",
-      "log.artistLinked": "{name}: found via Discogs link → {mb}",
-      "log.artistAmbiguous": "{name}: {n} MB artists share the Discogs link",
-      "log.artistMissing": "{name}: no MB artist with this Discogs link",
+      "log.artistLinked": "{name}: found via {src} link → {mb}",
+      "log.artistAmbiguous": "{name}: {n} MB artists share the {src} link",
+      "log.artistMissing": "{name}: no MB artist with this {src} link",
       "log.artistManual": "{name}: set manually → {mb}",
       "log.artistForm": "Create-artist form opened: {name}",
       "log.artistCreated": "Artist created: {name} ({mbid})",
@@ -372,24 +492,24 @@
       "syncMode.click": "on click",
       "log.syncMode": "Discogs view follows the dashboard {mode}",
       "companies.title": "Companies, etc.",
-      "companies.explain": "Labels, studios and plants from Discogs. They are matched to MB labels or places via their Discogs links. Discogs lists persons here as labels too: paste an MB artist to link one as a person.",
+      "companies.explain": "Labels, studios and plants from {src}. They are matched to MB labels or places via their {src} links. {src} lists persons here as labels too: paste an MB artist to link one as a person.",
       "entity.artist": "artist",
       "entity.label": "label",
       "entity.place": "place",
       "role.asEntity": "as MB {type}",
-      "role.companyWhole": "Discogs: Companies, etc. (whole release)",
-      "role.catno": "Catalog number on Discogs: {catno}",
+      "role.companyWhole": "{src}: Companies, etc. (whole release)",
+      "role.catno": "Catalog number on {src}: {catno}",
       "role.companyPlaceholder": "e.g. Pressed By",
       "credit.companyLabel": "Credited as",
       "issue.missingCompany": "MB label, place or artist missing",
-      "match.noLinkCompany": "no MB label, place or artist with this Discogs link",
+      "match.noLinkCompany": "no MB label, place or artist with this {src} link",
       "match.placeholderCompany": "URL or MBID of an MB label, place or artist",
       "match.createLabel": "Create label …",
       "match.createPlace": "Create place …",
       "msg.notCompany": "This MBID is not an artist, and not a label or place that fits these roles.",
       "companyDlg.titleLabel": "Create label: {name}",
       "companyDlg.titlePlace": "Create place: {name}",
-      "companyDlg.prefilled": "Prefilled from Discogs: name and Discogs link.",
+      "companyDlg.prefilled": "Prefilled from {src}: name and {src} link.",
       "companyDlg.checkLabel": "Check the form, add type and area if you know them, and click “Enter edit” at the bottom yourself. The dashboard then picks up the new label automatically.",
       "companyDlg.checkPlace": "Check the form, add the place type (e.g. studio) and the area, and click “Enter edit” at the bottom yourself. The dashboard then picks up the new place automatically.",
       "companyDlg.done": "“{name}” has been created and is assigned in the dashboard.",
@@ -399,7 +519,7 @@
       "date.used.one": "{n} row",
       "date.used.other": "{n} rows",
       "date.suggestions": "Suggestions:",
-      "date.sugg.copyright": "℗/© year in the Discogs notes {date}",
+      "date.sugg.copyright": "℗/© year in the notes {date}",
       "date.formTitle": "Edit date",
       "date.begin": "Begin date",
       "date.end": "End date",
@@ -454,7 +574,7 @@
       "manual.entityPlaceholder": "URL or MBID of any MusicBrainz entry",
       "manual.search": "Search MB:",
       "msg.badMbidAny": "No MBID recognized. Paste the URL of an MB artist, label or place page, or an MBID.",
-      "note.unknownRole": "Not an instrument known to MusicBrainz. Added as “miscellaneous support” with the Discogs role as task; choose a better type if there is one.",
+      "note.unknownRole": "Not an instrument known to MusicBrainz. Added as “miscellaneous support” with the {src} role as task; choose a better type if there is one.",
       "date.pasteTitle": "You can paste a date as MusicBrainz shows it, e.g. “from 2015-01-26 until 2015-01-27”, “in 2015-01” or “on 2015-01-26”.",
       "log.datePasted": "Date pasted: {date}",
       "log.dashboard": "Dashboard",
@@ -479,7 +599,7 @@
       "dir.recording": "each selected recording",
       "dir.work": "each work of the selected tracks",
       "link.mbTitle": "Open on MusicBrainz",
-      "link.discogsTitle": "Open on Discogs",
+      "link.discogsTitle": "Open on {src}",
       "works.openAll.one": "Open {n} work in a background tab",
       "works.openAll.other": "Open {n} works in background tabs",
       "works.openAllTitle": "Opens every work that is linked or will be linked, without leaving this page",
@@ -490,8 +610,8 @@
       "works.queueDone.other": "Done: {n} new works created.",
       "msg.openedTabs.one": "{n} work opened in a background tab.",
       "msg.openedTabs.other": "{n} works opened in background tabs.",
-      "msg.tabsNeedCompanion": "Opening background tabs needs the companion script “MB x Vibecode: Import Discogs credits COMPANION”, which has the browser permission for it. Without it, middle-click the work links in the Works section.",
-      "msg.tabsCompanionOld": "The companion script did not respond. Please update “MB x Vibecode: Import Discogs credits COMPANION” to version 0.3.0 or later.",
+      "msg.tabsNeedCompanion": "Opening background tabs needs the companion script “MB x Vibecode: Credits Importer Companion”, which has the browser permission for it. Without it, middle-click the work links in the Works section.",
+      "msg.tabsCompanionOld": "The companion script did not respond. Please update “MB x Vibecode: Credits Importer Companion” to version 0.3.0 or later.",
       "log.openedTabs.one": "Opened {n} work in a background tab",
       "log.openedTabs.other": "Opened {n} works in background tabs",
       "log.workRunDone.one": "Works created one by one: {n} new work",
@@ -509,12 +629,12 @@
       "unmapped.badge": "Not mapped – please check",
       "unmapped.instrument": "search MB instruments",
       "unmapped.types": "MB relationship types",
-      "unmapped.discogs": "Discogs credit roles",
+      "unmapped.discogs": "{src} credit roles",
       "unmapped.filter.one": "Only unmapped roles ({n})",
       "unmapped.filter.other": "Only unmapped roles ({n})",
       "common.remove": "Remove",
       "matrix.title": "Works matrix",
-      "matrix.explain": "One row per work, one column per person or publisher. Click a cell to switch its roles on or off; ▾ shows all roles and a date of its own for the cell.",
+      "matrix.explain": "One row per work, one column per person or publisher. Click a cell to switch its roles on or off; ▾ in a cell shows all roles and a date of its own, ▾ in a column head the column date and its tools. Drag a track group onto a column head, one of its roles or an attribute.",
       "matrix.codes": "Role codes",
       "matrix.codes.cisac": "CISAC (international)",
       "matrix.codes.gema": "GEMA",
@@ -526,6 +646,61 @@
       "matrix.colCredit": "credited as",
       "matrix.colDate": "date",
       "matrix.colDateMbTitle": "This date is added to the relationships of this column that MusicBrainz has without a date (an edit of each); dates MusicBrainz has stay",
+      "note.musicLyrics": "Music and lyrics in one credit: MusicBrainz “writer”",
+      "matrix.attrs": "Attributes of the link between recording and work",
+      "matrix.attrsAll": "Attributes for all:",
+      "matrix.attrsShort": "Attributes",
+      "matrix.attrsNone": "none",
+      "matrix.liveOffer": "Live release ({reason}): click to add “live” to this link that exists in MusicBrainz (an edit). It is not set by itself, so a studio track stays as it is.",
+      "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
+      "matrix.attrShort": "abbreviate",
+      "matrix.attrLong": "spell out",
+      "matrix.attrOpenAll": "open all rows",
+      "matrix.attrCloseAll": "close all rows",
+      "matrix.attrDropHint": "drag a track group onto an attribute",
+      "matrix.optsTitle": "Work type and lyrics languages of this work (click to change)",
+      "matrix.newWork": "new work",
+      "matrix.waiting": "waits for a work",
+      "matrix.notesReason": "from the notes: “{text}”",
+      "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
+      "matrix.suggOk": "Keep the suggestion",
+      "matrix.suggNo": "Take the suggestion out",
+      "matrix.colMenu": "Column: date, all works, publishers",
+      "matrix.colDateTitle": "Date of the column (▾ changes it; a pool date can be dropped onto the head)",
+      "matrix.roleDropTitle": "{role} – drop a track group here: this role only for the works of its tracks",
+      "matrix.colWorks.one": "{n} work",
+      "matrix.colWorks.other": "{n} works",
+      "matrix.suggCount.one": "{n} suggestion",
+      "matrix.suggCount.other": "{n} suggestions",
+      "matrix.optsNone": "work type · languages",
+      "matrix.countTracks.one": "{n} track",
+      "matrix.countTracks.other": "{n} tracks",
+      "matrix.similar": "(similar name)",
+      "matrix.dropReplace": "↧ only the works of these tracks (⇧ Shift: add)",
+      "matrix.dropAdd": "＋ adds the works of these tracks",
+      "log.matrixSuggOk": "Suggestion kept: {name}, track {track}",
+      "log.matrixSuggNo": "Suggestion taken out: {name}, track {track}",
+      "log.matrixAttrApplied": "Track group {name} → {attr}: {n} links",
+      "log.matrixAttrAdded": "Track group {name} added → {attr}: {n} links",
+      "log.matrixTracksApplied": "Track group {name} → {col} ({roles})",
+      "log.matrixTracksAdded": "Track group {name} added → {col} ({roles})",
+      "log.notesTracks": "Notes: {name} ({role}) on tracks {list} {similar}",
+      "log.notesTracksPool": "Notes: {name} on tracks {list} – only a track group (no matching role in the dashboard)",
+      "matrix.attrInMb": "Already in MusicBrainz",
+      "matrix.attrEdit": "Added to the link that exists in MusicBrainz (an edit of it)",
+      "matrix.liveAuto": "“live” preselected (rule S021): {reason}; untick to take it back",
+      "matrix.liveWhy.rg": "the release group is marked Live in MusicBrainz",
+      "matrix.liveWhy.format": "{src} calls the release live (format)",
+      "matrix.liveWhy.notes": "the notes say it was recorded live",
+      "matrix.liveWhy.title": "the track title says live",
+      "matrix.liveWhy.credit": "{src} credits “{role}” ({name}) for this track",
+      "matrix.liveWhy.creditAll": "{src} credits “{role}” ({name}) for the whole release",
+      "matrix.liveOfferRec": "Live recording – {reason}. This link exists in MusicBrainz without “live”: a click adds it (an edit). It is not set by itself.",
+      "matrix.songAuto": "Preselected (rule S020) because {src} names music and lyrics in one credit (e.g. “Music And Lyrics By”); a type you choose stays",
+      "preview.attrFillTitle": "Link exists in MusicBrainz; the attributes are added",
+      "log.linkAttrsAdded": "Attributes added to an existing link ({list}): {text}",
+      "msg.linkAttrsAdded.one": "Attributes added to {n} existing link between recording and work – MusicBrainz shows it as changed (yellow).",
+      "msg.linkAttrsAdded.other": "Attributes added to {n} existing links between recording and work – MusicBrainz shows them as changed (yellow).",
       "matrix.collapse": "Collapse column",
       "matrix.expand": "Expand column",
       "matrix.removeCol": "Take this column out of the matrix: its rows are set to “Skip” (they stay in the list); the column stays folded, a click brings it back",
@@ -605,6 +780,12 @@
       "log.stagedChangedInMb": "Changed in the editor itself, left alone: {text}",
       "launcher.shortcut": "Open or close the dashboard: Alt+Shift+D (Mac: Option+Shift+D); close it with Esc as well",
       "ms.2.16.0": "Status marks on every Discogs track line, each with the status of its track; “Directed By” is asked instead of assumed; columns can be taken out of the works matrix; column dates also go onto relationships MusicBrainz has without a date",
+      "ms.2.17.0": "Choose the media before importing a release with several media; attributes (live, cover …) of the recording–work links in the works matrix, “live” preselected on live releases; “Music and lyrics by” → writer with “Song” preselected; the log can sit next to the edit note",
+      "ms.2.18.0": "Works matrix in the look of the date matrix and more compact: column heads as cards, roles as chips, attributes (live, cover …) as short forms below each work; track groups can be dropped onto column heads, roles and attributes; track lists from the Discogs notes (“XYZ Publishing (1, 4, 6)”) as suggestions; “live” preselected only on new links",
+      "ms.2.19.0": "Suggestions look the same everywhere: dashed and yellow (date matrix, works matrix, “li?”, entries from the Discogs notes not used yet in the pools); “Commissioned By” → commissioned on the works; “Live Recording By” → recording engineer and a hint for “live”",
+      "ms.3.0.0": "Rebuilt inside: Discogs is read by a source adapter that delivers a neutral list of credits (person with links, role as written, details, tracks, source), and the rest of the script works only with that list. Nothing changes for you; it prepares other sources",
+      "ms.3.3.0": "New name: Credits Importer (and Credits Importer Companion). Besides Discogs it reads Bandcamp albums (credits, also those of the track pages) and pasted texts (booklet, liner notes): names there are only suggested. A preference list per physical and digital media decides which linked source is loaded; for digital releases Bandcamp comes first",
+      "ms.3.5.0": "Supplement with a second source, on request only: “Supplement with …” reads another linked source or a pasted text and lists what it adds (new roles, new entries) and where it differs, to take over by choice; rows it confirms get its mark. “Delete stored import …” starts the import of a release afresh. The Bandcamp spelling is shown next to the release’s artist credit and MusicBrainz. A fresh start: all stored data was reset once",
       "ms.2.14.0": "Works matrix: a date dropped onto a relationship already in MusicBrainz without a date is added to it (an edit); status marks also for credits of works that were new in the editor",
       "ms.2.13.0": "Track groups by drag & drop onto the tracks of rows; dates and track groups stay in the folded bar; status marks of work credits (composer, publisher) are checked on the works too",
       "ms.2.11.0": "After an update, a message shows the milestones of the new version",
@@ -629,8 +810,9 @@
       "ms.c0.1.0": "Discogs view: the Discogs tab shows where each credit comes from",
       "ms.0.3.0": "Works: linked works checked, existing works found, new works created",
       "ms.0.1.0": "First version: the credits of the linked Discogs release in the release relationship editor",
-      "notice.title": "MB x Vibecode: Import Discogs credits {version} – what’s new",
-      "notice.reset": "With this update all settings and stored data of the script were reset once (language, switches, own mapping rules, date and track pools); the list of created works was kept.",
+      "notice.title": "MB x Vibecode: Credits Importer {version} – what’s new",
+      "old.twice": "Two importer scripts are running on this page: the old “MB x Vibecode: Import Discogs credits” (or a second copy) and “MB x Vibecode: Credits Importer”. Please delete the old one in your script manager (Tampermonkey, Violentmonkey) and reload the page.",
+      "notice.reset": "With this update all settings and stored data of the script were reset once – a fresh start: language, switches, own mapping rules, date and track pools, the chosen sources and the list of created works.",
       "notice.changelog": "Changelog",
       "notice.close": "Close this message",
       "log.noticeClosed": "Update notice of {version} closed",
@@ -658,7 +840,35 @@
       "log.seriesLabel": "Series {series}: publishing label {label} from Discogs, for “Create series …”",
       "medium.label": "Medium:",
       "medium.all": "all",
-      "medium.option": "Medium {label} ({n} tracks)",
+      "medium.option.one": "Medium {label} ({n} track)",
+      "medium.option.other": "Medium {label} ({n} tracks)",
+      "media.title": "Which media should be imported?",
+      "media.intro": "This release has {n} media. The credits of the chosen media are imported; credits without track information go onto the tracks of the chosen media.",
+      "media.all": "All",
+      "media.none": "None",
+      "media.text": "Media:",
+      "media.textPlaceholder": "e.g. 1-4, 5, 8",
+      "media.bad": "Not a medium of this release: {list} (media: {known})",
+      "media.release": "Also import relationships on the release level (release and release group)",
+      "media.remember": "Remember this choice for this release",
+      "media.askHint": "You are asked before every import of this release.",
+      "media.savedHint": "Preselected: the choice remembered for this release. You are still asked before every import.",
+      "media.sum.one": "{m} of {all} media · {n} track",
+      "media.sum.other": "{m} of {all} media · {n} tracks",
+      "media.ok": "Import",
+      "media.allRelease": "all media with the release level",
+      "media.list": "media {list}",
+      "media.noMedia": "no media",
+      "media.withRelease": "{list} with the release level",
+      "media.withoutRelease": "{list} without the release level",
+      "media.nowTitle": "What was imported from Discogs",
+      "media.choose": "Choose media …",
+      "media.chooseTitle": "Choose the media again and import anew",
+      "media.confirm": "Choose the media again? The import starts anew; changes in the rows are lost.",
+      "msg.mediaCancelled": "Import cancelled: no media chosen.",
+      "msg.noCreditsMedia": "No credits for this choice ({text}).",
+      "log.mediaChosen": "Media chosen: {text}",
+      "log.mediaCancelled": "Media choice cancelled: nothing imported",
       "medium.load": "Load medium {list} in the editor",
       "medium.loadTitle": "Opens these media in MusicBrainz’s relationship editor, so their recordings can get relationships",
       "msg.mediumAuto": "This release has {n} tracks on several media. The dashboard shows medium {m}; choose the next one under “Medium” after staging and “Enter edit”.",
@@ -774,7 +984,7 @@
       "rules.code": "Code",
       "rules.tables": "Tables of the register",
       "instrAsk.ask": "Discogs only says “{name}”. Do you know which one it is?",
-      "instrAsk.otherwise": "(otherwise it stays “{credit}”; the role credit is “{credit}” either way)",
+      "instrAsk.otherwise": "(otherwise it stays “{credit}”, without a role credit; with another choice the role credit is “{credit}”)",
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
       "rules.questions": "Instrument questions",
       "rules.options": "Choices",
@@ -820,11 +1030,11 @@
       "log.rulesChanged": "Rules changed ({what}): {n} rows mapped again",
       "log.rulesExported": "{n} own rules exported",
       "datefind.title": "Find dates in free text",
-      "datefind.inNotes.one": "{n} date found in the Discogs notes",
-      "datefind.inNotes.other": "{n} dates found in the Discogs notes",
+      "datefind.inNotes.one": "{n} date found in the notes",
+      "datefind.inNotes.other": "{n} dates found in the notes",
       "datefind.placeholder": "Paste any text – liner notes, a Discogs paragraph … – and its dates appear below in MusicBrainz form.",
       "datefind.none": "No dates found yet.",
-      "datefind.fromNotes": "Discogs notes",
+      "datefind.fromNotes": "Notes",
       "datefind.fromText": "pasted text",
       "datefind.poolOnly": "pool only",
       "datefind.poolName": "Date",
@@ -848,19 +1058,19 @@
       "trackpool.kept": "Kept their own date: {list}",
       "date.fromMatrix": "from the matrix: {name}",
       "datefind.inMatrix": "in the matrix: {list}",
-      "dm.widened": "These dates lost their track groups and would now apply to all tracks; they are dashed again – please check them: {list}",
+      "dm.widened": "These dates lost their track groups and would now apply to all tracks; they are suggestions again (dashed, yellow) – please check them: {list}",
       "dm.applied.one": "Matrix applied: {n} row has a date from the matrix ({cells} dates in the columns).",
       "dm.applied.other": "Matrix applied: {n} rows have a date from the matrix ({cells} dates in the columns).",
       "dm.studios": "Studios limited to the tracks of their dates: {list}",
-      "dm.autoPlaced.one": "{n} date from the Discogs notes was placed in the date matrix as a suggestion (dashed). Check it and click “Apply” to put it on the rows.",
-      "dm.autoPlaced.other": "{n} dates from the Discogs notes were placed in the date matrix as suggestions (dashed). Check them and click “Apply” to put them on the rows.",
+      "dm.autoPlaced.one": "{n} date from the notes was placed in the date matrix as a suggestion (dashed, yellow). Check it and click “Apply” to put it on the rows.",
+      "dm.autoPlaced.other": "{n} dates from the notes were placed in the date matrix as suggestions (dashed, yellow). Check them and click “Apply” to put them on the rows.",
       "dm.pending": "not applied yet",
       "dm.pickDate": "Move “{name}”: drag it into a column of the matrix, or click here and then on “place here”",
       "dm.pickTracks": "Move “{name}”: drag it onto a date in the matrix, or click here and then on “tracks here”",
       "dm.placeHere": "+ place here",
       "dm.tracksHere": "+ tracks here",
       "dm.dropDates": "drag dates here",
-      "dm.help": "① Drag dates from the date pool into a column (date group). ② Drag track groups onto a date. A date without a track group applies to all tracks. A date dragged onto another date (in the pool or here) makes a period of both; a pool date dragged onto the date field of a row goes onto that row. Dashed: found automatically, not applied yet. ⠿ moves with clicks instead of dragging.",
+      "dm.help": "① Drag dates from the date pool into a column (date group). ② Drag track groups onto a date. A date without a track group applies to all tracks. A date dragged onto another date (in the pool or here) makes a period of both; a pool date dragged onto the date field of a row goes onto that row. Dashed and yellow: a suggestion (found automatically), not applied yet – in the pools too, until it is used. ⠿ moves with clicks instead of dragging.",
       "dm.apply": "Apply",
       "dm.applyTitle": "Puts the dates of the matrix onto the rows of their date groups and tracks (rows are split by tracks and dates where needed; dates entered in a row stay)",
       "dm.auto": "apply automatically",
@@ -903,6 +1113,7 @@
       "place.page": "in the page",
       "log.placeSwitch": "Dashboard shown: {place}",
       "pools.title": "Dates & tracks",
+      "pools.suggested": "suggestion from the notes (dashed, yellow) until you use it",
       "pools.toggleTitle": "Show or fold the date pool, the track pool and the matrix",
       "pools.nDates.one": "{n} date",
       "pools.nDates.other": "{n} dates",
@@ -913,8 +1124,8 @@
       "pools.clearTracks": "clear all track groups",
       "pools.clearDatesAsk.one": "Remove {n} date from the date pool of this release? Rows keep the dates they already have, as their own dates.",
       "pools.clearDatesAsk.other": "Remove {n} dates from the date pool of this release? Rows keep the dates they already have, as their own dates.",
-      "pools.clearTracksAsk.one": "Remove {n} track group of this release? Rows keep their tracks and dates; dates in the matrix then apply to all tracks (they become dashed suggestions).",
-      "pools.clearTracksAsk.other": "Remove {n} track groups of this release? Rows keep their tracks and dates; dates in the matrix then apply to all tracks (they become dashed suggestions).",
+      "pools.clearTracksAsk.one": "Remove {n} track group of this release? Rows keep their tracks and dates; dates in the matrix then apply to all tracks (they become suggestions, dashed and yellow).",
+      "pools.clearTracksAsk.other": "Remove {n} track groups of this release? Rows keep their tracks and dates; dates in the matrix then apply to all tracks (they become suggestions, dashed and yellow).",
       "pools.clearOthers.one": "also the stored pools of {n} other release",
       "pools.clearOthers.other": "also the stored pools of {n} other releases",
       "pools.clearDo": "Remove",
@@ -952,15 +1163,15 @@
       "msg.dateFillUnverified.one": "A date was added to {n} existing relationship, but MusicBrainz does not show {bad} of them as changed. Please check in the editor before “Enter edit”.",
       "msg.dateFillUnverified.other": "Dates were added to {n} existing relationships, but MusicBrainz does not show {bad} of them as changed. Please check in the editor before “Enter edit”.",
       "pools.reload": "↻ load again from Discogs",
-      "pools.reloadTitle": "Make the dates and track groups from the Discogs notes anew, as at the first import",
-      "pools.reloadAsk": "Load the dates and track groups from the Discogs notes again, as at the first import? Rows keep their dates until “Apply”.",
+      "pools.reloadTitle": "Make the dates and track groups from the notes anew, as at the first import",
+      "pools.reloadAsk": "Load the dates and track groups from the notes again, as at the first import? Rows keep their dates until “Apply”.",
       "pools.reloadAll": "also remove the dates and track groups made by hand (start from scratch)",
       "pools.reloadDo": "Load again",
-      "pools.reloaded": "Loaded again from the Discogs notes: {n} dates in the pool, {placed} in the matrix.",
-      "dm.autoPooled.one": "{n} date from the Discogs notes has no word naming its group; it is in the date pool – drag it into the matrix or onto a row if needed.",
-      "dm.autoPooled.other": "{n} dates from the Discogs notes have no word naming their group; they are in the date pool – drag them into the matrix or onto a row if needed.",
+      "pools.reloaded": "Loaded again from the notes: {n} dates in the pool, {placed} in the matrix.",
+      "dm.autoPooled.one": "{n} date from the notes has no word naming its group; it is in the date pool – drag it into the matrix or onto a row if needed.",
+      "dm.autoPooled.other": "{n} dates from the notes have no word naming their group; they are in the date pool – drag them into the matrix or onto a row if needed.",
       "date.chipTitle": "Click to edit or delete; drag into the matrix, onto the date field of a row, or onto another date (makes a period of both)",
-      "log.poolsReloaded": "Pools loaded again from the Discogs notes: {n} new dates, {placed} in the matrix (own ones removed: {all})",
+      "log.poolsReloaded": "Pools loaded again from the notes: {n} new dates, {placed} in the matrix (own ones removed: {all})",
       "log.datesMerged": "Dates joined: {a} + {b} → {date}",
       "trackpool.pick": "choose tracks …",
       "trackpool.allMedia": "all media (one group each, {n})",
@@ -974,7 +1185,7 @@
       "reset.do": "Reset",
       "reset.done": "All settings are back to their defaults.",
       "log.dmApplied": "Matrix applied: {n} rows with a date, {cells} dates, {split} rows split",
-      "log.dmAuto": "{n} dates from the Discogs notes placed in the matrix as suggestions",
+      "log.dmAuto": "{n} dates from the notes placed in the matrix as suggestions",
       "log.dmAutoSwitch": "Apply matrix automatically: {state}",
       "log.poolCleared": "Date pool cleared ({n} dates)",
       "log.trackPoolCleared": "Track pool cleared ({n} groups)",
@@ -1005,22 +1216,121 @@
       "log.dgRelease": "Discogs status on the release page: {state}",
     },
     de: {
-      "title": "Discogs-Credits importieren",
-      "launcher.open": "Discogs-Credits importieren …",
-      "launcher.status.one": "{n} Beziehung aus Discogs vorgemerkt, noch nicht abgeschickt.",
-      "launcher.status.other": "{n} Beziehungen aus Discogs vorgemerkt, noch nicht abgeschickt.",
+      "title": "Credits Importer",
+      "launcher.open": "Credits importieren …",
+      "launcher.status.one": "{n} Beziehung aus {src} vorgemerkt, noch nicht abgeschickt.",
+      "launcher.status.other": "{n} Beziehungen aus {src} vorgemerkt, noch nicht abgeschickt.",
       "lang.label": "Sprache",
       "common.close": "Schließen",
       "common.cancel": "Abbrechen",
       "common.quoted": "„{text}“",
       "raw": "{text}",
       "source.current": "{title} (Discogs {id})",
-      "source.none": "Noch kein Discogs-Release geladen",
-      "source.pick": "Verknüpftes Discogs-Release wählen …",
-      "source.other": "Andere Discogs-Release-URL oder ID",
+      "source.none": "Noch keine Quelle geladen",
+      "source.pick": "Verknüpfte Quelle wählen …",
+      "source.other": "Andere Quelle: Discogs-Release (URL oder ID) oder Bandcamp-Album-URL",
       "source.load": "Laden",
+      "source.currentLink": "{title} ({src})",
+      "msg.noSourceLink": "Dieses Release ist noch nicht mit Discogs oder Bandcamp verknüpft. Gib oben eine URL ein oder füge einen Text ein.",
+      "srcorder.toggle": "Reihenfolge der Quellen",
+      "forget.button": "Gespeicherten Import löschen …",
+      "supp.with": "Ergänzen mit",
+      "supp.text": "Text …",
+      "supp.textTitle": "Die geladene Quelle mit einem eingefügten Text ergänzen (Booklet, Liner Notes …)",
+      "supp.hint": "Die geladene Quelle bleibt maßgeblich. Was nur die zweite hat, ist ein Vorschlag; nichts wird von selbst übernommen.",
+      "supp.on": "ergänzt",
+      "supp.remove": "entfernen",
+      "supp.title": "Ergänzungen aus {name}",
+      "supp.summary": "bestätigt: {confirmed} · neu: {added} · Widerspruch: {differ} · nicht erkannt: {unrec}",
+      "supp.selectAll": "alle auswählen",
+      "supp.th.select": "Übernehmen",
+      "supp.th.kind": "Art",
+      "supp.th.name": "Name",
+      "supp.th.says": "{name} sagt",
+      "supp.th.rel": "MB-Beziehung",
+      "supp.th.tracks": "Tracks",
+      "supp.th.mb": "MusicBrainz",
+      "supp.kind.role": "neue Rolle",
+      "supp.kind.entry": "neuer Eintrag",
+      "supp.kind.differ": "Widerspruch",
+      "supp.kind.unrec": "nicht erkannt",
+      "supp.hasEntry": "Eintrag vorhanden",
+      "supp.onlyHere": "nur in {name}",
+      "supp.asEntry": "wie der Eintrag:",
+      "supp.noMbYet": "der Eintrag hat noch keine MusicBrainz-Zuordnung",
+      "supp.suggest": "Vorschlag:",
+      "supp.searchLater": "wird beim Übernehmen gesucht (nur Vorschläge)",
+      "supp.byLink": "über den {name}-Link:",
+      "supp.differKeep": "nicht ausgewählt: {first} bleibt",
+      "supp.differTake": "ausgewählt: die Tracks aus {name}",
+      "supp.differWas": "{first}: {tracks}",
+      "supp.byHand": "von Hand („Eintrag manuell hinzufügen“)",
+      "supp.nSelected": "{n} ausgewählt",
+      "supp.apply": "Ausgewählte übernehmen",
+      "supp.discard": "Alle verwerfen",
+      "supp.applyHint": "Übernommenes kommt in die Einträge, mit Kürzel {short}.",
+      "supp.empty": "Nichts mehr zu übernehmen. Zeilen, die {name} bestätigt, tragen das Kürzel {short}.",
+      "supp.mismatch": "{name} hat {n} Tracks, MusicBrainz {m}: Track-Nummern prüfen.",
+      "supp.allTracks": "alle",
+      "supp.textLoad": "Text lesen und ergänzen",
+      "supp.badgeConfirm": "{name} sagt dasselbe",
+      "supp.badgeAdded": "aus {name} übernommen",
+      "supp.badgeDiffer": "{name} nennt andere Tracks: {tracks}",
+      "busy.supp": "{source} wird zum Ergänzen gelesen …",
+      "log.suppLoaded": "Ergänzung aus {name}: {confirmed} bestätigt, {added} neu, {differ} Widerspruch, {unrec} nicht erkannt",
+      "log.suppApplied": "Aus {name} übernommen: {n}",
+      "log.suppDiscarded": "Ergänzungen aus {name} verworfen: {n}",
+      "forget.title": "Löscht, was das Skript für den Import dieses Releases gespeichert hat, und importiert neu",
+      "forget.ask": "Gespeicherten Import dieses Releases löschen?",
+      "forget.what": "Gelöscht werden: Datums-Pool, Track-Pool und Datums-Matrix dieses Releases, die dafür gewählte Quelle, seine Medienwahl, die Ergänzungen, sein Protokoll und – mit dem Companion – seine Status-Markierungen. Danach wird die Quelle neu importiert, wie beim ersten Mal.",
+      "forget.keeps": "Was im Beziehungseditor schon vorgemerkt ist, bleibt (verwirf es mit den Knöpfen von MusicBrainz oder durch Neuladen der Seite), ebenso die Liste der angelegten Werke.",
+      "forget.do": "Löschen und neu importieren",
+      "forget.done": "Der gespeicherte Import dieses Releases wurde gelöscht; die Quelle wird neu importiert.",
+      "log.importForgotten": "Gespeicherter Import dieses Releases gelöscht (Pools, Matrix, gewählte Quelle, Medienwahl, Ergänzungen, Protokoll, Status-Markierungen)",
+      "srcorder.physical": "Physische Medien",
+      "srcorder.digital": "Digitale Medien",
+      "srcorder.thisRelease": "(dieses Release)",
+      "srcorder.up": "{src} nach oben",
+      "srcorder.down": "{src} nach unten",
+      "srcorder.hint": "Geladen wird die erste Quelle der Liste, mit der das Release verknüpft ist (digital: alle Medien „Digital Media“). Eine Quelle, die du für ein Release selbst wählst, wird gemerkt und hat Vorrang.",
+      "bc.tracks": "Credits der Track-Seiten mitlesen",
+      "bc.tracksTitle": "Eine Anfrage an Bandcamp pro Track; Credits dort gelten nur für ihren Track",
+      "bc.testPh": "Bandcamp-Album-URL zum Testen",
+      "bc.test": "Seite testen",
+      "bc.testBadUrl": "Das ist keine Bandcamp-Album-URL (https://artist.bandcamp.com/album/name).",
+      "bc.testRunning": "Seite wird geladen …",
+      "bc.testOk": "Gelesen: „{title}“, {n} Tracks, {lines} Zeilen Credits, {pages} Track-Seiten (über {via}).",
+      "err.bandcampData": "Keine Album-Daten gefunden auf {url}.",
+      "err.pageHttp": "Die Seite antwortete mit HTTP {status}: {url}",
+      "err.pageNet": "Die Seite ließ sich nicht laden (blockiert oder offline): {url}",
+      "log.artistSpelling": "{name}: über den {src}-Link gefunden, aber MusicBrainz schreibt den Namen anders ({mb}) – nur ein Vorschlag",
+      "log.artistCreditSpelling": "{name}: über den {src}-Link gefunden, aber das Release nennt den Namen im Artist Credit anders ({mb}) – nur ein Vorschlag",
+      "log.sourceKept": "Für dieses Release früher gewählte Quelle: {src}",
+      "log.sourceOrder": "Reihenfolge der Quellen für {kind}: {list}",
+      "log.bcTest": "Bandcamp-Test: {text}",
+      "source.text": "Text einfügen …",
+      "source.textTitle": "Credits aus einem Text: Bandcamp-Credits, Booklet, Liner Notes, eine Besetzungsliste",
+      "source.currentText": "Text: {title}",
+      "source.textNoTitle": "eingefügt",
+      "textsrc.title": "Credits aus einem Text",
+      "textsrc.label": "Credits-Text",
+      "textsrc.origin": "Woher stammt er? (für die Bearbeitungsnotiz)",
+      "textsrc.originPh": "z. B. Booklet, https://…",
+      "textsrc.load": "Text lesen",
+      "textsrc.hint": "Am besten ein Credit pro Zeile: „Mixed by X“, „X – guitar, vocals“, „Guitar: X, Y“, „Tracks 3–5: Strings arranged by Z“. Namen werden nur vorgeschlagen; zuordnen tust du.",
+      "unrec.title.one": "{n} Zeile nicht erkannt",
+      "unrec.title.other": "{n} Zeilen nicht erkannt",
+      "unrec.hint": "Fehlendes von Hand ergänzen („Eintrag manuell hinzufügen“) oder die Zeile umformulieren und den Text neu lesen.",
+      "msg.textEmpty": "Der Text ist leer.",
+      "busy.source": "{source} wird gelesen …",
+      "log.sourceLoaded.one": "{source} gelesen: {artists} Einträge, {n} Rolle, {u} Zeilen nicht erkannt",
+      "log.sourceLoaded.other": "{source} gelesen: {artists} Einträge, {n} Rollen, {u} Zeilen nicht erkannt",
+      "log.nameSuggested": "{name}: gleicher Name in MusicBrainz (nur ein Vorschlag): {list}",
+      "match.nameSuggest": "Gleicher Name in MusicBrainz (ein Vorschlag – vor dem Zuordnen prüfen):",
+      "match.linkSuggest": "Über den {src}-Link gefunden, aber anders geschrieben ({mb}) – ein Vorschlag, vor dem Zuordnen prüfen:",
+      "match.nameUseTitle": "Diesen MusicBrainz-Eintrag zuordnen",
       "sync.off": "Discogs-Ansicht: aus",
-      "sync.offTitle": "Das Zusatzscript „MB x Vibecode: Import Discogs credits COMPANION“ ist nicht installiert oder nicht aktiv.",
+      "sync.offTitle": "Das Zusatzscript „MB x Vibecode: Credits Importer Companion“ ist nicht installiert oder nicht aktiv.",
       "sync.noTab": "Discogs-Ansicht: kein Discogs-Tab",
       "sync.openTab": "im Hintergrund öffnen",
       "sync.connected": "Discogs-Ansicht: verbunden ({where})",
@@ -1037,25 +1347,30 @@
       "toolbar.onlyMissing": "Nur Artists ohne MB-Zuordnung zeigen",
       "toolbar.roleCredits": "Rollen-Credits:",
       "toolbar.artistCredits": "Artist-Credits:",
-      "toolbar.asOnDiscogs": "wie auf Discogs",
+      "toolbar.asOnDiscogs": "wie auf {src}",
       "toolbar.clearAll": "alle leeren",
       "level.recording": "Recording",
       "level.release": "Release",
       "level.work": "Werk",
       "level.skip": "Überspringen",
-      "th.role": "Discogs-Rolle",
+      "th.role": "{src}-Rolle",
       "th.type": "MB-Beziehung",
       "th.attrs": "Attribute und Credits",
       "th.level": "Ebene",
       "th.tracks": "Tracks und Status",
-      "group.spelling": "Schreibweise auf Discogs:",
-      "group.noVariant": "Auf Discogs ohne abweichende Schreibweise",
+      "group.spelling": "Schreibweise auf {src}:",
+      "group.noVariant": "Auf {src} ohne abweichende Schreibweise",
+      "spell.title": "Schreibweise:",
+      "spell.release": "Release (Artist Credit)",
+      "spell.notInRelease": "nicht im Artist Credit",
+      "spell.same": "überall gleich",
+      "spell.differs": "weicht ab – bitte prüfen: Schreibweise auf dem Artwork, ein Tippfehler oder bei MusicBrainz anders benannt?",
       "group.creditAll": "Artist-Credit für alle Rollen",
       "group.creditAllAria": "Artist-Credit für alle Rollen von {name}",
       "group.setAll": "Für alle setzen",
       "group.addRole": "+ Weitere Rolle für {name}",
       "match.searching": "Suche MB-Artist …",
-      "match.linked": "über Discogs-Link gefunden",
+      "match.linked": "über {src}-Link gefunden",
       "match.manual": "manuell gesetzt",
       "match.created": "neu angelegt",
       "match.change": "ändern",
@@ -1065,10 +1380,12 @@
       "match.apply": "Übernehmen",
       "match.search": "Auf MB suchen",
       "match.create": "Artist anlegen …",
-      "match.ambiguous": "mehrere MB-Artists mit diesem Discogs-Link",
+      "match.ambiguous": "mehrere MB-Artists mit diesem {src}-Link",
       "match.pick": "Bitte wählen …",
-      "match.noLink": "kein MB-Artist mit diesem Discogs-Link",
+      "match.noLink": "kein MB-Artist mit diesem {src}-Link",
       "match.noId": "ohne Discogs-ID",
+      "match.byName": "noch nicht zugeordnet (kein Link) – Vorschläge prüfen oder MBID eingeben",
+      "log.nameLookup": "{name}: kein Link zu MusicBrainz – suche nach dem gleichen Namen",
       "role.placeholder": "z. B. Keyboards",
       "role.aria": "Rolle",
       "role.remove": "Zeile entfernen",
@@ -1079,14 +1396,14 @@
       "log.rowRestored": "Zeile zurückgeholt: {text}",
       "toolbar.onlyWorks": "nur Werke",
       "toolbar.onlyWorksTitle": "Überspringt alles außer den Werkbeziehungen der Werke-Matrix (Komponisten, Texter, Autoren, Verlage, Arrangeure …)",
-      "role.source": "Discogs: {where}",
+      "role.source": "{src}: {where}",
       "role.tracks": "Track {list}",
-      "role.wholeRelease": "Discogs: ganzes Release",
-      "role.splitFrom": "auf Discogs: „{raw}“ (eine Zeile je Aufgabe)",
+      "role.wholeRelease": "{src}: ganzes Release",
+      "role.splitFrom": "auf {src}: „{raw}“ (eine Zeile je Aufgabe)",
       "role.unresolved": "Nicht zuordenbar: {list}",
-      "note.uncredited": "Laut Discogs auf dem Release nicht genannt (Uncredited).",
+      "note.uncredited": "Laut {src} auf dem Release nicht genannt (Uncredited).",
       "note.featuring": "„Featuring“ steht meist schon in der Artist-Credit. Bitte prüfen.",
-      "note.misc": "Für diese Rolle hat MusicBrainz keine eigene Beziehung. Sie wird als „miscellaneous support“ mit der Discogs-Rolle als Aufgabe übernommen; stell sie auf Überspringen, wenn du sie nicht willst.",
+      "note.misc": "Für diese Rolle hat MusicBrainz keine eigene Beziehung. Sie wird als „miscellaneous support“ mit der {src}-Rolle als Aufgabe übernommen; stell sie auf Überspringen, wenn du sie nicht willst.",
       "type.skipped": "wird nicht übernommen",
       "type.choose": "Typ wählen …",
       "type.aria": "MusicBrainz-Beziehungstyp",
@@ -1108,11 +1425,11 @@
       "picker.all": "Alle",
       "picker.none": "Keine",
       "picker.invert": "Umkehren",
-      "picker.discogs": "Discogs-Vorschlag",
-      "picker.legend": "Mit {dot} markierte Nummern stammen aus der Discogs-Angabe.",
+      "picker.discogs": "{src}-Vorschlag",
+      "picker.legend": "Mit {dot} markierte Nummern stammen aus der {src}-Angabe.",
       "picker.medium": "Medium {n}",
-      "picker.dpos": "Discogs-Position {pos}",
-      "picker.noDpos": "keine Discogs-Entsprechung",
+      "picker.dpos": "{src}-Position {pos}",
+      "picker.noDpos": "keine {src}-Entsprechung",
       "status.new.one": "{n} neu",
       "status.new.other": "{n} neu",
       "status.existing.one": "{n} schon vorhanden",
@@ -1138,6 +1455,9 @@
       "kind.workLink.other": "{n} Werkverknüpfungen",
       "sum.incomplete.one": "{n} Zeile unvollständig",
       "sum.incomplete.other": "{n} Zeilen unvollständig",
+      "sum.incPrev": "Vorige unvollständige Zeile",
+      "sum.incNext": "Nächste unvollständige Zeile",
+      "sum.incTitle": "Nacheinander zu den unvollständigen Zeilen springen; was fehlt, wird hervorgehoben",
       "sum.existing.one": "{n} schon auf MB vorhanden",
       "sum.existing.other": "{n} schon auf MB vorhanden",
       "footer.preview": "Vorschau aller Beziehungen",
@@ -1182,17 +1502,17 @@
       "sub.popupBlocked": "Der Browser hat das Fenster blockiert.",
       "sub.popupOpen": "Das Formular ist im eigenen Fenster geöffnet. Nach dem Abschicken übernimmt das Dashboard das Ergebnis.",
       "artistDlg.title": "Artist anlegen: {name}",
-      "artistDlg.prefilled": "Vorausgefüllt aus Discogs: {list}.",
+      "artistDlg.prefilled": "Vorausgefüllt aus {src}: {list}.",
       "part.name": "Name",
       "part.type": "Typ {type}",
       "type.group": "Gruppe",
       "type.person": "Person",
-      "part.urls.one": "{n} Weblink (inklusive Discogs-Link)",
-      "part.urls.other": "{n} Weblinks (inklusive Discogs-Link)",
+      "part.urls.one": "{n} Weblink (inklusive {src}-Link)",
+      "part.urls.other": "{n} Weblinks (inklusive {src}-Link)",
       "part.members.one": "eine „member of band“-Beziehung zu {names}",
       "part.members.other": "{n} „member of band“-Beziehungen zu {names}",
       "artistDlg.notInMb": "Nicht in MusicBrainz und daher nicht verknüpft: {list}.",
-      "artistDlg.loadFailed": "Discogs-Daten nicht geladen: {msg}",
+      "artistDlg.loadFailed": "{src}-Daten nicht geladen: {msg}",
       "artistDlg.check": "Prüfe das Formular und klicke unten selbst auf „Enter edit“. Das Dashboard übernimmt den neuen Artist danach automatisch. Weblinks ohne erkannten Typ musst du im Formular noch zuordnen.",
       "artistDlg.done": "Artist „{name}“ ist angelegt und im Dashboard zugeordnet.",
       "workDlg.title": "Werk anlegen: {title}",
@@ -1205,16 +1525,15 @@
       "workDlg.done": "Werk „{title}“ ist angelegt. Die Verknüpfung mit Track {track} ist vorgemerkt.",
       "busy.mb": "Lade Tracks und vorhandene Beziehungen von MusicBrainz …",
       "busy.discogs": "Lade Discogs-Release {id} …",
-      "busy.artists": "Suche MB-Artists über ihre Discogs-Links …",
-      "busy.discogsArtist": "Lade Discogs-Daten für {name} …",
+      "busy.artists": "Suche MB-Artists über ihre {src}-Links …",
+      "busy.discogsArtist": "Lade {src}-Daten für {name} …",
       "busy.apply.one": "Übernehme {n} Beziehung in den Editor …",
       "busy.apply.other": "Übernehme {n} Beziehungen in den Editor …",
-      "msg.noDiscogsLink": "Dieses Release ist noch nicht mit Discogs verknüpft. Gib oben eine Discogs-Release-URL ein.",
-      "msg.multiLinks": "Dieses Release ist mit {n} Discogs-Releases verknüpft. Wähle oben eines aus.",
-      "msg.trackMismatch": "Discogs listet {d} Tracks, MusicBrainz {m}. Die Zuordnung erfolgt der Reihe nach. Prüfe bei Recording- und Werk-Beziehungen die Trackauswahl.",
-      "msg.noCredits": "Auf Discogs sind für dieses Release keine Credits eingetragen. Du kannst unten Einträge manuell anlegen.",
+      "msg.multiLinks": "Dieses Release ist mit {n} {src}-Releases verknüpft. Wähle oben eines aus.",
+      "msg.trackMismatch": "{src} listet {d} Tracks, MusicBrainz {m}. Die Zuordnung erfolgt der Reihe nach. Prüfe bei Recording- und Werk-Beziehungen die Trackauswahl.",
+      "msg.noCredits": "Auf {src} sind für dieses Release keine Credits eingetragen. Du kannst unten Einträge manuell anlegen.",
       "msg.confirmDiscard": "Die aktuelle Auswahl im Dashboard wird verworfen. Fortfahren?",
-      "msg.badDiscogsId": "Keine Discogs-Release-ID erkannt. Beispiel: https://www.discogs.com/release/1234567",
+      "msg.badDiscogsId": "Kein Discogs-Release und kein Bandcamp-Album erkannt. Beispiele: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
       "msg.badMbid": "Keine MBID erkannt. Füge die URL einer MB-Artist-Seite oder die MBID ein.",
       "msg.notArtist": "Diese MBID gehört nicht zu einem Artist.",
       "msg.editorNotReady": "Der Beziehungseditor ist noch nicht bereit. Warte, bis die Seite vollständig geladen ist, und versuche es erneut.",
@@ -1224,7 +1543,7 @@
       "msg.notLoaded.other": "{n} Beziehungen übersprungen, weil Medium {media} im Editor noch nicht geladen ist. Klappe das Medium im Editor auf und übernimm erneut. Bereits Übernommenes wird dabei ausgelassen.",
       "msg.errors.one": "Fehler bei {n} Beziehung: {list}",
       "msg.errors.other": "Fehler bei {n} Beziehungen: {list}",
-      "msg.noteMissing": "Das Edit-Notiz-Feld wurde nicht gefunden. Bitte die Discogs-Quelle selbst eintragen.",
+      "msg.noteMissing": "Das Edit-Notiz-Feld wurde nicht gefunden. Bitte die {src}-Quelle selbst eintragen.",
       "msg.pendingWorks.one": "{n} hier früher angelegtes Werk ist in MusicBrainz noch nicht mit seinem Recording verknüpft. Die Verknüpfung ist im Dashboard wieder vorgemerkt.",
       "msg.pendingWorks.other": "{n} hier früher angelegte Werke sind in MusicBrainz noch nicht mit ihren Recordings verknüpft. Die Verknüpfungen sind im Dashboard wieder vorgemerkt.",
       "msg.toEditor": "Zum Editor",
@@ -1242,15 +1561,24 @@
       "log.copied": "Kopiert",
       "log.clear": "Leeren",
       "log.hide": "Ausblenden",
+      "log.place": "Platz:",
+      "log.placeTitle": "Wo das Protokoll angezeigt wird: als eigenes Fenster oder in der Seite neben der Bearbeitungsnotiz (die Bearbeitungsnotiz bleibt an ihrem Platz).",
+      "log.place.window": "Fenster",
+      "log.place.left": "links der Bearbeitungsnotiz",
+      "log.place.right": "rechts der Bearbeitungsnotiz",
+      "log.place.above": "über der Bearbeitungsnotiz",
+      "log.placeNarrow": "Neben der Bearbeitungsnotiz ist zu wenig Platz: Das Protokoll steht darüber, bis die Seite breiter ist.",
+      "log.placeNoNote": "Auf dieser Seite gibt es (noch) keine Bearbeitungsnotiz: Das Protokoll wird als Fenster gezeigt, bis sie erscheint.",
+      "log.logPlaced": "Protokoll angezeigt: {place}",
       "log.start": "Dashboard geöffnet für Release {mbid}",
-      "log.mbLoaded.one": "MusicBrainz geladen: {n} Track ({works} mit Werk), Discogs-Links: {links}",
-      "log.mbLoaded.other": "MusicBrainz geladen: {n} Tracks ({works} mit Werk), Discogs-Links: {links}",
-      "log.trackMismatch": "Trackzahl weicht ab: Discogs {d}, MusicBrainz {m}",
+      "log.mbLoaded.one": "MusicBrainz geladen: {n} Track ({works} mit Werk), verknüpfte Quellen: {links}",
+      "log.mbLoaded.other": "MusicBrainz geladen: {n} Tracks ({works} mit Werk), verknüpfte Quellen: {links}",
+      "log.trackMismatch": "Trackzahl weicht ab: {src} {d}, MusicBrainz {m}",
       "log.discogsLoaded.one": "Discogs-Release {id} geladen: {artists} Artists, {n} Rolle",
       "log.discogsLoaded.other": "Discogs-Release {id} geladen: {artists} Artists, {n} Rollen",
-      "log.artistLinked": "{name}: über Discogs-Link gefunden → {mb}",
-      "log.artistAmbiguous": "{name}: {n} MB-Artists teilen sich den Discogs-Link",
-      "log.artistMissing": "{name}: kein MB-Artist mit diesem Discogs-Link",
+      "log.artistLinked": "{name}: über {src}-Link gefunden → {mb}",
+      "log.artistAmbiguous": "{name}: {n} MB-Artists teilen sich den {src}-Link",
+      "log.artistMissing": "{name}: kein MB-Artist mit diesem {src}-Link",
       "log.artistManual": "{name}: manuell gesetzt → {mb}",
       "log.artistForm": "Formular „Artist anlegen“ geöffnet: {name}",
       "log.artistCreated": "Artist angelegt: {name} ({mbid})",
@@ -1283,24 +1611,24 @@
       "syncMode.click": "beim Klicken",
       "log.syncMode": "Discogs-Ansicht folgt dem Dashboard {mode}",
       "companies.title": "Companies, etc. (Firmen)",
-      "companies.explain": "Labels, Studios und Presswerke aus Discogs. Sie werden über ihre Discogs-Links MB-Labels oder -Orten zugeordnet. Discogs führt hier auch Personen als Labels: Füge einen MB-Artist ein, um sie als Person zu verknüpfen.",
+      "companies.explain": "Labels, Studios und Presswerke aus {src}. Sie werden über ihre {src}-Links MB-Labels oder -Orten zugeordnet. {src} führt hier auch Personen als Labels: Füge einen MB-Artist ein, um sie als Person zu verknüpfen.",
       "entity.artist": "Artist",
       "entity.label": "Label",
       "entity.place": "Ort",
       "role.asEntity": "als MB-{type}",
-      "role.companyWhole": "Discogs: Companies, etc. (ganzes Release)",
-      "role.catno": "Katalognummer auf Discogs: {catno}",
+      "role.companyWhole": "{src}: Companies, etc. (ganzes Release)",
+      "role.catno": "Katalognummer auf {src}: {catno}",
       "role.companyPlaceholder": "z. B. Pressed By",
       "credit.companyLabel": "Genannt als",
       "issue.missingCompany": "MB-Label, -Ort oder -Artist fehlt",
-      "match.noLinkCompany": "kein MB-Label, -Ort oder -Artist mit diesem Discogs-Link",
+      "match.noLinkCompany": "kein MB-Label, -Ort oder -Artist mit diesem {src}-Link",
       "match.placeholderCompany": "URL oder MBID eines MB-Labels, -Orts oder -Artists",
       "match.createLabel": "Label anlegen …",
       "match.createPlace": "Ort anlegen …",
       "msg.notCompany": "Diese MBID gehört weder zu einem Artist noch zu einem Label oder Ort, der zu diesen Rollen passt.",
       "companyDlg.titleLabel": "Label anlegen: {name}",
       "companyDlg.titlePlace": "Ort anlegen: {name}",
-      "companyDlg.prefilled": "Vorausgefüllt aus Discogs: Name und Discogs-Link.",
+      "companyDlg.prefilled": "Vorausgefüllt aus {src}: Name und {src}-Link.",
       "companyDlg.checkLabel": "Prüfe das Formular, ergänze Typ und Gebiet, falls bekannt, und klicke unten selbst auf „Enter edit“. Das Dashboard übernimmt das neue Label danach automatisch.",
       "companyDlg.checkPlace": "Prüfe das Formular, ergänze die Art des Orts (z. B. Studio) und das Gebiet und klicke unten selbst auf „Enter edit“. Das Dashboard übernimmt den neuen Ort danach automatisch.",
       "companyDlg.done": "„{name}“ ist angelegt und im Dashboard zugeordnet.",
@@ -1310,7 +1638,7 @@
       "date.used.one": "{n} Zeile",
       "date.used.other": "{n} Zeilen",
       "date.suggestions": "Vorschläge:",
-      "date.sugg.copyright": "℗/©-Jahr in den Discogs-Notizen {date}",
+      "date.sugg.copyright": "℗/©-Jahr in den Notizen {date}",
       "date.formTitle": "Datum bearbeiten",
       "date.begin": "Begin date",
       "date.end": "End date",
@@ -1365,7 +1693,7 @@
       "manual.entityPlaceholder": "URL oder MBID eines beliebigen MusicBrainz-Eintrags",
       "manual.search": "Auf MB suchen:",
       "msg.badMbidAny": "Keine MBID erkannt. Füge die URL einer MB-Seite eines Artists, Labels oder Orts oder eine MBID ein.",
-      "note.unknownRole": "Kein Instrument, das MusicBrainz kennt. Übernommen als „miscellaneous support“ mit der Discogs-Rolle als Aufgabe; wähle einen besseren Typ, falls es einen gibt.",
+      "note.unknownRole": "Kein Instrument, das MusicBrainz kennt. Übernommen als „miscellaneous support“ mit der {src}-Rolle als Aufgabe; wähle einen besseren Typ, falls es einen gibt.",
       "date.pasteTitle": "Du kannst ein Datum so einfügen, wie MusicBrainz es anzeigt, z. B. „from 2015-01-26 until 2015-01-27“, „in 2015-01“ oder „on 2015-01-26“.",
       "log.datePasted": "Datum eingefügt: {date}",
       "log.dashboard": "Dashboard",
@@ -1390,7 +1718,7 @@
       "dir.recording": "jedes gewählte Recording",
       "dir.work": "jedes Werk der gewählten Tracks",
       "link.mbTitle": "Auf MusicBrainz öffnen",
-      "link.discogsTitle": "Auf Discogs öffnen",
+      "link.discogsTitle": "Auf {src} öffnen",
       "works.openAll.one": "{n} Werk im Hintergrund-Tab öffnen",
       "works.openAll.other": "{n} Werke in Hintergrund-Tabs öffnen",
       "works.openAllTitle": "Öffnet alle verknüpften und zum Verknüpfen vorgemerkten Werke, ohne diese Seite zu verlassen",
@@ -1401,8 +1729,8 @@
       "works.queueDone.other": "Fertig: {n} neue Werke angelegt.",
       "msg.openedTabs.one": "{n} Werk im Hintergrund-Tab geöffnet.",
       "msg.openedTabs.other": "{n} Werke in Hintergrund-Tabs geöffnet.",
-      "msg.tabsNeedCompanion": "Für Hintergrund-Tabs braucht es das Zusatzscript „MB x Vibecode: Import Discogs credits COMPANION“, das die nötige Browser-Berechtigung hat. Ohne es öffnest du die Werk-Links im Bereich „Werke“ per Mittelklick.",
-      "msg.tabsCompanionOld": "Das Zusatzscript hat nicht geantwortet. Bitte „MB x Vibecode: Import Discogs credits COMPANION“ auf Version 0.3.0 oder neuer aktualisieren.",
+      "msg.tabsNeedCompanion": "Für Hintergrund-Tabs braucht es das Zusatzscript „MB x Vibecode: Credits Importer Companion“, das die nötige Browser-Berechtigung hat. Ohne es öffnest du die Werk-Links im Bereich „Werke“ per Mittelklick.",
+      "msg.tabsCompanionOld": "Das Zusatzscript hat nicht geantwortet. Bitte „MB x Vibecode: Credits Importer Companion“ auf Version 0.3.0 oder neuer aktualisieren.",
       "log.openedTabs.one": "{n} Werk im Hintergrund-Tab geöffnet",
       "log.openedTabs.other": "{n} Werke in Hintergrund-Tabs geöffnet",
       "log.workRunDone.one": "Werke nacheinander angelegt: {n} neues Werk",
@@ -1420,12 +1748,12 @@
       "unmapped.badge": "Nicht zugeordnet – bitte prüfen",
       "unmapped.instrument": "MB-Instrumente suchen",
       "unmapped.types": "MB-Beziehungstypen",
-      "unmapped.discogs": "Discogs-Rollenliste",
+      "unmapped.discogs": "{src}-Rollenliste",
       "unmapped.filter.one": "Nur nicht zugeordnete Rollen ({n})",
       "unmapped.filter.other": "Nur nicht zugeordnete Rollen ({n})",
       "common.remove": "Entfernen",
       "matrix.title": "Werke-Matrix",
-      "matrix.explain": "Eine Zeile pro Werk, eine Spalte pro Person oder Verlag. Ein Klick in eine Zelle schaltet ihre Rollen an oder aus; ▾ zeigt alle Rollen und ein eigenes Datum für die Zelle.",
+      "matrix.explain": "Eine Zeile pro Werk, eine Spalte pro Person oder Verlag. Ein Klick in eine Zelle schaltet ihre Rollen an oder aus; ▾ in einer Zelle zeigt alle Rollen und ein eigenes Datum, ▾ im Spaltenkopf das Spaltendatum und weitere Werkzeuge. Track-Gruppen lassen sich auf einen Spaltenkopf, eine seiner Rollen oder ein Attribut ziehen.",
       "matrix.codes": "Rollenkürzel",
       "matrix.codes.cisac": "CISAC (international)",
       "matrix.codes.gema": "GEMA",
@@ -1437,6 +1765,61 @@
       "matrix.colCredit": "genannt als",
       "matrix.colDate": "Datum",
       "matrix.colDateMbTitle": "Dieses Datum wird den Beziehungen dieser Spalte hinzugefügt, die MusicBrainz ohne Datum hat (je eine Bearbeitung); Daten, die MusicBrainz hat, bleiben",
+      "note.musicLyrics": "Musik und Text in einem Credit: in MusicBrainz „writer“",
+      "matrix.attrs": "Attribute der Verknüpfung zwischen Aufnahme und Werk",
+      "matrix.attrsAll": "Attribute für alle:",
+      "matrix.attrsShort": "Attribute",
+      "matrix.attrsNone": "keine",
+      "matrix.liveOffer": "Live-Release ({reason}): Klick ergänzt „live“ an dieser Verknüpfung in MusicBrainz (eine Bearbeitung). Es wird nicht von selbst gesetzt, ein Studio-Track bleibt also, wie er ist.",
+      "matrix.attrAllTitle": "{name}: {k} von {n} Werken. Klick: für alle Werke an (oder aus, wenn alle es haben). Track-Gruppe hier ablegen: nur für ihre Tracks.",
+      "matrix.attrShort": "abkürzen",
+      "matrix.attrLong": "ausschreiben",
+      "matrix.attrOpenAll": "alle Zeilen aufklappen",
+      "matrix.attrCloseAll": "alle Zeilen zuklappen",
+      "matrix.attrDropHint": "Track-Gruppe auf ein Attribut ziehen",
+      "matrix.optsTitle": "Werktyp und Sprachen dieses Werks (Klick zum Ändern)",
+      "matrix.newWork": "neues Werk",
+      "matrix.waiting": "wartet auf Werk",
+      "matrix.notesReason": "aus den Notizen: „{text}“",
+      "matrix.commissionedReason": "{src} nennt „Commissioned By“ ohne Tracks: ein Vorschlag für jedes Werk (✓ behält ihn, × nimmt ihn heraus)",
+      "matrix.suggOk": "Vorschlag übernehmen",
+      "matrix.suggNo": "Vorschlag verwerfen",
+      "matrix.colMenu": "Spalte: Datum, alle Werke, Verlage",
+      "matrix.colDateTitle": "Datum der Spalte (▾ ändert es; ein Pool-Datum kann auf den Kopf gezogen werden)",
+      "matrix.roleDropTitle": "{role} – Track-Gruppe hier ablegen: diese Rolle nur für die Werke ihrer Tracks",
+      "matrix.colWorks.one": "{n} Werk",
+      "matrix.colWorks.other": "{n} Werke",
+      "matrix.suggCount.one": "{n} Vorschlag",
+      "matrix.suggCount.other": "{n} Vorschläge",
+      "matrix.optsNone": "Werktyp · Sprachen",
+      "matrix.countTracks.one": "{n} Track",
+      "matrix.countTracks.other": "{n} Tracks",
+      "matrix.similar": "(ähnlicher Name)",
+      "matrix.dropReplace": "↧ nur die Werke dieser Tracks (⇧ Umschalt: ergänzen)",
+      "matrix.dropAdd": "＋ ergänzt die Werke dieser Tracks",
+      "log.matrixSuggOk": "Vorschlag übernommen: {name}, Track {track}",
+      "log.matrixSuggNo": "Vorschlag verworfen: {name}, Track {track}",
+      "log.matrixAttrApplied": "Track-Gruppe {name} → {attr}: {n} Verknüpfungen",
+      "log.matrixAttrAdded": "Track-Gruppe {name} ergänzt → {attr}: {n} Verknüpfungen",
+      "log.matrixTracksApplied": "Track-Gruppe {name} → {col} ({roles})",
+      "log.matrixTracksAdded": "Track-Gruppe {name} ergänzt → {col} ({roles})",
+      "log.notesTracks": "Notizen: {name} ({role}) auf den Tracks {list} {similar}",
+      "log.notesTracksPool": "Notizen: {name} auf den Tracks {list} – nur als Track-Gruppe (keine passende Rolle im Dashboard)",
+      "matrix.attrInMb": "Schon in MusicBrainz",
+      "matrix.attrEdit": "Wird der Verknüpfung in MusicBrainz hinzugefügt (eine Bearbeitung)",
+      "matrix.liveAuto": "„live“ vorausgewählt (Regel S021): {reason}; abhaken nimmt es zurück",
+      "matrix.liveWhy.rg": "die Release-Gruppe ist in MusicBrainz als Live markiert",
+      "matrix.liveWhy.format": "{src} kennzeichnet das Release als live (Format)",
+      "matrix.liveWhy.notes": "laut den Notizen live aufgenommen",
+      "matrix.liveWhy.title": "der Track-Titel sagt live",
+      "matrix.liveWhy.credit": "{src} nennt „{role}“ ({name}) für diesen Track",
+      "matrix.liveWhy.creditAll": "{src} nennt „{role}“ ({name}) für das ganze Release",
+      "matrix.liveOfferRec": "Live-Aufnahme – {reason}. Diese Verknüpfung gibt es in MusicBrainz ohne „live“: Ein Klick ergänzt es (eine Bearbeitung). Von selbst wird es nicht gesetzt.",
+      "matrix.songAuto": "Vorausgewählt (Regel S020), weil {src} Musik und Text in einem Credit nennt (z. B. „Music And Lyrics By“); eine eigene Wahl bleibt",
+      "preview.attrFillTitle": "Verknüpfung existiert in MusicBrainz; die Attribute werden hinzugefügt",
+      "log.linkAttrsAdded": "Attribute zu einer bestehenden Verknüpfung hinzugefügt ({list}): {text}",
+      "msg.linkAttrsAdded.one": "Attribute zu {n} bestehenden Verknüpfung zwischen Aufnahme und Werk hinzugefügt – MusicBrainz zeigt sie als geändert (gelb).",
+      "msg.linkAttrsAdded.other": "Attribute zu {n} bestehenden Verknüpfungen zwischen Aufnahme und Werk hinzugefügt – MusicBrainz zeigt sie als geändert (gelb).",
       "matrix.collapse": "Spalte einklappen",
       "matrix.expand": "Spalte ausklappen",
       "matrix.removeCol": "Spalte aus der Matrix herausnehmen: ihre Zeilen kommen auf „Überspringen“ (sie bleiben in der Liste); die Spalte bleibt eingeklappt, ein Klick holt sie zurück",
@@ -1516,6 +1899,12 @@
       "log.stagedChangedInMb": "Im Editor selbst geändert, nicht angefasst: {text}",
       "launcher.shortcut": "Dashboard öffnen oder schließen: Alt+Umschalt+D (Mac: Wahl+Umschalt+D); schließen auch mit Esc",
       "ms.2.16.0": "Statusmarken auf jeder Discogs-Trackzeile, jeweils mit dem Status ihres Tracks; „Directed By“ wird abgefragt statt angenommen; Spalten lassen sich aus der Werk-Matrix herausnehmen; Spaltendaten kommen auch auf Beziehungen, die MusicBrainz ohne Datum hat",
+      "ms.2.17.0": "Medien vor dem Import eines Releases mit mehreren Medien wählen; Attribute (live, cover …) der Verknüpfungen Aufnahme–Werk in der Werk-Matrix, „live“ bei Live-Releases vorausgewählt; „Music and lyrics by“ → Writer mit vorausgewähltem „Song“; das Protokoll kann neben der Bearbeitungsnotiz stehen",
+      "ms.2.18.0": "Werk-Matrix im Stil der Daten-Matrix und kompakter: Spaltenköpfe als Karten, Rollen als Chips, Attribute (live, cover …) als Kürzel unter jedem Werk; Track-Gruppen lassen sich auf Spaltenköpfe, Rollen und Attribute ziehen; Tracklisten aus den Discogs-Notizen („XYZ Publishing (1, 4, 6)“) als Vorschläge; „live“ nur noch bei neuen Verknüpfungen vorausgewählt",
+      "ms.2.19.0": "Vorschläge sehen überall gleich aus: gelb gestrichelt (Daten-Matrix, Werk-Matrix, „li?“, noch nicht verwendete Einträge aus den Discogs-Notizen in den Pools); „Commissioned By“ → commissioned an den Werken; „Live Recording By“ → Recording Engineer und ein Hinweis auf „live“",
+      "ms.3.0.0": "Innen umgebaut: Discogs wird von einem Quellen-Adapter gelesen, der eine neutrale Credit-Liste liefert (Person mit Links, Rolle wie geschrieben, Details, Tracks, Quelle), und der Rest des Skripts arbeitet nur noch mit dieser Liste. Für dich ändert sich nichts; es bereitet weitere Quellen vor",
+      "ms.3.3.0": "Neuer Name: Credits Importer (und Credits Importer Companion). Neben Discogs liest er Bandcamp-Alben (Credits, auch die der Track-Seiten) und eingefügte Texte (Booklet, Liner Notes): Namen daraus werden nur vorgeschlagen. Eine Prioritätsliste für physische und digitale Medien bestimmt, welche verknüpfte Quelle geladen wird; bei digitalen Releases zuerst Bandcamp",
+      "ms.3.5.0": "Ergänzen mit einer zweiten Quelle, nur auf Wunsch: „Ergänzen mit …“ liest eine weitere verknüpfte Quelle oder einen eingefügten Text und listet, was sie ergänzt (neue Rollen, neue Einträge) und wo sie abweicht – zum Übernehmen nach Wahl; Zeilen, die sie bestätigt, bekommen ihr Kürzel. „Gespeicherten Import löschen …“ beginnt den Import eines Releases neu. Die Bandcamp-Schreibweise steht neben Artist Credit des Releases und MusicBrainz. Ein Neuanfang: alle gespeicherten Daten wurden einmal zurückgesetzt",
       "ms.2.14.0": "Werk-Matrix: Ein Datum auf einer Beziehung, die schon ohne Datum in MusicBrainz ist, wird ihr hinzugefügt (eine Bearbeitung); Statusmarken auch für Credits von Werken, die im Editor neu angelegt wurden",
       "ms.2.13.0": "Track-Gruppen per Drag & Drop auf die Tracks von Zeilen; Daten und Track-Gruppen bleiben in der eingeklappten Leiste; Statusmarken von Werk-Credits (Composer, Publisher) werden auch an den Werken geprüft",
       "ms.2.11.0": "Nach einem Update zeigt eine Nachricht die Meilensteine der neuen Version",
@@ -1540,8 +1929,9 @@
       "ms.c0.1.0": "Discogs-Ansicht: Der Discogs-Tab zeigt, woher jeder Credit stammt",
       "ms.0.3.0": "Werke: verknüpfte Werke geprüft, vorhandene gefunden, neue angelegt",
       "ms.0.1.0": "Erste Version: die Credits des verknüpften Discogs-Release im Relationship-Editor",
-      "notice.title": "MB x Vibecode: Import Discogs credits {version} – das ist neu",
-      "notice.reset": "Mit diesem Update wurden alle Einstellungen und gespeicherten Daten des Skripts einmal zurückgesetzt (Sprache, Schalter, eigene Mapping-Regeln, Datums- und Track-Pools); die Liste der angelegten Werke blieb erhalten.",
+      "notice.title": "MB x Vibecode: Credits Importer {version} – das ist neu",
+      "old.twice": "Auf dieser Seite laufen zwei Import-Skripte: das alte „MB x Vibecode: Import Discogs credits“ (oder eine zweite Kopie) und „MB x Vibecode: Credits Importer“. Bitte lösche das alte im Skript-Manager (Tampermonkey, Violentmonkey) und lade die Seite neu.",
+      "notice.reset": "Mit diesem Update wurden alle Einstellungen und gespeicherten Daten des Skripts einmal zurückgesetzt – ein Neuanfang: Sprache, Schalter, eigene Mapping-Regeln, Datums- und Track-Pools, die gewählten Quellen und die Liste der angelegten Werke.",
       "notice.changelog": "Changelog",
       "notice.close": "Diese Nachricht schließen",
       "log.noticeClosed": "Update-Nachricht zu {version} geschlossen",
@@ -1569,7 +1959,35 @@
       "log.seriesLabel": "Serie {series}: Verlags-Label {label} von Discogs, für „Serie anlegen …“",
       "medium.label": "Medium:",
       "medium.all": "alle",
-      "medium.option": "Medium {label} ({n} Tracks)",
+      "medium.option.one": "Medium {label} ({n} Track)",
+      "medium.option.other": "Medium {label} ({n} Tracks)",
+      "media.title": "Welche Medien sollen importiert werden?",
+      "media.intro": "Dieses Release hat {n} Medien. Importiert werden die Credits der gewählten Medien; Credits ohne Track-Angabe kommen auf die Tracks der gewählten Medien.",
+      "media.all": "Alle",
+      "media.none": "Keine",
+      "media.text": "Medien:",
+      "media.textPlaceholder": "z. B. 1-4, 5, 8",
+      "media.bad": "Kein Medium dieses Releases: {list} (Medien: {known})",
+      "media.release": "Beziehungen auf Release-Ebene mit importieren (Release und Release-Gruppe)",
+      "media.remember": "Auswahl für dieses Release merken",
+      "media.askHint": "Vor jedem Import dieses Releases wird gefragt.",
+      "media.savedHint": "Vorausgewählt: die für dieses Release gemerkte Auswahl. Gefragt wird trotzdem vor jedem Import.",
+      "media.sum.one": "{m} von {all} Medien · {n} Track",
+      "media.sum.other": "{m} von {all} Medien · {n} Tracks",
+      "media.ok": "Importieren",
+      "media.allRelease": "alle Medien mit Release-Ebene",
+      "media.list": "Medien {list}",
+      "media.noMedia": "keine Medien",
+      "media.withRelease": "{list} mit Release-Ebene",
+      "media.withoutRelease": "{list} ohne Release-Ebene",
+      "media.nowTitle": "Was von Discogs importiert wurde",
+      "media.choose": "Medien wählen …",
+      "media.chooseTitle": "Medien neu wählen und neu importieren",
+      "media.confirm": "Medien neu wählen? Der Import beginnt von vorn; Änderungen in den Zeilen gehen verloren.",
+      "msg.mediaCancelled": "Import abgebrochen: keine Medien gewählt.",
+      "msg.noCreditsMedia": "Keine Credits für diese Auswahl ({text}).",
+      "log.mediaChosen": "Medien gewählt: {text}",
+      "log.mediaCancelled": "Medienauswahl abgebrochen: nichts importiert",
       "medium.load": "Medium {list} im Editor laden",
       "medium.loadTitle": "Öffnet diese Medien im Beziehungseditor von MusicBrainz, damit ihre Recordings Beziehungen bekommen können",
       "msg.mediumAuto": "Dieses Release hat {n} Tracks auf mehreren Medien. Das Dashboard zeigt Medium {m}; nach Übernehmen und „Enter edit“ unter „Medium“ das nächste wählen.",
@@ -1685,7 +2103,7 @@
       "rules.code": "Code",
       "rules.tables": "Tabellen des Registers",
       "instrAsk.ask": "Discogs sagt nur „{name}“. Weißt du, welches Instrument es ist?",
-      "instrAsk.otherwise": "(sonst bleibt es „{credit}“; der Rollen-Credit ist in jedem Fall „{credit}“)",
+      "instrAsk.otherwise": "(sonst bleibt es „{credit}“, ohne Rollen-Credit; bei einer anderen Wahl ist der Rollen-Credit „{credit}“)",
       "log.instrPicked": "{name}: {instrument} (Rollen-Credit „{credit}“)",
       "rules.questions": "Instrument-Nachfragen",
       "rules.options": "Auswahl",
@@ -1731,11 +2149,11 @@
       "log.rulesChanged": "Regeln geändert ({what}): {n} Zeilen neu zugeordnet",
       "log.rulesExported": "{n} eigene Regeln exportiert",
       "datefind.title": "Daten in Fließtext finden",
-      "datefind.inNotes.one": "{n} Datum in den Discogs-Notes gefunden",
-      "datefind.inNotes.other": "{n} Daten in den Discogs-Notes gefunden",
+      "datefind.inNotes.one": "{n} Datum in den Notizen gefunden",
+      "datefind.inNotes.other": "{n} Daten in den Notizen gefunden",
       "datefind.placeholder": "Beliebigen Text einfügen – Liner Notes, einen Discogs-Absatz … – seine Daten erscheinen darunter im MusicBrainz-Format.",
       "datefind.none": "Noch keine Daten gefunden.",
-      "datefind.fromNotes": "Discogs-Notes",
+      "datefind.fromNotes": "Notizen",
       "datefind.fromText": "eingefügter Text",
       "datefind.poolOnly": "nur in den Pool",
       "datefind.poolName": "Datum",
@@ -1759,19 +2177,19 @@
       "trackpool.kept": "Eigenes Datum behalten: {list}",
       "date.fromMatrix": "aus der Matrix: {name}",
       "datefind.inMatrix": "in der Matrix: {list}",
-      "dm.widened": "Diese Daten haben ihre Track-Gruppen verloren und gälten jetzt für alle Tracks; sie sind wieder gestrichelt – bitte prüfen: {list}",
+      "dm.widened": "Diese Daten haben ihre Track-Gruppen verloren und gälten jetzt für alle Tracks; sie sind wieder Vorschläge (gelb gestrichelt) – bitte prüfen: {list}",
       "dm.applied.one": "Matrix angewendet: {n} Zeile hat ein Datum aus der Matrix ({cells} Daten in den Spalten).",
       "dm.applied.other": "Matrix angewendet: {n} Zeilen haben ein Datum aus der Matrix ({cells} Daten in den Spalten).",
       "dm.studios": "Studios auf die Tracks ihrer Daten beschränkt: {list}",
-      "dm.autoPlaced.one": "{n} Datum aus den Discogs-Notes wurde als Vorschlag (gestrichelt) in die Datums-Matrix gesetzt. Bitte prüfen und mit „Anwenden“ auf die Zeilen übertragen.",
-      "dm.autoPlaced.other": "{n} Daten aus den Discogs-Notes wurden als Vorschläge (gestrichelt) in die Datums-Matrix gesetzt. Bitte prüfen und mit „Anwenden“ auf die Zeilen übertragen.",
+      "dm.autoPlaced.one": "{n} Datum aus den Notizen wurde als Vorschlag (gelb gestrichelt) in die Datums-Matrix gesetzt. Bitte prüfen und mit „Anwenden“ auf die Zeilen übertragen.",
+      "dm.autoPlaced.other": "{n} Daten aus den Notizen wurden als Vorschläge (gelb gestrichelt) in die Datums-Matrix gesetzt. Bitte prüfen und mit „Anwenden“ auf die Zeilen übertragen.",
       "dm.pending": "noch nicht angewendet",
       "dm.pickDate": "„{name}“ verschieben: in eine Spalte der Matrix ziehen oder hier klicken und dann auf „hier ablegen“",
       "dm.pickTracks": "„{name}“ verschieben: auf ein Datum der Matrix ziehen oder hier klicken und dann auf „Tracks hierher“",
       "dm.placeHere": "+ hier ablegen",
       "dm.tracksHere": "+ Tracks hierher",
       "dm.dropDates": "Daten hierher ziehen",
-      "dm.help": "① Daten aus dem Datums-Pool in eine Spalte (Datumsgruppe) ziehen. ② Track-Gruppen auf ein Datum ziehen. Ein Datum ohne Track-Gruppe gilt für alle Tracks. Ein Datum auf ein anderes gezogen (im Pool oder hier) ergibt einen Zeitraum aus beiden; ein Pool-Datum auf das Datumsfeld einer Zeile gezogen kommt in diese Zeile. Gestrichelt: automatisch erkannt, noch nicht angewendet. ⠿ verschiebt per Klick statt Ziehen.",
+      "dm.help": "① Daten aus dem Datums-Pool in eine Spalte (Datumsgruppe) ziehen. ② Track-Gruppen auf ein Datum ziehen. Ein Datum ohne Track-Gruppe gilt für alle Tracks. Ein Datum auf ein anderes gezogen (im Pool oder hier) ergibt einen Zeitraum aus beiden; ein Pool-Datum auf das Datumsfeld einer Zeile gezogen kommt in diese Zeile. Gelb gestrichelt: ein Vorschlag (automatisch erkannt), noch nicht angewendet – auch in den Pools, bis er verwendet wird. ⠿ verschiebt per Klick statt Ziehen.",
       "dm.apply": "Anwenden",
       "dm.applyTitle": "Überträgt die Daten der Matrix auf die Zeilen ihrer Datumsgruppen und Tracks (Zeilen werden bei Bedarf nach Tracks und Daten geteilt; in einer Zeile eingegebene Daten bleiben)",
       "dm.auto": "automatisch anwenden",
@@ -1814,6 +2232,7 @@
       "place.page": "in der Seite",
       "log.placeSwitch": "Dashboard angezeigt: {place}",
       "pools.title": "Daten & Tracks",
+      "pools.suggested": "Vorschlag aus den Notizen (gelb gestrichelt), bis du ihn verwendest",
       "pools.toggleTitle": "Datums-Pool, Track-Pool und Matrix zeigen oder einklappen",
       "pools.nDates.one": "{n} Datum",
       "pools.nDates.other": "{n} Daten",
@@ -1824,8 +2243,8 @@
       "pools.clearTracks": "alle Track-Gruppen leeren",
       "pools.clearDatesAsk.one": "{n} Datum aus dem Datums-Pool dieses Releases entfernen? Zeilen behalten ihre schon gesetzten Daten als eigene Daten.",
       "pools.clearDatesAsk.other": "{n} Daten aus dem Datums-Pool dieses Releases entfernen? Zeilen behalten ihre schon gesetzten Daten als eigene Daten.",
-      "pools.clearTracksAsk.one": "{n} Track-Gruppe dieses Releases entfernen? Zeilen behalten ihre Tracks und Daten; Daten in der Matrix gelten dann für alle Tracks (sie werden zu gestrichelten Vorschlägen).",
-      "pools.clearTracksAsk.other": "{n} Track-Gruppen dieses Releases entfernen? Zeilen behalten ihre Tracks und Daten; Daten in der Matrix gelten dann für alle Tracks (sie werden zu gestrichelten Vorschlägen).",
+      "pools.clearTracksAsk.one": "{n} Track-Gruppe dieses Releases entfernen? Zeilen behalten ihre Tracks und Daten; Daten in der Matrix gelten dann für alle Tracks (sie werden zu gelb gestrichelten Vorschlägen).",
+      "pools.clearTracksAsk.other": "{n} Track-Gruppen dieses Releases entfernen? Zeilen behalten ihre Tracks und Daten; Daten in der Matrix gelten dann für alle Tracks (sie werden zu gelb gestrichelten Vorschlägen).",
       "pools.clearOthers.one": "auch die gespeicherten Pools von {n} weiteren Release",
       "pools.clearOthers.other": "auch die gespeicherten Pools von {n} weiteren Releases",
       "pools.clearDo": "Entfernen",
@@ -1863,15 +2282,15 @@
       "msg.dateFillUnverified.one": "Zu {n} bestehenden Beziehung wurde ein Datum hinzugefügt, aber MusicBrainz zeigt {bad} davon nicht als geändert. Bitte vor „Enter edit“ im Editor prüfen.",
       "msg.dateFillUnverified.other": "Zu {n} bestehenden Beziehungen wurden Daten hinzugefügt, aber MusicBrainz zeigt {bad} davon nicht als geändert. Bitte vor „Enter edit“ im Editor prüfen.",
       "pools.reload": "↻ aus Discogs neu laden",
-      "pools.reloadTitle": "Die Daten und Track-Gruppen aus den Discogs-Notes neu anlegen, wie beim ersten Import",
-      "pools.reloadAsk": "Die Daten und Track-Gruppen aus den Discogs-Notes neu laden, wie beim ersten Import? Zeilen behalten ihre Daten bis „Anwenden“.",
+      "pools.reloadTitle": "Die Daten und Track-Gruppen aus den Notizen neu anlegen, wie beim ersten Import",
+      "pools.reloadAsk": "Die Daten und Track-Gruppen aus den Notizen neu laden, wie beim ersten Import? Zeilen behalten ihre Daten bis „Anwenden“.",
       "pools.reloadAll": "auch die von Hand angelegten Daten und Track-Gruppen entfernen (ganz von vorn)",
       "pools.reloadDo": "Neu laden",
-      "pools.reloaded": "Aus den Discogs-Notes neu geladen: {n} Daten im Pool, {placed} in der Matrix.",
-      "dm.autoPooled.one": "{n} Datum aus den Discogs-Notes hat kein Wort, das seine Gruppe nennt; es liegt im Datums-Pool – bei Bedarf in die Matrix oder auf eine Zeile ziehen.",
-      "dm.autoPooled.other": "{n} Daten aus den Discogs-Notes haben kein Wort, das ihre Gruppe nennt; sie liegen im Datums-Pool – bei Bedarf in die Matrix oder auf eine Zeile ziehen.",
+      "pools.reloaded": "Aus den Notizen neu geladen: {n} Daten im Pool, {placed} in der Matrix.",
+      "dm.autoPooled.one": "{n} Datum aus den Notizen hat kein Wort, das seine Gruppe nennt; es liegt im Datums-Pool – bei Bedarf in die Matrix oder auf eine Zeile ziehen.",
+      "dm.autoPooled.other": "{n} Daten aus den Notizen haben kein Wort, das ihre Gruppe nennt; sie liegen im Datums-Pool – bei Bedarf in die Matrix oder auf eine Zeile ziehen.",
       "date.chipTitle": "Klicken zum Bearbeiten oder Löschen; in die Matrix, auf das Datumsfeld einer Zeile oder auf ein anderes Datum ziehen (ergibt einen Zeitraum aus beiden)",
-      "log.poolsReloaded": "Pools aus den Discogs-Notes neu geladen: {n} neue Daten, {placed} in der Matrix (eigene entfernt: {all})",
+      "log.poolsReloaded": "Pools aus den Notizen neu geladen: {n} neue Daten, {placed} in der Matrix (eigene entfernt: {all})",
       "log.datesMerged": "Daten zusammengeführt: {a} + {b} → {date}",
       "trackpool.pick": "Tracks auswählen …",
       "trackpool.allMedia": "alle Medien (je eine Gruppe, {n})",
@@ -1885,7 +2304,7 @@
       "reset.do": "Zurücksetzen",
       "reset.done": "Alle Einstellungen sind wieder auf Standard.",
       "log.dmApplied": "Matrix angewendet: {n} Zeilen mit Datum, {cells} Daten, {split} Zeilen geteilt",
-      "log.dmAuto": "{n} Daten aus den Discogs-Notes als Vorschläge in die Matrix gesetzt",
+      "log.dmAuto": "{n} Daten aus den Notizen als Vorschläge in die Matrix gesetzt",
       "log.dmAutoSwitch": "Matrix automatisch anwenden: {state}",
       "log.poolCleared": "Datums-Pool geleert ({n} Daten)",
       "log.trackPoolCleared": "Track-Pool geleert ({n} Gruppen)",
@@ -1916,22 +2335,121 @@
       "log.dgRelease": "Discogs-Status auf der Release-Seite: {state}",
     },
     es: {
-      "title": "Importar créditos de Discogs",
-      "launcher.open": "Importar créditos de Discogs…",
-      "launcher.status.one": "{n} relación de Discogs preparada, aún sin enviar.",
-      "launcher.status.other": "{n} relaciones de Discogs preparadas, aún sin enviar.",
+      "title": "Credits Importer",
+      "launcher.open": "Importar créditos…",
+      "launcher.status.one": "{n} relación de {src} preparada, aún sin enviar.",
+      "launcher.status.other": "{n} relaciones de {src} preparadas, aún sin enviar.",
       "lang.label": "Idioma",
       "common.close": "Cerrar",
       "common.cancel": "Cancelar",
       "common.quoted": "«{text}»",
       "raw": "{text}",
       "source.current": "{title} (Discogs {id})",
-      "source.none": "Aún no se ha cargado ninguna publicación de Discogs",
-      "source.pick": "Elige la publicación de Discogs enlazada…",
-      "source.other": "Otra URL o ID de publicación de Discogs",
+      "source.none": "Aún no se ha cargado ninguna fuente",
+      "source.pick": "Elige una fuente enlazada…",
+      "source.other": "Otra fuente: publicación de Discogs (URL o ID) o URL de un álbum de Bandcamp",
       "source.load": "Cargar",
+      "source.currentLink": "{title} ({src})",
+      "msg.noSourceLink": "Esta publicación aún no está enlazada con Discogs ni Bandcamp. Introduce una URL arriba o pega un texto.",
+      "srcorder.toggle": "Orden de las fuentes",
+      "forget.button": "Borrar la importación guardada…",
+      "supp.with": "Completar con",
+      "supp.text": "Texto…",
+      "supp.textTitle": "Completar la fuente cargada con un texto pegado (libreto, notas…)",
+      "supp.hint": "La fuente cargada sigue siendo la que cuenta. Lo que solo tiene la segunda es una sugerencia; nada se adopta por sí solo.",
+      "supp.on": "completado",
+      "supp.remove": "quitar",
+      "supp.title": "Complementos de {name}",
+      "supp.summary": "confirmados: {confirmed} · nuevos: {added} · distintos: {differ} · no reconocidos: {unrec}",
+      "supp.selectAll": "seleccionar todo",
+      "supp.th.select": "Adoptar",
+      "supp.th.kind": "Tipo",
+      "supp.th.name": "Nombre",
+      "supp.th.says": "{name} dice",
+      "supp.th.rel": "Relación MB",
+      "supp.th.tracks": "Pistas",
+      "supp.th.mb": "MusicBrainz",
+      "supp.kind.role": "rol nuevo",
+      "supp.kind.entry": "entrada nueva",
+      "supp.kind.differ": "distinto",
+      "supp.kind.unrec": "no reconocido",
+      "supp.hasEntry": "la entrada existe",
+      "supp.onlyHere": "solo en {name}",
+      "supp.asEntry": "como la entrada:",
+      "supp.noMbYet": "la entrada aún no tiene correspondencia en MusicBrainz",
+      "supp.suggest": "sugerencia:",
+      "supp.searchLater": "se busca al adoptarla (solo sugerencias)",
+      "supp.byLink": "por el enlace de {name}:",
+      "supp.differKeep": "no seleccionado: se queda {first}",
+      "supp.differTake": "seleccionado: las pistas de {name}",
+      "supp.differWas": "{first}: {tracks}",
+      "supp.byHand": "a mano («Añadir entrada manualmente»)",
+      "supp.nSelected": "{n} seleccionados",
+      "supp.apply": "Adoptar los seleccionados",
+      "supp.discard": "Descartar todo",
+      "supp.applyHint": "Lo adoptado va a las entradas, marcado {short}.",
+      "supp.empty": "No queda nada por adoptar. Las filas que confirma {name} llevan la marca {short}.",
+      "supp.mismatch": "{name} tiene {n} pistas, MusicBrainz {m}: revisa los números de pista.",
+      "supp.allTracks": "todas",
+      "supp.textLoad": "Leer el texto y completar",
+      "supp.badgeConfirm": "{name} dice lo mismo",
+      "supp.badgeAdded": "adoptado de {name}",
+      "supp.badgeDiffer": "{name} indica otras pistas: {tracks}",
+      "busy.supp": "Leyendo {source} para completar…",
+      "log.suppLoaded": "Complemento de {name}: {confirmed} confirmados, {added} nuevos, {differ} distintos, {unrec} no reconocidos",
+      "log.suppApplied": "Adoptado de {name}: {n}",
+      "log.suppDiscarded": "Complementos de {name} descartados: {n}",
+      "forget.title": "Borra lo que el script guardó para la importación de esta publicación y la importa de nuevo",
+      "forget.ask": "¿Borrar la importación guardada de esta publicación?",
+      "forget.what": "Se borran: el pool de fechas, el pool de pistas y la matriz de fechas de esta publicación, la fuente elegida para ella, su selección de medios, los complementos, su registro y – con el complemento Companion – sus marcas de estado. Después la fuente se importa de nuevo, como la primera vez.",
+      "forget.keeps": "Lo que ya está preparado en el editor de relaciones se queda (descártalo con los botones de MusicBrainz o recargando la página), igual que la lista de obras creadas.",
+      "forget.do": "Borrar e importar de nuevo",
+      "forget.done": "Se borró la importación guardada de esta publicación; la fuente se importa de nuevo.",
+      "log.importForgotten": "Importación guardada de esta publicación borrada (pools, matriz, fuente elegida, selección de medios, complementos, registro, marcas de estado)",
+      "srcorder.physical": "Medios físicos",
+      "srcorder.digital": "Medios digitales",
+      "srcorder.thisRelease": "(esta publicación)",
+      "srcorder.up": "{src} arriba",
+      "srcorder.down": "{src} abajo",
+      "srcorder.hint": "Se carga la primera fuente de la lista enlazada con la publicación (digital: todos sus medios son «Digital Media»). Una fuente que eliges tú para una publicación se recuerda y tiene prioridad.",
+      "bc.tracks": "Leer también los créditos de las páginas de pista",
+      "bc.tracksTitle": "Una petición a Bandcamp por pista; los créditos allí valen solo para su pista",
+      "bc.testPh": "URL de un álbum de Bandcamp para probar",
+      "bc.test": "Probar página",
+      "bc.testBadUrl": "Eso no es una URL de álbum de Bandcamp (https://artist.bandcamp.com/album/name).",
+      "bc.testRunning": "Cargando la página…",
+      "bc.testOk": "Leído: «{title}», {n} pistas, {lines} líneas de créditos, {pages} páginas de pista (mediante {via}).",
+      "err.bandcampData": "No se encontraron datos del álbum en {url}.",
+      "err.pageHttp": "La página respondió con HTTP {status}: {url}",
+      "err.pageNet": "No se pudo cargar la página (bloqueada o sin conexión): {url}",
+      "log.artistSpelling": "{name}: encontrado por su enlace de {src}, pero MusicBrainz lo escribe distinto ({mb}); solo una sugerencia",
+      "log.artistCreditSpelling": "{name}: encontrado por su enlace de {src}, pero la publicación lo nombra distinto en su crédito de artista ({mb}); solo una sugerencia",
+      "log.sourceKept": "Fuente elegida antes para esta publicación: {src}",
+      "log.sourceOrder": "Orden de las fuentes para {kind}: {list}",
+      "log.bcTest": "Prueba de Bandcamp: {text}",
+      "source.text": "Pegar texto…",
+      "source.textTitle": "Créditos de un texto: créditos de Bandcamp, un libreto, notas, una lista de músicos",
+      "source.currentText": "Texto: {title}",
+      "source.textNoTitle": "pegado",
+      "textsrc.title": "Créditos de un texto",
+      "textsrc.label": "Texto de créditos",
+      "textsrc.origin": "¿De dónde viene? (para la nota de edición)",
+      "textsrc.originPh": "p. ej. libreto, https://…",
+      "textsrc.load": "Leer texto",
+      "textsrc.hint": "Mejor un crédito por línea: «Mixed by X», «X – guitar, vocals», «Guitar: X, Y», «Tracks 3–5: Strings arranged by Z». Los nombres solo se sugieren; tú los asignas.",
+      "unrec.title.one": "{n} línea no reconocida",
+      "unrec.title.other": "{n} líneas no reconocidas",
+      "unrec.hint": "Añade lo que falta a mano («Añadir entrada manualmente») o reformula la línea y vuelve a leer el texto.",
+      "msg.textEmpty": "El texto está vacío.",
+      "busy.source": "Leyendo {source}…",
+      "log.sourceLoaded.one": "{source} leído: {artists} entradas, {n} rol, {u} líneas no reconocidas",
+      "log.sourceLoaded.other": "{source} leído: {artists} entradas, {n} roles, {u} líneas no reconocidas",
+      "log.nameSuggested": "{name}: mismo nombre en MusicBrainz (solo una sugerencia): {list}",
+      "match.nameSuggest": "Mismo nombre en MusicBrainz (una sugerencia: compruébala antes de asignar):",
+      "match.linkSuggest": "Encontrado por el enlace de {src}, pero escrito distinto ({mb}); una sugerencia, compruébala antes de asignarla:",
+      "match.nameUseTitle": "Asignar esta entrada de MusicBrainz",
       "sync.off": "Vista de Discogs: desactivada",
-      "sync.offTitle": "El script complementario «MB x Vibecode: Import Discogs credits COMPANION» no está instalado o no está activo.",
+      "sync.offTitle": "El script complementario «MB x Vibecode: Credits Importer Companion» no está instalado o no está activo.",
       "sync.noTab": "Vista de Discogs: ninguna pestaña de Discogs",
       "sync.openTab": "abrir en segundo plano",
       "sync.connected": "Vista de Discogs: conectada ({where})",
@@ -1948,25 +2466,30 @@
       "toolbar.onlyMissing": "Mostrar solo artistas sin coincidencia en MB",
       "toolbar.roleCredits": "Créditos de rol:",
       "toolbar.artistCredits": "Créditos de artista:",
-      "toolbar.asOnDiscogs": "como en Discogs",
+      "toolbar.asOnDiscogs": "como en {src}",
       "toolbar.clearAll": "vaciar todos",
       "level.recording": "Grabación",
       "level.release": "Publicación",
       "level.work": "Obra",
       "level.skip": "Omitir",
-      "th.role": "Rol en Discogs",
+      "th.role": "Rol en {src}",
       "th.type": "Relación en MB",
       "th.attrs": "Atributos y créditos",
       "th.level": "Nivel",
       "th.tracks": "Pistas y estado",
-      "group.spelling": "Grafía en Discogs:",
-      "group.noVariant": "Sin grafía alternativa en Discogs",
+      "group.spelling": "Grafía en {src}:",
+      "group.noVariant": "Sin grafía alternativa en {src}",
+      "spell.title": "Grafía:",
+      "spell.release": "publicación (crédito de artista)",
+      "spell.notInRelease": "no está en el crédito de artista",
+      "spell.same": "igual en todas partes",
+      "spell.differs": "difiere; compruébalo: ¿grafía de la portada, una errata o MusicBrainz lo llama distinto?",
       "group.creditAll": "Crédito de artista para todos los roles",
       "group.creditAllAria": "Crédito de artista para todos los roles de {name}",
       "group.setAll": "Aplicar a todos",
       "group.addRole": "+ Otro rol para {name}",
       "match.searching": "Buscando artista en MB…",
-      "match.linked": "encontrado por enlace de Discogs",
+      "match.linked": "encontrado por enlace de {src}",
       "match.manual": "asignado manualmente",
       "match.created": "recién creado",
       "match.change": "cambiar",
@@ -1976,10 +2499,12 @@
       "match.apply": "Aplicar",
       "match.search": "Buscar en MB",
       "match.create": "Crear artista…",
-      "match.ambiguous": "varios artistas de MB tienen este enlace de Discogs",
+      "match.ambiguous": "varios artistas de MB tienen este enlace de {src}",
       "match.pick": "Elige…",
-      "match.noLink": "ningún artista de MB con este enlace de Discogs",
+      "match.noLink": "ningún artista de MB con este enlace de {src}",
       "match.noId": "sin ID de Discogs",
+      "match.byName": "aún sin asignar (sin enlace): revisa las sugerencias o introduce un MBID",
+      "log.nameLookup": "{name}: sin enlace a MusicBrainz; buscando el mismo nombre",
       "role.placeholder": "p. ej. Keyboards",
       "role.aria": "Rol",
       "role.remove": "Quitar fila",
@@ -1990,14 +2515,14 @@
       "log.rowRestored": "Fila recuperada: {text}",
       "toolbar.onlyWorks": "solo obras",
       "toolbar.onlyWorksTitle": "Omite todo excepto las relaciones de obra de la matriz de obras (compositores, letristas, autores, editoriales, arreglistas …)",
-      "role.source": "Discogs: {where}",
+      "role.source": "{src}: {where}",
       "role.tracks": "pista {list}",
-      "role.wholeRelease": "Discogs: toda la publicación",
-      "role.splitFrom": "en Discogs: «{raw}» (una fila por tarea)",
+      "role.wholeRelease": "{src}: toda la publicación",
+      "role.splitFrom": "en {src}: «{raw}» (una fila por tarea)",
       "role.unresolved": "Sin correspondencia: {list}",
-      "note.uncredited": "Según Discogs, no aparece acreditado en la publicación (Uncredited).",
+      "note.uncredited": "Según {src}, no aparece acreditado en la publicación (Uncredited).",
       "note.featuring": "«Featuring» suele estar ya en el crédito de artista. Compruébalo.",
-      "note.misc": "MusicBrainz no tiene una relación específica para este rol. Se añade como «miscellaneous support» con el rol de Discogs como tarea; ponlo en Omitir si no lo quieres.",
+      "note.misc": "MusicBrainz no tiene una relación específica para este rol. Se añade como «miscellaneous support» con el rol de {src} como tarea; ponlo en Omitir si no lo quieres.",
       "type.skipped": "no se aplica",
       "type.choose": "Elige un tipo…",
       "type.aria": "Tipo de relación de MusicBrainz",
@@ -2019,11 +2544,11 @@
       "picker.all": "Todas",
       "picker.none": "Ninguna",
       "picker.invert": "Invertir",
-      "picker.discogs": "Sugerencia de Discogs",
-      "picker.legend": "Los números marcados con {dot} proceden de Discogs.",
+      "picker.discogs": "Sugerencia de {src}",
+      "picker.legend": "Los números marcados con {dot} proceden de {src}.",
       "picker.medium": "Medio {n}",
-      "picker.dpos": "Posición en Discogs: {pos}",
-      "picker.noDpos": "sin equivalente en Discogs",
+      "picker.dpos": "Posición en {src}: {pos}",
+      "picker.noDpos": "sin equivalente en {src}",
       "status.new.one": "{n} nueva",
       "status.new.other": "{n} nuevas",
       "status.existing.one": "{n} ya existe",
@@ -2049,6 +2574,9 @@
       "kind.workLink.other": "{n} enlaces de obra",
       "sum.incomplete.one": "{n} fila incompleta",
       "sum.incomplete.other": "{n} filas incompletas",
+      "sum.incPrev": "Fila incompleta anterior",
+      "sum.incNext": "Siguiente fila incompleta",
+      "sum.incTitle": "Ir una a una a las filas incompletas; lo que falta se resalta",
       "sum.existing.one": "{n} ya existe en MB",
       "sum.existing.other": "{n} ya existen en MB",
       "footer.preview": "Vista previa de todas las relaciones",
@@ -2093,17 +2621,17 @@
       "sub.popupBlocked": "El navegador bloqueó la ventana.",
       "sub.popupOpen": "El formulario está abierto en su propia ventana. Cuando lo envíes, el panel recogerá el resultado.",
       "artistDlg.title": "Crear artista: {name}",
-      "artistDlg.prefilled": "Prerrellenado desde Discogs: {list}.",
+      "artistDlg.prefilled": "Prerrellenado desde {src}: {list}.",
       "part.name": "nombre",
       "part.type": "tipo {type}",
       "type.group": "grupo",
       "type.person": "persona",
-      "part.urls.one": "{n} enlace web (incluido el enlace de Discogs)",
-      "part.urls.other": "{n} enlaces web (incluido el enlace de Discogs)",
+      "part.urls.one": "{n} enlace web (incluido el enlace de {src})",
+      "part.urls.other": "{n} enlaces web (incluido el enlace de {src})",
       "part.members.one": "una relación «member of band» con {names}",
       "part.members.other": "{n} relaciones «member of band» con {names}",
       "artistDlg.notInMb": "No están en MusicBrainz y por eso no se enlazan: {list}.",
-      "artistDlg.loadFailed": "No se cargaron los datos de Discogs: {msg}",
+      "artistDlg.loadFailed": "No se cargaron los datos de {src}: {msg}",
       "artistDlg.check": "Revisa el formulario y pulsa tú mismo «Enter edit» abajo. Después, el panel recoge automáticamente el nuevo artista. Los enlaces web sin tipo detectado debes asignarlos en el formulario.",
       "artistDlg.done": "El artista «{name}» se ha creado y está asignado en el panel.",
       "workDlg.title": "Crear obra: {title}",
@@ -2116,16 +2644,15 @@
       "workDlg.done": "La obra «{title}» se ha creado. El enlace con la pista {track} está preparado.",
       "busy.mb": "Cargando pistas y relaciones existentes de MusicBrainz…",
       "busy.discogs": "Cargando la publicación de Discogs {id}…",
-      "busy.artists": "Buscando artistas de MB mediante sus enlaces de Discogs…",
-      "busy.discogsArtist": "Cargando datos de Discogs para {name}…",
+      "busy.artists": "Buscando artistas de MB mediante sus enlaces de {src}…",
+      "busy.discogsArtist": "Cargando datos de {src} para {name}…",
       "busy.apply.one": "Preparando {n} relación en el editor…",
       "busy.apply.other": "Preparando {n} relaciones en el editor…",
-      "msg.noDiscogsLink": "Esta publicación aún no está enlazada con Discogs. Introduce arriba una URL de publicación de Discogs.",
-      "msg.multiLinks": "Esta publicación está enlazada con {n} publicaciones de Discogs. Elige una arriba.",
-      "msg.trackMismatch": "Discogs lista {d} pistas y MusicBrainz {m}. Las pistas se asignan por orden. Revisa la selección de pistas en las relaciones de grabación y de obra.",
-      "msg.noCredits": "Discogs no tiene créditos para esta publicación. Puedes añadir entradas manualmente abajo.",
+      "msg.multiLinks": "Esta publicación está enlazada con {n} publicaciones de {src}. Elige una arriba.",
+      "msg.trackMismatch": "{src} lista {d} pistas y MusicBrainz {m}. Las pistas se asignan por orden. Revisa la selección de pistas en las relaciones de grabación y de obra.",
+      "msg.noCredits": "{src} no tiene créditos para esta publicación. Puedes añadir entradas manualmente abajo.",
       "msg.confirmDiscard": "Se descartará la selección actual del panel. ¿Continuar?",
-      "msg.badDiscogsId": "No se reconoce ningún ID de publicación de Discogs. Ejemplo: https://www.discogs.com/release/1234567",
+      "msg.badDiscogsId": "No se reconoce ninguna publicación de Discogs ni álbum de Bandcamp. Ejemplos: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
       "msg.badMbid": "No se reconoce ningún MBID. Pega la URL de una página de artista de MB o un MBID.",
       "msg.notArtist": "Este MBID no pertenece a un artista.",
       "msg.editorNotReady": "El editor de relaciones aún no está listo. Espera a que la página termine de cargar e inténtalo de nuevo.",
@@ -2135,7 +2662,7 @@
       "msg.notLoaded.other": "Se omitieron {n} relaciones porque el medio {media} aún no está cargado en el editor. Despliega el medio en el editor y vuelve a preparar; lo ya preparado se omitirá.",
       "msg.errors.one": "Error en {n} relación: {list}",
       "msg.errors.other": "Errores en {n} relaciones: {list}",
-      "msg.noteMissing": "No se encontró el campo de la nota de edición. Añade tú mismo el origen de Discogs.",
+      "msg.noteMissing": "No se encontró el campo de la nota de edición. Añade tú mismo el origen de {src}.",
       "msg.pendingWorks.one": "{n} obra creada aquí anteriormente aún no está enlazada con su grabación en MusicBrainz. Su enlace vuelve a estar preparado en el panel.",
       "msg.pendingWorks.other": "{n} obras creadas aquí anteriormente aún no están enlazadas con sus grabaciones en MusicBrainz. Sus enlaces vuelven a estar preparados en el panel.",
       "msg.toEditor": "Ir al editor",
@@ -2153,15 +2680,24 @@
       "log.copied": "Copiado",
       "log.clear": "Vaciar",
       "log.hide": "Ocultar",
+      "log.place": "Lugar:",
+      "log.placeTitle": "Dónde se muestra el registro: como ventana propia o en la página junto a la nota de edición (la nota de edición se queda en su sitio).",
+      "log.place.window": "ventana",
+      "log.place.left": "a la izquierda de la nota de edición",
+      "log.place.right": "a la derecha de la nota de edición",
+      "log.place.above": "encima de la nota de edición",
+      "log.placeNarrow": "No hay sitio junto a la nota de edición: el registro se muestra encima hasta que la página sea más ancha.",
+      "log.placeNoNote": "Esta página aún no tiene nota de edición: el registro se muestra como ventana hasta que aparezca.",
+      "log.logPlaced": "Registro mostrado: {place}",
       "log.start": "Panel abierto para la publicación {mbid}",
-      "log.mbLoaded.one": "MusicBrainz cargado: {n} pista ({works} con obra), enlaces de Discogs: {links}",
-      "log.mbLoaded.other": "MusicBrainz cargado: {n} pistas ({works} con obra), enlaces de Discogs: {links}",
-      "log.trackMismatch": "El número de pistas difiere: Discogs {d}, MusicBrainz {m}",
+      "log.mbLoaded.one": "MusicBrainz cargado: {n} pista ({works} con obra), fuentes enlazadas: {links}",
+      "log.mbLoaded.other": "MusicBrainz cargado: {n} pistas ({works} con obra), fuentes enlazadas: {links}",
+      "log.trackMismatch": "El número de pistas difiere: {src} {d}, MusicBrainz {m}",
       "log.discogsLoaded.one": "Publicación de Discogs {id} cargada: {artists} artistas, {n} rol",
       "log.discogsLoaded.other": "Publicación de Discogs {id} cargada: {artists} artistas, {n} roles",
-      "log.artistLinked": "{name}: encontrado por enlace de Discogs → {mb}",
-      "log.artistAmbiguous": "{name}: {n} artistas de MB comparten el enlace de Discogs",
-      "log.artistMissing": "{name}: ningún artista de MB con este enlace de Discogs",
+      "log.artistLinked": "{name}: encontrado por enlace de {src} → {mb}",
+      "log.artistAmbiguous": "{name}: {n} artistas de MB comparten el enlace de {src}",
+      "log.artistMissing": "{name}: ningún artista de MB con este enlace de {src}",
       "log.artistManual": "{name}: asignado manualmente → {mb}",
       "log.artistForm": "Formulario «Crear artista» abierto: {name}",
       "log.artistCreated": "Artista creado: {name} ({mbid})",
@@ -2194,24 +2730,24 @@
       "syncMode.click": "al hacer clic",
       "log.syncMode": "La vista de Discogs sigue al panel {mode}",
       "companies.title": "Companies, etc. (empresas)",
-      "companies.explain": "Sellos, estudios y fábricas de Discogs. Se asignan a sellos o lugares de MB mediante sus enlaces de Discogs. Discogs también lista aquí personas como sellos: pega un artista de MB para enlazarla como persona.",
+      "companies.explain": "Sellos, estudios y fábricas de {src}. Se asignan a sellos o lugares de MB mediante sus enlaces de {src}. {src} también lista aquí personas como sellos: pega un artista de MB para enlazarla como persona.",
       "entity.artist": "artista",
       "entity.label": "sello",
       "entity.place": "lugar",
       "role.asEntity": "como {type} de MB",
-      "role.companyWhole": "Discogs: Companies, etc. (toda la publicación)",
-      "role.catno": "Número de catálogo en Discogs: {catno}",
+      "role.companyWhole": "{src}: Companies, etc. (toda la publicación)",
+      "role.catno": "Número de catálogo en {src}: {catno}",
       "role.companyPlaceholder": "p. ej. Pressed By",
       "credit.companyLabel": "Acreditado como",
       "issue.missingCompany": "falta el sello, lugar o artista de MB",
-      "match.noLinkCompany": "ningún sello, lugar o artista de MB con este enlace de Discogs",
+      "match.noLinkCompany": "ningún sello, lugar o artista de MB con este enlace de {src}",
       "match.placeholderCompany": "URL o MBID de un sello, lugar o artista de MB",
       "match.createLabel": "Crear sello…",
       "match.createPlace": "Crear lugar…",
       "msg.notCompany": "Este MBID no es un artista, ni un sello o lugar adecuado para estos roles.",
       "companyDlg.titleLabel": "Crear sello: {name}",
       "companyDlg.titlePlace": "Crear lugar: {name}",
-      "companyDlg.prefilled": "Prerrellenado desde Discogs: nombre y enlace de Discogs.",
+      "companyDlg.prefilled": "Prerrellenado desde {src}: nombre y enlace de {src}.",
       "companyDlg.checkLabel": "Revisa el formulario, añade tipo y zona si los conoces y pulsa tú mismo «Enter edit» abajo. Después, el panel recoge automáticamente el nuevo sello.",
       "companyDlg.checkPlace": "Revisa el formulario, añade el tipo de lugar (p. ej. estudio) y la zona y pulsa tú mismo «Enter edit» abajo. Después, el panel recoge automáticamente el nuevo lugar.",
       "companyDlg.done": "«{name}» se ha creado y está asignado en el panel.",
@@ -2221,7 +2757,7 @@
       "date.used.one": "{n} fila",
       "date.used.other": "{n} filas",
       "date.suggestions": "Sugerencias:",
-      "date.sugg.copyright": "año ℗/© en las notas de Discogs {date}",
+      "date.sugg.copyright": "año ℗/© en las notas {date}",
       "date.formTitle": "Editar fecha",
       "date.begin": "Fecha de inicio",
       "date.end": "Fecha de fin",
@@ -2276,7 +2812,7 @@
       "manual.entityPlaceholder": "URL o MBID de cualquier entrada de MusicBrainz",
       "manual.search": "Buscar en MB:",
       "msg.badMbidAny": "No se reconoce ningún MBID. Pega la URL de la página de un artista, sello o lugar de MB, o un MBID.",
-      "note.unknownRole": "No es un instrumento conocido por MusicBrainz. Se añade como «miscellaneous support» con el rol de Discogs como tarea; elige un tipo mejor si lo hay.",
+      "note.unknownRole": "No es un instrumento conocido por MusicBrainz. Se añade como «miscellaneous support» con el rol de {src} como tarea; elige un tipo mejor si lo hay.",
       "date.pasteTitle": "Puedes pegar una fecha tal como la muestra MusicBrainz, p. ej. «from 2015-01-26 until 2015-01-27», «in 2015-01» u «on 2015-01-26».",
       "log.datePasted": "Fecha pegada: {date}",
       "log.dashboard": "Panel",
@@ -2301,7 +2837,7 @@
       "dir.recording": "cada grabación seleccionada",
       "dir.work": "cada obra de las pistas seleccionadas",
       "link.mbTitle": "Abrir en MusicBrainz",
-      "link.discogsTitle": "Abrir en Discogs",
+      "link.discogsTitle": "Abrir en {src}",
       "works.openAll.one": "Abrir {n} obra en una pestaña en segundo plano",
       "works.openAll.other": "Abrir {n} obras en pestañas en segundo plano",
       "works.openAllTitle": "Abre todas las obras enlazadas o preparadas para enlazar, sin salir de esta página",
@@ -2312,8 +2848,8 @@
       "works.queueDone.other": "Listo: {n} obras nuevas creadas.",
       "msg.openedTabs.one": "{n} obra abierta en una pestaña en segundo plano.",
       "msg.openedTabs.other": "{n} obras abiertas en pestañas en segundo plano.",
-      "msg.tabsNeedCompanion": "Para abrir pestañas en segundo plano hace falta el script complementario «MB x Vibecode: Import Discogs credits COMPANION», que tiene el permiso del navegador para ello. Sin él, abre los enlaces de las obras en la sección «Obras» con el botón central del ratón.",
-      "msg.tabsCompanionOld": "El script complementario no respondió. Actualiza «MB x Vibecode: Import Discogs credits COMPANION» a la versión 0.3.0 o posterior.",
+      "msg.tabsNeedCompanion": "Para abrir pestañas en segundo plano hace falta el script complementario «MB x Vibecode: Credits Importer Companion», que tiene el permiso del navegador para ello. Sin él, abre los enlaces de las obras en la sección «Obras» con el botón central del ratón.",
+      "msg.tabsCompanionOld": "El script complementario no respondió. Actualiza «MB x Vibecode: Credits Importer Companion» a la versión 0.3.0 o posterior.",
       "log.openedTabs.one": "{n} obra abierta en una pestaña en segundo plano",
       "log.openedTabs.other": "{n} obras abiertas en pestañas en segundo plano",
       "log.workRunDone.one": "Obras creadas una por una: {n} obra nueva",
@@ -2331,12 +2867,12 @@
       "unmapped.badge": "Sin asignar – compruébalo",
       "unmapped.instrument": "buscar instrumentos en MB",
       "unmapped.types": "tipos de relación de MB",
-      "unmapped.discogs": "roles de crédito de Discogs",
+      "unmapped.discogs": "roles de crédito de {src}",
       "unmapped.filter.one": "Solo roles sin asignar ({n})",
       "unmapped.filter.other": "Solo roles sin asignar ({n})",
       "common.remove": "Quitar",
       "matrix.title": "Matriz de obras",
-      "matrix.explain": "Una fila por obra, una columna por persona o editorial. Un clic en una celda activa o desactiva sus roles; ▾ muestra todos los roles y una fecha propia para la celda.",
+      "matrix.explain": "Una fila por obra, una columna por persona o editorial. Un clic en una celda activa o desactiva sus roles; ▾ en una celda muestra todos los roles y una fecha propia, ▾ en la cabecera la fecha de la columna y sus herramientas. Se puede arrastrar un grupo de pistas a una cabecera, a uno de sus roles o a un atributo.",
       "matrix.codes": "Códigos de rol",
       "matrix.codes.cisac": "CISAC (internacional)",
       "matrix.codes.gema": "GEMA",
@@ -2348,6 +2884,61 @@
       "matrix.colCredit": "acreditado como",
       "matrix.colDate": "fecha",
       "matrix.colDateMbTitle": "Esta fecha se añade a las relaciones de esta columna que MusicBrainz tiene sin fecha (una edición de cada una); las fechas que MusicBrainz tiene se mantienen",
+      "note.musicLyrics": "Música y letra en un crédito: «writer» en MusicBrainz",
+      "matrix.attrs": "Atributos del enlace entre grabación y obra",
+      "matrix.attrsAll": "Atributos para todas:",
+      "matrix.attrsShort": "Atributos",
+      "matrix.attrsNone": "ninguno",
+      "matrix.liveOffer": "Publicación en directo ({reason}): un clic añade «live» a este enlace existente en MusicBrainz (una edición). No se pone solo, así una pista de estudio queda como está.",
+      "matrix.attrAllTitle": "{name}: {k} de {n} obras. Clic: para todas las obras (o quitar si todas lo tienen). Soltar un grupo de pistas aquí: solo para sus pistas.",
+      "matrix.attrShort": "abreviar",
+      "matrix.attrLong": "escribir completo",
+      "matrix.attrOpenAll": "abrir todas las filas",
+      "matrix.attrCloseAll": "cerrar todas las filas",
+      "matrix.attrDropHint": "arrastrar un grupo de pistas a un atributo",
+      "matrix.optsTitle": "Tipo de obra e idiomas de la letra de esta obra (clic para cambiar)",
+      "matrix.newWork": "obra nueva",
+      "matrix.waiting": "espera una obra",
+      "matrix.notesReason": "de las notas: «{text}»",
+      "matrix.commissionedReason": "{src} indica «Commissioned By» sin pistas: una sugerencia para cada obra (✓ la mantiene, × la quita)",
+      "matrix.suggOk": "Mantener la sugerencia",
+      "matrix.suggNo": "Quitar la sugerencia",
+      "matrix.colMenu": "Columna: fecha, todas las obras, editoriales",
+      "matrix.colDateTitle": "Fecha de la columna (▾ la cambia; se puede soltar una fecha del pool en la cabecera)",
+      "matrix.roleDropTitle": "{role} – soltar un grupo de pistas aquí: este rol solo para las obras de sus pistas",
+      "matrix.colWorks.one": "{n} obra",
+      "matrix.colWorks.other": "{n} obras",
+      "matrix.suggCount.one": "{n} sugerencia",
+      "matrix.suggCount.other": "{n} sugerencias",
+      "matrix.optsNone": "tipo de obra · idiomas",
+      "matrix.countTracks.one": "{n} pista",
+      "matrix.countTracks.other": "{n} pistas",
+      "matrix.similar": "(nombre parecido)",
+      "matrix.dropReplace": "↧ solo las obras de estas pistas (⇧ Mayús: añadir)",
+      "matrix.dropAdd": "＋ añade las obras de estas pistas",
+      "log.matrixSuggOk": "Sugerencia mantenida: {name}, pista {track}",
+      "log.matrixSuggNo": "Sugerencia quitada: {name}, pista {track}",
+      "log.matrixAttrApplied": "Grupo de pistas {name} → {attr}: {n} enlaces",
+      "log.matrixAttrAdded": "Grupo de pistas {name} añadido → {attr}: {n} enlaces",
+      "log.matrixTracksApplied": "Grupo de pistas {name} → {col} ({roles})",
+      "log.matrixTracksAdded": "Grupo de pistas {name} añadido → {col} ({roles})",
+      "log.notesTracks": "Notas: {name} ({role}) en las pistas {list} {similar}",
+      "log.notesTracksPool": "Notas: {name} en las pistas {list} – solo como grupo de pistas (sin rol adecuado en el panel)",
+      "matrix.attrInMb": "Ya en MusicBrainz",
+      "matrix.attrEdit": "Se añade al enlace existente en MusicBrainz (una edición)",
+      "matrix.liveAuto": "«live» preseleccionado (regla S021): {reason}; desmarcar lo retira",
+      "matrix.liveWhy.rg": "el grupo de publicación está marcado como Live en MusicBrainz",
+      "matrix.liveWhy.format": "{src} marca la publicación como en vivo (formato)",
+      "matrix.liveWhy.notes": "según las notas se grabó en vivo",
+      "matrix.liveWhy.title": "el título de la pista dice live",
+      "matrix.liveWhy.credit": "{src} acredita «{role}» ({name}) para esta pista",
+      "matrix.liveWhy.creditAll": "{src} acredita «{role}» ({name}) para toda la publicación",
+      "matrix.liveOfferRec": "Grabación en directo – {reason}. Este enlace existe en MusicBrainz sin «live»: un clic lo añade (una edición). No se pone solo.",
+      "matrix.songAuto": "Preseleccionado (regla S020) porque {src} nombra música y letra en un crédito (p. ej. «Music And Lyrics By»); un tipo elegido a mano se mantiene",
+      "preview.attrFillTitle": "El enlace existe en MusicBrainz; se añaden los atributos",
+      "log.linkAttrsAdded": "Atributos añadidos a un enlace existente ({list}): {text}",
+      "msg.linkAttrsAdded.one": "Atributos añadidos a {n} enlace existente entre grabación y obra – MusicBrainz lo muestra como modificado (amarillo).",
+      "msg.linkAttrsAdded.other": "Atributos añadidos a {n} enlaces existentes entre grabación y obra – MusicBrainz los muestra como modificados (amarillo).",
       "matrix.collapse": "Contraer columna",
       "matrix.expand": "Expandir columna",
       "matrix.removeCol": "Quitar esta columna de la matriz: sus filas pasan a «Omitir» (siguen en la lista); la columna queda contraída, un clic la recupera",
@@ -2427,6 +3018,12 @@
       "log.stagedChangedInMb": "Cambiada en el propio editor, no se toca: {text}",
       "launcher.shortcut": "Abrir o cerrar el panel: Alt+Mayús+D (Mac: Opción+Mayús+D); también se cierra con Esc",
       "ms.2.16.0": "Marcas de estado en cada línea de pista de Discogs, cada una con el estado de su pista; «Directed By» se pregunta en vez de suponerse; las columnas pueden quitarse de la matriz de obras; las fechas de columna también van a relaciones que MusicBrainz tiene sin fecha",
+      "ms.2.17.0": "Elegir los medios antes de importar una publicación con varios medios; atributos (live, cover …) de los enlaces grabación–obra en la matriz de obras, «live» preseleccionado en publicaciones en directo; «Music and lyrics by» → escritor con «Song» preseleccionado; el registro puede estar junto a la nota de edición",
+      "ms.2.18.0": "Matriz de obras con el aspecto de la matriz de fechas y más compacta: cabeceras como tarjetas, roles como chips, atributos (live, cover …) abreviados bajo cada obra; los grupos de pistas se pueden soltar en cabeceras, roles y atributos; listas de pistas de las notas de Discogs («XYZ Publishing (1, 4, 6)») como sugerencias; «live» preseleccionado solo en enlaces nuevos",
+      "ms.2.19.0": "Las sugerencias se ven igual en todas partes: discontinuas y en amarillo (matriz de fechas, matriz de obras, «li?», entradas de las notas de Discogs aún sin usar en las listas guardadas); «Commissioned By» → commissioned en las obras; «Live Recording By» → ingeniero de grabación y una pista para «live»",
+      "ms.3.0.0": "Reconstruido por dentro: Discogs lo lee un adaptador de fuente que entrega una lista neutral de créditos (persona con enlaces, rol tal como está escrito, detalles, pistas, fuente), y el resto del script trabaja solo con esa lista. Para ti no cambia nada; prepara otras fuentes",
+      "ms.3.3.0": "Nuevo nombre: Credits Importer (y Credits Importer Companion). Además de Discogs lee álbumes de Bandcamp (créditos, también los de las páginas de pista) y textos pegados (libreto, notas): los nombres de ahí solo se sugieren. Una lista de preferencia para medios físicos y digitales decide qué fuente enlazada se carga; en publicaciones digitales primero Bandcamp",
+      "ms.3.5.0": "Completar con una segunda fuente, solo si se pide: «Completar con…» lee otra fuente enlazada o un texto pegado y lista lo que añade (roles nuevos, entradas nuevas) y en qué difiere, para adoptarlo a elección; las filas que confirma llevan su marca. «Borrar la importación guardada…» empieza de nuevo la importación de una publicación. La grafía de Bandcamp se muestra junto al crédito de artista de la publicación y MusicBrainz. Un nuevo comienzo: todos los datos guardados se restablecieron una vez",
       "ms.2.14.0": "Matriz de obras: una fecha soltada sobre una relación que ya está en MusicBrainz sin fecha se le añade (una edición); marcas de estado también para créditos de obras nuevas en el editor",
       "ms.2.13.0": "Grupos de pistas con arrastrar y soltar sobre las pistas de las filas; fechas y grupos de pistas quedan en la barra plegada; las marcas de estado de los créditos de obra (compositor, editorial) se comprueban también en las obras",
       "ms.2.11.0": "Tras una actualización, un mensaje muestra los hitos de la nueva versión",
@@ -2451,8 +3048,9 @@
       "ms.c0.1.0": "Vista de Discogs: la pestaña de Discogs muestra de dónde viene cada crédito",
       "ms.0.3.0": "Obras: obras enlazadas comprobadas, obras existentes encontradas, obras nuevas creadas",
       "ms.0.1.0": "Primera versión: los créditos de la publicación de Discogs enlazada en el editor de relaciones",
-      "notice.title": "MB x Vibecode: Import Discogs credits {version} – novedades",
-      "notice.reset": "Con esta actualización se restablecieron una vez todos los ajustes y datos guardados del script (idioma, interruptores, reglas propias, fechas y pools de pistas); la lista de obras creadas se conservó.",
+      "notice.title": "MB x Vibecode: Credits Importer {version} – novedades",
+      "old.twice": "En esta página se ejecutan dos scripts de importación: el antiguo «MB x Vibecode: Import Discogs credits» (o una segunda copia) y «MB x Vibecode: Credits Importer». Borra el antiguo en tu gestor de scripts (Tampermonkey, Violentmonkey) y vuelve a cargar la página.",
+      "notice.reset": "Con esta actualización se restablecieron una vez todos los ajustes y datos guardados del script – un nuevo comienzo: idioma, interruptores, reglas propias, pools de fechas y pistas, las fuentes elegidas y la lista de obras creadas.",
       "notice.changelog": "Registro de cambios",
       "notice.close": "Cerrar este mensaje",
       "log.noticeClosed": "Mensaje de actualización de {version} cerrado",
@@ -2480,7 +3078,35 @@
       "log.seriesLabel": "Serie {series}: sello editor {label} de Discogs, para «Crear serie …»",
       "medium.label": "Medio:",
       "medium.all": "todos",
-      "medium.option": "Medio {label} ({n} pistas)",
+      "medium.option.one": "Medio {label} ({n} pista)",
+      "medium.option.other": "Medio {label} ({n} pistas)",
+      "media.title": "¿Qué medios se importan?",
+      "media.intro": "Esta publicación tiene {n} medios. Se importan los créditos de los medios elegidos; los créditos sin indicación de pistas van a las pistas de los medios elegidos.",
+      "media.all": "Todos",
+      "media.none": "Ninguno",
+      "media.text": "Medios:",
+      "media.textPlaceholder": "p. ej. 1-4, 5, 8",
+      "media.bad": "No es un medio de esta publicación: {list} (medios: {known})",
+      "media.release": "Importar también las relaciones a nivel de publicación (publicación y grupo de publicaciones)",
+      "media.remember": "Recordar esta selección para esta publicación",
+      "media.askHint": "Se pregunta antes de cada importación de esta publicación.",
+      "media.savedHint": "Preseleccionado: la selección recordada para esta publicación. Aun así se pregunta antes de cada importación.",
+      "media.sum.one": "{m} de {all} medios · {n} pista",
+      "media.sum.other": "{m} de {all} medios · {n} pistas",
+      "media.ok": "Importar",
+      "media.allRelease": "todos los medios con el nivel de publicación",
+      "media.list": "medios {list}",
+      "media.noMedia": "ningún medio",
+      "media.withRelease": "{list} con el nivel de publicación",
+      "media.withoutRelease": "{list} sin el nivel de publicación",
+      "media.nowTitle": "Lo que se importó de Discogs",
+      "media.choose": "Elegir medios …",
+      "media.chooseTitle": "Elegir de nuevo los medios e importar de nuevo",
+      "media.confirm": "¿Elegir de nuevo los medios? La importación empieza de nuevo; se pierden los cambios en las filas.",
+      "msg.mediaCancelled": "Importación cancelada: no se eligió ningún medio.",
+      "msg.noCreditsMedia": "No hay créditos para esta selección ({text}).",
+      "log.mediaChosen": "Medios elegidos: {text}",
+      "log.mediaCancelled": "Selección de medios cancelada: no se importó nada",
       "medium.load": "Cargar el medio {list} en el editor",
       "medium.loadTitle": "Abre estos medios en el editor de relaciones de MusicBrainz para que sus grabaciones puedan recibir relaciones",
       "msg.mediumAuto": "Esta publicación tiene {n} pistas en varios medios. El panel muestra el medio {m}; tras añadir y «Enter edit», elige el siguiente en «Medio».",
@@ -2596,7 +3222,7 @@
       "rules.code": "Código",
       "rules.tables": "Tablas del registro",
       "instrAsk.ask": "Discogs solo dice «{name}». ¿Sabes qué instrumento es?",
-      "instrAsk.otherwise": "(si no, queda «{credit}»; el crédito del rol es «{credit}» en todo caso)",
+      "instrAsk.otherwise": "(si no, queda «{credit}», sin crédito del rol; con otra elección el crédito del rol es «{credit}»)",
       "log.instrPicked": "{name}: {instrument} (crédito del rol «{credit}»)",
       "rules.questions": "Preguntas de instrumento",
       "rules.options": "Opciones",
@@ -2642,11 +3268,11 @@
       "log.rulesChanged": "Reglas cambiadas ({what}): {n} filas asignadas de nuevo",
       "log.rulesExported": "{n} reglas propias exportadas",
       "datefind.title": "Buscar fechas en texto libre",
-      "datefind.inNotes.one": "{n} fecha encontrada en las notas de Discogs",
-      "datefind.inNotes.other": "{n} fechas encontradas en las notas de Discogs",
+      "datefind.inNotes.one": "{n} fecha encontrada en las notas",
+      "datefind.inNotes.other": "{n} fechas encontradas en las notas",
       "datefind.placeholder": "Pega cualquier texto – notas, un párrafo de Discogs … – y sus fechas aparecen abajo en formato de MusicBrainz.",
       "datefind.none": "Aún no se han encontrado fechas.",
-      "datefind.fromNotes": "notas de Discogs",
+      "datefind.fromNotes": "notas",
       "datefind.fromText": "texto pegado",
       "datefind.poolOnly": "solo al pool",
       "datefind.poolName": "Fecha",
@@ -2670,19 +3296,19 @@
       "trackpool.kept": "Conservan su propia fecha: {list}",
       "date.fromMatrix": "de la matriz: {name}",
       "datefind.inMatrix": "en la matriz: {list}",
-      "dm.widened": "Estas fechas han perdido sus grupos de pistas y ahora valdrían para todas las pistas; vuelven a estar discontinuas – revísalas: {list}",
+      "dm.widened": "Estas fechas han perdido sus grupos de pistas y ahora valdrían para todas las pistas; vuelven a ser sugerencias (discontinuas, en amarillo) – revísalas: {list}",
       "dm.applied.one": "Matriz aplicada: {n} fila tiene una fecha de la matriz ({cells} fechas en las columnas).",
       "dm.applied.other": "Matriz aplicada: {n} filas tienen una fecha de la matriz ({cells} fechas en las columnas).",
       "dm.studios": "Estudios limitados a las pistas de sus fechas: {list}",
-      "dm.autoPlaced.one": "{n} fecha de las notas de Discogs se colocó en la matriz de fechas como sugerencia (discontinua). Revísala y pulsa «Aplicar» para llevarla a las filas.",
-      "dm.autoPlaced.other": "{n} fechas de las notas de Discogs se colocaron en la matriz de fechas como sugerencias (discontinuas). Revísalas y pulsa «Aplicar» para llevarlas a las filas.",
+      "dm.autoPlaced.one": "{n} fecha de las notas se colocó en la matriz de fechas como sugerencia (discontinua, en amarillo). Revísala y pulsa «Aplicar» para llevarla a las filas.",
+      "dm.autoPlaced.other": "{n} fechas de las notas se colocaron en la matriz de fechas como sugerencias (discontinuas, en amarillo). Revísalas y pulsa «Aplicar» para llevarlas a las filas.",
       "dm.pending": "aún no aplicado",
       "dm.pickDate": "Mover «{name}»: arrástrala a una columna de la matriz, o haz clic aquí y luego en «colocar aquí»",
       "dm.pickTracks": "Mover «{name}»: arrástralo sobre una fecha de la matriz, o haz clic aquí y luego en «pistas aquí»",
       "dm.placeHere": "+ colocar aquí",
       "dm.tracksHere": "+ pistas aquí",
       "dm.dropDates": "arrastra fechas aquí",
-      "dm.help": "① Arrastra fechas guardadas a una columna (grupo de fecha). ② Arrastra grupos de pistas sobre una fecha. Una fecha sin grupo de pistas vale para todas las pistas. Una fecha arrastrada sobre otra (en las fechas guardadas o aquí) forma un periodo con ambas; una fecha guardada arrastrada al campo de fecha de una fila va a esa fila. Discontinuo: detectado automáticamente, aún no aplicado. ⠿ mueve con clics en vez de arrastrar.",
+      "dm.help": "① Arrastra fechas guardadas a una columna (grupo de fecha). ② Arrastra grupos de pistas sobre una fecha. Una fecha sin grupo de pistas vale para todas las pistas. Una fecha arrastrada sobre otra (en las fechas guardadas o aquí) forma un periodo con ambas; una fecha guardada arrastrada al campo de fecha de una fila va a esa fila. Discontinuo y en amarillo: una sugerencia (detectada automáticamente), aún no aplicada – también en las listas guardadas, hasta que se use. ⠿ mueve con clics en vez de arrastrar.",
       "dm.apply": "Aplicar",
       "dm.applyTitle": "Lleva las fechas de la matriz a las filas de sus grupos de fecha y pistas (las filas se dividen por pistas y fechas si hace falta; las fechas escritas en una fila se mantienen)",
       "dm.auto": "aplicar automáticamente",
@@ -2725,6 +3351,7 @@
       "place.page": "en la página",
       "log.placeSwitch": "Panel mostrado: {place}",
       "pools.title": "Fechas y pistas",
+      "pools.suggested": "sugerencia de las notas (discontinua, en amarillo) hasta que la uses",
       "pools.toggleTitle": "Mostrar o plegar las fechas guardadas, el pool de pistas y la matriz",
       "pools.nDates.one": "{n} fecha",
       "pools.nDates.other": "{n} fechas",
@@ -2735,8 +3362,8 @@
       "pools.clearTracks": "vaciar todos los grupos de pistas",
       "pools.clearDatesAsk.one": "¿Quitar {n} fecha de las fechas guardadas de esta publicación? Las filas conservan las fechas que ya tienen, como fechas propias.",
       "pools.clearDatesAsk.other": "¿Quitar {n} fechas de las fechas guardadas de esta publicación? Las filas conservan las fechas que ya tienen, como fechas propias.",
-      "pools.clearTracksAsk.one": "¿Quitar {n} grupo de pistas de esta publicación? Las filas conservan sus pistas y fechas; las fechas de la matriz valdrán entonces para todas las pistas (pasan a ser sugerencias discontinuas).",
-      "pools.clearTracksAsk.other": "¿Quitar {n} grupos de pistas de esta publicación? Las filas conservan sus pistas y fechas; las fechas de la matriz valdrán entonces para todas las pistas (pasan a ser sugerencias discontinuas).",
+      "pools.clearTracksAsk.one": "¿Quitar {n} grupo de pistas de esta publicación? Las filas conservan sus pistas y fechas; las fechas de la matriz valdrán entonces para todas las pistas (pasan a ser sugerencias discontinuas en amarillo).",
+      "pools.clearTracksAsk.other": "¿Quitar {n} grupos de pistas de esta publicación? Las filas conservan sus pistas y fechas; las fechas de la matriz valdrán entonces para todas las pistas (pasan a ser sugerencias discontinuas en amarillo).",
       "pools.clearOthers.one": "también los pools guardados de {n} publicación más",
       "pools.clearOthers.other": "también los pools guardados de {n} publicaciones más",
       "pools.clearDo": "Quitar",
@@ -2774,15 +3401,15 @@
       "msg.dateFillUnverified.one": "Se añadió una fecha a {n} relación existente, pero MusicBrainz no muestra {bad} de ellas como modificadas. Compruébalo en el editor antes de «Enter edit».",
       "msg.dateFillUnverified.other": "Se añadieron fechas a {n} relaciones existentes, pero MusicBrainz no muestra {bad} de ellas como modificadas. Compruébalo en el editor antes de «Enter edit».",
       "pools.reload": "↻ volver a cargar de Discogs",
-      "pools.reloadTitle": "Volver a crear las fechas y grupos de pistas de las notas de Discogs, como en la primera importación",
-      "pools.reloadAsk": "¿Volver a cargar las fechas y grupos de pistas de las notas de Discogs, como en la primera importación? Las filas conservan sus fechas hasta «Aplicar».",
+      "pools.reloadTitle": "Volver a crear las fechas y grupos de pistas de las notas, como en la primera importación",
+      "pools.reloadAsk": "¿Volver a cargar las fechas y grupos de pistas de las notas, como en la primera importación? Las filas conservan sus fechas hasta «Aplicar».",
       "pools.reloadAll": "quitar también las fechas y grupos de pistas creados a mano (empezar de cero)",
       "pools.reloadDo": "Volver a cargar",
-      "pools.reloaded": "Vuelto a cargar de las notas de Discogs: {n} fechas guardadas, {placed} en la matriz.",
-      "dm.autoPooled.one": "{n} fecha de las notas de Discogs no tiene palabra que nombre su grupo; está en las fechas guardadas – arrástrala a la matriz o a una fila si hace falta.",
-      "dm.autoPooled.other": "{n} fechas de las notas de Discogs no tienen palabra que nombre su grupo; están en las fechas guardadas – arrástralas a la matriz o a una fila si hace falta.",
+      "pools.reloaded": "Vuelto a cargar de las notas: {n} fechas guardadas, {placed} en la matriz.",
+      "dm.autoPooled.one": "{n} fecha de las notas no tiene palabra que nombre su grupo; está en las fechas guardadas – arrástrala a la matriz o a una fila si hace falta.",
+      "dm.autoPooled.other": "{n} fechas de las notas no tienen palabra que nombre su grupo; están en las fechas guardadas – arrástralas a la matriz o a una fila si hace falta.",
       "date.chipTitle": "Clic para editar o borrar; arrástrala a la matriz, al campo de fecha de una fila o sobre otra fecha (forma un periodo con ambas)",
-      "log.poolsReloaded": "Pools vueltos a cargar de las notas de Discogs: {n} fechas nuevas, {placed} en la matriz (propias quitadas: {all})",
+      "log.poolsReloaded": "Pools vueltos a cargar de las notas: {n} fechas nuevas, {placed} en la matriz (propias quitadas: {all})",
       "log.datesMerged": "Fechas unidas: {a} + {b} → {date}",
       "trackpool.pick": "elegir pistas …",
       "trackpool.allMedia": "todos los medios (un grupo cada uno, {n})",
@@ -2796,7 +3423,7 @@
       "reset.do": "Restablecer",
       "reset.done": "Todos los ajustes vuelven a sus valores por defecto.",
       "log.dmApplied": "Matriz aplicada: {n} filas con fecha, {cells} fechas, {split} filas divididas",
-      "log.dmAuto": "{n} fechas de las notas de Discogs colocadas en la matriz como sugerencias",
+      "log.dmAuto": "{n} fechas de las notas colocadas en la matriz como sugerencias",
       "log.dmAutoSwitch": "Aplicar la matriz automáticamente: {state}",
       "log.poolCleared": "Fechas guardadas vaciadas ({n} fechas)",
       "log.trackPoolCleared": "Pool de pistas vaciado ({n} grupos)",
@@ -2827,22 +3454,121 @@
       "log.dgRelease": "Estado de Discogs en la página de la publicación: {state}",
     },
     fr: {
-      "title": "Importer les crédits Discogs",
-      "launcher.open": "Importer les crédits Discogs…",
-      "launcher.status.one": "{n} relation Discogs préparée, pas encore envoyée.",
-      "launcher.status.other": "{n} relations Discogs préparées, pas encore envoyées.",
+      "title": "Credits Importer",
+      "launcher.open": "Importer les crédits…",
+      "launcher.status.one": "{n} relation {src} préparée, pas encore envoyée.",
+      "launcher.status.other": "{n} relations {src} préparées, pas encore envoyées.",
       "lang.label": "Langue",
       "common.close": "Fermer",
       "common.cancel": "Annuler",
       "common.quoted": "« {text} »",
       "raw": "{text}",
       "source.current": "{title} (Discogs {id})",
-      "source.none": "Aucune parution Discogs chargée pour l’instant",
-      "source.pick": "Choisir la parution Discogs liée…",
-      "source.other": "Autre URL ou ID de parution Discogs",
+      "source.none": "Aucune source chargée pour l’instant",
+      "source.pick": "Choisir une source liée…",
+      "source.other": "Autre source : parution Discogs (URL ou ID) ou URL d’un album Bandcamp",
       "source.load": "Charger",
+      "source.currentLink": "{title} ({src})",
+      "msg.noSourceLink": "Cette parution n’est pas encore liée à Discogs ni à Bandcamp. Saisissez une URL ci-dessus ou collez un texte.",
+      "srcorder.toggle": "Ordre des sources",
+      "forget.button": "Supprimer l’import enregistré…",
+      "supp.with": "Compléter avec",
+      "supp.text": "Texte…",
+      "supp.textTitle": "Compléter la source chargée avec un texte collé (livret, notes de pochette…)",
+      "supp.hint": "La source chargée reste déterminante. Ce que seule la seconde contient est une suggestion ; rien n’est repris tout seul.",
+      "supp.on": "complété",
+      "supp.remove": "retirer",
+      "supp.title": "Compléments de {name}",
+      "supp.summary": "confirmés : {confirmed} · nouveaux : {added} · divergents : {differ} · non reconnus : {unrec}",
+      "supp.selectAll": "tout sélectionner",
+      "supp.th.select": "Reprendre",
+      "supp.th.kind": "Type",
+      "supp.th.name": "Nom",
+      "supp.th.says": "{name} indique",
+      "supp.th.rel": "Relation MB",
+      "supp.th.tracks": "Plages",
+      "supp.th.mb": "MusicBrainz",
+      "supp.kind.role": "nouveau rôle",
+      "supp.kind.entry": "nouvelle entrée",
+      "supp.kind.differ": "divergent",
+      "supp.kind.unrec": "non reconnu",
+      "supp.hasEntry": "l’entrée existe",
+      "supp.onlyHere": "seulement dans {name}",
+      "supp.asEntry": "comme l’entrée :",
+      "supp.noMbYet": "l’entrée n’a pas encore de correspondance MusicBrainz",
+      "supp.suggest": "suggestion :",
+      "supp.searchLater": "recherché à la reprise (suggestions seulement)",
+      "supp.byLink": "via le lien {name} :",
+      "supp.differKeep": "non sélectionné : {first} reste",
+      "supp.differTake": "sélectionné : les plages de {name}",
+      "supp.differWas": "{first} : {tracks}",
+      "supp.byHand": "à la main (« Ajouter une entrée manuellement »)",
+      "supp.nSelected": "{n} sélectionnés",
+      "supp.apply": "Reprendre la sélection",
+      "supp.discard": "Tout écarter",
+      "supp.applyHint": "Ce qui est repris va dans les entrées, marqué {short}.",
+      "supp.empty": "Plus rien à reprendre. Les lignes que {name} confirme portent la marque {short}.",
+      "supp.mismatch": "{name} a {n} plages, MusicBrainz {m} : vérifiez les numéros de plage.",
+      "supp.allTracks": "toutes",
+      "supp.textLoad": "Lire le texte et compléter",
+      "supp.badgeConfirm": "{name} indique la même chose",
+      "supp.badgeAdded": "repris de {name}",
+      "supp.badgeDiffer": "{name} indique d’autres plages : {tracks}",
+      "busy.supp": "Lecture de {source} pour compléter…",
+      "log.suppLoaded": "Complément de {name} : {confirmed} confirmés, {added} nouveaux, {differ} divergents, {unrec} non reconnus",
+      "log.suppApplied": "Repris de {name} : {n}",
+      "log.suppDiscarded": "Compléments de {name} écartés : {n}",
+      "forget.title": "Supprime ce que le script a enregistré pour l’import de cette parution et l’importe à nouveau",
+      "forget.ask": "Supprimer l’import enregistré de cette parution ?",
+      "forget.what": "Sont supprimés : le pool de dates, le pool de plages et la matrice de dates de cette parution, la source choisie pour elle, son choix de supports, les compléments, son journal et – avec le Companion – ses marques d’état. Ensuite la source est importée à nouveau, comme la première fois.",
+      "forget.keeps": "Ce qui est déjà préparé dans l’éditeur de relations reste (annulez-le avec les boutons de MusicBrainz ou en rechargeant la page), de même que la liste des œuvres créées.",
+      "forget.do": "Supprimer et importer à nouveau",
+      "forget.done": "L’import enregistré de cette parution a été supprimé ; la source est importée à nouveau.",
+      "log.importForgotten": "Import enregistré de cette parution supprimé (pools, matrice, source choisie, choix de supports, compléments, journal, marques d’état)",
+      "srcorder.physical": "Supports physiques",
+      "srcorder.digital": "Supports numériques",
+      "srcorder.thisRelease": "(cette parution)",
+      "srcorder.up": "{src} vers le haut",
+      "srcorder.down": "{src} vers le bas",
+      "srcorder.hint": "La première source de la liste liée à la parution est chargée (numérique : tous ses supports sont « Digital Media »). Une source que vous choisissez vous-même pour une parution est retenue et passe en premier.",
+      "bc.tracks": "Lire aussi les crédits des pages de piste",
+      "bc.tracksTitle": "Une requête à Bandcamp par piste ; les crédits qui s’y trouvent ne valent que pour leur piste",
+      "bc.testPh": "URL d’un album Bandcamp à tester",
+      "bc.test": "Tester la page",
+      "bc.testBadUrl": "Ce n’est pas une URL d’album Bandcamp (https://artist.bandcamp.com/album/name).",
+      "bc.testRunning": "Chargement de la page…",
+      "bc.testOk": "Lu : « {title} », {n} pistes, {lines} lignes de crédits, {pages} pages de piste (via {via}).",
+      "err.bandcampData": "Aucune donnée d’album trouvée sur {url}.",
+      "err.pageHttp": "La page a répondu HTTP {status} : {url}",
+      "err.pageNet": "La page n’a pas pu être chargée (bloquée ou hors ligne) : {url}",
+      "log.artistSpelling": "{name} : trouvé via son lien {src}, mais MusicBrainz l’écrit autrement ({mb}) – seulement une suggestion",
+      "log.artistCreditSpelling": "{name} : trouvé via son lien {src}, mais la parution le nomme autrement dans son crédit d’artiste ({mb}) – seulement une suggestion",
+      "log.sourceKept": "Source choisie auparavant pour cette parution : {src}",
+      "log.sourceOrder": "Ordre des sources pour {kind} : {list}",
+      "log.bcTest": "Test Bandcamp : {text}",
+      "source.text": "Coller un texte…",
+      "source.textTitle": "Crédits d’un texte : crédits Bandcamp, livret, notes de pochette, une liste de musiciens",
+      "source.currentText": "Texte : {title}",
+      "source.textNoTitle": "collé",
+      "textsrc.title": "Crédits d’un texte",
+      "textsrc.label": "Texte des crédits",
+      "textsrc.origin": "D’où vient-il ? (pour la note de modification)",
+      "textsrc.originPh": "p. ex. livret, https://…",
+      "textsrc.load": "Lire le texte",
+      "textsrc.hint": "Idéalement un crédit par ligne : « Mixed by X », « X – guitar, vocals », « Guitar: X, Y », « Tracks 3–5: Strings arranged by Z ». Les noms sont seulement suggérés ; c’est vous qui les associez.",
+      "unrec.title.one": "{n} ligne non reconnue",
+      "unrec.title.other": "{n} lignes non reconnues",
+      "unrec.hint": "Complétez à la main (« Ajouter une entrée manuellement ») ou reformulez la ligne et relisez le texte.",
+      "msg.textEmpty": "Le texte est vide.",
+      "busy.source": "Lecture de {source}…",
+      "log.sourceLoaded.one": "{source} lu : {artists} entrées, {n} rôle, {u} lignes non reconnues",
+      "log.sourceLoaded.other": "{source} lu : {artists} entrées, {n} rôles, {u} lignes non reconnues",
+      "log.nameSuggested": "{name} : même nom dans MusicBrainz (seulement une suggestion) : {list}",
+      "match.nameSuggest": "Même nom dans MusicBrainz (une suggestion – à vérifier avant d’associer) :",
+      "match.linkSuggest": "Trouvé via le lien {src}, mais écrit autrement ({mb}) – une suggestion, à vérifier avant d’attribuer :",
+      "match.nameUseTitle": "Associer cette entrée MusicBrainz",
       "sync.off": "Vue Discogs : désactivée",
-      "sync.offTitle": "Le script complémentaire « MB x Vibecode: Import Discogs credits COMPANION » n’est pas installé ou pas actif.",
+      "sync.offTitle": "Le script complémentaire « MB x Vibecode: Credits Importer Companion » n’est pas installé ou pas actif.",
       "sync.noTab": "Vue Discogs : aucun onglet Discogs",
       "sync.openTab": "ouvrir en arrière-plan",
       "sync.connected": "Vue Discogs : connectée ({where})",
@@ -2859,25 +3585,30 @@
       "toolbar.onlyMissing": "Afficher uniquement les artistes sans correspondance MB",
       "toolbar.roleCredits": "Crédits de rôle :",
       "toolbar.artistCredits": "Crédits d’artiste :",
-      "toolbar.asOnDiscogs": "comme sur Discogs",
+      "toolbar.asOnDiscogs": "comme sur {src}",
       "toolbar.clearAll": "tout vider",
       "level.recording": "Enregistrement",
       "level.release": "Parution",
       "level.work": "Œuvre",
       "level.skip": "Ignorer",
-      "th.role": "Rôle Discogs",
+      "th.role": "Rôle {src}",
       "th.type": "Relation MB",
       "th.attrs": "Attributs et crédits",
       "th.level": "Niveau",
       "th.tracks": "Pistes et état",
-      "group.spelling": "Graphie sur Discogs :",
-      "group.noVariant": "Pas de graphie différente sur Discogs",
+      "group.spelling": "Graphie sur {src} :",
+      "group.noVariant": "Pas de graphie différente sur {src}",
+      "spell.title": "Graphie :",
+      "spell.release": "parution (crédit d’artiste)",
+      "spell.notInRelease": "absent du crédit d’artiste",
+      "spell.same": "identique partout",
+      "spell.differs": "diffère – à vérifier : graphie de la pochette, faute de frappe, ou MusicBrainz l’écrit-il autrement ?",
       "group.creditAll": "Crédit d’artiste pour tous les rôles",
       "group.creditAllAria": "Crédit d’artiste pour tous les rôles de {name}",
       "group.setAll": "Appliquer à tous",
       "group.addRole": "+ Autre rôle pour {name}",
       "match.searching": "Recherche de l’artiste MB…",
-      "match.linked": "trouvé via le lien Discogs",
+      "match.linked": "trouvé via le lien {src}",
       "match.manual": "défini manuellement",
       "match.created": "nouvellement créé",
       "match.change": "modifier",
@@ -2887,10 +3618,12 @@
       "match.apply": "Appliquer",
       "match.search": "Chercher sur MB",
       "match.create": "Créer l’artiste…",
-      "match.ambiguous": "plusieurs artistes MB ont ce lien Discogs",
+      "match.ambiguous": "plusieurs artistes MB ont ce lien {src}",
       "match.pick": "Veuillez choisir…",
-      "match.noLink": "aucun artiste MB avec ce lien Discogs",
+      "match.noLink": "aucun artiste MB avec ce lien {src}",
       "match.noId": "sans ID Discogs",
+      "match.byName": "pas encore associé (sans lien) – vérifiez les suggestions ou saisissez un MBID",
+      "log.nameLookup": "{name} : pas de lien vers MusicBrainz – recherche du même nom",
       "role.placeholder": "p. ex. Keyboards",
       "role.aria": "Rôle",
       "role.remove": "Supprimer la ligne",
@@ -2901,14 +3634,14 @@
       "log.rowRestored": "Ligne rétablie : {text}",
       "toolbar.onlyWorks": "œuvres seules",
       "toolbar.onlyWorksTitle": "Ignore tout sauf les relations d’œuvre de la matrice des œuvres (compositeurs, paroliers, auteurs, éditeurs, arrangeurs …)",
-      "role.source": "Discogs : {where}",
+      "role.source": "{src} : {where}",
       "role.tracks": "piste {list}",
-      "role.wholeRelease": "Discogs : toute la parution",
-      "role.splitFrom": "sur Discogs : « {raw} » (une ligne par tâche)",
+      "role.wholeRelease": "{src} : toute la parution",
+      "role.splitFrom": "sur {src} : « {raw} » (une ligne par tâche)",
       "role.unresolved": "Sans correspondance : {list}",
-      "note.uncredited": "Selon Discogs, non mentionné sur la parution (Uncredited).",
+      "note.uncredited": "Selon {src}, non mentionné sur la parution (Uncredited).",
       "note.featuring": "« Featuring » figure généralement déjà dans le crédit d’artiste. Veuillez vérifier.",
-      "note.misc": "MusicBrainz n’a pas de relation spécifique pour ce rôle. Il est ajouté comme « miscellaneous support » avec le rôle Discogs comme tâche ; mettez-le sur Ignorer si vous n’en voulez pas.",
+      "note.misc": "MusicBrainz n’a pas de relation spécifique pour ce rôle. Il est ajouté comme « miscellaneous support » avec le rôle {src} comme tâche ; mettez-le sur Ignorer si vous n’en voulez pas.",
       "type.skipped": "non appliqué",
       "type.choose": "Choisir un type…",
       "type.aria": "Type de relation MusicBrainz",
@@ -2930,11 +3663,11 @@
       "picker.all": "Toutes",
       "picker.none": "Aucune",
       "picker.invert": "Inverser",
-      "picker.discogs": "Suggestion Discogs",
-      "picker.legend": "Les numéros marqués de {dot} proviennent de Discogs.",
+      "picker.discogs": "Suggestion {src}",
+      "picker.legend": "Les numéros marqués de {dot} proviennent de {src}.",
       "picker.medium": "Support {n}",
-      "picker.dpos": "Position Discogs : {pos}",
-      "picker.noDpos": "pas d’équivalent Discogs",
+      "picker.dpos": "Position {src} : {pos}",
+      "picker.noDpos": "pas d’équivalent {src}",
       "status.new.one": "{n} nouvelle",
       "status.new.other": "{n} nouvelles",
       "status.existing.one": "{n} existe déjà",
@@ -2960,6 +3693,9 @@
       "kind.workLink.other": "{n} liens d’œuvre",
       "sum.incomplete.one": "{n} ligne incomplète",
       "sum.incomplete.other": "{n} lignes incomplètes",
+      "sum.incPrev": "Ligne incomplète précédente",
+      "sum.incNext": "Ligne incomplète suivante",
+      "sum.incTitle": "Aller aux lignes incomplètes une à une ; ce qui manque est mis en évidence",
       "sum.existing.one": "{n} existe déjà sur MB",
       "sum.existing.other": "{n} existent déjà sur MB",
       "footer.preview": "Aperçu de toutes les relations",
@@ -3004,17 +3740,17 @@
       "sub.popupBlocked": "Le navigateur a bloqué la fenêtre.",
       "sub.popupOpen": "Le formulaire est ouvert dans sa propre fenêtre. Après l’envoi, le tableau récupère le résultat.",
       "artistDlg.title": "Créer l’artiste : {name}",
-      "artistDlg.prefilled": "Prérempli depuis Discogs : {list}.",
+      "artistDlg.prefilled": "Prérempli depuis {src} : {list}.",
       "part.name": "nom",
       "part.type": "type {type}",
       "type.group": "groupe",
       "type.person": "personne",
-      "part.urls.one": "{n} lien web (lien Discogs compris)",
-      "part.urls.other": "{n} liens web (lien Discogs compris)",
+      "part.urls.one": "{n} lien web (lien {src} compris)",
+      "part.urls.other": "{n} liens web (lien {src} compris)",
       "part.members.one": "une relation « member of band » avec {names}",
       "part.members.other": "{n} relations « member of band » avec {names}",
       "artistDlg.notInMb": "Absents de MusicBrainz et donc non liés : {list}.",
-      "artistDlg.loadFailed": "Données Discogs non chargées : {msg}",
+      "artistDlg.loadFailed": "Données {src} non chargées : {msg}",
       "artistDlg.check": "Vérifiez le formulaire et cliquez vous-même sur « Enter edit » en bas. Le tableau récupère ensuite automatiquement le nouvel artiste. Les liens web sans type détecté doivent être attribués dans le formulaire.",
       "artistDlg.done": "L’artiste « {name} » a été créé et est associé dans le tableau.",
       "workDlg.title": "Créer l’œuvre : {title}",
@@ -3027,16 +3763,15 @@
       "workDlg.done": "L’œuvre « {title} » a été créée. Le lien avec la piste {track} est préparé.",
       "busy.mb": "Chargement des pistes et des relations existantes depuis MusicBrainz…",
       "busy.discogs": "Chargement de la parution Discogs {id}…",
-      "busy.artists": "Recherche des artistes MB via leurs liens Discogs…",
-      "busy.discogsArtist": "Chargement des données Discogs pour {name}…",
+      "busy.artists": "Recherche des artistes MB via leurs liens {src}…",
+      "busy.discogsArtist": "Chargement des données {src} pour {name}…",
       "busy.apply.one": "Préparation de {n} relation dans l’éditeur…",
       "busy.apply.other": "Préparation de {n} relations dans l’éditeur…",
-      "msg.noDiscogsLink": "Cette parution n’est pas encore liée à Discogs. Saisissez une URL de parution Discogs ci-dessus.",
-      "msg.multiLinks": "Cette parution est liée à {n} parutions Discogs. Choisissez-en une ci-dessus.",
-      "msg.trackMismatch": "Discogs liste {d} pistes, MusicBrainz {m}. Les pistes sont associées dans l’ordre. Vérifiez la sélection des pistes pour les relations d’enregistrement et d’œuvre.",
-      "msg.noCredits": "Discogs n’a aucun crédit pour cette parution. Vous pouvez ajouter des entrées manuellement ci-dessous.",
+      "msg.multiLinks": "Cette parution est liée à {n} parutions {src}. Choisissez-en une ci-dessus.",
+      "msg.trackMismatch": "{src} liste {d} pistes, MusicBrainz {m}. Les pistes sont associées dans l’ordre. Vérifiez la sélection des pistes pour les relations d’enregistrement et d’œuvre.",
+      "msg.noCredits": "{src} n’a aucun crédit pour cette parution. Vous pouvez ajouter des entrées manuellement ci-dessous.",
       "msg.confirmDiscard": "La sélection actuelle du tableau sera abandonnée. Continuer ?",
-      "msg.badDiscogsId": "Aucun ID de parution Discogs reconnu. Exemple : https://www.discogs.com/release/1234567",
+      "msg.badDiscogsId": "Aucune parution Discogs ni album Bandcamp reconnu. Exemples : https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
       "msg.badMbid": "Aucun MBID reconnu. Collez l’URL d’une page d’artiste MB ou un MBID.",
       "msg.notArtist": "Ce MBID n’appartient pas à un artiste.",
       "msg.editorNotReady": "L’éditeur de relations n’est pas encore prêt. Attendez que la page soit entièrement chargée et réessayez.",
@@ -3046,7 +3781,7 @@
       "msg.notLoaded.other": "{n} relations ignorées, car le support {media} n’est pas encore chargé dans l’éditeur. Dépliez le support dans l’éditeur et préparez de nouveau ; ce qui est déjà préparé sera ignoré.",
       "msg.errors.one": "Erreur pour {n} relation : {list}",
       "msg.errors.other": "Erreurs pour {n} relations : {list}",
-      "msg.noteMissing": "Le champ de la note de modification est introuvable. Veuillez ajouter vous-même la source Discogs.",
+      "msg.noteMissing": "Le champ de la note de modification est introuvable. Veuillez ajouter vous-même la source {src}.",
       "msg.pendingWorks.one": "{n} œuvre créée ici auparavant n’est pas encore liée à son enregistrement dans MusicBrainz. Son lien est de nouveau préparé dans le tableau.",
       "msg.pendingWorks.other": "{n} œuvres créées ici auparavant ne sont pas encore liées à leurs enregistrements dans MusicBrainz. Leurs liens sont de nouveau préparés dans le tableau.",
       "msg.toEditor": "Vers l’éditeur",
@@ -3064,15 +3799,24 @@
       "log.copied": "Copié",
       "log.clear": "Vider",
       "log.hide": "Masquer",
+      "log.place": "Emplacement :",
+      "log.placeTitle": "Où le journal est affiché : dans sa propre fenêtre, ou dans la page à côté de la note de modification (la note de modification reste à sa place).",
+      "log.place.window": "fenêtre",
+      "log.place.left": "à gauche de la note de modification",
+      "log.place.right": "à droite de la note de modification",
+      "log.place.above": "au-dessus de la note de modification",
+      "log.placeNarrow": "Pas assez de place à côté de la note de modification : le journal s’affiche au-dessus jusqu’à ce que la page soit plus large.",
+      "log.placeNoNote": "Pas encore de note de modification sur cette page : le journal s’affiche en fenêtre jusqu’à ce qu’elle apparaisse.",
+      "log.logPlaced": "Journal affiché : {place}",
       "log.start": "Tableau ouvert pour la parution {mbid}",
-      "log.mbLoaded.one": "MusicBrainz chargé : {n} piste ({works} avec œuvre), liens Discogs : {links}",
-      "log.mbLoaded.other": "MusicBrainz chargé : {n} pistes ({works} avec œuvre), liens Discogs : {links}",
-      "log.trackMismatch": "Nombre de pistes différent : Discogs {d}, MusicBrainz {m}",
+      "log.mbLoaded.one": "MusicBrainz chargé : {n} piste ({works} avec œuvre), sources liées : {links}",
+      "log.mbLoaded.other": "MusicBrainz chargé : {n} pistes ({works} avec œuvre), sources liées : {links}",
+      "log.trackMismatch": "Nombre de pistes différent : {src} {d}, MusicBrainz {m}",
       "log.discogsLoaded.one": "Parution Discogs {id} chargée : {artists} artistes, {n} rôle",
       "log.discogsLoaded.other": "Parution Discogs {id} chargée : {artists} artistes, {n} rôles",
-      "log.artistLinked": "{name} : trouvé via le lien Discogs → {mb}",
-      "log.artistAmbiguous": "{name} : {n} artistes MB partagent le lien Discogs",
-      "log.artistMissing": "{name} : aucun artiste MB avec ce lien Discogs",
+      "log.artistLinked": "{name} : trouvé via le lien {src} → {mb}",
+      "log.artistAmbiguous": "{name} : {n} artistes MB partagent le lien {src}",
+      "log.artistMissing": "{name} : aucun artiste MB avec ce lien {src}",
       "log.artistManual": "{name} : défini manuellement → {mb}",
       "log.artistForm": "Formulaire « Créer l’artiste » ouvert : {name}",
       "log.artistCreated": "Artiste créé : {name} ({mbid})",
@@ -3105,24 +3849,24 @@
       "syncMode.click": "au clic",
       "log.syncMode": "La vue Discogs suit le tableau {mode}",
       "companies.title": "Companies, etc. (sociétés)",
-      "companies.explain": "Labels, studios et usines de Discogs. Ils sont associés à des labels ou lieux MB via leurs liens Discogs. Discogs liste aussi des personnes comme labels : collez un artiste MB pour la lier comme personne.",
+      "companies.explain": "Labels, studios et usines de {src}. Ils sont associés à des labels ou lieux MB via leurs liens {src}. {src} liste aussi des personnes comme labels : collez un artiste MB pour la lier comme personne.",
       "entity.artist": "artiste",
       "entity.label": "label",
       "entity.place": "lieu",
       "role.asEntity": "comme {type} MB",
-      "role.companyWhole": "Discogs : Companies, etc. (toute la parution)",
-      "role.catno": "Numéro de catalogue sur Discogs : {catno}",
+      "role.companyWhole": "{src} : Companies, etc. (toute la parution)",
+      "role.catno": "Numéro de catalogue sur {src} : {catno}",
       "role.companyPlaceholder": "p. ex. Pressed By",
       "credit.companyLabel": "Crédité comme",
       "issue.missingCompany": "label, lieu ou artiste MB manquant",
-      "match.noLinkCompany": "aucun label, lieu ou artiste MB avec ce lien Discogs",
+      "match.noLinkCompany": "aucun label, lieu ou artiste MB avec ce lien {src}",
       "match.placeholderCompany": "URL ou MBID d’un label, lieu ou artiste MB",
       "match.createLabel": "Créer le label…",
       "match.createPlace": "Créer le lieu…",
       "msg.notCompany": "Ce MBID n’est ni un artiste, ni un label ou lieu adapté à ces rôles.",
       "companyDlg.titleLabel": "Créer le label : {name}",
       "companyDlg.titlePlace": "Créer le lieu : {name}",
-      "companyDlg.prefilled": "Prérempli depuis Discogs : nom et lien Discogs.",
+      "companyDlg.prefilled": "Prérempli depuis {src} : nom et lien {src}.",
       "companyDlg.checkLabel": "Vérifiez le formulaire, ajoutez le type et la zone si vous les connaissez, puis cliquez vous-même sur « Enter edit » en bas. Le tableau récupère ensuite automatiquement le nouveau label.",
       "companyDlg.checkPlace": "Vérifiez le formulaire, ajoutez le type de lieu (p. ex. studio) et la zone, puis cliquez vous-même sur « Enter edit » en bas. Le tableau récupère ensuite automatiquement le nouveau lieu.",
       "companyDlg.done": "« {name} » a été créé et est associé dans le tableau.",
@@ -3132,7 +3876,7 @@
       "date.used.one": "{n} ligne",
       "date.used.other": "{n} lignes",
       "date.suggestions": "Suggestions :",
-      "date.sugg.copyright": "année ℗/© dans les notes Discogs {date}",
+      "date.sugg.copyright": "année ℗/© dans les notes {date}",
       "date.formTitle": "Modifier la date",
       "date.begin": "Date de début",
       "date.end": "Date de fin",
@@ -3187,7 +3931,7 @@
       "manual.entityPlaceholder": "URL ou MBID de n’importe quelle entrée MusicBrainz",
       "manual.search": "Chercher sur MB :",
       "msg.badMbidAny": "Aucun MBID reconnu. Collez l’URL de la page d’un artiste, label ou lieu MB, ou un MBID.",
-      "note.unknownRole": "Pas un instrument connu de MusicBrainz. Ajouté comme « miscellaneous support » avec le rôle Discogs comme tâche ; choisissez un meilleur type s’il y en a un.",
+      "note.unknownRole": "Pas un instrument connu de MusicBrainz. Ajouté comme « miscellaneous support » avec le rôle {src} comme tâche ; choisissez un meilleur type s’il y en a un.",
       "date.pasteTitle": "Vous pouvez coller une date telle que MusicBrainz l’affiche, p. ex. « from 2015-01-26 until 2015-01-27 », « in 2015-01 » ou « on 2015-01-26 ».",
       "log.datePasted": "Date collée : {date}",
       "log.dashboard": "Tableau",
@@ -3212,7 +3956,7 @@
       "dir.recording": "chaque enregistrement choisi",
       "dir.work": "chaque œuvre des pistes choisies",
       "link.mbTitle": "Ouvrir sur MusicBrainz",
-      "link.discogsTitle": "Ouvrir sur Discogs",
+      "link.discogsTitle": "Ouvrir sur {src}",
       "works.openAll.one": "Ouvrir {n} œuvre dans un onglet en arrière-plan",
       "works.openAll.other": "Ouvrir {n} œuvres dans des onglets en arrière-plan",
       "works.openAllTitle": "Ouvre toutes les œuvres liées ou prévues pour un lien, sans quitter cette page",
@@ -3223,8 +3967,8 @@
       "works.queueDone.other": "Terminé : {n} nouvelles œuvres créées.",
       "msg.openedTabs.one": "{n} œuvre ouverte dans un onglet en arrière-plan.",
       "msg.openedTabs.other": "{n} œuvres ouvertes dans des onglets en arrière-plan.",
-      "msg.tabsNeedCompanion": "L’ouverture d’onglets en arrière-plan nécessite le script complémentaire « MB x Vibecode: Import Discogs credits COMPANION », qui a l’autorisation du navigateur pour cela. Sans lui, ouvrez les liens des œuvres de la section « Œuvres » avec le clic du milieu.",
-      "msg.tabsCompanionOld": "Le script complémentaire n’a pas répondu. Veuillez mettre à jour « MB x Vibecode: Import Discogs credits COMPANION » vers la version 0.3.0 ou ultérieure.",
+      "msg.tabsNeedCompanion": "L’ouverture d’onglets en arrière-plan nécessite le script complémentaire « MB x Vibecode: Credits Importer Companion », qui a l’autorisation du navigateur pour cela. Sans lui, ouvrez les liens des œuvres de la section « Œuvres » avec le clic du milieu.",
+      "msg.tabsCompanionOld": "Le script complémentaire n’a pas répondu. Veuillez mettre à jour « MB x Vibecode: Credits Importer Companion » vers la version 0.3.0 ou ultérieure.",
       "log.openedTabs.one": "{n} œuvre ouverte dans un onglet en arrière-plan",
       "log.openedTabs.other": "{n} œuvres ouvertes dans des onglets en arrière-plan",
       "log.workRunDone.one": "Œuvres créées une par une : {n} nouvelle œuvre",
@@ -3242,12 +3986,12 @@
       "unmapped.badge": "Non attribué – à vérifier",
       "unmapped.instrument": "chercher des instruments MB",
       "unmapped.types": "types de relation MB",
-      "unmapped.discogs": "rôles de crédit Discogs",
+      "unmapped.discogs": "rôles de crédit {src}",
       "unmapped.filter.one": "Seulement les rôles non attribués ({n})",
       "unmapped.filter.other": "Seulement les rôles non attribués ({n})",
       "common.remove": "Retirer",
       "matrix.title": "Matrice des œuvres",
-      "matrix.explain": "Une ligne par œuvre, une colonne par personne ou éditeur. Un clic sur une cellule active ou désactive ses rôles ; ▾ affiche tous les rôles et une date propre à la cellule.",
+      "matrix.explain": "Une ligne par œuvre, une colonne par personne ou éditeur. Un clic sur une cellule active ou désactive ses rôles ; ▾ dans une cellule affiche tous les rôles et une date propre, ▾ dans un en-tête la date de la colonne et ses outils. Un groupe de pistes peut être glissé sur un en-tête, un de ses rôles ou un attribut.",
       "matrix.codes": "Codes de rôle",
       "matrix.codes.cisac": "CISAC (international)",
       "matrix.codes.gema": "GEMA",
@@ -3259,6 +4003,61 @@
       "matrix.colCredit": "crédité comme",
       "matrix.colDate": "date",
       "matrix.colDateMbTitle": "Cette date est ajoutée aux relations de cette colonne que MusicBrainz a sans date (une modification de chacune) ; les dates que MusicBrainz a restent",
+      "note.musicLyrics": "Musique et paroles dans un même crédit : « writer » dans MusicBrainz",
+      "matrix.attrs": "Attributs du lien entre enregistrement et œuvre",
+      "matrix.attrsAll": "Attributs pour toutes :",
+      "matrix.attrsShort": "Attributs",
+      "matrix.attrsNone": "aucun",
+      "matrix.liveOffer": "Parution live ({reason}) : un clic ajoute « live » à ce lien existant dans MusicBrainz (une modification). Il n’est pas mis de lui-même, une piste studio reste donc telle quelle.",
+      "matrix.attrAllTitle": "{name} : {k} sur {n} œuvres. Clic : pour toutes les œuvres (ou retiré si toutes l’ont). Déposer un groupe de pistes ici : seulement pour ses pistes.",
+      "matrix.attrShort": "abréger",
+      "matrix.attrLong": "en toutes lettres",
+      "matrix.attrOpenAll": "ouvrir toutes les lignes",
+      "matrix.attrCloseAll": "fermer toutes les lignes",
+      "matrix.attrDropHint": "glisser un groupe de pistes sur un attribut",
+      "matrix.optsTitle": "Type d’œuvre et langues des paroles de cette œuvre (clic pour changer)",
+      "matrix.newWork": "nouvelle œuvre",
+      "matrix.waiting": "attend une œuvre",
+      "matrix.notesReason": "des notes : « {text} »",
+      "matrix.commissionedReason": "{src} indique « Commissioned By » sans pistes : une suggestion pour chaque œuvre (✓ la garde, × la retire)",
+      "matrix.suggOk": "Garder la suggestion",
+      "matrix.suggNo": "Retirer la suggestion",
+      "matrix.colMenu": "Colonne : date, toutes les œuvres, éditeurs",
+      "matrix.colDateTitle": "Date de la colonne (▾ la change ; une date du pool peut être déposée sur l’en-tête)",
+      "matrix.roleDropTitle": "{role} – déposer un groupe de pistes ici : ce rôle seulement pour les œuvres de ses pistes",
+      "matrix.colWorks.one": "{n} œuvre",
+      "matrix.colWorks.other": "{n} œuvres",
+      "matrix.suggCount.one": "{n} suggestion",
+      "matrix.suggCount.other": "{n} suggestions",
+      "matrix.optsNone": "type d’œuvre · langues",
+      "matrix.countTracks.one": "{n} piste",
+      "matrix.countTracks.other": "{n} pistes",
+      "matrix.similar": "(nom semblable)",
+      "matrix.dropReplace": "↧ seulement les œuvres de ces pistes (⇧ Maj : ajouter)",
+      "matrix.dropAdd": "＋ ajoute les œuvres de ces pistes",
+      "log.matrixSuggOk": "Suggestion gardée : {name}, piste {track}",
+      "log.matrixSuggNo": "Suggestion retirée : {name}, piste {track}",
+      "log.matrixAttrApplied": "Groupe de pistes {name} → {attr} : {n} liens",
+      "log.matrixAttrAdded": "Groupe de pistes {name} ajouté → {attr} : {n} liens",
+      "log.matrixTracksApplied": "Groupe de pistes {name} → {col} ({roles})",
+      "log.matrixTracksAdded": "Groupe de pistes {name} ajouté → {col} ({roles})",
+      "log.notesTracks": "Notes : {name} ({role}) sur les pistes {list} {similar}",
+      "log.notesTracksPool": "Notes : {name} sur les pistes {list} – seulement un groupe de pistes (aucun rôle correspondant dans le tableau)",
+      "matrix.attrInMb": "Déjà dans MusicBrainz",
+      "matrix.attrEdit": "Ajouté au lien existant dans MusicBrainz (une modification)",
+      "matrix.liveAuto": "« live » présélectionné (règle S021) : {reason} ; décocher le retire",
+      "matrix.liveWhy.rg": "le groupe de parution est marqué Live dans MusicBrainz",
+      "matrix.liveWhy.format": "{src} indique la parution comme live (format)",
+      "matrix.liveWhy.notes": "selon les notes, enregistré en public",
+      "matrix.liveWhy.title": "le titre de la piste indique live",
+      "matrix.liveWhy.credit": "{src} crédite « {role} » ({name}) pour cette piste",
+      "matrix.liveWhy.creditAll": "{src} crédite « {role} » ({name}) pour toute la parution",
+      "matrix.liveOfferRec": "Enregistrement live – {reason}. Ce lien existe dans MusicBrainz sans « live » : un clic l’ajoute (une modification). Il n’est pas mis de lui-même.",
+      "matrix.songAuto": "Présélectionné (règle S020) parce que {src} nomme musique et paroles dans un même crédit (p. ex. « Music And Lyrics By ») ; un type choisi reste",
+      "preview.attrFillTitle": "Le lien existe dans MusicBrainz ; les attributs sont ajoutés",
+      "log.linkAttrsAdded": "Attributs ajoutés à un lien existant ({list}) : {text}",
+      "msg.linkAttrsAdded.one": "Attributs ajoutés à {n} lien existant entre enregistrement et œuvre – MusicBrainz l’affiche comme modifié (jaune).",
+      "msg.linkAttrsAdded.other": "Attributs ajoutés à {n} liens existants entre enregistrement et œuvre – MusicBrainz les affiche comme modifiés (jaune).",
       "matrix.collapse": "Replier la colonne",
       "matrix.expand": "Déplier la colonne",
       "matrix.removeCol": "Retirer cette colonne de la matrice : ses lignes passent à « Ignorer » (elles restent dans la liste) ; la colonne reste repliée, un clic la ramène",
@@ -3338,6 +4137,12 @@
       "log.stagedChangedInMb": "Modifiée dans l’éditeur lui-même, laissée telle quelle : {text}",
       "launcher.shortcut": "Ouvrir ou fermer le tableau de bord : Alt+Maj+D (Mac : Option+Maj+D) ; fermer aussi avec Échap",
       "ms.2.16.0": "Marques d’état sur chaque ligne de piste Discogs, chacune avec l’état de sa piste ; « Directed By » est demandé au lieu d’être supposé ; les colonnes peuvent être retirées de la matrice des œuvres ; les dates de colonne vont aussi sur les relations que MusicBrainz a sans date",
+      "ms.2.17.0": "Choisir les supports avant d’importer une parution à plusieurs supports ; attributs (live, cover …) des liens enregistrement–œuvre dans la matrice des œuvres, « live » présélectionné pour les parutions live ; « Music and lyrics by » → auteur avec « Song » présélectionné ; le journal peut se placer à côté de la note de modification",
+      "ms.2.18.0": "Matrice des œuvres dans le style de la matrice des dates et plus compacte : en-têtes en cartes, rôles en puces, attributs (live, cover …) abrégés sous chaque œuvre ; les groupes de pistes se déposent sur les en-têtes, les rôles et les attributs ; listes de pistes des notes Discogs (« XYZ Publishing (1, 4, 6) ») comme suggestions ; « live » présélectionné seulement sur les nouveaux liens",
+      "ms.2.19.0": "Les suggestions ont partout le même aspect : en tirets sur fond jaune (matrice des dates, matrice des œuvres, « li? », entrées des notes Discogs pas encore utilisées dans les listes enregistrées) ; « Commissioned By » → commissioned sur les œuvres ; « Live Recording By » → ingénieur d’enregistrement et un indice pour « live »",
+      "ms.3.0.0": "Reconstruit de l’intérieur : Discogs est lu par un adaptateur de source qui fournit une liste neutre de crédits (personne avec liens, rôle tel qu’écrit, détails, plages, source), et le reste du script ne travaille plus qu’avec cette liste. Rien ne change pour vous ; cela prépare d’autres sources",
+      "ms.3.3.0": "Nouveau nom : Credits Importer (et Credits Importer Companion). En plus de Discogs, il lit les albums Bandcamp (crédits, aussi ceux des pages de piste) et les textes collés (livret, notes de pochette) : les noms qui en viennent sont seulement suggérés. Une liste de préférence pour supports physiques et numériques décide quelle source liée est chargée ; pour les parutions numériques, Bandcamp d’abord",
+      "ms.3.5.0": "Compléter avec une seconde source, sur demande seulement : « Compléter avec… » lit une autre source liée ou un texte collé et liste ce qu’elle ajoute (nouveaux rôles, nouvelles entrées) et où elle diverge, à reprendre au choix ; les lignes qu’elle confirme portent sa marque. « Supprimer l’import enregistré… » recommence l’import d’une parution. La graphie Bandcamp s’affiche à côté du crédit d’artiste de la parution et de MusicBrainz. Un nouveau départ : toutes les données enregistrées ont été réinitialisées une fois",
       "ms.2.14.0": "Matrice des œuvres : une date déposée sur une relation déjà présente dans MusicBrainz sans date lui est ajoutée (une modification) ; marques d’état aussi pour les crédits d’œuvres créées dans l’éditeur",
       "ms.2.13.0": "Groupes de plages par glisser-déposer sur les plages des lignes ; dates et groupes de plages restent dans la barre repliée ; les marques d’état des crédits d’œuvre (compositeur, éditeur) sont aussi vérifiées sur les œuvres",
       "ms.2.11.0": "Après une mise à jour, un message présente les étapes clés de la nouvelle version",
@@ -3362,8 +4167,9 @@
       "ms.c0.1.0": "Vue Discogs : l’onglet Discogs montre d’où vient chaque crédit",
       "ms.0.3.0": "Œuvres : œuvres liées vérifiées, œuvres existantes trouvées, nouvelles œuvres créées",
       "ms.0.1.0": "Première version : les crédits de la parution Discogs liée dans l’éditeur de relations",
-      "notice.title": "MB x Vibecode: Import Discogs credits {version} – nouveautés",
-      "notice.reset": "Avec cette mise à jour, tous les réglages et données enregistrées du script ont été réinitialisés une fois (langue, interrupteurs, règles personnelles, dates et pools de plages) ; la liste des œuvres créées a été conservée.",
+      "notice.title": "MB x Vibecode: Credits Importer {version} – nouveautés",
+      "old.twice": "Deux scripts d’import tournent sur cette page : l’ancien « MB x Vibecode: Import Discogs credits » (ou une deuxième copie) et « MB x Vibecode: Credits Importer ». Supprimez l’ancien dans votre gestionnaire de scripts (Tampermonkey, Violentmonkey) et rechargez la page.",
+      "notice.reset": "Avec cette mise à jour, tous les réglages et données enregistrées du script ont été réinitialisés une fois – un nouveau départ : langue, interrupteurs, règles personnelles, pools de dates et de plages, sources choisies et liste des œuvres créées.",
       "notice.changelog": "Journal des modifications",
       "notice.close": "Fermer ce message",
       "log.noticeClosed": "Message de mise à jour de la {version} fermé",
@@ -3391,7 +4197,35 @@
       "log.seriesLabel": "Série {series} : label éditeur {label} de Discogs, pour « Créer la série … »",
       "medium.label": "Support :",
       "medium.all": "tous",
-      "medium.option": "Support {label} ({n} pistes)",
+      "medium.option.one": "Support {label} ({n} piste)",
+      "medium.option.other": "Support {label} ({n} pistes)",
+      "media.title": "Quels supports importer ?",
+      "media.intro": "Cette parution a {n} supports. Les crédits des supports choisis sont importés ; les crédits sans indication de pistes vont sur les pistes des supports choisis.",
+      "media.all": "Tous",
+      "media.none": "Aucun",
+      "media.text": "Supports :",
+      "media.textPlaceholder": "p. ex. 1-4, 5, 8",
+      "media.bad": "Pas un support de cette parution : {list} (supports : {known})",
+      "media.release": "Importer aussi les relations au niveau de la parution (parution et groupe de parutions)",
+      "media.remember": "Mémoriser ce choix pour cette parution",
+      "media.askHint": "La question est posée avant chaque import de cette parution.",
+      "media.savedHint": "Présélectionné : le choix mémorisé pour cette parution. La question est quand même posée avant chaque import.",
+      "media.sum.one": "{m} sur {all} supports · {n} piste",
+      "media.sum.other": "{m} sur {all} supports · {n} pistes",
+      "media.ok": "Importer",
+      "media.allRelease": "tous les supports avec le niveau parution",
+      "media.list": "supports {list}",
+      "media.noMedia": "aucun support",
+      "media.withRelease": "{list} avec le niveau parution",
+      "media.withoutRelease": "{list} sans le niveau parution",
+      "media.nowTitle": "Ce qui a été importé de Discogs",
+      "media.choose": "Choisir les supports …",
+      "media.chooseTitle": "Choisir à nouveau les supports et importer à nouveau",
+      "media.confirm": "Choisir à nouveau les supports ? L’import recommence ; les modifications dans les lignes sont perdues.",
+      "msg.mediaCancelled": "Import annulé : aucun support choisi.",
+      "msg.noCreditsMedia": "Aucun crédit pour ce choix ({text}).",
+      "log.mediaChosen": "Supports choisis : {text}",
+      "log.mediaCancelled": "Choix des supports annulé : rien n’a été importé",
       "medium.load": "Charger le support {list} dans l’éditeur",
       "medium.loadTitle": "Ouvre ces supports dans l’éditeur de relations de MusicBrainz pour que leurs enregistrements puissent recevoir des relations",
       "msg.mediumAuto": "Cette parution a {n} pistes sur plusieurs supports. Le tableau de bord affiche le support {m} ; après l’ajout et « Enter edit », choisissez le suivant sous « Support ».",
@@ -3507,7 +4341,7 @@
       "rules.code": "Code",
       "rules.tables": "Tables du registre",
       "instrAsk.ask": "Discogs dit seulement « {name} ». Savez-vous de quel instrument il s’agit ?",
-      "instrAsk.otherwise": "(sinon cela reste « {credit} » ; le crédit du rôle est « {credit} » dans tous les cas)",
+      "instrAsk.otherwise": "(sinon cela reste « {credit} », sans crédit du rôle ; avec un autre choix le crédit du rôle est « {credit} »)",
       "log.instrPicked": "{name} : {instrument} (crédit du rôle « {credit} »)",
       "rules.questions": "Questions d’instrument",
       "rules.options": "Choix",
@@ -3553,11 +4387,11 @@
       "log.rulesChanged": "Règles modifiées ({what}) : {n} lignes attribuées de nouveau",
       "log.rulesExported": "{n} règles propres exportées",
       "datefind.title": "Trouver des dates dans un texte libre",
-      "datefind.inNotes.one": "{n} date trouvée dans les notes Discogs",
-      "datefind.inNotes.other": "{n} dates trouvées dans les notes Discogs",
+      "datefind.inNotes.one": "{n} date trouvée dans les notes",
+      "datefind.inNotes.other": "{n} dates trouvées dans les notes",
       "datefind.placeholder": "Collez n’importe quel texte – notes, un paragraphe Discogs … – ses dates apparaissent ci-dessous au format MusicBrainz.",
       "datefind.none": "Aucune date trouvée pour l’instant.",
-      "datefind.fromNotes": "notes Discogs",
+      "datefind.fromNotes": "notes",
       "datefind.fromText": "texte collé",
       "datefind.poolOnly": "seulement dans le pool",
       "datefind.poolName": "Date",
@@ -3581,19 +4415,19 @@
       "trackpool.kept": "Gardent leur propre date : {list}",
       "date.fromMatrix": "de la matrice : {name}",
       "datefind.inMatrix": "dans la matrice : {list}",
-      "dm.widened": "Ces dates ont perdu leurs groupes de plages et vaudraient maintenant pour toutes les plages ; elles sont de nouveau en pointillés – vérifiez-les : {list}",
+      "dm.widened": "Ces dates ont perdu leurs groupes de plages et vaudraient maintenant pour toutes les plages ; elles redeviennent des suggestions (en tirets, sur fond jaune) – vérifiez-les : {list}",
       "dm.applied.one": "Matrice appliquée : {n} ligne a une date de la matrice ({cells} dates dans les colonnes).",
       "dm.applied.other": "Matrice appliquée : {n} lignes ont une date de la matrice ({cells} dates dans les colonnes).",
       "dm.studios": "Studios limités aux plages de leurs dates : {list}",
-      "dm.autoPlaced.one": "{n} date des notes Discogs a été placée dans la matrice des dates comme suggestion (en pointillés). Vérifiez-la et cliquez sur « Appliquer » pour la reporter sur les lignes.",
-      "dm.autoPlaced.other": "{n} dates des notes Discogs ont été placées dans la matrice des dates comme suggestions (en pointillés). Vérifiez-les et cliquez sur « Appliquer » pour les reporter sur les lignes.",
+      "dm.autoPlaced.one": "{n} date des notes a été placée dans la matrice des dates comme suggestion (en tirets, sur fond jaune). Vérifiez-la et cliquez sur « Appliquer » pour la reporter sur les lignes.",
+      "dm.autoPlaced.other": "{n} dates des notes ont été placées dans la matrice des dates comme suggestions (en tirets, sur fond jaune). Vérifiez-les et cliquez sur « Appliquer » pour les reporter sur les lignes.",
       "dm.pending": "pas encore appliqué",
       "dm.pickDate": "Déplacer « {name} » : faites-la glisser dans une colonne de la matrice, ou cliquez ici puis sur « placer ici »",
       "dm.pickTracks": "Déplacer « {name} » : faites-le glisser sur une date de la matrice, ou cliquez ici puis sur « plages ici »",
       "dm.placeHere": "+ placer ici",
       "dm.tracksHere": "+ plages ici",
       "dm.dropDates": "glissez des dates ici",
-      "dm.help": "① Faites glisser des dates enregistrées dans une colonne (groupe de dates). ② Faites glisser des groupes de plages sur une date. Une date sans groupe de plages vaut pour toutes les plages. Une date glissée sur une autre (dans les dates enregistrées ou ici) forme une période des deux ; une date enregistrée glissée sur le champ de date d’une ligne va sur cette ligne. En pointillés : trouvé automatiquement, pas encore appliqué. ⠿ déplace par clics au lieu de glisser.",
+      "dm.help": "① Faites glisser des dates enregistrées dans une colonne (groupe de dates). ② Faites glisser des groupes de plages sur une date. Une date sans groupe de plages vaut pour toutes les plages. Une date glissée sur une autre (dans les dates enregistrées ou ici) forme une période des deux ; une date enregistrée glissée sur le champ de date d’une ligne va sur cette ligne. En tirets sur fond jaune : une suggestion (trouvée automatiquement), pas encore appliquée – aussi dans les listes enregistrées, jusqu’à ce qu’elle serve. ⠿ déplace par clics au lieu de glisser.",
       "dm.apply": "Appliquer",
       "dm.applyTitle": "Reporte les dates de la matrice sur les lignes de leurs groupes de dates et plages (les lignes sont divisées par plages et dates si besoin ; les dates saisies dans une ligne restent)",
       "dm.auto": "appliquer automatiquement",
@@ -3636,6 +4470,7 @@
       "place.page": "dans la page",
       "log.placeSwitch": "Tableau affiché : {place}",
       "pools.title": "Dates et plages",
+      "pools.suggested": "suggestion des notes (en tirets, sur fond jaune) jusqu’à ce que vous l’utilisiez",
       "pools.toggleTitle": "Afficher ou replier les dates enregistrées, le pool de plages et la matrice",
       "pools.nDates.one": "{n} date",
       "pools.nDates.other": "{n} dates",
@@ -3646,8 +4481,8 @@
       "pools.clearTracks": "vider tous les groupes de plages",
       "pools.clearDatesAsk.one": "Retirer {n} date des dates enregistrées de cette parution ? Les lignes gardent les dates qu’elles ont déjà, comme dates propres.",
       "pools.clearDatesAsk.other": "Retirer {n} dates des dates enregistrées de cette parution ? Les lignes gardent les dates qu’elles ont déjà, comme dates propres.",
-      "pools.clearTracksAsk.one": "Retirer {n} groupe de plages de cette parution ? Les lignes gardent leurs plages et dates ; les dates de la matrice valent alors pour toutes les plages (elles deviennent des suggestions en pointillés).",
-      "pools.clearTracksAsk.other": "Retirer {n} groupes de plages de cette parution ? Les lignes gardent leurs plages et dates ; les dates de la matrice valent alors pour toutes les plages (elles deviennent des suggestions en pointillés).",
+      "pools.clearTracksAsk.one": "Retirer {n} groupe de plages de cette parution ? Les lignes gardent leurs plages et dates ; les dates de la matrice valent alors pour toutes les plages (elles deviennent des suggestions en tirets, sur fond jaune).",
+      "pools.clearTracksAsk.other": "Retirer {n} groupes de plages de cette parution ? Les lignes gardent leurs plages et dates ; les dates de la matrice valent alors pour toutes les plages (elles deviennent des suggestions en tirets, sur fond jaune).",
       "pools.clearOthers.one": "aussi les pools enregistrés de {n} autre parution",
       "pools.clearOthers.other": "aussi les pools enregistrés de {n} autres parutions",
       "pools.clearDo": "Retirer",
@@ -3685,15 +4520,15 @@
       "msg.dateFillUnverified.one": "Une date a été ajoutée à {n} relation existante, mais MusicBrainz n’en affiche pas {bad} comme modifiée(s). Vérifiez dans l’éditeur avant « Enter edit ».",
       "msg.dateFillUnverified.other": "Des dates ont été ajoutées à {n} relations existantes, mais MusicBrainz n’en affiche pas {bad} comme modifiées. Vérifiez dans l’éditeur avant « Enter edit ».",
       "pools.reload": "↻ recharger depuis Discogs",
-      "pools.reloadTitle": "Recréer les dates et groupes de plages des notes Discogs, comme lors du premier import",
-      "pools.reloadAsk": "Recharger les dates et groupes de plages des notes Discogs, comme lors du premier import ? Les lignes gardent leurs dates jusqu’à « Appliquer ».",
+      "pools.reloadTitle": "Recréer les dates et groupes de plages des notes, comme lors du premier import",
+      "pools.reloadAsk": "Recharger les dates et groupes de plages des notes, comme lors du premier import ? Les lignes gardent leurs dates jusqu’à « Appliquer ».",
       "pools.reloadAll": "retirer aussi les dates et groupes de plages créés à la main (repartir de zéro)",
       "pools.reloadDo": "Recharger",
-      "pools.reloaded": "Rechargé depuis les notes Discogs : {n} dates enregistrées, {placed} dans la matrice.",
-      "dm.autoPooled.one": "{n} date des notes Discogs n’a pas de mot nommant son groupe ; elle est dans les dates enregistrées – faites-la glisser dans la matrice ou sur une ligne si besoin.",
-      "dm.autoPooled.other": "{n} dates des notes Discogs n’ont pas de mot nommant leur groupe ; elles sont dans les dates enregistrées – faites-les glisser dans la matrice ou sur une ligne si besoin.",
+      "pools.reloaded": "Rechargé depuis les notes : {n} dates enregistrées, {placed} dans la matrice.",
+      "dm.autoPooled.one": "{n} date des notes n’a pas de mot nommant son groupe ; elle est dans les dates enregistrées – faites-la glisser dans la matrice ou sur une ligne si besoin.",
+      "dm.autoPooled.other": "{n} dates des notes n’ont pas de mot nommant leur groupe ; elles sont dans les dates enregistrées – faites-les glisser dans la matrice ou sur une ligne si besoin.",
       "date.chipTitle": "Cliquer pour modifier ou supprimer ; faire glisser dans la matrice, sur le champ de date d’une ligne ou sur une autre date (forme une période des deux)",
-      "log.poolsReloaded": "Pools rechargés depuis les notes Discogs : {n} nouvelles dates, {placed} dans la matrice (propres retirées : {all})",
+      "log.poolsReloaded": "Pools rechargés depuis les notes : {n} nouvelles dates, {placed} dans la matrice (propres retirées : {all})",
       "log.datesMerged": "Dates réunies : {a} + {b} → {date}",
       "trackpool.pick": "choisir des plages …",
       "trackpool.allMedia": "tous les supports (un groupe chacun, {n})",
@@ -3707,7 +4542,7 @@
       "reset.do": "Réinitialiser",
       "reset.done": "Tous les réglages sont revenus par défaut.",
       "log.dmApplied": "Matrice appliquée : {n} lignes avec date, {cells} dates, {split} lignes divisées",
-      "log.dmAuto": "{n} dates des notes Discogs placées dans la matrice comme suggestions",
+      "log.dmAuto": "{n} dates des notes placées dans la matrice comme suggestions",
       "log.dmAutoSwitch": "Appliquer la matrice automatiquement : {state}",
       "log.poolCleared": "Dates enregistrées vidées ({n} dates)",
       "log.trackPoolCleared": "Pool de plages vidé ({n} groupes)",
@@ -3744,7 +4579,11 @@
    * Translates a key and fills in {placeholders}. Keys with ".one"/".other" forms are
    * pluralized by params.n. Missing entries fall back to English, then to the key.
    */
+  /** The name of the source being imported, for texts that name it ("{src}"): Discogs, Bandcamp, Text. */
+  let SOURCE_NAME = 'Discogs';
+
   function tr(key, params = {}) {
+    if (params.src == null) params = { ...params, src: SOURCE_NAME };
     const dict = I18N[LANG] || I18N.en;
     let text = dict[key];
     if (text == null && (dict[`${key}.other`] != null || I18N.en[`${key}.other`] != null)) {
@@ -3761,8 +4600,29 @@
   }
 
   // ===========================================================================
-  // 2. Reading Discogs data (pure functions, no DOM)
+  // 2. Sources: an adapter turns a source (Discogs) into a neutral release; the core only reads that
   // ===========================================================================
+  //
+  // The neutral release – what a source adapter delivers and everything after this section works with:
+  //   { source, id, url, title, country, notes, tags, tracks, credits, companies, series }
+  //   source     the adapter's id ("discogs"); id and url: the release at the source
+  //   notes      free text about the release (liner notes): dates, live, track lists are read from it
+  //   tags       words describing the release, in lower case ("cd", "album", "live" …)
+  //   tracks     [{ position, title, aliases }] in the order of the source, without headings
+  //   credits    one per person and role, in the order of the source:
+  //              { who, role, base, details, credited, tracks }
+  //                who       { id, name, rawName, links } – the source's own id (0: none), the name to show,
+  //                          the name as written there, and the URLs MusicBrainz may have for it
+  //                role      the role as written ("Guitar [Electric]"); base and details: its parts
+  //                credited  the name as credited on this release ('' = the name itself)
+  //                tracks    { all: true } – the whole release; { indexes, spec, unresolved } – a list of
+  //                          the release ("A1 to A3"); { indexes, position } – a credit on one track
+  //   companies  { who, role, catno, tracks } – labels, studios and the like with their role (tracks: null = all)
+  //   series     { id, name, number, links }
+  //   optional:  noteSource – the source as the edit note names it (else url); unrecognized – lines of a text
+  //              that gave no credit
+  // A role is written in the dashboard's notation, the one Discogs uses: "Role [Detail, Detail]", several
+  // roles separated by commas. Mapping (rules R, W, C, S …) is the core's business, not the adapter's.
 
   /** Splits at commas that are not inside square brackets. */
   function splitTopLevel(str) {
@@ -3783,17 +4643,20 @@
     return parts.map((p) => p.trim()).filter(Boolean);
   }
 
-  /** "Guitar [Electric, Rhythm], Vocals" → [{raw, base: 'Guitar', mods: ['Electric', 'Rhythm']}, …] */
-  function parseRoles(roleString) {
-    return splitTopLevel(roleString).flatMap((raw) => {
+  /** The role notation: "Guitar [Electric, Rhythm], Vocals" → [{ raw, base: 'Guitar', mods: ['Electric', 'Rhythm'] }, …] */
+  function parseRoleNotation(roleString) {
+    return splitTopLevel(roleString).map((raw) => {
       const mods = [];
       const base = raw.replace(/\[([^\]]*)\]/g, (_, inner) => {
         mods.push(...splitTopLevel(inner));
         return ' ';
       }).replace(/\s+/g, ' ').trim();
-      return splitEngineerTasks({ raw, base, mods });
+      return { raw, base, mods };
     });
   }
+
+  /** Roles typed in the dashboard (rule test, rows added by hand): the notation, engineer tasks split (S018). */
+  const parseRoles = (roleString) => parseRoleNotation(roleString).flatMap(splitEngineerTasks);
 
   /**
    * [S018] An engineer with several tasks ("Engineer [Mix, Recording]") is one role per task – mix and recording –
@@ -3811,34 +4674,13 @@
     });
   }
 
-  /** Tracks without headings; an index track counts as one track, its sub-tracks become aliases. */
-  function flattenDiscogsTracks(tracklist) {
-    const tracks = [];
-    for (const t of tracklist || []) {
-      if (t.type_ === 'heading') continue;
-      const entry = {
-        position: t.position || '',
-        title: t.title || '',
-        extraartists: [...(t.extraartists || [])],
-        aliases: [],
-      };
-      if (t.type_ === 'index') {
-        for (const sub of t.sub_tracks || []) {
-          if (sub.position) entry.aliases.push(sub.position);
-          entry.extraartists.push(...(sub.extraartists || []));
-        }
-      }
-      tracks.push(entry);
-    }
-    return tracks;
-  }
-
   const normPos = (p) => String(p || '').toUpperCase().replace(/\s+/g, '');
 
-  function positionIndex(dTracks) {
+  /** Positions of the source's tracks (and their aliases) → index into its track list. */
+  function positionIndex(tracks) {
     const map = new Map();
-    dTracks.forEach((t, i) => {
-      [t.position, ...t.aliases].filter(Boolean).forEach((p) => {
+    tracks.forEach((t, i) => {
+      [t.position, ...(t.aliases || [])].filter(Boolean).forEach((p) => {
         const key = normPos(p);
         if (!map.has(key)) map.set(key, i);
       });
@@ -3846,78 +4688,578 @@
     return map;
   }
 
-  /** "A1 to A3, B2" → indexes into the flat Discogs track list */
-  function parseTrackSpec(spec, posMap) {
-    const indexes = new Set();
-    const unresolved = [];
-    for (const part of String(spec || '').split(',').map((s) => s.trim()).filter(Boolean)) {
-      const range = part.split(/\s+to\s+/i);
-      if (range.length === 2) {
-        const a = posMap.get(normPos(range[0]));
-        const b = posMap.get(normPos(range[1]));
-        if (a !== undefined && b !== undefined) {
-          for (let i = Math.min(a, b); i <= Math.max(a, b); i++) indexes.add(i);
-          continue;
-        }
-      } else {
-        const a = posMap.get(normPos(part));
-        if (a !== undefined) {
-          indexes.add(a);
-          continue;
-        }
-      }
-      unresolved.push(part);
+  // --- Source adapter: Discogs ------------------------------------------------------------------------
+  // Everything that knows Discogs' data is here: its API, its JSON, its URLs, "Name (2)" numbering, the
+  // track list with headings and index tracks, track specifications like "A1 to A3".
+
+  const DISCOGS = (() => {
+    const WEB = 'https://www.discogs.com';
+    const API = 'https://api.discogs.com';
+    /** "Name (2)": Discogs numbers people and labels of the same name. */
+    const cleanName = (name) => String(name || '').replace(/\s\(\d+\)$/, '').trim();
+    const artistUrl = (id) => `${WEB}/artist/${id}`;
+    const labelUrl = (id) => `${WEB}/label/${id}`;
+
+    async function getJson(path, { missingId = null } = {}) {
+      const res = await fetch(`${API}/${path}`);
+      if (res.status === 429) throw new Error(tr('err.discogsLimit'));
+      if (res.status === 404 && missingId != null) throw new Error(tr('err.discogsMissing', { id: missingId }));
+      if (!res.ok) throw new Error(tr('err.discogsHttp', { status: res.status }));
+      return res.json();
     }
-    return { indexes, unresolved };
-  }
 
-  /**
-   * Collects all credits (release level and track level), grouped by Discogs artist,
-   * merging identical roles of the same artist across multiple tracks.
-   */
-  function collectCredits(release, dTracks, posMap) {
-    const groups = new Map();
-
-    const add = (ea, { allTracks = false, indexes = [], spec = '', position = '', unresolved = [] }) => {
-      const dId = Number(ea.id) || 0;
-      const name = cleanDiscogsName(ea.name);
-      if (!name && !dId) return;
-      const gKey = dId ? `id:${dId}` : `name:${norm(name)}`;
-      if (!groups.has(gKey)) groups.set(gKey, { dId, name, rawName: String(ea.name || '').trim(), roles: new Map() });
-      const group = groups.get(gKey);
-      const anv = String(ea.anv || '').trim();
-      for (const role of parseRoles(ea.role)) {
-        const rKey = `${norm(role.raw)}|${norm(anv)}`;
-        if (!group.roles.has(rKey)) {
-          group.roles.set(rKey, {
-            role, anv, allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [],
-          });
+    /** "A1 to A3, B2" → indexes into the track list. */
+    function parseTrackSpec(spec, posMap) {
+      const indexes = new Set();
+      const unresolved = [];
+      for (const part of String(spec || '').split(',').map((s) => s.trim()).filter(Boolean)) {
+        const range = part.split(/\s+to\s+/i);
+        if (range.length === 2) {
+          const a = posMap.get(normPos(range[0]));
+          const b = posMap.get(normPos(range[1]));
+          if (a !== undefined && b !== undefined) {
+            for (let i = Math.min(a, b); i <= Math.max(a, b); i++) indexes.add(i);
+            continue;
+          }
+        } else {
+          const a = posMap.get(normPos(part));
+          if (a !== undefined) {
+            indexes.add(a);
+            continue;
+          }
         }
-        const entry = group.roles.get(rKey);
-        if (allTracks) entry.allTracks = true;
-        indexes.forEach((i) => entry.indexes.add(i));
-        unresolved.forEach((u) => entry.unresolved.includes(u) || entry.unresolved.push(u));
-        if (spec && !entry.specs.includes(spec)) entry.specs.push(spec);
-        if (position && !entry.positions.includes(position)) entry.positions.push(position);
+        unresolved.push(part);
       }
+      return { indexes, unresolved };
+    }
+
+    /** A Discogs artist (a credit) as "who". */
+    const whoOfArtist = (ea) => {
+      const id = Number(ea.id) || 0;
+      return { id, name: cleanName(ea.name), rawName: String(ea.name || '').trim(), links: id ? [artistUrl(id)] : [] };
     };
 
-    for (const ea of release.extraartists || []) {
-      const spec = String(ea.tracks || '').trim();
-      if (spec) {
-        const { indexes, unresolved } = parseTrackSpec(spec, posMap);
-        add(ea, { indexes: [...indexes], spec, unresolved });
-      } else {
-        add(ea, { allTracks: true });
+    /** The JSON of a Discogs release → the neutral release. */
+    function toRelease(d, releaseId) {
+      // Tracks without headings; an index track counts as one track, its sub-tracks become aliases
+      const tracks = [];
+      const onTracks = [];
+      for (const t of d.tracklist || []) {
+        if (t.type_ === 'heading') continue;
+        const entry = { position: t.position || '', title: t.title || '', aliases: [] };
+        const people = [...(t.extraartists || [])];
+        if (t.type_ === 'index') {
+          for (const sub of t.sub_tracks || []) {
+            if (sub.position) entry.aliases.push(sub.position);
+            people.push(...(sub.extraartists || []));
+          }
+        }
+        tracks.push(entry);
+        onTracks.push(people);
+      }
+      const posMap = positionIndex(tracks);
+      const credits = [];
+      const add = (ea, where) => {
+        const who = whoOfArtist(ea);
+        if (!who.name && !who.id) return;
+        const credited = String(ea.anv || '').trim();
+        const roles = parseRoleNotation(ea.role);
+        // A credit without a role still names the person
+        if (!roles.length) credits.push({ who, role: '', base: '', details: [], credited, tracks: where });
+        for (const r of roles) credits.push({ who, role: r.raw, base: r.base, details: r.mods, credited, tracks: where });
+      };
+      for (const ea of d.extraartists || []) {
+        const spec = String(ea.tracks || '').trim();
+        if (spec) {
+          const { indexes, unresolved } = parseTrackSpec(spec, posMap);
+          add(ea, { indexes: [...indexes], spec, unresolved });
+        } else {
+          add(ea, { all: true });
+        }
+      }
+      onTracks.forEach((people, i) => people.forEach((ea) => add(ea, { indexes: [i], position: tracks[i].position || String(i + 1) })));
+      const companies = [];
+      for (const c of d.companies || []) {
+        const role = String(c.entity_type_name || '').trim();
+        if (!role || !c.name) continue;
+        const id = Number(c.id) || 0;
+        companies.push({ who: { id, name: cleanName(c.name), rawName: c.name, links: id ? [labelUrl(id)] : [] }, role, catno: String(c.catno || '').trim() });
+      }
+      const series = (d.series || []).filter((x) => x && x.id)
+        .map((x) => ({ id: x.id, name: x.name, number: String(x.catno || ''), links: [labelUrl(x.id)] }));
+      return {
+        source: 'discogs',
+        id: String(releaseId != null ? releaseId : d.id),
+        url: `${WEB}/release/${releaseId != null ? releaseId : d.id}`,
+        title: d.title || '',
+        country: d.country || '',
+        notes: String(d.notes || ''),
+        tags: (d.formats || []).flatMap((f) => [f.name, ...(f.descriptions || []), f.text || '']).map(norm).filter(Boolean),
+        tracks,
+        credits,
+        companies,
+        series,
+      };
+    }
+
+    /** Person or group, from the Discogs artist resource. */
+    function personType(x) {
+      if (!x) return null;
+      if ((x.members || []).length) return 'group';
+      if ((x.groups || []).length || x.realname) return 'person';
+      return null;
+    }
+
+    return {
+      id: 'discogs',
+      name: 'Discogs',
+      /** Short mark of the source (rows it confirms or adds when it supplements another, stage 2). */
+      short: 'DG',
+      /** The source in edit notes ("… credit relationships from Discogs", "writers from Discogs credits"). */
+      noteName: 'Discogs',
+      creditsName: 'Discogs',
+      /** The companion script shows this source's pages (the Discogs tab, status marks). */
+      companion: true,
+      /** The source's list of its roles (linked from rows whose role is not mapped). */
+      rolesHelpUrl: `${WEB}/help/creditslist`,
+      /** MusicBrainz's URL relationship to this source, with the ids musicbrainz.org uses (if the page data lacks it). */
+      urlLinkType: { name: 'discogs', ids: { artist: 180, label: 217, place: 705 } },
+      cleanName,
+      releaseUrl: (id) => `${WEB}/release/${id}`,
+      /** The URL a resource stands for, as the dashboard keys it ('' if it is no Discogs artist or label). */
+      urlKey(resource) {
+        const m = String(resource || '').match(/discogs\.com\/(artist|label)\/(\d+)/);
+        return m ? `${WEB}/${m[1]}/${m[2]}` : '';
+      },
+      /** Releases of this source a MusicBrainz release links to (its URL relationships). */
+      releaseLinks(relations) {
+        const links = new Map();
+        for (const r of relations || []) {
+          const m = r['target-type'] === 'url' && r.url && String(r.url.resource).match(/discogs\.com\/release\/(\d+)/);
+          if (m && !links.has(m[1])) links.set(m[1], { id: m[1], url: r.url.resource });
+        }
+        return [...links.values()];
+      },
+      /** A release id in typed text: a Discogs URL, "r123" or "123" ('' if none). */
+      parseReleaseId(text) {
+        const m = String(text || '').match(/(?:release\/|^r?)(\d+)/i);
+        return m ? m[1] : '';
+      },
+      async release(id) {
+        return toRelease(await getJson(`releases/${id}`, { missingId: id }), id);
+      },
+      toRelease,
+      /**
+       * A person or group for MusicBrainz's "Add artist" form: name, type, its own URLs, and the members (of a
+       * group) or groups (of a person) as "related" ({ id, name, links, isGroup: the new artist is the group }).
+       */
+      async person(id) {
+        const x = await getJson(`artists/${id}`);
+        const related = [
+          ...((x.members || []).map((m) => ({ ...m, isGroup: true }))),
+          ...((x.groups || []).map((g) => ({ ...g, isGroup: false }))),
+        ].filter((r) => r.id).map((r) => ({ id: r.id, name: cleanName(r.name), links: [artistUrl(r.id)], isGroup: r.isGroup, active: r.active }));
+        return { name: cleanName(x.name), type: personType(x), urls: (x.urls || []).map((u) => String(u || '').trim()), related };
+      },
+      /** Other names Discogs keeps as artists of their own ("Aliases"), as "who". */
+      async aliases(id) {
+        const res = await fetch(`${API}/artists/${id}`);
+        const data = res.ok ? await res.json() : null;
+        return ((data && data.aliases) || []).filter((x) => x && x.id).map((x) => ({ id: x.id, name: x.name, links: [artistUrl(x.id)] }));
+      },
+      /** The label a series belongs to ("Parent Label"), as "who"; null if none. */
+      async seriesParent(id) {
+        const res = await fetch(`${API}/labels/${id}`);
+        const data = res.ok ? await res.json() : null;
+        const parent = data && data.parent_label;
+        return parent && parent.id ? { id: parent.id, name: parent.name, links: [labelUrl(parent.id)] } : null;
+      },
+    };
+  })();
+
+  // --- Source adapter: text (credits pasted into the dashboard: Bandcamp, booklets, liner notes …) -------------
+  // [E1] Lines such as "Mixed by X", "X – guitar, vocals", "Guitar: X, Y", "Tracks 3–5: …" become credits. Names have
+  // no links: MusicBrainz entries of the same name are only suggested. What is not understood is kept as it is.
+
+  const TEXT = (() => {
+    // Names in a list: "A, B & C", "A and B", "A / B"
+    const NAME_SEP = /\s*(?:,|&|\+|\/|;|\band\b|\bund\b|\bet\b)\s*/i;
+    // Roles in a list: "guitar, vocals", "mixed and mastered"
+    const ROLE_SEP = /\s*(?:,|&|\+|\/|\band\b|\bund\b|\bet\b)\s*/i;
+    // A track list in front of a line or after it: "Tracks 3–5:", "(tracks 1, 4)", "on track 2", "(1, 3)"
+    const TRACK_WORDS = '(?:tracks?|titles?|songs?|stücke?|pistas?|plages?|morceaux)';
+    const SPEC = '[A-Za-z]?\\d+(?:[.\\-–—]\\d+)?(?:\\s*(?:,|&|-|–|—|\\bto\\b|\\band\\b|\\bbis\\b)\\s*[A-Za-z]?\\d+(?:[.\\-–—]\\d+)?)*';
+    const PREFIX = new RegExp(`^${TRACK_WORDS}\\s*(${SPEC})\\s*[:–—-]\\s*(.+)$`, 'i');
+    const SUFFIX = new RegExp(`^(.*?)[\\s,]*\\(?\\s*(?:on\\s+|auf\\s+)?${TRACK_WORDS}\\s*(${SPEC})\\s*\\)?\\s*\\.?$`, 'i');
+    const NUMBERS = new RegExp(`^(.*?)\\s*\\((${SPEC})\\)\\s*\\.?$`);
+
+    const cap = (s) => String(s || '').replace(/^\s*\S/, (c) => c.toUpperCase());
+    const clean = (s) => String(s || '').replace(/^[\s•·*▪◦>–—-]+/, '').replace(/[\s.;:]+$/, '').replace(/\s+/g, ' ').trim();
+    /** A name: some words, no sentence, no address. */
+    const looksLikeName = (n) => !!n && n.length <= 60 && n.split(' ').length <= 6 && !/https?:|www\.|\d{3,}|@/.test(n) && /\p{L}/u.test(n);
+
+    /** Clauses of a line: "Written by A, mixed by B" → two; other commas stay inside their clause. */
+    function clauses(line) {
+      const out = [];
+      for (const part of line.split(/\s*;\s*/)) {
+        let cur = '';
+        for (const piece of part.split(/,\s+/)) {
+          if (cur && /\sby\s/i.test(` ${cur} `) && /^[\p{L}][\p{L}\s&'’-]{0,40}?\sby\s/iu.test(`${piece} `)) {
+            out.push(cur);
+            cur = piece;
+          } else {
+            cur = cur ? `${cur}, ${piece}` : piece;
+          }
+        }
+        if (cur) out.push(cur);
+      }
+      return out.map(clean).filter(Boolean);
+    }
+    const MONTHS = /\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?(?=\s|$)/gi;
+    /** Dates and numbers out of a role phrase ("Recorded 12 May 2019" → "Recorded"). */
+    const noDates = (s) => clean(String(s || '').replace(/\d+(?:[./–—-]\d+)*(?:st|nd|rd|th)?/g, ' ').replace(MONTHS, ' ').replace(/\s+(?:on|am|le|el)\s*$/i, ''));
+
+    function parse(text, { isRole, isCompanyRole, resolveTracks }) {
+      const credits = [];
+      const companies = [];
+      const unrecognized = [];
+      const who = (name) => ({ id: 0, name, rawName: name, links: [] });
+      const tracksOf = (scope) => (scope ? { indexes: [...scope.set], spec: scope.spec, unresolved: [] } : { all: true });
+      // The line a credit comes from (shown when the text supplements another source)
+      let line0 = '';
+      const addCredit = (name, role, scope) => {
+        const p = parseRoleNotation(role)[0];
+        if (!p || !looksLikeName(name)) return false;
+        if (isCompanyRole(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, line: line0 });
+        else credits.push({ who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), line: line0 });
+        return true;
+      };
+      /**
+       * "Mixed and mastered" → ["Mixed By", "Mastered By"]; one known role stays one ("Music and lyrics by");
+       * "Strings arranged" → "Arranged By [Strings]".
+       */
+      const byRole = (r) => {
+        const m2 = r.match(/^(.+?)\s+(\p{L}+ed)$/iu);
+        return m2 ? `${cap(m2[2])} By [${cap(m2[1])}]` : `${cap(r)} By`;
+      };
+      const byRoles = (left) => {
+        const l = noDates(left);
+        if (!l) return [];
+        if (isRole(`${cap(l)} By`)) return [`${cap(l)} By`];
+        const parts = l.split(ROLE_SEP).map(clean).filter(Boolean).map(byRole);
+        return parts.length && parts.every(isRole) ? parts : [];
+      };
+      const listRoles = (side) => {
+        const parts = side.split(ROLE_SEP).map(clean).filter(Boolean);
+        return parts.length && parts.every(isRole) ? parts : null;
+      };
+      const names = (side) => side.split(NAME_SEP).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
+
+      for (const raw of String(text || '').split(/\r?\n/)) {
+        let line = clean(raw);
+        if (!line) continue;
+        line0 = raw.trim();
+        // A track list for the line (only when it names tracks of this release)
+        let scope = null;
+        let m;
+        const useScope = (spec, rest) => {
+          const set = resolveTracks(spec);
+          if (!set || !set.size) return false;
+          scope = { set, spec: spec.trim() };
+          line = clean(rest);
+          return true;
+        };
+        if (!((m = line.match(PREFIX)) && useScope(m[1], m[2]))) {
+          if (!((m = line.match(SUFFIX)) && m[1] && useScope(m[2], m[1]))) {
+            if ((m = line.match(NUMBERS)) && m[1]) useScope(m[2], m[1]);
+          }
+        }
+        let found = 0;
+        // ℗ / © with a year: the label of the copyright
+        if ((m = line.match(/^(℗|\(p\)|©|\(c\))\s*(?:\d{4}\s*)?(.+)$/i))) {
+          const role = /℗|\(p\)/i.test(m[1]) ? 'Phonographic Copyright (p)' : 'Copyright (c)';
+          if (looksLikeName(clean(m[2]))) {
+            companies.push({ who: who(clean(m[2])), role, catno: '', tracks: null, line: line0 });
+            found++;
+          }
+        }
+        for (const clause of found ? [] : clauses(line)) {
+          // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
+          const place = (verb, name) => {
+            const role = `${cap(verb)} At`;
+            const n = clean(name);
+            if (!looksLikeName(n) || !isCompanyRole(role)) return;
+            companies.push({ who: who(n), role, catno: '', tracks: scope ? tracksOf(scope) : null, line: line0 });
+            found++;
+          };
+          if ((m = clause.match(/^(.+?)\s+by\s+(.+)$/i))) {
+            let left = m[1];
+            let right = m[2];
+            const verb = (clean(left).match(/^\p{L}+/u) || [''])[0];
+            // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
+            const at = left.match(/^(.*?)\s+at\s+([^,]+?)(?:,.*)?$/i);
+            if (at) {
+              place(verb, at[2]);
+              left = at[1];
+            }
+            // "Mixed by X at Studio Y"
+            const at2 = right.match(/^(.+?)\s+at\s+(.+)$/i);
+            if (at2) {
+              place(verb, at2[2].replace(/,.*$/, ''));
+              right = at2[1];
+            }
+            const roles = byRoles(left);
+            for (const n of roles.length ? names(right) : []) roles.forEach((r) => { if (addCredit(n, r, scope)) found++; });
+            continue;
+          }
+          // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person)
+          if ((m = clause.match(/^(\p{L}+)\b.*?\s+at\s+([^,]+)/iu))) {
+            place(m[1], m[2]);
+            continue;
+          }
+          // "Name – roles", "Name: roles", "Role: names", "Role – names", "Name (roles)"
+          let left = null;
+          let right = null;
+          if ((m = clause.match(/^(.+?)\s+[–—-]\s+(.+)$/)) || (m = clause.match(/^(.+?)\s*:\s+(.+)$/))) [, left, right] = m;
+          else if ((m = clause.match(/^(.+?)\s*\(([^)]+)\)$/))) [, left, right] = m;
+          if (!left) continue;
+          left = clean(left);
+          right = clean(right);
+          const rolesRight = listRoles(right);
+          const rolesLeft = listRoles(left);
+          if (rolesRight && !rolesLeft) {
+            rolesRight.forEach((r) => { if (addCredit(left, r, scope)) found++; });
+          } else if (rolesLeft && !rolesRight) {
+            for (const n of names(right)) rolesLeft.forEach((r) => { if (addCredit(n, r, scope)) found++; });
+          }
+        }
+        if (!found) unrecognized.push(raw.trim());
+      }
+      return { credits, companies, unrecognized };
+    }
+
+    /** The neutral release of a pasted text (ctx: the MB tracks and the core's helpers, see sourceContext). */
+    function toRelease(input, ctx) {
+      const text = String((input && input.text) || '');
+      const origin = String((input && input.origin) || '').trim();
+      const res = parse(text, ctx);
+      return {
+        source: 'text',
+        id: ctx.sig(text),
+        url: /^https?:\/\//i.test(origin) ? origin : '',
+        title: origin,
+        noteSource: origin || 'credits text pasted into the dashboard',
+        country: '',
+        notes: text,
+        tags: [],
+        tracks: ctx.tracks,
+        credits: res.credits,
+        companies: res.companies,
+        series: [],
+        unrecognized: res.unrecognized,
+      };
+    }
+
+    return {
+      id: 'text',
+      name: 'Text',
+      /** Short mark of the source (rows it confirms or adds when it supplements another, stage 2). */
+      short: 'TXT',
+      noteName: 'a pasted text',
+      creditsName: 'pasted text',
+      companion: false,
+      /** Track lists in the text are read with the credits (not again as notes, S022). */
+      readsTrackLists: true,
+      /** Names have no links: MusicBrainz entries of the same name are suggested. */
+      nameSearch: true,
+      /** The tracks are MusicBrainz's own (the text has no track list). */
+      usesMbTracks: true,
+      urlKey: () => '',
+      releaseLinks: () => [],
+      parseReleaseId: () => '',
+      parse,
+      toRelease,
+      async release(id, ctx) {
+        return toRelease(ctx.input, ctx);
+      },
+    };
+  })();
+
+  // --- Source adapter: Bandcamp ----------------------------------------------------------------------------------
+  // [E2] An album page of Bandcamp: its data (the JSON in "data-tralbum": title, track list, the credits and "about"
+  // texts), the credits read as a text (E1), optionally the credits of each track page. The band is the only name
+  // with a link (its Bandcamp page); everything else is found by name, as suggestions.
+
+  const BANDCAMP = (() => {
+    const ALBUM_RE = /^https?:\/\/([a-z0-9-]+\.bandcamp\.com)\/album\/([^/?#\s]+)/i;
+    /** "https://band.bandcamp.com/album/name?x" → "https://band.bandcamp.com/album/name" ('' if no album page). */
+    const albumUrl = (u) => {
+      const m = String(u || '').trim().match(ALBUM_RE);
+      return m ? `https://${m[1].toLowerCase()}/album/${m[2]}` : '';
+    };
+    const bandUrl = (u) => {
+      const m = String(u || '').match(/^https?:\/\/([a-z0-9-]+\.bandcamp\.com)/i);
+      return m ? `https://${m[1].toLowerCase()}/` : '';
+    };
+    /** The page data of an album or track page (the JSON in "data-tralbum"), or null. */
+    function pageData(html) {
+      const m = String(html || '').match(/data-tralbum="([^"]*)"/);
+      if (!m) return null;
+      const named = { quot: '"', apos: "'", lt: '<', gt: '>', amp: '&', nbsp: '\u00a0' };
+      const json = m[1].replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, e) => (e[0] === '#'
+        ? String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : (named[e.toLowerCase()] ?? all)));
+      try {
+        return JSON.parse(json);
+      } catch (e) {
+        return null;
       }
     }
-    dTracks.forEach((t, i) => {
-      for (const ea of t.extraartists || []) {
-        add(ea, { indexes: [i], position: t.position || String(i + 1) });
-      }
-    });
 
+    /**
+     * The neutral release from an album's page data. trackCredits: [credits text of each track page] (or []);
+     * ctx: as for a text (see sourceContext), with this album's tracks.
+     */
+    function toRelease(data, url, trackCredits, ctx) {
+      const cur = data.current || {};
+      const tracks = (data.trackinfo || []).map((t, i) => ({ position: String(t.track_num || i + 1), title: t.title || '', aliases: [] }));
+      const resolveTracks = (spec) => ctx.resolveTracks(spec, tracks);
+      const band = { name: String(data.artist || '').trim(), url: bandUrl(url) };
+      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks });
+      const credits = [...album.credits];
+      const companies = [...album.companies];
+      const unrecognized = [...album.unrecognized];
+      (trackCredits || []).forEach((text, i) => {
+        if (!text || !tracks[i]) return;
+        const res = TEXT.parse(text, { ...ctx, resolveTracks });
+        const on = { indexes: [i], position: tracks[i].position };
+        res.credits.forEach((c) => credits.push({ ...c, tracks: c.tracks.all ? on : c.tracks }));
+        res.companies.forEach((c) => companies.push({ ...c, tracks: c.tracks || on }));
+        res.unrecognized.forEach((l) => unrecognized.push(`${tracks[i].position}: ${l}`));
+      });
+      // [rule 4] The band's own name links to its Bandcamp page (found in MB only with exactly this spelling)
+      const linkBand = (w) => (band.url && w.name === band.name ? { ...w, id: band.url, links: [band.url] } : w);
+      return {
+        source: 'bandcamp',
+        id: url,
+        url,
+        title: cur.title || '',
+        country: '',
+        notes: [cur.credits, cur.about].filter(Boolean).join('\n\n'),
+        tags: [],
+        tracks,
+        credits: credits.map((c) => ({ ...c, who: linkBand(c.who) })),
+        companies: companies.map((c) => ({ ...c, who: linkBand(c.who) })),
+        series: [],
+        unrecognized,
+        band,
+        released: cur.release_date || '',
+      };
+    }
+
+    return {
+      id: 'bandcamp',
+      name: 'Bandcamp',
+      /** Short mark of the source (rows it confirms or adds when it supplements another, stage 2). */
+      short: 'BC',
+      noteName: 'Bandcamp',
+      creditsName: 'Bandcamp',
+      companion: false,
+      readsTrackLists: true,
+      nameSearch: true,
+      /** A link is only taken when the name is spelled exactly as in MusicBrainz (else it is a suggestion). */
+      strictNames: true,
+      urlLinkType: null,
+      albumUrl,
+      pageData,
+      toRelease,
+      urlKey: bandUrl,
+      /** Album pages of Bandcamp a MusicBrainz release links to (any link type: purchase, streaming …). */
+      releaseLinks(relations) {
+        const links = new Map();
+        for (const r of relations || []) {
+          const u = r['target-type'] === 'url' && r.url && albumUrl(r.url.resource);
+          if (u && !links.has(u)) links.set(u, { id: u, url: u });
+        }
+        return [...links.values()];
+      },
+      parseReleaseId: albumUrl,
+      async release(id, ctx) {
+        const html = await ctx.httpGet(id);
+        const data = pageData(html);
+        if (!data || !data.current) throw new Error(tr('err.bandcampData', { url: id }));
+        const trackCredits = [];
+        if (ctx.settings.bandcampTracks) {
+          const origin = bandUrl(id).replace(/\/$/, '');
+          for (const t of data.trackinfo || []) {
+            let text = '';
+            if (t.title_link) {
+              try {
+                const td = pageData(await ctx.httpGet(`${origin}${t.title_link}`));
+                text = (td && td.current && td.current.credits) || '';
+              } catch (e) {
+                console.warn('[Discogs-Credits] Bandcamp track page', t.title_link, e);
+              }
+            }
+            trackCredits.push(text);
+          }
+        }
+        return toRelease(data, id, trackCredits, ctx);
+      },
+    };
+  })();
+
+  /** The sources the dashboard can read; those with links on a MusicBrainz release are ordered by preference. */
+  const SOURCES = { discogs: DISCOGS, bandcamp: BANDCAMP, text: TEXT };
+  const LINKED_SOURCES = ['discogs', 'bandcamp'];
+
+  // --- From the neutral release to the dashboard's entries (core) ---------------------------------------
+
+  /**
+   * The credits of a neutral release grouped by person (its source id, else its name), identical roles of a
+   * person merged across tracks; engineer tasks are split here (S018).
+   */
+  function groupCredits(credits) {
+    const groups = new Map();
+    for (const c of credits || []) {
+      const { who } = c;
+      const gKey = who.id ? `id:${who.id}` : `name:${norm(who.name)}`;
+      if (!groups.has(gKey)) groups.set(gKey, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: new Map() });
+      const group = groups.get(gKey);
+      if (!c.role) continue;
+      const anv = c.credited || '';
+      const at = c.tracks || { all: true };
+      for (const role of splitEngineerTasks({ raw: c.role, base: c.base, mods: [...(c.details || [])] })) {
+        const rKey = `${norm(role.raw)}|${norm(anv)}`;
+        if (!group.roles.has(rKey)) {
+          group.roles.set(rKey, { role, anv, allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [] });
+        }
+        const entry = group.roles.get(rKey);
+        if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
+        if (at.all) entry.allTracks = true;
+        (at.indexes || []).forEach((i) => entry.indexes.add(i));
+        (at.unresolved || []).forEach((u) => entry.unresolved.includes(u) || entry.unresolved.push(u));
+        if (at.spec && !entry.specs.includes(at.spec)) entry.specs.push(at.spec);
+        if (at.position && !entry.positions.includes(at.position)) entry.positions.push(at.position);
+      }
+    }
     return [...groups.values()];
+  }
+
+  /** The companies of a neutral release: one entry per company with all of its roles. */
+  function groupCompanies(companies) {
+    const byKey = new Map();
+    for (const c of companies || []) {
+      const { who } = c;
+      const key = who.id ? `id:${who.id}` : `name:${norm(who.rawName || who.name)}`;
+      if (!byKey.has(key)) byKey.set(key, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: [] });
+      const g = byKey.get(key);
+      const same = g.roles.find((r) => norm(r.role) === norm(c.role));
+      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}) });
+      // the same role once for some tracks and once for all: all
+      else if (same.tracks && (!c.tracks || c.tracks.all)) same.tracks = null;
+      else if (same.tracks && c.tracks && c.tracks.indexes) same.tracks = { ...same.tracks, indexes: uniq([...same.tracks.indexes, ...c.tracks.indexes]) };
+    }
+    return [...byKey.values()];
   }
 
   // ===========================================================================
@@ -4056,7 +5398,7 @@
     { id: 'W004', where: 'wordingRuleFor, roleCreditFor', note: '"Horn [French]" and "French Horn" are the MusicBrainz instrument French horn, without role credit', phrases: ['horn french', 'french horn'], credit: '' },
     { id: 'W005', where: 'wordingRuleFor, roleCreditFor', note: '"Flugel Horn" (also Flügelhorn) is the MusicBrainz instrument flugelhorn, without role credit', phrases: ['flugel horn', 'flugelhorn', 'flügelhorn', 'flugel-horn'], credit: '' },
     { id: 'W006', where: 'wordingRuleFor, roleCreditFor', note: '"Mix", "Mixed By", "Engineer [Mix]" … are the MusicBrainz relationship mix, without role credit', phrases: ['mix', 'mixing', 'mixed by', 'mixed-by', 'mix engineer', 'mixing engineer', 'engineer mix', 'engineer mixing', 'engineered by mix', 'mixdown', 'engineer mixdown'], credit: '' },
-    { id: 'W007', where: 'wordingRuleFor, roleCreditFor', note: '"Recording", "Recorded By", "Engineer [Recording]" … are the MusicBrainz relationship recording (recording engineer), without role credit', phrases: ['recording', 'recorded by', 'recorded-by', 'recording engineer', 'engineer recording', 'engineered by recording', 'recording by', 'tracking', 'tracked by', 'engineer tracking'], credit: '' },
+    { id: 'W007', where: 'wordingRuleFor, roleCreditFor', note: '"Recording", "Recorded By", "Engineer [Recording]", "Live Recording By" … are the MusicBrainz relationship recording (recording engineer), without role credit', phrases: ['recording', 'recorded by', 'recorded-by', 'recording engineer', 'engineer recording', 'engineered by recording', 'recording by', 'tracking', 'tracked by', 'engineer tracking', 'live recording by', 'live recording', 'live recorded by', 'recorded live by', 'live recording engineer'], credit: '' },
   ];
 
   const CHECKBOX_DETAILS = ['additional', 'guest', 'solo', 'uncredited'];
@@ -4095,22 +5437,28 @@
    */
   const SPECIAL_RULES = [
     { id: 'S001', where: 'mapRoleInner', note: '"Additional …" at the start of a role ticks the "additional" checkbox ("Additional Synths" → synthesizer, additional)' },
-    { id: 'S002', where: 'mapRoleInner', note: 'Details "Additional", "Guest", "Solo" tick checkboxes; "Uncredited" is noted' },
+    { id: 'S002', where: 'mapRoleInner, DETAIL_FLAGS', note: 'Details "Additional", "Guest", "Solo" tick checkboxes ("Additional Musicians", "Additional Personnel" and misspellings such as "Additonal" count as "Additional"); "Uncredited" is noted' },
     { id: 'S003', where: 'mapRole', note: 'A medium in front of a role ("CD Produced By", "LP Mastered By") puts it on the release' },
     { id: 'S004', where: 'roleRules (design rule)', note: '"design" anywhere in a role or its details: type design, the other words (without "design", "by") are the wording' },
     { id: 'S005', where: 'instrumentAskHtml, roleCreditFor (QUESTION_RULES)', note: 'Plain instrument family ("Bass", "Guitar"): the word stays as role credit, and the row asks which instrument it is (rules Q001 …)' },
-    { id: 'S006', where: 'loadDiscogs', note: 'Arrangement credits go to the works matrix when Discogs names writing credits' },
-    { id: 'S007', where: 'loadDiscogs (companies)', note: '"Companies, etc." with "Festival" in the name are not taken over (a festival is an event in MusicBrainz)' },
-    { id: 'S008', where: 'discogsCreditFor, syncDiscogsCredits', note: '"Credited as": the Discogs name whenever it differs from the MusicBrainz name' },
+    { id: 'S006', where: 'loadRelease', note: 'Arrangement credits go to the works matrix when Discogs names writing credits' },
+    { id: 'S007', where: 'loadRelease (companies)', note: '"Companies, etc." with "Festival" in the name are not taken over (a festival is an event in MusicBrainz)' },
+    { id: 'S008', where: 'sourceCreditFor, syncSourceCredits', note: '"Credited as": the Discogs name whenever it differs from the MusicBrainz name' },
     { id: 'S009', where: 'roleCreditFor', note: 'Role credits never contain Discogs brackets: details come before the role ("Coordinator [Tour]" → "tour coordinator")' },
     { id: 'S010', where: 'withoutBy, wordingCredit', note: 'Trailing "by" is never taken over ("Photography By" → photography)' },
-    { id: 'S012', where: 'typo (roleCreditFor, discogsCreditFor, relFields)', note: "Typewriter apostrophe ' becomes ’ in role credits and artist credits (\"Rock 'n' Roll\" → \"Rock ’n’ Roll\")" },
+    { id: 'S012', where: 'typo (roleCreditFor, sourceCreditFor, relFields)', note: "Typewriter apostrophe ' becomes ’ in role credits and artist credits (\"Rock 'n' Roll\" → \"Rock ’n’ Roll\")" },
     { id: 'S013', where: 'roleRules (R084), wordingCredit', note: 'A&R goes on the release group as artists and repertoire; the word after "A&R" becomes its task ("A & R Consultant" → task "consultant")' },
     { id: 'S014', where: 'computePublisherEvidence', note: 'Publishers (Discogs names them for the whole release) are ticked in the works matrix only on works whose writer has them as personal publisher in MusicBrainz; all publishers stay in the matrix to tick by hand' },
     { id: 'S015', where: 'tracksInText, applyMatrixColumn, applyDateToTracks (date dropped onto a row)', note: 'Track groups: a date whose sentence names tracks ("Tracks 1 to 5 recorded …", "tracks 6, 8 and 10", "A1 to A3", "side B", "CD2, tracks 1–5", "Disc 2" for the whole medium) goes into the date matrix with that track group and only onto those tracks; rows covering more tracks are split, rows with a date of their own stay' },
     { id: 'S016', where: 'studiosInText, applyMatrixColumn', note: 'A studio of "Companies, etc." named in the same sentence gets exactly these tracks and this date; other studios are left alone by that date' },
     { id: 'S017', where: 'wordingCredit', note: 'A Discogs spelling that differs from the MusicBrainz instrument only in spaces or hyphens is no role credit ("Flugel Horn" → flugelhorn, "Hand Claps" → handclaps)' },
     { id: 'S018', where: 'splitEngineerTasks', note: 'An engineer with several tasks is one role per task: "Engineer [Mix, Recording]" → mix and recording (each with the other details, e.g. "Assistant")' },
+    { id: 'S020', where: 'applySongDefault', note: 'Music and lyrics in one credit (R098): new works of these tracks get the work type "Song" (the default for all new works when the credit is for the whole release); a type chosen by hand stays' },
+    { id: 'S021', where: 'applyLiveDefault, linkAttrsOf, liveHint', note: '"live" is preselected on new links recording → work (a new work, or a work linked here) when the release group is marked Live in MusicBrainz, Discogs calls the release live (format, "recorded live" in the notes), or the track title says so ("(live)", "[live]", "(live at …)", "– live"), or a "Live Recording By" credit names the track (the whole release without track list); unticking takes it back. Links that exist in MusicBrainz keep their attributes: "live" is only offered there ("li?")' },
+    { id: 'S022', where: 'notesTrackCredits, matchEntry, applyNotesTrackCredits', note: 'Track lists in the Discogs notes ("XYZ Publishing (1, 4, 6)", "Published by X (tracks 1–3)", "Written by Y (2, 5)", "Tracks 1, 4 & 6 published by Z"): a track group in the pool; when the name is an entry of the dashboard (compared generously: case, accents, spaces, hyphens, punctuation, "&"/"and", Ltd./GmbH/Inc. …, one typo; as a last step without generic words like Publishing, Music, Verlag – marked "similar"), its work-level roles get these tracks as a suggestion (dashed, ✓ keeps, × takes out), ahead of the personal publisher evidence (S014). Credits Discogs gives on these tracks already are left alone; unknown names only give the track group' },
+    { id: 'S023', where: 'dropTracksOnMatrix', note: 'A track group dropped onto the works matrix: onto an attribute in the head of the track column (the links of these tracks get it, the others lose it), onto a role of a column (that role only for the works of these tracks) or onto a column head (all its roles); with Shift added instead. Relationships and attributes already in MusicBrainz stay' },
+    { id: 'S024', where: 'suggestCommissioned', note: '"Commissioned By" (R099, C037) without a track list: "commissioned" is suggested on all works (dashed, yellow; ✓ keeps it, × takes it out, it is staged like the others). With a track list it is set on the works of those tracks' },
+    { id: 'S019', where: 'repeatedDetails', note: 'Details that only repeat the role in another word form are no role credit: "Mixed By [Mixing]", "Mastered By [Mastering]", "Music By [All Music By]", "Recorded By [Recording]"; "[Cover Photo]" stays' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
 
@@ -4121,6 +5469,7 @@
   const QUESTION_RULES = [
     { id: 'Q001', base: 'bass', credit: 'bass', options: ['electric bass guitar', 'double bass', 'acoustic bass guitar'], note: 'Plain "Bass": which bass?' },
     { id: 'Q002', base: 'guitar', credit: 'guitar', options: ['electric guitar', 'acoustic guitar'], note: 'Plain "Guitar": which guitar?' },
+    { id: 'Q004', base: 'bass guitar', credit: 'bass guitar', options: ['bass guitar', 'electric bass guitar', 'acoustic bass guitar'], note: 'Plain "Bass Guitar": which bass guitar? Without a choice it stays bass guitar' },
   ];
 
   /**
@@ -4172,6 +5521,7 @@
     { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
     { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
+    { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
   ];
   const MONTH_NAMES = {
     1: ['january', 'jan', 'januar', 'jänner', 'jän', 'enero', 'ene', 'janvier', 'janv'],
@@ -4272,8 +5622,11 @@
     ['mastering', /master(ed|ing)?\b|gemastert/i],
     ['mix', /\bmix(ed|ing)?\b|abgemischt|mezcl|mixag/i],
     ['copyright', /℗|©|\(p\)|\(c\)|copyright|phonographic/i],
-    ['performance', /record(ed|ing)?|\brec\.|live at|session|aufgenommen|aufnahme|grabad|enregistr|concert|konzert/i],
+    // [D015] whole words only: "Fuzzoramarecords" or "… Records" is a label name, not "recorded"
+    ['performance', /\brecord(ed|ing|ings)?\b|\brec\.|\blive at\b|\bsessions?\b|aufgenommen|aufnahme|grabad|enregistr|\bconcert|\bkonzert/i],
   ];
+  /** ℗ and © signs (also as (P), (C) and the doubled "©©" that Discogs often has for ℗ ©). */
+  const COPYRIGHT_SIGN = /℗|©|\(p\)|\(c\)/i;
 
   /**
    * All dates and periods in a text, in MusicBrainz form, with the rule that found them (D001 …), a short
@@ -4297,20 +5650,28 @@
         if (!v || v === 'skip') continue;
         // The keyword closest before the date (or inside it) suggests the group
         const before = src.slice(Math.max(0, a - 80), b);
+        // [D015] after a ℗ / © sign in the same sentence, capitalised keywords belong to a name ("℗ Fuzzorama Recordings 2005")
+        const seg = before.slice(Math.max(...['.', ';', '\n'].map((c) => before.lastIndexOf(c, before.length - m[0].length - 1))) + 1);
+        const segStart = before.length - seg.length;
+        const sign = ruleOn('D015') ? seg.search(COPYRIGHT_SIGN) : -1;
         let hint = '';
         let at = -1;
         for (const [key, re] of DATE_HINTS) {
           const g = new RegExp(re.source, 'gi');
           let h;
           while ((h = g.exec(before))) {
-            if (h.index > at) {
+            const inName = sign >= 0 && key !== 'copyright' && h.index > segStart + sign && /^[A-ZÄÖÜ]/.test(h[0]);
+            if (h.index > at && !inName) {
               at = h.index;
               hint = key;
             }
             if (!h[0]) break;
           }
         }
-        found.push({ index: a, text: m[0], rule: mt.id, value: { begin: v.begin, end: v.end, ended: v.ended }, alt: v.alt || null, order: v.order || '',
+        // [D015] "©©" is mostly a typo for "℗ ©": both, i.e. the group ℗/©
+        const doubled = ruleOn('D015') && /©\s*©/.test(seg);
+        if (doubled) hint = 'copyright';
+        found.push({ index: a, text: m[0], rule: doubled ? `${mt.id} · D015` : mt.id, value: { begin: v.begin, end: v.end, ended: v.ended }, alt: v.alt || null, order: v.order || '',
           multi: v.multi || null, days: v.days || null, consecutive: !!v.consecutive,
           hint, snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
       }
@@ -4374,6 +5735,7 @@
     [/^arranged for/, { id: 'C029', label: ['arranged for'], level: 'release' }],
     [/^transferred at/, { id: 'C030', place: ['transferred at'], level: 'release' }],
     [/^published by/, { id: 'C031', label: ['publishing'], artist: ['publishing'], level: 'work' }],
+    [/^commissioned by/, { id: 'C037', label: ['commissioned'], artist: ['commissioned'], level: 'work' }],
     [/^rights society/, { id: 'C032', label: ['rights society'], level: 'release' }],
     [/^designed (by|at)/, { id: 'C033', label: ['design'], artist: ['design'], level: 'release' }],
     [/^artwork by/, { id: 'C034', label: ['artwork'], artist: ['artwork'], level: 'release' }],
@@ -4408,8 +5770,10 @@
         test: () => !b, run: () => out([]) },
       { id: 'R002', kind: 'simple', note: "", re: /^(written-by|written by|writer|songwriter|songwriters)$/, types: ['writer', 'composer'], level: 'recording',
         test: () => is(/^(written-by|written by|writer|songwriter|songwriters)$/), run: () => out(['writer', 'composer'], wrk) },
-      { id: 'R003', kind: 'simple', note: "", re: /^(composed by|composer|composition by|music by|music|score|score by|soundtrack)$/, types: ['composer', 'writer'], level: 'recording',
-        test: () => is(/^(composed by|composer|composition by|music by|music|score|score by|soundtrack)$/), run: () => out(['composer', 'writer'], wrk) },
+      { id: 'R098', kind: 'simple', note: "Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)", re: /^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$/, types: ['writer'], level: 'work',
+        test: () => is(/^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$/), run: () => out(['writer'], { ...wrk, notes: ['musicLyrics'] }) },
+      { id: 'R003', kind: 'simple', note: "", re: /^(composed by|composer|composition by|music by|music|all music by|all music|score|score by|soundtrack)$/, types: ['composer', 'writer'], level: 'recording',
+        test: () => is(/^(composed by|composer|composition by|music by|music|all music by|all music|score|score by|soundtrack)$/), run: () => out(['composer', 'writer'], wrk) },
       { id: 'R004', kind: 'simple', note: "", re: /^(translated by|translation|translator|translations)$/, types: ['translator'], level: 'recording',
         test: () => is(/^(translated by|translation|translator|translations)$/), run: () => out(['translator'], wrk) },
       { id: 'R005', kind: 'simple', note: "", re: /^(author|poetry by|poem by|story by|screenwriter|script by|created by)$/, types: ['writer'], level: 'work',
@@ -4490,8 +5854,8 @@
         test: () => is(/^(transferred by|transfer|audio transfer|cd transfer|digital transfer)$/), run: () => out(['transfer', 'engineer'], { level: 'release', flags: engFlags() }) },
       { id: 'R030', kind: 'simple', note: "", re: /^(direct metal mastering by|dmm cut by|dmm)$/, types: ['mastering'], level: 'release',
         test: () => is(/^(direct metal mastering by|dmm cut by|dmm)$/), run: () => out(['mastering'], { level: 'release', flags: engFlags(), credit: true }) },
-      { id: 'R031', kind: 'special', note: "", re: /^(recorded by|recording|recording engineer|tracking|tracked by|tracking by)$/, types: ['recording', 'engineer'], level: 'recording',
-        test: () => is(/^(recorded by|recording|recording engineer|tracking|tracked by|tracking by)$/) || (engineer && has('recording', 'tracking')), run: () => {
+      { id: 'R031', kind: 'special', note: "\"Live Recording By\" (also \"Live Recording\", \"Recorded Live By\" …) is recording too, without role credit; it is a hint for \"live\" (S021)", re: /^(recorded by|recording|recording engineer|tracking|tracked by|tracking by|live recording by|live recording|live recorded by|recorded live by|live recording engineer)$/, types: ['recording', 'engineer'], level: 'recording',
+        test: () => is(/^(recorded by|recording|recording engineer|tracking|tracked by|tracking by|live recording by|live recording|live recorded by|recorded live by|live recording engineer)$/) || (engineer && has('recording', 'tracking', 'live recording')), run: () => {
       return out(['recording', 'engineer'], { flags: engFlags() });
     } },
       { id: 'R032', kind: 'simple', note: "", re: /^(dj mix|dj-mix|dj)$/, types: ['mix-dj'], level: 'release',
@@ -4660,8 +6024,10 @@
         test: () => is(/^(licensed from|licensor)$/), run: () => out(['licensor'], rel) },
       { id: 'R094', kind: 'simple', note: "", re: /^audio director$/, types: ['audio director'], level: 'recording',
         test: () => is(/^audio director$/), run: () => out(['audio director'], rel) },
-      { id: 'R095', kind: 'special', note: "Roles without an MB relationship type: added as \"misc\" with the Discogs role as task", re: /^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|commissioned by|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|plated by|abridged by|adapted by \(text\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera operator|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$/, types: ['misc'], level: 'release',
-        test: () => is(/^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|commissioned by|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|plated by|abridged by|adapted by \(text\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera operator|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$/), run: () => {
+      { id: 'R099', kind: 'simple', note: "\"Commissioned By\": the work was commissioned by them (a work-level role); without a track list a suggestion on all works (S024)", re: /^(commissioned by|commissioned)$/, types: ['commissioned'], level: 'work',
+        test: () => is(/^(commissioned by|commissioned)$/), run: () => out(['commissioned'], wrk) },
+      { id: 'R095', kind: 'special', note: "Roles without an MB relationship type: added as \"misc\" with the Discogs role as task", re: /^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|plated by|abridged by|adapted by \(text\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera operator|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$/, types: ['misc'], level: 'release',
+        test: () => is(/^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|plated by|abridged by|adapted by \(text\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera operator|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$/), run: () => {
       return out(['misc'], { ...rel, notes: ['misc'], credit: true });
     } },
       { id: 'R096', note: "Everything else is treated as an instrument; if MB has no such instrument, the row becomes \"misc\" (see makeRow)", types: ['instrument'], level: 'recording', test: () => true, run: () => out(['instrument'], { primaryCands: instrumentCandidates(b, ms), fallback: true }) },
@@ -4699,9 +6065,10 @@
     const consumed = new Set();
     let uncredited = false;
     for (const m of (modsIn || []).map(norm)) {
-      // [S002] details that tick checkboxes
-      if (ruleOn('S002') && ['additional', 'guest', 'solo'].includes(m)) {
-        flags.push(m);
+      // [S002] details that tick checkboxes ("Additional Musicians", "Additonal" … count as additional)
+      const box = flagForDetail(m);
+      if (ruleOn('S002') && ['additional', 'guest', 'solo'].includes(box)) {
+        flags.push(box);
         consumed.add(m);
       } else if (m === 'uncredited') {
         uncredited = true;
@@ -4756,7 +6123,8 @@
    * e.g. "Mastered By [Remaster]" → "re". MB's own attribute names are the targets.
    */
   const DETAIL_FLAGS = [
-    [/^additional(ly)?$/, 'additional'],
+    // [S002] also "Additional Musicians" / "Additional Personnel" and common misspellings ("Additonal")
+    [/^(additional(ly)?|additonal|addtional|additinal|aditional|additionnal|additionel|addditional)( musicians?| personnel| players?| performers?)?$/, 'additional'],
     [/^guest$/, 'guest'],
     [/^solo(ist)?$/, 'solo'],
     [/^(assistant|assisted by|asst\.?)$/, 'assistant'],
@@ -4905,22 +6273,6 @@
 
   /** Escapes a phrase for use inside double quotes in a Lucene query. */
   // --- Companies, etc. ------------------------------------------------------------
-
-  /** Discogs "Companies, etc." → one entry per company with all of its roles. */
-  function collectCompanies(release) {
-    const byKey = new Map();
-    for (const c of (release && release.companies) || []) {
-      const role = String(c.entity_type_name || '').trim();
-      if (!role || !c.name) continue;
-      const key = c.id ? `id:${c.id}` : `name:${norm(c.name)}`;
-      if (!byKey.has(key)) {
-        byKey.set(key, { dId: Number(c.id) || 0, name: cleanDiscogsName(c.name), rawName: c.name, roles: [] });
-      }
-      const g = byKey.get(key);
-      if (!g.roles.some((r) => norm(r.role) === norm(role))) g.roles.push({ role, catno: String(c.catno || '').trim() });
-    }
-    return [...byKey.values()];
-  }
 
   /**
    * Discogs company roles → MB relationship types, per MB entity type. Discogs lists studios,
@@ -5103,10 +6455,10 @@
     return same(state.begin_date, expected.begin) && same(state.end_date, expected.end) && !!state.ended === !!expected.ended;
   }
 
-  /** Date suggestions from Discogs: ℗/© years in the notes. */
-  function dateSuggestions(discogsRelease) {
+  /** Date suggestions from the source: ℗/© years in the notes of the (neutral) release. */
+  function dateSuggestions(release) {
     const out = [];
-    const notes = String((discogsRelease && discogsRelease.notes) || '');
+    const notes = String((release && release.notes) || '');
     const re = /(℗|©|\(p\)|\(c\))(?:\s*(?:&|and|\+)\s*(?:℗|©|\(p\)|\(c\)))?\s*(\d{4})/gi;
     let m;
     const seen = new Set();
@@ -5132,24 +6484,17 @@
     return parts.join(' AND ');
   }
 
-  /** Person or group, derived from the Discogs artist resource. */
-  function guessArtistType(discogsArtist) {
-    if (!discogsArtist) return null;
-    if ((discogsArtist.members || []).length) return 'group';
-    if ((discogsArtist.groups || []).length || discogsArtist.realname) return 'person';
-    return null;
-  }
-
   /**
    * Query parameters for the MB "Add artist" form (see MB wiki: Development/Seeding/Artist Editor).
+   * sourceUrl: the artist's page at the source; person: what the source adapter knows (name, urls);
    * rels: [{ mbid, linkTypeId, backward, ended }]
    */
-  function buildArtistSeed({ name, discogsId, discogsArtist, typeId, discogsLinkTypeId, rels, editNote }) {
-    const params = [['edit-artist.name', cleanDiscogsName((discogsArtist && discogsArtist.name) || name)]];
+  function buildArtistSeed({ name, sourceUrl, sourceLinkTypeId, person, typeId, rels, editNote }) {
+    const params = [['edit-artist.name', (person && person.name) || name]];
     if (typeId) params.push(['edit-artist.type_id', String(typeId)]);
     const urls = [];
-    if (discogsId) urls.push({ text: discogsArtistUrl(discogsId), type: discogsLinkTypeId });
-    for (const u of (discogsArtist && discogsArtist.urls) || []) {
+    if (sourceUrl) urls.push({ text: sourceUrl, type: sourceLinkTypeId });
+    for (const u of (person && person.urls) || []) {
       const text = String(u || '').trim();
       if (/^https?:\/\//i.test(text) && !urls.some((x) => x.text === text)) urls.push({ text });
     }
@@ -5188,11 +6533,11 @@
 
   if (IS_NODE_TEST) {
     module.exports = {
-      splitTopLevel, parseRoles, flattenDiscogsTracks, positionIndex, parseTrackSpec,
-      collectCredits, instrumentCandidates, mapRole, cleanDiscogsName, suggestRoleCredit, roleCreditOptions,
-      lucenePhrase, buildWorkQuery, guessArtistType, buildArtistSeed, buildWorkSeed, toQuery,
+      splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
+      instrumentCandidates, mapRole, suggestRoleCredit, roleCreditOptions,
+      lucenePhrase, buildWorkQuery, buildArtistSeed, buildWorkSeed, toQuery,
       tr, I18N, LANGS, setLang: (code) => { LANG = code; },
-      collectCompanies, mapCompanyRole, fixedRoleCredit, wordingCredit, caseCredit, buildVocabulary, flagForDetail, parseDate, wordingRuleFor, roleRules, questionRuleFor, findDates,
+      mapCompanyRole, fixedRoleCredit, wordingCredit, caseCredit, buildVocabulary, flagForDetail, parseDate, wordingRuleFor, roleRules, questionRuleFor, findDates,
       sentenceAround,
       isPlaceholderTitle: (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || '')),
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
@@ -5248,13 +6593,6 @@
       entityCache.set(mbid, p);
     }
     return entityCache.get(mbid);
-  }
-
-  async function fetchDiscogsArtist(id) {
-    const res = await fetch(`https://api.discogs.com/artists/${id}`);
-    if (res.status === 429) throw new Error(tr('err.discogsLimit'));
-    if (!res.ok) throw new Error(tr('err.discogsHttp', { status: res.status }));
-    return res.json();
   }
 
   /**
@@ -5391,31 +6729,22 @@
     return result;
   }
 
-  async function fetchDiscogsRelease(id) {
-    const res = await fetch(`https://api.discogs.com/releases/${id}`);
-    if (res.status === 429) throw new Error(tr('err.discogsLimit'));
-    if (res.status === 404) throw new Error(tr('err.discogsMissing', { id }));
-    if (!res.ok) throw new Error(tr('err.discogsHttp', { status: res.status }));
-    return res.json();
-  }
-
   /**
-   * Looks up Discogs artist or label URLs in MB. Returns Map(url → [{ mbid, name, disambiguation, entityType }]).
-   * Discogs "labels" can belong to MB labels or places (studios, pressing plants).
+   * Looks up URLs of the source's pages (people, labels, series) in MB. Returns Map(url → [{ mbid, name,
+   * disambiguation, entityType }]), keyed as the source adapter keys its URLs. kind: 'artist' (people),
+   * 'label' (companies: MB labels or places – studios, pressing plants – and sometimes persons) or 'series'.
    */
-  async function lookupDiscogsUrls(urls, kind = 'artist') {
+  async function lookupUrls(urls, kind = 'artist', urlKey = S.source.urlKey) {
     const qs = urls.map((u) => `resource=${encodeURIComponent(u)}`).join('&');
-    // Discogs "labels" may be MB labels or places, and sometimes persons (MB artists).
     const targetTypes = kind === 'label' ? ['label', 'place', 'artist'] : kind === 'series' ? ['series'] : ['artist'];
     const data = await mbWs(`url?${qs}&inc=${targetTypes.map((x) => `${x}-rels`).join('+')}`);
     let list = [];
     if (data && Array.isArray(data.urls)) list = data.urls;
     else if (data && data.resource) list = [data];
     const out = new Map();
-    const idRe = kind === 'artist' ? /discogs\.com\/artist\/(\d+)/ : /discogs\.com\/label\/(\d+)/;
     for (const u of list) {
-      const idMatch = String(u.resource || '').match(idRe);
-      if (!idMatch) continue;
+      const key = urlKey(u.resource);
+      if (!key) continue;
       const seen = new Set();
       const found = [];
       for (const r of u.relations || []) {
@@ -5425,12 +6754,10 @@
         seen.add(e.id);
         found.push({ mbid: e.id, name: e.name, disambiguation: e.disambiguation || '', entityType: et, type: e.type || '' });
       }
-      out.set(kind === 'artist' ? discogsArtistUrl(idMatch[1]) : discogsLabelUrl(idMatch[1]), found);
+      out.set(key, found);
     }
     return out;
   }
-
-  const lookupDiscogsArtistUrls = (urls) => lookupDiscogsUrls(urls, 'artist');
 
   // --- Relationship types and attributes from MB.linkedEntities ---------------
 
@@ -5502,13 +6829,20 @@
       performanceLt: findLt('recording', 'work', 'performance'),
       // Fallback IDs are the values currently used on musicbrainz.org.
       memberLtId: (findLt('artist', 'artist', 'member of band') || { id: 103 }).id,
-      discogsArtistUrlLtId: (findLt('artist', 'url', 'discogs') || { id: 180 }).id,
-      discogsUrlLtId: {
-        label: (findLt('label', 'url', 'discogs') || { id: 217 }).id,
-        place: (findLt('place', 'url', 'discogs') || { id: 705 }).id,
-      },
+      // URL relationship types by name, e.g. "discogs" for the links of a source (sourceUrlLtId)
+      findUrlLt: (type0, name) => findLt(type0, 'url', name),
     };
     return IDX;
+  }
+
+  /**
+   * MB's URL relationship type for a link to the source's page of an artist, label or place ("discogs"); the id
+   * musicbrainz.org uses when the page data lacks it. null for other entity types (the form then chooses).
+   */
+  function sourceUrlLtId(entityType) {
+    const def = S.source.urlLinkType;
+    if (!def || !(entityType in def.ids)) return null;
+    return (idx().findUrlLt(entityType, def.name) || { id: def.ids[entityType] }).id;
   }
 
   const typesFor = (level, entityType = 'artist') => idx().byLevel[`${entityType}:${level}`] || [];
@@ -5686,22 +7020,54 @@
   const S = {
     overlay: null,
     initialized: false,
-    discogsLinks: [],
-    discogsId: null,
-    discogs: null,
-    dTracks: [],
+    // The source the credits come from (its adapter, section 2) and its releases this MB release links to
+    source: DISCOGS,
+    sourceLinks: [],
+    // The release being imported, as the adapter delivers it (neutral, section 2), and its tracks
+    release: null,
+    srcTracks: [],
+    // [E1] A pasted text (the source "text") and its form while open
+    textInput: null,
+    textForm: null,
+    // [stage 2] The second source supplementing the loaded one (its list of suggestions), and the sources that did
+    supp: null,
+    suppSources: new Map(),
+    // Preference of the linked sources (physical / digital media), whether this release is digital, the settings panels
+    sourceOrder: { physical: ['discogs', 'bandcamp'], digital: ['bandcamp', 'discogs'] },
+    digital: false,
+    srcOrderOpen: false,
+    bcOpen: false,
+    // [E2] Bandcamp: read the credits of the track pages too (one request per track); the page test
+    bcTracks: true,
+    bcTest: null,
     mbTracks: [],
     existing: { exact: new Set(), loose: new Set(), credits: new Map(), noText: new Set() },
     filled: new Set(),
     // Dates for relationships already in MusicBrainz (works matrix): key → planned date; staged ones
     dateFills: new Map(),
     filledDates: new Set(),
+    // Attributes of the links recording → work: chosen on / off by hand (key "track|work"), staged additions
+    linkAttrOn: new Map(),
+    linkAttrOff: new Map(),
+    linkAttrStaged: new Map(),
+    // Works matrix: attribute rows opened by hand (key of the matrix row), all opened, options of rows opened (track index)
+    wattrOpen: new Set(),
+    wattrOpenAll: false,
+    // "Spell out": the attributes with their names instead of the short forms (remembered)
+    wattrLong: readJson('localStorage', 'dci-wattr-long', false) === true,
+    mxOptsOpen: new Set(),
+    // The ▾ menu of a column head (its key)
+    mxColMenu: null,
+    // [S021] live: why it is preselected (release, or a track: index → reason)
+    liveAuto: { release: '', tracks: new Map(), credits: new Map(), releaseCredit: null },
     fillCredits: false,
     artists: new Map(),
     rows: [],
     plan: [],
     appliedKeys: new Set(),
     mediumFilter: null,
+    // Media choice of this import: { media: Set, release: bool }; null: all media with the release level (as before)
+    mediaSel: null,
     capOn: true,
     capLimit: 500,
     // What the dashboard put into the editor: key → { state, source, sig, text }
@@ -5870,6 +7236,22 @@
     return typo(roleCreditForInner(row)); // [S012]
   }
 
+  /**
+   * [S019] Details that only repeat the role in another word form are no role credit: "Mixed By [Mixing]",
+   * "Mastered By [Mastering]", "Music By [All Music By]", "Recorded By [Recording]". Every word of the detail
+   * (without "all" and a final "by") has to be a form of the Discogs role or of the MB type ("[Cover Photo]" stays).
+   */
+  function repeatedDetails(row) {
+    if (!ruleOn('S019')) return [];
+    const lt = currentLinkType(row);
+    const refs = [withoutBy(row.base), lt ? lt.name : '', ...(lt ? WORDING_SYNONYMS[norm(lt.name)] || [] : [])].filter(Boolean);
+    const words = (t) => norm(t).split(/[\s\-/]+/).filter((w) => w && !['all', 'by', 'and', '&', 'the'].includes(w));
+    return (row.mods || []).filter((m) => {
+      const ws = words(m);
+      return ws.length && ws.every((w) => refs.some((r) => sameWording(w, r)));
+    });
+  }
+
   function roleCreditForInner(row) {
     // [W001–W003] A wording rule of the register wins (e.g. "Bass [Upright]" → "upright bass")
     const wr = wordingRuleFor(row);
@@ -5877,7 +7259,7 @@
     const vocab = instrumentVocabulary();
     const lt0 = currentLinkType(row);
     const art = lt0 && ART_TYPES.includes(norm(lt0.name));
-    const raw = suggestRoleCredit(row.mods, [...(row.consumed || []), ...(row.flagMods || [])], row.primaryText);
+    const raw = suggestRoleCredit(row.mods, [...(row.consumed || []), ...(row.flagMods || []), ...repeatedDetails(row)], row.primaryText);
     const details = raw ? (!ruleOn('S011') ? raw : art ? norm(raw) : caseCredit(raw, vocab)) : ''; // [S011]
     const task = row.creditFromRole ? withoutBy(norm(row.creditFromRole)) : '';
     // [S009] No Discogs brackets in role credits: the details come before the role ("tour coordinator")
@@ -5885,7 +7267,8 @@
     if (details) return details;
     // Discogs "Bass" keeps "bass" as role credit, whichever bass it turns out to be
     const question = questionRuleFor(row); // [S005] [Q001 …]
-    if (question) return question.credit;
+    // (no credit that only repeats the instrument: "Bass Guitar" left as bass guitar)
+    if (question) return norm(row.primaryText) === norm(question.credit) ? '' : question.credit;
     const lt = currentLinkType(row);
     return wordingCredit(row.base, row.mods, row.primaryText, lt ? lt.name : '', vocab) || fixedRoleCredit(row.base, row.primaryText);
   }
@@ -5964,7 +7347,7 @@
       const tq = typeQuestionFor(row);
       if (tq) ids.push(tq.id);
       if (/^additional\s+\S/i.test(base0)) ids.push('S001');
-      if ((row.mods || []).some((x) => CHECKBOX_DETAILS.includes(norm(x)))) ids.push('S002');
+      if ((row.mods || []).some((x) => CHECKBOX_DETAILS.includes(norm(x)) || ['additional', 'guest', 'solo'].includes(flagForDetail(x)))) ids.push('S002');
       if (/^\s*(cd|cds|lp|lps|dvd|vinyl|cassette|sacd|blu-?ray|album)\s+/i.test(base0) && !/design/i.test(base0)) ids.push('S003');
       if (row.ruleId === 'R062') ids.push('S004');
       if (row.level === 'work' && ARRANGER_TYPES.includes(norm(row.types[0] || '')) && row.defaultLevel === 'recording') ids.push('S006');
@@ -5973,6 +7356,7 @@
       if ((lt && ART_TYPES.includes(norm(lt.name)) && remainingMods(row).length) || /[A-Z]/.test(row.roleCredit || '')) ids.push('S011');
       if (/'/.test(row.raw || '') && /’/.test(row.roleCredit || '')) ids.push('S012');
       if (row.dSplitFrom) ids.push('S018');
+      if (repeatedDetails(row).length) ids.push('S019');
     }
     const a = S.artists.get(row.artistKey);
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push('S008');
@@ -6153,8 +7537,10 @@
     for (const [i, plan] of S.workPlan) {
       const t = S.mbTracks[i];
       if (!t || !perf) continue;
+      // Attributes chosen in the matrix, with the preselected "live" (S021)
+      const eff = linkAttrsOf(i, { ...plan, planned: true });
       const attrs = allowedRoots(perf)
-        .filter((r) => !r.hasChildren && !r.attr.free_text && plan.flags.has(norm(r.attr.name)))
+        .filter((r) => !r.hasChildren && !r.attr.free_text && eff.has(norm(r.attr.name)))
         .map((r) => ({ type: r.attr }));
       const key = `link|${t.recordingGid}|${plan.gid}`;
       planned.add(key);
@@ -6302,6 +7688,25 @@
         const before = [info.ready, info.applied, info.existing];
         planTarget(target);
         markTrack(target, info.ready > before[0] ? 'open' : info.applied > before[1] ? 'staged' : info.existing > before[2] ? 'mb' : null);
+      }
+    }
+    // Attributes added to links recording → work that exist in MusicBrainz (an edit of each link)
+    if (perf && S.scope !== 'nonwork') {
+      const types = linkAttrTypes();
+      for (const t of S.mbTracks) {
+        if (!matrixTrack(t) || !inMedium(t.idx)) continue;
+        for (const w of t.works) {
+          const key = linkKey(t.idx, w.gid);
+          const inMb = mbLinkAttrs(w);
+          const add = [...linkAttrsOf(t.idx, w)].filter((n) => !inMb.has(n));
+          const sig = add.sort().join(',');
+          if (!add.length || S.linkAttrStaged.get(key) === sig) continue;
+          items.push({
+            kind: 'work-link', attrFill: key, attrSig: sig, lt: perf, workGid: w.gid, workTitle: w.title, credit: '', noteText: '', date: null, key: `la|${key}`,
+            attrs: types.filter((a) => add.includes(norm(a.name))).map((a) => ({ type: a })),
+            target: { kind: 'recording', gid: t.recordingGid, label: `${t.medium}.${t.number} ${t.title}`, order: t.idx, track: t },
+          });
+        }
       }
     }
     // Dates for relationships already in MusicBrainz (works matrix): an edit of each existing relationship
@@ -6825,6 +8230,26 @@
     else el.querySelector('[data-rf="test"]').focus();
   }
 
+  /** The next (or previous) incomplete row: scrolled into view, with what is missing highlighted. */
+  function gotoIncomplete(step) {
+    const ids = S.incompleteIds || [];
+    if (!ids.length) return;
+    S.incIdx = ((S.incIdx == null || S.incIdx < 0 ? (step > 0 ? -1 : 0) : S.incIdx) + step + ids.length) % ids.length;
+    const row = S.rows.find((r) => r.id === ids[S.incIdx]);
+    const tr1 = row && S.overlay.querySelector(`tr[data-row="${row.id}"]`);
+    refresh();
+    if (!tr1) return;
+    const lt = currentLinkType(row);
+    const artist = S.artists.get(row.artistKey);
+    const missing = !artist || !artist.mbid ? S.overlay.querySelector(`[data-match="${row.artistKey}"]`)
+      : !lt ? tr1.querySelector('.dci-c-type') : rowDateInfo(row, lt).error ? tr1.querySelector('.dci-c-date') : tr1.querySelector('.dci-c-attr');
+    tr1.scrollIntoView({ block: 'center' });
+    [tr1, missing].filter(Boolean).forEach((el) => {
+      el.classList.add('dci-flash');
+      setTimeout(() => el.classList.remove('dci-flash'), 2500);
+    });
+  }
+
   /** Jumps to a rule in the rules window (own rules or the register) and highlights it until another one is chosen. */
   function focusRule(id) {
     const el = document.getElementById('dci-rules');
@@ -6867,18 +8292,171 @@
         renderLog();
       }
     });
+    el.addEventListener('change', (e) => {
+      if (e.target.matches('[data-log-f="place"]')) setLogPlace(e.target.value);
+    });
     document.body.appendChild(el);
     S.logEl = el;
     renderLog();
     applyScale();
     makeMovable(el, '.dci-log-head', 'log');
+    applyLogPlace();
   }
+
+  // --- Log placement: its own window (default), or in the page next to the edit note ----------
+
+  const LOG_PLACES = ['window', 'left', 'right', 'above'];
+  S.logPlace = LOG_PLACES.includes(readJson('localStorage', 'dci-log-place', 'window')) ? readJson('localStorage', 'dci-log-place', 'window') : 'window';
+  /** Below this width (CSS px) of the edit note, the log does not go beside it but above it. */
+  const LOG_SIDE_MIN_PX = 640;
+  /** Beside the edit note: the log's share of the edit note's width, and its least height. */
+  const LOG_DOCK_SIDE_SHARE = 0.42;
+  const LOG_DOCK_MIN_H = 140;
+
+  const editNoteEl = () => document.getElementById('edit-note-text') || document.querySelector('textarea[name$="edit_note"]');
+  const logDocked = () => !!(S.logEl && S.logEl.classList.contains('dci-log-docked'));
+
+  /** The edit note gets its own width back (the log is no longer beside it). */
+  function releaseEditNote() {
+    const n = S.logNote;
+    if (!n) return;
+    n.style.width = n.dataset.dciWidth || '';
+    n.style.verticalAlign = n.dataset.dciValign || '';
+    delete n.dataset.dciWidth;
+    delete n.dataset.dciValign;
+    if (S.logNoteRo) S.logNoteRo.unobserve(n);
+    S.logNote = null;
+  }
+
+  /** The edit note's width without the log beside it. */
+  function editNoteWidth(note) {
+    if (S.logNote !== note) return note.getBoundingClientRect().width;
+    const w = note.style.width;
+    note.style.width = note.dataset.dciWidth || '';
+    const own = note.getBoundingClientRect().width;
+    note.style.width = w;
+    return own;
+  }
+
+  /** Where the log is right now: the chosen place, "above" when the page is too narrow, the window without an edit note. */
+  function logPlaceNow() {
+    if (S.logPlace === 'window') return { place: 'window', why: '' };
+    const note = editNoteEl();
+    if (!note || !note.parentElement) return { place: 'window', why: 'noNote', note: null };
+    if (S.logPlace !== 'above') {
+      const w = editNoteWidth(note);
+      if (w < LOG_SIDE_MIN_PX) return { place: 'above', why: 'narrow', note };
+      return { place: S.logPlace, why: '', note, w };
+    }
+    return { place: 'above', why: '', note };
+  }
+
+  /**
+   * Puts the log where it belongs. In the page it is inserted right before the edit note; the edit note itself
+   * is not moved (MusicBrainz keeps managing it). Beside it, the edit note keeps its place and gets the rest of
+   * its width, and the log takes its height (at least LOG_DOCK_MIN_H); above it, the log's height can be dragged.
+   */
+  function applyLogPlace() {
+    const el = S.logEl;
+    if (!el) return;
+    const now = logPlaceNow();
+    S.logPlaceNow = now;
+    const side = (now.place === 'left' || now.place === 'right') && !el.hidden;
+    if (S.logNote && (!side || S.logNote !== now.note)) releaseEditNote();
+    const clear = document.getElementById('dci-log-clear');
+    if (clear && !side) clear.remove();
+    if (now.place === 'window') {
+      if (logDocked() || el.parentNode !== document.body) {
+        el.classList.remove('dci-log-docked', 'dci-log-dock-left', 'dci-log-dock-right', 'dci-log-dock-above');
+        document.body.appendChild(el);
+        const saved = readJson('localStorage', GEOM_KEYS.log, null);
+        placeWindow(el, saved && saved.w >= 160 && saved.h >= 100 ? saved : defaultGeom('log'), true);
+      }
+      renderLogPlace();
+      return;
+    }
+    const note = now.note;
+    if (note.previousSibling !== el) note.before(el);
+    el.classList.add('dci-log-docked');
+    ['left', 'right', 'above'].forEach((p) => el.classList.toggle(`dci-log-dock-${p}`, now.place === p));
+    ['left', 'top', 'right', 'bottom', 'zIndex'].forEach((k) => { el.style[k] = ''; });
+    if (now.place === 'above') {
+      el.style.width = '';
+      el.style.height = `${Math.max(LOG_DOCK_MIN_H, Number(readJson('localStorage', 'dci-log-dock-h', 180)) || 180)}px`;
+    } else {
+      const gap = Math.round(12 * (basePx() / 13));
+      const logW = Math.round(now.w * LOG_DOCK_SIDE_SHARE);
+      el.style.width = `${logW}px`;
+      if (side) {
+        if (S.logNote !== note) {
+          note.dataset.dciWidth = note.style.width || '';
+          note.dataset.dciValign = note.style.verticalAlign || '';
+          S.logNote = note;
+          S.logNoteRo = S.logNoteRo || new ResizeObserver(() => syncLogHeight());
+          S.logNoteRo.observe(note);
+        }
+        note.style.width = `${Math.floor(now.w - logW - gap)}px`;
+        note.style.verticalAlign = 'top';
+        // the float ends below the edit note, whatever follows it
+        const c = clear || Object.assign(document.createElement('div'), { id: 'dci-log-clear' });
+        if (note.nextSibling !== c) note.after(c);
+        syncLogHeight();
+      }
+    }
+    renderLogPlace();
+  }
+
+  function syncLogHeight() {
+    const el = S.logEl;
+    const note = S.logNote;
+    if (!el || !note || !el.classList.contains('dci-log-docked') || el.classList.contains('dci-log-dock-above')) return;
+    const h = Math.max(LOG_DOCK_MIN_H, Math.round(note.getBoundingClientRect().height));
+    if (Math.abs((parseFloat(el.style.height) || 0) - h) > 1) el.style.height = `${h}px`;
+  }
+
+  /** The place selector in the log's head, with a hint when the log cannot be where it was asked to be. */
+  function renderLogPlace() {
+    const sel = S.logEl && S.logEl.querySelector('[data-log-f="place"]');
+    if (!sel) return;
+    sel.value = S.logPlace;
+    const why = S.logPlaceNow && S.logPlaceNow.why;
+    sel.title = why ? tr(why === 'narrow' ? 'log.placeNarrow' : 'log.placeNoNote') : tr('log.placeTitle');
+    sel.classList.toggle('dci-log-place-off', !!why);
+  }
+
+  function setLogPlace(place) {
+    S.logPlace = LOG_PLACES.includes(place) ? place : 'window';
+    writeJson('localStorage', 'dci-log-place', S.logPlace === 'window' ? null : S.logPlace);
+    applyLogPlace();
+    log('info', 'logPlaced', { place: tr(`log.place.${S.logPlace}`) });
+    if (S.logEl.hidden) return;
+    if (logDocked()) S.logEl.scrollIntoView({ block: 'nearest' });
+    else {
+      clampWindow(S.logEl);
+      bringToFront('log');
+    }
+  }
+
+  // MusicBrainz may draw the edit note again (or late), the window may get narrower: the log follows
+  let logPlaceFrame = 0;
+  const queueLogPlace = (force) => {
+    if (S.logPlace === 'window' || !S.logEl || logPlaceFrame) return;
+    logPlaceFrame = requestAnimationFrame(() => {
+      logPlaceFrame = 0;
+      const cur = S.logPlaceNow || {};
+      const note = editNoteEl();
+      if (force === true || note !== cur.note || (note && note.previousSibling !== S.logEl) || (cur.place === 'window') !== !note) applyLogPlace();
+    });
+  };
+  new MutationObserver(() => queueLogPlace(false)).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('resize', () => queueLogPlace(true));
 
   function renderLog() {
     if (!S.logEl) return;
     S.logEl.innerHTML = `
       <div class="dci-log-head">
         <h2 id="dci-log-title">${esc(tr('log.title'))}</h2>
+        <label class="dci-log-place">${esc(tr('log.place'))} <select data-log-f="place">${LOG_PLACES.map((p) => `<option value="${p}">${esc(tr(`log.place.${p}`))}</option>`).join('')}</select></label>
         <button type="button" data-log-act="dashboard" class="dci-log-dash" title="${esc(tr('log.dashboardTitle'))}">${esc(tr('log.dashboard'))}</button>
         <button type="button" data-log-act="diag" aria-pressed="${!!DIAG.timer}" title="${esc(tr('log.diagTitle'))}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>
         <button type="button" data-log-act="copy">${esc(tr('log.copy'))}</button>
@@ -6886,6 +8464,7 @@
         <button type="button" data-log-act="hide">${esc(tr('log.hide'))}</button>
       </div>
       <ol aria-live="polite">${S.log.map(logItemHtml).join('')}</ol>`;
+    renderLogPlace();
     scrollLog();
   }
 
@@ -6893,6 +8472,7 @@
     if (!S.logEl) buildLogWindow();
     S.logEl.hidden = !visible;
     writeJson('localStorage', 'dci-log-open', visible);
+    if (S.logPlace !== 'window') applyLogPlace();
     if (visible) {
       clampWindow(S.logEl);
       bringToFront('log');
@@ -6962,18 +8542,34 @@
   // --- Edit note ------------------------------------------------------------------------
   // Always English: edit notes are read by editors worldwide.
 
+  /** The id of the release being imported at its source (null before an import). */
+  const srcReleaseId = () => (S.release ? S.release.id : null);
+  /**
+   * The source for edit notes: the release imported (its URL, or what a text says it comes from), else the
+   * Discogs release new works of this browser came from.
+   */
+  function noteSourceUrl() {
+    if (S.release) return S.release.noteSource || S.release.url;
+    return S.noteDiscogsId ? DISCOGS.releaseUrl(S.noteDiscogsId) : '';
+  }
+  /** The release the companion script shows (its Discogs tab); null without one, or for a source it does not know. */
+  const companionReleaseId = () => (S.release && S.source.companion ? S.release.id : null);
+
   function editNoteBlock() {
     const st = S.noteStats;
     const lines = [];
-    const discogsId = S.discogsId || S.noteDiscogsId;
-    if (discogsId) lines.push(`Source: https://www.discogs.com/release/${discogsId}`);
+    const sourceUrl = noteSourceUrl();
+    if (sourceUrl) lines.push(`Source: ${sourceUrl}`);
+    // [stage 2] The sources that supplemented it, and what came from them
+    const supp = suppNoteLines();
+    supp.filter((l) => l.startsWith('Also from: ')).forEach((l) => lines.push(l));
     lines.push(`Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})`);
     const done = [];
     const credits = st.recording + st.release + st.release_group + st.work;
     if (credits) {
       const parts = [['recording', st.recording], ['release', st.release], ['release group', st.release_group], ['work', st.work]]
         .filter(([, n]) => n).map(([level, n]) => `${n} ${level}`);
-      done.push(`added ${credits} credit relationship${credits === 1 ? '' : 's'} from Discogs (${parts.join(', ')})`);
+      done.push(`added ${credits} credit relationship${credits === 1 ? '' : 's'} from ${S.source.noteName} (${parts.join(', ')})`);
     }
     if (st.workLinks) {
       done.push(`linked ${st.workLinks} work${st.workLinks === 1 ? '' : 's'} to recordings${st.newWorkLinks ? ` (${st.newWorkLinks} newly created)` : ''}`);
@@ -6981,10 +8577,12 @@
     }
     if (st.filled) done.push(`added role credits to ${st.filled} existing relationship${st.filled === 1 ? '' : 's'}`);
     if (st.datesFilled) done.push(`added dates to ${st.datesFilled} existing relationship${st.datesFilled === 1 ? '' : 's'} without a date`);
+    if (st.linkAttrs) done.push(`added attributes (live, cover …) to ${st.linkAttrs} existing link${st.linkAttrs === 1 ? '' : 's'} between recording and work`);
     if (done.length) lines.push(`Done: ${done.join('; ')}.`);
+    supp.filter((l) => !l.startsWith('Also from: ')).forEach((l) => lines.push(l));
     if (S.noteDates.size) lines.push(`Dates entered in the dashboard: ${[...S.noteDates.values()].join('; ')}.`);
     if (S.noteLines.size) {
-      lines.push('Not stored in MB (Discogs wording):');
+      lines.push(`Not stored in MB (${S.source.noteName} wording):`);
       S.noteLines.forEach((l) => lines.push(`- ${l}`));
     }
     return lines.join('\n');
@@ -7016,7 +8614,8 @@
 
   function rememberCreatedWork(i, gid, title) {
     const list = readCreatedWorks().filter((x) => x.gid !== gid);
-    list.push({ i, rec: S.mbTracks[i].recordingGid, gid, title, discogsId: S.discogsId || '', ts: Date.now() });
+    // (stored as "discogsId", as earlier versions did)
+    list.push({ i, rec: S.mbTracks[i].recordingGid, gid, title, discogsId: (S.source === DISCOGS && srcReleaseId()) || '', ts: Date.now() });
     writeJson('localStorage', CREATED_KEY, list);
   }
 
@@ -7082,6 +8681,85 @@
   // 7. Flow: load, resolve artists, apply
   // ===========================================================================
 
+  // --- Which source is imported: chosen for this release, else the preference list -----------------------------
+
+  const SOURCE_ORDER_KEY = 'dci-source-order';
+  const SOURCE_PICK_KEY = 'dci-source-pick';
+  /** Default preference: physical media from Discogs first, digital media from Bandcamp first. */
+  const SOURCE_ORDER_DEFAULT = { physical: ['discogs', 'bandcamp'], digital: ['bandcamp', 'discogs'] };
+  function readSourceOrder() {
+    const stored = readJson('localStorage', SOURCE_ORDER_KEY, null) || {};
+    const fix = (list, def) => {
+      const known = (Array.isArray(list) ? list : []).filter((k) => LINKED_SOURCES.includes(k));
+      return uniq([...known, ...def]);
+    };
+    return { physical: fix(stored.physical, SOURCE_ORDER_DEFAULT.physical), digital: fix(stored.digital, SOURCE_ORDER_DEFAULT.digital) };
+  }
+  S.sourceOrder = readSourceOrder();
+  S.bcTracks = readJson('localStorage', 'dci-bc-tracks', true) !== false;
+  const sourceOrder = () => (S.digital ? S.sourceOrder.digital : S.sourceOrder.physical);
+  /** A source chosen by hand for this release is remembered and wins over the list. */
+  function keepSourcePick(source, id) {
+    if (!LINKED_SOURCES.includes(source.id)) return;
+    const all = readJson('localStorage', SOURCE_PICK_KEY, {}) || {};
+    all[releaseMbid] = { source: source.id, id: String(id), at: Date.now() };
+    // only the last 200 releases are remembered
+    const keep = Object.entries(all).sort((a, c) => (c[1].at || 0) - (a[1].at || 0)).slice(0, 200);
+    writeJson('localStorage', SOURCE_PICK_KEY, Object.fromEntries(keep));
+  }
+
+  /** Moves a source in a preference list (by ▲▼, or dropped onto another source: to its place). */
+  function moveSourceOrder(kind, src, dir, toSrc = null) {
+    const list = [...(S.sourceOrder[kind] || [])];
+    const i = list.indexOf(src);
+    if (i < 0) return;
+    const j = toSrc ? list.indexOf(toSrc) : i + dir;
+    if (j < 0 || j >= list.length || j === i) return;
+    list.splice(i, 1);
+    list.splice(j, 0, src);
+    S.sourceOrder = { ...S.sourceOrder, [kind]: list };
+    writeJson('localStorage', SOURCE_ORDER_KEY, S.sourceOrder);
+    log('info', 'sourceOrder', { kind: tr(`srcorder.${kind}`), list: list.map((k) => SOURCES[k].name).join(' › ') });
+    renderSource();
+  }
+
+  /** [E2] What the script finds on a Bandcamp album page (to check that it can read Bandcamp in this browser). */
+  async function testBandcampPage(input) {
+    const url = BANDCAMP.albumUrl(input);
+    S.bcTest = { url: input, ok: false, text: tr('bc.testBadUrl') };
+    if (url) {
+      S.bcTest.text = tr('bc.testRunning');
+      renderSource();
+      try {
+        const data = BANDCAMP.pageData(await httpGet(url));
+        if (!data || !data.current) throw new Error(tr('err.bandcampData', { url }));
+        const lines = String(data.current.credits || '').split(/\r?\n/).filter((l) => l.trim()).length;
+        const pages = (data.trackinfo || []).filter((t) => t.title_link).length;
+        S.bcTest = { url: input, ok: true, text: tr('bc.testOk', { title: data.current.title || '?', n: (data.trackinfo || []).length, lines, pages, via: typeof GM_xmlhttpRequest === 'function' ? 'GM_xmlhttpRequest' : 'fetch' }) };
+      } catch (e) {
+        S.bcTest = { url: input, ok: false, text: e.message };
+      }
+      log(S.bcTest.ok ? 'ok' : 'warn', 'bcTest', { text: S.bcTest.text });
+    }
+    renderSource();
+  }
+
+  /**
+   * The source to start with: the one chosen by hand for this release (if it is still linked), else the first
+   * source of the preference list (physical or digital media) that is linked – one link: load it; several: ask.
+   */
+  function startSource() {
+    const kept = (readJson('localStorage', SOURCE_PICK_KEY, {}) || {})[releaseMbid];
+    const keptLink = kept && S.sourceLinks.find((x) => x.source === kept.source && x.id === kept.id);
+    if (keptLink) return { link: keptLink, kept: true };
+    for (const k of sourceOrder()) {
+      const links = S.sourceLinks.filter((x) => x.source === k);
+      if (links.length === 1) return { link: links[0] };
+      if (links.length > 1) return { multi: links.length, source: k };
+    }
+    return {};
+  }
+
   async function init() {
     try {
       clearMessages();
@@ -7090,7 +8768,7 @@
       setBusy('busy.mb');
       log('info', 'start', { mbid: releaseMbid });
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
-        + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups');
+        + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits');
       if (!ws) throw new Error(tr('err.releaseMissing'));
       S.mbTracks = [];
       S.mediaInfo = new Map((ws.media || []).map((m) => [m.position, { format: m.format || '', title: m.title || '' }]));
@@ -7105,6 +8783,8 @@
           works: rels.filter((r) => r['target-type'] === 'work' && r.work).map((r) => ({
             gid: r.work.id,
             title: r.work.title,
+            // Attributes of the link recording → work (live, cover, medley …) as MusicBrainz has them
+            linkAttrs: (r.attributes || []).map(norm),
             writers: uniq((r.work.relations || [])
               .filter((x) => x['target-type'] === 'artist' && x.artist)
               .map((x) => `${x.artist.name} (${x.type})`)),
@@ -7116,15 +8796,14 @@
         });
       }));
       S.existing = indexExistingRelationships(ws);
+      // [rule 4] The release's artist credit, as named below its title (names from Bandcamp must match it exactly)
+      S.releaseCredit = (ws['artist-credit'] || []).map((p) => ({ mbid: (p.artist && p.artist.id) || '', name: p.name || (p.artist && p.artist.name) || '', join: p.joinphrase || '' }));
       S.workOptions = await loadWorkOptions();
       // Nothing is preselected; the choice applies to every new work until it is changed.
       S.workDefaults = { typeId: '', languageIds: [] };
-      const links = new Map();
-      for (const r of ws.relations || []) {
-        const m = r['target-type'] === 'url' && r.url && String(r.url.resource).match(/discogs\.com\/release\/(\d+)/);
-        if (m && !links.has(m[1])) links.set(m[1], { id: m[1], url: r.url.resource });
-      }
-      S.discogsLinks = [...links.values()];
+      // Every source this release links to (Discogs releases, Bandcamp albums); digital: all media are "Digital Media"
+      S.sourceLinks = LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(ws.relations).map((l) => ({ ...l, source: k })));
+      S.digital = !!(ws.media || []).length && (ws.media || []).every((m) => /digital media/i.test(m.format || ''));
       // Large releases: one medium at a time, starting with the first (from 50 tracks on several media)
       const media = uniq(S.mbTracks.map((t) => t.medium));
       if (S.mbTracks.length >= 50 && media.length > 1 && S.mediumFilter == null) {
@@ -7149,7 +8828,7 @@
       log('info', 'mbLoaded', {
         n: S.mbTracks.length,
         works: S.mbTracks.filter((x) => x.works.length).length,
-        links: S.discogsLinks.length,
+        links: S.sourceLinks.length,
       });
       renderSource();
       renderWorks();
@@ -7161,56 +8840,727 @@
         log('warn', 'pendingWorks', { n: created.length });
       }
       if (S.panicMode) return;
-      if (S.discogsLinks.length === 1) {
-        await loadDiscogs(S.discogsLinks[0].id);
-      } else if (!S.discogsLinks.length) {
-        showMessage('info', 'msg.noDiscogsLink');
-      } else {
-        showMessage('info', 'msg.multiLinks', { n: S.discogsLinks.length });
-      }
+      await startImport();
     } catch (e) {
       setBusy('');
       showError(e);
     }
   }
 
-  async function loadDiscogs(id) {
-    if (S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
+  /** Imports the source chosen for this release, else the first linked one of the preference list. */
+  async function startImport() {
+    const start = startSource();
+    if (start.link) {
+      if (start.kept) log('info', 'sourceKept', { src: SOURCES[start.link.source].name });
+      await loadRelease(start.link.id, { source: SOURCES[start.link.source], confirmed: true });
+    } else if (start.multi) {
+      showMessage('info', 'msg.multiLinks', { n: start.multi, src: SOURCES[start.source].name });
+    } else {
+      showMessage('info', 'msg.noSourceLink');
+    }
+  }
+
+  /**
+   * [3.4.0] "Delete stored import": forgets what is stored for the import of this release – date pool, track pool,
+   * date matrix, the source chosen for it, its media choice, the supplements, its log, its status marks with the
+   * companion – and imports it anew. What is staged in the relationship editor stays, so does the list of created works.
+   */
+  async function forgetImport() {
+    S.forgetOpen = false;
+    const dropEntry = (key) => {
+      const all = readJson('localStorage', key, {}) || {};
+      delete all[releaseMbid];
+      writeJson('localStorage', key, Object.keys(all).length ? all : null);
+    };
+    dropEntry(SOURCE_PICK_KEY);
+    dropEntry(MEDIA_SEL_KEY);
+    S.datePool = [];
+    S.trackPool = [];
+    S.poolForm = null;
+    S.trackForm = null;
+    S.dm = { cells: [], found: '', dirty: false };
+    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY].forEach((k) => writeJson('localStorage', k, null));
+    S.mediaSel = null;
+    S.supp = null;
+    S.suppSources = new Map();
+    toDiscogs({ type: 'forget-release', mbRelease: releaseMbid });
+    S.log = [];
+    writeJson('sessionStorage', LOG_KEY, null);
+    renderLog();
+    log('info', 'importForgotten');
+    S.release = null;
+    S.artists = new Map();
+    S.rows = [];
+    S.textInput = null;
+    $('toolbar').hidden = true;
+    clearMessages();
+    renderSource();
+    renderSupp();
+    renderDates();
+    renderGroups();
+    renderWorks();
+    refresh();
+    showMessage('ok', 'forget.done');
+    await startImport();
+  }
+
+  // --- Stage 2: a second source supplements the loaded one (on request only) ------------------------------------
+  // The loaded source stays decisive. A second one (another linked source or a pasted text) is read after it, on
+  // a click, and compared row by row: the same → its mark on the row; only there → a suggestion in the list
+  // "Supplements from …" (new role, new entry); other tracks → "differs", the loaded source stays until chosen.
+  // Nothing is taken over by itself; one supplement at a time, one after another.
+
+  /** "1–3, 5" (with several media "1.1–1.3"), or "all". */
+  function trackSetText(list, all) {
+    if (all) return tr('supp.allTracks');
+    const tracks = [...list].sort((x, y) => x - y).map((i) => S.mbTracks[i]).filter(Boolean);
+    const several = uniq(S.mbTracks.map((t) => t.medium)).length > 1;
+    const label = (t) => (several ? trackLabel(t) : t.number);
+    const out = [];
+    for (let k = 0; k < tracks.length; k++) {
+      let j = k;
+      while (j + 1 < tracks.length && tracks[j + 1].idx === tracks[j].idx + 1 && tracks[j + 1].medium === tracks[k].medium) j++;
+      out.push(j > k + 1 ? `${label(tracks[k])}–${label(tracks[j])}` : j > k ? `${label(tracks[k])}, ${label(tracks[j])}` : label(tracks[k]));
+      k = j;
+    }
+    return out.join(', ');
+  }
+
+  /** What a row is in MusicBrainz terms, to compare rows of two sources: entity, relationship type, its attribute. */
+  const suppSig = (row) => `${row.company ? 'c' : 'a'}|${norm((row.types || [])[0] || '')}|${norm(row.primaryText || '')}`;
+  const sameTracks = (a, b) => a.size === b.size && [...a].every((i) => b.has(i));
+  /** A name compared loosely: case, accents and punctuation do not count. */
+  const nameKey = (x) => norm(x).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  /** MB relationship of a row in words: "instrument · trumpet". */
+  const rowRelText = (row) => [(row.types || [])[0] || '', row.primaryText || ''].filter(Boolean).join(' · ');
+
+  /** The entry of the dashboard a name of the second source belongs to: the same MB entry, else the same name. */
+  function suppEntryFor(name, mbids, company) {
+    const list = [...S.artists.values()].filter((a) => !!a.company === company && !a.other && S.rows.some((r) => r.artistKey === a.key));
+    const byMbid = mbids.length ? list.find((a) => a.mbid && mbids.includes(a.mbid)) : null;
+    if (byMbid) return byMbid;
+    const k = nameKey(name);
+    return list.find((a) => [a.name, a.rawName, a.mbName, ...(a.anvs || []), ...(a.dAliases || [])].some((n) => n && nameKey(n) === k)) || null;
+  }
+
+  /** The tracks of a credit of the second source, in MusicBrainz (and in the media chosen for the import). */
+  const suppTracks = (c) => (c.allTracks ? selIdx() : [...c.indexes].filter((i) => i < S.mbTracks.length && inSelection(i)));
+
+  /** Reads the second source and compares it with the rows of the dashboard. */
+  async function loadSupplement(source, id, input = null) {
+    if (!S.release || !S.rows.length) return;
+    try {
+      clearMessages();
+      setBusy('busy.supp', { source: source.name });
+      const rel = await source.release(id, { ...sourceContext(), input });
+      if (S.supp) dropSupplementMarks(S.supp);
+      S.supp = { source, id, rel, open: true, items: [], url: rel.noteSource || rel.url || '' };
+      S.suppSources.set(source.short, { name: source.noteName, url: S.supp.url });
+      await compareSupplement();
+      const n = (kind) => S.supp.items.filter((it) => it.kind === kind).length;
+      log('info', 'suppLoaded', { name: source.name, confirmed: S.supp.confirmed, added: n('role') + n('entry'), differ: n('differ'), unrec: n('unrec') });
+      setBusy('');
+    } catch (e) {
+      setBusy('');
+      showError(e);
+    }
+    renderSource();
+    renderSupp();
+    renderGroups();
+    renderWorks();
+    refresh();
+  }
+
+  /** Takes the marks of a supplement off the rows (its suggestions go; what was taken over stays). */
+  function dropSupplementMarks(sp) {
+    for (const r of S.rows) {
+      if (r.confirmedBy) r.confirmedBy.delete(sp.source.short);
+      if (r.differ && r.differ.short === sp.source.short) r.differ = null;
+    }
+  }
+
+  async function compareSupplement() {
+    const sp = S.supp;
+    const short = sp.source.short;
+    const items = [];
+    sp.confirmed = 0;
+    let n = 0;
+    const id = () => `s${++n}`;
+    // MB entries of the names with a link at the second source (Bandcamp: the band), to find them by MBID
+    const groups = groupCredits(sp.rel.credits);
+    const companies = groupCompanies(sp.rel.companies);
+    const urls = uniq(groups.filter((g) => g.dId && (g.links || [])[0]).map((g) => g.links[0]));
+    const linked = new Map();
+    if (urls.length) {
+      try {
+        (await lookupUrls(urls, 'artist', sp.source.urlKey)).forEach((v, k) => linked.set(k, v));
+      } catch (e) {
+        console.warn('[Credits-Importer] supplement links', e);
+      }
+    }
+    const compare = (a, probe, info) => {
+      const row = S.rows.find((r) => r.artistKey === a.key && suppSig(r) === suppSig(probe));
+      if (!row) return { kind: 'role' };
+      if (sameTracks(row.tracks, new Set(info.tracks))) {
+        if (!row.confirmedBy) row.confirmedBy = new Set();
+        row.confirmedBy.add(short);
+        sp.confirmed++;
+        return null;
+      }
+      row.differ = { short, tracks: info.tracks, all: info.all, name: sp.source.name };
+      return { kind: 'differ', rowId: row.id, firstTracks: trackSetText(row.tracks, row.dAllTracks) };
+    };
+    for (const g of groups) {
+      const mbids = (linked.get((g.links || [])[0]) || []).map((c) => c.mbid);
+      const a = suppEntryFor(g.name, mbids, false);
+      const fresh = [];
+      for (const c of g.roles.values()) {
+        const tracks = suppTracks(c);
+        if (S.mediaSel && !c.allTracks && c.indexes.size && !tracks.length) continue;
+        const probe = makeRow('supp', { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv });
+        const info = { name: g.name, line: c.lines[0] || c.role.raw, rel: rowRelText(probe), tracks, all: !!c.allTracks, c };
+        if (!a) {
+          fresh.push(info);
+          continue;
+        }
+        const res = compare(a, probe, info);
+        if (res) items.push({ id: id(), artistKey: a.key, sel: res.kind === 'role', ...info, ...res });
+      }
+      if (!a && fresh.length) {
+        items.push({ id: id(), kind: 'entry', sel: true, name: g.name, g, roles: fresh, mbids, line: fresh.map((x) => x.line).join(' · '),
+          rel: fresh.map((x) => x.rel).join('; '), tracks: uniq(fresh.flatMap((x) => x.tracks)), all: fresh.every((x) => x.all) });
+      }
+    }
+    for (const g of companies) {
+      const a = suppEntryFor(g.rawName || g.name, [], true);
+      const fresh = [];
+      for (const r of g.roles) {
+        const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
+        const tracks = some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx();
+        if (some && !tracks.length) continue;
+        const probe = makeRow('supp', { raw: r.role, company: a || { entityType: null } });
+        const info = { name: g.name, line: r.line || r.role, rel: rowRelText(probe), tracks, all: !some, r, company: true };
+        if (!a) {
+          fresh.push(info);
+          continue;
+        }
+        const res = compare(a, probe, info);
+        if (res) items.push({ id: id(), artistKey: a.key, sel: res.kind === 'role', ...info, ...res });
+      }
+      if (!a && fresh.length) {
+        items.push({ id: id(), kind: 'entry', sel: true, company: true, name: g.name, g, roles: fresh, mbids: [], line: fresh.map((x) => x.line).join(' · '),
+          rel: fresh.map((x) => x.rel).join('; '), tracks: uniq(fresh.flatMap((x) => x.tracks)), all: fresh.every((x) => x.all) });
+      }
+    }
+    (sp.rel.unrecognized || []).forEach((l) => items.push({ id: id(), kind: 'unrec', sel: false, line: l }));
+    sp.items = items;
+    // New entries: what MusicBrainz has for them (shown in the list; looked up again when taken over)
+    for (const it of items.filter((x) => x.kind === 'entry')) {
+      if (it.mbids.length) {
+        it.hint = { byLink: true, names: (linked.get(it.g.links[0]) || []).map((c) => c.name) };
+      } else if (sp.source.nameSearch) {
+        const probe = { name: it.name, company: !!it.company, key: '' };
+        await suggestByName([probe]);
+        it.hint = { names: (probe.nameHits || []).map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '')) };
+      }
+    }
+    sp.mismatch = sp.source.usesMbTracks || sp.rel.tracks.length === S.mbTracks.length ? null : { n: sp.rel.tracks.length, m: S.mbTracks.length };
+  }
+
+  /** A row of the second source, built as the import builds rows (tracks from it, its mark). */
+  function suppRow(artistKey, info, company) {
+    const row = company ? makeRow(artistKey, { raw: info.r.role, company })
+      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv });
+    row.dAllTracks = !!info.all;
+    if (!company) {
+      row.dSpec = info.c.specs.join(', ');
+      row.dPositions = info.c.positions;
+      row.unresolved = info.c.unresolved;
+    }
+    row.tracks = new Set(info.tracks);
+    row.suggested = new Set(info.tracks);
+    row.supp = S.supp.source.short;
+    row.suppName = S.supp.source.name;
+    if (!releaseLevelChosen(row) || noMediaFor(row)) return null;
+    suggestCommissioned(row);
+    return row;
+  }
+
+  /** Takes the selected suggestions of the list into the dashboard. */
+  async function applySupplement() {
+    const sp = S.supp;
+    if (!sp) return;
+    const chosen = sp.items.filter((it) => it.sel && it.kind !== 'unrec');
+    const added = [];
+    for (const it of chosen) {
+      if (it.kind === 'role') {
+        const a = S.artists.get(it.artistKey);
+        const row = a && suppRow(a.key, it, it.company ? a : null);
+        if (row) S.rows.push(row);
+      } else if (it.kind === 'differ') {
+        const row = S.rows.find((r) => r.id === it.rowId);
+        if (!row) continue;
+        row.tracks = new Set(it.tracks);
+        row.suggested = new Set(it.tracks);
+        row.dAllTracks = !!it.all;
+        row.suppTook = { short: sp.source.short, name: sp.source.name, first: it.firstTracks };
+        row.differ = null;
+      } else if (it.kind === 'entry') {
+        const g = it.g;
+        const entry = it.company
+          ? { key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true, entityType: null,
+            mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], src: sp.source }
+          : { key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', mbid: null, mbName: '',
+            candidates: [], editing: false, error: '', anvs: [], src: sp.source };
+        S.artists.set(entry.key, entry);
+        const rows = it.roles.map((info) => suppRow(entry.key, info, it.company ? entry : null)).filter(Boolean);
+        if (!rows.length) {
+          S.artists.delete(entry.key);
+          continue;
+        }
+        S.rows.push(...rows);
+        added.push(entry);
+      }
+    }
+    sp.items = sp.items.filter((it) => !chosen.includes(it));
+    log('ok', 'suppApplied', { name: sp.source.name, n: chosen.length });
+    renderSupp();
+    renderGroups();
+    renderWorks();
+    refresh();
+    if (added.length) {
+      await resolveArtists({ source: sp.source, only: added });
+      renderGroups();
+    }
+  }
+
+  function discardSupplement() {
+    const sp = S.supp;
+    if (!sp) return;
+    log('info', 'suppDiscarded', { name: sp.source.name, n: sp.items.filter((it) => it.kind !== 'unrec').length });
+    sp.items = [];
+    for (const r of S.rows) if (r.differ && r.differ.short === sp.source.short) r.differ = null;
+    renderSupp();
+    renderGroups();
+    renderWorks();
+  }
+
+  /** "Supplement with …": the other linked sources and a text, or the supplement loaded now. */
+  function suppBarHtml() {
+    if (!S.release || !S.rows.length) return '';
+    const sp = S.supp;
+    const isCurrent = (l) => l.source === S.source.id && l.id === S.release.id;
+    const on = (label) => `<span class="dci-supp-on">${esc(label)} ✓ ${esc(tr('supp.on'))}</span>
+      <button type="button" class="dci-textbtn" data-act="supp-remove">${esc(tr('supp.remove'))}</button>`;
+    const links = S.sourceLinks.filter((l) => !isCurrent(l)).map((l) => (sp && sp.source.id === l.source && sp.id === l.id ? on(sourceLinkLabel(l))
+      : `<button type="button" class="dci-supp-btn" data-act="supp-load" data-link="${esc(`${l.source}|${l.id}`)}">＋ ${esc(sourceLinkLabel(l))}</button>`));
+    const text = sp && sp.source === TEXT ? on(`${TEXT.name}: ${sp.rel.title || tr('source.textNoTitle')}`)
+      : `<button type="button" class="dci-supp-btn" data-act="supp-text" title="${esc(tr('supp.textTitle'))}">＋ ${esc(tr('supp.text'))}</button>`;
+    return `<div class="dci-suppbar" role="group" aria-label="${esc(tr('supp.with'))}"><strong>${esc(tr('supp.with'))}</strong>
+      ${links.join(' ')} ${text} <span class="dci-sub">${esc(tr('supp.hint'))}</span></div>`;
+  }
+
+  /** The list "Supplements from …" (variant B): every suggestion of the second source with a checkbox. */
+  function renderSupp() {
+    if (!S.overlay) return;
+    const el = $('supp');
+    const sp = S.supp;
+    el.hidden = !sp;
+    if (!sp) {
+      el.innerHTML = '';
+      return;
+    }
+    const name = sp.source.name;
+    const short = sp.source.short;
+    const count = (kind) => sp.items.filter((it) => it.kind === kind).length;
+    const selectable = sp.items.filter((it) => it.kind !== 'unrec');
+    const nSel = selectable.filter((it) => it.sel).length;
+    const chip = (kind) => `<span class="dci-supp-kind dci-supp-${kind}">${esc(tr(`supp.kind.${kind}`))}</span>`;
+    const mbCell = (it) => {
+      if (it.kind === 'unrec') return esc(tr('supp.byHand'));
+      if (it.kind === 'differ') return esc(tr(it.sel ? 'supp.differTake' : 'supp.differKeep', { name, first: S.source.name }));
+      if (it.kind === 'role') {
+        const a = S.artists.get(it.artistKey);
+        return a && a.mbid ? `${esc(tr('supp.asEntry'))} <a href="/${entityPath(a.company ? a.entityType : 'artist')}/${esc(a.mbid)}" target="_blank" rel="noopener">${esc(a.mbName)}</a>`
+          : esc(tr('supp.noMbYet'));
+      }
+      if (it.hint && it.hint.names.length) return `${esc(tr(it.hint.byLink ? 'supp.byLink' : 'supp.suggest', { name }))} <span class="dci-supp-hint">${esc(it.hint.names.join(', '))}</span>`;
+      return esc(tr('supp.searchLater'));
+    };
+    const rows = sp.items.map((it) => {
+      const a = it.artistKey ? S.artists.get(it.artistKey) : null;
+      const who = it.kind === 'unrec' ? '–' : `<strong>${esc(it.name)}</strong><div class="dci-sub">${esc(it.kind === 'entry' ? tr('supp.onlyHere', { name }) : tr('supp.hasEntry'))}</div>`;
+      const tracks = it.kind === 'unrec' ? '–' : `${esc(trackSetText(it.tracks, it.all))}${it.kind === 'differ' ? ` <span class="dci-sub">(${esc(tr('supp.differWas', { first: S.source.name, tracks: it.firstTracks }))})</span>` : ''}`;
+      return `<tr class="dci-supp-row dci-supp-row-${it.kind}" data-supp="${it.id}">
+        <td><input type="checkbox" data-f="supp-sel" data-id="${it.id}" ${it.sel ? 'checked' : ''} ${it.kind === 'unrec' ? 'disabled' : ''} aria-label="${esc(`${tr(`supp.kind.${it.kind}`)}: ${it.name || it.line}`)}"></td>
+        <td>${chip(it.kind)}</td><td>${a && it.kind !== 'entry' ? `<strong>${esc(a.name)}</strong><div class="dci-sub">${esc(tr('supp.hasEntry'))}</div>` : who}</td>
+        <td class="dci-supp-line">${esc(it.line)}</td><td>${esc(it.rel || '–')}</td><td>${tracks}</td><td>${mbCell(it)}</td></tr>`;
+    }).join('');
+    const summary = tr('supp.summary', { confirmed: sp.confirmed, added: count('role') + count('entry'), differ: count('differ'), unrec: count('unrec') });
+    el.innerHTML = `<div class="dci-supp-head">
+        <button type="button" class="dci-textbtn dci-supp-fold" data-act="supp-fold" aria-expanded="${sp.open}">${sp.open ? '▾' : '▸'} ${esc(tr('supp.title', { name }))}</button>
+        <span>${esc(summary)}</span>
+        ${selectable.length ? `<label class="dci-check dci-supp-all"><input type="checkbox" data-f="supp-all" ${nSel === selectable.length ? 'checked' : ''}> ${esc(tr('supp.selectAll'))}</label>` : ''}
+      </div>
+      ${sp.open ? `${sp.mismatch ? `<p class="dci-note dci-warn">${esc(tr('supp.mismatch', { name, ...sp.mismatch }))}</p>` : ''}
+      ${sp.items.length ? `<div class="dci-tablewrap"><table class="dci-table dci-supp-table"><thead><tr>
+          <th scope="col"><span class="dci-vh">${esc(tr('supp.th.select'))}</span></th><th scope="col">${esc(tr('supp.th.kind'))}</th>
+          <th scope="col">${esc(tr('supp.th.name'))}</th><th scope="col">${esc(tr('supp.th.says', { name }))}</th><th scope="col">${esc(tr('supp.th.rel'))}</th>
+          <th scope="col">${esc(tr('supp.th.tracks'))}</th><th scope="col">${esc(tr('supp.th.mb'))}</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div class="dci-supp-foot"><span>${esc(tr('supp.nSelected', { n: nSel }))}</span>
+          <button type="button" class="dci-apply dci-small" data-act="supp-apply" ${nSel ? '' : 'disabled'}>${esc(tr('supp.apply'))}</button>
+          <button type="button" data-act="supp-discard">${esc(tr('supp.discard'))}</button>
+          <span class="dci-sub">${esc(tr('supp.applyHint', { short }))}</span></div>`
+    : `<p class="dci-sub">${esc(tr('supp.empty', { name, short }))}</p>`}` : ''}`;
+  }
+
+  /** The marks of a row: its source, and the second source when it says the same (or other tracks). */
+  function srcMarksHtml(row) {
+    if (!S.suppSources.size) return '';
+    const mark = (text, title, cls = '') => `<span class="dci-srcmark${cls}" title="${esc(title)}">${esc(text)}</span>`;
+    const out = [];
+    if (row.supp) out.push(mark(row.supp, tr('supp.badgeAdded', { name: row.suppName }), ' dci-srcmark-supp'));
+    else out.push(mark(S.source.short, S.source.name));
+    (row.confirmedBy ? [...row.confirmedBy] : []).forEach((sh) => out.push(mark(sh, tr('supp.badgeConfirm', { name: sourceByShort(sh).name }), ' dci-srcmark-supp')));
+    if (row.differ) out.push(mark(`${row.differ.short} ≠`, tr('supp.badgeDiffer', { name: row.differ.name, tracks: trackSetText(row.differ.tracks, row.differ.all) }), ' dci-srcmark-differ'));
+    if (row.suppTook) out.push(mark(`${row.suppTook.short} ✓`, tr('supp.badgeAdded', { name: row.suppTook.name }), ' dci-srcmark-supp'));
+    return `<div class="dci-srcmarks">${out.join('')}</div>`;
+  }
+  const sourceByShort = (sh) => Object.values(SOURCES).find((x) => x.short === sh) || { name: sh };
+
+  /** Edit note lines of the supplements: where from, what they confirmed, added, and where the sources differ. */
+  function suppNoteLines() {
+    const lines = [];
+    for (const [short, src] of S.suppSources) {
+      // Only rows that can be staged (an MB entry, not skipped)
+      const can = (r) => r.level !== 'skip' && !!(S.artists.get(r.artistKey) || {}).mbid;
+      const confirmed = S.rows.filter((r) => r.confirmedBy && r.confirmedBy.has(short) && can(r)).length;
+      const added = S.rows.filter((r) => r.supp === short && can(r));
+      const took = S.rows.filter((r) => r.suppTook && r.suppTook.short === short);
+      const differ = S.rows.filter((r) => r.differ && r.differ.short === short);
+      if (!confirmed && !added.length && !took.length && !differ.length) continue;
+      if (src.url) lines.push(`Also from: ${src.url}`);
+      const nameOf = (r) => (S.artists.get(r.artistKey) || {}).name || '';
+      const what = (r) => `${nameOf(r)}, ${r.primaryText || (r.types || [])[0] || r.raw}`;
+      const parts = [];
+      if (confirmed) parts.push(`${confirmed} credit${confirmed === 1 ? '' : 's'} also in ${src.name}`);
+      if (added.length) parts.push(`added from ${src.name} only: ${added.map((r) => `${what(r)} (${r.dAllTracks ? 'all tracks' : `tracks ${trackSetText(r.tracks)}`})`).join('; ')}`);
+      if (parts.length) lines.push(`${parts.join('; ')}.`.replace(/^./, (c) => c.toUpperCase()));
+      const diffs = [
+        ...differ.map((r) => `${what(r)} – ${S.source.noteName}: ${r.dAllTracks ? 'all tracks' : trackSetText(r.tracks)}, ${src.name}: ${r.differ.all ? 'all tracks' : trackSetText(r.differ.tracks)}; kept ${S.source.noteName}`),
+        ...took.map((r) => `${what(r)} – ${S.source.noteName}: ${r.suppTook.first}, ${src.name}: ${r.dAllTracks ? 'all tracks' : trackSetText(r.tracks)}; took ${src.name}`),
+      ];
+      if (diffs.length) lines.push(`Sources differ: ${diffs.join('; ')}.`);
+    }
+    return lines;
+  }
+
+  // --- Media choice: which media of a release with several media are imported --------------------
+
+  /** Remembered choices per release ("Remember this choice"): { [release MBID]: { media: [..], release: bool } }. */
+  const MEDIA_SEL_KEY = 'dci-media-sel';
+
+  /** "1-4, 5, 8" → the media numbers; tokens that are no medium of the release in "bad". */
+  function parseMediaList(text, known) {
+    const media = new Set();
+    const bad = [];
+    const src = String(text || '').replace(/(\d)\s*(?:-|–|—|to|bis|à|a)\s*(\d)/gi, '$1-$2');
+    for (const tok of src.split(/[\s,;+]+/).filter(Boolean)) {
+      const m = tok.match(/^(\d+)(?:-(\d+))?$/);
+      if (!m) {
+        bad.push(tok);
+        continue;
+      }
+      let a = Number(m[1]);
+      let b = m[2] ? Number(m[2]) : a;
+      if (a > b) [a, b] = [b, a];
+      for (let n = a; n <= b && n - a < 1000; n++) {
+        if (known.includes(n)) media.add(n);
+        else if (!bad.includes(String(n))) bad.push(String(n));
+      }
+    }
+    return { media, bad };
+  }
+
+  /** [1, 2, 3, 5, 8] → "1-3, 5, 8"; [2, 3] → "2-3" */
+  function formatMediaList(list) {
+    const xs = [...list].sort((a, b) => a - b);
+    const out = [];
+    for (let i = 0; i < xs.length; i++) {
+      let j = i;
+      while (j + 1 < xs.length && xs[j + 1] === xs[j] + 1) j++;
+      out.push(j > i ? `${xs[i]}-${xs[j]}` : `${xs[i]}`);
+      i = j;
+    }
+    return out.join(', ');
+  }
+
+  /** The choice of this import in words (for the dashboard and the log). */
+  function mediaChoiceText(choice = S.mediaSel) {
+    if (!choice) return tr('media.allRelease');
+    const list = choice.media.size ? tr('media.list', { list: formatMediaList(choice.media) }) : tr('media.noMedia');
+    return choice.release ? tr('media.withRelease', { list }) : tr('media.withoutRelease', { list });
+  }
+
+  /**
+   * Before each import of a release with several media: which media, and whether the relationships on the
+   * release level (release, release group) come along. "All" with the release level is the import as before.
+   * Resolves to { media, release, all } or null (cancelled).
+   */
+  function chooseMedia() {
+    const media = uniq(S.mbTracks.map((t) => t.medium));
+    if (media.length < 2 || !S.overlay) return Promise.resolve({ media: new Set(media), release: true, all: true });
+    const store = readJson('localStorage', MEDIA_SEL_KEY, {}) || {};
+    const saved = store[releaseMbid] && Array.isArray(store[releaseMbid].media) ? store[releaseMbid] : null;
+    let sel = new Set(saved ? saved.media.filter((m) => media.includes(m)) : media);
+    let release = saved ? saved.release !== false : true;
+    let textBad = false;
+    const count = (m) => S.mbTracks.filter((t) => t.medium === m).length;
+    const label = (m) => {
+      const info = (S.mediaInfo && S.mediaInfo.get(m)) || {};
+      return tr('medium.option', { label: [`${m}`, info.format || tr('medium.unknownFormat'), info.title].filter(Boolean).join(' · '), n: count(m) });
+    };
+    const el = $('media');
+    el.innerHTML = `
+      <div class="dci-sub-panel dci-media-panel" role="dialog" aria-modal="true" aria-labelledby="dci-media-title">
+        <header class="dci-sub-head"><h3 id="dci-media-title">${esc(tr('media.title'))}</h3></header>
+        <div class="dci-media-body">
+          <p>${esc(tr('media.intro', { n: media.length }))}</p>
+          <div class="dci-media-btns">
+            <button type="button" data-mact="all">${esc(tr('media.all'))}</button>
+            <button type="button" data-mact="none">${esc(tr('media.none'))}</button>
+            <span class="dci-media-sep" aria-hidden="true"></span>
+            ${media.map((m) => `<button type="button" class="dci-media-btn" data-mact="toggle" data-m="${m}" aria-pressed="false">${esc(label(m))}</button>`).join('')}
+          </div>
+          <label class="dci-media-text">${esc(tr('media.text'))} <input type="text" data-mf="text" placeholder="${esc(tr('media.textPlaceholder'))}" autocomplete="off"></label>
+          <p class="dci-bad" data-mel="err" hidden></p>
+          <label class="dci-check"><input type="checkbox" data-mf="release" ${release ? 'checked' : ''}> ${esc(tr('media.release'))}</label>
+          <label class="dci-check"><input type="checkbox" data-mf="remember" ${saved ? 'checked' : ''}> ${esc(tr('media.remember'))}</label>
+          <p class="dci-sub">${esc(tr(saved ? 'media.savedHint' : 'media.askHint'))}</p>
+        </div>
+        <footer class="dci-media-foot">
+          <span class="dci-sub" data-mel="sum"></span>
+          <button type="button" class="dci-small" data-mact="ok">${esc(tr('media.ok'))}</button>
+          <button type="button" class="dci-textbtn" data-mact="cancel">${esc(tr('common.cancel'))}</button>
+        </footer>
+      </div>`;
+    const input = el.querySelector('[data-mf="text"]');
+    const err = el.querySelector('[data-mel="err"]');
+    const ok = el.querySelector('[data-mact="ok"]');
+    const sync = (fromText = false) => {
+      el.querySelectorAll('[data-mact="toggle"]').forEach((b) => b.setAttribute('aria-pressed', String(sel.has(Number(b.dataset.m)))));
+      if (!fromText) {
+        input.value = formatMediaList(sel);
+        textBad = false;
+        err.hidden = true;
+      }
+      const n = S.mbTracks.filter((t) => sel.has(t.medium)).length;
+      el.querySelector('[data-mel="sum"]').textContent = tr('media.sum', { m: sel.size, n, all: media.length });
+      ok.disabled = textBad || (!sel.size && !release);
+    };
+    sync();
+    el.hidden = false;
+    return new Promise((resolve) => {
+      const done = (result) => {
+        el.removeEventListener('click', onClickM);
+        el.removeEventListener('input', onInputM);
+        el.removeEventListener('change', onChangeM);
+        el.removeEventListener('keydown', onKeyM);
+        el.hidden = true;
+        el.innerHTML = '';
+        if (S.subDialog === handle) S.subDialog = null;
+        resolve(result);
+      };
+      const onClickM = (e) => {
+        const b = e.target.closest('[data-mact]');
+        if (!b) return;
+        const act = b.dataset.mact;
+        if (act === 'all') sel = new Set(media);
+        else if (act === 'none') sel = new Set();
+        else if (act === 'toggle') {
+          const m = Number(b.dataset.m);
+          if (sel.has(m)) sel.delete(m);
+          else sel.add(m);
+        } else if (act === 'cancel') {
+          done(null);
+          return;
+        } else if (act === 'ok') {
+          if (ok.disabled) return;
+          const all = sel.size === media.length;
+          const st = readJson('localStorage', MEDIA_SEL_KEY, {}) || {};
+          if (el.querySelector('[data-mf="remember"]').checked) st[releaseMbid] = { media: [...sel].sort((a, c) => a - c), release, at: Date.now() };
+          else delete st[releaseMbid];
+          // only the last 50 releases are remembered
+          const keep = Object.entries(st).sort((a, c) => (c[1].at || 0) - (a[1].at || 0)).slice(0, 50);
+          writeJson('localStorage', MEDIA_SEL_KEY, keep.length ? Object.fromEntries(keep) : null);
+          done({ media: new Set(sel), release, all });
+          return;
+        }
+        sync();
+      };
+      const onInputM = (e) => {
+        if (e.target !== input) return;
+        const r = parseMediaList(input.value, media);
+        textBad = r.bad.length > 0;
+        err.hidden = !textBad;
+        err.textContent = textBad ? tr('media.bad', { list: r.bad.join(', '), known: formatMediaList(media) }) : '';
+        if (!textBad) sel = r.media;
+        sync(true);
+      };
+      const onChangeM = (e) => {
+        if (e.target.matches('[data-mf="release"]')) {
+          release = e.target.checked;
+          sync(true);
+        } else if (e.target === input && !textBad) sync();
+      };
+      const onKeyM = (e) => {
+        if (e.key === 'Enter' && e.target === input && !ok.disabled) {
+          e.preventDefault();
+          ok.click();
+        }
+      };
+      const handle = { cancel: () => done(null) };
+      el.addEventListener('click', onClickM);
+      el.addEventListener('input', onInputM);
+      el.addEventListener('change', onChangeM);
+      el.addEventListener('keydown', onKeyM);
+      S.subDialog = handle;
+      ok.focus();
+    });
+  }
+
+  /** Takes over the choice: the medium filter only offers the chosen media (and follows them on large releases). */
+  function applyMediaChoice(choice) {
+    S.mediaSel = !choice || (choice.all && choice.release) ? null : { media: choice.media, release: choice.release };
+    const media = selMedia();
+    if (S.mediumAuto && S.mediumFilter === S.mediumAuto.m) {
+      const n = selTracks().length;
+      if (n >= 50 && media.length > 1) S.mediumAuto = { n, m: media[0] };
+      else S.mediumAuto = null;
+      S.mediumFilter = S.mediumAuto ? S.mediumAuto.m : null;
+    }
+    if (S.mediumFilter != null && !media.includes(S.mediumFilter)) S.mediumFilter = null;
+    renderMediumFilter();
+  }
+
+  /** "Choose media …": the dialog again, then a new import (after a confirmation). */
+  async function rechooseMedia(fallbackId, fallbackSource = S.source) {
+    const id = srcReleaseId() || fallbackId;
+    if (!id) return;
+    if (S.rows.length && !confirm(tr('media.confirm'))) return;
+    await loadRelease(id, { confirmed: true, source: S.release ? S.source : fallbackSource });
+  }
+
+  // --- What a source adapter may use from the core ---------------------------------------------------------
+
+  /** MusicBrainz's tracks as source tracks (for sources without a track list of their own, e.g. a text). */
+  const mbTracksAsSource = () => S.mbTracks.map((t) => ({ position: multiMedium() ? `${t.medium}.${t.number}` : String(t.number), title: t.title, aliases: [] }));
+
+  /** [E1] A phrase the register knows as a role ("Mixed By", "Artwork"), or an instrument MusicBrainz has ("trumpet"). */
+  function isKnownRole(phrase) {
+    const p = parseRoleNotation(phrase)[0];
+    if (!p || !p.base || /\d/.test(p.base) || p.base.split(' ').length > 6) return false;
+    const m = mapRole(p.base, p.mods);
+    if (m.rule && m.rule !== 'R096' && !m.fallback) return true;
+    const lt = typesFor('recording').find((l) => norm(l.name) === 'instrument');
+    const root = lt ? primaryRootOf(lt) : null;
+    return !!root && instrumentCandidates(p.base, p.mods).some((c) => findChildAttr(root.id, c));
+  }
+
+  /** [E1] Roles of a text that name a company (publisher, studio, ℗/©) – other "… by" are people. */
+  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
+  const isTextCompanyRole = (role) => TEXT_COMPANY_RE.test(norm(role)) && !!mapCompanyRole(role).rule;
+
+  /**
+   * A page of another site (Bandcamp) as text. The userscript manager's GM_xmlhttpRequest may read other sites
+   * (@connect); without it (other managers) the browser's fetch is tried, which most sites do not allow.
+   */
+  function httpGet(url) {
+    if (typeof GM_xmlhttpRequest === 'function') {
+      return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+          method: 'GET', url, timeout: 30000,
+          onload: (r) => (r.status >= 200 && r.status < 300 ? resolve(r.responseText) : reject(new Error(tr('err.pageHttp', { status: r.status, url })))),
+          onerror: () => reject(new Error(tr('err.pageNet', { url }))),
+          ontimeout: () => reject(new Error(tr('err.pageNet', { url }))),
+        });
+      });
+    }
+    return fetch(url).then((res) => {
+      if (!res.ok) throw new Error(tr('err.pageHttp', { status: res.status, url }));
+      return res.text();
+    }, () => { throw new Error(tr('err.pageNet', { url })); });
+  }
+
+  /** The context an adapter gets with release(): MB's tracks, a pasted text, settings, and helpers. */
+  function sourceContext() {
+    const tracks = mbTracksAsSource();
+    return {
+      tracks, input: S.textInput, sig: textSig, isRole: isKnownRole, isCompanyRole: isTextCompanyRole, httpGet,
+      settings: { bandcampTracks: S.bcTracks },
+      resolveTracks: (spec, srcTracks = tracks) => tracksInText(`tracks ${spec}`, srcTracks),
+    };
+  }
+
+  /**
+   * Imports a release of a source (default: the current one): the adapter delivers it as a neutral release
+   * (section 2), and everything from here on works with that – entries and rows, dates, track lists, live, series.
+   */
+  async function loadRelease(id, { confirmed = false, source = S.source } = {}) {
+    if (!confirmed && S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
+      renderSource();
+      return;
+    }
+    const choice = await chooseMedia();
+    if (!choice) {
+      log('info', 'mediaCancelled');
+      if (!S.rows.length) showMessage('info', 'msg.mediaCancelled', {}, { action: { act: 'media-choose', arg: `${source.id}:${id}`, label: 'media.choose' } });
       renderSource();
       return;
     }
     try {
       clearMessages();
-      setBusy('busy.discogs', { id });
-      const d = await fetchDiscogsRelease(id);
-      S.discogsId = String(id);
-      S.discogs = d;
-      S.dTracks = flattenDiscogsTracks(d.tracklist);
+      setBusy(source === DISCOGS ? 'busy.discogs' : 'busy.source', { id, source: source.name });
+      const rel = await source.release(id, sourceContext());
+      applyMediaChoice(choice);
+      if (S.mediaSel) log('info', 'mediaChosen', { text: mediaChoiceText() });
+      S.source = source;
+      SOURCE_NAME = source.name;
+      S.release = rel;
+      S.srcTracks = rel.tracks;
       S.artists = new Map();
       S.rows = [];
+      S.supp = null;
+      S.suppSources = new Map();
       renderSource();
+      renderSupp();
 
-      if (S.dTracks.length !== S.mbTracks.length) {
-        showMessage('warn', 'msg.trackMismatch', { d: S.dTracks.length, m: S.mbTracks.length });
-        log('warn', 'trackMismatch', { d: S.dTracks.length, m: S.mbTracks.length });
+      if (S.srcTracks.length !== S.mbTracks.length) {
+        showMessage('warn', 'msg.trackMismatch', { d: S.srcTracks.length, m: S.mbTracks.length });
+        log('warn', 'trackMismatch', { d: S.srcTracks.length, m: S.mbTracks.length });
       }
 
-      for (const g of collectCredits(d, S.dTracks, positionIndex(S.dTracks))) {
+      for (const g of groupCredits(rel.credits)) {
         const artist = {
-          key: nextId('a'), dId: g.dId, name: g.name, rawName: g.rawName, status: 'pending',
+          key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending',
           mbid: null, mbName: '', candidates: [], editing: false, error: '',
           anvs: uniq([...g.roles.values()].map((c) => c.anv).filter(Boolean)),
         };
         S.artists.set(artist.key, artist);
         for (const c of g.roles.values()) {
           const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv });
-          if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the Discogs role as written
+          if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
           row.dSpec = c.specs.join(', ');
           row.dPositions = c.positions;
           row.unresolved = c.unresolved;
+          // The source names no tracks for this credit (the whole release)
+          row.dAllTracks = !!c.allTracks;
+          // Credits without track information go onto the tracks of the chosen media (media choice)
           const suggested = c.allTracks
-            ? S.mbTracks.map((x) => x.idx)
-            : [...c.indexes].filter((i) => i < S.mbTracks.length);
+            ? selIdx()
+            : [...c.indexes].filter((i) => i < S.mbTracks.length && inSelection(i));
+          // Media choice: credits only for tracks of media not chosen are not imported
+          if (S.mediaSel && !c.allTracks && c.indexes.size && !suggested.length) continue;
           row.suggested = new Set(suggested);
           row.tracks = new Set(suggested);
           // A producer role meant for the release stays on the recordings Discogs names it for.
@@ -7218,38 +9568,56 @@
             row.level = 'recording';
             resolveRowType(row);
           }
+          if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
+          suggestCommissioned(row);
           S.rows.push(row);
         }
       }
-      for (const g of collectCompanies(d)) {
+      for (const g of groupCompanies(rel.companies)) {
         // [S007]
         if (ruleOn('S007') && (/festival/i.test(g.name || '') || /festival/i.test(g.rawName || ''))) {
           log('info', 'festivalSkipped', { name: g.name });
           continue;
         }
         const company = {
-          key: nextId('c'), dId: g.dId, name: g.name, rawName: g.rawName, status: 'pending', company: true,
+          key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
           entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [],
         };
         S.artists.set(company.key, company);
         for (const r of g.roles) {
           const row = makeRow(company.key, { raw: r.role, company });
-          row.tracks = new Set(S.mbTracks.map((x) => x.idx));
+          // A company for some tracks only (a text: "Published by X (1, 3)"), otherwise for all of them
+          const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
+          row.dAllTracks = !some;
+          row.tracks = new Set(some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx());
+          if (some && r.tracks.spec) row.dSpec = r.tracks.spec;
+          if (some && !row.tracks.size) continue;
           row.suggested = new Set(row.tracks);
           if (r.catno) row.dSpec = r.catno;
+          if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
+          suggestCommissioned(row);
           S.rows.push(row);
         }
       }
-      S.dateSuggestions = dateSuggestions(d);
+      // Media choice: entries whose credits all belong to media not chosen are not shown
+      if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
+      S.dateSuggestions = dateSuggestions(rel);
       // Dates in the notes with a word naming their group: suggestions in the date matrix (once per release)
       autoPlaceFoundDates();
-      log('info', 'discogsLoaded', { id, artists: S.artists.size, n: S.rows.length });
+      if (source === DISCOGS) log('info', 'discogsLoaded', { id, artists: S.artists.size, n: S.rows.length });
+      else log('info', 'sourceLoaded', { source: source.name, artists: S.artists.size, n: S.rows.length, u: (rel.unrecognized || []).length });
 
       $('toolbar').hidden = !S.rows.length;
-      if (!S.rows.length) showMessage('info', 'msg.noCredits');
+      if (!S.rows.length && S.mediaSel) {
+        showMessage('info', 'msg.noCreditsMedia', { text: mediaChoiceText() }, { action: { act: 'media-choose', arg: String(id), label: 'media.choose' } });
+      } else if (!S.rows.length) showMessage('info', 'msg.noCredits');
+      applySongDefault();
+      applyLiveDefault();
       renderDates();
       renderGroups();
       renderWorks();
+      // "Supplement with …" once there are rows
+      renderSource();
       refresh();
 
       // [S006] Arrangements named together with writing credits belong to the works (matrix), not the recordings
@@ -7264,11 +9632,14 @@
       if (S.artists.size) {
         setBusy('busy.artists');
         await resolveArtists();
-        const seriesList = (d.series || []).filter((x) => x && x.id);
-        if (seriesList.length) {
-          await loadSeries(seriesList);
+        if (rel.series.length) {
+          await loadSeries(rel.series);
           renderGroups();
         }
+        const pooled = S.trackPool.length;
+        // A text's own track lists are read with its credits (not again as notes)
+        if (!S.source.readsTrackLists) applyNotesTrackCredits();
+        if (S.trackPool.length !== pooled) renderDates();
         await computePublisherEvidence();
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
@@ -7282,20 +9653,19 @@
   }
 
   /**
-   * Discogs lists pseudonyms as artists of their own ("Aliases"); MusicBrainz often has only the Discogs
+   * A source may list pseudonyms as artists of their own (Discogs: "Aliases"); MusicBrainz often has only the
    * link of the main name. Artists not found by their own link are looked up through their aliases.
    */
-  async function resolveViaAliases(list) {
+  async function resolveViaAliases(list, source = S.source) {
+    if (!source.aliases) return;
     for (const a of list) {
       try {
-        const res = await fetch(`https://api.discogs.com/artists/${a.dId}`);
-        const data = res.ok ? await res.json() : null;
-        const aliases = ((data && data.aliases) || []).filter((x) => x && x.id);
+        const aliases = await source.aliases(a.dId);
         a.dAliases = aliases.map((x) => x.name);
         if (!aliases.length) continue;
-        const found = await lookupDiscogsUrls(aliases.map((x) => discogsArtistUrl(x.id)), 'artist');
+        const found = await lookupUrls(aliases.map((x) => x.links[0]), 'artist');
         const hits = new Map();
-        aliases.forEach((x) => (found.get(discogsArtistUrl(x.id)) || []).filter((c) => c.entityType === 'artist').forEach((c) => hits.set(c.mbid, { c, alias: x.name })));
+        aliases.forEach((x) => (found.get(x.links[0]) || []).filter((c) => c.entityType === 'artist').forEach((c) => hits.set(c.mbid, { c, alias: x.name })));
         // Only a suggestion: the person decides whether the alias belongs to this credit
         a.aliasHits = [...hits.values()];
         if (a.aliasHits.length) log('info', 'artistAliasSuggested', { name: a.name, list: a.aliasHits.map((h) => `${h.c.name} (${h.alias})`).join(', ') });
@@ -7305,27 +9675,58 @@
     }
   }
 
-  async function resolveArtists() {
-    const pending = [...S.artists.values()].filter((a) => a.status === 'pending');
+  /**
+   * [E1] Entries without a link to MusicBrainz (names from a text): MusicBrainz entries of exactly this name (or
+   * with it as an alias) are suggested – never assigned by themselves; a click assigns one.
+   */
+  async function suggestByName(list) {
+    for (const a of list) {
+      const type = a.company ? (companyTypes(a)[0] || 'label') : 'artist';
+      try {
+        const data = await mbWs(`${type}?query=${encodeURIComponent(`${type}:${lucenePhrase(a.name)}`)}&limit=10`);
+        const items = (data && data[`${type}s`]) || [];
+        const same = items.filter((x) => norm(x.name) === norm(a.name) || (x.aliases || []).some((al) => norm(al.name) === norm(a.name)));
+        a.nameHits = same.slice(0, 5).map((x) => ({ mbid: x.id, name: x.name, disambiguation: x.disambiguation || '', entityType: type }));
+        if (a.nameHits.length) log('info', 'nameSuggested', { name: a.name, list: a.nameHits.map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '')).join(', ') });
+      } catch (e) {
+        console.warn('[Discogs-Credits] name search', a.name, e);
+      }
+    }
+  }
+
+  /** [rule 4] The name the release's artist credit gives this MB artist ('' when it is not part of it). */
+  const releaseCreditName = (mbid) => ((S.releaseCredit || []).find((p) => p.mbid && p.mbid === mbid) || {}).name || '';
+  /** [rule 4] The release's artist credit as one text ("A & B feat. C"). */
+  const releaseCreditText = () => (S.releaseCredit || []).map((p) => `${p.name}${p.join}`).join('').trim();
+
+  /**
+   * Finds the MB entries of the entries still pending: through their links, else their aliases at the source, else
+   * (sources without links) by name as suggestions. source: the source the entries come from (a second source
+   * supplementing the first, stage 2); only: these entries (default: all pending ones).
+   */
+  async function resolveArtists({ source = S.source, only = null } = {}) {
+    const pending = (only || [...S.artists.values()]).filter((a) => a.status === 'pending');
     for (const a of pending.filter((x) => !x.dId)) {
       a.status = 'missing';
       updateGroupHeader(a);
-      log('warn', 'artistMissing', { name: a.name });
+      // A name from a text has no link: it is looked up by its name below
+      log(source.nameSearch ? 'info' : 'warn', source.nameSearch ? 'nameLookup' : 'artistMissing', { name: a.name });
     }
-    const urlOf = (a) => (a.company ? discogsLabelUrl(a.dId) : discogsArtistUrl(a.dId));
-    const byUrl = new Map(pending.filter((a) => a.dId).map((a) => [urlOf(a), a]));
+    // Each entry by the URL of its page at the source (people: MB artists; companies: labels, places …)
+    const urlOf = (a) => (a.links || [])[0] || '';
+    const byUrl = new Map(pending.filter((a) => a.dId && urlOf(a)).map((a) => [urlOf(a), a]));
     const found = new Map();
     for (const kind of ['artist', 'label']) {
-      const urls = [...byUrl.keys()].filter((u) => u.includes(`/${kind}/`));
+      const urls = [...byUrl.entries()].filter(([, a]) => (kind === 'label') === !!a.company).map(([u]) => u);
       for (let i = 0; i < urls.length; i += 50) {
         const chunk = urls.slice(i, i + 50);
         try {
-          (await lookupDiscogsUrls(chunk, kind)).forEach((v, k) => found.set(k, v));
+          (await lookupUrls(chunk, kind, source.urlKey)).forEach((v, k) => found.set(k, v));
         } catch (e) {
           // If the batch lookup fails, look up URLs one by one
           for (const u of chunk) {
             try {
-              (await lookupDiscogsUrls([u], kind)).forEach((v, k) => found.set(k, v));
+              (await lookupUrls([u], kind, source.urlKey)).forEach((v, k) => found.set(k, v));
             } catch (e2) {
               console.warn('[Discogs-Credits]', u, e2);
             }
@@ -7340,6 +9741,23 @@
         const usable = new Set(S.rows.filter((r) => r.artistKey === a.key).flatMap((r) => Object.keys(r.typeOptions || {})));
         a.candidates = a.candidates.filter((c) => usable.has(c.entityType));
       }
+      // [rule 4] A source whose names must match exactly (Bandcamp): an artist found through its link is assigned only
+      // when the release names it exactly so in its artist credit (below the title); a company when MusicBrainz spells
+      // it so. Otherwise it is only a suggestion.
+      if (source.strictNames && a.candidates.length) {
+        const spelled = (c) => (a.company ? c.name : releaseCreditName(c.mbid));
+        const exact = a.candidates.filter((c) => spelled(c) === a.name);
+        // Shown in the entry to check by eye: the name at the source, in the release's artist credit, in MusicBrainz
+        if (!a.company) a.spell = { src: a.name, srcName: source.name, release: spelled(exact[0] || a.candidates[0]), mb: (exact[0] || a.candidates[0]).name };
+        if (exact.length) {
+          a.candidates = exact;
+        } else {
+          a.nameHits = a.candidates.map((c) => ({ mbid: c.mbid, name: c.name, disambiguation: c.disambiguation || '', entityType: c.entityType }));
+          a.strictSpelled = uniq(a.candidates.map(spelled).filter(Boolean)).join(', ') || (a.company ? '' : releaseCreditText());
+          a.candidates = [];
+          a.strictMiss = true;
+        }
+      }
       if (a.candidates.length === 1) {
         a.status = 'linked';
         a.mbid = a.candidates[0].mbid;
@@ -7352,11 +9770,14 @@
         log('warn', 'artistAmbiguous', { name: a.name, n: a.candidates.length });
       } else {
         a.status = 'missing';
-        log('warn', 'artistMissing', { name: a.name });
+        if (a.strictMiss) log('warn', a.company ? 'artistSpelling' : 'artistCreditSpelling', { name: a.name, mb: a.strictSpelled || '–' });
+        else log('warn', 'artistMissing', { name: a.name });
       }
     }
-    // Not found by their own Discogs link: try the Discogs aliases
-    await resolveViaAliases(pending.filter((a) => !a.company && a.dId && a.status === 'missing'));
+    // Not found by their own link: try their aliases at the source
+    await resolveViaAliases(pending.filter((a) => !a.company && a.dId && a.status === 'missing'), source);
+    // [E1] Names without a link (a text): MusicBrainz entries of the same name, as suggestions only
+    if (source.nameSearch) await suggestByName(pending.filter((a) => !a.dId && a.status === 'missing'));
     for (const a of pending) {
       if (a.company) rerenderGroup(a);
       else updateGroupHeader(a);
@@ -7423,7 +9844,7 @@
       if (company || other) row.entityType = et;
       if (other) Object.assign(row, { other: true, types: [], typeOptions: null, notes: [] });
       applyRoleText(row, roleInput.value);
-      row.tracks = new Set(S.mbTracks.map((x) => x.idx));
+      row.tracks = new Set(selIdx());
       row.suggested = new Set(row.tracks);
       S.rows.push(row);
       renderGroups();
@@ -7530,6 +9951,7 @@
     const fillMissing = [];
     const fillIds = [];
     const dateFillIds = [];
+    let linkAttrN = 0;
     let step = 0;
     for (const it of items) {
       step++;
@@ -7537,6 +9959,39 @@
         setBusy(round ? 'busy.applyProgressRound' : 'busy.applyProgress', { i: step, n: items.length, ...(round || {}) });
       }
       const text = describeItem(it);
+      // Attributes added to an existing link recording → work (works matrix)
+      if (it.attrFill) {
+        try {
+          const current = statesBetween(re.state, it.target.gid, it.workGid, it.lt.id)[0];
+          if (!current) {
+            fillMissing.push(text);
+            continue;
+          }
+          const vals = treeValues(current.attributes);
+          const have = new Set(vals.map((a) => a.typeID || (a.type && a.type.id)));
+          it.attrs.filter((a) => !have.has(a.type.id)).forEach((a) => vals.push({ type: a.type, typeID: a.type.id, typeName: a.type.name }));
+          vals.sort((x, y) => (x.typeID || x.type.id) - (y.typeID || y.type.id));
+          const newState = {
+            ...current,
+            attributes: vals.length ? mb.tree.fromDistinctAscArray(vals) : current.attributes,
+            _original: current._original || current,
+            _status: current._status === 0 ? 2 : current._status, // 2 = edited
+          };
+          const sourceEntity = current.entity0 && current.entity0.gid === it.target.gid ? current.entity0 : current.entity1;
+          re.dispatch({
+            type: 'update-relationship-state', sourceEntity, batchSelectionCount: null,
+            creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
+          });
+          S.linkAttrStaged.set(it.attrFill, it.attrSig);
+          S.noteStats.linkAttrs = (S.noteStats.linkAttrs || 0) + 1;
+          linkAttrN++;
+          log('ok', 'linkAttrsAdded', { text, list: it.attrs.map((a) => a.type.name).join(', ') });
+        } catch (e) {
+          errors.push(`${text}: ${e.message}`);
+          log('error', 'stageFailed', { text, error: e.message });
+        }
+        continue;
+      }
       // A date for an existing relationship without one (works matrix): changed in the editor like MB's own dialog does
       if (it.fillDate) {
         try {
@@ -7719,7 +10174,7 @@
           S.noteStats[it.target.kind]++;
         }
         if (it.noteText) {
-          S.noteLines.add(`${it.artist.mbName || it.artist.name}, ${it.lt.name}: "${it.noteText}" (Discogs: ${it.row.raw})`);
+          S.noteLines.add(`${it.artist.mbName || it.artist.name}, ${it.lt.name}: "${it.noteText}" (${S.source.noteName}: ${it.row.raw})`);
         }
         added++;
         log('ok', 'staged', { text });
@@ -7781,9 +10236,10 @@
       showMessage(unchanged ? 'warn' : 'ok', unchanged ? 'msg.dateFillUnverified' : 'msg.datesFilled', { n: dateFillIds.length, bad: unchanged });
     }
     if (fillMissing.length) showMessage('warn', 'msg.fillNotFound', { n: fillMissing.length, list: fillMissing.join('; ') });
+    if (linkAttrN) showMessage('ok', 'msg.linkAttrsAdded', { n: linkAttrN });
     // The edit note after the checks above, so it counts the credits and dates added to existing relationships too
     let noteOk = true;
-    if ((added || fillIds.length || dateFillIds.length) && S.editNote) {
+    if ((added || fillIds.length || dateFillIds.length || linkAttrN) && S.editNote) {
       noteOk = writeEditNote();
       if (noteOk) log('info', 'noteWritten');
     }
@@ -7845,23 +10301,77 @@
     }).join('');
   }
 
+  /** A linked source in words: "Discogs 1234", "Bandcamp band.bandcamp.com/album/name". */
+  const sourceLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : l.id.replace(/^https?:\/\//, '')}`;
+
   function renderSource() {
     if (!S.overlay) return;
     const el = $('source');
-    const current = S.discogsId
-      ? `<a href="https://www.discogs.com/release/${esc(S.discogsId)}" target="_blank" rel="noopener">${esc(tr('source.current', { title: (S.discogs && S.discogs.title) || 'Discogs', id: S.discogsId }))}</a>`
-      : `<span>${esc(tr('source.none'))}</span>`;
-    const picker = S.discogsLinks.length > 1
+    const rel = S.release;
+    const text = rel && rel.source === 'text';
+    const label = !rel ? '' : text ? tr('source.currentText', { title: rel.title || tr('source.textNoTitle') })
+      : S.source === DISCOGS ? tr('source.current', { title: rel.title || S.source.name, id: rel.id }) : tr('source.currentLink', { title: rel.title || S.source.name });
+    const current = !rel ? `<span>${esc(tr('source.none'))}</span>`
+      : rel.url ? `<a href="${esc(rel.url)}" target="_blank" rel="noopener">${esc(label)}</a>` : `<span>${esc(label)}</span>`;
+    // [E1] Lines of a text that gave no credit, to add by hand
+    const unrec = (rel && rel.unrecognized) || [];
+    const unrecHtml = unrec.length ? `<details class="dci-unrec"><summary>${esc(tr('unrec.title', { n: unrec.length }))}</summary>
+      <ol>${unrec.map((l) => `<li>${esc(l)}</li>`).join('')}</ol><p class="dci-sub">${esc(tr('unrec.hint'))}</p></details>` : '';
+    const f = S.textForm;
+    const textForm = f ? `<div class="dci-textsrc${f.supp ? ' dci-textsrc-supp' : ''}" role="group" aria-label="${esc(tr(f.supp ? 'supp.textTitle' : 'textsrc.title'))}">
+        ${f.supp ? `<p class="dci-sub">${esc(tr('supp.textTitle'))}</p>` : ''}
+        <label class="dci-textsrc-text">${esc(tr('textsrc.label'))}<textarea data-f="text-src" rows="8" spellcheck="false">${esc(f.text)}</textarea></label>
+        <label>${esc(tr('textsrc.origin'))} <input type="text" data-f="text-origin" value="${esc(f.origin)}" placeholder="${esc(tr('textsrc.originPh'))}"></label>
+        <div class="dci-textsrc-btns"><button type="button" class="dci-apply dci-small" data-act="${f.supp ? 'supp-text-load' : 'text-load'}">${esc(tr(f.supp ? 'supp.textLoad' : 'textsrc.load'))}</button>
+          <button type="button" class="dci-textbtn" data-act="text-cancel">${esc(tr('common.cancel'))}</button></div>
+        <p class="dci-sub">${esc(tr('textsrc.hint'))}</p></div>` : '';
+    // Every linked source (Discogs releases, Bandcamp albums)
+    const linkLabel = sourceLinkLabel;
+    const picker = S.sourceLinks.length > 1
       ? `<select data-f="discogs-pick" aria-label="${esc(tr('source.pick'))}">
           <option value="">${esc(tr('source.pick'))}</option>
-          ${S.discogsLinks.map((l) => `<option value="${esc(l.id)}" ${l.id === S.discogsId ? 'selected' : ''}>Discogs ${esc(l.id)}</option>`).join('')}
+          ${S.sourceLinks.map((l) => `<option value="${esc(`${l.source}|${l.id}`)}" ${rel && S.source.id === l.source && l.id === rel.id ? 'selected' : ''}>${esc(linkLabel(l))}</option>`).join('')}
         </select>`
       : '';
     el.innerHTML = `${current} ${picker}
       <span class="dci-other">
         <input type="text" data-f="discogs-input" placeholder="${esc(tr('source.other'))}" aria-label="${esc(tr('source.other'))}">
         <button type="button" data-act="discogs-load">${esc(tr('source.load'))}</button>
-      </span>`;
+      </span>
+      <button type="button" class="dci-textbtn" data-act="text-open" aria-expanded="${!!f}" title="${esc(tr('source.textTitle'))}">${esc(tr('source.text'))}</button>
+      <button type="button" class="dci-textbtn dci-srcset-tgl" data-act="srcorder-toggle" aria-expanded="${S.srcOrderOpen}">${S.srcOrderOpen ? '▾' : '▸'} ${esc(tr('srcorder.toggle'))}</button>
+      <button type="button" class="dci-textbtn dci-srcset-tgl" data-act="bc-toggle" aria-expanded="${S.bcOpen}">${S.bcOpen ? '▾' : '▸'} Bandcamp</button>
+      <button type="button" class="dci-textbtn" data-act="forget-open" aria-expanded="${!!S.forgetOpen}" title="${esc(tr('forget.title'))}">${esc(tr('forget.button'))}</button>
+      ${S.forgetOpen ? `<div class="dci-forget" role="group" aria-label="${esc(tr('forget.ask'))}"><strong>${esc(tr('forget.ask'))}</strong>
+        <p class="dci-sub">${esc(tr('forget.what'))}</p><p class="dci-sub">${esc(tr('forget.keeps'))}</p>
+        <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
+          <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
+      ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
+      ${suppBarHtml()}${unrecHtml}${textForm}`;
+  }
+
+  /**
+   * The preference of the linked sources, one list for physical and one for digital media (drag & drop, or ▲▼):
+   * the first source of the list that the release links to is loaded – unless a source was chosen for it by hand.
+   */
+  function sourceOrderHtml() {
+    const list = (kind) => `<div class="dci-srcorder-col"><strong>${esc(tr(`srcorder.${kind}`))}${S.digital === (kind === 'digital') ? ` <span class="dci-sub">${esc(tr('srcorder.thisRelease'))}</span>` : ''}</strong>
+      <ol data-srcorder="${kind}">${S.sourceOrder[kind].map((k, i, all) => `<li class="dci-srcorder-item" draggable="true" data-drag="srcorder" data-id="${k}" data-list="${kind}" data-srcorder-item>
+        <span class="dci-chip-grip" aria-hidden="true">⠿</span> ${esc(SOURCES[k].name)}
+        <button type="button" class="dci-iconbtn" data-act="srcorder-move" data-list="${kind}" data-src="${k}" data-dir="-1" ${i ? '' : 'disabled'} aria-label="${esc(tr('srcorder.up', { src: SOURCES[k].name }))}">▲</button>
+        <button type="button" class="dci-iconbtn" data-act="srcorder-move" data-list="${kind}" data-src="${k}" data-dir="1" ${i < all.length - 1 ? '' : 'disabled'} aria-label="${esc(tr('srcorder.down', { src: SOURCES[k].name }))}">▼</button></li>`).join('')}</ol></div>`;
+    return `<div class="dci-srcorder" role="group" aria-label="${esc(tr('srcorder.toggle'))}">${list('physical')}${list('digital')}
+      <p class="dci-sub">${esc(tr('srcorder.hint'))}</p></div>`;
+  }
+
+  /** [E2] Bandcamp: read the credits of the track pages too; test a page (what the script finds there). */
+  function bandcampSettingsHtml() {
+    const t = S.bcTest;
+    return `<div class="dci-bcset" role="group" aria-label="Bandcamp">
+      <label class="dci-check" title="${esc(tr('bc.tracksTitle'))}"><input type="checkbox" data-f="bc-tracks" ${S.bcTracks ? 'checked' : ''}> ${esc(tr('bc.tracks'))}</label>
+      <span class="dci-bctest"><input type="text" data-f="bc-test-url" value="${esc((t && t.url) || '')}" placeholder="${esc(tr('bc.testPh'))}" aria-label="${esc(tr('bc.testPh'))}">
+        <button type="button" data-act="bc-test">${esc(tr('bc.test'))}</button></span>
+      ${t ? `<p class="dci-sub dci-bctest-res${t.ok ? '' : ' dci-bad'}" data-bc-result>${esc(t.text)}</p>` : ''}</div>`;
   }
 
   /** MB entity types a company can be matched with, from the roles it has. */
@@ -7871,17 +10381,17 @@
   const entityPath = (et) => String(et || 'artist').replace('_', '-');
 
   /**
-   * "Credited as" of a row from Discogs: the name Discogs shows (its name variation, otherwise the Discogs
-   * name without its number), whenever it differs from the MusicBrainz name; empty if they are the same.
+   * "Credited as" of a row from the source: the name it shows (its name variation, otherwise its name; a number
+   * like Discogs' "(2)" or a trailing "*" left out), whenever it differs from the MusicBrainz name; empty if the same.
    */
   // [S008]
-  function discogsCreditFor(row, a) {
+  function sourceCreditFor(row, a) {
     const shown = String(row.anv || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim();
     return shown && a.mbName && shown !== String(a.mbName).trim() ? typo(shown) : ''; // [S012]
   }
 
-  /** Applies discogsCreditFor to every row from Discogs whose credit was not edited by hand. */
-  function syncDiscogsCredits() {
+  /** Applies sourceCreditFor to every row from Discogs whose credit was not edited by hand. */
+  function syncSourceCredits() {
     if (!ruleOn('S008')) return;
     let works = false;
     const groups = new Set();
@@ -7889,7 +10399,7 @@
       if (row.creditTouched || row.manual) continue;
       const a = S.artists.get(row.artistKey);
       if (!a || !a.dId || !a.mbid || a.other) continue;
-      const want = discogsCreditFor(row, a);
+      const want = sourceCreditFor(row, a);
       if (row.credit === want) continue;
       row.credit = want;
       if (row.level === 'work') works = true;
@@ -7904,11 +10414,19 @@
   function aliasSuggestHtml(a) {
     if (!a.aliasHits || !a.aliasHits.length || a.mbid) return '';
     return `<div class="dci-alias-suggest"><span class="dci-sub">${esc(tr('match.aliasSuggest'))}</span>
-      ${a.aliasHits.map((h) => `<button type="button" class="dci-textbtn" data-act="alias-use" data-mbid="${esc(h.c.mbid)}" title="${esc(tr('match.aliasUseTitle', { alias: h.alias }))}">${esc(h.c.name)}${h.c.disambiguation ? ` (${esc(h.c.disambiguation)})` : ''} – ${esc(tr('match.viaAlias', { alias: h.alias }))}</button>`).join(' ')}</div>`;
+      ${a.aliasHits.map((h) => `<button type="button" class="dci-textbtn dci-suggbtn" data-act="alias-use" data-mbid="${esc(h.c.mbid)}" title="${esc(tr('match.aliasUseTitle', { alias: h.alias }))}">${esc(h.c.name)}${h.c.disambiguation ? ` (${esc(h.c.disambiguation)})` : ''} – ${esc(tr('match.viaAlias', { alias: h.alias }))}</button>`).join(' ')}</div>`;
+  }
+
+  /** [E1] Entries of the same name in MusicBrainz for a name without a link (a suggestion, dashed and yellow). */
+  function nameSuggestHtml(a) {
+    if (!a.nameHits || !a.nameHits.length || a.mbid) return '';
+    const head = a.strictMiss ? tr('match.linkSuggest', { mb: a.strictSpelled || '–' }) : tr('match.nameSuggest');
+    return `<div class="dci-alias-suggest"><span class="dci-sub">${esc(head)}</span>
+      ${a.nameHits.map((h) => `<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}" title="${esc(tr('match.nameUseTitle'))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}</button>`).join(' ')}</div>`;
   }
 
   function matchHtml(a) {
-    return matchHtmlInner(a) + aliasSuggestHtml(a);
+    return matchHtmlInner(a) + aliasSuggestHtml(a) + nameSuggestHtml(a);
   }
 
   function matchHtmlInner(a) {
@@ -7944,22 +10462,40 @@
           ${a.candidates.map((c) => `<option value="${esc(c.mbid)}">${esc(c.name)}${c.disambiguation ? ` (${esc(c.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${c.entityType}`))}` : ''}</option>`).join('')}
         </select>`;
     }
-    return editor(!a.dId ? 'match.noId' : a.discogsSeries ? 'match.noLinkSeries' : a.company ? 'match.noLinkCompany' : 'match.noLink');
+    return editor(!a.dId && (a.src || S.source).nameSearch ? 'match.byName' : !a.dId ? 'match.noId' : a.srcSeries ? 'match.noLinkSeries' : a.company ? 'match.noLinkCompany' : 'match.noLink');
   }
 
   function artistVariants(a) {
     return uniq([...(a.anvs || []), a.name, a.mbName].map((x) => String(x || '').trim()).filter(Boolean));
   }
 
+  /**
+   * [rule 4] Bandcamp: the name at the source, in the release's artist credit (below its title) and in MusicBrainz,
+   * side by side to check by eye – the artwork often credits a band differently, or a name was typed differently.
+   */
+  function spellHtml(a) {
+    const sp = a.spell;
+    if (!sp || a.company) return '';
+    const release = a.mbid ? releaseCreditName(a.mbid) : sp.release;
+    const mb = a.mbid ? a.mbName : sp.mb;
+    const differs = release !== sp.src || mb !== sp.src;
+    const val = (text, off) => (text ? `<span class="dci-spell-val${off ? ' dci-spell-x' : ''}">${esc(tr('common.quoted', { text }))}</span>`
+      : `<span class="dci-spell-val dci-spell-x">${esc(tr('spell.notInRelease'))}</span>`);
+    return `<span class="dci-spell${differs ? ' dci-spell-diff' : ''}"><strong>${esc(tr('spell.title'))}</strong>
+      ${esc(sp.srcName)} ${val(sp.src, false)} · ${esc(tr('spell.release'))} ${val(release, release !== sp.src)} · MusicBrainz ${val(mb, mb !== sp.src)}
+      <span class="dci-sub">– ${esc(tr(differs ? 'spell.differs' : 'spell.same'))}</span></span>`;
+  }
+
   function variantsHtml(a) {
     const anvs = a.anvs || [];
     let spelled = '';
+    // A source with strict names (Bandcamp) shows the spelling check instead (spellHtml)
     if (anvs.length) {
       spelled = `${esc(tr('group.spelling'))} ${anvs.map((v) => `<span class="dci-anv">${esc(tr('common.quoted', { text: v }))}</span>`).join(', ')}`;
-    } else if (a.dId) {
+    } else if (a.dId && !(a.src || S.source).strictNames) {
       spelled = esc(tr('group.noVariant'));
     }
-    return `${spelled ? `<span>${spelled}</span>` : ''}
+    return `<span data-spell="${a.key}">${spellHtml(a)}</span>${spelled ? `<span>${spelled}</span>` : ''}
       <label class="dci-credit">${esc(tr('group.creditAll'))}
         <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(anvs.length === 1 ? anvs[0] : '')}"
           placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('group.creditAllAria', { name: a.name }))}">
@@ -7987,17 +10523,17 @@
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship).
     const rows = allRows.filter((r) => r.level !== 'work');
-    const discogsLink = a.dId
-      ? `<a class="dci-dglink" href="${a.company || a.discogsSeries ? discogsLabelUrl(a.dId) : discogsArtistUrl(a.dId)}" target="_blank" rel="noopener" title="${esc(tr('link.discogsTitle'))}"><span class="dci-src dci-src-dg">Discogs</span>${esc(a.rawName || a.name)}</a>`
+    const sourceLink = a.dId && (a.links || [])[0]
+      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(tr('link.discogsTitle'))}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span>${esc(a.rawName || a.name)}</a>`
       : '';
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong> ${discogsLink}</div>
+          <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong> ${sourceLink}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
-        ${a.discogsSeries ? seriesLabelHtml(a) : ''}
+        ${a.srcSeries ? seriesLabelHtml(a) : ''}
         <div class="dci-tablewrap">
           <table class="dci-table">
             <thead><tr>
@@ -8025,7 +10561,7 @@
         <button type="button" class="dci-textbtn" data-act="remove-row">${esc(tr('role.remove'))}</button>${asType}${notes}`;
     }
     if (row.company) {
-      return `<div class="dci-drole">${esc(row.raw)}</div>
+      return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}
         <div class="dci-sub">${esc(tr('role.companyWhole'))} ${ruleInfoHtml(row)}</div>
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec ? `<div class="dci-sub">${esc(tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
@@ -8034,7 +10570,7 @@
     if (row.dSpec) where.push(row.dSpec);
     if (row.dPositions.length) where.push(tr('role.tracks', { list: row.dPositions.join(', ') }));
     const roleHtml = esc(row.raw).replace(/\[[^\]]*\]/g, (m) => `<span class="dci-bracket">${m}</span>`);
-    return `<div class="dci-drole">${roleHtml}</div>
+    return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
         ${ruleInfoHtml(row)}</div>
@@ -8326,7 +10862,7 @@
   }
 
   /** Slash dates: US releases on Discogs are read month/day, all others day/month (rule D003). */
-  const usDateOrder = () => ['us', 'usa', 'united states'].includes(norm((S.discogs && S.discogs.country) || ''));
+  const usDateOrder = () => ['us', 'usa', 'united states'].includes(norm((S.release && S.release.country) || ''));
 
   /** The sentence around a found date: its line, split at ";" and at full stops that end a sentence. */
   function sentenceAround(src, a, b) {
@@ -8355,11 +10891,11 @@
    * [S015] Tracks named in a sentence ("Tracks 1 to 5", "track 3", "tracks 6, 8 and 10", "A1 to A3",
    * "side B", "CD2, tracks 1–5"), as indexes of the MusicBrainz tracks; null if it names none.
    */
-  function tracksInText(text) {
+  function tracksInText(text, srcTracks = S.srcTracks) {
     const out = new Set();
     let named = false;
     const disc = (String(text).match(/\b(?:cd|disc|disk|lp|platte)\s*(\d+)/i) || [])[1];
-    const posMap = positionIndex(S.dTracks || []);
+    const posMap = positionIndex(srcTracks || []);
     const firstMedium = S.mbTracks.length ? S.mbTracks[0].medium : null;
     const resolve = (tok) => {
       const t = plainNo(tok);
@@ -8401,7 +10937,7 @@
     const side = /\bside\s+([A-H])\b/gi;
     while ((m = side.exec(text))) {
       named = true;
-      (S.dTracks || []).forEach((t, i) => { if (i < S.mbTracks.length && normPos(t.position).startsWith(m[1].toUpperCase())) out.add(i); });
+      (srcTracks || []).forEach((t, i) => { if (i < S.mbTracks.length && normPos(t.position).startsWith(m[1].toUpperCase())) out.add(i); });
     }
     // "Disc 2 recorded …" without tracks: the whole medium (releases with several media)
     if (!named && disc && multiMedium()) {
@@ -8428,7 +10964,7 @@
 
   /** Dates found in the Discogs notes (once per release) and in the text pasted into the date pool. */
   function dateFinds() {
-    const notes = String((S.discogs && S.discogs.notes) || '');
+    const notes = String((S.release && S.release.notes) || '');
     const sig = `${notes}|${usDateOrder()}|${S.mbTracks.length}|${S.artists.size}`;
     if (S.notesDatesFor !== sig) {
       S.notesDates = datesWithContext(notes);
@@ -8440,7 +10976,7 @@
   /** "1–5, 8": Discogs positions (or MusicBrainz numbers) of tracks, runs shortened. */
   function trackListLabel(idxs) {
     const list = [...idxs].filter((i) => S.mbTracks[i]).sort((a, b) => a - b);
-    const label = (i) => (S.dTracks && S.dTracks[i] && S.dTracks[i].position) || (multiMedium() ? `${S.mbTracks[i].medium}.${S.mbTracks[i].number}` : S.mbTracks[i].number);
+    const label = (i) => (S.srcTracks && S.srcTracks[i] && S.srcTracks[i].position) || (multiMedium() ? `${S.mbTracks[i].medium}.${S.mbTracks[i].number}` : S.mbTracks[i].number);
     const runs = [];
     for (const i of list) {
       const last = runs[runs.length - 1];
@@ -8520,7 +11056,7 @@
         placed.length ? `<span class="dci-tg-tag dci-tag-date">${esc(tr('datefind.inMatrix', { list: placed.join(', ') }))}</span>` : '',
       ].join(' ');
       const groups = DATE_GROUPS.map((g) => `<button type="button" class="${x.hint === g.key ? 'dci-primary' : ''}" data-act="datefind-use" data-src="${src}" data-i="${i}" data-group="${g.key}">${esc(g.label)}</button>`).join('');
-      const order = x.alt ? `<span class="dci-warn">${esc(tr(useAlt ? 'datefind.otherUsed' : x.order === 'us' ? 'datefind.orderUs' : 'datefind.orderDay', { country: (S.discogs && S.discogs.country) || '–' }))}</span>
+      const order = x.alt ? `<span class="dci-warn">${esc(tr(useAlt ? 'datefind.otherUsed' : x.order === 'us' ? 'datefind.orderUs' : 'datefind.orderDay', { country: (S.release && S.release.country) || '–' }))}</span>
         <button type="button" class="dci-textbtn" data-act="datefind-alt" data-key="${key}">${esc(tr('datefind.useOther', { date: formatDateValue(useAlt ? x.value : x.alt) }))}</button>` : '';
       return `<li><code>${esc(shown)}</code> ${extra} <span class="dci-sub" title="${esc(x.rule)}">${esc(tr(src === 'notes' ? 'datefind.fromNotes' : 'datefind.fromText'))}: „…${esc(x.snippet)}…“ (${esc(x.rule)})</span> ${order}
         <span class="dci-seg dci-seg-small">${groups}<button type="button" data-act="datefind-use" data-src="${src}" data-i="${i}" data-group="">${esc(tr('datefind.poolOnly'))}</button></span></li>`;
@@ -8682,7 +11218,7 @@
   /**
    * The matrix of this release: { cells: [{ id, col, date, tgs, studios, auto }], found, dirty }. A cell is a
    * pool date in a column; its track groups (none = all tracks) and studios (none = all) limit it. "auto":
-   * placed by the script and not applied yet (dashed). "found": the Discogs notes already read.
+   * placed by the script and not applied yet (a suggestion: dashed, yellow). "found": the Discogs notes already read.
    */
   function dm() {
     if (S.dm) return S.dm;
@@ -8898,16 +11434,24 @@
    * pool (cleared, or the browser's storage emptied), so a release gives the same result as at its first import.
    */
   function autoPlaceFoundDates({ force = false } = {}) {
-    const notes = String((S.discogs && S.discogs.notes) || '');
+    const notes = String((S.release && S.release.notes) || '');
     const m = dm();
-    const sig = `${S.discogsId || ''}|${textSig(notes)}`;
+    // (with a media choice, its media are part of the signature: another choice places anew)
+    const sig = `${srcReleaseId() || ''}|${textSig(notes)}${S.mediaSel ? `|m:${formatMediaList(S.mediaSel.media)}` : ''}`;
     const fromNotes = S.datePool.some((d) => String(d.found || '').startsWith('notes:'));
     if (!notes.trim() || (!force && m.found === sig && fromNotes)) return { placed: 0, pooled: 0 };
     m.found = sig;
     let placed = 0;
     const before = S.datePool.length;
-    dateFinds().notes.forEach((x, i) => {
+    dateFinds().notes.forEach((x0, i) => {
       const key = `notes:${i}`;
+      // Media choice: dates only for tracks of media not chosen stay out; the others keep the chosen tracks
+      let x = x0;
+      if (S.mediaSel && x.tracks && x.tracks.size) {
+        const kept = new Set([...x.tracks].filter(inSelection));
+        if (!kept.size) return;
+        x = { ...x, tracks: kept };
+      }
       const group = DATE_GROUPS.find((g) => g.key === x.hint) || null;
       const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, '', { found: true }) : null;
       const studios = (x.studios || []).map((k) => S.artists.get(k)).filter(Boolean).map(studioId);
@@ -8962,6 +11506,7 @@
     savePool();
     S.messages = S.messages.filter((x) => !['dm.autoPlaced', 'dm.autoPooled', 'dm.widened'].includes(x.key));
     const res = autoPlaceFoundDates({ force: true });
+    if (!S.source.readsTrackLists) applyNotesTrackCredits({ rows: false });
     dm().dirty = true;
     saveMatrix();
     showMessage('ok', 'pools.reloaded', { n: S.datePool.filter(fromNotes).length, placed: dm().cells.length });
@@ -8977,7 +11522,7 @@
   function suggestRowDate(row, entry) {
     const group = dateGroupOf(row);
     if (!group || dm().cells.some((c) => c.col === group.key && c.date === entry.id)) return;
-    const all = (row.level !== 'recording' && row.level !== 'work') || row.tracks.size >= S.mbTracks.length;
+    const all = (row.level !== 'recording' && row.level !== 'work') || row.tracks.size >= selTracks().length;
     const tg = !all && row.tracks.size ? ensureTrackGroup(row.tracks) : null;
     dm().cells.push({ id: newCellId(), col: group.key, date: entry.id, tgs: tg ? [tg.id] : [], studios: [], auto: true });
     dmChanged();
@@ -8996,6 +11541,25 @@
 
   const poolUsage = (id) => S.rows.filter((r) => r.date && r.date.poolId === id && r.level !== 'skip').length
     + [...S.workPlan.values()].filter((p) => p.date && p.date.poolId === id).length;
+
+  /**
+   * A date or track group from the Discogs notes is a suggestion (dashed, yellow) until it is used: dropped somewhere,
+   * on a row, or in a matrix cell that was placed by hand or applied (a cell the script placed is a suggestion too).
+   */
+  const inPlacedCell = (pred) => dm().cells.some((c) => !c.auto && pred(c));
+  const poolDateSuggested = (d) => String(d.found || '').startsWith('notes:') && !d.used && !poolUsage(d.id)
+    && !inPlacedCell((c) => c.date === d.id || (c.alt || []).includes(d.id));
+  const trackGroupSuggested = (g) => !!g.found && !g.used && !inPlacedCell((c) => (c.tgs || []).includes(g.id));
+
+  /** A pool entry from the Discogs notes was used: no longer a suggestion (true if that changed). */
+  function markPoolUsed(kind, id) {
+    const e = (kind === 'date' ? S.datePool : S.trackPool).find((x) => x.id === id);
+    if (!e || e.used || !(kind === 'date' ? String(e.found || '').startsWith('notes:') : e.found)) return false;
+    e.used = true;
+    if (kind === 'date') savePool();
+    else saveTrackPool();
+    return true;
+  }
 
   function poolSuggestions() {
     const inPool = new Set(S.datePool.map((d) => formatDateValue(d)));
@@ -9058,7 +11622,7 @@
         ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
         ${choose ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: choose }))}</span>` : ''}
         ${open ? `<span class="dci-pools-tools">
-          ${S.discogs ? `<button type="button" class="dci-textbtn" data-act="pool-clear" data-what="reload" title="${esc(tr('pools.reloadTitle'))}">${esc(tr('pools.reload'))}</button>` : ''}
+          ${S.release ? `<button type="button" class="dci-textbtn" data-act="pool-clear" data-what="reload" title="${esc(tr('pools.reloadTitle'))}">${esc(tr('pools.reload'))}</button>` : ''}
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="dates" ${S.datePool.length ? '' : 'disabled'}>${esc(tr('pools.clearDates'))}</button>
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="tracks" ${S.trackPool.length ? '' : 'disabled'}>${esc(tr('pools.clearTracks'))}</button>
         </span>` : ''}
@@ -9089,12 +11653,15 @@
 
   /** The date pool; "kept": the chips alone, in the folded bar (to drag them onto rows while scrolling). */
   function datePoolHtml(kept = false) {
-    const chips = S.datePool.map((d) => `
-      <span class="dci-date-chip dci-pchip-date" draggable="true" data-drag="date" data-id="${esc(d.id)}">
+    const chips = S.datePool.map((d) => {
+      const sugg = poolDateSuggested(d);
+      return `
+      <span class="dci-date-chip dci-pchip-date${sugg ? ' dci-pchip-sugg' : ''}" draggable="true" data-drag="date" data-id="${esc(d.id)}">
         ${gripHtml('date', d.id, poolLabel(d))}
-        <button type="button" class="dci-chip-main" data-act="pool-edit" data-id="${esc(d.id)}" title="${esc(tr('date.chipTitle'))}">
+        <button type="button" class="dci-chip-main" data-act="pool-edit" data-id="${esc(d.id)}" title="${esc(tr('date.chipTitle'))}${sugg ? ` – ${esc(tr('pools.suggested'))}` : ''}">
           ${esc(poolLabel(d))} <span class="dci-chip-count">${esc(tr('date.used', { n: poolUsage(d.id) }))}</span></button>
-      </span>`).join('');
+      </span>`;
+    }).join('');
     const suggestions = poolSuggestions();
     const suggHtml = suggestions.length ? `<span class="dci-date-sugg"><span class="dci-sub">${esc(tr('date.suggestions'))}</span>
       ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin) }))}</button>`).join(' ')}</span>` : '';
@@ -9117,14 +11684,14 @@
    * chips alone, in the folded bar (to drag them onto the tracks of rows while scrolling).
    */
   function trackPoolHtml(kept = false) {
-    const chips = S.trackPool.map((g) => `<span class="dci-date-chip dci-pchip-tg" draggable="true" data-drag="tg" data-id="${esc(g.id)}">
+    const chips = S.trackPool.map((g) => `<span class="dci-date-chip dci-pchip-tg${trackGroupSuggested(g) ? ' dci-pchip-sugg' : ''}" draggable="true" data-drag="tg" data-id="${esc(g.id)}">
       ${gripHtml('tg', g.id, g.name)}
-      <button type="button" class="dci-chip-main" data-act="tg-edit" data-id="${esc(g.id)}" title="${esc(tr('trackpool.editTitle'))}">
+      <button type="button" class="dci-chip-main" data-act="tg-edit" data-id="${esc(g.id)}" title="${esc(tr('trackpool.editTitle'))}${trackGroupSuggested(g) ? ` – ${esc(tr('pools.suggested'))}` : ''}">
       ${esc(g.name)} <span class="dci-chip-count">${esc(tr('trackpool.count', { n: g.tracks.length }))}</span></button></span>`).join('');
     const hint = `<span class="dci-drag-hint" title="${esc(tr('trackpool.dragHintTitle'))}">⠿ ${esc(tr('trackpool.dragHint'))}</span>`;
     if (kept) return `<div class="dci-dates-bar dci-tracks-bar"><strong class="dci-pool-label">${esc(tr('trackpool.title'))}</strong>${chips}${hint}</div>`;
-    // Several media: a whole medium (or one group per medium) in one step
-    const media = uniq(S.mbTracks.map((x) => x.medium));
+    // Several media: a whole medium (or one group per medium) in one step (of the chosen media)
+    const media = selMedia();
     const add = media.length > 1
       ? `<select data-f="tg-new-pick" class="dci-tg-newsel" aria-label="${esc(tr('trackpool.new'))}">
           <option value="">${esc(tr('trackpool.new'))}</option>
@@ -9150,7 +11717,7 @@
       renderDates();
       return;
     }
-    const media = value === 'all' ? uniq(S.mbTracks.map((x) => x.medium)) : [Number(value.slice(2))];
+    const media = value === 'all' ? selMedia() : [Number(value.slice(2))];
     for (const md of media) {
       const tracks = S.mbTracks.filter((x) => x.medium === md).map((x) => x.idx);
       if (tracks.length) ensureTrackGroup(new Set(tracks), mediumGroupName(md));
@@ -9373,11 +11940,11 @@
   function trackFormHtml() {
     const f = S.trackForm;
     let lastMedium = null;
-    const chips = S.mbTracks.map((x) => {
+    const chips = selTracks().map((x) => {
       const head = multiMedium() && x.medium !== lastMedium
         ? `<button type="button" class="dci-medium dci-medium-toggle" data-act="tg-medium" data-medium="${x.medium}" title="${esc(tr('picker.mediumTitle'))}">${esc(mediumLabel(x.medium))}</button>` : '';
       lastMedium = x.medium;
-      const dPos = S.dTracks[x.idx] ? S.dTracks[x.idx].position : '';
+      const dPos = S.srcTracks[x.idx] ? S.srcTracks[x.idx].position : '';
       return `${head}<label class="dci-chip" title="${esc(dPos ? tr('picker.dpos', { pos: dPos }) : tr('picker.noDpos'))}">
         <input type="checkbox" data-f="tg-track" data-i="${x.idx}" ${f.tracks.has(x.idx) ? 'checked' : ''}>
         <span class="dci-tn">${esc(x.number)}</span> <span class="dci-tt">${esc(x.title)}</span></label>`;
@@ -9489,7 +12056,7 @@
     let main = '';
     if (row.level === 'recording' || row.level === 'work') {
       main = `<button type="button" class="dci-tbtn" data-act="tracks-toggle" aria-expanded="${row.tracksOpen}">
-        <span data-tcount="${row.id}">${esc(tr('tracks.count', { sel: row.tracks.size, n: S.mbTracks.length }))}</span></button>`;
+        <span data-tcount="${row.id}">${esc(tr('tracks.count', { sel: row.tracks.size, n: selTracks().length }))}</span></button>`;
       if (row.level === 'work') main += `<div class="dci-sub">${esc(tr('tracks.worksOf'))}</div>`;
     } else if (row.level === 'release') {
       main = `<span class="dci-muted">${esc(tr('tracks.wholeRelease'))}</span>`;
@@ -9506,11 +12073,11 @@
   function tracksPicker(row) {
     const multiMedium = new Set(S.mbTracks.map((x) => x.medium)).size > 1;
     let lastMedium = null;
-    const chips = S.mbTracks.map((x) => {
+    const chips = selTracks().map((x) => {
       const head = multiMedium && x.medium !== lastMedium
         ? `<button type="button" class="dci-medium dci-medium-toggle" data-act="tracks-medium" data-medium="${x.medium}" title="${esc(tr('picker.mediumTitle'))}">${esc(mediumLabel(x.medium))}</button>` : '';
       lastMedium = x.medium;
-      const dPos = S.dTracks[x.idx] ? S.dTracks[x.idx].position : '';
+      const dPos = S.srcTracks[x.idx] ? S.srcTracks[x.idx].position : '';
       return `${head}<label class="dci-chip ${row.suggested.has(x.idx) ? 'dci-sugg' : ''}" title="${esc(dPos ? tr('picker.dpos', { pos: dPos }) : tr('picker.noDpos'))}">
         <input type="checkbox" data-f="track" data-i="${x.idx}" ${row.tracks.has(x.idx) ? 'checked' : ''}>
         <span class="dci-tn">${esc(x.number)}</span> <span class="dci-tt">${esc(x.title)}</span>
@@ -9546,7 +12113,7 @@
     return `<div class="dci-unmapped-box"><strong>${esc(tr('unmapped.badge'))}</strong>
       <a href="/search?type=instrument&query=${word}&method=indexed" target="_blank" rel="noopener">${esc(tr('unmapped.instrument'))}</a> ·
       <a href="/relationships/${esc(et)}-${level}" target="_blank" rel="noopener">${esc(tr('unmapped.types'))}</a> ·
-      <a href="https://www.discogs.com/help/creditslist" target="_blank" rel="noopener">${esc(tr('unmapped.discogs'))}</a></div>`;
+      ${S.source.rolesHelpUrl ? `<a href="${esc(S.source.rolesHelpUrl)}" target="_blank" rel="noopener">${esc(tr('unmapped.discogs'))}</a>` : ''}</div>`;
   }
 
 
@@ -9621,6 +12188,8 @@
     const tag = section.querySelector('.dci-kind-tag');
     if (tag) tag.outerHTML = kindTagHtml(a);
     section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
+    const spell = section.querySelector(`[data-spell="${a.key}"]`);
+    if (spell) spell.innerHTML = spellHtml(a);
     const list = section.querySelector(`#dci-ac-${a.key}`);
     if (list) list.innerHTML = artistVariants(a).map((v) => `<option value="${esc(v)}"></option>`).join('');
   }
@@ -9649,7 +12218,7 @@
       cb.checked = row.tracks.has(Number(cb.dataset.i));
     });
     const count = S.overlay.querySelector(`[data-tcount="${row.id}"]`);
-    if (count) count.textContent = tr('tracks.count', { sel: row.tracks.size, n: S.mbTracks.length });
+    if (count) count.textContent = tr('tracks.count', { sel: row.tracks.size, n: selTracks().length });
   }
 
   function updateMark(row) {
@@ -9699,7 +12268,7 @@
   function refresh() {
     if (!S.overlay) return;
     autoSkipExisting();
-    syncDiscogsCredits();
+    syncSourceCredits();
     const { items, rowInfo, removals, waiting } = computePlan();
     S.removals = removals;
     S.rowInfo = rowInfo;
@@ -9718,6 +12287,7 @@
     S.plan = items;
     let incomplete = 0;
     let existing = 0;
+    const incompleteIds = [];
     for (const row of S.rows) {
       const el = S.overlay.querySelector(`[data-status="${row.id}"]`);
       const info = rowInfo.get(row.id);
@@ -9737,6 +12307,7 @@
       }
       if (info.issues.length) {
         incomplete++;
+        incompleteIds.push(row.id);
         el.classList.add('dci-bad');
         el.textContent = info.issues.join(', ');
         continue;
@@ -9766,7 +12337,15 @@
       ['kind.workLink', count((i) => i.kind === 'work-link')],
     ].filter(([, n]) => n).map(([key, n]) => tr(key, { n }));
     const sum = [`<strong>${esc(tr('sum.new', { n: items.length }))}</strong>${kinds.length ? ` (${esc(kinds.join(', '))})` : ''}`];
-    if (incomplete) sum.push(`<span class="dci-bad">${esc(tr('sum.incomplete', { n: incomplete }))}</span>`);
+    // Incomplete rows: a click goes to the next one, ‹ › step back and forth
+    S.incompleteIds = incompleteIds;
+    if (S.incIdx >= incompleteIds.length) S.incIdx = incompleteIds.length - 1;
+    if (incomplete) {
+      const pos = S.incIdx >= 0 ? `${S.incIdx + 1}/${incomplete}` : '';
+      sum.push(`<span class="dci-incomplete"><button type="button" class="dci-iconbtn" data-act="inc-prev" title="${esc(tr('sum.incPrev'))}" aria-label="${esc(tr('sum.incPrev'))}">‹</button>
+        <button type="button" class="dci-textbtn dci-bad" data-act="inc-next" title="${esc(tr('sum.incTitle'))}">${esc(tr('sum.incomplete', { n: incomplete }))}</button>${pos ? ` <span class="dci-sub">${esc(pos)}</span>` : ''}
+        <button type="button" class="dci-iconbtn" data-act="inc-next" title="${esc(tr('sum.incNext'))}" aria-label="${esc(tr('sum.incNext'))}">›</button></span>`);
+    }
     if (existing) sum.push(`<span class="dci-muted">${esc(tr('sum.existing', { n: existing }))}</span>`);
     $('sum').innerHTML = sum.join('<br>');
     S.overlay.querySelectorAll('[data-group]').forEach((section) => {
@@ -9810,7 +12389,8 @@
       if (it.credit) line.push(tr('preview.artistCredit', { credit: it.credit }));
       if (it.date) line.push(tr('preview.date', { date: formatDateValue(it.date) || tr('date.endedOnly') }));
       if (it.noteText) line.push(tr('preview.noteOnly', { text: it.noteText }));
-      const mark = it.fillDate ? `<span class="dci-pv-update" title="${esc(tr('preview.fillDateTitle'))}">✎</span> `
+      const mark = it.attrFill ? `<span class="dci-pv-update" title="${esc(tr('preview.attrFillTitle'))}">✎</span> `
+        : it.fillDate ? `<span class="dci-pv-update" title="${esc(tr('preview.fillDateTitle'))}">✎</span> `
         : it.fill ? `<span class="dci-pv-update" title="${esc(tr('preview.fillTitle'))}">✎</span> `
         : it.update || it.replaces ? `<span class="dci-pv-update" title="${esc(tr('preview.updateTitle'))}">↻</span> ` : '';
       byTarget.get(label).push(`${mark}${esc(line.join(', '))}`);
@@ -9836,7 +12416,39 @@
    * Shows a seeded MB create form inside the dashboard. The user submits it;
    * once the frame (or the fallback window) lands on /<type>/<MBID>, onCreated runs.
    */
+  /**
+   * Where the dashboard was when an MB form opened: the group or matrix row of the button, and its place on the
+   * screen. After the entry was created and the dashboard redrawn, that place is restored (unless you scrolled).
+   */
+  function rememberPlace() {
+    // the button clicked last (some browsers do not focus buttons on click), else the focused element
+    const src = S.lastActEl && S.lastActEl.isConnected && S.overlay.contains(S.lastActEl) ? S.lastActEl : document.activeElement;
+    const from = src && src.closest && src.closest('[data-group], .dci-matrix tr[data-work]');
+    const sel = !from ? null : from.dataset.group ? `[data-group="${from.dataset.group}"]` : `.dci-matrix tr[data-work="${from.dataset.work}"]`;
+    const el = sel && S.overlay.querySelector(sel);
+    return { sel, top: el ? el.getBoundingClientRect().top : null, scroll: inPage() ? window.scrollY : $('body').scrollTop };
+  }
+
+  function restorePlace(place) {
+    if (!place || !S.overlay) return;
+    let last = null;
+    const scroller = () => (inPage() ? window.scrollY : $('body').scrollTop);
+    const apply = () => {
+      if (last != null && Math.abs(scroller() - last) > 2) return; // scrolled by hand meanwhile
+      const el = place.sel && S.overlay.querySelector(place.sel);
+      const dy = el && place.top != null ? el.getBoundingClientRect().top - place.top : place.scroll - scroller();
+      if (dy) {
+        if (inPage()) window.scrollBy(0, dy);
+        else $('body').scrollTop += dy;
+      }
+      last = scroller();
+    };
+    // The dashboard is redrawn after lookups in MusicBrainz, so a few times
+    [0, 300, 1000, 2000].forEach((ms) => setTimeout(apply, ms));
+  }
+
   function openCreateDialog({ title, url, entityType, infoHtml, onCreated, onCancel }) {
+    const place = rememberPlace();
     const sub = $('sub');
     const frame = $('sub-frame');
     const created = new RegExp(`^/${entityType}/(${MBID_RE.source})(?:/|$)`, 'i');
@@ -9856,7 +12468,8 @@
       if (done) return;
       done = true;
       cleanup();
-      onCreated(mbid.toLowerCase());
+      Promise.resolve(onCreated(mbid.toLowerCase())).finally(() => restorePlace(place));
+      restorePlace(place);
     };
     const check = (win) => {
       try {
@@ -9906,32 +12519,33 @@
     };
   }
 
+  /** The page of an entry at the source ('' if none). */
+  const srcUrlOf = (a) => (a && a.dId && (a.links || [])[0]) || '';
+  const prefilledBy = (from) => `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${from ? ` from ${S.source.noteName}` : ''}.`;
+
   async function startArtistCreate(artist) {
     const x = idx();
-    let discogsArtist = null;
+    let person = null;
     const warnings = [];
     const rels = [];
     const notInMb = [];
-    if (artist.dId) {
+    if (artist.dId && S.source.person) {
       try {
         setBusy('busy.discogsArtist', { name: artist.name });
-        discogsArtist = await fetchDiscogsArtist(artist.dId);
+        person = await S.source.person(artist.dId);
         // Members (for a group) or groups (for a person) that already exist in MB
-        const related = [
-          ...((discogsArtist.members || []).map((m) => ({ ...m, newIsGroup: true }))),
-          ...((discogsArtist.groups || []).map((g) => ({ ...g, newIsGroup: false }))),
-        ].filter((r) => r.id);
+        const related = person.related || [];
         if (related.length) {
           const found = new Map();
-          const urls = related.map((r) => discogsArtistUrl(r.id));
+          const urls = related.map((r) => r.links[0]);
           for (let i = 0; i < urls.length; i += 50) {
-            (await lookupDiscogsArtistUrls(urls.slice(i, i + 50))).forEach((v, k) => found.set(k, v));
+            (await lookupUrls(urls.slice(i, i + 50), 'artist')).forEach((v, k) => found.set(k, v));
           }
           for (const r of related) {
-            const matches = found.get(discogsArtistUrl(r.id)) || [];
+            const matches = found.get(r.links[0]) || [];
             if (matches.length === 1) {
               // "member of band": the member is entity0. If the new artist is the group, the relationship points backward.
-              rels.push({ mbid: matches[0].mbid, name: matches[0].name, linkTypeId: x.memberLtId, backward: r.newIsGroup, ended: r.active === false });
+              rels.push({ mbid: matches[0].mbid, name: matches[0].name, linkTypeId: x.memberLtId, backward: r.isGroup, ended: r.active === false });
             } else {
               notInMb.push(r);
             }
@@ -9943,25 +12557,25 @@
         setBusy('');
       }
     }
-    const type = guessArtistType(discogsArtist);
+    const type = person ? person.type : null;
     const params = buildArtistSeed({
       name: artist.name,
-      discogsId: artist.dId,
-      discogsArtist,
+      sourceUrl: srcUrlOf(artist),
+      person,
       typeId: type === 'group' ? 2 : type === 'person' ? 1 : null,
-      discogsLinkTypeId: x.discogsArtistUrlLtId,
+      sourceLinkTypeId: sourceUrlLtId('artist'),
       rels,
-      editNote: artist.dId ? `Source: ${discogsArtistUrl(artist.dId)}\nPrefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL}) from Discogs.` : '',
+      editNote: srcUrlOf(artist) ? `Source: ${srcUrlOf(artist)}\n${prefilledBy(true)}` : '',
     });
     const urlCount = params.filter(([k]) => /^edit-artist\.url\.\d+\.text$/.test(k)).length;
-    const displayName = cleanDiscogsName((discogsArtist && discogsArtist.name) || artist.name);
+    const displayName = (person && person.name) || artist.name;
     const prefilled = [tr('part.name')];
     if (type) prefilled.push(tr('part.type', { type: tr(`type.${type}`) }));
     if (urlCount) prefilled.push(tr('part.urls', { n: urlCount }));
     if (rels.length) prefilled.push(tr('part.members', { n: rels.length, names: rels.map((r) => r.name).join(', ') }));
     const info = [`<p>${esc(tr('artistDlg.prefilled', { list: prefilled.join(', ') }))}</p>`];
     if (notInMb.length) {
-      const links = notInMb.map((r) => `<a href="${discogsArtistUrl(r.id)}" target="_blank" rel="noopener">${esc(cleanDiscogsName(r.name))}</a>`).join(', ');
+      const links = notInMb.map((r) => `<a href="${esc(r.links[0])}" target="_blank" rel="noopener">${esc(r.name)}</a>`).join(', ');
       info.push(`<p class="dci-muted">${esc(tr('artistDlg.notInMb')).replace('{list}', links)}</p>`);
     }
     warnings.forEach((w) => info.push(`<p class="dci-bad">${esc(w)}</p>`));
@@ -10002,15 +12616,15 @@
     const et = owner.entityType;
     const path = entityPath(et);
     const params = [[`edit-${path}.name`, owner.name]];
-    if (owner.dId && owner.discogsSeries) {
-      params.push([`edit-${path}.url.0.text`, discogsLabelUrl(owner.dId)]);
-      const lt = idx().discogsUrlLtId && idx().discogsUrlLtId[et];
+    if (owner.srcSeries && srcUrlOf(owner)) {
+      params.push([`edit-${path}.url.0.text`, srcUrlOf(owner)]);
+      const lt = sourceUrlLtId(et);
       if (lt) params.push([`edit-${path}.url.0.link_type_id`, String(lt)]);
     }
-    if (owner.discogsSeries) params.push(...seriesLabelParams(owner));
+    if (owner.srcSeries) params.push(...seriesLabelParams(owner));
     params.push([`edit-${path}.edit_note`, [
-      owner.dId && owner.discogsSeries ? `Source: ${discogsLabelUrl(owner.dId)}` : '',
-      `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${owner.dId ? ' from Discogs' : ''}.`,
+      owner.srcSeries && srcUrlOf(owner) ? `Source: ${srcUrlOf(owner)}` : '',
+      prefilledBy(!!owner.dId),
     ].filter(Boolean).join('\n')]);
     const type = tr(`entity.${et}`);
     log('info', 'otherForm', { name: owner.name, type });
@@ -10045,13 +12659,13 @@
 
   function startCompanyCreate(company, entityType) {
     const params = [[`edit-${entityType}.name`, company.name]];
-    if (company.dId) {
-      params.push([`edit-${entityType}.url.0.text`, discogsLabelUrl(company.dId)]);
-      params.push([`edit-${entityType}.url.0.link_type_id`, String(idx().discogsUrlLtId[entityType])]);
+    if (srcUrlOf(company)) {
+      params.push([`edit-${entityType}.url.0.text`, srcUrlOf(company)]);
+      params.push([`edit-${entityType}.url.0.link_type_id`, String(sourceUrlLtId(entityType))]);
     }
     params.push([`edit-${entityType}.edit_note`, [
-      company.dId ? `Source: ${discogsLabelUrl(company.dId)}` : '',
-      `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL}) from Discogs.`,
+      srcUrlOf(company) ? `Source: ${srcUrlOf(company)}` : '',
+      prefilledBy(true),
     ].filter(Boolean).join('\n')]);
     const info = `<p>${esc(tr('companyDlg.prefilled'))}</p><p>${esc(tr(entityType === 'place' ? 'companyDlg.checkPlace' : 'companyDlg.checkLabel'))}</p>`;
     log('info', 'companyForm', { name: company.name, type: tr(`entity.${entityType}`) });
@@ -10107,15 +12721,15 @@
     const opts = rowOpts(i);
     const typeName = (S.workOptions.types.find((x) => String(x.id) === String(opts.typeId)) || {}).name;
     const langName = opts.languageIds.map((id) => (S.workOptions.languages.find((x) => String(x.id) === String(id)) || {}).name).filter(Boolean).join(', ');
-    const discogsId = S.discogsId || S.noteDiscogsId;
+    const sourceUrl = noteSourceUrl();
     const params = buildWorkSeed({
       title: workTitleOf(track.title),
       typeId: opts.typeId,
       languageIds: opts.languageIds,
       writers,
       editNote: [
-        discogsId ? `Source: https://www.discogs.com/release/${discogsId}` : '',
-        `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${writers.length ? '; writers from Discogs credits' : ''}.`,
+        sourceUrl ? `Source: ${sourceUrl}` : '',
+        `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${writers.length ? `; writers from ${S.source.creditsName} credits` : ''}.`,
       ].filter(Boolean).join('\n'),
     });
     const prefilled = [tr('part.title', { title: track.title })];
@@ -10173,8 +12787,8 @@
     finishWorkRun();
   }
 
-  /** The people Discogs credits for writing this track (MB artists, no publishers). */
-  function discogsWritersOf(i) {
+  /** The people the source credits for writing this track (MB artists, no publishers). */
+  function creditedWritersOf(i) {
     const out = new Map();
     for (const r of S.rows) {
       const a = S.artists.get(r.artistKey);
@@ -10191,7 +12805,7 @@
     const track = S.mbTracks[i];
     if (!track) return;
     const writers = writersForTrack(i);
-    const people = discogsWritersOf(i);
+    const people = creditedWritersOf(i);
     if (!people.size) {
       S.workSearch.set(i, { state: 'noWriters', results: [], writers });
       renderWorkRow(i);
@@ -10213,7 +12827,7 @@
     renderWorkRow(i);
   }
 
-  // --- Series from Discogs ------------------------------------------------------------
+  // --- Series from the source (Discogs) ----------------------------------------------------
   /** "Vol. 3" → "3": MB keeps only the number in the series' "number" attribute. */
   const seriesNumber = (catno) => String(catno || '').replace(/^\s*(vol(ume)?|no|nr|number|#|part|pt)\.?\s*/i, '').trim();
 
@@ -10225,14 +12839,13 @@
    * goes into the form of a series that is created from the dashboard ("Create series …").
    */
   async function loadSeriesLabel(owner) {
+    if (!S.source.seriesParent) return;
     try {
-      const res = await fetch(`https://api.discogs.com/labels/${owner.dId}`);
-      const data = res.ok ? await res.json() : null;
-      const parent = data && data.parent_label;
-      if (!parent || !parent.id) return;
-      const info = { dId: parent.id, name: parent.name, mbid: null, mbName: '' };
-      const found = await lookupDiscogsUrls([discogsLabelUrl(parent.id)], 'label');
-      const label = (found.get(discogsLabelUrl(parent.id)) || []).find((x) => x.entityType === 'label');
+      const parent = await S.source.seriesParent(owner.dId);
+      if (!parent) return;
+      const info = { dId: parent.id, links: parent.links, name: parent.name, mbid: null, mbName: '' };
+      const found = await lookupUrls([parent.links[0]], 'label');
+      const label = (found.get(parent.links[0]) || []).find((x) => x.entityType === 'label');
       if (label) Object.assign(info, { mbid: label.mbid, mbName: label.name });
       owner.seriesLabel = info;
       log('info', 'seriesLabel', { series: owner.name, label: parent.name });
@@ -10253,7 +12866,7 @@
   function seriesLabelHtml(a) {
     const info = a.seriesLabel;
     if (!info || a.mbid) return '';
-    const dg = `<a class="dci-dglink" href="${discogsLabelUrl(info.dId)}" target="_blank" rel="noopener"><span class="dci-src dci-src-dg">Discogs</span>${esc(info.name)}</a>`;
+    const dg = `<a class="dci-dglink" href="${esc(info.links[0])}" target="_blank" rel="noopener"><span class="dci-src dci-src-dg">${esc(S.source.name)}</span>${esc(info.name)}</a>`;
     const mb = info.mbid ? `<a class="dci-mblink" href="/label/${esc(info.mbid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(info.mbName)}</a>` : '';
     return `<div class="dci-series-label"><span class="dci-sub">${esc(tr('seriesLabel.title'))}</span> ${dg} ${mb}
       <span class="dci-sub">${esc(tr(info.mbid ? 'seriesLabel.onCreate' : 'seriesLabel.noMb'))}</span></div>`;
@@ -10262,19 +12875,19 @@
   async function loadSeries(list) {
     let found = new Map();
     try {
-      found = await lookupDiscogsUrls(list.map((x) => discogsLabelUrl(x.id)), 'series');
+      found = await lookupUrls(list.map((x) => x.links[0]), 'series');
     } catch (e) {
       console.warn('[Discogs-Credits] series lookup failed', e);
     }
     for (const x of list) {
-      const hit = (found.get(discogsLabelUrl(x.id)) || [])[0];
+      const hit = (found.get(x.links[0]) || [])[0];
       const type = hit ? norm(hit.type) : '';
       const owner = {
-        key: nextId('o'), dId: x.id, name: x.name, rawName: x.name, status: hit ? 'linked' : 'missing', other: true, discogsSeries: true,
+        key: nextId('o'), dId: x.id, links: x.links, name: x.name, rawName: x.name, status: hit ? 'linked' : 'missing', other: true, srcSeries: true,
         entityType: 'series', mbid: hit ? hit.mbid : null, mbName: hit ? hit.name : '', mbComment: hit ? hit.disambiguation : '',
         candidates: [], editing: false, error: '', anvs: [],
       };
-      owner.dNumber = seriesNumber(x.catno);
+      owner.dNumber = seriesNumber(x.number);
       S.artists.set(owner.key, owner);
       const row = makeRow(owner.key, { manual: true, company: null });
       Object.assign(row, { other: true, entityType: 'series', types: [], typeOptions: null, notes: [] });
@@ -10282,18 +12895,18 @@
       if (hit && type === 'release group series' && S.releaseGroup) {
         row.level = 'release_group';
         resolveRowType(row);
-        const number = seriesNumber(x.catno);
+        const number = seriesNumber(x.number);
         if (number) Object.assign(row, { roleCredit: number, roleCreditTouched: true });
       } else if (hit && (type === 'release series' || type === '')) {
         row.level = 'release';
-        const number = seriesNumber(x.catno);
+        const number = seriesNumber(x.number);
         if (number) Object.assign(row, { roleCredit: number, roleCreditTouched: true });
       } else {
         Object.assign(row, { level: 'skip', levelTouched: true, seriesType: hit ? hit.type : '' });
         row.notes = [hit ? (type === 'release group series' ? 'noReleaseGroup' : 'seriesType') : 'seriesMissing'];
       }
       S.rows.push(row);
-      log(hit ? 'info' : 'warn', 'series', { name: x.name, number: x.catno || '–' });
+      log(hit ? 'info' : 'warn', 'series', { name: x.name, number: x.number || '–' });
       if (!hit) await loadSeriesLabel(owner);
     }
   }
@@ -10343,6 +12956,195 @@
   const rowTypeName = (row) => (currentLinkType(row) || {}).name || row.types[0] || '';
 
   /** Work rows of the matrix: each existing work, the planned work, or "no work yet" per track. */
+  // --- Attributes of the link recording → work (live, cover, medley …) --------------------------------
+
+  /** The attributes MusicBrainz allows on "performance" (checkboxes, without free text), in its order. */
+  /** The attributes MusicBrainz offers for the link recording → work, sorted by their short form. */
+  function linkAttrTypes() {
+    const perf = idx().performanceLt;
+    const list = perf ? allowedRoots(perf).filter((r) => !r.hasChildren && !r.attr.free_text).map((r) => r.attr) : [];
+    return list.sort((x, y) => attrAbbr(x.name).localeCompare(attrAbbr(y.name)));
+  }
+  /** Short forms of the link attributes in the works matrix (two letters, lower case). */
+  const ATTR_ABBR = { 'a cappella': 'ac', acappella: 'ac', 'a capella': 'ac', cover: 'co', demo: 'de', instrumental: 'in', karaoke: 'ka', live: 'li', medley: 'me', partial: 'pa' };
+  const attrAbbr = (name) => ATTR_ABBR[norm(name)] || norm(name).replace(/[^a-z0-9]/g, '').slice(0, 2);
+  const linkKey = (i, gid) => `${i}|${gid}`;
+  /** [S021] Why "live" is suggested for a track ('' if not). */
+  function liveReason(i) {
+    if (!ruleOn('S021')) return '';
+    return S.liveAuto.tracks.get(i) || S.liveAuto.release || '';
+  }
+  /** [S021] The reason as text; a "Live Recording By" credit with its Discogs role and name. */
+  function liveWhyText(i) {
+    const reason = liveReason(i);
+    const c = reason === 'credit' ? (S.liveAuto.credits || new Map()).get(i) : reason === 'creditAll' ? S.liveAuto.releaseCredit : null;
+    return tr(`matrix.liveWhy.${reason}`, c || { role: 'Live Recording By', name: '?' });
+  }
+  /** [S021] "li?": the track itself is a live recording (credit, title) or the release is live (group, format, notes). */
+  const liveOfferText = (i) => tr(['credit', 'creditAll', 'title'].includes(liveReason(i)) ? 'matrix.liveOfferRec' : 'matrix.liveOffer', { reason: liveWhyText(i) });
+  /** Attributes a link has in MusicBrainz already (existing links only). */
+  const mbLinkAttrs = (work) => new Set(work && !work.planned ? work.linkAttrs || [] : []);
+  /**
+   * The attributes a link gets: MusicBrainz's own, chosen by hand, and "live" preselected [S021] – the latter
+   * only on links that are new (a new work, or a work linked here). An existing link keeps what MusicBrainz has.
+   */
+  function linkAttrsOf(i, work) {
+    if (!work) return new Set();
+    const key = linkKey(i, work.gid);
+    const off = S.linkAttrOff.get(key) || new Set();
+    const out = new Set([...mbLinkAttrs(work), ...(S.linkAttrOn.get(key) || [])]);
+    const plan = work.planned ? S.workPlan.get(i) : null;
+    if (plan) plan.flags.forEach((f) => out.add(f));
+    if (work.planned && liveReason(i) && !off.has('live')) out.add('live');
+    off.forEach((f) => { if (!mbLinkAttrs(work).has(f)) out.delete(f); });
+    return out;
+  }
+  /** [S021] An existing link of a live release without "live": offered ("li?"), never set by itself. */
+  const liveHint = (i, work) => !!(work && !work.planned && liveReason(i) && !linkAttrsOf(i, work).has('live'));
+  /** Switches an attribute of one link on or off (MusicBrainz's own stay). */
+  function setLinkAttr(i, work, name, on) {
+    const key = linkKey(i, work.gid);
+    const onSet = S.linkAttrOn.get(key) || new Set();
+    const offSet = S.linkAttrOff.get(key) || new Set();
+    const plan = work.planned ? S.workPlan.get(i) : null;
+    if (on) {
+      onSet.add(name);
+      offSet.delete(name);
+      if (plan) plan.flags.add(name);
+    } else {
+      onSet.delete(name);
+      offSet.add(name);
+      if (plan) plan.flags.delete(name);
+    }
+    S.linkAttrOn.set(key, onSet);
+    S.linkAttrOff.set(key, offSet);
+  }
+
+  /** A work's attribute row is open when the link has (or is offered) an attribute, or when opened by hand. */
+  function linkAttrsOpen(mrow) {
+    if (!mrow.work) return false;
+    const has = linkAttrsOf(mrow.i, mrow.work).size > 0 || liveHint(mrow.i, mrow.work);
+    return { has, open: has || S.wattrOpenAll || S.wattrOpen.has(mrow.key) };
+  }
+
+  /** One attribute as a small button: its short form (or its name with "ausschreiben"). */
+  function attrPillHtml(a, { state, act, title, extra = '' }) {
+    const n = norm(a.name);
+    const label = S.wattrLong ? a.name : attrAbbr(a.name);
+    return `<button type="button" class="dci-wpill dci-wpill-${state}" data-act="${act}" data-attr="${esc(n)}" aria-pressed="${state === 'off' || state === 'hint' ? 'false' : state === 'mixed' ? 'mixed' : 'true'}"
+      ${state === 'mb' ? 'disabled' : ''} title="${esc(title)}">${esc(label)}${state === 'hint' ? '?' : ''}${extra}</button>`;
+  }
+
+  /** The attributes of a work's link, below the work in the works matrix (all of them when open). */
+  function linkAttrsHtml(mrow) {
+    const types = linkAttrTypes();
+    if (!mrow.work || !types.length) return '';
+    const st = linkAttrsOpen(mrow);
+    if (!st.open) return '';
+    const have = linkAttrsOf(mrow.i, mrow.work);
+    const inMb = mbLinkAttrs(mrow.work);
+    const staged = S.linkAttrStaged.has(linkKey(mrow.i, mrow.work.gid));
+    const reason = liveReason(mrow.i);
+    const pills = types.map((a) => {
+      const n = norm(a.name);
+      if (inMb.has(n)) return attrPillHtml(a, { state: 'mb', act: 'mx-wattr', title: `${a.name} – ${tr('matrix.attrInMb')}` });
+      if (have.has(n)) {
+        const auto = n === 'live' && reason && mrow.work.planned && !(S.linkAttrOn.get(linkKey(mrow.i, mrow.work.gid)) || new Set()).has('live');
+        const edit = !mrow.work.planned;
+        const title = auto ? tr('matrix.liveAuto', { reason: liveWhyText(mrow.i) }) : edit ? tr('matrix.attrEdit') : a.name;
+        return attrPillHtml(a, { state: 'on', act: 'mx-wattr', title: `${a.name} – ${title}`, extra: edit ? `<sup>${staged ? '✎✓' : '✎'}</sup>` : '' });
+      }
+      if (n === 'live' && liveHint(mrow.i, mrow.work)) {
+        return attrPillHtml(a, { state: 'hint', act: 'mx-wattr', title: liveOfferText(mrow.i) });
+      }
+      return attrPillHtml(a, { state: 'off', act: 'mx-wattr', title: a.name });
+    }).join('');
+    const close = st.has ? '' : `<button type="button" class="dci-textbtn dci-wattr-tgl" data-act="mx-wattr-open" aria-expanded="true">▾ ${esc(tr('matrix.attrsShort'))}</button>`;
+    return `<div class="dci-wattrs" role="group" aria-label="${esc(tr('matrix.attrs'))}">${pills}${close}</div>`;
+  }
+
+  /** Closed attribute row: "none ▸ Attributes" at the end of the work's line. */
+  function linkAttrsToggleHtml(mrow) {
+    if (!mrow.work || !linkAttrTypes().length || linkAttrsOpen(mrow).open) return '';
+    return `<span class="dci-wattr-sum"><span class="dci-muted">${esc(tr('matrix.attrsNone'))}</span>
+      <button type="button" class="dci-textbtn dci-wattr-tgl" data-act="mx-wattr-open" aria-expanded="false">▸ ${esc(tr('matrix.attrsShort'))}</button></span>`;
+  }
+
+  /** "Attributes for all" in the head of the track column, with "spell out" and "open all rows". */
+  function linkAttrsHeadHtml() {
+    const types = linkAttrTypes();
+    const rows = matrixRows().filter((m) => m.work);
+    if (!types.length || !rows.length) return '';
+    const pills = types.map((a) => {
+      const n = norm(a.name);
+      const k = rows.filter((m) => linkAttrsOf(m.i, m.work).has(n)).length;
+      const state = k === rows.length ? 'on' : k ? 'mixed' : 'off';
+      return `<span class="dci-wpill-drop" data-tgattr="${esc(n)}">${attrPillHtml(a, { state, act: 'mx-wattr-all', title: tr('matrix.attrAllTitle', { name: a.name, k, n: rows.length }) })}</span>`;
+    }).join('');
+    return `<div class="dci-wattrs dci-wattrs-all" role="group" aria-label="${esc(tr('matrix.attrsAll'))}"><span class="dci-sub">${esc(tr('matrix.attrsAll'))}</span>${pills}</div>
+      <div class="dci-mx-cardline">
+        <button type="button" class="dci-textbtn" data-act="mx-wattr-long" aria-pressed="${S.wattrLong}">${esc(S.wattrLong ? `▾ ${tr('matrix.attrShort')}` : `▸ ${tr('matrix.attrLong')}`)}</button>
+        <button type="button" class="dci-textbtn" data-act="mx-wattr-openall" aria-pressed="${S.wattrOpenAll}">${esc(tr(S.wattrOpenAll ? 'matrix.attrCloseAll' : 'matrix.attrOpenAll'))}</button>
+        <span class="dci-sub">${esc(tr('matrix.attrDropHint'))}</span></div>`;
+  }
+
+  /**
+   * [S020] Music and lyrics in one credit (R098): new works of these tracks get the work type "Song" – the default
+   * for all new works when Discogs gives the credit for the whole release. A type chosen by hand stays.
+   */
+  function applySongDefault() {
+    if (!ruleOn('S020')) return;
+    const song = (S.workOptions.types || []).find((t) => norm(t.name) === 'song');
+    const rows = S.rows.filter((r) => r.ruleId === 'R098' && r.level !== 'skip');
+    if (!song || !rows.length) return;
+    if (rows.some((r) => !r.dSpec && !(r.dPositions || []).length)) {
+      if (!S.workDefaults.typeId) Object.assign(S.workDefaults, { typeId: String(song.id), typeAuto: 'S020' });
+      return;
+    }
+    rows.forEach((r) => r.tracks.forEach((i) => {
+      if (!S.workRowOpts.has(i)) S.workRowOpts.set(i, { ...rowOpts(i), typeId: String(song.id), typeAuto: 'S020' });
+    }));
+  }
+
+  /**
+   * [S021] "live" is preselected on the links of all works when the release group is marked Live in MusicBrainz
+   * or Discogs calls the release live (format, "recorded live" in the notes), and on a single work when its track
+   * title says so ("(live)", "[live]", "(live at …)", "– live"). A "Live Recording By" credit (R031) counts too:
+   * for the tracks it names, or for the whole release when it names none.
+   */
+  function applyLiveDefault() {
+    const reasons = { release: '', tracks: new Map(), credits: new Map(), releaseCredit: null };
+    const types = ((S.releaseGroup && (S.releaseGroup['secondary-types'] || S.releaseGroup.secondaryTypes)) || []).map(norm);
+    const d = S.release || { tags: [], notes: '' };
+    if (types.includes('live')) reasons.release = 'rg';
+    else if (d.tags.includes('live')) reasons.release = 'format';
+    else if (/\b(recorded|performed)\s+live\b|\blive\s+recording\b/i.test(d.notes || '')) reasons.release = 'notes';
+    const LIVE_TITLE = /\((?:live|live at [^)]*|live in [^)]*|live version)\)|\[(?:live|live at [^\]]*)\]|\s[-–—]\s*live\b/i;
+    S.mbTracks.forEach((t) => {
+      const dt = (S.srcTracks || [])[t.idx];
+      if (LIVE_TITLE.test(t.title || '') || (dt && LIVE_TITLE.test(dt.title || ''))) reasons.tracks.set(t.idx, 'title');
+    });
+    // "Live Recording By", "Recorded Live By" … (R031)
+    for (const r of S.rows) {
+      if (r.company || r.ruleId !== 'R031' || !/\blive\b/i.test([r.raw, r.dBase, ...(r.mods || [])].join(' '))) continue;
+      const a = S.artists.get(r.artistKey) || {};
+      const credit = { role: String(r.raw || r.dBase || '').trim(), name: a.name || a.rawName || '' };
+      if (r.dAllTracks) {
+        if (!reasons.release) {
+          reasons.release = 'creditAll';
+          reasons.releaseCredit = credit;
+        }
+      } else {
+        r.tracks.forEach((i) => {
+          if (reasons.tracks.has(i)) return;
+          reasons.tracks.set(i, 'credit');
+          reasons.credits.set(i, credit);
+        });
+      }
+    }
+    S.liveAuto = reasons;
+  }
+
   function matrixRows() {
     const rows = [];
     for (const t of S.mbTracks) {
@@ -10374,6 +13176,7 @@
     }
     const known = new Set([...cols.values()].map((c) => c.mbid).filter(Boolean));
     for (const t of S.mbTracks) {
+      if (!inSelection(t.idx)) continue;
       for (const w of t.works) {
         for (const r of (w.rels || []).filter((x) => matrixRel(x))) {
           const key = `mb:${r.mbid}`;
@@ -10509,6 +13312,140 @@
     });
   }
 
+  /**
+   * [S024] "Commissioned By" (R099, C037) without a track list: "commissioned" is a suggestion on all works – dashed and
+   * yellow like the other suggestions, staged unless taken out (×). With a track list it is set on those works.
+   */
+  function suggestCommissioned(row) {
+    if (!ruleOn('S024') || !['R099', 'C037'].includes(row.ruleId) || row.level !== 'work' || !row.dAllTracks) return;
+    row.suggest = { source: 'commissioned', tracks: new Set(row.tracks) };
+    row.confirmed = new Set();
+  }
+
+  // --- [S022] Track lists in the Discogs notes ----------------------------------------------------
+  // Liner notes often say which tracks a publisher (or a writer) has: "XYZ Publishing (1, 4, 6)",
+  // "Published by X (tracks 1–3)", "Tracks 1, 4 & 6 published by Z".
+
+  /** A name for a generous comparison: case, accents, spaces, hyphens, punctuation, "&"/"and", company forms. */
+  function looseName(text, generic = false) {
+    let x = String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss');
+    x = x.replace(/\s*\(\d+\)\s*$/, '').replace(/&/g, ' and ').replace(/\b(und|et|y)\b/g, ' and ');
+    x = x.replace(/\b(ltd|limited|gmbh|inc|incorporated|llc|corp|corporation|co|company|plc|pty|ag|kg|bv|nv|sa|sl|srl|sarl|oy|ab|as|aps|spa|ohg)\b\.?/g, ' ');
+    if (generic) {
+      x = x.replace(/\b(publishing|publishers?|publications?|music|musik|musique|musica|musikverlag|verlag|editions?|edizioni|ediciones|songs?|records?|recordings|entertainment|group|international|the)\b/g, ' ');
+    }
+    return x.replace(/[^a-z0-9]+/g, '').replace(/ae/g, 'a').replace(/oe/g, 'o').replace(/ue/g, 'u');
+  }
+
+  /** The entry of the dashboard with this name (exact in the generous sense, or "similar"), or null. */
+  function matchEntry(name) {
+    const k1 = looseName(name);
+    const k2 = looseName(name, true);
+    if (!k1) return null;
+    let similar = null;
+    for (const a of S.artists.values()) {
+      for (const n of [a.name, a.mbName, a.rawName, ...(a.anvs || [])].filter(Boolean)) {
+        const n1 = looseName(n);
+        if (n1 === k1) return { entry: a, similar: false };
+        if (!similar && ((k2.length >= 3 && looseName(n, true) === k2) || (k1.length >= 8 && withinOne(n1, k1)))) similar = { entry: a, similar: true };
+      }
+    }
+    return similar;
+  }
+
+  const NOTE_ROLES = [
+    [/\b(published|publishing|publisher|verlag|verlegt|sub-?published)\b/i, 'publishing'],
+    [/\bcommissioned\b/i, 'commissioned'],
+    [/\b(written|words and music|words & music|music and lyrics|music & lyrics|lyrics and music|lyrics & music|songs)\s+by\b/i, 'writer'],
+    [/\b(music|composed|composition|compositions)\s+by\b|\bcomposers?\b/i, 'composer'],
+    [/\b(lyrics|words|text|texte)\s+by\b|\blyricists?\b/i, 'lyricist'],
+    [/\b(arranged|arrangements?|orchestrated|orchestrations?)\s+by\b|\barrangers?\b/i, 'arranger'],
+  ];
+  const noteRole = (text) => (NOTE_ROLES.find(([re]) => re.test(text)) || [])[1] || '';
+
+  /** Names with a track list in a text, with the role their sentence names (or ''). */
+  function notesTrackCredits(text) {
+    const out = [];
+    const list = (spec) => tracksInText(`tracks ${String(spec).replace(/^\s*(?:tracks?|titles?|titel|pistas?|morceaux|plages?)\b\.?:?\s*/i, '')}`);
+    const clean = (n) => String(n || '').replace(/^.*\bby\b\s*/i, '').replace(/^[\s&+/–—-]*(?:and\s+)?/i, '')
+      .replace(/^(?:[℗©]|\([pc]\))*\s*(?:\d{4}\s*)?/i, '').replace(/[\s:–—-]+$/, '').trim();
+    for (const seg of String(text || '').split(/\r?\n|;/)) {
+      // "Name (1, 4, 6)" and "Name (tracks 1–3)"
+      const re = /([^(),;:\n]*[\p{L}\p{N}][^(),;:\n]*?)\s*\(\s*((?:tracks?|titles?|titel|pistas?|morceaux|plages?)?\.?:?\s*[A-Za-z]?\d[^()]*)\)/gu;
+      let m;
+      while ((m = re.exec(seg))) {
+        const name = clean(m[1]);
+        const tracks = list(m[2]);
+        if (!name || name.length < 2 || !tracks) continue;
+        out.push({ name, tracks, role: noteRole(seg.slice(0, m.index + m[1].length)) || noteRole(name), text: m[0].trim() });
+      }
+      // "Tracks 1, 4 & 6 published by Name"
+      const re2 = /\b(tracks?\s+[A-Za-z]?\d[\w\s,&–-]*?)\s+(?:are\s+|is\s+|were\s+|was\s+)?(published|written|composed|arranged|orchestrated|commissioned)\s+by\s+([^.,;()\n]+)/gi;
+      while ((m = re2.exec(seg))) {
+        const tracks = list(m[1]);
+        const name = clean(m[3]);
+        if (!name || !tracks) continue;
+        out.push({ name, tracks, role: noteRole(`${m[2]} by`), text: m[0].trim() });
+      }
+    }
+    return out;
+  }
+
+  /** Whether a work-level row has the role a note names ("" fits every work-level role). */
+  function noteRoleFits(row, role) {
+    const t = norm(rowTypeName(row));
+    if (!role) return true;
+    if (role === 'publishing') return isPublishingRow(row);
+    if (role === 'writer') return WRITER_TYPES.includes(t);
+    if (role === 'composer') return t === 'composer' || t === 'writer';
+    if (role === 'lyricist') return ['lyricist', 'librettist', 'writer'].includes(t);
+    if (role === 'arranger') return ARRANGER_TYPES.includes(t);
+    if (role === 'commissioned') return t === 'commissioned';
+    return true;
+  }
+
+  /**
+   * [S022] Track groups from the track lists in the Discogs notes, and the tracks of the named entry's work-level
+   * roles as suggestions (rows: false – only the track groups, e.g. after the pools were loaded again).
+   */
+  function applyNotesTrackCredits({ rows = true } = {}) {
+    if (!ruleOn('S022')) return 0;
+    let n = 0;
+    for (const f of notesTrackCredits(String((S.release && S.release.notes) || ''))) {
+      const tracks = new Set([...f.tracks].filter(inSelection));
+      if (!tracks.size) continue;
+      const hit = matchEntry(f.name);
+      // A name: an entry of the dashboard, or one the note gives a role, or a company ("… Publishing", "… Music")
+      const named = hit || f.role || /\b(publishing|publishers?|music|musik|musique|verlag|editions?|edizioni|songs|ltd|gmbh|inc|llc)\b/i.test(f.name);
+      if (!named || /\b(recorded|mixed|mastered|remastered|engineered|produced|live|bonus)\b/i.test(f.name)) continue;
+      ensureTrackGroup(tracks, `${f.name} · ${trackListLabel(tracks)}`, { found: true });
+      if (!rows) continue;
+      if (!hit) {
+        log('info', 'notesTracksPool', { name: f.name, list: trackListLabel(tracks) });
+        continue;
+      }
+      const a = hit.entry;
+      const role = f.role || (a.company ? 'publishing' : '');
+      const target = S.rows.filter((r) => r.artistKey === a.key && r.level === 'work' && !r.splitFrom && noteRoleFits(r, role));
+      // Credits Discogs gives on these tracks already (track credits) are left alone
+      const open = target.filter((r) => !((r.dPositions || []).length && [...tracks].every((i) => (r.suggested || new Set()).has(i))));
+      if (!open.length) {
+        log('info', 'notesTracksPool', { name: f.name, list: trackListLabel(tracks) });
+        continue;
+      }
+      for (const r of open) {
+        const own = (r.dPositions || []).length ? new Set(r.tracks) : new Set();
+        r.tracks = new Set([...own, ...tracks]);
+        r.notesTracks = new Set(tracks);
+        r.suggest = { source: 'notes', tracks: new Set([...tracks].filter((i) => !own.has(i))), text: f.text };
+        r.confirmed = new Set();
+      }
+      n++;
+      log('info', 'notesTracks', { name: a.mbName || a.name, role: role || '–', list: trackListLabel(tracks), similar: hit.similar ? tr('matrix.similar') : '' });
+    }
+    return n;
+  }
+
   // --- Publishers: evidence from MB's artist–label "personal publisher" relationships -------
   // [S014] Discogs names publishers only for the whole release. A publisher is ticked only on the works
   // whose writer has it as personal publisher in MusicBrainz; every other cell stays off (to tick by hand).
@@ -10545,7 +13482,7 @@
         // Not in MusicBrainz (or not a label): no evidence, so no work is ticked by itself
         a.pubEvidence = { state: col.mbid ? 'unsupported' : 'unmatched', evidence: new Map(), hints: new Map() };
         for (const row of col.rows) {
-          if (isPublishingRow(row) && !row.pubTouched) row.tracks = new Set();
+          if (isPublishingRow(row) && !row.pubTouched && !row.notesTracks && row.dAllTracks !== false) row.tracks = new Set();
         }
         continue;
       }
@@ -10571,7 +13508,12 @@
         else hints.set(t.idx, hit.map((r) => `${r.name} (${r.begin || '?'} – ${r.end || '?'})`).join(', '));
       }
       for (const row of col.rows) {
-        if (isPublishingRow(row) && !row.pubTouched) row.tracks = new Set(evidence.keys());
+        // [S022] Tracks the Discogs notes give for this publisher come first; evidence is a suggestion
+        // (a source that names the tracks itself – "Published by X (1, 3)" in a text – keeps them)
+        if (isPublishingRow(row) && !row.pubTouched && !row.notesTracks && row.dAllTracks !== false) {
+          row.tracks = new Set(evidence.keys());
+          row.suggest = { source: 'evidence', tracks: new Set(evidence.keys()) };
+        }
       }
       a.pubEvidence = { state: rels.length ? 'checked' : 'none', evidence, hints, count: rels.length };
       log('info', 'pubEvidence', { name: col.name, n: evidence.size });
@@ -10667,67 +13609,100 @@
 
   const rowOpts = (i) => S.workRowOpts.get(i) || { typeId: S.workDefaults.typeId, languageIds: [...S.workDefaults.languageIds] };
 
+  /** Work type and lyrics languages of a row in short ("Song · English"), and the selects when opened. */
+  function rowOptsHtml(i) {
+    const opts = rowOpts(i);
+    const typeName = (S.workOptions.types.find((t) => String(t.id) === String(opts.typeId)) || {}).name || '';
+    const langName = (id) => (S.workOptions.languages.find((l) => String(l.id) === String(id)) || {}).name || id;
+    const open = S.mxOptsOpen.has(i);
+    const btn = `<button type="button" class="dci-textbtn dci-mx-optsbtn" data-act="mx-opts" aria-expanded="${open}" title="${esc(tr('matrix.optsTitle'))}">${open ? '▾' : '▸'} ${esc([typeName, ...opts.languageIds.map(langName)].filter(Boolean).join(' · ') || tr('matrix.optsNone'))}</button>${typeAutoHtml(opts)}`;
+    const panel = open ? `<div class="dci-row-opts"><label>${esc(tr('matrix.rowType'))} <select data-f="mx-type">${workOptionsHtml(S.workOptions.types, opts.typeId)}</select></label>
+      <label>${esc(tr('matrix.rowLangs'))} ${languagesHtml(opts.languageIds, `row:${i}`)}</label></div>` : '';
+    return { btn, panel };
+  }
+
+  /**
+   * The first column of the works matrix, compact: the track (number, title, Discogs position), then the work
+   * (linked, new, found – or the buttons to get one) with the closed attributes at the end of that line; below
+   * it the attributes when open, the date of a planned link and the work's options when opened.
+   */
   function workFrontCell(mrow) {
     const { i, track, work } = mrow;
-    const dPos = S.dTracks[i] ? S.dTracks[i].position : '';
-    const head = `<div class="dci-mx-title"><span class="dci-tn">${esc(trackLabel(track))}</span> <strong>${esc(track.title)}</strong></div>${dPos ? `<div class="dci-mx-dpos">Discogs ${esc(dPos)}</div>` : ''}`;
+    const dPos = S.srcTracks[i] ? S.srcTracks[i].position : '';
+    const head = `<div class="dci-mx-title"><span class="dci-tn">${esc(trackLabel(track))}</span> <strong>${esc(track.title)}</strong>${dPos
+      ? `<span class="dci-mx-dpos" title="${esc(tr('picker.dpos', { pos: dPos }))}">${esc(dPos)}</span>` : ''}</div>`;
+    const mbLink = (w) => `<a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>`;
+    const line = (inner) => `<div class="dci-mx-line">${inner}${linkAttrsToggleHtml(mrow)}</div>`;
+    const unplan = `<button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button>`;
     if (work && !work.planned) {
-      return `${head}<div><span class="dci-badge dci-badge-ok">${esc(tr('works.linked'))}</span>
-        <a class="dci-mblink" href="/work/${esc(work.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(work.title)}</a></div>`;
-    }
-    if (work && work.planned && work.origin === 'pending') {
-      const plan = S.workPlan.get(i);
-      const opts = rowOpts(i);
-      return `${head}<div><span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))}">${esc(tr('works.plannedPending'))}</span>
-          <strong>${esc(work.title)}</strong>
-          <button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button></div>
-        <div class="dci-c-date dci-w-date">${plan ? workDateCell(i, plan) : ''}</div>
-        <div class="dci-row-opts"><label>${esc(tr('matrix.rowType'))} <select data-f="mx-type">${workOptionsHtml(S.workOptions.types, opts.typeId)}</select></label>
-          <label>${esc(tr('matrix.rowLangs'))} ${languagesHtml(opts.languageIds, `row:${i}`)}</label></div>`;
+      return `${head}${line(`<span class="dci-badge dci-badge-ok">${esc(tr('works.linked'))}</span> ${mbLink(work)}`)}${linkAttrsHtml(mrow)}`;
     }
     if (work && work.planned) {
       const plan = S.workPlan.get(i);
-      return `${head}<div><span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span>
-          <a class="dci-mblink" href="/work/${esc(work.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(work.title)}</a>
-          <button type="button" class="dci-textbtn" data-act="work-unplan">${esc(tr('works.unplan'))}</button></div>
-        <div class="dci-c-date dci-w-date">${plan ? workDateCell(i, plan) : ''}</div>`;
+      const pending = work.origin === 'pending';
+      const o = pending ? rowOptsHtml(i) : { btn: '', panel: '' };
+      const badge = pending
+        ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('works.plannedPending'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>`
+        : `<span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span> ${mbLink(work)}`;
+      return `${head}${line(`${badge} ${unplan} ${o.btn}`)}${linkAttrsHtml(mrow)}
+        <div class="dci-c-date dci-w-date">${plan ? workDateCell(i, plan) : ''}</div>${o.panel}`;
     }
     const search = S.workSearch.get(i);
     const same = sameNamed(i);
-    const opts = rowOpts(i);
+    const o = rowOptsHtml(i);
+    const mbSearchUrl = `/search?query=${encodeURIComponent(track.title)}&type=work&method=indexed`;
+    const info = (text) => `<a class="dci-info" href="${mbSearchUrl}" target="_blank" rel="noopener" title="${esc(text)} ${esc(tr('matrix.searchMb'))}" aria-label="${esc(tr('matrix.searchMb'))}">ⓘ</a>`;
+    let state = '';
     let found = '';
-    const mbSearch = `<a href="/search?query=${encodeURIComponent(track.title)}&type=work&method=indexed" target="_blank" rel="noopener">${esc(tr('matrix.searchMb'))}</a>`;
-    if (search && search.state === 'loading') found = `<div class="dci-sub">${esc(tr('works.searching'))}</div>`;
-    else if (search && search.state === 'noWriters') found = `<div class="dci-sub">${esc(tr('matrix.noWriters'))} ${mbSearch}</div>`;
-    else if (search && search.state === 'error') found = `<div class="dci-bad">${esc(search.error)}</div>`;
+    if (search && search.state === 'loading') state = `<span class="dci-sub" title="${esc(tr('works.searching'))}">…</span>`;
+    else if (search && search.state === 'noWriters') state = info(tr('matrix.noWriters'));
+    else if (search && search.state === 'error') state = `<span class="dci-bad" title="${esc(search.error)}">!</span>`;
+    else if (search && search.state === 'done' && !same.length) state = info(tr('matrix.noSame'));
     else if (search && search.state === 'done') {
-      found = same.length
-        ? `<div class="dci-same"><strong>${esc(tr('matrix.same', { n: same.length }))}</strong><ul class="dci-candidates">${same.map((w) => `<li>
-            <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}">${esc(tr('works.link'))}</button>
-            <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
-            <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span></li>`).join('')}</ul></div>`
-        : `<div class="dci-sub">${esc(tr('matrix.noSame'))} ${mbSearch}</div>`;
+      found = `<div class="dci-same"><strong>${esc(tr('matrix.same', { n: same.length }))}</strong><ul class="dci-candidates">${same.map((w) => `<li>
+          <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}">${esc(tr('works.link'))}</button>
+          <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
+          <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span></li>`).join('')}</ul></div>`;
     }
-    return `${head}<div><span class="dci-muted">${esc(tr('matrix.noWork'))}</span>
-        <button type="button" class="dci-primary" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pending'))}</button>
-        <button type="button" data-act="work-search">${esc(tr('works.search'))}</button>
-        <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button></div>
-      ${found}
-      <div class="dci-row-opts"><label>${esc(tr('matrix.rowType'))} <select data-f="mx-type">${workOptionsHtml(S.workOptions.types, opts.typeId)}</select></label>
-        <label>${esc(tr('matrix.rowLangs'))} ${languagesHtml(opts.languageIds, `row:${i}`)}</label></div>`;
+    return `${head}<div class="dci-mx-line"><span class="dci-badge">${esc(tr('matrix.noWork'))}</span>
+        <button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pending'))}</button>
+        <button type="button" class="dci-small" data-act="work-search">${esc(tr('works.search'))}</button>
+        <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button>${state} ${o.btn}</div>
+      ${found}${o.panel}`;
   }
 
+  /** [S020] A small mark next to a work type preselected by a rule. */
+  const typeAutoHtml = (opts) => (opts && opts.typeAuto && opts.typeId
+    ? ` <span class="dci-sub dci-ruleref" title="${esc(tr('matrix.songAuto'))}">${esc(opts.typeAuto)}</span>` : '');
+
+  /** A cell's role was set by a suggestion (publisher evidence, Discogs notes) and not confirmed yet. */
+  const isSuggestedCell = (r, i) => !!(r.suggest && r.suggest.tracks.has(i) && !(r.confirmed && r.confirmed.has(i)));
+  const LOCK_SVG = '<svg class="dci-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
+
+  /**
+   * A cell of the works matrix: its roles as chips like the dates of the date matrix – green and locked: in
+   * MusicBrainz; solid: planned; dashed and yellow: suggested (✓ keeps it, × takes it out); grey dotted: waits for a work.
+   */
   function cellHtml(col, mrow) {
     const st = cellState(col, mrow);
+    const sugg = st.active.filter((r) => isSuggestedCell(r, mrow.i));
+    const chip = (kind, text, title) => `<span class="dci-mxchip dci-mxchip-${kind}" title="${esc(title)}">${text}</span>`;
     const codes = [
-      ...st.existing.map((r) => `<span class="dci-code dci-code-mb" title="${esc(tr('matrix.inMb', { type: r.type }))}">${esc(roleCode(r.type, (r.attrs || []).includes('sub')))}</span>`),
-      ...st.active.map((r) => `<span class="dci-code" title="${esc(rowTypeName(r))}${r.date && hasDateInput(r.date) ? ` · ${esc(formatDateValue(validateDateFields(r.date).value) || '')}` : ''}">${esc(roleCode(rowTypeName(r), r.flags.has('sub')))}${r.ownDate ? '<sup>⌚</sup>' : ''}</span>`),
+      ...st.existing.map((r) => chip('mb', `${esc(roleCode(r.type, (r.attrs || []).includes('sub')))}${LOCK_SVG}`, tr('matrix.inMb', { type: r.type }))),
+      ...st.active.map((r) => {
+        const kind = !mrow.work ? 'wait' : sugg.includes(r) ? 'sugg' : 'on';
+        const date = r.date && hasDateInput(r.date) ? ` · ${formatDateValue(validateDateFields(r.date).value) || ''}` : '';
+        const why = !sugg.includes(r) ? '' : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
+          : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}` : '';
+        return chip(kind, `${esc(roleCode(rowTypeName(r), r.flags.has('sub')))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
+          `${rowTypeName(r)}${date}${why}`);
+      }),
     ].join('');
     const title = st.reason ? tr('matrix.reason', { names: st.reason, publisher: col.name })
       : st.hint ? tr('matrix.hint', { list: st.hint }) : st.unclear ? tr('matrix.unclear') : '';
     const collapsed = S.mxCollapsed.has(col.key) || col.removed;
     const menuOpen = S.mxMenu && S.mxMenu.col === col.key && S.mxMenu.mrow === mrow.key;
-    const cls = ['dci-mx-cell', st.existing.length ? 'dci-mx-mb' : '', st.active.length ? 'dci-mx-on' : '', st.unclear ? 'dci-mx-unclear' : '', col.mbOnly ? 'dci-mx-locked' : ''].filter(Boolean).join(' ');
+    const cls = ['dci-mx-cell', st.existing.length ? 'dci-mx-mb' : '', st.active.length ? 'dci-mx-on' : '', sugg.length ? 'dci-mx-sugg' : '', st.unclear ? 'dci-mx-unclear' : '', col.mbOnly ? 'dci-mx-locked' : ''].filter(Boolean).join(' ');
     if (collapsed) return `<td class="${cls} dci-mx-collapsed" title="${esc(title)}">${st.existing.length || st.active.length ? '•' : ''}</td>`;
     // Dates for the relationships already in MusicBrainz (an edit of each), with × to take them back until staged
     const fills = fillsOfCell(col, mrow).map(([key, f]) => {
@@ -10736,8 +13711,9 @@
         : `<button type="button" class="dci-iconbtn" data-act="mx-fill-remove" data-key="${esc(key)}" aria-label="${esc(tr('matrix.fillRemove'))}" title="${esc(tr('matrix.fillRemove'))}">×</button>`}</span>`;
     }).join('');
     const fillable = datelessExisting(col, mrow, st).length ? ' data-fill="1"' : '';
+    const suggBtns = sugg.length ? `<span class="dci-mx-suggbtns"><button type="button" class="dci-iconbtn dci-ok" data-act="mx-sugg-ok" title="${esc(tr('matrix.suggOk'))}" aria-label="${esc(tr('matrix.suggOk'))}">✓</button><button type="button" class="dci-iconbtn" data-act="mx-sugg-no" title="${esc(tr('matrix.suggNo'))}" aria-label="${esc(tr('matrix.suggNo'))}">×</button></span>` : '';
     return `<td class="${cls}" data-col="${esc(col.key)}" data-mrow="${esc(mrow.key)}"${fillable} title="${esc(title)}">
-      ${col.mbOnly ? codes : `<button type="button" class="dci-mx-toggle" data-act="mx-cell" aria-label="${esc(tr('matrix.toggle', { name: col.name }))}">${codes || (st.unclear ? '?' : '+')}</button>
+      ${col.mbOnly ? `<span class="dci-mx-chips">${codes}</span>` : `<button type="button" class="dci-mx-toggle${codes ? '' : ' dci-mx-empty'}" data-act="mx-cell" aria-label="${esc(tr('matrix.toggle', { name: col.name }))}">${codes || '+'}</button>${suggBtns}
       <button type="button" class="dci-iconbtn dci-mx-more" data-act="mx-menu" aria-label="${esc(tr('matrix.menuTitle'))}">▾</button>`}
       ${fills}
       ${menuOpen ? cellMenuHtml(col, mrow, st) : ''}</td>`;
@@ -10757,6 +13733,11 @@
       <button type="button" class="dci-textbtn" data-act="mx-menu-close">${esc(tr('common.close'))}</button></div>`;
   }
 
+  /**
+   * The head of a column as a card, like a column of the date matrix: name and buttons (▾ menu, « fold,
+   * ✕ take out), the roles (each one a place to drop a track group onto, the whole card too), the column date
+   * and "credited as". The date fields, the pool and the publisher tools are in the ▾ menu.
+   */
   function columnHeadHtml(col) {
     const a = col.artist;
     const collapsed = S.mxCollapsed.has(col.key);
@@ -10768,38 +13749,57 @@
         title="${esc(tr('matrix.restoreCol', { name: col.name }))}" aria-label="${esc(tr('matrix.restoreCol', { name: col.name }))}">»</button></th>`;
     }
     if (collapsed) return `<th scope="col" class="dci-mx-col dci-mx-collapsed"><button type="button" class="dci-iconbtn" data-act="mx-collapse" data-col="${esc(col.key)}" title="${esc(tr('matrix.expand'))} ${esc(col.name)}">»</button></th>`;
+    const menuOpen = S.mxColMenu === col.key;
     const removeBtn = `<button type="button" class="dci-iconbtn dci-mx-remove" data-act="mx-col-remove" data-col="${esc(col.key)}"
       title="${esc(tr(col.mbOnly ? 'matrix.removeColMb' : 'matrix.removeCol'))}" aria-label="${esc(tr(col.mbOnly ? 'matrix.removeColMb' : 'matrix.removeCol'))}">✕</button>`;
+    const btns = `<span class="dci-mx-colbtns"><button type="button" class="dci-iconbtn" data-act="mx-colmenu" data-col="${esc(col.key)}" aria-expanded="${menuOpen}"
+        title="${esc(tr('matrix.colMenu'))}" aria-label="${esc(tr('matrix.colMenu'))}">▾</button><button type="button" class="dci-iconbtn" data-act="mx-collapse" data-col="${esc(col.key)}" title="${esc(tr('matrix.collapse'))}" aria-label="${esc(tr('matrix.collapse'))}">«</button>${removeBtn}</span>`;
     const colDateRow = col.rows.find((r) => !r.ownDate && r.date && hasDateInput(r.date));
     const cd = S.mxColDate.get(col.key) || (colDateRow ? { ...colDateRow.date } : emptyDate());
-    const cdErr = hasDateInput(cd) ? dateErrorText(validateDateFields(cd).error) : '';
+    const cdInfo = validateDateFields(cd);
+    const cdErr = hasDateInput(cd) ? dateErrorText(cdInfo.error) : '';
+    const dateChip = hasDateInput(cd) ? `<span class="dci-mx-datechip${cdErr ? ' dci-bad' : ''}" title="${esc(cdErr || tr('matrix.colDateTitle'))}">${esc(cdErr ? '!' : formatDateValue(cdInfo.value) || tr('date.endedOnly'))}</span>` : '';
     const dateBox = `<div class="dci-mbdate dci-mx-datebox"><span class="dci-sub">${esc(tr('matrix.colDate'))}</span>${mbDateFields('cd', cd, true)}
         ${S.datePool.length ? `<select data-f="cd-pool" aria-label="${esc(tr('date.fromPool'))}"><option value="">${esc(tr('date.fromPool'))}</option>${S.datePool.map((d) => `<option value="${esc(d.id)}">${esc(poolLabel(d))}</option>`).join('')}</select>` : ''}
         <div class="dci-err" data-cd-err aria-live="polite">${esc(cdErr)}</div></div>`;
+    const menu = (inner) => (menuOpen ? `<div class="dci-mx-colmenu" role="group" aria-label="${esc(tr('matrix.colMenu'))}">${inner}
+      <button type="button" class="dci-textbtn" data-act="mx-colmenu" data-col="${esc(col.key)}">${esc(tr('common.close'))}</button></div>` : '');
     // Only in MusicBrainz: its date goes onto those relationships that have none (an edit of each)
     if (col.mbOnly) {
-      return `<th scope="col" class="dci-mx-col dci-mx-locked" data-colhead="${esc(col.key)}">${name} ${removeBtn}<div class="dci-sub">${esc(tr('matrix.mbOnly'))}</div>
-        <div title="${esc(tr('matrix.colDateMbTitle'))}">${dateBox}</div></th>`;
+      return `<th scope="col" class="dci-mx-col dci-mx-locked" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+        <div class="dci-mx-colname">${name} ${btns}</div>
+        <div class="dci-mx-roles"><span class="dci-sub">${esc(tr('matrix.mbOnly'))}</span>${dateChip}</div>
+        ${menu(`<div title="${esc(tr('matrix.colDateMbTitle'))}">${dateBox}</div>`)}</div></th>`;
     }
-    const roles = uniq(defaultRowsOf(col).map((r) => roleCode(rowTypeName(r), r.flags.has('sub')))).join(' ');
-    let pub = '';
+    const nWorks = matrixRows().filter((m) => { const st = cellState(col, m); return st.active.length || st.existing.length; }).length;
+    const roles = defaultRowsOf(col).filter((r, k, all) => all.findIndex((x) => rowTypeName(x) === rowTypeName(r) && x.flags.has('sub') === r.flags.has('sub')) === k)
+      .map((r) => `<span class="dci-mx-role" data-tgrole="${esc(r.id)}" title="${esc(tr('matrix.roleDropTitle', { role: rowTypeName(r) }))}">${esc(roleCode(rowTypeName(r), r.flags.has('sub')))}</span>`).join('');
+    // Suggested cells (publisher evidence, Discogs notes, "Commissioned By" without a track list)
+    const nSugg = col.rows.some((r) => r.suggest) ? matrixRows().filter((m) => cellState(col, m).active.some((r) => isSuggestedCell(r, m.i))).length : 0;
+    let pub = nSugg ? `<span class="dci-sub dci-mx-suggn">${esc(tr('matrix.suggCount', { n: nSugg }))}</span>` : '';
+    let pubMenu = '';
     if (isPublisherCol(col)) {
       const ev = a.pubEvidence || {};
       const status = ev.state === 'checked' ? tr('matrix.pubCount', { n: ev.count }) : ev.state === 'none' ? tr('matrix.pubNone')
         : ev.state === 'unmatched' ? tr('matrix.pubUnmatched') : ev.state === 'unsupported' ? tr('matrix.pubNone') : '';
-      pub = `<div class="dci-sub">${esc(status)}</div>
+      pub += status ? `<span class="dci-info" title="${esc(status)}">ⓘ</span>` : '';
+      pubMenu = `<div class="dci-sub">${esc(status)}</div>
         <button type="button" class="dci-textbtn" data-act="mx-pub-all" data-col="${esc(col.key)}">${esc(tr('matrix.pubAll'))}</button>
         <button type="button" class="dci-textbtn" data-act="mx-pub-check">${esc(tr('matrix.pubCheck'))}</button>`;
     }
-    const sugg = (a.pubSuggest || []).map((p) => `<div class="dci-sub">${esc(tr('matrix.suggestPub', { name: p.name }))}
-      <button type="button" class="dci-textbtn" data-act="mx-pub-suggest" data-mbid="${esc(p.mbid)}" data-name="${esc(p.name)}">${esc(tr('matrix.addColumn'))}</button></div>`).join('');
-    return `<th scope="col" class="dci-mx-col" data-colhead="${esc(col.key)}">
-      <div class="dci-mx-colname">${name}
-        <button type="button" class="dci-iconbtn" data-act="mx-collapse" data-col="${esc(col.key)}" title="${esc(tr('matrix.collapse'))}">«</button>${removeBtn}</div>
-      <div class="dci-mx-roles">${esc(roles)} <button type="button" class="dci-textbtn" data-act="mx-col-all" data-col="${esc(col.key)}" title="${esc(tr('matrix.colAllTitle'))}">${esc(tr('matrix.colAll'))}</button></div>
-      <label class="dci-sub">${esc(tr('matrix.colCredit'))} <input type="text" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10"></label>
-      ${dateBox}
-      ${pub}${sugg}</th>`;
+    const sugg = a.pubSuggest || [];
+    const suggMenu = sugg.map((x) => `<div class="dci-sub">${esc(tr('matrix.suggestPub', { name: x.name }))}
+      <button type="button" class="dci-textbtn" data-act="mx-pub-suggest" data-mbid="${esc(x.mbid)}" data-name="${esc(x.name)}">${esc(tr('matrix.addColumn'))}</button></div>`).join('');
+    const r098 = col.rows.some((r) => r.ruleId === 'R098')
+      ? `<button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="R098" title="${esc(tr('note.musicLyrics'))}">R098</button>` : '';
+    return `<th scope="col" class="dci-mx-col" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+      <div class="dci-mx-colname">${name} ${btns}</div>
+      <div class="dci-mx-roles">${roles}<span class="dci-sub">${esc(tr('matrix.colWorks', { n: nWorks }))}</span>${dateChip}${pub}${r098}${sugg.length
+        ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}</div>
+      <label class="dci-mx-credit">${esc(tr('matrix.colCredit'))} <input type="text" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10"></label>
+      ${menu(`${dateBox}
+        <button type="button" class="dci-textbtn" data-act="mx-col-all" data-col="${esc(col.key)}" title="${esc(tr('matrix.colAllTitle'))}">${esc(tr('matrix.colAll'))}</button>
+        ${r098 ? `<div class="dci-sub dci-ruleinfo">${esc(tr('note.musicLyrics'))}</div>` : ''}${pubMenu}${suggMenu}`)}</div></th>`;
   }
 
   const isPending = (gid) => String(gid || '').startsWith('pending:');
@@ -10809,7 +13809,16 @@
   /** Title of a work: information in square brackets is left out ("Song [bonus track]" → "Song"). */
   const workTitleOf = (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || '');
   /** Medium filter for large releases ("Medium: all · 1 · 2 …"). */
-  const inMedium = (i) => !S.mediumFilter || !!(S.mbTracks[i] && S.mbTracks[i].medium === S.mediumFilter);
+  /** Media choice: tracks of the media chosen for this import (all of them without a choice). */
+  const inSelection = (i) => !S.mediaSel || !!(S.mbTracks[i] && S.mediaSel.media.has(S.mbTracks[i].medium));
+  const selTracks = () => (S.mediaSel ? S.mbTracks.filter((t) => inSelection(t.idx)) : S.mbTracks);
+  const selIdx = () => selTracks().map((t) => t.idx);
+  const selMedia = () => uniq(selTracks().map((t) => t.medium));
+  /** Media choice: rows on the release level (release, release group) only when they were chosen too. */
+  const releaseLevelChosen = (row) => !S.mediaSel || S.mediaSel.release || (row.level !== 'release' && row.level !== 'release_group');
+  /** Media choice without any medium (only the release level): rows on tracks stay out. */
+  const noMediaFor = (row) => !!S.mediaSel && !S.mediaSel.media.size && (row.level === 'recording' || row.level === 'work');
+  const inMedium = (i) => inSelection(i) && (!S.mediumFilter || !!(S.mbTracks[i] && S.mbTracks[i].medium === S.mediumFilter));
   /** Tracks the works matrix deals with: in the medium filter, without placeholder titles (unless they have a work). */
   const matrixTrack = (t) => inMedium(t.idx) && (!isPlaceholderTitle(t.title) || t.works.length > 0 || S.workPlan.has(t.idx));
 
@@ -10893,7 +13902,7 @@
       <p class="dci-muted">${esc(missing ? tr('works.missing', { n: missing }) : tr('works.allDone'))} ${esc(tr('matrix.explain'))}</p>
       <div class="dci-works-bar">
         ${codesSelect}
-        <label>${esc(tr('works.type'))} <select data-f="work-type">${workOptionsHtml(S.workOptions.types, S.workDefaults.typeId)}</select></label>
+        <label>${esc(tr('works.type'))} <select data-f="work-type">${workOptionsHtml(S.workOptions.types, S.workDefaults.typeId)}</select>${typeAutoHtml(S.workDefaults)}</label>
         <label>${esc(tr('works.lang'))} ${languagesHtml(S.workDefaults.languageIds, 'default')}</label>
         <button type="button" class="dci-textbtn" data-act="mx-top" title="${esc(tr('matrix.topTitle'))}">↑ ${esc(tr('matrix.top'))}</button>
         <button type="button" class="dci-textbtn" data-act="mx-clear-dates">${esc(tr('matrix.clearDates'))}</button>
@@ -10912,7 +13921,8 @@
       ${cols.length ? '' : `<p class="dci-sub">${esc(tr('matrix.empty'))}</p>`}
       <div class="dci-mx-wrap">
         <table class="dci-table dci-matrix">
-          <thead><tr><th scope="col" class="dci-mx-front">${esc(tr('matrix.work'))}</th>${cols.map(columnHeadHtml).join('')}</tr></thead>
+          <thead><tr><th scope="col" class="dci-mx-front"><div class="dci-mx-card dci-mx-frontcard"><div class="dci-mx-cardline"><strong>${esc(tr('matrix.work'))}</strong>
+            <span class="dci-sub">${esc(`${tr('matrix.countTracks', { n: uniq(mrows.map((m) => m.i)).length })} · ${tr('matrix.colWorks', { n: mrows.filter((m) => m.work).length })}`)}</span></div>${linkAttrsHeadHtml()}</div></th>${cols.map(columnHeadHtml).join('')}</tr></thead>
           <tbody>${mrows.map((m) => `<tr data-work="${m.i}" data-mrow="${esc(m.key)}"><th scope="row" class="dci-mx-front">${workFrontCell(m)}</th>${cols.map((c) => cellHtml(c, m)).join('')}</tr>`).join('')}</tbody>
         </table>
       </div>`;
@@ -10983,8 +13993,26 @@
         if (!col || !mrow || col.mbOnly) return true;
         const st = cellState(col, mrow);
         if (st.active.length) st.active.forEach((r) => removeCell(r, mrow));
-        else defaultRowsOf(col).forEach((r) => addCell(r, mrow));
+        else {
+          defaultRowsOf(col).forEach((r) => {
+            addCell(r, mrow);
+            // set by hand: no longer a suggestion
+            r.confirmed = (r.confirmed || new Set()).add(mrow.i);
+          });
+        }
         col.rows.filter(isPublishingRow).forEach((r) => { r.pubTouched = true; });
+        break;
+      }
+      case 'mx-sugg-ok':
+      case 'mx-sugg-no': {
+        // A suggested role of a cell (publisher evidence, Discogs notes): kept, or taken out
+        if (!col || !mrow) return true;
+        cellState(col, mrow).active.filter((r) => isSuggestedCell(r, mrow.i)).forEach((r) => {
+          if (act === 'mx-sugg-ok') r.confirmed = (r.confirmed || new Set()).add(mrow.i);
+          else removeCell(r, mrow);
+          if (isPublishingRow(r)) r.pubTouched = true;
+        });
+        log('info', act === 'mx-sugg-ok' ? 'matrixSuggOk' : 'matrixSuggNo', { name: col.name, track: trackLabel(mrow.track) });
         break;
       }
       case 'mx-menu':
@@ -11013,7 +14041,10 @@
         const c = matrixColumns().find((x) => x.key === btn.dataset.col);
         if (!c) return true;
         const mrows = matrixRows();
-        defaultRowsOf(c).forEach((r) => mrows.forEach((m) => addCell(r, m)));
+        defaultRowsOf(c).forEach((r) => {
+          mrows.forEach((m) => addCell(r, m));
+          r.suggest = null;
+        });
         c.rows.filter(isPublishingRow).forEach((r) => { r.pubTouched = true; });
         break;
       }
@@ -11039,6 +14070,47 @@
       case 'mx-search-cancel':
         S.searchCancel = true;
         return true;
+      case 'mx-wattr': {
+        // One attribute of one work's link (MusicBrainz's own stay)
+        const tr1 = btn.closest('tr[data-mrow]');
+        const m = tr1 && matrixRows().find((x) => x.key === tr1.dataset.mrow);
+        const n = btn.dataset.attr;
+        if (!m || !m.work || mbLinkAttrs(m.work).has(n)) return true;
+        setLinkAttr(m.i, m.work, n, !linkAttrsOf(m.i, m.work).has(n));
+        break;
+      }
+      case 'mx-wattr-all': {
+        // For all works: on, or off when all have it already
+        const n = btn.dataset.attr;
+        const rows = matrixRows().filter((m) => m.work);
+        const on = !rows.every((m) => linkAttrsOf(m.i, m.work).has(n));
+        rows.forEach((m) => { if (!mbLinkAttrs(m.work).has(n)) setLinkAttr(m.i, m.work, n, on); });
+        break;
+      }
+      case 'mx-wattr-long':
+        S.wattrLong = !S.wattrLong;
+        writeJson('localStorage', 'dci-wattr-long', S.wattrLong || null);
+        break;
+      case 'mx-wattr-open': {
+        const tr1 = btn.closest('tr[data-mrow]');
+        if (!tr1) return true;
+        if (S.wattrOpen.has(tr1.dataset.mrow)) S.wattrOpen.delete(tr1.dataset.mrow);
+        else S.wattrOpen.add(tr1.dataset.mrow);
+        break;
+      }
+      case 'mx-wattr-openall':
+        S.wattrOpenAll = !S.wattrOpenAll;
+        if (!S.wattrOpenAll) S.wattrOpen.clear();
+        break;
+      case 'mx-opts': {
+        const i = Number(btn.closest('tr[data-work]').dataset.work);
+        if (S.mxOptsOpen.has(i)) S.mxOptsOpen.delete(i);
+        else S.mxOptsOpen.add(i);
+        break;
+      }
+      case 'mx-colmenu':
+        S.mxColMenu = S.mxColMenu === btn.dataset.col ? null : btn.dataset.col;
+        break;
       case 'cd-copy': {
         const key = btn.closest('[data-colhead]').dataset.colhead;
         const f = S.mxColDate.get(key) || emptyDate();
@@ -11117,8 +14189,9 @@
       case 'mx-pub-all': {
         const c = matrixColumns().find((x) => x.key === btn.dataset.col);
         (c ? c.rows.filter(isPublishingRow) : []).forEach((r) => {
-          r.tracks = new Set(S.mbTracks.map((t) => t.idx));
+          r.tracks = new Set(selIdx());
           r.pubTouched = true;
+          r.suggest = null;
         });
         break;
       }
@@ -11219,7 +14292,7 @@
       }
       case 'mx-type': {
         const i = workIndexOf(el);
-        S.workRowOpts.set(i, { ...rowOpts(i), typeId: el.value });
+        S.workRowOpts.set(i, { ...rowOpts(i), typeId: el.value, typeAuto: null });
         return true;
       }
       case 'work-lang-add': {
@@ -11274,10 +14347,11 @@
   function sendDiscogsStatus(rowInfo = S.rowInfo) {
     clearTimeout(dgStatusTimer);
     dgStatusTimer = setTimeout(() => {
-      if (!S.sync.installed || !S.discogsId) return;
+      const releaseId = companionReleaseId();
+      if (!S.sync.installed || !releaseId) return;
       const items = [];
       const targetIndex = new Map();
-      const posIdx = positionIndex(S.dTracks || []);
+      const posIdx = positionIndex(S.srcTracks || []);
       if (S.dgStatus) {
         for (const row of S.rows) {
           const a = S.artists.get(row.artistKey);
@@ -11323,7 +14397,7 @@
       }
       const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
-      toDiscogs({ type: 'status-map', releaseId: S.discogsId, enabled: !!S.dgStatus, artwork: !!S.dgArtwork, items, labels, targets: [...targetIndex.keys()],
+      toDiscogs({ type: 'status-map', releaseId, enabled: !!S.dgStatus, artwork: !!S.dgArtwork, items, labels, targets: [...targetIndex.keys()],
         mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease });
     }, 800);
   }
@@ -11342,12 +14416,12 @@
     const st = S.sync;
     if (!st.installed) return `<span class="dci-muted" title="${esc(tr('sync.offTitle'))}">${esc(tr('sync.off'))}</span>`;
     if (!st.tabs) {
-      return `${esc(tr('sync.noTab'))}${withDetails && S.discogsId ? ` <button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>` : ''}`;
+      return `${esc(tr('sync.noTab'))}${withDetails && companionReleaseId() ? ` <button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>` : ''}`;
     }
     const where = tr(st.target && st.target.visible ? 'sync.visible' : 'sync.background');
     const openBtn = `<button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>`;
     // A Discogs tab is open, but none of them shows this release
-    if (S.discogsId && !(st.releases || []).includes(String(S.discogsId))) {
+    if (companionReleaseId() && !(st.releases || []).includes(String(companionReleaseId()))) {
       return `${esc(tr('sync.otherPage'))}${withDetails ? ` <button type="button" data-act="sync-load" title="${esc(tr('sync.loadTitle'))}">${esc(tr('sync.load'))}</button> ${openBtn}` : ''}`;
     }
     return `${esc(tr('sync.connected', { where }))} <button type="button" class="dci-iconbtn" data-sync-reload title="${esc(tr('sync.reloadTitle'))}" aria-label="${esc(tr('sync.reloadTitle'))}">↻</button>${withDetails && st.last ? ` <span class="dci-sub">${esc(tr(`sync.${st.last}`))}</span>` : ''}`;
@@ -11430,8 +14504,8 @@
       const a = S.artists.get(row.artistKey);
       log('info', 'dgFocus', { name: a ? a.mbName || a.name : '', role: row.raw || '' });
     } else if (msg.type === 'hover-track') {
-      if (!S.dgHover || String(msg.releaseId) !== String(S.discogsId) || !S.overlay || S.overlay.hidden) return;
-      const i = S.dTracks.findIndex((t) => t && norm(t.position) === norm(msg.position));
+      if (!S.dgHover || String(msg.releaseId) !== String(companionReleaseId()) || !S.overlay || S.overlay.hidden) return;
+      const i = S.srcTracks.findIndex((t) => t && norm(t.position) === norm(msg.position));
       S.overlay.querySelectorAll('.dci-mx-hover').forEach((x) => x.classList.remove('dci-mx-hover'));
       const tr1 = i >= 0 && S.overlay.querySelector(`.dci-matrix tr[data-work="${i}"]`);
       if (tr1) {
@@ -11456,8 +14530,8 @@
   let lastShownAt = 0;
   let showTimer = null;
   function showOnDiscogs(payload) {
-    if (!S.sync.installed || !S.discogsId) return;
-    const msg = { type: 'show', releaseId: S.discogsId, ...payload };
+    if (!S.sync.installed || !companionReleaseId()) return;
+    const msg = { type: 'show', releaseId: companionReleaseId(), ...payload };
     const sig = JSON.stringify(msg);
     // A pending jump to another row is always cancelled. The same jump is skipped only right after
     // it was sent (e.g. focus and click on one row); later it jumps again, in case Discogs was scrolled.
@@ -11518,7 +14592,7 @@
       const row = rowOf(el);
       if (row && !row.manual) showOnDiscogs(discogsPayloadForRow(row));
     } else if (el.matches('tr[data-work]')) {
-      const d = S.dTracks[Number(el.dataset.work)];
+      const d = S.srcTracks[Number(el.dataset.work)];
       if (d) showOnDiscogs({ positions: [d.position || ''], role: '', artistId: 0, artistName: '' });
     } else {
       const artist = artistOf(el);
@@ -11557,17 +14631,26 @@
   function renderMediumFilter() {
     const el = S.overlay && $('medium-filter');
     if (!el) return;
-    const media = uniq(S.mbTracks.map((t) => t.medium));
-    if (media.length < 2) {
+    const allMedia = uniq(S.mbTracks.map((t) => t.medium));
+    if (allMedia.length < 2) {
       el.innerHTML = '';
       return;
     }
+    // Only the media chosen for this import (media choice)
+    const media = selMedia();
     const count = (m) => S.mbTracks.filter((t) => t.medium === m).length;
     const unloaded = unloadedMedia();
-    const sig = JSON.stringify([LANG, S.mediumFilter, unloaded, media]);
+    const choice = S.release ? mediaChoiceText() : '';
+    const sig = JSON.stringify([LANG, S.mediumFilter, unloaded, media, choice]);
     if (el.dataset.sig === sig) return;
     el.dataset.sig = sig;
-    el.innerHTML = `<label class="dci-medium-filter">${esc(tr('medium.label'))}
+    const chooser = S.release ? `<span class="dci-media-now" title="${esc(tr('media.nowTitle'))}">${esc(choice)}</span>
+      <button type="button" data-act="media-choose" title="${esc(tr('media.chooseTitle'))}">${esc(tr('media.choose'))}</button>` : '';
+    if (media.length < 2) {
+      el.innerHTML = chooser;
+      return;
+    }
+    el.innerHTML = `${chooser}<label class="dci-medium-filter">${esc(tr('medium.label'))}
         <select data-f="medium-filter"><option value="">${esc(tr('medium.all'))}</option>
           ${media.map((m) => {
             const info = (S.mediaInfo && S.mediaInfo.get(m)) || {};
@@ -11903,9 +14986,23 @@
     const d = S.dmDrag;
     const t = e.target;
     if (!d || !t || !t.closest) return null;
+    // A source in a preference list: onto another source of the same list
+    if (d.kind === 'srcorder') {
+      const li = t.closest('[data-srcorder-item]');
+      return li && li.dataset.list === d.list && li.dataset.id !== d.id ? { el: li, kind: 'srcorder' } : null;
+    }
     if (d.kind === 'tg' || d.kind === 'cell-tg') {
       const c = t.closest('[data-dmcell]');
       if (c) return !c.classList.contains('dci-dm-choose') ? { el: c, kind: 'tracks' } : null;
+      // Works matrix: an attribute in the head of the track column, a role of a column, a column head
+      if (d.kind === 'tg') {
+        const attr = t.closest('[data-tgattr]');
+        if (attr) return { el: attr, kind: 'mx-attr' };
+        const role = t.closest('[data-colhead]:not(.dci-mx-locked) [data-tgrole]');
+        if (role) return { el: role, kind: 'mx-role' };
+        const card = t.closest('[data-colhead]:not(.dci-mx-locked) .dci-mx-card');
+        if (card) return { el: card, kind: 'mx-col' };
+      }
       const place = t.closest('tr[data-row] .dci-c-tracks, tr[data-tracksrow]');
       const row = place && rowOf(place);
       return row && tracksDropFits(row) ? { el: place, kind: 'row-tracks' } : null;
@@ -11923,7 +15020,7 @@
     if (col) return { el: col, kind: 'place' };
     if (d.kind !== 'date') return null;
     // Date fields of rows, work links and the works matrix
-    const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-datebox, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date');
+    const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-card, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date');
     if (!field || field.closest('[data-el="dates"]')) return null;
     return { el: field, kind: 'row' };
   }
@@ -11939,7 +15036,7 @@
     const g = S.trackPool.find((x) => x.id === groupId);
     const row = rowOf(target);
     if (!g || !row || !tracksDropFits(row)) return;
-    const tracks = g.tracks.filter((i) => i < S.mbTracks.length);
+    const tracks = g.tracks.filter((i) => i < S.mbTracks.length && inSelection(i));
     const moved = row.level === 'release';
     if (moved) setLevel(row, 'recording');
     row.tracks = new Set(add ? [...row.tracks, ...tracks] : tracks);
@@ -11952,12 +15049,59 @@
   function dmMarkOver(el) {
     S.overlay.querySelectorAll('.dci-dm-over').forEach((x) => { if (x !== el) x.classList.remove('dci-dm-over', 'dci-drop-add'); });
     if (el) el.classList.add('dci-dm-over');
+    // A role or an attribute under the pointer: its card says what the drop does
+    const card = el && el.matches('[data-tgrole], [data-tgattr]') ? el.closest('.dci-mx-card') : null;
+    S.overlay.querySelectorAll('.dci-mx-cardover').forEach((x) => { if (x !== card) x.classList.remove('dci-mx-cardover', 'dci-drop-add'); });
+    if (card) card.classList.add('dci-mx-cardover');
+  }
+
+  /**
+   * A track group dropped onto the works matrix (S023): onto an attribute in the head of the track column – the
+   * links of the group's tracks get it, the others lose it (MusicBrainz's own stay); onto a role of a column – that
+   * role is on exactly for the works of these tracks; onto the head of a column – all its roles. With Shift the
+   * group is added instead. Relationships already in MusicBrainz stay as they are.
+   */
+  function dropTracksOnMatrix(kind, el, groupId, add) {
+    const g = S.trackPool.find((x) => x.id === groupId);
+    if (!g) return;
+    const tracks = new Set(g.tracks.filter((i) => i < S.mbTracks.length && inSelection(i)));
+    if (kind === 'mx-attr') {
+      const n = el.dataset.tgattr;
+      let k = 0;
+      matrixRows().filter((m) => m.work && !mbLinkAttrs(m.work).has(n)).forEach((m) => {
+        if (tracks.has(m.i)) {
+          setLinkAttr(m.i, m.work, n, true);
+          k++;
+        } else if (!add) setLinkAttr(m.i, m.work, n, false);
+      });
+      log('info', add ? 'matrixAttrAdded' : 'matrixAttrApplied', { name: g.name, attr: n, n: k });
+    } else {
+      const col = matrixColumns().find((c) => c.key === el.closest('[data-colhead]').dataset.colhead);
+      if (!col || col.mbOnly) return;
+      const main = kind === 'mx-role' ? col.rows.filter((r) => r.id === el.dataset.tgrole) : defaultRowsOf(col);
+      for (const r of main) {
+        const splits = col.rows.filter((x) => x.splitFrom === r.id && x !== r);
+        // copies of a cell with a date of its own: kept for the group's tracks, gone for the others
+        if (!add) splits.forEach((x) => { [...x.tracks].filter((i) => !tracks.has(i)).forEach((i) => x.tracks.delete(i)); });
+        const own = new Set(splits.flatMap((x) => [...x.tracks]));
+        const next = new Set([...(add ? r.tracks : []), ...tracks]);
+        own.forEach((i) => next.delete(i));
+        r.tracks = next;
+        if (r.excluded) [...r.excluded].filter((x) => tracks.has(Number(x.split('|')[0]))).forEach((x) => r.excluded.delete(x));
+        r.confirmed = new Set([...(r.confirmed || []), ...tracks]);
+        r.suggest = null;
+        if (isPublishingRow(r)) r.pubTouched = true;
+      }
+      log('info', add ? 'matrixTracksAdded' : 'matrixTracksApplied', { name: g.name, col: col.name, roles: main.map((r) => rowTypeName(r)).join(', ') });
+    }
+    renderWorks();
+    refresh();
   }
 
   function onDragStart(e) {
     const src = e.target && e.target.closest && e.target.closest('[data-drag]');
     if (!src || !S.overlay.contains(src)) return;
-    S.dmDrag = { kind: src.dataset.drag, id: src.dataset.id, cell: src.dataset.cell || null };
+    S.dmDrag = { kind: src.dataset.drag, id: src.dataset.id, cell: src.dataset.cell || null, list: src.dataset.list || null };
     try {
       e.dataTransfer.setData('text/plain', src.dataset.id);
       e.dataTransfer.effectAllowed = 'copyMove';
@@ -11965,7 +15109,8 @@
     const kind = S.dmDrag.kind === 'cell' ? 'date' : S.dmDrag.kind === 'cell-tg' ? 'tg' : S.dmDrag.kind;
     // Track groups: the places on rows say what a drop does (replace; with Shift: add)
     if (kind === 'tg') {
-      [['--dci-tg-hint', 'tracks.dropHint'], ['--dci-tg-replace', 'tracks.dropReplace'], ['--dci-tg-add', 'tracks.dropAdd']]
+      [['--dci-tg-hint', 'tracks.dropHint'], ['--dci-tg-replace', 'tracks.dropReplace'], ['--dci-tg-add', 'tracks.dropAdd'],
+        ['--dci-mx-replace', 'matrix.dropReplace'], ['--dci-mx-add', 'matrix.dropAdd']]
         .forEach(([v, key]) => S.overlay.style.setProperty(v, JSON.stringify(tr(key))));
     }
     S.overlay.classList.add('dci-dm-dragging', `dci-dm-drag-${kind}`);
@@ -12024,7 +15169,11 @@
     const t = dmTargetOf(e);
     dmMarkOver(t && t.el);
     if (!t) return;
-    if (t.kind === 'row-tracks') t.el.classList.toggle('dci-drop-add', !!e.shiftKey);
+    if (['row-tracks', 'mx-col', 'mx-role', 'mx-attr'].includes(t.kind)) {
+      t.el.classList.toggle('dci-drop-add', !!e.shiftKey);
+      const card = t.el.closest('.dci-mx-cardover');
+      if (card) card.classList.toggle('dci-drop-add', !!e.shiftKey);
+    }
     e.preventDefault();
     try {
       e.dataTransfer.dropEffect = S.dmDrag.kind === 'date' || S.dmDrag.kind === 'tg' ? 'copy' : 'move';
@@ -12037,12 +15186,30 @@
     dmDragEnd();
     if (!t || !d) return;
     e.preventDefault();
+    // A pool entry from the Discogs notes dropped somewhere: used, no longer a suggestion
+    const used = (d.kind === 'date' || d.kind === 'tg') && markPoolUsed(d.kind, d.id);
+    try {
+      onDropOn(t, d, e);
+    } finally {
+      if (used) renderDates();
+    }
+  }
+
+  function onDropOn(t, d, e) {
+    if (t.kind === 'srcorder') {
+      moveSourceOrder(d.list, d.id, 0, t.el.dataset.id);
+      return;
+    }
     if (t.kind === 'tracks') {
       dmAddTracks(t.el.dataset.dmcell, d.id, d.kind === 'cell-tg' ? d.cell : null);
       return;
     }
     if (t.kind === 'row-tracks') {
       dropTracksOn(t.el, d.id, e.shiftKey);
+      return;
+    }
+    if (t.kind === 'mx-col' || t.kind === 'mx-role' || t.kind === 'mx-attr') {
+      dropTracksOnMatrix(t.kind, t.el, d.id, e.shiftKey);
       return;
     }
     const m = dm();
@@ -12084,11 +15251,23 @@
     if (!S.overlay) return;
     S.overlay.classList.remove('dci-dm-dragging', 'dci-dm-drag-date', 'dci-dm-drag-tg', 'dci-dm-drag-pool');
     dmMarkOver(null);
+    S.overlay.querySelectorAll('.dci-mx-cardover').forEach((x) => x.classList.remove('dci-mx-cardover', 'dci-drop-add'));
   }
 
   function onClick(e) {
+    // An open ▾ menu of a column head closes with a click anywhere else
+    if (S.mxColMenu && e.target.closest && !e.target.closest('.dci-mx-colmenu, [data-act="mx-colmenu"]')) {
+      S.mxColMenu = null;
+      const btnOut = e.target.closest('[data-act]');
+      if (!btnOut || !S.overlay.contains(btnOut)) {
+        renderWorks();
+        return;
+      }
+      renderWorks();
+    }
     const btn = e.target.closest('[data-act]');
     if (!btn || !S.overlay.contains(btn)) return;
+    S.lastActEl = btn;
     const act = btn.dataset.act;
     if ((act.startsWith('mx-') || act === 'cd-copy' || act === 'xd-copy') && matrixAction(act, btn)) return;
     const row = rowOf(btn);
@@ -12122,12 +15301,16 @@
       case 'rules':
         openRules();
         break;
+      case 'inc-next':
+      case 'inc-prev':
+        gotoIncomplete(act === 'inc-next' ? 1 : -1);
+        break;
       case 'rule-info':
       case 'rule-goto': {
         // The rules window with this row's Discogs role in the test field (and at the rule clicked)
         openRules();
         const t = document.querySelector('#dci-rules [data-rf="test"]');
-        if (t) {
+        if (t && row) {
           t.value = row.raw || row.base || '';
           document.querySelector('#dci-rules [data-rf="result"]').innerHTML = ruleTestHtml(t.value);
         }
@@ -12137,6 +15320,16 @@
       case 'load-media':
         loadMediaInEditor();
         break;
+      case 'media-choose': {
+        // "Choose media …" (also from the message after a cancelled choice: "source:id")
+        const arg = String(btn.dataset.arg || '');
+        const k = arg.indexOf(':');
+        const source = k > 0 && SOURCES[arg.slice(0, k)] ? SOURCES[arg.slice(0, k)] : S.source;
+        const id = k > 0 && SOURCES[arg.slice(0, k)] ? arg.slice(k + 1) : arg;
+        if (S.rows.length || S.release) rechooseMedia(id, source);
+        else if (id) loadRelease(id, { source });
+        break;
+      }
       case 'bulk-level':
         for (const r of S.rows) {
           // "Only works": everything is skipped except the work relationships of the works matrix
@@ -12176,7 +15369,7 @@
         break;
       }
       case 'tracks-all':
-        row.tracks = new Set(S.mbTracks.map((x) => x.idx));
+        row.tracks = new Set(selIdx());
         updateTrackUi(row);
         refresh();
         break;
@@ -12195,7 +15388,7 @@
         refresh();
         break;
       case 'tracks-invert':
-        row.tracks = new Set(S.mbTracks.map((x) => x.idx).filter((i) => !row.tracks.has(i)));
+        row.tracks = new Set(selIdx().filter((i) => !row.tracks.has(i)));
         updateTrackUi(row);
         refresh();
         break;
@@ -12207,8 +15400,9 @@
       case 'tracks-group': {
         const g = S.trackPool.find((x) => x.id === btn.dataset.id);
         if (!g) break;
-        row.tracks = new Set(g.tracks.filter((i) => i < S.mbTracks.length));
+        row.tracks = new Set(g.tracks.filter((i) => i < S.mbTracks.length && inSelection(i)));
         updateTrackUi(row);
+        if (markPoolUsed('tg', g.id)) renderDates();
         refresh();
         break;
       }
@@ -12262,6 +15456,17 @@
       case 'other-create':
         startOtherCreate(artist);
         break;
+      case 'name-use': {
+        const h = (artist.nameHits || []).find((x) => x.mbid === btn.dataset.mbid);
+        if (!h) break;
+        Object.assign(artist, { status: 'manual', mbid: h.mbid, mbName: h.name, mbComment: h.disambiguation || '', candidates: [h], editing: false, error: '' });
+        if (artist.company) setCompanyEntityType(artist, h.entityType);
+        log('ok', 'artistManual', { name: artist.name, mb: h.name });
+        if (artist.company) rerenderGroup(artist);
+        else updateGroupHeader(artist);
+        refresh();
+        break;
+      }
       case 'alias-use': {
         const h = (artist.aliasHits || []).find((x) => x.c.mbid === btn.dataset.mbid);
         if (!h) break;
@@ -12561,7 +15766,7 @@
           Object.assign(r, { other: true, entityType: artist.entityType, types: [], typeOptions: null, notes: [] });
           applyRoleText(r, '');
         }
-        r.tracks = new Set(S.mbTracks.map((x) => x.idx));
+        r.tracks = new Set(selIdx());
         S.rows.push(r);
         S.overlay.querySelector(`[data-group="${artist.key}"] tbody`).insertAdjacentHTML('beforeend', rowHtml(r));
         S.overlay.querySelector(`tr[data-row="${r.id}"] [data-f="role-text"]`).focus();
@@ -12594,7 +15799,7 @@
             // "as on Discogs": the Discogs name where it differs from MusicBrainz; "clear": empty, kept so
             const a = S.artists.get(r.artistKey);
             r.creditTouched = !fromDiscogs;
-            r.credit = fromDiscogs && a && a.mbid ? discogsCreditFor(r, a) : (fromDiscogs ? r.anv : '');
+            r.credit = fromDiscogs && a && a.mbid ? sourceCreditFor(r, a) : (fromDiscogs ? r.anv : '');
           }
         }
         renderGroups();
@@ -12605,10 +15810,111 @@
         addManualEntry();
         break;
       case 'discogs-load': {
+        // Another source: a Bandcamp album URL, else a Discogs release (URL or ID); remembered for this release
         const input = S.overlay.querySelector('[data-f="discogs-input"]');
-        const m = String(input.value).match(/(?:release\/|^r?)(\d+)/i);
-        if (m) loadDiscogs(m[1]);
-        else showMessage('error', 'msg.badDiscogsId');
+        const bc = BANDCAMP.albumUrl(input.value);
+        const source = bc ? BANDCAMP : DISCOGS;
+        const id = bc || DISCOGS.parseReleaseId(input.value);
+        if (id) {
+          keepSourcePick(source, id);
+          loadRelease(id, { source });
+        } else {
+          showMessage('error', 'msg.badDiscogsId');
+        }
+        break;
+      }
+      case 'srcorder-toggle':
+        S.srcOrderOpen = !S.srcOrderOpen;
+        renderSource();
+        break;
+      case 'bc-toggle':
+        S.bcOpen = !S.bcOpen;
+        renderSource();
+        break;
+      case 'srcorder-move':
+        moveSourceOrder(btn.dataset.list, btn.dataset.src, Number(btn.dataset.dir));
+        break;
+      case 'bc-test':
+        testBandcampPage(S.overlay.querySelector('[data-f="bc-test-url"]').value);
+        break;
+      // [E1] Credits from a pasted text
+      case 'supp-load': {
+        const [src, ...rest] = String(btn.dataset.link || '').split('|');
+        if (SOURCES[src]) loadSupplement(SOURCES[src], rest.join('|'));
+        break;
+      }
+      case 'supp-text':
+        S.textForm = { text: '', origin: '', supp: true };
+        renderSource();
+        S.overlay.querySelector('[data-f="text-src"]').focus();
+        break;
+      case 'supp-text-load': {
+        const text = S.overlay.querySelector('[data-f="text-src"]').value;
+        const origin = S.overlay.querySelector('[data-f="text-origin"]').value.trim();
+        if (!text.trim()) {
+          showMessage('error', 'msg.textEmpty');
+          break;
+        }
+        S.textForm = null;
+        loadSupplement(TEXT, textSig(text), { text, origin });
+        break;
+      }
+      case 'supp-remove':
+        if (S.supp) {
+          dropSupplementMarks(S.supp);
+          S.suppSources.delete(S.supp.source.short);
+          // What was taken over stays, with its mark
+          if (S.rows.some((r) => r.supp === S.supp.source.short || (r.suppTook && r.suppTook.short === S.supp.source.short))) {
+            S.suppSources.set(S.supp.source.short, { name: S.supp.source.noteName, url: S.supp.url });
+          }
+          S.supp = null;
+        }
+        renderSource();
+        renderSupp();
+        renderGroups();
+        renderWorks();
+        break;
+      case 'supp-fold':
+        if (S.supp) S.supp.open = !S.supp.open;
+        renderSupp();
+        break;
+      case 'supp-apply':
+        applySupplement();
+        break;
+      case 'supp-discard':
+        discardSupplement();
+        break;
+      case 'forget-open':
+        S.forgetOpen = !S.forgetOpen;
+        renderSource();
+        if (S.forgetOpen) S.overlay.querySelector('[data-act="forget-cancel"]').focus();
+        break;
+      case 'forget-cancel':
+        S.forgetOpen = false;
+        renderSource();
+        break;
+      case 'forget-do':
+        forgetImport();
+        break;
+      case 'text-open':
+        S.textForm = S.textForm ? null : { text: (S.textInput && S.textInput.text) || '', origin: (S.textInput && S.textInput.origin) || '' };
+        renderSource();
+        if (S.textForm) S.overlay.querySelector('[data-f="text-src"]').focus();
+        break;
+      case 'text-cancel':
+        S.textForm = null;
+        renderSource();
+        break;
+      case 'text-load': {
+        const text = S.overlay.querySelector('[data-f="text-src"]').value;
+        const origin = S.overlay.querySelector('[data-f="text-origin"]').value.trim();
+        if (!text.trim()) {
+          showMessage('error', 'msg.textEmpty');
+          break;
+        }
+        S.textForm = null;
+        S.textInput = { text, origin };
+        loadRelease(textSig(text), { source: TEXT });
         break;
       }
       case 'preview':
@@ -12709,10 +16015,10 @@
         openInBackground(allWorkGids().map(workUrl));
         break;
       case 'sync-open':
-        if (S.discogsId) toDiscogs({ type: 'open', url: `https://www.discogs.com/release/${S.discogsId}` });
+        if (companionReleaseId()) toDiscogs({ type: 'open', url: S.release.url });
         break;
       case 'sync-load':
-        if (S.discogsId) toDiscogs({ type: 'show', releaseId: S.discogsId, loadOnly: true, id: Date.now() });
+        if (companionReleaseId()) toDiscogs({ type: 'show', releaseId: companionReleaseId(), loadOnly: true, id: Date.now() });
         break;
       default:
         break;
@@ -12905,11 +16211,32 @@
         S.editNote = el.checked;
         S.rows.forEach(updateHint);
         break;
-      case 'discogs-pick':
-        if (el.value) loadDiscogs(el.value);
+      case 'discogs-pick': {
+        // "source|id" of a linked source; remembered for this release
+        const k = el.value.indexOf('|');
+        const source = k > 0 ? SOURCES[el.value.slice(0, k)] : null;
+        if (!source) break;
+        keepSourcePick(source, el.value.slice(k + 1));
+        loadRelease(el.value.slice(k + 1), { source });
+        break;
+      }
+      case 'bc-tracks':
+        S.bcTracks = el.checked;
+        writeJson('localStorage', 'dci-bc-tracks', el.checked ? null : false);
+        break;
+      case 'supp-sel': {
+        const it = S.supp && S.supp.items.find((x) => x.id === el.dataset.id);
+        if (it) it.sel = el.checked;
+        renderSupp();
+        break;
+      }
+      case 'supp-all':
+        if (S.supp) S.supp.items.forEach((x) => { if (x.kind !== 'unrec') x.sel = el.checked; });
+        renderSupp();
         break;
       case 'work-type':
         S.workDefaults.typeId = el.value;
+        S.workDefaults.typeAuto = null;
         break;
 
       case 'work-flag': {
@@ -13093,6 +16420,7 @@
       'manual-artist': '[data-act="add-manual"]',
       'manual-role': '[data-act="add-manual"]',
       'discogs-input': '[data-act="discogs-load"]',
+      'bc-test-url': '[data-act="bc-test"]',
       'pf-name': '[data-act="pool-save"]',
       'pf-by': '[data-act="pool-save"]',
       'pf-bm': '[data-act="pool-save"]',
@@ -13145,7 +16473,7 @@
   }
 
   function setScale(scale) {
-    S.scale = Math.min(1.8, Math.max(0.8, Math.round(scale * 10) / 10));
+    S.scale = Math.min(1.8, Math.max(0.5, Math.round(scale * 10) / 10));
     writeJson('localStorage', 'dci-scale', S.scale);
     applyScale();
     renderZoom();
@@ -13197,7 +16525,7 @@
   };
 
   function clampWindow(win) {
-    if (win.isConnected && win.getBoundingClientRect().width && !win.closest('.dci-inline')) placeWindow(win, geomOf(win), true);
+    if (win.isConnected && win.getBoundingClientRect().width && !win.closest('.dci-inline') && !win.classList.contains('dci-log-docked')) placeWindow(win, geomOf(win), true);
   }
 
   function bringToFront(kind) {
@@ -13218,7 +16546,7 @@
     placeWindow(win, valid ? saved : defaultGeom(kind), true);
     win.addEventListener('pointerdown', (e) => {
       // In the page, the dashboard is part of the page: nothing to move or bring to the front
-      if (win.closest('.dci-inline')) return;
+      if (win.closest('.dci-inline') || win.classList.contains('dci-log-docked')) return;
       bringToFront(kind);
       const handle = e.target.closest(handleSelector);
       if (!handle || e.button !== 0 || e.target.closest('button, input, select, textarea, a, label, option')) return;
@@ -13247,6 +16575,16 @@
         return;
       }
       if (!win.getBoundingClientRect().width || win.classList.contains('dci-moving') || win.closest('.dci-inline')) return;
+      if (win.classList.contains('dci-log-docked')) {
+        // above the edit note, the dragged height is kept; beside it, the log follows the edit note
+        if (!win.classList.contains('dci-log-dock-above')) return;
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          const h = Math.round(win.getBoundingClientRect().height);
+          if (win.isConnected && win.classList.contains('dci-log-dock-above') && h >= LOG_DOCK_MIN_H) writeJson('localStorage', 'dci-log-dock-h', h);
+        }, 400);
+        return;
+      }
       clearTimeout(timer);
       timer = setTimeout(() => saveGeom(win, kind), 400);
     });
@@ -13259,7 +16597,7 @@
     for (const m of movable) {
       if (!m.win.isConnected) continue;
       writeJson('localStorage', GEOM_KEYS[m.kind], null);
-      if (!m.win.closest('.dci-inline')) placeWindow(m.win, defaultGeom(m.kind));
+      if (!m.win.closest('.dci-inline') && !m.win.classList.contains('dci-log-docked')) placeWindow(m.win, defaultGeom(m.kind));
     }
   }
 
@@ -13299,6 +16637,7 @@
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
           <div class="dci-msgs" data-el="msgs" aria-live="polite"></div>
           <section class="dci-dates" data-el="dates" aria-label="${esc(tr('date.title'))}" hidden></section>
+          <section class="dci-supp" data-el="supp" aria-label="${esc(tr('supp.with'))}" hidden></section>
           <div class="dci-toolbar" data-el="toolbar" hidden>
             <span>${esc(tr('toolbar.levelAll'))}</span>
             <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
@@ -13369,7 +16708,8 @@
           <div class="dci-sub-info" data-el="sub-info"></div>
           <iframe class="dci-sub-frame" data-el="sub-frame" title="${esc(tr('sub.frameTitle'))}"></iframe>
         </div>
-      </div>`;
+      </div>
+      <div class="dci-subdlg dci-media-dlg" data-el="media" hidden></div>`;
     document.body.appendChild(overlay);
     overlay.classList.toggle('dci-only-missing', S.onlyMissing);
     overlay.addEventListener('click', onClick);
@@ -13519,7 +16859,7 @@
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
-    'dci-place'];
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks'];
 
   function renderReset() {
     if (!S.overlay) return;
@@ -13552,7 +16892,8 @@
     [...SETTINGS_KEYS, ...Object.values(GEOM_KEYS)].forEach((k) => writeJson('localStorage', k, null));
     Object.assign(S, {
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, fillCredits: false,
-      capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window',
+      capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
+      sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
     });
     if (rules) {
       userRulesCache = [];
@@ -13571,6 +16912,7 @@
     log('info', 'settingsReset', { rules: tr(rules ? 'common.on' : 'common.off'), pools: tr(pools ? 'common.on' : 'common.off') });
     LANG = 'en';
     rebuildDashboard();
+    applyLogPlace();
     resetWindows();
     if (S.logEl) setLogVisible(true);
     renderSync();
@@ -13623,6 +16965,12 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.5.0', label: 'Credits Importer 3.5.0 · Companion 1.7.0' },
+    { v: '3.3.0', label: 'Credits Importer 3.3.0 · Companion 1.6.0' },
+    { v: '3.0.0', label: 'Import 3.0.0' },
+    { v: '2.19.0', label: 'Import 2.19.0' },
+    { v: '2.18.0', label: 'Import 2.18.0' },
+    { v: '2.17.0', label: 'Import 2.17.0' },
     { v: '2.16.0', label: 'Import 2.16.0 · COMPANION 1.5.0' },
     { v: '2.14.0', label: 'Import 2.14.0 · COMPANION 1.4.4' },
     { v: '2.13.0', label: 'Import 2.13.0 · COMPANION 1.4.3' },
@@ -13650,7 +16998,7 @@
     { v: '0.1.0', label: 'Import 0.1.0' },
   ];
   const NOTICE_KEY = 'dci-notice-version';
-  const CHANGELOG_URL = `${SCRIPT_URL}/blob/main/mb-discogs-credits-import-CHANGELOG.md`;
+  const CHANGELOG_URL = `${SCRIPT_URL}/blob/main/mb-vibecode-credits-importer-CHANGELOG.md`;
 
   const versionParts = (v) => String(v || '0').split('.').map((x) => parseInt(x, 10) || 0);
   function compareVersions(a, b) {
@@ -13773,7 +17121,7 @@
     const placeBtn = e.target.closest && e.target.closest('#dci-launcher [data-place]');
     if (placeBtn && placeBtn.dataset.place !== S.place) setPlace(placeBtn.dataset.place);
     if (e.target.closest && e.target.closest('[data-sync-reload]')) {
-      toDiscogs({ type: 'reload', releaseId: S.discogsId });
+      toDiscogs({ type: 'reload', releaseId: companionReleaseId() });
       log('info', 'dgReload');
     }
     if (e.target.closest && e.target.closest('[data-dg-artwork]')) {
@@ -13802,8 +17150,9 @@
   /** An open dialog of MusicBrainz itself, or a field of the MB page being edited: Escape belongs to MB. */
   function mbUsesEscape() {
     const active = document.activeElement;
-    if (active && !S.overlay.contains(active) && !(document.getElementById('dci-log') || document.body).contains(active) && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return true;
-    return [...document.querySelectorAll('.dialog, [role="dialog"]')].some((d) => !S.overlay.contains(d) && d.offsetParent !== null);
+    const own = (el) => S.overlay.contains(el) || ['dci-log', 'dci-rules'].some((id) => { const w = document.getElementById(id); return !!(w && w.contains(el)); });
+    if (active && !own(active) && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return true;
+    return [...document.querySelectorAll('.dialog, [role="dialog"]')].some((d) => !own(d) && d.offsetParent !== null);
   }
 
   document.addEventListener('keydown', (e) => {
@@ -13815,7 +17164,15 @@
       else showDashboard();
       return;
     }
-    if (e.key !== 'Escape' || !S.overlay || S.overlay.hidden) return;
+    if (e.key !== 'Escape') return;
+    // The small "Mapping rules" window goes first; the dashboard stays open
+    const rules = document.getElementById('dci-rules');
+    if (rules && !rules.hidden) {
+      e.preventDefault();
+      rules.hidden = true;
+      return;
+    }
+    if (!S.overlay || S.overlay.hidden) return;
     // The dashboard does not block the page: Escape closes it unless MusicBrainz needs the key.
     if (!S.overlay.contains(document.activeElement) && mbUsesEscape()) return;
     if (S.dmPick || S.dmEdit) {
@@ -13895,6 +17252,16 @@
         border-radius: 4px; box-shadow: 0 4px 16px rgba(38, 36, 48, 0.18); font-size: calc(var(--u, 1px) * 12); line-height: 1.4;
       }
       #dci-log[hidden] { display: none; }
+      #dci-log.dci-log-docked { position: relative; left: auto; top: auto; right: auto; bottom: auto; z-index: auto !important; max-width: none; max-height: none; min-width: 0;
+        resize: none; box-shadow: none; text-align: left; }
+      #dci-log.dci-log-dock-left { float: left; margin: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 6) 0; }
+      #dci-log.dci-log-dock-right { float: right; margin: 0 0 calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); }
+      #dci-log.dci-log-dock-above { width: 100%; resize: vertical; margin: 0 0 calc(var(--u, 1px) * 8); }
+      #dci-log.dci-log-docked .dci-log-head { cursor: default; }
+      #dci-log-clear { clear: both; }
+      #dci-log .dci-log-place { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); float: none; width: auto; margin: 0; padding: 0; font-weight: normal; color: #4b4585; }
+      #dci-log .dci-log-place select { font: inherit; padding: 0; max-width: calc(var(--u, 1px) * 150); }
+      #dci-log .dci-log-place select.dci-log-place-off { border-color: #9a5b00; color: #9a5b00; }
       #dci-log .dci-log-head { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 8); border-bottom: 1px solid #dddae8; background: #f7f6fb; }
       #dci-log h2 { margin: 0 auto 0 0; font-size: calc(var(--u, 1px) * 13); font-weight: 600; color: #4b4585; }
       #dci-log .dci-log-dash { border-color: #736dab; color: #4b4585; font-weight: 600; }
@@ -13913,6 +17280,9 @@
         /* Colour code used everywhere: dates in MB purple, tracks in MB orange */
         --date: var(--purple); --date-d: var(--purple-d); --date-bg: #f0eff9; --date-line: #bdb9dc;
         --track: var(--orange); --track-d: #a8471a; --track-bg: #fdf0e8; --track-line: #f1bc9f;
+        /* Suggestions everywhere: yellow with an amber dashed border (the coloured left edge stays) */
+        --sugg-bg: #fff8db; --sugg-line: #e0a526; --sugg-ink: #6b4f00;
+        --role: #3d5f9e;
         /* All sizes follow --dci-fs: the browser's font size setting times the text size control */
         --u: calc(var(--dci-fs, 13px) / 13);
         position: fixed; inset: 0; z-index: 10000; pointer-events: none;
@@ -13941,7 +17311,56 @@
       .dci-head h2 { margin: 0; font-size: calc(var(--u, 1px) * 18); font-weight: 600; color: var(--purple-d); }
       .dci-source { flex: 1 1 calc(var(--u, 1px) * 400); display: flex; align-items: center; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); flex-wrap: wrap; color: var(--muted); }
       .dci-other { display: inline-flex; gap: calc(var(--u, 1px) * 6); }
-      .dci-other input { width: calc(var(--u, 1px) * 240); }
+      .dci-other input { width: calc(var(--u, 1px) * 330); }
+      /* [E1] A pasted text as the source, and the lines it did not understand */
+      .dci-textsrc { display: grid; gap: calc(var(--u, 1px) * 6); width: 100%; margin-top: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 6px; background: var(--soft); }
+      .dci-textsrc-text { display: grid; gap: 2px; }
+      .dci-textsrc textarea { width: 100%; min-height: calc(var(--u, 1px) * 140); font: inherit; font-size: calc(var(--u, 1px) * 12); resize: vertical; }
+      .dci-textsrc input { width: calc(var(--u, 1px) * 280); }
+      .dci-unrec { width: 100%; margin-top: calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 12); }
+      .dci-unrec summary { cursor: pointer; color: var(--warn); }
+      .dci-unrec ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }
+      /* Order of the linked sources (physical / digital media) and the Bandcamp settings */
+      .dci-srcorder, .dci-bcset { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 24); align-items: flex-start; width: 100%; margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 6px; background: var(--soft); }
+      .dci-srcorder ol { margin: calc(var(--u, 1px) * 4) 0 0; padding-left: calc(var(--u, 1px) * 22); }
+      .dci-srcorder-item { padding: 1px calc(var(--u, 1px) * 4); border-radius: 4px; cursor: grab; }
+      .dci-srcorder-item .dci-iconbtn { padding: 0 calc(var(--u, 1px) * 3); }
+      #dci-overlay .dci-srcorder-item.dci-dm-over { outline: 2px solid var(--purple); background: var(--date-bg); }
+      .dci-srcorder > p, .dci-bctest-res { flex-basis: 100%; margin: 0; }
+      .dci-bcset { align-items: center; }
+      .dci-bctest { display: inline-flex; gap: calc(var(--u, 1px) * 6); }
+      .dci-bctest input { width: calc(var(--u, 1px) * 300); }
+      /* Suggestions of MB entries (same name, an alias): dashed and yellow like every suggestion */
+      #dci-overlay .dci-suggbtn { border: 1px dashed var(--sugg-line); border-radius: 3px; background: var(--sugg-bg); color: var(--sugg-ink); padding: 0 calc(var(--u, 1px) * 6); text-decoration: none; }
+      .dci-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+      .dci-suppbar { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); flex-basis: 100%; margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 4px; background: #f7f6fb; }
+      .dci-supp-btn { font: inherit; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); border: 1px solid #c8c5d6; border-radius: 999px; background: #fff; color: #4b4585; cursor: pointer; }
+      .dci-supp-btn:hover { background: #f1f0f8; }
+      .dci-supp-on { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); border: 1px solid #1d6b78; border-radius: 999px; background: #e5f2f4; color: #134a53; font-weight: 600; }
+      .dci-supp { margin: calc(var(--u, 1px) * 10) 0; border: 1px solid #1d6b78; border-radius: 6px; overflow: hidden; }
+      .dci-supp-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); background: #e5f2f4; color: #134a53; }
+      .dci-supp-head .dci-supp-fold { font-weight: 700; color: #134a53; text-decoration: none; }
+      .dci-supp-all { margin-left: auto; }
+      .dci-supp > .dci-sub, .dci-supp > .dci-note { margin: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
+      .dci-supp-table td { vertical-align: top; }
+      .dci-supp-row-role td, .dci-supp-row-entry td { background: var(--sugg-bg); color: var(--sugg-ink); }
+      .dci-supp-row-differ td { background: #fdf0e8; color: #6e2c0b; }
+      .dci-supp-row-unrec td { color: var(--muted); }
+      .dci-supp-kind { display: inline-block; padding: 0 calc(var(--u, 1px) * 8); border-radius: 999px; background: #fff; font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
+      .dci-supp-role, .dci-supp-entry { border: 1px dashed var(--sugg-line); color: var(--sugg-ink); }
+      .dci-supp-differ { border: 1px solid #e8a27f; color: #8a3a12; }
+      .dci-supp-unrec { border: 1px solid #c8c5d6; color: var(--muted); }
+      .dci-supp-line { max-width: 34ch; }
+      .dci-supp-hint { font-weight: 600; }
+      .dci-supp-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border-top: 1px solid var(--line); }
+      .dci-srcmarks { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 3); margin: calc(var(--u, 1px) * 2) 0; }
+      .dci-srcmark { padding: 0 calc(var(--u, 1px) * 5); border-radius: 3px; background: #262430; color: #fff; font-size: calc(var(--u, 1px) * 11); font-weight: 700; }
+      .dci-srcmark.dci-srcmark-supp { background: #1d6b78; }
+      .dci-srcmark.dci-srcmark-differ { background: #fdf0e8; color: #8a3a12; border: 1px solid #8a3a12; }
+      .dci-spell { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); border-radius: 4px; background: #eef6ee; }
+      .dci-spell.dci-spell-diff { background: var(--sugg-bg); border: 1px dashed var(--sugg-line); color: var(--sugg-ink); }
+      .dci-spell-val { font-weight: 600; }
+      .dci-spell-val.dci-spell-x { text-decoration: underline wavy var(--sugg-line); text-underline-offset: 3px; }
       .dci-close, .dci-headbtn { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); }
       .dci-head-tools { display: flex; align-items: center; gap: calc(var(--u, 1px) * 8); margin-left: auto; }
       .dci-lang { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
@@ -13991,12 +17410,12 @@
       .dci-table.dci-matrix { min-width: 0; width: max-content; border-collapse: separate; border-spacing: 0; }
       .dci-matrix th, .dci-matrix td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: top; }
       .dci-matrix thead th { position: sticky; top: 0; z-index: 2; background: var(--soft); text-align: left; }
-      .dci-matrix .dci-mx-front { position: sticky; left: 0; z-index: 1; background: #fff; min-width: calc(var(--u, 1px) * 300); max-width: calc(var(--u, 1px) * 380); text-align: left; font-weight: normal; }
+      .dci-matrix .dci-mx-front { position: sticky; left: 0; z-index: 1; background: #fff; min-width: calc(var(--u, 1px) * 330); max-width: calc(var(--u, 1px) * 420); text-align: left; font-weight: normal; }
       .dci-matrix thead .dci-mx-front { z-index: 3; background: var(--soft); font-weight: 600; }
-      .dci-mx-col { min-width: calc(var(--u, 1px) * 150); max-width: calc(var(--u, 1px) * 220); font-weight: normal; }
+      .dci-mx-col { min-width: calc(var(--u, 1px) * 170); max-width: calc(var(--u, 1px) * 240); font-weight: normal; }
       .dci-mx-col.dci-mx-collapsed, td.dci-mx-collapsed { min-width: 0; width: calc(var(--u, 1px) * 26); text-align: center; color: var(--muted); }
-      .dci-mx-colname { display: flex; gap: calc(var(--u, 1px) * 4); align-items: baseline; justify-content: space-between; }
-      .dci-mx-roles { font-weight: 700; letter-spacing: 0.03em; margin: calc(var(--u, 1px) * 2) 0; }
+      .dci-mx-colname { display: flex; gap: calc(var(--u, 1px) * 5); align-items: center; }
+      .dci-mx-roles { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); }
       .dci-mx-col label { display: block; margin-top: calc(var(--u, 1px) * 2); }
       .dci-mx-col input[type=text] { width: 100%; box-sizing: border-box; }
       .dci-mx-locked { background: #f4f4f4; }
@@ -14005,10 +17424,9 @@
       .dci-mx-fill { display: block; margin-top: 2px; font-size: calc(var(--u, 1px) * 11); color: var(--date-d, #3d3a7a); white-space: nowrap; }
       .dci-mx-fill .dci-iconbtn { margin-left: 2px; }
       .dci-mx-cell { text-align: center; white-space: nowrap; min-width: calc(var(--u, 1px) * 70); }
-      .dci-mx-cell.dci-mx-on { background: #eef4ff; }
-      .dci-mx-cell.dci-mx-mb { background: #e6f3ea; }
-      .dci-mx-cell.dci-mx-unclear .dci-mx-toggle { color: #7a5a00; border-style: dashed; }
-      .dci-mx-toggle { min-width: calc(var(--u, 1px) * 40); font-weight: 600; display: inline-flex; flex-direction: column; align-items: stretch; gap: 2px; vertical-align: top; }
+      .dci-mx-toggle { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: calc(var(--u, 1px) * 3); min-width: 0; padding: 0; border: 0; background: none; font: inherit; cursor: pointer; vertical-align: middle; }
+      .dci-mx-toggle.dci-mx-empty { width: calc(var(--u, 1px) * 30); height: calc(var(--u, 1px) * 22); border: 1px dotted #c8c5d6; border-radius: 4px; color: #8f8ba3; }
+      .dci-mx-toggle.dci-mx-empty:hover { border-style: solid; color: var(--purple-d); }
       .dci-mx-cell.dci-mx-locked { display: table-cell; }
       .dci-mx-locked .dci-code { display: block; margin: 1px 0; }
       .dci-code { display: inline-block; margin: 0 1px; padding: 0 calc(var(--u, 1px) * 4); border-radius: 3px; background: var(--purple); color: #fff; font-size: calc(var(--u, 1px) * 12); font-weight: 700; line-height: 1.5; }
@@ -14027,6 +17445,61 @@
       .dci-mx-newworks, .dci-mx-addcol { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border-radius: 4px; }
       .dci-mx-newworks { background: #fff8db; border: 1px solid #e8c547; }
       .dci-mx-addcol { background: var(--soft); border: 1px solid var(--line); }
+      /* Works matrix in the look of the date matrix: heads as cards, roles and attributes as chips */
+      .dci-matrix thead th { padding: calc(var(--u, 1px) * 5); }
+      .dci-matrix tbody th, .dci-matrix tbody td { vertical-align: middle; }
+      .dci-matrix tbody th.dci-mx-front { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); }
+      .dci-matrix tbody td.dci-mx-cell { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); }
+      .dci-mx-card { position: relative; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 7); border: 1px solid #e7e5ef; border-radius: 4px; background: #fff; font-weight: normal; text-align: left; white-space: normal; }
+      .dci-mx-cardline { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); font-size: calc(var(--u, 1px) * 12); }
+      .dci-mx-cardline strong { font-size: calc(var(--u, 1px) * 13); }
+      .dci-mx-colbtns { margin-left: auto; display: inline-flex; gap: 2px; }
+      .dci-mx-role { padding: 0 calc(var(--u, 1px) * 6); border: 1px solid #c7d5f0; border-radius: 3px; background: #eef4ff; color: #2c4a80; font-size: calc(var(--u, 1px) * 12); font-weight: 600; }
+      .dci-mx-datechip { padding: 0 calc(var(--u, 1px) * 6); border: 1px solid var(--date-line); border-radius: 3px; background: var(--date-bg); color: var(--date-d); font-size: calc(var(--u, 1px) * 11); }
+      .dci-mx-col .dci-mx-credit { display: flex; align-items: center; gap: calc(var(--u, 1px) * 4); margin: 0; font-size: calc(var(--u, 1px) * 11); color: var(--muted); }
+      .dci-mx-col .dci-mx-credit input { flex: 1; min-width: 0; width: auto; font-size: calc(var(--u, 1px) * 12); padding: 1px calc(var(--u, 1px) * 4); }
+      .dci-mx-colmenu { position: absolute; left: 0; top: 100%; z-index: 6; display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 6); min-width: calc(var(--u, 1px) * 280);
+        margin-top: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--date-line); border-top: 3px solid var(--purple); border-radius: 4px; background: #fff;
+        box-shadow: 0 4px 16px rgba(38, 36, 48, 0.16); white-space: normal; }
+      .dci-mx-colmenu .dci-mx-datebox { margin: 0; }
+      .dci-info { color: var(--purple-d); text-decoration: none; cursor: help; }
+      .dci-mx-title { display: flex; align-items: baseline; gap: calc(var(--u, 1px) * 6); }
+      .dci-mx-title .dci-mx-dpos { margin: 0 0 0 auto; }
+      .dci-mx-line { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 6); margin-top: 2px; font-size: calc(var(--u, 1px) * 12); }
+      .dci-mx-line button { font-size: calc(var(--u, 1px) * 12); }
+      .dci-mx-line .dci-small { padding: 0 calc(var(--u, 1px) * 6); }
+      .dci-mx-line .dci-badge { font-size: calc(var(--u, 1px) * 11); }
+      .dci-mx-optsbtn { color: var(--purple-d); }
+      .dci-wattr-sum { margin-left: auto; display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); }
+      .dci-wattr-tgl { color: var(--purple-d); }
+      .dci-wpill { min-width: calc(var(--u, 1px) * 22); height: calc(var(--u, 1px) * 20); padding: 0 calc(var(--u, 1px) * 4); border: 1px solid var(--line); border-radius: 3px; background: #fff; color: var(--muted);
+        font: inherit; font-size: calc(var(--u, 1px) * 11); font-weight: 700; line-height: 1; cursor: pointer; }
+      .dci-wpill sup { font-size: 0.75em; margin-left: 1px; }
+      .dci-wpill-on { border-color: #3d5f9e; background: #eef4ff; color: #2c4a80; }
+      /* Some of the links have it: half filled (dashed is kept for suggestions) */
+      .dci-wpill-mixed { border: 1px solid var(--role); background: linear-gradient(135deg, #cddbf6 50%, #fff 50%); color: #2c4a80; }
+      .dci-wpill-mb, .dci-wpill-mb:disabled { border-color: var(--ok); background: #e6f3ea; color: #1f5a36; opacity: 1; cursor: default; }
+      .dci-wpill-hint { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      .dci-mxchip { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); padding: 1px calc(var(--u, 1px) * 7); border: 1px solid; border-left-width: 4px; border-radius: 4px; font-size: calc(var(--u, 1px) * 12); font-weight: 600; line-height: 1.4; white-space: nowrap; }
+      .dci-mxchip-mb { border-color: #b9dcc5; border-left-color: var(--ok); background: #e6f3ea; color: #1f5a36; }
+      .dci-mxchip-on { border-color: #c7d5f0; border-left-color: var(--role); background: #eef4ff; color: #2c4a80; }
+      .dci-mxchip-sugg { border-style: dashed; border-color: var(--sugg-line); border-left-style: solid; border-left-color: var(--role); background: var(--sugg-bg); color: var(--sugg-ink); }
+      /* Waits for a work: grey dotted (not a suggestion) */
+      .dci-mxchip-wait { border-style: dotted; border-color: #aeaabf; border-left-style: solid; border-left-color: #c8c5d6; background: #fff; color: var(--muted); font-weight: 400; }
+      .dci-mxchip sup { font-size: 0.7em; }
+      .dci-mxwait { font-size: calc(var(--u, 1px) * 11); font-weight: 400; }
+      .dci-lock { width: calc(var(--u, 1px) * 9); height: calc(var(--u, 1px) * 9); }
+      .dci-mx-chips { display: inline-flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 3); justify-content: center; }
+      .dci-mx-suggbtns { display: inline-flex; margin-left: 2px; vertical-align: middle; }
+      .dci-mx-suggbtns .dci-ok { color: var(--ok); }
+      /* A track group being dragged: the column heads, their roles and the attributes it can go onto */
+      #dci-overlay.dci-dm-drag-tg [data-colhead]:not(.dci-mx-locked) .dci-mx-card { outline: 2px dashed var(--track-line); outline-offset: -1px; }
+      #dci-overlay.dci-dm-drag-tg [data-colhead]:not(.dci-mx-locked) [data-tgrole], #dci-overlay.dci-dm-drag-tg [data-tgattr] .dci-wpill { outline: 1px dashed var(--orange); outline-offset: 1px; }
+      #dci-overlay .dci-mx-card.dci-dm-over, #dci-overlay [data-tgrole].dci-dm-over { outline: 2px solid var(--orange) !important; background: var(--track-bg); }
+      #dci-overlay [data-tgattr].dci-dm-over .dci-wpill { outline: 2px solid var(--orange) !important; background: var(--track-bg); }
+      #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-dm-over::after, #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-mx-cardover::after {
+        content: var(--dci-mx-replace); display: block; font-size: calc(var(--u, 1px) * 11); font-weight: 600; color: var(--track-d); }
+      #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-dm-over.dci-drop-add::after, #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-mx-cardover.dci-drop-add::after { content: var(--dci-mx-add); }
       button.dci-primary { background: var(--purple); color: #fff; border-color: var(--purple-d); font-weight: 600; }
       .dci-same { margin-top: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 4); border-left: 3px solid #e0a800; background: #fffbe8; }
       .dci-work-note { margin: calc(var(--u, 1px) * 4) 0 0; font-style: italic; }
@@ -14080,6 +17553,17 @@
       .dci-sub-head button { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: 3px calc(var(--u, 1px) * 10); }
       .dci-sub-info { padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 16); background: var(--soft); border-bottom: 1px solid var(--line); max-height: 30vh; overflow: auto; }
       .dci-sub-info p { margin: 0 0 calc(var(--u, 1px) * 4); max-width: 90ch; }
+      .dci-media-panel { width: min(calc(var(--u, 1px) * 680), 100%); height: auto; max-height: 100%; border-top-color: #736dab; }
+      .dci-media-body { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 16); overflow: auto; }
+      .dci-media-body p { margin: 0; max-width: 80ch; }
+      .dci-media-btns { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
+      .dci-media-btns button { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: 3px calc(var(--u, 1px) * 10); cursor: pointer; }
+      .dci-media-btns .dci-media-btn[aria-pressed="true"] { background: #736dab; border-color: #736dab; color: #fff; }
+      .dci-media-sep { align-self: stretch; width: 1px; margin: 0 calc(var(--u, 1px) * 4); background: var(--line); }
+      .dci-media-text input { width: calc(var(--u, 1px) * 200); margin-left: calc(var(--u, 1px) * 4); }
+      .dci-media-foot { display: flex; align-items: center; justify-content: flex-end; gap: calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 16); border-top: 1px solid var(--line); }
+      .dci-media-foot [data-mel="sum"] { margin-right: auto; }
+      .dci-media-now { margin: 0 calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 8); color: #4b4585; }
       .dci-sub-frame { flex: 1; width: 100%; border: 0; }
 
       .dci-seg { display: inline-flex; border: 1px solid #c8c5d6; border-radius: 3px; overflow: hidden; }
@@ -14101,6 +17585,12 @@
       .dci-datefind-list li { padding: calc(var(--u, 1px) * 4) 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
       .dci-ruleinfo { color: var(--muted); font-size: calc(var(--u, 1px) * 11); }
       .dci-type-ask [aria-pressed="true"] { font-weight: 700; text-decoration: none; }
+      .dci-incomplete { white-space: nowrap; }
+      .dci-incomplete .dci-textbtn { color: inherit; font-weight: 600; }
+      .dci-wattrs { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 3); margin-top: 3px; }
+      .dci-wattrs-all { margin-top: 0; font-weight: normal; }
+      .dci-wattrs-all .dci-sub { margin-right: calc(var(--u, 1px) * 3); }
+      .dci-ruleref { border: 1px solid #c8c5d6; border-radius: 3px; padding: 0 3px; font-size: calc(var(--u, 1px) * 10); }
       .dci-ruleinfo .dci-textbtn { font-size: inherit; padding: 0; }
       .dci-ruleinfo .dci-ruleid { text-decoration: underline dotted; }
       #dci-rules tr.dci-rule-hit > td { background: #fdf0e8; }
@@ -14156,6 +17646,9 @@
       .dci-date-chip.dci-pchip-tg { border-color: var(--track-line); background: var(--track-bg); }
       .dci-date-chip.dci-pchip-tg .dci-chip-main { color: var(--track-d); }
       .dci-date-chip.dci-pchip-tg:hover { border-color: var(--track); }
+      /* From the Discogs notes and not used yet: a suggestion like everywhere else */
+      .dci-date-chip.dci-pchip-sugg { border-style: dashed; border-color: var(--sugg-line); background: var(--sugg-bg); }
+      .dci-date-chip.dci-pchip-sugg .dci-iconbtn { border-left-color: #f0dc9a; }
       .dci-date-chip[draggable="true"] { cursor: grab; }
       .dci-date-chip .dci-chip-grip { padding: 2px 0 2px calc(var(--u, 1px) * 7); color: var(--muted); cursor: grab; letter-spacing: -1px; }
       .dci-date-chip .dci-chip-grip + .dci-chip-main { padding-left: calc(var(--u, 1px) * 4); }
@@ -14211,7 +17704,7 @@
       #dci-overlay.dci-dm-drag-tg tr.dci-row .dci-c-tracks.dci-dm-over::after, #dci-overlay.dci-dm-drag-tg tr[data-tracksrow].dci-dm-over .dci-picker::after { content: var(--dci-tg-replace); font-weight: 600; }
       #dci-overlay.dci-dm-drag-tg tr.dci-row .dci-c-tracks.dci-dm-over.dci-drop-add::after, #dci-overlay.dci-dm-drag-tg tr[data-tracksrow].dci-dm-over.dci-drop-add .dci-picker::after { content: var(--dci-tg-add); }
       .dci-dm-cell { border: 1px solid var(--date-line); border-left: 4px solid var(--date); border-radius: 4px; background: #fff; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); cursor: grab; }
-      .dci-dm-cell.dci-dm-auto { border-style: dashed; border-left-style: dashed; background: #fcfcff; }
+      .dci-dm-cell.dci-dm-auto { border-style: dashed; border-color: var(--sugg-line); border-left-style: solid; border-left-color: var(--date); background: var(--sugg-bg); }
       .dci-dm-cell.dci-dm-editing { box-shadow: 0 0 0 2px var(--date-line); }
       /* Separate days: choose the single days or the period */
       .dci-dm-cell.dci-dm-choose { border: 2px solid var(--warn); border-left-width: 4px; background: #fffaf0; }
@@ -14253,10 +17746,10 @@
       .dci-mbdate-tools select { max-width: calc(var(--u, 1px) * 170); font-size: calc(var(--u, 1px) * 12); }
       .dci-date-add { font-size: calc(var(--u, 1px) * 12); }
       /* A pool date being dragged: the date fields it can go onto */
-      #dci-overlay.dci-dm-drag-pool .dci-c-date, #dci-overlay.dci-dm-drag-pool .dci-mx-datebox, #dci-overlay.dci-dm-drag-pool .dci-mx-cell[data-col]:not(.dci-mx-locked),
+      #dci-overlay.dci-dm-drag-pool .dci-c-date, #dci-overlay.dci-dm-drag-pool [data-colhead] .dci-mx-card, #dci-overlay.dci-dm-drag-pool .dci-mx-cell[data-col]:not(.dci-mx-locked),
       #dci-overlay.dci-dm-drag-pool .dci-mx-cell.dci-mx-locked[data-fill],
       #dci-overlay.dci-dm-drag-pool .dci-pchip-date { outline: 1px dashed var(--date-line); outline-offset: -2px; }
-      #dci-overlay .dci-c-date.dci-dm-over, #dci-overlay .dci-mx-datebox.dci-dm-over, #dci-overlay .dci-mx-cell.dci-dm-over, #dci-overlay .dci-w-date.dci-dm-over,
+      #dci-overlay .dci-c-date.dci-dm-over, #dci-overlay.dci-dm-drag-date .dci-mx-card.dci-dm-over, #dci-overlay .dci-mx-cell.dci-dm-over, #dci-overlay .dci-w-date.dci-dm-over,
       #dci-overlay .dci-pchip-date.dci-dm-over, #dci-overlay .dci-dm-date.dci-dm-over { outline: 2px solid var(--date) !important; background: var(--date-bg); }
       #dci-overlay .dci-dm-cell .dci-dm-date { border-radius: 3px; }
 
@@ -14326,8 +17819,29 @@
     document.head.appendChild(style);
   }
 
+  // [3.3.2] The old script ("Import Discogs credits", another file) or a second copy must not run beside this one:
+  // both would answer every click. The one that came second stays out; whichever comes second, a warning says so.
+  function showTwiceWarning() {
+    if (document.getElementById('dci-twice')) return;
+    const box = document.createElement('div');
+    box.id = 'dci-twice';
+    box.setAttribute('role', 'alert');
+    box.style.cssText = 'margin: 8px 0 12px; padding: 10px 14px; max-width: 80ch; border: 1px dashed #e0a526; border-radius: 4px; background: #fff8db; color: #5b4300;';
+    box.textContent = tr('old.twice');
+    const bar = document.getElementById('dci-pagebar');
+    if (bar) bar.prepend(box);
+    else (document.getElementById('content') || document.body).prepend(box);
+    console.warn('[Credits-Importer] another copy of the importer runs on this page (the old "Import Discogs credits"?)');
+  }
+  if (document.getElementById('dci-styles')) {
+    showTwiceWarning();
+    return;
+  }
   document.addEventListener('dci:from-discogs', onFromDiscogs);
   injectStyles();
   insertLauncher();
   resumePanicIfRequested();
+  setTimeout(() => {
+    if (document.querySelectorAll('#dci-styles').length > 1) showTwiceWarning();
+  }, 3000);
 })();

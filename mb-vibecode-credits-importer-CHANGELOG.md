@@ -2,13 +2,19 @@
 
 All notable changes to both userscripts in this repository, newest first. Releases published together are listed together.
 
-- **Import** = MB x Vibecode: Import Discogs credits (`mb-discogs-credits-import.user.js`)
-- **COMPANION** = MB x Vibecode: Import Discogs credits COMPANION (`mb-discogs-credits-sync.user.js`)
+What changed in the code with each version (functions, stored data, texts, tests) is in the [code changes](mb-vibecode-credits-importer-CODE-CHANGES.md).
+
+- **Import** = MB x Vibecode: Credits Importer (`mb-vibecode-credits-importer.user.js`), called “MB x Vibecode: Import Discogs credits” (`mb-discogs-credits-import.user.js`) until 3.3.0
+- **COMPANION** = MB x Vibecode: Credits Importer Companion (`mb-vibecode-credits-importer-companion.user.js`), called “MB x Vibecode: Import Discogs credits COMPANION” (`mb-discogs-credits-sync.user.js`) until 1.6.0
+
+The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the main script reads more than Discogs now; the files followed with Import 3.3.1 and COMPANION 1.6.1, so both scripts are installed anew from their new URLs. The column names below stay.
 
 ## Overview
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
+| 2026-10-12 | 2.17.0 – 3.0.0 | – |
 | 2026-10-11 | 2.8.0 – 2.16.0 | 1.4.1 – 1.5.0 |
 | 2026-10-10 | 2.4.3 – 2.7.0 | 1.3.0 – 1.4.0 |
 | 2026-10-09 | 2.4.2 | 1.2.0 |
@@ -27,6 +33,12 @@ All notable changes to both userscripts in this repository, newest first. Releas
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-13 | Import 3.5.0 · COMPANION 1.7.0 | Supplement with a second source, on request only: another linked source or a pasted text is compared with the rows; what it adds (new roles, new entries) and where it differs is listed to take over by choice, rows it confirms get its mark (variant B). "Delete stored import …" starts the import of a release afresh. The Bandcamp spelling next to the release's artist credit and MusicBrainz. A fresh start: all stored data reset once |
+| 2026-10-13 | Import 3.3.0 · COMPANION 1.6.0 | New names: Credits Importer and Credits Importer Companion. Besides Discogs the main script reads Bandcamp albums (credits of the album, optionally of each track page) and pasted texts (booklet, liner notes, a list of musicians); names from there are only suggested. A preference list for physical and digital media decides which linked source is loaded, for digital releases Bandcamp first; a source chosen for a release is remembered |
+| 2026-10-12 | Import 3.0.0 | Rebuilt inside: Discogs is read by a source adapter that delivers a neutral list of credits (person with links, role as written, details, tracks, source); the rest of the script works only with that list. Nothing changes for you; it prepares other sources |
+| 2026-10-12 | Import 2.19.0 | Suggestions look the same everywhere: dashed and yellow (date matrix, works matrix, “li?”, entries from the Discogs notes not used yet in the pools); “Commissioned By” → commissioned on the works; “Live Recording By” → recording engineer and a hint for “live” |
+| 2026-10-12 | Import 2.18.0 | Works matrix in the look of the date matrix and more compact: column heads as cards, roles as chips, attributes (live, cover …) as short forms below each work; track groups can be dropped onto column heads, roles and attributes; track lists from the Discogs notes (“XYZ Publishing (1, 4, 6)”) as suggestions; “live” preselected only on new links |
+| 2026-10-12 | Import 2.17.0 | Choose the media before importing a release with several media; attributes (live, cover …) of the recording–work links in the works matrix, “live” preselected on live releases; “Music and lyrics by” → writer with “Song” preselected; the log can sit next to the edit note |
 | 2026-10-11 | Import 2.16.0 · COMPANION 1.5.0 | Status marks on every Discogs track line, each with the status of its track; “Directed By” is asked instead of assumed; columns can be taken out of the works matrix; column dates also go onto relationships MusicBrainz has without a date |
 | 2026-10-11 | Import 2.14.0 · COMPANION 1.4.4 | Works matrix: a date dropped onto a relationship already in MusicBrainz without a date is added to it (an edit); status marks also for credits of works that were new in the editor |
 | 2026-10-11 | Import 2.13.0 · COMPANION 1.4.3 | Track groups by drag & drop onto the tracks of rows; dates and track groups stay in the folded bar; status marks of work credits (composer, publisher) are checked on the works too |
@@ -52,6 +64,177 @@ All notable changes to both userscripts in this repository, newest first. Releas
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-13
+
+### Import 3.5.0
+
+#### Added
+
+- **Supplement with a second source** (stage 2, variant B of the mockup). The dashboard still imports one source; a second one only supplements it, and only on request, one after another:
+  - **Supplement with** below the source: a button per other linked source ("＋ Bandcamp …", "＋ Discogs …") and "＋ Text …" (a pasted text, with "Read text and supplement"). Nothing is read before the click.
+  - The second source is compared with the rows, row by row: the same entry (the same MusicBrainz entry, else the same name – case, accents and punctuation do not count), the same MusicBrainz relationship and instrument or vocal, the same tracks.
+  - **The same:** the row gets the mark of the second source next to the mark of its own (**DG BC**).
+  - **Only in the second source:** a suggestion in the list **Supplements from …**: a **new role** of an entry, or a **new entry** (with what MusicBrainz has for it: via its link, or entries of the same name – only shown).
+  - **Different tracks:** **differs**, with both track lists; until chosen the loaded source stays (row mark "BC ≠").
+  - Lines of a text that gave no credit: **not recognized**.
+  - A checkbox per suggestion (new roles and entries ticked, "differs" not), **select all**, **Take over selected**, **Discard all**. What is taken over goes into the entries with its mark (BC); new entries are looked up as the second source looks them up (Bandcamp: rule 4, names as suggestions). "differs", when ticked, gives the row the tracks of the second source.
+  - **remove** ends the supplement; what was taken over stays. A new import of the main source starts without supplements. Nothing of a supplement is stored.
+  - Edit note: "Also from: <URL>" below "Source:", and after "Done" what the second source confirmed, what was added from it only and where the sources differ (only rows with a MusicBrainz entry).
+  - The text source remembers the line each credit comes from ("Bandcamp says" in the list).
+
+### Import 3.4.0 · COMPANION 1.7.0
+
+#### Added
+
+- **Delete stored import …** next to the source: after a question, forgets what the script stored for the import of this release – date pool, track pool and date matrix, the source chosen for it, its media choice, the supplements, its log and, with the companion, its status marks – and imports the source anew, as the first time. What is staged in the relationship editor stays, and so does the safety list of created works.
+- COMPANION 1.7.0: "Delete stored import" also deletes the status of that release kept for the release page.
+
+#### Changed
+
+- **A fresh start** (asked for by the maintainer): the storage generation goes up to 4. With the update all stored settings and data of the main script are cleared once – this time the safety list of created works too – and the companion clears its shared storage and the cover box settings on Discogs. The update notice says so.
+
+### Import 3.3.2
+
+#### Added
+
+- **Spelling check for Bandcamp:** an entry found through its Bandcamp link shows its name on Bandcamp, in the release's artist credit (below the title) and in MusicBrainz side by side; spellings that differ from Bandcamp's are underlined and the line is yellow and dashed ("differs – please check: spelling on the artwork, a typo, or does MusicBrainz name it differently?"). It replaces "No alternative spelling on Bandcamp".
+- **The old script on the same page:** if "MB x Vibecode: Import Discogs credits" (or a second copy) runs too, a note above the import button says so and asks to delete it; the new script stays out when the old one started first.
+
+#### Changed
+
+- Entries keep the source they came from (for their link and the "by name" note).
+
+### Import 3.3.1 · COMPANION 1.6.1
+
+#### Changed
+
+- **New file names**, so everybody installs anew: `mb-vibecode-credits-importer.user.js` and `mb-vibecode-credits-importer-companion.user.js` (READMEs and this changelog as `mb-vibecode-credits-importer-…`). The old files `mb-discogs-credits-import.user.js` and `mb-discogs-credits-sync.user.js` get no more updates; delete the old scripts in the script manager, because the old and the new main script would both put a dashboard on the page. Settings, pools, rules and the list of created works stay (no reset).
+- Rule 4 for Bandcamp names: the band found through its Bandcamp link is compared with the **release's artist credit** (the name below the release title), not with the name of the MusicBrainz artist. "Test Band" on Bandcamp, "The Test Band" in MusicBrainz, credited "Test Band" on the release: assigned. Credited differently, or not part of the release's artist credit: a suggestion. The release is read with its artist credit for this (`inc=artist-credits`). Companies (labels found through a Bandcamp link) are still compared with their MusicBrainz name.
+- A suggestion found through a link says so: "Found via the Bandcamp link, but spelled differently (how the release names it) – a suggestion …" instead of "Same name in MusicBrainz"; the log says "the release names it differently in its artist credit (…)".
+
+### Import 3.3.0 · COMPANION 1.6.0
+
+#### Added
+
+- **Bandcamp as a source** (E2). The main script reads it itself; the companion is not needed for it.
+  - Found through any link of the release to a Bandcamp album page (purchase for download, streaming …); another album can be entered in the source field (`https://artist.bandcamp.com/album/name`).
+  - The page is loaded with `GM_xmlhttpRequest` (new permissions: `@grant GM_xmlhttpRequest`, `@connect bandcamp.com`; the script manager asks once). The script reads the album data Bandcamp puts into the page: title, track list, the credits text and the "about" text.
+  - The credits text is read like a pasted text (see 3.2.0). With **Read the credits of the track pages too** (on by default) each track page is loaded as well; its credits count only for that track, and its lines that are not understood are listed with the track number.
+  - Rule 4 for names: only the band itself has a link (its Bandcamp page). A MusicBrainz artist found through that link is assigned only when MusicBrainz spells it exactly as Bandcamp does; otherwise it is a suggestion and the log says "MusicBrainz spells it differently". Every other name is found by name and suggested.
+  - The edit note names the album page as its source ("Source: https://…bandcamp.com/album/…", "from Bandcamp (…)").
+- **Order of the sources**: a small foldable list under the source field, one for physical media and one for digital media (a release counts as digital when all its media are "Digital Media"). Drag & drop or ▲▼ change the order; the list that applies to this release is marked "(this release)". The first source in the list that the release links to is loaded. Defaults: physical Discogs, Bandcamp; digital Bandcamp, Discogs. Remembered in `dci-source-order`.
+- A source chosen for a release by hand (in the picker or the field) is remembered for that release and comes before the list (`dci-source-pick`, the last 200 releases); the log says so.
+- **Bandcamp menu** (foldable, under the source field): the switch for the track pages (`dci-bc-tracks`), and **Test page** – loads a Bandcamp album URL and says what it found ("Read: “Title”, 9 tracks, 12 lines of credits, 9 track pages (via GM_xmlhttpRequest)"), for checking whether Bandcamp can be reached from the browser at all.
+- "↺ Defaults" also resets the order of the sources, the chosen sources and the track pages switch.
+
+#### Changed
+
+- The source picker lists every linked source ("Discogs 1234", "Bandcamp artist.bandcamp.com/album/name"); without a link: "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text."
+- Texts that named Discogs as the source name the loaded source now (role column, "whole release", the reasons in the matrices, messages, the log).
+- COMPANION 1.6.0: only the new name (see 3.1.0). It shows Discogs releases only; with Bandcamp or a text as the source it stays idle.
+
+### Import 3.2.0
+
+#### Added
+
+- **Credits from a pasted text** (E1): **Paste text …** under the source field opens a field for the text and one for where it is from (booklet, a URL …, for the edit note); **Read text** makes it the source of the dashboard. It understands one credit per line:
+  - "Name – guitar, vocals", "Name: bass, vocals", "Name (roles)"; "Guitar: Name, Name"; roles from the mapping register, in the same notation as Discogs ("Arranged By [Strings]").
+  - "Written by A, mixed by B" (two clauses in one line), "Mixed and mastered by X", "Strings arranged by Z" (→ "Arranged By [Strings]"), "Music and lyrics by Y".
+  - Places: "Recorded live at Place, City, 12 May 2019 by Name" (a person and the place), "Mastered by A at Studio", "Recorded 12–14 May 2019 at Studio X".
+  - Tracks: "Tracks 3–5: …", "… (tracks 1, 4)", "… on track 2", "… (1, 3)" – only when they name tracks of this release (the MusicBrainz tracks); otherwise the line is for the whole release.
+  - "℗ 2019 Label" and "© 2019 Label"; companies such as "Published by X" with their tracks (they reach the works matrix like track lists in the notes, S022).
+  - Lines without credits are listed under the source as "n lines not recognized", to add by hand or to rewrite and read again.
+- Names from a text have no links. The script looks for the same name in MusicBrainz (artists, labels, places; also aliases) and offers the hits as suggestions (dashed and yellow); a click assigns one. Nothing is assigned by itself.
+- Edit note: "Source: <where it is from>" and "… from a pasted text (…)".
+
+#### Changed
+
+- Track lists in the text are read with the credits, not again as notes (S022).
+- The personal publisher evidence (S014) leaves a company alone that the source gives for some tracks only.
+
+### Import 3.1.0 · COMPANION 1.6.0
+
+#### Changed
+
+- New names: **MB x Vibecode: Credits Importer** (before: "Import Discogs credits") and **MB x Vibecode: Credits Importer Companion** (before: "… COMPANION"). The dashboard title, the button ("Import credits …"), the edit notes and the message after an update use them.
+- Script managers know a script by its name: the new version may be installed next to the old one. Then delete the old scripts once. Settings, pools, rules and the list of created works stay (they are stored in the browser, not in the script); the companion keeps the place of its cover box, and the status marks of the last releases come back when their dashboards are opened again. No reset.
+
+## 2026-10-12
+
+### Import 3.0.0
+
+#### Changed
+
+- Built in two parts (no visible change, no reset: settings, pools, rules and the list of created works stay):
+  - **Source adapter (Discogs):** the only part that reads Discogs – its API (releases, artists, labels), its JSON, its URLs, numbered names ("Name (2)"), headings and index tracks, track specifications ("A1 to A3"), the parent label of a series, aliases, members and groups of an artist. It delivers a **neutral release**: tracks; credits as "who (id, name, name as written, links) – role as written with role and details – name as credited – tracks (whole release, a list with what could not be resolved, or one track)"; companies with catalog number; series; notes and format words.
+  - **Core:** everything else works with the neutral release only – entries and rows (grouping per person, engineer tasks split by S018), finding MB entries through the links (also through aliases), dates and the date matrix, track lists in the notes, "live", series, the forms for new artists, labels, series and works, edit notes, the release picker, the Discogs tab of the companion.
+- Checked against 2.19.1: the same entries, roles, tracks and companies for the test releases; all browser tests give the same results, also with data stored by 2.19.1.
+
+### Import 2.19.1
+
+#### Changed
+
+- "li?" and the preselected "live" say more exactly why when a track is a live recording: "Live recording – Discogs credits “Live Recording By” (Name) for this track" (or "for the whole release" when the credit names no tracks), with the Discogs role as written ("Recorded Live By" …) and the name. A track title saying live is a live recording too. "Live release" stays for the release group, the format and the notes.
+
+### Import 2.19.0
+
+#### Added
+
+- "Commissioned By" → the work relationship commissioned ("was commissioned by"), for persons (rule R099) and labels (companies, rule C037), as a column of the works matrix. Without tracks it is a suggestion on every work (rule S024; × takes it out of a work, ✓ keeps it, the rest is staged); with tracks it is set on the works of those tracks. The cells say why. "Commissioned by X (2)" in the Discogs notes works like the other track lists (S022). "Funded By" stays as it was.
+- "Live Recording By" (also "Live Recording", "Live Recorded By", "Recorded Live By", "Live Recording Engineer", "Engineer [Live Recording]") → recording (recording engineer) on the recording level, without role credit (R031, W007). It is a hint for "live" (S021): preselected only on the new links of its tracks (the whole release when it names no tracks); a link already in MusicBrainz is only offered "li?".
+- Dates and track groups from the Discogs notes are suggestions in the pools until they are used: dropped onto a row, the matrix or a date, or placed by hand (the dates also when a row uses them). "Load again from Discogs" makes them suggestions again.
+- Every column of the works matrix with suggested cells counts them in its head ("4 suggestions"), not only publishers.
+
+#### Changed
+
+- One look for all suggestions: yellow with an amber dashed border, the coloured left edge stays (date matrix purple, works matrix blue). This covers the suggested dates in the date matrix, the suggested cells of the works matrix (publisher evidence, Discogs notes, "Commissioned By"), the offered "li?" and the unused entries from the Discogs notes in the pools. The help of the date matrix and the messages say "dashed and yellow".
+- What is dashed but no suggestion looks different now: "some works have it" in "Attributes for all" is half filled; "… waits for a work" is grey dotted. Dashed outlines while dragging stay.
+- "Commissioned By" is no longer "miscellaneous support" (R095).
+
+### Import 2.18.0
+
+#### Added
+
+- Track lists in the Discogs notes (rule S022): "XYZ Publishing (1, 4, 6)", "Published by X (tracks 1–3)", "Written by Y (2, 5)", "Tracks 1, 4 & 6 published by Z" become track groups in the pool; when the name is an entry of the dashboard, its work-level roles get these tracks as suggestions, ahead of the personal publisher evidence. Names are compared generously (case, accents, spaces, hyphens, punctuation, "&"/"and", Ltd./GmbH/Inc. …, one typo; as a last step without generic words like Publishing, Music, Verlag – marked "similar name"). Credits Discogs gives on these tracks already are left alone; names that are no entry only give the track group.
+- Track groups dropped onto the works matrix (rule S023): onto a column head (all its roles only for the works of the group's tracks), onto one role in the head, or onto an attribute in the head of the first column; Shift adds instead. MusicBrainz's own relationships and attributes stay.
+- Suggested cells (publisher evidence, Discogs notes) are dashed, with ✓ (keep) and × (take out).
+- "Spell out" in the head of the works matrix: the attribute names instead of the short forms (remembered, `dci-wattr-long`; "↺ Defaults" sets it back). "Open all rows" opens the attributes of every work.
+
+#### Changed
+
+- Works matrix in the look of the date matrix, much more compact:
+  - Column heads are cards: name and ▾ (menu) « (fold) ✕ (take out); the roles as chips with the number of works; the column date as a date chip; "credited as" stays visible. The column date fields, "all works" and the publisher tools ("for all works", "check evidence", personal publishers to add as a column) are in the ▾ menu, which closes with a click elsewhere. A pool date dropped onto the head sets the column date.
+  - Cells show the roles as chips: green with a lock – in MusicBrainz; solid – planned; dashed – suggested; grey dashed – waits for a work; an empty cell a dotted "+".
+  - The first column: the track in one line (Discogs position on the right), the work in the next (linked, new, found – or ＋ New work · Search · via form … with ⓘ for the search result); the work type and languages of a new work in short ("▸ Song · English"), opened with a click.
+- Attributes of the links recording → work as two-letter short forms below each work (ac, co, de, in, ka, li, me, pa) instead of checkboxes. A work with an attribute (in MusicBrainz, set, preselected or offered) always shows them all; one without any is closed ("none ▸ Attributes"). "Attributes for all" in the head of the first column (dashed: some works have it).
+- "live" (rule S021) is preselected only on new links (a new work, or a work linked here). Links that exist in MusicBrainz keep their attributes – live albums often have studio tracks; "live" is only offered there ("li?").
+- Publisher evidence (personal publisher, S014) ticks its works as suggestions (dashed) instead of plain ticks.
+
+### Import 2.17.0
+
+#### Added
+
+- Media choice before every import of a release with several media: a button per medium, All / None and a text field ("1-4, 5, 8") that follow each other, and "Also import relationships on the release level (release and release group)". Only the credits of the chosen media come in; credits without track information go onto their tracks; release and release group credits only with the checkbox. The works matrix, the dates from the Discogs notes, the track pool's media and the medium list cover only the chosen media. "Remember this choice for this release" preselects it next time (still asked); "Choose media …" in the toolbar asks again and imports anew after a confirmation. All media with the release level (preselected) is the import as before.
+- Works matrix: attributes of the link between recording and work (live, cover, medley, partial, instrumental … – those MusicBrainz offers), per row and "all:" in the head. Planned links get them when staged; for links already in MusicBrainz an attribute ticked here is added to the link (an edit, ✎, ✎✓ once staged; edit note line "added attributes (live, cover …) to … existing links").
+- "live" preselected on the links (rule S021): for all of them when the release group is Live in MusicBrainz, a Discogs format says Live or the notes say "recorded live"; for one when its track title says so ("(Live)", "[Live]", "(Live at …)", "– Live"). Shown with the reason; unticking takes it back.
+- "Music And Lyrics By", "Words And Music By", "Songs By" and the like → writer (rule R098); the column head of the works matrix says "Music and lyrics in one credit: MusicBrainz “writer”" with R098. New works get the type "Song" preselected (rule S020) – for all new works when the credit is for the whole release, otherwise for its tracks; a type chosen by hand stays.
+- "Bass Guitar" asks bass guitar · electric bass guitar · acoustic bass guitar (question Q004); without a choice it stays bass guitar.
+- The log can sit in the page next to MusicBrainz's edit note: "Place:" in the log's head – window (default), left of / right of the edit note (the edit note keeps its place and gets the rest of its width, the log takes its height) or above it (height can be dragged, remembered). Too narrow beside it → above, with a note. Remembered; "↺ Defaults" sets it back.
+- "n rows incomplete" in the summary: ‹ and › (or a click on the count) jump through the incomplete rows ("1/2") and light up what is missing (artist match, type, date or instrument).
+- Copyright dates written "©©" on Discogs (rule D015): "©© Fuzzoramarecords 2005" → ℗/© 2005.
+
+#### Changed
+
+- Instrument questions (Q001 "Bass", Q002 "Guitar", Q004 "Bass Guitar"): without a choice the row has no role credit any more – it would only repeat the instrument. With a choice the Discogs word stays the role credit ("electric bass guitar" credited as "bass").
+- A detail that only repeats the role is no role credit (rule S019): "Mixed By [Mixing]" → mix without credit.
+- "All Music By" and "All Music" → composer (rule R003).
+- "Additional Musicians", "Additional Personnel" and misspellings such as "Additonal" tick "additional" (rule S002): "Trombone [Additonal Musicians]" → trombone, additional, no credit.
+- Date keywords count as whole words only ("Fuzzoramarecords" is no "record"), and capitalised words after ℗/© in the same sentence belong to a name.
+- Text size down to 50 % (was 80 %).
+- Escape closes the "Mapping rules" window first; the dashboard stays open.
+- After creating an artist, label, place, series or work through a form, the dashboard stays at the entry or works matrix row you came from (also after it is redrawn), unless you scrolled.
+- The medium list says "1 track" instead of "1 tracks".
 
 ## 2026-10-11
 
