@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.10.0
-// @date         2026-10-16
+// @version      3.12.0
+// @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
 // @description:es Panel de importación en el editor de relaciones de la publicación: revisa los créditos de la publicación de Discogs o del álbum de Bandcamp enlazados (o de un texto pegado), asigna artistas mediante enlaces o nombres, elige roles, nivel y pistas y prepáralos como relaciones. El envío («Enter edit») siempre lo haces tú.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.10.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.12.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -796,6 +796,7 @@
       "ms.3.3.0": "New name: Credits Importer (and Credits Importer Companion). Besides Discogs it reads Bandcamp albums (credits, also those of the track pages) and pasted texts (booklet, liner notes): names there are only suggested. A preference list per physical and digital media decides which linked source is loaded; for digital releases Bandcamp comes first",
       "ms.3.5.0": "Supplement with a second source, on request only: “Supplement with …” reads another linked source or a pasted text and lists what it adds (new roles, new entries) and where it differs, to take over by choice; rows it confirms get its mark. “Delete stored import …” starts the import of a release afresh. The Bandcamp spelling is shown next to the release’s artist credit and MusicBrainz. A fresh start: all stored data was reset once",
       "ms.3.10.0": "The rows of an entry rearrange with the width of the dashboard (relationship and attributes, level, date and tracks one above the other in a narrow window); a date from the pool or the matrix is a chip, its fields open with ✎, begin above end. Dates of the date matrix can be marked “Release level”. Texts: “tenor & soprano sax”, recording place and dates in Bandcamp’s “about” text, name suggestions without accents and with middle names; supplement with any Discogs or Bandcamp URL",
+      "ms.3.12.0": "Rebuilt inside: all mapping rules and word lists in one place of the script (the mapping register), the role rules as plain data. What the script makes of a source stays the same – checked with about 1,200 roles, 100 company roles, 50 date phrases and pasted texts. “Mapping rules” also lists the tables and word lists now (read only) and shows the right level for 27 rules (e.g. “Written-By”: work, “Artwork”: release)",
       "ms.2.14.0": "Works matrix: a date dropped onto a relationship already in MusicBrainz without a date is added to it (an edit); status marks also for credits of works that were new in the editor",
       "ms.2.13.0": "Track groups by drag & drop onto the tracks of rows; dates and track groups stay in the folded bar; status marks of work credits (composer, publisher) are checked on the works too",
       "ms.2.11.0": "After an update, a message shows the milestones of the new version",
@@ -995,6 +996,8 @@
       "rules.applied": "Rules applied",
       "rules.code": "Code",
       "rules.tables": "Tables of the register",
+      "rules.lists": "Tables and word lists (read only)",
+      "rules.listsHint": "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; they change with an update of the script.",
       "instrAsk.ask": "Discogs only says “{name}”. Do you know which one it is?",
       "instrAsk.otherwise": "(otherwise it stays “{credit}”, without a role credit; with another choice the role credit is “{credit}”)",
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
@@ -1930,6 +1933,7 @@
       "ms.3.3.0": "Neuer Name: Credits Importer (und Credits Importer Companion). Neben Discogs liest er Bandcamp-Alben (Credits, auch die der Track-Seiten) und eingefügte Texte (Booklet, Liner Notes): Namen daraus werden nur vorgeschlagen. Eine Prioritätsliste für physische und digitale Medien bestimmt, welche verknüpfte Quelle geladen wird; bei digitalen Releases zuerst Bandcamp",
       "ms.3.5.0": "Ergänzen mit einer zweiten Quelle, nur auf Wunsch: „Ergänzen mit …“ liest eine weitere verknüpfte Quelle oder einen eingefügten Text und listet, was sie ergänzt (neue Rollen, neue Einträge) und wo sie abweicht – zum Übernehmen nach Wahl; Zeilen, die sie bestätigt, bekommen ihr Kürzel. „Gespeicherten Import löschen …“ beginnt den Import eines Releases neu. Die Bandcamp-Schreibweise steht neben Artist Credit des Releases und MusicBrainz. Ein Neuanfang: alle gespeicherten Daten wurden einmal zurückgesetzt",
       "ms.3.10.0": "Die Zeilen eines Eintrags ordnen sich nach der Breite des Dashboards (in einem schmalen Fenster Beziehung und Attribute, Ebene, Datum und Tracks untereinander); ein Datum aus Pool oder Matrix ist ein Chip, seine Felder öffnet ✎, Beginn über Ende. Daten der Datums-Matrix lassen sich als „Release-Ebene“ markieren. Texte: „tenor & soprano sax“, Aufnahmeort und -daten im „about“-Text von Bandcamp, Namensvorschläge ohne Akzente und mit Mittelnamen; Ergänzen mit jeder Discogs- oder Bandcamp-URL",
+      "ms.3.12.0": "Innen umgebaut: alle Mapping-Regeln und Wortlisten an einem Ort im Skript (das Mapping-Register), die Rollenregeln als reine Daten. Was das Skript aus einer Quelle macht, bleibt gleich – geprüft mit rund 1.200 Rollen, 100 Firmenrollen, 50 Datumsangaben und eingefügten Texten. „Mapping-Regeln“ zeigt jetzt auch die Tabellen und Wortlisten (nur lesen) und bei 27 Regeln die richtige Ebene (z. B. „Written-By“: Werk, „Artwork“: Release)",
       "ms.2.14.0": "Werk-Matrix: Ein Datum auf einer Beziehung, die schon ohne Datum in MusicBrainz ist, wird ihr hinzugefügt (eine Bearbeitung); Statusmarken auch für Credits von Werken, die im Editor neu angelegt wurden",
       "ms.2.13.0": "Track-Gruppen per Drag & Drop auf die Tracks von Zeilen; Daten und Track-Gruppen bleiben in der eingeklappten Leiste; Statusmarken von Werk-Credits (Composer, Publisher) werden auch an den Werken geprüft",
       "ms.2.11.0": "Nach einem Update zeigt eine Nachricht die Meilensteine der neuen Version",
@@ -2129,6 +2133,8 @@
       "rules.applied": "Angewandte Regeln",
       "rules.code": "Code",
       "rules.tables": "Tabellen des Registers",
+      "rules.lists": "Tabellen und Wortlisten (nur lesen)",
+      "rules.listsHint": "Womit das Register außer den Regeln liest: Details, Wörter in Texten, Daten, Datumsgruppen, „live“ in Titeln, Rollen in den Notizen. Sie lassen sich nicht abschalten; sie ändern sich mit einem Update des Skripts.",
       "instrAsk.ask": "Discogs sagt nur „{name}“. Weißt du, welches Instrument es ist?",
       "instrAsk.otherwise": "(sonst bleibt es „{credit}“, ohne Rollen-Credit; bei einer anderen Wahl ist der Rollen-Credit „{credit}“)",
       "log.instrPicked": "{name}: {instrument} (Rollen-Credit „{credit}“)",
@@ -3064,6 +3070,7 @@
       "ms.3.3.0": "Nuevo nombre: Credits Importer (y Credits Importer Companion). Además de Discogs lee álbumes de Bandcamp (créditos, también los de las páginas de pista) y textos pegados (libreto, notas): los nombres de ahí solo se sugieren. Una lista de preferencia para medios físicos y digitales decide qué fuente enlazada se carga; en publicaciones digitales primero Bandcamp",
       "ms.3.5.0": "Completar con una segunda fuente, solo si se pide: «Completar con…» lee otra fuente enlazada o un texto pegado y lista lo que añade (roles nuevos, entradas nuevas) y en qué difiere, para adoptarlo a elección; las filas que confirma llevan su marca. «Borrar la importación guardada…» empieza de nuevo la importación de una publicación. La grafía de Bandcamp se muestra junto al crédito de artista de la publicación y MusicBrainz. Un nuevo comienzo: todos los datos guardados se restablecieron una vez",
       "ms.3.10.0": "Las filas de una entrada se reorganizan según el ancho del panel (en una ventana estrecha relación y atributos, nivel, fecha y pistas uno encima de otro); una fecha del pool o de la matriz es un chip, ✎ abre sus campos, inicio sobre fin. Las fechas de la matriz pueden marcarse «Nivel de publicación». Textos: «tenor & soprano sax», lugar y fechas de grabación en el texto «about» de Bandcamp, sugerencias de nombres sin acentos y con segundos nombres; completar con cualquier URL de Discogs o Bandcamp",
+      "ms.3.12.0": "Reconstruido por dentro: todas las reglas de asignación y listas de palabras en un solo lugar del script (el registro), las reglas de roles como datos. Lo que el script hace con una fuente no cambia: comprobado con unos 1200 roles, 100 roles de empresas, 50 fechas y textos pegados. «Reglas de asignación» muestra ahora también las tablas y listas de palabras (solo lectura) y el nivel correcto de 27 reglas (p. ej. «Written-By»: obra, «Artwork»: publicación)",
       "ms.2.14.0": "Matriz de obras: una fecha soltada sobre una relación que ya está en MusicBrainz sin fecha se le añade (una edición); marcas de estado también para créditos de obras nuevas en el editor",
       "ms.2.13.0": "Grupos de pistas con arrastrar y soltar sobre las pistas de las filas; fechas y grupos de pistas quedan en la barra plegada; las marcas de estado de los créditos de obra (compositor, editorial) se comprueban también en las obras",
       "ms.2.11.0": "Tras una actualización, un mensaje muestra los hitos de la nueva versión",
@@ -3263,6 +3270,8 @@
       "rules.applied": "Reglas aplicadas",
       "rules.code": "Código",
       "rules.tables": "Tablas del registro",
+      "rules.lists": "Tablas y listas de palabras (solo lectura)",
+      "rules.listsHint": "Lo que el registro usa además de las reglas: detalles, palabras de los textos, fechas, grupos de fechas, «live» en los títulos, roles en las notas. No se pueden desactivar; cambian con una actualización del script.",
       "instrAsk.ask": "Discogs solo dice «{name}». ¿Sabes qué instrumento es?",
       "instrAsk.otherwise": "(si no, queda «{credit}», sin crédito del rol; con otra elección el crédito del rol es «{credit}»)",
       "log.instrPicked": "{name}: {instrument} (crédito del rol «{credit}»)",
@@ -4198,6 +4207,7 @@
       "ms.3.3.0": "Nouveau nom : Credits Importer (et Credits Importer Companion). En plus de Discogs, il lit les albums Bandcamp (crédits, aussi ceux des pages de piste) et les textes collés (livret, notes de pochette) : les noms qui en viennent sont seulement suggérés. Une liste de préférence pour supports physiques et numériques décide quelle source liée est chargée ; pour les parutions numériques, Bandcamp d’abord",
       "ms.3.5.0": "Compléter avec une seconde source, sur demande seulement : « Compléter avec… » lit une autre source liée ou un texte collé et liste ce qu’elle ajoute (nouveaux rôles, nouvelles entrées) et où elle diverge, à reprendre au choix ; les lignes qu’elle confirme portent sa marque. « Supprimer l’import enregistré… » recommence l’import d’une parution. La graphie Bandcamp s’affiche à côté du crédit d’artiste de la parution et de MusicBrainz. Un nouveau départ : toutes les données enregistrées ont été réinitialisées une fois",
       "ms.3.10.0": "Les lignes d’une entrée se réorganisent selon la largeur du tableau (dans une fenêtre étroite relation et attributs, niveau, date et plages les uns sous les autres) ; une date du pool ou de la matrice est une puce, ✎ ouvre ses champs, début au-dessus de fin. Les dates de la matrice peuvent être marquées « Niveau parution ». Textes : « tenor & soprano sax », lieu et dates d’enregistrement dans le texte « about » de Bandcamp, suggestions de noms sans accents et avec deuxièmes prénoms ; compléter avec n’importe quelle URL Discogs ou Bandcamp",
+      "ms.3.12.0": "Reconstruit à l’intérieur : toutes les règles de correspondance et listes de mots en un seul endroit du script (le registre), les règles de rôles comme simples données. Ce que le script fait d’une source ne change pas – vérifié avec environ 1 200 rôles, 100 rôles de sociétés, 50 dates et des textes collés. « Règles de correspondance » montre maintenant aussi les tables et listes de mots (lecture seule) et le bon niveau pour 27 règles (p. ex. « Written-By » : œuvre, « Artwork » : parution)",
       "ms.2.14.0": "Matrice des œuvres : une date déposée sur une relation déjà présente dans MusicBrainz sans date lui est ajoutée (une modification) ; marques d’état aussi pour les crédits d’œuvres créées dans l’éditeur",
       "ms.2.13.0": "Groupes de plages par glisser-déposer sur les plages des lignes ; dates et groupes de plages restent dans la barre repliée ; les marques d’état des crédits d’œuvre (compositeur, éditeur) sont aussi vérifiées sur les œuvres",
       "ms.2.11.0": "Après une mise à jour, un message présente les étapes clés de la nouvelle version",
@@ -4397,6 +4407,8 @@
       "rules.applied": "Règles appliquées",
       "rules.code": "Code",
       "rules.tables": "Tables du registre",
+      "rules.lists": "Tables et listes de mots (lecture seule)",
+      "rules.listsHint": "Ce que le registre utilise en plus des règles : détails, mots des textes, dates, groupes de dates, « live » dans les titres, rôles dans les notes. Elles ne peuvent pas être désactivées ; elles changent avec une mise à jour du script.",
       "instrAsk.ask": "Discogs dit seulement « {name} ». Savez-vous de quel instrument il s’agit ?",
       "instrAsk.otherwise": "(sinon cela reste « {credit} », sans crédit du rôle ; avec un autre choix le crédit du rôle est « {credit} »)",
       "log.instrPicked": "{name} : {instrument} (crédit du rôle « {credit} »)",
@@ -4660,29 +4672,23 @@
   }
 
   // ===========================================================================
-  // 2. Sources: an adapter turns a source (Discogs) into a neutral release; the core only reads that
+  // 2. Mapping register: everything that turns what a source writes into MusicBrainz
   // ===========================================================================
   //
-  // The neutral release – what a source adapter delivers and everything after this section works with:
-  //   { source, id, url, title, country, notes, tags, tracks, credits, companies, series }
-  //   source     the adapter's id ("discogs"); id and url: the release at the source
-  //   notes      free text about the release (liner notes): dates, live, track lists are read from it
-  //   tags       words describing the release, in lower case ("cd", "album", "live" …)
-  //   tracks     [{ position, title, aliases }] in the order of the source, without headings
-  //   credits    one per person and role, in the order of the source:
-  //              { who, role, base, details, credited, tracks }
-  //                who       { id, name, rawName, links } – the source's own id (0: none), the name to show,
-  //                          the name as written there, and the URLs MusicBrainz may have for it
-  //                role      the role as written ("Guitar [Electric]"); base and details: its parts
-  //                credited  the name as credited on this release ('' = the name itself)
-  //                tracks    { all: true } – the whole release; { indexes, spec, unresolved } – a list of
-  //                          the release ("A1 to A3"); { indexes, position } – a credit on one track
-  //   companies  { who, role, catno, tracks } – labels, studios and the like with their role (tracks: null = all)
-  //   series     { id, name, number, links }
-  //   optional:  noteSource – the source as the edit note names it (else url); unrecognized – lines of a text
-  //              that gave no credit
-  // A role is written in the dashboard's notation, the one Discogs uses: "Role [Detail, Detail]", several
-  // roles separated by commas. Mapping (rules R, W, C, S …) is the core's business, not the adapter's.
+  // One place for the rules and word lists the sources are read with (the dashboard's window "Mapping rules"
+  // lists them all, with their ids):
+  //   2a  Role notation          "Role [Detail, Detail]", the common language of all sources (Discogs' notation)
+  //   2b  Own rules, switches    U001 … and switched-off rules (browser storage: dci-user-rules, dci-rules-off)
+  //   2c  Rule lists             W wording, S special rules (index), Q questions, C companies, R roles (roleRules)
+  //   2d  Tables and word lists  T001 … (TABLES): instruments, words, details, texts, dates, date groups, live, notes
+  //   2e  Applying the rules     mapRole, mapCompanyRole, instrument candidates, wording and role credits
+  //   2f  Dates in free text     D001 … (DATE_RULES, DATE_MATCHERS, findDates)
+  // The rules S… act where their feature is (the index in 2c names the place). Ids never change: own rules and
+  // switched-off rules are stored by id. The adapters (section 3) read the word lists of 2d directly; whether a
+  // phrase is a role or a company is asked through their context (isRole, isCompanyRole), as that needs MusicBrainz.
+
+
+  // --- 2a. Role notation -----------------------------------------------------------------------------------------------
 
   /** Splits at commas that are not inside square brackets. */
   function splitTopLevel(str) {
@@ -4722,7 +4728,6 @@
    * [S018] An engineer with several tasks ("Engineer [Mix, Recording]") is one role per task – mix and recording –
    * each with the other details ("Engineer [Mix, Recording, Assistant]" → both assistant).
    */
-  const ENGINEER_TASK_RE = /^(mix|mixing|mixed|mixdown|recording|recorded|tracking|mastering|mastered|overdubs?|overdubbing)$/i;
   function splitEngineerTasks(role) {
     if (!/^(engineer|engineered by|engineering)$/i.test(role.base) || !ruleOn('S018')) return [role];
     const tasks = role.mods.filter((m) => ENGINEER_TASK_RE.test(m.trim()));
@@ -4733,6 +4738,1135 @@
       return { raw: `${role.base} [${mods.join(', ')}]`, base: role.base, mods, splitFrom: role.raw };
     });
   }
+
+
+  // --- 2b. Own rules (U001 …) and switched-off rules, stored in this browser -------------------------------------------
+
+  const USER_RULES_KEY = 'dci-user-rules';
+
+  const RULES_OFF_KEY = 'dci-rules-off';
+
+  let userRulesCache = null;
+
+  let rulesOffCache = null;
+
+  function loadStore(key, fallback) {
+    try {
+      return JSON.parse(localStorage.getItem(key)) || fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  /** Own rules: { id, kind: 'role' | 'instrument', on, discogs, details, detailsMode, type, level, instrument, credit }. */
+  function userRules() {
+    if (!userRulesCache) userRulesCache = loadStore(USER_RULES_KEY, []);
+    return userRulesCache;
+  }
+
+  /** Ids of built-in rules that are switched off (R…, W…, Q…, C…, S…). */
+  function rulesOff() {
+    if (!rulesOffCache) rulesOffCache = new Set(loadStore(RULES_OFF_KEY, []));
+    return rulesOffCache;
+  }
+
+  function saveRules() {
+    try {
+      localStorage.setItem(USER_RULES_KEY, JSON.stringify(userRules()));
+      localStorage.setItem(RULES_OFF_KEY, JSON.stringify([...rulesOff()]));
+    } catch (e) {
+      console.warn('[Discogs-Credits] rules not saved', e);
+    }
+  }
+
+  function ruleOn(id) {
+    return !rulesOff().has(id);
+  }
+
+  /** Instrument spellings: own ones first, then the built-in table (T001). */
+  function aliasesFor(key) {
+    const own = userRules().filter((u) => u.kind === 'instrument' && u.on !== false && norm(u.discogs) === key).map((u) => u.instrument);
+    return [...own, ...(INSTRUMENT_ALIASES[key] || [])];
+  }
+
+  const CHECKBOX_DETAILS = ['additional', 'guest', 'solo', 'uncredited'];
+
+  /** The first own role rule that fits the Discogs role (b) and its details (ms). */
+  function ownRuleResult(b, ms, consumed, out) {
+    const det = ms.filter((x) => !CHECKBOX_DETAILS.includes(x)).map(norm).sort().join(', ');
+    for (const ur of userRules()) {
+      if (ur.kind !== 'role' || ur.on === false || norm(ur.discogs) !== b) continue;
+      const want = String(ur.details || '').split(',').map(norm).filter(Boolean).sort().join(', ');
+      if (ur.detailsMode === 'exact' ? det !== want : (want && !det.includes(want))) continue;
+      if (ur.credit) ms.forEach((x) => { if (!CHECKBOX_DETAILS.includes(x)) consumed.add(x); });
+      const level = ur.level || 'recording';
+      const res = out([ur.type], {
+        level, ...(level === 'work' ? { work: true } : {}),
+        primaryCands: ur.instrument ? [ur.instrument] : instrumentCandidates(b, ms),
+        ...(ur.credit ? { credit: ur.credit } : {}),
+      });
+      res.rule = ur.id;
+      return res;
+    }
+    return null;
+  }
+
+
+  // --- 2c. Rule lists: wording (W), special rules (S, index), questions (Q), companies (C), roles (R) ------------------
+
+  /**
+   * Wording rules: the role credit for a Discogs role (with its details, in either order), where the
+   * general rules would not find it. The phrase is the role and its details in lower case.
+   */
+  const WORDING_RULES = [
+    { id: 'W001', where: 'wordingRuleFor, roleCreditFor', note: 'Upright bass is a double bass; the Discogs word stays as role credit', phrases: ['upright bass', 'bass upright'], credit: 'upright bass' },
+    { id: 'W002', where: 'wordingRuleFor, roleCreditFor', note: 'Contrabass is a double bass; the Discogs word stays as role credit', phrases: ['contrabass', 'bass contrabass', 'contrabass bass'], credit: 'contrabass' },
+    { id: 'W003', where: 'wordingRuleFor, roleCreditFor', note: 'Kontrabass (German) is a double bass; kept as a German noun with a capital letter', phrases: ['kontrabass', 'bass kontrabass', 'kontrabass bass'], credit: 'Kontrabass' },
+    { id: 'W004', where: 'wordingRuleFor, roleCreditFor', note: '"Horn [French]" and "French Horn" are the MusicBrainz instrument French horn, without role credit', phrases: ['horn french', 'french horn'], credit: '' },
+    { id: 'W005', where: 'wordingRuleFor, roleCreditFor', note: '"Flugel Horn" (also Flügelhorn) is the MusicBrainz instrument flugelhorn, without role credit', phrases: ['flugel horn', 'flugelhorn', 'flügelhorn', 'flugel-horn'], credit: '' },
+    { id: 'W006', where: 'wordingRuleFor, roleCreditFor', note: '"Mix", "Mixed By", "Engineer [Mix]" … are the MusicBrainz relationship mix, without role credit', phrases: ['mix', 'mixing', 'mixed by', 'mixed-by', 'mix engineer', 'mixing engineer', 'engineer mix', 'engineer mixing', 'engineered by mix', 'mixdown', 'engineer mixdown'], credit: '' },
+    { id: 'W007', where: 'wordingRuleFor, roleCreditFor', note: '"Recording", "Recorded By", "Engineer [Recording]", "Live Recording By" … are the MusicBrainz relationship recording (recording engineer), without role credit', phrases: ['recording', 'recorded by', 'recorded-by', 'recording engineer', 'engineer recording', 'engineered by recording', 'recording by', 'tracking', 'tracked by', 'engineer tracking', 'live recording by', 'live recording', 'live recorded by', 'recorded live by', 'live recording engineer'], credit: '' },
+  ];
+
+  /**
+   * Rules with their own handling elsewhere in the script, listed here so that every rule can be found
+   * in one place (the dashboard's "Mapping rules" shows them).
+   */
+  const SPECIAL_RULES = [
+    { id: 'S001', where: 'mapRoleInner', note: '"Additional …" at the start of a role ticks the "additional" checkbox ("Additional Synths" → synthesizer, additional)' },
+    { id: 'S002', where: 'mapRoleInner, DETAIL_FLAGS', note: 'Details "Additional", "Guest", "Solo" tick checkboxes ("Additional Musicians", "Additional Personnel" and misspellings such as "Additonal" count as "Additional"); "Uncredited" is noted' },
+    { id: 'S003', where: 'mapRole', note: 'A medium in front of a role ("CD Produced By", "LP Mastered By") puts it on the release' },
+    { id: 'S004', where: 'roleRules (design rule)', note: '"design" anywhere in a role or its details: type design, the other words (without "design", "by") are the wording' },
+    { id: 'S005', where: 'instrumentAskHtml, roleCreditFor (QUESTION_RULES)', note: 'Plain instrument family ("Bass", "Guitar"): the word stays as role credit, and the row asks which instrument it is (rules Q001 …)' },
+    { id: 'S006', where: 'loadRelease', note: 'Arrangement credits go to the works matrix when Discogs names writing credits' },
+    { id: 'S007', where: 'loadRelease (companies)', note: '"Companies, etc." with "Festival" in the name are not taken over (a festival is an event in MusicBrainz)' },
+    { id: 'S008', where: 'sourceCreditFor, syncSourceCredits', note: '"Credited as": the Discogs name whenever it differs from the MusicBrainz name' },
+    { id: 'S009', where: 'roleCreditFor', note: 'Role credits never contain Discogs brackets: details come before the role ("Coordinator [Tour]" → "tour coordinator")' },
+    { id: 'S010', where: 'withoutBy, wordingCredit', note: 'Trailing "by" is never taken over ("Photography By" → photography)' },
+    { id: 'S012', where: 'typo (roleCreditFor, sourceCreditFor, relFields)', note: "Typewriter apostrophe ' becomes ’ in role credits and artist credits (\"Rock 'n' Roll\" → \"Rock ’n’ Roll\")" },
+    { id: 'S013', where: 'roleRules (R084), wordingCredit', note: 'A&R goes on the release group as artists and repertoire; the word after "A&R" becomes its task ("A & R Consultant" → task "consultant")' },
+    { id: 'S014', where: 'computePublisherEvidence', note: 'Publishers (Discogs names them for the whole release) are ticked in the works matrix only on works whose writer has them as personal publisher in MusicBrainz; all publishers stay in the matrix to tick by hand' },
+    { id: 'S015', where: 'tracksInText, applyMatrixColumn, applyDateToTracks (date dropped onto a row)', note: 'Track groups: a date whose sentence names tracks ("Tracks 1 to 5 recorded …", "tracks 6, 8 and 10", "A1 to A3", "side B", "CD2, tracks 1–5", "Disc 2" for the whole medium) goes into the date matrix with that track group and only onto those tracks; rows covering more tracks are split, rows with a date of their own stay' },
+    { id: 'S016', where: 'studiosInText, applyMatrixColumn', note: 'A studio of "Companies, etc." named in the same sentence gets exactly these tracks and this date; other studios are left alone by that date' },
+    { id: 'S017', where: 'wordingCredit', note: 'A Discogs spelling that differs from the MusicBrainz instrument only in spaces or hyphens is no role credit ("Flugel Horn" → flugelhorn, "Hand Claps" → handclaps)' },
+    { id: 'S018', where: 'splitEngineerTasks', note: 'An engineer with several tasks is one role per task: "Engineer [Mix, Recording]" → mix and recording (each with the other details, e.g. "Assistant")' },
+    { id: 'S020', where: 'applySongDefault', note: 'Music and lyrics in one credit (R098): new works of these tracks get the work type "Song" (the default for all new works when the credit is for the whole release); a type chosen by hand stays' },
+    { id: 'S021', where: 'applyLiveDefault, linkAttrsOf, liveHint', note: '"live" is preselected on new links recording → work (a new work, or a work linked here) when the release group is marked Live in MusicBrainz, Discogs calls the release live (format, "recorded live" in the notes), or the track title says so ("(live)", "[live]", "(live at …)", "– live"), or a "Live Recording By" credit names the track (the whole release without track list); unticking takes it back. Links that exist in MusicBrainz keep their attributes: "live" is only offered there ("li?")' },
+    { id: 'S022', where: 'notesTrackCredits, matchEntry, applyNotesTrackCredits', note: 'Track lists in the Discogs notes ("XYZ Publishing (1, 4, 6)", "Published by X (tracks 1–3)", "Written by Y (2, 5)", "Tracks 1, 4 & 6 published by Z"): a track group in the pool; when the name is an entry of the dashboard (compared generously: case, accents, spaces, hyphens, punctuation, "&"/"and", Ltd./GmbH/Inc. …, one typo; as a last step without generic words like Publishing, Music, Verlag – marked "similar"), its work-level roles get these tracks as a suggestion (dashed, ✓ keeps, × takes out), ahead of the personal publisher evidence (S014). Credits Discogs gives on these tracks already are left alone; unknown names only give the track group' },
+    { id: 'S023', where: 'dropTracksOnMatrix', note: 'A track group dropped onto the works matrix: onto an attribute in the head of the track column (the links of these tracks get it, the others lose it), onto a role of a column (that role only for the works of these tracks) or onto a column head (all its roles); with Shift added instead. Relationships and attributes already in MusicBrainz stay' },
+    { id: 'S024', where: 'suggestCommissioned', note: '"Commissioned By" (R099, C037) without a track list: "commissioned" is suggested on all works (dashed, yellow; ✓ keeps it, × takes it out, it is staged like the others). With a track list it is set on the works of those tracks' },
+    { id: 'S019', where: 'repeatedDetails', note: 'Details that only repeat the role in another word form are no role credit: "Mixed By [Mixing]", "Mastered By [Mastering]", "Music By [All Music By]", "Recorded By [Recording]"; "[Cover Photo]" stays' },
+    { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
+  ];
+
+  /**
+   * Instrument questions (Q001 …): Discogs names only the instrument family. The row keeps that word as
+   * role credit and asks which instrument it is; one click sets it (the role credit stays).
+   */
+  const QUESTION_RULES = [
+    { id: 'Q001', base: 'bass', credit: 'bass', options: ['electric bass guitar', 'double bass', 'acoustic bass guitar'], note: 'Plain "Bass": which bass?' },
+    { id: 'Q002', base: 'guitar', credit: 'guitar', options: ['electric guitar', 'acoustic guitar'], note: 'Plain "Guitar": which guitar?' },
+    { id: 'Q004', base: 'bass guitar', credit: 'bass guitar', options: ['bass guitar', 'electric bass guitar', 'acoustic bass guitar'], note: 'Plain "Bass Guitar": which bass guitar? Without a choice it stays bass guitar' },
+  ];
+
+  /**
+   * Questions for the relationship type: the row has none until one is chosen ("please choose"), so nothing is
+   * staged by assumption. Each option is a type with its level and, for "misc", the task.
+   */
+  const TYPE_QUESTIONS = [
+    { id: 'Q003', base: 'directed by', rule: 'R097', note: '"Directed By": conductor, chorus master, creative direction or miscellaneous support (task "director")? Nothing is assumed',
+      options: [
+        { type: 'conductor', level: 'recording' },
+        { type: 'chorus master', level: 'recording' },
+        { type: 'creative direction', level: 'release' },
+        { type: 'misc', level: 'recording', task: 'director', label: 'miscellaneous support (task “director”)' },
+      ] },
+  ];
+
+  /**
+   * Discogs company roles → MB relationship types, per MB entity type. Discogs lists studios,
+   * pressing plants and rights holders all as "labels"; in MB they are labels or places.
+   */
+  // [T004] "Companies, etc." from Discogs (rules C001 …)
+  const COMPANY_ROLES = [
+    [/^phonographic copyright/, { id: 'C001', label: ['phonographic copyright'], artist: ['phonographic copyright'], level: 'recording' }],
+    [/^copyright/, { id: 'C002', label: ['copyright'], artist: ['copyright'], level: 'release' }],
+    [/^licensed from/, { id: 'C003', label: ['licensor'], artist: ['licensor'], level: 'release' }],
+    [/^licensed (to|through)/, { id: 'C004', label: ['licensee'], artist: ['licensee'], level: 'release' }],
+    [/^marketed by/, { id: 'C005', label: ['marketed'], level: 'release' }],
+    [/^distributed (by|through)/, { id: 'C006', label: ['distributed'], level: 'release' }],
+    [/^exported by/, { id: 'C007', label: ['exported'], level: 'release' }],
+    [/^promoted by/, { id: 'C008', label: ['promoted'], level: 'release' }],
+    [/^manufactured for/, { id: 'C009', label: ['manufactured for'], level: 'release' }],
+    [/^(manufactured|made) (by|at)/, { id: 'C010', label: ['manufactured'], place: ['manufactured at'], level: 'release' }],
+    [/^printed by/, { id: 'C011', label: ['printed'], level: 'release' }],
+    [/^pressed (by|at)/, { id: 'C012', label: ['pressed'], place: ['pressed at'], level: 'release' }],
+    [/^glass mastered (by|at)/, { id: 'C013', label: ['glass mastered'], place: ['glass mastered at'], level: 'release' }],
+    [/^lacquer cut (by|at)/, { id: 'C014', place: ['lacquer cut at'], artist: ['lacquer cut'], level: 'release' }],
+    [/^mastered (by|at)/, { id: 'C015', label: ['mastering'], place: ['mastered at'], artist: ['mastering'], level: 'release' }],
+    [/^remastered (by|at)/, { id: 'C016', label: ['mastering'], place: ['mastered at'], artist: ['mastering'], level: 'release', flags: ['re'] }],
+    [/^mastered for/, { id: 'C017', label: ['mastered for'], level: 'release' }],
+    [/^remixed at/, { id: 'C018', place: ['remixed at'], level: 'recording' }],
+    [/^mixed at/, { id: 'C019', place: ['mixed at'], level: 'recording' }],
+    [/^mixed by/, { id: 'C020', label: ['mix'], artist: ['mix'], level: 'release' }],
+    [/^recorded by/, { id: 'C021', artist: ['recording'], level: 'recording' }],
+    [/^mixed for/, { id: 'C022', label: ['mixed for'], level: 'release' }],
+    [/^(recorded|overdubbed) at/, { id: 'C023', place: ['recorded at'], level: 'recording' }],
+    [/^engineered at/, { id: 'C024', place: ['engineered at'], level: 'recording' }],
+    [/^produced at/, { id: 'C025', place: ['produced at'], level: 'recording' }],
+    [/^produced for/, { id: 'C026', label: ['produced for'], level: 'release' }],
+    // A person credited as producer in "Companies, etc." (labels have no producer relationship in MusicBrainz)
+    [/^(produced by|producer)$/, { id: 'C036', artist: ['producer'], label: ['misc'], level: 'recording', prefer: 'artist' }],
+    [/^edited at/, { id: 'C027', place: ['edited at'], level: 'recording' }],
+    [/^edited for/, { id: 'C028', label: ['edited for'], level: 'release' }],
+    [/^arranged for/, { id: 'C029', label: ['arranged for'], level: 'release' }],
+    [/^transferred at/, { id: 'C030', place: ['transferred at'], level: 'release' }],
+    [/^published by/, { id: 'C031', label: ['publishing'], artist: ['publishing'], level: 'work' }],
+    [/^commissioned by/, { id: 'C037', label: ['commissioned'], artist: ['commissioned'], level: 'work' }],
+    [/^rights society/, { id: 'C032', label: ['rights society'], level: 'release' }],
+    [/^designed (by|at)/, { id: 'C033', label: ['design'], artist: ['design'], level: 'release' }],
+    [/^artwork by/, { id: 'C034', label: ['artwork'], artist: ['artwork'], level: 'release' }],
+    [/^photography by/, { id: 'C035', label: ['photography'], artist: ['photography'], level: 'release' }],
+  ];
+
+  /** The MusicBrainz types of the design rules (R062, R064–R067). */
+  const DESIGN_TYPES = ['design', 'design/illustration', 'graphic design'];
+
+  /**
+   * [R001 …] Role rules, tried in this order; the first one whose test passes and that returns a result wins.
+   * As data (3.12.0): an id (shown in the window "Mapping rules"), a note, the pattern it takes (re: the role without
+   * details, in lower case), the MusicBrainz types and the level it leads to. A simple rule also says what goes with
+   * it: work (a credit on the works), flags (checkboxes), eng (the engineer details assistant, associate, co,
+   * executive become checkboxes), credit (true: the role as written is the role credit; a text: that text),
+   * primaryCands (the instrument or vocal), notes. Special rules, and a few simple ones, need code: it is in
+   * roleRules, under their id. A rule without code is tested with its pattern and gives its types and level.
+   */
+  const ROLE_RULE_DATA = [
+    { id: 'R001', kind: 'special', note: "", re: null, types: [], level: 'recording' },
+    { id: 'R002', kind: 'simple', note: "", re: /^(written-by|written by|writer|songwriter|songwriters)$/, types: ['writer', 'composer'], level: 'work', work: true },
+    { id: 'R098', kind: 'simple', note: "Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)", re: /^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$/, types: ['writer'], level: 'work', work: true, notes: ['musicLyrics'] },
+    { id: 'R003', kind: 'simple', note: "", re: /^(composed by|composer|composition by|music by|music|all music by|all music|score|score by|soundtrack)$/, types: ['composer', 'writer'], level: 'work', work: true },
+    { id: 'R004', kind: 'simple', note: "", re: /^(translated by|translation|translator|translations)$/, types: ['translator'], level: 'work', work: true },
+    { id: 'R005', kind: 'simple', note: "", re: /^(author|poetry by|poem by|story by|screenwriter|script by|created by)$/, types: ['writer'], level: 'work', work: true, credit: true },
+    { id: 'R006', kind: 'simple', note: "", re: /^(lyrics by|lyricist|words by|lyrics)$/, types: ['lyricist', 'writer'], level: 'work', work: true },
+    { id: 'R007', kind: 'simple', note: "", re: /^(libretto by|librettist)$/, types: ['librettist', 'lyricist'], level: 'work', work: true },
+    { id: 'R008', kind: 'simple', note: "Vocals", re: /^(lead vocals?|lead vocalist)$/, types: ['vocal'], level: 'recording', primaryCands: ['lead vocals'] },
+    { id: 'R009', kind: 'special', note: "", re: null, types: ['vocal'], level: 'recording' },
+    { id: 'R010', kind: 'simple', note: "", re: /^solo vocals?$/, types: ['vocal'], level: 'recording', flags: ['solo'] },
+    { id: 'R011', kind: 'special', note: "", re: /^(scat|yodeling|yodelling|humming|whistling|human beatbox|beatbox|vocal percussion|vocalese|toasting|overtone voice|joik|eefing|kakegoe|satsuma|caller|cantor|coro)$/, types: ['vocal'], level: 'recording' },
+    { id: 'R012', kind: 'special', note: "", re: /^(announcer|commentator|interviewee|interviewer|dialog|dialogue|read by|presenter|hosted by|host|compere|compère)$/, types: ['vocal'], level: 'recording' },
+    { id: 'R013', kind: 'simple', note: "", re: /^(backing vocals?|background vocals?|harmony vocals?|chorus|backing vocalist)$/, types: ['vocal'], level: 'recording', primaryCands: ['background vocals'] },
+    { id: 'R014', kind: 'simple', note: "", re: /^(choir|choir vocals?)$/, types: ['vocal'], level: 'recording', primaryCands: ['choir vocals'] },
+    { id: 'R015', kind: 'simple', note: "", re: /^(voice|narrator|spoken word|speech|spoken vocals?|voice actor)$/, types: ['vocal'], level: 'recording', primaryCands: ['spoken vocals'] },
+    { id: 'R016', kind: 'simple', note: "", re: /^guest$/, types: ['performer'], level: 'recording', flags: ['guest'] },
+    { id: 'R017', kind: 'simple', note: "", re: /^(rap|rapper|mc|rapping)$/, types: ['vocal'], level: 'recording', primaryCands: ['rap', 'spoken vocals'] },
+    { id: 'R018', kind: 'special', note: "", re: /^(vocals?|vocalist|singer)$/, types: ['vocal'], level: 'recording' },
+    { id: 'R019', kind: 'special', note: "", re: /^featuring$/, types: ['performer', 'vocal'], level: 'recording' },
+    { id: 'R020', kind: 'simple', note: "Production", re: /^(co-producer|co-produced by|coproducer|coproduced by|co-produced)$/, types: ['producer'], level: 'recording', flags: ['co'] },
+    { id: 'R021', kind: 'simple', note: "Only producer and co-producer belong on recordings by default; the other producer roles on the release.", re: /^(executive-producer|executive producer|executive-produced by|executive produced by)$/, types: ['producer'], level: 'release', flags: ['executive'] },
+    { id: 'R022', kind: 'simple', note: "", re: /^associate[- ]producer$/, types: ['producer'], level: 'release', flags: ['associate'] },
+    { id: 'R023', kind: 'simple', note: "", re: /^assistant[- ]producer$/, types: ['producer'], level: 'release', flags: ['assistant'] },
+    { id: 'R024', kind: 'simple', note: "", re: /^(additional[- ]producer|additional production)$/, types: ['producer'], level: 'release', flags: ['additional'] },
+    { id: 'R025', kind: 'special', note: "", re: /^(compilation producer|reissue producer|recording supervisor|supervised by|supervisor|post production|post-production)$/, types: ['producer'], level: 'recording' },
+    { id: 'R026', kind: 'special', note: "\"Produced By\" (also \"Produced-By\", \"Produced\") is always producer", re: /^(producer|produced by|produced-by|produced|record producer)$/, types: ['producer'], level: 'recording' },
+    { id: 'R027', kind: 'simple', note: "", re: /^(overdubbed by|overdubs by)$/, types: ['recording', 'engineer'], level: 'recording', eng: true, credit: true },
+    { id: 'R028', kind: 'simple', note: "", re: /^(tape op|tape operator|restoration|restored by|daw|technical assistance)$/, types: ['engineer'], level: 'recording', eng: true, credit: true },
+    { id: 'R029', kind: 'simple', note: "", re: /^(transferred by|transfer|audio transfer|cd transfer|digital transfer)$/, types: ['transfer', 'engineer'], level: 'release', eng: true },
+    { id: 'R030', kind: 'simple', note: "", re: /^(direct metal mastering by|dmm cut by|dmm)$/, types: ['mastering'], level: 'release', eng: true, credit: true },
+    { id: 'R031', kind: 'special', note: "\"Live Recording By\" (also \"Live Recording\", \"Recorded Live By\" …) is recording too, without role credit; it is a hint for \"live\" (S021)", re: /^(recorded by|recording|recording engineer|tracking|tracked by|tracking by|live recording by|live recording|live recorded by|recorded live by|live recording engineer)$/, types: ['recording', 'engineer'], level: 'recording' },
+    { id: 'R032', kind: 'simple', note: "", re: /^(dj mix|dj-mix|dj)$/, types: ['mix-dj'], level: 'release' },
+    { id: 'R033', kind: 'special', note: "", re: /^(mixed by|mixing|mix engineer|mixing engineer|mix)$/, types: ['mix'], level: 'recording' },
+    { id: 'R034', kind: 'special', note: "", re: /^(mastered by|mastering|mastering engineer)$/, types: ['mastering'], level: 'release' },
+    { id: 'R035', kind: 'simple', note: "", re: /^(pre-?mastered by|pre-?mastering|pre-?master)$/, types: ['mastering'], level: 'release', flags: ['pre'] },
+    { id: 'R036', kind: 'special', note: "", re: /^(remastered by|remastering|remaster)$/, types: ['mastering'], level: 'release' },
+    { id: 'R037', kind: 'simple', note: "", re: /^(lathe cut by|lathe cut)$/, types: ['lacquer cut'], level: 'release', credit: true },
+    { id: 'R038', kind: 'special', note: "", re: /^(lacquer cut by|lacquer cut|cut by|cutting engineer|lacquer cutting)$/, types: ['lacquer cut'], level: 'release' },
+    { id: 'R039', kind: 'special', note: "", re: /^(sound engineer|sound)$/, types: ['sound', 'engineer'], level: 'recording' },
+    { id: 'R040', kind: 'simple', note: "", re: /^(sound designer|sound design|sound effects|sfx)$/, types: ['sound effects', 'engineer'], level: 'release' },
+    { id: 'R041', kind: 'special', note: "", re: /^balance engineer$/, types: ['balance', 'engineer'], level: 'recording' },
+    { id: 'R042', kind: 'special', note: "", re: /^audio engineer$/, types: ['audio', 'engineer'], level: 'recording' },
+    { id: 'R043', kind: 'special', note: "", re: null, types: ['engineer'], level: 'recording' },
+    { id: 'R044', kind: 'simple', note: "", re: /^(remix|remixed by|remixer|remix by)$/, types: ['remixer'], level: 'recording' },
+    { id: 'R045', kind: 'simple', note: "", re: /^(programmed by|programming|programmer|drum programming|programmed|sequenced by)$/, types: ['programming'], level: 'recording' },
+    { id: 'R046', kind: 'special', note: "", re: /^(editor|edited by|editing|edited)$/, types: ['miscellaneous support'], level: 'release' },
+    { id: 'R047', kind: 'simple', note: "", re: /^(edited by|editing|edited)$/, types: ['editor'], level: 'recording' },
+    { id: 'R048', kind: 'simple', note: "", re: /^(compiled by|compiler|compilation by|selected by)$/, types: ['compiler'], level: 'release' },
+    { id: 'R049', kind: 'simple', note: "", re: /^(collected by|curated by)$/, types: ['compiler'], level: 'release', credit: true },
+    { id: 'R050', kind: 'simple', note: "", re: /^beats$/, types: ['programming', 'producer'], level: 'recording', credit: true },
+    { id: 'R051', kind: 'special', note: "Arrangement, conducting, ensembles", re: /^(arranged by|arranger|arrangement|arrangements|arrangements by)$/, types: ['vocal arranger'], level: 'recording' },
+    { id: 'R052', kind: 'simple', note: "", re: /^(adapted by|transcription by|transcribed by)$/, types: ['arranger'], level: 'recording', credit: true },
+    { id: 'R053', kind: 'simple', note: "", re: /^(instrumentation by)$/, types: ['orchestrator', 'arranger'], level: 'recording', credit: true },
+    { id: 'R054', kind: 'simple', note: "", re: /^(orchestrated by|orchestration|orchestrator)$/, types: ['orchestrator'], level: 'recording' },
+    { id: 'R055', kind: 'simple', note: "", re: /^(conductor|conducted by)$/, types: ['conductor'], level: 'recording' },
+    { id: 'R056', kind: 'simple', note: "", re: /^(music director|musical director)$/, types: ['conductor'], level: 'recording', credit: true },
+    { id: 'R097', kind: 'special', note: "\"Directed By\" is not always conducting: no type is assumed, the dashboard asks (Q003)", re: /^directed by$/, types: [], level: 'recording' },
+    { id: 'R057', kind: 'simple', note: "", re: /^(chorus master|choirmaster|choir master|chorus director|choir director)$/, types: ['chorus master'], level: 'recording' },
+    { id: 'R058', kind: 'simple', note: "", re: /^(concertmaster|concertmistress)$/, types: ['concertmaster'], level: 'recording' },
+    { id: 'R059', kind: 'simple', note: "", re: /^(orchestra|performing orchestra)$/, types: ['performing orchestra', 'orchestra'], level: 'recording' },
+    { id: 'R060', kind: 'simple', note: "", re: /^(performer|musician|performed by|band|ensemble|accompanied by|backing band)$/, types: ['performer'], level: 'recording' },
+    { id: 'R061', kind: 'simple', note: "", re: /^(instruments|multi-instrumentalist|all instruments|instrumentation)$/, types: ['instrument'], level: 'recording' },
+    // [S004] design rule
+    { id: 'R062', special: 'S004', kind: 'special', note: "", re: null, types: ['design', 'design/illustration', 'graphic design'], level: 'release' },
+    { id: 'R063', kind: 'special', note: "", re: /^(cover|cover by)$/, types: ['photography'], level: 'release' },
+    { id: 'R064', kind: 'simple', note: "", re: /^sleeve$/, types: DESIGN_TYPES, level: 'release', credit: 'sleeve' },
+    { id: 'R065', kind: 'simple', note: "", re: /^(lithography|lithography by|litho|litho by|lithographer)$/, types: DESIGN_TYPES, level: 'release' },
+    { id: 'R066', kind: 'simple', note: "", re: /^cover concept$/, types: DESIGN_TYPES, level: 'release', credit: 'cover concept' },
+    { id: 'R067', kind: 'simple', note: "", re: /^cover design$/, types: DESIGN_TYPES, level: 'release', credit: 'cover design' },
+    { id: 'R068', kind: 'simple', note: "", re: /^cover photo(s|graphy)?$/, types: ['photography'], level: 'release', credit: 'cover photo' },
+    { id: 'R069', kind: 'simple', note: "", re: /^cover (painting|illustration|drawing)$/, types: ['illustration', 'design/illustration'], level: 'release' },
+    { id: 'R070', kind: 'simple', note: "", re: /^cover art$/, types: ['artwork', 'design/illustration'], level: 'release', credit: 'cover art' },
+    { id: 'R071', kind: 'simple', note: "", re: /^(photography by|photography|photographer|photos by|photo|photos|photograph by|photographed by|photographs by)$/, types: ['photography'], level: 'release' },
+    { id: 'R072', kind: 'simple', note: "", re: /^(graphic design|graphics|graphic designer)$/, types: ['graphic design', 'design'], level: 'release' },
+    { id: 'R073', kind: 'simple', note: "", re: /^(typography|lettering|logo|calligraphy|desk-top publishing|desktop publishing|realization|realisation)$/, types: ['graphic design', 'design'], level: 'release', credit: true },
+    { id: 'R074', kind: 'simple', note: "", re: /^(design concept)$/, types: ['design'], level: 'release', credit: true },
+    { id: 'R075', kind: 'simple', note: "", re: /^(drawing|drawings by)$/, types: ['illustration'], level: 'release', credit: true },
+    { id: 'R076', kind: 'simple', note: "", re: /^(film director|video director|director)$/, types: ['video director'], level: 'release' },
+    { id: 'R077', kind: 'simple', note: "", re: /^(design|designed by|design by|layout|cover design|sleeve design|package design|packaging)$/, types: ['design', 'design/illustration', 'graphic design'], level: 'release' },
+    { id: 'R078', kind: 'simple', note: "", re: /^(illustration|illustrated by|illustrations|drawings|painting|paintings|cover illustration)$/, types: ['illustration', 'design/illustration'], level: 'release' },
+    { id: 'R079', kind: 'simple', note: "", re: /^(artwork|artwork by|art)$/, types: ['artwork', 'design/illustration'], level: 'release' },
+    { id: 'R080', kind: 'simple', note: "", re: /^(art direction|art director|art directed by)$/, types: ['art direction'], level: 'release' },
+    { id: 'R081', kind: 'simple', note: "", re: /^(creative direction|creative director)$/, types: ['creative direction', 'art direction'], level: 'release', credit: true },
+    { id: 'R082', kind: 'simple', note: "", re: /^(liner notes|sleeve notes|notes|linernotes|text by)$/, types: ['liner notes'], level: 'release' },
+    { id: 'R083', kind: 'simple', note: "", re: /^(booklet editor|booklet)$/, types: ['booklet editor'], level: 'release' },
+    { id: 'R084', kind: 'simple', note: "", re: /^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\s+(.+))?$/, types: ['artists and repertoire', 'misc'], level: 'release_group' },
+    { id: 'R085', kind: 'simple', note: "Miscellaneous", re: /^(field recording|field recordings|field recordist)$/, types: ['field recordist'], level: 'recording' },
+    { id: 'R086', kind: 'special', note: "", re: /^(technician|instrument technician|guitar technician|piano technician|drum technician|keyboard technician|tech|tuner|piano tuner)$/, types: ['instrument technician'], level: 'recording' },
+    { id: 'R087', kind: 'simple', note: "", re: /^booking$/, types: ['booking'], level: 'release' },
+    { id: 'R088', kind: 'simple', note: "", re: /^(legal|lawyer|legal representation)$/, types: ['legal representation'], level: 'release' },
+    { id: 'R089', kind: 'simple', note: "", re: /^(coordinator|co-ordinator|coordination|co-ordination|production coordinator|project coordinator)$/, types: ['production coordinator'], level: 'release' },
+    { id: 'R090', kind: 'simple', note: "", re: /^(copyright|copyright \(c\))$/, types: ['copyright'], level: 'release' },
+    { id: 'R091', kind: 'simple', note: "", re: /^(phonographic copyright|phonographic copyright \(p\))$/, types: ['phonographic copyright'], level: 'release' },
+    { id: 'R092', kind: 'simple', note: "", re: /^(published by|publisher|publishing)$/, types: ['publishing'], level: 'release' },
+    { id: 'R093', kind: 'simple', note: "", re: /^(licensed from|licensor)$/, types: ['licensor'], level: 'release' },
+    { id: 'R094', kind: 'simple', note: "", re: /^audio director$/, types: ['audio director'], level: 'release' },
+    { id: 'R099', kind: 'simple', note: "\"Commissioned By\": the work was commissioned by them (a work-level role); without a track list a suggestion on all works (S024)", re: /^(commissioned by|commissioned)$/, types: ['commissioned'], level: 'work', work: true },
+    { id: 'R095', kind: 'special', note: "Roles without an MB relationship type: added as \"misc\" with the Discogs role as task", re: /^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|plated by|abridged by|adapted by \(text\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera operator|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$/, types: ['misc'], level: 'release' },
+    { id: 'R096', note: "Everything else is treated as an instrument; if MB has no such instrument, the row becomes \"misc\" (see makeRow)", types: ['instrument'], level: 'recording' },
+  ];
+
+  /**
+   * The role rules for one role: ROLE_RULE_DATA with test() and run(). The context c describes the role being mapped:
+   * b (role without details, lower case), ms (details), and the helpers has/is/out.
+   */
+  function roleRules(c) {
+    const { b, ms, flags, consumed, has, is, out, modsIn } = c;
+    const withFlags = (...extra) => [...flags, ...extra];
+    const engFlags = () => withFlags(
+      ...(has('assistant') ? ['assistant'] : []),
+      ...(has('associate') ? ['associate'] : []),
+      ...(has('co') ? ['co'] : []),
+      ...(has('executive') ? ['executive'] : []),
+    );
+    const range = b.match(/^(soprano|mezzo-soprano|alto|contralto|countertenor|tenor|baritone|bass-baritone|bass|treble) vocals?$/);
+    const engineer = is(/^(engineer|engineered by|engineering)$/);
+    const textEditor = ms.find((x) => /publication|liner|text|copy|magazine|journal|\bbook\b/.test(x));
+    const rel = { level: 'release' };
+    const designTypes = DESIGN_TYPES;
+    const allWords = [b, ...ms].join(' ');
+    // What goes with a simple rule (ROLE_RULE_DATA) when it applies
+    const extraOf = (r) => {
+      const e = {};
+      if (r.level !== 'recording') e.level = r.level;
+      if (r.work) e.work = true;
+      if (r.eng) e.flags = engFlags();
+      else if (r.flags) e.flags = withFlags(...r.flags);
+      if (r.credit !== undefined) e.credit = r.credit;
+      if (r.primaryCands) e.primaryCands = r.primaryCands;
+      if (r.notes) e.notes = r.notes;
+      return e;
+    };
+    // Rules whose test or result needs code (the test is the pattern where none is given here)
+    const code = {
+      R001: { test: () => !b, run: () => out([]) },
+      R009: { test: () => range, run: () => out(['vocal'], { primaryCands: [`${range[1]} vocals`] }) },
+      R011: { run: () => {
+      return out(['vocal'], { primaryCands: [b, 'other vocals'], credit: true });
+    } },
+      R012: { run: () => {
+      return out(['vocal'], { primaryCands: ['spoken vocals'], credit: true });
+    } },
+      R018: { run: () => {
+      let cands = [];
+      if (has('lead')) cands = ['lead vocals'];
+      else if (has('backing', 'background', 'harmony')) cands = ['background vocals'];
+      else if (has('choir')) cands = ['choir vocals'];
+      return out(['vocal'], { primaryCands: cands });
+    } },
+      R019: { run: () => {
+      return out(['performer', 'vocal'], {
+        flags: withFlags('guest'),
+        notes: ['featuring'],
+      });
+    } },
+      R025: { run: () => {
+      return out(['producer'], { level: is(/^(compilation|reissue)/) ? 'release' : 'recording', credit: true });
+    } },
+      R026: { run: () => {
+      const producerFlags = withFlags(
+        ...(has('co-producer', 'co') ? ['co'] : []),
+        ...(has('executive', 'executive-producer') ? ['executive'] : []),
+        ...(has('assistant') ? ['assistant'] : []),
+        ...(has('associate') ? ['associate'] : []),
+      );
+      const onRelease = producerFlags.some((f) => ['executive', 'associate', 'assistant', 'additional'].includes(f));
+      return out(['producer'], { flags: producerFlags, level: onRelease ? 'release' : 'recording' });
+    } },
+      R031: { test: () => is(/^(recorded by|recording|recording engineer|tracking|tracked by|tracking by|live recording by|live recording|live recorded by|recorded live by|live recording engineer)$/) || (engineer && has('recording', 'tracking', 'live recording')), run: () => {
+      return out(['recording', 'engineer'], { flags: engFlags() });
+    } },
+      R033: { test: () => is(/^(mixed by|mixing|mix engineer|mixing engineer|mix)$/) || (engineer && has('mix', 'mixing')), run: () => {
+      return out(['mix'], { flags: engFlags() });
+    } },
+      R034: { test: () => is(/^(mastered by|mastering|mastering engineer)$/) || (engineer && has('mastering')), run: () => {
+      return out(['mastering'], { level: 'release', flags: engFlags() });
+    } },
+      R036: { run: () => {
+      return out(['mastering'], { level: 'release', flags: withFlags('re') });
+    } },
+      R038: { run: () => {
+      return out(['lacquer cut'], { level: 'release' });
+    } },
+      R039: { test: () => is(/^(sound engineer|sound)$/) || (engineer && has('sound')), run: () => out(['sound', 'engineer'], { flags: engFlags() }) },
+      R040: { run: () => out(['sound effects', 'engineer'], { level: 'release', credit: !is(/^sound effects$/) }) },
+      R041: { test: () => is(/^balance engineer$/) || (engineer && has('balance')), run: () => out(['balance', 'engineer'], { flags: engFlags() }) },
+      R042: { test: () => is(/^audio engineer$/) || (engineer && has('audio')), run: () => out(['audio', 'engineer'], { flags: engFlags() }) },
+      R043: { test: () => engineer, run: () => out(['engineer'], { flags: engFlags() }) },
+      R046: { test: () => is(/^(editor|edited by|editing|edited)$/) && textEditor, run: () => {
+      consumed.add(textEditor);
+      return out(['miscellaneous support'], { level: 'release', credit: textEditor });
+    } },
+      R051: { run: () => {
+      if (has('vocals', 'vocal', 'choir', 'backing vocals')) return out(['vocal arranger']);
+      if (ms.length) {
+        return out(['instrument arranger', 'arranger'], {
+          primaryCands: uniq(ms.flatMap((m) => instrumentCandidates(m, []))),
+        });
+      }
+      return out(['arranger']);
+    } },
+      R097: { run: () => out([], { notes: ['askType'] }) },
+      R062: { test: () => /\bdesign(ed|s)?\b/.test(allWords) && !/\bgraphic/.test(allWords), run: () => {
+      ms.forEach((x) => consumed.add(x));
+      const rest = uniq(allWords.replace(/\b(designed|designs|design|designer|by)\b/g, ' ').split(/[\s,]+/).filter(Boolean));
+      return out(['design', 'design/illustration', 'graphic design'], { ...rel, credit: rest.join(' ') });
+    } },
+      R063: { run: () => {
+      if (has('design')) return out(designTypes, { ...rel, credit: 'cover design' });
+      if (has('photo', 'photos', 'photography')) return out(['photography'], { ...rel, credit: 'cover photo' });
+      for (const w of ['illustration', 'painting', 'drawing']) {
+        if (has(w)) return out(['illustration', 'design/illustration'], { ...rel, credit: `cover ${w}` });
+      }
+      return out(['artwork', 'design/illustration'], { ...rel, credit: 'cover' });
+    } },
+      R065: { run: () => out(designTypes, { ...rel, credit: (modsIn || []).length ? '' : 'lithography' }) },
+      R069: { run: () => out(['illustration', 'design/illustration'], { ...rel, credit: b }) },
+      R084: { run: () => {
+          // [S013] The word after "A&R" becomes the task: "A & R Consultant" → task "consultant"
+          const m = b.match(/^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\s+(.+))?$/);
+          const task = m && m[1] ? withoutBy(m[1]) : '';
+          return out(['artists and repertoire', 'misc'], { level: 'release_group', ...(task ? { credit: task } : {}) });
+        } },
+      R086: { run: () => {
+      return out(['instrument technician'], { credit: is(/^(tuner|piano tuner)$/) });
+    } },
+      R089: { run: () => out(['production coordinator'], { ...rel, credit: !is(/^production coordinator$/) }) },
+      R095: { run: () => {
+      return out(['misc'], { ...rel, notes: ['misc'], credit: true });
+    } },
+      R096: { test: () => true, run: () => out(['instrument'], { primaryCands: instrumentCandidates(b, ms), fallback: true }) },
+    };
+    return ROLE_RULE_DATA.map((r) => {
+      const k = code[r.id] || {};
+      return { ...r, test: k.test || (() => is(r.re)), run: k.run || (() => out(r.types, extraOf(r))) };
+    });
+  }
+
+
+
+  // --- 2d. Tables and word lists (T001 …) ------------------------------------------------------------------------------
+
+  /**
+   * Tables of the register (ids T001 …): where they are and what they hold. show(): what the window "Mapping rules"
+   * lists of a table (3.11.0) – words, pairs [left, right] or a pattern as the script uses it; T001, T002 and T004
+   * have sections of their own there.
+   */
+  const TABLES = [
+    { id: 'T001', where: 'INSTRUMENT_ALIASES', note: 'Discogs spellings of instruments → MusicBrainz instruments' },
+    { id: 'T002', where: 'GENERIC_WORDS', note: 'Words written in lower case in role credits (S011)' },
+    { id: 'T003', where: 'ART_TYPES', note: 'Artwork relationship types whose role credits are entirely in lower case (S011)', show: () => ({ words: ART_TYPES }) },
+    { id: 'T004', where: 'COMPANY_ROLES', note: '"Companies, etc." roles → MusicBrainz types for labels, places and artists (rules C001 …)' },
+    { id: 'T005', where: 'DETAIL_FLAGS', note: 'Details that stand for a MusicBrainz checkbox or attribute ("Additional Musicians" → additional, "Remaster" → re) (S002)',
+      show: () => ({ pairs: DETAIL_FLAGS.map(([re, flag]) => [re, flag]) }) },
+    { id: 'T006', where: 'WORDING_SYNONYMS', note: 'Words that only name the kind of relationship and are no role credit ("Music By" = composer, "Engineer [Mix]" = mix)',
+      show: () => ({ pairs: Object.entries(WORDING_SYNONYMS).map(([type, words]) => [type, words.join(', ')]) }) },
+    { id: 'T007', where: 'FIXED_ROLE_CREDITS', note: 'Role credits kept when MusicBrainz names the instrument differently ("Drums" → drums (drum set), credited "drums")',
+      show: () => ({ pairs: FIXED_ROLE_CREDITS.map((f) => [`${f.base} → ${f.instrument}`, f.credit]) }) },
+    { id: 'T008', where: 'ENGINEER_TASK_RE', note: 'Engineer tasks: "Engineer [Mix, Recording]" becomes one role per task (S018)', show: () => ({ pattern: ENGINEER_TASK_RE }) },
+    { id: 'T009', where: 'TEXT_NAME_SEP, TEXT_ROLE_SEP, TEXT_AND_SEP', note: 'Texts: separators between names, between roles, and before a shared instrument word ("tenor & soprano sax")',
+      show: () => ({ pairs: [['names', TEXT_NAME_SEP], ['roles', TEXT_ROLE_SEP], ['shared instrument word', TEXT_AND_SEP]] }) },
+    { id: 'T010', where: 'TEXT_TRACK_WORDS', note: 'Texts: words for tracks ("Tracks 3–5:", "(tracks 1, 4)"; also German, Spanish, French)', show: () => ({ pattern: TEXT_TRACK_WORDS }) },
+    { id: 'T011', where: 'INSTRUMENT_MODIFIER', note: 'Texts: words that name a kind of an instrument and share its noun ("tenor & soprano sax" → tenor and soprano saxophone)',
+      show: () => ({ pattern: INSTRUMENT_MODIFIER }) },
+    { id: 'T012', where: 'PRIVATE_PLACE', note: 'Texts: private places that are no MusicBrainz place ("recorded at home", "at my place")', show: () => ({ pattern: PRIVATE_PLACE }) },
+    { id: 'T013', where: 'TEXT_COMPANY_RE', note: 'Texts: roles that name a company (published by, recorded at, ℗ / ©); other "… by" are people', show: () => ({ pattern: TEXT_COMPANY_RE }) },
+    { id: 'T014', where: 'MONTH_NAMES, ORDINALS, TEXT_MONTHS', note: 'Dates: month names (English, German, Spanish, French) and ordinal words (D004, D005)',
+      show: () => ({ pairs: [...Object.entries(MONTH_NAMES).map(([n, words]) => [n, words.join(', ')]), ['1 … 31', [...ORDINALS.keys()].join(', ')]] }) },
+    { id: 'T015', where: 'DATE_HINTS', note: 'Dates: words near a date that name its date group ("recorded", "mixed", "mastered", "℗") (D015)',
+      show: () => ({ pairs: DATE_HINTS.map(([group, re]) => [group, re]) }) },
+    { id: 'T016', where: 'DATE_GROUPS', note: 'Date groups: the MusicBrainz relationships that share a column of the date matrix',
+      show: () => ({ pairs: DATE_GROUPS.map((g) => [g.label, g.types.join(', ') + (g.onlyNote ? ` (${g.onlyNote})` : '')]) }) },
+    { id: 'T017', where: 'LIVE_TITLE', note: 'Track titles that say "live": "(Live)", "(Live at …)", "[Live]", "– Live" (S021)', show: () => ({ pattern: LIVE_TITLE }) },
+    { id: 'T018', where: 'NOTE_ROLES', note: 'Roles named with a track list in the notes ("XYZ Publishing (1, 4, 6)", "Written by Y (2, 5)") (S022)',
+      show: () => ({ pairs: NOTE_ROLES.map(([re, type]) => [re, type]) }) },
+  ];
+
+  /** Discogs spelling → possible MB instrument names (tried in this order). */
+  // [T001] instrument spellings
+  const INSTRUMENT_ALIASES = {
+    'bass': ['bass'],
+    'electric bass': ['electric bass guitar', 'bass guitar'],
+    'acoustic bass': ['acoustic bass guitar', 'double bass'],
+    'upright bass': ['double bass'],
+    'contrabass': ['double bass'],
+    'kontrabass': ['double bass'],
+    'bass upright': ['double bass'],
+    'bass contrabass': ['double bass'],
+    'bass kontrabass': ['double bass'],
+    'drums': ['drums (drum set)', 'drum set', 'drums'],
+    'drum': ['drums (drum set)', 'drum set', 'drums'],
+    'keyboards': ['keyboard'],
+    'synth': ['synthesizer'],
+    'synthesizers': ['synthesizer'],
+    'rhodes': ['rhodes piano', 'fender rhodes', 'electric piano'],
+    'fender rhodes': ['rhodes piano', 'fender rhodes', 'electric piano'],
+    'rhodes electric piano': ['rhodes piano', 'electric piano'],
+    'wurlitzer': ['wurlitzer electric piano', 'electric piano'],
+    'wurlitzer electric piano': ['wurlitzer electric piano', 'electric piano'],
+    'hammond organ': ['hammond organ', 'organ'],
+    'congas': ['conga', 'congas'],
+    'bongos': ['bongos', 'bongo'],
+    'turntables': ['turntable(s)', 'turntables', 'turntable'],
+    'scratches': ['turntable(s)', 'turntables', 'turntable'],
+    'horns': ['brass'],
+    'french horn': ['french horn', 'horn'],
+    'horn french': ['french horn', 'horn'],
+    'flugel horn': ['flugelhorn'],
+    'flügelhorn': ['flugelhorn'],
+    'flugel-horn': ['flugelhorn'],
+    'sax': ['saxophone'],
+    'tenor sax': ['tenor saxophone'],
+    'alto sax': ['alto saxophone'],
+    'baritone sax': ['baritone saxophone'],
+    'soprano sax': ['soprano saxophone'],
+    'pedal steel': ['pedal steel guitar'],
+    'steel guitar': ['steel guitar', 'pedal steel guitar'],
+    'vibes': ['vibraphone'],
+    'claps': ['handclaps'],
+    'hand claps': ['handclaps'],
+    'electronics': ['electronic instruments', 'electronics'],
+    'fiddle': ['fiddle', 'violin'],
+    '12-string guitar': ['12 string guitar', '12-string guitar'],
+    'twelve-string guitar': ['12 string guitar', '12-string guitar'],
+  };
+
+  // [T002] (S011)
+  const GENERIC_WORDS = new Set(['brushes', 'mallets', 'sticks', 'bow', 'bowed', 'plucked', 'muted', 'effects', 'fx', 'loops', 'samples',
+    'sampler', 'programming', 'overdubs', 'synth', 'synths', 'keys', 'keyboard', 'keyboards', 'vox', 'sax', 'perc', 'gtr', 'lead', 'rhythm',
+    'backing', 'solo', 'additional', 'tour', 'live', 'intro', 'outro', 'harmony', 'harmonies', 'chorus', 'choir', 'strings', 'horns', 'brass',
+    'woodwinds', 'tenor', 'alto', 'soprano', 'baritone', 'bass', 'acoustic', 'electric', 'fretless', 'slide', 'steel', 'pedal', 'lap',
+    '12-string', '6-string', '7-string', '5-string', '4-string', 'upright', 'double', 'grand', 'prepared', 'toy', 'analog', 'digital',
+    'modular', 'drum', 'drums', 'machine', 'kit', 'snare', 'kick', 'cymbals', 'hi-hat', 'tambourine', 'shaker', 'claps', 'handclaps',
+    'whistle', 'whistling', 'voice', 'vocals', 'spoken', 'word', 'guitar', 'guitars', 'piano', 'organ', 'synthesizer', 'synthesizers',
+    'sax', 'saxes', 'bari', 'tpt', 'tbn', 'flgh', 'vibes', 'gtrs', 'bs', 'dr', 'kbd', 'kbds', 'clar', 'fl', 'horn', 'reeds', 'winds']);
+
+  // [T003] Artwork relationships: their role credits are written entirely in lower case (S011)
+  const ART_TYPES = ['artwork', 'art direction', 'design', 'design/illustration', 'graphic design', 'illustration', 'photography'];
+
+  /**
+   * [T005] Discogs details (bracket parts) that stand for an MB yes/no attribute,
+   * e.g. "Mastered By [Remaster]" → "re". MB's own attribute names are the targets.
+   */
+  const DETAIL_FLAGS = [
+    // [S002] also "Additional Musicians" / "Additional Personnel" and common misspellings ("Additonal")
+    [/^(additional(ly)?|additonal|addtional|additinal|aditional|additionnal|additionel|addditional)( musicians?| personnel| players?| performers?)?$/, 'additional'],
+    [/^guest$/, 'guest'],
+    [/^solo(ist)?$/, 'solo'],
+    [/^(assistant|assisted by|asst\.?)$/, 'assistant'],
+    [/^associate$/, 'associate'],
+    [/^co-?$/, 'co'],
+    [/^executive$/, 'executive'],
+    [/^re-?master(ed|ing)?$/, 're'],
+    [/^pre-?master(ed|ing)?$/, 'pre'],
+    [/^sub-?publish(er|ing|ed)?$/, 'sub'],
+    [/^(translation|translated( by)?|translator)$/, 'translator'],
+  ];
+
+  /**
+   * Discogs wording, in lower case, for instruments and roles that MusicBrainz names differently:
+   * "Synth" → synthesizer credited as "synth", "Layout" → design with "layout", "Backing Vocals" →
+   * background vocals with "backing vocals". Details in brackets that are part of the MB name count
+   * as wording ("Guitar [Electric]" = electric guitar, nothing to credit).
+   * For relationship types without an instrument, grammatical variants are not credited
+   * ("Mixed By" = mix, "Remastered By" = mastering, "Music By" = composer). [T006]
+   */
+  const WORDING_SYNONYMS = {
+    composer: ['music'], lyricist: ['words', 'text'], 'artists and repertoire': ['a&r'],
+    // "Engineer [Mix]": the word engineer only names the kind of relationship
+    mix: ['engineer', 'engineered'], recording: ['engineer', 'engineered'], mastering: ['engineer', 'engineered'],
+  };
+
+  /**
+   * Fixed role credits: MB names some instruments differently from how they are credited.
+   * Used only when Discogs gives no detail in brackets: "Drums" → MB "drums (drum set)" credited as "drums",
+   * while "Drums [Brushes]" keeps "Brushes". [T007]
+   */
+  const FIXED_ROLE_CREDITS = [
+    { base: 'drums', instrument: 'drums (drum set)', credit: 'drums' },
+  ];
+
+  // [T008] (S018) Engineer tasks: "Engineer [Mix, Recording]" is one role per task
+  const ENGINEER_TASK_RE = /^(mix|mixing|mixed|mixdown|recording|recorded|tracking|mastering|mastered|overdubs?|overdubbing)$/i;
+
+  // [T009] Texts: names in a list ("A, B & C", "A and B", "A / B"), roles in a list ("guitar, vocals", "mixed and
+  // mastered"), and the separators after which a shared instrument word goes to the word before ("tenor & soprano sax")
+  const TEXT_NAME_SEP = /\s*(?:,|&|\+|\/|;|\band\b|\bund\b|\bet\b)\s*/i;
+  const TEXT_ROLE_SEP = /\s*(?:,|&|\+|\/|\band\b|\bund\b|\bet\b)\s*/i;
+  const TEXT_AND_SEP = /^(&|\+|\/|and|und|et)$/;
+
+  // [T010] Texts: words for tracks ("Tracks 3–5:", "(tracks 1, 4)", "on track 2"; German, Spanish, French)
+  const TEXT_TRACK_WORDS = '(?:tracks?|titles?|songs?|stücke?|pistas?|plages?|morceaux)';
+
+  // [T011] Texts (3.6.0): words that name a kind of an instrument and share its noun; not "bass" ("bass & electric
+  // guitar" are two)
+  const INSTRUMENT_MODIFIER = /^(sopranino|soprano|alto|tenor|baritone|bari|contrabass|acoustic|electric|classical|slide|fretless|upright|prepared|toy|grand|12-string|twelve-string|nylon-string|steel-string)$/i;
+
+  // [T012] Texts (3.7.0): "home", "home during lockdown", "my place", "their own living room" – a private place, not
+  // one of MusicBrainz
+  const PRIVATE_PLACE = /^(?:home\b|(?:my|his|her|their|our)\s+(?:own\s+)?(?:home|house|flat|apartment|bedroom|living\s?room|kitchen|garage|basement|attic|cellar|place|studio)\b)/i;
+
+  // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
+  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
+
+  // [T014] Dates: month names (English, German, Spanish, French; D004)
+  const MONTH_NAMES = {
+    1: ['january', 'jan', 'januar', 'jänner', 'jän', 'enero', 'ene', 'janvier', 'janv'],
+    2: ['february', 'feb', 'februar', 'febrero', 'février', 'fevrier', 'févr', 'fevr', 'fév'],
+    3: ['march', 'mar', 'märz', 'maerz', 'marzo', 'mars'],
+    4: ['april', 'apr', 'abril', 'abr', 'avril', 'avr'],
+    5: ['may', 'mai', 'mayo'],
+    6: ['june', 'jun', 'juni', 'junio', 'juin'],
+    7: ['july', 'jul', 'juli', 'julio', 'juillet', 'juil'],
+    8: ['august', 'aug', 'agosto', 'ago', 'août', 'aout'],
+    9: ['september', 'sept', 'sep', 'septiembre', 'septembre'],
+    10: ['october', 'oct', 'oktober', 'okt', 'octubre', 'octobre'],
+    11: ['november', 'nov', 'noviembre', 'novembre'],
+    12: ['december', 'dec', 'dezember', 'dez', 'diciembre', 'dic', 'décembre', 'decembre', 'déc'],
+  };
+
+  // [T014] Dates: ordinal words ("November the first"; D005)
+  const ORDINALS = new Map(['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth',
+    'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth'].map((w, i) => [w, i + 1]));
+  ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth'].forEach((w, i) => {
+    ORDINALS.set(`twenty-${w}`, 21 + i);
+    ORDINALS.set(`twenty ${w}`, 21 + i);
+  });
+  ORDINALS.set('thirtieth', 30);
+  ORDINALS.set('thirty-first', 31);
+  ORDINALS.set('thirty first', 31);
+
+  /** [T015] Keywords near a date that suggest its group (shown highlighted; the choice stays with the person). */
+  const DATE_HINTS = [
+    ['remastering', /remaster/i],
+    ['mastering', /master(ed|ing)?\b|gemastert/i],
+    ['mix', /\bmix(ed|ing)?\b|abgemischt|mezcl|mixag/i],
+    ['copyright', /℗|©|\(p\)|\(c\)|copyright|phonographic/i],
+    // [D015] whole words only: "Fuzzoramarecords" or "… Records" is a label name, not "recorded"
+    ['performance', /\brecord(ed|ing|ings)?\b|\brec\.|\blive at\b|\bsessions?\b|aufgenommen|aufnahme|grabad|enregistr|\bconcert|\bkonzert/i],
+  ];
+
+  // [T014] Texts: month names, only to take dates out of a role phrase ("Recorded 12 May 2019" → "Recorded")
+  const TEXT_MONTHS = /\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?(?=\s|$)/gi;
+
+  /**
+   * Date groups: a date on one row of a group goes into the pool ("Performance 1" …) and onto every
+   * other row of the group in both directions (roles ↔ places). Dates entered by hand are never
+   * overwritten; those rows are named in the warning. [T016]
+   */
+  const DATE_GROUPS = [
+    { key: 'performance', label: 'Performance', types: ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at'] },
+    { key: 'mix', label: 'Mix', types: ['mix', 'mixed at'] },
+    { key: 'remastering', label: 'Remastering', types: ['mastering', 'mastered at'], onlyNote: 'mastering with "re", or a role "Remastered …"',
+      only: (n, row) => (n === 'mastering' && row.flags.has('re')) || (n === 'mastered at' && /^remastered/i.test(row.raw || '')) },
+    { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at'] },
+    { key: 'copyright', label: '℗/©', types: ['phonographic copyright', 'copyright'] },
+  ];
+  // test(name of the MB relationship type, row): the first group that takes it wins (Remastering before Mastering)
+  DATE_GROUPS.forEach((g) => { g.test = (n, row) => g.types.includes(n) && (!g.only || g.only(n, row)); });
+
+  // [T017] (S021) Track titles that say "live": "(Live)", "(Live at …)", "[Live]", "– Live"
+  const LIVE_TITLE = /\((?:live|live at [^)]*|live in [^)]*|live version)\)|\[(?:live|live at [^\]]*)\]|\s[-–—]\s*live\b/i;
+
+  // [T018] (S022) Roles named with a track list in the notes ("XYZ Publishing (1, 4, 6)", "Written by Y (2, 5)")
+  const NOTE_ROLES = [
+    [/\b(published|publishing|publisher|verlag|verlegt|sub-?published)\b/i, 'publishing'],
+    [/\bcommissioned\b/i, 'commissioned'],
+    [/\b(written|words and music|words & music|music and lyrics|music & lyrics|lyrics and music|lyrics & music|songs)\s+by\b/i, 'writer'],
+    [/\b(music|composed|composition|compositions)\s+by\b|\bcomposers?\b/i, 'composer'],
+    [/\b(lyrics|words|text|texte)\s+by\b|\blyricists?\b/i, 'lyricist'],
+    [/\b(arranged|arrangements?|orchestrated|orchestrations?)\s+by\b|\barrangers?\b/i, 'arranger'],
+  ];
+
+  // --- 2e. Applying the rules ------------------------------------------------------------------------------------------
+
+  function instrumentCandidates(base, mods) {
+    const b = norm(base);
+    const out = [];
+    const push = (x) => {
+      const n = norm(x);
+      if (n && !out.includes(n)) out.push(n);
+    };
+    for (const m of mods.map(norm)) {
+      push(`${m} ${b}`);
+      aliasesFor(`${m} ${b}`).forEach(push);
+      push(m);
+      aliasesFor(m).forEach(push);
+    }
+    aliasesFor(b).forEach(push);
+    // Plurals: "Synths" → synth → synthesizer
+    if (/[^s]s$/.test(b)) aliasesFor(b.slice(0, -1)).forEach(push);
+    push(b);
+    if (b.length > 3 && b.endsWith('s')) push(b.slice(0, -1));
+    return out;
+  }
+
+  /** Wording rule for a row: its role and details (checkbox details left out), in either order. */
+  function wordingRuleFor(row) {
+    const flagged = new Set([...(row.flagMods || [])].map(norm));
+    const details = (row.mods || []).map(norm).filter((m) => !flagged.has(m) && !['additional', 'guest', 'solo', 'uncredited'].includes(m));
+    const phrases = [[norm(row.base), ...details].join(' '), [...details, norm(row.base)].join(' ')];
+    return WORDING_RULES.find((r) => ruleOn(r.id) && r.phrases.some((x) => phrases.includes(x))) || null;
+  }
+
+  const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && row.ruleId === q.rule) || null);
+
+  /** Details in brackets that are neither checkboxes (e.g. "Additional") nor part of the instrument name. */
+  function remainingMods(row) {
+    const used = new Set([...(row.consumed || []), ...(row.flagMods || [])].map(norm));
+    return (row.mods || []).filter((m) => !used.has(norm(m)));
+  }
+
+  /** The question for a row: Discogs gives only the family word, without details other than checkboxes. */
+  function questionRuleFor(row) {
+    if (!ruleOn('S005') || remainingMods(row).length) return null;
+    return QUESTION_RULES.find((q) => ruleOn(q.id) && norm(row.base) === q.base) || null;
+  }
+
+  // [S010]
+  const withoutBy = (t) => (ruleOn('S010') ? String(t || '').replace(/[\s-]+by$/i, '').trim() : String(t || '').trim());
+
+  // [S012] typewriter apostrophe → typographic apostrophe in credits
+  const typo = (t) => (ruleOn('S012') ? String(t == null ? '' : t).replace(/'/g, '’') : String(t == null ? '' : t));
+
+  /**
+   * Returns a suggestion that can always be overridden in the dashboard:
+   * types        – candidate MB relationship types (by name), the first available one wins
+   * level        – 'recording' | 'release' | 'skip'
+   * primaryCands – instrument or vocal attribute candidates
+   * flags        – simple attributes such as additional, guest, solo, co, executive …
+   * consumed     – bracket details already used for the mapping (not suggested as role credit)
+   */
+  /**
+   * A medium in front of the role ("CD Produced By", "LP Mastered By") means the product, not the
+   * recording: the role is mapped without it and goes on the release.
+   */
+  // [S003]
+  function mapRole(baseIn, modsIn) {
+    const m = String(baseIn || '').match(/^\s*(cd|cds|lp|lps|dvd|vinyl|cassette|sacd|blu-?ray|album)\s+(.+)$/i);
+    if (m && ruleOn('S003') && !/design/i.test(baseIn)) {
+      const res = mapRoleInner(m[2], modsIn);
+      if (res.level === 'recording') res.level = 'release';
+      return res;
+    }
+    return mapRoleInner(baseIn, modsIn);
+  }
+
+  function mapRoleInner(baseIn, modsIn) {
+    let b = norm(baseIn).replace(/[‐‑–]/g, '-');
+    const flags = [];
+    const ms = [];
+    // [S001] "Additional Synths" = synthesizer with MB's "additional" checkbox, not a role named "additional synths".
+    let plainBase = String(baseIn || '').trim();
+    if (ruleOn('S001') && /^additional\s+\S/.test(b) && b !== 'additional production') {
+      b = b.replace(/^additional\s+/, '');
+      plainBase = plainBase.replace(/^\s*additional\s+/i, '');
+      flags.push('additional');
+    }
+    // Bracket details that are already used as an attribute or for the type
+    // and are therefore not suggested as a role credit as well
+    const consumed = new Set();
+    let uncredited = false;
+    for (const m of (modsIn || []).map(norm)) {
+      // [S002] details that tick checkboxes ("Additional Musicians", "Additonal" … count as additional)
+      const box = flagForDetail(m);
+      if (ruleOn('S002') && ['additional', 'guest', 'solo'].includes(box)) {
+        flags.push(box);
+        consumed.add(m);
+      } else if (m === 'uncredited') {
+        uncredited = true;
+        consumed.add(m);
+      } else {
+        ms.push(m);
+      }
+    }
+    // credit: true keeps the Discogs role as written as role credit (for roles without an exact MB type)
+    const out = (types, extra = {}) => {
+      const res = { types, level: 'recording', flags, primaryCands: [], notes: [], work: false, ...extra };
+      res.credit = extra.credit === true ? plainBase : (typeof extra.credit === 'string' ? extra.credit : '');
+      res.base = plainBase;
+      if (uncredited) res.notes = ['uncredited', ...res.notes];
+      res.consumed = [...consumed];
+      return res;
+    };
+    const has = (...xs) => {
+      let hit = false;
+      for (const m of ms) {
+        if (xs.includes(m)) {
+          consumed.add(m);
+          hit = true;
+        }
+      }
+      return hit;
+    };
+    const is = (re) => re.test(b);
+    // [U…] Own rules come first
+    const own = ownRuleResult(b, ms, consumed, out);
+    if (own) return own;
+    // [R001–R096] The rules themselves are in the mapping register (roleRules)
+    for (const rule of roleRules({ b, ms, flags, consumed, has, is, out, plainBase, modsIn, baseIn })) {
+      if (!ruleOn(rule.id) || (rule.special && !ruleOn(rule.special))) continue;
+      if (!rule.test()) continue;
+      const res = rule.run();
+      if (res) {
+        res.rule = rule.id;
+        return res;
+      }
+    }
+    return out(['instrument'], { primaryCands: instrumentCandidates(b, ms), fallback: true });
+  }
+
+  function flagForDetail(detail) {
+    const d = norm(detail).replace(/[‐‑–]/g, '-');
+    const hit = DETAIL_FLAGS.find(([re]) => re.test(d));
+    return hit ? hit[1] : '';
+  }
+
+  const wordStem = (t) => t.replace(/(ings?|ed|ers?|ors?|ists?|ions?|s|y)$/, '');
+
+  function sameWording(a, b) {
+    const tokens = (x) => norm(x).split(/[\s\-/]+/).filter((t) => t && !['by', 'for', 'and', '&', 'of', 'the'].includes(t));
+    const tb = tokens(b);
+    return tokens(a).some((x) => tb.some((y) => {
+      const sx = wordStem(x);
+      const sy = wordStem(y);
+      return x === y || (sx.length >= 3 && sy.length >= 3 && (sx.includes(sy) || sy.includes(sx)));
+    }));
+  }
+
+  /** Word lists from MB's instrument and vocal names: { lower: Set, proper: Map(lower → as MB writes it) }. */
+  function buildVocabulary(names) {
+    const lower = new Set();
+    const proper = new Map();
+    for (const name of names) {
+      for (const w of String(name || '').split(/[\s(),/]+/).filter(Boolean)) {
+        if (/^[A-Z]/.test(w)) proper.set(w.toLowerCase(), w);
+        else lower.add(w.toLowerCase());
+      }
+    }
+    return { lower, proper };
+  }
+
+  /**
+   * Generic words in Discogs details are written in lower case, proper names as they are:
+   * "Brushes" → brushes, "Fender Rhodes" stays, "Roland Jupiter-8" stays. MusicBrainz's own instrument
+   * names decide where they can (lower case there: generic; capitalized there, like "Rhodes" in
+   * "Rhodes piano": proper name). Words MB does not know are kept as Discogs writes them.
+   */
+  function caseWord(word, vocab) {
+    const w = word.toLowerCase();
+    if (/\d/.test(word)) return word;  // models such as Jupiter-8 or TR-808
+    // "Tenor-Sax", "Bass-Clarinet": each part on its own
+    if (word.includes('-')) return word.split('-').map((part) => (part ? caseWord(part, vocab) : part)).join('-');
+    const generic = GENERIC_WORDS.has(w) || vocab.lower.has(w) || vocab.lower.has(w.replace(/e?s$/, ''))
+      || (w.length >= 3 && [...vocab.lower].some((v) => v.length > w.length && v.startsWith(w)));
+    if (generic && !vocab.proper.has(w)) return w;
+    if (vocab.proper.has(w)) return vocab.proper.get(w);
+    return word;
+  }
+
+  /** Applies the word rule to a credit text, keeping separators and brackets. */
+  // [S011] which words stay capitalised (instrument models) and which are written in lower case
+  function caseCredit(text, vocab = { lower: new Set(), proper: new Map() }) {
+    return String(text || '').replace(/[^\s,\[\]()/]+/g, (w) => caseWord(w, vocab));
+  }
+
+  /**
+   * The Discogs wording as credit where MusicBrainz names it differently. Instruments keep proper names
+   * ("Fender Rhodes" for Rhodes piano), other roles are written in lower case ("layout" for design).
+   */
+  function wordingCredit(base, mods, primaryName, typeName, vocab) {
+    const primary = ` ${norm(primaryName)} `;
+    const inName = (mods || []).filter((m) => norm(m) && primary.includes(` ${norm(m)} `));
+    // "Trumpet [Pocket Trumpet]": the detail already holds the base word → "pocket trumpet", not "pocket trumpet trumpet"
+    const baseInMod = inName.some((m) => ` ${norm(m)} `.includes(` ${norm(base)} `));
+    const original = (baseInMod ? inName : [...inName, base]).join(' ').replace(/[\s-]+by$/i, '').trim();
+    const wording = norm(original);
+    if (!wording) return '';
+    // [S017] Spaces and hyphens do not make a role credit ("Flugel Horn" for flugelhorn, "Hand Claps" for handclaps)
+    const squash = (t) => norm(t).replace(ruleOn('S017') ? /[\s-]+/g : /$^/, '');
+    if (norm(primaryName)) return squash(primaryName) === squash(wording) ? '' : caseCredit(original, vocab);
+    if (!typeName) return '';
+    const synonyms = WORDING_SYNONYMS[norm(typeName)] || [];
+    // "A & R Consultant", "A&R Coordinator" …: not as wording – the word after A&R is the task (S013)
+    if (norm(typeName) === 'artists and repertoire' && /^a\s*&\s*r\b/.test(norm(wording))) return '';
+    if (wording.split(/\s+/).some((w) => synonyms.includes(w))) return '';
+    return sameWording(wording, typeName) ? '' : wording;
+  }
+
+  function fixedRoleCredit(base, primaryName) {
+    const hit = FIXED_ROLE_CREDITS.find((f) => norm(base) === f.base && norm(primaryName) === f.instrument);
+    return hit ? hit.credit : '';
+  }
+
+  /**
+   * Remaining bracket details = alternative designation according to Discogs.
+   * Details that are already used (additional, Recording …) or contained in the
+   * chosen instrument name (Guitar [Electric] → electric guitar) are not suggested.
+   */
+  function suggestRoleCredit(mods, consumed, primaryName) {
+    const primary = ` ${norm(primaryName)} `;
+    const used = new Set((consumed || []).map(norm));
+    return (mods || []).filter((m) => {
+      const n = norm(m);
+      return n && !used.has(n) && !primary.includes(` ${n} `);
+    }).join(', ');
+  }
+
+  /** Options for the role credit field: everything exactly as written on Discogs. */
+  /**
+   * Suggestions for the role credit field: never the Discogs role itself when it only names the MusicBrainz
+   * role in another word form ("Produced By" for producer), never "by" or Discogs brackets (S009, S010).
+   */
+  function roleCreditOptions(raw, base, mods, suggestion, typeName = '') {
+    const out = [];
+    const push = (x) => {
+      const t = typo(withoutBy(String(x || '').replace(/\s*\[.*?\]/g, '').trim()));
+      if (!t || out.includes(t) || (typeName && sameWording(t, typeName))) return;
+      out.push(t);
+    };
+    push(suggestion);
+    push((mods || []).join(', '));
+    (mods || []).forEach(push);
+    (mods || []).forEach((m) => push(`${m} ${withoutBy(base)}`));
+    return out;
+  }
+
+  /** Maps a Discogs company role. "prefer" is the MB entity type assumed until the company is matched. */
+  function mapCompanyRole(role) {
+    const r = norm(role);
+    const hit = COMPANY_ROLES.find(([re, o]) => ruleOn(o.id) && re.test(r));
+    // "artist" is always allowed: persons also appear here, and their type can be chosen by hand.
+    if (!hit) return { typeOptions: { label: ['misc'], artist: [] }, level: 'skip', prefer: 'label', notes: ['misc'] };
+    const spec = hit[1];
+    const ruleId = spec.id;
+    const typeOptions = {};
+    if (spec.label) typeOptions.label = spec.label;
+    if (spec.place) typeOptions.place = spec.place;
+    typeOptions.artist = spec.artist || [];
+    const companyFlags = spec.flags || [];
+    const prefer = spec.prefer || (spec.place && (!spec.label || / at$/.test(r)) ? 'place' : spec.label ? 'label' : 'artist');
+    return { typeOptions, level: spec.level, prefer, notes: [], flags: companyFlags, rule: ruleId };
+  }
+
+
+  // --- 2f. Dates in free text (D001 …): liner notes, the notes of a source, pasted texts – in MusicBrainz form ---------
+
+  const DATE_RULES = [
+    { id: 'D001', note: 'ISO and MusicBrainz dates and periods: 2022-11-01, 2022-11, 1998-03-01 – 1998-03-20, 1997–1998' },
+    { id: 'D002', note: 'Numbers with dots, day first: 01.11.2022' },
+    { id: 'D003', note: 'Numbers with slashes: 1/11/2022 – a number over 12 decides; otherwise the Discogs release country (US: month/day, elsewhere day/month), with a note and the other reading to choose' },
+    { id: 'D004', note: 'Month names (English, German, Spanish, French): November 1, 2022 · November 1. 2022 · Nov. 1st, 2022 · 1 November 2022 · 1. November 2022 · 1st of November 2022 · 1 de noviembre de 2022' },
+    { id: 'D005', note: 'Ordinal words: first of November 2022 · November the first, 2022' },
+    { id: 'D006', note: 'Days within one month: March 1–3, 1998 · 1–3 March 1998 · 1.–3. März 1998' },
+    { id: 'D007', note: 'Periods across months or years: March 1 to April 2, 1998 · December 2003 to January 2004 · between 1997 and 1998 · 1997/98' },
+    { id: 'D008', note: 'Month and year: November 2022 · Nov 2022' },
+    { id: 'D009', note: 'Seasons give the year: Spring 1998 → 1998' },
+    { id: 'D010', note: 'A year alone: 1998' },
+    { id: 'D011', note: 'Decades ("late 1970s", "the 70s") cannot be given as a MusicBrainz date and are left out' },
+    { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
+    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows' },
+    { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
+    { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
+  ];
+
+  const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
+
+  const reAlt = (keys) => [...keys].sort((x, y) => y.length - x.length).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+
+  const P = {
+    M: `(?<![\\p{L}])(${reAlt(MONTH_BY_NAME.keys())})(?![\\p{L}])\\.?`,
+    D: '(\\d{1,2})(?:st|nd|rd|th|er|\\.)?',
+    O: `(${reAlt(ORDINALS.keys())})`,
+    Y: '(\\d{4})',
+    TO: '(?:\\s*[-–—]\\s*|\\s+(?:to|until|till|through|bis|au|al)\\s+)',
+    OF: '(?:\\s+(?:of|de|du))?',
+    SEASON: '(spring|summer|autumn|fall|winter|frühling|frühjahr|sommer|herbst|primavera|verano|otoño|invierno|printemps|été|automne|hiver)',
+  };
+
+  const monthNo = (t) => MONTH_BY_NAME.get(String(t || '').toLowerCase().replace(/\.$/, ''));
+
+  function ymd(y, m = null, d = null) {
+    const year = Number(y);
+    const month = m == null ? null : Number(m);
+    const day = d == null ? null : Number(d);
+    if (!year || year < 1000 || year > 2100) return null;
+    if (month != null && (month < 1 || month > 12)) return null;
+    if (day != null && (month == null || day < 1 || day > new Date(year, month, 0).getDate())) return null;
+    return { year, month, day };
+  }
+
+  const single = (v) => (v ? { begin: v, end: v, ended: true } : null);
+
+  const span = (a, b) => (a && b ? { begin: a, end: b, ended: true } : null);
+
+  /** Several days of one month: consecutive ones form a period, others stay single dates (D013). */
+  function multiDays(y, mo, text) {
+    const days = uniq((String(text).match(/\d{1,2}/g) || []).map(Number)).sort((a, b) => a - b);
+    const values = days.map((d) => ymd(y, mo, d));
+    if (days.length < 2 || values.some((v) => !v)) return null;
+    if (days.every((d, i) => i === 0 || d === days[i - 1] + 1)) return { ...span(values[0], values[values.length - 1]), days: values, consecutive: true };
+    return { ...single(values[0]), multi: values.map(single), days: values };
+  }
+
+  const DAYP = '\\d{1,2}(?:st|nd|rd|th|er|\\.)?';
+
+  // [3.7.0] also "June 16/17 2018", "16/17 June 2018" (Bandcamp)
+  const DAYLIST = `${DAYP}(?:\\s*,\\s*${DAYP})*\\s*,?\\s*(?:(?:and|&|und|y|et)\\s+|/\\s*)${DAYP}`;
+
+  /** The matchers of the date rules, longest forms first (a period wins over the dates inside it). */
+  const DATE_MATCHERS = [
+    { id: 'D013', re: `${P.M}\\s+(${DAYLIST}),?\\s+${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[1]), m[2]) },
+    { id: 'D013', re: `(${DAYLIST})${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[2]), m[1]) },
+    { id: 'D007', re: `${P.M}\\s+${P.D}${P.TO}${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
+    { id: 'D007', re: `${P.D}${P.OF}\\s+${P.M}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[2]), m[1]), ymd(m[5], monthNo(m[4]), m[3])) },
+    { id: 'D007', re: `${P.M},?\\s+${P.Y}${P.TO}${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[2], monthNo(m[1])), ymd(m[4], monthNo(m[3]))) },
+    { id: 'D006', re: `${P.M}\\s+${P.D}${P.TO}${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[4], monthNo(m[1]), m[2]), ymd(m[4], monthNo(m[1]), m[3])) },
+    { id: 'D006', re: `${P.D}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => span(ymd(m[4], monthNo(m[3]), m[1]), ymd(m[4], monthNo(m[3]), m[2])) },
+    { id: 'D001', re: '(?<!\\d)(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?(?:\\s+[-–—]\\s+|\\s*[–—]\\s*|\\s+(?:to|bis|until)\\s+)(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?(?!\\d)',
+      make: (m) => span(ymd(m[1], m[2], m[3]), ymd(m[4], m[5], m[6])) },
+    { id: 'D007', re: '(?:between|zwischen|entre)\\s+(\\d{4})\\s+(?:and|und|y|et)\\s+(\\d{4})', make: (m) => span(ymd(m[1]), ymd(m[2])) },
+    { id: 'D007', re: '(?<!\\d)(\\d{4})\\s*/\\s*(\\d{2}|\\d{4})(?![\\d/])', make: (m) => span(ymd(m[1]), ymd(m[2].length === 2 ? `${m[1].slice(0, 2)}${m[2]}` : m[2])) },
+    { id: 'D005', re: `${P.O}(?:\\s+day)?${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), ORDINALS.get(m[1].toLowerCase()))) },
+    { id: 'D005', re: `${P.M}\\s+(?:the\\s+)?${P.O},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), ORDINALS.get(m[2].toLowerCase()))) },
+    { id: 'D004', re: `${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), m[2])) },
+    { id: 'D004', re: `${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), m[1])) },
+    { id: 'D001', re: '(?<![\\d./-])(\\d{4})-(\\d{1,2})(?:-(\\d{1,2}))?(?![\\d-])', make: (m) => single(ymd(m[1], m[2], m[3])) },
+    { id: 'D002', re: '(?<![\\d.])(\\d{1,2})\\.(\\d{1,2})\\.(\\d{4})(?!\\d)', make: (m) => single(ymd(m[3], m[2], m[1])) },
+    { id: 'D003', re: '(?<![\\d/])(\\d{1,2})/(\\d{1,2})/(\\d{4})(?![\\d/])', make: (m, o) => {
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      if (a > 12) return single(ymd(m[3], b, a));
+      if (b > 12) return single(ymd(m[3], a, b));
+      const us = single(ymd(m[3], a, b));
+      const row = single(ymd(m[3], b, a));
+      if (a === b) return us;
+      return { ...(o.usOrder ? us : row), alt: o.usOrder ? row : us, order: o.usOrder ? 'us' : 'dayFirst' };
+    } },
+    { id: 'D012', re: '(?<![\\d/.])(\\d{1,2})[/.](\\d{4})(?![\\d/]|\\.\\d)', make: (m) => single(ymd(m[2], m[1])) },
+    { id: 'D011', re: '(?:(?:early|mid|late|the|frühe[n]?|späte[n]?|mitte der)[-\\s]+)?(?:\\d{2})?\\d0\'?s(?![\\p{L}])|(?:\\d{2})?\\d0er(?:\\s+jahren?)?', make: () => 'skip' },
+    { id: 'D009', re: `${P.SEASON}(?:\\s+(?:of|de|du))?\\s+${P.Y}`, make: (m) => single(ymd(m[2])) },
+    { id: 'D008', re: `${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[2], monthNo(m[1]))) },
+    { id: 'D010', re: '(?<![\\d./-])(1[89]\\d{2}|20\\d{2})(?![\\d/-]|\\.\\d)', make: (m) => single(ymd(m[1])) },
+  ].map((x) => ({ ...x, rx: new RegExp(x.re, 'giu') }));
+
+  /** ℗ and © signs (also as (P), (C) and the doubled "©©" that Discogs often has for ℗ ©). */
+  const COPYRIGHT_SIGN = /℗|©|\(p\)|\(c\)/i;
+
+  /**
+   * All dates and periods in a text, in MusicBrainz form, with the rule that found them (D001 …), a short
+   * snippet, the suggested group and, for slash dates that could be read either way, the other reading.
+   */
+  function findDates(text, { usOrder = false } = {}) {
+    const src = String(text || '');
+    const taken = [];
+    const found = [];
+    const free = (a, b) => !taken.some(([x, y]) => a < y && b > x);
+    for (const mt of DATE_MATCHERS) {
+      if (!ruleOn(mt.id)) continue;
+      mt.rx.lastIndex = 0;
+      let m;
+      while ((m = mt.rx.exec(src))) {
+        const a = m.index;
+        const b = a + m[0].length;
+        if (!m[0] || !free(a, b)) continue;
+        const v = mt.make(m, { usOrder });
+        taken.push([a, b]);
+        if (!v || v === 'skip') continue;
+        // The keyword closest before the date (or inside it) suggests the group
+        const before = src.slice(Math.max(0, a - 80), b);
+        // [D015] after a ℗ / © sign in the same sentence, capitalised keywords belong to a name ("℗ Fuzzorama Recordings 2005")
+        const seg = before.slice(Math.max(...['.', ';', '\n'].map((c) => before.lastIndexOf(c, before.length - m[0].length - 1))) + 1);
+        const segStart = before.length - seg.length;
+        const sign = ruleOn('D015') ? seg.search(COPYRIGHT_SIGN) : -1;
+        let hint = '';
+        let at = -1;
+        for (const [key, re] of DATE_HINTS) {
+          const g = new RegExp(re.source, 'gi');
+          let h;
+          while ((h = g.exec(before))) {
+            const inName = sign >= 0 && key !== 'copyright' && h.index > segStart + sign && /^[A-ZÄÖÜ]/.test(h[0]);
+            if (h.index > at && !inName) {
+              at = h.index;
+              hint = key;
+            }
+            if (!h[0]) break;
+          }
+        }
+        // [D015] "©©" is mostly a typo for "℗ ©": both, i.e. the group ℗/©
+        const doubled = ruleOn('D015') && /©\s*©/.test(seg);
+        if (doubled) hint = 'copyright';
+        found.push({ index: a, text: m[0], rule: doubled ? `${mt.id} · D015` : mt.id, value: { begin: v.begin, end: v.end, ended: v.ended }, alt: v.alt || null, order: v.order || '',
+          multi: v.multi || null, days: v.days || null, consecutive: !!v.consecutive,
+          hint, snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
+      }
+    }
+    return found.sort((x, y) => x.index - y.index);
+  }
+
+  // ===========================================================================
+  // 3. Sources: an adapter turns a source (Discogs, Bandcamp, a text) into a neutral release; the core only reads that
+  // ===========================================================================
+  //
+  // The neutral release – what a source adapter delivers and everything after this section works with:
+  //   { source, id, url, title, country, notes, tags, tracks, credits, companies, series }
+  //   source     the adapter's id ("discogs"); id and url: the release at the source
+  //   notes      free text about the release (liner notes): dates, live, track lists are read from it
+  //   tags       words describing the release, in lower case ("cd", "album", "live" …)
+  //   tracks     [{ position, title, aliases }] in the order of the source, without headings
+  //   credits    one per person and role, in the order of the source:
+  //              { who, role, base, details, credited, tracks }
+  //                who       { id, name, rawName, links } – the source's own id (0: none), the name to show,
+  //                          the name as written there, and the URLs MusicBrainz may have for it
+  //                role      the role as written ("Guitar [Electric]"); base and details: its parts
+  //                credited  the name as credited on this release ('' = the name itself)
+  //                tracks    { all: true } – the whole release; { indexes, spec, unresolved } – a list of
+  //                          the release ("A1 to A3"); { indexes, position } – a credit on one track
+  //   companies  { who, role, catno, tracks } – labels, studios and the like with their role (tracks: null = all)
+  //   series     { id, name, number, links }
+  //   optional:  noteSource – the source as the edit note names it (else url); unrecognized – lines of a text
+  //              that gave no credit
+  // A role is written in the dashboard's notation, the one Discogs uses: "Role [Detail, Detail]", several
+  // roles separated by commas. Mapping (rules R, W, C, S …) belongs to the register (section 2); an adapter only reads
+  // its word lists (the text adapter: T009–T014).
 
   const normPos = (p) => String(p || '').toUpperCase().replace(/\s+/g, '');
 
@@ -4942,22 +6076,13 @@
   // no links: MusicBrainz entries of the same name are only suggested. What is not understood is kept as it is.
 
   const TEXT = (() => {
-    // Names in a list: "A, B & C", "A and B", "A / B"
-    const NAME_SEP = /\s*(?:,|&|\+|\/|;|\band\b|\bund\b|\bet\b)\s*/i;
-    // Roles in a list: "guitar, vocals", "mixed and mastered"
-    const ROLE_SEP = /\s*(?:,|&|\+|\/|\band\b|\bund\b|\bet\b)\s*/i;
     // A track list in front of a line or after it: "Tracks 3–5:", "(tracks 1, 4)", "on track 2", "(1, 3)"
-    const TRACK_WORDS = '(?:tracks?|titles?|songs?|stücke?|pistas?|plages?|morceaux)';
     const SPEC = '[A-Za-z]?\\d+(?:[.\\-–—]\\d+)?(?:\\s*(?:,|&|-|–|—|\\bto\\b|\\band\\b|\\bbis\\b)\\s*[A-Za-z]?\\d+(?:[.\\-–—]\\d+)?)*';
-    const PREFIX = new RegExp(`^${TRACK_WORDS}\\s*(${SPEC})\\s*[:–—-]\\s*(.+)$`, 'i');
-    const SUFFIX = new RegExp(`^(.*?)[\\s,]*\\(?\\s*(?:on\\s+|auf\\s+)?${TRACK_WORDS}\\s*(${SPEC})\\s*\\)?\\s*\\.?$`, 'i');
+    const PREFIX = new RegExp(`^${TEXT_TRACK_WORDS}\\s*(${SPEC})\\s*[:–—-]\\s*(.+)$`, 'i');
+    const SUFFIX = new RegExp(`^(.*?)[\\s,]*\\(?\\s*(?:on\\s+|auf\\s+)?${TEXT_TRACK_WORDS}\\s*(${SPEC})\\s*\\)?\\s*\\.?$`, 'i');
     const NUMBERS = new RegExp(`^(.*?)\\s*\\((${SPEC})\\)\\s*\\.?$`);
 
     const cap = (s) => String(s || '').replace(/^\s*\S/, (c) => c.toUpperCase());
-    // [3.6.0] Separators after which a shared instrument word is given to the word before ("tenor & soprano sax")
-    const AND_SEP = /^(&|\+|\/|and|und|et)$/;
-    // Words that name a kind of an instrument and share its noun; not "bass" ("bass & electric guitar" are two)
-    const INSTRUMENT_MODIFIER = /^(sopranino|soprano|alto|tenor|baritone|bari|contrabass|acoustic|electric|classical|slide|fretless|upright|prepared|toy|grand|12-string|twelve-string|nylon-string|steel-string)$/i;
     const clean = (s) => String(s || '').replace(/^[\s•·*▪◦>–—-]+/, '').replace(/[\s.;:]+$/, '').replace(/\s+/g, ' ').trim();
     /** A name: some words, no sentence, no address. */
     const looksLikeName = (n) => !!n && n.length <= 60 && n.split(' ').length <= 6 && !/https?:|www\.|\d{3,}|@/.test(n) && /\p{L}/u.test(n);
@@ -4966,8 +6091,6 @@
      * [3.7.0] A place and its area: "Loft in Cologne, june 16/17 2018" and "Loft, Cologne" → { name: 'Loft',
      * area: 'Cologne' } (dates and other parts with digits are left out).
      */
-    // [3.7.0] "home", "home during lockdown", "my place", "their own living room": a private place, not one of MusicBrainz
-    const PRIVATE_PLACE = /^(?:home\b|(?:my|his|her|their|our)\s+(?:own\s+)?(?:home|house|flat|apartment|bedroom|living\s?room|kitchen|garage|basement|attic|cellar|place|studio)\b)/i;
     function placeOf(text) {
       const parts = String(text || '').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
       if (!parts.length) return null;
@@ -4996,9 +6119,8 @@
       }
       return out.map(clean).filter(Boolean);
     }
-    const MONTHS = /\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?(?=\s|$)/gi;
     /** Dates and numbers out of a role phrase ("Recorded 12 May 2019" → "Recorded"). */
-    const noDates = (s) => clean(String(s || '').replace(/\d+(?:[./–—-]\d+)*(?:st|nd|rd|th)?/g, ' ').replace(MONTHS, ' ').replace(/\s+(?:on|am|le|el)\s*$/i, ''));
+    const noDates = (s) => clean(String(s || '').replace(/\d+(?:[./–—-]\d+)*(?:st|nd|rd|th)?/g, ' ').replace(TEXT_MONTHS, ' ').replace(/\s+(?:on|am|le|el)\s*$/i, ''));
 
     function parse(text, { isRole, isCompanyRole, resolveTracks }) {
       const credits = [];
@@ -5027,7 +6149,7 @@
         const l = noDates(left);
         if (!l) return [];
         if (isRole(`${cap(l)} By`)) return [`${cap(l)} By`];
-        const parts = l.split(ROLE_SEP).map(clean).filter(Boolean).map(byRole);
+        const parts = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map(byRole);
         return parts.length && parts.every(isRole) ? parts : [];
       };
       const listRoles = (side) => {
@@ -5049,7 +6171,7 @@
         }
         for (let i = parts.length - 1; i > 0; i--) {
           const words = parts[i].split(' ');
-          if (words.length < 2 || !AND_SEP.test(seps[i - 1]) || !INSTRUMENT_MODIFIER.test(words[0])) continue;
+          if (words.length < 2 || !TEXT_AND_SEP.test(seps[i - 1]) || !INSTRUMENT_MODIFIER.test(words[0])) continue;
           const noun = words.slice(1).join(' ');
           // back through the list while the parts before are modifiers too ("alto, tenor & baritone sax")
           for (let j = i - 1; j >= 0 && (j === i - 1 || /^(,|&|\+|\/|and|und|et)$/.test(seps[j])); j--) {
@@ -5063,7 +6185,7 @@
         const parts = splitRoles(side);
         return { parts, known: parts.filter(isRole), unknown: parts.filter((x) => !isRole(x)) };
       };
-      const names = (side) => side.split(NAME_SEP).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
+      const names = (side) => side.split(TEXT_NAME_SEP).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
 
       for (const raw of String(text || '').split(/\r?\n/)) {
         let line = clean(raw);
@@ -5385,1039 +6507,8 @@
   }
 
   // ===========================================================================
-  // 3. Discogs roles → MusicBrainz relationship types
+  // 3b. Dates, searches and forms for MusicBrainz (helpers)
   // ===========================================================================
-
-  /** Discogs spelling → possible MB instrument names (tried in this order). */
-  // [T001] instrument spellings
-  const INSTRUMENT_ALIASES = {
-    'bass': ['bass'],
-    'electric bass': ['electric bass guitar', 'bass guitar'],
-    'acoustic bass': ['acoustic bass guitar', 'double bass'],
-    'upright bass': ['double bass'],
-    'contrabass': ['double bass'],
-    'kontrabass': ['double bass'],
-    'bass upright': ['double bass'],
-    'bass contrabass': ['double bass'],
-    'bass kontrabass': ['double bass'],
-    'drums': ['drums (drum set)', 'drum set', 'drums'],
-    'drum': ['drums (drum set)', 'drum set', 'drums'],
-    'keyboards': ['keyboard'],
-    'synth': ['synthesizer'],
-    'synthesizers': ['synthesizer'],
-    'rhodes': ['rhodes piano', 'fender rhodes', 'electric piano'],
-    'fender rhodes': ['rhodes piano', 'fender rhodes', 'electric piano'],
-    'rhodes electric piano': ['rhodes piano', 'electric piano'],
-    'wurlitzer': ['wurlitzer electric piano', 'electric piano'],
-    'wurlitzer electric piano': ['wurlitzer electric piano', 'electric piano'],
-    'hammond organ': ['hammond organ', 'organ'],
-    'congas': ['conga', 'congas'],
-    'bongos': ['bongos', 'bongo'],
-    'turntables': ['turntable(s)', 'turntables', 'turntable'],
-    'scratches': ['turntable(s)', 'turntables', 'turntable'],
-    'horns': ['brass'],
-    'french horn': ['french horn', 'horn'],
-    'horn french': ['french horn', 'horn'],
-    'flugel horn': ['flugelhorn'],
-    'flügelhorn': ['flugelhorn'],
-    'flugel-horn': ['flugelhorn'],
-    'sax': ['saxophone'],
-    'tenor sax': ['tenor saxophone'],
-    'alto sax': ['alto saxophone'],
-    'baritone sax': ['baritone saxophone'],
-    'soprano sax': ['soprano saxophone'],
-    'pedal steel': ['pedal steel guitar'],
-    'steel guitar': ['steel guitar', 'pedal steel guitar'],
-    'vibes': ['vibraphone'],
-    'claps': ['handclaps'],
-    'hand claps': ['handclaps'],
-    'electronics': ['electronic instruments', 'electronics'],
-    'fiddle': ['fiddle', 'violin'],
-    '12-string guitar': ['12 string guitar', '12-string guitar'],
-    'twelve-string guitar': ['12 string guitar', '12-string guitar'],
-  };
-
-  function instrumentCandidates(base, mods) {
-    const b = norm(base);
-    const out = [];
-    const push = (x) => {
-      const n = norm(x);
-      if (n && !out.includes(n)) out.push(n);
-    };
-    for (const m of mods.map(norm)) {
-      push(`${m} ${b}`);
-      aliasesFor(`${m} ${b}`).forEach(push);
-      push(m);
-      aliasesFor(m).forEach(push);
-    }
-    aliasesFor(b).forEach(push);
-    // Plurals: "Synths" → synth → synthesizer
-    if (/[^s]s$/.test(b)) aliasesFor(b.slice(0, -1)).forEach(push);
-    push(b);
-    if (b.length > 3 && b.endsWith('s')) push(b.slice(0, -1));
-    return out;
-  }
-
-  /**
-   * Returns a suggestion that can always be overridden in the dashboard:
-   * types        – candidate MB relationship types (by name), the first available one wins
-   * level        – 'recording' | 'release' | 'skip'
-   * primaryCands – instrument or vocal attribute candidates
-   * flags        – simple attributes such as additional, guest, solo, co, executive …
-   * consumed     – bracket details already used for the mapping (not suggested as role credit)
-   */
-  // ===========================================================================
-  // 3a. Mapping register: the rules that turn a Discogs role into a MusicBrainz relationship
-  // ===========================================================================
-
-  // --- Own rules (U001 …) and switched-off rules, stored in this browser --------------------------
-  const USER_RULES_KEY = 'dci-user-rules';
-  const RULES_OFF_KEY = 'dci-rules-off';
-  let userRulesCache = null;
-  let rulesOffCache = null;
-  function loadStore(key, fallback) {
-    try {
-      return JSON.parse(localStorage.getItem(key)) || fallback;
-    } catch (e) {
-      return fallback;
-    }
-  }
-  /** Own rules: { id, kind: 'role' | 'instrument', on, discogs, details, detailsMode, type, level, instrument, credit }. */
-  function userRules() {
-    if (!userRulesCache) userRulesCache = loadStore(USER_RULES_KEY, []);
-    return userRulesCache;
-  }
-  /** Ids of built-in rules that are switched off (R…, W…, Q…, C…, S…). */
-  function rulesOff() {
-    if (!rulesOffCache) rulesOffCache = new Set(loadStore(RULES_OFF_KEY, []));
-    return rulesOffCache;
-  }
-  function saveRules() {
-    try {
-      localStorage.setItem(USER_RULES_KEY, JSON.stringify(userRules()));
-      localStorage.setItem(RULES_OFF_KEY, JSON.stringify([...rulesOff()]));
-    } catch (e) {
-      console.warn('[Discogs-Credits] rules not saved', e);
-    }
-  }
-  function ruleOn(id) {
-    return !rulesOff().has(id);
-  }
-  /** Instrument spellings: own ones first, then the built-in table (T001). */
-  function aliasesFor(key) {
-    const own = userRules().filter((u) => u.kind === 'instrument' && u.on !== false && norm(u.discogs) === key).map((u) => u.instrument);
-    return [...own, ...(INSTRUMENT_ALIASES[key] || [])];
-  }
-
-  /**
-   * Wording rules: the role credit for a Discogs role (with its details, in either order), where the
-   * general rules would not find it. The phrase is the role and its details in lower case.
-   */
-  const WORDING_RULES = [
-    { id: 'W001', where: 'wordingRuleFor, roleCreditFor', note: 'Upright bass is a double bass; the Discogs word stays as role credit', phrases: ['upright bass', 'bass upright'], credit: 'upright bass' },
-    { id: 'W002', where: 'wordingRuleFor, roleCreditFor', note: 'Contrabass is a double bass; the Discogs word stays as role credit', phrases: ['contrabass', 'bass contrabass', 'contrabass bass'], credit: 'contrabass' },
-    { id: 'W003', where: 'wordingRuleFor, roleCreditFor', note: 'Kontrabass (German) is a double bass; kept as a German noun with a capital letter', phrases: ['kontrabass', 'bass kontrabass', 'kontrabass bass'], credit: 'Kontrabass' },
-    { id: 'W004', where: 'wordingRuleFor, roleCreditFor', note: '"Horn [French]" and "French Horn" are the MusicBrainz instrument French horn, without role credit', phrases: ['horn french', 'french horn'], credit: '' },
-    { id: 'W005', where: 'wordingRuleFor, roleCreditFor', note: '"Flugel Horn" (also Flügelhorn) is the MusicBrainz instrument flugelhorn, without role credit', phrases: ['flugel horn', 'flugelhorn', 'flügelhorn', 'flugel-horn'], credit: '' },
-    { id: 'W006', where: 'wordingRuleFor, roleCreditFor', note: '"Mix", "Mixed By", "Engineer [Mix]" … are the MusicBrainz relationship mix, without role credit', phrases: ['mix', 'mixing', 'mixed by', 'mixed-by', 'mix engineer', 'mixing engineer', 'engineer mix', 'engineer mixing', 'engineered by mix', 'mixdown', 'engineer mixdown'], credit: '' },
-    { id: 'W007', where: 'wordingRuleFor, roleCreditFor', note: '"Recording", "Recorded By", "Engineer [Recording]", "Live Recording By" … are the MusicBrainz relationship recording (recording engineer), without role credit', phrases: ['recording', 'recorded by', 'recorded-by', 'recording engineer', 'engineer recording', 'engineered by recording', 'recording by', 'tracking', 'tracked by', 'engineer tracking', 'live recording by', 'live recording', 'live recorded by', 'recorded live by', 'live recording engineer'], credit: '' },
-  ];
-
-  const CHECKBOX_DETAILS = ['additional', 'guest', 'solo', 'uncredited'];
-
-  /** The first own role rule that fits the Discogs role (b) and its details (ms). */
-  function ownRuleResult(b, ms, consumed, out) {
-    const det = ms.filter((x) => !CHECKBOX_DETAILS.includes(x)).map(norm).sort().join(', ');
-    for (const ur of userRules()) {
-      if (ur.kind !== 'role' || ur.on === false || norm(ur.discogs) !== b) continue;
-      const want = String(ur.details || '').split(',').map(norm).filter(Boolean).sort().join(', ');
-      if (ur.detailsMode === 'exact' ? det !== want : (want && !det.includes(want))) continue;
-      if (ur.credit) ms.forEach((x) => { if (!CHECKBOX_DETAILS.includes(x)) consumed.add(x); });
-      const level = ur.level || 'recording';
-      const res = out([ur.type], {
-        level, ...(level === 'work' ? { work: true } : {}),
-        primaryCands: ur.instrument ? [ur.instrument] : instrumentCandidates(b, ms),
-        ...(ur.credit ? { credit: ur.credit } : {}),
-      });
-      res.rule = ur.id;
-      return res;
-    }
-    return null;
-  }
-
-  /** Wording rule for a row: its role and details (checkbox details left out), in either order. */
-  function wordingRuleFor(row) {
-    const flagged = new Set([...(row.flagMods || [])].map(norm));
-    const details = (row.mods || []).map(norm).filter((m) => !flagged.has(m) && !['additional', 'guest', 'solo', 'uncredited'].includes(m));
-    const phrases = [[norm(row.base), ...details].join(' '), [...details, norm(row.base)].join(' ')];
-    return WORDING_RULES.find((r) => ruleOn(r.id) && r.phrases.some((x) => phrases.includes(x))) || null;
-  }
-
-  /**
-   * Rules with their own handling elsewhere in the script, listed here so that every rule can be found
-   * in one place (the dashboard's "Mapping rules" shows them).
-   */
-  const SPECIAL_RULES = [
-    { id: 'S001', where: 'mapRoleInner', note: '"Additional …" at the start of a role ticks the "additional" checkbox ("Additional Synths" → synthesizer, additional)' },
-    { id: 'S002', where: 'mapRoleInner, DETAIL_FLAGS', note: 'Details "Additional", "Guest", "Solo" tick checkboxes ("Additional Musicians", "Additional Personnel" and misspellings such as "Additonal" count as "Additional"); "Uncredited" is noted' },
-    { id: 'S003', where: 'mapRole', note: 'A medium in front of a role ("CD Produced By", "LP Mastered By") puts it on the release' },
-    { id: 'S004', where: 'roleRules (design rule)', note: '"design" anywhere in a role or its details: type design, the other words (without "design", "by") are the wording' },
-    { id: 'S005', where: 'instrumentAskHtml, roleCreditFor (QUESTION_RULES)', note: 'Plain instrument family ("Bass", "Guitar"): the word stays as role credit, and the row asks which instrument it is (rules Q001 …)' },
-    { id: 'S006', where: 'loadRelease', note: 'Arrangement credits go to the works matrix when Discogs names writing credits' },
-    { id: 'S007', where: 'loadRelease (companies)', note: '"Companies, etc." with "Festival" in the name are not taken over (a festival is an event in MusicBrainz)' },
-    { id: 'S008', where: 'sourceCreditFor, syncSourceCredits', note: '"Credited as": the Discogs name whenever it differs from the MusicBrainz name' },
-    { id: 'S009', where: 'roleCreditFor', note: 'Role credits never contain Discogs brackets: details come before the role ("Coordinator [Tour]" → "tour coordinator")' },
-    { id: 'S010', where: 'withoutBy, wordingCredit', note: 'Trailing "by" is never taken over ("Photography By" → photography)' },
-    { id: 'S012', where: 'typo (roleCreditFor, sourceCreditFor, relFields)', note: "Typewriter apostrophe ' becomes ’ in role credits and artist credits (\"Rock 'n' Roll\" → \"Rock ’n’ Roll\")" },
-    { id: 'S013', where: 'roleRules (R084), wordingCredit', note: 'A&R goes on the release group as artists and repertoire; the word after "A&R" becomes its task ("A & R Consultant" → task "consultant")' },
-    { id: 'S014', where: 'computePublisherEvidence', note: 'Publishers (Discogs names them for the whole release) are ticked in the works matrix only on works whose writer has them as personal publisher in MusicBrainz; all publishers stay in the matrix to tick by hand' },
-    { id: 'S015', where: 'tracksInText, applyMatrixColumn, applyDateToTracks (date dropped onto a row)', note: 'Track groups: a date whose sentence names tracks ("Tracks 1 to 5 recorded …", "tracks 6, 8 and 10", "A1 to A3", "side B", "CD2, tracks 1–5", "Disc 2" for the whole medium) goes into the date matrix with that track group and only onto those tracks; rows covering more tracks are split, rows with a date of their own stay' },
-    { id: 'S016', where: 'studiosInText, applyMatrixColumn', note: 'A studio of "Companies, etc." named in the same sentence gets exactly these tracks and this date; other studios are left alone by that date' },
-    { id: 'S017', where: 'wordingCredit', note: 'A Discogs spelling that differs from the MusicBrainz instrument only in spaces or hyphens is no role credit ("Flugel Horn" → flugelhorn, "Hand Claps" → handclaps)' },
-    { id: 'S018', where: 'splitEngineerTasks', note: 'An engineer with several tasks is one role per task: "Engineer [Mix, Recording]" → mix and recording (each with the other details, e.g. "Assistant")' },
-    { id: 'S020', where: 'applySongDefault', note: 'Music and lyrics in one credit (R098): new works of these tracks get the work type "Song" (the default for all new works when the credit is for the whole release); a type chosen by hand stays' },
-    { id: 'S021', where: 'applyLiveDefault, linkAttrsOf, liveHint', note: '"live" is preselected on new links recording → work (a new work, or a work linked here) when the release group is marked Live in MusicBrainz, Discogs calls the release live (format, "recorded live" in the notes), or the track title says so ("(live)", "[live]", "(live at …)", "– live"), or a "Live Recording By" credit names the track (the whole release without track list); unticking takes it back. Links that exist in MusicBrainz keep their attributes: "live" is only offered there ("li?")' },
-    { id: 'S022', where: 'notesTrackCredits, matchEntry, applyNotesTrackCredits', note: 'Track lists in the Discogs notes ("XYZ Publishing (1, 4, 6)", "Published by X (tracks 1–3)", "Written by Y (2, 5)", "Tracks 1, 4 & 6 published by Z"): a track group in the pool; when the name is an entry of the dashboard (compared generously: case, accents, spaces, hyphens, punctuation, "&"/"and", Ltd./GmbH/Inc. …, one typo; as a last step without generic words like Publishing, Music, Verlag – marked "similar"), its work-level roles get these tracks as a suggestion (dashed, ✓ keeps, × takes out), ahead of the personal publisher evidence (S014). Credits Discogs gives on these tracks already are left alone; unknown names only give the track group' },
-    { id: 'S023', where: 'dropTracksOnMatrix', note: 'A track group dropped onto the works matrix: onto an attribute in the head of the track column (the links of these tracks get it, the others lose it), onto a role of a column (that role only for the works of these tracks) or onto a column head (all its roles); with Shift added instead. Relationships and attributes already in MusicBrainz stay' },
-    { id: 'S024', where: 'suggestCommissioned', note: '"Commissioned By" (R099, C037) without a track list: "commissioned" is suggested on all works (dashed, yellow; ✓ keeps it, × takes it out, it is staged like the others). With a track list it is set on the works of those tracks' },
-    { id: 'S019', where: 'repeatedDetails', note: 'Details that only repeat the role in another word form are no role credit: "Mixed By [Mixing]", "Mastered By [Mastering]", "Music By [All Music By]", "Recorded By [Recording]"; "[Cover Photo]" stays' },
-    { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
-  ];
-
-  /**
-   * Instrument questions (Q001 …): Discogs names only the instrument family. The row keeps that word as
-   * role credit and asks which instrument it is; one click sets it (the role credit stays).
-   */
-  const QUESTION_RULES = [
-    { id: 'Q001', base: 'bass', credit: 'bass', options: ['electric bass guitar', 'double bass', 'acoustic bass guitar'], note: 'Plain "Bass": which bass?' },
-    { id: 'Q002', base: 'guitar', credit: 'guitar', options: ['electric guitar', 'acoustic guitar'], note: 'Plain "Guitar": which guitar?' },
-    { id: 'Q004', base: 'bass guitar', credit: 'bass guitar', options: ['bass guitar', 'electric bass guitar', 'acoustic bass guitar'], note: 'Plain "Bass Guitar": which bass guitar? Without a choice it stays bass guitar' },
-  ];
-
-  /**
-   * Questions for the relationship type: the row has none until one is chosen ("please choose"), so nothing is
-   * staged by assumption. Each option is a type with its level and, for "misc", the task.
-   */
-  const TYPE_QUESTIONS = [
-    { id: 'Q003', base: 'directed by', rule: 'R097', note: '"Directed By": conductor, chorus master, creative direction or miscellaneous support (task "director")? Nothing is assumed',
-      options: [
-        { type: 'conductor', level: 'recording' },
-        { type: 'chorus master', level: 'recording' },
-        { type: 'creative direction', level: 'release' },
-        { type: 'misc', level: 'recording', task: 'director', label: 'miscellaneous support (task “director”)' },
-      ] },
-  ];
-  const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && row.ruleId === q.rule) || null);
-
-  /** Details in brackets that are neither checkboxes (e.g. "Additional") nor part of the instrument name. */
-  function remainingMods(row) {
-    const used = new Set([...(row.consumed || []), ...(row.flagMods || [])].map(norm));
-    return (row.mods || []).filter((m) => !used.has(norm(m)));
-  }
-
-  /** The question for a row: Discogs gives only the family word, without details other than checkboxes. */
-  function questionRuleFor(row) {
-    if (!ruleOn('S005') || remainingMods(row).length) return null;
-    return QUESTION_RULES.find((q) => ruleOn(q.id) && norm(row.base) === q.base) || null;
-  }
-
-  // [S010]
-  const withoutBy = (t) => (ruleOn('S010') ? String(t || '').replace(/[\s-]+by$/i, '').trim() : String(t || '').trim());
-
-  // [S012] typewriter apostrophe → typographic apostrophe in credits
-  const typo = (t) => (ruleOn('S012') ? String(t == null ? '' : t).replace(/'/g, '’') : String(t == null ? '' : t));
-
-  // --- Date rules (D001 …): dates in free text (liner notes, Discogs notes) in MusicBrainz form -----
-  const DATE_RULES = [
-    { id: 'D001', note: 'ISO and MusicBrainz dates and periods: 2022-11-01, 2022-11, 1998-03-01 – 1998-03-20, 1997–1998' },
-    { id: 'D002', note: 'Numbers with dots, day first: 01.11.2022' },
-    { id: 'D003', note: 'Numbers with slashes: 1/11/2022 – a number over 12 decides; otherwise the Discogs release country (US: month/day, elsewhere day/month), with a note and the other reading to choose' },
-    { id: 'D004', note: 'Month names (English, German, Spanish, French): November 1, 2022 · November 1. 2022 · Nov. 1st, 2022 · 1 November 2022 · 1. November 2022 · 1st of November 2022 · 1 de noviembre de 2022' },
-    { id: 'D005', note: 'Ordinal words: first of November 2022 · November the first, 2022' },
-    { id: 'D006', note: 'Days within one month: March 1–3, 1998 · 1–3 March 1998 · 1.–3. März 1998' },
-    { id: 'D007', note: 'Periods across months or years: March 1 to April 2, 1998 · December 2003 to January 2004 · between 1997 and 1998 · 1997/98' },
-    { id: 'D008', note: 'Month and year: November 2022 · Nov 2022' },
-    { id: 'D009', note: 'Seasons give the year: Spring 1998 → 1998' },
-    { id: 'D010', note: 'A year alone: 1998' },
-    { id: 'D011', note: 'Decades ("late 1970s", "the 70s") cannot be given as a MusicBrainz date and are left out' },
-    { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
-    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows' },
-    { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
-    { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
-  ];
-  const MONTH_NAMES = {
-    1: ['january', 'jan', 'januar', 'jänner', 'jän', 'enero', 'ene', 'janvier', 'janv'],
-    2: ['february', 'feb', 'februar', 'febrero', 'février', 'fevrier', 'févr', 'fevr', 'fév'],
-    3: ['march', 'mar', 'märz', 'maerz', 'marzo', 'mars'],
-    4: ['april', 'apr', 'abril', 'abr', 'avril', 'avr'],
-    5: ['may', 'mai', 'mayo'],
-    6: ['june', 'jun', 'juni', 'junio', 'juin'],
-    7: ['july', 'jul', 'juli', 'julio', 'juillet', 'juil'],
-    8: ['august', 'aug', 'agosto', 'ago', 'août', 'aout'],
-    9: ['september', 'sept', 'sep', 'septiembre', 'septembre'],
-    10: ['october', 'oct', 'oktober', 'okt', 'octubre', 'octobre'],
-    11: ['november', 'nov', 'noviembre', 'novembre'],
-    12: ['december', 'dec', 'dezember', 'dez', 'diciembre', 'dic', 'décembre', 'decembre', 'déc'],
-  };
-  const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
-  const ORDINALS = new Map(['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth',
-    'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth'].map((w, i) => [w, i + 1]));
-  ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth'].forEach((w, i) => {
-    ORDINALS.set(`twenty-${w}`, 21 + i);
-    ORDINALS.set(`twenty ${w}`, 21 + i);
-  });
-  ORDINALS.set('thirtieth', 30);
-  ORDINALS.set('thirty-first', 31);
-  ORDINALS.set('thirty first', 31);
-  const reAlt = (keys) => [...keys].sort((x, y) => y.length - x.length).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-  const P = {
-    M: `(?<![\\p{L}])(${reAlt(MONTH_BY_NAME.keys())})(?![\\p{L}])\\.?`,
-    D: '(\\d{1,2})(?:st|nd|rd|th|er|\\.)?',
-    O: `(${reAlt(ORDINALS.keys())})`,
-    Y: '(\\d{4})',
-    TO: '(?:\\s*[-–—]\\s*|\\s+(?:to|until|till|through|bis|au|al)\\s+)',
-    OF: '(?:\\s+(?:of|de|du))?',
-    SEASON: '(spring|summer|autumn|fall|winter|frühling|frühjahr|sommer|herbst|primavera|verano|otoño|invierno|printemps|été|automne|hiver)',
-  };
-  const monthNo = (t) => MONTH_BY_NAME.get(String(t || '').toLowerCase().replace(/\.$/, ''));
-  function ymd(y, m = null, d = null) {
-    const year = Number(y);
-    const month = m == null ? null : Number(m);
-    const day = d == null ? null : Number(d);
-    if (!year || year < 1000 || year > 2100) return null;
-    if (month != null && (month < 1 || month > 12)) return null;
-    if (day != null && (month == null || day < 1 || day > new Date(year, month, 0).getDate())) return null;
-    return { year, month, day };
-  }
-  const single = (v) => (v ? { begin: v, end: v, ended: true } : null);
-  const span = (a, b) => (a && b ? { begin: a, end: b, ended: true } : null);
-  /** Several days of one month: consecutive ones form a period, others stay single dates (D013). */
-  function multiDays(y, mo, text) {
-    const days = uniq((String(text).match(/\d{1,2}/g) || []).map(Number)).sort((a, b) => a - b);
-    const values = days.map((d) => ymd(y, mo, d));
-    if (days.length < 2 || values.some((v) => !v)) return null;
-    if (days.every((d, i) => i === 0 || d === days[i - 1] + 1)) return { ...span(values[0], values[values.length - 1]), days: values, consecutive: true };
-    return { ...single(values[0]), multi: values.map(single), days: values };
-  }
-  const DAYP = '\\d{1,2}(?:st|nd|rd|th|er|\\.)?';
-  // [3.7.0] also "June 16/17 2018", "16/17 June 2018" (Bandcamp)
-  const DAYLIST = `${DAYP}(?:\\s*,\\s*${DAYP})*\\s*,?\\s*(?:(?:and|&|und|y|et)\\s+|/\\s*)${DAYP}`;
-
-  /** The matchers of the date rules, longest forms first (a period wins over the dates inside it). */
-  const DATE_MATCHERS = [
-    { id: 'D013', re: `${P.M}\\s+(${DAYLIST}),?\\s+${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[1]), m[2]) },
-    { id: 'D013', re: `(${DAYLIST})${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[2]), m[1]) },
-    { id: 'D007', re: `${P.M}\\s+${P.D}${P.TO}${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
-    { id: 'D007', re: `${P.D}${P.OF}\\s+${P.M}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[2]), m[1]), ymd(m[5], monthNo(m[4]), m[3])) },
-    { id: 'D007', re: `${P.M},?\\s+${P.Y}${P.TO}${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[2], monthNo(m[1])), ymd(m[4], monthNo(m[3]))) },
-    { id: 'D006', re: `${P.M}\\s+${P.D}${P.TO}${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[4], monthNo(m[1]), m[2]), ymd(m[4], monthNo(m[1]), m[3])) },
-    { id: 'D006', re: `${P.D}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => span(ymd(m[4], monthNo(m[3]), m[1]), ymd(m[4], monthNo(m[3]), m[2])) },
-    { id: 'D001', re: '(?<!\\d)(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?(?:\\s+[-–—]\\s+|\\s*[–—]\\s*|\\s+(?:to|bis|until)\\s+)(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?(?!\\d)',
-      make: (m) => span(ymd(m[1], m[2], m[3]), ymd(m[4], m[5], m[6])) },
-    { id: 'D007', re: '(?:between|zwischen|entre)\\s+(\\d{4})\\s+(?:and|und|y|et)\\s+(\\d{4})', make: (m) => span(ymd(m[1]), ymd(m[2])) },
-    { id: 'D007', re: '(?<!\\d)(\\d{4})\\s*/\\s*(\\d{2}|\\d{4})(?![\\d/])', make: (m) => span(ymd(m[1]), ymd(m[2].length === 2 ? `${m[1].slice(0, 2)}${m[2]}` : m[2])) },
-    { id: 'D005', re: `${P.O}(?:\\s+day)?${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), ORDINALS.get(m[1].toLowerCase()))) },
-    { id: 'D005', re: `${P.M}\\s+(?:the\\s+)?${P.O},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), ORDINALS.get(m[2].toLowerCase()))) },
-    { id: 'D004', re: `${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), m[2])) },
-    { id: 'D004', re: `${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), m[1])) },
-    { id: 'D001', re: '(?<![\\d./-])(\\d{4})-(\\d{1,2})(?:-(\\d{1,2}))?(?![\\d-])', make: (m) => single(ymd(m[1], m[2], m[3])) },
-    { id: 'D002', re: '(?<![\\d.])(\\d{1,2})\\.(\\d{1,2})\\.(\\d{4})(?!\\d)', make: (m) => single(ymd(m[3], m[2], m[1])) },
-    { id: 'D003', re: '(?<![\\d/])(\\d{1,2})/(\\d{1,2})/(\\d{4})(?![\\d/])', make: (m, o) => {
-      const a = Number(m[1]);
-      const b = Number(m[2]);
-      if (a > 12) return single(ymd(m[3], b, a));
-      if (b > 12) return single(ymd(m[3], a, b));
-      const us = single(ymd(m[3], a, b));
-      const row = single(ymd(m[3], b, a));
-      if (a === b) return us;
-      return { ...(o.usOrder ? us : row), alt: o.usOrder ? row : us, order: o.usOrder ? 'us' : 'dayFirst' };
-    } },
-    { id: 'D012', re: '(?<![\\d/.])(\\d{1,2})[/.](\\d{4})(?![\\d/]|\\.\\d)', make: (m) => single(ymd(m[2], m[1])) },
-    { id: 'D011', re: '(?:(?:early|mid|late|the|frühe[n]?|späte[n]?|mitte der)[-\\s]+)?(?:\\d{2})?\\d0\'?s(?![\\p{L}])|(?:\\d{2})?\\d0er(?:\\s+jahren?)?', make: () => 'skip' },
-    { id: 'D009', re: `${P.SEASON}(?:\\s+(?:of|de|du))?\\s+${P.Y}`, make: (m) => single(ymd(m[2])) },
-    { id: 'D008', re: `${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[2], monthNo(m[1]))) },
-    { id: 'D010', re: '(?<![\\d./-])(1[89]\\d{2}|20\\d{2})(?![\\d/-]|\\.\\d)', make: (m) => single(ymd(m[1])) },
-  ].map((x) => ({ ...x, rx: new RegExp(x.re, 'giu') }));
-
-  /** Keywords near a date that suggest its group (shown highlighted; the choice stays with the person). */
-  const DATE_HINTS = [
-    ['remastering', /remaster/i],
-    ['mastering', /master(ed|ing)?\b|gemastert/i],
-    ['mix', /\bmix(ed|ing)?\b|abgemischt|mezcl|mixag/i],
-    ['copyright', /℗|©|\(p\)|\(c\)|copyright|phonographic/i],
-    // [D015] whole words only: "Fuzzoramarecords" or "… Records" is a label name, not "recorded"
-    ['performance', /\brecord(ed|ing|ings)?\b|\brec\.|\blive at\b|\bsessions?\b|aufgenommen|aufnahme|grabad|enregistr|\bconcert|\bkonzert/i],
-  ];
-  /** ℗ and © signs (also as (P), (C) and the doubled "©©" that Discogs often has for ℗ ©). */
-  const COPYRIGHT_SIGN = /℗|©|\(p\)|\(c\)/i;
-
-  /**
-   * All dates and periods in a text, in MusicBrainz form, with the rule that found them (D001 …), a short
-   * snippet, the suggested group and, for slash dates that could be read either way, the other reading.
-   */
-  function findDates(text, { usOrder = false } = {}) {
-    const src = String(text || '');
-    const taken = [];
-    const found = [];
-    const free = (a, b) => !taken.some(([x, y]) => a < y && b > x);
-    for (const mt of DATE_MATCHERS) {
-      if (!ruleOn(mt.id)) continue;
-      mt.rx.lastIndex = 0;
-      let m;
-      while ((m = mt.rx.exec(src))) {
-        const a = m.index;
-        const b = a + m[0].length;
-        if (!m[0] || !free(a, b)) continue;
-        const v = mt.make(m, { usOrder });
-        taken.push([a, b]);
-        if (!v || v === 'skip') continue;
-        // The keyword closest before the date (or inside it) suggests the group
-        const before = src.slice(Math.max(0, a - 80), b);
-        // [D015] after a ℗ / © sign in the same sentence, capitalised keywords belong to a name ("℗ Fuzzorama Recordings 2005")
-        const seg = before.slice(Math.max(...['.', ';', '\n'].map((c) => before.lastIndexOf(c, before.length - m[0].length - 1))) + 1);
-        const segStart = before.length - seg.length;
-        const sign = ruleOn('D015') ? seg.search(COPYRIGHT_SIGN) : -1;
-        let hint = '';
-        let at = -1;
-        for (const [key, re] of DATE_HINTS) {
-          const g = new RegExp(re.source, 'gi');
-          let h;
-          while ((h = g.exec(before))) {
-            const inName = sign >= 0 && key !== 'copyright' && h.index > segStart + sign && /^[A-ZÄÖÜ]/.test(h[0]);
-            if (h.index > at && !inName) {
-              at = h.index;
-              hint = key;
-            }
-            if (!h[0]) break;
-          }
-        }
-        // [D015] "©©" is mostly a typo for "℗ ©": both, i.e. the group ℗/©
-        const doubled = ruleOn('D015') && /©\s*©/.test(seg);
-        if (doubled) hint = 'copyright';
-        found.push({ index: a, text: m[0], rule: doubled ? `${mt.id} · D015` : mt.id, value: { begin: v.begin, end: v.end, ended: v.ended }, alt: v.alt || null, order: v.order || '',
-          multi: v.multi || null, days: v.days || null, consecutive: !!v.consecutive,
-          hint, snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
-      }
-    }
-    return found.sort((x, y) => x.index - y.index);
-  }
-
-  /** Tables of the register (ids T001 …): where they are and what they hold. */
-  const TABLES = [
-    { id: 'T001', where: 'INSTRUMENT_ALIASES', note: 'Discogs spellings of instruments → MusicBrainz instruments' },
-    { id: 'T002', where: 'GENERIC_WORDS', note: 'Words written in lower case in role credits (S011)' },
-    { id: 'T003', where: 'ART_TYPES', note: 'Artwork relationship types whose role credits are entirely in lower case (S011)' },
-    { id: 'T004', where: 'COMPANY_ROLES', note: '"Companies, etc." roles → MusicBrainz types for labels, places and artists (rules C001 …)' },
-  ];
-
-  // [T003] Artwork relationships: their role credits are written entirely in lower case (S011)
-  const ART_TYPES = ['artwork', 'art direction', 'design', 'design/illustration', 'graphic design', 'illustration', 'photography'];
-
-  // [T002] (S011)
-  const GENERIC_WORDS = new Set(['brushes', 'mallets', 'sticks', 'bow', 'bowed', 'plucked', 'muted', 'effects', 'fx', 'loops', 'samples',
-    'sampler', 'programming', 'overdubs', 'synth', 'synths', 'keys', 'keyboard', 'keyboards', 'vox', 'sax', 'perc', 'gtr', 'lead', 'rhythm',
-    'backing', 'solo', 'additional', 'tour', 'live', 'intro', 'outro', 'harmony', 'harmonies', 'chorus', 'choir', 'strings', 'horns', 'brass',
-    'woodwinds', 'tenor', 'alto', 'soprano', 'baritone', 'bass', 'acoustic', 'electric', 'fretless', 'slide', 'steel', 'pedal', 'lap',
-    '12-string', '6-string', '7-string', '5-string', '4-string', 'upright', 'double', 'grand', 'prepared', 'toy', 'analog', 'digital',
-    'modular', 'drum', 'drums', 'machine', 'kit', 'snare', 'kick', 'cymbals', 'hi-hat', 'tambourine', 'shaker', 'claps', 'handclaps',
-    'whistle', 'whistling', 'voice', 'vocals', 'spoken', 'word', 'guitar', 'guitars', 'piano', 'organ', 'synthesizer', 'synthesizers',
-    'sax', 'saxes', 'bari', 'tpt', 'tbn', 'flgh', 'vibes', 'gtrs', 'bs', 'dr', 'kbd', 'kbds', 'clar', 'fl', 'horn', 'reeds', 'winds']);
-
-  // [T004] "Companies, etc." from Discogs (rules C001 …)
-  const COMPANY_ROLES = [
-    [/^phonographic copyright/, { id: 'C001', label: ['phonographic copyright'], artist: ['phonographic copyright'], level: 'recording' }],
-    [/^copyright/, { id: 'C002', label: ['copyright'], artist: ['copyright'], level: 'release' }],
-    [/^licensed from/, { id: 'C003', label: ['licensor'], artist: ['licensor'], level: 'release' }],
-    [/^licensed (to|through)/, { id: 'C004', label: ['licensee'], artist: ['licensee'], level: 'release' }],
-    [/^marketed by/, { id: 'C005', label: ['marketed'], level: 'release' }],
-    [/^distributed (by|through)/, { id: 'C006', label: ['distributed'], level: 'release' }],
-    [/^exported by/, { id: 'C007', label: ['exported'], level: 'release' }],
-    [/^promoted by/, { id: 'C008', label: ['promoted'], level: 'release' }],
-    [/^manufactured for/, { id: 'C009', label: ['manufactured for'], level: 'release' }],
-    [/^(manufactured|made) (by|at)/, { id: 'C010', label: ['manufactured'], place: ['manufactured at'], level: 'release' }],
-    [/^printed by/, { id: 'C011', label: ['printed'], level: 'release' }],
-    [/^pressed (by|at)/, { id: 'C012', label: ['pressed'], place: ['pressed at'], level: 'release' }],
-    [/^glass mastered (by|at)/, { id: 'C013', label: ['glass mastered'], place: ['glass mastered at'], level: 'release' }],
-    [/^lacquer cut (by|at)/, { id: 'C014', place: ['lacquer cut at'], artist: ['lacquer cut'], level: 'release' }],
-    [/^mastered (by|at)/, { id: 'C015', label: ['mastering'], place: ['mastered at'], artist: ['mastering'], level: 'release' }],
-    [/^remastered (by|at)/, { id: 'C016', label: ['mastering'], place: ['mastered at'], artist: ['mastering'], level: 'release', flags: ['re'] }],
-    [/^mastered for/, { id: 'C017', label: ['mastered for'], level: 'release' }],
-    [/^remixed at/, { id: 'C018', place: ['remixed at'], level: 'recording' }],
-    [/^mixed at/, { id: 'C019', place: ['mixed at'], level: 'recording' }],
-    [/^mixed by/, { id: 'C020', label: ['mix'], artist: ['mix'], level: 'release' }],
-    [/^recorded by/, { id: 'C021', artist: ['recording'], level: 'recording' }],
-    [/^mixed for/, { id: 'C022', label: ['mixed for'], level: 'release' }],
-    [/^(recorded|overdubbed) at/, { id: 'C023', place: ['recorded at'], level: 'recording' }],
-    [/^engineered at/, { id: 'C024', place: ['engineered at'], level: 'recording' }],
-    [/^produced at/, { id: 'C025', place: ['produced at'], level: 'recording' }],
-    [/^produced for/, { id: 'C026', label: ['produced for'], level: 'release' }],
-    // A person credited as producer in "Companies, etc." (labels have no producer relationship in MusicBrainz)
-    [/^(produced by|producer)$/, { id: 'C036', artist: ['producer'], label: ['misc'], level: 'recording', prefer: 'artist' }],
-    [/^edited at/, { id: 'C027', place: ['edited at'], level: 'recording' }],
-    [/^edited for/, { id: 'C028', label: ['edited for'], level: 'release' }],
-    [/^arranged for/, { id: 'C029', label: ['arranged for'], level: 'release' }],
-    [/^transferred at/, { id: 'C030', place: ['transferred at'], level: 'release' }],
-    [/^published by/, { id: 'C031', label: ['publishing'], artist: ['publishing'], level: 'work' }],
-    [/^commissioned by/, { id: 'C037', label: ['commissioned'], artist: ['commissioned'], level: 'work' }],
-    [/^rights society/, { id: 'C032', label: ['rights society'], level: 'release' }],
-    [/^designed (by|at)/, { id: 'C033', label: ['design'], artist: ['design'], level: 'release' }],
-    [/^artwork by/, { id: 'C034', label: ['artwork'], artist: ['artwork'], level: 'release' }],
-    [/^photography by/, { id: 'C035', label: ['photography'], artist: ['photography'], level: 'release' }],
-  ];
-
-
-  /**
-   * Role rules, tried in this order; the first one whose test passes and that returns a result wins.
-   * Each rule has an id (shown in the dashboard's "Mapping rules"), a note, the Discogs pattern (re),
-   * the MusicBrainz types and level it leads to, test() and run(). The context c describes the role
-   * being mapped: b (role without details, lower case), ms (details), and the helpers has/is/out.
-   */
-  function roleRules(c) {
-    const { b, ms, flags, consumed, has, is, out, modsIn } = c;
-    const withFlags = (...extra) => [...flags, ...extra];
-    const engFlags = () => withFlags(
-      ...(has('assistant') ? ['assistant'] : []),
-      ...(has('associate') ? ['associate'] : []),
-      ...(has('co') ? ['co'] : []),
-      ...(has('executive') ? ['executive'] : []),
-    );
-    const wrk = { level: 'work', work: true };
-    const range = b.match(/^(soprano|mezzo-soprano|alto|contralto|countertenor|tenor|baritone|bass-baritone|bass|treble) vocals?$/);
-    const engineer = is(/^(engineer|engineered by|engineering)$/);
-    const textEditor = ms.find((x) => /publication|liner|text|copy|magazine|journal|\bbook\b/.test(x));
-    const rel = { level: 'release' };
-    const designTypes = ['design', 'design/illustration', 'graphic design'];
-    const allWords = [b, ...ms].join(' ');
-    return [
-      { id: 'R001', kind: 'special', note: "", re: null, types: [], level: 'recording',
-        test: () => !b, run: () => out([]) },
-      { id: 'R002', kind: 'simple', note: "", re: /^(written-by|written by|writer|songwriter|songwriters)$/, types: ['writer', 'composer'], level: 'recording',
-        test: () => is(/^(written-by|written by|writer|songwriter|songwriters)$/), run: () => out(['writer', 'composer'], wrk) },
-      { id: 'R098', kind: 'simple', note: "Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)", re: /^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$/, types: ['writer'], level: 'work',
-        test: () => is(/^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$/), run: () => out(['writer'], { ...wrk, notes: ['musicLyrics'] }) },
-      { id: 'R003', kind: 'simple', note: "", re: /^(composed by|composer|composition by|music by|music|all music by|all music|score|score by|soundtrack)$/, types: ['composer', 'writer'], level: 'recording',
-        test: () => is(/^(composed by|composer|composition by|music by|music|all music by|all music|score|score by|soundtrack)$/), run: () => out(['composer', 'writer'], wrk) },
-      { id: 'R004', kind: 'simple', note: "", re: /^(translated by|translation|translator|translations)$/, types: ['translator'], level: 'recording',
-        test: () => is(/^(translated by|translation|translator|translations)$/), run: () => out(['translator'], wrk) },
-      { id: 'R005', kind: 'simple', note: "", re: /^(author|poetry by|poem by|story by|screenwriter|script by|created by)$/, types: ['writer'], level: 'work',
-        test: () => is(/^(author|poetry by|poem by|story by|screenwriter|script by|created by)$/), run: () => out(['writer'], { ...wrk, credit: true }) },
-      { id: 'R006', kind: 'simple', note: "", re: /^(lyrics by|lyricist|words by|lyrics)$/, types: ['lyricist', 'writer'], level: 'recording',
-        test: () => is(/^(lyrics by|lyricist|words by|lyrics)$/), run: () => out(['lyricist', 'writer'], wrk) },
-      { id: 'R007', kind: 'simple', note: "", re: /^(libretto by|librettist)$/, types: ['librettist', 'lyricist'], level: 'recording',
-        test: () => is(/^(libretto by|librettist)$/), run: () => out(['librettist', 'lyricist'], wrk) },
-      { id: 'R008', kind: 'simple', note: "Vocals", re: /^(lead vocals?|lead vocalist)$/, types: ['vocal'], level: 'recording',
-        test: () => is(/^(lead vocals?|lead vocalist)$/), run: () => out(['vocal'], { primaryCands: ['lead vocals'] }) },
-      { id: 'R009', kind: 'special', note: "", re: null, types: ['vocal'], level: 'recording',
-        test: () => range, run: () => out(['vocal'], { primaryCands: [`${range[1]} vocals`] }) },
-      { id: 'R010', kind: 'simple', note: "", re: /^solo vocals?$/, types: ['vocal'], level: 'recording',
-        test: () => is(/^solo vocals?$/), run: () => out(['vocal'], { flags: withFlags('solo') }) },
-      { id: 'R011', kind: 'special', note: "", re: /^(scat|yodeling|yodelling|humming|whistling|human beatbox|beatbox|vocal percussion|vocalese|toasting|overtone voice|joik|eefing|kakegoe|satsuma|caller|cantor|coro)$/, types: ['vocal'], level: 'recording',
-        test: () => is(/^(scat|yodeling|yodelling|humming|whistling|human beatbox|beatbox|vocal percussion|vocalese|toasting|overtone voice|joik|eefing|kakegoe|satsuma|caller|cantor|coro)$/), run: () => {
-      return out(['vocal'], { primaryCands: [b, 'other vocals'], credit: true });
-    } },
-      { id: 'R012', kind: 'special', note: "", re: /^(announcer|commentator|interviewee|interviewer|dialog|dialogue|read by|presenter|hosted by|host|compere|compère)$/, types: ['vocal'], level: 'recording',
-        test: () => is(/^(announcer|commentator|interviewee|interviewer|dialog|dialogue|read by|presenter|hosted by|host|compere|compère)$/), run: () => {
-      return out(['vocal'], { primaryCands: ['spoken vocals'], credit: true });
-    } },
-      { id: 'R013', kind: 'simple', note: "", re: /^(backing vocals?|background vocals?|harmony vocals?|chorus|backing vocalist)$/, types: ['vocal'], level: 'recording',
-        test: () => is(/^(backing vocals?|background vocals?|harmony vocals?|chorus|backing vocalist)$/), run: () => out(['vocal'], { primaryCands: ['background vocals'] }) },
-      { id: 'R014', kind: 'simple', note: "", re: /^(choir|choir vocals?)$/, types: ['vocal'], level: 'recording',
-        test: () => is(/^(choir|choir vocals?)$/), run: () => out(['vocal'], { primaryCands: ['choir vocals'] }) },
-      { id: 'R015', kind: 'simple', note: "", re: /^(voice|narrator|spoken word|speech|spoken vocals?|voice actor)$/, types: ['vocal'], level: 'recording',
-        test: () => is(/^(voice|narrator|spoken word|speech|spoken vocals?|voice actor)$/), run: () => out(['vocal'], { primaryCands: ['spoken vocals'] }) },
-      { id: 'R016', kind: 'simple', note: "", re: /^guest$/, types: ['performer'], level: 'recording',
-        test: () => is(/^guest$/), run: () => out(['performer'], { flags: withFlags('guest') }) },
-      { id: 'R017', kind: 'simple', note: "", re: /^(rap|rapper|mc|rapping)$/, types: ['vocal'], level: 'recording',
-        test: () => is(/^(rap|rapper|mc|rapping)$/), run: () => out(['vocal'], { primaryCands: ['rap', 'spoken vocals'] }) },
-      { id: 'R018', kind: 'special', note: "", re: /^(vocals?|vocalist|singer)$/, types: ['vocal'], level: 'recording',
-        test: () => is(/^(vocals?|vocalist|singer)$/), run: () => {
-      let cands = [];
-      if (has('lead')) cands = ['lead vocals'];
-      else if (has('backing', 'background', 'harmony')) cands = ['background vocals'];
-      else if (has('choir')) cands = ['choir vocals'];
-      return out(['vocal'], { primaryCands: cands });
-    } },
-      { id: 'R019', kind: 'special', note: "", re: /^featuring$/, types: ['performer', 'vocal'], level: 'recording',
-        test: () => is(/^featuring$/), run: () => {
-      return out(['performer', 'vocal'], {
-        flags: withFlags('guest'),
-        notes: ['featuring'],
-      });
-    } },
-      { id: 'R020', kind: 'simple', note: "Production", re: /^(co-producer|co-produced by|coproducer|coproduced by|co-produced)$/, types: ['producer'], level: 'recording',
-        test: () => is(/^(co-producer|co-produced by|coproducer|coproduced by|co-produced)$/), run: () => out(['producer'], { flags: withFlags('co') }) },
-      { id: 'R021', kind: 'simple', note: "Only producer and co-producer belong on recordings by default; the other producer roles on the release.", re: /^(executive-producer|executive producer|executive-produced by|executive produced by)$/, types: ['producer'], level: 'release',
-        test: () => is(/^(executive-producer|executive producer|executive-produced by|executive produced by)$/), run: () => out(['producer'], { level: 'release', flags: withFlags('executive') }) },
-      { id: 'R022', kind: 'simple', note: "", re: /^associate[- ]producer$/, types: ['producer'], level: 'release',
-        test: () => is(/^associate[- ]producer$/), run: () => out(['producer'], { level: 'release', flags: withFlags('associate') }) },
-      { id: 'R023', kind: 'simple', note: "", re: /^assistant[- ]producer$/, types: ['producer'], level: 'release',
-        test: () => is(/^assistant[- ]producer$/), run: () => out(['producer'], { level: 'release', flags: withFlags('assistant') }) },
-      { id: 'R024', kind: 'simple', note: "", re: /^(additional[- ]producer|additional production)$/, types: ['producer'], level: 'release',
-        test: () => is(/^(additional[- ]producer|additional production)$/), run: () => out(['producer'], { level: 'release', flags: withFlags('additional') }) },
-      { id: 'R025', kind: 'special', note: "", re: /^(compilation producer|reissue producer|recording supervisor|supervised by|supervisor|post production|post-production)$/, types: ['producer'], level: 'recording',
-        test: () => is(/^(compilation producer|reissue producer|recording supervisor|supervised by|supervisor|post production|post-production)$/), run: () => {
-      return out(['producer'], { level: is(/^(compilation|reissue)/) ? 'release' : 'recording', credit: true });
-    } },
-      { id: 'R026', kind: 'special', note: "\"Produced By\" (also \"Produced-By\", \"Produced\") is always producer", re: /^(producer|produced by|produced-by|produced|record producer)$/, types: ['producer'], level: 'recording',
-        test: () => is(/^(producer|produced by|produced-by|produced|record producer)$/), run: () => {
-      const producerFlags = withFlags(
-        ...(has('co-producer', 'co') ? ['co'] : []),
-        ...(has('executive', 'executive-producer') ? ['executive'] : []),
-        ...(has('assistant') ? ['assistant'] : []),
-        ...(has('associate') ? ['associate'] : []),
-      );
-      const onRelease = producerFlags.some((f) => ['executive', 'associate', 'assistant', 'additional'].includes(f));
-      return out(['producer'], { flags: producerFlags, level: onRelease ? 'release' : 'recording' });
-    } },
-      { id: 'R027', kind: 'simple', note: "", re: /^(overdubbed by|overdubs by)$/, types: ['recording', 'engineer'], level: 'recording',
-        test: () => is(/^(overdubbed by|overdubs by)$/), run: () => out(['recording', 'engineer'], { flags: engFlags(), credit: true }) },
-      { id: 'R028', kind: 'simple', note: "", re: /^(tape op|tape operator|restoration|restored by|daw|technical assistance)$/, types: ['engineer'], level: 'recording',
-        test: () => is(/^(tape op|tape operator|restoration|restored by|daw|technical assistance)$/), run: () => out(['engineer'], { flags: engFlags(), credit: true }) },
-      { id: 'R029', kind: 'simple', note: "", re: /^(transferred by|transfer|audio transfer|cd transfer|digital transfer)$/, types: ['transfer', 'engineer'], level: 'release',
-        test: () => is(/^(transferred by|transfer|audio transfer|cd transfer|digital transfer)$/), run: () => out(['transfer', 'engineer'], { level: 'release', flags: engFlags() }) },
-      { id: 'R030', kind: 'simple', note: "", re: /^(direct metal mastering by|dmm cut by|dmm)$/, types: ['mastering'], level: 'release',
-        test: () => is(/^(direct metal mastering by|dmm cut by|dmm)$/), run: () => out(['mastering'], { level: 'release', flags: engFlags(), credit: true }) },
-      { id: 'R031', kind: 'special', note: "\"Live Recording By\" (also \"Live Recording\", \"Recorded Live By\" …) is recording too, without role credit; it is a hint for \"live\" (S021)", re: /^(recorded by|recording|recording engineer|tracking|tracked by|tracking by|live recording by|live recording|live recorded by|recorded live by|live recording engineer)$/, types: ['recording', 'engineer'], level: 'recording',
-        test: () => is(/^(recorded by|recording|recording engineer|tracking|tracked by|tracking by|live recording by|live recording|live recorded by|recorded live by|live recording engineer)$/) || (engineer && has('recording', 'tracking', 'live recording')), run: () => {
-      return out(['recording', 'engineer'], { flags: engFlags() });
-    } },
-      { id: 'R032', kind: 'simple', note: "", re: /^(dj mix|dj-mix|dj)$/, types: ['mix-dj'], level: 'release',
-        test: () => is(/^(dj mix|dj-mix|dj)$/), run: () => out(['mix-dj'], { level: 'release' }) },
-      { id: 'R033', kind: 'special', note: "", re: /^(mixed by|mixing|mix engineer|mixing engineer|mix)$/, types: ['mix'], level: 'recording',
-        test: () => is(/^(mixed by|mixing|mix engineer|mixing engineer|mix)$/) || (engineer && has('mix', 'mixing')), run: () => {
-      return out(['mix'], { flags: engFlags() });
-    } },
-      { id: 'R034', kind: 'special', note: "", re: /^(mastered by|mastering|mastering engineer)$/, types: ['mastering'], level: 'release',
-        test: () => is(/^(mastered by|mastering|mastering engineer)$/) || (engineer && has('mastering')), run: () => {
-      return out(['mastering'], { level: 'release', flags: engFlags() });
-    } },
-      { id: 'R035', kind: 'simple', note: "", re: /^(pre-?mastered by|pre-?mastering|pre-?master)$/, types: ['mastering'], level: 'release',
-        test: () => is(/^(pre-?mastered by|pre-?mastering|pre-?master)$/), run: () => out(['mastering'], { level: 'release', flags: withFlags('pre') }) },
-      { id: 'R036', kind: 'special', note: "", re: /^(remastered by|remastering|remaster)$/, types: ['mastering'], level: 'release',
-        test: () => is(/^(remastered by|remastering|remaster)$/), run: () => {
-      return out(['mastering'], { level: 'release', flags: withFlags('re') });
-    } },
-      { id: 'R037', kind: 'simple', note: "", re: /^(lathe cut by|lathe cut)$/, types: ['lacquer cut'], level: 'release',
-        test: () => is(/^(lathe cut by|lathe cut)$/), run: () => out(['lacquer cut'], { level: 'release', credit: true }) },
-      { id: 'R038', kind: 'special', note: "", re: /^(lacquer cut by|lacquer cut|cut by|cutting engineer|lacquer cutting)$/, types: ['lacquer cut'], level: 'release',
-        test: () => is(/^(lacquer cut by|lacquer cut|cut by|cutting engineer|lacquer cutting)$/), run: () => {
-      return out(['lacquer cut'], { level: 'release' });
-    } },
-      { id: 'R039', kind: 'special', note: "", re: /^(sound engineer|sound)$/, types: ['sound', 'engineer'], level: 'recording',
-        test: () => is(/^(sound engineer|sound)$/) || (engineer && has('sound')), run: () => out(['sound', 'engineer'], { flags: engFlags() }) },
-      { id: 'R040', kind: 'simple', note: "", re: /^(sound designer|sound design|sound effects|sfx)$/, types: ['sound effects', 'engineer'], level: 'release',
-        test: () => is(/^(sound designer|sound design|sound effects|sfx)$/), run: () => out(['sound effects', 'engineer'], { level: 'release', credit: !is(/^sound effects$/) }) },
-      { id: 'R041', kind: 'special', note: "", re: /^balance engineer$/, types: ['balance', 'engineer'], level: 'recording',
-        test: () => is(/^balance engineer$/) || (engineer && has('balance')), run: () => out(['balance', 'engineer'], { flags: engFlags() }) },
-      { id: 'R042', kind: 'special', note: "", re: /^audio engineer$/, types: ['audio', 'engineer'], level: 'recording',
-        test: () => is(/^audio engineer$/) || (engineer && has('audio')), run: () => out(['audio', 'engineer'], { flags: engFlags() }) },
-      { id: 'R043', kind: 'special', note: "", re: null, types: ['engineer'], level: 'recording',
-        test: () => engineer, run: () => out(['engineer'], { flags: engFlags() }) },
-      { id: 'R044', kind: 'simple', note: "", re: /^(remix|remixed by|remixer|remix by)$/, types: ['remixer'], level: 'recording',
-        test: () => is(/^(remix|remixed by|remixer|remix by)$/), run: () => out(['remixer']) },
-      { id: 'R045', kind: 'simple', note: "", re: /^(programmed by|programming|programmer|drum programming|programmed|sequenced by)$/, types: ['programming'], level: 'recording',
-        test: () => is(/^(programmed by|programming|programmer|drum programming|programmed|sequenced by)$/), run: () => out(['programming']) },
-      { id: 'R046', kind: 'special', note: "", re: /^(editor|edited by|editing|edited)$/, types: ['miscellaneous support'], level: 'release',
-        test: () => is(/^(editor|edited by|editing|edited)$/) && textEditor, run: () => {
-      consumed.add(textEditor);
-      return out(['miscellaneous support'], { level: 'release', credit: textEditor });
-    } },
-      { id: 'R047', kind: 'simple', note: "", re: /^(edited by|editing|edited)$/, types: ['editor'], level: 'recording',
-        test: () => is(/^(edited by|editing|edited)$/), run: () => out(['editor']) },
-      { id: 'R048', kind: 'simple', note: "", re: /^(compiled by|compiler|compilation by|selected by)$/, types: ['compiler'], level: 'release',
-        test: () => is(/^(compiled by|compiler|compilation by|selected by)$/), run: () => out(['compiler'], { level: 'release' }) },
-      { id: 'R049', kind: 'simple', note: "", re: /^(collected by|curated by)$/, types: ['compiler'], level: 'release',
-        test: () => is(/^(collected by|curated by)$/), run: () => out(['compiler'], { level: 'release', credit: true }) },
-      { id: 'R050', kind: 'simple', note: "", re: /^beats$/, types: ['programming', 'producer'], level: 'recording',
-        test: () => is(/^beats$/), run: () => out(['programming', 'producer'], { credit: true }) },
-      { id: 'R051', kind: 'special', note: "Arrangement, conducting, ensembles", re: /^(arranged by|arranger|arrangement|arrangements|arrangements by)$/, types: ['vocal arranger'], level: 'recording',
-        test: () => is(/^(arranged by|arranger|arrangement|arrangements|arrangements by)$/), run: () => {
-      if (has('vocals', 'vocal', 'choir', 'backing vocals')) return out(['vocal arranger']);
-      if (ms.length) {
-        return out(['instrument arranger', 'arranger'], {
-          primaryCands: uniq(ms.flatMap((m) => instrumentCandidates(m, []))),
-        });
-      }
-      return out(['arranger']);
-    } },
-      { id: 'R052', kind: 'simple', note: "", re: /^(adapted by|transcription by|transcribed by)$/, types: ['arranger'], level: 'recording',
-        test: () => is(/^(adapted by|transcription by|transcribed by)$/), run: () => out(['arranger'], { credit: true }) },
-      { id: 'R053', kind: 'simple', note: "", re: /^(instrumentation by)$/, types: ['orchestrator', 'arranger'], level: 'recording',
-        test: () => is(/^(instrumentation by)$/), run: () => out(['orchestrator', 'arranger'], { credit: true }) },
-      { id: 'R054', kind: 'simple', note: "", re: /^(orchestrated by|orchestration|orchestrator)$/, types: ['orchestrator'], level: 'recording',
-        test: () => is(/^(orchestrated by|orchestration|orchestrator)$/), run: () => out(['orchestrator']) },
-      { id: 'R055', kind: 'simple', note: "", re: /^(conductor|conducted by)$/, types: ['conductor'], level: 'recording',
-        test: () => is(/^(conductor|conducted by)$/), run: () => out(['conductor']) },
-      { id: 'R056', kind: 'simple', note: "", re: /^(music director|musical director)$/, types: ['conductor'], level: 'recording',
-        test: () => is(/^(music director|musical director)$/), run: () => out(['conductor'], { credit: true }) },
-      { id: 'R097', kind: 'special', note: "\"Directed By\" is not always conducting: no type is assumed, the dashboard asks (Q003)", re: /^directed by$/, types: [], level: 'recording',
-        test: () => is(/^directed by$/), run: () => out([], { notes: ['askType'] }) },
-      { id: 'R057', kind: 'simple', note: "", re: /^(chorus master|choirmaster|choir master|chorus director|choir director)$/, types: ['chorus master'], level: 'recording',
-        test: () => is(/^(chorus master|choirmaster|choir master|chorus director|choir director)$/), run: () => out(['chorus master']) },
-      { id: 'R058', kind: 'simple', note: "", re: /^(concertmaster|concertmistress)$/, types: ['concertmaster'], level: 'recording',
-        test: () => is(/^(concertmaster|concertmistress)$/), run: () => out(['concertmaster']) },
-      { id: 'R059', kind: 'simple', note: "", re: /^(orchestra|performing orchestra)$/, types: ['performing orchestra', 'orchestra'], level: 'recording',
-        test: () => is(/^(orchestra|performing orchestra)$/), run: () => out(['performing orchestra', 'orchestra']) },
-      { id: 'R060', kind: 'simple', note: "", re: /^(performer|musician|performed by|band|ensemble|accompanied by|backing band)$/, types: ['performer'], level: 'recording',
-        test: () => is(/^(performer|musician|performed by|band|ensemble|accompanied by|backing band)$/), run: () => out(['performer']) },
-      { id: 'R061', kind: 'simple', note: "", re: /^(instruments|multi-instrumentalist|all instruments|instrumentation)$/, types: ['instrument'], level: 'recording',
-        test: () => is(/^(instruments|multi-instrumentalist|all instruments|instrumentation)$/), run: () => out(['instrument']) },
-      // [S004] design rule
-      { id: 'R062', special: 'S004', kind: 'special', note: "", re: null, types: ['design', 'design/illustration', 'graphic design'], level: 'release',
-        test: () => /\bdesign(ed|s)?\b/.test(allWords) && !/\bgraphic/.test(allWords), run: () => {
-      ms.forEach((x) => consumed.add(x));
-      const rest = uniq(allWords.replace(/\b(designed|designs|design|designer|by)\b/g, ' ').split(/[\s,]+/).filter(Boolean));
-      return out(['design', 'design/illustration', 'graphic design'], { ...rel, credit: rest.join(' ') });
-    } },
-      { id: 'R063', kind: 'special', note: "", re: /^(cover|cover by)$/, types: ['photography'], level: 'release',
-        test: () => is(/^(cover|cover by)$/), run: () => {
-      if (has('design')) return out(designTypes, { ...rel, credit: 'cover design' });
-      if (has('photo', 'photos', 'photography')) return out(['photography'], { ...rel, credit: 'cover photo' });
-      for (const w of ['illustration', 'painting', 'drawing']) {
-        if (has(w)) return out(['illustration', 'design/illustration'], { ...rel, credit: `cover ${w}` });
-      }
-      return out(['artwork', 'design/illustration'], { ...rel, credit: 'cover' });
-    } },
-      { id: 'R064', kind: 'simple', note: "", re: /^sleeve$/, types: [], level: 'release',
-        test: () => is(/^sleeve$/), run: () => out(designTypes, { ...rel, credit: 'sleeve' }) },
-      { id: 'R065', kind: 'simple', note: "", re: /^(lithography|lithography by|litho|litho by|lithographer)$/, types: [], level: 'release',
-        test: () => is(/^(lithography|lithography by|litho|litho by|lithographer)$/), run: () => out(designTypes, { ...rel, credit: (modsIn || []).length ? '' : 'lithography' }) },
-      { id: 'R066', kind: 'simple', note: "", re: /^cover concept$/, types: [], level: 'release',
-        test: () => is(/^cover concept$/), run: () => out(designTypes, { ...rel, credit: 'cover concept' }) },
-      { id: 'R067', kind: 'simple', note: "", re: /^cover design$/, types: [], level: 'release',
-        test: () => is(/^cover design$/), run: () => out(designTypes, { ...rel, credit: 'cover design' }) },
-      { id: 'R068', kind: 'simple', note: "", re: /^cover photo(s|graphy)?$/, types: ['photography'], level: 'release',
-        test: () => is(/^cover photo(s|graphy)?$/), run: () => out(['photography'], { ...rel, credit: 'cover photo' }) },
-      { id: 'R069', kind: 'simple', note: "", re: /^cover (painting|illustration|drawing)$/, types: ['illustration', 'design/illustration'], level: 'release',
-        test: () => is(/^cover (painting|illustration|drawing)$/), run: () => out(['illustration', 'design/illustration'], { ...rel, credit: b }) },
-      { id: 'R070', kind: 'simple', note: "", re: /^cover art$/, types: ['artwork', 'design/illustration'], level: 'recording',
-        test: () => is(/^cover art$/), run: () => out(['artwork', 'design/illustration'], { ...rel, credit: 'cover art' }) },
-      { id: 'R071', kind: 'simple', note: "", re: /^(photography by|photography|photographer|photos by|photo|photos|photograph by|photographed by|photographs by)$/, types: ['photography'], level: 'recording',
-        test: () => is(/^(photography by|photography|photographer|photos by|photo|photos|photograph by|photographed by|photographs by)$/), run: () => out(['photography'], rel) },
-      { id: 'R072', kind: 'simple', note: "", re: /^(graphic design|graphics|graphic designer)$/, types: ['graphic design', 'design'], level: 'recording',
-        test: () => is(/^(graphic design|graphics|graphic designer)$/), run: () => out(['graphic design', 'design'], rel) },
-      { id: 'R073', kind: 'simple', note: "", re: /^(typography|lettering|logo|calligraphy|desk-top publishing|desktop publishing|realization|realisation)$/, types: ['graphic design', 'design'], level: 'release',
-        test: () => is(/^(typography|lettering|logo|calligraphy|desk-top publishing|desktop publishing|realization|realisation)$/), run: () => out(['graphic design', 'design'], { ...rel, credit: true }) },
-      { id: 'R074', kind: 'simple', note: "", re: /^(design concept)$/, types: ['design'], level: 'release',
-        test: () => is(/^(design concept)$/), run: () => out(['design'], { ...rel, credit: true }) },
-      { id: 'R075', kind: 'simple', note: "", re: /^(drawing|drawings by)$/, types: ['illustration'], level: 'release',
-        test: () => is(/^(drawing|drawings by)$/), run: () => out(['illustration'], { ...rel, credit: true }) },
-      { id: 'R076', kind: 'simple', note: "", re: /^(film director|video director|director)$/, types: ['video director'], level: 'recording',
-        test: () => is(/^(film director|video director|director)$/), run: () => out(['video director'], rel) },
-      { id: 'R077', kind: 'simple', note: "", re: /^(design|designed by|design by|layout|cover design|sleeve design|package design|packaging)$/, types: ['design', 'design/illustration', 'graphic design'], level: 'recording',
-        test: () => is(/^(design|designed by|design by|layout|cover design|sleeve design|package design|packaging)$/), run: () => out(['design', 'design/illustration', 'graphic design'], rel) },
-      { id: 'R078', kind: 'simple', note: "", re: /^(illustration|illustrated by|illustrations|drawings|painting|paintings|cover illustration)$/, types: ['illustration', 'design/illustration'], level: 'recording',
-        test: () => is(/^(illustration|illustrated by|illustrations|drawings|painting|paintings|cover illustration)$/), run: () => out(['illustration', 'design/illustration'], rel) },
-      { id: 'R079', kind: 'simple', note: "", re: /^(artwork|artwork by|art)$/, types: ['artwork', 'design/illustration'], level: 'recording',
-        test: () => is(/^(artwork|artwork by|art)$/), run: () => out(['artwork', 'design/illustration'], rel) },
-      { id: 'R080', kind: 'simple', note: "", re: /^(art direction|art director|art directed by)$/, types: ['art direction'], level: 'recording',
-        test: () => is(/^(art direction|art director|art directed by)$/), run: () => out(['art direction'], rel) },
-      { id: 'R081', kind: 'simple', note: "", re: /^(creative direction|creative director)$/, types: ['creative direction', 'art direction'], level: 'release',
-        test: () => is(/^(creative direction|creative director)$/), run: () => out(['creative direction', 'art direction'], { ...rel, credit: true }) },
-      { id: 'R082', kind: 'simple', note: "", re: /^(liner notes|sleeve notes|notes|linernotes|text by)$/, types: ['liner notes'], level: 'recording',
-        test: () => is(/^(liner notes|sleeve notes|notes|linernotes|text by)$/), run: () => out(['liner notes'], rel) },
-      { id: 'R083', kind: 'simple', note: "", re: /^(booklet editor|booklet)$/, types: ['booklet editor'], level: 'recording',
-        test: () => is(/^(booklet editor|booklet)$/), run: () => out(['booklet editor'], rel) },
-      { id: 'R084', kind: 'simple', note: "", re: /^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\s+(.+))?$/, types: ['artists and repertoire', 'misc'], level: 'recording',
-        test: () => is(/^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\s+(.+))?$/), run: () => {
-          // [S013] The word after "A&R" becomes the task: "A & R Consultant" → task "consultant"
-          const m = b.match(/^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\s+(.+))?$/);
-          const task = m && m[1] ? withoutBy(m[1]) : '';
-          return out(['artists and repertoire', 'misc'], { level: 'release_group', ...(task ? { credit: task } : {}) });
-        } },
-      { id: 'R085', kind: 'simple', note: "Miscellaneous", re: /^(field recording|field recordings|field recordist)$/, types: ['field recordist'], level: 'recording',
-        test: () => is(/^(field recording|field recordings|field recordist)$/), run: () => out(['field recordist']) },
-      { id: 'R086', kind: 'special', note: "", re: /^(technician|instrument technician|guitar technician|piano technician|drum technician|keyboard technician|tech|tuner|piano tuner)$/, types: ['instrument technician'], level: 'recording',
-        test: () => is(/^(technician|instrument technician|guitar technician|piano technician|drum technician|keyboard technician|tech|tuner|piano tuner)$/), run: () => {
-      return out(['instrument technician'], { credit: is(/^(tuner|piano tuner)$/) });
-    } },
-      { id: 'R087', kind: 'simple', note: "", re: /^booking$/, types: ['booking'], level: 'recording',
-        test: () => is(/^booking$/), run: () => out(['booking'], rel) },
-      { id: 'R088', kind: 'simple', note: "", re: /^(legal|lawyer|legal representation)$/, types: ['legal representation'], level: 'recording',
-        test: () => is(/^(legal|lawyer|legal representation)$/), run: () => out(['legal representation'], rel) },
-      { id: 'R089', kind: 'simple', note: "", re: /^(coordinator|co-ordinator|coordination|co-ordination|production coordinator|project coordinator)$/, types: ['production coordinator'], level: 'release',
-        test: () => is(/^(coordinator|co-ordinator|coordination|co-ordination|production coordinator|project coordinator)$/), run: () => out(['production coordinator'], { ...rel, credit: !is(/^production coordinator$/) }) },
-      { id: 'R090', kind: 'simple', note: "", re: /^(copyright|copyright \(c\))$/, types: ['copyright'], level: 'recording',
-        test: () => is(/^(copyright|copyright \(c\))$/), run: () => out(['copyright'], rel) },
-      { id: 'R091', kind: 'simple', note: "", re: /^(phonographic copyright|phonographic copyright \(p\))$/, types: ['phonographic copyright'], level: 'recording',
-        test: () => is(/^(phonographic copyright|phonographic copyright \(p\))$/), run: () => out(['phonographic copyright'], rel) },
-      { id: 'R092', kind: 'simple', note: "", re: /^(published by|publisher|publishing)$/, types: ['publishing'], level: 'recording',
-        test: () => is(/^(published by|publisher|publishing)$/), run: () => out(['publishing'], rel) },
-      { id: 'R093', kind: 'simple', note: "", re: /^(licensed from|licensor)$/, types: ['licensor'], level: 'recording',
-        test: () => is(/^(licensed from|licensor)$/), run: () => out(['licensor'], rel) },
-      { id: 'R094', kind: 'simple', note: "", re: /^audio director$/, types: ['audio director'], level: 'recording',
-        test: () => is(/^audio director$/), run: () => out(['audio director'], rel) },
-      { id: 'R099', kind: 'simple', note: "\"Commissioned By\": the work was commissioned by them (a work-level role); without a track list a suggestion on all works (S024)", re: /^(commissioned by|commissioned)$/, types: ['commissioned'], level: 'work',
-        test: () => is(/^(commissioned by|commissioned)$/), run: () => out(['commissioned'], wrk) },
-      { id: 'R095', kind: 'special', note: "Roles without an MB relationship type: added as \"misc\" with the Discogs role as task", re: /^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|plated by|abridged by|adapted by \(text\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera operator|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$/, types: ['misc'], level: 'release',
-        test: () => is(/^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|plated by|abridged by|adapted by \(text\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera operator|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$/), run: () => {
-      return out(['misc'], { ...rel, notes: ['misc'], credit: true });
-    } },
-      { id: 'R096', note: "Everything else is treated as an instrument; if MB has no such instrument, the row becomes \"misc\" (see makeRow)", types: ['instrument'], level: 'recording', test: () => true, run: () => out(['instrument'], { primaryCands: instrumentCandidates(b, ms), fallback: true }) },
-    ];
-  }
-
-  /**
-   * A medium in front of the role ("CD Produced By", "LP Mastered By") means the product, not the
-   * recording: the role is mapped without it and goes on the release.
-   */
-  // [S003]
-  function mapRole(baseIn, modsIn) {
-    const m = String(baseIn || '').match(/^\s*(cd|cds|lp|lps|dvd|vinyl|cassette|sacd|blu-?ray|album)\s+(.+)$/i);
-    if (m && ruleOn('S003') && !/design/i.test(baseIn)) {
-      const res = mapRoleInner(m[2], modsIn);
-      if (res.level === 'recording') res.level = 'release';
-      return res;
-    }
-    return mapRoleInner(baseIn, modsIn);
-  }
-
-  function mapRoleInner(baseIn, modsIn) {
-    let b = norm(baseIn).replace(/[‐‑–]/g, '-');
-    const flags = [];
-    const ms = [];
-    // [S001] "Additional Synths" = synthesizer with MB's "additional" checkbox, not a role named "additional synths".
-    let plainBase = String(baseIn || '').trim();
-    if (ruleOn('S001') && /^additional\s+\S/.test(b) && b !== 'additional production') {
-      b = b.replace(/^additional\s+/, '');
-      plainBase = plainBase.replace(/^\s*additional\s+/i, '');
-      flags.push('additional');
-    }
-    // Bracket details that are already used as an attribute or for the type
-    // and are therefore not suggested as a role credit as well
-    const consumed = new Set();
-    let uncredited = false;
-    for (const m of (modsIn || []).map(norm)) {
-      // [S002] details that tick checkboxes ("Additional Musicians", "Additonal" … count as additional)
-      const box = flagForDetail(m);
-      if (ruleOn('S002') && ['additional', 'guest', 'solo'].includes(box)) {
-        flags.push(box);
-        consumed.add(m);
-      } else if (m === 'uncredited') {
-        uncredited = true;
-        consumed.add(m);
-      } else {
-        ms.push(m);
-      }
-    }
-    // credit: true keeps the Discogs role as written as role credit (for roles without an exact MB type)
-    const out = (types, extra = {}) => {
-      const res = { types, level: 'recording', flags, primaryCands: [], notes: [], work: false, ...extra };
-      res.credit = extra.credit === true ? plainBase : (typeof extra.credit === 'string' ? extra.credit : '');
-      res.base = plainBase;
-      if (uncredited) res.notes = ['uncredited', ...res.notes];
-      res.consumed = [...consumed];
-      return res;
-    };
-    const has = (...xs) => {
-      let hit = false;
-      for (const m of ms) {
-        if (xs.includes(m)) {
-          consumed.add(m);
-          hit = true;
-        }
-      }
-      return hit;
-    };
-    const is = (re) => re.test(b);
-    // [U…] Own rules come first
-    const own = ownRuleResult(b, ms, consumed, out);
-    if (own) return own;
-    // [R001–R096] The rules themselves are in the mapping register (roleRules)
-    for (const rule of roleRules({ b, ms, flags, consumed, has, is, out, plainBase, modsIn, baseIn })) {
-      if (!ruleOn(rule.id) || (rule.special && !ruleOn(rule.special))) continue;
-      if (!rule.test()) continue;
-      const res = rule.run();
-      if (res) {
-        res.rule = rule.id;
-        return res;
-      }
-    }
-    return out(['instrument'], { primaryCands: instrumentCandidates(b, ms), fallback: true });
-  }
-
-  /**
-   * Remaining bracket details = alternative designation according to Discogs.
-   * Details that are already used (additional, Recording …) or contained in the
-   * chosen instrument name (Guitar [Electric] → electric guitar) are not suggested.
-   */
-  /**
-   * Discogs details (bracket parts) that stand for an MB yes/no attribute,
-   * e.g. "Mastered By [Remaster]" → "re". MB's own attribute names are the targets.
-   */
-  const DETAIL_FLAGS = [
-    // [S002] also "Additional Musicians" / "Additional Personnel" and common misspellings ("Additonal")
-    [/^(additional(ly)?|additonal|addtional|additinal|aditional|additionnal|additionel|addditional)( musicians?| personnel| players?| performers?)?$/, 'additional'],
-    [/^guest$/, 'guest'],
-    [/^solo(ist)?$/, 'solo'],
-    [/^(assistant|assisted by|asst\.?)$/, 'assistant'],
-    [/^associate$/, 'associate'],
-    [/^co-?$/, 'co'],
-    [/^executive$/, 'executive'],
-    [/^re-?master(ed|ing)?$/, 're'],
-    [/^pre-?master(ed|ing)?$/, 'pre'],
-    [/^sub-?publish(er|ing|ed)?$/, 'sub'],
-    [/^(translation|translated( by)?|translator)$/, 'translator'],
-  ];
-
-  function flagForDetail(detail) {
-    const d = norm(detail).replace(/[‐‑–]/g, '-');
-    const hit = DETAIL_FLAGS.find(([re]) => re.test(d));
-    return hit ? hit[1] : '';
-  }
-
-  /**
-   * Discogs wording, in lower case, for instruments and roles that MusicBrainz names differently:
-   * "Synth" → synthesizer credited as "synth", "Layout" → design with "layout", "Backing Vocals" →
-   * background vocals with "backing vocals". Details in brackets that are part of the MB name count
-   * as wording ("Guitar [Electric]" = electric guitar, nothing to credit).
-   * For relationship types without an instrument, grammatical variants are not credited
-   * ("Mixed By" = mix, "Remastered By" = mastering, "Music By" = composer).
-   */
-  const WORDING_SYNONYMS = {
-    composer: ['music'], lyricist: ['words', 'text'], 'artists and repertoire': ['a&r'],
-    // "Engineer [Mix]": the word engineer only names the kind of relationship
-    mix: ['engineer', 'engineered'], recording: ['engineer', 'engineered'], mastering: ['engineer', 'engineered'],
-  };
-  const wordStem = (t) => t.replace(/(ings?|ed|ers?|ors?|ists?|ions?|s|y)$/, '');
-
-  function sameWording(a, b) {
-    const tokens = (x) => norm(x).split(/[\s\-/]+/).filter((t) => t && !['by', 'for', 'and', '&', 'of', 'the'].includes(t));
-    const tb = tokens(b);
-    return tokens(a).some((x) => tb.some((y) => {
-      const sx = wordStem(x);
-      const sy = wordStem(y);
-      return x === y || (sx.length >= 3 && sy.length >= 3 && (sx.includes(sy) || sy.includes(sx)));
-    }));
-  }
-
-  /**
-   * Generic words in Discogs details are written in lower case, proper names as they are:
-   * "Brushes" → brushes, "Fender Rhodes" stays, "Roland Jupiter-8" stays. MusicBrainz's own instrument
-   * names decide where they can (lower case there: generic; capitalized there, like "Rhodes" in
-   * "Rhodes piano": proper name). Words MB does not know are kept as Discogs writes them.
-   */
-
-  /** Word lists from MB's instrument and vocal names: { lower: Set, proper: Map(lower → as MB writes it) }. */
-  function buildVocabulary(names) {
-    const lower = new Set();
-    const proper = new Map();
-    for (const name of names) {
-      for (const w of String(name || '').split(/[\s(),/]+/).filter(Boolean)) {
-        if (/^[A-Z]/.test(w)) proper.set(w.toLowerCase(), w);
-        else lower.add(w.toLowerCase());
-      }
-    }
-    return { lower, proper };
-  }
-
-  function caseWord(word, vocab) {
-    const w = word.toLowerCase();
-    if (/\d/.test(word)) return word;  // models such as Jupiter-8 or TR-808
-    // "Tenor-Sax", "Bass-Clarinet": each part on its own
-    if (word.includes('-')) return word.split('-').map((part) => (part ? caseWord(part, vocab) : part)).join('-');
-    const generic = GENERIC_WORDS.has(w) || vocab.lower.has(w) || vocab.lower.has(w.replace(/e?s$/, ''))
-      || (w.length >= 3 && [...vocab.lower].some((v) => v.length > w.length && v.startsWith(w)));
-    if (generic && !vocab.proper.has(w)) return w;
-    if (vocab.proper.has(w)) return vocab.proper.get(w);
-    return word;
-  }
-
-  /** Applies the word rule to a credit text, keeping separators and brackets. */
-  // [S011] which words stay capitalised (instrument models) and which are written in lower case
-  function caseCredit(text, vocab = { lower: new Set(), proper: new Map() }) {
-    return String(text || '').replace(/[^\s,\[\]()/]+/g, (w) => caseWord(w, vocab));
-  }
-
-  /**
-   * The Discogs wording as credit where MusicBrainz names it differently. Instruments keep proper names
-   * ("Fender Rhodes" for Rhodes piano), other roles are written in lower case ("layout" for design).
-   */
-  function wordingCredit(base, mods, primaryName, typeName, vocab) {
-    const primary = ` ${norm(primaryName)} `;
-    const inName = (mods || []).filter((m) => norm(m) && primary.includes(` ${norm(m)} `));
-    // "Trumpet [Pocket Trumpet]": the detail already holds the base word → "pocket trumpet", not "pocket trumpet trumpet"
-    const baseInMod = inName.some((m) => ` ${norm(m)} `.includes(` ${norm(base)} `));
-    const original = (baseInMod ? inName : [...inName, base]).join(' ').replace(/[\s-]+by$/i, '').trim();
-    const wording = norm(original);
-    if (!wording) return '';
-    // [S017] Spaces and hyphens do not make a role credit ("Flugel Horn" for flugelhorn, "Hand Claps" for handclaps)
-    const squash = (t) => norm(t).replace(ruleOn('S017') ? /[\s-]+/g : /$^/, '');
-    if (norm(primaryName)) return squash(primaryName) === squash(wording) ? '' : caseCredit(original, vocab);
-    if (!typeName) return '';
-    const synonyms = WORDING_SYNONYMS[norm(typeName)] || [];
-    // "A & R Consultant", "A&R Coordinator" …: not as wording – the word after A&R is the task (S013)
-    if (norm(typeName) === 'artists and repertoire' && /^a\s*&\s*r\b/.test(norm(wording))) return '';
-    if (wording.split(/\s+/).some((w) => synonyms.includes(w))) return '';
-    return sameWording(wording, typeName) ? '' : wording;
-  }
-
-  /**
-   * Fixed role credits: MB names some instruments differently from how they are credited.
-   * Used only when Discogs gives no detail in brackets: "Drums" → MB "drums (drum set)" credited as "drums",
-   * while "Drums [Brushes]" keeps "Brushes".
-   */
-  const FIXED_ROLE_CREDITS = [
-    { base: 'drums', instrument: 'drums (drum set)', credit: 'drums' },
-  ];
-
-  function fixedRoleCredit(base, primaryName) {
-    const hit = FIXED_ROLE_CREDITS.find((f) => norm(base) === f.base && norm(primaryName) === f.instrument);
-    return hit ? hit.credit : '';
-  }
-
-  function suggestRoleCredit(mods, consumed, primaryName) {
-    const primary = ` ${norm(primaryName)} `;
-    const used = new Set((consumed || []).map(norm));
-    return (mods || []).filter((m) => {
-      const n = norm(m);
-      return n && !used.has(n) && !primary.includes(` ${n} `);
-    }).join(', ');
-  }
-
-  /** Options for the role credit field: everything exactly as written on Discogs. */
-  /**
-   * Suggestions for the role credit field: never the Discogs role itself when it only names the MusicBrainz
-   * role in another word form ("Produced By" for producer), never "by" or Discogs brackets (S009, S010).
-   */
-  function roleCreditOptions(raw, base, mods, suggestion, typeName = '') {
-    const out = [];
-    const push = (x) => {
-      const t = typo(withoutBy(String(x || '').replace(/\s*\[.*?\]/g, '').trim()));
-      if (!t || out.includes(t) || (typeName && sameWording(t, typeName))) return;
-      out.push(t);
-    };
-    push(suggestion);
-    push((mods || []).join(', '));
-    (mods || []).forEach(push);
-    (mods || []).forEach((m) => push(`${m} ${withoutBy(base)}`));
-    return out;
-  }
-
-  /** Escapes a phrase for use inside double quotes in a Lucene query. */
-  // --- Companies, etc. ------------------------------------------------------------
-
-  /**
-   * Discogs company roles → MB relationship types, per MB entity type. Discogs lists studios,
-   * pressing plants and rights holders all as "labels"; in MB they are labels or places.
-   */
-
-  /** Maps a Discogs company role. "prefer" is the MB entity type assumed until the company is matched. */
-  function mapCompanyRole(role) {
-    const r = norm(role);
-    const hit = COMPANY_ROLES.find(([re, o]) => ruleOn(o.id) && re.test(r));
-    // "artist" is always allowed: persons also appear here, and their type can be chosen by hand.
-    if (!hit) return { typeOptions: { label: ['misc'], artist: [] }, level: 'skip', prefer: 'label', notes: ['misc'] };
-    const spec = hit[1];
-    const ruleId = spec.id;
-    const typeOptions = {};
-    if (spec.label) typeOptions.label = spec.label;
-    if (spec.place) typeOptions.place = spec.place;
-    typeOptions.artist = spec.artist || [];
-    const companyFlags = spec.flags || [];
-    const prefer = spec.prefer || (spec.place && (!spec.label || / at$/.test(r)) ? 'place' : spec.label ? 'label' : 'artist');
-    return { typeOptions, level: spec.level, prefer, notes: [], flags: companyFlags, rule: ruleId };
-  }
 
   // --- Dates --------------------------------------------------------------------------
 
@@ -6594,6 +6685,7 @@
     return out;
   }
 
+  /** Escapes a phrase for use inside double quotes in a Lucene query. */
   const lucenePhrase = (text) => `"${String(text || '').replace(/[\\"]/g, '\\$&')}"`;
 
   /** Work search: title plus (optionally) the MBIDs of the known writers. */
@@ -7143,10 +7235,10 @@
   const S = {
     overlay: null,
     initialized: false,
-    // The source the credits come from (its adapter, section 2) and its releases this MB release links to
+    // The source the credits come from (its adapter, section 3) and its releases this MB release links to
     source: DISCOGS,
     sourceLinks: [],
-    // The release being imported, as the adapter delivers it (neutral, section 2), and its tracks
+    // The release being imported, as the adapter delivers it (neutral, section 3), and its tracks
     release: null,
     srcTracks: [],
     // [E1] A pasted text (the source "text") and its form while open
@@ -8095,6 +8187,31 @@
   /** A Discogs pattern of the register in readable form: "Producer | Produced By". */
   const patternText = (re) => (re ? String(re.source).replace(/^\^\(?|\)?\$$/g, '').replace(/\\/g, '').split('|').join(' | ') : '');
 
+  /**
+   * [3.11.0] A pattern of the register as a list of words where it is a plain list ("mix · mixing · mixed …",
+   * "track(s)"), else null (it is then shown as written).
+   */
+  function patternWords(re) {
+    let t = String(re instanceof RegExp ? re.source : re).replace(/\\s[*+]?/g, ' ').replace(/\\b/g, '').replace(/^\^|\$$/g, '').trim();
+    const m = t.match(/^\((?:\?:)?(.*)\)$/);
+    if (m) t = m[1];
+    t = t.replace(/([\p{L}\d])\?/gu, '($1)').replace(/\\(.)/g, '$1');
+    return /[()[\]{}*+?^$\\]/.test(t.replace(/\([\p{L}\d]\)/gu, '')) ? null : t.split('|').map((x) => x.trim()).filter(Boolean);
+  }
+
+  /** [3.11.0] What a table of the register holds, for the window "Mapping rules" (read only). */
+  function tableShowHtml(t) {
+    const v = t.show();
+    const pat = (re) => {
+      const words = patternWords(re);
+      return words ? esc(words.join(' · ')) : `<code>${esc(re instanceof RegExp ? re.source : String(re))}</code>`;
+    };
+    const cell = (x) => `<td>${x instanceof RegExp ? pat(x) : esc(String(x))}</td>`;
+    if (v.words) return `<p>${esc(v.words.join(', '))}</p>`;
+    if (v.pattern) return `<p>${pat(v.pattern)}</p>`;
+    return `<table><tbody>${v.pairs.map(([a, b]) => `<tr>${cell(a)}${cell(b)}</tr>`).join('')}</tbody></table>`;
+  }
+
   function rulesTables() {
     const cell = (c) => `<td>${esc(String(c))}</td>`;
     const onCell = (id) => `<td><input type="checkbox" data-rule-on="${esc(id)}" ${ruleOn(id) ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id }))}"></td>`;
@@ -8119,6 +8236,8 @@
       sect('words', `${tr('rules.words')} (T002 · ${where('GENERIC_WORDS')})`, `<p>${esc([...GENERIC_WORDS].sort().join(', '))}</p>`),
       sect('dates', `${tr('rules.dates')} (D001 … · ${where('DATE_RULES, DATE_MATCHERS')})`, `<table>${head([tr('rules.id'), tr('rules.note')])}<tbody>
         ${DATE_RULES.map((r) => row(r.id, [r.id, r.note])).join('')}</tbody></table>`),
+      sect('lists', tr('rules.lists'), `<p class="dci-sub">${esc(tr('rules.listsHint'))}</p>${TABLES.filter((t) => t.show).map((t) => `<div class="dci-rules-list" data-table="${esc(t.id)}">
+        <h4>${esc(t.id)} · ${esc(t.note)} <span class="dci-sub">(${esc(where(t.where))})</span></h4>${tableShowHtml(t)}</div>`).join('')}`),
       sect('tables', tr('rules.tables'), `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')], false)}<tbody>${TABLES.map((t) => `<tr>${cell(t.id)}${cell(t.note)}${cell(t.where)}</tr>`).join('')}</tbody></table>`),
     ].join('');
   }
@@ -9595,8 +9714,6 @@
     return !!root && instrumentCandidates(p.base, p.mods).some((c) => findChildAttr(root.id, c));
   }
 
-  /** [E1] Roles of a text that name a company (publisher, studio, ℗/©) – other "… by" are people. */
-  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
   const isTextCompanyRole = (role) => TEXT_COMPANY_RE.test(norm(role)) && !!mapCompanyRole(role).rule;
 
   /**
@@ -9632,7 +9749,7 @@
 
   /**
    * Imports a release of a source (default: the current one): the adapter delivers it as a neutral release
-   * (section 2), and everything from here on works with that – entries and rows, dates, track lists, live, series.
+   * (section 3), and everything from here on works with that – entries and rows, dates, track lists, live, series.
    */
   async function loadRelease(id, { confirmed = false, source = S.source } = {}) {
     if (!confirmed && S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
@@ -11029,19 +11146,6 @@
       box.checked = endSet || !!row.date.ended;
     }
   }
-
-  /**
-   * Date groups: a date on one row of a group goes into the pool ("Performance 1" …) and onto every
-   * other row of the group in both directions (roles ↔ places). Dates entered by hand are never
-   * overwritten; those rows are named in the warning.
-   */
-  const DATE_GROUPS = [
-    { key: 'performance', label: 'Performance', test: (n) => ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at'].includes(n) },
-    { key: 'mix', label: 'Mix', test: (n) => n === 'mix' || n === 'mixed at' },
-    { key: 'remastering', label: 'Remastering', test: (n, row) => (n === 'mastering' && row.flags.has('re')) || (n === 'mastered at' && /^remastered/i.test(row.raw || '')) },
-    { key: 'mastering', label: 'Mastering', test: (n) => n === 'mastering' || n === 'mastered at' },
-    { key: 'copyright', label: '℗/©', test: (n) => n === 'phonographic copyright' || n === 'copyright' },
-  ];
 
   function dateGroupOf(row) {
     const lt = row.level !== 'skip' && currentLinkType(row);
@@ -13310,7 +13414,6 @@
     if (types.includes('live')) reasons.release = 'rg';
     else if (d.tags.includes('live')) reasons.release = 'format';
     else if (/\b(recorded|performed)\s+live\b|\blive\s+recording\b/i.test(d.notes || '')) reasons.release = 'notes';
-    const LIVE_TITLE = /\((?:live|live at [^)]*|live in [^)]*|live version)\)|\[(?:live|live at [^\]]*)\]|\s[-–—]\s*live\b/i;
     S.mbTracks.forEach((t) => {
       const dt = (S.srcTracks || [])[t.idx];
       if (LIVE_TITLE.test(t.title || '') || (dt && LIVE_TITLE.test(dt.title || ''))) reasons.tracks.set(t.idx, 'title');
@@ -13544,14 +13647,6 @@
     return similar;
   }
 
-  const NOTE_ROLES = [
-    [/\b(published|publishing|publisher|verlag|verlegt|sub-?published)\b/i, 'publishing'],
-    [/\bcommissioned\b/i, 'commissioned'],
-    [/\b(written|words and music|words & music|music and lyrics|music & lyrics|lyrics and music|lyrics & music|songs)\s+by\b/i, 'writer'],
-    [/\b(music|composed|composition|compositions)\s+by\b|\bcomposers?\b/i, 'composer'],
-    [/\b(lyrics|words|text|texte)\s+by\b|\blyricists?\b/i, 'lyricist'],
-    [/\b(arranged|arrangements?|orchestrated|orchestrations?)\s+by\b|\barrangers?\b/i, 'arranger'],
-  ];
   const noteRole = (text) => (NOTE_ROLES.find(([re]) => re.test(text)) || [])[1] || '';
 
   /** Names with a track list in a text, with the role their sentence names (or ''). */
@@ -17215,6 +17310,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.12.0', label: 'Credits Importer 3.12.0' },
     { v: '3.10.0', label: 'Credits Importer 3.10.0' },
     { v: '3.5.0', label: 'Credits Importer 3.5.0 · Companion 1.7.0' },
     { v: '3.3.0', label: 'Credits Importer 3.3.0 · Companion 1.6.0' },
@@ -17483,6 +17579,9 @@
       #dci-rules .dci-rules-head { display: flex; align-items: center; justify-content: space-between; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-bottom: 1px solid #dddae8; background: #f7f6fb; cursor: move; }
       #dci-rules h2 { margin: 0; font-size: calc(var(--u, 1px) * 15); }
       #dci-rules h3 { margin: calc(var(--u, 1px) * 12) 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 13); }
+      #dci-rules h4 { margin: calc(var(--u, 1px) * 10) 0 calc(var(--u, 1px) * 2); font-size: calc(var(--u, 1px) * 12); font-weight: 600; }
+      #dci-rules .dci-rules-list p { margin: 0 0 calc(var(--u, 1px) * 4); }
+      #dci-rules .dci-rules-list code { white-space: pre-wrap; overflow-wrap: anywhere; }
       #dci-rules .dci-rules-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
       #dci-rules label { display: block; margin: calc(var(--u, 1px) * 6) 0; font-weight: 600; }
       #dci-rules input { width: 100%; box-sizing: border-box; padding: calc(var(--u, 1px) * 4); }
