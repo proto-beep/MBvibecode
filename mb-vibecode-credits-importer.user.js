@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.17.1
+// @version      3.17.2
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -116,7 +116,7 @@
       "srcorder.toggle": "Order of the sources",
       "forget.button": "Delete stored import …",
       "about.off": "Leave out the “about” text",
-      "about.offTitle": "Only for this release: the places and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
+      "about.offTitle": "Only for this release: the places, liner notes and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
       "log.aboutOff": "“about” text left out (rows hidden: {rows}, dates out of the pool: {dates})",
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "supp.with": "Supplement with",
@@ -1119,6 +1119,8 @@
       "bc.fromTrackPage.other": "From the track pages:",
       "bc.trackPageTitle": "Opens the track page on Bandcamp",
       "about.from": "From the “about” text",
+      "liner.poolName": "Liner notes – {name}",
+      "log.linerFound": "Liner notes found below the “about” text, signed “{name}” (the name only suggested)",
       "dgStatus.off": "⊘ switch this credit off – its row goes to “Skip” in the dashboard",
       "dgStatus.on": "⊘ switch this credit on again",
       "dgStatus.isOff": "switched off here",
@@ -1379,7 +1381,7 @@
       "srcorder.toggle": "Reihenfolge der Quellen",
       "forget.button": "Gespeicherten Import löschen …",
       "about.off": "„about“-Text auslassen",
-      "about.offTitle": "Nur für dieses Release: Orte und Daten aus dem „about“-Text von Bandcamp werden ausgelassen – ihre Zeilen ausgeblendet, ihre Daten aus Pool und Matrix genommen –, sofort, ohne neuen Import. Wieder abgehakt, sind sie zurück, mit dem, was du an ihnen geändert hast.",
+      "about.offTitle": "Nur für dieses Release: Orte, Liner Notes und Daten aus dem „about“-Text von Bandcamp werden ausgelassen – ihre Zeilen ausgeblendet, ihre Daten aus Pool und Matrix genommen –, sofort, ohne neuen Import. Wieder abgehakt, sind sie zurück, mit dem, was du an ihnen geändert hast.",
       "log.aboutOff": "„about“-Text ausgelassen (Zeilen ausgeblendet: {rows}, Daten aus dem Pool: {dates})",
       "log.aboutOn": "„about“-Text wieder aufgenommen (Zeilen zurück: {rows}, Daten zurück: {dates})",
       "supp.with": "Ergänzen mit",
@@ -2382,6 +2384,8 @@
       "bc.fromTrackPage.other": "Von den Track-Seiten:",
       "bc.trackPageTitle": "Öffnet die Track-Seite auf Bandcamp",
       "about.from": "Aus dem „about“-Text",
+      "liner.poolName": "Liner Notes – {name}",
+      "log.linerFound": "Liner Notes unter dem „about“-Text gefunden, unterzeichnet „{name}“ (der Name nur vorgeschlagen)",
       "dgStatus.off": "⊘ diesen Credit abschalten – seine Zeile kommt im Dashboard auf „Überspringen“",
       "dgStatus.on": "⊘ diesen Credit wieder anschalten",
       "dgStatus.isOff": "hier abgeschaltet",
@@ -2642,7 +2646,7 @@
       "srcorder.toggle": "Orden de las fuentes",
       "forget.button": "Borrar la importación guardada…",
       "about.off": "Omitir el texto «about»",
-      "about.offTitle": "Solo para esta publicación: los lugares y fechas del texto «about» de Bandcamp se omiten – sus filas ocultas, sus fechas fuera del grupo y de la matriz – al instante, sin nueva importación. Al desmarcarlo vuelven, con lo que hayas cambiado en ellos.",
+      "about.offTitle": "Solo para esta publicación: los lugares, notas del disco y fechas del texto «about» de Bandcamp se omiten – sus filas ocultas, sus fechas fuera del grupo y de la matriz – al instante, sin nueva importación. Al desmarcarlo vuelven, con lo que hayas cambiado en ellos.",
       "log.aboutOff": "Texto «about» omitido (filas ocultas: {rows}, fechas fuera del grupo: {dates})",
       "log.aboutOn": "Texto «about» incluido de nuevo (filas de vuelta: {rows}, fechas de vuelta: {dates})",
       "supp.with": "Completar con",
@@ -3645,6 +3649,8 @@
       "bc.fromTrackPage.other": "De las páginas de pista:",
       "bc.trackPageTitle": "Abre la página de la pista en Bandcamp",
       "about.from": "Del texto «about»",
+      "liner.poolName": "Notas del disco – {name}",
+      "log.linerFound": "Notas del disco encontradas bajo el texto «about», firmadas «{name}» (el nombre solo sugerido)",
       "dgStatus.off": "⊘ desactivar este crédito – su fila pasa a «Omitir» en el panel",
       "dgStatus.on": "⊘ volver a activar este crédito",
       "dgStatus.isOff": "desactivado aquí",
@@ -3905,7 +3911,7 @@
       "srcorder.toggle": "Ordre des sources",
       "forget.button": "Supprimer l’import enregistré…",
       "about.off": "Laisser de côté le texte « about »",
-      "about.offTitle": "Pour cette parution seulement : les lieux et dates du texte « about » de Bandcamp sont laissés de côté – leurs lignes masquées, leurs dates retirées du réservoir et de la matrice – tout de suite, sans nouvel import. Décoché, ils reviennent, avec ce que vous y avez changé.",
+      "about.offTitle": "Pour cette parution seulement : les lieux, notes de pochette et dates du texte « about » de Bandcamp sont laissés de côté – leurs lignes masquées, leurs dates retirées du réservoir et de la matrice – tout de suite, sans nouvel import. Décoché, ils reviennent, avec ce que vous y avez changé.",
       "log.aboutOff": "Texte « about » laissé de côté (lignes masquées : {rows}, dates retirées du réservoir : {dates})",
       "log.aboutOn": "Texte « about » repris (lignes de retour : {rows}, dates de retour : {dates})",
       "supp.with": "Compléter avec",
@@ -4908,6 +4914,8 @@
       "bc.fromTrackPage.other": "Des pages des morceaux :",
       "bc.trackPageTitle": "Ouvre la page du morceau sur Bandcamp",
       "about.from": "Du texte « about »",
+      "liner.poolName": "Notes de pochette – {name}",
+      "log.linerFound": "Notes de pochette trouvées sous le texte « about », signées « {name} » (le nom seulement suggéré)",
       "dgStatus.off": "⊘ désactiver ce crédit – sa ligne passe à « Ignorer » dans le tableau de bord",
       "dgStatus.on": "⊘ réactiver ce crédit",
       "dgStatus.isOff": "désactivé ici",
@@ -5738,6 +5746,8 @@
       show: () => ({ pattern: TEXT_NOT_NAME }) },
     { id: 'T026', where: 'SPECIAL_ARTISTS', note: 'Works of the artists: special purpose artists are not compared (Various Artists, [unknown] …; any name entirely in [square brackets] too)',
       show: () => ({ pairs: [...SPECIAL_ARTISTS.map(([id, name]) => [name, id]), ['[…]', SPECIAL_ARTIST_NAME]] }) },
+    { id: 'T027', where: 'LINER_NOT_NAME, LINER_PARTICLE', note: 'Bandcamp (3.17.2): liner notes below the "about" text – a first word that makes the line no name ("Special Thanks"), and particles inside a name ("Jan van Roe")',
+      show: () => ({ pairs: [['no name', LINER_NOT_NAME], ['particles', LINER_PARTICLE]] }) },
   ];
 
   /** Discogs spelling → possible MB instrument names (tried in this order). */
@@ -5892,6 +5902,11 @@
   // [T025] Texts (3.14.0): words that are no part of a name after a role at the start of a line – "Photography Tom
   // Barrett" is a credit, "Music and artwork of this release …" is not
   const TEXT_NOT_NAME = /\b(?:the|a|an|and|or|of|to|for|with|by|at|in|on|from|this|that|these|those|is|are|was|were|be|been|all|our|my|his|her|their|its|no|not|thanks|release|album|record)\b/i;
+
+  // [T027] (3.17.2) Liner notes in Bandcamp's "about" text: a first word that makes the line below the text no name
+  // ("Special Thanks", "Listen loud") – and the particles a name may have inside ("Jan van Roe")
+  const LINER_NOT_NAME = /^(?:special|thanks?|thankyou|love|enjoy|credits?|notes?|liner|about|all|rights|recorded|mixed|mastered|produced|written|music|lyrics|artwork|photography|photos?|design|cover|layout|listen|download|stream|available|out|now|released?|album|ep|lp|single|tracks?|bonus|the|a|an|and|for|with|from|by|to|in|on|at|of|our|my|your|this|that)$/i;
+  const LINER_PARTICLE = /^(?:van|von|der|den|de|del|della|di|da|du|la|le|dos|das|af|av|bin|ibn|y|zu|ten|ter)$/i;
 
   // [T026] (3.15.1) MusicBrainz's special purpose artists (https://musicbrainz.org/doc/Style/Unknown_and_untitled/Special_purpose_artist,
   // checked 2026-10-17): their catalogues are huge and say nothing about a release – the works comparison leaves them out.
@@ -6991,6 +7006,54 @@
       }
     }
 
+    // [3.17.2] Liner notes at the end of the "about" text: prose of at least five sentences and a name below it (T027)
+    const LINER_MIN_SENTENCES = 5;
+    /** "Jane Roe" (2–4 words, capitals, particles inside) from a signature "— Jane Roe, Berlin, May 2019"; null if none. */
+    function signatureName(text) {
+      const parts = String(text || '').replace(/^[\s—–―~*•-]+/, '').split(/\s*,\s*/);
+      const name = (parts[0] || '').replace(/[\s.;:!]+$/, '').trim();
+      const words = name.split(/\s+/);
+      // after the name: place, date … – a few short parts
+      const rest = parts.slice(1);
+      if (rest.length > 3 || rest.some((x) => !x || x.split(/\s+/).length > 5)) return null;
+      if (words.length < 2 || words.length > 4 || /\d/.test(name) || LINER_NOT_NAME.test(words[0])) return null;
+      const ok = words.every((w, i) => (i > 0 && i < words.length - 1 && LINER_PARTICLE.test(w)) || /^\p{Lu}[\p{L}'’.-]*$/u.test(w));
+      return ok && !words.some((w) => /^(?:thanks?|notes|credits)$/i.test(w)) ? name : null;
+    }
+    /** Sentences of a text: ended by . ! ? … or a line break, with at least three words. */
+    const sentenceCount = (t) => String(t || '').split(/(?<=[.!?…])["”’)]*\s+|\n+/).filter((x) => (x.match(/\p{L}+/gu) || []).length >= 3).length;
+    /**
+     * [3.17.2] The liner notes of an "about" text: a name (a) at the end of its last line after a sign, behind a finished
+     * sentence ("… our music. — Jane Roe", "~ Jane Roe"), (b) on the line right below the text or (c) after an empty line,
+     * ", place, date" allowed after it; the text above it at least five sentences (several paragraphs are fine).
+     * Returns { name, line, part, pi, n, at, len } (the line and part as for a credit, at/len: the signature in the text) or null.
+     */
+    function linerNotes(about) {
+      const text = String(about || '');
+      const lines = text.split(/\r?\n/);
+      let k = lines.length - 1;
+      while (k >= 0 && !lines[k].trim()) k--;
+      if (k < 0) return null;
+      const line = lines[k].trim();
+      let name = null;
+      let prose = '';
+      let part = line;
+      let pi = 0;
+      if (k > 0 && (name = signatureName(line))) {
+        prose = lines.slice(0, k).join('\n');
+      } else {
+        const m = line.match(/^(.*[.!?…]["”’)]*)\s+[—–―~-]+\s*([^—–―~]+)$/);
+        if (m && (name = signatureName(m[2]))) {
+          prose = [...lines.slice(0, k), m[1]].join('\n');
+          part = m[2].trim();
+          pi = 1;
+        }
+      }
+      if (!name || sentenceCount(prose) < LINER_MIN_SENTENCES) return null;
+      const at = text.lastIndexOf(part);
+      return { name, line, part, pi, n: lines.slice(0, k).filter((l) => l.trim() === line).length, at, len: part.length };
+    }
+
     /**
      * The neutral release from an album's page data. trackCredits: [credits text of each track page] (or []);
      * ctx: as for a text (see sourceContext), with this album's tracks.
@@ -7018,6 +7081,15 @@
         res.companies.forEach((c) => companies.push({ ...c, ...page, tracks: c.tracks || on }));
         res.unrecognized.forEach((l) => unrecognized.push(`${tracks[i].position}: ${l}`));
       });
+      // [3.17.2] Liner notes at the end of the "about" text: a credit "Liner Notes" of the name below it – a name like any
+      // other (only suggested), from the about text (left out with it)
+      const liner = linerNotes(cur.about || '');
+      if (liner) {
+        const p = parseRoleNotation('Liner Notes')[0];
+        credits.push({ who: { id: 0, name: liner.name, rawName: liner.name, links: [] }, role: p.raw, base: p.base, details: p.mods, credited: '',
+          tracks: { all: true }, line: liner.line, part: liner.part, pi: liner.pi, n: liner.n, fromAbout: true });
+      }
+      const aboutAt = cur.about ? (cur.credits ? cur.credits.length + 2 : 0) : null;
       // [rule 4] The band's own name links to its Bandcamp page (found in MB only with exactly this spelling)
       const linkBand = (w) => (band.url && w.name === band.name ? { ...w, id: band.url, links: [band.url] } : w);
       return {
@@ -7028,7 +7100,9 @@
         country: '',
         notes: [cur.credits, cur.about].filter(Boolean).join('\n\n'),
         // [3.16.1] where the "about" text begins in the notes (its dates can be left out), null without one
-        aboutAt: cur.about ? (cur.credits ? cur.credits.length + 2 : 0) : null,
+        aboutAt,
+        // [3.17.2] the liner notes found (their signature in the notes: a date there is named for them in the pool)
+        liner: liner ? { name: liner.name, at: aboutAt + liner.at, len: liner.len } : null,
         tags: [],
         tracks,
         credits: credits.map((c) => ({ ...c, who: linkBand(c.who) })),
@@ -7057,6 +7131,7 @@
       albumUrl,
       pageData,
       toRelease,
+      linerNotes,
       urlKey: bandUrl,
       /** Album pages of Bandcamp a MusicBrainz release links to (any link type: purchase, streaming …). */
       releaseLinks(relations) {
@@ -7129,9 +7204,12 @@
       for (const role of splitEngineerTasks({ raw: c.role, base: c.base, mods: [...(c.details || [])] })) {
         const rKey = `${norm(role.raw)}|${norm(anv)}`;
         if (!group.roles.has(rKey)) {
-          group.roles.set(rKey, { role, anv, allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [] });
+          group.roles.set(rKey, { role, anv, allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
+            fromAbout: !!c.fromAbout });
         }
         const entry = group.roles.get(rKey);
+        // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
+        if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
         addSrcRef(entry.refs, c);
         if (at.all) entry.allTracks = true;
@@ -10520,6 +10598,7 @@
           const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv });
           if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
           row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
+          if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
           row.dSpec = c.specs.join(', ');
           row.dPositions = c.positions;
           row.unresolved = c.unresolved;
@@ -10579,6 +10658,7 @@
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
       // [3.16.1] "about" text left out for this release: its rows hidden at once
       if (S.aboutOff) setAboutRowsHidden(true);
+      if (rel.liner) log('info', 'linerFound', { name: rel.liner.name }); // [3.17.2]
       // [3.17.1] credits switched off on Bandcamp for this release: their rows on "Skip" at once
       if (S.source === BANDCAMP && S.bcOff.size) {
         S.rows.forEach((r) => {
@@ -12670,8 +12750,11 @@
         placed += placeSeparateDays(x, key, group, { auto: true, tg, studios });
         return;
       }
-      // Without such a word: only into the pool, to be dragged where it belongs
-      const e = poolDateFor(x.value, group, key);
+      // Without such a word: only into the pool, to be dragged where it belongs ([3.17.2] named for the liner notes
+      // when it is in their signature: "Liner notes – Jane Roe")
+      const liner = S.release && S.release.liner;
+      const forLiner = liner && x0.index >= liner.at && x0.index < liner.at + liner.len;
+      const e = poolDateFor(x.value, group, key, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
       addCommonDate(e.begin, e.end, group, key, e);
       if (!group) return;
       const here = m.cells.find((c) => c.col === group.key && c.date === e.id);

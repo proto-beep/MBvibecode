@@ -1752,7 +1752,10 @@
    "[church chimes] 90068d37-bae7-4292-be4a-704c145bd616",
    "[language instruction] 80a8851f-444c-4539-892b-ad2a49292aa9",
    "MusicBrainz Test Artist 7e84f845-ac16-41fe-9ff8-df12eb32af55",
-   "[…] ^\\[[^\\]]+\\]$"
+   "[…] ^\\[[^\\]]+\\]$",
+   "T027 · Bandcamp (3.17.2): liner notes below the \"about\" text – a first word that makes the line no name (\"Special Thanks\"), and particles inside a name (\"Jan van Roe\") (Code: LINER_NOT_NAME, LINER_PARTICLE)",
+   "no name special · thank(s) · thankyou · love · enjoy · credit(s) · note(s) · liner · about · all · rights · recorded · mixed · mastered · produced · written · music · lyrics · artwork · photography · photo(s) · design · cover · layout · listen · download · stream · available · out · now · release(d) · album · ep · lp · single · track(s) · bonus · the · a · an · and · for · with · from · by · to · in · on · at · of · our · my · your · this · that",
+   "particles van · von · der · den · de · del · della · di · da · du · la · le · dos · das · af · av · bin · ibn · y · zu · ten · ter"
   ],
   "own": [
    "Your rules (U001 … · stored in this browser, tried before the built-in rules)",
@@ -1948,7 +1951,8 @@
    "T023 Texts: a person without a name after \"by\" (\"a human\", \"the band\", \"himself\") – the release artist is suggested PLACEHOLDER_WHO",
    "T024 Texts: lines that only name the label (\"An X release.\", \"Released on X\") are left out; ℗ / © lines stay credits TEXT_LABEL_LINE",
    "T025 Texts: words that are no part of a name after a role at the start of a line (\"Photography Tom Barrett\") TEXT_NOT_NAME",
-   "T026 Works of the artists: special purpose artists are not compared (Various Artists, [unknown] …; any name entirely in [square brackets] too) SPECIAL_ARTISTS"
+   "T026 Works of the artists: special purpose artists are not compared (Various Artists, [unknown] …; any name entirely in [square brackets] too) SPECIAL_ARTISTS",
+   "T027 Bandcamp (3.17.2): liner notes below the \"about\" text – a first word that makes the line no name (\"Special Thanks\"), and particles inside a name (\"Jan van Roe\") LINER_NOT_NAME, LINER_PARTICLE"
   ],
   "wording": [
    "Role credit wording (W001 … · Code: WORDING_RULES)",
