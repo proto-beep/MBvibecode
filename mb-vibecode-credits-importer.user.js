@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.15.3
+// @version      3.16.0
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.15.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.16.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -581,6 +581,51 @@
       "msg.datesMismatch.one": "{n} relationship in the editor does not have the date from the dashboard: {list}. Please check it in the editor.",
       "msg.datesMismatch.other": "{n} relationships in the editor do not have the date from the dashboard: {list}. Please check them in the editor.",
       "zoom.label": "Text size",
+      "settings.button": "⚙ Settings",
+      "settings.buttonTitle": "All settings in one place, by topic",
+      "settings.title": "Settings",
+      "settings.hint": "All settings in one place, by topic – the switches stay where they are too. Stored in this browser.",
+      "settings.t.general": "General",
+      "settings.t.sources": "Sources",
+      "settings.t.discogs": "Discogs view",
+      "settings.t.works": "Works",
+      "settings.t.staging": "Staging",
+      "settings.t.dates": "Dates & tracks",
+      "settings.resetTopic": "↺ Defaults of this topic",
+      "settings.resetAsk": "Put the settings of “{topic}” back to their defaults?",
+      "settings.place": "Dashboard",
+      "settings.place.window": "as a window",
+      "settings.place.page": "in the page",
+      "settings.logOpen": "Show the log",
+      "settings.logPlace": "Place of the log",
+      "settings.discogsHint": "With the companion script in a Discogs tab: when the Discogs view follows the dashboard and what it shows.",
+      "settings.awOn": "Compare the tracks without a work with the works of the release's artists, writers and musicians",
+      "settings.awMax": "At most per artist (works and recordings together)",
+      "settings.awCost": "= {req} requests, about {sec} s per artist",
+      "settings.awSlow": "Name a large catalogue after",
+      "settings.awSlowSec": "seconds and from",
+      "settings.awSlowN": "entries to read",
+      "settings.awDays": "Keep the works read for (days)",
+      "settings.awClear": "Clear the stored works",
+      "settings.awStored.one": "{n} artist stored",
+      "settings.awStored.other": "{n} artists stored",
+      "settings.awClearAsk.one": "Clear the stored works of {n} artist? They are read from MusicBrainz again when needed.",
+      "settings.awClearAsk.other": "Clear the stored works of {n} artists? They are read from MusicBrainz again when needed.",
+      "settings.wattrLong": "Spell out the attributes of the works matrix (live, cover …)",
+      "settings.capOn": "Stage in rounds",
+      "settings.capLimit": "Relationships per round",
+      "settings.aria.awMax": "At most works and recordings per artist",
+      "settings.aria.awSlowSec": "Seconds before a large catalogue is named",
+      "settings.aria.awSlowN": "Entries to read before a large catalogue is named",
+      "settings.aria.awDays": "Days the works read are kept",
+      "log.settingAw": "Comparison with the works of the artists: {state}",
+      "log.settingValue": "Setting “{what}”: {value}",
+      "log.settingsTopicReset": "Settings of “{topic}” back to their defaults",
+      "log.artistWorksStored.one": "Works of {name}: {n} work from the store (read {date})",
+      "log.artistWorksStored.other": "Works of {name}: {n} works from the store (read {date})",
+      "log.artistWorksCleared.one": "Stored works cleared ({n} artist)",
+      "log.artistWorksCleared.other": "Stored works cleared ({n} artists)",
+      "ms.3.16.0": "A menu “⚙ Settings” with all settings by topic (General, Sources, Discogs view, Works, Staging, Dates & tracks), each with its own “↺”; the switches stay where they are too. Works of the artists: on or off, how many works and recordings per artist are read (4,000), when a large catalogue is named, and how long the works read are kept – now beyond reloading the page (7 days).",
       "zoom.smaller": "Smaller text",
       "zoom.larger": "Larger text",
       "window.reset": "Reset position and size of the dashboard and the log",
@@ -750,7 +795,7 @@
       "works.viaLinked": "work of {name}",
       "works.viaRecorded": "recorded by {name} (“{recording}”)",
       "msg.artistWorksSlow": "Comparing the tracks with the works of {name} takes a while: a large catalogue ({n} recordings, {done} read so far). It goes on in the background.",
-      "msg.artistWorksCapped": "{name} has {n} recordings; only the first {max} were compared with the tracks.",
+      "msg.artistWorksCapped": "{name} has {n} works and recordings; only the first {max} were compared with the tracks.",
       "log.artistWorksSlow": "Works of {name}: a large catalogue ({n} recordings, {done} read so far)",
       "log.artistWorks.one": "Works of {name}: {n} work read (linked to the artist or recorded by them)",
       "log.artistWorks.other": "Works of {name}: {n} works read (linked to the artist or recorded by them)",
@@ -758,7 +803,7 @@
       "log.artistWorksDone.other": "Works of the artists compared: {n} works with the same title as a track ({tracks})",
       "log.artistWorksNone": "Works of the artists compared: no work with the same title as a track",
       "log.artistWorksSpecial": "{name}: a special purpose artist (Various Artists, [unknown] …) – its works are not compared",
-      "log.artistWorksCapped": "Works of {name}: {n} recordings, only the first {max} compared",
+      "log.artistWorksCapped": "Works of {name}: {n} works and recordings, only the first {max} compared",
       "matrix.noSame": "No work with the same title by these writers in MusicBrainz.",
       "matrix.dupWarn": "MusicBrainz already has a work with the same title (see the list below the track): {title}. Create a new work anyway?",
       "matrix.dupWarnAll.one": "{n} track already has a same-named work in MusicBrainz ({list}); it is left out so it can be linked instead. Create the other works?",
@@ -1753,6 +1798,51 @@
       "msg.datesMismatch.one": "{n} Beziehung im Editor hat nicht das Datum aus dem Dashboard: {list}. Bitte im Editor prüfen.",
       "msg.datesMismatch.other": "{n} Beziehungen im Editor haben nicht das Datum aus dem Dashboard: {list}. Bitte im Editor prüfen.",
       "zoom.label": "Schriftgröße",
+      "settings.button": "⚙ Einstellungen",
+      "settings.buttonTitle": "Alle Einstellungen an einem Ort, nach Themen",
+      "settings.title": "Einstellungen",
+      "settings.hint": "Alle Einstellungen an einem Ort, nach Themen – die Schalter bleiben auch an ihren Orten. Gespeichert in diesem Browser.",
+      "settings.t.general": "Allgemein",
+      "settings.t.sources": "Quellen",
+      "settings.t.discogs": "Discogs-Ansicht",
+      "settings.t.works": "Werke",
+      "settings.t.staging": "Stagen",
+      "settings.t.dates": "Daten & Tracks",
+      "settings.resetTopic": "↺ Standard für dieses Thema",
+      "settings.resetAsk": "Die Einstellungen von „{topic}“ wirklich auf den Standard zurücksetzen?",
+      "settings.place": "Dashboard",
+      "settings.place.window": "als Fenster",
+      "settings.place.page": "in der Seite",
+      "settings.logOpen": "Protokoll zeigen",
+      "settings.logPlace": "Platz des Protokolls",
+      "settings.discogsHint": "Mit dem Companion-Skript in einem Discogs-Tab: wann die Discogs-Ansicht dem Dashboard folgt und was sie zeigt.",
+      "settings.awOn": "Tracks ohne Werk mit den Werken der Artists des Releases, der Autoren und der Musiker abgleichen",
+      "settings.awMax": "Höchstens pro Artist (Werke und Aufnahmen zusammen)",
+      "settings.awCost": "= {req} Abfragen, etwa {sec} s pro Artist",
+      "settings.awSlow": "Großen Werkkatalog nennen nach",
+      "settings.awSlowSec": "Sekunden und ab",
+      "settings.awSlowN": "zu lesenden Einträgen",
+      "settings.awDays": "Gelesene Werke merken für (Tage)",
+      "settings.awClear": "Werke-Speicher leeren",
+      "settings.awStored.one": "{n} Artist gespeichert",
+      "settings.awStored.other": "{n} Artists gespeichert",
+      "settings.awClearAsk.one": "Die gespeicherten Werke von {n} Artist wirklich löschen? Sie werden bei Bedarf neu von MusicBrainz gelesen.",
+      "settings.awClearAsk.other": "Die gespeicherten Werke von {n} Artists wirklich löschen? Sie werden bei Bedarf neu von MusicBrainz gelesen.",
+      "settings.wattrLong": "Attribute der Werk-Matrix ausschreiben (live, cover …)",
+      "settings.capOn": "In Runden stagen",
+      "settings.capLimit": "Beziehungen pro Runde",
+      "settings.aria.awMax": "Höchstens Werke und Aufnahmen pro Artist",
+      "settings.aria.awSlowSec": "Sekunden, bis ein großer Werkkatalog genannt wird",
+      "settings.aria.awSlowN": "Zu lesende Einträge, ab denen ein großer Werkkatalog genannt wird",
+      "settings.aria.awDays": "Tage, die gelesene Werke gemerkt werden",
+      "log.settingAw": "Abgleich mit den Werken der Artists: {state}",
+      "log.settingValue": "Einstellung „{what}“: {value}",
+      "log.settingsTopicReset": "Einstellungen von „{topic}“ auf den Standard zurückgesetzt",
+      "log.artistWorksStored.one": "Werke von {name}: {n} Werk aus dem Speicher (gelesen am {date})",
+      "log.artistWorksStored.other": "Werke von {name}: {n} Werke aus dem Speicher (gelesen am {date})",
+      "log.artistWorksCleared.one": "Werke-Speicher geleert ({n} Artist)",
+      "log.artistWorksCleared.other": "Werke-Speicher geleert ({n} Artists)",
+      "ms.3.16.0": "Ein Menü „⚙ Einstellungen“ mit allen Einstellungen nach Themen (Allgemein, Quellen, Discogs-Ansicht, Werke, Stagen, Daten & Tracks), jedes mit eigenem „↺“; die Schalter bleiben auch an ihren Orten. Werke der Artists: an oder aus, wie viele Werke und Aufnahmen pro Artist gelesen werden (4.000), wann ein großer Werkkatalog genannt wird und wie lange gelesene Werke gemerkt werden – jetzt über das Neuladen hinaus (7 Tage).",
       "zoom.smaller": "Kleinere Schrift",
       "zoom.larger": "Größere Schrift",
       "window.reset": "Position und Größe von Dashboard und Protokoll zurücksetzen",
@@ -1922,7 +2012,7 @@
       "works.viaLinked": "Werk von {name}",
       "works.viaRecorded": "aufgenommen von {name} („{recording}“)",
       "msg.artistWorksSlow": "Der Abgleich der Tracks mit den Werken von {name} dauert: ein großer Werkkatalog ({n} Aufnahmen, bisher {done} gelesen). Er läuft im Hintergrund weiter.",
-      "msg.artistWorksCapped": "{name} hat {n} Aufnahmen; nur die ersten {max} wurden mit den Tracks abgeglichen.",
+      "msg.artistWorksCapped": "{name} hat {n} Werke und Aufnahmen; nur die ersten {max} wurden mit den Tracks abgeglichen.",
       "log.artistWorksSlow": "Werke von {name}: ein großer Werkkatalog ({n} Aufnahmen, bisher {done} gelesen)",
       "log.artistWorks.one": "Werke von {name}: {n} Werk gelesen (mit dem Artist verknüpft oder von ihm aufgenommen)",
       "log.artistWorks.other": "Werke von {name}: {n} Werke gelesen (mit dem Artist verknüpft oder von ihm aufgenommen)",
@@ -1930,7 +2020,7 @@
       "log.artistWorksDone.other": "Werke der Artists abgeglichen: {n} Werke mit dem Titel eines Tracks ({tracks})",
       "log.artistWorksNone": "Werke der Artists abgeglichen: kein Werk mit dem Titel eines Tracks",
       "log.artistWorksSpecial": "{name}: ein Sonder-Artist (Various Artists, [unknown] …) – seine Werke werden nicht abgeglichen",
-      "log.artistWorksCapped": "Werke von {name}: {n} Aufnahmen, nur die ersten {max} abgeglichen",
+      "log.artistWorksCapped": "Werke von {name}: {n} Werke und Aufnahmen, nur die ersten {max} abgeglichen",
       "matrix.noSame": "Kein gleichnamiges Werk dieser Autoren in MusicBrainz.",
       "matrix.dupWarn": "MusicBrainz hat schon ein gleichnamiges Werk (siehe die Liste unter dem Track): {title}. Trotzdem ein neues Werk anlegen?",
       "matrix.dupWarnAll.one": "Für {n} Track gibt es schon ein gleichnamiges Werk in MusicBrainz ({list}); er wird ausgelassen, damit du es verknüpfen kannst. Die übrigen Werke anlegen?",
@@ -2925,6 +3015,51 @@
       "msg.datesMismatch.one": "{n} relación del editor no tiene la fecha del panel: {list}. Compruébala en el editor.",
       "msg.datesMismatch.other": "{n} relaciones del editor no tienen la fecha del panel: {list}. Compruébalas en el editor.",
       "zoom.label": "Tamaño del texto",
+      "settings.button": "⚙ Ajustes",
+      "settings.buttonTitle": "Todos los ajustes en un lugar, por temas",
+      "settings.title": "Ajustes",
+      "settings.hint": "Todos los ajustes en un lugar, por temas – los interruptores siguen también en su sitio. Guardados en este navegador.",
+      "settings.t.general": "General",
+      "settings.t.sources": "Fuentes",
+      "settings.t.discogs": "Vista de Discogs",
+      "settings.t.works": "Obras",
+      "settings.t.staging": "Preparar",
+      "settings.t.dates": "Fechas y pistas",
+      "settings.resetTopic": "↺ Valores por defecto de este tema",
+      "settings.resetAsk": "¿Restablecer de verdad los ajustes de «{topic}»?",
+      "settings.place": "Panel",
+      "settings.place.window": "como ventana",
+      "settings.place.page": "en la página",
+      "settings.logOpen": "Mostrar el registro",
+      "settings.logPlace": "Lugar del registro",
+      "settings.discogsHint": "Con el script complementario en una pestaña de Discogs: cuándo la vista de Discogs sigue al panel y qué muestra.",
+      "settings.awOn": "Comparar las pistas sin obra con las obras de los artistas de la publicación, de los autores y de los músicos",
+      "settings.awMax": "Como máximo por artista (obras y grabaciones juntas)",
+      "settings.awCost": "= {req} consultas, unos {sec} s por artista",
+      "settings.awSlow": "Indicar un catálogo grande tras",
+      "settings.awSlowSec": "segundos y desde",
+      "settings.awSlowN": "entradas por leer",
+      "settings.awDays": "Guardar las obras leídas (días)",
+      "settings.awClear": "Vaciar las obras guardadas",
+      "settings.awStored.one": "{n} artista guardado",
+      "settings.awStored.other": "{n} artistas guardados",
+      "settings.awClearAsk.one": "¿Borrar de verdad las obras guardadas de {n} artista? Se vuelven a leer de MusicBrainz cuando hagan falta.",
+      "settings.awClearAsk.other": "¿Borrar de verdad las obras guardadas de {n} artistas? Se vuelven a leer de MusicBrainz cuando hagan falta.",
+      "settings.wattrLong": "Escribir completos los atributos de la matriz de obras (live, cover …)",
+      "settings.capOn": "Preparar por rondas",
+      "settings.capLimit": "Relaciones por ronda",
+      "settings.aria.awMax": "Como máximo obras y grabaciones por artista",
+      "settings.aria.awSlowSec": "Segundos hasta indicar un catálogo grande",
+      "settings.aria.awSlowN": "Entradas por leer a partir de las que se indica un catálogo grande",
+      "settings.aria.awDays": "Días que se guardan las obras leídas",
+      "log.settingAw": "Comparación con las obras de los artistas: {state}",
+      "log.settingValue": "Ajuste «{what}»: {value}",
+      "log.settingsTopicReset": "Ajustes de «{topic}» restablecidos",
+      "log.artistWorksStored.one": "Obras de {name}: {n} obra guardada (leída el {date})",
+      "log.artistWorksStored.other": "Obras de {name}: {n} obras guardadas (leídas el {date})",
+      "log.artistWorksCleared.one": "Obras guardadas borradas ({n} artista)",
+      "log.artistWorksCleared.other": "Obras guardadas borradas ({n} artistas)",
+      "ms.3.16.0": "Un menú «⚙ Ajustes» con todos los ajustes por temas (General, Fuentes, Vista de Discogs, Obras, Preparar, Fechas y pistas), cada uno con su «↺»; los interruptores siguen también en su sitio. Obras de los artistas: activada o no, cuántas obras y grabaciones se leen por artista (4000), cuándo se indica un catálogo grande y cuánto tiempo se guardan las obras leídas – ahora también al recargar la página (7 días).",
       "zoom.smaller": "Texto más pequeño",
       "zoom.larger": "Texto más grande",
       "window.reset": "Restablecer posición y tamaño del panel y del registro",
@@ -3094,7 +3229,7 @@
       "works.viaLinked": "obra de {name}",
       "works.viaRecorded": "grabada por {name} («{recording}»)",
       "msg.artistWorksSlow": "Comparar las pistas con las obras de {name} lleva un rato: un catálogo grande ({n} grabaciones, {done} leídas hasta ahora). Sigue en segundo plano.",
-      "msg.artistWorksCapped": "{name} tiene {n} grabaciones; solo se compararon las primeras {max} con las pistas.",
+      "msg.artistWorksCapped": "{name} tiene {n} obras y grabaciones; solo se compararon las primeras {max} con las pistas.",
       "log.artistWorksSlow": "Obras de {name}: un catálogo grande ({n} grabaciones, {done} leídas hasta ahora)",
       "log.artistWorks.one": "Obras de {name}: {n} obra leída (vinculada al artista o grabada por él)",
       "log.artistWorks.other": "Obras de {name}: {n} obras leídas (vinculadas al artista o grabadas por él)",
@@ -3102,7 +3237,7 @@
       "log.artistWorksDone.other": "Obras de los artistas comparadas: {n} obras con el título de una pista ({tracks})",
       "log.artistWorksNone": "Obras de los artistas comparadas: ninguna obra con el título de una pista",
       "log.artistWorksSpecial": "{name}: un artista de uso especial (Various Artists, [unknown] …) – sus obras no se comparan",
-      "log.artistWorksCapped": "Obras de {name}: {n} grabaciones, solo se compararon las primeras {max}",
+      "log.artistWorksCapped": "Obras de {name}: {n} obras y grabaciones, solo se compararon las primeras {max}",
       "matrix.noSame": "Ninguna obra con el mismo título de estos autores en MusicBrainz.",
       "matrix.dupWarn": "MusicBrainz ya tiene una obra con el mismo título (ver la lista bajo la pista): {title}. ¿Crear una obra nueva de todos modos?",
       "matrix.dupWarnAll.one": "{n} pista ya tiene en MusicBrainz una obra con el mismo título ({list}); se omite para poder enlazarla. ¿Crear las demás obras?",
@@ -4097,6 +4232,51 @@
       "msg.datesMismatch.one": "{n} relation dans l’éditeur n’a pas la date du tableau : {list}. Veuillez la vérifier dans l’éditeur.",
       "msg.datesMismatch.other": "{n} relations dans l’éditeur n’ont pas la date du tableau : {list}. Veuillez les vérifier dans l’éditeur.",
       "zoom.label": "Taille du texte",
+      "settings.button": "⚙ Réglages",
+      "settings.buttonTitle": "Tous les réglages au même endroit, par thèmes",
+      "settings.title": "Réglages",
+      "settings.hint": "Tous les réglages au même endroit, par thèmes – les interrupteurs restent aussi à leur place. Enregistrés dans ce navigateur.",
+      "settings.t.general": "Général",
+      "settings.t.sources": "Sources",
+      "settings.t.discogs": "Vue Discogs",
+      "settings.t.works": "Œuvres",
+      "settings.t.staging": "Préparation",
+      "settings.t.dates": "Dates et pistes",
+      "settings.resetTopic": "↺ Valeurs par défaut de ce thème",
+      "settings.resetAsk": "Remettre vraiment les réglages de « {topic} » aux valeurs par défaut ?",
+      "settings.place": "Tableau de bord",
+      "settings.place.window": "en fenêtre",
+      "settings.place.page": "dans la page",
+      "settings.logOpen": "Afficher le journal",
+      "settings.logPlace": "Place du journal",
+      "settings.discogsHint": "Avec le script compagnon dans un onglet Discogs : quand la vue Discogs suit le tableau de bord et ce qu’elle montre.",
+      "settings.awOn": "Comparer les pistes sans œuvre aux œuvres des artistes de la parution, des auteurs et des musiciens",
+      "settings.awMax": "Au plus par artiste (œuvres et enregistrements ensemble)",
+      "settings.awCost": "= {req} requêtes, environ {sec} s par artiste",
+      "settings.awSlow": "Signaler un grand catalogue après",
+      "settings.awSlowSec": "secondes et à partir de",
+      "settings.awSlowN": "entrées à lire",
+      "settings.awDays": "Garder les œuvres lues pendant (jours)",
+      "settings.awClear": "Vider les œuvres enregistrées",
+      "settings.awStored.one": "{n} artiste enregistré",
+      "settings.awStored.other": "{n} artistes enregistrés",
+      "settings.awClearAsk.one": "Effacer vraiment les œuvres enregistrées de {n} artiste ? Elles seront relues sur MusicBrainz au besoin.",
+      "settings.awClearAsk.other": "Effacer vraiment les œuvres enregistrées de {n} artistes ? Elles seront relues sur MusicBrainz au besoin.",
+      "settings.wattrLong": "Écrire en entier les attributs de la matrice des œuvres (live, cover …)",
+      "settings.capOn": "Préparer par tours",
+      "settings.capLimit": "Relations par tour",
+      "settings.aria.awMax": "Au plus d’œuvres et d’enregistrements par artiste",
+      "settings.aria.awSlowSec": "Secondes avant de signaler un grand catalogue",
+      "settings.aria.awSlowN": "Entrées à lire à partir desquelles un grand catalogue est signalé",
+      "settings.aria.awDays": "Jours pendant lesquels les œuvres lues sont gardées",
+      "log.settingAw": "Comparaison avec les œuvres des artistes : {state}",
+      "log.settingValue": "Réglage « {what} » : {value}",
+      "log.settingsTopicReset": "Réglages de « {topic} » remis par défaut",
+      "log.artistWorksStored.one": "Œuvres de {name} : {n} œuvre enregistrée (lue le {date})",
+      "log.artistWorksStored.other": "Œuvres de {name} : {n} œuvres enregistrées (lues le {date})",
+      "log.artistWorksCleared.one": "Œuvres enregistrées effacées ({n} artiste)",
+      "log.artistWorksCleared.other": "Œuvres enregistrées effacées ({n} artistes)",
+      "ms.3.16.0": "Un menu « ⚙ Réglages » avec tous les réglages par thèmes (Général, Sources, Vue Discogs, Œuvres, Préparation, Dates et pistes), chacun avec son « ↺ » ; les interrupteurs restent aussi à leur place. Œuvres des artistes : activée ou non, combien d’œuvres et d’enregistrements sont lus par artiste (4 000), quand un grand catalogue est signalé et combien de temps les œuvres lues sont gardées – désormais même après rechargement de la page (7 jours).",
       "zoom.smaller": "Texte plus petit",
       "zoom.larger": "Texte plus grand",
       "window.reset": "Réinitialiser la position et la taille du tableau et du journal",
@@ -4266,7 +4446,7 @@
       "works.viaLinked": "œuvre de {name}",
       "works.viaRecorded": "enregistrée par {name} (« {recording} »)",
       "msg.artistWorksSlow": "Comparer les pistes avec les œuvres de {name} prend du temps : un grand catalogue ({n} enregistrements, {done} lus jusqu’ici). Cela continue en arrière-plan.",
-      "msg.artistWorksCapped": "{name} a {n} enregistrements ; seuls les {max} premiers ont été comparés avec les pistes.",
+      "msg.artistWorksCapped": "{name} a {n} œuvres et enregistrements ; seuls les {max} premiers ont été comparés avec les pistes.",
       "log.artistWorksSlow": "Œuvres de {name} : un grand catalogue ({n} enregistrements, {done} lus jusqu’ici)",
       "log.artistWorks.one": "Œuvres de {name} : {n} œuvre lue (liée à l’artiste ou enregistrée par lui)",
       "log.artistWorks.other": "Œuvres de {name} : {n} œuvres lues (liées à l’artiste ou enregistrées par lui)",
@@ -4274,7 +4454,7 @@
       "log.artistWorksDone.other": "Œuvres des artistes comparées : {n} œuvres portant le titre d’une piste ({tracks})",
       "log.artistWorksNone": "Œuvres des artistes comparées : aucune œuvre portant le titre d’une piste",
       "log.artistWorksSpecial": "{name} : un artiste à usage spécial (Various Artists, [unknown] …) – ses œuvres ne sont pas comparées",
-      "log.artistWorksCapped": "Œuvres de {name} : {n} enregistrements, seuls les {max} premiers comparés",
+      "log.artistWorksCapped": "Œuvres de {name} : {n} œuvres et enregistrements, seuls les {max} premiers comparés",
       "matrix.noSame": "Aucune œuvre du même titre de ces auteurs dans MusicBrainz.",
       "matrix.dupWarn": "MusicBrainz a déjà une œuvre du même titre (voir la liste sous la piste) : {title}. Créer quand même une nouvelle œuvre ?",
       "matrix.dupWarnAll.one": "{n} piste a déjà dans MusicBrainz une œuvre du même titre ({list}) ; elle est laissée de côté pour pouvoir la lier. Créer les autres œuvres ?",
@@ -7568,6 +7748,9 @@
     artistWorkHits: new Map(),
     artistWorkTargets: new Map(),
     artistWorksSpecialLogged: new Set(),
+    settingsOpen: false,
+    settingsTopics: new Set(),
+    awStoreCount: null,
     workOptions: null,
     workDefaults: { typeId: '', languageIds: [] },
     workQueue: [],
@@ -13425,6 +13608,7 @@
         }
         S.workPlan.set(i, { gid: mbid, title, origin: 'created', flags: new Set() });
         rememberCreatedWork(i, mbid, title);
+        rememberArtistWork(i, mbid, title);
         if (S.workRun) S.workRun.created.push(mbid);
         else showMessage('ok', 'workDlg.done', { title, track: trackLabel(track) }, { action: { act: 'open-works', arg: mbid, label: 'works.openOne' } });
         log('ok', 'workCreated', { title, track: trackLabel(track), mbid });
@@ -13635,6 +13819,22 @@
   S.dgRelease = readJson('localStorage', 'dci-dg-release', true) !== false;
   S.dgArtwork = readJson('localStorage', 'dci-dg-artwork', true) !== false;
   S.capLimit = Number(readJson('localStorage', 'dci-stage-cap', 500)) || 500;
+  // [3.16.0] The comparison with the works of the artists (menu "Settings" → Works): on/off, at most so many works and
+  // recordings per artist (together), when a large catalogue is named (after seconds, from entries), days the works are kept
+  const AW_SETTINGS = {
+    awMax: { key: 'dci-aw-max', def: 4000, min: 100, max: 10000, step: 100 },
+    awSlowSec: { key: 'dci-aw-slow-s', def: 10, min: 1, max: 120, step: 1 },
+    awSlowN: { key: 'dci-aw-slow-n', def: 900, min: 100, max: 10000, step: 100 },
+    awDays: { key: 'dci-aw-days', def: 7, min: 1, max: 90, step: 1 },
+  };
+  /** A number of a setting within its limits (rounded to its step); the default when it is no number. */
+  function awValue(name, v) {
+    const d = AW_SETTINGS[name];
+    const n = Math.round(Number(v) / d.step) * d.step;
+    return Number.isFinite(n) && String(v).trim() !== '' && v !== null ? Math.min(d.max, Math.max(d.min, n)) : d.def;
+  }
+  S.awOn = readJson('localStorage', 'dci-aw-on', true) !== false;
+  Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = awValue(name, readJson('localStorage', d.key, d.def)); });
   S.mxMenu = null;
   S.pubRels = new Map();
   S.workRowOpts = new Map();
@@ -14250,8 +14450,6 @@
   }
 
   // --- [3.15.0] Works of the artists: release artists, writers, performers --------------------------------
-  /** At most this many works and recordings are read per artist (100 per request). */
-  const ARTIST_WORKS_MAX = 2000;
 
   /** The artists whose works are compared: the release's artists, then writers, then performers (with MB entry). */
   function artistWorkTargets() {
@@ -14286,22 +14484,35 @@
    * and those of the artist's recordings (also covers). onPage(entry) after each request.
    */
   async function loadArtistWorks(mbid, name, onPage) {
-    const entry = { name, works: new Map(), recordings: 0, total: 0, linked: 0, capped: false };
-    for (let offset = 0; offset < ARTIST_WORKS_MAX; offset += 100) {
+    // [3.16.0] at most S.awMax works and recordings together (setting): the linked works first, the recordings with the rest
+    const max = S.awMax;
+    const entry = { name, works: new Map(), recordings: 0, total: 0, linked: 0, linkedRead: 0, capped: false, max };
+    for (let offset = 0; offset < max; offset += 100) {
       const d = await mbWsIdle(`work?artist=${mbid}&inc=aliases&limit=100&offset=${offset}`);
       const list = (d && d.works) || [];
       list.forEach((w) => entry.works.set(w.id, { gid: w.id, title: w.title, aliases: (w.aliases || []).map((x) => x.name).filter(Boolean),
         type: w.type || '', disambiguation: w.disambiguation || '', via: 'linked' }));
+      entry.linkedRead += list.length;
       entry.linked = (d && d['work-count']) || entry.works.size;
       onPage(entry);
       if (!list.length || offset + 100 >= entry.linked) break;
     }
+    // [3.16.0] linked works beyond the limit were left out silently before
+    if (entry.linked > entry.linkedRead) entry.capped = true;
+    const rest = max - entry.linkedRead;
+    if (rest <= 0) {
+      // the works took all of it: how many recordings there are, for the message
+      const d = await mbWsIdle(`recording?artist=${mbid}&limit=1`);
+      entry.total = (d && d['recording-count']) || 0;
+      if (entry.total) entry.capped = true;
+      return entry;
+    }
     for (let offset = 0; ; offset += 100) {
-      if (offset >= ARTIST_WORKS_MAX) {
+      if (offset >= rest) {
         entry.capped = true;
         break;
       }
-      const d = await mbWsIdle(`recording?artist=${mbid}&inc=work-rels&limit=100&offset=${offset}`);
+      const d = await mbWsIdle(`recording?artist=${mbid}&inc=work-rels&limit=${Math.min(100, rest - offset)}&offset=${offset}`);
       const list = (d && d.recordings) || [];
       entry.total = (d && d['recording-count']) || entry.recordings + list.length;
       for (const rec of list) {
@@ -14384,6 +14595,73 @@
     renderWorks();
   }
 
+  // --- [3.16.0] The works of the artists, kept beyond reloading the page (IndexedDB of musicbrainz.org) ---------------
+  const AW_DB = 'dci-works';
+  let awDbPromise = null;
+  /** The database, or null where the browser does not allow it (then the works are kept for the page only, as before). */
+  function awDb() {
+    if (!awDbPromise) {
+      awDbPromise = new Promise((resolve) => {
+        try {
+          const req = window.indexedDB.open(AW_DB, 1);
+          req.onupgradeneeded = () => req.result.createObjectStore('artists', { keyPath: 'mbid' });
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+          req.onblocked = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+    return awDbPromise;
+  }
+  /** One request to the store of artists; its result, or null. */
+  async function awStore(mode, fn) {
+    const db = await awDb();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('artists', mode);
+        const req = fn(tx.objectStore('artists'));
+        tx.oncomplete = () => resolve(req ? req.result : true);
+        tx.onerror = () => resolve(null);
+        tx.onabort = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+  const awGet = (mbid) => awStore('readonly', (st) => st.get(mbid));
+  const awPut = (rec) => awStore('readwrite', (st) => st.put(rec));
+  const awCount = () => awStore('readonly', (st) => st.count());
+  const awClear = () => awStore('readwrite', (st) => st.clear());
+  /** What was read of an artist, short (works as arrays) and with the time it was read (kept when a work is added). */
+  const awPack = (mbid, e, readAt = Date.now()) => ({ mbid, name: e.name, readAt, max: e.max, linked: e.linked, total: e.total, recordings: e.recordings,
+    capped: e.capped, works: [...e.works.values()].map((w) => [w.gid, w.title, w.aliases || [], w.type || '', w.disambiguation || '', w.via === 'recorded' ? 'r' : 'l', w.recording || '']) });
+  const awUnpack = (rec) => ({ name: rec.name, max: rec.max, linked: rec.linked, total: rec.total, recordings: rec.recordings, capped: rec.capped, readAt: rec.readAt,
+    works: new Map((rec.works || []).map(([gid, title, aliases, type, disambiguation, via, recording]) => [gid,
+      { gid, title, aliases: aliases || [], type, disambiguation, via: via === 'r' ? 'recorded' : 'linked', recording }])) });
+  /** Still good: younger than the days of the setting, and not cut off by a lower limit than the one set now. */
+  const awFresh = (rec) => Date.now() - rec.readAt < S.awDays * 86400000 && (!rec.capped || rec.max >= S.awMax);
+
+  /**
+   * A work the dashboard linked to a track or created goes at once into the works of the artists credited on that track
+   * (and of the release's artists) – otherwise it would be missing in the store until it is read again.
+   */
+  function rememberArtistWork(i, gid, title) {
+    const ids = new Set((S.releaseCredit || []).map((p) => p.mbid).filter(Boolean));
+    for (const r of S.rows) {
+      const a = S.artists.get(r.artistKey);
+      if (a && a.mbid && r.level !== 'skip' && (!r.tracks || !r.tracks.size || r.tracks.has(i))) ids.add(a.mbid);
+    }
+    for (const id of ids) {
+      const e = S.artistWorks.get(id);
+      if (!e || e.works.has(gid)) continue;
+      e.works.set(gid, { gid, title, aliases: [], type: '', disambiguation: '', via: 'linked' });
+      awPut(awPack(id, e, e.readAt || Date.now()));
+    }
+  }
+
   /**
    * [3.15.0] Compares the tracks without a work with all works of the release's artists, its writers and its performers
    * (in the background; works read once per session). Longer than 10 seconds: a message says why (a large catalogue);
@@ -14392,6 +14670,15 @@
   async function runArtistWorks() {
     if (S.artistWorksRunning) {
       S.artistWorksAgain = true;
+      return;
+    }
+    // [3.16.0] switched off in the settings: no comparison, no hits
+    if (!S.awOn) {
+      S.artistWorkTargets = new Map();
+      if (S.artistWorkHits.size) {
+        S.artistWorkHits = new Map();
+        renderWorksBackground();
+      }
       return;
     }
     const targets = artistWorkTargets();
@@ -14409,22 +14696,33 @@
     try {
       for (const [mbid, info] of targets) {
         if (S.artistWorksAgain) break;
+        // [3.16.0] read before (in this browser, within the days of the setting): from the store
         if (!S.artistWorks.has(mbid)) {
-          // one artist taking longer than 10 seconds because of a large catalogue (more than 9 pages of 100 to read;
-          // a wait for the dashboard's own requests is not the catalogue's fault): the message says so
+          const rec = await awGet(mbid);
+          if (rec && awFresh(rec)) {
+            const e = awUnpack(rec);
+            S.artistWorks.set(mbid, e);
+            log('info', 'artistWorksStored', { name: info.name, n: e.works.size, date: new Date(rec.readAt).toISOString().slice(0, 10) });
+          }
+        }
+        if (!S.artistWorks.has(mbid)) {
+          // one artist taking longer than the seconds of the setting (10) because of a large catalogue (more entries to read
+          // than the setting says, 900; a wait for the dashboard's own requests is not the catalogue's fault): the message says so
           const started = Date.now();
           let slowShown = false;
           const e = await loadArtistWorks(mbid, info.name, (entry) => {
-            if (slowShown || Date.now() - started < 10000 || entry.total + entry.linked <= 900) return;
+            if (slowShown || Date.now() - started < S.awSlowSec * 1000 || entry.total + entry.linked <= S.awSlowN) return;
             slowShown = true;
             showMessage('info', 'msg.artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
             log('info', 'artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
           });
+          e.readAt = Date.now();
           S.artistWorks.set(mbid, e);
+          awPut(awPack(mbid, e, e.readAt));
           if (e.works.size) log('info', 'artistWorks', { name: info.name, n: e.works.size });
           if (e.capped) {
-            showMessage('info', 'msg.artistWorksCapped', { name: info.name, n: e.total, max: ARTIST_WORKS_MAX });
-            log('warn', 'artistWorksCapped', { name: info.name, n: e.total, max: ARTIST_WORKS_MAX });
+            showMessage('info', 'msg.artistWorksCapped', { name: info.name, n: e.linked + e.total, max: e.max });
+            log('warn', 'artistWorksCapped', { name: info.name, n: e.linked + e.total, max: e.max });
           }
         }
         if (matchArtistWorks()) renderWorksBackground();
@@ -16675,9 +16973,48 @@
       case 'place-toggle':
         setPlace(inPage() ? 'window' : 'page');
         break;
+      // [3.16.0] the menu "Settings"
+      case 'settings-open':
+        S.settingsOpen = !S.settingsOpen;
+        if (S.settingsOpen) {
+          S.resetOpen = false;
+          renderReset();
+          awCount().then((n) => {
+            S.awStoreCount = n || 0;
+            renderSettings();
+          });
+        }
+        renderSettings();
+        if (S.settingsOpen) $('settings').scrollIntoView({ block: 'nearest' });
+        break;
+      case 'settings-topic': {
+        const t = btn.dataset.topic;
+        if (S.settingsTopics.has(t)) S.settingsTopics.delete(t);
+        else S.settingsTopics.add(t);
+        renderSettings();
+        break;
+      }
+      case 'settings-reset':
+        if (confirm(tr('settings.resetAsk', { topic: tr(`settings.t.${btn.dataset.topic}`) }))) resetTopic(btn.dataset.topic);
+        break;
+      case 'aw-clear': {
+        const n = S.awStoreCount || 0;
+        if (!confirm(tr('settings.awClearAsk', { n }))) break;
+        awClear().then(() => {
+          S.artistWorks.clear();
+          S.awStoreCount = 0;
+          log('info', 'artistWorksCleared', { n });
+          renderSettings();
+        });
+        break;
+      }
       // "Reset all to default"
       case 'reset-open':
         S.resetOpen = !S.resetOpen;
+        if (S.resetOpen && S.settingsOpen) {
+          S.settingsOpen = false;
+          renderSettings();
+        }
         renderReset();
         break;
       case 'reset-cancel':
@@ -16920,6 +17257,7 @@
         const i = workIndexOf(btn);
         S.workPlan.set(i, { gid: btn.dataset.gid, title: btn.dataset.title, origin: 'search', flags: new Set() });
         log('info', 'workPicked', { track: trackLabel(S.mbTracks[i]), title: btn.dataset.title });
+        rememberArtistWork(i, btn.dataset.gid, btn.dataset.title);
         renderWorks();
         refresh();
         break;
@@ -16970,6 +17308,10 @@
   }
 
   function onChange(e) {
+    if (e.target.dataset && e.target.dataset.set) {
+      settingsChange(e.target);
+      return;
+    }
     S.changingEl = e.target;
     try {
       onChangeInner(e);
@@ -17592,6 +17934,7 @@
               <button type="button" class="dci-headbtn" data-act="zoom-in" title="${esc(tr('zoom.larger'))}" aria-label="${esc(tr('zoom.larger'))}">A+</button>
             </span>
             <button type="button" class="dci-headbtn" data-act="place-toggle" title="${esc(tr(inPage() ? 'place.toWindowTitle' : 'place.toPageTitle'))}">${esc(tr(inPage() ? 'place.toWindow' : 'place.toPage'))}</button>
+            <button type="button" class="dci-headbtn" data-act="settings-open" aria-expanded="false" title="${esc(tr('settings.buttonTitle'))}">${esc(tr('settings.button'))}</button>
             <button type="button" class="dci-headbtn" data-act="reset-open" aria-expanded="false" title="${esc(tr('reset.title'))}">${esc(tr('reset.button'))}</button>
             <button type="button" class="dci-headbtn" data-act="window-reset" title="${esc(tr('window.reset'))}" aria-label="${esc(tr('window.reset'))}">⤢</button>
             <button type="button" class="dci-headbtn" data-act="rules">${esc(tr('rules.title'))}</button>
@@ -17601,6 +17944,7 @@
         </header>
         <div class="dci-body" data-el="body">
           <div class="dci-reset" data-el="reset" role="dialog" aria-label="${esc(tr('reset.title'))}" hidden></div>
+          <div class="dci-settings" data-el="settings" role="region" aria-label="${esc(tr('settings.title'))}" hidden></div>
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
           <div class="dci-msgs" data-el="msgs" aria-live="polite"></div>
           <section class="dci-dates" data-el="dates" aria-label="${esc(tr('date.title'))}" hidden></section>
@@ -17660,7 +18004,7 @@
             <button type="button" class="dci-textbtn" data-act="preview" aria-expanded="${S.previewOpen}">${esc(tr('footer.preview'))}</button>
             <label class="dci-check"><input type="checkbox" data-f="editnote" ${S.editNote ? 'checked' : ''}> ${esc(tr('footer.editNote'))}</label>
             <label class="dci-check" title="${esc(tr('footer.fillTitle'))}"><input type="checkbox" data-f="fill-credits" ${S.fillCredits ? 'checked' : ''}> ${esc(tr('footer.fill'))}</label>
-            <label class="dci-check" title="${esc(tr('footer.capTitle'))}"><input type="checkbox" data-f="stage-cap" ${S.capOn ? 'checked' : ''}> ${esc(tr('footer.cap', { n: S.capLimit }))}</label>
+            <label class="dci-check" title="${esc(tr('footer.capTitle'))}"><input type="checkbox" data-f="stage-cap" ${S.capOn ? 'checked' : ''}> <span data-el="cap-label">${esc(tr('footer.cap', { n: S.capLimit }))}</span></label>
             <button type="button" class="dci-apply" data-act="apply" disabled>${esc(tr('footer.apply'))}</button>
           </div>
           <p class="dci-rounds" data-el="rounds" hidden></p>
@@ -17686,6 +18030,9 @@
     overlay.addEventListener('click', onClick);
     overlay.addEventListener('change', onChange);
     overlay.addEventListener('input', onInput);
+    // [3.16.0] the menu "Settings" and the switches it shares follow every change
+    overlay.addEventListener('click', settingsAfterEvent);
+    overlay.addEventListener('change', settingsAfterEvent);
     overlay.addEventListener('paste', onPaste);
     overlay.addEventListener('keydown', onKeydown);
     overlay.addEventListener('dragstart', onDragStart);
@@ -17718,6 +18065,7 @@
     renderSource();
     renderSync();
     renderReset();
+    renderSettings();
     renderDates();
     renderMessages();
     renderBusy();
@@ -17831,10 +18179,192 @@
 
   // --- "Defaults": all settings back to the defaults --------------------------------------------
 
+  // --- [3.16.0] The menu "Settings": all settings in one place, by topic (the switches stay where they are too) ----------
+  const SETTING_TOPICS = ['general', 'sources', 'discogs', 'works', 'staging', 'dates'];
+  /** The stored keys of each topic (its "↺" sets them back). */
+  const TOPIC_KEYS = {
+    general: ['dci-lang', 'dci-scale', 'dci-place', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
+    sources: ['dci-source-order', 'dci-bc-tracks'],
+    discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork'],
+    works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long'],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap'],
+    dates: ['dci-dm-auto', 'dci-pools-keep'],
+  };
+  /** Settings the menu shares with switches elsewhere in the dashboard (data-f → the value they show). */
+  const SHARED_SWITCHES = {
+    'fill-credits': () => S.fillCredits, 'stage-cap': () => S.capOn, 'bc-tracks': () => S.bcTracks, 'dm-auto': () => S.dmAuto,
+    'pools-keep': () => S.poolsKeep,
+  };
+
+  function settingsHtml() {
+    const check = (attr, on, label, title = '') => `<label class="dci-check"${title ? ` title="${esc(title)}"` : ''}><input type="checkbox" ${attr} ${on ? 'checked' : ''}> ${esc(label)}</label>`;
+    const num = (name) => {
+      const d = AW_SETTINGS[name];
+      return `<input type="number" data-set="${name}" min="${d.min}" max="${d.max}" step="${d.step}" value="${S[name]}" aria-label="${esc(tr(`settings.aria.${name}`))}">`;
+    };
+    const row = (html) => `<div class="dci-set-row">${html}</div>`;
+    const req = Math.ceil(S.awMax / 100);
+    const bodies = {
+      general: () => [
+        row(`<label>${esc(tr('lang.label'))} <select data-f="lang">${Object.entries(LANGS).map(([code, name]) => `<option value="${code}" ${code === LANG ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`),
+        row(`${esc(tr('zoom.label'))} <button type="button" class="dci-headbtn" data-act="zoom-out" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
+          <span data-el="zoom-set">${Math.round(S.scale * 100)} %</span> <button type="button" class="dci-headbtn" data-act="zoom-in" aria-label="${esc(tr('zoom.larger'))}">A+</button>`),
+        row(`${esc(tr('settings.place'))} <span class="dci-seg dci-seg-small" role="group">${['window', 'page'].map((pl) => (inPage() === (pl === 'page')
+          ? `<button type="button" aria-pressed="true" disabled>${esc(tr(`settings.place.${pl}`))}</button>`
+          : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
+        row(check('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'))),
+        row(`<label>${esc(tr('settings.logPlace'))} <select data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select></label>`),
+      ],
+      sources: () => [
+        row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
+        row(check('data-f="bc-tracks"', S.bcTracks, tr('bc.tracks'), tr('bc.tracksTitle'))),
+      ],
+      discogs: () => [row(syncModeHtml()), `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`],
+      works: () => [
+        row(check('data-set="aw-on"', S.awOn, tr('settings.awOn'))),
+        row(`<label>${esc(tr('settings.awMax'))} ${num('awMax')}</label> <span class="dci-sub" data-el="aw-cost">${esc(tr('settings.awCost', { req, sec: Math.round(req * 1.1) }))}</span>`),
+        row(`${esc(tr('settings.awSlow'))} ${num('awSlowSec')} ${esc(tr('settings.awSlowSec'))} ${num('awSlowN')} ${esc(tr('settings.awSlowN'))}`),
+        row(`<label>${esc(tr('settings.awDays'))} ${num('awDays')}</label>`),
+        row(`<button type="button" class="dci-small" data-act="aw-clear">${esc(tr('settings.awClear'))}</button>
+          ${S.awStoreCount == null ? '' : `<span class="dci-sub">${esc(tr('settings.awStored', { n: S.awStoreCount }))}</span>`}`),
+        row(`<label>${esc(tr('matrix.codes'))} <select data-f="mx-codes">${['names', 'cisac', 'gema'].map((c) => `<option value="${c}" ${S.roleCodes === c ? 'selected' : ''}>${esc(tr(`matrix.codes.${c}`))}</option>`).join('')}</select></label>`),
+        row(check('data-set="wattr-long"', S.wattrLong, tr('settings.wattrLong'))),
+      ],
+      staging: () => [
+        row(check('data-f="fill-credits"', S.fillCredits, tr('footer.fill'), tr('footer.fillTitle'))),
+        row(check('data-f="stage-cap"', S.capOn, tr('settings.capOn'), tr('footer.capTitle'))),
+        row(`<label>${esc(tr('settings.capLimit'))} <input type="number" data-set="cap-limit" min="50" max="2000" step="50" value="${S.capLimit}"></label>`),
+      ],
+      dates: () => [
+        row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
+        row(check('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'))),
+      ],
+    };
+    const topic = (key) => {
+      const open = S.settingsTopics.has(key);
+      return `<div class="dci-set-topic" data-topic="${key}">
+        <button type="button" class="dci-textbtn dci-set-tgl" data-act="settings-topic" data-topic="${key}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(tr(`settings.t.${key}`))}</button>
+        ${open ? `<div class="dci-set-body">${bodies[key]().join('')}
+          <div class="dci-set-reset"><button type="button" class="dci-textbtn" data-act="settings-reset" data-topic="${key}">${esc(tr('settings.resetTopic'))}</button></div></div>` : ''}
+      </div>`;
+    };
+    return `<div class="dci-set-head"><strong>${esc(tr('settings.title'))}</strong> <span class="dci-sub">${esc(tr('settings.hint'))}</span>
+        <button type="button" class="dci-textbtn" data-act="settings-open">${esc(tr('common.close'))}</button></div>
+      ${SETTING_TOPICS.map(topic).join('')}`;
+  }
+
+  /** The menu, drawn anew (the field being used keeps the focus). */
+  function renderSettings() {
+    if (!S.overlay) return;
+    const el = $('settings');
+    if (!el) return;
+    S.overlay.querySelectorAll('.dci-head [data-act="settings-open"]').forEach((b) => b.setAttribute('aria-expanded', String(!!S.settingsOpen)));
+    el.hidden = !S.settingsOpen;
+    if (!S.settingsOpen) {
+      el.innerHTML = '';
+      return;
+    }
+    const active = document.activeElement;
+    const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]` : active.dataset.f ? `[data-f="${active.dataset.f}"]` : '') : '';
+    el.innerHTML = settingsHtml();
+    const again = key && el.querySelector(key);
+    if (again) again.focus();
+  }
+
+  /** The switches elsewhere in the dashboard show what was set in the menu (and the other way round). */
+  function syncSharedSwitches() {
+    if (!S.overlay) return;
+    for (const [f, get] of Object.entries(SHARED_SWITCHES)) {
+      S.overlay.querySelectorAll(`input[data-f="${f}"]`).forEach((x) => { if (x !== document.activeElement) x.checked = !!get(); });
+    }
+    S.overlay.querySelectorAll('select[data-f="mx-codes"]').forEach((x) => { if (x !== document.activeElement) x.value = S.roleCodes; });
+    const cap = S.overlay.querySelector('[data-el="cap-label"]');
+    if (cap) cap.textContent = tr('footer.cap', { n: S.capLimit });
+  }
+
+  /** After a click or a change anywhere in the dashboard: the menu and the shared switches follow (after all handlers ran). */
+  function settingsAfterEvent(e) {
+    if (e.type === 'click' && e.target.closest && e.target.closest('input, select, textarea')) return;
+    setTimeout(() => {
+      syncSharedSwitches();
+      if (S.settingsOpen) renderSettings();
+    }, 0);
+  }
+
+  /** A field of the menu of its own (data-set). */
+  function settingsChange(el) {
+    const k = el.dataset.set;
+    if (k === 'log-open') setLogVisible(el.checked);
+    else if (k === 'log-place') setLogPlace(el.value);
+    else if (k === 'aw-on') {
+      S.awOn = el.checked;
+      writeJson('localStorage', 'dci-aw-on', el.checked ? null : false);
+      log('info', 'settingAw', { state: tr(el.checked ? 'common.on' : 'common.off') });
+      runArtistWorks();
+    } else if (AW_SETTINGS[k]) {
+      S[k] = awValue(k, el.value);
+      writeJson('localStorage', AW_SETTINGS[k].key, S[k] === AW_SETTINGS[k].def ? null : S[k]);
+      log('info', 'settingValue', { what: tr(`settings.aria.${k}`), value: S[k] });
+      if (k === 'awMax') {
+        // works cut off by a lower limit are read again
+        for (const [id, e] of S.artistWorks) if (e.capped && e.max < S.awMax) S.artistWorks.delete(id);
+        runArtistWorks();
+      }
+    } else if (k === 'wattr-long') {
+      S.wattrLong = el.checked;
+      writeJson('localStorage', 'dci-wattr-long', S.wattrLong || null);
+      renderWorks();
+    } else if (k === 'cap-limit') {
+      S.capLimit = Math.min(2000, Math.max(50, Math.round(Number(el.value) / 50) * 50)) || 500;
+      writeJson('localStorage', 'dci-stage-cap', S.capLimit === 500 ? null : S.capLimit);
+      S.capRun = null;
+      log('info', 'settingValue', { what: tr('settings.capLimit'), value: S.capLimit });
+      refresh();
+    }
+    syncSharedSwitches();
+    renderSettings();
+  }
+
+  /** "↺" of a topic: its settings back to their defaults (after a question). */
+  function resetTopic(t) {
+    (TOPIC_KEYS[t] || []).forEach((k) => writeJson('localStorage', k, null));
+    log('info', 'settingsTopicReset', { topic: tr(`settings.t.${t}`) });
+    if (t === 'general') {
+      setScale(1);
+      if (S.logEl) setLogVisible(true);
+      setLogPlace('window');
+      if (S.place !== 'window') setPlace('window');
+      if (LANG !== 'en') setLanguage('en');
+    } else if (t === 'sources') {
+      Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
+      renderSource();
+    } else if (t === 'discogs') {
+      Object.assign(S, { syncMode: 'click', dgStatus: true, dgHover: true, dgRelease: true, dgArtwork: true });
+      renderSync();
+      sendDiscogsStatus();
+    } else if (t === 'works') {
+      const was = { on: S.awOn, max: S.awMax };
+      S.awOn = true;
+      Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
+      Object.assign(S, { roleCodes: 'names', wattrLong: false });
+      renderWorks();
+      if (!was.on || was.max !== S.awMax) runArtistWorks();
+    } else if (t === 'staging') {
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null });
+      refresh();
+    } else if (t === 'dates') {
+      Object.assign(S, { dmAuto: false, poolsKeep: true });
+      renderDates();
+    }
+    syncSharedSwitches();
+    renderSettings();
+  }
+
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks'];
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key)];
 
   function renderReset() {
     if (!S.overlay) return;
@@ -17869,7 +18399,13 @@
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
+      awOn: true, settingsOpen: false,
     });
+    // [3.16.0] the works settings and the stored works of the artists too
+    Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
+    awClear();
+    S.artistWorks.clear();
+    S.awStoreCount = 0;
     if (rules) {
       userRulesCache = [];
       rulesOffCache = new Set();
@@ -17940,6 +18476,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.16.0', label: 'Credits Importer 3.16.0' },
     { v: '3.15.0', label: 'Credits Importer 3.15.0' },
     { v: '3.12.0', label: 'Credits Importer 3.12.0' },
     { v: '3.10.0', label: 'Credits Importer 3.10.0' },
@@ -18669,6 +19206,18 @@
       .dci-pool-clear, .dci-reset { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid var(--warn); border-left-width: 4px; border-radius: 3px; background: #fffaf0; max-width: 80ch; }
       .dci-pool-clear p, .dci-reset p { margin: calc(var(--u, 1px) * 4) 0; }
       .dci-reset .dci-check { display: flex; margin: calc(var(--u, 1px) * 4) 0; }
+      /* [3.16.0] the menu "Settings" */
+      .dci-settings { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid #c9c4dd; border-left: 4px solid var(--purple);
+        border-radius: 3px; background: #faf9fd; }
+      .dci-settings[hidden] { display: none; }
+      .dci-set-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); margin-bottom: calc(var(--u, 1px) * 6); }
+      .dci-set-head [data-act="settings-open"] { margin-left: auto; }
+      .dci-set-topic { border-top: 1px solid #e4e1ee; padding: calc(var(--u, 1px) * 4) 0; }
+      .dci-set-tgl { font-weight: 600; text-decoration: none; }
+      .dci-set-body { padding: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 18); }
+      .dci-set-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 5) 0; }
+      .dci-set-row input[type="number"] { width: calc(var(--u, 1px) * 80); }
+      .dci-set-reset { margin-top: calc(var(--u, 1px) * 6); }
       .dci-dm-pending { color: var(--warn); font-size: calc(var(--u, 1px) * 12); font-weight: 600; }
 
       /* The date matrix: one column per date group */
