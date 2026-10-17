@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.16.1 | – |
+| 2026-10-17 | 3.11.0 – 3.16.2 | – |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -72,6 +72,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-17
+
+### Import 3.16.2
+
+#### Changed
+
+- **Texts that named Discogs say "the source" when another source is loaded** (collected on 2026-10-17, as "Mapping rules" in 3.13.2): the question for an instrument ("The source (pasted text) only says “Guitar”. Do you know which one it is?"), "The source (Bandcamp) names no writers for this track", the tag of a role credit taken over ("from the source", tooltip "Taken from the source (pasted text)"), the empty works matrix, "What was imported from the source (…)", "↻ load again from the source (…)", the dates "as the source gives them". With Discogs loaded they are as before. The placeholder of "Add entry manually" says "a role as the source writes it" for every source.
+
 
 ### Import 3.16.1
 

@@ -117,6 +117,7 @@ python3 t_suggstack.py    # suggestions as a block below the red mark (3.15.2, 3
                           # explanations as tooltips
 python3 t_aboutoff.py     # "Leave out the about text" (3.16.1): place and dates of the about text out and back, with the changes,
                           # kept across a reload, reset by "Delete stored import"
+python3 t_srctexts.py     # texts that named Discogs say "the source" with another source (3.16.2)
 python3 t_settings.py     # the menu "Settings" (3.16.0): topics, shared switches both ways, values in steps, a topic's "↺",
                           # the works of the artists kept across a reload (IndexedDB), clearing them, switched off
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
