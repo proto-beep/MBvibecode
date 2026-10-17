@@ -13,12 +13,26 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.17.0, Companion 1.6.0 – 1.8.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.17.1, Companion 1.6.0 – 1.8.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.17.1 · Companion 1.8.1 · 2026-10-17
+
+Credits switched off and on on Bandcamp (collect item 5).
+
+- **New:** `BC_OFF_KEY` (`dci-bc-off:<MBID>`, an array of "name|role"), `S.bcOff` (a Set), `bcOffKey(row)` (`norm` of the entry's name as written – `rawName`, else `name` or the placeholder – and of the role), `saveBcOff()`, `bcCreditOn(row)` (forgets the flags and the key, logs `log.bcOn`, returns the level to go back to: `bcOffLevel`, else `defaultLevel`), `toggleBcCredit(row, off)` (off: `row.bcOff`, `row.bcOffLevel`, key stored, `log.bcOff`, `setLevel(row, 'skip')`; on: `setLevel(row, bcCreditOn(row))`), `bcOffHtml(row)` (note `.dci-bcoff` in both branches of `roleCell`).
+- **`loadRelease`:** with Bandcamp, rows with places whose key is in `S.bcOff` are set off right after the rows are made (level `skip`, the level kept). **`forgetImport`:** `BC_OFF_KEY` cleared, `S.bcOff` emptied.
+- **Level buttons (`case 'level'`):** a level other than "Skip" on a row switched off calls `bcCreditOn` first.
+- **`onFromDiscogs`:** new message `toggle-credit` `{ row, off, releaseId }` (only with Bandcamp loaded and the same release).
+- **`sendDiscogsStatus`:** Bandcamp items get `off: true`; labels `off`, `on`, `isOff`.
+- **Texts (4 languages):** `dgStatus.off`, `dgStatus.on`, `dgStatus.isOff`, `bc.offNote`, `log.bcOff`, `log.bcOn`.
+- **Companion 1.8.1:** MB side relays `toggle-credit` from `fromDiscogs`; the click handler of `initSourceSide` sends `toggle-credit` for `.dci-bc-off` (before the marks). `renderBandcampStatus`: each mark in `.dci-bc-markwrap` with its ⊘ `.dci-bc-off` (`data-row`, `data-off`), `.dci-bc-isoff` and "(switched off here)" in the title for credits off; a place whose credits are all off gets its part wrapped in `.dci-bc-offtext` (`BC_OFF`) before its marks are put in front of it; old wrappers removed / unwrapped first. `BC_SKIP` skips `.dci-bc-markwrap`; `bcInsert` also steps out of `.dci-bc-offtext`. CSS: ⊘ shown on hover above its mark (absolute, no shift of the text), greyed marks and struck-through text.
+- **Tests:** new `t_bcoff.py` (A–E: ⊘ on hover, off → "Skip" + note + grey, a group, on again with its level, kept after reload, a level chosen switches on, "Delete stored import"); `t_bcview.py` leaves ⊘ out of the text after a mark.
+
 
 ## Import 3.17.0 · Companion 1.8.0 · 2026-10-17
 

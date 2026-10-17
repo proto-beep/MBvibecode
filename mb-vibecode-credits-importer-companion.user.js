@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.8.0
+// @version      1.8.1
 // @date         2026-10-17
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -194,7 +194,8 @@
     });
     // From the Discogs page back to the dashboard: a click on a status mark, a track under the mouse
     GM_addValueChangeListener('fromDiscogs', (name, oldValue, newValue) => {
-      if (newValue && ['focus-row', 'hover-track'].includes(newValue.type)) send(newValue);
+      // [1.8.1] ⊘ on Bandcamp: a credit off or on again
+      if (newValue && ['focus-row', 'hover-track', 'toggle-credit'].includes(newValue.type)) send(newValue);
     });
 
     status();
@@ -294,6 +295,14 @@
       if (shown !== (here && !!lastMap.enabled) || artShown !== (here && !!lastMap.artwork && !!side.artwork)) showMap(lastMap);
     }, 3000);
     document.addEventListener('click', (e) => {
+      // [1.8.1] ⊘ next to a Bandcamp mark: the credit off (its row "Skip") or on again
+      const off = e.target.closest && e.target.closest('.dci-bc-off');
+      if (off) {
+        e.preventDefault();
+        e.stopPropagation();
+        GM_setValue('fromDiscogs', { type: 'toggle-credit', row: off.dataset.row, off: off.dataset.off === '1', releaseId: currentReleaseId(), ts: Date.now() });
+        return;
+      }
       const mark = e.target.closest && e.target.closest('.dci-dg-mark');
       if (!mark) return;
       e.preventDefault();
@@ -375,7 +384,13 @@
       #dci-artwork .dci-art-toggle { border: 1px solid #c8c5d6; border-radius: 3px; background: #f7f6fb; color: #262430; font: 12px/1.4 sans-serif; padding: 0 6px; cursor: pointer; }
       #dci-artwork.dci-art-collapsed .dci-art-img { display: none; }
       .dci-dg-unmapped-line { background-color: #fff3c4 !important; }
-      .dci-bc-hl { background-color: rgba(235, 116, 59, 0.22) !important; box-shadow: 0 0 0 2px rgba(235, 116, 59, 0.6); border-radius: 2px; scroll-margin: 120px; }`;
+      .dci-bc-hl { background-color: rgba(235, 116, 59, 0.22) !important; box-shadow: 0 0 0 2px rgba(235, 116, 59, 0.6); border-radius: 2px; scroll-margin: 120px; }
+      .dci-bc-markwrap { position: relative; display: inline-block; }
+      .dci-bc-off { display: none; position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); z-index: 5; padding: 0 0.3em;
+        border: 1px solid #c0392b; border-radius: 3px; background: #fff; color: #c0392b; font: bold 12px/1.4 sans-serif; cursor: pointer; }
+      .dci-bc-markwrap:hover .dci-bc-off, .dci-bc-off:focus { display: inline-block; }
+      .dci-dg-mark.dci-bc-isoff { opacity: 0.55; }
+      .dci-bc-offtext { opacity: 0.45; text-decoration: line-through; }`;
     document.head.appendChild(style);
   }
 
@@ -741,7 +756,7 @@
   };
   const bcNeedle = (t) => bcLow(String(t || '').replace(/\s+/g, ' ').trim());
   // Not part of the text: our marks, the "..." and the "more" link of a shortened text
-  const BC_SKIP = '.dci-dg-mark, .bcTruncateEllipsis, .peekaboo-ellipsis, .peekaboo-link, script, style';
+  const BC_SKIP = '.dci-bc-markwrap, .dci-dg-mark, .bcTruncateEllipsis, .peekaboo-ellipsis, .peekaboo-link, script, style';
 
   /**
    * The text of an element as it reads: lines (at <br>) of single-spaced words in lower case, and for each character
@@ -824,7 +839,7 @@
     const [node, off] = st.at[pos] || [];
     if (!node || off < 0) return false;
     let before = off ? node.splitText(off) : node;
-    while (before.parentNode.matches && before.parentNode.matches(`.${BC_HL}`) && before.parentNode.firstChild === before) before = before.parentNode;
+    while (before.parentNode.matches && before.parentNode.matches(`.${BC_HL}, .${BC_OFF}`) && before.parentNode.firstChild === before) before = before.parentNode;
     before.parentNode.insertBefore(el, before);
     return true;
   }
@@ -878,12 +893,15 @@
   }
 
   const BC_HL = 'dci-bc-hl';
+  // [1.8.1] the text of a part whose credits are all switched off
+  const BC_OFF = 'dci-bc-offtext';
 
   function renderBandcampStatus(map) {
     ensureStyle();
     const root = bcCredits();
     if (!root) return;
-    root.querySelectorAll('.dci-dg-mark').forEach((m) => m.remove());
+    root.querySelectorAll('.dci-bc-markwrap, .dci-dg-mark').forEach((m) => m.remove());
+    root.querySelectorAll(`.${BC_OFF}`).forEach((x) => x.replaceWith(...x.childNodes));
     root.normalize();
     if (!map || !map.enabled) return;
     const page = bandcampPage().page;
@@ -899,25 +917,45 @@
     const places = [];
     for (const t of todo) {
       const at = bcFindLine(st, t.r.line, t.r.n);
-      if (at >= 0) places.push({ ...t, pos: bcPartRange(st, at, t.r)[0] });
+      if (at >= 0) places.push({ ...t, range: bcPartRange(st, at, t.r) });
     }
+    places.forEach((x) => { x.pos = x.range[0]; });
     // From the end, so that the places before stay where they are; marks at the same place in their order, together
     places.sort((a, b) => b.pos - a.pos || a.order - b.order);
     const atPos = new Map();
-    for (const { item, r, pos } of places) {
+    for (const { item, r, pos, range } of places) {
       const status = item.unmapped ? 'unmapped' : (r.status || item.status);
       const mark = document.createElement('button');
       mark.type = 'button';
-      mark.className = `dci-dg-mark dci-dg-${status} dci-bc-mark`;
+      mark.className = `dci-dg-mark dci-dg-${status} dci-bc-mark${item.off ? ' dci-bc-isoff' : ''}`;
       mark.dataset.row = item.row;
       mark.textContent = MARK_SYMBOL[status] || '?';
       const note = r.note || item.note || '';
       const checked = map.checked && (status === 'mb' || status === 'pending') ? ` (${labels.checked || ''})` : '';
-      mark.title = `${item.role ? `${item.role}: ` : ''}${labels[status] || status}${note ? ` ${note}` : ''}${checked} – ${labels.click || ''}`.trim();
-      if (!atPos.has(pos)) atPos.set(pos, document.createDocumentFragment());
-      atPos.get(pos).appendChild(mark);
+      const off = item.off ? ` (${labels.isOff || ''})` : '';
+      mark.title = `${item.role ? `${item.role}: ` : ''}${labels[status] || status}${note ? ` ${note}` : ''}${checked}${off} – ${labels.click || ''}`.trim();
+      // [1.8.1] ⊘ (shown while the pointer is on the mark) switches the credit off or on again
+      const wrap = document.createElement('span');
+      wrap.className = 'dci-bc-markwrap';
+      const tgl = document.createElement('button');
+      tgl.type = 'button';
+      tgl.className = 'dci-bc-off';
+      tgl.dataset.row = item.row;
+      tgl.dataset.off = item.off ? '0' : '1';
+      tgl.textContent = '⊘';
+      tgl.title = (item.off ? labels.on : labels.off) || '';
+      tgl.setAttribute('aria-label', tgl.title);
+      wrap.append(mark, tgl);
+      if (!atPos.has(pos)) atPos.set(pos, { frag: document.createDocumentFragment(), range, allOff: true });
+      const at = atPos.get(pos);
+      at.frag.appendChild(wrap);
+      if (!item.off) at.allOff = false;
     }
-    atPos.forEach((frag, pos) => bcInsert(st, pos, frag));
+    // From the end: a part whose credits are all off is greyed, then its marks go before it
+    atPos.forEach(({ frag, range, allOff }, pos) => {
+      if (allOff && range[1] > range[0]) bcWrap(st, range[0], range[1], BC_OFF);
+      bcInsert(st, pos, frag);
+    });
   }
 
   /** Shows a credit (its lines, or its sentence in the "about" text) or a track of the album. */

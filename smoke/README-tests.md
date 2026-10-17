@@ -124,6 +124,8 @@ python3 t_bcview.py       # the Bandcamp view of the companion (3.17.0 / 1.8.0):
                           # "Load the release there", marks before each part of a line (none in the about text, shortened texts
                           # opened), mark → row, jumps (part of a line, sentence of the about text, track both ways), track
                           # pages (link, loaded, own marks), ● after staging and ✓ on the release page, menu, old companion
+python3 t_bcoff.py        # credits switched off on Bandcamp (3.17.1 / 1.8.1): ⊘ on hover, off → "Skip" with a note and greyed, a
+                          # group of marks, on again with its level, kept across a reload, a level chosen, "Delete stored import"
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)

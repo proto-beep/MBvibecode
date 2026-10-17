@@ -58,7 +58,7 @@ LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.s
 SYNC = "document.querySelector('[data-el=sync] .dci-syncstatus').textContent.replace(/\\s+/g, ' ').trim()"
 MARKS = """(sel) => { const root = document.querySelector(sel); if (!root) return null;
   return [...root.querySelectorAll('.dci-dg-mark')].map(m => { const r = document.createRange(); r.setStartAfter(m); r.setEnd(root, root.childNodes.length);
-    const f = r.cloneContents(); f.querySelectorAll('.dci-dg-mark').forEach(x => x.remove());
+    const f = r.cloneContents(); f.querySelectorAll('.dci-dg-mark, .dci-bc-off').forEach(x => x.remove());
     return [m.textContent, f.textContent.replace(/\\s+/g, ' ').trim().slice(0, 16), m.title.split(':')[0]]; }); }"""
 HL = "[...document.querySelectorAll('.dci-bc-hl')].map(x => x.textContent).join('').replace(/\\s+/g, ' ').trim()"
 results = []
