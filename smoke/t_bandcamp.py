@@ -53,7 +53,8 @@ def ws():
 H.ws_release = ws
 GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
   [g.className.match(/dci-st-(\\w+)/)[1], [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-drole').textContent.trim() + ' · ' + ((tr.querySelector('[data-tcount]') || {}).textContent || '').trim()),
-   [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.trim())]])))()"""
+   // 3.15.2: the name of a suggestion without its mark ("spelled differently")
+   [...g.querySelectorAll('[data-act=name-use]')].map(b => [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim())]])))()"""
 done = lambda pg, n: H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= {n}", 90)
 SPELL = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Test Band');
   const sp = g && g.querySelector('.dci-spell'); return sp ? [sp.textContent.replace(/\\s+/g, ' ').trim(), sp.classList.contains('dci-spell-diff'),
@@ -173,14 +174,14 @@ with sync_playwright() as p:
     H.RELEASE_AC[:] = [(gid, 'The Test Band', 'TEST BAND', '')]
     reopen(pg)
     g2 = pg.evaluate(GROUPS).get('Test Band')
-    head = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent === 'Test Band').map(g => (g.querySelector('.dci-alias-suggest .dci-sub') || {}).textContent)[0]")
+    head = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent === 'Test Band').map(g => [(g.querySelector('.dci-sugg-stack') || {}).title, [...g.querySelectorAll('.dci-sugg-stack .dci-similar')].map(x => x.textContent)])[0]")
     log = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'names it differently in its artist credit' in x]
     print('F) MB „The Test Band“, Release „Test Band“:', g1, '| Release „TEST BAND“:', g2, '|', head, '|', log[-1:])
     spell2 = pg.evaluate(SPELL)
     print('   Schreibweise:', spell, '|', spell2)
     ok_f = spell and spell[1] and 'Bandcamp “Test Band” · release (artist credit) “Test Band” · MusicBrainz “The Test Band”' in spell[0] \
         and spell[2] == ['“The Test Band”'] and spell2 and '“TEST BAND”' in spell2[0] and spell2[2] == ['“TEST BAND”', '“The Test Band”']
-    ok_f = ok_f and g1[0] == 'linked' and g2[0] == 'missing' and g2[2] == ['The Test Band'] and 'TEST BAND' in (head or '') and any('(TEST BAND)' in x for x in log)
+    ok_f = ok_f and g1[0] == 'linked' and g2[0] == 'missing' and g2[2] == ['The Test Band'] and 'TEST BAND' in (head or ['', []])[0] and 'spelled differently' in (head or ['', []])[1] and any('(TEST BAND)' in x for x in log)
     results.append(ok_f)
     print('Fehler:', errs, errs2)
     results.append(not errs and not errs2)
