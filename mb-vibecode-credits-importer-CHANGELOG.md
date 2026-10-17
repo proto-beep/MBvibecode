@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.17.1 | 1.8.0 – 1.8.1 |
+| 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -73,6 +73,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-17
+
+### Import 3.17.2
+
+#### Added
+
+- **Liner notes from Bandcamp's "about" text** (collected item 19; maintainer: "wenn in einem Bandcamp "about" feld ein längerer fließtext hinterlegt ist und unterhalb ein name angegeben ist, kann dies als liner notes angeboten werden"; decisions: "5 sätze als threshhold", "der name muss darunter stehen", "in der zeile als abschluss durch ein zeichen getrennt, darunter oder eben widerum mit einem absatz abstand"). When the "about" text is prose of at least five sentences – several paragraphs are fine – and a name stands below it (at the end of the last line after a sign behind a finished sentence: "… our music. — Jane Roe", "~ Jane Roe"; on the line right below; or after an empty line; ", place, date" may follow the name), the name gets an entry with the role **Liner Notes** (MusicBrainz: liner notes, release level). The texts are mostly written by someone else, so the name is searched in MusicBrainz like any other name and only suggested (not the release's artist); the row says "From the “about” text", and in the Bandcamp view it jumps to the name's line. A date by the name ("Berlin, May 2019") goes into the date pool as a suggestion named "Liner notes – Jane Roe". "Leave out the “about” text" leaves the liner notes out too. Two to four words with capitals make a name; a last line such as "Special Thanks" or "Thanks to everyone" does not (word list T027 in the register).
+
 
 ### Import 3.17.1 · COMPANION 1.8.1
 

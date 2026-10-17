@@ -13,12 +13,25 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.17.1, Companion 1.6.0 – 1.8.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.17.2, Companion 1.6.0 – 1.8.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.17.2 · 2026-10-17
+
+Liner notes from Bandcamp's "about" text (collect item 19).
+
+- **Register:** new table **T027** – `LINER_NOT_NAME` (a first word that makes the last line no name: "Special Thanks", "Listen …", articles and prepositions) and `LINER_PARTICLE` (particles inside a name: van, von, de …), in `TABLES`.
+- **Bandcamp adapter:** new `signatureName(text)` (a leading sign taken off, ", place, date" after the name at most three short parts, the name 2–4 words with capitals or particles inside, no digits, no "thanks/notes/credits"), `sentenceCount(text)` (split at `. ! ? …` and line breaks, parts with at least three words), `LINER_MIN_SENTENCES` (5), **`linerNotes(about)`** → `{ name, line, part, pi, n, at, len }` or `null`: the last non-empty line is the signature (b, c), else a name after a sign at the end of the last line behind a finished sentence (a; `part` the name, `pi` 1). Exported as `BANDCAMP.linerNotes`. `toRelease` adds a credit "Liner Notes" (`parseRoleNotation`, all tracks, `fromAbout: true`, line/part/pi/n for the Bandcamp view) and `release.liner` `{ name, at, len }` (the signature's place in `notes`); `aboutAt` computed once.
+- **`groupCredits`:** a role entry keeps `fromAbout` while all its credits come from the about text; rows get `row.fromAbout` (so `setAboutRowsHidden` takes them along).
+- **`autoPlaceFoundDates`:** a date found inside the signature goes into the pool named `liner.poolName` ("Liner notes – Jane Roe").
+- **`loadRelease`:** log `log.linerFound`.
+- **Texts (4 languages):** `liner.poolName`, `log.linerFound`; `about.offTitle` names the liner notes.
+- **Tests:** new `t_linernotes.py` (A in Node: three places of the name, multi-paragraph prose; four sentences, "Special Thanks", "Thanks to everyone", a name after a sign without a finished sentence, the real "Invisible Places" text → none; B–D in the dashboard: entry, suggestion only, hint, pool name, jump to the name's line, about text left out and back). Golden file written anew: the only change is T027 in the rules window (sections `lists` and `tables`).
+
 
 ## Import 3.17.1 · Companion 1.8.1 · 2026-10-17
 
