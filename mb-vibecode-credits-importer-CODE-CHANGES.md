@@ -13,14 +13,24 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.15.1, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.15.2, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
 
-## Import 3.15.1 · 2026-10-17
+## Import 3.15.2 · 2026-10-17
+
+Suggestions stacked (collect item 15), rows as boxes (collect item 16).
+
+- **New:** `SUGG_VISIBLE` (5), `suggestStackHtml(a)` – alias hits (`data-act="alias-use"`) and name hits (`data-act="name-use"`) as one stack `.dci-sugg-stack`; its title = the heads (`match.aliasSuggest`, `match.nameSuggest` / `match.linkSuggest` / `match.placeholderSuggest`), each suggestion's title = head + its own title; marks `.dci-similar`: `match.viaAlias`, `match.similarName`, new `match.markSpelled` (`a.strictMiss`), `match.markRelease` (`a.releaseMbid`); more than 5: `<button class="dci-suggmore" data-act="sugg-more">` (`match.suggMore` / `match.suggLess`), state `a.suggOpen`.
+- **Removed:** `aliasSuggestHtml`, `nameSuggestHtml` (replaced by the stack).
+- **Changed:** `matchHtml(a)` passes the stack to `matchHtmlInner(a, stack)`; its `editor()` puts the red badge and the stack into `.dci-match-col` (not for `match.changeLabel`); other states append the stack. Click case `sugg-more` toggles `a.suggOpen` and calls `updateGroupHeader`. `suggestByName` keeps up to 25 hits (was 5); its log lists 5 and "… (+n)".
+- **CSS:** `.dci-match-col`, `.dci-sugg-stack` (column), `.dci-suggmore` (2px solid, bold), `.dci-gmatch:has(.dci-match-col)` top-aligned. Rows: `.dci-rows tr.dci-row` with frame, left stripe `color-mix(var(--kind) 55%)`, radius, gap; every second row `color-mix(var(--kind) 7%)` (with a plain fallback colour first); an open `tr.dci-tracksrow` continues the box (`:has(+ …)`); the old td stripe `#faf9fd` is gone. Wide layout (`@container (min-width: 1150px)`): the level column `calc(var(--u) * 200)` instead of `auto`.
+- **Texts (4 languages):** `match.markSpelled`, `match.markRelease`, `match.suggMore`, `match.suggLess`.
+- **Tests:** new `t_suggstack.py` (eight artists of one name: order red mark → stack → field, tooltip instead of text, 5 + "+ 3 more" bold and solid, all 8 and "− fewer", assigning); `t_textrules.py` and `t_bandcamp.py` read the explanation from the stack's tooltip and a suggestion's name without its mark.
+
 
 Mastering only on the release level (collect item 14), special purpose artists left out (collect item 11).
 

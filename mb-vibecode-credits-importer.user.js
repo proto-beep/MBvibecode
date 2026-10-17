@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.15.1
+// @version      3.15.2
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.15.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.15.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -214,6 +214,10 @@
       "match.linkSuggest": "Found via the {src} link, but spelled differently ({mb}) – a suggestion, check before assigning:",
       "match.nameUseTitle": "Assign this MusicBrainz entry",
       "match.similarName": "similar name",
+      "match.markSpelled": "spelled differently",
+      "match.markRelease": "release artist",
+      "match.suggMore": "+ {n} more",
+      "match.suggLess": "− fewer",
       "match.similarTitle": "A similar name in MusicBrainz (a middle name or an initial more or less) – check before assigning",
       "match.placeholderSuggest": "The text names no one here (“{said}”) – the release's artist? A suggestion, check before assigning:",
       "log.placeholderSuggested": "{name}: the text says “{said}” – the release's artist is suggested",
@@ -1382,6 +1386,10 @@
       "match.linkSuggest": "Über den {src}-Link gefunden, aber anders geschrieben ({mb}) – ein Vorschlag, vor dem Zuordnen prüfen:",
       "match.nameUseTitle": "Diesen MusicBrainz-Eintrag zuordnen",
       "match.similarName": "ähnlicher Name",
+      "match.markSpelled": "anders geschrieben",
+      "match.markRelease": "Release-Artist",
+      "match.suggMore": "+ {n} weitere",
+      "match.suggLess": "− weniger",
       "match.similarTitle": "Ähnlicher Name in MusicBrainz (ein Mittelname oder eine Initiale mehr oder weniger) – vor dem Zuordnen prüfen",
       "match.placeholderSuggest": "Der Text nennt hier niemanden („{said}“) – der Artist des Releases? Ein Vorschlag, vor dem Zuordnen prüfen:",
       "log.placeholderSuggested": "{name}: Der Text sagt „{said}“ – der Artist des Releases wird vorgeschlagen",
@@ -2550,6 +2558,10 @@
       "match.linkSuggest": "Encontrado por el enlace de {src}, pero escrito distinto ({mb}); una sugerencia, compruébala antes de asignarla:",
       "match.nameUseTitle": "Asignar esta entrada de MusicBrainz",
       "match.similarName": "nombre parecido",
+      "match.markSpelled": "escrito de otra forma",
+      "match.markRelease": "artista de la publicación",
+      "match.suggMore": "+ {n} más",
+      "match.suggLess": "− menos",
       "match.similarTitle": "Nombre parecido en MusicBrainz (un segundo nombre o una inicial de más o de menos); compruébalo antes de asignarlo",
       "match.placeholderSuggest": "El texto no nombra a nadie aquí («{said}»): ¿el artista de la publicación? Una sugerencia, compruébala antes de asignarla:",
       "log.placeholderSuggested": "{name}: el texto dice «{said}»; se sugiere el artista de la publicación",
@@ -3718,6 +3730,10 @@
       "match.linkSuggest": "Trouvé via le lien {src}, mais écrit autrement ({mb}) – une suggestion, à vérifier avant d’attribuer :",
       "match.nameUseTitle": "Associer cette entrée MusicBrainz",
       "match.similarName": "nom proche",
+      "match.markSpelled": "écrit autrement",
+      "match.markRelease": "artiste de la parution",
+      "match.suggMore": "+ {n} de plus",
+      "match.suggLess": "− moins",
       "match.similarTitle": "Nom proche dans MusicBrainz (un deuxième prénom ou une initiale de plus ou de moins) – à vérifier avant d’attribuer",
       "match.placeholderSuggest": "Le texte ne nomme personne ici (« {said} ») – l’artiste de la parution ? Une suggestion, à vérifier avant de l’attribuer :",
       "log.placeholderSuggested": "{name} : le texte dit « {said} » – l’artiste de la parution est suggéré",
@@ -10291,10 +10307,12 @@
         };
         const hits = items.map((x) => ({ x, fit: fitOf(x) })).filter((h) => h.fit)
           .sort((p, q) => (p.fit === q.fit ? 0 : p.fit === 'same' ? -1 : 1));
-        a.nameHits = hits.slice(0, 5).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
+        // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
+        a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name].filter(Boolean).join(', ') }));
         if (a.nameHits.length) {
-          log('info', 'nameSuggested', { name: a.name, list: a.nameHits.map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ') });
+          const listed = a.nameHits.slice(0, 5).map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ');
+          log('info', 'nameSuggested', { name: a.name, list: listed + (a.nameHits.length > 5 ? ` … (+${a.nameHits.length - 5})` : '') });
         }
       } catch (e) {
         console.warn('[Credits-Importer] name search', a.name, e);
@@ -11019,33 +11037,59 @@
   }
 
   /** Suggestions from Discogs aliases for an entry that is not assigned yet. */
-  function aliasSuggestHtml(a) {
-    if (!a.aliasHits || !a.aliasHits.length || a.mbid) return '';
-    return `<div class="dci-alias-suggest"><span class="dci-sub">${esc(tr('match.aliasSuggest'))}</span>
-      ${a.aliasHits.map((h) => `<button type="button" class="dci-textbtn dci-suggbtn" data-act="alias-use" data-mbid="${esc(h.c.mbid)}" title="${esc(tr('match.aliasUseTitle', { alias: h.alias }))}">${esc(h.c.name)}${h.c.disambiguation ? ` (${esc(h.c.disambiguation)})` : ''} – ${esc(tr('match.viaAlias', { alias: h.alias }))}</button>`).join(' ')}</div>`;
-  }
+  /** [3.15.2] Suggestions shown before the rest are folded behind "+ n more". */
+  const SUGG_VISIBLE = 5;
 
-  /** [E1] Entries of the same name in MusicBrainz for a name without a link (a suggestion, dashed and yellow). */
-  function nameSuggestHtml(a) {
-    if (!a.nameHits || !a.nameHits.length || a.mbid) return '';
-    const head = a.strictMiss ? tr('match.linkSuggest', { mb: a.strictSpelled || '–' })
-      : a.releaseMbid ? tr('match.placeholderSuggest', { said: a.placeholder }) : tr('match.nameSuggest');
-    return `<div class="dci-alias-suggest"><span class="dci-sub">${esc(head)}</span>
-      ${a.nameHits.map((h) => `<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}" title="${esc(tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle'))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.similar ? ` <span class="dci-similar">${esc(tr('match.similarName'))}</span>` : ''}</button>`).join(' ')}</div>`;
+  /**
+   * [E1, 3.15.2] Suggestions for an entry without a match, stacked right below its red mark: Discogs aliases first, then
+   * MusicBrainz entries of the same (or a similar) name. The explanations are tooltips; a short mark on a suggestion says
+   * what matters: "similar name", "via alias X", "spelled differently" (found via the link), "release artist" (the text
+   * names no one). At most 5 shown, the rest behind a clearly visible "+ n more".
+   */
+  function suggestStackHtml(a) {
+    if (a.mbid) return '';
+    const mark = (key, params) => ` <span class="dci-similar">${esc(tr(key, params))}</span>`;
+    const items = [];
+    const heads = [];
+    if (a.aliasHits && a.aliasHits.length) {
+      heads.push(tr('match.aliasSuggest'));
+      a.aliasHits.forEach((h) => items.push(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="alias-use" data-mbid="${esc(h.c.mbid)}"
+        title="${esc(`${tr('match.aliasSuggest')} ${tr('match.aliasUseTitle', { alias: h.alias })}`)}">${esc(h.c.name)}${h.c.disambiguation ? ` (${esc(h.c.disambiguation)})` : ''}${mark('match.viaAlias', { alias: h.alias })}</button>`));
+    }
+    if (a.nameHits && a.nameHits.length) {
+      const head = a.strictMiss ? tr('match.linkSuggest', { mb: a.strictSpelled || '–' })
+        : a.releaseMbid ? tr('match.placeholderSuggest', { said: a.placeholder }) : tr('match.nameSuggest');
+      heads.push(head);
+      const why = a.strictMiss ? mark('match.markSpelled') : a.releaseMbid ? mark('match.markRelease') : '';
+      a.nameHits.forEach((h) => items.push(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}"
+        title="${esc(`${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`)}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.similar ? mark('match.similarName') : ''}${why}</button>`));
+    }
+    if (!items.length) return '';
+    const rest = items.length - SUGG_VISIBLE;
+    const more = rest > 0 ? `<button type="button" class="dci-suggmore" data-act="sugg-more" aria-expanded="${!!a.suggOpen}">${esc(a.suggOpen ? tr('match.suggLess') : tr('match.suggMore', { n: rest }))}</button>` : '';
+    const shown = rest > 0 && !a.suggOpen ? items.slice(0, SUGG_VISIBLE) : items;
+    return `<div class="dci-sugg-stack" title="${esc(heads.join(' · '))}">${shown.join('')}${more}</div>`;
   }
 
   function matchHtml(a) {
-    return matchHtmlInner(a) + aliasSuggestHtml(a) + nameSuggestHtml(a);
+    const stack = suggestStackHtml(a);
+    const inner = matchHtmlInner(a, stack);
+    // the red mark takes the stack below it; other states (several MB entries with the link) show it after
+    return inner.includes('dci-sugg-stack') || !stack ? inner : `${inner}<div class="dci-match-col">${stack}</div>`;
   }
 
-  function matchHtmlInner(a) {
+  function matchHtmlInner(a, stack = '') {
     const searchType = a.other ? a.entityType : a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
     const searchUrl = `/search?query=${encodeURIComponent(a.name)}&type=${searchType}&method=indexed`;
     const createButtons = a.other ? (CREATABLE.includes(a.entityType) ? `<button type="button" data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
       ? companyTypes(a).map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' ')
       : `<button type="button" data-act="artist-create">${esc(tr('match.create'))}</button>`;
+    // [3.15.2] with suggestions: the red mark, the suggestions stacked below it, then the field and the buttons
+    const mark = (labelKey) => (stack && labelKey !== 'match.changeLabel'
+      ? `<div class="dci-match-col"><span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>${stack}</div>`
+      : `<span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>`);
     const editor = (labelKey) => `
-      <span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>
+      ${mark(labelKey)}
       <input type="text" data-f="artist-input" placeholder="${esc(a.other ? tr('match.placeholderOther', { type: tr(`entity.${a.entityType}`) }) : tr(a.company ? 'match.placeholderCompany' : 'match.placeholder'))}" aria-label="${esc(tr('match.inputAria', { name: a.name }))}">
       <button type="button" data-act="artist-set">${esc(tr('match.apply'))}</button>
       <a href="${esc(searchUrl)}" target="_blank" rel="noopener">${esc(tr('match.search'))}</a>
@@ -16332,6 +16376,11 @@
       case 'other-create':
         startOtherCreate(artist);
         break;
+      case 'sugg-more':
+        // [3.15.2] the suggestions folded behind "+ n more"
+        artist.suggOpen = !artist.suggOpen;
+        updateGroupHeader(artist);
+        break;
       case 'name-use': {
         const h = (artist.nameHits || []).find((x) => x.mbid === btn.dataset.mbid);
         if (!h) break;
@@ -18333,7 +18382,6 @@
       .dci-ghead { display: flex; align-items: baseline; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 18); flex-wrap: wrap;
         background: var(--kind-bg); margin: 0 calc(var(--u, 1px) * -12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * -14);
         padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14); border-radius: 0 6px 0 0; }
-      .dci-group tbody tr.dci-row:nth-child(4n+3) > td { background: #faf9fd; }
       .dci-group .dci-table td { border-bottom: 1px solid #eeedf3; }
       .dci-gname strong { font-size: calc(var(--u, 1px) * 15); font-weight: 600; margin-right: calc(var(--u, 1px) * 6); }
       .dci-gmatch { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); flex-wrap: wrap; }
@@ -18539,7 +18587,14 @@
       .dci-tg-tag.dci-tag-track { background: var(--track-bg); color: var(--track-d); }
       .dci-tracks-bar { margin-top: calc(var(--u, 1px) * 4); }
       .dci-track-form .dci-chips { max-height: calc(var(--u, 1px) * 220); overflow: auto; }
-      .dci-alias-suggest { margin-top: calc(var(--u, 1px) * 4); display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
+      /* [3.15.2] the red mark with its suggestions stacked below it */
+      .dci-gmatch:has(.dci-match-col) { align-items: flex-start; }
+      .dci-match-col { display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 4); }
+      .dci-sugg-stack { display: flex; flex-direction: column; align-items: stretch; gap: calc(var(--u, 1px) * 4); min-width: 100%; }
+      #dci-overlay .dci-sugg-stack .dci-suggbtn { text-align: left; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); line-height: 1.35; }
+      #dci-overlay .dci-suggmore { align-self: flex-start; border: 2px solid var(--sugg-line); border-radius: 3px; background: #fff; color: var(--sugg-ink);
+        font: inherit; font-weight: 700; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); cursor: pointer; }
+      #dci-overlay .dci-suggmore:hover { background: var(--sugg-bg); }
       .dci-mbdate-grid { display: grid; grid-template-columns: auto auto auto auto auto auto auto; column-gap: 2px; row-gap: 3px; align-items: center; justify-content: start; }
       .dci-mbdate-grid .dci-mbdate-line { display: contents; }
       .dci-mbdate-grid .dci-mbdate-label { min-width: 0; margin-right: calc(var(--u, 1px) * 4); font-weight: 600; cursor: help; }
@@ -18714,10 +18769,18 @@
       .dci-rowswrap { container-type: inline-size; overflow-x: visible; }
       .dci-table.dci-rows { display: block; min-width: 0; width: 100%; }
       .dci-rows > tbody { display: block; }
-      .dci-rows tr.dci-row { display: grid; border-bottom: 1px solid var(--row);
+      /* [3.15.2] each row a box of its own (variant B): frame, gap, a stripe in the colour of the entry's kind, every second
+         one tinted; an open track list below a row belongs to its box */
+      .dci-rows tr.dci-row { display: grid; border: 1px solid #d6d2e4; border-left: 4px solid #b9b5c9;
+        border-left-color: color-mix(in srgb, var(--kind) 55%, #fff); border-radius: 4px; margin: 0 0 calc(var(--u, 1px) * 6); background: #fff;
         grid-template-columns: minmax(calc(var(--u, 1px) * 150), 1fr) minmax(calc(var(--u, 1px) * 210), 1.6fr) minmax(calc(var(--u, 1px) * 230), 1.6fr);
         grid-template-areas: "role type level" "role attr date" "role attr tracks"; grid-template-rows: auto auto 1fr; }
       .dci-rows tr.dci-row > td { display: block; width: auto; min-width: 0; border-bottom: 0; }
+      .dci-group .dci-rows tbody tr.dci-row:nth-child(4n+3), .dci-group .dci-rows tbody tr.dci-tracksrow:nth-child(4n+4) { background: #f6f5fa;
+        background: color-mix(in srgb, var(--kind) 7%, #fff); }
+      .dci-rows tr.dci-row:has(+ tr.dci-tracksrow:not([hidden])) { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+      .dci-rows tr.dci-tracksrow:not([hidden]) { border: 1px solid #d6d2e4; border-top: 0; border-left: 4px solid #b9b5c9;
+        border-left-color: color-mix(in srgb, var(--kind) 55%, #fff); border-radius: 0 0 4px 4px; margin: 0 0 calc(var(--u, 1px) * 6); background: #fff; }
       .dci-rows .dci-c-role { grid-area: role; } .dci-rows .dci-c-type { grid-area: type; } .dci-rows .dci-c-attr { grid-area: attr; }
       .dci-rows .dci-c-level { grid-area: level; } .dci-rows .dci-c-date { grid-area: date; min-width: 0; } .dci-rows .dci-c-tracks { grid-area: tracks; }
       .dci-rows tr.dci-tracksrow:not([hidden]), .dci-rows tr.dci-tracksrow:not([hidden]) > td { display: block; }
@@ -18726,7 +18789,7 @@
       .dci-cap { margin-bottom: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); font-weight: 600; color: #4a4658; letter-spacing: 0.01em; }
       @container (min-width: 1150px) {
         .dci-rows tr.dci-row { grid-template-areas: "role type attr level date tracks"; grid-template-rows: auto;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.7fr) auto minmax(0, 1.3fr) minmax(0, 0.8fr); }
+          grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.7fr) calc(var(--u, 1px) * 200) minmax(0, 1.3fr) minmax(0, 0.8fr); }
       }
       @container (max-width: 699px) {
         .dci-rows tr.dci-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto;
