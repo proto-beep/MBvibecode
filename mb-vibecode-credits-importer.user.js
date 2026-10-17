@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.16.1
+// @version      3.16.2
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.16.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.16.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -380,7 +380,7 @@
       "preview.noteOnly": "edit note only: “{text}”",
       "manual.title": "Add entry manually",
       "manual.artistAria": "MusicBrainz entry",
-      "manual.rolePlaceholder": "MB relationship type or Discogs role, e.g. artwork or Guitar [Electric]",
+      "manual.rolePlaceholder": "MB relationship type or a role as the source writes it, e.g. artwork or Guitar [Electric]",
       "manual.add": "Add",
       "works.missing.one": "{n} track has no work yet.",
       "works.missing.other": "{n} tracks have no work yet.",
@@ -1075,6 +1075,17 @@
       "rules.lists": "Tables and word lists (read only)",
       "rules.listsHint": "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; they change with an update of the script.",
       "instrAsk.ask": "Discogs only says “{name}”. Do you know which one it is?",
+      "src.textLabel": "pasted text",
+      "instrAsk.askAny": "The source ({src}) only says “{name}”. Do you know which one it is?",
+      "matrix.emptyAny": "No writing credits yet. They appear here once the source names them, or add them with “Add entry manually” and a work-level role such as composer.",
+      "matrix.noWritersAny": "The source ({src}) names no writers for this track, so no works are suggested.",
+      "roleCredit.fromDiscogsAny": "Taken from the source ({src})",
+      "roleCredit.fromTagAny": "from the source",
+      "media.nowTitleAny": "What was imported from the source ({src})",
+      "dm.chooseSingleAny": "{n} dates as in the source: {list}",
+      "dm.chooseSingleTitleAny": "Use the days as the source gives them: one relationship per day",
+      "datefind.alsoRangeTitleAny": "The pool gets the days as the source gives them and also the period from the first to the last day; in the matrix you choose which to use",
+      "pools.reloadAny": "↻ load again from the source ({src})",
       "instrAsk.otherwise": "(otherwise it stays “{credit}”, without a role credit; with another choice the role credit is “{credit}”)",
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
       "rules.questions": "Instrument questions",
@@ -1601,7 +1612,7 @@
       "preview.noteOnly": "nur Edit-Notiz: „{text}“",
       "manual.title": "Eintrag manuell hinzufügen",
       "manual.artistAria": "MusicBrainz-Eintrag",
-      "manual.rolePlaceholder": "MB-Beziehungstyp oder Discogs-Rolle, z. B. artwork oder Guitar [Electric]",
+      "manual.rolePlaceholder": "MB-Beziehungstyp oder eine Rolle, wie die Quelle sie schreibt, z. B. artwork oder Guitar [Electric]",
       "manual.add": "Hinzufügen",
       "works.missing.one": "{n} Track hat noch kein Werk.",
       "works.missing.other": "{n} Tracks haben noch kein Werk.",
@@ -2296,6 +2307,17 @@
       "rules.lists": "Tabellen und Wortlisten (nur lesen)",
       "rules.listsHint": "Womit das Register außer den Regeln liest: Details, Wörter in Texten, Daten, Datumsgruppen, „live“ in Titeln, Rollen in den Notizen. Sie lassen sich nicht abschalten; sie ändern sich mit einem Update des Skripts.",
       "instrAsk.ask": "Discogs sagt nur „{name}“. Weißt du, welches Instrument es ist?",
+      "src.textLabel": "eingefügter Text",
+      "instrAsk.askAny": "Die Quelle ({src}) sagt nur „{name}“. Weißt du, welches Instrument es ist?",
+      "matrix.emptyAny": "Noch keine Writing Credits. Sie erscheinen hier, sobald die Quelle welche nennt, oder du fügst sie über „Eintrag von Hand hinzufügen“ mit einer Werk-Rolle wie composer hinzu.",
+      "matrix.noWritersAny": "Die Quelle ({src}) nennt für diesen Track keine Autoren, daher werden keine Werke vorgeschlagen.",
+      "roleCredit.fromDiscogsAny": "Aus der Quelle übernommen ({src})",
+      "roleCredit.fromTagAny": "aus der Quelle",
+      "media.nowTitleAny": "Was aus der Quelle importiert wurde ({src})",
+      "dm.chooseSingleAny": "{n} Daten wie in der Quelle: {list}",
+      "dm.chooseSingleTitleAny": "Die Tage so nehmen, wie die Quelle sie nennt: eine Beziehung pro Tag",
+      "datefind.alsoRangeTitleAny": "Der Pool bekommt die Tage wie in der Quelle und zusätzlich den Zeitraum vom ersten bis zum letzten Tag; in der Matrix wählst du, was gilt",
+      "pools.reloadAny": "↻ aus der Quelle neu laden ({src})",
       "instrAsk.otherwise": "(sonst bleibt es „{credit}“, ohne Rollen-Credit; bei einer anderen Wahl ist der Rollen-Credit „{credit}“)",
       "log.instrPicked": "{name}: {instrument} (Rollen-Credit „{credit}“)",
       "rules.questions": "Instrument-Nachfragen",
@@ -2822,7 +2844,7 @@
       "preview.noteOnly": "solo nota de edición: «{text}»",
       "manual.title": "Añadir entrada manualmente",
       "manual.artistAria": "Entrada de MusicBrainz",
-      "manual.rolePlaceholder": "Tipo de relación de MB o rol de Discogs, p. ej. artwork o Guitar [Electric]",
+      "manual.rolePlaceholder": "Tipo de relación de MB o un rol tal como lo escribe la fuente, p. ej. artwork o Guitar [Electric]",
       "manual.add": "Añadir",
       "works.missing.one": "{n} pista aún no tiene obra.",
       "works.missing.other": "{n} pistas aún no tienen obra.",
@@ -3517,6 +3539,17 @@
       "rules.lists": "Tablas y listas de palabras (solo lectura)",
       "rules.listsHint": "Lo que el registro usa además de las reglas: detalles, palabras de los textos, fechas, grupos de fechas, «live» en los títulos, roles en las notas. No se pueden desactivar; cambian con una actualización del script.",
       "instrAsk.ask": "Discogs solo dice «{name}». ¿Sabes qué instrumento es?",
+      "src.textLabel": "texto pegado",
+      "instrAsk.askAny": "La fuente ({src}) solo dice «{name}». ¿Sabes qué instrumento es?",
+      "matrix.emptyAny": "Aún no hay créditos de autoría. Aparecen aquí cuando la fuente los indica, o añádelos con «Añadir entrada a mano» y un rol de obra como composer.",
+      "matrix.noWritersAny": "La fuente ({src}) no indica autores para esta pista, así que no se sugieren obras.",
+      "roleCredit.fromDiscogsAny": "Tomado de la fuente ({src})",
+      "roleCredit.fromTagAny": "de la fuente",
+      "media.nowTitleAny": "Lo que se importó de la fuente ({src})",
+      "dm.chooseSingleAny": "{n} fechas como en la fuente: {list}",
+      "dm.chooseSingleTitleAny": "Usar los días tal como los da la fuente: una relación por día",
+      "datefind.alsoRangeTitleAny": "Las fechas guardadas reciben los días tal como los da la fuente y además el periodo del primero al último día; en la matriz eliges cuál usar",
+      "pools.reloadAny": "↻ volver a cargar de la fuente ({src})",
       "instrAsk.otherwise": "(si no, queda «{credit}», sin crédito del rol; con otra elección el crédito del rol es «{credit}»)",
       "log.instrPicked": "{name}: {instrument} (crédito del rol «{credit}»)",
       "rules.questions": "Preguntas de instrumento",
@@ -4043,7 +4076,7 @@
       "preview.noteOnly": "note de modification uniquement : « {text} »",
       "manual.title": "Ajouter une entrée manuellement",
       "manual.artistAria": "Entrée MusicBrainz",
-      "manual.rolePlaceholder": "Type de relation MB ou rôle Discogs, p. ex. artwork ou Guitar [Electric]",
+      "manual.rolePlaceholder": "Type de relation MB ou un rôle tel que la source l’écrit, p. ex. artwork ou Guitar [Electric]",
       "manual.add": "Ajouter",
       "works.missing.one": "{n} piste n’a pas encore d’œuvre.",
       "works.missing.other": "{n} pistes n’ont pas encore d’œuvre.",
@@ -4738,6 +4771,17 @@
       "rules.lists": "Tables et listes de mots (lecture seule)",
       "rules.listsHint": "Ce que le registre utilise en plus des règles : détails, mots des textes, dates, groupes de dates, « live » dans les titres, rôles dans les notes. Elles ne peuvent pas être désactivées ; elles changent avec une mise à jour du script.",
       "instrAsk.ask": "Discogs dit seulement « {name} ». Savez-vous de quel instrument il s’agit ?",
+      "src.textLabel": "texte collé",
+      "instrAsk.askAny": "La source ({src}) dit seulement « {name} ». Savez-vous de quel instrument il s’agit ?",
+      "matrix.emptyAny": "Pas encore de crédits d’écriture. Ils apparaissent ici dès que la source en donne, ou ajoutez-les avec « Ajouter une entrée à la main » et un rôle d’œuvre comme composer.",
+      "matrix.noWritersAny": "La source ({src}) ne cite aucun auteur pour cette piste ; aucune œuvre n’est donc proposée.",
+      "roleCredit.fromDiscogsAny": "Repris de la source ({src})",
+      "roleCredit.fromTagAny": "de la source",
+      "media.nowTitleAny": "Ce qui a été importé de la source ({src})",
+      "dm.chooseSingleAny": "{n} dates comme dans la source : {list}",
+      "dm.chooseSingleTitleAny": "Utiliser les jours tels que la source les donne : une relation par jour",
+      "datefind.alsoRangeTitleAny": "Les dates enregistrées reçoivent les jours tels que la source les donne et aussi la période du premier au dernier jour ; dans la matrice, vous choisissez lesquels utiliser",
+      "pools.reloadAny": "↻ recharger depuis la source ({src})",
       "instrAsk.otherwise": "(sinon cela reste « {credit} », sans crédit du rôle ; avec un autre choix le crédit du rôle est « {credit} »)",
       "log.instrPicked": "{name} : {instrument} (crédit du rôle « {credit} »)",
       "rules.questions": "Questions d’instrument",
@@ -8834,6 +8878,13 @@
     'rules.formIncomplete': 'rules.formIncompleteAny',
   };
   const trRules = (key) => tr(S.release && S.source === DISCOGS ? key : (RULES_ANY[key] || key));
+  /** [3.16.2] The source as texts for any source name it: "Bandcamp", "pasted text". */
+  const srcLabel = () => (S.source === TEXT ? tr('src.textLabel') : (S.source && S.source.name) || '');
+  /**
+   * [3.16.2] A text that names Discogs: as it is while Discogs is the loaded source; with another source (or none) its
+   * "…Any" form, which says "the source" ({src}: its name).
+   */
+  const trSrc = (key, params = {}) => (S.release && S.source === DISCOGS ? tr(key, params) : tr(`${key}Any`, { ...params, src: srcLabel() }));
 
   /** [3.13.2] Another source was loaded: the open rules window follows. */
   function refreshRulesWindow() {
@@ -11509,7 +11560,7 @@
     }
     const options = roleCreditOptions(row.raw, row.base, row.mods, row.roleCreditSuggest, lt ? lt.name : '');
     const fromDiscogs = !row.manual && !!norm(row.roleCredit) && norm(row.roleCredit) === norm(row.roleCreditSuggest);
-    parts.push(`<label class="dci-credit"><span class="dci-credit-name">${esc(tr('roleCredit.label'))}${fromDiscogs ? ` <span class="dci-src dci-src-dg" title="${esc(tr('roleCredit.fromDiscogs'))}">${esc(tr('roleCredit.fromTag'))}</span>` : ''}</span>
+    parts.push(`<label class="dci-credit"><span class="dci-credit-name">${esc(tr('roleCredit.label'))}${fromDiscogs ? ` <span class="dci-src dci-src-dg" title="${esc(trSrc('roleCredit.fromDiscogs'))}">${esc(trSrc('roleCredit.fromTag'))}</span>` : ''}</span>
         <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(tr('roleCredit.fromDiscogs')) : ''}">
       </label>
       <datalist id="dci-rc-${row.id}">${options.map((o) => `<option value="${esc(o)}"></option>`).join('')}</datalist>
@@ -11971,7 +12022,7 @@
         .flatMap((d) => dm().cells.filter((c) => c.date === d.id).map((c) => (DATE_GROUPS.find((g) => g.key === c.col) || {}).label)).filter(Boolean));
       const extra = [
         n > 1 && !x.multi ? `<span class="dci-tg-tag dci-tag-date" title="${esc(tr('datefind.multiTitle'))}">${esc(tr('datefind.multi', { n }))}</span>` : '',
-        x.multi ? `<span class="dci-tg-tag dci-tag-date" title="${esc(tr('datefind.alsoRangeTitle'))}">${esc(tr('datefind.alsoRange', { date: formatDateValue(span(x.multi[0].begin, x.multi[x.multi.length - 1].end)) }))}</span>` : '',
+        x.multi ? `<span class="dci-tg-tag dci-tag-date" title="${esc(trSrc('datefind.alsoRangeTitle'))}">${esc(tr('datefind.alsoRange', { date: formatDateValue(span(x.multi[0].begin, x.multi[x.multi.length - 1].end)) }))}</span>` : '',
         x.consecutive ? `<button type="button" class="dci-textbtn" data-act="datefind-split" data-key="${key}">${esc(tr(asDays ? 'datefind.asPeriod' : 'datefind.asDays'))}</button>` : '',
         x.tracks ? `<span class="dci-tg-tag dci-tag-track">${esc(tr('datefind.tracks', { list: trackListLabel(x.tracks) }))}</span>` : '',
         x.studios && x.studios.length ? `<span class="dci-tg-tag">${esc(tr('datefind.studio', { list: x.studios.map((k) => { const a = S.artists.get(k); return a ? a.mbName || a.name : ''; }).join(', ') }))}</span>` : '',
@@ -12552,7 +12603,7 @@
         ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
         ${choose ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: choose }))}</span>` : ''}
         ${open ? `<span class="dci-pools-tools">
-          ${S.release ? `<button type="button" class="dci-textbtn" data-act="pool-clear" data-what="reload" title="${esc(tr('pools.reloadTitle'))}">${esc(tr('pools.reload'))}</button>` : ''}
+          ${S.release ? `<button type="button" class="dci-textbtn" data-act="pool-clear" data-what="reload" title="${esc(tr('pools.reloadTitle'))}">${esc(trSrc('pools.reload'))}</button>` : ''}
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="dates" ${S.datePool.length ? '' : 'disabled'}>${esc(tr('pools.clearDates'))}</button>
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="tracks" ${S.trackPool.length ? '' : 'disabled'}>${esc(tr('pools.clearTracks'))}</button>
         </span>` : ''}
@@ -12710,8 +12761,8 @@
     return `<div class="dci-dm-cell dci-dm-choose" data-dmcell="${esc(c.id)}" draggable="true" data-drag="cell" data-id="${esc(c.id)}" role="group" aria-label="${esc(tr('dm.choose'))}">
       <div class="dci-dm-date"><strong class="dci-dm-choose-q">${esc(tr('dm.choose'))}</strong>
         <button type="button" class="dci-dm-x" data-act="dm-remove" data-cell="${esc(c.id)}" title="${esc(tr('dm.removeTitle'))}" aria-label="${esc(tr('dm.removeTitle'))}">×</button></div>
-      <button type="button" class="dci-dm-opt" data-act="dm-choose" data-cell="${esc(c.id)}" data-pick="single" title="${esc(tr('dm.chooseSingleTitle'))}">
-        ${esc(tr('dm.chooseSingle', { n: singles.length, list: singles.map((d) => formatDateValue(d)).join(' · ') }))}</button>
+      <button type="button" class="dci-dm-opt" data-act="dm-choose" data-cell="${esc(c.id)}" data-pick="single" title="${esc(trSrc('dm.chooseSingleTitle'))}">
+        ${esc(trSrc('dm.chooseSingle', { n: singles.length, list: singles.map((d) => formatDateValue(d)).join(' · ') }))}</button>
       <button type="button" class="dci-dm-opt" data-act="dm-choose" data-cell="${esc(c.id)}" data-pick="range" title="${esc(tr('dm.chooseRangeTitle'))}">
         ${esc(tr('dm.chooseRange', { date: formatDateValue(range) }))}</button>
       ${lcd ? `<button type="button" class="dci-dm-opt" data-act="dm-choose" data-cell="${esc(c.id)}" data-pick="lcd" title="${esc(tr('dm.chooseLcdTitle'))}">
@@ -12799,7 +12850,7 @@
   function poolClearHtml() {
     const what = S.poolClear;
     if (what === 'reload') {
-      return `<div class="dci-pool-clear" role="alertdialog" aria-label="${esc(tr('pools.reload'))}">
+      return `<div class="dci-pool-clear" role="alertdialog" aria-label="${esc(trSrc('pools.reload'))}">
         <p>${esc(tr('pools.reloadAsk'))}</p>
         <label class="dci-check"><input type="checkbox" data-f="pool-reload-all"> ${esc(tr('pools.reloadAll'))}</label>
         <div class="dci-mbdate-tools">
@@ -13058,7 +13109,7 @@
     const q = questionRuleFor(row);
     if (row.level === 'skip' || !q || !lt || !primaryRootOf(lt) || norm(row.primaryText) !== q.base) return '';
     const pick = (name) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}">${esc(name)}</button>`;
-    return `<div class="dci-bass-ask" data-question="${q.id}">${esc(tr('instrAsk.ask', { name: row.base }))} ${q.options.map(pick).join(' · ')}
+    return `<div class="dci-bass-ask" data-question="${q.id}">${esc(trSrc('instrAsk.ask', { name: row.base }))} ${q.options.map(pick).join(' · ')}
       <span class="dci-sub">${esc(tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
 
@@ -14928,7 +14979,7 @@
     let state = '';
     let found = '';
     if (search && search.state === 'loading') state = `<span class="dci-sub" title="${esc(tr('works.searching'))}">…</span>`;
-    else if (search && search.state === 'noWriters' && !same.length) state = info(tr('matrix.noWriters'));
+    else if (search && search.state === 'noWriters' && !same.length) state = info(trSrc('matrix.noWriters'));
     else if (search && search.state === 'error') state = `<span class="dci-bad" title="${esc(search.error)}">!</span>`;
     else if (search && search.state === 'done' && !same.length) state = info(tr('matrix.noSame'));
     // [3.15.0] works of the artists are shown also when the writers gave nothing (or there are none)
@@ -15192,7 +15243,7 @@
         <button type="button" class="dci-textbtn" data-act="works-create-all">${esc(tr('works.createAllForm'))}</button></div>` : ''}
       ${addColumnHtml()}
       ${S.searchProgress ? `<p class="dci-sub" data-el="search-progress">${esc(tr('matrix.searchProgress', S.searchProgress))}<button type="button" class="dci-textbtn" data-act="mx-search-cancel">${esc(tr('matrix.searchCancel'))}</button></p>` : ''}
-      ${cols.length ? '' : `<p class="dci-sub">${esc(tr('matrix.empty'))}</p>`}
+      ${cols.length ? '' : `<p class="dci-sub">${esc(trSrc('matrix.empty'))}</p>`}
       <div class="dci-mx-wrap">
         <table class="dci-table dci-matrix">
           <thead><tr><th scope="col" class="dci-mx-front"><div class="dci-mx-card dci-mx-frontcard"><div class="dci-mx-cardline"><strong>${esc(tr('matrix.work'))}</strong>
@@ -15918,7 +15969,7 @@
     const sig = JSON.stringify([LANG, S.mediumFilter, unloaded, media, choice]);
     if (el.dataset.sig === sig) return;
     el.dataset.sig = sig;
-    const chooser = S.release ? `<span class="dci-media-now" title="${esc(tr('media.nowTitle'))}">${esc(choice)}</span>
+    const chooser = S.release ? `<span class="dci-media-now" title="${esc(trSrc('media.nowTitle'))}">${esc(choice)}</span>
       <button type="button" data-act="media-choose" title="${esc(tr('media.chooseTitle'))}">${esc(tr('media.choose'))}</button>` : '';
     if (media.length < 2) {
       el.innerHTML = chooser;

@@ -13,12 +13,23 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.16.1, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.16.2, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.16.2 · 2026-10-17
+
+Neutral texts for other sources (collect item 17).
+
+- **New:** `srcLabel()` (the source's name, "pasted text" for the text source: `src.textLabel`), `trSrc(key, params)` – the text as it is while Discogs is loaded (`S.release && S.source === DISCOGS`), else `${key}Any` with `{src}`.
+- **Changed (now `trSrc`):** `instrAsk.ask` (`instrumentAskHtml`), `matrix.noWriters` and `matrix.empty` (works matrix), `roleCredit.fromDiscogs` / `roleCredit.fromTag` (role credit tag), `media.nowTitle`, `dm.chooseSingle` / `dm.chooseSingleTitle`, `datefind.alsoRangeTitle`, `pools.reload` (button and question). `manual.rolePlaceholder` is neutral in every language (manual entries do not depend on the source).
+- **Looked through and left:** texts of the Discogs view (`sync.*`, `dgStatus.*`), Discogs series, Discogs aliases, the Discogs API errors, `log.discogsLoaded`, the milestones (history), `datefind.order*` (only with a Discogs release country).
+- **Texts (4 languages):** `src.textLabel`, `instrAsk.askAny`, `matrix.emptyAny`, `matrix.noWritersAny`, `roleCredit.fromDiscogsAny`, `roleCredit.fromTagAny`, `media.nowTitleAny`, `dm.chooseSingleAny`, `dm.chooseSingleTitleAny`, `datefind.alsoRangeTitleAny`, `pools.reloadAny`; `manual.rolePlaceholder` changed.
+- **Tests:** new `t_srctexts.py` (Discogs: the texts as before; a pasted text: question, role credit tag, "no writers").
+
 
 ## Import 3.16.1 · 2026-10-17
 
