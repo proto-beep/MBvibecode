@@ -165,6 +165,39 @@ def bc_page(data):
             '<h2 class="trackTitle">x</h2></body></html>')
 
 
+def bc_html(data, url, about_cut=None, credits_cut=None, released='January 1, 2020'):
+    """[3.17.0] A Bandcamp album or track page built like Bandcamp's own (as on real pages saved on 2026-10-17): the
+    track table (album), the "about" and "credits" texts (lines separated by <br>, the credits after "released …"),
+    Bandcamp's shortening of long texts ("..." and a hidden rest with "more", cut after about_cut/credits_cut
+    characters), and the page data in "data-tralbum"."""
+    import html as _html
+    cur = data.get('current', {})
+    track_page = '/track/' in url
+    data = dict(data, url=url, item_type='track' if track_page else 'album')
+
+    def lines(text):
+        return '\n<br>\n'.join(_html.escape(x, quote=False) for x in re.split(r'\r?\n', text))
+
+    def body(text, cut):
+        if cut is None or cut >= len(text):
+            return lines(text)
+        return (lines(text[:cut]) + '<span><span class="bcTruncateEllipsis">...</span></span>'
+                f'<span class="bcTruncateMore" style="display:none">{lines(text[cut:])}</span><span>&nbsp; <a>more</a></span>')
+
+    tracks = '' if track_page else '<table class="track_list track_table" id="track_table"><tbody>' + ''.join(
+        f'<tr class="track_row_view linked" rel="tracknum={t["track_num"]}"><td class="track-number-col"><div class="track_number secondaryText">{t["track_num"]}.</div></td>'
+        f'<td class="title-col"><div class="title"><a href="{t.get("title_link", "")}"><span class="track-title">{_html.escape(t["title"])}</span></a></div></td></tr>'
+        for t in data.get('trackinfo', [])) + '</tbody></table>'
+    head = (f'from <a href="{data.get("album_url", "")}">Testalbum</a>, released {released}\n<br><span style="opacity: 0.7;">published {released}<br></span>'
+            if track_page else f'released {released}\n<br><span style="opacity: 0.7;">published {released}<br></span><br><br>')
+    about = f'<h3 class="about-label">about</h3><div class="tralbumData tralbum-about">{body(cur["about"], about_cut)}</div>' if cur.get('about') else ''
+    credits = f'<h3 class="credits-label">credits</h3><div class="tralbumData tralbum-credits">{head}{body(cur.get("credits") or "", credits_cut)}</div>'
+    return ('<!doctype html><html><head><meta charset="utf-8"><title>Bandcamp</title></head><body>'
+            f'<div id="name-section"><h2 class="trackTitle">{_html.escape(cur.get("title", ""))}</h2></div>{tracks}'
+            f'<div class="tralbumData">{about}{credits}</div>'
+            f'<script type="text/javascript" data-tralbum="{_html.escape(json.dumps(data), quote=True)}"></script></body></html>')
+
+
 # GM_xmlhttpRequest as a userscript manager gives it (with fetch); the calls are recorded in window.__gmXhr
 GM_XHR_SHIM = """window.__gmXhr = [];
 window.GM_xmlhttpRequest = (d) => { window.__gmXhr.push(d.url);
@@ -623,6 +656,18 @@ def open_discogs(ctx):
     errs = errors_of(pg)
     pg.goto(f'https://www.discogs.com/release/{DISCOGS_ID}-Test-Band-Testalbum')
     with_companion(pg)
+    return pg, errs
+
+
+def open_bandcamp(ctx, url):
+    """[3.17.0] A Bandcamp tab with the companion; it stays with the companion when it loads another page."""
+    pg = ctx.new_page()
+    errs = errors_of(pg)
+    # only in the page itself, not in its frames (@noframes)
+    pg.add_init_script(script="if (window.top === window) window.addEventListener('DOMContentLoaded', () => { for (const code of [%s, %s]) {"
+                       " const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
+                       % (json.dumps(GM_SHIM), json.dumps(SYNC)))
+    pg.goto(url)
     return pg, errs
 
 
