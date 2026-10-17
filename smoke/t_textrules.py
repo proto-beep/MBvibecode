@@ -26,7 +26,8 @@ A Northern Echo release.
 Thanks to the cat for keeping us company"""
 GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
   [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()),
-  (g.querySelector('.dci-alias-suggest .dci-sub') || {}).textContent || '',
+  // 3.15.2: the explanation of the suggestions is the stack's tooltip
+  (g.querySelector('.dci-sugg-stack') || {}).title || '',
   [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid), g.className.match(/dci-st-(\\w+)/)[1]]))()"""
 results = []
 with sync_playwright() as p:
@@ -55,6 +56,9 @@ with sync_playwright() as p:
     ok_c = unrec == ['Thanks to the cat for keeping us company']
     ph = [x for x in g if x[0] == 'Jane Roe' and 'names no one' in x[2]]
     ok_d = bool(ph) and 'a human' in ph[0][2] and ph[0][3] == [JR] and ph[0][4] == 'missing' and ph[0][1] == ['Artwork']
+    mark = pg.evaluate("[...document.querySelectorAll('.dci-sugg-stack [data-act=name-use] .dci-similar')].map(x => x.textContent)")
+    print('   Marken an Vorschlägen:', mark)
+    ok_d = ok_d and 'release artist' in mark
     works = pg.evaluate("[...document.querySelectorAll('[data-el=works] .dci-mx-colhead, [data-el=works] th')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Jane Roe/.test(t))")
     print('   Werke-Matrix (Jane Roe):', works[:2])
     print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d)
