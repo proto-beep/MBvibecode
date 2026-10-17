@@ -207,6 +207,29 @@ MB_SEARCH = {}
 # a work is found when one of its artists is named in the query (arid:…)
 WORK_SEARCH = []
 WORK_QUERIES = []
+# works of an artist (3.15.0): browse "work?artist=" → artist gid → [{'id', 'title', 'aliases': [{'name'}]}];
+# browse "recording?artist=" → artist gid → [{'title', 'work': {'id', 'title'}}] (a work may be missing) or a number
+# (that many recordings without works – a large catalogue). BROWSES records the browse requests (kind, artist, offset).
+ARTIST_WORKS = {}
+ARTIST_RECORDINGS = {}
+BROWSES = []
+
+
+def ws_browse(kind, query):
+    q = urllib.parse.parse_qs(query)
+    artist, offset, limit = q.get('artist', [''])[0], int(q.get('offset', ['0'])[0]), int(q.get('limit', ['25'])[0])
+    BROWSES.append((kind, artist, offset))
+    if kind == 'work':
+        works = ARTIST_WORKS.get(artist, [])
+        return {'work-count': len(works), 'work-offset': offset, 'works': works[offset:offset + limit]}
+    recs = ARTIST_RECORDINGS.get(artist, [])
+    if isinstance(recs, int):
+        page = [{'id': uid('99999999', k), 'title': f'Recording {k}', 'relations': []} for k in range(offset, min(recs, offset + limit))]
+        return {'recording-count': recs, 'recording-offset': offset, 'recordings': page}
+    page = [{'id': uid('99999998', offset + k), 'title': r['title'],
+             'relations': [{'target-type': 'work', 'type': 'performance', 'work': r['work']}] if r.get('work') else []}
+            for k, r in enumerate(recs[offset:offset + limit])]
+    return {'recording-count': len(recs), 'recording-offset': offset, 'recordings': page}
 # Areas of the places in COMPANIES, for the search with an area ("Abbey Road Studios, London")
 PLACE_AREAS = {'Abbey Road Studios': 'London'}
 
@@ -505,6 +528,8 @@ def install_routes(ctx):
             return json_route(route, ws_work(m.group(1)))
         if p.startswith('/ws/2/release-group/'):
             return json_route(route, {'id': RG, 'relations': MB_EXTRA.get(RG, [])})
+        if p in ('/ws/2/work', '/ws/2/recording') and 'artist' in urllib.parse.parse_qs(u.query):
+            return json_route(route, ws_browse(p.rsplit('/', 1)[1], u.query))
         if p == '/ws/2/work':
             q = urllib.parse.parse_qs(u.query).get('query', [''])[0]
             WORK_QUERIES.append(q)
