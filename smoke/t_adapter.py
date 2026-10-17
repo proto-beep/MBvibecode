@@ -101,9 +101,10 @@ console.log(JSON.stringify({ rel: ser(rel), groups: ser(groups), companies: ser(
         and len(g['Ranger']['roles']) == 1 and g['Ranger']['roles'][0]['idx'] == [0, 1, 2, 3] and g['Ranger']['roles'][0]['specs'] == ['A1 to A3, B9', 'B1'] \
         and g['Ranger']['roles'][0]['pos'] == ['A1', 'B1'] and g['Ranger']['roles'][0]['un'] == ['B9'] and not g['Ranger']['roles'][0]['all'] \
         and g['NoRole']['roles'] == [] and g['Nobody']['dId'] == 0 and g['Nobody']['links'] == [] and '' not in g
+    # 3.17.0: "refs" – where a company is at its source (lines of a text or Bandcamp; none from Discogs)
     print('B3) Firmen:', [(c['name'], c['rawName'], c['links'], c['roles']) for c in comps])
     ok_b = ok_b and [(c['name'], c['dId']) for c in comps] == [('Pub', 21), ('NoId Co', 0)] \
-        and comps[0]['roles'] == [{'role': 'Published By', 'catno': 'X1', 'tracks': None}, {'role': 'Copyright (c)', 'catno': '', 'tracks': None}] and comps[1]['links'] == []
+        and comps[0]['roles'] == [{'role': 'Published By', 'catno': 'X1', 'tracks': None, 'refs': []}, {'role': 'Copyright (c)', 'catno': '', 'tracks': None, 'refs': []}] and comps[1]['links'] == []
     seed = dict((k, v) for k, v in out['seed'])
     print('B4) Seed:', out['seed'], '\n    Links:', out['links'], '| IDs:', out['ids'], '| URL-Schlüssel:', out['keys'])
     ok_b = ok_b and seed.get('edit-artist.name') == 'Y' and seed.get('edit-artist.url.0.text') == 'https://www.discogs.com/artist/5' \

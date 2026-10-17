@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.7.0
-// @date         2026-10-13
-// @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
-// @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
-// @description:es Complemento de «MB x Vibecode: Credits Importer»: conecta el panel de importación con una pestaña de Discogs (p. ej. la otra mitad de una vista dividida), carga allí la publicación y resalta de dónde viene cada crédito.
-// @description:fr Complément de « MB x Vibecode: Credits Importer » : relie le tableau d'import à un onglet Discogs (p. ex. l'autre moitié d'un écran partagé), y charge la parution et met en évidence l'origine de chaque crédit.
+// @version      1.8.0
+// @date         2026-10-17
+// @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
+// @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
+// @description:es Complemento de «MB x Vibecode: Credits Importer»: conecta el panel de importación con una pestaña de Discogs o Bandcamp (p. ej. la otra mitad de una vista dividida), carga allí la publicación y resalta de dónde viene cada crédito.
+// @description:fr Complément de « MB x Vibecode: Credits Importer » : relie le tableau d'import à un onglet Discogs ou Bandcamp (p. ex. l'autre moitié d'un écran partagé), y charge la parution et met en évidence l'origine de chaque crédit.
 // @author       proto-beep
 // @license      CC0-1.0
 // @homepageURL  https://github.com/proto-beep/MBvibecode
@@ -19,6 +19,7 @@
 // @match        *://*.musicbrainz.org/release/*
 // @match        *://www.discogs.com/*
 // @match        *://discogs.com/*
+// @match        *://*.bandcamp.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_deleteValue
@@ -34,16 +35,22 @@
   'use strict';
 
   // How it works:
-  // - Every Discogs tab with this script writes a heartbeat into the shared userscript storage.
+  // - Every Discogs and Bandcamp tab with this script writes a heartbeat into the shared userscript storage (with its
+  //   site: "discogs" or "bandcamp", since 1.8.0).
   // - On the MB relationship editor this script relays between the dashboard of the main script
   //   (DOM events carrying JSON strings, which cross the page/sandbox boundary safely) and that storage.
-  // - Commands go to one Discogs tab: a visible one first (e.g. in split view), else the most recently seen.
+  // - Commands go to one tab of the site of the loaded source: a visible one first (e.g. in split view), else the most
+  //   recently seen.
   // The main script never needs special permissions; only this companion does.
 
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
   const isMusicBrainz = /(^|\.)musicbrainz\.org$/i.test(location.hostname);
+  const isBandcamp = /(^|\.)bandcamp\.com$/i.test(location.hostname);
+  /** [1.8.0] The sites the companion shows; a tab without a site (before 1.8.0) is a Discogs tab. */
+  const SITES = ['discogs', 'bandcamp'];
+  const siteOf = (x) => (x && SITES.includes(x.site) ? x.site : 'discogs');
 
   // Stored data of the companion has a generation; an update that raises it clears it once
   // (2: COMPANION 1.4.2, together with Import 2.11.0; 3: COMPANION 1.4.3, together with Import 2.13.0; 4: Companion
@@ -104,26 +111,34 @@
       return tabs;
     };
 
-    const pickTab = (tabs, releaseId = null) => {
+    const pickTab = (tabs, releaseId = null, site = 'discogs') => {
+      // [1.8.0] Only tabs of the site (Discogs or Bandcamp) of the command
+      const own = tabs.filter((t) => siteOf(t) === site);
       // A tab that already shows the release comes first, then a visible one, then the last viewed one
-      const same = releaseId ? tabs.filter((t) => String(t.releaseId) === String(releaseId)) : [];
-      return [...(same.length ? same : tabs)].sort((a, b) => (Number(b.visible) - Number(a.visible)) || (b.lastVisible - a.lastVisible))[0] || null;
+      const same = releaseId ? own.filter((t) => String(t.releaseId) === String(releaseId)) : [];
+      return [...(same.length ? same : own)].sort((a, b) => (Number(b.visible) - Number(a.visible)) || (b.lastVisible - a.lastVisible))[0] || null;
     };
 
     const status = () => {
       const tabs = liveTabs();
-      const target = pickTab(tabs);
-      send({
-        type: 'status',
-        tabs: tabs.length,
-        target: target && { id: target.id, visible: target.visible, releaseId: target.releaseId },
-        // Releases shown in the open Discogs tabs: "connected" means one of them is the dashboard's release
-        releases: tabs.map((t) => String(t.releaseId || '')).filter(Boolean),
-      });
+      const ofSite = (site) => {
+        const own = tabs.filter((t) => siteOf(t) === site);
+        const target = pickTab(own, null, site);
+        return {
+          tabs: own.length,
+          target: target && { id: target.id, visible: target.visible, releaseId: target.releaseId },
+          // Releases shown in the open tabs of the site: "connected" means one of them is the dashboard's release
+          releases: own.map((t) => String(t.releaseId || '')).filter(Boolean),
+        };
+      };
+      const sites = Object.fromEntries(SITES.map((site) => [site, ofSite(site)]));
+      // The Discogs tabs as before 1.8.0 (for older main scripts), and the tabs of each site
+      send({ type: 'status', ...sites.discogs, sites });
     };
 
-    // Other scripts on the page could send these events too, so only MusicBrainz and Discogs pages are opened.
-    const mayOpen = (url) => /^https:\/\/((beta|test)\.)?musicbrainz\.org\//.test(String(url)) || /^https:\/\/(www\.)?discogs\.com\//.test(String(url));
+    // Other scripts on the page could send these events too, so only MusicBrainz, Discogs and Bandcamp pages are opened.
+    const mayOpen = (url) => /^https:\/\/((beta|test)\.)?musicbrainz\.org\//.test(String(url)) || /^https:\/\/(www\.)?discogs\.com\//.test(String(url))
+      || /^https:\/\/([a-z0-9-]+\.)?bandcamp\.com\//i.test(String(url));
 
     document.addEventListener('dci:to-discogs', (e) => {
       let msg;
@@ -144,7 +159,7 @@
         urls.forEach((u) => GM_openInTab(u, { active: false, insert: true }));
         send({ type: 'opened', n: urls.length });
       } else if (msg.type === 'reload') {
-        const target = pickTab(liveTabs(), msg.releaseId);
+        const target = pickTab(liveTabs(), msg.releaseId, siteOf(msg));
         if (target) GM_setValue('cmd', { type: 'reload', target: target.id, id: Date.now(), sent: Date.now() });
       } else if (msg.type === 'status-map') {
         // Status of every Discogs credit, shown on the Discogs page (all tabs of that release)
@@ -165,7 +180,7 @@
         // "Defaults" in the dashboard: every Discogs tab (now or when opened next) forgets the cover's place and folding
         GM_setValue('artReset', Date.now());
       } else if (msg.type === 'show') {
-        const target = pickTab(liveTabs(), msg.releaseId);
+        const target = pickTab(liveTabs(), msg.releaseId, siteOf(msg));
         if (!target) {
           send({ type: 'result', id: msg.id, found: 'no-tab' });
           return;
@@ -186,10 +201,12 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Discogs side
+  // Discogs and Bandcamp side
   // ---------------------------------------------------------------------------
+  // [1.8.0] The same for both sites (heartbeat, commands, status marks, back to the dashboard); what differs is in
+  // DISCOGS_SIDE and BANDCAMP_SIDE: which release the page shows, which page a command needs, how a credit is found.
 
-  function initDiscogsSide() {
+  function initSourceSide(side) {
     // sessionStorage survives navigation within the tab, so the tab keeps its id.
     let tabId = sessionStorage.getItem('dci-tab-id');
     if (!tabId) {
@@ -197,12 +214,12 @@
       sessionStorage.setItem('dci-tab-id', tabId);
     }
     let lastVisible = 0;
-    const currentReleaseId = () => (location.pathname.match(/\/release\/(\d+)/) || [])[1] || '';
+    const currentReleaseId = side.releaseId;
 
     const beat = () => {
       const visible = document.visibilityState === 'visible';
       if (visible) lastVisible = Date.now();
-      GM_setValue(`tab:${tabId}`, { id: tabId, ts: Date.now(), visible, lastVisible, releaseId: currentReleaseId() });
+      GM_setValue(`tab:${tabId}`, { id: tabId, site: side.id, ts: Date.now(), visible, lastVisible, releaseId: currentReleaseId() });
     };
     beat();
     setInterval(beat, HEARTBEAT_MS);
@@ -216,11 +233,17 @@
         location.reload();
         return;
       }
-      if (String(cmd.releaseId) !== currentReleaseId()) {
-        // Load the release first; the command is picked up again after the navigation.
+      // The page the command needs: '' when this one, null when none can be loaded
+      const go = side.pageFor(cmd);
+      if (go === null) {
+        report(cmd, 'none');
+        return;
+      }
+      if (go) {
+        // Load the release (or its page) first; the command is picked up again after the navigation.
         sessionStorage.setItem('dci-pending', JSON.stringify(cmd));
         report(cmd, 'loading');
-        location.assign(`${location.origin}/release/${cmd.releaseId}`);
+        location.assign(go);
         return;
       }
       // "Load the release there": nothing to point at
@@ -228,11 +251,11 @@
         report(cmd, 'loaded');
         return;
       }
-      report(cmd, await locateWithRetry(cmd));
+      report(cmd, await side.locate(cmd));
     };
 
     GM_addValueChangeListener('cmd', (name, oldValue, cmd) => {
-      if (cmd && cmd.target === tabId) handle(cmd);
+      if (cmd && cmd.target === tabId && siteOf(cmd) === side.id) handle(cmd);
     });
 
     // Status marks of the dashboard
@@ -244,27 +267,31 @@
       const same = beat && (beat.release && map && map.mbRelease ? beat.release === map.mbRelease : beat.pageId === (map && map.pageId));
       return !!(map && same && Date.now() - beat.ts < 8000);
     };
+    // A status map of this site and of the release this page shows
+    const isHere = (map) => !!(map && siteOf(map) === side.id && String(map.releaseId) === currentReleaseId() && senderAlive(map));
     let artShown = false;
     const showMap = (map) => {
       lastMap = map;
-      const here = !!(map && String(map.releaseId) === currentReleaseId() && senderAlive(map));
+      const here = isHere(map);
       shown = here && !!map.enabled;
-      artShown = here && !!map.artwork;
-      renderStatus(shown ? map : null);
-      renderArtwork(artShown ? map : null);
+      artShown = here && !!map.artwork && !!side.artwork;
+      side.renderStatus(shown ? map : null);
+      if (side.artwork) renderArtwork(artShown ? map : null);
     };
     GM_addValueChangeListener('statusMap', (name, oldValue, map) => showMap(map || null));
-    GM_addValueChangeListener('artReset', (name, oldValue, ts) => resetArt(ts));
-    resetArt(GM_getValue('artReset'));
-    const stored = GM_getValue('statusMap');
-    if (stored) setTimeout(() => showMap(stored), 1500);
+    if (side.artwork) {
+      GM_addValueChangeListener('artReset', (name, oldValue, ts) => resetArt(ts));
+      resetArt(GM_getValue('artReset'));
+    }
+    // [1.8.0] the newest map then (one that arrived meanwhile is not replaced by the one stored when the page opened)
+    if (GM_getValue('statusMap')) setTimeout(() => showMap(lastMap || GM_getValue('statusMap') || null), 1500);
     // Discogs renders parts of the page later: mark again once the credits are there
     setTimeout(() => { if (lastMap) showMap(lastMap); }, 4000);
     // The edit page was closed (or crashed): remove the marks; they come back when it reports again
     setInterval(() => {
       if (!lastMap) return;
-      const here = senderAlive(lastMap) && String(lastMap.releaseId) === currentReleaseId();
-      if (shown !== (here && !!lastMap.enabled) || artShown !== (here && !!lastMap.artwork)) showMap(lastMap);
+      const here = isHere(lastMap);
+      if (shown !== (here && !!lastMap.enabled) || artShown !== (here && !!lastMap.artwork && !!side.artwork)) showMap(lastMap);
     }, 3000);
     document.addEventListener('click', (e) => {
       const mark = e.target.closest && e.target.closest('.dci-dg-mark');
@@ -276,9 +303,7 @@
     let hoverTimer = null;
     let lastPos = '';
     document.addEventListener('mouseover', (e) => {
-      const row = e.target.closest && (e.target.closest('[data-track-position]') || e.target.closest('#release-tracklist tr, [id*="tracklist" i] tr'));
-      if (!row) return;
-      const pos = row.getAttribute('data-track-position') || ((row.querySelector('td, th') || {}).textContent || '').trim();
+      const pos = side.trackAt(e.target);
       if (!pos || pos === lastPos) return;
       lastPos = pos;
       clearTimeout(hoverTimer);
@@ -294,6 +319,24 @@
       } catch (e) { /* ignore */ }
     }
   }
+
+  /** The Discogs release page: its release id, the tracklist, the credits found by their artist links. */
+  const DISCOGS_SIDE = {
+    id: 'discogs',
+    artwork: true,
+    releaseId: () => (location.pathname.match(/\/release\/(\d+)/) || [])[1] || '',
+    pageFor(cmd) {
+      if (String(cmd.releaseId) === DISCOGS_SIDE.releaseId()) return '';
+      return /^\d+$/.test(String(cmd.releaseId)) ? `${location.origin}/release/${cmd.releaseId}` : null;
+    },
+    locate: (cmd) => locateWithRetry(cmd),
+    renderStatus: (map) => renderStatus(map),
+    trackAt(target) {
+      const row = target.closest && (target.closest('[data-track-position]') || target.closest('#release-tracklist tr, [id*="tracklist" i] tr'));
+      if (!row) return '';
+      return row.getAttribute('data-track-position') || ((row.querySelector('td, th') || {}).textContent || '').trim();
+    },
+  };
 
   // --- Finding the source of a credit on the Discogs release page ---------------
   // Discogs' markup has no stable hooks for scripts. The search therefore relies on
@@ -331,7 +374,8 @@
       #dci-artwork .dci-art-img img { display: block; width: 120px; max-height: 120px; object-fit: contain; }
       #dci-artwork .dci-art-toggle { border: 1px solid #c8c5d6; border-radius: 3px; background: #f7f6fb; color: #262430; font: 12px/1.4 sans-serif; padding: 0 6px; cursor: pointer; }
       #dci-artwork.dci-art-collapsed .dci-art-img { display: none; }
-      .dci-dg-unmapped-line { background-color: #fff3c4 !important; }`;
+      .dci-dg-unmapped-line { background-color: #fff3c4 !important; }
+      .dci-bc-hl { background-color: rgba(235, 116, 59, 0.22) !important; box-shadow: 0 0 0 2px rgba(235, 116, 59, 0.6); border-radius: 2px; scroll-margin: 120px; }`;
     document.head.appendChild(style);
   }
 
@@ -665,6 +709,291 @@
     return result;
   }
 
+  // --- [1.8.0] Bandcamp: album and track pages of *.bandcamp.com --------------------------------------------------
+  // The page's data ("data-tralbum") says which album it belongs to. The credits are lines of plain text (separated by
+  // <br>), so a credit is found by the text of its line (and of the part of the line, "mixed by B" of "Written by A,
+  // mixed by B"), as the dashboard read it. Marks go before each part, only into the credits; a credit from the "about"
+  // text is shown by marking its sentence. Bandcamp shortens long texts ("more"): they are opened first.
+
+  /** The album (its URL as the dashboard writes it), the track page (its path) and track number of this page. */
+  function bandcampPage() {
+    let data = null;
+    const el = document.querySelector('[data-tralbum]');
+    try {
+      data = el ? JSON.parse(el.getAttribute('data-tralbum')) : null;
+    } catch (e) { /* not an album or track page */ }
+    const host = location.hostname.toLowerCase();
+    const path = location.pathname.replace(/\/+$/, '');
+    const slug = (u) => (String(u || '').match(/\/album\/([^/?#\s]+)/) || [])[1] || '';
+    const isTrack = /^\/track\/[^/]+$/.test(path);
+    const album = slug(path) || (isTrack && data ? slug(data.album_url) : '');
+    const info = isTrack && data && (data.trackinfo || [])[0];
+    return { album: album ? `https://${host}/album/${album}` : '', page: isTrack ? path : '', track: info ? String(info.track_num || '') : '' };
+  }
+
+  const bcCredits = () => document.querySelector('.tralbumData.tralbum-credits') || document.querySelector('.tralbum-credits');
+  const bcAbout = () => document.querySelector('.tralbumData.tralbum-about') || document.querySelector('.tralbum-about');
+  /** Lower case, one unit at a time (so the text and its places on the page stay aligned). */
+  const bcLow = (t) => {
+    let out = '';
+    for (let i = 0; i < t.length; i++) out += t[i].toLowerCase();
+    return out;
+  };
+  const bcNeedle = (t) => bcLow(String(t || '').replace(/\s+/g, ' ').trim());
+  // Not part of the text: our marks, the "..." and the "more" link of a shortened text
+  const BC_SKIP = '.dci-dg-mark, .bcTruncateEllipsis, .peekaboo-ellipsis, .peekaboo-link, script, style';
+
+  /**
+   * The text of an element as it reads: lines (at <br>) of single-spaced words in lower case, and for each character
+   * its text node and offset (to put a mark there or to mark a stretch).
+   */
+  function bcStream(root) {
+    const st = { s: '', at: [] };
+    const add = (ch, node, off) => {
+      st.s += ch;
+      st.at.push([node, off]);
+    };
+    const walk = (el) => {
+      for (const n of el.childNodes) {
+        if (n.nodeType === 3) {
+          const t = n.nodeValue;
+          for (let i = 0; i < t.length; i++) {
+            if (/\s/.test(t[i])) {
+              if (st.s && !/[ \n]$/.test(st.s)) add(' ', n, i);
+            } else {
+              for (const c of t[i].toLowerCase()) add(c, n, i);
+            }
+          }
+        } else if (n.nodeType === 1) {
+          if (n.matches(BC_SKIP)) continue;
+          // the "more" link right after the hidden rest of a shortened text
+          if (n.previousElementSibling && n.previousElementSibling.classList.contains('bcTruncateMore')) continue;
+          if (n.tagName === 'BR') {
+            if (st.s.endsWith(' ')) {
+              st.s = st.s.slice(0, -1);
+              st.at.pop();
+            }
+            if (st.s && !st.s.endsWith('\n')) add('\n', n, -1);
+          } else {
+            walk(n);
+          }
+        }
+      }
+    };
+    walk(root);
+    return st;
+  }
+
+  /** Where a line of the dashboard starts in the text (the n-th line of the same text), -1 if not there. */
+  function bcFindLine(st, line, n = 0) {
+    const needle = bcNeedle(line);
+    if (!needle) return -1;
+    const whole = [];
+    let loose = -1;
+    for (let i = st.s.indexOf(needle); i >= 0; i = st.s.indexOf(needle, i + 1)) {
+      const end = i + needle.length;
+      if ((i === 0 || st.s[i - 1] === '\n') && (end === st.s.length || st.s[end] === '\n')) whole.push(i);
+      else if (loose < 0) loose = i;
+    }
+    if (whole.length) return whole[Math.min(n || 0, whole.length - 1)];
+    return loose;
+  }
+
+  /** The stretch of a part of a line: from its start (the first part: the line's) to its end, else the whole line. */
+  function bcPartRange(st, at, ref) {
+    const lineEnd = at + bcNeedle(ref.line).length;
+    const part = bcNeedle(ref.part);
+    const i = part ? st.s.indexOf(part, ref.pi ? at + 1 : at) : -1;
+    if (i < 0 || i >= lineEnd) return [at, lineEnd];
+    return [ref.pi ? i : at, Math.min(lineEnd, i + part.length)];
+  }
+
+  /** The sentence around a place of the text (up to ". ", "! ", "? " or the end of the line). */
+  function bcSentence(st, pos) {
+    const s = st.s;
+    let a = pos;
+    while (a > 0 && s[a - 1] !== '\n' && !(s[a - 1] === ' ' && /[.!?]/.test(s[a - 2] || ''))) a--;
+    let b = pos;
+    while (b < s.length && s[b] !== '\n' && !(/[.!?]/.test(s[b]) && (b + 1 === s.length || /[ \n]/.test(s[b + 1])))) b++;
+    if (b < s.length && /[.!?]/.test(s[b])) b++;
+    return [a, b];
+  }
+
+  /** Puts an element (or a fragment) before the character at a place of the text, not inside a marked stretch. */
+  function bcInsert(st, pos, el) {
+    const [node, off] = st.at[pos] || [];
+    if (!node || off < 0) return false;
+    let before = off ? node.splitText(off) : node;
+    while (before.parentNode.matches && before.parentNode.matches(`.${BC_HL}`) && before.parentNode.firstChild === before) before = before.parentNode;
+    before.parentNode.insertBefore(el, before);
+    return true;
+  }
+
+  /** Marks a stretch of the text (each text node of it in a span of its own); returns the spans. */
+  function bcWrap(st, from, to, cls) {
+    const byNode = new Map();
+    for (let i = from; i < to; i++) {
+      const [node, off] = st.at[i] || [];
+      if (!node || off < 0) continue;
+      const r = byNode.get(node);
+      byNode.set(node, r ? [Math.min(r[0], off), Math.max(r[1], off)] : [off, off]);
+    }
+    const spans = [];
+    for (const [node, [a, b]] of [...byNode].reverse()) {
+      const mid = a ? node.splitText(a) : node;
+      if (b + 1 - a < mid.length) mid.splitText(b + 1 - a);
+      const span = document.createElement('span');
+      span.className = cls;
+      mid.parentNode.insertBefore(span, mid);
+      span.appendChild(mid);
+      spans.unshift(span);
+    }
+    return spans;
+  }
+
+  function bcUnwrap(cls) {
+    document.querySelectorAll(`.${cls}`).forEach((x) => {
+      const parent = x.parentNode;
+      x.replaceWith(...x.childNodes);
+      parent.normalize();
+    });
+  }
+
+  /** Opens the shortened credits and "about" text (Bandcamp's "more"), so marks and marked sentences can be seen. */
+  function bcExpand() {
+    for (const root of [bcCredits(), bcAbout()]) {
+      if (!root) continue;
+      root.querySelectorAll('.bcTruncateMore').forEach((more) => {
+        if (more.style.display !== 'none') return;
+        const link = more.nextElementSibling && more.nextElementSibling.querySelector('a');
+        if (link) link.click();
+        if (more.style.display !== 'none') return;
+        // Bandcamp's own script did not open it: shown directly, the "..." and "more" hidden
+        more.style.display = '';
+        if (more.nextElementSibling) more.nextElementSibling.style.display = 'none';
+        const dots = more.previousElementSibling;
+        if (dots && dots.querySelector('.bcTruncateEllipsis')) dots.style.display = 'none';
+      });
+    }
+  }
+
+  const BC_HL = 'dci-bc-hl';
+
+  function renderBandcampStatus(map) {
+    ensureStyle();
+    const root = bcCredits();
+    if (!root) return;
+    root.querySelectorAll('.dci-dg-mark').forEach((m) => m.remove());
+    root.normalize();
+    if (!map || !map.enabled) return;
+    const page = bandcampPage().page;
+    const labels = map.labels || {};
+    const todo = [];
+    (map.items || []).forEach((item, order) => (item.refs || []).forEach((r, k) => {
+      if (r.about || (r.page || '') !== page) return;
+      todo.push({ item, r, order: order * 1000 + k });
+    }));
+    if (!todo.length) return;
+    bcExpand();
+    const st = bcStream(root);
+    const places = [];
+    for (const t of todo) {
+      const at = bcFindLine(st, t.r.line, t.r.n);
+      if (at >= 0) places.push({ ...t, pos: bcPartRange(st, at, t.r)[0] });
+    }
+    // From the end, so that the places before stay where they are; marks at the same place in their order, together
+    places.sort((a, b) => b.pos - a.pos || a.order - b.order);
+    const atPos = new Map();
+    for (const { item, r, pos } of places) {
+      const status = item.unmapped ? 'unmapped' : (r.status || item.status);
+      const mark = document.createElement('button');
+      mark.type = 'button';
+      mark.className = `dci-dg-mark dci-dg-${status} dci-bc-mark`;
+      mark.dataset.row = item.row;
+      mark.textContent = MARK_SYMBOL[status] || '?';
+      const note = r.note || item.note || '';
+      const checked = map.checked && (status === 'mb' || status === 'pending') ? ` (${labels.checked || ''})` : '';
+      mark.title = `${item.role ? `${item.role}: ` : ''}${labels[status] || status}${note ? ` ${note}` : ''}${checked} – ${labels.click || ''}`.trim();
+      if (!atPos.has(pos)) atPos.set(pos, document.createDocumentFragment());
+      atPos.get(pos).appendChild(mark);
+    }
+    atPos.forEach((frag, pos) => bcInsert(st, pos, frag));
+  }
+
+  /** Shows a credit (its lines, or its sentence in the "about" text) or a track of the album. */
+  function bandcampLocate(cmd) {
+    ensureStyle();
+    bcUnwrap(BC_HL);
+    document.querySelectorAll(`.${HIGHLIGHT}`).forEach((x) => x.classList.remove(HIGHLIGHT));
+    const here = bandcampPage();
+    const refs = (cmd.refs || []).filter((r) => (r.page || '') === here.page);
+    if (refs.length) bcExpand();
+    const spans = [];
+    for (const r of refs) {
+      const root = r.about ? bcAbout() : bcCredits();
+      if (!root) continue;
+      const st = bcStream(root);
+      const at = bcFindLine(st, r.line, r.n);
+      if (at < 0) continue;
+      const [a, b] = r.about ? bcSentence(st, bcPartRange(st, at, r)[0]) : bcPartRange(st, at, r);
+      spans.push(...bcWrap(st, a, b, BC_HL));
+    }
+    if (spans.length) {
+      spans[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return 'credit';
+    }
+    const pos = String((cmd.positions || []).filter(Boolean)[0] || '');
+    if (pos) {
+      const row = !here.page && [...document.querySelectorAll('#track_table tr.track_row_view, tr.track_row_view')]
+        .find((tr) => (String(tr.getAttribute('rel') || '').match(/tracknum=(\d+)/) || [])[1] === pos);
+      const title = here.page && here.track === pos && document.querySelector('#name-section .trackTitle, h2.trackTitle');
+      if (row || title) {
+        highlight(row || title);
+        return 'track';
+      }
+    }
+    return 'none';
+  }
+
+  const BANDCAMP_SIDE = {
+    id: 'bandcamp',
+    artwork: false,
+    releaseId: () => bandcampPage().album,
+    /** The album page, or the track page a credit is on; null for a command that is no Bandcamp album. */
+    pageFor(cmd) {
+      const want = String(cmd.releaseId || '');
+      const m = want.match(/^(https:\/\/[a-z0-9-]+\.bandcamp\.com)\/album\/[^/?#\s]+$/i);
+      if (!m) return null;
+      const here = bandcampPage();
+      const onAlbum = here.album === want;
+      if (cmd.loadOnly) return onAlbum ? '' : want;
+      const pages = [...new Set((cmd.refs || []).map((r) => r.page || ''))];
+      const pos = String((cmd.positions || []).filter(Boolean)[0] || '');
+      if (onAlbum) {
+        if (pages.length && pages.includes(here.page)) return '';
+        if (!pages.length && (!pos || !here.page || here.track === pos)) return '';
+      }
+      // a credit only on track pages: the first of them; else the album page
+      const page = pages.length && !pages.includes('') ? pages[0] : '';
+      return page && /^\/track\/[^/?#\s]+$/.test(page) ? `${m[1]}${page}` : want;
+    },
+    async locate(cmd) {
+      let result = 'none';
+      // The page may still be getting ready after a navigation, so try a few times.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        result = bandcampLocate(cmd);
+        if (result !== 'none') return result;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+      return result;
+    },
+    renderStatus: (map) => renderBandcampStatus(map),
+    trackAt(target) {
+      const row = target.closest && target.closest('tr.track_row_view');
+      return row ? (String(row.getAttribute('rel') || '').match(/tracknum=(\d+)/) || [])[1] || '' : '';
+    },
+  };
+
   // Start only after all declarations above are initialized.
   /** The release page of MusicBrainz keeps the Discogs status marks of its release alive (if switched on). */
   /**
@@ -776,8 +1105,8 @@
         const total = targets.length + recs.length;
         if (!total) return item;
         const hits = targets.filter((g) => has(found, g, item)).length + recs.filter((rec) => onWorkOf(found, rec, item)).length;
-        // Each Discogs track line on its own (its targets only)
-        const byPos = item.byPos && item.byPos.map((p) => {
+        // Each Discogs track line on its own (its targets only); [1.8.0] so each place of a Bandcamp credit on a track page
+        const each = (list) => list && list.map((p) => {
           const pt = (p.t || []).map((i) => (map.targets || [])[i]).filter(Boolean);
           const pr = (p.r || []).map((i) => (map.targets || [])[i]).filter(Boolean);
           const n = pt.length + pr.length;
@@ -787,9 +1116,15 @@
           if (p.status === 'staged' || p.status === 'mb') return { ...p, status: 'pending', note: `${h}/${n}` };
           return p;
         });
-        if (hits === total) return { ...item, status: 'mb', note: '', byPos };
-        if (item.status === 'staged' || item.status === 'mb') return { ...item, status: 'pending', note: `${hits}/${total}`, byPos };
-        return { ...item, byPos };
+        const byPos = each(item.byPos);
+        // A Bandcamp place without targets of its own (album credits) takes the status of the whole credit
+        const whole = hits === total ? { status: 'mb', note: '' }
+          : item.status === 'staged' || item.status === 'mb' ? { status: 'pending', note: `${hits}/${total}` } : null;
+        const refs = item.refs && each(item.refs).map((p) => (whole && !(p.t || []).length && !(p.r || []).length ? { ...p, ...whole } : p));
+        const more = { byPos, ...(refs ? { refs } : {}) };
+        if (hits === total) return { ...item, status: 'mb', note: '', ...more };
+        if (item.status === 'staged' || item.status === 'mb') return { ...item, status: 'pending', note: `${hits}/${total}`, ...more };
+        return { ...item, ...more };
       });
       // The dashboard may have sent a newer map meanwhile: only this release's marks are replaced
       const now = stored();
@@ -810,5 +1145,6 @@
 
   if (isMusicBrainz && /\/edit-relationships/.test(location.pathname)) initMusicBrainzSide();
   else if (isMusicBrainz) initReleasePage();
-  else initDiscogsSide();
+  else if (isBandcamp) initSourceSide(BANDCAMP_SIDE);
+  else initSourceSide(DISCOGS_SIDE);
 })();

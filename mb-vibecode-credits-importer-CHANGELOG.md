@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.16.2 | – |
+| 2026-10-17 | 3.11.0 – 3.17.0 | 1.8.0 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -35,6 +35,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-17 | Import 3.17.0 · COMPANION 1.8.0 | Bandcamp view in the companion: a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the "about" text: to its sentence), track highlight both ways, status on the MusicBrainz release page; "open in background" and "Load the release there" for Bandcamp too. Rows from track pages link to them |
 | 2026-10-17 | Import 3.16.0 | A menu "⚙ Settings" with all settings by topic (General, Sources, Discogs view, Works, Staging, Dates & tracks), each with its own "↺"; the switches stay where they are too. Works of the artists: on or off, how many works and recordings per artist are read (4,000), when a large catalogue is named, and how long the works read are kept – now beyond reloading the page (7 days) |
 | 2026-10-17 | Import 3.15.0 | Works matrix: the tracks without a work are compared with all works of the release's artists, its writers and its musicians – works linked to them and works of their recordings (also covers), in the background, read once per session; a large catalogue is named. Pasted texts and Bandcamp credits: credits in sentences ("Music played and recorded by … in September and October 2026"), "Role Name" lines and "… of this release were created by a human" (the release's artists suggested) are recognized. Arrows in the status bar jump to the top or bottom of the dashboard |
 | 2026-10-17 | Import 3.12.0 | Rebuilt inside: all mapping rules and word lists in one place of the script (the mapping register), the role rules as plain data; what the script makes of a source stays the same (checked with about 1,200 roles, 100 company roles, 50 date phrases and pasted texts). "Mapping rules" lists the tables and word lists (read only) and shows the right level for 27 rules |
@@ -72,6 +73,30 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-17
+
+### Import 3.17.0 · COMPANION 1.8.0
+
+#### Added
+
+- **Bandcamp view in the companion** (collected item 4; decisions of the maintainer on 2026-10-17: "gleiche Einstellungen wie die Discogs-Ansicht", marks "nur im Credits-Feld … vor jedem Teil einer Zeile", from the "about" text "nur den Satz markieren", "kein Cover-Kästchen", only `*.bandcamp.com`, marks on track pages too). With Bandcamp as the loaded source, a Bandcamp tab – an album page or a track page – is connected with the dashboard like a Discogs tab:
+  - **Status marks** (✓ ● ○ – ! ✗) only in the credits, before each part of a line: "Written by A, mixed by B" gets two marks, "Mixed and mastered by C" two marks at the same place (one for each credit). The "about" text gets none. On a track page only the credits of that track get marks. A click on a mark shows its row in the dashboard ("From Bandcamp: Bob Mix – Mixed By").
+  - **Jump to source** (on mouse-over or on click, as set): a row marks its part of the line; a credit of a track page loads that track page; a place from the "about" text marks only its sentence. Texts Bandcamp shortened ("more") are opened first. An entry's head marks all of its lines.
+  - **Track highlight** both ways: a track of the works matrix highlights its line in Bandcamp's track list, the pointer on a track there its row in the works matrix.
+  - **Status on the release page:** after "Enter edit" the MusicBrainz release page checks the staged credits – ✓ or ✗ on Bandcamp, as on Discogs.
+  - **In the dashboard:** rows from track pages say "From the track page: 2" with a link to it; places from the "about" text say "From the “about” text".
+- **"open in background" and "Load the release there" for Bandcamp** (collected item 7): without a Bandcamp tab the album opens in a background tab; a Bandcamp tab on another page loads the album.
+
+#### Changed
+
+- The texts of the view name the site of the loaded source ("Bandcamp view: connected", "Bandcamp status", "From Bandcamp: …"); with Discogs they are as before. The settings topic is called "Discogs and Bandcamp view"; the switch "Artwork" is only shown for Discogs.
+- An older companion (before 1.8.0) only connects Discogs: with Bandcamp loaded, the view says "needs the companion script 1.8.0 or later".
+- COMPANION 1.8.0 runs on `*.bandcamp.com` too (the script manager asks once); every tab reports its site, and the dashboard's commands go to a tab of the loaded source's site; Bandcamp pages may be opened in the background.
+
+#### Fixed
+
+- A company named on two track pages (e.g. "Recorded at Studio X" on the pages of tracks 1 and 3) is one row for both tracks again – since 3.16.1 only the tracks of its first place were taken.
+- COMPANION: on a Discogs (or Bandcamp) page just loaded, the status marks could fall back to an older state a second or two later – the status stored when the page opened replaced a newer one that had arrived meanwhile (found with the Bandcamp test: ✓ after "Enter edit" turned back into ○).
+
 
 ### Import 3.16.2
 
