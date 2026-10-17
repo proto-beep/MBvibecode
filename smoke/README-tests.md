@@ -100,6 +100,8 @@ python3 t_register.py     # the mapping register stays the same (3.11.0, golden 
                           # ~1,200 roles, ~100 company roles, ~50 date phrases, pasted texts) through the register in Node, the
                           # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
                           # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
+python3 t_recheck.py      # fixes of 3.12.1: "n lines not recognized" opens in the window; same-named works searched again when
+                          # a text's writer is assigned (found then), not without a change; a new import searches anew
 ```
 
 **Golden test of the register:** `register_corpus.json` was made once from Import 3.10.0 and stays as it is (more roles
@@ -125,6 +127,8 @@ records the URLs in `window.__gmXhr` (without it the script falls back to `fetch
 of the query – case and accents do not count (`harness.fold`) – and, for `area:(…)`, only places in that area;
 `harness.MB_SEARCH[kind]` adds more entries to search (`{'id', 'name', 'aliases': [{'name'}], 'area': {'name'}}`),
 `harness.PLACE_AREAS` gives the mock's own places an area (`{'Abbey Road Studios': 'London'}`).
+The work search (`/ws/2/work?query=…`) answers from `harness.WORK_SEARCH` (`{'id', 'title', 'aliases', 'relations'}`; a work is
+found when one of its artists is named in the query as `arid:`); `harness.WORK_QUERIES` records the queries.
 
 With several media (`harness.MEDIA = [2, 1, 1]` …) the dashboard asks for the media before the import:
 `harness.open_dashboard(pg)` answers "All" with the release level (the import as before),

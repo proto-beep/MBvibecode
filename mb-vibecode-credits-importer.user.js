@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.12.0
+// @version      3.12.1
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.12.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.12.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -836,6 +836,8 @@
       "log.importDone": "Import complete: {rows} roles of {entries} entries in the dashboard, {existing} already in MusicBrainz",
       "log.checksDone.one": "Checks complete: same-named works looked up for {n} track",
       "log.checksDone.other": "Checks complete: same-named works looked up for {n} tracks",
+      "log.workRecheck.one": "The writers of {n} track changed – its same-named works are looked up again",
+      "log.workRecheck.other": "The writers of {n} tracks changed – their same-named works are looked up again",
       "log.stageSummary": "Staging complete: {added} added, {updated} updated, {removed} taken out, {changed} changed in the editor itself, {remove} to remove by hand",
       "seriesLabel.title": "Publishing label (Discogs “Parent Label”):",
       "seriesLabel.onCreate": "is added with “Create series …”",
@@ -1973,6 +1975,8 @@
       "log.importDone": "Import abgeschlossen: {rows} Rollen von {entries} Einträgen im Dashboard, {existing} schon in MusicBrainz",
       "log.checksDone.one": "Prüfungen abgeschlossen: gleichnamige Werke für {n} Track gesucht",
       "log.checksDone.other": "Prüfungen abgeschlossen: gleichnamige Werke für {n} Tracks gesucht",
+      "log.workRecheck.one": "Die Schreiber von {n} Track haben sich geändert – gleichnamige Werke werden neu gesucht",
+      "log.workRecheck.other": "Die Schreiber von {n} Tracks haben sich geändert – gleichnamige Werke werden neu gesucht",
       "log.stageSummary": "Übernehmen abgeschlossen: {added} hinzugefügt, {updated} aktualisiert, {removed} herausgenommen, {changed} im Editor selbst geändert, {remove} von Hand zu entfernen",
       "seriesLabel.title": "Verlags-Label (Discogs „Parent Label“):",
       "seriesLabel.onCreate": "wird mit „Serie anlegen …“ eingetragen",
@@ -3110,6 +3114,8 @@
       "log.importDone": "Importación completa: {rows} roles de {entries} entradas en el panel, {existing} ya en MusicBrainz",
       "log.checksDone.one": "Comprobaciones completas: obras homónimas buscadas para {n} pista",
       "log.checksDone.other": "Comprobaciones completas: obras homónimas buscadas para {n} pistas",
+      "log.workRecheck.one": "Los autores de {n} pista han cambiado: se vuelven a buscar sus obras homónimas",
+      "log.workRecheck.other": "Los autores de {n} pistas han cambiado: se vuelven a buscar sus obras homónimas",
       "log.stageSummary": "Añadido completo: {added} añadidas, {updated} actualizadas, {removed} quitadas, {changed} cambiadas en el propio editor, {remove} para quitar a mano",
       "seriesLabel.title": "Sello editor (Discogs «Parent Label»):",
       "seriesLabel.onCreate": "se añade con «Crear serie …»",
@@ -4247,6 +4253,8 @@
       "log.importDone": "Import terminé : {rows} rôles de {entries} entrées dans le tableau de bord, {existing} déjà dans MusicBrainz",
       "log.checksDone.one": "Vérifications terminées : œuvres homonymes cherchées pour {n} piste",
       "log.checksDone.other": "Vérifications terminées : œuvres homonymes cherchées pour {n} pistes",
+      "log.workRecheck.one": "Les auteurs de {n} piste ont changé – ses œuvres homonymes sont cherchées à nouveau",
+      "log.workRecheck.other": "Les auteurs de {n} pistes ont changé – leurs œuvres homonymes sont cherchées à nouveau",
       "log.stageSummary": "Ajout terminé : {added} ajoutées, {updated} mises à jour, {removed} retirées, {changed} modifiées dans l’éditeur lui-même, {remove} à retirer à la main",
       "seriesLabel.title": "Label éditeur (Discogs « Parent Label ») :",
       "seriesLabel.onCreate": "est ajouté avec « Créer la série … »",
@@ -9777,6 +9785,9 @@
       S.rows = [];
       S.supp = null;
       S.suppSources = new Map();
+      // [3.12.1] the same-named works of the import before do not count for this one (they were never reset)
+      S.workSearch = new Map();
+      if (S.searchRunning) S.searchCancel = true;
       renderSource();
       renderSupp();
 
@@ -12562,6 +12573,7 @@
 
   function refresh() {
     if (!S.overlay) return;
+    scheduleWorkRecheck();
     autoSkipExisting();
     syncSourceCredits();
     const { items, rowInfo, removals, waiting } = computePlan();
@@ -13092,6 +13104,28 @@
     return out;
   }
 
+  /** The MusicBrainz writers of a track as one text (which writers a search was made with). */
+  const writerSig = (people) => [...people.keys()].sort().join(' ');
+
+  /**
+   * [3.12.1] The writers of tracks changed – a name got its MusicBrainz entry (a suggestion, an alias, a URL, a new
+   * artist), a writing role was added or moved to the work level: their same-named works are looked up again. Runs
+   * a moment after each refresh; tracks searched with other writers than they have now are searched anew.
+   */
+  let workRecheckTimer = null;
+  function scheduleWorkRecheck() {
+    clearTimeout(workRecheckTimer);
+    workRecheckTimer = setTimeout(() => {
+      if (!S.overlay || S.searchRunning || !S.workSearch.size) return;
+      const changed = [...S.workSearch].filter(([i, s]) => s.state !== 'loading' && !worksForTrack(i).length
+        && writerSig(creditedWritersOf(i)) !== (s.sig || '')).map(([i]) => i);
+      if (!changed.length) return;
+      changed.forEach((i) => S.workSearch.delete(i));
+      log('info', 'workRecheck', { n: changed.length });
+      autoSearchWorks();
+    }, 800);
+  }
+
   /**
    * Same-named works of this track's writers: a work is offered only if one of the writers Discogs names
    * is credited on it in MusicBrainz and its title or one of its aliases matches the track title.
@@ -13101,22 +13135,24 @@
     if (!track) return;
     const writers = writersForTrack(i);
     const people = creditedWritersOf(i);
+    // [3.12.1] which writers the search was made with (searched again when they change)
+    const sig = writerSig(people);
     if (!people.size) {
-      S.workSearch.set(i, { state: 'noWriters', results: [], writers });
+      S.workSearch.set(i, { state: 'noWriters', results: [], writers, sig });
       renderWorkRow(i);
       return;
     }
-    S.workSearch.set(i, { state: 'loading', results: [], writers });
+    S.workSearch.set(i, { state: 'loading', results: [], writers, sig });
     renderWorkRow(i);
     try {
       const found = await searchWorks(workTitleOf(track.title), [...people.keys()]);
       const title = normTitle(workTitleOf(track.title));
       const results = found.filter((w) => w.writerIds.some((id) => people.has(id))
         && [w.title, ...w.aliases].some((t) => withinOne(normTitle(t), title)));
-      S.workSearch.set(i, { state: 'done', results, writers });
+      S.workSearch.set(i, { state: 'done', results, writers, sig });
       log('info', 'workSearch', { track: trackLabel(track), n: results.length });
     } catch (e) {
-      S.workSearch.set(i, { state: 'error', results: [], writers, error: e.message });
+      S.workSearch.set(i, { state: 'error', results: [], writers, error: e.message, sig });
       log('error', 'error', { text: e.message });
     }
     renderWorkRow(i);
@@ -13848,7 +13884,11 @@
   }
 
   async function autoSearchWorks() {
-    if (S.searchRunning) return;
+    // [3.12.1] a search still running (of an import before, or of other writers) runs this one after it
+    if (S.searchRunning) {
+      S.searchAgain = true;
+      return;
+    }
     const todo = S.mbTracks.filter((t) => matrixTrack(t) && !isPlaceholderTitle(t.title) && !worksForTrack(t.idx).length && !S.workSearch.has(t.idx));
     if (!todo.length) return;
     S.searchRunning = true;
@@ -13862,9 +13902,11 @@
       if (el) el.firstChild.textContent = tr('matrix.searchProgress', S.searchProgress);
     }
     const done = S.searchProgress.done;
-    Object.assign(S, { searchProgress: null, searchRunning: false });
+    const again = S.searchAgain;
+    Object.assign(S, { searchProgress: null, searchRunning: false, searchAgain: false });
     renderWorks();
     log('ok', 'checksDone', { n: done });
+    if (again) autoSearchWorks();
   }
 
   // --- Rendering ------------------------------------------------------------------------
@@ -16890,7 +16932,8 @@
       if (win.closest('.dci-inline') || win.classList.contains('dci-log-docked')) return;
       bringToFront(kind);
       const handle = e.target.closest(handleSelector);
-      if (!handle || e.button !== 0 || e.target.closest('button, input, select, textarea, a, label, option')) return;
+      // [3.12.1] also foldable lists in the head (the lines a text did not give, "n lines not recognized")
+      if (!handle || e.button !== 0 || e.target.closest('button, input, select, textarea, a, label, option, summary, details')) return;
       e.preventDefault();
       const start = geomOf(win);
       const dx = e.clientX - start.x;
