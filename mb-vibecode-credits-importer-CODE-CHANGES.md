@@ -13,12 +13,36 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.12.1, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.13.2, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.13.2 · 2026-10-17
+
+The rules window names Discogs only with Discogs (collect item 3).
+
+- **New:** `RULES_ANY` (8 keys → their neutral variant), `trRules(key)` (the Discogs text while `S.release && S.source === DISCOGS`, else the neutral one), `refreshRulesWindow()` (label `[data-rf="test-label"]` and `renderRulesBody()`), called in `loadRelease` once the new source is set.
+- **Changed:** the 8 uses in `rulesTables`, `ownRulesHtml`, the own-rule form check and `ruleTestHtml` use `trRules`; the label of the test field is a `<span data-rf="test-label">`.
+- **Texts:** `rules.testAny`, `rules.testHintAny`, `rules.colRole`, `rules.kindRoleAny`, `rules.kindInstrumentAny`, `rules.fRoleAny`, `rules.fSpellingAny`, `rules.formIncompleteAny` (4 languages).
+- **Tests:** new `t_rulesname.py` (Discogs → text → Discogs with the window open); `register_golden.json` written anew – only the column heads and own-rule texts of the window differ (its golden part is taken after a text import).
+
+## Import 3.13.1 · 2026-10-17
+
+Phrases after "at" that are no place (collect item 2).
+
+- **New:** `NOT_A_PLACE` (T019, section 2d) – "the same time", "the time", "that/this/the point|stage|moment", "the end|beginning|start" (alone or before "of"), "once", "night", "dawn", "dusk", "midnight", "noon", "least", "all", "times", "first", "last" (alone), "first|last" before week, weekend, day(s), night(s), time, month, year, session(s), take(s). In `TABLES` with `show()`.
+- **Changed:** `TEXT.placeOf` gives `null` for them (as for `PRIVATE_PLACE`), so `place()` adds nothing.
+- **Tests:** `t_about.py` part E; `register_golden.json` written anew – the corpus lines "Mixed at last, in the summer of 1980" and "recorded at the same time as the album" give no place now (listed as not recognized), the window lists T019.
+
+## Import 3.13.0 · 2026-10-17
+
+Name suggestions for names with an initial (collect item 1).
+
+- **Changed:** `suggestByName` – for a person whose `nameWords` include a one-letter word and at least one longer word, a second search `artist:(written words) OR alias:(…)` (`limit=25`); its hits are added to those of the first search (no duplicates), then `nameFit` decides as before ("similar" when the initials fit first and middle names in order).
+- **Tests:** new `t_initials.py` (T. Snekkestad, Barry J. Guy, K. Tanaka vs. Kenji/Hiro, no second search without an initial).
 
 ## Import 3.12.1 · 2026-10-17
 

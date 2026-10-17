@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.12.1 | – |
+| 2026-10-17 | 3.11.0 – 3.13.2 | – |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -70,6 +70,24 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-17
+
+### Import 3.13.2
+
+#### Changed
+
+- **"Mapping rules" names Discogs only while Discogs is the loaded source.** With Bandcamp, a pasted text or no source it says "Try a role:", "Role", "Role → MusicBrainz", "Spelling → MB instrument", "Role (without details)", "Spelling", and the hint asks for a role "as the source writes it" ("Bass [Upright]" or "tenor sax"). The rules are the same for every source. An open window follows when another source is loaded.
+
+### Import 3.13.1
+
+#### Fixed
+
+- **What follows "at" without being a place gives no entry:** "recorded at the same time as …", "mixed at last", "at night", "at the end of the session", "at first" (new word list T019 in the register, shown in "Mapping rules"). "first" and "last" count only alone or before a word of time ("first week", "last day"), so "First Avenue, Minneapolis" stays a place; "The End Studios" and "All Saints Church" stay places too. Place names in small letters are still read ("recorded at loft in cologne"). A date in such a line still goes into the date pool; the line is listed as not recognized (in Bandcamp's "about" text it is passed over).
+
+### Import 3.13.0
+
+#### Added
+
+- **Name suggestions for names with an initial:** MusicBrainz's search needs every word of a name, and "T" is no word of "Torben" – so a name with an initial is also searched with its written-out words. "T. Snekkestad" finds "Torben Snekkestad", "Barry J. Guy" finds "Barry John Guy", "T. J. Snekkestad" would find "Torben Jon Snekkestad" – each marked "similar name". The initials must fit the first and middle names in their order ("K. Tanaka" finds "Kenji Tanaka", not "Hiro Tanaka"). One more request per such name; nothing is assigned by itself.
 
 ### Import 3.12.1
 
