@@ -4,11 +4,12 @@ A) Track 4 (no writers): the release artist's work "Song Four" is offered ("work
    names the artists. Track 3 (Writer Z, nothing found): the bassist recorded "Song Three" (a cover, "Song Three (live)")
    – offered with that recording. Track 2: the writer's own search and his works find the same work – shown once.
 B) The order: the release's artists first, then the writers, then the performers; the log names the works read and the
-   result; a work chosen from these is linked as one found by the search.
+   result; a work chosen from these is linked as one found by the search, and goes into the stored works (3.16.0) of the
+   artists credited on its track.
 C) Read once per session: a second import (a pasted text) compares again without asking MusicBrainz again (the release
    artist's work is offered again for track 4, whose chosen work was given up).
-D) A large catalogue: an artist with 2,500 recordings takes longer than 10 seconds – a message says why; only the
-   first 2,000 recordings are read, and a message says so.
+D) A large catalogue: an artist with 2,500 recordings takes longer than 10 seconds – a message says why; with the
+   setting "at most 2,000 per artist" (3.16.0; default 4,000) only the first 2,000 are read, and a message says so.
 E) A result of the background does not disturb typing: while a date field of the works matrix is being typed in, the
    matrix is not drawn anew (focus and text stay); once the field is left, the work found is shown."""
 import re
@@ -70,8 +71,13 @@ with sync_playwright() as p:
     pg.locator('tr[data-work="3"]').locator(f'[data-act=work-pick][data-gid="{W4}"]').evaluate('b => b.click()')
     pg.wait_for_timeout(400)
     picked = [x for x in pg.evaluate(LOGS) if 'chosen for linking' in x]
+    # 3.16.0: the work chosen goes into the stored works of the artists credited on the track (Bass Man plays on all tracks)
+    pg.wait_for_timeout(500)
+    kept = pg.evaluate("""new Promise(r => { const q = indexedDB.open('dci-works', 1); q.onsuccess = () => {
+      const t = q.result.transaction('artists').objectStore('artists').get('%s'); t.onsuccess = () => r(t.result ? t.result.works.map(w => w[0]) : null); }; })""" % BASS)
+    print('   gespeicherte Werke von Bass Man:', kept)
     print('   gewählt:', picked, '| Track 4 hat Werk:', pg.locator('tr[data-work="3"]').locator('.dci-same').count() == 0)
-    results.append(ok_order and ok_log and picked == ['Track 1.4: work “Song Four” chosen for linking']
+    results.append(ok_order and ok_log and picked == ['Track 1.4: work “Song Four” chosen for linking'] and kept and W4 in kept and W3 in kept
                    and pg.locator('tr[data-work="3"]').locator('.dci-same').count() == 0)
     # C) a second import: compared again from what was read (the work chosen for track 4 is given up before)
     pg.locator('tr[data-work="3"] [data-act=work-unplan]').evaluate('b => b.click()')
@@ -99,6 +105,9 @@ with sync_playwright() as p:
     ctx = H.new_context(b)
     pg, errs = H.open_mb_edit(ctx, companion=False)
     pg.on('dialog', lambda d: d.accept())
+    # 3.16.0: at most 2,000 works and recordings per artist (the setting, stored; read when the script starts)
+    pg.evaluate("localStorage.setItem('dci-aw-max', '2000')")
+    pg.reload(); pg.add_script_tag(content=H.MAIN)
     pg.wait_for_selector('#dci-open', timeout=20000)
     H.open_dashboard(pg)
     H.wait_for(pg, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 120)
@@ -109,7 +118,7 @@ with sync_playwright() as p:
     print('   Protokoll:', log)
     print('   Aufnahmen gelesen bis Offset:', max(recs), '| Anfragen:', len(recs))
     results.append(any('takes a while: a large catalogue (2500 recordings' in m for m in msgs)
-                   and any('Guitar Guy has 2500 recordings; only the first 2000 were compared' in m for m in msgs)
+                   and any('Guitar Guy has 2500 works and recordings; only the first 2000 were compared' in m for m in msgs)
                    and any('a large catalogue' in x for x in log) and any('only the first 2000 compared' in x for x in log)
                    and len(recs) == 20 and max(recs) == 1900)
     print('Fehler:', errs)

@@ -13,14 +13,28 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.15.3, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.16.0, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
 
-## Import 3.15.3 · 2026-10-17
+## Import 3.16.0 · 2026-10-17
+
+The menu "Settings" (collect item 13) and the stored works of the artists (collect item 12). Milestone.
+
+- **New (settings of the works comparison):** `AW_SETTINGS` (`awMax` 100–10,000 step 100 default 4,000; `awSlowSec` 1–120 default 10; `awSlowN` 100–10,000 step 100 default 900; `awDays` 1–90 default 7; keys `dci-aw-max`, `dci-aw-slow-s`, `dci-aw-slow-n`, `dci-aw-days`), `awValue(name, v)` (clamped, rounded to the step), `S.awOn` (`dci-aw-on`, stored only when off).
+- **`loadArtistWorks`:** one budget `S.awMax` for linked works and recordings (`entry.max`, `entry.linkedRead`); `capped` also when linked works are left out; when the works use the whole budget one request `recording?artist=…&limit=1` gives the number of recordings for the message; the recording requests ask for `min(100, rest)`. `ARTIST_WORKS_MAX` is gone.
+- **`runArtistWorks`:** returns at once (and clears the hits) when `S.awOn` is off; per target first `awGet` – a fresh record (`awFresh`: younger than `S.awDays`, not capped below `S.awMax`) becomes the entry (`awUnpack`, log `log.artistWorksStored`); else read, `readAt` set, `awPut(awPack(…))`; the slow message uses `S.awSlowSec` and `S.awSlowN`; the capped message `n` = linked + recordings, `max` = `e.max`.
+- **New (store):** `AW_DB` (`dci-works`, store `artists`, keyPath `mbid`), `awDb()`, `awStore(mode, fn)`, `awGet`, `awPut`, `awCount`, `awClear`, `awPack(mbid, e, readAt)` (works as arrays `[gid, title, aliases, type, disambiguation, 'l'|'r', recording]`), `awUnpack(rec)`, `awFresh(rec)`; `rememberArtistWork(i, gid, title)` – called by `work-pick` and after a work was created (`rememberCreatedWork`): the release-credit artists and the artists of the rows on that track get the work (memory and store, `readAt` kept).
+- **New (menu):** `SETTING_TOPICS`, `TOPIC_KEYS` (stored keys per topic), `SHARED_SWITCHES`, `settingsHtml()` (topics as `data-act="settings-topic"` buttons, `S.settingsTopics`; reuses `data-f` controls of the dashboard – `lang`, `bc-tracks`, `mx-codes`, `fill-credits`, `stage-cap`, `dm-auto`, `pools-keep`, `zoom-in/out`, `place-toggle`, `syncModeHtml()`, `sourceOrderHtml()` – and has fields of its own with `data-set`: `log-open`, `log-place`, `aw-on`, `awMax`, `awSlowSec`, `awSlowN`, `awDays`, `wattr-long`, `cap-limit`), `renderSettings()` (keeps the focus), `syncSharedSwitches()` (the dashboard's copies of shared switches, the footer's cap label `[data-el="cap-label"]`), `settingsAfterEvent(e)` (overlay click/change listener, after a `setTimeout` so that the document-level handlers of the Discogs view have run), `settingsChange(el)` (`onChange` hands `data-set` fields to it), `resetTopic(t)`.
+- **Changed:** head button `data-act="settings-open"` and panel `[data-el="settings"]` (after the reset panel; opening one closes the other); `renderAll` calls `renderSettings`; click cases `settings-open` (counts the store with `awCount`), `settings-topic`, `settings-reset` (confirm), `aw-clear` (confirm, log `log.artistWorksCleared`). `SETTINGS_KEYS` gains `dci-aw-on` and the `AW_SETTINGS` keys; `resetSettings` sets them back and clears the store. The footer's cap text is a `span[data-el="cap-label"]`.
+- **Texts (4 languages):** `settings.*` (button, title, hint, topics `settings.t.*`, `settings.resetTopic`, `settings.resetAsk`, `settings.place*`, `settings.logOpen`, `settings.logPlace`, `settings.discogsHint`, `settings.aw*`, `settings.awStored`/`settings.awClearAsk` one/other, `settings.wattrLong`, `settings.capOn`, `settings.capLimit`, `settings.aria.*`), `log.settingAw`, `log.settingValue`, `log.settingsTopicReset`, `log.artistWorksStored` and `log.artistWorksCleared` (one/other), `ms.3.16.0`; `msg.artistWorksCapped` and `log.artistWorksCapped` say "works and recordings". `MILESTONES` gains 3.16.0.
+- **CSS:** `.dci-settings`, `.dci-set-head`, `.dci-set-topic`, `.dci-set-tgl`, `.dci-set-body`, `.dci-set-row`, `.dci-set-reset`.
+- **Tests:** new `t_settings.py` (menu and topics, shared switches both ways, a value with steps, a topic's "↺" with its question, the store across a reload, clearing it, switched off, a Discogs-view button in the menu); `t_artistworks.py` D sets `dci-aw-max` = 2,000 (the default is 4,000 now), B checks the chosen work in the store of Bass Man; `t_notice.py` expects 3.16.0, 3.15.0, 3.12.0 and no longer 3.10.0.
+- **Watch out:** the log of a release is kept across reloads – a test that waits for a log line after loading again must wait for one more than before.
+
 
 The suggestions as a wrapping block (addition to collect item 15).
 
