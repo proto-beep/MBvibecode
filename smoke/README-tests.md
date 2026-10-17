@@ -93,7 +93,7 @@ python3 t_names.py        # texts (3.6.0): "tenor & soprano sax, trumpet and cla
                           # accents ("Agusti" → "Agustí") and "similar name" with a middle name ("Barry Guy" → "Barry John Guy")
 python3 t_about.py        # Bandcamp "about" text (3.7.0): "recorded at Loft in Cologne, june 16/17 2018" → place Loft (Cologne),
                           # places suggested only in that area, the period in the date pool; "Studio Nord, Bremen" in the credits;
-                          # "mixed at home in Oslo" gives no entry
+                          # "mixed at home in Oslo", "at the same time", "at last" give no entry (3.13.1)
 python3 t_reldate.py      # date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level
                           # takes the matching date, a date typed by hand stays, the mark stored with the matrix
 python3 t_register.py     # the mapping register stays the same (3.11.0, golden test): a frozen corpus (register_corpus.json:
@@ -102,6 +102,9 @@ python3 t_register.py     # the mapping register stays the same (3.11.0, golden 
                           # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
 python3 t_recheck.py      # fixes of 3.12.1: "n lines not recognized" opens in the window; same-named works searched again when
                           # a text's writer is assigned (found then), not without a change; a new import searches anew
+python3 t_initials.py     # name suggestions for names with an initial (3.13.0): "T. Snekkestad" → Torben Snekkestad, "Barry J. Guy"
+                          # → Barry John Guy, "K. Tanaka" → Kenji (not Hiro) Tanaka, no second search without an initial
+python3 t_rulesname.py    # "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
 ```
 
 **Golden test of the register:** `register_corpus.json` was made once from Import 3.10.0 and stays as it is (more roles

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.12.1
+// @version      3.13.2
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.12.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.13.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1041,6 +1041,14 @@
       "rules.import": "Import rules:",
       "rules.ioHint": "A file with your rules and the built-in rules you switched off – to keep, move to another browser or share.",
       "rules.formIncomplete": "Please give the Discogs role and the MusicBrainz type (or the instrument).",
+      "rules.testAny": "Try a role:",
+      "rules.testHintAny": "Type a role as the source writes it, e.g. “Bass [Upright]” or “tenor sax”; several separated by commas.",
+      "rules.colRole": "Role",
+      "rules.kindRoleAny": "Role → MusicBrainz",
+      "rules.kindInstrumentAny": "Spelling → MB instrument",
+      "rules.fRoleAny": "Role (without details)",
+      "rules.fSpellingAny": "Spelling",
+      "rules.formIncompleteAny": "Please give the role and the MusicBrainz type (or the instrument).",
       "rules.importBad": "This is not a rules file of this script.",
       "rules.imported": "{n} rules imported",
       "msg.rulesApplied": "{what}: rules applied, {n} rows mapped again.",
@@ -2180,6 +2188,14 @@
       "rules.import": "Regeln importieren:",
       "rules.ioHint": "Eine Datei mit deinen Regeln und den eingebauten Regeln, die du abgeschaltet hast – zum Sichern, Übertragen oder Teilen.",
       "rules.formIncomplete": "Bitte Discogs-Rolle und MusicBrainz-Typ (bzw. das Instrument) angeben.",
+      "rules.testAny": "Rolle ausprobieren:",
+      "rules.testHintAny": "Eine Rolle so eingeben, wie die Quelle sie schreibt, z. B. „Bass [Upright]“ oder „tenor sax“; mehrere durch Komma getrennt.",
+      "rules.colRole": "Rolle",
+      "rules.kindRoleAny": "Rolle → MusicBrainz",
+      "rules.kindInstrumentAny": "Schreibweise → MB-Instrument",
+      "rules.fRoleAny": "Rolle (ohne Klammerangabe)",
+      "rules.fSpellingAny": "Schreibweise",
+      "rules.formIncompleteAny": "Bitte Rolle und MusicBrainz-Typ (bzw. das Instrument) angeben.",
       "rules.importBad": "Das ist keine Regeldatei dieses Scripts.",
       "rules.imported": "{n} Regeln importiert",
       "msg.rulesApplied": "{what}: Regeln angewendet, {n} Zeilen neu zugeordnet.",
@@ -3319,6 +3335,14 @@
       "rules.import": "Importar reglas:",
       "rules.ioHint": "Un archivo con tus reglas y las integradas que desactivaste – para guardarlas, llevarlas a otro navegador o compartirlas.",
       "rules.formIncomplete": "Indica el rol de Discogs y el tipo de MusicBrainz (o el instrumento).",
+      "rules.testAny": "Probar un rol:",
+      "rules.testHintAny": "Escribe un rol como lo escribe la fuente, p. ej. «Bass [Upright]» o «tenor sax»; varios separados por comas.",
+      "rules.colRole": "Rol",
+      "rules.kindRoleAny": "Rol → MusicBrainz",
+      "rules.kindInstrumentAny": "Grafía → instrumento de MB",
+      "rules.fRoleAny": "Rol (sin detalles)",
+      "rules.fSpellingAny": "Grafía",
+      "rules.formIncompleteAny": "Indica el rol y el tipo de MusicBrainz (o el instrumento).",
       "rules.importBad": "Esto no es un archivo de reglas de este script.",
       "rules.imported": "{n} reglas importadas",
       "msg.rulesApplied": "{what}: reglas aplicadas, {n} filas asignadas de nuevo.",
@@ -4458,6 +4482,14 @@
       "rules.import": "Importer des règles :",
       "rules.ioHint": "Un fichier avec vos règles et les règles intégrées désactivées – pour les garder, les transférer vers un autre navigateur ou les partager.",
       "rules.formIncomplete": "Indiquez le rôle Discogs et le type MusicBrainz (ou l’instrument).",
+      "rules.testAny": "Essayer un rôle :",
+      "rules.testHintAny": "Saisissez un rôle tel que la source l’écrit, p. ex. « Bass [Upright] » ou « tenor sax » ; plusieurs séparés par des virgules.",
+      "rules.colRole": "Rôle",
+      "rules.kindRoleAny": "Rôle → MusicBrainz",
+      "rules.kindInstrumentAny": "Graphie → instrument MB",
+      "rules.fRoleAny": "Rôle (sans détails)",
+      "rules.fSpellingAny": "Graphie",
+      "rules.formIncompleteAny": "Indiquez le rôle et le type MusicBrainz (ou l’instrument).",
       "rules.importBad": "Ce n’est pas un fichier de règles de ce script.",
       "rules.imported": "{n} règles importées",
       "msg.rulesApplied": "{what} : règles appliquées, {n} lignes attribuées de nouveau.",
@@ -5226,6 +5258,8 @@
     { id: 'T017', where: 'LIVE_TITLE', note: 'Track titles that say "live": "(Live)", "(Live at …)", "[Live]", "– Live" (S021)', show: () => ({ pattern: LIVE_TITLE }) },
     { id: 'T018', where: 'NOTE_ROLES', note: 'Roles named with a track list in the notes ("XYZ Publishing (1, 4, 6)", "Written by Y (2, 5)") (S022)',
       show: () => ({ pairs: NOTE_ROLES.map(([re, type]) => [re, type]) }) },
+    { id: 'T019', where: 'NOT_A_PLACE', note: 'Texts: what follows "at" without being a place ("at the same time", "at last", "at night", "at the end of …")',
+      show: () => ({ pattern: NOT_A_PLACE }) },
   ];
 
   /** Discogs spelling → possible MB instrument names (tried in this order). */
@@ -5351,6 +5385,11 @@
   // [T012] Texts (3.7.0): "home", "home during lockdown", "my place", "their own living room" – a private place, not
   // one of MusicBrainz
   const PRIVATE_PLACE = /^(?:home\b|(?:my|his|her|their|our)\s+(?:own\s+)?(?:home|house|flat|apartment|bedroom|living\s?room|kitchen|garage|basement|attic|cellar|place|studio)\b)/i;
+
+  // [T019] Texts (3.13.1): what follows "at" without being a place – "recorded at the same time as …", "mixed at last",
+  // "at night", "at the end of the session", "at first". "first" and "last" only alone or before a word of time, so
+  // "First Avenue" stays a place; small letters are no sign (place names may be written so too)
+  const NOT_A_PLACE = /^(?:(?:the\s+)?same\s+time\b|the\s+time\b|(?:that|this|the)\s+(?:point|stage|moment)\b|(?:the\s+)?(?:end|beginning|start)(?:$|\s+of\b)|(?:once|night|dawn|dusk|midnight|noon|least|all|times|first|last)$|(?:first|last)\s+(?:week|weekend|days?|nights?|time|month|year|sessions?|takes?)\b)/i;
 
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
   const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
@@ -6106,7 +6145,7 @@
       let area = parts[1] || '';
       const inArea = !area && name.match(/^(.+?)\s+in\s+(\p{L}[\p{L}\s.'’-]*)$/u);
       if (inArea) [, name, area] = inArea;
-      if (PRIVATE_PLACE.test(clean(name))) return null;
+      if (PRIVATE_PLACE.test(clean(name)) || NOT_A_PLACE.test(clean(name))) return null;
       return { name: clean(name), area: clean(noDates(area)) };
     }
 
@@ -8229,17 +8268,17 @@
     const sect = (id, title, html) => `<section data-rsect="${id}"><h3>${esc(title)}</h3><div class="dci-rules-wrap">${html}</div></section>`;
     const where = (w) => `${tr('rules.code')}: ${w}`;
     return [
-      sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), tr('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note')])}<tbody>
+      sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note')])}<tbody>
         ${roles.map((r) => row(r.id, [r.id, r.re ? patternText(r.re) : tr('rules.special'), (r.types || []).join(', '), r.level || '', r.note || ''])).join('')}</tbody></table>`),
-      sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code')])}<tbody>
+      sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code')])}<tbody>
         ${WORDING_RULES.map((r) => row(r.id, [r.id, r.phrases.join(' | '), r.credit, r.note, r.where || ''])).join('')}</tbody></table>`),
-      sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note')])}<tbody>
+      sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note')])}<tbody>
         ${QUESTION_RULES.map((q) => row(q.id, [q.id, q.base, q.options.join(' · '), q.credit, q.note])).join('')}
         ${TYPE_QUESTIONS.map((q) => row(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note])).join('')}</tbody></table>`),
       sect('special', `${tr('rules.specialTitle')} (S001 … · ${where('SPECIAL_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')])}<tbody>${SPECIAL_RULES.map((r) => row(r.id, [r.id, r.note, r.where || ''])).join('')}</tbody></table>`),
-      sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), tr('rules.discogs'), tr('rules.mb'), tr('rules.level')])}<tbody>
+      sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level')])}<tbody>
         ${COMPANY_ROLES.map(([re, o]) => row(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.artist || [])]).join(', '), o.level || ''])).join('')}</tbody></table>`),
-      sect('instruments', `${tr('rules.instruments')} (T001 · ${where('INSTRUMENT_ALIASES')})`, `<table>${head([tr('rules.discogs'), tr('rules.mb')], false)}<tbody>
+      sect('instruments', `${tr('rules.instruments')} (T001 · ${where('INSTRUMENT_ALIASES')})`, `<table>${head([trRules('rules.discogs'), tr('rules.mb')], false)}<tbody>
         ${Object.entries(INSTRUMENT_ALIASES).map(([k, v]) => `<tr>${cell(k)}${cell(v.join(' / '))}</tr>`).join('')}</tbody></table>`),
       sect('words', `${tr('rules.words')} (T002 · ${where('GENERIC_WORDS')})`, `<p>${esc([...GENERIC_WORDS].sort().join(', '))}</p>`),
       sect('dates', `${tr('rules.dates')} (D001 … · ${where('DATE_RULES, DATE_MATCHERS')})`, `<table>${head([tr('rules.id'), tr('rules.note')])}<tbody>
@@ -8261,15 +8300,15 @@
     const opt = (v, label) => `<option value="${esc(v)}" ${String(f[label.k] || '') === v ? 'selected' : ''}>${esc(label.t)}</option>`;
     const list = userRules();
     const rowsHtml = list.map((u) => `<tr data-rid="${esc(u.id)}"><td><input type="checkbox" data-urule-on="${esc(u.id)}" ${u.on !== false ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id: u.id }))}"></td>
-      <td>${esc(u.id)}</td><td>${esc(tr(u.kind === 'role' ? 'rules.kindRole' : 'rules.kindInstrument'))}</td><td>${esc(u.discogs)}${u.details ? ` [${esc(u.details)}]${u.detailsMode === 'exact' ? ' =' : ''}` : (u.detailsMode === 'exact' ? ' []' : '')}</td>
+      <td>${esc(u.id)}</td><td>${esc(trRules(u.kind === 'role' ? 'rules.kindRole' : 'rules.kindInstrument'))}</td><td>${esc(u.discogs)}${u.details ? ` [${esc(u.details)}]${u.detailsMode === 'exact' ? ' =' : ''}` : (u.detailsMode === 'exact' ? ' []' : '')}</td>
       <td>${esc(u.kind === 'role' ? `${u.type} · ${u.level}` : '')}</td><td>${esc(u.instrument || '')}</td><td>${esc(u.credit || '')}</td>
       <td><button type="button" class="dci-textbtn" data-urule-edit="${esc(u.id)}">${esc(tr('rules.edit'))}</button> <button type="button" class="dci-textbtn" data-urule-del="${esc(u.id)}">${esc(tr('rules.delete'))}</button></td></tr>`).join('');
     const role = (f.kind || 'role') === 'role';
     return `<section data-rsect="own"><h3>${esc(tr('rules.own'))} (U001 … · ${esc(tr('rules.ownWhere'))})</h3>
-      ${list.length ? `<div class="dci-rules-wrap"><table><thead><tr><th>${esc(tr('rules.on'))}</th><th>${esc(tr('rules.id'))}</th><th>${esc(tr('rules.kind'))}</th><th>${esc(tr('rules.discogs'))}</th><th>${esc(tr('rules.mb'))}</th><th>${esc(tr('rules.instrument'))}</th><th>${esc(tr('rules.credit'))}</th><th></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>` : `<p class="dci-sub">${esc(tr('rules.ownEmpty'))}</p>`}
+      ${list.length ? `<div class="dci-rules-wrap"><table><thead><tr><th>${esc(tr('rules.on'))}</th><th>${esc(tr('rules.id'))}</th><th>${esc(tr('rules.kind'))}</th><th>${esc(trRules('rules.discogs'))}</th><th>${esc(tr('rules.mb'))}</th><th>${esc(tr('rules.instrument'))}</th><th>${esc(tr('rules.credit'))}</th><th></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>` : `<p class="dci-sub">${esc(tr('rules.ownEmpty'))}</p>`}
       <fieldset class="dci-urule-form"><legend>${esc(f.id ? tr('rules.formEdit', { id: f.id }) : tr('rules.formNew'))}</legend>
-        <label>${esc(tr('rules.kind'))} <select data-uf="kind">${opt('role', { k: 'kind', t: tr('rules.kindRole') })}${opt('instrument', { k: 'kind', t: tr('rules.kindInstrument') })}</select></label>
-        <label>${esc(tr(role ? 'rules.fDiscogs' : 'rules.fSpelling'))} <input type="text" data-uf="discogs" value="${esc(f.discogs || '')}" placeholder="${role ? 'Guitar' : 'Gtr'}"></label>
+        <label>${esc(tr('rules.kind'))} <select data-uf="kind">${opt('role', { k: 'kind', t: trRules('rules.kindRole') })}${opt('instrument', { k: 'kind', t: trRules('rules.kindInstrument') })}</select></label>
+        <label>${esc(trRules(role ? 'rules.fDiscogs' : 'rules.fSpelling'))} <input type="text" data-uf="discogs" value="${esc(f.discogs || '')}" placeholder="${role ? 'Guitar' : 'Gtr'}"></label>
         ${role ? `<label>${esc(tr('rules.details'))} <input type="text" data-uf="details" value="${esc(f.details || '')}" placeholder="Rhythm"></label>
         <label>${esc(tr('rules.detailsMode'))} <select data-uf="detailsMode">${opt('any', { k: 'detailsMode', t: tr('rules.detailsAny') })}${opt('exact', { k: 'detailsMode', t: tr('rules.detailsExact') })}</select></label>
         <label>${esc(tr('rules.type'))} <input type="text" data-uf="type" list="dci-dl-ltnames" value="${esc(f.type || '')}" placeholder="instrument"></label>
@@ -8296,7 +8335,7 @@
     const kind = f.kind || 'role';
     const discogs = norm(f.discogs || '');
     if (!discogs || (kind === 'role' ? !String(f.type || '').trim() : !String(f.instrument || '').trim())) {
-      setRulesStatus(tr('rules.formIncomplete'));
+      setRulesStatus(trRules('rules.formIncomplete'));
       return;
     }
     const rule = { id: f.id || nextUserRuleId(), kind, on: f.on !== false, discogs,
@@ -8349,6 +8388,26 @@
     reader.readAsText(file);
   }
 
+  /**
+   * [3.13.2] The window "Mapping rules" names Discogs only while Discogs is the loaded source; with Bandcamp, a text or
+   * no source it speaks of "role" and "spelling" (the rules are the same for every source).
+   */
+  const RULES_ANY = {
+    'rules.test': 'rules.testAny', 'rules.testHint': 'rules.testHintAny', 'rules.discogs': 'rules.colRole', 'rules.kindRole': 'rules.kindRoleAny',
+    'rules.kindInstrument': 'rules.kindInstrumentAny', 'rules.fDiscogs': 'rules.fRoleAny', 'rules.fSpelling': 'rules.fSpellingAny',
+    'rules.formIncomplete': 'rules.formIncompleteAny',
+  };
+  const trRules = (key) => tr(S.release && S.source === DISCOGS ? key : (RULES_ANY[key] || key));
+
+  /** [3.13.2] Another source was loaded: the open rules window follows. */
+  function refreshRulesWindow() {
+    const el = document.getElementById('dci-rules');
+    if (!el) return;
+    const label = el.querySelector('[data-rf="test-label"]');
+    if (label) label.textContent = trRules('rules.test');
+    renderRulesBody();
+  }
+
   /** Redraws the parts of the rules window that depend on the rules. */
   function renderRulesBody() {
     const el = document.getElementById('dci-rules');
@@ -8362,7 +8421,7 @@
 
   /** What the script makes of a Discogs role (several separated by commas, as on Discogs). */
   function ruleTestHtml(text) {
-    if (!String(text || '').trim()) return `<p class="dci-sub">${esc(tr('rules.testHint'))}</p>`;
+    if (!String(text || '').trim()) return `<p class="dci-sub">${esc(trRules('rules.testHint'))}</p>`;
     // Dates in the text (D001 …)
     const dates = findDates(text, { usOrder: usDateOrder() });
     const datesHtml = dates.length ? `<div class="dci-rule-result"><strong>${esc(tr('rules.datesFound'))}</strong>
@@ -8417,7 +8476,7 @@
       el.innerHTML = `<div class="dci-rules-head"><h2 id="dci-rules-title">${esc(tr('rules.title'))}</h2>
           <button type="button" class="dci-iconbtn" data-rules-close aria-label="${esc(tr('rules.close'))}">✕</button></div>
         <div class="dci-rules-body">
-          <label class="dci-rules-test">${esc(tr('rules.test'))} <input type="text" data-rf="test" placeholder="Bass [Upright], Coordinator [Tour]"></label>
+          <label class="dci-rules-test"><span data-rf="test-label">${esc(trRules('rules.test'))}</span> <input type="text" data-rf="test" placeholder="Bass [Upright], Coordinator [Tour]"></label>
           <div data-rf="result">${ruleTestHtml('')}</div>
           <div data-rf="own"></div>
           <label class="dci-rules-search">${esc(tr('rules.search'))} <input type="search" data-rf="search"></label>
@@ -9780,6 +9839,7 @@
       S.source = source;
       SOURCE_NAME = source.name;
       S.release = rel;
+      refreshRulesWindow();
       S.srcTracks = rel.tracks;
       S.artists = new Map();
       S.rows = [];
@@ -9979,6 +10039,15 @@
           : words && !a.company ? `${type}:(${words}) OR alias:(${words})` : `${type}:${lucenePhrase(a.name)}`;
         const data = await mbWs(`${type}?query=${encodeURIComponent(query)}&limit=25`);
         const items = (data && data[`${type}s`]) || [];
+        // [3.13.0] A name with an initial ("T. Snekkestad", "Torben S. Snekkestad"): MusicBrainz's search needs every
+        // word, and "T" is no word of "Torben" – so the written-out words are searched too (nameFit decides)
+        const initials = nameWords(a.name);
+        const written = initials.filter((w) => w.length > 1);
+        if (!a.company && written.length && written.length < initials.length) {
+          const more = luceneWords(written.join(' '));
+          const data2 = await mbWs(`${type}?query=${encodeURIComponent(`${type}:(${more}) OR alias:(${more})`)}&limit=25`);
+          for (const x of (data2 && data2[`${type}s`]) || []) if (!items.some((y) => y.id === x.id)) items.push(x);
+        }
         const fitOf = (x) => {
           const fits = [nameFit(x.name, a.name), ...(x.aliases || []).map((al) => nameFit(al.name, a.name))];
           return fits.includes('same') ? 'same' : fits.includes('similar') ? 'similar' : '';

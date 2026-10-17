@@ -1468,7 +1468,7 @@
    {"companies": [], "credits": [{"base": "tenor sax", "credited": "", "details": [], "line": "Torben Snekkestad: tenor & soprano sax, trumpet and clarinet", "role": "tenor sax", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Torben Snekkestad", "rawName": "Torben Snekkestad"}}, {"base": "soprano sax", "credited": "", "details": [], "line": "Torben Snekkestad: tenor & soprano sax, trumpet and clarinet", "role": "soprano sax", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Torben Snekkestad", "rawName": "Torben Snekkestad"}}, {"base": "trumpet", "credited": "", "details": [], "line": "Torben Snekkestad: tenor & soprano sax, trumpet and clarinet", "role": "trumpet", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Torben Snekkestad", "rawName": "Torben Snekkestad"}}, {"base": "clarinet", "credited": "", "details": [], "line": "Torben Snekkestad: tenor & soprano sax, trumpet and clarinet", "role": "clarinet", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Torben Snekkestad", "rawName": "Torben Snekkestad"}}, {"base": "piano", "credited": "", "details": [], "line": "Agusti Fernández – piano", "role": "piano", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Agusti Fernández", "rawName": "Agusti Fernández"}}, {"base": "double bass", "credited": "", "details": [], "line": "Barry Guy – double bass, sticks-and-stones", "role": "double bass", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Barry Guy", "rawName": "Barry Guy"}}, {"base": "acoustic guitar", "credited": "", "details": [], "line": "Gene Pick – acoustic & electric guitar", "role": "acoustic guitar", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Gene Pick", "rawName": "Gene Pick"}}, {"base": "electric guitar", "credited": "", "details": [], "line": "Gene Pick – acoustic & electric guitar", "role": "electric guitar", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Gene Pick", "rawName": "Gene Pick"}}, {"base": "bass", "credited": "", "details": [], "line": "Bo Strum – bass & electric guitar", "role": "bass", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Bo Strum", "rawName": "Bo Strum"}}, {"base": "electric guitar", "credited": "", "details": [], "line": "Bo Strum – bass & electric guitar", "role": "electric guitar", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Bo Strum", "rawName": "Bo Strum"}}], "unrecognized": ["Barry Guy – double bass, sticks-and-stones → ? “sticks-and-stones”"]},
    {"companies": [{"catno": "", "line": "Recorded live at Café Oto, London, 12 May 2019 by John Doe", "role": "Recorded At", "tracks": null, "who": {"area": "London", "id": 0, "links": [], "name": "Café Oto", "rawName": "Café Oto"}}, {"catno": "", "line": "Mastered by A at Studio Nord", "role": "Mastered At", "tracks": null, "who": {"area": "", "id": 0, "links": [], "name": "Studio Nord", "rawName": "Studio Nord"}}], "credits": [{"base": "Recorded live By", "credited": "", "details": [], "line": "Recorded live at Café Oto, London, 12 May 2019 by John Doe", "role": "Recorded live By", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "John Doe", "rawName": "John Doe"}}, {"base": "Mastered By", "credited": "", "details": [], "line": "Mastered by A at Studio Nord", "role": "Mastered By", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "A", "rawName": "A"}}, {"base": "Mixed By", "credited": "", "details": [], "line": "Mixed and mastered by Pat Smith", "role": "Mixed By", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Pat Smith", "rawName": "Pat Smith"}}, {"base": "Mastered By", "credited": "", "details": [], "line": "Mixed and mastered by Pat Smith", "role": "Mastered By", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Pat Smith", "rawName": "Pat Smith"}}, {"base": "Arranged By", "credited": "", "details": ["Strings"], "line": "Strings arranged by Zoe Q", "role": "Arranged By [Strings]", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Zoe Q", "rawName": "Zoe Q"}}, {"base": "Music and lyrics By", "credited": "", "details": [], "line": "Music and lyrics by Yan Y", "role": "Music and lyrics By", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Yan Y", "rawName": "Yan Y"}}, {"base": "Written By", "credited": "", "details": [], "line": "Written by Ann, mixed by Ben", "role": "Written By", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Ann", "rawName": "Ann"}}, {"base": "Mixed By", "credited": "", "details": [], "line": "Written by Ann, mixed by Ben", "role": "Mixed By", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Ben", "rawName": "Ben"}}], "unrecognized": []},
    {"companies": [{"catno": "", "line": "Published by Big Songs (1, 3)", "role": "Published By", "tracks": {"indexes": [0, 2], "spec": "1, 3", "unresolved": []}, "who": {"id": 0, "links": [], "name": "Big Songs", "rawName": "Big Songs"}}, {"catno": "", "line": "℗ 2019 Label Records", "role": "Phonographic Copyright (p)", "tracks": null, "who": {"id": 0, "links": [], "name": "Label Records", "rawName": "Label Records"}}, {"catno": "", "line": "© 2019 Label Records", "role": "Copyright (c)", "tracks": null, "who": {"id": 0, "links": [], "name": "Label Records", "rawName": "Label Records"}}], "credits": [{"base": "Arranged By", "credited": "", "details": ["Strings"], "line": "Tracks 3–5: Strings arranged by Kim", "role": "Arranged By [Strings]", "tracks": {"indexes": [2, 4], "spec": "3–5", "unresolved": []}, "who": {"id": 0, "links": [], "name": "Kim", "rawName": "Kim"}}, {"base": "Guitar", "credited": "", "details": [], "line": "Guitar: Al One, Bo Two", "role": "Guitar", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Al One", "rawName": "Al One"}}, {"base": "Guitar", "credited": "", "details": [], "line": "Guitar: Al One, Bo Two", "role": "Guitar", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Bo Two", "rawName": "Bo Two"}}, {"base": "Artwork", "credited": "", "details": [], "line": "Artwork: Cy Three", "role": "Artwork", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Cy Three", "rawName": "Cy Three"}}], "unrecognized": ["Drums (tracks 1, 4) – Dee Four"]},
-   {"companies": [{"catno": "", "line": "recorded at Loft in Cologne, june 16/17 2018", "role": "Recorded At", "tracks": null, "who": {"area": "Cologne", "id": 0, "links": [], "name": "Loft", "rawName": "Loft"}}, {"catno": "", "line": "Mixed at last, in the summer of 1980", "role": "Mixed At", "tracks": null, "who": {"area": "", "id": 0, "links": [], "name": "last", "rawName": "last"}}, {"catno": "", "line": "recorded at the same time as the album", "role": "Recorded At", "tracks": null, "who": {"area": "", "id": 0, "links": [], "name": "the same time as the album", "rawName": "the same time as the album"}}], "credits": [], "unrecognized": ["mixed at home in Oslo, july 2018", "Recorded at the first week of November 1979"]},
+   {"companies": [{"catno": "", "line": "recorded at Loft in Cologne, june 16/17 2018", "role": "Recorded At", "tracks": null, "who": {"area": "Cologne", "id": 0, "links": [], "name": "Loft", "rawName": "Loft"}}], "credits": [], "unrecognized": ["mixed at home in Oslo, july 2018", "Recorded at the first week of November 1979", "Mixed at last, in the summer of 1980", "recorded at the same time as the album"]},
    {"companies": [{"catno": "", "line": "Mastered at Studio Nord, Bremen", "role": "Mastered At", "tracks": null, "who": {"area": "Bremen", "id": 0, "links": [], "name": "Studio Nord", "rawName": "Studio Nord"}}, {"catno": "", "line": "Recorded at Abbey Road Studios, London", "role": "Recorded At", "tracks": null, "who": {"area": "London", "id": 0, "links": [], "name": "Abbey Road Studios", "rawName": "Abbey Road Studios"}}, {"catno": "", "line": "Produced by Pro Ducer at Big Room", "role": "Produced At", "tracks": null, "who": {"area": "", "id": 0, "links": [], "name": "Big Room", "rawName": "Big Room"}}, {"catno": "", "line": "Engineered at Small Room by Eng Ineer", "role": "Engineered At", "tracks": null, "who": {"area": "", "id": 0, "links": [], "name": "Small Room", "rawName": "Small Room"}}], "credits": [{"base": "bass", "credited": "", "details": [], "line": "Bass Man – bass", "role": "bass", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Bass Man", "rawName": "Bass Man"}}, {"base": "Produced By", "credited": "", "details": [], "line": "Produced by Pro Ducer at Big Room", "role": "Produced By", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Pro Ducer", "rawName": "Pro Ducer"}}, {"base": "Engineered By", "credited": "", "details": [], "line": "Engineered at Small Room by Eng Ineer", "role": "Engineered By", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Eng Ineer", "rawName": "Eng Ineer"}}], "unrecognized": ["Loft, Cologne – recorded at"]},
    {"companies": [], "credits": [{"base": "Vocals", "credited": "", "details": [], "line": "Vocals – Sue Sing", "role": "Vocals", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Sue Sing", "rawName": "Sue Sing"}}, {"base": "Backing Vocals", "credited": "", "details": [], "line": "Backing Vocals – Al Back, Bea Back", "role": "Backing Vocals", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Al Back", "rawName": "Al Back"}}, {"base": "Backing Vocals", "credited": "", "details": [], "line": "Backing Vocals – Al Back, Bea Back", "role": "Backing Vocals", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Bea Back", "rawName": "Bea Back"}}, {"base": "Saxophone", "credited": "", "details": ["Tenor"], "line": "Saxophone [Tenor] – Sax Man", "role": "Saxophone [Tenor]", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Sax Man", "rawName": "Sax Man"}}, {"base": "Keyboards", "credited": "", "details": [], "line": "Keyboards, Synthesizer – Key Board", "role": "Keyboards", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Key Board", "rawName": "Key Board"}}, {"base": "Synthesizer", "credited": "", "details": [], "line": "Keyboards, Synthesizer – Key Board", "role": "Synthesizer", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Key Board", "rawName": "Key Board"}}, {"base": "Percussion", "credited": "", "details": [], "line": "Percussion: Perc One & Perc Two", "role": "Percussion", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Perc One", "rawName": "Perc One"}}, {"base": "Percussion", "credited": "", "details": [], "line": "Percussion: Perc One & Perc Two", "role": "Percussion", "tracks": {"all": true}, "who": {"id": 0, "links": [], "name": "Perc Two", "rawName": "Perc Two"}}], "unrecognized": ["Thanks to everybody"]}
   ]
@@ -1514,8 +1514,6 @@
    ["LabelBig Songs", []],
    ["LabelLabel Records", [["Phonographic Copyright (p)", "711", "", "release", "whole release"], ["Copyright (c)", "708", "", "release", "whole release"]]],
    ["PlaceLoft (Cologne)", [["Recorded At", "693", "", "recording", "4 of 4 tracks"]]],
-   ["Placelast", [["Mixed At", "694", "", "recording", "4 of 4 tracks"]]],
-   ["Placethe same time as the album", [["Recorded At", "693", "", "recording", "4 of 4 tracks"]]],
    ["PlaceAbbey Road Studios (London)", [["Recorded At", "693", "", "recording", "4 of 4 tracks"]]],
    ["PlaceBig Room", [["Produced At", "", "", "recording", "4 of 4 tracks"]]],
    ["PlaceSmall Room", [["Engineered At", "", "", "recording", "4 of 4 tracks"]]]
@@ -1526,6 +1524,8 @@
    "Drums (tracks 1, 4) – Dee Four",
    "mixed at home in Oslo, july 2018",
    "Recorded at the first week of November 1979",
+   "Mixed at last, in the summer of 1980",
+   "recorded at the same time as the album",
    "Loft, Cologne – recorded at",
    "Keyboards, Synthesizer – Key Board",
    "Percussion: Perc One & Perc Two",
@@ -1535,7 +1535,7 @@
  "rules": {
   "companies": [
    "Companies, etc. (C001 … · Code: COMPANY_ROLES)",
-   "On Rule Discogs MusicBrainz Level",
+   "On Rule Role MusicBrainz Level",
    "C001 phonographic copyright phonographic copyright recording",
    "C002 copyright copyright release",
    "C003 licensed from licensor release",
@@ -1595,7 +1595,7 @@
   ],
   "instruments": [
    "Instrument spellings (T001 · Code: INSTRUMENT_ALIASES)",
-   "Discogs MusicBrainz",
+   "Role MusicBrainz",
    "bass bass",
    "electric bass electric bass guitar / bass guitar",
    "acoustic bass acoustic bass guitar / double bass",
@@ -1715,16 +1715,18 @@
    "\\b(written|words and music|words & music|music and lyrics|music & lyrics|lyrics and music|lyrics & music|songs)\\s+by\\b writer",
    "\\b(music|composed|composition|compositions)\\s+by\\b|\\bcomposers?\\b composer",
    "\\b(lyrics|words|text|texte)\\s+by\\b|\\blyricists?\\b lyricist",
-   "\\b(arranged|arrangements?|orchestrated|orchestrations?)\\s+by\\b|\\barrangers?\\b arranger"
+   "\\b(arranged|arrangements?|orchestrated|orchestrations?)\\s+by\\b|\\barrangers?\\b arranger",
+   "T019 · Texts: what follows \"at\" without being a place (\"at the same time\", \"at last\", \"at night\", \"at the end of …\") (Code: NOT_A_PLACE)",
+   "^(?:(?:the\\s+)?same\\s+time\\b|the\\s+time\\b|(?:that|this|the)\\s+(?:point|stage|moment)\\b|(?:the\\s+)?(?:end|beginning|start)(?:$|\\s+of\\b)|(?:once|night|dawn|dusk|midnight|noon|least|all|times|first|last)$|(?:first|last)\\s+(?:week|weekend|days?|nights?|time|month|year|sessions?|takes?)\\b)"
   ],
   "own": [
    "Your rules (U001 … · stored in this browser, tried before the built-in rules)",
    "No own rules yet. Add one below.",
    "New rule",
    "Kind",
-   "Discogs role → MusicBrainz",
-   "Discogs spelling → MB instrument",
-   "Discogs role (without details)",
+   "Role → MusicBrainz",
+   "Spelling → MB instrument",
+   "Role (without details)",
    "Details in brackets",
    "Details must",
    "contain this (empty: any details)",
@@ -1746,7 +1748,7 @@
   ],
   "questions": [
    "Instrument questions (Q001 … · Code: QUESTION_RULES)",
-   "On Rule Discogs Choices Role credit Note",
+   "On Rule Role Choices Role credit Note",
    "Q001 bass electric bass guitar · double bass · acoustic bass guitar bass Plain \"Bass\": which bass?",
    "Q002 guitar electric guitar · acoustic guitar guitar Plain \"Guitar\": which guitar?",
    "Q004 bass guitar bass guitar · electric bass guitar · acoustic bass guitar bass guitar Plain \"Bass Guitar\": which bass guitar? Without a choice it stays bass guitar",
@@ -1754,7 +1756,7 @@
   ],
   "roles": [
    "Roles (R001 … · Code: roleRules)",
-   "On Rule Discogs MusicBrainz Level Note",
+   "On Rule Role MusicBrainz Level Note",
    "R001 (special) recording",
    "R002 written-by | written by | writer | songwriter | songwriters writer, composer work",
    "R098 music and lyrics by | music & lyrics by | music and lyrics | music & lyrics | lyrics and music by | lyrics & music by | lyrics and music | lyrics & music | words and music by | words & music by | words and music | words & music | music and words by | music & words by | all songs by | songs by | all songs written by | songs written by writer work Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)",
@@ -1903,11 +1905,12 @@
    "T015 Dates: words near a date that name its date group (\"recorded\", \"mixed\", \"mastered\", \"℗\") (D015) DATE_HINTS",
    "T016 Date groups: the MusicBrainz relationships that share a column of the date matrix DATE_GROUPS",
    "T017 Track titles that say \"live\": \"(Live)\", \"(Live at …)\", \"[Live]\", \"– Live\" (S021) LIVE_TITLE",
-   "T018 Roles named with a track list in the notes (\"XYZ Publishing (1, 4, 6)\", \"Written by Y (2, 5)\") (S022) NOTE_ROLES"
+   "T018 Roles named with a track list in the notes (\"XYZ Publishing (1, 4, 6)\", \"Written by Y (2, 5)\") (S022) NOTE_ROLES",
+   "T019 Texts: what follows \"at\" without being a place (\"at the same time\", \"at last\", \"at night\", \"at the end of …\") NOT_A_PLACE"
   ],
   "wording": [
    "Role credit wording (W001 … · Code: WORDING_RULES)",
-   "On Rule Discogs Role credit Note Code",
+   "On Rule Role Role credit Note Code",
    "W001 upright bass | bass upright upright bass Upright bass is a double bass; the Discogs word stays as role credit wordingRuleFor, roleCreditFor",
    "W002 contrabass | bass contrabass | contrabass bass contrabass Contrabass is a double bass; the Discogs word stays as role credit wordingRuleFor, roleCreditFor",
    "W003 kontrabass | bass kontrabass | kontrabass bass Kontrabass Kontrabass (German) is a double bass; kept as a German noun with a capital letter wordingRuleFor, roleCreditFor",
