@@ -105,6 +105,13 @@ python3 t_recheck.py      # fixes of 3.12.1: "n lines not recognized" opens in t
 python3 t_initials.py     # name suggestions for names with an initial (3.13.0): "T. Snekkestad" → Torben Snekkestad, "Barry J. Guy"
                           # → Barry John Guy, "K. Tanaka" → Kenji (not Hiro) Tanaka, no second search without an initial
 python3 t_rulesname.py    # "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
+python3 t_textrules.py    # rules for free credits texts (3.14.0): "Music played and recorded by X in March and April 2025",
+                          # "Mixed and mastered by X in May 2025", "Photography Sam Lee", "mastering john doe", the label line
+                          # left out, "… created by a human" → the release's artist suggested; the period 2025-03 – 2025-04
+python3 t_jump.py         # ▲ ▼ in the status bar jump to the top and bottom of the dashboard, in the window and in the page (3.14.1)
+python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
+                          # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
+                          # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)
 ```
 
 **Golden test of the register:** `register_corpus.json` was made once from Import 3.10.0 and stays as it is (more roles
@@ -132,6 +139,12 @@ of the query – case and accents do not count (`harness.fold`) – and, for `ar
 `harness.PLACE_AREAS` gives the mock's own places an area (`{'Abbey Road Studios': 'London'}`).
 The work search (`/ws/2/work?query=…`) answers from `harness.WORK_SEARCH` (`{'id', 'title', 'aliases', 'relations'}`; a work is
 found when one of its artists is named in the query as `arid:`); `harness.WORK_QUERIES` records the queries.
+The browse requests for the works of an artist (3.15.0) answer from `harness.ARTIST_WORKS` (`work?artist=…`: artist gid →
+`[{'id', 'title', 'type', 'aliases'}]`) and `harness.ARTIST_RECORDINGS` (`recording?artist=…`: artist gid →
+`[{'title', 'work': {'id', 'title'} or None}]`, or a number: that many recordings without works, a large catalogue);
+`harness.BROWSES` records them as `(kind, artist, offset)` – they are not in `WORK_QUERIES`. Every import browses each
+artist with an MB entry twice in the background (one request a second), so a test that counts MusicBrainz requests
+should count only its own kind.
 
 With several media (`harness.MEDIA = [2, 1, 1]` …) the dashboard asks for the media before the import:
 `harness.open_dashboard(pg)` answers "All" with the release level (the import as before),

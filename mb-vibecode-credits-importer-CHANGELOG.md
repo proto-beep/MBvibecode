@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.13.2 | – |
+| 2026-10-17 | 3.11.0 – 3.15.0 | – |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -35,6 +35,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-17 | Import 3.15.0 | Works matrix: the tracks without a work are compared with all works of the release's artists, its writers and its musicians – works linked to them and works of their recordings (also covers), in the background, read once per session; a large catalogue is named. Pasted texts and Bandcamp credits: credits in sentences ("Music played and recorded by … in September and October 2026"), "Role Name" lines and "… of this release were created by a human" (the release's artists suggested) are recognized. Arrows in the status bar jump to the top or bottom of the dashboard |
 | 2026-10-17 | Import 3.12.0 | Rebuilt inside: all mapping rules and word lists in one place of the script (the mapping register), the role rules as plain data; what the script makes of a source stays the same (checked with about 1,200 roles, 100 company roles, 50 date phrases and pasted texts). "Mapping rules" lists the tables and word lists (read only) and shows the right level for 27 rules |
 | 2026-10-16 | Import 3.10.0 | The rows of an entry rearrange with the width of the dashboard (relationship above attributes, level above date above tracks), with captions instead of the table head; a date from the pool or the matrix is a chip, its fields open with ✎, begin above end. Dates of the date matrix can be marked "Release level"; a row switched to the release level takes that date. Texts: "tenor & soprano sax", recording place and dates in Bandcamp's "about" text, places with their area, name suggestions without accents and with middle names; supplement with any Discogs or Bandcamp URL |
 | 2026-10-13 | Import 3.5.0 · COMPANION 1.7.0 | Supplement with a second source, on request only: another linked source or a pasted text is compared with the rows; what it adds (new roles, new entries) and where it differs is listed to take over by choice, rows it confirms get its mark (variant B). "Delete stored import …" starts the import of a release afresh. The Bandcamp spelling next to the release's artist credit and MusicBrainz. A fresh start: all stored data reset once |
@@ -70,6 +71,42 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-17
+
+### Import 3.15.0
+
+#### Added
+
+- **Existing works of the artists in the works matrix** (asked for with the release "Invisible Places": "alle Werke, die der Artist schon einmal verknüpft hat, also auch Cover"). The tracks without a work are compared with all works of
+  - the release's artists (its artist credit),
+  - the writers of the tracks (composer, lyricist, writer … with an MB artist),
+  - its musicians (instrument, vocal, performer rows with an MB artist),
+
+  in this order: the works linked to the artist (every artist–work relationship) and the works of the artist's recordings – so a cover the artist recorded before is found too. A work with the title of a track (or an alias; one letter may differ, digits must match, as with the same-named works) is listed under the track, with where it comes from: "work of Test Band", "recorded by Bass Man ("Song Three (live)")". It is linked with "Link" like a work found by the search; nothing is linked by itself, and a track with such a work is not planned as a new work by "＋ New work" for all tracks.
+- **In the background:** the works are read while the dashboard's own requests (search, checks) are not waiting, one request a second as MusicBrainz asks; once per artist and session (a second import, e.g. a pasted text after Discogs, compares again without asking MusicBrainz again). A new name assigned later (a suggestion, an alias, a URL) is compared a moment later.
+- **A large catalogue:** when one artist takes longer than 10 seconds because more than 900 works or recordings are to be read, a message says why ("… takes a while: a large catalogue (2500 recordings, 900 read so far). It goes on in the background."). At most 2,000 recordings are read per artist; a message says so. The log names the works read of each artist and the result ("Works of the artists compared: 3 works with the same title as a track (1.2, 1.3, 1.4)"). The works matrix is drawn anew only when something new was found, and not while you type in one of its fields (then once you leave it).
+
+#### Changed
+
+- The heading of the list says where the works come from: "… by these writers" when only the writers' search found them, "(of the writers, the release's artists or its musicians)" when the comparison found some. The question before "＋ New work" for a track with such a work no longer says "by these writers".
+
+### Import 3.14.1
+
+#### Added
+
+- **Two arrows in the status bar** (bottom of the dashboard): ▲ jumps to the top, ▼ to the bottom – of the window in the window, of the page in the page.
+
+### Import 3.14.0
+
+#### Added
+
+- **Rules for free credits texts, for every source** (a pasted text, Bandcamp's credits; found with the credits of the album "Invisible Places", but meant for any text):
+  - **Credits in sentences:** "Music played and recorded by X in September and October 2026." → X: played by (performer) and recorded by (recording engineer); "Mixed and mastered by X in October 2026." → mixed by, mastered by. Words that only say what was done ("Music", "Songs", "The album" … before the verb) are left out of the role (T021); the time after a name ("in October 2026", "during the summer of 1980") is cut off the name (T020) – the date goes into the date pool. Only the first sentence of a line counts for the name.
+  - **Two months of one year** are one period: "September and October 2026", "Sept/Oct 2026", "septiembre y octubre de 2026" → 2026-09 – 2026-10 (date rule D007).
+  - **"Role Name" without a separator:** "Photography Tom Barrett", "mastering john doe" (names in small letters too) – when the line gives nothing else: a role of 1–3 words that the register knows, then a name of 2–4 words without words like "the", "of", "this", "release" (T025).
+  - **"… were created by a human":** "Music and artwork of this release were entirely created by a (cat assisted) human." names roles (the words before "of this release" and the verb, T022) but no one: for "a human", "me", "us", "the band", "the artist", "himself" … (T023) the release's artists are offered, as an entry of its own with a suggestion ("The text names no one here ("a human") – the release's artist? A suggestion, check before assigning"). Nothing is assigned by itself.
+  - **The label line is left out:** "An Echo Elberfeld release.", "Released on X Records" (T024) – the label is set in the release editor; ℗ and © lines stay credits.
+  - "played by" maps to performer (rule R060).
+- The new word lists T020 – T025 are shown in "Mapping rules" (Tables and word lists).
 
 ### Import 3.13.2
 

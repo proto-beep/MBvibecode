@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.13.2
+// @version      3.15.0
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.13.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.15.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -215,6 +215,8 @@
       "match.nameUseTitle": "Assign this MusicBrainz entry",
       "match.similarName": "similar name",
       "match.similarTitle": "A similar name in MusicBrainz (a middle name or an initial more or less) – check before assigning",
+      "match.placeholderSuggest": "The text names no one here (“{said}”) – the release's artist? A suggestion, check before assigning:",
+      "log.placeholderSuggested": "{name}: the text says “{said}” – the release's artist is suggested",
       "sync.off": "Discogs view: off",
       "sync.offTitle": "The companion script “MB x Vibecode: Credits Importer Companion” is not installed or not active.",
       "sync.noTab": "Discogs view: no Discogs tab",
@@ -347,6 +349,9 @@
       "sum.existing.one": "{n} already on MB",
       "sum.existing.other": "{n} already on MB",
       "footer.preview": "Preview all relationships",
+      "footer.jump": "Move in the dashboard",
+      "footer.top": "To the top of the dashboard",
+      "footer.bottom": "To the bottom of the dashboard",
       "footer.editNote": "Write source and summary to the edit note",
       "footer.apply": "Stage in the relationship editor",
       "footer.hint": "Nothing is submitted. You review the changes in the editor and click “Enter edit” yourself.",
@@ -735,10 +740,23 @@
       "matrix.inMb": "Already in MusicBrainz: {type}",
       "matrix.same.one": "{n} work with the same title by these writers exists:",
       "matrix.same.other": "{n} works with the same title by these writers exist:",
+      "matrix.sameArtists.one": "{n} work with the same title exists (of the writers, the release's artists or its musicians):",
+      "matrix.sameArtists.other": "{n} works with the same title exist (of the writers, the release's artists or its musicians):",
+      "works.viaLinked": "work of {name}",
+      "works.viaRecorded": "recorded by {name} (“{recording}”)",
+      "msg.artistWorksSlow": "Comparing the tracks with the works of {name} takes a while: a large catalogue ({n} recordings, {done} read so far). It goes on in the background.",
+      "msg.artistWorksCapped": "{name} has {n} recordings; only the first {max} were compared with the tracks.",
+      "log.artistWorksSlow": "Works of {name}: a large catalogue ({n} recordings, {done} read so far)",
+      "log.artistWorks.one": "Works of {name}: {n} work read (linked to the artist or recorded by them)",
+      "log.artistWorks.other": "Works of {name}: {n} works read (linked to the artist or recorded by them)",
+      "log.artistWorksDone.one": "Works of the artists compared: {n} work with the same title as a track ({tracks})",
+      "log.artistWorksDone.other": "Works of the artists compared: {n} works with the same title as a track ({tracks})",
+      "log.artistWorksNone": "Works of the artists compared: no work with the same title as a track",
+      "log.artistWorksCapped": "Works of {name}: {n} recordings, only the first {max} compared",
       "matrix.noSame": "No work with the same title by these writers in MusicBrainz.",
-      "matrix.dupWarn": "MusicBrainz already has a work with the same title by these writers: {title}. Create a new work anyway?",
-      "matrix.dupWarnAll.one": "{n} track already has a same-named work by its writers in MusicBrainz ({list}); it is left out so it can be linked instead. Create the other works?",
-      "matrix.dupWarnAll.other": "{n} tracks already have same-named works by their writers in MusicBrainz ({list}); they are left out so they can be linked instead. Create the other works?",
+      "matrix.dupWarn": "MusicBrainz already has a work with the same title (see the list below the track): {title}. Create a new work anyway?",
+      "matrix.dupWarnAll.one": "{n} track already has a same-named work in MusicBrainz ({list}); it is left out so it can be linked instead. Create the other works?",
+      "matrix.dupWarnAll.other": "{n} tracks already have same-named works in MusicBrainz ({list}); they are left out so they can be linked instead. Create the other works?",
       "matrix.rowType": "Work type",
       "matrix.rowLangs": "Lyrics languages",
       "matrix.langAdd": "add a language …",
@@ -796,6 +814,7 @@
       "ms.3.3.0": "New name: Credits Importer (and Credits Importer Companion). Besides Discogs it reads Bandcamp albums (credits, also those of the track pages) and pasted texts (booklet, liner notes): names there are only suggested. A preference list per physical and digital media decides which linked source is loaded; for digital releases Bandcamp comes first",
       "ms.3.5.0": "Supplement with a second source, on request only: “Supplement with …” reads another linked source or a pasted text and lists what it adds (new roles, new entries) and where it differs, to take over by choice; rows it confirms get its mark. “Delete stored import …” starts the import of a release afresh. The Bandcamp spelling is shown next to the release’s artist credit and MusicBrainz. A fresh start: all stored data was reset once",
       "ms.3.10.0": "The rows of an entry rearrange with the width of the dashboard (relationship and attributes, level, date and tracks one above the other in a narrow window); a date from the pool or the matrix is a chip, its fields open with ✎, begin above end. Dates of the date matrix can be marked “Release level”. Texts: “tenor & soprano sax”, recording place and dates in Bandcamp’s “about” text, name suggestions without accents and with middle names; supplement with any Discogs or Bandcamp URL",
+      "ms.3.15.0": "Works matrix: the tracks without a work are compared with all works of the release’s artists, its writers and its musicians – works linked to them and works of their recordings (also covers), in the background, read once per session; a large catalogue is named. Pasted texts and Bandcamp credits: credits in sentences (“Music played and recorded by … in September and October 2026”), “Role Name” lines and “… of this release were created by a human” (the release’s artists suggested) are recognized. Arrows in the status bar jump to the top or bottom of the dashboard",
       "ms.3.12.0": "Rebuilt inside: all mapping rules and word lists in one place of the script (the mapping register), the role rules as plain data. What the script makes of a source stays the same – checked with about 1,200 roles, 100 company roles, 50 date phrases and pasted texts. “Mapping rules” also lists the tables and word lists now (read only) and shows the right level for 27 rules (e.g. “Written-By”: work, “Artwork”: release)",
       "ms.2.14.0": "Works matrix: a date dropped onto a relationship already in MusicBrainz without a date is added to it (an edit); status marks also for credits of works that were new in the editor",
       "ms.2.13.0": "Track groups by drag & drop onto the tracks of rows; dates and track groups stay in the folded bar; status marks of work credits (composer, publisher) are checked on the works too",
@@ -1362,6 +1381,8 @@
       "match.nameUseTitle": "Diesen MusicBrainz-Eintrag zuordnen",
       "match.similarName": "ähnlicher Name",
       "match.similarTitle": "Ähnlicher Name in MusicBrainz (ein Mittelname oder eine Initiale mehr oder weniger) – vor dem Zuordnen prüfen",
+      "match.placeholderSuggest": "Der Text nennt hier niemanden („{said}“) – der Artist des Releases? Ein Vorschlag, vor dem Zuordnen prüfen:",
+      "log.placeholderSuggested": "{name}: Der Text sagt „{said}“ – der Artist des Releases wird vorgeschlagen",
       "sync.off": "Discogs-Ansicht: aus",
       "sync.offTitle": "Das Zusatzscript „MB x Vibecode: Credits Importer Companion“ ist nicht installiert oder nicht aktiv.",
       "sync.noTab": "Discogs-Ansicht: kein Discogs-Tab",
@@ -1494,6 +1515,9 @@
       "sum.existing.one": "{n} schon auf MB vorhanden",
       "sum.existing.other": "{n} schon auf MB vorhanden",
       "footer.preview": "Vorschau aller Beziehungen",
+      "footer.jump": "Im Dashboard springen",
+      "footer.top": "Zum Anfang des Dashboards",
+      "footer.bottom": "Zum Ende des Dashboards",
       "footer.editNote": "Quelle und Zusammenfassung in die Edit-Notiz schreiben",
       "footer.apply": "In den Beziehungseditor übernehmen",
       "footer.hint": "Es wird nichts abgeschickt. Du prüfst die Änderungen im Editor und klickst selbst auf „Enter edit“.",
@@ -1882,10 +1906,23 @@
       "matrix.inMb": "Schon in MusicBrainz: {type}",
       "matrix.same.one": "Es gibt {n} gleichnamiges Werk dieser Autoren:",
       "matrix.same.other": "Es gibt {n} gleichnamige Werke dieser Autoren:",
+      "matrix.sameArtists.one": "Es gibt {n} gleichnamiges Werk (der Autoren, der Artists des Releases oder seiner Musiker):",
+      "matrix.sameArtists.other": "Es gibt {n} gleichnamige Werke (der Autoren, der Artists des Releases oder seiner Musiker):",
+      "works.viaLinked": "Werk von {name}",
+      "works.viaRecorded": "aufgenommen von {name} („{recording}“)",
+      "msg.artistWorksSlow": "Der Abgleich der Tracks mit den Werken von {name} dauert: ein großer Werkkatalog ({n} Aufnahmen, bisher {done} gelesen). Er läuft im Hintergrund weiter.",
+      "msg.artistWorksCapped": "{name} hat {n} Aufnahmen; nur die ersten {max} wurden mit den Tracks abgeglichen.",
+      "log.artistWorksSlow": "Werke von {name}: ein großer Werkkatalog ({n} Aufnahmen, bisher {done} gelesen)",
+      "log.artistWorks.one": "Werke von {name}: {n} Werk gelesen (mit dem Artist verknüpft oder von ihm aufgenommen)",
+      "log.artistWorks.other": "Werke von {name}: {n} Werke gelesen (mit dem Artist verknüpft oder von ihm aufgenommen)",
+      "log.artistWorksDone.one": "Werke der Artists abgeglichen: {n} Werk mit dem Titel eines Tracks ({tracks})",
+      "log.artistWorksDone.other": "Werke der Artists abgeglichen: {n} Werke mit dem Titel eines Tracks ({tracks})",
+      "log.artistWorksNone": "Werke der Artists abgeglichen: kein Werk mit dem Titel eines Tracks",
+      "log.artistWorksCapped": "Werke von {name}: {n} Aufnahmen, nur die ersten {max} abgeglichen",
       "matrix.noSame": "Kein gleichnamiges Werk dieser Autoren in MusicBrainz.",
-      "matrix.dupWarn": "MusicBrainz hat schon ein gleichnamiges Werk dieser Autoren: {title}. Trotzdem ein neues Werk anlegen?",
-      "matrix.dupWarnAll.one": "Für {n} Track gibt es schon ein gleichnamiges Werk seiner Autoren in MusicBrainz ({list}); er wird ausgelassen, damit du es verknüpfen kannst. Die übrigen Werke anlegen?",
-      "matrix.dupWarnAll.other": "Für {n} Tracks gibt es schon gleichnamige Werke ihrer Autoren in MusicBrainz ({list}); sie werden ausgelassen, damit du sie verknüpfen kannst. Die übrigen Werke anlegen?",
+      "matrix.dupWarn": "MusicBrainz hat schon ein gleichnamiges Werk (siehe die Liste unter dem Track): {title}. Trotzdem ein neues Werk anlegen?",
+      "matrix.dupWarnAll.one": "Für {n} Track gibt es schon ein gleichnamiges Werk in MusicBrainz ({list}); er wird ausgelassen, damit du es verknüpfen kannst. Die übrigen Werke anlegen?",
+      "matrix.dupWarnAll.other": "Für {n} Tracks gibt es schon gleichnamige Werke in MusicBrainz ({list}); sie werden ausgelassen, damit du sie verknüpfen kannst. Die übrigen Werke anlegen?",
       "matrix.rowType": "Werkart",
       "matrix.rowLangs": "Liedtext-Sprachen",
       "matrix.langAdd": "Sprache hinzufügen …",
@@ -1943,6 +1980,7 @@
       "ms.3.3.0": "Neuer Name: Credits Importer (und Credits Importer Companion). Neben Discogs liest er Bandcamp-Alben (Credits, auch die der Track-Seiten) und eingefügte Texte (Booklet, Liner Notes): Namen daraus werden nur vorgeschlagen. Eine Prioritätsliste für physische und digitale Medien bestimmt, welche verknüpfte Quelle geladen wird; bei digitalen Releases zuerst Bandcamp",
       "ms.3.5.0": "Ergänzen mit einer zweiten Quelle, nur auf Wunsch: „Ergänzen mit …“ liest eine weitere verknüpfte Quelle oder einen eingefügten Text und listet, was sie ergänzt (neue Rollen, neue Einträge) und wo sie abweicht – zum Übernehmen nach Wahl; Zeilen, die sie bestätigt, bekommen ihr Kürzel. „Gespeicherten Import löschen …“ beginnt den Import eines Releases neu. Die Bandcamp-Schreibweise steht neben Artist Credit des Releases und MusicBrainz. Ein Neuanfang: alle gespeicherten Daten wurden einmal zurückgesetzt",
       "ms.3.10.0": "Die Zeilen eines Eintrags ordnen sich nach der Breite des Dashboards (in einem schmalen Fenster Beziehung und Attribute, Ebene, Datum und Tracks untereinander); ein Datum aus Pool oder Matrix ist ein Chip, seine Felder öffnet ✎, Beginn über Ende. Daten der Datums-Matrix lassen sich als „Release-Ebene“ markieren. Texte: „tenor & soprano sax“, Aufnahmeort und -daten im „about“-Text von Bandcamp, Namensvorschläge ohne Akzente und mit Mittelnamen; Ergänzen mit jeder Discogs- oder Bandcamp-URL",
+      "ms.3.15.0": "Werk-Matrix: Die Tracks ohne Werk werden mit allen Werken der Artists des Releases, seiner Autoren und seiner Musiker abgeglichen – mit ihnen verknüpfte Werke und Werke ihrer Aufnahmen (auch Cover), im Hintergrund, einmal pro Sitzung gelesen; ein großer Werkkatalog wird genannt. Eingefügte Texte und Bandcamp-Credits: Credits in Sätzen („Music played and recorded by … in September and October 2026“), Zeilen „Rolle Name“ und „… of this release were created by a human“ (die Artists des Releases vorgeschlagen) werden erkannt. Pfeile in der Statusleiste springen an den Anfang oder das Ende des Dashboards",
       "ms.3.12.0": "Innen umgebaut: alle Mapping-Regeln und Wortlisten an einem Ort im Skript (das Mapping-Register), die Rollenregeln als reine Daten. Was das Skript aus einer Quelle macht, bleibt gleich – geprüft mit rund 1.200 Rollen, 100 Firmenrollen, 50 Datumsangaben und eingefügten Texten. „Mapping-Regeln“ zeigt jetzt auch die Tabellen und Wortlisten (nur lesen) und bei 27 Regeln die richtige Ebene (z. B. „Written-By“: Werk, „Artwork“: Release)",
       "ms.2.14.0": "Werk-Matrix: Ein Datum auf einer Beziehung, die schon ohne Datum in MusicBrainz ist, wird ihr hinzugefügt (eine Bearbeitung); Statusmarken auch für Credits von Werken, die im Editor neu angelegt wurden",
       "ms.2.13.0": "Track-Gruppen per Drag & Drop auf die Tracks von Zeilen; Daten und Track-Gruppen bleiben in der eingeklappten Leiste; Statusmarken von Werk-Credits (Composer, Publisher) werden auch an den Werken geprüft",
@@ -2509,6 +2547,8 @@
       "match.nameUseTitle": "Asignar esta entrada de MusicBrainz",
       "match.similarName": "nombre parecido",
       "match.similarTitle": "Nombre parecido en MusicBrainz (un segundo nombre o una inicial de más o de menos); compruébalo antes de asignarlo",
+      "match.placeholderSuggest": "El texto no nombra a nadie aquí («{said}»): ¿el artista de la publicación? Una sugerencia, compruébala antes de asignarla:",
+      "log.placeholderSuggested": "{name}: el texto dice «{said}»; se sugiere el artista de la publicación",
       "sync.off": "Vista de Discogs: desactivada",
       "sync.offTitle": "El script complementario «MB x Vibecode: Credits Importer Companion» no está instalado o no está activo.",
       "sync.noTab": "Vista de Discogs: ninguna pestaña de Discogs",
@@ -2641,6 +2681,9 @@
       "sum.existing.one": "{n} ya existe en MB",
       "sum.existing.other": "{n} ya existen en MB",
       "footer.preview": "Vista previa de todas las relaciones",
+      "footer.jump": "Moverse en el panel",
+      "footer.top": "Al principio del panel",
+      "footer.bottom": "Al final del panel",
       "footer.editNote": "Escribir el origen y un resumen en la nota de edición",
       "footer.apply": "Preparar en el editor de relaciones",
       "footer.hint": "No se envía nada. Revisas los cambios en el editor y pulsas «Enter edit» tú mismo.",
@@ -3029,10 +3072,23 @@
       "matrix.inMb": "Ya en MusicBrainz: {type}",
       "matrix.same.one": "Existe {n} obra con el mismo título de estos autores:",
       "matrix.same.other": "Existen {n} obras con el mismo título de estos autores:",
+      "matrix.sameArtists.one": "Existe {n} obra con el mismo título (de los autores, de los artistas de la publicación o de sus músicos):",
+      "matrix.sameArtists.other": "Existen {n} obras con el mismo título (de los autores, de los artistas de la publicación o de sus músicos):",
+      "works.viaLinked": "obra de {name}",
+      "works.viaRecorded": "grabada por {name} («{recording}»)",
+      "msg.artistWorksSlow": "Comparar las pistas con las obras de {name} lleva un rato: un catálogo grande ({n} grabaciones, {done} leídas hasta ahora). Sigue en segundo plano.",
+      "msg.artistWorksCapped": "{name} tiene {n} grabaciones; solo se compararon las primeras {max} con las pistas.",
+      "log.artistWorksSlow": "Obras de {name}: un catálogo grande ({n} grabaciones, {done} leídas hasta ahora)",
+      "log.artistWorks.one": "Obras de {name}: {n} obra leída (vinculada al artista o grabada por él)",
+      "log.artistWorks.other": "Obras de {name}: {n} obras leídas (vinculadas al artista o grabadas por él)",
+      "log.artistWorksDone.one": "Obras de los artistas comparadas: {n} obra con el título de una pista ({tracks})",
+      "log.artistWorksDone.other": "Obras de los artistas comparadas: {n} obras con el título de una pista ({tracks})",
+      "log.artistWorksNone": "Obras de los artistas comparadas: ninguna obra con el título de una pista",
+      "log.artistWorksCapped": "Obras de {name}: {n} grabaciones, solo se compararon las primeras {max}",
       "matrix.noSame": "Ninguna obra con el mismo título de estos autores en MusicBrainz.",
-      "matrix.dupWarn": "MusicBrainz ya tiene una obra con el mismo título de estos autores: {title}. ¿Crear una obra nueva de todos modos?",
-      "matrix.dupWarnAll.one": "{n} pista ya tiene en MusicBrainz una obra con el mismo título de sus autores ({list}); se omite para poder enlazarla. ¿Crear las demás obras?",
-      "matrix.dupWarnAll.other": "{n} pistas ya tienen en MusicBrainz obras con el mismo título de sus autores ({list}); se omiten para poder enlazarlas. ¿Crear las demás obras?",
+      "matrix.dupWarn": "MusicBrainz ya tiene una obra con el mismo título (ver la lista bajo la pista): {title}. ¿Crear una obra nueva de todos modos?",
+      "matrix.dupWarnAll.one": "{n} pista ya tiene en MusicBrainz una obra con el mismo título ({list}); se omite para poder enlazarla. ¿Crear las demás obras?",
+      "matrix.dupWarnAll.other": "{n} pistas ya tienen en MusicBrainz obras con el mismo título ({list}); se omiten para poder enlazarlas. ¿Crear las demás obras?",
       "matrix.rowType": "Tipo de obra",
       "matrix.rowLangs": "Idiomas de la letra",
       "matrix.langAdd": "añadir un idioma …",
@@ -3090,6 +3146,7 @@
       "ms.3.3.0": "Nuevo nombre: Credits Importer (y Credits Importer Companion). Además de Discogs lee álbumes de Bandcamp (créditos, también los de las páginas de pista) y textos pegados (libreto, notas): los nombres de ahí solo se sugieren. Una lista de preferencia para medios físicos y digitales decide qué fuente enlazada se carga; en publicaciones digitales primero Bandcamp",
       "ms.3.5.0": "Completar con una segunda fuente, solo si se pide: «Completar con…» lee otra fuente enlazada o un texto pegado y lista lo que añade (roles nuevos, entradas nuevas) y en qué difiere, para adoptarlo a elección; las filas que confirma llevan su marca. «Borrar la importación guardada…» empieza de nuevo la importación de una publicación. La grafía de Bandcamp se muestra junto al crédito de artista de la publicación y MusicBrainz. Un nuevo comienzo: todos los datos guardados se restablecieron una vez",
       "ms.3.10.0": "Las filas de una entrada se reorganizan según el ancho del panel (en una ventana estrecha relación y atributos, nivel, fecha y pistas uno encima de otro); una fecha del pool o de la matriz es un chip, ✎ abre sus campos, inicio sobre fin. Las fechas de la matriz pueden marcarse «Nivel de publicación». Textos: «tenor & soprano sax», lugar y fechas de grabación en el texto «about» de Bandcamp, sugerencias de nombres sin acentos y con segundos nombres; completar con cualquier URL de Discogs o Bandcamp",
+      "ms.3.15.0": "Matriz de obras: las pistas sin obra se comparan con todas las obras de los artistas de la publicación, de sus autores y de sus músicos – obras vinculadas a ellos y obras de sus grabaciones (también versiones), en segundo plano, leídas una vez por sesión; se indica un catálogo grande. Textos pegados y créditos de Bandcamp: se reconocen créditos en frases («Music played and recorded by … in September and October 2026»), líneas «Rol Nombre» y «… of this release were created by a human» (se sugieren los artistas de la publicación). Flechas en la barra de estado saltan al principio o al final del panel",
       "ms.3.12.0": "Reconstruido por dentro: todas las reglas de asignación y listas de palabras en un solo lugar del script (el registro), las reglas de roles como datos. Lo que el script hace con una fuente no cambia: comprobado con unos 1200 roles, 100 roles de empresas, 50 fechas y textos pegados. «Reglas de asignación» muestra ahora también las tablas y listas de palabras (solo lectura) y el nivel correcto de 27 reglas (p. ej. «Written-By»: obra, «Artwork»: publicación)",
       "ms.2.14.0": "Matriz de obras: una fecha soltada sobre una relación que ya está en MusicBrainz sin fecha se le añade (una edición); marcas de estado también para créditos de obras nuevas en el editor",
       "ms.2.13.0": "Grupos de pistas con arrastrar y soltar sobre las pistas de las filas; fechas y grupos de pistas quedan en la barra plegada; las marcas de estado de los créditos de obra (compositor, editorial) se comprueban también en las obras",
@@ -3656,6 +3713,8 @@
       "match.nameUseTitle": "Associer cette entrée MusicBrainz",
       "match.similarName": "nom proche",
       "match.similarTitle": "Nom proche dans MusicBrainz (un deuxième prénom ou une initiale de plus ou de moins) – à vérifier avant d’attribuer",
+      "match.placeholderSuggest": "Le texte ne nomme personne ici (« {said} ») – l’artiste de la parution ? Une suggestion, à vérifier avant de l’attribuer :",
+      "log.placeholderSuggested": "{name} : le texte dit « {said} » – l’artiste de la parution est suggéré",
       "sync.off": "Vue Discogs : désactivée",
       "sync.offTitle": "Le script complémentaire « MB x Vibecode: Credits Importer Companion » n’est pas installé ou pas actif.",
       "sync.noTab": "Vue Discogs : aucun onglet Discogs",
@@ -3788,6 +3847,9 @@
       "sum.existing.one": "{n} existe déjà sur MB",
       "sum.existing.other": "{n} existent déjà sur MB",
       "footer.preview": "Aperçu de toutes les relations",
+      "footer.jump": "Se déplacer dans le tableau",
+      "footer.top": "En haut du tableau",
+      "footer.bottom": "En bas du tableau",
       "footer.editNote": "Écrire la source et un résumé dans la note de modification",
       "footer.apply": "Préparer dans l’éditeur de relations",
       "footer.hint": "Rien n’est envoyé. Vous vérifiez les modifications dans l’éditeur et cliquez vous-même sur « Enter edit ».",
@@ -4176,10 +4238,23 @@
       "matrix.inMb": "Déjà dans MusicBrainz : {type}",
       "matrix.same.one": "{n} œuvre du même titre de ces auteurs existe :",
       "matrix.same.other": "{n} œuvres du même titre de ces auteurs existent :",
+      "matrix.sameArtists.one": "{n} œuvre du même titre existe (des auteurs, des artistes de la parution ou de ses musiciens) :",
+      "matrix.sameArtists.other": "{n} œuvres du même titre existent (des auteurs, des artistes de la parution ou de ses musiciens) :",
+      "works.viaLinked": "œuvre de {name}",
+      "works.viaRecorded": "enregistrée par {name} (« {recording} »)",
+      "msg.artistWorksSlow": "Comparer les pistes avec les œuvres de {name} prend du temps : un grand catalogue ({n} enregistrements, {done} lus jusqu’ici). Cela continue en arrière-plan.",
+      "msg.artistWorksCapped": "{name} a {n} enregistrements ; seuls les {max} premiers ont été comparés avec les pistes.",
+      "log.artistWorksSlow": "Œuvres de {name} : un grand catalogue ({n} enregistrements, {done} lus jusqu’ici)",
+      "log.artistWorks.one": "Œuvres de {name} : {n} œuvre lue (liée à l’artiste ou enregistrée par lui)",
+      "log.artistWorks.other": "Œuvres de {name} : {n} œuvres lues (liées à l’artiste ou enregistrées par lui)",
+      "log.artistWorksDone.one": "Œuvres des artistes comparées : {n} œuvre portant le titre d’une piste ({tracks})",
+      "log.artistWorksDone.other": "Œuvres des artistes comparées : {n} œuvres portant le titre d’une piste ({tracks})",
+      "log.artistWorksNone": "Œuvres des artistes comparées : aucune œuvre portant le titre d’une piste",
+      "log.artistWorksCapped": "Œuvres de {name} : {n} enregistrements, seuls les {max} premiers comparés",
       "matrix.noSame": "Aucune œuvre du même titre de ces auteurs dans MusicBrainz.",
-      "matrix.dupWarn": "MusicBrainz a déjà une œuvre du même titre de ces auteurs : {title}. Créer quand même une nouvelle œuvre ?",
-      "matrix.dupWarnAll.one": "{n} piste a déjà dans MusicBrainz une œuvre du même titre de ses auteurs ({list}) ; elle est laissée de côté pour pouvoir la lier. Créer les autres œuvres ?",
-      "matrix.dupWarnAll.other": "{n} pistes ont déjà dans MusicBrainz des œuvres du même titre de leurs auteurs ({list}) ; elles sont laissées de côté pour pouvoir les lier. Créer les autres œuvres ?",
+      "matrix.dupWarn": "MusicBrainz a déjà une œuvre du même titre (voir la liste sous la piste) : {title}. Créer quand même une nouvelle œuvre ?",
+      "matrix.dupWarnAll.one": "{n} piste a déjà dans MusicBrainz une œuvre du même titre ({list}) ; elle est laissée de côté pour pouvoir la lier. Créer les autres œuvres ?",
+      "matrix.dupWarnAll.other": "{n} pistes ont déjà dans MusicBrainz des œuvres du même titre ({list}) ; elles sont laissées de côté pour pouvoir les lier. Créer les autres œuvres ?",
       "matrix.rowType": "Type d’œuvre",
       "matrix.rowLangs": "Langues des paroles",
       "matrix.langAdd": "ajouter une langue …",
@@ -4237,6 +4312,7 @@
       "ms.3.3.0": "Nouveau nom : Credits Importer (et Credits Importer Companion). En plus de Discogs, il lit les albums Bandcamp (crédits, aussi ceux des pages de piste) et les textes collés (livret, notes de pochette) : les noms qui en viennent sont seulement suggérés. Une liste de préférence pour supports physiques et numériques décide quelle source liée est chargée ; pour les parutions numériques, Bandcamp d’abord",
       "ms.3.5.0": "Compléter avec une seconde source, sur demande seulement : « Compléter avec… » lit une autre source liée ou un texte collé et liste ce qu’elle ajoute (nouveaux rôles, nouvelles entrées) et où elle diverge, à reprendre au choix ; les lignes qu’elle confirme portent sa marque. « Supprimer l’import enregistré… » recommence l’import d’une parution. La graphie Bandcamp s’affiche à côté du crédit d’artiste de la parution et de MusicBrainz. Un nouveau départ : toutes les données enregistrées ont été réinitialisées une fois",
       "ms.3.10.0": "Les lignes d’une entrée se réorganisent selon la largeur du tableau (dans une fenêtre étroite relation et attributs, niveau, date et plages les uns sous les autres) ; une date du pool ou de la matrice est une puce, ✎ ouvre ses champs, début au-dessus de fin. Les dates de la matrice peuvent être marquées « Niveau parution ». Textes : « tenor & soprano sax », lieu et dates d’enregistrement dans le texte « about » de Bandcamp, suggestions de noms sans accents et avec deuxièmes prénoms ; compléter avec n’importe quelle URL Discogs ou Bandcamp",
+      "ms.3.15.0": "Matrice des œuvres : les pistes sans œuvre sont comparées à toutes les œuvres des artistes de la parution, de ses auteurs et de ses musiciens – œuvres liées à eux et œuvres de leurs enregistrements (reprises comprises), en arrière-plan, lues une fois par session ; un grand catalogue est signalé. Textes collés et crédits Bandcamp : les crédits en phrases (« Music played and recorded by … in September and October 2026 »), les lignes « Rôle Nom » et « … of this release were created by a human » (les artistes de la parution suggérés) sont reconnus. Des flèches dans la barre d’état sautent au début ou à la fin du tableau de bord",
       "ms.3.12.0": "Reconstruit à l’intérieur : toutes les règles de correspondance et listes de mots en un seul endroit du script (le registre), les règles de rôles comme simples données. Ce que le script fait d’une source ne change pas – vérifié avec environ 1 200 rôles, 100 rôles de sociétés, 50 dates et des textes collés. « Règles de correspondance » montre maintenant aussi les tables et listes de mots (lecture seule) et le bon niveau pour 27 règles (p. ex. « Written-By » : œuvre, « Artwork » : parution)",
       "ms.2.14.0": "Matrice des œuvres : une date déposée sur une relation déjà présente dans MusicBrainz sans date lui est ajoutée (une modification) ; marques d’état aussi pour les crédits d’œuvres créées dans l’éditeur",
       "ms.2.13.0": "Groupes de plages par glisser-déposer sur les plages des lignes ; dates et groupes de plages restent dans la barre repliée ; les marques d’état des crédits d’œuvre (compositeur, éditeur) sont aussi vérifiées sur les œuvres",
@@ -5043,7 +5119,7 @@
     { id: 'R057', kind: 'simple', note: "", re: /^(chorus master|choirmaster|choir master|chorus director|choir director)$/, types: ['chorus master'], level: 'recording' },
     { id: 'R058', kind: 'simple', note: "", re: /^(concertmaster|concertmistress)$/, types: ['concertmaster'], level: 'recording' },
     { id: 'R059', kind: 'simple', note: "", re: /^(orchestra|performing orchestra)$/, types: ['performing orchestra', 'orchestra'], level: 'recording' },
-    { id: 'R060', kind: 'simple', note: "", re: /^(performer|musician|performed by|band|ensemble|accompanied by|backing band)$/, types: ['performer'], level: 'recording' },
+    { id: 'R060', kind: 'simple', note: "", re: /^(performer|musician|performed by|played by|band|ensemble|accompanied by|backing band)$/, types: ['performer'], level: 'recording' },
     { id: 'R061', kind: 'simple', note: "", re: /^(instruments|multi-instrumentalist|all instruments|instrumentation)$/, types: ['instrument'], level: 'recording' },
     // [S004] design rule
     { id: 'R062', special: 'S004', kind: 'special', note: "", re: null, types: ['design', 'design/illustration', 'graphic design'], level: 'release' },
@@ -5260,6 +5336,18 @@
       show: () => ({ pairs: NOTE_ROLES.map(([re, type]) => [re, type]) }) },
     { id: 'T019', where: 'NOT_A_PLACE', note: 'Texts: what follows "at" without being a place ("at the same time", "at last", "at night", "at the end of …")',
       show: () => ({ pattern: NOT_A_PLACE }) },
+    { id: 'T020', where: 'TEXT_TIME_AFTER_NAME', note: 'Texts: a time after a name is cut off ("… by X in October 2026" → X; the date goes into the pool)',
+      show: () => ({ pattern: TEXT_TIME_AFTER_NAME }) },
+    { id: 'T021', where: 'TEXT_WHAT_WORDS', note: 'Texts: words before a verb that only say what was done ("Music played and recorded by X" → played by, recorded by)',
+      show: () => ({ pattern: TEXT_WHAT_WORDS }) },
+    { id: 'T022', where: 'TEXT_MADE_BY', note: 'Texts: roles named before a verb of making ("Music and artwork of this release were entirely created by …")',
+      show: () => ({ pattern: TEXT_MADE_BY }) },
+    { id: 'T023', where: 'PLACEHOLDER_WHO', note: 'Texts: a person without a name after "by" ("a human", "the band", "himself") – the release artist is suggested',
+      show: () => ({ pattern: PLACEHOLDER_WHO }) },
+    { id: 'T024', where: 'TEXT_LABEL_LINE', note: 'Texts: lines that only name the label ("An X release.", "Released on X") are left out; ℗ / © lines stay credits',
+      show: () => ({ pattern: TEXT_LABEL_LINE }) },
+    { id: 'T025', where: 'TEXT_NOT_NAME', note: 'Texts: words that are no part of a name after a role at the start of a line ("Photography Tom Barrett")',
+      show: () => ({ pattern: TEXT_NOT_NAME }) },
   ];
 
   /** Discogs spelling → possible MB instrument names (tried in this order). */
@@ -5390,6 +5478,30 @@
   // "at night", "at the end of the session", "at first". "first" and "last" only alone or before a word of time, so
   // "First Avenue" stays a place; small letters are no sign (place names may be written so too)
   const NOT_A_PLACE = /^(?:(?:the\s+)?same\s+time\b|the\s+time\b|(?:that|this|the)\s+(?:point|stage|moment)\b|(?:the\s+)?(?:end|beginning|start)(?:$|\s+of\b)|(?:once|night|dawn|dusk|midnight|noon|least|all|times|first|last)$|(?:first|last)\s+(?:week|weekend|days?|nights?|time|month|year|sessions?|takes?)\b)/i;
+
+  // [T020] Texts (3.14.0): a time after a name – "… by X in October 2026", "… by X during the summer of 1980" – is cut
+  // off the name (the date itself goes into the date pool)
+  const TEXT_TIME_AFTER_NAME = /\s+(?:in|on|during|between|from|since|throughout|around)\s+(?=[^,]*(?:\b\d{4}\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b|\b(?:spring|summer|autumn|fall|winter)\b)).*$/i;
+
+  // [T021] Texts (3.14.0): words before a verb that only say what was done – "Music played and recorded by X" is
+  // played by and recorded by X
+  const TEXT_WHAT_WORDS = /^(?:the\s+)?(?:music|songs?|album|tracks?|record|recordings?|everything|all)\s+(?=\p{L}+ed$)/iu;
+
+  // [T022] Texts (3.14.0): roles named before a verb of making – "Music and artwork of this release were entirely
+  // created by …": the roles are the words before "of this …" and the verb
+  const TEXT_MADE_BY = /^(.+?)\s+(?:(?:of|on|for)\s+(?:this|the)\s+(?:release|album|record|ep|single|recording)\s+)?(?:(?:was|were|is|are|has\s+been|have\s+been)\s+)?(?:(?:entirely|all|completely|fully|solely|exclusively)\s+)?(?:created|made|written|composed|produced|done|performed|designed)$/i;
+
+  // [T023] Texts (3.14.0): a person without a name after "by" ("a (cat assisted) human", "the band", "himself") – the
+  // release's artists are offered for it, only as a suggestion
+  const PLACEHOLDER_WHO = /^(?:an?\s+)?(?:human(?:\s+being)?|me|myself|us|ourselves|the\s+artists?|the\s+band|the\s+musicians?|himself|herself|themselves)$/i;
+
+  // [T024] Texts (3.14.0): a line that only names the label of the release ("An Echo Elberfeld release.", "Released on
+  // X Records") is left out – the label is set in the release editor; ℗ / © lines are credits
+  const TEXT_LABEL_LINE = /^(?:(?:an?|the)\s+.+?\s+release|released\s+(?:on|by|via|through)\s+.+)$/i;
+
+  // [T025] Texts (3.14.0): words that are no part of a name after a role at the start of a line – "Photography Tom
+  // Barrett" is a credit, "Music and artwork of this release …" is not
+  const TEXT_NOT_NAME = /\b(?:the|a|an|and|or|of|to|for|with|by|at|in|on|from|this|that|these|those|is|are|was|were|be|been|all|our|my|his|her|their|its|no|not|thanks|release|album|record)\b/i;
 
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
   const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
@@ -5744,7 +5856,7 @@
     { id: 'D004', note: 'Month names (English, German, Spanish, French): November 1, 2022 · November 1. 2022 · Nov. 1st, 2022 · 1 November 2022 · 1. November 2022 · 1st of November 2022 · 1 de noviembre de 2022' },
     { id: 'D005', note: 'Ordinal words: first of November 2022 · November the first, 2022' },
     { id: 'D006', note: 'Days within one month: March 1–3, 1998 · 1–3 March 1998 · 1.–3. März 1998' },
-    { id: 'D007', note: 'Periods across months or years: March 1 to April 2, 1998 · December 2003 to January 2004 · between 1997 and 1998 · 1997/98' },
+    { id: 'D007', note: 'Periods across months or years: March 1 to April 2, 1998 · December 2003 to January 2004 · September and October 2026 · between 1997 and 1998 · 1997/98' },
     { id: 'D008', note: 'Month and year: November 2022 · Nov 2022' },
     { id: 'D009', note: 'Seasons give the year: Spring 1998 → 1998' },
     { id: 'D010', note: 'A year alone: 1998' },
@@ -5806,6 +5918,8 @@
     { id: 'D007', re: `${P.M}\\s+${P.D}${P.TO}${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
     { id: 'D007', re: `${P.D}${P.OF}\\s+${P.M}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[2]), m[1]), ymd(m[5], monthNo(m[4]), m[3])) },
     { id: 'D007', re: `${P.M},?\\s+${P.Y}${P.TO}${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[2], monthNo(m[1])), ymd(m[4], monthNo(m[3]))) },
+    // [3.14.0] two months of one year: "September and October 2026", "September to October 2026", "September/October 2026"
+    { id: 'D007', re: `${P.M}(?:${P.TO}|\\s+(?:and|&|und|y|et)\\s+|\\s*/\\s*)${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => span(ymd(m[3], monthNo(m[1])), ymd(m[3], monthNo(m[2]))) },
     { id: 'D006', re: `${P.M}\\s+${P.D}${P.TO}${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[4], monthNo(m[1]), m[2]), ymd(m[4], monthNo(m[1]), m[3])) },
     { id: 'D006', re: `${P.D}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => span(ymd(m[4], monthNo(m[3]), m[1]), ymd(m[4], monthNo(m[3]), m[2])) },
     { id: 'D001', re: '(?<!\\d)(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?(?:\\s+[-–—]\\s+|\\s*[–—]\\s*|\\s+(?:to|bis|until)\\s+)(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?(?!\\d)',
@@ -6184,18 +6298,34 @@
         else credits.push({ who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), line: line0 });
         return true;
       };
+      // [3.14.0] A credit without a name ("… created by a human"): the core offers the release's artists for it
+      const addPlaceholder = (said, role, scope) => {
+        const p = parseRoleNotation(role)[0];
+        if (!p || isCompanyRole(p.raw)) return false;
+        credits.push({ who: { id: 0, name: '', rawName: said, links: [], placeholder: said }, role: p.raw, base: p.base, details: p.mods, credited: '',
+          tracks: tracksOf(scope), line: line0 });
+        return true;
+      };
+      // [3.14.0] A role with "By" ("Mixed By"), else without ("Layout", "Photography", "Artwork")
+      const roleOf = (word) => (isRole(`${cap(word)} By`) || !isRole(cap(word)) ? `${cap(word)} By` : cap(word));
+      /** [3.14.0] The first sentence of a text ("a human. No AI tools were used." → "a human"); initials stay ("T. Name"). */
+      const firstSentence = (t) => String(t || '').split(/(?<=[^\s.]{2})\.\s+/)[0];
       /**
        * "Mixed and mastered" → ["Mixed By", "Mastered By"]; one known role stays one ("Music and lyrics by");
        * "Strings arranged" → "Arranged By [Strings]".
        */
-      const byRole = (r) => {
+      const byRole = (r0) => {
+        // [3.14.0] "Music played" → played (T021)
+        const r = r0.replace(TEXT_WHAT_WORDS, '');
         const m2 = r.match(/^(.+?)\s+(\p{L}+ed)$/iu);
-        return m2 ? `${cap(m2[2])} By [${cap(m2[1])}]` : `${cap(r)} By`;
+        return m2 ? `${cap(m2[2])} By [${cap(m2[1])}]` : roleOf(r);
       };
       const byRoles = (left) => {
         const l = noDates(left);
         if (!l) return [];
         if (isRole(`${cap(l)} By`)) return [`${cap(l)} By`];
+        // [3.14.0] "Layout by X": the role is "Layout"
+        if (isRole(cap(l))) return [cap(l)];
         const parts = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map(byRole);
         return parts.length && parts.every(isRole) ? parts : [];
       };
@@ -6255,6 +6385,8 @@
         }
         let found = 0;
         const unknownParts = [];
+        // [3.14.0] a line that only names the label of the release is left out (T024)
+        if (TEXT_LABEL_LINE.test(line)) continue;
         // ℗ / © with a year: the label of the copyright
         if ((m = line.match(/^(℗|\(p\)|©|\(c\))\s*(?:\d{4}\s*)?(.+)$/i))) {
           const role = /℗|\(p\)/i.test(m[1]) ? 'Phonographic Copyright (p)' : 'Copyright (c)';
@@ -6288,7 +6420,20 @@
               place(verb, placeOf(at2[2]));
               right = at2[1];
             }
-            const roles = byRoles(left);
+            // [3.14.0] "Music and artwork of this release were entirely created by …" (T022): a sentence (with "of this …",
+            // "was/were …" or "entirely …") names its roles before the verb; otherwise the verbs are the roles
+            const sentence = /\s(?:of|on|for)\s+(?:this|the)\s|\s(?:was|were|is|are|been)\s|\s(?:entirely|completely|fully|solely|exclusively)\s/i.test(` ${left} `);
+            const made = sentence && clean(left).match(TEXT_MADE_BY);
+            const madeParts = made ? made[1].split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map(cap) : [];
+            const roles = madeParts.length && madeParts.every(isRole) ? madeParts : byRoles(left);
+            // [3.14.0] the first sentence only, and a time after the name cut off (T020): "X in October 2026" → X
+            right = firstSentence(right).replace(TEXT_TIME_AFTER_NAME, '');
+            // [3.14.0] a person without a name ("a (cat assisted) human", "the band"): the release's artists (T023)
+            const nobody = clean(right.replace(/\s*\([^)]*\)/g, ''));
+            if (roles.length && PLACEHOLDER_WHO.test(nobody)) {
+              roles.forEach((r) => { if (addPlaceholder(nobody, r, scope)) found++; });
+              continue;
+            }
             for (const n of roles.length ? names(right) : []) roles.forEach((r) => { if (addCredit(n, r, scope)) found++; });
             continue;
           }
@@ -6318,6 +6463,19 @@
               rp.known.forEach((r) => { if (addCredit(left, r, scope)) found++; });
               if (found) unknownParts.push(...rp.unknown);
             }
+          }
+        }
+        // [3.14.0] "Photography Tom Barrett", "mastering john doe": a known role at the start, then a name of two to four
+        // words (small letters too) that has no word of a sentence in it (T025) and is no list of roles
+        if (!found) {
+          const words = line.split(' ');
+          for (let k = Math.min(3, words.length - 2); k >= 1 && !found; k--) {
+            const role = words.slice(0, k).join(' ');
+            const name = words.slice(k).join(' ');
+            const n = name.split(' ');
+            if (n.length > 4 || TEXT_NOT_NAME.test(name) || n.every((w) => isRole(cap(w)))) continue;
+            if (!isRole(cap(role)) && !isRole(`${cap(role)} By`)) continue;
+            if (addCredit(name, roleOf(role), scope)) found++;
           }
         }
         if (!found) unrecognized.push(raw.trim());
@@ -6513,8 +6671,13 @@
     const groups = new Map();
     for (const c of credits || []) {
       const { who } = c;
-      const gKey = who.id ? `id:${who.id}` : `name:${norm(who.name)}`;
-      if (!groups.has(gKey)) groups.set(gKey, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: new Map() });
+      // [3.14.0] a credit without a name stays its own entry (a suggestion), also next to the same artist by name
+      const gKey = who.id ? `id:${who.id}` : who.placeholder ? `ph:${norm(who.name)}` : `name:${norm(who.name)}`;
+      if (!groups.has(gKey)) {
+        groups.set(gKey, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: new Map(),
+          // [3.14.0] a credit without a name, given to one of the release's artists (placeholderCredits)
+          ...(who.placeholder ? { placeholder: who.placeholder, releaseMbid: who.releaseMbid || '' } : {}) });
+      }
       const group = groups.get(gKey);
       if (!c.role) continue;
       const anv = c.credited || '';
@@ -6821,7 +6984,9 @@
   // MB allows one request per second on average.
   let mbQueue = Promise.resolve();
   let lastMbRequest = 0;
-  function mbWs(path) {
+  // [3.15.0] requests of the dashboard waiting or running; background requests (works of artists) wait for them
+  let mbForeground = 0;
+  function mbWs(path, { background = false } = {}) {
     const run = async () => {
       for (let attempt = 0; attempt < 4; attempt++) {
         const wait = lastMbRequest + 1100 - Date.now();
@@ -6841,6 +7006,10 @@
     };
     const p = mbQueue.then(run, run);
     mbQueue = p.catch(() => {});
+    if (!background) {
+      mbForeground++;
+      p.then(() => { mbForeground--; }, () => { mbForeground--; });
+    }
     return p;
   }
 
@@ -6877,6 +7046,12 @@
         .filter((r) => r['target-type'] === 'artist' && r.artist)
         .map((r) => `${r.artist.name} (${r.type})`)),
     }));
+  }
+
+  /** [3.15.0] A request in the background: it waits while the dashboard's own requests run. */
+  async function mbWsIdle(path) {
+    while (mbForeground > 0) await sleep(300);
+    return mbWs(path, { background: true });
   }
 
   // Work types and languages exactly as offered by MusicBrainz: first from the page data,
@@ -7338,6 +7513,10 @@
     // Works: planned recording→work links (track index → { gid, title, origin, flags })
     workPlan: new Map(),
     workSearch: new Map(),
+    // [3.15.0] works of artists (release artists, writers, performers): kept for the session; matches per track
+    artistWorks: new Map(),
+    artistWorkHits: new Map(),
+    artistWorkTargets: new Map(),
     workOptions: null,
     workDefaults: { typeId: '', languageIds: [] },
     workQueue: [],
@@ -9296,7 +9475,7 @@
     let n = 0;
     const id = () => `s${++n}`;
     // MB entries of the names with a link at the second source (Bandcamp: the band), to find them by MBID
-    const groups = groupCredits(sp.rel.credits);
+    const groups = groupCredits(placeholderCredits(sp.rel.credits));
     const companies = groupCompanies(sp.rel.companies);
     const urls = uniq(groups.filter((g) => g.dId && (g.links || [])[0]).map((g) => g.links[0]));
     const linked = new Map();
@@ -9848,6 +10027,10 @@
       // [3.12.1] the same-named works of the import before do not count for this one (they were never reset)
       S.workSearch = new Map();
       if (S.searchRunning) S.searchCancel = true;
+      // [3.15.0] the matches with works of artists too (the works themselves stay known for the session)
+      S.artistWorkHits = new Map();
+      S.artistWorkTargets = new Map();
+      if (S.artistWorksRunning) S.artistWorksAgain = true;
       renderSource();
       renderSupp();
 
@@ -9856,9 +10039,10 @@
         log('warn', 'trackMismatch', { d: S.srcTracks.length, m: S.mbTracks.length });
       }
 
-      for (const g of groupCredits(rel.credits)) {
+      for (const g of groupCredits(placeholderCredits(rel.credits))) {
         const artist = {
           key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending',
+          ...(g.placeholder ? { placeholder: g.placeholder, releaseMbid: g.releaseMbid } : {}),
           mbid: null, mbName: '', candidates: [], editing: false, error: '',
           anvs: uniq([...g.roles.values()].map((c) => c.anv).filter(Boolean)),
         };
@@ -9964,6 +10148,7 @@
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
         autoSearchWorks();
+        runArtistWorks();
       }
       setBusy('');
     } catch (e) {
@@ -10028,8 +10213,24 @@
   /** Lucene words of a name, all required (finds names with a middle name too). */
   const luceneWords = (name) => nameWords(name).map((w) => w.replace(/[+\-!(){}[\]^"~*?:\\/&|]/g, '\\$&')).join(' AND ');
 
+  /**
+   * [3.14.0] Credits of a text without a name ("Music and artwork … were entirely created by a human"): one credit for
+   * each artist of the release's artist credit (with an MB artist), offered as a suggestion; without one they go.
+   */
+  function placeholderCredits(credits) {
+    const artists = (S.releaseCredit || []).filter((p) => p.mbid && p.name);
+    return (credits || []).flatMap((c) => (!c.who || !c.who.placeholder ? [c]
+      : artists.map((p) => ({ ...c, who: { id: 0, name: p.name, rawName: p.name, links: [], placeholder: c.who.placeholder, releaseMbid: p.mbid } }))));
+  }
+
   async function suggestByName(list) {
     for (const a of list) {
+      // [3.14.0] an artist of the release offered for a credit without a name: that artist is the suggestion
+      if (a.releaseMbid) {
+        a.nameHits = [{ mbid: a.releaseMbid, name: a.name, entityType: 'artist', similar: false, disambiguation: '' }];
+        log('info', 'placeholderSuggested', { name: a.name, said: a.placeholder });
+        continue;
+      }
       const type = a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
       try {
         const words = luceneWords(a.name);
@@ -10791,7 +10992,8 @@
   /** [E1] Entries of the same name in MusicBrainz for a name without a link (a suggestion, dashed and yellow). */
   function nameSuggestHtml(a) {
     if (!a.nameHits || !a.nameHits.length || a.mbid) return '';
-    const head = a.strictMiss ? tr('match.linkSuggest', { mb: a.strictSpelled || '–' }) : tr('match.nameSuggest');
+    const head = a.strictMiss ? tr('match.linkSuggest', { mb: a.strictSpelled || '–' })
+      : a.releaseMbid ? tr('match.placeholderSuggest', { said: a.placeholder }) : tr('match.nameSuggest');
     return `<div class="dci-alias-suggest"><span class="dci-sub">${esc(head)}</span>
       ${a.nameHits.map((h) => `<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}" title="${esc(tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle'))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.similar ? ` <span class="dci-similar">${esc(tr('match.similarName'))}</span>` : ''}</button>`).join(' ')}</div>`;
   }
@@ -13185,7 +13387,13 @@
   function scheduleWorkRecheck() {
     clearTimeout(workRecheckTimer);
     workRecheckTimer = setTimeout(() => {
-      if (!S.overlay || S.searchRunning || !S.workSearch.size) return;
+      if (!S.overlay) return;
+      // [3.15.0] an artist got its MusicBrainz entry (or a role): its works are compared too
+      if (S.artistWorkTargets.size || S.artistWorkHits.size || S.release) {
+        const targets = artistWorkTargets();
+        if ([...targets.keys()].some((id) => !S.artistWorkTargets.has(id))) runArtistWorks();
+      }
+      if (S.searchRunning || !S.workSearch.size) return;
       const changed = [...S.workSearch].filter(([i, s]) => s.state !== 'loading' && !worksForTrack(i).length
         && writerSig(creditedWritersOf(i)) !== (s.sig || '')).map(([i]) => i);
       if (!changed.length) return;
@@ -13948,8 +14156,176 @@
   function sameNamed(i) {
     const search = S.workSearch.get(i);
     const track = S.mbTracks[i];
-    if (!search || search.state !== 'done' || !track) return [];
-    return search.results;
+    if (!track) return [];
+    const own = search && search.state === 'done' ? search.results : [];
+    // [3.15.0] and works of the release's artists, its writers and performers with this title
+    const more = (S.artistWorkHits.get(i) || []).filter((w) => !own.some((x) => x.gid === w.gid));
+    return [...own, ...more];
+  }
+
+  // --- [3.15.0] Works of the artists: release artists, writers, performers --------------------------------
+  /** At most this many works and recordings are read per artist (100 per request). */
+  const ARTIST_WORKS_MAX = 2000;
+
+  /** The artists whose works are compared: the release's artists, then writers, then performers (with MB entry). */
+  function artistWorkTargets() {
+    const out = new Map();
+    for (const p of S.releaseCredit || []) if (p.mbid && !out.has(p.mbid)) out.set(p.mbid, { name: p.name, why: 'release' });
+    const rank = { writer: 1, performer: 2 };
+    const found = [];
+    for (const r of S.rows) {
+      const a = S.artists.get(r.artistKey);
+      if (!a || !a.mbid || a.company || a.other || r.level === 'skip') continue;
+      const t = norm(rowTypeName(r));
+      const why = WRITER_TYPES.includes(t) ? 'writer' : ['instrument', 'vocal', 'performer'].includes(t) ? 'performer' : '';
+      if (why) found.push([a.mbid, { name: a.mbName || a.name, why }]);
+    }
+    found.sort((x, y) => rank[x[1].why] - rank[y[1].why]).forEach(([id, info]) => { if (!out.has(id)) out.set(id, info); });
+    return out;
+  }
+
+  /** Tracks still without a work (those the comparison is for). */
+  const tracksWithoutWork = () => S.mbTracks.filter((t) => matrixTrack(t) && !isPlaceholderTitle(t.title) && !worksForTrack(t.idx).length);
+
+  /**
+   * Reads the works of an artist: those linked to the artist (writer, arranger … – every artist–work relationship)
+   * and those of the artist's recordings (also covers). onPage(entry) after each request.
+   */
+  async function loadArtistWorks(mbid, name, onPage) {
+    const entry = { name, works: new Map(), recordings: 0, total: 0, linked: 0, capped: false };
+    for (let offset = 0; offset < ARTIST_WORKS_MAX; offset += 100) {
+      const d = await mbWsIdle(`work?artist=${mbid}&inc=aliases&limit=100&offset=${offset}`);
+      const list = (d && d.works) || [];
+      list.forEach((w) => entry.works.set(w.id, { gid: w.id, title: w.title, aliases: (w.aliases || []).map((x) => x.name).filter(Boolean),
+        type: w.type || '', disambiguation: w.disambiguation || '', via: 'linked' }));
+      entry.linked = (d && d['work-count']) || entry.works.size;
+      onPage(entry);
+      if (!list.length || offset + 100 >= entry.linked) break;
+    }
+    for (let offset = 0; ; offset += 100) {
+      if (offset >= ARTIST_WORKS_MAX) {
+        entry.capped = true;
+        break;
+      }
+      const d = await mbWsIdle(`recording?artist=${mbid}&inc=work-rels&limit=100&offset=${offset}`);
+      const list = (d && d.recordings) || [];
+      entry.total = (d && d['recording-count']) || entry.recordings + list.length;
+      for (const rec of list) {
+        for (const rel of rec.relations || []) {
+          const w = rel.work;
+          if (w && w.id && !entry.works.has(w.id)) {
+            entry.works.set(w.id, { gid: w.id, title: w.title, aliases: [], type: w.type || '', disambiguation: w.disambiguation || '', via: 'recorded', recording: rec.title || '' });
+          }
+        }
+      }
+      entry.recordings += list.length;
+      onPage(entry);
+      if (!list.length || entry.recordings >= entry.total) break;
+    }
+    return entry;
+  }
+
+  /**
+   * Matches the tracks without a work with the works read (title or alias, as with same-named works).
+   * True when the hits changed (only then the works matrix is drawn anew – a background run does not disturb scrolling).
+   */
+  function matchArtistWorks() {
+    const sig = (m) => [...m].map(([i, list]) => `${i}:${list.map((w) => `${w.gid}/${w.writers.join('|')}`).join(',')}`).join(';');
+    const before = sig(S.artistWorkHits || new Map());
+    const hits = new Map();
+    for (const t of tracksWithoutWork()) {
+      const title = normTitle(workTitleOf(t.title));
+      const found = new Map();
+      for (const [mbid, info] of S.artistWorkTargets) {
+        const e = S.artistWorks.get(mbid);
+        if (!e) continue;
+        for (const w of e.works.values()) {
+          if (![w.title, ...w.aliases].some((x) => withinOne(normTitle(x), title))) continue;
+          const via = tr(w.via === 'recorded' ? 'works.viaRecorded' : 'works.viaLinked', { name: info.name, recording: w.recording || '' });
+          const hit = found.get(w.gid) || { gid: w.gid, title: w.title, type: w.type, disambiguation: w.disambiguation, aliases: w.aliases, writerIds: [], writers: [], artistWork: true };
+          if (!hit.writers.includes(via)) hit.writers.push(via);
+          found.set(w.gid, hit);
+        }
+      }
+      if (found.size) hits.set(t.idx, [...found.values()]);
+    }
+    S.artistWorkHits = hits;
+    return sig(hits) !== before;
+  }
+
+  /**
+   * [3.15.0] Draws the works matrix anew for a result found in the background – while a field in it is being typed in,
+   * only when that field is left (drawing it anew would take the focus and what is being typed).
+   */
+  function renderWorksBackground() {
+    const el = S.overlay && $('works');
+    const active = document.activeElement;
+    if (el && active && el.contains(active) && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName)) {
+      if (!S.worksRenderOnBlur) {
+        S.worksRenderOnBlur = true;
+        // a moment after leaving it (a click that left it lands first); typing in the next field defers again
+        active.addEventListener('blur', () => {
+          S.worksRenderOnBlur = false;
+          setTimeout(renderWorksBackground, 400);
+        }, { once: true });
+      }
+      return;
+    }
+    renderWorks();
+  }
+
+  /**
+   * [3.15.0] Compares the tracks without a work with all works of the release's artists, its writers and its performers
+   * (in the background; works read once per session). Longer than 10 seconds: a message says why (a large catalogue);
+   * more than 2,000 recordings of an artist: only those are read, and a message says so.
+   */
+  async function runArtistWorks() {
+    if (S.artistWorksRunning) {
+      S.artistWorksAgain = true;
+      return;
+    }
+    const targets = artistWorkTargets();
+    S.artistWorkTargets = targets;
+    if (!targets.size || !tracksWithoutWork().length) {
+      if (matchArtistWorks()) renderWorksBackground();
+      return;
+    }
+    S.artistWorksRunning = true;
+    try {
+      for (const [mbid, info] of targets) {
+        if (S.artistWorksAgain) break;
+        if (!S.artistWorks.has(mbid)) {
+          // one artist taking longer than 10 seconds because of a large catalogue (more than 9 pages of 100 to read;
+          // a wait for the dashboard's own requests is not the catalogue's fault): the message says so
+          const started = Date.now();
+          let slowShown = false;
+          const e = await loadArtistWorks(mbid, info.name, (entry) => {
+            if (slowShown || Date.now() - started < 10000 || entry.total + entry.linked <= 900) return;
+            slowShown = true;
+            showMessage('info', 'msg.artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
+            log('info', 'artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
+          });
+          S.artistWorks.set(mbid, e);
+          if (e.works.size) log('info', 'artistWorks', { name: info.name, n: e.works.size });
+          if (e.capped) {
+            showMessage('info', 'msg.artistWorksCapped', { name: info.name, n: e.total, max: ARTIST_WORKS_MAX });
+            log('warn', 'artistWorksCapped', { name: info.name, n: e.total, max: ARTIST_WORKS_MAX });
+          }
+        }
+        if (matchArtistWorks()) renderWorksBackground();
+      }
+    } catch (e) {
+      log('error', 'error', { text: e.message });
+    }
+    S.artistWorksRunning = false;
+    if (matchArtistWorks()) renderWorksBackground();
+    const n = [...S.artistWorkHits.values()].reduce((sum, list) => sum + list.length, 0);
+    const tracks = [...S.artistWorkHits.keys()].sort((a, b) => a - b).map((i) => trackLabel(S.mbTracks[i])).join(', ');
+    if (!S.artistWorksAgain) log('ok', n ? 'artistWorksDone' : 'artistWorksNone', { n, tracks });
+    if (S.artistWorksAgain) {
+      S.artistWorksAgain = false;
+      runArtistWorks();
+    }
   }
 
   async function autoSearchWorks() {
@@ -14052,11 +14428,12 @@
     let state = '';
     let found = '';
     if (search && search.state === 'loading') state = `<span class="dci-sub" title="${esc(tr('works.searching'))}">…</span>`;
-    else if (search && search.state === 'noWriters') state = info(tr('matrix.noWriters'));
+    else if (search && search.state === 'noWriters' && !same.length) state = info(tr('matrix.noWriters'));
     else if (search && search.state === 'error') state = `<span class="dci-bad" title="${esc(search.error)}">!</span>`;
     else if (search && search.state === 'done' && !same.length) state = info(tr('matrix.noSame'));
-    else if (search && search.state === 'done') {
-      found = `<div class="dci-same"><strong>${esc(tr('matrix.same', { n: same.length }))}</strong><ul class="dci-candidates">${same.map((w) => `<li>
+    // [3.15.0] works of the artists are shown also when the writers gave nothing (or there are none)
+    if (same.length) {
+      found = `<div class="dci-same"><strong>${esc(tr(same.some((w) => w.artistWork) ? 'matrix.sameArtists' : 'matrix.same', { n: same.length }))}</strong><ul class="dci-candidates">${same.map((w) => `<li>
           <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}">${esc(tr('works.link'))}</button>
           <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
           <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span></li>`).join('')}</ul></div>`;
@@ -15717,6 +16094,11 @@
       case 'scope':
         setScope(btn.dataset.scope);
         break;
+      // [3.14.1] to the top or the bottom of the dashboard (its own scrolling in the window, the page in the page)
+      case 'jump-top':
+      case 'jump-bottom':
+        jumpDashboard(act === 'jump-top' ? 'top' : 'bottom');
+        break;
       case 'rules':
         openRules();
         break;
@@ -16906,6 +17288,18 @@
   S.place = readJson('localStorage', 'dci-place', 'window') === 'page' ? 'page' : 'window';
   const inPage = () => S.place === 'page';
 
+  /** [3.14.1] Scrolls the dashboard to its top or bottom: its body in the window, the page in the page. */
+  function jumpDashboard(where) {
+    const body = $('body');
+    if (!inPage() && body) {
+      body.scrollTo({ top: where === 'top' ? 0 : body.scrollHeight, behavior: 'smooth' });
+      return;
+    }
+    const r = S.overlay.querySelector('.dci-panel').getBoundingClientRect();
+    const top = window.scrollY + r.top - 8;
+    window.scrollTo({ top: where === 'top' ? top : Math.max(top, top + r.height - window.innerHeight + 16), behavior: 'smooth' });
+  }
+
   /** The browser's default font size ("medium"), independent of the page's own CSS. */
   function browserFontPx() {
     const probe = document.createElement('div');
@@ -17136,6 +17530,10 @@
         </div>
         <div class="dci-preview" data-el="preview" hidden></div>
         <footer class="dci-foot">
+          <span class="dci-jump" role="group" aria-label="${esc(tr('footer.jump'))}">
+            <button type="button" class="dci-iconbtn" data-act="jump-top" title="${esc(tr('footer.top'))}" aria-label="${esc(tr('footer.top'))}">▲</button>
+            <button type="button" class="dci-iconbtn" data-act="jump-bottom" title="${esc(tr('footer.bottom'))}" aria-label="${esc(tr('footer.bottom'))}">▼</button>
+          </span>
           <div class="dci-sum" data-el="sum"></div>
           <div class="dci-foot-actions">
             <button type="button" class="dci-panic" data-act="panic" hidden title="${esc(tr('panic.title'))}"></button>
@@ -17422,6 +17820,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.15.0', label: 'Credits Importer 3.15.0' },
     { v: '3.12.0', label: 'Credits Importer 3.12.0' },
     { v: '3.10.0', label: 'Credits Importer 3.10.0' },
     { v: '3.5.0', label: 'Credits Importer 3.5.0 · Companion 1.7.0' },
@@ -18302,6 +18701,8 @@
       #dci-overlay.dci-inline .dci-head { cursor: default; }
       #dci-overlay.dci-inline .dci-body { overflow: visible; }
       #dci-overlay.dci-inline .dci-dates { top: 0; }
+      .dci-jump { display: inline-flex; gap: calc(var(--u, 1px) * 2); }
+      .dci-jump .dci-iconbtn { border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; padding: 1px calc(var(--u, 1px) * 7); line-height: 1.2; }
       #dci-overlay.dci-inline .dci-foot { position: sticky; bottom: 0; z-index: 4; background: #fff; box-shadow: 0 -2px 6px rgba(38, 36, 48, 0.08); border-radius: 0 0 4px 4px; }
       #dci-overlay.dci-inline .dci-preview { max-height: 60vh; overflow: auto; }
       /* Both stay in view while the page scrolls, so they take less room there */
