@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.17.0 | 1.8.0 |
+| 2026-10-17 | 3.11.0 – 3.17.1 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -73,6 +73,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-17
+
+### Import 3.17.1 · COMPANION 1.8.1
+
+#### Added
+
+- **Switch credits off and on again on Bandcamp** (collected item 5; maintainer: "bitte je credit", "Überspringen", "pro release gespeichert"). While the pointer is on a status mark, **⊘** appears above it; a click switches that credit off: its row goes to "Skip" in the dashboard and says "Switched off on Bandcamp", its mark is greyed, and when all credits of that part of the line are off, the part is greyed and struck through too. Credits that share their words ("Mixed and mastered by C") stay a group of marks, each with its own ⊘. ⊘ on a greyed mark switches the credit on again with the level it had; choosing a level for the row in the dashboard does the same. The log says what was switched. Kept for the release – after loading the edit page again and importing anew, the same credits are off –, reset by "Delete stored import".
+
 
 ### Import 3.17.0 · COMPANION 1.8.0
 

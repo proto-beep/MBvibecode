@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.17.0
+// @version      3.17.1
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1119,6 +1119,12 @@
       "bc.fromTrackPage.other": "From the track pages:",
       "bc.trackPageTitle": "Opens the track page on Bandcamp",
       "about.from": "From the “about” text",
+      "dgStatus.off": "⊘ switch this credit off – its row goes to “Skip” in the dashboard",
+      "dgStatus.on": "⊘ switch this credit on again",
+      "dgStatus.isOff": "switched off here",
+      "bc.offNote": "Switched off on Bandcamp (⊘): “Skip”. ⊘ there switches it on again, so does choosing a level here.",
+      "log.bcOff": "Bandcamp: {name} – {role} switched off (“Skip”)",
+      "log.bcOn": "Bandcamp: {name} – {role} switched on again",
       "ms.3.17.0": "Bandcamp view in the companion (1.8.0): a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the “about” text: to its sentence), track highlight, status on the MusicBrainz release page; “open in background” and “Load the release there” for Bandcamp too. Rows from track pages link to them.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
@@ -2376,6 +2382,12 @@
       "bc.fromTrackPage.other": "Von den Track-Seiten:",
       "bc.trackPageTitle": "Öffnet die Track-Seite auf Bandcamp",
       "about.from": "Aus dem „about“-Text",
+      "dgStatus.off": "⊘ diesen Credit abschalten – seine Zeile kommt im Dashboard auf „Überspringen“",
+      "dgStatus.on": "⊘ diesen Credit wieder anschalten",
+      "dgStatus.isOff": "hier abgeschaltet",
+      "bc.offNote": "Auf Bandcamp abgeschaltet (⊘): „Überspringen“. ⊘ dort schaltet ihn wieder an, ebenso eine hier gewählte Ebene.",
+      "log.bcOff": "Bandcamp: {name} – {role} abgeschaltet („Überspringen“)",
+      "log.bcOn": "Bandcamp: {name} – {role} wieder angeschaltet",
       "ms.3.17.0": "Bandcamp-Ansicht im Companion (1.8.0): ein Bandcamp-Tab folgt dem Dashboard wie ein Discogs-Tab – Status-Zeichen vor jedem Teil einer Credits-Zeile (Album- und Track-Seiten), ein Klick auf ein Zeichen zeigt seine Zeile, eine Zeile springt zu ihrer Stelle (aus dem „about“-Text: zu ihrem Satz), Track-Hervorhebung, Status auf der MusicBrainz-Release-Seite; „im Hintergrund öffnen“ und „Release dort laden“ auch für Bandcamp. Zeilen von Track-Seiten verlinken sie.",
       "log.stagedRemoved": "Aus dem Editor genommen (nicht mehr gewünscht): {text}",
       "msg.stagedRemovedAll.one": "{n} schon übernommene Beziehung ist nicht mehr gewünscht und wurde aus dem Editor genommen.",
@@ -3633,6 +3645,12 @@
       "bc.fromTrackPage.other": "De las páginas de pista:",
       "bc.trackPageTitle": "Abre la página de la pista en Bandcamp",
       "about.from": "Del texto «about»",
+      "dgStatus.off": "⊘ desactivar este crédito – su fila pasa a «Omitir» en el panel",
+      "dgStatus.on": "⊘ volver a activar este crédito",
+      "dgStatus.isOff": "desactivado aquí",
+      "bc.offNote": "Desactivado en Bandcamp (⊘): «Omitir». ⊘ allí lo vuelve a activar, igual que elegir un nivel aquí.",
+      "log.bcOff": "Bandcamp: {name} – {role} desactivado («Omitir»)",
+      "log.bcOn": "Bandcamp: {name} – {role} activado de nuevo",
       "ms.3.17.0": "Vista de Bandcamp en el complemento (1.8.0): una pestaña de Bandcamp sigue al panel como una de Discogs – marcas de estado delante de cada parte de una línea de créditos (páginas de álbum y de pista), un clic en una marca muestra su fila, una fila salta a su línea (del texto «about»: a su frase), resaltado de pistas, estado en la página de la publicación de MusicBrainz; «abrir en segundo plano» y «Cargar la publicación allí» también para Bandcamp. Las filas de páginas de pista enlazan a ellas.",
       "log.stagedRemoved": "Quitada del editor (ya no deseada): {text}",
       "msg.stagedRemovedAll.one": "{n} relación ya añadida ya no se quiere y se quitó del editor.",
@@ -4890,6 +4908,12 @@
       "bc.fromTrackPage.other": "Des pages des morceaux :",
       "bc.trackPageTitle": "Ouvre la page du morceau sur Bandcamp",
       "about.from": "Du texte « about »",
+      "dgStatus.off": "⊘ désactiver ce crédit – sa ligne passe à « Ignorer » dans le tableau de bord",
+      "dgStatus.on": "⊘ réactiver ce crédit",
+      "dgStatus.isOff": "désactivé ici",
+      "bc.offNote": "Désactivé sur Bandcamp (⊘) : « Ignorer ». ⊘ là-bas le réactive, tout comme choisir un niveau ici.",
+      "log.bcOff": "Bandcamp : {name} – {role} désactivé (« Ignorer »)",
+      "log.bcOn": "Bandcamp : {name} – {role} réactivé",
       "ms.3.17.0": "Vue Bandcamp dans le compagnon (1.8.0) : un onglet Bandcamp suit le tableau de bord comme un onglet Discogs – marques de statut devant chaque partie d’une ligne de crédits (pages d’album et de morceau), un clic sur une marque affiche sa ligne, une ligne saute à son endroit (du texte « about » : à sa phrase), surlignage des pistes, statut sur la page de la parution MusicBrainz ; « ouvrir en arrière-plan » et « Y charger la parution » aussi pour Bandcamp. Les lignes des pages de morceau y renvoient.",
       "log.stagedRemoved": "Retirée de l’éditeur (plus voulue) : {text}",
       "msg.stagedRemovedAll.one": "{n} relation déjà ajoutée n’est plus voulue et a été retirée de l’éditeur.",
@@ -8671,6 +8695,9 @@
   // [3.16.1] "Leave out the about text" for this release: { stash: { pool, cells } } (the dates taken out), null when not
   const ABOUT_KEY = `dci-about-off:${releaseMbid}`;
   S.aboutOff = !!readJson('localStorage', ABOUT_KEY, null);
+  // [3.17.1] Credits switched off on Bandcamp (⊘ in the companion): stored per release as "name|role"
+  const BC_OFF_KEY = `dci-bc-off:${releaseMbid}`;
+  S.bcOff = new Set(readJson('localStorage', BC_OFF_KEY, []) || []);
   S.trackPool = readJson('localStorage', TRACKPOOL_KEY, null) || [];
   const saveTrackPool = () => writeJson('localStorage', TRACKPOOL_KEY, S.trackPool.length ? S.trackPool : null);
 
@@ -9806,8 +9833,9 @@
     S.poolForm = null;
     S.trackForm = null;
     S.dm = { cells: [], found: '', dirty: false };
-    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY].forEach((k) => writeJson('localStorage', k, null));
+    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY, BC_OFF_KEY].forEach((k) => writeJson('localStorage', k, null));
     S.aboutOff = false;
+    S.bcOff = new Set();
     S.mediaSel = null;
     S.supp = null;
     S.suppSources = new Map();
@@ -10551,6 +10579,12 @@
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
       // [3.16.1] "about" text left out for this release: its rows hidden at once
       if (S.aboutOff) setAboutRowsHidden(true);
+      // [3.17.1] credits switched off on Bandcamp for this release: their rows on "Skip" at once
+      if (S.source === BANDCAMP && S.bcOff.size) {
+        S.rows.forEach((r) => {
+          if ((r.srcRefs || []).length && S.bcOff.has(bcOffKey(r))) Object.assign(r, { bcOff: true, bcOffLevel: r.level, level: 'skip' });
+        });
+      }
       S.dateSuggestions = dateSuggestions(rel);
       // Dates in the notes with a word naming their group: suggestions in the date matrix (once per release)
       autoPlaceFoundDates();
@@ -11610,6 +11644,9 @@
     return out.join('');
   }
 
+  /** [3.17.1] A credit switched off on Bandcamp says so. */
+  const bcOffHtml = (row) => (row.bcOff ? `<div class="dci-note dci-bcoff">${esc(tr('bc.offNote'))}</div>` : '');
+
   function roleCell(row) {
     const notes = (row.notes || []).map((k) => `<div class="dci-note">${esc(tr(`note.${k}`, { type: row.seriesType || '' }))}</div>`).join('')
 ;
@@ -11620,7 +11657,7 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}
-        <div class="dci-sub">${esc(tr('role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}
+        <div class="dci-sub">${esc(tr('role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${bcOffHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec ? `<div class="dci-sub">${esc(tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
@@ -11631,7 +11668,7 @@
     return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
-        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}
+        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${bcOffHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
       <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
       ${notes}`;
@@ -12059,6 +12096,45 @@
   // --- [3.16.1] "Leave out the about text" (Bandcamp; per release, at once, without a new import) ---------------------
   /** A date found in the notes that lies in the "about" text. */
   const fromAboutText = (x) => !!(S.release && S.release.aboutAt != null && x && x.index >= S.release.aboutAt);
+
+  /** [3.17.1] A credit switched off on Bandcamp, as stored for the release: its name as written and its role. */
+  function bcOffKey(row) {
+    const a = S.artists.get(row.artistKey);
+    return a ? `${norm(a.rawName || a.name || a.placeholder || '')}|${norm(row.raw)}` : '';
+  }
+
+  const saveBcOff = () => writeJson('localStorage', BC_OFF_KEY, S.bcOff.size ? [...S.bcOff] : null);
+
+  /** [3.17.1] Forgets that a credit was switched off (its level is set by the caller). */
+  function bcCreditOn(row) {
+    const prev = row.bcOffLevel;
+    delete row.bcOff;
+    delete row.bcOffLevel;
+    S.bcOff.delete(bcOffKey(row));
+    saveBcOff();
+    const a = S.artists.get(row.artistKey);
+    log('info', 'bcOn', { name: a ? a.mbName || a.name : '', role: row.raw });
+    return prev && prev !== 'skip' ? prev : row.defaultLevel;
+  }
+
+  /**
+   * [3.17.1] ⊘ on Bandcamp: a credit switched off – its row goes to "Skip" (its level kept) – or on again (the level
+   * back). Stored for the release; "Delete stored import" forgets it.
+   */
+  function toggleBcCredit(row, off) {
+    const key = bcOffKey(row);
+    if (!key || !!row.bcOff === !!off) return;
+    if (!off) {
+      setLevel(row, bcCreditOn(row));
+      return;
+    }
+    Object.assign(row, { bcOff: true, bcOffLevel: row.level });
+    S.bcOff.add(key);
+    saveBcOff();
+    const a = S.artists.get(row.artistKey);
+    log('info', 'bcOff', { name: a ? a.mbName || a.name : '', role: row.raw });
+    setLevel(row, 'skip');
+  }
 
   /** The rows of places from the "about" text hidden (on "Skip", the level before kept) or shown again as they were. */
   function setAboutRowsHidden(hide) {
@@ -15901,7 +15977,7 @@
             return pt;
           };
           if (site === 'bandcamp') {
-            items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb,
+            items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb, ...(row.bcOff ? { off: true } : {}),
               refs: refs.map((r) => ({ page: r.page, line: r.line, part: r.part, pi: r.pi, n: r.n, ...(r.pos ? { pos: r.pos, ...ofTrack(r.pos) } : { status }) })) });
             continue;
           }
@@ -15912,7 +15988,8 @@
             positions: row.dPositions || [], status, unmapped: isUnmapped(row), mb, byPos });
         }
       }
-      const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow']
+      const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow',
+        'off', 'on', 'isOff']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
       toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items, labels,
         targets: [...targetIndex.keys()], mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease });
@@ -16026,6 +16103,11 @@
       }
       const a = S.artists.get(row.artistKey);
       logView('info', 'dgFocus', { name: a ? a.mbName || a.name : '', role: row.raw || '' });
+    } else if (msg.type === 'toggle-credit') {
+      // [3.17.1] ⊘ on the Bandcamp page: the credit off ("Skip") or on again
+      if (viewSite() !== 'bandcamp' || String(msg.releaseId) !== String(companionReleaseId())) return;
+      const row = S.rows.find((r) => r.id === msg.row);
+      if (row) toggleBcCredit(row, !!msg.off);
     } else if (msg.type === 'hover-track') {
       if (!S.dgHover || String(msg.releaseId) !== String(companionReleaseId()) || !S.overlay || S.overlay.hidden) return;
       const i = S.srcTracks.findIndex((t) => t && norm(t.position) === norm(msg.position));
@@ -16859,7 +16941,11 @@
         startPanic();
         break;
       case 'level':
-        if (row) setLevel(row, btn.dataset.level);
+        if (row) {
+          // [3.17.1] a level chosen for a credit switched off on Bandcamp switches it on again
+          if (row.bcOff && btn.dataset.level !== 'skip') bcCreditOn(row);
+          setLevel(row, btn.dataset.level);
+        }
         break;
       case 'scope':
         setScope(btn.dataset.scope);
