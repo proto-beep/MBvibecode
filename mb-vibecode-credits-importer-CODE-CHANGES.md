@@ -13,12 +13,45 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.13.2, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.15.0, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.15.0 · 2026-10-17
+
+The works of the artists in the works matrix (collect item 9b). Milestone.
+
+- **New (section 4, after the same-named works):** `ARTIST_WORKS_MAX` (2,000), `artistWorkTargets()` (a `Map` MBID → `{ name, why }`: `S.releaseCredit` first, then rows with an MB artist whose type is in `WRITER_TYPES`, then instrument / vocal / performer rows; companies, "other" artists and skipped rows not), `tracksWithoutWork()` (`matrixTrack`, no placeholder title, no `worksForTrack`), `loadArtistWorks(mbid, name, onPage)` (browse `work?artist=…&inc=aliases` and `recording?artist=…&inc=work-rels`, 100 per request; `via: 'linked' | 'recorded'`, `recording` = the recording's title; `capped` when 2,000 recordings were read), `matchArtistWorks()` (title or alias `withinOne` the normalized track title, as `sameNamed`; a hit has `artistWork: true` and its origin in `writers`; returns true when the hits changed), `renderWorksBackground()` (draws the works matrix anew only when no input, select or textarea in it has the focus; otherwise 400 ms after that field is left – a background redraw took the focus in `t_focus.py` and stopped the smooth scroll of `t_jump.py`), `runArtistWorks()` (one run at a time, `S.artistWorksAgain` chains the next; draws anew only when `matchArtistWorks()` reports a change).
+- **`mbWs(path, { background })`:** counts the dashboard's own requests (`mbForeground`); new `mbWsIdle(path)` waits (300 ms steps) while there are any, then queues a background request – the queue of one request per 1.1 s stays the same.
+- **State:** `S.artistWorks` (MBID → what was read, kept for the page session, not reset by `loadRelease`), `S.artistWorkHits` (track index → hits) and `S.artistWorkTargets`, both reset by `loadRelease`; `S.artistWorksRunning`, `S.artistWorksAgain`, `S.worksRenderOnBlur`.
+- **Changed:** `sameNamed(i)` = the writers' search results plus the artist hits not in them (so `works-pending`, `works-pending-all` and the "＋ New work" question count them too). `renderWorks` work cell: the list is shown whenever `sameNamed` has works (before: only with a finished writers' search), heading `matrix.sameArtists` when an artist hit is in it; the "no writers" mark only without works. `loadRelease` calls `runArtistWorks()` after `autoSearchWorks()`; `scheduleWorkRecheck` calls it when `artistWorkTargets()` has an MBID not compared yet.
+- **Messages:** after 10 s for one artist with more than 900 works and recordings to read: `msg.artistWorksSlow` (once per artist); capped: `msg.artistWorksCapped`.
+- **Texts (4 languages):** `matrix.sameArtists` (one/other), `works.viaLinked`, `works.viaRecorded`, `msg.artistWorksSlow`, `msg.artistWorksCapped`, `log.artistWorks` (one/other), `log.artistWorksSlow`, `log.artistWorksCapped`, `log.artistWorksDone` (one/other), `log.artistWorksNone`, `ms.3.15.0`; `matrix.dupWarn` and `matrix.dupWarnAll` without "by these writers". `MILESTONES` gains 3.15.0.
+- **Tests:** new `t_artistworks.py` (A release artist's work, a performer's cover, no duplicate with the writers' search; B order and log, picking; C read once per session; D 2,500 recordings: the message after 10 s, capped at 2,000; E no redraw while a date field of the matrix is typed in, the hit shown after leaving it); harness: browse `work?artist=` from `ARTIST_WORKS`, `recording?artist=` from `ARTIST_RECORDINGS` (a number: that many recordings without works), recorded in `BROWSES` (not in `WORK_QUERIES`); `t_notice.py` expects 3.15.0, 3.12.0, 3.10.0 and no longer 3.5.0.
+- **Watch out:** every import now makes two background requests per artist with an MBID (more for large catalogues); a dashboard request waits at most for the one background request already queued.
+
+## Import 3.14.1 · 2026-10-17
+
+Arrows in the status bar (collect item 8).
+
+- **New:** `jumpDashboard(where)` – `'top' | 'bottom'`: in window mode the dashboard's body is scrolled, in page mode the page (to the dashboard's top or bottom).
+- **Changed:** the footer gets `<span class="dci-jump">` with two buttons `data-act="jump-top"` / `"jump-bottom"` (▲ ▼); the click handler has the case. CSS `.dci-jump`.
+- **Texts:** `footer.jump`, `footer.top`, `footer.bottom` (4 languages).
+- **Tests:** new `t_jump.py` (window and page, clicked by `evaluate` as the log window may cover the footer).
+
+## Import 3.14.0 · 2026-10-17
+
+Rules for free credits texts, for all sources (collect item 10).
+
+- **New tables (section 2d, each in `TABLES` with `show()`):** `TEXT_TIME_AFTER_NAME` (T020), `TEXT_WHAT_WORDS` (T021), `TEXT_MADE_BY` (T022), `PLACEHOLDER_WHO` (T023), `TEXT_LABEL_LINE` (T024), `TEXT_NOT_NAME` (T025).
+- **Rules:** R060 pattern gains `played by`; date rule D007 also matches two months of one year (`${P.M}` and / & / und / y / et / "/" `${P.M}`, optional "de", `${P.Y}`), its note names "September and October 2026".
+- **`TEXT.parse`:** new helpers `addPlaceholder(said, role, scope)` (a credit whose `who` has no name, `placeholder: said`), `roleOf(word)` ("played" → "Played By" when the register knows it), `firstSentence(t)`. `byRole` strips `TEXT_WHAT_WORDS`; `byRoles` also tries `cap(l)` without "By". The "… by" branch: a line in the made-by form (`TEXT_MADE_BY`) takes its roles from there; `right = firstSentence(right).replace(TEXT_TIME_AFTER_NAME, '')`; `PLACEHOLDER_WHO` → `addPlaceholder`. `TEXT_LABEL_LINE` lines are skipped (not listed as not recognized). "Role Name" lines only when nothing else matched: a role of 1–3 words (`isRole`), a name of 2–4 words without a `TEXT_NOT_NAME` word, not all words roles.
+- **Core:** `groupCredits` keys placeholders `ph:<said>` and carries `placeholder`, `releaseMbid`; new `placeholderCredits(credits)` turns a placeholder credit into one credit per release-credit artist with an MBID (used in `loadRelease` and the supplement); the artist object keeps `placeholder` and `releaseMbid`; `suggestByName` puts the release artist into `nameHits`; `nameSuggestHtml` heads it with `match.placeholderSuggest`; log `log.placeholderSuggested`.
+- **Texts:** `match.placeholderSuggest`, `log.placeholderSuggested` (4 languages); the notes of T020 – T025 are in English, as those of the other tables.
+- **Tests:** new `t_textrules.py`; `register_corpus.json` gains a text in the form of the credits of "Invisible Places" (other names) and date phrases (now 7 texts, 55 dates); `register_golden.json` written anew – R060's pattern, D007's note, the new tables and the new corpus entries differ, nothing else.
 
 ## Import 3.13.2 · 2026-10-17
 
