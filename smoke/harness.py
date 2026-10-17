@@ -67,9 +67,9 @@ attr(1150, 'task', 1150, free=True)
 LTS = {}
 
 
-def lt(i, gid, name, t0, t1, attrs=(), dates=True):
+def lt(i, gid, name, t0, t1, attrs=(), dates=True, deprecated=False):
     LTS[i] = {'id': i, 'gid': gid, 'name': name, 'type0': t0, 'type1': t1, 'has_dates': dates, 'description': name,
-              'deprecated': False, 'attributes': {str(a): {'min': 0, 'max': None} for a in attrs},
+              'deprecated': deprecated, 'attributes': {str(a): {'min': 0, 'max': None} for a in attrs},
               'link_phrase': name, 'reverse_link_phrase': name, 'long_link_phrase': name}
 
 
@@ -78,7 +78,9 @@ lt(149, '0fdbe3c6-7700-4a31-ae54-b53f06ae1cfa', 'vocal', 'artist', 'recording', 
 lt(141, '5c0ceac3-feb4-41f0-868d-dc06f6e27fc0', 'producer', 'artist', 'recording', (1, 526))
 lt(143, '3e3102e1-1896-4f50-b5b2-dd9824e46efe', 'mix', 'artist', 'recording', (1, 526))
 lt(128, 'a01ee869-80a8-45ef-9447-c59e91aa7926', 'recording', 'artist', 'recording', (1, 526))
-lt(136, '30adb2d7-dbcb-4393-9230-2098510ddd64', 'mastering', 'artist', 'recording', (1, 526))
+# as on MusicBrainz (3.15.1): mastering on recordings is deprecated ("Please add mastering engineers at the release level")
+lt(136, '30adb2d7-dbcb-4393-9230-2098510ddd64', 'mastering', 'artist', 'recording', (1, 526), deprecated=True)
+lt(42, '84453d28-c3e8-4864-9aae-25aa968bcf3e', 'mastering', 'artist', 'release', (1, 526))
 lt(129, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cffc', 'miscellaneous support', 'artist', 'recording', (1150,))
 lt(156, '628a9658-f54c-4142-b0c0-95f031b544da', 'performer', 'artist', 'recording', (1, 194, 596))
 lt(928, '9c02ea37-7680-4fb5-8555-e330c7aa885b', 'design', 'artist', 'release', (1, 526, 1150))

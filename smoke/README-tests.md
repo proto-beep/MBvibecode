@@ -109,6 +109,10 @@ python3 t_textrules.py    # rules for free credits texts (3.14.0): "Music played
                           # "Mixed and mastered by X in May 2025", "Photography Sam Lee", "mastering john doe", the label line
                           # left out, "… created by a human" → the release's artist suggested; the period 2025-03 – 2025-04
 python3 t_jump.py         # ▲ ▼ in the status bar jump to the top and bottom of the dashboard, in the window and in the page (3.14.1)
+python3 t_special.py      # special purpose artists (3.15.1): Various Artists and "[soundtrack]" are not asked for their works,
+                          # logged once; table T026 in "Mapping rules"
+python3 t_mastering.py    # mastering only on the release level (3.15.1): two engineers for CD 1 / CD 2, no "Recording", no
+                          # "Release level" in the column, the track group decides which mastering row takes a date
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)
@@ -149,6 +153,10 @@ should count only its own kind.
 With several media (`harness.MEDIA = [2, 1, 1]` …) the dashboard asks for the media before the import:
 `harness.open_dashboard(pg)` answers "All" with the release level (the import as before),
 `open_dashboard(pg, media={'text': '2-3', 'release': False})` another choice, `media=False` leaves the question open.
+
+Relationship types of the mock are made with `harness.lt(id, gid, name, type0, type1, attrs, dates, deprecated)`; as on
+MusicBrainz, artist–recording "mastering" is deprecated (the dashboard leaves it out) and artist–release "mastering" (42)
+exists (3.15.1).
 
 `harness.WORK_RELS_DIRECT_ONLY = True` leaves the submitted relationships of the work out of the release lookup, as
 while its link to the recording is still an open edit; `/ws/2/work/<id>` still has them (`harness.WORK_LOOKUPS`

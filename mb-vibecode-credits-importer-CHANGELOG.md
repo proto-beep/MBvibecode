@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.15.0 | – |
+| 2026-10-17 | 3.11.0 – 3.15.1 | – |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -72,7 +72,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 ## 2026-10-17
 
-### Import 3.15.0
+### Import 3.15.1
+
+#### Changed
+
+- **Mastering only on the release level, as MusicBrainz has it** (on recordings the type is deprecated – "Please add mastering engineers at the release level" – and "mastered at" does not exist there). In the date matrix the columns **Mastering** and **Remastering** have no checkbox "Release level" any more: every date of these columns goes to the mastering rows, also a date with a track group. A track group now only says which mastering row a date belongs to – CD 1 mastered by X in May, CD 2 by Y in June: X takes May, Y June; a date without a group goes to all mastering rows. Before, a mastering date with a track group reached a release-level row only after ticking "Release level". The column ℗/© keeps the checkbox (℗ can be on recordings or the release).
+- A row that MusicBrainz allows on one level only shows that on mouse-over of its level ("MusicBrainz has this relationship only on this level (Release)").
+- **Special purpose artists are left out of the comparison with the works of the artists:** Various Artists, [unknown], [anonymous], [traditional], [no artist], [data], [dialogue], [Disney], [theatre], [church chimes], [language instruction] and MusicBrainz Test Artist (their MBIDs, checked on MusicBrainz's page "Special purpose artist"), and any name entirely in square brackets ("[soundtrack]"). Their catalogues are huge and say nothing about a release. The log says so once per import ("Various Artists: a special purpose artist … – its works are not compared"); the list is table T026 in "Mapping rules".
+
+#### Fixed
+
+- A work found by the comparison with the works of the artists (background) does not draw the works matrix anew while something is dragged (a track group, a date) – the drop would be lost; it is drawn a moment after the drop.
+
 
 #### Added
 
