@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.16.2
+// @version      3.17.2
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.16.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -116,7 +116,7 @@
       "srcorder.toggle": "Order of the sources",
       "forget.button": "Delete stored import …",
       "about.off": "Leave out the “about” text",
-      "about.offTitle": "Only for this release: the places and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
+      "about.offTitle": "Only for this release: the places, liner notes and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
       "log.aboutOff": "“about” text left out (rows hidden: {rows}, dates out of the pool: {dates})",
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "supp.with": "Supplement with",
@@ -591,7 +591,7 @@
       "settings.hint": "All settings in one place, by topic – the switches stay where they are too. Stored in this browser.",
       "settings.t.general": "General",
       "settings.t.sources": "Sources",
-      "settings.t.discogs": "Discogs view",
+      "settings.t.discogs": "Discogs and Bandcamp view",
       "settings.t.works": "Works",
       "settings.t.staging": "Staging",
       "settings.t.dates": "Dates & tracks",
@@ -602,7 +602,7 @@
       "settings.place.page": "in the page",
       "settings.logOpen": "Show the log",
       "settings.logPlace": "Place of the log",
-      "settings.discogsHint": "With the companion script in a Discogs tab: when the Discogs view follows the dashboard and what it shows.",
+      "settings.discogsHint": "With the companion script in a Discogs or Bandcamp tab: when the view follows the dashboard and what it shows (the cover only on Discogs). It shows the source that is loaded.",
       "settings.awOn": "Compare the tracks without a work with the works of the release's artists, writers and musicians",
       "settings.awMax": "At most per artist (works and recordings together)",
       "settings.awCost": "= {req} requests, about {sec} s per artist",
@@ -1095,6 +1095,39 @@
       "sync.load": "Load the release there",
       "sync.loadTitle": "Opens this release in the connected Discogs tab",
       "sync.loaded": "release loaded",
+      "sync.offSite": "{site} view: off",
+      "sync.noTabSite": "{site} view: no {site} tab",
+      "sync.connectedSite": "{site} view: connected ({where})",
+      "sync.found.loadingSite": "{site} is loading the release …",
+      "sync.found.noneSite": "source not found on {site}",
+      "sync.found.no-tabSite": "no {site} tab",
+      "log.discogsJumpSite": "{site} view: {result}",
+      "log.syncModeSite": "{site} view follows the dashboard {mode}",
+      "sync.dgStatusSite": "{site} status",
+      "sync.dgStatusTitleSite": "Shows in the credits of the {site} page which credits are already in MusicBrainz, staged, open, skipped or not mapped – a mark before each part of a line; a click on a mark shows its row in the dashboard",
+      "log.dgStatusSite": "{site} status: {state}",
+      "log.dgFocusSite": "From {site}: {name} – {role}",
+      "sync.trackHoverTitleSite": "When the pointer rests on a track on the {site} page, its row in the works matrix is highlighted",
+      "sync.reloadTitleSite": "Reload the connected {site} tab",
+      "log.dgReloadSite": "Connected {site} tab reloaded",
+      "sync.otherPageSite": "{site} view: a {site} tab is open, but on another page",
+      "sync.loadTitleSite": "Opens this release in the connected {site} tab",
+      "sync.dgReleaseTitleSite": "Keep the {site} status marks while the MusicBrainz release page is open (e.g. after “Enter edit”), to check at a glance what arrived; they go when the release page and the editor are closed",
+      "log.dgReleaseSite": "{site} status on the release page: {state}",
+      "sync.oldSite": "{site} view: needs the companion script 1.8.0 or later – please update “MB x Vibecode: Credits Importer Companion”",
+      "bc.fromTrackPage.one": "From the track page:",
+      "bc.fromTrackPage.other": "From the track pages:",
+      "bc.trackPageTitle": "Opens the track page on Bandcamp",
+      "about.from": "From the “about” text",
+      "liner.poolName": "Liner notes – {name}",
+      "log.linerFound": "Liner notes found below the “about” text, signed “{name}” (the name only suggested)",
+      "dgStatus.off": "⊘ switch this credit off – its row goes to “Skip” in the dashboard",
+      "dgStatus.on": "⊘ switch this credit on again",
+      "dgStatus.isOff": "switched off here",
+      "bc.offNote": "Switched off on Bandcamp (⊘): “Skip”. ⊘ there switches it on again, so does choosing a level here.",
+      "log.bcOff": "Bandcamp: {name} – {role} switched off (“Skip”)",
+      "log.bcOn": "Bandcamp: {name} – {role} switched on again",
+      "ms.3.17.0": "Bandcamp view in the companion (1.8.0): a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the “about” text: to its sentence), track highlight, status on the MusicBrainz release page; “open in background” and “Load the release there” for Bandcamp too. Rows from track pages link to them.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -1348,7 +1381,7 @@
       "srcorder.toggle": "Reihenfolge der Quellen",
       "forget.button": "Gespeicherten Import löschen …",
       "about.off": "„about“-Text auslassen",
-      "about.offTitle": "Nur für dieses Release: Orte und Daten aus dem „about“-Text von Bandcamp werden ausgelassen – ihre Zeilen ausgeblendet, ihre Daten aus Pool und Matrix genommen –, sofort, ohne neuen Import. Wieder abgehakt, sind sie zurück, mit dem, was du an ihnen geändert hast.",
+      "about.offTitle": "Nur für dieses Release: Orte, Liner Notes und Daten aus dem „about“-Text von Bandcamp werden ausgelassen – ihre Zeilen ausgeblendet, ihre Daten aus Pool und Matrix genommen –, sofort, ohne neuen Import. Wieder abgehakt, sind sie zurück, mit dem, was du an ihnen geändert hast.",
       "log.aboutOff": "„about“-Text ausgelassen (Zeilen ausgeblendet: {rows}, Daten aus dem Pool: {dates})",
       "log.aboutOn": "„about“-Text wieder aufgenommen (Zeilen zurück: {rows}, Daten zurück: {dates})",
       "supp.with": "Ergänzen mit",
@@ -1823,7 +1856,7 @@
       "settings.hint": "Alle Einstellungen an einem Ort, nach Themen – die Schalter bleiben auch an ihren Orten. Gespeichert in diesem Browser.",
       "settings.t.general": "Allgemein",
       "settings.t.sources": "Quellen",
-      "settings.t.discogs": "Discogs-Ansicht",
+      "settings.t.discogs": "Discogs- und Bandcamp-Ansicht",
       "settings.t.works": "Werke",
       "settings.t.staging": "Stagen",
       "settings.t.dates": "Daten & Tracks",
@@ -1834,7 +1867,7 @@
       "settings.place.page": "in der Seite",
       "settings.logOpen": "Protokoll zeigen",
       "settings.logPlace": "Platz des Protokolls",
-      "settings.discogsHint": "Mit dem Companion-Skript in einem Discogs-Tab: wann die Discogs-Ansicht dem Dashboard folgt und was sie zeigt.",
+      "settings.discogsHint": "Mit dem Companion-Skript in einem Discogs- oder Bandcamp-Tab: wann die Ansicht dem Dashboard folgt und was sie zeigt (das Cover nur bei Discogs). Sie zeigt die geladene Quelle.",
       "settings.awOn": "Tracks ohne Werk mit den Werken der Artists des Releases, der Autoren und der Musiker abgleichen",
       "settings.awMax": "Höchstens pro Artist (Werke und Aufnahmen zusammen)",
       "settings.awCost": "= {req} Abfragen, etwa {sec} s pro Artist",
@@ -2327,6 +2360,39 @@
       "sync.load": "Release dort laden",
       "sync.loadTitle": "Öffnet dieses Release im verbundenen Discogs-Tab",
       "sync.loaded": "Release geladen",
+      "sync.offSite": "{site}-Ansicht: aus",
+      "sync.noTabSite": "{site}-Ansicht: kein {site}-Tab",
+      "sync.connectedSite": "{site}-Ansicht: verbunden ({where})",
+      "sync.found.loadingSite": "{site} lädt das Release …",
+      "sync.found.noneSite": "Stelle auf {site} nicht gefunden",
+      "sync.found.no-tabSite": "kein {site}-Tab",
+      "log.discogsJumpSite": "{site}-Ansicht: {result}",
+      "log.syncModeSite": "{site}-Ansicht folgt dem Dashboard {mode}",
+      "sync.dgStatusSite": "{site}-Status",
+      "sync.dgStatusTitleSite": "Zeigt in den Credits der {site}-Seite, welche Credits schon in MusicBrainz, vorgemerkt, offen, übersprungen oder nicht zugeordnet sind – ein Zeichen vor jedem Teil einer Zeile; ein Klick auf ein Zeichen zeigt seine Zeile im Dashboard",
+      "log.dgStatusSite": "{site}-Status: {state}",
+      "log.dgFocusSite": "Von {site}: {name} – {role}",
+      "sync.trackHoverTitleSite": "Ruht die Maus auf einem Track der {site}-Seite, wird seine Zeile in der Werke-Matrix hervorgehoben",
+      "sync.reloadTitleSite": "Verbundenen {site}-Tab neu laden",
+      "log.dgReloadSite": "Verbundener {site}-Tab neu geladen",
+      "sync.otherPageSite": "{site}-Ansicht: ein {site}-Tab ist offen, aber auf einer anderen Seite",
+      "sync.loadTitleSite": "Öffnet dieses Release im verbundenen {site}-Tab",
+      "sync.dgReleaseTitleSite": "Die {site}-Status-Zeichen bleiben, solange die MusicBrainz-Release-Seite offen ist (z. B. nach „Enter edit“), um auf einen Blick zu prüfen, was angekommen ist; sie verschwinden, wenn Release-Seite und Editor geschlossen sind",
+      "log.dgReleaseSite": "{site}-Status auf der Release-Seite: {state}",
+      "sync.oldSite": "{site}-Ansicht: braucht das Companion-Skript 1.8.0 oder neuer – bitte „MB x Vibecode: Credits Importer Companion“ aktualisieren",
+      "bc.fromTrackPage.one": "Von der Track-Seite:",
+      "bc.fromTrackPage.other": "Von den Track-Seiten:",
+      "bc.trackPageTitle": "Öffnet die Track-Seite auf Bandcamp",
+      "about.from": "Aus dem „about“-Text",
+      "liner.poolName": "Liner Notes – {name}",
+      "log.linerFound": "Liner Notes unter dem „about“-Text gefunden, unterzeichnet „{name}“ (der Name nur vorgeschlagen)",
+      "dgStatus.off": "⊘ diesen Credit abschalten – seine Zeile kommt im Dashboard auf „Überspringen“",
+      "dgStatus.on": "⊘ diesen Credit wieder anschalten",
+      "dgStatus.isOff": "hier abgeschaltet",
+      "bc.offNote": "Auf Bandcamp abgeschaltet (⊘): „Überspringen“. ⊘ dort schaltet ihn wieder an, ebenso eine hier gewählte Ebene.",
+      "log.bcOff": "Bandcamp: {name} – {role} abgeschaltet („Überspringen“)",
+      "log.bcOn": "Bandcamp: {name} – {role} wieder angeschaltet",
+      "ms.3.17.0": "Bandcamp-Ansicht im Companion (1.8.0): ein Bandcamp-Tab folgt dem Dashboard wie ein Discogs-Tab – Status-Zeichen vor jedem Teil einer Credits-Zeile (Album- und Track-Seiten), ein Klick auf ein Zeichen zeigt seine Zeile, eine Zeile springt zu ihrer Stelle (aus dem „about“-Text: zu ihrem Satz), Track-Hervorhebung, Status auf der MusicBrainz-Release-Seite; „im Hintergrund öffnen“ und „Release dort laden“ auch für Bandcamp. Zeilen von Track-Seiten verlinken sie.",
       "log.stagedRemoved": "Aus dem Editor genommen (nicht mehr gewünscht): {text}",
       "msg.stagedRemovedAll.one": "{n} schon übernommene Beziehung ist nicht mehr gewünscht und wurde aus dem Editor genommen.",
       "msg.stagedRemovedAll.other": "{n} schon übernommene Beziehungen sind nicht mehr gewünscht und wurden aus dem Editor genommen.",
@@ -2580,7 +2646,7 @@
       "srcorder.toggle": "Orden de las fuentes",
       "forget.button": "Borrar la importación guardada…",
       "about.off": "Omitir el texto «about»",
-      "about.offTitle": "Solo para esta publicación: los lugares y fechas del texto «about» de Bandcamp se omiten – sus filas ocultas, sus fechas fuera del grupo y de la matriz – al instante, sin nueva importación. Al desmarcarlo vuelven, con lo que hayas cambiado en ellos.",
+      "about.offTitle": "Solo para esta publicación: los lugares, notas del disco y fechas del texto «about» de Bandcamp se omiten – sus filas ocultas, sus fechas fuera del grupo y de la matriz – al instante, sin nueva importación. Al desmarcarlo vuelven, con lo que hayas cambiado en ellos.",
       "log.aboutOff": "Texto «about» omitido (filas ocultas: {rows}, fechas fuera del grupo: {dates})",
       "log.aboutOn": "Texto «about» incluido de nuevo (filas de vuelta: {rows}, fechas de vuelta: {dates})",
       "supp.with": "Completar con",
@@ -3055,7 +3121,7 @@
       "settings.hint": "Todos los ajustes en un lugar, por temas – los interruptores siguen también en su sitio. Guardados en este navegador.",
       "settings.t.general": "General",
       "settings.t.sources": "Fuentes",
-      "settings.t.discogs": "Vista de Discogs",
+      "settings.t.discogs": "Vista de Discogs y Bandcamp",
       "settings.t.works": "Obras",
       "settings.t.staging": "Preparar",
       "settings.t.dates": "Fechas y pistas",
@@ -3066,7 +3132,7 @@
       "settings.place.page": "en la página",
       "settings.logOpen": "Mostrar el registro",
       "settings.logPlace": "Lugar del registro",
-      "settings.discogsHint": "Con el script complementario en una pestaña de Discogs: cuándo la vista de Discogs sigue al panel y qué muestra.",
+      "settings.discogsHint": "Con el script complementario en una pestaña de Discogs o Bandcamp: cuándo la vista sigue al panel y qué muestra (la portada solo en Discogs). Muestra la fuente cargada.",
       "settings.awOn": "Comparar las pistas sin obra con las obras de los artistas de la publicación, de los autores y de los músicos",
       "settings.awMax": "Como máximo por artista (obras y grabaciones juntas)",
       "settings.awCost": "= {req} consultas, unos {sec} s por artista",
@@ -3559,6 +3625,39 @@
       "sync.load": "Cargar la publicación allí",
       "sync.loadTitle": "Abre esta publicación en la pestaña de Discogs conectada",
       "sync.loaded": "publicación cargada",
+      "sync.offSite": "Vista de {site}: desactivada",
+      "sync.noTabSite": "Vista de {site}: ninguna pestaña de {site}",
+      "sync.connectedSite": "Vista de {site}: conectada ({where})",
+      "sync.found.loadingSite": "{site} está cargando la publicación…",
+      "sync.found.noneSite": "origen no encontrado en {site}",
+      "sync.found.no-tabSite": "ninguna pestaña de {site}",
+      "log.discogsJumpSite": "Vista de {site}: {result}",
+      "log.syncModeSite": "La vista de {site} sigue al panel {mode}",
+      "sync.dgStatusSite": "Estado en {site}",
+      "sync.dgStatusTitleSite": "Muestra en los créditos de la página de {site} qué créditos ya están en MusicBrainz, añadidos, pendientes, omitidos o sin asignar – una marca delante de cada parte de una línea; un clic en una marca muestra su fila en el panel",
+      "log.dgStatusSite": "Estado en {site}: {state}",
+      "log.dgFocusSite": "Desde {site}: {name} – {role}",
+      "sync.trackHoverTitleSite": "Cuando el puntero se detiene en una pista de la página de {site}, se resalta su fila en la matriz de obras",
+      "sync.reloadTitleSite": "Recargar la pestaña de {site} conectada",
+      "log.dgReloadSite": "Pestaña de {site} conectada recargada",
+      "sync.otherPageSite": "Vista de {site}: hay una pestaña de {site} abierta, pero en otra página",
+      "sync.loadTitleSite": "Abre esta publicación en la pestaña de {site} conectada",
+      "sync.dgReleaseTitleSite": "Mantener las marcas de estado en {site} mientras la página de la publicación de MusicBrainz esté abierta (p. ej. tras «Enter edit»), para comprobar de un vistazo lo que llegó; desaparecen al cerrar la página y el editor",
+      "log.dgReleaseSite": "Estado de {site} en la página de la publicación: {state}",
+      "sync.oldSite": "Vista de {site}: necesita el script complementario 1.8.0 o posterior – actualiza «MB x Vibecode: Credits Importer Companion»",
+      "bc.fromTrackPage.one": "De la página de la pista:",
+      "bc.fromTrackPage.other": "De las páginas de pista:",
+      "bc.trackPageTitle": "Abre la página de la pista en Bandcamp",
+      "about.from": "Del texto «about»",
+      "liner.poolName": "Notas del disco – {name}",
+      "log.linerFound": "Notas del disco encontradas bajo el texto «about», firmadas «{name}» (el nombre solo sugerido)",
+      "dgStatus.off": "⊘ desactivar este crédito – su fila pasa a «Omitir» en el panel",
+      "dgStatus.on": "⊘ volver a activar este crédito",
+      "dgStatus.isOff": "desactivado aquí",
+      "bc.offNote": "Desactivado en Bandcamp (⊘): «Omitir». ⊘ allí lo vuelve a activar, igual que elegir un nivel aquí.",
+      "log.bcOff": "Bandcamp: {name} – {role} desactivado («Omitir»)",
+      "log.bcOn": "Bandcamp: {name} – {role} activado de nuevo",
+      "ms.3.17.0": "Vista de Bandcamp en el complemento (1.8.0): una pestaña de Bandcamp sigue al panel como una de Discogs – marcas de estado delante de cada parte de una línea de créditos (páginas de álbum y de pista), un clic en una marca muestra su fila, una fila salta a su línea (del texto «about»: a su frase), resaltado de pistas, estado en la página de la publicación de MusicBrainz; «abrir en segundo plano» y «Cargar la publicación allí» también para Bandcamp. Las filas de páginas de pista enlazan a ellas.",
       "log.stagedRemoved": "Quitada del editor (ya no deseada): {text}",
       "msg.stagedRemovedAll.one": "{n} relación ya añadida ya no se quiere y se quitó del editor.",
       "msg.stagedRemovedAll.other": "{n} relaciones ya añadidas ya no se quieren y se quitaron del editor.",
@@ -3812,7 +3911,7 @@
       "srcorder.toggle": "Ordre des sources",
       "forget.button": "Supprimer l’import enregistré…",
       "about.off": "Laisser de côté le texte « about »",
-      "about.offTitle": "Pour cette parution seulement : les lieux et dates du texte « about » de Bandcamp sont laissés de côté – leurs lignes masquées, leurs dates retirées du réservoir et de la matrice – tout de suite, sans nouvel import. Décoché, ils reviennent, avec ce que vous y avez changé.",
+      "about.offTitle": "Pour cette parution seulement : les lieux, notes de pochette et dates du texte « about » de Bandcamp sont laissés de côté – leurs lignes masquées, leurs dates retirées du réservoir et de la matrice – tout de suite, sans nouvel import. Décoché, ils reviennent, avec ce que vous y avez changé.",
       "log.aboutOff": "Texte « about » laissé de côté (lignes masquées : {rows}, dates retirées du réservoir : {dates})",
       "log.aboutOn": "Texte « about » repris (lignes de retour : {rows}, dates de retour : {dates})",
       "supp.with": "Compléter avec",
@@ -4287,7 +4386,7 @@
       "settings.hint": "Tous les réglages au même endroit, par thèmes – les interrupteurs restent aussi à leur place. Enregistrés dans ce navigateur.",
       "settings.t.general": "Général",
       "settings.t.sources": "Sources",
-      "settings.t.discogs": "Vue Discogs",
+      "settings.t.discogs": "Vue Discogs et Bandcamp",
       "settings.t.works": "Œuvres",
       "settings.t.staging": "Préparation",
       "settings.t.dates": "Dates et pistes",
@@ -4298,7 +4397,7 @@
       "settings.place.page": "dans la page",
       "settings.logOpen": "Afficher le journal",
       "settings.logPlace": "Place du journal",
-      "settings.discogsHint": "Avec le script compagnon dans un onglet Discogs : quand la vue Discogs suit le tableau de bord et ce qu’elle montre.",
+      "settings.discogsHint": "Avec le script compagnon dans un onglet Discogs ou Bandcamp : quand la vue suit le tableau de bord et ce qu’elle montre (la pochette seulement sur Discogs). Elle montre la source chargée.",
       "settings.awOn": "Comparer les pistes sans œuvre aux œuvres des artistes de la parution, des auteurs et des musiciens",
       "settings.awMax": "Au plus par artiste (œuvres et enregistrements ensemble)",
       "settings.awCost": "= {req} requêtes, environ {sec} s par artiste",
@@ -4791,6 +4890,39 @@
       "sync.load": "Y charger la parution",
       "sync.loadTitle": "Ouvre cette parution dans l’onglet Discogs connecté",
       "sync.loaded": "parution chargée",
+      "sync.offSite": "Vue {site} : désactivée",
+      "sync.noTabSite": "Vue {site} : aucun onglet {site}",
+      "sync.connectedSite": "Vue {site} : connectée ({where})",
+      "sync.found.loadingSite": "{site} charge la parution…",
+      "sync.found.noneSite": "source introuvable sur {site}",
+      "sync.found.no-tabSite": "aucun onglet {site}",
+      "log.discogsJumpSite": "Vue {site} : {result}",
+      "log.syncModeSite": "La vue {site} suit le tableau {mode}",
+      "sync.dgStatusSite": "Statut {site}",
+      "sync.dgStatusTitleSite": "Montre dans les crédits de la page {site} quels crédits sont déjà dans MusicBrainz, ajoutés, en attente, ignorés ou non attribués – une marque devant chaque partie d’une ligne ; un clic sur une marque affiche sa ligne dans le tableau de bord",
+      "log.dgStatusSite": "Statut {site} : {state}",
+      "log.dgFocusSite": "Depuis {site} : {name} – {role}",
+      "sync.trackHoverTitleSite": "Quand le pointeur s’arrête sur une piste de la page {site}, sa ligne dans la matrice des œuvres est surlignée",
+      "sync.reloadTitleSite": "Recharger l’onglet {site} connecté",
+      "log.dgReloadSite": "Onglet {site} connecté rechargé",
+      "sync.otherPageSite": "Vue {site} : un onglet {site} est ouvert, mais sur une autre page",
+      "sync.loadTitleSite": "Ouvre cette parution dans l’onglet {site} connecté",
+      "sync.dgReleaseTitleSite": "Garder les marques de statut sur {site} tant que la page de la parution MusicBrainz est ouverte (p. ex. après « Enter edit »), pour vérifier d’un coup d’œil ce qui est arrivé ; elles disparaissent quand la page et l’éditeur sont fermés",
+      "log.dgReleaseSite": "Statut {site} sur la page de la parution : {state}",
+      "sync.oldSite": "Vue {site} : nécessite le script compagnon 1.8.0 ou plus récent – veuillez mettre à jour « MB x Vibecode: Credits Importer Companion »",
+      "bc.fromTrackPage.one": "De la page du morceau :",
+      "bc.fromTrackPage.other": "Des pages des morceaux :",
+      "bc.trackPageTitle": "Ouvre la page du morceau sur Bandcamp",
+      "about.from": "Du texte « about »",
+      "liner.poolName": "Notes de pochette – {name}",
+      "log.linerFound": "Notes de pochette trouvées sous le texte « about », signées « {name} » (le nom seulement suggéré)",
+      "dgStatus.off": "⊘ désactiver ce crédit – sa ligne passe à « Ignorer » dans le tableau de bord",
+      "dgStatus.on": "⊘ réactiver ce crédit",
+      "dgStatus.isOff": "désactivé ici",
+      "bc.offNote": "Désactivé sur Bandcamp (⊘) : « Ignorer ». ⊘ là-bas le réactive, tout comme choisir un niveau ici.",
+      "log.bcOff": "Bandcamp : {name} – {role} désactivé (« Ignorer »)",
+      "log.bcOn": "Bandcamp : {name} – {role} réactivé",
+      "ms.3.17.0": "Vue Bandcamp dans le compagnon (1.8.0) : un onglet Bandcamp suit le tableau de bord comme un onglet Discogs – marques de statut devant chaque partie d’une ligne de crédits (pages d’album et de morceau), un clic sur une marque affiche sa ligne, une ligne saute à son endroit (du texte « about » : à sa phrase), surlignage des pistes, statut sur la page de la parution MusicBrainz ; « ouvrir en arrière-plan » et « Y charger la parution » aussi pour Bandcamp. Les lignes des pages de morceau y renvoient.",
       "log.stagedRemoved": "Retirée de l’éditeur (plus voulue) : {text}",
       "msg.stagedRemovedAll.one": "{n} relation déjà ajoutée n’est plus voulue et a été retirée de l’éditeur.",
       "msg.stagedRemovedAll.other": "{n} relations déjà ajoutées ne sont plus voulues et ont été retirées de l’éditeur.",
@@ -5614,6 +5746,8 @@
       show: () => ({ pattern: TEXT_NOT_NAME }) },
     { id: 'T026', where: 'SPECIAL_ARTISTS', note: 'Works of the artists: special purpose artists are not compared (Various Artists, [unknown] …; any name entirely in [square brackets] too)',
       show: () => ({ pairs: [...SPECIAL_ARTISTS.map(([id, name]) => [name, id]), ['[…]', SPECIAL_ARTIST_NAME]] }) },
+    { id: 'T027', where: 'LINER_NOT_NAME, LINER_PARTICLE', note: 'Bandcamp (3.17.2): liner notes below the "about" text – a first word that makes the line no name ("Special Thanks"), and particles inside a name ("Jan van Roe")',
+      show: () => ({ pairs: [['no name', LINER_NOT_NAME], ['particles', LINER_PARTICLE]] }) },
   ];
 
   /** Discogs spelling → possible MB instrument names (tried in this order). */
@@ -5768,6 +5902,11 @@
   // [T025] Texts (3.14.0): words that are no part of a name after a role at the start of a line – "Photography Tom
   // Barrett" is a credit, "Music and artwork of this release …" is not
   const TEXT_NOT_NAME = /\b(?:the|a|an|and|or|of|to|for|with|by|at|in|on|from|this|that|these|those|is|are|was|were|be|been|all|our|my|his|her|their|its|no|not|thanks|release|album|record)\b/i;
+
+  // [T027] (3.17.2) Liner notes in Bandcamp's "about" text: a first word that makes the line below the text no name
+  // ("Special Thanks", "Listen loud") – and the particles a name may have inside ("Jan van Roe")
+  const LINER_NOT_NAME = /^(?:special|thanks?|thankyou|love|enjoy|credits?|notes?|liner|about|all|rights|recorded|mixed|mastered|produced|written|music|lyrics|artwork|photography|photos?|design|cover|layout|listen|download|stream|available|out|now|released?|album|ep|lp|single|tracks?|bonus|the|a|an|and|for|with|from|by|to|in|on|at|of|our|my|your|this|that)$/i;
+  const LINER_PARTICLE = /^(?:van|von|der|den|de|del|della|di|da|du|la|le|dos|das|af|av|bin|ibn|y|zu|ten|ter)$/i;
 
   // [T026] (3.15.1) MusicBrainz's special purpose artists (https://musicbrainz.org/doc/Style/Unknown_and_untitled/Special_purpose_artist,
   // checked 2026-10-17): their catalogues are huge and say nothing about a release – the works comparison leaves them out.
@@ -6463,8 +6602,8 @@
       /** The source in edit notes ("… credit relationships from Discogs", "writers from Discogs credits"). */
       noteName: 'Discogs',
       creditsName: 'Discogs',
-      /** The companion script shows this source's pages (the Discogs tab, status marks). */
-      companion: true,
+      /** The companion script shows this source's pages (the Discogs tab, status marks); [3.17.0] its site. */
+      companion: 'discogs',
       /** The source's list of its roles (linked from rows whose role is not mapped). */
       rolesHelpUrl: `${WEB}/help/creditslist`,
       /** MusicBrainz's URL relationship to this source, with the ids musicbrainz.org uses (if the page data lacks it). */
@@ -6581,11 +6720,18 @@
       const tracksOf = (scope) => (scope ? { indexes: [...scope.set], spec: scope.spec, unresolved: [] } : { all: true });
       // The line a credit comes from (shown when the text supplements another source)
       let line0 = '';
+      // [3.17.0] Where on that line (the companion marks each part of a line on Bandcamp): the part ("mixed by B" of
+      // "Written by A, mixed by B"), its number on the line, and which of the lines with the same text it is
+      let part0 = '';
+      let pi0 = 0;
+      let n0 = 0;
+      const lineCount = new Map();
+      const at = () => ({ line: line0, part: part0, pi: pi0, n: n0 });
       const addCredit = (name, role, scope) => {
         const p = parseRoleNotation(role)[0];
         if (!p || !looksLikeName(name)) return false;
-        if (isCompanyRole(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, line: line0 });
-        else credits.push({ who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), line: line0 });
+        if (isCompanyRole(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at() });
+        else credits.push({ who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at() });
         return true;
       };
       // [3.14.0] A credit without a name ("… created by a human"): the core offers the release's artists for it
@@ -6593,7 +6739,7 @@
         const p = parseRoleNotation(role)[0];
         if (!p || isCompanyRole(p.raw)) return false;
         credits.push({ who: { id: 0, name: '', rawName: said, links: [], placeholder: said }, role: p.raw, base: p.base, details: p.mods, credited: '',
-          tracks: tracksOf(scope), line: line0 });
+          tracks: tracksOf(scope), ...at() });
         return true;
       };
       // [3.14.0] A role with "By" ("Mixed By"), else without ("Layout", "Photography", "Artwork")
@@ -6658,6 +6804,9 @@
         let line = clean(raw);
         if (!line) continue;
         line0 = raw.trim();
+        const sameKey = line0.replace(/\s+/g, ' ').toLowerCase();
+        n0 = lineCount.get(sameKey) || 0;
+        lineCount.set(sameKey, n0 + 1);
         // A track list for the line (only when it names tracks of this release)
         let scope = null;
         let m;
@@ -6675,23 +6824,27 @@
         }
         let found = 0;
         const unknownParts = [];
+        part0 = line;
+        pi0 = 0;
         // [3.14.0] a line that only names the label of the release is left out (T024)
         if (TEXT_LABEL_LINE.test(line)) continue;
         // ℗ / © with a year: the label of the copyright
         if ((m = line.match(/^(℗|\(p\)|©|\(c\))\s*(?:\d{4}\s*)?(.+)$/i))) {
           const role = /℗|\(p\)/i.test(m[1]) ? 'Phonographic Copyright (p)' : 'Copyright (c)';
           if (looksLikeName(clean(m[2]))) {
-            companies.push({ who: who(clean(m[2])), role, catno: '', tracks: null, line: line0 });
+            companies.push({ who: who(clean(m[2])), role, catno: '', tracks: null, ...at() });
             found++;
           }
         }
-        for (const clause of found ? [] : clauses(line)) {
+        for (const [ci, clause] of (found ? [] : clauses(line)).entries()) {
+          part0 = clause;
+          pi0 = ci;
           // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
           const place = (verb, where) => {
             const role = `${cap(verb)} At`;
             const n = where && clean(where.name);
             if (!looksLikeName(n) || !isCompanyRole(role)) return;
-            companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: scope ? tracksOf(scope) : null, line: line0 });
+            companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: scope ? tracksOf(scope) : null, ...at() });
             found++;
           };
           if ((m = clause.match(/^(.+?)\s+by\s+(.+)$/i))) {
@@ -6758,6 +6911,8 @@
         // [3.14.0] "Photography Tom Barrett", "mastering john doe": a known role at the start, then a name of two to four
         // words (small letters too) that has no word of a sentence in it (T025) and is no list of roles
         if (!found) {
+          part0 = line;
+          pi0 = 0;
           const words = line.split(' ');
           for (let k = Math.min(3, words.length - 2); k >= 1 && !found; k--) {
             const role = words.slice(0, k).join(' ');
@@ -6851,6 +7006,54 @@
       }
     }
 
+    // [3.17.2] Liner notes at the end of the "about" text: prose of at least five sentences and a name below it (T027)
+    const LINER_MIN_SENTENCES = 5;
+    /** "Jane Roe" (2–4 words, capitals, particles inside) from a signature "— Jane Roe, Berlin, May 2019"; null if none. */
+    function signatureName(text) {
+      const parts = String(text || '').replace(/^[\s—–―~*•-]+/, '').split(/\s*,\s*/);
+      const name = (parts[0] || '').replace(/[\s.;:!]+$/, '').trim();
+      const words = name.split(/\s+/);
+      // after the name: place, date … – a few short parts
+      const rest = parts.slice(1);
+      if (rest.length > 3 || rest.some((x) => !x || x.split(/\s+/).length > 5)) return null;
+      if (words.length < 2 || words.length > 4 || /\d/.test(name) || LINER_NOT_NAME.test(words[0])) return null;
+      const ok = words.every((w, i) => (i > 0 && i < words.length - 1 && LINER_PARTICLE.test(w)) || /^\p{Lu}[\p{L}'’.-]*$/u.test(w));
+      return ok && !words.some((w) => /^(?:thanks?|notes|credits)$/i.test(w)) ? name : null;
+    }
+    /** Sentences of a text: ended by . ! ? … or a line break, with at least three words. */
+    const sentenceCount = (t) => String(t || '').split(/(?<=[.!?…])["”’)]*\s+|\n+/).filter((x) => (x.match(/\p{L}+/gu) || []).length >= 3).length;
+    /**
+     * [3.17.2] The liner notes of an "about" text: a name (a) at the end of its last line after a sign, behind a finished
+     * sentence ("… our music. — Jane Roe", "~ Jane Roe"), (b) on the line right below the text or (c) after an empty line,
+     * ", place, date" allowed after it; the text above it at least five sentences (several paragraphs are fine).
+     * Returns { name, line, part, pi, n, at, len } (the line and part as for a credit, at/len: the signature in the text) or null.
+     */
+    function linerNotes(about) {
+      const text = String(about || '');
+      const lines = text.split(/\r?\n/);
+      let k = lines.length - 1;
+      while (k >= 0 && !lines[k].trim()) k--;
+      if (k < 0) return null;
+      const line = lines[k].trim();
+      let name = null;
+      let prose = '';
+      let part = line;
+      let pi = 0;
+      if (k > 0 && (name = signatureName(line))) {
+        prose = lines.slice(0, k).join('\n');
+      } else {
+        const m = line.match(/^(.*[.!?…]["”’)]*)\s+[—–―~-]+\s*([^—–―~]+)$/);
+        if (m && (name = signatureName(m[2]))) {
+          prose = [...lines.slice(0, k), m[1]].join('\n');
+          part = m[2].trim();
+          pi = 1;
+        }
+      }
+      if (!name || sentenceCount(prose) < LINER_MIN_SENTENCES) return null;
+      const at = text.lastIndexOf(part);
+      return { name, line, part, pi, n: lines.slice(0, k).filter((l) => l.trim() === line).length, at, len: part.length };
+    }
+
     /**
      * The neutral release from an album's page data. trackCredits: [credits text of each track page] (or []);
      * ctx: as for a text (see sourceContext), with this album's tracks.
@@ -6872,10 +7075,21 @@
         if (!text || !tracks[i]) return;
         const res = TEXT.parse(text, { ...ctx, resolveTracks });
         const on = { indexes: [i], position: tracks[i].position };
-        res.credits.forEach((c) => credits.push({ ...c, tracks: c.tracks.all ? on : c.tracks }));
-        res.companies.forEach((c) => companies.push({ ...c, tracks: c.tracks || on }));
+        // [3.17.0] the track page a credit is on (its path), for the companion and the hint in the dashboard
+        const page = { page: String(((data.trackinfo || [])[i] || {}).title_link || ''), pos: tracks[i].position };
+        res.credits.forEach((c) => credits.push({ ...c, ...page, tracks: c.tracks.all ? on : c.tracks }));
+        res.companies.forEach((c) => companies.push({ ...c, ...page, tracks: c.tracks || on }));
         res.unrecognized.forEach((l) => unrecognized.push(`${tracks[i].position}: ${l}`));
       });
+      // [3.17.2] Liner notes at the end of the "about" text: a credit "Liner Notes" of the name below it – a name like any
+      // other (only suggested), from the about text (left out with it)
+      const liner = linerNotes(cur.about || '');
+      if (liner) {
+        const p = parseRoleNotation('Liner Notes')[0];
+        credits.push({ who: { id: 0, name: liner.name, rawName: liner.name, links: [] }, role: p.raw, base: p.base, details: p.mods, credited: '',
+          tracks: { all: true }, line: liner.line, part: liner.part, pi: liner.pi, n: liner.n, fromAbout: true });
+      }
+      const aboutAt = cur.about ? (cur.credits ? cur.credits.length + 2 : 0) : null;
       // [rule 4] The band's own name links to its Bandcamp page (found in MB only with exactly this spelling)
       const linkBand = (w) => (band.url && w.name === band.name ? { ...w, id: band.url, links: [band.url] } : w);
       return {
@@ -6886,7 +7100,9 @@
         country: '',
         notes: [cur.credits, cur.about].filter(Boolean).join('\n\n'),
         // [3.16.1] where the "about" text begins in the notes (its dates can be left out), null without one
-        aboutAt: cur.about ? (cur.credits ? cur.credits.length + 2 : 0) : null,
+        aboutAt,
+        // [3.17.2] the liner notes found (their signature in the notes: a date there is named for them in the pool)
+        liner: liner ? { name: liner.name, at: aboutAt + liner.at, len: liner.len } : null,
         tags: [],
         tracks,
         credits: credits.map((c) => ({ ...c, who: linkBand(c.who) })),
@@ -6905,7 +7121,8 @@
       short: 'BC',
       noteName: 'Bandcamp',
       creditsName: 'Bandcamp',
-      companion: false,
+      /** [3.17.0] The companion script shows Bandcamp's album and track pages too (the Bandcamp tab, status marks). */
+      companion: 'bandcamp',
       readsTrackLists: true,
       nameSearch: true,
       /** A link is only taken when the name is spelled exactly as in MusicBrainz (else it is a suggestion). */
@@ -6914,6 +7131,7 @@
       albumUrl,
       pageData,
       toRelease,
+      linerNotes,
       urlKey: bandUrl,
       /** Album pages of Bandcamp a MusicBrainz release links to (any link type: purchase, streaming …). */
       releaseLinks(relations) {
@@ -6960,6 +7178,14 @@
    * The credits of a neutral release grouped by person (its source id, else its name), identical roles of a
    * person merged across tracks; engineer tasks are split here (S018).
    */
+  /** [3.17.0] Where a credit is at its source (page, line, part), once per place; see TEXT.parse. */
+  function addSrcRef(refs, c) {
+    if (!c.line) return;
+    const ref = { page: c.page || '', line: c.line, part: c.part || '', pi: c.pi || 0, n: c.n || 0, ...(c.pos ? { pos: c.pos } : {}), ...(c.fromAbout ? { about: true } : {}) };
+    const key = JSON.stringify(ref);
+    if (!refs.some((r) => JSON.stringify(r) === key)) refs.push(ref);
+  }
+
   function groupCredits(credits) {
     const groups = new Map();
     for (const c of credits || []) {
@@ -6978,10 +7204,14 @@
       for (const role of splitEngineerTasks({ raw: c.role, base: c.base, mods: [...(c.details || [])] })) {
         const rKey = `${norm(role.raw)}|${norm(anv)}`;
         if (!group.roles.has(rKey)) {
-          group.roles.set(rKey, { role, anv, allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [] });
+          group.roles.set(rKey, { role, anv, allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
+            fromAbout: !!c.fromAbout });
         }
         const entry = group.roles.get(rKey);
+        // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
+        if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
+        addSrcRef(entry.refs, c);
         if (at.all) entry.allTracks = true;
         (at.indexes || []).forEach((i) => entry.indexes.add(i));
         (at.unresolved || []).forEach((u) => entry.unresolved.includes(u) || entry.unresolved.push(u));
@@ -7001,10 +7231,13 @@
       if (!byKey.has(key)) byKey.set(key, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: [], ...(who.area ? { area: who.area } : {}) });
       const g = byKey.get(key);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
-      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}) });
-      else if (!c.fromAbout) delete same.fromAbout;
-      // the same role once for some tracks and once for all: all
-      else if (same.tracks && (!c.tracks || c.tracks.all)) same.tracks = null;
+      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), refs: [] });
+      addSrcRef((same || g.roles[g.roles.length - 1]).refs, c);
+      if (!same) continue;
+      if (!c.fromAbout) delete same.fromAbout;
+      // the same role once for some tracks and once for all: all ([3.17.0] again also when it is not from the "about"
+      // text: since 3.16.1 the tracks of a company named twice, e.g. on two track pages, had not been joined)
+      if (same.tracks && (!c.tracks || c.tracks.all)) same.tracks = null;
       else if (same.tracks && c.tracks && c.tracks.indexes) same.tracks = { ...same.tracks, indexes: uniq([...same.tracks.indexes, ...c.tracks.indexes]) };
     }
     return [...byKey.values()];
@@ -8540,6 +8773,9 @@
   // [3.16.1] "Leave out the about text" for this release: { stash: { pool, cells } } (the dates taken out), null when not
   const ABOUT_KEY = `dci-about-off:${releaseMbid}`;
   S.aboutOff = !!readJson('localStorage', ABOUT_KEY, null);
+  // [3.17.1] Credits switched off on Bandcamp (⊘ in the companion): stored per release as "name|role"
+  const BC_OFF_KEY = `dci-bc-off:${releaseMbid}`;
+  S.bcOff = new Set(readJson('localStorage', BC_OFF_KEY, []) || []);
   S.trackPool = readJson('localStorage', TRACKPOOL_KEY, null) || [];
   const saveTrackPool = () => writeJson('localStorage', TRACKPOOL_KEY, S.trackPool.length ? S.trackPool : null);
 
@@ -9675,8 +9911,9 @@
     S.poolForm = null;
     S.trackForm = null;
     S.dm = { cells: [], found: '', dirty: false };
-    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY].forEach((k) => writeJson('localStorage', k, null));
+    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY, BC_OFF_KEY].forEach((k) => writeJson('localStorage', k, null));
     S.aboutOff = false;
+    S.bcOff = new Set();
     S.mediaSel = null;
     S.supp = null;
     S.suppSources = new Map();
@@ -10360,6 +10597,8 @@
         for (const c of g.roles.values()) {
           const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv });
           if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
+          row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
+          if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
           row.dSpec = c.specs.join(', ');
           row.dPositions = c.positions;
           row.unresolved = c.unresolved;
@@ -10397,6 +10636,7 @@
         for (const r of g.roles) {
           const row = makeRow(company.key, { raw: r.role, company });
           if (r.fromAbout) row.fromAbout = true;
+          row.srcRefs = r.refs || []; // [3.17.0]
           // A company for some tracks only (a text: "Published by X (1, 3)"), otherwise for all of them
           const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
           row.dAllTracks = !some;
@@ -10418,6 +10658,13 @@
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
       // [3.16.1] "about" text left out for this release: its rows hidden at once
       if (S.aboutOff) setAboutRowsHidden(true);
+      if (rel.liner) log('info', 'linerFound', { name: rel.liner.name }); // [3.17.2]
+      // [3.17.1] credits switched off on Bandcamp for this release: their rows on "Skip" at once
+      if (S.source === BANDCAMP && S.bcOff.size) {
+        S.rows.forEach((r) => {
+          if ((r.srcRefs || []).length && S.bcOff.has(bcOffKey(r))) Object.assign(r, { bcOff: true, bcOffLevel: r.level, level: 'skip' });
+        });
+      }
       S.dateSuggestions = dateSuggestions(rel);
       // Dates in the notes with a word naming their group: suggestions in the date matrix (once per release)
       autoPlaceFoundDates();
@@ -11456,6 +11703,30 @@
       </section>`;
   }
 
+  /**
+   * [3.17.0] Where a Bandcamp credit is, when not in the album's credits: on track pages (links to them), or in the
+   * "about" text.
+   */
+  function srcRefsHtml(row) {
+    if (!S.release || S.source !== BANDCAMP || row.supp) return '';
+    const refs = row.srcRefs || [];
+    const pages = uniq(refs.filter((r) => r.page).map((r) => `${r.page}|${r.pos || ''}`));
+    const out = [];
+    if (pages.length) {
+      const origin = BANDCAMP.urlKey(S.release.url).replace(/\/$/, '');
+      const links = pages.map((x) => {
+        const [page, pos] = x.split('|');
+        return `<a href="${esc(origin + page)}" target="_blank" rel="noopener" title="${esc(tr('bc.trackPageTitle'))}">${esc(pos || page)}</a>`;
+      });
+      out.push(`<div class="dci-sub dci-bcpages">${esc(tr('bc.fromTrackPage', { n: pages.length }))} ${links.join(', ')}</div>`);
+    }
+    if (refs.length && refs.every((r) => r.about)) out.push(`<div class="dci-sub">${esc(tr('about.from'))}</div>`);
+    return out.join('');
+  }
+
+  /** [3.17.1] A credit switched off on Bandcamp says so. */
+  const bcOffHtml = (row) => (row.bcOff ? `<div class="dci-note dci-bcoff">${esc(tr('bc.offNote'))}</div>` : '');
+
   function roleCell(row) {
     const notes = (row.notes || []).map((k) => `<div class="dci-note">${esc(tr(`note.${k}`, { type: row.seriesType || '' }))}</div>`).join('')
 ;
@@ -11466,7 +11737,7 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}
-        <div class="dci-sub">${esc(tr('role.companyWhole'))} ${ruleInfoHtml(row)}</div>
+        <div class="dci-sub">${esc(tr('role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${bcOffHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec ? `<div class="dci-sub">${esc(tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
@@ -11477,7 +11748,7 @@
     return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
-        ${ruleInfoHtml(row)}</div>
+        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${bcOffHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
       <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
       ${notes}`;
@@ -11905,6 +12176,45 @@
   // --- [3.16.1] "Leave out the about text" (Bandcamp; per release, at once, without a new import) ---------------------
   /** A date found in the notes that lies in the "about" text. */
   const fromAboutText = (x) => !!(S.release && S.release.aboutAt != null && x && x.index >= S.release.aboutAt);
+
+  /** [3.17.1] A credit switched off on Bandcamp, as stored for the release: its name as written and its role. */
+  function bcOffKey(row) {
+    const a = S.artists.get(row.artistKey);
+    return a ? `${norm(a.rawName || a.name || a.placeholder || '')}|${norm(row.raw)}` : '';
+  }
+
+  const saveBcOff = () => writeJson('localStorage', BC_OFF_KEY, S.bcOff.size ? [...S.bcOff] : null);
+
+  /** [3.17.1] Forgets that a credit was switched off (its level is set by the caller). */
+  function bcCreditOn(row) {
+    const prev = row.bcOffLevel;
+    delete row.bcOff;
+    delete row.bcOffLevel;
+    S.bcOff.delete(bcOffKey(row));
+    saveBcOff();
+    const a = S.artists.get(row.artistKey);
+    log('info', 'bcOn', { name: a ? a.mbName || a.name : '', role: row.raw });
+    return prev && prev !== 'skip' ? prev : row.defaultLevel;
+  }
+
+  /**
+   * [3.17.1] ⊘ on Bandcamp: a credit switched off – its row goes to "Skip" (its level kept) – or on again (the level
+   * back). Stored for the release; "Delete stored import" forgets it.
+   */
+  function toggleBcCredit(row, off) {
+    const key = bcOffKey(row);
+    if (!key || !!row.bcOff === !!off) return;
+    if (!off) {
+      setLevel(row, bcCreditOn(row));
+      return;
+    }
+    Object.assign(row, { bcOff: true, bcOffLevel: row.level });
+    S.bcOff.add(key);
+    saveBcOff();
+    const a = S.artists.get(row.artistKey);
+    log('info', 'bcOff', { name: a ? a.mbName || a.name : '', role: row.raw });
+    setLevel(row, 'skip');
+  }
 
   /** The rows of places from the "about" text hidden (on "Skip", the level before kept) or shown again as they were. */
   function setAboutRowsHidden(hide) {
@@ -12440,8 +12750,11 @@
         placed += placeSeparateDays(x, key, group, { auto: true, tg, studios });
         return;
       }
-      // Without such a word: only into the pool, to be dragged where it belongs
-      const e = poolDateFor(x.value, group, key);
+      // Without such a word: only into the pool, to be dragged where it belongs ([3.17.2] named for the liner notes
+      // when it is in their signature: "Liner notes – Jane Roe")
+      const liner = S.release && S.release.liner;
+      const forLiner = liner && x0.index >= liner.at && x0.index < liner.at + liner.len;
+      const e = poolDateFor(x.value, group, key, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
       addCommonDate(e.begin, e.end, group, key, e);
       if (!group) return;
       const here = m.cells.find((c) => c.col === group.key && c.date === e.id);
@@ -15664,9 +15977,38 @@
     toDiscogs({ type: 'open-tabs', urls: list });
   }
 
+  // --- [3.17.0] The site the companion shows for the loaded source: Discogs or Bandcamp --------------------------
+
+  /** 'discogs' or 'bandcamp': the site of the loaded source in the companion (Discogs while none or a text is loaded). */
+  const viewSite = () => (S.source && S.source.companion === 'bandcamp' ? 'bandcamp' : 'discogs');
+  const VIEW_NAMES = { discogs: 'Discogs', bandcamp: 'Bandcamp' };
+  /** A text of the Discogs view; with Bandcamp its "…Site" form ({site}: "Bandcamp"), where there is one. */
+  function trView(key, params = {}) {
+    const site = viewSite();
+    if (site === 'discogs' || I18N.en[`${key}Site`] == null) return tr(key, params);
+    return tr(`${key}Site`, { ...params, site: VIEW_NAMES[site] });
+  }
+  /** A line of the log about the Discogs view; with Bandcamp its "…Site" form. */
+  function logView(level, key, params = {}) {
+    const site = viewSite();
+    if (site === 'discogs' || I18N.en[`log.${key}Site`] == null) log(level, key, params);
+    else log(level, `${key}Site`, { ...params, site: VIEW_NAMES[site] });
+  }
+  /**
+   * The companion's tabs of the loaded source's site: { tabs, target, releases }. A companion before 1.8.0 only knows
+   * Discogs tabs ("old": Bandcamp needs an update).
+   */
+  function syncSite() {
+    const { sites } = S.sync;
+    if (!sites) return viewSite() === 'discogs' ? S.sync : { tabs: 0, target: null, releases: [], old: true };
+    return sites[viewSite()] || { tabs: 0, target: null, releases: [] };
+  }
+
   /**
    * Status of every Discogs credit, shown by the companion on the Discogs page: already in MusicBrainz,
    * staged, open, skipped, or not mapped. Sent (debounced) after every change of the plan.
+   * [3.17.0] With Bandcamp: the status of each place of a credit in the credits of the album page or a track page
+   * (its line and the part of the line, see TEXT.parse).
    */
   let dgStatusTimer = null;
   function sendDiscogsStatus(rowInfo = S.rowInfo) {
@@ -15674,13 +16016,17 @@
     dgStatusTimer = setTimeout(() => {
       const releaseId = companionReleaseId();
       if (!S.sync.installed || !releaseId) return;
+      const site = viewSite();
       const items = [];
       const targetIndex = new Map();
       const posIdx = positionIndex(S.srcTracks || []);
       if (S.dgStatus) {
         for (const row of S.rows) {
           const a = S.artists.get(row.artistKey);
-          if (!a || !a.dId || row.manual || !row.raw) continue;
+          if (!a || row.manual || !row.raw) continue;
+          // Discogs: credits with a Discogs artist or label; Bandcamp: credits of its own text (not of a supplement)
+          const refs = site === 'bandcamp' ? (row.srcRefs || []).filter((r) => !r.about) : [];
+          if (site === 'discogs' ? !a.dId : (row.supp || !refs.length)) continue;
           const info = rowInfo && rowInfo.get(row.id);
           let status = 'open';
           if (row.level === 'skip') status = row.existingAll ? 'mb' : 'skip';
@@ -15700,30 +16046,36 @@
             // Work credits: the companion also looks at the works themselves (their link may still be open)
             if (row.level === 'work') mb.w = 1;
           }
+          // The status of one track of the credit (a Discogs track line, a Bandcamp track page), with its targets
+          const ofTrack = (pos) => {
+            const i = posIdx.get(normPos(pos));
+            const onRow = i != null && (!['recording', 'work'].includes(row.level) || row.tracks.has(i));
+            // A track the row covers but that got no status (no work yet, other medium) is still open
+            const st = i == null ? status : !onRow ? 'skip' : info && info.per ? (info.per.get(i) || 'open') : status;
+            const pt = { status: st };
+            if (mb && onRow) {
+              pt.t = info.mb.t.filter((g, k) => info.mb.tt[k] === i).map((g) => targetIndex.get(g));
+              if (info.mb.r.length) pt.r = info.mb.r.filter((g, k) => info.mb.rt[k] === i).map((g) => targetIndex.get(g));
+            }
+            return pt;
+          };
+          if (site === 'bandcamp') {
+            items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb, ...(row.bcOff ? { off: true } : {}),
+              refs: refs.map((r) => ({ page: r.page, line: r.line, part: r.part, pi: r.pi, n: r.n, ...(r.pos ? { pos: r.pos, ...ofTrack(r.pos) } : { status }) })) });
+            continue;
+          }
           // Credits on Discogs track lines: a status for each line (each track), with its targets for the release page
           let byPos = null;
-          if ((row.dPositions || []).length && row.level !== 'skip') {
-            byPos = row.dPositions.map((pos) => {
-              const i = posIdx.get(normPos(pos));
-              const onRow = i != null && (!['recording', 'work'].includes(row.level) || row.tracks.has(i));
-              // A track the row covers but that got no status (no work yet, other medium) is still open
-              const st = i == null ? status : !onRow ? 'skip' : info && info.per ? (info.per.get(i) || 'open') : status;
-              const pt = { pos, status: st };
-              if (mb && onRow) {
-                pt.t = info.mb.t.filter((g, k) => info.mb.tt[k] === i).map((g) => targetIndex.get(g));
-                if (info.mb.r.length) pt.r = info.mb.r.filter((g, k) => info.mb.rt[k] === i).map((g) => targetIndex.get(g));
-              }
-              return pt;
-            });
-          }
+          if ((row.dPositions || []).length && row.level !== 'skip') byPos = row.dPositions.map((pos) => ({ pos, ...ofTrack(pos) }));
           items.push({ row: row.id, artistId: a.company ? null : a.dId, labelId: a.company ? a.dId : null, role: row.raw, base: row.base,
             positions: row.dPositions || [], status, unmapped: isUnmapped(row), mb, byPos });
         }
       }
-      const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow']
+      const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow',
+        'off', 'on', 'isOff']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
-      toDiscogs({ type: 'status-map', releaseId, enabled: !!S.dgStatus, artwork: !!S.dgArtwork, items, labels, targets: [...targetIndex.keys()],
-        mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease });
+      toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items, labels,
+        targets: [...targetIndex.keys()], mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease });
     }, 800);
   }
 
@@ -15738,18 +16090,21 @@
   }
 
   function syncStatusHtml(withDetails) {
-    const st = S.sync;
-    if (!st.installed) return `<span class="dci-muted" title="${esc(tr('sync.offTitle'))}">${esc(tr('sync.off'))}</span>`;
+    if (!S.sync.installed) return `<span class="dci-muted" title="${esc(tr('sync.offTitle'))}">${esc(trView('sync.off'))}</span>`;
+    // [3.17.0] The tabs of the loaded source's site (Discogs or Bandcamp)
+    const st = syncSite();
+    if (st.old) return `<span class="dci-muted">${esc(tr('sync.oldSite', { site: VIEW_NAMES[viewSite()] }))}</span>`;
     if (!st.tabs) {
-      return `${esc(tr('sync.noTab'))}${withDetails && companionReleaseId() ? ` <button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>` : ''}`;
+      return `${esc(trView('sync.noTab'))}${withDetails && companionReleaseId() ? ` <button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>` : ''}`;
     }
     const where = tr(st.target && st.target.visible ? 'sync.visible' : 'sync.background');
     const openBtn = `<button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>`;
-    // A Discogs tab is open, but none of them shows this release
+    // A Discogs (Bandcamp) tab is open, but none of them shows this release
     if (companionReleaseId() && !(st.releases || []).includes(String(companionReleaseId()))) {
-      return `${esc(tr('sync.otherPage'))}${withDetails ? ` <button type="button" data-act="sync-load" title="${esc(tr('sync.loadTitle'))}">${esc(tr('sync.load'))}</button> ${openBtn}` : ''}`;
+      return `${esc(trView('sync.otherPage'))}${withDetails ? ` <button type="button" data-act="sync-load" title="${esc(trView('sync.loadTitle'))}">${esc(tr('sync.load'))}</button> ${openBtn}` : ''}`;
     }
-    return `${esc(tr('sync.connected', { where }))} <button type="button" class="dci-iconbtn" data-sync-reload title="${esc(tr('sync.reloadTitle'))}" aria-label="${esc(tr('sync.reloadTitle'))}">↻</button>${withDetails && st.last ? ` <span class="dci-sub">${esc(tr(`sync.${st.last}`))}</span>` : ''}`;
+    const last = S.sync.last;
+    return `${esc(trView('sync.connected', { where }))} <button type="button" class="dci-iconbtn" data-sync-reload title="${esc(trView('sync.reloadTitle'))}" aria-label="${esc(trView('sync.reloadTitle'))}">↻</button>${withDetails && last ? ` <span class="dci-sub">${esc(trView(`sync.${last}`))}</span>` : ''}`;
   }
 
   /** Switch: the Discogs tab follows the dashboard on mouse-over or on click. */
@@ -15758,17 +16113,18 @@
     return `<span class="dci-syncmode" role="group" aria-label="${esc(tr('nav.label'))}"><strong>${esc(tr('nav.label'))}</strong>
       <span>${esc(tr('syncMode.label'))}</span>
       <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('syncMode.label'))}">${btn('hover')}${btn('click')}</span>
-      <button type="button" class="dci-dgstatus-toggle" data-dg-status aria-pressed="${!!S.dgStatus}" title="${esc(tr('sync.dgStatusTitle'))}">${esc(tr('sync.dgStatus'))}</button>
-      <button type="button" class="dci-dgstatus-toggle" data-dg-hover aria-pressed="${!!S.dgHover}" title="${esc(tr('sync.trackHoverTitle'))}">${esc(tr('sync.trackHover'))}</button>
-      <button type="button" class="dci-dgstatus-toggle" data-dg-release aria-pressed="${!!S.dgRelease}" title="${esc(tr('sync.dgReleaseTitle'))}">${esc(tr('sync.dgRelease'))}</button>
-      <button type="button" class="dci-dgstatus-toggle" data-dg-artwork aria-pressed="${!!S.dgArtwork}" title="${esc(tr('sync.dgArtworkTitle'))}">${esc(tr('sync.dgArtwork'))}</button></span>`;
+      <button type="button" class="dci-dgstatus-toggle" data-dg-status aria-pressed="${!!S.dgStatus}" title="${esc(trView('sync.dgStatusTitle'))}">${esc(trView('sync.dgStatus'))}</button>
+      <button type="button" class="dci-dgstatus-toggle" data-dg-hover aria-pressed="${!!S.dgHover}" title="${esc(trView('sync.trackHoverTitle'))}">${esc(tr('sync.trackHover'))}</button>
+      <button type="button" class="dci-dgstatus-toggle" data-dg-release aria-pressed="${!!S.dgRelease}" title="${esc(trView('sync.dgReleaseTitle'))}">${esc(tr('sync.dgRelease'))}</button>
+      ${viewSite() === 'discogs' ? `<button type="button" class="dci-dgstatus-toggle" data-dg-artwork aria-pressed="${!!S.dgArtwork}" title="${esc(tr('sync.dgArtworkTitle'))}">${esc(tr('sync.dgArtwork'))}</button>` : ''}</span>`;
   }
 
   // The mode switch only makes sense with the companion script, so it is hidden without it.
   // Status updates arrive every few seconds; they only change the text and the pressed state,
   // so the buttons are not replaced while someone clicks them.
   function updateSyncArea(el, withDetails) {
-    const want = S.sync.installed ? 'switch' : 'plain';
+    // [3.17.0] drawn anew for another site too (its names, no cover button for Bandcamp)
+    const want = `${S.sync.installed ? 'switch' : 'plain'}:${viewSite()}`;
     if (el.dataset.layout !== want || el.dataset.lang !== LANG) {
       el.innerHTML = `${S.sync.installed ? syncModeHtml() : ''} <span class="dci-syncstatus"></span>`;
       el.dataset.layout = want;
@@ -15801,7 +16157,7 @@
     if (mode !== 'hover' && mode !== 'click') return;
     S.syncMode = mode;
     writeJson('localStorage', 'dci-sync-mode', mode);
-    log('info', 'syncMode', { mode: tr(`syncMode.${mode}`) });
+    logView('info', 'syncMode', { mode: tr(`syncMode.${mode}`) });
     renderSync();
   }
 
@@ -15813,7 +16169,9 @@
       return;
     }
     if (msg.type === 'status') {
-      Object.assign(S.sync, { installed: true, tabs: msg.tabs, target: msg.target, releases: msg.releases || (msg.target && msg.target.releaseId ? [String(msg.target.releaseId)] : []) });
+      // [3.17.0] Companion 1.8.0 reports the tabs of each site ("sites"); before, only Discogs tabs
+      Object.assign(S.sync, { installed: true, tabs: msg.tabs, target: msg.target, releases: msg.releases || (msg.target && msg.target.releaseId ? [String(msg.target.releaseId)] : []),
+        sites: msg.sites && typeof msg.sites === 'object' ? msg.sites : null });
     } else if (msg.type === 'focus-row') {
       const row = S.rows.find((r) => r.id === msg.row);
       if (!row) return;
@@ -15827,7 +16185,12 @@
         setTimeout(() => el.classList.remove('dci-flash'), 2500);
       }
       const a = S.artists.get(row.artistKey);
-      log('info', 'dgFocus', { name: a ? a.mbName || a.name : '', role: row.raw || '' });
+      logView('info', 'dgFocus', { name: a ? a.mbName || a.name : '', role: row.raw || '' });
+    } else if (msg.type === 'toggle-credit') {
+      // [3.17.1] ⊘ on the Bandcamp page: the credit off ("Skip") or on again
+      if (viewSite() !== 'bandcamp' || String(msg.releaseId) !== String(companionReleaseId())) return;
+      const row = S.rows.find((r) => r.id === msg.row);
+      if (row) toggleBcCredit(row, !!msg.off);
     } else if (msg.type === 'hover-track') {
       if (!S.dgHover || String(msg.releaseId) !== String(companionReleaseId()) || !S.overlay || S.overlay.hidden) return;
       const i = S.srcTracks.findIndex((t) => t && norm(t.position) === norm(msg.position));
@@ -15846,7 +16209,7 @@
       S.sync.installed = true;
       const known = ['credit', 'track', 'artist', 'loading', 'none', 'no-tab'];
       S.sync.last = known.includes(msg.found) ? `found.${msg.found}` : '';
-      if (S.sync.last && msg.found !== 'loading') log(msg.found === 'none' || msg.found === 'no-tab' ? 'warn' : 'info', 'discogsJump', { result: tr(`sync.${S.sync.last}`) });
+      if (S.sync.last && msg.found !== 'loading') logView(msg.found === 'none' || msg.found === 'no-tab' ? 'warn' : 'info', 'discogsJump', { result: trView(`sync.${S.sync.last}`) });
     }
     renderSync();
   }
@@ -15856,7 +16219,9 @@
   let showTimer = null;
   function showOnDiscogs(payload) {
     if (!S.sync.installed || !companionReleaseId()) return;
-    const msg = { type: 'show', releaseId: companionReleaseId(), ...payload };
+    // [3.17.0] Bandcamp needs Companion 1.8.0 (an older one would send the command to a Discogs tab)
+    if (viewSite() !== 'discogs' && !S.sync.sites) return;
+    const msg = { type: 'show', site: viewSite(), releaseId: companionReleaseId(), ...payload };
     const sig = JSON.stringify(msg);
     // A pending jump to another row is always cancelled. The same jump is skipped only right after
     // it was sent (e.g. focus and click on one row); later it jumps again, in case Discogs was scrolled.
@@ -15887,6 +16252,18 @@
     };
   }
 
+  /** [3.17.0] A row on the Bandcamp page: the places of its credit there (page, line, part), the tracks it names. */
+  function bandcampPayloadForRows(rows) {
+    const refs = [];
+    for (const row of rows) {
+      for (const r of row.supp ? [] : row.srcRefs || []) {
+        const ref = { page: r.page || '', line: r.line, part: r.part || '', pi: r.pi || 0, n: r.n || 0, ...(r.about ? { about: true } : {}) };
+        if (!refs.some((x) => JSON.stringify(x) === JSON.stringify(ref))) refs.push(ref);
+      }
+    }
+    return { refs, positions: [], role: rows.length === 1 ? rows[0].raw : '', artistId: 0, artistName: '' };
+  }
+
   const sourceElOf = (target) => (target && target.closest ? target.closest('tr.dci-row, tr[data-work], .dci-ghead') : null);
 
   function onFocusSource(e) {
@@ -15913,7 +16290,14 @@
   }
 
   function showSourceOf(el) {
-    if (el.matches('tr.dci-row')) {
+    if (viewSite() === 'bandcamp' && !el.matches('tr[data-work]')) {
+      // [3.17.0] Bandcamp: the lines of the credit (or of all credits of the entry) on the album or a track page
+      const row = el.matches('tr.dci-row') ? rowOf(el) : null;
+      const artist = row ? null : artistOf(el);
+      const rows = row ? [row] : artist ? S.rows.filter((r) => r.artistKey === artist.key) : [];
+      const payload = bandcampPayloadForRows(rows.filter((r) => !r.manual));
+      if (payload.refs.length) showOnDiscogs(payload);
+    } else if (el.matches('tr.dci-row')) {
       const row = rowOf(el);
       if (row && !row.manual) showOnDiscogs(discogsPayloadForRow(row));
     } else if (el.matches('tr[data-work]')) {
@@ -16640,7 +17024,11 @@
         startPanic();
         break;
       case 'level':
-        if (row) setLevel(row, btn.dataset.level);
+        if (row) {
+          // [3.17.1] a level chosen for a credit switched off on Bandcamp switches it on again
+          if (row.bcOff && btn.dataset.level !== 'skip') bcCreditOn(row);
+          setLevel(row, btn.dataset.level);
+        }
         break;
       case 'scope':
         setScope(btn.dataset.scope);
@@ -17438,7 +17826,7 @@
         if (companionReleaseId()) toDiscogs({ type: 'open', url: S.release.url });
         break;
       case 'sync-load':
-        if (companionReleaseId()) toDiscogs({ type: 'show', releaseId: companionReleaseId(), loadOnly: true, id: Date.now() });
+        if (companionReleaseId()) toDiscogs({ type: 'show', site: viewSite(), releaseId: companionReleaseId(), loadOnly: true, id: Date.now() });
         break;
       default:
         break;
@@ -18618,6 +19006,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.17.0', label: 'Credits Importer 3.17.0 · Companion 1.8.0' },
     { v: '3.16.0', label: 'Credits Importer 3.16.0' },
     { v: '3.15.0', label: 'Credits Importer 3.15.0' },
     { v: '3.12.0', label: 'Credits Importer 3.12.0' },
@@ -18771,15 +19160,15 @@
     if (e.target.closest && e.target.closest('[data-dg-status]')) {
       S.dgStatus = !S.dgStatus;
       writeJson('localStorage', 'dci-dg-status', S.dgStatus);
-      log('info', 'dgStatus', { state: tr(S.dgStatus ? 'common.on' : 'common.off') });
+      logView('info', 'dgStatus', { state: tr(S.dgStatus ? 'common.on' : 'common.off') });
       renderSync();
       sendDiscogsStatus();
     }
     const placeBtn = e.target.closest && e.target.closest('#dci-launcher [data-place]');
     if (placeBtn && placeBtn.dataset.place !== S.place) setPlace(placeBtn.dataset.place);
     if (e.target.closest && e.target.closest('[data-sync-reload]')) {
-      toDiscogs({ type: 'reload', releaseId: companionReleaseId() });
-      log('info', 'dgReload');
+      toDiscogs({ type: 'reload', site: viewSite(), releaseId: companionReleaseId() });
+      logView('info', 'dgReload');
     }
     if (e.target.closest && e.target.closest('[data-dg-artwork]')) {
       S.dgArtwork = !S.dgArtwork;
@@ -18791,7 +19180,7 @@
     if (e.target.closest && e.target.closest('[data-dg-release]')) {
       S.dgRelease = !S.dgRelease;
       writeJson('localStorage', 'dci-dg-release', S.dgRelease);
-      log('info', 'dgRelease', { state: tr(S.dgRelease ? 'common.on' : 'common.off') });
+      logView('info', 'dgRelease', { state: tr(S.dgRelease ? 'common.on' : 'common.off') });
       renderSync();
       sendDiscogsStatus();
     }

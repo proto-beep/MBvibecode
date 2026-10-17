@@ -13,12 +13,59 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.16.2, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.17.2, Companion 1.6.0 – 1.8.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.17.2 · 2026-10-17
+
+Liner notes from Bandcamp's "about" text (collect item 19).
+
+- **Register:** new table **T027** – `LINER_NOT_NAME` (a first word that makes the last line no name: "Special Thanks", "Listen …", articles and prepositions) and `LINER_PARTICLE` (particles inside a name: van, von, de …), in `TABLES`.
+- **Bandcamp adapter:** new `signatureName(text)` (a leading sign taken off, ", place, date" after the name at most three short parts, the name 2–4 words with capitals or particles inside, no digits, no "thanks/notes/credits"), `sentenceCount(text)` (split at `. ! ? …` and line breaks, parts with at least three words), `LINER_MIN_SENTENCES` (5), **`linerNotes(about)`** → `{ name, line, part, pi, n, at, len }` or `null`: the last non-empty line is the signature (b, c), else a name after a sign at the end of the last line behind a finished sentence (a; `part` the name, `pi` 1). Exported as `BANDCAMP.linerNotes`. `toRelease` adds a credit "Liner Notes" (`parseRoleNotation`, all tracks, `fromAbout: true`, line/part/pi/n for the Bandcamp view) and `release.liner` `{ name, at, len }` (the signature's place in `notes`); `aboutAt` computed once.
+- **`groupCredits`:** a role entry keeps `fromAbout` while all its credits come from the about text; rows get `row.fromAbout` (so `setAboutRowsHidden` takes them along).
+- **`autoPlaceFoundDates`:** a date found inside the signature goes into the pool named `liner.poolName` ("Liner notes – Jane Roe").
+- **`loadRelease`:** log `log.linerFound`.
+- **Texts (4 languages):** `liner.poolName`, `log.linerFound`; `about.offTitle` names the liner notes.
+- **Tests:** new `t_linernotes.py` (A in Node: three places of the name, multi-paragraph prose; four sentences, "Special Thanks", "Thanks to everyone", a name after a sign without a finished sentence, the real "Invisible Places" text → none; B–D in the dashboard: entry, suggestion only, hint, pool name, jump to the name's line, about text left out and back). Golden file written anew: the only change is T027 in the rules window (sections `lists` and `tables`).
+
+
+## Import 3.17.1 · Companion 1.8.1 · 2026-10-17
+
+Credits switched off and on on Bandcamp (collect item 5).
+
+- **New:** `BC_OFF_KEY` (`dci-bc-off:<MBID>`, an array of "name|role"), `S.bcOff` (a Set), `bcOffKey(row)` (`norm` of the entry's name as written – `rawName`, else `name` or the placeholder – and of the role), `saveBcOff()`, `bcCreditOn(row)` (forgets the flags and the key, logs `log.bcOn`, returns the level to go back to: `bcOffLevel`, else `defaultLevel`), `toggleBcCredit(row, off)` (off: `row.bcOff`, `row.bcOffLevel`, key stored, `log.bcOff`, `setLevel(row, 'skip')`; on: `setLevel(row, bcCreditOn(row))`), `bcOffHtml(row)` (note `.dci-bcoff` in both branches of `roleCell`).
+- **`loadRelease`:** with Bandcamp, rows with places whose key is in `S.bcOff` are set off right after the rows are made (level `skip`, the level kept). **`forgetImport`:** `BC_OFF_KEY` cleared, `S.bcOff` emptied.
+- **Level buttons (`case 'level'`):** a level other than "Skip" on a row switched off calls `bcCreditOn` first.
+- **`onFromDiscogs`:** new message `toggle-credit` `{ row, off, releaseId }` (only with Bandcamp loaded and the same release).
+- **`sendDiscogsStatus`:** Bandcamp items get `off: true`; labels `off`, `on`, `isOff`.
+- **Texts (4 languages):** `dgStatus.off`, `dgStatus.on`, `dgStatus.isOff`, `bc.offNote`, `log.bcOff`, `log.bcOn`.
+- **Companion 1.8.1:** MB side relays `toggle-credit` from `fromDiscogs`; the click handler of `initSourceSide` sends `toggle-credit` for `.dci-bc-off` (before the marks). `renderBandcampStatus`: each mark in `.dci-bc-markwrap` with its ⊘ `.dci-bc-off` (`data-row`, `data-off`), `.dci-bc-isoff` and "(switched off here)" in the title for credits off; a place whose credits are all off gets its part wrapped in `.dci-bc-offtext` (`BC_OFF`) before its marks are put in front of it; old wrappers removed / unwrapped first. `BC_SKIP` skips `.dci-bc-markwrap`; `bcInsert` also steps out of `.dci-bc-offtext`. CSS: ⊘ shown on hover above its mark (absolute, no shift of the text), greyed marks and struck-through text.
+- **Tests:** new `t_bcoff.py` (A–E: ⊘ on hover, off → "Skip" + note + grey, a group, on again with its level, kept after reload, a level chosen switches on, "Delete stored import"); `t_bcview.py` leaves ⊘ out of the text after a mark.
+
+
+## Import 3.17.0 · Companion 1.8.0 · 2026-10-17
+
+Bandcamp view in the companion (collect items 4 and 7), milestone.
+
+- **Text adapter (`TEXT.parse`):** every credit and company also gets `part` (the clause of its line, from `clauses()`), `pi` (the number of that clause on the line, 0 = first) and `n` (which of the lines with the same text it is, counted in `lineCount`); `at()` adds them together with `line`. "Role Name" lines and ℗/© lines: the line is the part, `pi` 0.
+- **Bandcamp adapter:** `companion: 'bandcamp'` (Discogs: `companion: 'discogs'`; `companionReleaseId()` unchanged); credits and companies of track pages get `page` (the track's `title_link`) and `pos` (its position).
+- **New `addSrcRef(refs, c)`:** `{ page, line, part, pi, n, pos?, about? }`, once per place; `groupCredits` (`entry.refs`), `groupCompanies` (`role.refs`); rows get `row.srcRefs` in `loadRelease` (credits and companies).
+- **Fixed in `groupCompanies`:** since 3.16.1 (`else if (!c.fromAbout) delete same.fromAbout;` in the else-if chain) the tracks of a role found again were joined only when the credit came from the about text; now `fromAbout` and the tracks are handled one after the other.
+- **New:** `viewSite()` ('discogs' / 'bandcamp' from `S.source.companion`), `VIEW_NAMES`, `trView(key, params)` (`${key}Site` with `{site}` when that key exists, else `key`), `logView(level, key, params)` (`log.${key}Site`), `syncSite()` (the tabs of the site from `S.sync.sites`; without it Discogs = `S.sync`, Bandcamp `{ old: true }`).
+- **`sendDiscogsStatus`:** Bandcamp items `{ row, role, status, unmapped, mb, refs: [{ page, line, part, pi, n, status, pos?, t?, r? }] }` – rows with places in the credits only (places in the about text and rows of a supplement left out); `ofTrack(pos)` gives the status and targets of one track, shared with the Discogs `byPos`. The message gets `site`; `artwork` only for Discogs.
+- **`onFromDiscogs`:** `status` keeps `msg.sites` (`S.sync.sites`); `focus-row` and `result` log through `logView`, `result` with `trView`.
+- **`showOnDiscogs`:** `site` in the command; for Bandcamp nothing without `S.sync.sites` (an old companion would send it to a Discogs tab). **New `bandcampPayloadForRows(rows)`** (`refs` of the rows, without supplements). **`showSourceOf`** for Bandcamp: a row → its places, an entry head → the places of all its rows; a track of the works matrix as before (`positions`).
+- **`syncStatusHtml`, `syncModeHtml`, `updateSyncArea`:** `syncSite()`, `trView`; `sync.oldSite` for an old companion; the layout key includes the site (drawn anew when the source changes); `data-dg-artwork` only for Discogs. `sync-load` and `data-sync-reload` send `site`; the logs `dgStatus`, `dgRelease`, `dgReload`, `syncMode` go through `logView`.
+- **New `srcRefsHtml(row)`** in both branches of `roleCell`: `bc.fromTrackPage` with links to the track pages (`.dci-bcpages`, origin from `BANDCAMP.urlKey`), `about.from` when all places are in the about text.
+- **Texts (4 languages):** `…Site` forms of `sync.off`, `sync.noTab`, `sync.connected`, `sync.found.loading`, `sync.found.none`, `sync.found.no-tab`, `log.discogsJump`, `log.syncMode`, `sync.dgStatus`, `sync.dgStatusTitle`, `log.dgStatus`, `log.dgFocus`, `sync.trackHoverTitle`, `sync.reloadTitle`, `log.dgReload`, `sync.otherPage`, `sync.loadTitle`, `sync.dgReleaseTitle`, `log.dgRelease`; new `sync.oldSite`, `bc.fromTrackPage` (`.one`/`.other`), `bc.trackPageTitle`, `about.from`, `ms.3.17.0`; changed `settings.t.discogs` ("Discogs and Bandcamp view"), `settings.discogsHint`.
+- **Milestone:** `MILESTONES` 3.17.0 ("Credits Importer 3.17.0 · Companion 1.8.0").
+- **Companion 1.8.0:** `@match *://*.bandcamp.com/*`; `isBandcamp`, `SITES`, `siteOf(x)` (no site = Discogs). MB side: `pickTab(tabs, releaseId, site)`, `status()` with `sites` (and the Discogs fields as before, for older main scripts), `mayOpen` also `https://*.bandcamp.com/`, `show` and `reload` by `siteOf(msg)`. `initDiscogsSide` → **`initSourceSide(side)`** with `DISCOGS_SIDE` and `BANDCAMP_SIDE` (`id`, `artwork`, `releaseId()`, `pageFor(cmd)` – '' this page, a URL to load, `null` none –, `locate(cmd)`, `renderStatus(map)`, `trackAt(target)`); the heartbeat `tab:<id>` has `site`; commands and status maps of another site are left alone. Bandcamp: `bandcampPage()` (album URL from the path or `album_url` of `data-tralbum`, track page path, track number), `bcCredits()`, `bcAbout()`, `bcLow`, `bcNeedle`, `BC_SKIP`, `bcStream(root)` (the text with the place of each character, lines at `<br>`, without marks and Bandcamp's "..."/"more"), `bcFindLine`, `bcPartRange`, `bcSentence`, `bcInsert`, `bcWrap`/`bcUnwrap` (`.dci-bc-hl`), `bcExpand` (opens `.bcTruncateMore`: Bandcamp's link, else shown directly), `renderBandcampStatus` (marks inserted from the end, those of one place together as a fragment; `bcInsert` puts them before a marked stretch, not into it), `bandcampLocate`. **Fixed:** the delayed first `showMap` after the page opens uses `lastMap || GM_getValue('statusMap')` (it used the map read at the start and could replace a newer one). Release page: `refs` checked like `byPos` (`each`); a place without targets of its own takes the status of the whole credit. CSS `.dci-bc-hl`.
+- **Tests:** new `t_bcview.py` (A–G); harness `bc_html()` (a Bandcamp album or track page built like real ones: track table, about, credits with `<br>` after "released …", Bandcamp's shortening) and `open_bandcamp()` (the companion in the top frame only, also after the tab loads another page); `t_register.py` leaves `part`/`pi`/`n` out of the golden data; `t_notice.py` (3.17.0). Checked locally on the maintainer's saved pages (Invisible Places, a Kungens Män track page): marks before each part, every row jumps to its credit.
+
 
 ## Import 3.16.2 · 2026-10-17
 
