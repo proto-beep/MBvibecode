@@ -13,12 +13,63 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.15.2, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.16.2, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.16.2 · 2026-10-17
+
+Neutral texts for other sources (collect item 17).
+
+- **New:** `srcLabel()` (the source's name, "pasted text" for the text source: `src.textLabel`), `trSrc(key, params)` – the text as it is while Discogs is loaded (`S.release && S.source === DISCOGS`), else `${key}Any` with `{src}`.
+- **Changed (now `trSrc`):** `instrAsk.ask` (`instrumentAskHtml`), `matrix.noWriters` and `matrix.empty` (works matrix), `roleCredit.fromDiscogs` / `roleCredit.fromTag` (role credit tag), `media.nowTitle`, `dm.chooseSingle` / `dm.chooseSingleTitle`, `datefind.alsoRangeTitle`, `pools.reload` (button and question). `manual.rolePlaceholder` is neutral in every language (manual entries do not depend on the source).
+- **Looked through and left:** texts of the Discogs view (`sync.*`, `dgStatus.*`), Discogs series, Discogs aliases, the Discogs API errors, `log.discogsLoaded`, the milestones (history), `datefind.order*` (only with a Discogs release country).
+- **Texts (4 languages):** `src.textLabel`, `instrAsk.askAny`, `matrix.emptyAny`, `matrix.noWritersAny`, `roleCredit.fromDiscogsAny`, `roleCredit.fromTagAny`, `media.nowTitleAny`, `dm.chooseSingleAny`, `dm.chooseSingleTitleAny`, `datefind.alsoRangeTitleAny`, `pools.reloadAny`; `manual.rolePlaceholder` changed.
+- **Tests:** new `t_srctexts.py` (Discogs: the texts as before; a pasted text: question, role credit tag, "no writers").
+
+
+## Import 3.16.1 · 2026-10-17
+
+"Leave out the about text" (collect item 6).
+
+- **Bandcamp adapter (`toRelease`):** companies from the "about" text get `fromAbout: true`; the release gets `aboutAt` (where the about text begins in `notes`: after the credits and two newlines, 0 without credits, `null` without an about text).
+- **`groupCompanies`:** a role keeps `fromAbout` only while every credit of it comes from the about text; **`loadRelease`:** company rows of such roles get `row.fromAbout`; with `S.aboutOff` they are hidden right after the rows are made (`setAboutRowsHidden(true)`).
+- **New:** `ABOUT_KEY` (`dci-about-off:<MBID>`, `{ stash: { pool, cells } }` while off), `S.aboutOff`, `fromAboutText(find)` (a date find at or after `aboutAt`), `setAboutRowsHidden(hide)` (`aboutHidden`, level to `skip` with `aboutLevel` kept, and back), `setAboutOff(off)` (rows; off: the pool entries of about-text finds – `found` `notes:<i>` or `notes:<i>:…` – and the matrix cells using them go into the stash; on: they come back from it; `savePool`, `dmChanged`, log `log.aboutOff` / `log.aboutOn`, renders).
+- **Changed:** `autoPlaceFoundDates` skips about-text finds while off (else they would come back when no dates of the notes are left); `groupHtml` / `rowHtml` add `dci-about-hidden` (a group only when all its rows are hidden); `renderSource` shows the checkbox `data-f="about-off"` after "Delete stored import …" when `rel.aboutAt != null`; `onChangeInner` case `about-off`; `forgetImport` clears `ABOUT_KEY` and `S.aboutOff`.
+- **CSS:** `#dci-overlay .dci-about-hidden` (and the track list of such a row) not shown.
+- **Texts (4 languages):** `about.off`, `about.offTitle`, `log.aboutOff`, `log.aboutOn`.
+- **Tests:** new `t_aboutoff.py` (the checkbox next to "Delete stored import", ticked: Loft hidden, Studio Nord stays, June dates out, March stays, stored; off again: back with "credited as" typed before; kept across a reload; reset by "Delete stored import").
+- **Not covered:** a supplement from Bandcamp (its about-text places stay suggestions as before).
+- **Docs:** the headings of the entries 3.15.0 – 3.16.0 in the changelog and in this file had been lost each time the next entry was added (3.15.0 and 3.15.1 also on `main` after PR #7); put back.
+
+
+## Import 3.16.0 · 2026-10-17
+
+The menu "Settings" (collect item 13) and the stored works of the artists (collect item 12). Milestone.
+
+- **New (settings of the works comparison):** `AW_SETTINGS` (`awMax` 100–10,000 step 100 default 4,000; `awSlowSec` 1–120 default 10; `awSlowN` 100–10,000 step 100 default 900; `awDays` 1–90 default 7; keys `dci-aw-max`, `dci-aw-slow-s`, `dci-aw-slow-n`, `dci-aw-days`), `awValue(name, v)` (clamped, rounded to the step), `S.awOn` (`dci-aw-on`, stored only when off).
+- **`loadArtistWorks`:** one budget `S.awMax` for linked works and recordings (`entry.max`, `entry.linkedRead`); `capped` also when linked works are left out; when the works use the whole budget one request `recording?artist=…&limit=1` gives the number of recordings for the message; the recording requests ask for `min(100, rest)`. `ARTIST_WORKS_MAX` is gone.
+- **`runArtistWorks`:** returns at once (and clears the hits) when `S.awOn` is off; per target first `awGet` – a fresh record (`awFresh`: younger than `S.awDays`, not capped below `S.awMax`) becomes the entry (`awUnpack`, log `log.artistWorksStored`); else read, `readAt` set, `awPut(awPack(…))`; the slow message uses `S.awSlowSec` and `S.awSlowN`; the capped message `n` = linked + recordings, `max` = `e.max`.
+- **New (store):** `AW_DB` (`dci-works`, store `artists`, keyPath `mbid`), `awDb()`, `awStore(mode, fn)`, `awGet`, `awPut`, `awCount`, `awClear`, `awPack(mbid, e, readAt)` (works as arrays `[gid, title, aliases, type, disambiguation, 'l'|'r', recording]`), `awUnpack(rec)`, `awFresh(rec)`; `rememberArtistWork(i, gid, title)` – called by `work-pick` and after a work was created (`rememberCreatedWork`): the release-credit artists and the artists of the rows on that track get the work (memory and store, `readAt` kept).
+- **New (menu):** `SETTING_TOPICS`, `TOPIC_KEYS` (stored keys per topic), `SHARED_SWITCHES`, `settingsHtml()` (topics as `data-act="settings-topic"` buttons, `S.settingsTopics`; reuses `data-f` controls of the dashboard – `lang`, `bc-tracks`, `mx-codes`, `fill-credits`, `stage-cap`, `dm-auto`, `pools-keep`, `zoom-in/out`, `place-toggle`, `syncModeHtml()`, `sourceOrderHtml()` – and has fields of its own with `data-set`: `log-open`, `log-place`, `aw-on`, `awMax`, `awSlowSec`, `awSlowN`, `awDays`, `wattr-long`, `cap-limit`), `renderSettings()` (keeps the focus), `syncSharedSwitches()` (the dashboard's copies of shared switches, the footer's cap label `[data-el="cap-label"]`), `settingsAfterEvent(e)` (overlay click/change listener, after a `setTimeout` so that the document-level handlers of the Discogs view have run), `settingsChange(el)` (`onChange` hands `data-set` fields to it), `resetTopic(t)`.
+- **Changed:** head button `data-act="settings-open"` and panel `[data-el="settings"]` (after the reset panel; opening one closes the other); `renderAll` calls `renderSettings`; click cases `settings-open` (counts the store with `awCount`), `settings-topic`, `settings-reset` (confirm), `aw-clear` (confirm, log `log.artistWorksCleared`). `SETTINGS_KEYS` gains `dci-aw-on` and the `AW_SETTINGS` keys; `resetSettings` sets them back and clears the store. The footer's cap text is a `span[data-el="cap-label"]`.
+- **Texts (4 languages):** `settings.*` (button, title, hint, topics `settings.t.*`, `settings.resetTopic`, `settings.resetAsk`, `settings.place*`, `settings.logOpen`, `settings.logPlace`, `settings.discogsHint`, `settings.aw*`, `settings.awStored`/`settings.awClearAsk` one/other, `settings.wattrLong`, `settings.capOn`, `settings.capLimit`, `settings.aria.*`), `log.settingAw`, `log.settingValue`, `log.settingsTopicReset`, `log.artistWorksStored` and `log.artistWorksCleared` (one/other), `ms.3.16.0`; `msg.artistWorksCapped` and `log.artistWorksCapped` say "works and recordings". `MILESTONES` gains 3.16.0.
+- **CSS:** `.dci-settings`, `.dci-set-head`, `.dci-set-topic`, `.dci-set-tgl`, `.dci-set-body`, `.dci-set-row`, `.dci-set-reset`.
+- **Tests:** new `t_settings.py` (menu and topics, shared switches both ways, a value with steps, a topic's "↺" with its question, the store across a reload, clearing it, switched off, a Discogs-view button in the menu); `t_artistworks.py` D sets `dci-aw-max` = 2,000 (the default is 4,000 now), B checks the chosen work in the store of Bass Man; `t_notice.py` expects 3.16.0, 3.15.0, 3.12.0 and no longer 3.10.0.
+- **Watch out:** the log of a release is kept across reloads – a test that waits for a log line after loading again must wait for one more than before.
+
+
+## Import 3.15.3 · 2026-10-17
+
+The suggestions as a wrapping block (addition to collect item 15).
+
+- **Changed:** `matchHtml(a)` = `matchHtmlInner(a)` + `suggestStackHtml(a)` (the stack always after the head line); `matchHtmlInner` takes no stack any more, `editor()` shows the red badge alone again; `.dci-match-col` is gone.
+- **CSS:** `.dci-sugg-stack` is `flex: 1 0 100%` (a line of its own in the flex-wrap `.dci-gmatch`) with `flex-wrap: wrap` in a row; `.dci-suggmore` without `align-self`.
+- **Tests:** `t_suggstack.py` – order mark → field → buttons → block, the block below the mark and left-aligned with it, row + wrap, one line with 5, two with all 8, more when the panel is 560 px wide.
+
 
 ## Import 3.15.2 · 2026-10-17
 
@@ -32,6 +83,8 @@ Suggestions stacked (collect item 15), rows as boxes (collect item 16).
 - **Tests:** new `t_suggstack.py` (eight artists of one name: order red mark → stack → field, tooltip instead of text, 5 + "+ 3 more" bold and solid, all 8 and "− fewer", assigning); `t_textrules.py` and `t_bandcamp.py` read the explanation from the stack's tooltip and a suggestion's name without its mark.
 
 
+## Import 3.15.1 · 2026-10-17
+
 Mastering only on the release level (collect item 14), special purpose artists left out (collect item 11).
 
 - **New (section 2d):** `SPECIAL_ARTISTS` (T026, `[mbid, name]` of the 7 official special purpose artists, 4 subsets with an MBID and MusicBrainz Test Artist), `SPECIAL_ARTIST_NAME` (a name entirely in square brackets), `isSpecialArtist(mbid, ...names)`; `TABLES` entry T026 (`show()` as pairs).
@@ -44,6 +97,8 @@ Mastering only on the release level (collect item 14), special purpose artists l
 - **Texts (4 languages):** `log.artistWorksSpecial`, `level.onlyHere`.
 - **Tests:** new `t_special.py` (Various Artists and "[soundtrack]" not browsed, Test Band is; logged once; T026 in the window), new `t_mastering.py` (two mastering rows on CD 1 / CD 2: only "Release" and "Skip" with the title, no "Release level" in the column, May/June by track group, July for both); harness: `lt(…, deprecated=False)`, artist–recording "mastering" (136) deprecated, artist–release "mastering" (42) added; `register_golden.json` written anew – the mastering rows of the pasted texts now have type 42 (was none: the mock had no release mastering), T016's notes, T026.
 
+
+## Import 3.15.0 · 2026-10-17
 
 The works of the artists in the works matrix (collect item 9b). Milestone.
 
