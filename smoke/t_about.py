@@ -5,7 +5,9 @@ A) The place: an entry "Loft" (Cologne) with "Recorded At"; MusicBrainz places o
 B) The date: "june 16/17 2018" (and "16/17 June 2018") – two days in a row, in the date pool as a period
    (2018-06-16 – 2018-06-17), which can be split into the single days as with "June 16 & 17, 2018".
 C) "Loft, Cologne" in the credits works the same way.
-D) A private place is no place: "mixed at home in Oslo" gives no entry "home" (and is not listed as not recognized)."""
+D) A private place is no place: "mixed at home in Oslo" gives no entry "home" (and is not listed as not recognized).
+E) What follows "at" without being a place gives no entry either (3.13.1): "recorded at the same time as the video",
+   "overdubs at last, in the summer of 2018"."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -18,7 +20,7 @@ H.MB_SEARCH['place'] = [
 ]
 H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {
     'title': 'Swift', 'credits': 'Bass Man – bass\nMastered at Studio Nord, Bremen',
-    'about': 'An evening of improvised music, three friends, one room.\nrecorded at Loft in Cologne, june 16/17 2018\nmixed at home in Oslo, july 2018'},
+    'about': 'An evening of improvised music, three friends, one room.\nrecorded at Loft in Cologne, june 16/17 2018\nmixed at home in Oslo, july 2018\nrecorded at the same time as the video\noverdubs recorded at last, in the summer of 2018'},
     'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
 orig_ws = H.ws_release
 
@@ -56,8 +58,9 @@ with sync_playwright() as p:
     ok_b = any('{"year":2018,"month":6,"day":16} {"year":2018,"month":6,"day":17}' in s for s in stored)
     ok_c = nord is not None and nord[0] == ['Mastered At'] and nord[1] == ['Studio Nord (Bremen) – place']
     ok_d = not any('home' in k.lower() for k in g)
-    print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d)
-    results += [ok_a, ok_b, ok_c, ok_d]
+    ok_e = not any(w in k.lower() for k in g for w in ('same time', 'last'))
+    print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d, '| E)', ok_e)
+    results += [ok_a, ok_b, ok_c, ok_d, ok_e]
     print('Fehler:', errs)
     results.append(not errs)
     b.close()
