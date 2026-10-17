@@ -13,14 +13,27 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.15.0, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.15.1, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
 
-## Import 3.15.0 · 2026-10-17
+## Import 3.15.1 · 2026-10-17
+
+Mastering only on the release level (collect item 14), special purpose artists left out (collect item 11).
+
+- **New (section 2d):** `SPECIAL_ARTISTS` (T026, `[mbid, name]` of the 7 official special purpose artists, 4 subsets with an MBID and MusicBrainz Test Artist), `SPECIAL_ARTIST_NAME` (a name entirely in square brackets), `isSpecialArtist(mbid, ...names)`; `TABLES` entry T026 (`show()` as pairs).
+- **`DATE_GROUPS`:** `releaseOnly: true` for `remastering` and `mastering`; T016's `show()` adds "– release level only".
+- **`applyMatrixColumn`:** a row not on recording/work level in a `releaseOnly` group takes every cell of the column whose track groups touch the row's tracks (or that has none); the `rel` mark is not used there. Other groups unchanged.
+- **`matrixCellHtml`:** no `dm-rel` checkbox in `releaseOnly` columns.
+- **`levelCell`:** when only one level (besides "Skip") is offered for the row's MB type, the group has the title `level.onlyHere`. The levels themselves were already limited to those where MB has the type (`levelsOfType`, `buildIndex` leaves out deprecated types) – on MusicBrainz a mastering row has no "Recording".
+- **`artistWorkTargets`:** special purpose artists go to `out.special` instead of the targets; `runArtistWorks` logs `log.artistWorksSpecial` once per import (`S.artistWorksSpecialLogged`, reset in `loadRelease`).
+- **`renderWorksBackground`** (the redraw for hits of the works of the artists): waits while `S.dmDrag` is set (`S.worksRenderAfterDrag`), checks again every 300 ms. Tried and taken back: drawing the end of `autoSearchWorks` through it as well – deferred until a field of the matrix was left, that redraw came 400 ms after the mousedown of the next drag and lost the drop (`t_mxdrop.py` B2 failed in 4 of 5 runs side by side; with `renderWorks` as before 5 of 5 pass).
+- **Texts (4 languages):** `log.artistWorksSpecial`, `level.onlyHere`.
+- **Tests:** new `t_special.py` (Various Artists and "[soundtrack]" not browsed, Test Band is; logged once; T026 in the window), new `t_mastering.py` (two mastering rows on CD 1 / CD 2: only "Release" and "Skip" with the title, no "Release level" in the column, May/June by track group, July for both); harness: `lt(…, deprecated=False)`, artist–recording "mastering" (136) deprecated, artist–release "mastering" (42) added; `register_golden.json` written anew – the mastering rows of the pasted texts now have type 42 (was none: the mock had no release mastering), T016's notes, T026.
+
 
 The works of the artists in the works matrix (collect item 9b). Milestone.
 
