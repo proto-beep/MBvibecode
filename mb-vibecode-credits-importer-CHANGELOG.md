@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.15.2 | – |
+| 2026-10-17 | 3.11.0 – 3.16.2 | – |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -35,6 +35,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-17 | Import 3.16.0 | A menu "⚙ Settings" with all settings by topic (General, Sources, Discogs view, Works, Staging, Dates & tracks), each with its own "↺"; the switches stay where they are too. Works of the artists: on or off, how many works and recordings per artist are read (4,000), when a large catalogue is named, and how long the works read are kept – now beyond reloading the page (7 days) |
 | 2026-10-17 | Import 3.15.0 | Works matrix: the tracks without a work are compared with all works of the release's artists, its writers and its musicians – works linked to them and works of their recordings (also covers), in the background, read once per session; a large catalogue is named. Pasted texts and Bandcamp credits: credits in sentences ("Music played and recorded by … in September and October 2026"), "Role Name" lines and "… of this release were created by a human" (the release's artists suggested) are recognized. Arrows in the status bar jump to the top or bottom of the dashboard |
 | 2026-10-17 | Import 3.12.0 | Rebuilt inside: all mapping rules and word lists in one place of the script (the mapping register), the role rules as plain data; what the script makes of a source stays the same (checked with about 1,200 roles, 100 company roles, 50 date phrases and pasted texts). "Mapping rules" lists the tables and word lists (read only) and shows the right level for 27 rules |
 | 2026-10-16 | Import 3.10.0 | The rows of an entry rearrange with the width of the dashboard (relationship above attributes, level above date above tracks), with captions instead of the table head; a date from the pool or the matrix is a chip, its fields open with ✎, begin above end. Dates of the date matrix can be marked "Release level"; a row switched to the release level takes that date. Texts: "tenor & soprano sax", recording place and dates in Bandcamp's "about" text, places with their area, name suggestions without accents and with middle names; supplement with any Discogs or Bandcamp URL |
@@ -72,6 +73,52 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 ## 2026-10-17
 
+### Import 3.16.2
+
+#### Changed
+
+- **Texts that named Discogs say "the source" when another source is loaded** (collected on 2026-10-17, as "Mapping rules" in 3.13.2): the question for an instrument ("The source (pasted text) only says “Guitar”. Do you know which one it is?"), "The source (Bandcamp) names no writers for this track", the tag of a role credit taken over ("from the source", tooltip "Taken from the source (pasted text)"), the empty works matrix, "What was imported from the source (…)", "↻ load again from the source (…)", the dates "as the source gives them". With Discogs loaded they are as before. The placeholder of "Add entry manually" says "a role as the source writes it" for every source.
+
+
+### Import 3.16.1
+
+#### Added
+
+- **"Leave out the “about” text"** – a checkbox next to "Delete stored import …", for a Bandcamp release with an "about" text (asked for by the maintainer: "eine Checkbox … um den about-Text zu ignorieren, die direkt wirkt", "nur für dieses Release"). Ticked, the places from the "about" text are hidden (their rows go to "Skip" and out of sight) and its dates leave the date pool and the date matrix – at once, without a new import; the credits field is not touched. Ticked off again, everything is back as it was, with what you changed in those rows; the dates come back from where they were kept. The choice is stored for the release (also after loading the page again) and reset by "Delete stored import". The log says what was left out ("“about” text left out (rows hidden: 1, dates out of the pool: 2)").
+
+
+### Import 3.16.0
+
+#### Added
+
+- **A menu "⚙ Settings"** in the head of the dashboard (next to "↺ Defaults"; asked for by the maintainer: "ein aufklappbares Einstellungsmenü mit verschiedenen Themen"). All settings in one place, by topic, each topic folded and with its own **"↺ Defaults of this topic"** (after a question):
+  - **General:** language, text size, the dashboard as a window or in the page, show the log, place of the log.
+  - **Sources:** the order of the sources (physical / digital media), the credits of the Bandcamp track pages.
+  - **Discogs view:** jump to source on mouse-over or click, Discogs status, track highlight, status on the release page, artwork.
+  - **Works:** the comparison with the works of the artists (new settings, below), the role codes, the attributes spelled out.
+  - **Staging:** role credits for existing relationships, staging in rounds and – new – how many relationships per round (50 – 2,000, default 500).
+  - **Dates & tracks:** apply automatically, keep the pools in the bar.
+
+  The switches stay where they are too (the menu was asked for "erstmal zusätzlich"); a switch changed in one place shows the same in the other.
+- **Settings of the comparison with the works of the artists** (topic "Works"): on or off; at most so many works and recordings per artist, **together** (100 – 10,000, default **4,000**; the menu shows what it costs: "= 40 requests, about 44 s per artist"); a large catalogue is named after so many seconds (default 10) and from so many entries to read (default 900); the works read are kept so many days (1 – 90, default 7).
+- **The works read are kept beyond reloading the page** (in the browser's IndexedDB of musicbrainz.org, per artist, with the day they were read): loaded again within the days of the setting, the artist is not asked again – the log says "Works of Test Band: 1 work from the store (read 2026-10-17)". Works read with a lower limit than the one set now are read again. A work chosen for a track ("Link") or created through the dashboard goes into the stored works of the artists credited on that track at once. **Clear the stored works** (topic "Works", after a question with the number of artists) empties the store; "↺ Defaults" does too. Without IndexedDB (a browser that does not allow it) the works are kept for the page only, as before.
+
+#### Changed
+
+- The limit counts the works linked to an artist and the works of its recordings together: the linked works first, the recordings with the rest (3.15.0: up to 2,000 of each).
+
+#### Fixed
+
+- The linked works of an artist with more than 2,000 of them were cut off without a word; now the message names the limit for works too ("… has 4,500 works and recordings; only the first 4,000 were compared with the tracks").
+
+
+### Import 3.15.3
+
+#### Changed
+
+- **The suggestions are a block below the head line of the entry** (asked for by the maintainer: "sie können nebeneinander und untereinander dargestellt werden"): the red mark, the field and the buttons stay in one line; below them the suggestions lie side by side and wrap into more lines when there are many or the dashboard is narrow. In 3.15.2 they were one per line. Five, then "+ n more", tooltips and marks as in 3.15.2.
+
+
 ### Import 3.15.2
 
 #### Changed
@@ -84,6 +131,8 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 - In a wide dashboard the columns of the rows of an entry did not line up: the column "Level" took the width of its buttons ("Recording · Skip" or "Recording · Release · Skip"). It has a fixed width now.
 
 
+### Import 3.15.1
+
 #### Changed
 
 - **Mastering only on the release level, as MusicBrainz has it** (on recordings the type is deprecated – "Please add mastering engineers at the release level" – and "mastered at" does not exist there). In the date matrix the columns **Mastering** and **Remastering** have no checkbox "Release level" any more: every date of these columns goes to the mastering rows, also a date with a track group. A track group now only says which mastering row a date belongs to – CD 1 mastered by X in May, CD 2 by Y in June: X takes May, Y June; a date without a group goes to all mastering rows. Before, a mastering date with a track group reached a release-level row only after ticking "Release level". The column ℗/© keeps the checkbox (℗ can be on recordings or the release).
@@ -94,6 +143,8 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 - A work found by the comparison with the works of the artists (background) does not draw the works matrix anew while something is dragged (a track group, a date) – the drop would be lost; it is drawn a moment after the drop.
 
+
+### Import 3.15.0
 
 #### Added
 

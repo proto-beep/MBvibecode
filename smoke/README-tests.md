@@ -113,8 +113,13 @@ python3 t_special.py      # special purpose artists (3.15.1): Various Artists an
                           # logged once; table T026 in "Mapping rules"
 python3 t_mastering.py    # mastering only on the release level (3.15.1): two engineers for CD 1 / CD 2, no "Recording", no
                           # "Release level" in the column, the track group decides which mastering row takes a date
-python3 t_suggstack.py    # suggestions stacked below the red mark (3.15.2): eight artists of one name, 5 shown + "+ 3 more",
+python3 t_suggstack.py    # suggestions as a block below the red mark (3.15.2, 3.15.3: side by side, wrapping): eight artists of one name, 5 shown + "+ 3 more",
                           # explanations as tooltips
+python3 t_aboutoff.py     # "Leave out the about text" (3.16.1): place and dates of the about text out and back, with the changes,
+                          # kept across a reload, reset by "Delete stored import"
+python3 t_srctexts.py     # texts that named Discogs say "the source" with another source (3.16.2)
+python3 t_settings.py     # the menu "Settings" (3.16.0): topics, shared switches both ways, values in steps, a topic's "↺",
+                          # the works of the artists kept across a reload (IndexedDB), clearing them, switched off
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)
