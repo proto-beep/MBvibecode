@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.16.0
+// @version      3.16.1
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.16.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.16.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -115,6 +115,10 @@
       "msg.noSourceLink": "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text.",
       "srcorder.toggle": "Order of the sources",
       "forget.button": "Delete stored import …",
+      "about.off": "Leave out the “about” text",
+      "about.offTitle": "Only for this release: the places and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
+      "log.aboutOff": "“about” text left out (rows hidden: {rows}, dates out of the pool: {dates})",
+      "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
       "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album URL",
@@ -1332,6 +1336,10 @@
       "msg.noSourceLink": "Dieses Release ist noch nicht mit Discogs oder Bandcamp verknüpft. Gib oben eine URL ein oder füge einen Text ein.",
       "srcorder.toggle": "Reihenfolge der Quellen",
       "forget.button": "Gespeicherten Import löschen …",
+      "about.off": "„about“-Text auslassen",
+      "about.offTitle": "Nur für dieses Release: Orte und Daten aus dem „about“-Text von Bandcamp werden ausgelassen – ihre Zeilen ausgeblendet, ihre Daten aus Pool und Matrix genommen –, sofort, ohne neuen Import. Wieder abgehakt, sind sie zurück, mit dem, was du an ihnen geändert hast.",
+      "log.aboutOff": "„about“-Text ausgelassen (Zeilen ausgeblendet: {rows}, Daten aus dem Pool: {dates})",
+      "log.aboutOn": "„about“-Text wieder aufgenommen (Zeilen zurück: {rows}, Daten zurück: {dates})",
       "supp.with": "Ergänzen mit",
       "supp.text": "Text …",
       "supp.urlPh": "oder eine andere: Discogs-Release (URL oder ID) oder Bandcamp-Album-URL",
@@ -2549,6 +2557,10 @@
       "msg.noSourceLink": "Esta publicación aún no está enlazada con Discogs ni Bandcamp. Introduce una URL arriba o pega un texto.",
       "srcorder.toggle": "Orden de las fuentes",
       "forget.button": "Borrar la importación guardada…",
+      "about.off": "Omitir el texto «about»",
+      "about.offTitle": "Solo para esta publicación: los lugares y fechas del texto «about» de Bandcamp se omiten – sus filas ocultas, sus fechas fuera del grupo y de la matriz – al instante, sin nueva importación. Al desmarcarlo vuelven, con lo que hayas cambiado en ellos.",
+      "log.aboutOff": "Texto «about» omitido (filas ocultas: {rows}, fechas fuera del grupo: {dates})",
+      "log.aboutOn": "Texto «about» incluido de nuevo (filas de vuelta: {rows}, fechas de vuelta: {dates})",
       "supp.with": "Completar con",
       "supp.text": "Texto…",
       "supp.urlPh": "u otra: publicación de Discogs (URL o ID) o URL de un álbum de Bandcamp",
@@ -3766,6 +3778,10 @@
       "msg.noSourceLink": "Cette parution n’est pas encore liée à Discogs ni à Bandcamp. Saisissez une URL ci-dessus ou collez un texte.",
       "srcorder.toggle": "Ordre des sources",
       "forget.button": "Supprimer l’import enregistré…",
+      "about.off": "Laisser de côté le texte « about »",
+      "about.offTitle": "Pour cette parution seulement : les lieux et dates du texte « about » de Bandcamp sont laissés de côté – leurs lignes masquées, leurs dates retirées du réservoir et de la matrice – tout de suite, sans nouvel import. Décoché, ils reviennent, avec ce que vous y avez changé.",
+      "log.aboutOff": "Texte « about » laissé de côté (lignes masquées : {rows}, dates retirées du réservoir : {dates})",
+      "log.aboutOn": "Texte « about » repris (lignes de retour : {rows}, dates de retour : {dates})",
       "supp.with": "Compléter avec",
       "supp.text": "Texte…",
       "supp.urlPh": "ou une autre : parution Discogs (URL ou ID) ou URL d’un album Bandcamp",
@@ -6805,7 +6821,8 @@
       const companies = [...album.companies];
       // [3.7.0] The "about" text is mostly prose: only its places ("recorded at Loft in Cologne, june 16/17 2018");
       // its dates are found in the notes like those of the credits
-      companies.push(...TEXT.parse(cur.about || '', { ...ctx, resolveTracks }).companies.filter((c) => /\bat$/i.test(c.role)));
+      companies.push(...TEXT.parse(cur.about || '', { ...ctx, resolveTracks }).companies.filter((c) => /\bat$/i.test(c.role))
+        .map((c) => ({ ...c, fromAbout: true }))); // [3.16.1] can be left out ("Leave out the about text")
       const unrecognized = [...album.unrecognized];
       (trackCredits || []).forEach((text, i) => {
         if (!text || !tracks[i]) return;
@@ -6824,6 +6841,8 @@
         title: cur.title || '',
         country: '',
         notes: [cur.credits, cur.about].filter(Boolean).join('\n\n'),
+        // [3.16.1] where the "about" text begins in the notes (its dates can be left out), null without one
+        aboutAt: cur.about ? (cur.credits ? cur.credits.length + 2 : 0) : null,
         tags: [],
         tracks,
         credits: credits.map((c) => ({ ...c, who: linkBand(c.who) })),
@@ -6938,7 +6957,8 @@
       if (!byKey.has(key)) byKey.set(key, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: [], ...(who.area ? { area: who.area } : {}) });
       const g = byKey.get(key);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
-      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}) });
+      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}) });
+      else if (!c.fromAbout) delete same.fromAbout;
       // the same role once for some tracks and once for all: all
       else if (same.tracks && (!c.tracks || c.tracks.all)) same.tracks = null;
       else if (same.tracks && c.tracks && c.tracks.indexes) same.tracks = { ...same.tracks, indexes: uniq([...same.tracks.indexes, ...c.tracks.indexes]) };
@@ -8473,6 +8493,9 @@
 
   // Track pool: named groups of tracks ("Tracks 1–5"), from text or made by hand, per release
   const TRACKPOOL_KEY = `dci-track-pool:${releaseMbid}`;
+  // [3.16.1] "Leave out the about text" for this release: { stash: { pool, cells } } (the dates taken out), null when not
+  const ABOUT_KEY = `dci-about-off:${releaseMbid}`;
+  S.aboutOff = !!readJson('localStorage', ABOUT_KEY, null);
   S.trackPool = readJson('localStorage', TRACKPOOL_KEY, null) || [];
   const saveTrackPool = () => writeJson('localStorage', TRACKPOOL_KEY, S.trackPool.length ? S.trackPool : null);
 
@@ -9601,7 +9624,8 @@
     S.poolForm = null;
     S.trackForm = null;
     S.dm = { cells: [], found: '', dirty: false };
-    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY].forEach((k) => writeJson('localStorage', k, null));
+    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY].forEach((k) => writeJson('localStorage', k, null));
+    S.aboutOff = false;
     S.mediaSel = null;
     S.supp = null;
     S.suppSources = new Map();
@@ -10321,6 +10345,7 @@
         S.artists.set(company.key, company);
         for (const r of g.roles) {
           const row = makeRow(company.key, { raw: r.role, company });
+          if (r.fromAbout) row.fromAbout = true;
           // A company for some tracks only (a text: "Published by X (1, 3)"), otherwise for all of them
           const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
           row.dAllTracks = !some;
@@ -10340,6 +10365,8 @@
       }
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
+      // [3.16.1] "about" text left out for this release: its rows hidden at once
+      if (S.aboutOff) setAboutRowsHidden(true);
       S.dateSuggestions = dateSuggestions(rel);
       // Dates in the notes with a word naming their group: suggestions in the date matrix (once per release)
       autoPlaceFoundDates();
@@ -11151,6 +11178,7 @@
       <button type="button" class="dci-textbtn dci-srcset-tgl" data-act="srcorder-toggle" aria-expanded="${S.srcOrderOpen}">${S.srcOrderOpen ? '▾' : '▸'} ${esc(tr('srcorder.toggle'))}</button>
       <button type="button" class="dci-textbtn dci-srcset-tgl" data-act="bc-toggle" aria-expanded="${S.bcOpen}">${S.bcOpen ? '▾' : '▸'} Bandcamp</button>
       <button type="button" class="dci-textbtn" data-act="forget-open" aria-expanded="${!!S.forgetOpen}" title="${esc(tr('forget.title'))}">${esc(tr('forget.button'))}</button>
+      ${rel && rel.aboutAt != null ? `<label class="dci-check" title="${esc(tr('about.offTitle'))}"><input type="checkbox" data-f="about-off" ${S.aboutOff ? 'checked' : ''}> ${esc(tr('about.off'))}</label>` : ''}
       ${S.forgetOpen ? `<div class="dci-forget" role="group" aria-label="${esc(tr('forget.ask'))}"><strong>${esc(tr('forget.ask'))}</strong>
         <p class="dci-sub">${esc(tr('forget.what'))}</p><p class="dci-sub">${esc(tr('forget.keeps'))}</p>
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
@@ -11355,11 +11383,12 @@
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship).
     const rows = allRows.filter((r) => r.level !== 'work');
+    const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
     const sourceLink = a.dId && (a.links || [])[0]
       ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(tr('link.discogsTitle'))}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span>${esc(a.rawName || a.name)}</a>`
       : '';
     return `
-      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}" data-group="${a.key}">
+      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}" data-group="${a.key}">
         <div class="dci-ghead">
           <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
@@ -11820,6 +11849,63 @@
       else runs.push([i, i]);
     }
     return runs.map(([a, b]) => (a === b ? label(a) : `${label(a)}–${label(b)}`)).join(', ');
+  }
+
+  // --- [3.16.1] "Leave out the about text" (Bandcamp; per release, at once, without a new import) ---------------------
+  /** A date found in the notes that lies in the "about" text. */
+  const fromAboutText = (x) => !!(S.release && S.release.aboutAt != null && x && x.index >= S.release.aboutAt);
+
+  /** The rows of places from the "about" text hidden (on "Skip", the level before kept) or shown again as they were. */
+  function setAboutRowsHidden(hide) {
+    let n = 0;
+    for (const r of S.rows) {
+      if (!r.fromAbout) continue;
+      if (hide && !r.aboutHidden) {
+        Object.assign(r, { aboutHidden: true, aboutLevel: r.level, level: 'skip' });
+        n++;
+      } else if (!hide && r.aboutHidden) {
+        r.level = r.aboutLevel || r.level;
+        delete r.aboutHidden;
+        delete r.aboutLevel;
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /**
+   * Switches the "about" text off or on for this release: its rows hidden or back (with the changes made in them), its
+   * dates out of the pool and the matrix (kept with the setting) or back.
+   */
+  function setAboutOff(off) {
+    S.aboutOff = off;
+    const rows = setAboutRowsHidden(off);
+    let dates = 0;
+    const m = dm();
+    if (off) {
+      const keys = dateFinds().notes.map((x, i) => (fromAboutText(x) ? `notes:${i}` : null)).filter(Boolean);
+      const mine = (d) => keys.some((k) => d.found === k || String(d.found || '').startsWith(`${k}:`));
+      const pool = S.datePool.filter(mine);
+      const ids = new Set(pool.map((d) => d.id));
+      const cells = m.cells.filter((c) => ids.has(c.date) || (c.alt || []).some((id) => ids.has(id)));
+      S.datePool = S.datePool.filter((d) => !ids.has(d.id));
+      m.cells = m.cells.filter((c) => !cells.includes(c));
+      dates = pool.length;
+      writeJson('localStorage', ABOUT_KEY, { stash: { pool, cells } });
+    } else {
+      const stash = (readJson('localStorage', ABOUT_KEY, null) || {}).stash || { pool: [], cells: [] };
+      for (const d of stash.pool || []) if (!S.datePool.some((x) => x.id === d.id)) { S.datePool.push(d); dates++; }
+      for (const c of stash.cells || []) if (!m.cells.some((x) => x.id === c.id)) m.cells.push(c);
+      writeJson('localStorage', ABOUT_KEY, null);
+    }
+    savePool();
+    dmChanged();
+    log('info', off ? 'aboutOff' : 'aboutOn', { rows, dates });
+    renderSource();
+    renderDates();
+    renderGroups();
+    renderWorks();
+    refresh();
   }
 
   /** The track group with exactly these tracks, created ("Tracks 1–5") if there is none yet. */
@@ -12288,6 +12374,7 @@
     const before = S.datePool.length;
     dateFinds().notes.forEach((x0, i) => {
       const key = `notes:${i}`;
+      if (S.aboutOff && fromAboutText(x0)) return; // [3.16.1]
       // Media choice: dates only for tracks of media not chosen stay out; the others keep the chosen tracks
       let x = x0;
       if (S.mediaSel && x.tracks && x.tracks.size) {
@@ -12988,7 +13075,7 @@
   function rowHtml(row) {
     const open = row.tracksOpen && (row.level === 'recording' || row.level === 'work');
     return `
-      <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}" data-row="${row.id}">
+      <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden ? ' dci-about-hidden' : ''}" data-row="${row.id}">
         <td class="dci-c-role">${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${typeAskHtml(row)}</td>
         <td class="dci-c-type"><div class="dci-cap">${esc(tr('th.type'))}</div>${typeCell(row)}</td>
         <td class="dci-c-attr"><div class="dci-cap">${esc(tr('th.attrs'))}</div>${attrCell(row)}</td>
@@ -17329,6 +17416,10 @@
       else S.trackForm.tracks.delete(Number(el.dataset.i));
       return;
     }
+    if (f === 'about-off') {
+      setAboutOff(el.checked);
+      return;
+    }
     if (f === 'pools-keep') {
       S.poolsKeep = el.checked;
       writeJson('localStorage', 'dci-pools-keep', el.checked ? null : false);
@@ -19206,6 +19297,8 @@
       .dci-pool-clear, .dci-reset { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid var(--warn); border-left-width: 4px; border-radius: 3px; background: #fffaf0; max-width: 80ch; }
       .dci-pool-clear p, .dci-reset p { margin: calc(var(--u, 1px) * 4) 0; }
       .dci-reset .dci-check { display: flex; margin: calc(var(--u, 1px) * 4) 0; }
+      /* [3.16.1] rows and entries of the "about" text, left out */
+      #dci-overlay .dci-about-hidden, #dci-overlay tr.dci-about-hidden + tr.dci-tracksrow { display: none; }
       /* [3.16.0] the menu "Settings" */
       .dci-settings { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid #c9c4dd; border-left: 4px solid var(--purple);
         border-radius: 3px; background: #faf9fd; }

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.16.0 | – |
+| 2026-10-17 | 3.11.0 – 3.16.1 | – |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -73,6 +73,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 ## 2026-10-17
 
+### Import 3.16.1
+
+#### Added
+
+- **"Leave out the “about” text"** – a checkbox next to "Delete stored import …", for a Bandcamp release with an "about" text (asked for by the maintainer: "eine Checkbox … um den about-Text zu ignorieren, die direkt wirkt", "nur für dieses Release"). Ticked, the places from the "about" text are hidden (their rows go to "Skip" and out of sight) and its dates leave the date pool and the date matrix – at once, without a new import; the credits field is not touched. Ticked off again, everything is back as it was, with what you changed in those rows; the dates come back from where they were kept. The choice is stored for the release (also after loading the page again) and reset by "Delete stored import". The log says what was left out ("“about” text left out (rows hidden: 1, dates out of the pool: 2)").
+
+
 ### Import 3.16.0
 
 #### Added
@@ -98,10 +105,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 - The linked works of an artist with more than 2,000 of them were cut off without a word; now the message names the limit for works too ("… has 4,500 works and recordings; only the first 4,000 were compared with the tracks").
 
 
+### Import 3.15.3
+
 #### Changed
 
 - **The suggestions are a block below the head line of the entry** (asked for by the maintainer: "sie können nebeneinander und untereinander dargestellt werden"): the red mark, the field and the buttons stay in one line; below them the suggestions lie side by side and wrap into more lines when there are many or the dashboard is narrow. In 3.15.2 they were one per line. Five, then "+ n more", tooltips and marks as in 3.15.2.
 
+
+### Import 3.15.2
 
 #### Changed
 
@@ -113,6 +124,8 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 - In a wide dashboard the columns of the rows of an entry did not line up: the column "Level" took the width of its buttons ("Recording · Skip" or "Recording · Release · Skip"). It has a fixed width now.
 
 
+### Import 3.15.1
+
 #### Changed
 
 - **Mastering only on the release level, as MusicBrainz has it** (on recordings the type is deprecated – "Please add mastering engineers at the release level" – and "mastered at" does not exist there). In the date matrix the columns **Mastering** and **Remastering** have no checkbox "Release level" any more: every date of these columns goes to the mastering rows, also a date with a track group. A track group now only says which mastering row a date belongs to – CD 1 mastered by X in May, CD 2 by Y in June: X takes May, Y June; a date without a group goes to all mastering rows. Before, a mastering date with a track group reached a release-level row only after ticking "Release level". The column ℗/© keeps the checkbox (℗ can be on recordings or the release).
@@ -123,6 +136,8 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 - A work found by the comparison with the works of the artists (background) does not draw the works matrix anew while something is dragged (a track group, a date) – the drop would be lost; it is drawn a moment after the drop.
 
+
+### Import 3.15.0
 
 #### Added
 
