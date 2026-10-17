@@ -203,6 +203,10 @@ def ws_work(gid):
 
 # MB search answers beyond ARTISTS / COMPANIES for a test: kind → [{'id', 'name', 'disambiguation', 'aliases'}]
 MB_SEARCH = {}
+# works the MusicBrainz work search finds (3.12.1): {'id', 'title', 'aliases': [{'name'}], 'relations': [artist rels]};
+# a work is found when one of its artists is named in the query (arid:…)
+WORK_SEARCH = []
+WORK_QUERIES = []
 # Areas of the places in COMPANIES, for the search with an area ("Abbey Road Studios, London")
 PLACE_AREAS = {'Abbey Road Studios': 'London'}
 
@@ -501,6 +505,12 @@ def install_routes(ctx):
             return json_route(route, ws_work(m.group(1)))
         if p.startswith('/ws/2/release-group/'):
             return json_route(route, {'id': RG, 'relations': MB_EXTRA.get(RG, [])})
+        if p == '/ws/2/work':
+            q = urllib.parse.parse_qs(u.query).get('query', [''])[0]
+            WORK_QUERIES.append(q)
+            ids = set(re.findall(r'arid:([0-9a-f-]{36})', q))
+            return json_route(route, {'works': [dict(w, score=100) for w in WORK_SEARCH
+                                                if any(r.get('artist', {}).get('id') in ids for r in w.get('relations', []))]})
         m = re.match(r'/ws/2/(artist|label|place)$', p)
         if m:
             return json_route(route, ws_search(m.group(1), u.query))

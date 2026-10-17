@@ -13,12 +13,23 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.12.0, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.12.1, Companion 1.6.0 – 1.7.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.12.1 · 2026-10-17
+
+Two fixes (collect items 10 and 9a of 2026-10-17).
+
+- **`makeMovable`:** a press on `summary` or inside `details` does not move the window (the list `.dci-unrec` in the head `.dci-head` could not be opened in window mode: `preventDefault` and `setPointerCapture` took the click).
+- **`loadRelease`:** resets `S.workSearch` (it was never reset, so a second import kept the results of the first and `autoSearchWorks` skipped its tracks) and asks a running search to stop (`S.searchCancel`).
+- **`autoSearchWorks`:** when a search is running, it sets `S.searchAgain` and the running one starts it again when it ends (no search lost between two imports).
+- **New:** `writerSig(people)` (the MB writers of a track as text), `scheduleWorkRecheck()` – called by `refresh()`, 800 ms later it searches again the tracks without a work whose writers (`creditedWritersOf`) differ from those of their search; `runWorkSearch` stores `sig` with every state. Covers every way a writer gets an MBID or a writing role changes, without hooks in each handler.
+- **Texts:** `log.workRecheck` (one/other, 4 languages).
+- **Tests:** new `t_recheck.py` (A the list opens in the window, B a text writer assigned → searched and found, C no new query without a change, D a new import searches itself); harness: `/ws/2/work?query=` answered from `WORK_SEARCH` (a work is found when one of its artists is in the query's `arid:`), queries recorded in `WORK_QUERIES`.
 
 ## Import 3.12.0 · 2026-10-17
 

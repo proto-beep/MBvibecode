@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.12.0 | – |
+| 2026-10-17 | 3.11.0 – 3.12.1 | – |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -70,6 +70,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-17
+
+### Import 3.12.1
+
+#### Fixed
+
+- **"n lines not recognized" could not be opened** in the window (it could "in the page"): the source sits in the head of the window, with which the window is moved, and a press on the list started moving the window instead. Reported with the Bandcamp album "Invisible Places" (phelios).
+- **The works matrix found no existing works after a second import:** the same-named works of the import before stayed, and the tracks of the new source were never searched – e.g. Discogs loaded first, then Bandcamp or a pasted text chosen. A new import searches anew.
+- **Same-named works are looked up again when the writers of a track change:** a name of Bandcamp or a text is only a suggestion at the import, so its tracks had no writers and nothing was searched; after you assigned the name (a suggestion, an alias, a URL, a new artist), nothing was searched either. Now the tracks whose writers changed are searched again a moment later; the log says so ("The writers of 2 tracks changed – their same-named works are looked up again").
 
 ### Import 3.12.0
 
