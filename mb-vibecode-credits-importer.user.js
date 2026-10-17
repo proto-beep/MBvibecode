@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.15.0
+// @version      3.15.2
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.15.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.15.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -214,6 +214,10 @@
       "match.linkSuggest": "Found via the {src} link, but spelled differently ({mb}) – a suggestion, check before assigning:",
       "match.nameUseTitle": "Assign this MusicBrainz entry",
       "match.similarName": "similar name",
+      "match.markSpelled": "spelled differently",
+      "match.markRelease": "release artist",
+      "match.suggMore": "+ {n} more",
+      "match.suggLess": "− fewer",
       "match.similarTitle": "A similar name in MusicBrainz (a middle name or an initial more or less) – check before assigning",
       "match.placeholderSuggest": "The text names no one here (“{said}”) – the release's artist? A suggestion, check before assigning:",
       "log.placeholderSuggested": "{name}: the text says “{said}” – the release's artist is suggested",
@@ -239,6 +243,7 @@
       "toolbar.clearAll": "clear all",
       "level.recording": "Recording",
       "level.release": "Release",
+      "level.onlyHere": "MusicBrainz has this relationship only on this level ({level})",
       "level.work": "Work",
       "level.skip": "Skip",
       "th.role": "{src} role",
@@ -752,6 +757,7 @@
       "log.artistWorksDone.one": "Works of the artists compared: {n} work with the same title as a track ({tracks})",
       "log.artistWorksDone.other": "Works of the artists compared: {n} works with the same title as a track ({tracks})",
       "log.artistWorksNone": "Works of the artists compared: no work with the same title as a track",
+      "log.artistWorksSpecial": "{name}: a special purpose artist (Various Artists, [unknown] …) – its works are not compared",
       "log.artistWorksCapped": "Works of {name}: {n} recordings, only the first {max} compared",
       "matrix.noSame": "No work with the same title by these writers in MusicBrainz.",
       "matrix.dupWarn": "MusicBrainz already has a work with the same title (see the list below the track): {title}. Create a new work anyway?",
@@ -1380,6 +1386,10 @@
       "match.linkSuggest": "Über den {src}-Link gefunden, aber anders geschrieben ({mb}) – ein Vorschlag, vor dem Zuordnen prüfen:",
       "match.nameUseTitle": "Diesen MusicBrainz-Eintrag zuordnen",
       "match.similarName": "ähnlicher Name",
+      "match.markSpelled": "anders geschrieben",
+      "match.markRelease": "Release-Artist",
+      "match.suggMore": "+ {n} weitere",
+      "match.suggLess": "− weniger",
       "match.similarTitle": "Ähnlicher Name in MusicBrainz (ein Mittelname oder eine Initiale mehr oder weniger) – vor dem Zuordnen prüfen",
       "match.placeholderSuggest": "Der Text nennt hier niemanden („{said}“) – der Artist des Releases? Ein Vorschlag, vor dem Zuordnen prüfen:",
       "log.placeholderSuggested": "{name}: Der Text sagt „{said}“ – der Artist des Releases wird vorgeschlagen",
@@ -1405,6 +1415,7 @@
       "toolbar.clearAll": "alle leeren",
       "level.recording": "Recording",
       "level.release": "Release",
+      "level.onlyHere": "MusicBrainz hat diese Beziehung nur auf dieser Ebene ({level})",
       "level.work": "Werk",
       "level.skip": "Überspringen",
       "th.role": "{src}-Rolle",
@@ -1918,6 +1929,7 @@
       "log.artistWorksDone.one": "Werke der Artists abgeglichen: {n} Werk mit dem Titel eines Tracks ({tracks})",
       "log.artistWorksDone.other": "Werke der Artists abgeglichen: {n} Werke mit dem Titel eines Tracks ({tracks})",
       "log.artistWorksNone": "Werke der Artists abgeglichen: kein Werk mit dem Titel eines Tracks",
+      "log.artistWorksSpecial": "{name}: ein Sonder-Artist (Various Artists, [unknown] …) – seine Werke werden nicht abgeglichen",
       "log.artistWorksCapped": "Werke von {name}: {n} Aufnahmen, nur die ersten {max} abgeglichen",
       "matrix.noSame": "Kein gleichnamiges Werk dieser Autoren in MusicBrainz.",
       "matrix.dupWarn": "MusicBrainz hat schon ein gleichnamiges Werk (siehe die Liste unter dem Track): {title}. Trotzdem ein neues Werk anlegen?",
@@ -2546,6 +2558,10 @@
       "match.linkSuggest": "Encontrado por el enlace de {src}, pero escrito distinto ({mb}); una sugerencia, compruébala antes de asignarla:",
       "match.nameUseTitle": "Asignar esta entrada de MusicBrainz",
       "match.similarName": "nombre parecido",
+      "match.markSpelled": "escrito de otra forma",
+      "match.markRelease": "artista de la publicación",
+      "match.suggMore": "+ {n} más",
+      "match.suggLess": "− menos",
       "match.similarTitle": "Nombre parecido en MusicBrainz (un segundo nombre o una inicial de más o de menos); compruébalo antes de asignarlo",
       "match.placeholderSuggest": "El texto no nombra a nadie aquí («{said}»): ¿el artista de la publicación? Una sugerencia, compruébala antes de asignarla:",
       "log.placeholderSuggested": "{name}: el texto dice «{said}»; se sugiere el artista de la publicación",
@@ -2571,6 +2587,7 @@
       "toolbar.clearAll": "vaciar todos",
       "level.recording": "Grabación",
       "level.release": "Publicación",
+      "level.onlyHere": "MusicBrainz tiene esta relación solo en este nivel ({level})",
       "level.work": "Obra",
       "level.skip": "Omitir",
       "th.role": "Rol en {src}",
@@ -3084,6 +3101,7 @@
       "log.artistWorksDone.one": "Obras de los artistas comparadas: {n} obra con el título de una pista ({tracks})",
       "log.artistWorksDone.other": "Obras de los artistas comparadas: {n} obras con el título de una pista ({tracks})",
       "log.artistWorksNone": "Obras de los artistas comparadas: ninguna obra con el título de una pista",
+      "log.artistWorksSpecial": "{name}: un artista de uso especial (Various Artists, [unknown] …) – sus obras no se comparan",
       "log.artistWorksCapped": "Obras de {name}: {n} grabaciones, solo se compararon las primeras {max}",
       "matrix.noSame": "Ninguna obra con el mismo título de estos autores en MusicBrainz.",
       "matrix.dupWarn": "MusicBrainz ya tiene una obra con el mismo título (ver la lista bajo la pista): {title}. ¿Crear una obra nueva de todos modos?",
@@ -3712,6 +3730,10 @@
       "match.linkSuggest": "Trouvé via le lien {src}, mais écrit autrement ({mb}) – une suggestion, à vérifier avant d’attribuer :",
       "match.nameUseTitle": "Associer cette entrée MusicBrainz",
       "match.similarName": "nom proche",
+      "match.markSpelled": "écrit autrement",
+      "match.markRelease": "artiste de la parution",
+      "match.suggMore": "+ {n} de plus",
+      "match.suggLess": "− moins",
       "match.similarTitle": "Nom proche dans MusicBrainz (un deuxième prénom ou une initiale de plus ou de moins) – à vérifier avant d’attribuer",
       "match.placeholderSuggest": "Le texte ne nomme personne ici (« {said} ») – l’artiste de la parution ? Une suggestion, à vérifier avant de l’attribuer :",
       "log.placeholderSuggested": "{name} : le texte dit « {said} » – l’artiste de la parution est suggéré",
@@ -3737,6 +3759,7 @@
       "toolbar.clearAll": "tout vider",
       "level.recording": "Enregistrement",
       "level.release": "Parution",
+      "level.onlyHere": "MusicBrainz n’a cette relation qu’à ce niveau ({level})",
       "level.work": "Œuvre",
       "level.skip": "Ignorer",
       "th.role": "Rôle {src}",
@@ -4250,6 +4273,7 @@
       "log.artistWorksDone.one": "Œuvres des artistes comparées : {n} œuvre portant le titre d’une piste ({tracks})",
       "log.artistWorksDone.other": "Œuvres des artistes comparées : {n} œuvres portant le titre d’une piste ({tracks})",
       "log.artistWorksNone": "Œuvres des artistes comparées : aucune œuvre portant le titre d’une piste",
+      "log.artistWorksSpecial": "{name} : un artiste à usage spécial (Various Artists, [unknown] …) – ses œuvres ne sont pas comparées",
       "log.artistWorksCapped": "Œuvres de {name} : {n} enregistrements, seuls les {max} premiers comparés",
       "matrix.noSame": "Aucune œuvre du même titre de ces auteurs dans MusicBrainz.",
       "matrix.dupWarn": "MusicBrainz a déjà une œuvre du même titre (voir la liste sous la piste) : {title}. Créer quand même une nouvelle œuvre ?",
@@ -5330,7 +5354,7 @@
     { id: 'T015', where: 'DATE_HINTS', note: 'Dates: words near a date that name its date group ("recorded", "mixed", "mastered", "℗") (D015)',
       show: () => ({ pairs: DATE_HINTS.map(([group, re]) => [group, re]) }) },
     { id: 'T016', where: 'DATE_GROUPS', note: 'Date groups: the MusicBrainz relationships that share a column of the date matrix',
-      show: () => ({ pairs: DATE_GROUPS.map((g) => [g.label, g.types.join(', ') + (g.onlyNote ? ` (${g.onlyNote})` : '')]) }) },
+      show: () => ({ pairs: DATE_GROUPS.map((g) => [g.label, g.types.join(', ') + (g.onlyNote ? ` (${g.onlyNote})` : '') + (g.releaseOnly ? ' – release level only' : '')]) }) },
     { id: 'T017', where: 'LIVE_TITLE', note: 'Track titles that say "live": "(Live)", "(Live at …)", "[Live]", "– Live" (S021)', show: () => ({ pattern: LIVE_TITLE }) },
     { id: 'T018', where: 'NOTE_ROLES', note: 'Roles named with a track list in the notes ("XYZ Publishing (1, 4, 6)", "Written by Y (2, 5)") (S022)',
       show: () => ({ pairs: NOTE_ROLES.map(([re, type]) => [re, type]) }) },
@@ -5348,6 +5372,8 @@
       show: () => ({ pattern: TEXT_LABEL_LINE }) },
     { id: 'T025', where: 'TEXT_NOT_NAME', note: 'Texts: words that are no part of a name after a role at the start of a line ("Photography Tom Barrett")',
       show: () => ({ pattern: TEXT_NOT_NAME }) },
+    { id: 'T026', where: 'SPECIAL_ARTISTS', note: 'Works of the artists: special purpose artists are not compared (Various Artists, [unknown] …; any name entirely in [square brackets] too)',
+      show: () => ({ pairs: [...SPECIAL_ARTISTS.map(([id, name]) => [name, id]), ['[…]', SPECIAL_ARTIST_NAME]] }) },
   ];
 
   /** Discogs spelling → possible MB instrument names (tried in this order). */
@@ -5503,6 +5529,28 @@
   // Barrett" is a credit, "Music and artwork of this release …" is not
   const TEXT_NOT_NAME = /\b(?:the|a|an|and|or|of|to|for|with|by|at|in|on|from|this|that|these|those|is|are|was|were|be|been|all|our|my|his|her|their|its|no|not|thanks|release|album|record)\b/i;
 
+  // [T026] (3.15.1) MusicBrainz's special purpose artists (https://musicbrainz.org/doc/Style/Unknown_and_untitled/Special_purpose_artist,
+  // checked 2026-10-17): their catalogues are huge and say nothing about a release – the works comparison leaves them out.
+  // Besides these, any MB name entirely in square brackets ("[soundtrack]", "[classical music]") counts as one.
+  const SPECIAL_ARTISTS = [
+    ['89ad4ac3-39f7-470e-963a-56509c546377', 'Various Artists'],
+    ['125ec42a-7229-4250-afc5-e057484327fe', '[unknown]'],
+    ['f731ccc4-e22a-43af-a747-64213329e088', '[anonymous]'],
+    ['9be7f096-97ec-4615-8957-8d40b5dcbc41', '[traditional]'],
+    ['eec63d3c-3b81-4ad4-b1e4-7c147d4d2b61', '[no artist]'],
+    ['33cf029c-63b0-41a0-9855-be2a3665fb3b', '[data]'],
+    ['314e1c25-dde7-4e4d-b2f4-0a7b9f7c56dc', '[dialogue]'],
+    ['66ea0139-149f-4a0c-8fbf-5ea9ec4a6e49', '[Disney]'],
+    ['a0ef7e1d-44ff-4039-9435-7d5fefdeecc9', '[theatre]'],
+    ['90068d37-bae7-4292-be4a-704c145bd616', '[church chimes]'],
+    ['80a8851f-444c-4539-892b-ad2a49292aa9', '[language instruction]'],
+    ['7e84f845-ac16-41fe-9ff8-df12eb32af55', 'MusicBrainz Test Artist'],
+  ];
+  const SPECIAL_ARTIST_NAME = /^\[[^\]]+\]$/;
+  /** A special purpose artist: one of SPECIAL_ARTISTS, or a name entirely in square brackets. */
+  const isSpecialArtist = (mbid, ...names) => SPECIAL_ARTISTS.some(([id]) => id === mbid)
+    || names.some((n) => SPECIAL_ARTIST_NAME.test(String(n || '').trim()));
+
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
   const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
 
@@ -5554,9 +5602,11 @@
   const DATE_GROUPS = [
     { key: 'performance', label: 'Performance', types: ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at'] },
     { key: 'mix', label: 'Mix', types: ['mix', 'mixed at'] },
+    // [3.15.1] releaseOnly: MusicBrainz has mastering on the release only (on recordings it is deprecated, "mastered at"
+    // does not exist there) – every date of the column is for the release level, a track group only says which row
     { key: 'remastering', label: 'Remastering', types: ['mastering', 'mastered at'], onlyNote: 'mastering with "re", or a role "Remastered …"',
-      only: (n, row) => (n === 'mastering' && row.flags.has('re')) || (n === 'mastered at' && /^remastered/i.test(row.raw || '')) },
-    { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at'] },
+      only: (n, row) => (n === 'mastering' && row.flags.has('re')) || (n === 'mastered at' && /^remastered/i.test(row.raw || '')), releaseOnly: true },
+    { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at'], releaseOnly: true },
     { key: 'copyright', label: '℗/©', types: ['phonographic copyright', 'copyright'] },
   ];
   // test(name of the MB relationship type, row): the first group that takes it wins (Remastering before Mastering)
@@ -7517,6 +7567,7 @@
     artistWorks: new Map(),
     artistWorkHits: new Map(),
     artistWorkTargets: new Map(),
+    artistWorksSpecialLogged: new Set(),
     workOptions: null,
     workDefaults: { typeId: '', languageIds: [] },
     workQueue: [],
@@ -10030,6 +10081,7 @@
       // [3.15.0] the matches with works of artists too (the works themselves stay known for the session)
       S.artistWorkHits = new Map();
       S.artistWorkTargets = new Map();
+      S.artistWorksSpecialLogged = new Set();
       if (S.artistWorksRunning) S.artistWorksAgain = true;
       renderSource();
       renderSupp();
@@ -10255,10 +10307,12 @@
         };
         const hits = items.map((x) => ({ x, fit: fitOf(x) })).filter((h) => h.fit)
           .sort((p, q) => (p.fit === q.fit ? 0 : p.fit === 'same' ? -1 : 1));
-        a.nameHits = hits.slice(0, 5).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
+        // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
+        a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name].filter(Boolean).join(', ') }));
         if (a.nameHits.length) {
-          log('info', 'nameSuggested', { name: a.name, list: a.nameHits.map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ') });
+          const listed = a.nameHits.slice(0, 5).map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ');
+          log('info', 'nameSuggested', { name: a.name, list: listed + (a.nameHits.length > 5 ? ` … (+${a.nameHits.length - 5})` : '') });
         }
       } catch (e) {
         console.warn('[Credits-Importer] name search', a.name, e);
@@ -10983,33 +11037,59 @@
   }
 
   /** Suggestions from Discogs aliases for an entry that is not assigned yet. */
-  function aliasSuggestHtml(a) {
-    if (!a.aliasHits || !a.aliasHits.length || a.mbid) return '';
-    return `<div class="dci-alias-suggest"><span class="dci-sub">${esc(tr('match.aliasSuggest'))}</span>
-      ${a.aliasHits.map((h) => `<button type="button" class="dci-textbtn dci-suggbtn" data-act="alias-use" data-mbid="${esc(h.c.mbid)}" title="${esc(tr('match.aliasUseTitle', { alias: h.alias }))}">${esc(h.c.name)}${h.c.disambiguation ? ` (${esc(h.c.disambiguation)})` : ''} – ${esc(tr('match.viaAlias', { alias: h.alias }))}</button>`).join(' ')}</div>`;
-  }
+  /** [3.15.2] Suggestions shown before the rest are folded behind "+ n more". */
+  const SUGG_VISIBLE = 5;
 
-  /** [E1] Entries of the same name in MusicBrainz for a name without a link (a suggestion, dashed and yellow). */
-  function nameSuggestHtml(a) {
-    if (!a.nameHits || !a.nameHits.length || a.mbid) return '';
-    const head = a.strictMiss ? tr('match.linkSuggest', { mb: a.strictSpelled || '–' })
-      : a.releaseMbid ? tr('match.placeholderSuggest', { said: a.placeholder }) : tr('match.nameSuggest');
-    return `<div class="dci-alias-suggest"><span class="dci-sub">${esc(head)}</span>
-      ${a.nameHits.map((h) => `<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}" title="${esc(tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle'))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.similar ? ` <span class="dci-similar">${esc(tr('match.similarName'))}</span>` : ''}</button>`).join(' ')}</div>`;
+  /**
+   * [E1, 3.15.2] Suggestions for an entry without a match, stacked right below its red mark: Discogs aliases first, then
+   * MusicBrainz entries of the same (or a similar) name. The explanations are tooltips; a short mark on a suggestion says
+   * what matters: "similar name", "via alias X", "spelled differently" (found via the link), "release artist" (the text
+   * names no one). At most 5 shown, the rest behind a clearly visible "+ n more".
+   */
+  function suggestStackHtml(a) {
+    if (a.mbid) return '';
+    const mark = (key, params) => ` <span class="dci-similar">${esc(tr(key, params))}</span>`;
+    const items = [];
+    const heads = [];
+    if (a.aliasHits && a.aliasHits.length) {
+      heads.push(tr('match.aliasSuggest'));
+      a.aliasHits.forEach((h) => items.push(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="alias-use" data-mbid="${esc(h.c.mbid)}"
+        title="${esc(`${tr('match.aliasSuggest')} ${tr('match.aliasUseTitle', { alias: h.alias })}`)}">${esc(h.c.name)}${h.c.disambiguation ? ` (${esc(h.c.disambiguation)})` : ''}${mark('match.viaAlias', { alias: h.alias })}</button>`));
+    }
+    if (a.nameHits && a.nameHits.length) {
+      const head = a.strictMiss ? tr('match.linkSuggest', { mb: a.strictSpelled || '–' })
+        : a.releaseMbid ? tr('match.placeholderSuggest', { said: a.placeholder }) : tr('match.nameSuggest');
+      heads.push(head);
+      const why = a.strictMiss ? mark('match.markSpelled') : a.releaseMbid ? mark('match.markRelease') : '';
+      a.nameHits.forEach((h) => items.push(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}"
+        title="${esc(`${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`)}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.similar ? mark('match.similarName') : ''}${why}</button>`));
+    }
+    if (!items.length) return '';
+    const rest = items.length - SUGG_VISIBLE;
+    const more = rest > 0 ? `<button type="button" class="dci-suggmore" data-act="sugg-more" aria-expanded="${!!a.suggOpen}">${esc(a.suggOpen ? tr('match.suggLess') : tr('match.suggMore', { n: rest }))}</button>` : '';
+    const shown = rest > 0 && !a.suggOpen ? items.slice(0, SUGG_VISIBLE) : items;
+    return `<div class="dci-sugg-stack" title="${esc(heads.join(' · '))}">${shown.join('')}${more}</div>`;
   }
 
   function matchHtml(a) {
-    return matchHtmlInner(a) + aliasSuggestHtml(a) + nameSuggestHtml(a);
+    const stack = suggestStackHtml(a);
+    const inner = matchHtmlInner(a, stack);
+    // the red mark takes the stack below it; other states (several MB entries with the link) show it after
+    return inner.includes('dci-sugg-stack') || !stack ? inner : `${inner}<div class="dci-match-col">${stack}</div>`;
   }
 
-  function matchHtmlInner(a) {
+  function matchHtmlInner(a, stack = '') {
     const searchType = a.other ? a.entityType : a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
     const searchUrl = `/search?query=${encodeURIComponent(a.name)}&type=${searchType}&method=indexed`;
     const createButtons = a.other ? (CREATABLE.includes(a.entityType) ? `<button type="button" data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
       ? companyTypes(a).map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' ')
       : `<button type="button" data-act="artist-create">${esc(tr('match.create'))}</button>`;
+    // [3.15.2] with suggestions: the red mark, the suggestions stacked below it, then the field and the buttons
+    const mark = (labelKey) => (stack && labelKey !== 'match.changeLabel'
+      ? `<div class="dci-match-col"><span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>${stack}</div>`
+      : `<span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>`);
     const editor = (labelKey) => `
-      <span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>
+      ${mark(labelKey)}
       <input type="text" data-f="artist-input" placeholder="${esc(a.other ? tr('match.placeholderOther', { type: tr(`entity.${a.entityType}`) }) : tr(a.company ? 'match.placeholderCompany' : 'match.placeholder'))}" aria-label="${esc(tr('match.inputAria', { name: a.name }))}">
       <button type="button" data-act="artist-set">${esc(tr('match.apply'))}</button>
       <a href="${esc(searchUrl)}" target="_blank" rel="noopener">${esc(tr('match.search'))}</a>
@@ -11260,8 +11340,11 @@
     const has = (level) => row.level === level || (names.length
       ? names.some((n) => levelsOfType(n, et).includes(level))
       : (level !== 'release_group' || (row.other && typesFor('release_group', et).length > 0)));
-    return `<div class="dci-seg" role="group" aria-label="${esc(tr('th.level'))}">
-      ${['recording', 'release', 'release_group', 'work'].filter(has).map(btn).join('')}${btn('skip')}
+    const levels = ['recording', 'release', 'release_group', 'work'].filter(has);
+    // [3.15.1] one level only (mastering: MusicBrainz has it on the release only) – the button says so on mouse-over
+    const only = levels.length === 1 && names.length ? ` title="${esc(tr('level.onlyHere', { level: tr(`level.${levels[0]}`) }))}"` : '';
+    return `<div class="dci-seg" role="group" aria-label="${esc(tr('th.level'))}"${only}>
+      ${levels.map(btn).join('')}${btn('skip')}
     </div>`;
   }
 
@@ -11940,7 +12023,13 @@
         continue;
       }
       let parts;
-      if (r.level !== 'recording' && r.level !== 'work') {
+      if (r.level !== 'recording' && r.level !== 'work' && group.releaseOnly) {
+        // [3.15.1] Mastering: every date of the column is for the release level; a date with a track group goes to the
+        // mastering rows whose tracks it touches (CD 1 mastered by X in May, CD 2 by Y in June), one without to all
+        const own = r.tracks && r.tracks.size ? r.tracks : null;
+        const fits = mine.filter((c) => { const t = cellTracks(c); return !t || !own || [...t].some((i) => own.has(i)); });
+        parts = [{ dates: uniqEntries(fits.map(cellEntry)), tracks: null }];
+      } else if (r.level !== 'recording' && r.level !== 'work') {
         // Release level: the dates marked "release level" [3.10.0], else the dates for all tracks
         const rel = mine.filter((c) => c.rel);
         parts = [{ dates: uniqEntries((rel.length ? rel : mine.filter((c) => !cellTracks(c))).map(cellEntry)), tracks: null }];
@@ -12375,7 +12464,8 @@
         <button type="button" class="dci-chip-main" data-act="dm-edit" data-cell="${esc(c.id)}" aria-expanded="${editing}" title="${esc(tr('dm.editTitle'))}">${esc(poolLabel(e))}</button>
         <button type="button" class="dci-dm-x" data-act="dm-remove" data-cell="${esc(c.id)}" title="${esc(tr('dm.removeTitle'))}" aria-label="${esc(tr('dm.removeTitle'))}">×</button>
       </div>
-      ${cellTracksHtml(c, `<label class="dci-check dci-dm-rel" title="${esc(tr('dm.relTitle'))}"><input type="checkbox" data-f="dm-rel" data-cell="${esc(c.id)}" ${c.rel ? 'checked' : ''}> ${esc(tr('dm.rel'))}</label>`)}
+      ${cellTracksHtml(c, (DATE_GROUPS.find((g) => g.key === c.col) || {}).releaseOnly ? '' // [3.15.1] mastering: always the release level
+    : `<label class="dci-check dci-dm-rel" title="${esc(tr('dm.relTitle'))}"><input type="checkbox" data-f="dm-rel" data-cell="${esc(c.id)}" ${c.rel ? 'checked' : ''}> ${esc(tr('dm.rel'))}</label>`)}
       ${editing ? matrixEditorHtml(c) : ''}
     </div>`;
   }
@@ -14170,7 +14260,14 @@
   /** The artists whose works are compared: the release's artists, then writers, then performers (with MB entry). */
   function artistWorkTargets() {
     const out = new Map();
-    for (const p of S.releaseCredit || []) if (p.mbid && !out.has(p.mbid)) out.set(p.mbid, { name: p.name, why: 'release' });
+    // [3.15.1] special purpose artists (T026) are left out; runArtistWorks names them in the log
+    const special = new Map();
+    const add = (id, info, ...names) => {
+      if (out.has(id) || special.has(id)) return;
+      if (isSpecialArtist(id, ...names)) special.set(id, info);
+      else out.set(id, info);
+    };
+    for (const p of S.releaseCredit || []) if (p.mbid) add(p.mbid, { name: p.name, why: 'release' }, p.name);
     const rank = { writer: 1, performer: 2 };
     const found = [];
     for (const r of S.rows) {
@@ -14178,9 +14275,10 @@
       if (!a || !a.mbid || a.company || a.other || r.level === 'skip') continue;
       const t = norm(rowTypeName(r));
       const why = WRITER_TYPES.includes(t) ? 'writer' : ['instrument', 'vocal', 'performer'].includes(t) ? 'performer' : '';
-      if (why) found.push([a.mbid, { name: a.mbName || a.name, why }]);
+      if (why) found.push([a.mbid, { name: a.mbName || a.name, why }, a.mbName, a.name]);
     }
-    found.sort((x, y) => rank[x[1].why] - rank[y[1].why]).forEach(([id, info]) => { if (!out.has(id)) out.set(id, info); });
+    found.sort((x, y) => rank[x[1].why] - rank[y[1].why]).forEach(([id, info, ...names]) => add(id, info, ...names));
+    out.special = special;
     return out;
   }
 
@@ -14258,6 +14356,22 @@
    * only when that field is left (drawing it anew would take the focus and what is being typed).
    */
   function renderWorksBackground() {
+    // [3.15.1] not while something is dragged (a drop target drawn anew would lose the drop) – a moment after it
+    if (S.dmDrag) {
+      if (!S.worksRenderAfterDrag) {
+        S.worksRenderAfterDrag = true;
+        const wait = () => {
+          if (S.dmDrag) {
+            setTimeout(wait, 300);
+            return;
+          }
+          S.worksRenderAfterDrag = false;
+          renderWorksBackground();
+        };
+        setTimeout(wait, 300);
+      }
+      return;
+    }
     const el = S.overlay && $('works');
     const active = document.activeElement;
     if (el && active && el.contains(active) && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName)) {
@@ -14286,6 +14400,11 @@
     }
     const targets = artistWorkTargets();
     S.artistWorkTargets = targets;
+    for (const [id, info] of targets.special || []) {
+      if (S.artistWorksSpecialLogged.has(id)) continue;
+      S.artistWorksSpecialLogged.add(id);
+      log('info', 'artistWorksSpecial', { name: info.name });
+    }
     if (!targets.size || !tracksWithoutWork().length) {
       if (matchArtistWorks()) renderWorksBackground();
       return;
@@ -16256,6 +16375,11 @@
         break;
       case 'other-create':
         startOtherCreate(artist);
+        break;
+      case 'sugg-more':
+        // [3.15.2] the suggestions folded behind "+ n more"
+        artist.suggOpen = !artist.suggOpen;
+        updateGroupHeader(artist);
         break;
       case 'name-use': {
         const h = (artist.nameHits || []).find((x) => x.mbid === btn.dataset.mbid);
@@ -18258,7 +18382,6 @@
       .dci-ghead { display: flex; align-items: baseline; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 18); flex-wrap: wrap;
         background: var(--kind-bg); margin: 0 calc(var(--u, 1px) * -12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * -14);
         padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14); border-radius: 0 6px 0 0; }
-      .dci-group tbody tr.dci-row:nth-child(4n+3) > td { background: #faf9fd; }
       .dci-group .dci-table td { border-bottom: 1px solid #eeedf3; }
       .dci-gname strong { font-size: calc(var(--u, 1px) * 15); font-weight: 600; margin-right: calc(var(--u, 1px) * 6); }
       .dci-gmatch { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); flex-wrap: wrap; }
@@ -18464,7 +18587,14 @@
       .dci-tg-tag.dci-tag-track { background: var(--track-bg); color: var(--track-d); }
       .dci-tracks-bar { margin-top: calc(var(--u, 1px) * 4); }
       .dci-track-form .dci-chips { max-height: calc(var(--u, 1px) * 220); overflow: auto; }
-      .dci-alias-suggest { margin-top: calc(var(--u, 1px) * 4); display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
+      /* [3.15.2] the red mark with its suggestions stacked below it */
+      .dci-gmatch:has(.dci-match-col) { align-items: flex-start; }
+      .dci-match-col { display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 4); }
+      .dci-sugg-stack { display: flex; flex-direction: column; align-items: stretch; gap: calc(var(--u, 1px) * 4); min-width: 100%; }
+      #dci-overlay .dci-sugg-stack .dci-suggbtn { text-align: left; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); line-height: 1.35; }
+      #dci-overlay .dci-suggmore { align-self: flex-start; border: 2px solid var(--sugg-line); border-radius: 3px; background: #fff; color: var(--sugg-ink);
+        font: inherit; font-weight: 700; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); cursor: pointer; }
+      #dci-overlay .dci-suggmore:hover { background: var(--sugg-bg); }
       .dci-mbdate-grid { display: grid; grid-template-columns: auto auto auto auto auto auto auto; column-gap: 2px; row-gap: 3px; align-items: center; justify-content: start; }
       .dci-mbdate-grid .dci-mbdate-line { display: contents; }
       .dci-mbdate-grid .dci-mbdate-label { min-width: 0; margin-right: calc(var(--u, 1px) * 4); font-weight: 600; cursor: help; }
@@ -18639,10 +18769,18 @@
       .dci-rowswrap { container-type: inline-size; overflow-x: visible; }
       .dci-table.dci-rows { display: block; min-width: 0; width: 100%; }
       .dci-rows > tbody { display: block; }
-      .dci-rows tr.dci-row { display: grid; border-bottom: 1px solid var(--row);
+      /* [3.15.2] each row a box of its own (variant B): frame, gap, a stripe in the colour of the entry's kind, every second
+         one tinted; an open track list below a row belongs to its box */
+      .dci-rows tr.dci-row { display: grid; border: 1px solid #d6d2e4; border-left: 4px solid #b9b5c9;
+        border-left-color: color-mix(in srgb, var(--kind) 55%, #fff); border-radius: 4px; margin: 0 0 calc(var(--u, 1px) * 6); background: #fff;
         grid-template-columns: minmax(calc(var(--u, 1px) * 150), 1fr) minmax(calc(var(--u, 1px) * 210), 1.6fr) minmax(calc(var(--u, 1px) * 230), 1.6fr);
         grid-template-areas: "role type level" "role attr date" "role attr tracks"; grid-template-rows: auto auto 1fr; }
       .dci-rows tr.dci-row > td { display: block; width: auto; min-width: 0; border-bottom: 0; }
+      .dci-group .dci-rows tbody tr.dci-row:nth-child(4n+3), .dci-group .dci-rows tbody tr.dci-tracksrow:nth-child(4n+4) { background: #f6f5fa;
+        background: color-mix(in srgb, var(--kind) 7%, #fff); }
+      .dci-rows tr.dci-row:has(+ tr.dci-tracksrow:not([hidden])) { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+      .dci-rows tr.dci-tracksrow:not([hidden]) { border: 1px solid #d6d2e4; border-top: 0; border-left: 4px solid #b9b5c9;
+        border-left-color: color-mix(in srgb, var(--kind) 55%, #fff); border-radius: 0 0 4px 4px; margin: 0 0 calc(var(--u, 1px) * 6); background: #fff; }
       .dci-rows .dci-c-role { grid-area: role; } .dci-rows .dci-c-type { grid-area: type; } .dci-rows .dci-c-attr { grid-area: attr; }
       .dci-rows .dci-c-level { grid-area: level; } .dci-rows .dci-c-date { grid-area: date; min-width: 0; } .dci-rows .dci-c-tracks { grid-area: tracks; }
       .dci-rows tr.dci-tracksrow:not([hidden]), .dci-rows tr.dci-tracksrow:not([hidden]) > td { display: block; }
@@ -18651,7 +18789,7 @@
       .dci-cap { margin-bottom: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); font-weight: 600; color: #4a4658; letter-spacing: 0.01em; }
       @container (min-width: 1150px) {
         .dci-rows tr.dci-row { grid-template-areas: "role type attr level date tracks"; grid-template-rows: auto;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.7fr) auto minmax(0, 1.3fr) minmax(0, 0.8fr); }
+          grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.7fr) calc(var(--u, 1px) * 200) minmax(0, 1.3fr) minmax(0, 0.8fr); }
       }
       @container (max-width: 699px) {
         .dci-rows tr.dci-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto;
