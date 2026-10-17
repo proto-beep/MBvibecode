@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-17 | 3.11.0 – 3.15.2 | – |
+| 2026-10-17 | 3.11.0 – 3.15.3 | – |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
 | 2026-10-12 | 2.17.0 – 3.0.0 | – |
@@ -72,7 +72,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 ## 2026-10-17
 
-### Import 3.15.2
+### Import 3.15.3
+
+#### Changed
+
+- **The suggestions are a block below the head line of the entry** (asked for by the maintainer: "sie können nebeneinander und untereinander dargestellt werden"): the red mark, the field and the buttons stay in one line; below them the suggestions lie side by side and wrap into more lines when there are many or the dashboard is narrow. In 3.15.2 they were one per line. Five, then "+ n more", tooltips and marks as in 3.15.2.
+
 
 #### Changed
 

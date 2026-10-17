@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.15.2
+// @version      3.15.3
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.15.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.15.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -11041,7 +11041,8 @@
   const SUGG_VISIBLE = 5;
 
   /**
-   * [E1, 3.15.2] Suggestions for an entry without a match, stacked right below its red mark: Discogs aliases first, then
+   * [E1, 3.15.2, 3.15.3] Suggestions for an entry without a match, a block right below its red mark (side by side, in more
+   * lines when there are many – a line of its own below the field and the buttons): Discogs aliases first, then
    * MusicBrainz entries of the same (or a similar) name. The explanations are tooltips; a short mark on a suggestion says
    * what matters: "similar name", "via alias X", "spelled differently" (found via the link), "release artist" (the text
    * names no one). At most 5 shown, the rest behind a clearly visible "+ n more".
@@ -11072,24 +11073,19 @@
   }
 
   function matchHtml(a) {
-    const stack = suggestStackHtml(a);
-    const inner = matchHtmlInner(a, stack);
-    // the red mark takes the stack below it; other states (several MB entries with the link) show it after
-    return inner.includes('dci-sugg-stack') || !stack ? inner : `${inner}<div class="dci-match-col">${stack}</div>`;
+    // [3.15.3] the suggestions as a block of their own below the head line (the red mark, the field, the buttons):
+    // side by side first, in more lines when there are many
+    return matchHtmlInner(a) + suggestStackHtml(a);
   }
 
-  function matchHtmlInner(a, stack = '') {
+  function matchHtmlInner(a) {
     const searchType = a.other ? a.entityType : a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
     const searchUrl = `/search?query=${encodeURIComponent(a.name)}&type=${searchType}&method=indexed`;
     const createButtons = a.other ? (CREATABLE.includes(a.entityType) ? `<button type="button" data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
       ? companyTypes(a).map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' ')
       : `<button type="button" data-act="artist-create">${esc(tr('match.create'))}</button>`;
-    // [3.15.2] with suggestions: the red mark, the suggestions stacked below it, then the field and the buttons
-    const mark = (labelKey) => (stack && labelKey !== 'match.changeLabel'
-      ? `<div class="dci-match-col"><span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>${stack}</div>`
-      : `<span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>`);
     const editor = (labelKey) => `
-      ${mark(labelKey)}
+      <span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>
       <input type="text" data-f="artist-input" placeholder="${esc(a.other ? tr('match.placeholderOther', { type: tr(`entity.${a.entityType}`) }) : tr(a.company ? 'match.placeholderCompany' : 'match.placeholder'))}" aria-label="${esc(tr('match.inputAria', { name: a.name }))}">
       <button type="button" data-act="artist-set">${esc(tr('match.apply'))}</button>
       <a href="${esc(searchUrl)}" target="_blank" rel="noopener">${esc(tr('match.search'))}</a>
@@ -18587,12 +18583,10 @@
       .dci-tg-tag.dci-tag-track { background: var(--track-bg); color: var(--track-d); }
       .dci-tracks-bar { margin-top: calc(var(--u, 1px) * 4); }
       .dci-track-form .dci-chips { max-height: calc(var(--u, 1px) * 220); overflow: auto; }
-      /* [3.15.2] the red mark with its suggestions stacked below it */
-      .dci-gmatch:has(.dci-match-col) { align-items: flex-start; }
-      .dci-match-col { display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 4); }
-      .dci-sugg-stack { display: flex; flex-direction: column; align-items: stretch; gap: calc(var(--u, 1px) * 4); min-width: 100%; }
+      /* [3.15.2, 3.15.3] the suggestions: a block of their own below the head line, side by side, wrapping into more lines */
+      .dci-sugg-stack { flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 6); }
       #dci-overlay .dci-sugg-stack .dci-suggbtn { text-align: left; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); line-height: 1.35; }
-      #dci-overlay .dci-suggmore { align-self: flex-start; border: 2px solid var(--sugg-line); border-radius: 3px; background: #fff; color: var(--sugg-ink);
+      #dci-overlay .dci-suggmore { border: 2px solid var(--sugg-line); border-radius: 3px; background: #fff; color: var(--sugg-ink);
         font: inherit; font-weight: 700; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); cursor: pointer; }
       #dci-overlay .dci-suggmore:hover { background: var(--sugg-bg); }
       .dci-mbdate-grid { display: grid; grid-template-columns: auto auto auto auto auto auto auto; column-gap: 2px; row-gap: 3px; align-items: center; justify-content: start; }
