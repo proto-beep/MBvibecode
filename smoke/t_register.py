@@ -61,7 +61,12 @@ const resolveTracks = (spec) => {
   const nums = (String(spec).match(/\d+/g) || []).map(Number).filter((n) => n >= 1 && n <= 12);
   return nums.length ? new Set(nums.map((n) => n - 1)) : null;
 };
-const texts = corpus.texts.map((t) => ser(m.SOURCES.text.parse(t, { isRole, isCompanyRole, resolveTracks })));
+// [3.17.0] where on its line a credit is (for the companion) is no output of the register: left out here
+const noPlace = (c) => { const { part, pi, n, ...rest } = c; return rest; };
+const texts = corpus.texts.map((t) => {
+  const res = m.SOURCES.text.parse(t, { isRole, isCompanyRole, resolveTracks });
+  return ser({ ...res, credits: res.credits.map(noPlace), companies: res.companies.map(noPlace) });
+});
 console.log(JSON.stringify({ roles, rules, companies, dates, texts }));
 """
 
