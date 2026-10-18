@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-18 | 3.17.3 – 3.17.6 | 1.8.2 – 1.8.3 |
+| 2026-10-18 | 3.17.3 – 3.18.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
@@ -36,6 +36,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-18 | Import 3.18.0 | Works matrix: "Skip works matrix" (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to "Skip" and the work lookups rest; "Take works matrix again" brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. "Add entry manually" is one line above the date pool, always in view |
 | 2026-10-17 | Import 3.17.0 · COMPANION 1.8.0 | Bandcamp view in the companion: a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the "about" text: to its sentence), track highlight both ways, status on the MusicBrainz release page; "open in background" and "Load the release there" for Bandcamp too. Rows from track pages link to them |
 | 2026-10-17 | Import 3.16.0 | A menu "⚙ Settings" with all settings by topic (General, Sources, Discogs view, Works, Staging, Dates & tracks), each with its own "↺"; the switches stay where they are too. Works of the artists: on or off, how many works and recordings per artist are read (4,000), when a large catalogue is named, and how long the works read are kept – now beyond reloading the page (7 days) |
 | 2026-10-17 | Import 3.15.0 | Works matrix: the tracks without a work are compared with all works of the release's artists, its writers and its musicians – works linked to them and works of their recordings (also covers), in the background, read once per session; a large catalogue is named. Pasted texts and Bandcamp credits: credits in sentences ("Music played and recorded by … in September and October 2026"), "Role Name" lines and "… of this release were created by a human" (the release's artists suggested) are recognized. Arrows in the status bar jump to the top or bottom of the dashboard |
@@ -74,6 +75,21 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-18
+
+### Import 3.18.0
+
+Milestone: the works matrix can be skipped and folded, a question before long work lookups, "Add entry manually" always in view.
+
+#### Added
+
+- **Skip works matrix** (collected item 26; maintainer: "wir brauchen eine möglichkeit die work Matrix komplett zu skippen. so dass dann auch nichts angelegt wird", "wenn man die matrix skipped soll das alles auch geskippt werden. er kann ruhen sobald man auf skip klickt"). A button in the head of the works matrix. Skipped, nothing of the matrix is staged: no works (also none marked as new), no links to works, no work relationships – its rows (writers, publishers, arrangers …) go to "Skip" and are listed with their entries; what was staged of it is taken out of the editor with the next staging. The same-named works and the works of the artists are no longer looked up (a lookup running stops). The matrix folds and says "skipped"; while skipped, rows have no "Work" level (the button says why). Kept for this release (`dci-works-skip:<MBID>`, forgotten with "Delete stored import …"). **Take works matrix again** brings all of it back as it was – rows, links, lookups.
+- **Fold and unfold the works matrix** at its head ("▾ Works matrix"); folded, the head says how many tracks, works and columns it has. The fold is not kept ("Das Werk Matrix zuklappen muss nicht gemerkt werden"); skipping folds it by itself.
+- **A question before long work lookups** (maintainer: "bei releases mit vielen tracks (+100) kann auch gefragt werden ob werkabfragen durchgeführt werden sollen und wie lange das ungefähr dauern kann", "In den Einstellungen mit 100 als Standardvorgabe"). From 100 tracks without a work the works section asks before looking up works, with about how long it takes (MusicBrainz answers one request a second). **Not now** leaves out only the work lookups ("Nur die Werkabfragen auslassen") – the matrix stays and can be used; **Look up now** starts them later. The number is a setting (Settings → Works: "Ask before the work lookups from … tracks without a work", 0: never).
+
+#### Changed
+
+- **"Add entry manually" is one line above the date pool, always in view** (collected item 25; maintainer: "die "Add entry manually" Zeile soll jederzeit oberhalb des Date & Track pools angezeigt werden", "ja immer sichtbar sein. und "Add any MusicBrainz entry … works too." soll tooltip werden"). Entry, role and "Add" stand in the block that stays at the top of the dashboard (window and page), above "Dates & tracks"; the explanation is the tooltip of the title and the entry field; the search links of MusicBrainz come with **?**. An entry added there is shown where it was added (scrolled into view, lit up for a moment).
+
 
 ### Import 3.17.6
 
