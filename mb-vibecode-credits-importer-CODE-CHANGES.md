@@ -13,12 +13,44 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.17.6, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.19.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.19.0 · 2026-10-18
+
+The tick "open relationship editor and start import dashboard" in the release editor (collect item 18).
+
+- **Header:** `@match *://musicbrainz.org/release/*` and `*://*.musicbrainz.org/release/*` instead of `…/release/*/edit-relationships*`.
+- **New section 3b** (before "4. MusicBrainz access"): `AFTER_EDIT_KEY` (`dci-after-edit`, localStorage, the tick; in `SETTINGS_KEYS`), `AFTER_EDIT_GO_KEY` (`dci-after-edit-go`, sessionStorage: `{ release: MBID or 'new', links, at }`), `AUTOSTART_KEY` (`dci-autostart`, sessionStorage: `{ release, links, at }`), `AFTER_EDIT_MAX_MS` (10 min); `releasePageKind(path)` (`relationships`, `editor` for `/release/add` and `/release/<MBID>/edit`, `release`, else `null`), `sourceLinksOf(urls)` (through `SOURCES[k].releaseLinks`), `afterEditLinkLabel(l)`.
+- **`initReleaseEditorHook()`:** the label `#dci-after-edit` (checkbox, `afterEdit.label`, title `afterEdit.title` with the links) before `#enter-edit`; shown (`inline-flex`) only while the button is visible and `#external-links-editor tr.external-link-item` has a Discogs release or Bandcamp album (`a.url` without `rel-remove`, or the `input.value`); updated by a `MutationObserver` and `input`/`change` (150 ms). Submission: `MB.releaseEditor.submissionInProgress.subscribe` – true writes `AFTER_EDIT_GO_KEY` (ticked, shown, with links), false (an error) removes it; without the observable a click on `#enter-edit` (capture) writes it.
+- **`initReleasePageHook()`:** reads and removes `AFTER_EDIT_GO_KEY`; within 10 minutes and for this release (a new release: `document.referrer` from `/release/add`) it writes `AUTOSTART_KEY` and goes to `/release/<MBID>/edit-relationships` (`location.assign`).
+- **Section 4:** after `releaseMbid` the page kind decides: `editor` → `initReleaseEditorHook`, `release` → `initReleasePageHook`, other than `relationships` → nothing (return before anything of the dashboard).
+- **Relationship editor:** `S.editorLinks` (read once from `AUTOSTART_KEY` for this release, within 10 minutes), `S.autostart`; `init` logs `fromEditor`; `startSource` merges `S.editorLinks` into `S.sourceLinks` and returns a single link MusicBrainz does not have (`fromEditor`, logged as `sourceFromEditor` in `startImport`); new `openWhenReady()` (waits for `MB.linkedEntities.link_type`, up to 30 s) is called after `insertLauncher` when `S.autostart`.
+- **Texts (4 languages):** `afterEdit.label`, `afterEdit.title`, `log.fromEditor`, `log.sourceFromEditor`.
+- **Harness:** `EDITOR_LINKS`, `mb_release_editor_page(kind)` (tabs, `#external-links-editor`, `#enter-edit`, `MB.releaseEditor.submissionInProgress`, `__tab`, `__submit`), routes `/release/<REL>/edit` and `/release/add`, `open_mb_any(ctx, url)` (the main script on every MusicBrainz page of the tab, also after navigations).
+- **Tests:** new `t_afteredit.py`.
+
+
+## Import 3.18.0 · 2026-10-18
+
+Milestone. Skip and fold the works matrix, the question before long work lookups (collect item 26); "Add entry manually" as one line in the sticky block above the date pool (collect item 25).
+
+- **State and storage:** `S.worksSkip` (stored per release, `WORKS_SKIP_KEY` = `dci-works-skip:<MBID>`, cleared by `forgetImport`), `S.worksFolded` (not stored; starts as `S.worksSkip`), `S.worksLookups` (`null` not decided, `'ask'` question shown, `'yes'`, `'no'` – for the page). New setting `AW_SETTINGS.awAsk` (`dci-aw-ask`, 100, 0–10000, 0 = never; in `TOPIC_KEYS.works`, `SETTINGS_KEYS` and the resets through `AW_SETTINGS`); `settingsChange`: a changed `awAsk` while the question is open asks anew (or starts the lookups).
+- **New functions:** `worksResting()` (skipped, `'no'` or `'ask'`), `worksLookupsAllowed()` (the gate of both lookups: resting → false; with `S.awAsk` and `tracksWithoutWork().length >= S.awAsk` it sets `'ask'`, logs `worksAsk` and draws the works section), `worksLookupMinutes()` (tracks + 3 per artist target, 1.1 s each), `setWorksLookups(yes)`, `setWorksRowsSkipped(skip)` (rows on the works level → `skip` with `row.mxSkipped`; back: `level 'work'`, or `srcOffLevel`/`aboutLevel` = `'work'` for rows switched off at the source or hidden with the about text), `setWorksSkip(skip)` (stores, folds, rows, stops a running search, logs `worksSkipped`/`worksTaken`, draws; taken again it starts both lookups).
+- **Lookups:** `autoSearchWorks` and `runArtistWorks` return unless `worksLookupsAllowed()`; their loops stop when `worksResting()`; `loadArtistWorks` stops between two requests (`entry.stopped`, not stored, not kept in `S.artistWorks`); `checksDone`/`artistWorksDone` are not logged after a stop.
+- **`computePlan`:** with `S.worksSkip` no links to works from `S.workPlan` (also not in `planned`, so staged links become removals), no attribute fills of existing links, no date fills (`S.dateFills`), no "waiting" tracks; a row on the works level meanwhile gets the issue `issue.worksSkipped` and nothing staged.
+- **Rows:** `loadRelease` applies the skip after the about/source switches and again after S006; `applySupplement` too; `toggleCredit` keeps `mxSkipped` (a work row switched on again stays on "Skip" while skipped), `setAboutRowsHidden(false)` too; explicit level choices (`setLevel`, `bulk-level`, `type-pick`, `mx-col-remove`) delete `mxSkipped`. `levelCell`: the "Work" button is disabled while skipped (title `level.workSkipped`).
+- **`renderWorksInner`:** a head `.dci-works-head` with the fold button (`mx-fold`, `aria-expanded`), `mx-skip` (`data-on`), the badge `.dci-works-skipped` and, folded, what it holds (`[data-el=works-folded]`: tracks · works · columns or rows on "Skip"); the hint `matrix.skippedHint`; the question `.dci-mx-ask` (`[data-el=works-ask]`, `mx-lookups` with `data-on`) and after "Not now" `[data-el=works-lookups-off]`. Folded: only the head. Skipped and unfolded: no bars, the matrix `inert` and dimmed (`.dci-works-off`). `matrixAction`: `mx-fold`, `mx-skip`, `mx-lookups`.
+- **"Add entry manually":** the overlay has a sticky wrapper `[data-el=stick]` (`.dci-stick`, the sticky rules of `.dci-dates` moved there; `.dci-stick:not(:has(> :not([hidden])))` hidden) with `[data-el=manual]` (one flex line: `.dci-manual-title` with `manual.hint` as title, the entry field with the same title, role, "Add", `manual-search` "?" toggling `[data-el=manual-search]`) above `[data-el=dates]`. The move of the manual block before the works is gone. The `ResizeObserver`, `updatePageScrollPadding` and `dragAutoScroll` measure the wrapper. `addManualEntry` lights the new row up (`dci-flash`).
+- **CSS:** `.dci-works-head`, `.dci-works-fold`, `.dci-works-skipped`, `.dci-works-off`, `.dci-mx-ask`, `.dci-stick`, the new `.dci-manual` rules (old `.dci-manual h3`, `.dci-manual-form` removed), `#dci-overlay.dci-inline .dci-stick`.
+- **Texts (4 languages):** `matrix.fold`, `matrix.unfold`, `matrix.skip`, `matrix.skipTitle`, `matrix.skipped`, `matrix.unskip`, `matrix.skippedHint`, `matrix.skippedRows`, `matrix.cols`, `matrix.askLookups`, `matrix.askTime`, `matrix.lookupsYes`, `matrix.lookupsNo`, `matrix.lookupsOff`, `matrix.lookupsNow`, `issue.worksSkipped`, `level.workSkipped`, `settings.awAsk`, `settings.awAskTracks`, `settings.aria.awAsk`, `manual.searchTitle`, `log.worksAsk`, `log.worksLookupsOn`, `log.worksLookupsOff`, `log.worksSkipped`, `log.worksTaken`, `ms.3.18.0`; `MILESTONES` with 3.18.0.
+- **Header:** `@date` 2026-10-18.
+- **Tests:** new `t_worksskip.py`, `t_manualtop.py`; `t_inline.py` (the sticky wrapper at the top), `t_notice.py` (3.18.0, 3.17.0, 3.16.0, not 3.15.0).
+
 
 ## Import 3.17.6 · 2026-10-18
 

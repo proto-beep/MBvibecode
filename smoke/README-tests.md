@@ -134,6 +134,13 @@ python3 t_relcheck.py     # the release page keeps its check (1.8.2): ✓ after 
 python3 t_distrib.py      # "Distribution - !K7" and variants (3.17.3, T028): company "Distributed By", label → release distributed
 python3 t_navlink.py      # the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
 python3 t_keepmarks.py    # a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
+python3 t_worksskip.py    # the works matrix (3.18.0): fold / unfold (not kept), "Skip works matrix" (rows on "Skip", nothing of it planned,
+                          # no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later)
+python3 t_manualtop.py    # "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
+                          # page), an entry added from there is shown
+python3 t_afteredit.py    # "open relationship editor and start import dashboard" in the release editor (3.19.0): only on "Edit note" with a
+                          # Discogs/Bandcamp link, not ticked, ticked (remembered) → relationship editor with the dashboard, an error, "Add
+                          # release" with a Bandcamp link typed in (German, loaded at once), other release pages untouched
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)
@@ -162,6 +169,11 @@ frame, as `@noframes`), also after the tab loads another page.
 `harness.BC_ARTISTS` maps a band URL (`https://band.bandcamp.com/`) to an MB artist `(mbid, name)` for the URL lookup;
 `harness.WS_FAIL = {'release': n}` (3.17.3) lets the next n lookups of the release answer 503 (MusicBrainz busy).
 `harness.RELEASE_AC` is the release's artist credit, `[(mbid, MB name, name as credited, join phrase)]`.
+The release editor (3.19.0): `/release/<REL>/edit` and `/release/add` serve `harness.mb_release_editor_page(kind)` – tabs, the
+external links editor with the links of `harness.EDITOR_LINKS[kind]`, "Enter edit" (`#enter-edit`, shown with `__tab('edit-note')`)
+and `MB.releaseEditor.submissionInProgress`; a click on "Enter edit" goes to the release page (`window.__gid`, default the
+mock release; `window.__fail = true`: an error instead). `harness.open_mb_any(ctx, url)` opens a MusicBrainz tab that gets the
+main script on every page, also after the page navigated by itself.
 `open_mb_edit(ctx, gm_xhr=True)` adds `harness.GM_XHR_SHIM`, a `GM_xmlhttpRequest` that fetches through the mock and
 records the URLs in `window.__gmXhr` (without it the script falls back to `fetch`). The MusicBrainz search
 (`/ws/2/artist|label|place?query=…`) finds the artists and companies of the mock whose name (or alias) has all the words
