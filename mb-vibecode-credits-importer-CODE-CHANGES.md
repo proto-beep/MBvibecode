@@ -13,12 +13,23 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.17.2, Companion 1.6.0 – 1.8.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.17.3, Companion 1.6.0 – 1.8.2 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.17.3 · Companion 1.8.2 · 2026-10-18
+
+The release page keeps its result (collect item 27), distribution (collect item 28).
+
+- **Companion 1.8.2, `initReleasePage`:** `checkOnce` returns `false` without writing when the release cannot be read (`!res.ok` or an error) – before, it wrote the dashboard's items unchecked (`checked: 0`); `check` retries after `RECHECK_MS` (15 s, at most 8 times), `retries` reset after a check that read MusicBrainz. Beat also on `visibilitychange`.
+- **Companion 1.8.2, beats:** `statusBeat` of the edit page and of the release page carries `hidden` (`document.visibilityState`); the edit page beats again on `visibilitychange` and sets its beat to 0 on `pagehide` (as the release page did); `senderAlive` allows `BEAT_HIDDEN_MS` (75 s) for a hidden sender, 8 s otherwise.
+- **Register:** new table **T028** `TEXT_DISTRIBUTION` (distribution, distributor, distributed, vertrieb, distribución, distribué … ) in `TABLES`.
+- **`TEXT.parse`:** `distribution(t)` (T028, a trailing by/par/por/da/durch/via left out) → `['Distributed By']`; used first in `byRoles` ("Distribution by X") and `listRoles` ("Distribution - X", "Distribution: X"); a clause "<word> par/por/da/durch/via/through X" whose word is in T028 adds X with "Distributed By" (before the place rules). The company role itself is C006 as before.
+- **Tests:** new `t_relcheck.py` (A–C: ✓ after "Enter edit", a failing check keeps ✓ and is retried, a hidden sender's beat counts 75 s; with companion 1.8.1 B shows ● – the reported fault), new `t_distrib.py` (A in Node: 11 variants and a sentence without; B in the dashboard: "!K7" with "Distributed By", label → release distributed, only suggested); harness `WS_FAIL` (`{'release': n}`: the next n lookups of the release answer 503). Golden file written anew: only T028 added (sections `lists` and `tables`).
+
 
 ## Import 3.17.2 · 2026-10-17
 

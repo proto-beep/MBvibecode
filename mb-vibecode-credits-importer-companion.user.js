@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.8.1
+// @version      1.8.2
 // @date         2026-10-17
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -45,6 +45,10 @@
 
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
+  // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat
+  const BEAT_HIDDEN_MS = 75000;
+  // [1.8.2] a check of the release page that could not read MusicBrainz is tried again after this long (at most 8 times)
+  const RECHECK_MS = 15000;
   const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
   const isMusicBrainz = /(^|\.)musicbrainz\.org$/i.test(location.hostname);
   const isBandcamp = /(^|\.)bandcamp\.com$/i.test(location.hostname);
@@ -91,12 +95,17 @@
     const pageId = Math.random().toString(36).slice(2, 10);
     let beatTimer = null;
     const mbRelease = (location.pathname.match(/[0-9a-f-]{36}/) || [])[0] || '';
-    const statusBeat = () => GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now() });
+    // [1.8.2] "hidden": a page in the background beats more slowly (the browser slows its timers down to once a minute)
+    const statusBeat = () => GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden' });
+    document.addEventListener('visibilitychange', () => { if (beatTimer) statusBeat(); });
     window.addEventListener('pagehide', () => {
       // With "status on the release page" the release page (where "Enter edit" leads) keeps the marks;
       // otherwise they go now. Either way they disappear once no page of the release reports any more.
       const map = GM_getValue('statusMap');
       if (map && map.pageId === pageId && !map.keepOnRelease) GM_setValue('statusMap', { pageId, enabled: false, items: [], ts: Date.now() });
+      // [1.8.2] closed: its last beat (maybe from going into the background) does not keep the marks for another 75 s
+      const beat = GM_getValue('statusBeat');
+      if (beat && beat.pageId === pageId) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: 0 });
     });
 
     const liveTabs = () => {
@@ -266,7 +275,8 @@
     const senderAlive = (map) => {
       const beat = GM_getValue('statusBeat');
       const same = beat && (beat.release && map && map.mbRelease ? beat.release === map.mbRelease : beat.pageId === (map && map.pageId));
-      return !!(map && same && Date.now() - beat.ts < 8000);
+      // [1.8.2] a page in the background may beat only once a minute
+      return !!(map && same && Date.now() - beat.ts < (beat.hidden ? BEAT_HIDDEN_MS : 8000));
     };
     // A status map of this site and of the release this page shows
     const isHere = (map) => !!(map && siteOf(map) === side.id && String(map.releaseId) === currentReleaseId() && senderAlive(map));
@@ -1050,7 +1060,7 @@
       return map && map.enabled && map.keepOnRelease ? map : null;
     };
     const beat = () => {
-      if (stored()) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now() });
+      if (stored()) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden' });
     };
     /**
      * "target|entry|type" of relationships; "seen" holds every entity the lookups returned, "works" the works
@@ -1101,15 +1111,26 @@
     /** A credit on the work of a recording (a work that was new in the editor): found on any work linked to it. */
     const onWorkOf = (found, rec, item) => (found.works.get(rec) || []).some((w) => has(found, w, item));
     let running = false;
+    let retries = 0;
+    let retryTimer = null;
     const check = async () => {
       if (running) return;
       running = true;
+      let ok = true;
       try {
-        await checkOnce();
+        ok = await checkOnce();
       } finally {
         running = false;
       }
       beat();
+      // [1.8.2] MusicBrainz did not answer (e.g. too many requests): the last result stays, and it is tried again
+      clearTimeout(retryTimer);
+      if (ok === false && retries < 8) {
+        retries++;
+        retryTimer = setTimeout(check, RECHECK_MS);
+      } else if (ok !== false) {
+        retries = 0;
+      }
     };
     const checkOnce = async () => {
       const map = stored();
@@ -1119,8 +1140,11 @@
         const inc = 'artist-rels+label-rels+place-rels+series-rels+recordings+recording-level-rels+work-rels+work-level-rels+release-groups+release-group-level-rels';
         const res = await fetch(`/ws/2/release/${mbRelease}?inc=${inc}&fmt=json`, { headers: { Accept: 'application/json' } });
         if (res.ok) ws = await res.json();
-      } catch (e) { /* the marks stay as the dashboard sent them */ }
-      const found = ws ? relKeys(ws) : null;
+      } catch (e) { /* not read: see below */ }
+      // [1.8.2] Not read: the marks stay as they are – as the dashboard sent them, or as the last check found them
+      // (before, a failed check later on put the unchecked marks back: ● instead of ✓)
+      if (!ws) return false;
+      const found = relKeys(ws);
       if (found) {
         // Work credits not found yet: their works (flagged by the dashboard, or not part of the release at all)
         const works = new Set();
@@ -1166,10 +1190,12 @@
       });
       // The dashboard may have sent a newer map meanwhile: only this release's marks are replaced
       const now = stored();
-      if (now && now.ts === map.ts) GM_setValue('statusMap', { ...map, items, pageId, checked: ws ? Date.now() : 0, ts: Date.now() });
+      if (now && now.ts === map.ts) GM_setValue('statusMap', { ...map, items, pageId, checked: Date.now(), ts: Date.now() });
+      return true;
     };
     beat();
     setInterval(beat, 2000);
+    document.addEventListener('visibilitychange', beat);
     check();
     // Edits can take a moment to be applied: look again a little later
     setTimeout(check, 20000);
