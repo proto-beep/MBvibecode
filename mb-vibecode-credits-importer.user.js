@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.17.4
+// @version      3.17.5
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1095,6 +1095,15 @@
       "sync.load": "Load the release there",
       "sync.loadTitle": "Opens this release in the connected Discogs tab",
       "sync.loaded": "release loaded",
+      "sync.clickToggle": "Click switches",
+      "sync.clickToggleTitle": "A click on a status mark on Discogs or Bandcamp skips that credit (its row goes to “Skip”) or takes it again; resting the pointer on a mark shows its row in the dashboard. Off: a click shows the row",
+      "sync.keepMarks": "Keep marks",
+      "sync.keepMarksTitle": "Show the import marks on Discogs and Bandcamp also after the relationship editor is closed – the last state of the release",
+      "dgStatus.hover": "rest the pointer on it: its row in the dashboard",
+      "log.srcOff": "{site}: {name} – {role} switched off (“Skip”)",
+      "log.srcOn": "{site}: {name} – {role} switched on again",
+      "log.clickToggle": "A click on a mark switches the credit: {state}",
+      "log.keepMarks": "Marks kept after the editor is closed: {state}",
       "sync.srcLinkTitle": "Opens this release on {site} in a new tab",
       "match.openNew": "Opens it in MusicBrainz, in a new tab",
       "sync.offSite": "{site} view: off",
@@ -1123,12 +1132,10 @@
       "about.from": "From the “about” text",
       "liner.poolName": "Liner notes – {name}",
       "log.linerFound": "Liner notes found below the “about” text, signed “{name}” (the name only suggested)",
-      "dgStatus.off": "⊘ switch this credit off – its row goes to “Skip” in the dashboard",
-      "dgStatus.on": "⊘ switch this credit on again",
+      "dgStatus.off": "click: skip this credit (its row goes to “Skip”)",
+      "dgStatus.on": "click: take this credit again",
       "dgStatus.isOff": "switched off here",
-      "bc.offNote": "Switched off on Bandcamp (⊘): “Skip”. ⊘ there switches it on again, so does choosing a level here.",
-      "log.bcOff": "Bandcamp: {name} – {role} switched off (“Skip”)",
-      "log.bcOn": "Bandcamp: {name} – {role} switched on again",
+      "bc.offNote": "Switched off on {site} (a click on its mark): “Skip”. Another click there switches it on again, so does choosing a level here.",
       "ms.3.17.0": "Bandcamp view in the companion (1.8.0): a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the “about” text: to its sentence), track highlight, status on the MusicBrainz release page; “open in background” and “Load the release there” for Bandcamp too. Rows from track pages link to them.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
@@ -2362,6 +2369,15 @@
       "sync.load": "Release dort laden",
       "sync.loadTitle": "Öffnet dieses Release im verbundenen Discogs-Tab",
       "sync.loaded": "Release geladen",
+      "sync.clickToggle": "Klick schaltet",
+      "sync.clickToggleTitle": "Ein Klick auf eine Status-Marke auf Discogs oder Bandcamp überspringt diesen Credit (seine Zeile kommt auf „Überspringen“) oder nimmt ihn wieder auf; ruht der Zeiger auf einer Marke, zeigt das Dashboard ihre Zeile. Aus: ein Klick zeigt die Zeile",
+      "sync.keepMarks": "Marken behalten",
+      "sync.keepMarksTitle": "Die Import-Marken auf Discogs und Bandcamp auch nach dem Schließen des Beziehungs-Editors zeigen – der letzte Stand des Releases",
+      "dgStatus.hover": "Zeiger darauf ruhen lassen: seine Zeile im Dashboard",
+      "log.srcOff": "{site}: {name} – {role} abgeschaltet („Überspringen“)",
+      "log.srcOn": "{site}: {name} – {role} wieder angeschaltet",
+      "log.clickToggle": "Ein Klick auf eine Marke schaltet den Credit um: {state}",
+      "log.keepMarks": "Marken nach dem Schließen des Editors behalten: {state}",
       "sync.srcLinkTitle": "Öffnet dieses Release auf {site} in einem neuen Tab",
       "match.openNew": "Öffnet den Eintrag in MusicBrainz, in einem neuen Tab",
       "sync.offSite": "{site}-Ansicht: aus",
@@ -2390,12 +2406,10 @@
       "about.from": "Aus dem „about“-Text",
       "liner.poolName": "Liner Notes – {name}",
       "log.linerFound": "Liner Notes unter dem „about“-Text gefunden, unterzeichnet „{name}“ (der Name nur vorgeschlagen)",
-      "dgStatus.off": "⊘ diesen Credit abschalten – seine Zeile kommt im Dashboard auf „Überspringen“",
-      "dgStatus.on": "⊘ diesen Credit wieder anschalten",
+      "dgStatus.off": "Klick: diesen Credit überspringen (seine Zeile kommt auf „Überspringen“)",
+      "dgStatus.on": "Klick: diesen Credit wieder aufnehmen",
       "dgStatus.isOff": "hier abgeschaltet",
-      "bc.offNote": "Auf Bandcamp abgeschaltet (⊘): „Überspringen“. ⊘ dort schaltet ihn wieder an, ebenso eine hier gewählte Ebene.",
-      "log.bcOff": "Bandcamp: {name} – {role} abgeschaltet („Überspringen“)",
-      "log.bcOn": "Bandcamp: {name} – {role} wieder angeschaltet",
+      "bc.offNote": "Auf {site} abgeschaltet (Klick auf seine Marke): „Überspringen“. Ein weiterer Klick dort schaltet ihn wieder an, ebenso eine hier gewählte Ebene.",
       "ms.3.17.0": "Bandcamp-Ansicht im Companion (1.8.0): ein Bandcamp-Tab folgt dem Dashboard wie ein Discogs-Tab – Status-Zeichen vor jedem Teil einer Credits-Zeile (Album- und Track-Seiten), ein Klick auf ein Zeichen zeigt seine Zeile, eine Zeile springt zu ihrer Stelle (aus dem „about“-Text: zu ihrem Satz), Track-Hervorhebung, Status auf der MusicBrainz-Release-Seite; „im Hintergrund öffnen“ und „Release dort laden“ auch für Bandcamp. Zeilen von Track-Seiten verlinken sie.",
       "log.stagedRemoved": "Aus dem Editor genommen (nicht mehr gewünscht): {text}",
       "msg.stagedRemovedAll.one": "{n} schon übernommene Beziehung ist nicht mehr gewünscht und wurde aus dem Editor genommen.",
@@ -3629,6 +3643,15 @@
       "sync.load": "Cargar la publicación allí",
       "sync.loadTitle": "Abre esta publicación en la pestaña de Discogs conectada",
       "sync.loaded": "publicación cargada",
+      "sync.clickToggle": "Clic alterna",
+      "sync.clickToggleTitle": "Un clic en una marca de estado en Discogs o Bandcamp omite ese crédito (su fila pasa a «Omitir») o lo vuelve a incluir; si el puntero se detiene en una marca, el panel muestra su fila. Desactivado: un clic muestra la fila",
+      "sync.keepMarks": "Mantener marcas",
+      "sync.keepMarksTitle": "Mostrar las marcas de importación en Discogs y Bandcamp también después de cerrar el editor de relaciones – el último estado de la publicación",
+      "dgStatus.hover": "detener el puntero encima: su fila en el panel",
+      "log.srcOff": "{site}: {name} – {role} desactivado («Omitir»)",
+      "log.srcOn": "{site}: {name} – {role} activado de nuevo",
+      "log.clickToggle": "Un clic en una marca alterna el crédito: {state}",
+      "log.keepMarks": "Marcas mantenidas tras cerrar el editor: {state}",
       "sync.srcLinkTitle": "Abre esta publicación en {site} en una pestaña nueva",
       "match.openNew": "Lo abre en MusicBrainz, en una pestaña nueva",
       "sync.offSite": "Vista de {site}: desactivada",
@@ -3657,12 +3680,10 @@
       "about.from": "Del texto «about»",
       "liner.poolName": "Notas del disco – {name}",
       "log.linerFound": "Notas del disco encontradas bajo el texto «about», firmadas «{name}» (el nombre solo sugerido)",
-      "dgStatus.off": "⊘ desactivar este crédito – su fila pasa a «Omitir» en el panel",
-      "dgStatus.on": "⊘ volver a activar este crédito",
+      "dgStatus.off": "clic: omitir este crédito (su fila pasa a «Omitir»)",
+      "dgStatus.on": "clic: volver a incluir este crédito",
       "dgStatus.isOff": "desactivado aquí",
-      "bc.offNote": "Desactivado en Bandcamp (⊘): «Omitir». ⊘ allí lo vuelve a activar, igual que elegir un nivel aquí.",
-      "log.bcOff": "Bandcamp: {name} – {role} desactivado («Omitir»)",
-      "log.bcOn": "Bandcamp: {name} – {role} activado de nuevo",
+      "bc.offNote": "Desactivado en {site} (un clic en su marca): «Omitir». Otro clic allí lo vuelve a activar, igual que elegir un nivel aquí.",
       "ms.3.17.0": "Vista de Bandcamp en el complemento (1.8.0): una pestaña de Bandcamp sigue al panel como una de Discogs – marcas de estado delante de cada parte de una línea de créditos (páginas de álbum y de pista), un clic en una marca muestra su fila, una fila salta a su línea (del texto «about»: a su frase), resaltado de pistas, estado en la página de la publicación de MusicBrainz; «abrir en segundo plano» y «Cargar la publicación allí» también para Bandcamp. Las filas de páginas de pista enlazan a ellas.",
       "log.stagedRemoved": "Quitada del editor (ya no deseada): {text}",
       "msg.stagedRemovedAll.one": "{n} relación ya añadida ya no se quiere y se quitó del editor.",
@@ -4896,6 +4917,15 @@
       "sync.load": "Y charger la parution",
       "sync.loadTitle": "Ouvre cette parution dans l’onglet Discogs connecté",
       "sync.loaded": "parution chargée",
+      "sync.clickToggle": "Clic bascule",
+      "sync.clickToggleTitle": "Un clic sur une marque de statut sur Discogs ou Bandcamp ignore ce crédit (sa ligne passe à « Ignorer ») ou le reprend ; quand le pointeur s’arrête sur une marque, le tableau de bord montre sa ligne. Désactivé : un clic montre la ligne",
+      "sync.keepMarks": "Garder les marques",
+      "sync.keepMarksTitle": "Montrer les marques d’import sur Discogs et Bandcamp même après la fermeture de l’éditeur de relations – le dernier état de la parution",
+      "dgStatus.hover": "laisser le pointeur dessus : sa ligne dans le tableau de bord",
+      "log.srcOff": "{site} : {name} – {role} désactivé (« Ignorer »)",
+      "log.srcOn": "{site} : {name} – {role} réactivé",
+      "log.clickToggle": "Un clic sur une marque bascule le crédit : {state}",
+      "log.keepMarks": "Marques gardées après la fermeture de l’éditeur : {state}",
       "sync.srcLinkTitle": "Ouvre cette parution sur {site} dans un nouvel onglet",
       "match.openNew": "L’ouvre dans MusicBrainz, dans un nouvel onglet",
       "sync.offSite": "Vue {site} : désactivée",
@@ -4924,12 +4954,10 @@
       "about.from": "Du texte « about »",
       "liner.poolName": "Notes de pochette – {name}",
       "log.linerFound": "Notes de pochette trouvées sous le texte « about », signées « {name} » (le nom seulement suggéré)",
-      "dgStatus.off": "⊘ désactiver ce crédit – sa ligne passe à « Ignorer » dans le tableau de bord",
-      "dgStatus.on": "⊘ réactiver ce crédit",
+      "dgStatus.off": "clic : ignorer ce crédit (sa ligne passe à « Ignorer »)",
+      "dgStatus.on": "clic : reprendre ce crédit",
       "dgStatus.isOff": "désactivé ici",
-      "bc.offNote": "Désactivé sur Bandcamp (⊘) : « Ignorer ». ⊘ là-bas le réactive, tout comme choisir un niveau ici.",
-      "log.bcOff": "Bandcamp : {name} – {role} désactivé (« Ignorer »)",
-      "log.bcOn": "Bandcamp : {name} – {role} réactivé",
+      "bc.offNote": "Désactivé sur {site} (un clic sur sa marque) : « Ignorer ». Un autre clic là-bas le réactive, tout comme choisir un niveau ici.",
       "ms.3.17.0": "Vue Bandcamp dans le compagnon (1.8.0) : un onglet Bandcamp suit le tableau de bord comme un onglet Discogs – marques de statut devant chaque partie d’une ligne de crédits (pages d’album et de morceau), un clic sur une marque affiche sa ligne, une ligne saute à son endroit (du texte « about » : à sa phrase), surlignage des pistes, statut sur la page de la parution MusicBrainz ; « ouvrir en arrière-plan » et « Y charger la parution » aussi pour Bandcamp. Les lignes des pages de morceau y renvoient.",
       "log.stagedRemoved": "Retirée de l’éditeur (plus voulue) : {text}",
       "msg.stagedRemovedAll.one": "{n} relation déjà ajoutée n’est plus voulue et a été retirée de l’éditeur.",
@@ -8796,9 +8824,11 @@
   // [3.16.1] "Leave out the about text" for this release: { stash: { pool, cells } } (the dates taken out), null when not
   const ABOUT_KEY = `dci-about-off:${releaseMbid}`;
   S.aboutOff = !!readJson('localStorage', ABOUT_KEY, null);
-  // [3.17.1] Credits switched off on Bandcamp (⊘ in the companion): stored per release as "name|role"
+  // [3.17.1] Credits switched off on Bandcamp; [3.17.5] on Discogs too (a click on a mark in the companion): stored per
+  // release as "source|name|role" (the "name|role" of 3.17.1 were Bandcamp's)
   const BC_OFF_KEY = `dci-bc-off:${releaseMbid}`;
-  S.bcOff = new Set(readJson('localStorage', BC_OFF_KEY, []) || []);
+  const SRC_OFF_KEY = `dci-src-off:${releaseMbid}`;
+  S.srcOff = new Set([...(readJson('localStorage', SRC_OFF_KEY, []) || []), ...(readJson('localStorage', BC_OFF_KEY, []) || []).map((k) => `bandcamp|${k}`)]);
   S.trackPool = readJson('localStorage', TRACKPOOL_KEY, null) || [];
   const saveTrackPool = () => writeJson('localStorage', TRACKPOOL_KEY, S.trackPool.length ? S.trackPool : null);
 
@@ -9934,9 +9964,9 @@
     S.poolForm = null;
     S.trackForm = null;
     S.dm = { cells: [], found: '', dirty: false };
-    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY, BC_OFF_KEY].forEach((k) => writeJson('localStorage', k, null));
+    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY, BC_OFF_KEY, SRC_OFF_KEY].forEach((k) => writeJson('localStorage', k, null));
     S.aboutOff = false;
-    S.bcOff = new Set();
+    S.srcOff = new Set();
     S.mediaSel = null;
     S.supp = null;
     S.suppSources = new Map();
@@ -10682,10 +10712,10 @@
       // [3.16.1] "about" text left out for this release: its rows hidden at once
       if (S.aboutOff) setAboutRowsHidden(true);
       if (rel.liner) log('info', 'linerFound', { name: rel.liner.name }); // [3.17.2]
-      // [3.17.1] credits switched off on Bandcamp for this release: their rows on "Skip" at once
-      if (S.source === BANDCAMP && S.bcOff.size) {
+      // [3.17.1] credits switched off on Bandcamp ([3.17.5] or Discogs) for this release: their rows on "Skip" at once
+      if (S.source.companion && S.srcOff.size) {
         S.rows.forEach((r) => {
-          if ((r.srcRefs || []).length && S.bcOff.has(bcOffKey(r))) Object.assign(r, { bcOff: true, bcOffLevel: r.level, level: 'skip' });
+          if (!r.manual && !r.supp && S.srcOff.has(srcOffKey(r))) Object.assign(r, { srcOff: true, srcOffLevel: r.level, level: 'skip' });
         });
       }
       S.dateSuggestions = dateSuggestions(rel);
@@ -11752,7 +11782,7 @@
   }
 
   /** [3.17.1] A credit switched off on Bandcamp says so. */
-  const bcOffHtml = (row) => (row.bcOff ? `<div class="dci-note dci-bcoff">${esc(tr('bc.offNote'))}</div>` : '');
+  const srcOffHtml = (row) => (row.srcOff ? `<div class="dci-note dci-srcoff">${esc(tr('bc.offNote', { site: VIEW_NAMES[viewSite()] }))}</div>` : '');
 
   function roleCell(row) {
     const notes = (row.notes || []).map((k) => `<div class="dci-note">${esc(tr(`note.${k}`, { type: row.seriesType || '' }))}</div>`).join('')
@@ -11764,7 +11794,7 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}
-        <div class="dci-sub">${esc(tr('role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${bcOffHtml(row)}
+        <div class="dci-sub">${esc(tr('role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec ? `<div class="dci-sub">${esc(tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
@@ -11775,7 +11805,7 @@
     return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
-        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${bcOffHtml(row)}
+        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
       <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
       ${notes}`;
@@ -12204,42 +12234,49 @@
   /** A date found in the notes that lies in the "about" text. */
   const fromAboutText = (x) => !!(S.release && S.release.aboutAt != null && x && x.index >= S.release.aboutAt);
 
-  /** [3.17.1] A credit switched off on Bandcamp, as stored for the release: its name as written and its role. */
-  function bcOffKey(row) {
+  /**
+   * [3.17.1] A credit switched off at its source (Bandcamp; [3.17.5] Discogs too), as stored for the release: the source,
+   * the name as written and the role.
+   */
+  function srcOffKey(row) {
     const a = S.artists.get(row.artistKey);
-    return a ? `${norm(a.rawName || a.name || a.placeholder || '')}|${norm(row.raw)}` : '';
+    return a && S.source ? `${S.source.id}|${norm(a.rawName || a.name || a.placeholder || '')}|${norm(row.raw)}` : '';
   }
 
-  const saveBcOff = () => writeJson('localStorage', BC_OFF_KEY, S.bcOff.size ? [...S.bcOff] : null);
+  // (the key of 3.17.1 is taken over into the new one and goes)
+  function saveSrcOff() {
+    writeJson('localStorage', SRC_OFF_KEY, S.srcOff.size ? [...S.srcOff] : null);
+    writeJson('localStorage', BC_OFF_KEY, null);
+  }
 
   /** [3.17.1] Forgets that a credit was switched off (its level is set by the caller). */
-  function bcCreditOn(row) {
-    const prev = row.bcOffLevel;
-    delete row.bcOff;
-    delete row.bcOffLevel;
-    S.bcOff.delete(bcOffKey(row));
-    saveBcOff();
+  function creditOn(row) {
+    const prev = row.srcOffLevel;
+    delete row.srcOff;
+    delete row.srcOffLevel;
+    S.srcOff.delete(srcOffKey(row));
+    saveSrcOff();
     const a = S.artists.get(row.artistKey);
-    log('info', 'bcOn', { name: a ? a.mbName || a.name : '', role: row.raw });
+    log('info', 'srcOn', { site: VIEW_NAMES[viewSite()], name: a ? a.mbName || a.name : '', role: row.raw });
     return prev && prev !== 'skip' ? prev : row.defaultLevel;
   }
 
   /**
-   * [3.17.1] ⊘ on Bandcamp: a credit switched off – its row goes to "Skip" (its level kept) – or on again (the level
-   * back). Stored for the release; "Delete stored import" forgets it.
+   * [3.17.1] A credit switched off at its source – a click on its mark ([3.17.5]; ⊘ in 3.17.1) – its row goes to "Skip"
+   * (its level kept), or on again (the level back). Stored for the release; "Delete stored import" forgets it.
    */
-  function toggleBcCredit(row, off) {
-    const key = bcOffKey(row);
-    if (!key || !!row.bcOff === !!off) return;
+  function toggleCredit(row, off) {
+    const key = srcOffKey(row);
+    if (!key || !!row.srcOff === !!off) return;
     if (!off) {
-      setLevel(row, bcCreditOn(row));
+      setLevel(row, creditOn(row));
       return;
     }
-    Object.assign(row, { bcOff: true, bcOffLevel: row.level });
-    S.bcOff.add(key);
-    saveBcOff();
+    Object.assign(row, { srcOff: true, srcOffLevel: row.level });
+    S.srcOff.add(key);
+    saveSrcOff();
     const a = S.artists.get(row.artistKey);
-    log('info', 'bcOff', { name: a ? a.mbName || a.name : '', role: row.raw });
+    log('info', 'srcOff', { site: VIEW_NAMES[viewSite()], name: a ? a.mbName || a.name : '', role: row.raw });
     setLevel(row, 'skip');
   }
 
@@ -14296,6 +14333,9 @@
   S.fillCredits = readJson('localStorage', 'dci-fill-credits', false) === true;
   S.dgRelease = readJson('localStorage', 'dci-dg-release', true) !== false;
   S.dgArtwork = readJson('localStorage', 'dci-dg-artwork', true) !== false;
+  // [3.17.5] a click on a mark switches its credit (on), the marks stay after the editor is closed (off)
+  S.clickToggle = readJson('localStorage', 'dci-click-toggle', true) !== false;
+  S.keepMarks = readJson('localStorage', 'dci-keep-marks', false) === true;
   S.capLimit = Number(readJson('localStorage', 'dci-stage-cap', 500)) || 500;
   // [3.16.0] The comparison with the works of the artists (menu "Settings" → Works): on/off, at most so many works and
   // recordings per artist (together), when a large catalogue is named (after seconds, from entries), days the works are kept
@@ -16087,7 +16127,7 @@
             return pt;
           };
           if (site === 'bandcamp') {
-            items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb, ...(row.bcOff ? { off: true } : {}),
+            items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb, ...(row.srcOff ? { off: true } : {}),
               refs: refs.map((r) => ({ page: r.page, line: r.line, part: r.part, pi: r.pi, n: r.n, ...(r.pos ? { pos: r.pos, ...ofTrack(r.pos) } : { status }) })) });
             continue;
           }
@@ -16095,14 +16135,16 @@
           let byPos = null;
           if ((row.dPositions || []).length && row.level !== 'skip') byPos = row.dPositions.map((pos) => ({ pos, ...ofTrack(pos) }));
           items.push({ row: row.id, artistId: a.company ? null : a.dId, labelId: a.company ? a.dId : null, role: row.raw, base: row.base,
-            positions: row.dPositions || [], status, unmapped: isUnmapped(row), mb, byPos });
+            positions: row.dPositions || [], status, unmapped: isUnmapped(row), mb, byPos, ...(row.srcOff ? { off: true } : {}) });
         }
       }
       const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow',
-        'off', 'on', 'isOff']
+        'off', 'on', 'isOff', 'hover']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
+      // [3.17.5] toggle: a click on a mark switches its credit; keepAfterClose: the marks stay after the editor is closed
       toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items, labels,
-        targets: [...targetIndex.keys()], mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease });
+        targets: [...targetIndex.keys()], mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease,
+        toggle: !!S.clickToggle, keepAfterClose: !!S.keepMarks });
     }, 800);
   }
 
@@ -16150,6 +16192,8 @@
       <button type="button" class="dci-dgstatus-toggle" data-dg-status aria-pressed="${!!S.dgStatus}" title="${esc(trView('sync.dgStatusTitle'))}">${esc(trView('sync.dgStatus'))}</button>
       <button type="button" class="dci-dgstatus-toggle" data-dg-hover aria-pressed="${!!S.dgHover}" title="${esc(trView('sync.trackHoverTitle'))}">${esc(tr('sync.trackHover'))}</button>
       <button type="button" class="dci-dgstatus-toggle" data-dg-release aria-pressed="${!!S.dgRelease}" title="${esc(trView('sync.dgReleaseTitle'))}">${esc(tr('sync.dgRelease'))}</button>
+      <button type="button" class="dci-dgstatus-toggle" data-click-toggle aria-pressed="${!!S.clickToggle}" title="${esc(tr('sync.clickToggleTitle'))}">${esc(tr('sync.clickToggle'))}</button>
+      <button type="button" class="dci-dgstatus-toggle" data-keep-marks aria-pressed="${!!S.keepMarks}" title="${esc(tr('sync.keepMarksTitle'))}">${esc(tr('sync.keepMarks'))}</button>
       ${viewSite() === 'discogs' ? `<button type="button" class="dci-dgstatus-toggle" data-dg-artwork aria-pressed="${!!S.dgArtwork}" title="${esc(tr('sync.dgArtworkTitle'))}">${esc(tr('sync.dgArtwork'))}</button>` : ''}</span>`;
   }
 
@@ -16169,6 +16213,8 @@
     el.querySelectorAll('[data-dg-hover]').forEach((b) => b.setAttribute('aria-pressed', String(!!S.dgHover)));
     el.querySelectorAll('[data-dg-release]').forEach((b) => b.setAttribute('aria-pressed', String(!!S.dgRelease)));
     el.querySelectorAll('[data-dg-artwork]').forEach((b) => b.setAttribute('aria-pressed', String(!!S.dgArtwork)));
+    el.querySelectorAll('[data-click-toggle]').forEach((b) => b.setAttribute('aria-pressed', String(!!S.clickToggle)));
+    el.querySelectorAll('[data-keep-marks]').forEach((b) => b.setAttribute('aria-pressed', String(!!S.keepMarks)));
     const status = el.querySelector('.dci-syncstatus');
     const html = syncStatusHtml(withDetails);
     if (status.innerHTML !== html) status.innerHTML = html;
@@ -16216,6 +16262,8 @@
     } else if (msg.type === 'focus-row') {
       const row = S.rows.find((r) => r.id === msg.row);
       if (!row) return;
+      // [3.17.5] the pointer resting on a mark: the row shown in an open dashboard, without a line in the log
+      if (msg.hover && (!S.overlay || S.overlay.hidden)) return;
       showDashboard();
       const el = row.level === 'work'
         ? S.overlay.querySelector(`[data-colhead="k:${row.artistKey}"]`)
@@ -16226,12 +16274,12 @@
         setTimeout(() => el.classList.remove('dci-flash'), 2500);
       }
       const a = S.artists.get(row.artistKey);
-      logView('info', 'dgFocus', { name: a ? a.mbName || a.name : '', role: row.raw || '' });
+      if (!msg.hover) logView('info', 'dgFocus', { name: a ? a.mbName || a.name : '', role: row.raw || '' });
     } else if (msg.type === 'toggle-credit') {
-      // [3.17.1] ⊘ on the Bandcamp page: the credit off ("Skip") or on again
-      if (viewSite() !== 'bandcamp' || String(msg.releaseId) !== String(companionReleaseId())) return;
+      // [3.17.1] a click on a mark ([3.17.5] Bandcamp and Discogs): the credit off ("Skip") or on again
+      if (!S.clickToggle || String(msg.releaseId) !== String(companionReleaseId())) return;
       const row = S.rows.find((r) => r.id === msg.row);
-      if (row) toggleBcCredit(row, !!msg.off);
+      if (row) toggleCredit(row, !!msg.off);
     } else if (msg.type === 'hover-track') {
       if (!S.dgHover || String(msg.releaseId) !== String(companionReleaseId()) || !S.overlay || S.overlay.hidden) return;
       const i = S.srcTracks.findIndex((t) => t && norm(t.position) === norm(msg.position));
@@ -17067,7 +17115,7 @@
       case 'level':
         if (row) {
           // [3.17.1] a level chosen for a credit switched off on Bandcamp switches it on again
-          if (row.bcOff && btn.dataset.level !== 'skip') bcCreditOn(row);
+          if (row.srcOff && btn.dataset.level !== 'skip') creditOn(row);
           setLevel(row, btn.dataset.level);
         }
         break;
@@ -18754,7 +18802,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-scale', 'dci-place', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
     sources: ['dci-source-order', 'dci-bc-tracks'],
-    discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork'],
+    discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap'],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
@@ -18908,7 +18956,7 @@
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
     } else if (t === 'discogs') {
-      Object.assign(S, { syncMode: 'click', dgStatus: true, dgHover: true, dgRelease: true, dgArtwork: true });
+      Object.assign(S, { syncMode: 'click', dgStatus: true, dgHover: true, dgRelease: true, dgArtwork: true, clickToggle: true, keepMarks: false });
       renderSync();
       sendDiscogsStatus();
     } else if (t === 'works') {
@@ -18933,7 +18981,7 @@
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key)];
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks'];
 
   function renderReset() {
     if (!S.overlay) return;
@@ -18965,7 +19013,7 @@
   function resetSettings({ rules = false, pools = false } = {}) {
     [...SETTINGS_KEYS, ...Object.values(GEOM_KEYS)].forEach((k) => writeJson('localStorage', k, null));
     Object.assign(S, {
-      scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, fillCredits: false,
+      scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false,
@@ -19211,6 +19259,21 @@
     if (e.target.closest && e.target.closest('[data-sync-reload]')) {
       toDiscogs({ type: 'reload', site: viewSite(), releaseId: companionReleaseId() });
       logView('info', 'dgReload');
+    }
+    // [3.17.5] the two switches of the marks
+    if (e.target.closest && e.target.closest('[data-click-toggle]')) {
+      S.clickToggle = !S.clickToggle;
+      writeJson('localStorage', 'dci-click-toggle', S.clickToggle ? null : false);
+      log('info', 'clickToggle', { state: tr(S.clickToggle ? 'common.on' : 'common.off') });
+      renderSync();
+      sendDiscogsStatus();
+    }
+    if (e.target.closest && e.target.closest('[data-keep-marks]')) {
+      S.keepMarks = !S.keepMarks;
+      writeJson('localStorage', 'dci-keep-marks', S.keepMarks || null);
+      log('info', 'keepMarks', { state: tr(S.keepMarks ? 'common.on' : 'common.off') });
+      renderSync();
+      sendDiscogsStatus();
     }
     if (e.target.closest && e.target.closest('[data-dg-artwork]')) {
       S.dgArtwork = !S.dgArtwork;

@@ -6,7 +6,8 @@ B) A Bandcamp tab on another album: "a Bandcamp tab is open, but on another page
 C) Status marks only in the credits, before each part of a line: "Written by Jane Roe, mixed by Bob Mix" two marks,
    "Mixed and mastered by Mark Master" two marks at the same place, none for "Thanks Mom." and none in the "about"
    text (also when Bandcamp shortened it: "more").
-D) A click on a mark shows its row in the dashboard ("From Bandcamp: …").
+D) A click on a mark shows its row in the dashboard ("From Bandcamp: …") – since 3.17.5 with "Click switches" off (on, a
+   click switches the credit, see t_bcoff.py).
 E) A row jumps to its part of the line; a place from the "about" text marks only its sentence (the shortened text is
    opened), the row says "From the “about” text"; a track of the works matrix highlights its row of the track table;
    the pointer on a track of the Bandcamp page highlights its row in the works matrix.
@@ -134,13 +135,16 @@ with sync_playwright() as p:
             ['○', 'Mixed and master', 'Mastered By'], ['○', 'Test Band – guit', 'guitar'], ['○', 'Trumpet: Peter E', 'Trumpet'],
             ['○', 'Photography Tom ', 'Photography By']]
     results.append(c1 == want and c_about == 0 and shown == [''])
-    # D) a click on a mark: its row in the dashboard
+    # D) a click on a mark: its row in the dashboard (3.17.5: with "Click switches" off)
+    pg.locator('[data-el=sync] [data-click-toggle]').click()
+    poll(bc, "document.querySelector('.tralbum-credits .dci-dg-mark').title.includes('click to show it')")
     bc.locator('.tralbum-credits .dci-dg-mark').nth(1).click()
     H.wait_for(pg, f"{LOGS}.some(x => /From Bandcamp: Bob Mix/.test(x))", 15)
     d1 = [x for x in pg.evaluate(LOGS) if 'From Bandcamp' in x]
     flash = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').textContent.trim())")
     print('D) Protokoll:', d1, '| hervorgehoben:', flash)
     results.append(d1 == ['From Bandcamp: Bob Mix – Mixed By'] and flash == ['Mixed By'])
+    pg.locator('[data-el=sync] [data-click-toggle]').click()
     # E) jumps: a part of a line, a sentence of the "about" text, a track
     e1 = jump(pg, bc, 'Peter Evans', 'Trumpet')
     e2 = jump(pg, bc, 'Bob Mix', 'Mixed By')
