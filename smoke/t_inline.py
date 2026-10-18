@@ -24,10 +24,10 @@ with sync_playwright() as p:
         head: o.querySelector('[data-act=place-toggle]').textContent.trim() }; })()""")
     print('1) in der Seite:', where)
     ok1 = where['afterBar'] and where['inline'] and where['position'] == 'relative' and where['bodyOverflow'] == 'visible' and pressed0 == ['false', 'true']
-    # 2) the page scrolls; the dates block sticks to the top, the footer to the bottom
+    # 2) the page scrolls; the dates block ([3.18.0] with the line "Add entry manually") sticks to the top, the footer to the bottom
     pg.evaluate("window.scrollTo(0, document.querySelector('[data-el=companies]').getBoundingClientRect().top + window.scrollY - 200)")
     pg.wait_for_timeout(300)
-    pos = pg.evaluate("""(() => ({ y: Math.round(window.scrollY), dates: Math.round(document.querySelector('[data-el=dates]').getBoundingClientRect().top),
+    pos = pg.evaluate("""(() => ({ y: Math.round(window.scrollY), dates: Math.round(document.querySelector('[data-el=stick]').getBoundingClientRect().top),
       foot: Math.round(window.innerHeight - document.querySelector('.dci-foot').getBoundingClientRect().bottom) }))()""")
     print('2) gescrollt:', pos)
     ok2 = pos['y'] > 300 and pos['dates'] == 0 and pos['foot'] == 0

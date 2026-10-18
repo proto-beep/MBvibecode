@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.17.6
-// @date         2026-10-17
+// @version      3.19.0
+// @date         2026-10-18
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
 // @description:es Panel de importación en el editor de relaciones de la publicación: revisa los créditos de la publicación de Discogs o del álbum de Bandcamp enlazados (o de un texto pegado), asigna artistas mediante enlaces o nombres, elige roles, nivel y pistas y prepáralos como relaciones. El envío («Enter edit») siempre lo haces tú.
@@ -13,8 +13,8 @@
 // @supportURL   https://github.com/proto-beep/MBvibecode/issues
 // @downloadURL  https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js
 // @updateURL    https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js
-// @match        *://musicbrainz.org/release/*/edit-relationships*
-// @match        *://*.musicbrainz.org/release/*/edit-relationships*
+// @match        *://musicbrainz.org/release/*
+// @match        *://*.musicbrainz.org/release/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      bandcamp.com
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.19.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -194,6 +194,8 @@
       "log.artistSpelling": "{name}: found via its {src} link, but MusicBrainz spells it differently ({mb}) – only a suggestion",
       "log.artistCreditSpelling": "{name}: found via its {src} link, but the release names it differently in its artist credit ({mb}) – only a suggestion",
       "log.sourceKept": "Source chosen for this release before: {src}",
+      "log.fromEditor": "Started from the release editor (“open relationship editor and start import dashboard”) – links there: {links}",
+      "log.sourceFromEditor": "Source entered in the release editor, not in MusicBrainz yet: {src}",
       "log.sourceOrder": "Order of the sources for {kind}: {list}",
       "log.bcTest": "Bandcamp test: {text}",
       "source.text": "Paste text …",
@@ -248,6 +250,7 @@
       "level.recording": "Recording",
       "level.release": "Release",
       "level.onlyHere": "MusicBrainz has this relationship only on this level ({level})",
+      "level.workSkipped": "The works matrix is skipped for this release (“Take works matrix again” in the works section brings the works level back)",
       "level.work": "Work",
       "level.skip": "Skip",
       "th.role": "{src} role",
@@ -340,6 +343,7 @@
       "issue.searching": "looking up MB artist",
       "issue.missingArtist": "MB artist missing",
       "issue.chooseType": "choose a relationship type",
+      "issue.worksSkipped": "works matrix skipped",
       "issue.noTracks": "no tracks selected",
       "issue.unknownAttr": "{root} “{value}” unknown",
       "issue.requiredAttr": "required attribute “{name}” missing",
@@ -613,6 +617,8 @@
       "settings.awSlowSec": "seconds and from",
       "settings.awSlowN": "entries to read",
       "settings.awDays": "Keep the works read for (days)",
+      "settings.awAsk": "Ask before the work lookups from",
+      "settings.awAskTracks": "tracks without a work (0: never)",
       "settings.awClear": "Clear the stored works",
       "settings.awStored.one": "{n} artist stored",
       "settings.awStored.other": "{n} artists stored",
@@ -625,6 +631,7 @@
       "settings.aria.awSlowSec": "Seconds before a large catalogue is named",
       "settings.aria.awSlowN": "Entries to read before a large catalogue is named",
       "settings.aria.awDays": "Days the works read are kept",
+      "settings.aria.awAsk": "Ask before the work lookups from so many tracks without a work",
       "log.settingAw": "Comparison with the works of the artists: {state}",
       "log.settingValue": "Setting “{what}”: {value}",
       "log.settingsTopicReset": "Settings of “{topic}” back to their defaults",
@@ -644,6 +651,7 @@
       "manual.hint": "Add any MusicBrainz entry that can be related to this release, its recordings or works: artist, label, place, area, event, series, recording, release, work and more. The kind of entry is recognized from the URL or MBID. The role list shows all MB relationship types for that kind; for artists, a role as Discogs writes it (e.g. Guitar [Electric]) works too.",
       "manual.entityPlaceholder": "URL or MBID of any MusicBrainz entry",
       "manual.search": "Search MB:",
+      "manual.searchTitle": "Search MusicBrainz for an entry (links in a new tab)",
       "msg.badMbidAny": "No MBID recognized. Paste the URL of an MB artist, label or place page, or an MBID.",
       "note.unknownRole": "Not an instrument known to MusicBrainz. Added as “miscellaneous support” with the {src} role as task; choose a better type if there is one.",
       "date.pasteTitle": "You can paste a date as MusicBrainz shows it, e.g. “from 2015-01-26 until 2015-01-27”, “in 2015-01” or “on 2015-01-26”.",
@@ -900,6 +908,8 @@
       "ms.0.1.0": "First version: the credits of the linked Discogs release in the release relationship editor",
       "notice.title": "MB x Vibecode: Credits Importer {version} – what’s new",
       "old.twice": "Two importer scripts are running on this page: the old “MB x Vibecode: Import Discogs credits” (or a second copy) and “MB x Vibecode: Credits Importer”. Please delete the old one in your script manager (Tampermonkey, Violentmonkey) and reload the page.",
+      "afterEdit.label": "open relationship editor and start import dashboard",
+      "afterEdit.title": "Credits Importer: after “Enter edit”, “Edit relationships” of this release opens with the import dashboard, which loads the credits of its source – {links}",
       "notice.reset": "With this update all settings and stored data of the script were reset once – a fresh start: language, switches, own mapping rules, date and track pools, the chosen sources and the list of created works.",
       "notice.changelog": "Changelog",
       "notice.close": "Close this message",
@@ -913,6 +923,14 @@
       "log.importDone": "Import complete: {rows} roles of {entries} entries in the dashboard, {existing} already in MusicBrainz",
       "log.checksDone.one": "Checks complete: same-named works looked up for {n} track",
       "log.checksDone.other": "Checks complete: same-named works looked up for {n} tracks",
+      "log.worksAsk.one": "{n} track without a work: the works section asks before the work lookups",
+      "log.worksAsk.other": "{n} tracks without a work: the works section asks before the work lookups",
+      "log.worksLookupsOn": "Work lookups: started",
+      "log.worksLookupsOff": "Work lookups: not now (the works matrix stays)",
+      "log.worksSkipped.one": "Works matrix skipped for this release ({n} row on “Skip”), the work lookups rest",
+      "log.worksSkipped.other": "Works matrix skipped for this release ({n} rows on “Skip”), the work lookups rest",
+      "log.worksTaken.one": "Works matrix taken again ({n} row back)",
+      "log.worksTaken.other": "Works matrix taken again ({n} rows back)",
       "log.workRecheck.one": "The writers of {n} track changed – its same-named works are looked up again",
       "log.workRecheck.other": "The writers of {n} tracks changed – their same-named works are looked up again",
       "log.stageSummary": "Staging complete: {added} added, {updated} updated, {removed} taken out, {changed} changed in the editor itself, {remove} to remove by hand",
@@ -971,6 +989,24 @@
       "busy.applyProgress": "Staging {i} of {n} …",
       "matrix.searchProgress": "Same-named works: {done} of {total} tracks checked ",
       "matrix.searchCancel": "stop",
+      "matrix.fold": "Fold the works matrix",
+      "matrix.unfold": "Unfold the works matrix",
+      "matrix.skip": "Skip works matrix",
+      "matrix.skipTitle": "Nothing of the works matrix is created: no works, no links to works, no work relationships (writers, publishers, arrangers …); the work lookups rest. Kept for this release.",
+      "matrix.skipped": "skipped",
+      "matrix.unskip": "Take works matrix again",
+      "matrix.skippedHint": "Skipped for this release: nothing of the works matrix is staged – no works, no links to works, no work relationships (its rows are on “Skip”); what was staged of it is taken out of the editor. The work lookups rest.",
+      "matrix.skippedRows.one": "{n} row on “Skip”",
+      "matrix.skippedRows.other": "{n} rows on “Skip”",
+      "matrix.cols.one": "{n} column",
+      "matrix.cols.other": "{n} columns",
+      "matrix.askLookups.one": "Look up works for {n} track without a work?",
+      "matrix.askLookups.other": "Look up works for {n} tracks without a work?",
+      "matrix.askTime": "Same-named works and the works of the artists: about {min} min (MusicBrainz answers one request a second; longer with large catalogues). Without them the matrix stays as it is.",
+      "matrix.lookupsYes": "Look up works",
+      "matrix.lookupsNo": "Not now",
+      "matrix.lookupsOff": "Work lookups left out (same-named works, works of the artists).",
+      "matrix.lookupsNow": "Look up now",
       "footer.cap": "at most {n} per staging",
       "footer.capTitle": "Keeps each “Enter edit” reviewable; switch off to stage everything at once",
       "log.mediumAuto": "Large release ({n} tracks): showing medium {m}",
@@ -1140,6 +1176,7 @@
       "dgStatus.isOff": "switched off here",
       "bc.offNote": "Switched off on {site} (a click on its mark): “Skip”. Another click there switches it on again, so does choosing a level here.",
       "ms.3.17.0": "Bandcamp view in the companion (1.8.0): a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the “about” text: to its sentence), track highlight, status on the MusicBrainz release page; “open in background” and “Load the release there” for Bandcamp too. Rows from track pages link to them.",
+      "ms.3.18.0": "Works matrix: “Skip works matrix” (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to “Skip” and the work lookups rest; “Take works matrix again” brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. “Add entry manually” is one line above the date pool, always in view.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -1471,6 +1508,8 @@
       "log.artistSpelling": "{name}: über den {src}-Link gefunden, aber MusicBrainz schreibt den Namen anders ({mb}) – nur ein Vorschlag",
       "log.artistCreditSpelling": "{name}: über den {src}-Link gefunden, aber das Release nennt den Namen im Artist Credit anders ({mb}) – nur ein Vorschlag",
       "log.sourceKept": "Für dieses Release früher gewählte Quelle: {src}",
+      "log.fromEditor": "Aus dem Release-Editor gestartet („Beziehungs-Editor öffnen und Import-Dashboard starten“) – Links dort: {links}",
+      "log.sourceFromEditor": "Quelle im Release-Editor eingetragen, noch nicht in MusicBrainz: {src}",
       "log.sourceOrder": "Reihenfolge der Quellen für {kind}: {list}",
       "log.bcTest": "Bandcamp-Test: {text}",
       "source.text": "Text einfügen …",
@@ -1525,6 +1564,7 @@
       "level.recording": "Recording",
       "level.release": "Release",
       "level.onlyHere": "MusicBrainz hat diese Beziehung nur auf dieser Ebene ({level})",
+      "level.workSkipped": "Die Werk-Matrix ist für dieses Release übersprungen („Werk-Matrix wieder nehmen“ im Werk-Bereich bringt die Werk-Ebene zurück)",
       "level.work": "Werk",
       "level.skip": "Überspringen",
       "th.role": "{src}-Rolle",
@@ -1617,6 +1657,7 @@
       "issue.searching": "MB-Artist wird gesucht",
       "issue.missingArtist": "MB-Artist fehlt",
       "issue.chooseType": "Beziehungstyp wählen",
+      "issue.worksSkipped": "Werk-Matrix übersprungen",
       "issue.noTracks": "keine Tracks gewählt",
       "issue.unknownAttr": "{root} „{value}“ unbekannt",
       "issue.requiredAttr": "Pflichtattribut „{name}“ fehlt",
@@ -1890,6 +1931,8 @@
       "settings.awSlowSec": "Sekunden und ab",
       "settings.awSlowN": "zu lesenden Einträgen",
       "settings.awDays": "Gelesene Werke merken für (Tage)",
+      "settings.awAsk": "Vor den Werk-Abfragen fragen ab",
+      "settings.awAskTracks": "Tracks ohne Werk (0: nie)",
       "settings.awClear": "Werke-Speicher leeren",
       "settings.awStored.one": "{n} Artist gespeichert",
       "settings.awStored.other": "{n} Artists gespeichert",
@@ -1902,6 +1945,7 @@
       "settings.aria.awSlowSec": "Sekunden, bis ein großer Werkkatalog genannt wird",
       "settings.aria.awSlowN": "Zu lesende Einträge, ab denen ein großer Werkkatalog genannt wird",
       "settings.aria.awDays": "Tage, die gelesene Werke gemerkt werden",
+      "settings.aria.awAsk": "Vor den Werk-Abfragen fragen ab so vielen Tracks ohne Werk",
       "log.settingAw": "Abgleich mit den Werken der Artists: {state}",
       "log.settingValue": "Einstellung „{what}“: {value}",
       "log.settingsTopicReset": "Einstellungen von „{topic}“ auf den Standard zurückgesetzt",
@@ -1921,6 +1965,7 @@
       "manual.hint": "Füge jeden MusicBrainz-Eintrag hinzu, der mit diesem Release, seinen Recordings oder Werken verknüpft werden kann: Artist, Label, Ort, Gebiet, Event, Serie, Recording, Release, Werk und mehr. Die Art des Eintrags wird an URL oder MBID erkannt. Die Rollenliste zeigt alle MB-Beziehungstypen für diese Art; bei Artists geht auch eine Rolle wie bei Discogs (z. B. Guitar [Electric]).",
       "manual.entityPlaceholder": "URL oder MBID eines beliebigen MusicBrainz-Eintrags",
       "manual.search": "Auf MB suchen:",
+      "manual.searchTitle": "Auf MusicBrainz nach einem Eintrag suchen (Links in einem neuen Tab)",
       "msg.badMbidAny": "Keine MBID erkannt. Füge die URL einer MB-Seite eines Artists, Labels oder Orts oder eine MBID ein.",
       "note.unknownRole": "Kein Instrument, das MusicBrainz kennt. Übernommen als „miscellaneous support“ mit der {src}-Rolle als Aufgabe; wähle einen besseren Typ, falls es einen gibt.",
       "date.pasteTitle": "Du kannst ein Datum so einfügen, wie MusicBrainz es anzeigt, z. B. „from 2015-01-26 until 2015-01-27“, „in 2015-01“ oder „on 2015-01-26“.",
@@ -2177,6 +2222,8 @@
       "ms.0.1.0": "Erste Version: die Credits des verknüpften Discogs-Release im Relationship-Editor",
       "notice.title": "MB x Vibecode: Credits Importer {version} – das ist neu",
       "old.twice": "Auf dieser Seite laufen zwei Import-Skripte: das alte „MB x Vibecode: Import Discogs credits“ (oder eine zweite Kopie) und „MB x Vibecode: Credits Importer“. Bitte lösche das alte im Skript-Manager (Tampermonkey, Violentmonkey) und lade die Seite neu.",
+      "afterEdit.label": "Beziehungs-Editor öffnen und Import-Dashboard starten",
+      "afterEdit.title": "Credits Importer: nach „Enter edit“ öffnet sich „Edit relationships“ dieses Releases mit dem Import-Dashboard, das die Credits seiner Quelle lädt – {links}",
       "notice.reset": "Mit diesem Update wurden alle Einstellungen und gespeicherten Daten des Skripts einmal zurückgesetzt – ein Neuanfang: Sprache, Schalter, eigene Mapping-Regeln, Datums- und Track-Pools, die gewählten Quellen und die Liste der angelegten Werke.",
       "notice.changelog": "Changelog",
       "notice.close": "Diese Nachricht schließen",
@@ -2190,6 +2237,14 @@
       "log.importDone": "Import abgeschlossen: {rows} Rollen von {entries} Einträgen im Dashboard, {existing} schon in MusicBrainz",
       "log.checksDone.one": "Prüfungen abgeschlossen: gleichnamige Werke für {n} Track gesucht",
       "log.checksDone.other": "Prüfungen abgeschlossen: gleichnamige Werke für {n} Tracks gesucht",
+      "log.worksAsk.one": "{n} Track ohne Werk: der Werk-Bereich fragt vor den Werk-Abfragen",
+      "log.worksAsk.other": "{n} Tracks ohne Werk: der Werk-Bereich fragt vor den Werk-Abfragen",
+      "log.worksLookupsOn": "Werk-Abfragen: gestartet",
+      "log.worksLookupsOff": "Werk-Abfragen: jetzt nicht (die Werk-Matrix bleibt)",
+      "log.worksSkipped.one": "Werk-Matrix für dieses Release übersprungen ({n} Zeile auf „Skip“), die Werk-Abfragen ruhen",
+      "log.worksSkipped.other": "Werk-Matrix für dieses Release übersprungen ({n} Zeilen auf „Skip“), die Werk-Abfragen ruhen",
+      "log.worksTaken.one": "Werk-Matrix wieder genommen ({n} Zeile zurück)",
+      "log.worksTaken.other": "Werk-Matrix wieder genommen ({n} Zeilen zurück)",
       "log.workRecheck.one": "Die Schreiber von {n} Track haben sich geändert – gleichnamige Werke werden neu gesucht",
       "log.workRecheck.other": "Die Schreiber von {n} Tracks haben sich geändert – gleichnamige Werke werden neu gesucht",
       "log.stageSummary": "Übernehmen abgeschlossen: {added} hinzugefügt, {updated} aktualisiert, {removed} herausgenommen, {changed} im Editor selbst geändert, {remove} von Hand zu entfernen",
@@ -2248,6 +2303,24 @@
       "busy.applyProgress": "Übernehme {i} von {n} …",
       "matrix.searchProgress": "Gleichnamige Werke: {done} von {total} Tracks geprüft ",
       "matrix.searchCancel": "abbrechen",
+      "matrix.fold": "Werk-Matrix zuklappen",
+      "matrix.unfold": "Werk-Matrix aufklappen",
+      "matrix.skip": "Werk-Matrix überspringen",
+      "matrix.skipTitle": "Von der Werk-Matrix wird nichts angelegt: keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen (Writer, Verlage, Arrangeure …); die Werk-Abfragen ruhen. Für dieses Release gemerkt.",
+      "matrix.skipped": "übersprungen",
+      "matrix.unskip": "Werk-Matrix wieder nehmen",
+      "matrix.skippedHint": "Für dieses Release übersprungen: von der Werk-Matrix wird nichts vorgemerkt – keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen (ihre Zeilen stehen auf „Skip“); was davon vorgemerkt war, wird aus dem Editor genommen. Die Werk-Abfragen ruhen.",
+      "matrix.skippedRows.one": "{n} Zeile auf „Skip“",
+      "matrix.skippedRows.other": "{n} Zeilen auf „Skip“",
+      "matrix.cols.one": "{n} Spalte",
+      "matrix.cols.other": "{n} Spalten",
+      "matrix.askLookups.one": "Werke für {n} Track ohne Werk abfragen?",
+      "matrix.askLookups.other": "Werke für {n} Tracks ohne Werk abfragen?",
+      "matrix.askTime": "Gleichnamige Werke und die Werke der Artists: etwa {min} Min. (MusicBrainz beantwortet eine Anfrage pro Sekunde; länger bei großen Katalogen). Ohne sie bleibt die Matrix, wie sie ist.",
+      "matrix.lookupsYes": "Werke abfragen",
+      "matrix.lookupsNo": "Jetzt nicht",
+      "matrix.lookupsOff": "Werk-Abfragen ausgelassen (gleichnamige Werke, Werke der Artists).",
+      "matrix.lookupsNow": "Jetzt abfragen",
       "footer.cap": "höchstens {n} pro Übernehmen",
       "footer.capTitle": "Hält jedes „Enter edit“ überschaubar; abschalten, um alles auf einmal zu übernehmen",
       "log.mediumAuto": "Großes Release ({n} Tracks): zeige Medium {m}",
@@ -2417,6 +2490,7 @@
       "dgStatus.isOff": "hier abgeschaltet",
       "bc.offNote": "Auf {site} abgeschaltet (Klick auf seine Marke): „Überspringen“. Ein weiterer Klick dort schaltet ihn wieder an, ebenso eine hier gewählte Ebene.",
       "ms.3.17.0": "Bandcamp-Ansicht im Companion (1.8.0): ein Bandcamp-Tab folgt dem Dashboard wie ein Discogs-Tab – Status-Zeichen vor jedem Teil einer Credits-Zeile (Album- und Track-Seiten), ein Klick auf ein Zeichen zeigt seine Zeile, eine Zeile springt zu ihrer Stelle (aus dem „about“-Text: zu ihrem Satz), Track-Hervorhebung, Status auf der MusicBrainz-Release-Seite; „im Hintergrund öffnen“ und „Release dort laden“ auch für Bandcamp. Zeilen von Track-Seiten verlinken sie.",
+      "ms.3.18.0": "Werk-Matrix: „Werk-Matrix überspringen“ (für das Release gemerkt) – nichts davon wird vorgemerkt (keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen), ihre Zeilen gehen auf „Skip“ und die Werk-Abfragen ruhen; „Werk-Matrix wieder nehmen“ bringt alles zurück. Die Matrix lässt sich an ihrem Kopf zu- und aufklappen. Ab 100 Tracks ohne Werk (Einstellung) fragt der Werk-Bereich vor den Werk-Abfragen, mit ungefährer Dauer. „Eintrag manuell hinzufügen“ ist eine Zeile über dem Datums-Pool, immer sichtbar.",
       "log.stagedRemoved": "Aus dem Editor genommen (nicht mehr gewünscht): {text}",
       "msg.stagedRemovedAll.one": "{n} schon übernommene Beziehung ist nicht mehr gewünscht und wurde aus dem Editor genommen.",
       "msg.stagedRemovedAll.other": "{n} schon übernommene Beziehungen sind nicht mehr gewünscht und wurden aus dem Editor genommen.",
@@ -2748,6 +2822,8 @@
       "log.artistSpelling": "{name}: encontrado por su enlace de {src}, pero MusicBrainz lo escribe distinto ({mb}); solo una sugerencia",
       "log.artistCreditSpelling": "{name}: encontrado por su enlace de {src}, pero la publicación lo nombra distinto en su crédito de artista ({mb}); solo una sugerencia",
       "log.sourceKept": "Fuente elegida antes para esta publicación: {src}",
+      "log.fromEditor": "Iniciado desde el editor de publicaciones («abrir el editor de relaciones e iniciar el panel de importación») – enlaces allí: {links}",
+      "log.sourceFromEditor": "Fuente introducida en el editor de publicaciones, aún no en MusicBrainz: {src}",
       "log.sourceOrder": "Orden de las fuentes para {kind}: {list}",
       "log.bcTest": "Prueba de Bandcamp: {text}",
       "source.text": "Pegar texto…",
@@ -2802,6 +2878,7 @@
       "level.recording": "Grabación",
       "level.release": "Publicación",
       "level.onlyHere": "MusicBrainz tiene esta relación solo en este nivel ({level})",
+      "level.workSkipped": "La matriz de obras está omitida para esta publicación («Volver a tomar la matriz de obras» en la sección de obras devuelve el nivel de obra)",
       "level.work": "Obra",
       "level.skip": "Omitir",
       "th.role": "Rol en {src}",
@@ -2894,6 +2971,7 @@
       "issue.searching": "buscando artista de MB",
       "issue.missingArtist": "falta el artista de MB",
       "issue.chooseType": "elige un tipo de relación",
+      "issue.worksSkipped": "matriz de obras omitida",
       "issue.noTracks": "ninguna pista seleccionada",
       "issue.unknownAttr": "{root} «{value}» desconocido",
       "issue.requiredAttr": "falta el atributo obligatorio «{name}»",
@@ -3167,6 +3245,8 @@
       "settings.awSlowSec": "segundos y desde",
       "settings.awSlowN": "entradas por leer",
       "settings.awDays": "Guardar las obras leídas (días)",
+      "settings.awAsk": "Preguntar antes de las búsquedas de obras a partir de",
+      "settings.awAskTracks": "pistas sin obra (0: nunca)",
       "settings.awClear": "Vaciar las obras guardadas",
       "settings.awStored.one": "{n} artista guardado",
       "settings.awStored.other": "{n} artistas guardados",
@@ -3179,6 +3259,7 @@
       "settings.aria.awSlowSec": "Segundos hasta indicar un catálogo grande",
       "settings.aria.awSlowN": "Entradas por leer a partir de las que se indica un catálogo grande",
       "settings.aria.awDays": "Días que se guardan las obras leídas",
+      "settings.aria.awAsk": "Preguntar antes de las búsquedas de obras a partir de tantas pistas sin obra",
       "log.settingAw": "Comparación con las obras de los artistas: {state}",
       "log.settingValue": "Ajuste «{what}»: {value}",
       "log.settingsTopicReset": "Ajustes de «{topic}» restablecidos",
@@ -3198,6 +3279,7 @@
       "manual.hint": "Añade cualquier entrada de MusicBrainz que pueda relacionarse con esta publicación, sus grabaciones u obras: artista, sello, lugar, zona, evento, serie, grabación, publicación, obra y más. El tipo de entrada se reconoce por la URL o el MBID. La lista de roles muestra todos los tipos de relación de MB para ese tipo; para artistas también vale un rol como en Discogs (p. ej. Guitar [Electric]).",
       "manual.entityPlaceholder": "URL o MBID de cualquier entrada de MusicBrainz",
       "manual.search": "Buscar en MB:",
+      "manual.searchTitle": "Buscar una entrada en MusicBrainz (enlaces en una pestaña nueva)",
       "msg.badMbidAny": "No se reconoce ningún MBID. Pega la URL de la página de un artista, sello o lugar de MB, o un MBID.",
       "note.unknownRole": "No es un instrumento conocido por MusicBrainz. Se añade como «miscellaneous support» con el rol de {src} como tarea; elige un tipo mejor si lo hay.",
       "date.pasteTitle": "Puedes pegar una fecha tal como la muestra MusicBrainz, p. ej. «from 2015-01-26 until 2015-01-27», «in 2015-01» u «on 2015-01-26».",
@@ -3454,6 +3536,8 @@
       "ms.0.1.0": "Primera versión: los créditos de la publicación de Discogs enlazada en el editor de relaciones",
       "notice.title": "MB x Vibecode: Credits Importer {version} – novedades",
       "old.twice": "En esta página se ejecutan dos scripts de importación: el antiguo «MB x Vibecode: Import Discogs credits» (o una segunda copia) y «MB x Vibecode: Credits Importer». Borra el antiguo en tu gestor de scripts (Tampermonkey, Violentmonkey) y vuelve a cargar la página.",
+      "afterEdit.label": "abrir el editor de relaciones e iniciar el panel de importación",
+      "afterEdit.title": "Credits Importer: tras «Enter edit» se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links}",
       "notice.reset": "Con esta actualización se restablecieron una vez todos los ajustes y datos guardados del script – un nuevo comienzo: idioma, interruptores, reglas propias, pools de fechas y pistas, las fuentes elegidas y la lista de obras creadas.",
       "notice.changelog": "Registro de cambios",
       "notice.close": "Cerrar este mensaje",
@@ -3467,6 +3551,14 @@
       "log.importDone": "Importación completa: {rows} roles de {entries} entradas en el panel, {existing} ya en MusicBrainz",
       "log.checksDone.one": "Comprobaciones completas: obras homónimas buscadas para {n} pista",
       "log.checksDone.other": "Comprobaciones completas: obras homónimas buscadas para {n} pistas",
+      "log.worksAsk.one": "{n} pista sin obra: la sección de obras pregunta antes de las búsquedas de obras",
+      "log.worksAsk.other": "{n} pistas sin obra: la sección de obras pregunta antes de las búsquedas de obras",
+      "log.worksLookupsOn": "Búsquedas de obras: iniciadas",
+      "log.worksLookupsOff": "Búsquedas de obras: ahora no (la matriz de obras se queda)",
+      "log.worksSkipped.one": "Matriz de obras omitida para esta publicación ({n} fila en «Skip»), las búsquedas de obras descansan",
+      "log.worksSkipped.other": "Matriz de obras omitida para esta publicación ({n} filas en «Skip»), las búsquedas de obras descansan",
+      "log.worksTaken.one": "Matriz de obras tomada de nuevo ({n} fila de vuelta)",
+      "log.worksTaken.other": "Matriz de obras tomada de nuevo ({n} filas de vuelta)",
       "log.workRecheck.one": "Los autores de {n} pista han cambiado: se vuelven a buscar sus obras homónimas",
       "log.workRecheck.other": "Los autores de {n} pistas han cambiado: se vuelven a buscar sus obras homónimas",
       "log.stageSummary": "Añadido completo: {added} añadidas, {updated} actualizadas, {removed} quitadas, {changed} cambiadas en el propio editor, {remove} para quitar a mano",
@@ -3525,6 +3617,24 @@
       "busy.applyProgress": "Añadiendo {i} de {n} …",
       "matrix.searchProgress": "Obras homónimas: {done} de {total} pistas comprobadas ",
       "matrix.searchCancel": "detener",
+      "matrix.fold": "Plegar la matriz de obras",
+      "matrix.unfold": "Desplegar la matriz de obras",
+      "matrix.skip": "Omitir la matriz de obras",
+      "matrix.skipTitle": "No se crea nada de la matriz de obras: ni obras, ni enlaces a obras, ni relaciones de obra (autores, editoriales, arreglistas …); las búsquedas de obras descansan. Se guarda para esta publicación.",
+      "matrix.skipped": "omitida",
+      "matrix.unskip": "Volver a tomar la matriz de obras",
+      "matrix.skippedHint": "Omitida para esta publicación: no se prepara nada de la matriz de obras – ni obras, ni enlaces a obras, ni relaciones de obra (sus filas están en «Skip»); lo que estaba preparado de ella se quita del editor. Las búsquedas de obras descansan.",
+      "matrix.skippedRows.one": "{n} fila en «Skip»",
+      "matrix.skippedRows.other": "{n} filas en «Skip»",
+      "matrix.cols.one": "{n} columna",
+      "matrix.cols.other": "{n} columnas",
+      "matrix.askLookups.one": "¿Buscar obras para {n} pista sin obra?",
+      "matrix.askLookups.other": "¿Buscar obras para {n} pistas sin obra?",
+      "matrix.askTime": "Obras del mismo nombre y las obras de los artistas: unos {min} min (MusicBrainz responde una petición por segundo; más con catálogos grandes). Sin ellas la matriz se queda como está.",
+      "matrix.lookupsYes": "Buscar obras",
+      "matrix.lookupsNo": "Ahora no",
+      "matrix.lookupsOff": "Búsquedas de obras omitidas (obras del mismo nombre, obras de los artistas).",
+      "matrix.lookupsNow": "Buscar ahora",
       "footer.cap": "como máximo {n} por vez",
       "footer.capTitle": "Mantiene cada «Enter edit» revisable; desactívalo para añadir todo de una vez",
       "log.mediumAuto": "Publicación grande ({n} pistas): mostrando el medio {m}",
@@ -3694,6 +3804,7 @@
       "dgStatus.isOff": "desactivado aquí",
       "bc.offNote": "Desactivado en {site} (un clic en su marca): «Omitir». Otro clic allí lo vuelve a activar, igual que elegir un nivel aquí.",
       "ms.3.17.0": "Vista de Bandcamp en el complemento (1.8.0): una pestaña de Bandcamp sigue al panel como una de Discogs – marcas de estado delante de cada parte de una línea de créditos (páginas de álbum y de pista), un clic en una marca muestra su fila, una fila salta a su línea (del texto «about»: a su frase), resaltado de pistas, estado en la página de la publicación de MusicBrainz; «abrir en segundo plano» y «Cargar la publicación allí» también para Bandcamp. Las filas de páginas de pista enlazan a ellas.",
+      "ms.3.18.0": "Matriz de obras: «Omitir la matriz de obras» (se guarda para la publicación) – no se prepara nada de ella (ni obras, ni enlaces a obras, ni relaciones de obra), sus filas pasan a «Skip» y las búsquedas de obras descansan; «Volver a tomar la matriz de obras» lo devuelve todo. La matriz se pliega y despliega en su cabecera. A partir de 100 pistas sin obra (ajuste) la sección de obras pregunta antes de las búsquedas de obras, con cuánto tardan más o menos. «Añadir entrada manualmente» es una línea encima de las fechas guardadas, siempre visible.",
       "log.stagedRemoved": "Quitada del editor (ya no deseada): {text}",
       "msg.stagedRemovedAll.one": "{n} relación ya añadida ya no se quiere y se quitó del editor.",
       "msg.stagedRemovedAll.other": "{n} relaciones ya añadidas ya no se quieren y se quitaron del editor.",
@@ -4025,6 +4136,8 @@
       "log.artistSpelling": "{name} : trouvé via son lien {src}, mais MusicBrainz l’écrit autrement ({mb}) – seulement une suggestion",
       "log.artistCreditSpelling": "{name} : trouvé via son lien {src}, mais la parution le nomme autrement dans son crédit d’artiste ({mb}) – seulement une suggestion",
       "log.sourceKept": "Source choisie auparavant pour cette parution : {src}",
+      "log.fromEditor": "Lancé depuis l’éditeur de parution (« ouvrir l’éditeur de relations et lancer le tableau de bord d’import ») – liens : {links}",
+      "log.sourceFromEditor": "Source saisie dans l’éditeur de parution, pas encore dans MusicBrainz : {src}",
       "log.sourceOrder": "Ordre des sources pour {kind} : {list}",
       "log.bcTest": "Test Bandcamp : {text}",
       "source.text": "Coller un texte…",
@@ -4079,6 +4192,7 @@
       "level.recording": "Enregistrement",
       "level.release": "Parution",
       "level.onlyHere": "MusicBrainz n’a cette relation qu’à ce niveau ({level})",
+      "level.workSkipped": "La matrice des œuvres est ignorée pour cette parution (« Reprendre la matrice des œuvres » dans la section des œuvres rétablit le niveau œuvre)",
       "level.work": "Œuvre",
       "level.skip": "Ignorer",
       "th.role": "Rôle {src}",
@@ -4171,6 +4285,7 @@
       "issue.searching": "recherche de l’artiste MB",
       "issue.missingArtist": "artiste MB manquant",
       "issue.chooseType": "choisissez un type de relation",
+      "issue.worksSkipped": "matrice des œuvres ignorée",
       "issue.noTracks": "aucune piste sélectionnée",
       "issue.unknownAttr": "{root} « {value} » inconnu",
       "issue.requiredAttr": "attribut obligatoire « {name} » manquant",
@@ -4444,6 +4559,8 @@
       "settings.awSlowSec": "secondes et à partir de",
       "settings.awSlowN": "entrées à lire",
       "settings.awDays": "Garder les œuvres lues pendant (jours)",
+      "settings.awAsk": "Demander avant les recherches d’œuvres à partir de",
+      "settings.awAskTracks": "pistes sans œuvre (0 : jamais)",
       "settings.awClear": "Vider les œuvres enregistrées",
       "settings.awStored.one": "{n} artiste enregistré",
       "settings.awStored.other": "{n} artistes enregistrés",
@@ -4456,6 +4573,7 @@
       "settings.aria.awSlowSec": "Secondes avant de signaler un grand catalogue",
       "settings.aria.awSlowN": "Entrées à lire à partir desquelles un grand catalogue est signalé",
       "settings.aria.awDays": "Jours pendant lesquels les œuvres lues sont gardées",
+      "settings.aria.awAsk": "Demander avant les recherches d’œuvres à partir de tant de pistes sans œuvre",
       "log.settingAw": "Comparaison avec les œuvres des artistes : {state}",
       "log.settingValue": "Réglage « {what} » : {value}",
       "log.settingsTopicReset": "Réglages de « {topic} » remis par défaut",
@@ -4475,6 +4593,7 @@
       "manual.hint": "Ajoutez toute entrée MusicBrainz qui peut être liée à cette parution, à ses enregistrements ou à ses œuvres : artiste, label, lieu, région, événement, série, enregistrement, parution, œuvre et plus. Le type d’entrée est reconnu à partir de l’URL ou du MBID. La liste des rôles montre tous les types de relation MB pour ce type ; pour les artistes, un rôle comme sur Discogs (p. ex. Guitar [Electric]) fonctionne aussi.",
       "manual.entityPlaceholder": "URL ou MBID de n’importe quelle entrée MusicBrainz",
       "manual.search": "Chercher sur MB :",
+      "manual.searchTitle": "Chercher une entrée sur MusicBrainz (liens dans un nouvel onglet)",
       "msg.badMbidAny": "Aucun MBID reconnu. Collez l’URL de la page d’un artiste, label ou lieu MB, ou un MBID.",
       "note.unknownRole": "Pas un instrument connu de MusicBrainz. Ajouté comme « miscellaneous support » avec le rôle {src} comme tâche ; choisissez un meilleur type s’il y en a un.",
       "date.pasteTitle": "Vous pouvez coller une date telle que MusicBrainz l’affiche, p. ex. « from 2015-01-26 until 2015-01-27 », « in 2015-01 » ou « on 2015-01-26 ».",
@@ -4731,6 +4850,8 @@
       "ms.0.1.0": "Première version : les crédits de la parution Discogs liée dans l’éditeur de relations",
       "notice.title": "MB x Vibecode: Credits Importer {version} – nouveautés",
       "old.twice": "Deux scripts d’import tournent sur cette page : l’ancien « MB x Vibecode: Import Discogs credits » (ou une deuxième copie) et « MB x Vibecode: Credits Importer ». Supprimez l’ancien dans votre gestionnaire de scripts (Tampermonkey, Violentmonkey) et rechargez la page.",
+      "afterEdit.label": "ouvrir l’éditeur de relations et lancer le tableau de bord d’import",
+      "afterEdit.title": "Credits Importer : après « Enter edit », « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links}",
       "notice.reset": "Avec cette mise à jour, tous les réglages et données enregistrées du script ont été réinitialisés une fois – un nouveau départ : langue, interrupteurs, règles personnelles, pools de dates et de plages, sources choisies et liste des œuvres créées.",
       "notice.changelog": "Journal des modifications",
       "notice.close": "Fermer ce message",
@@ -4744,6 +4865,14 @@
       "log.importDone": "Import terminé : {rows} rôles de {entries} entrées dans le tableau de bord, {existing} déjà dans MusicBrainz",
       "log.checksDone.one": "Vérifications terminées : œuvres homonymes cherchées pour {n} piste",
       "log.checksDone.other": "Vérifications terminées : œuvres homonymes cherchées pour {n} pistes",
+      "log.worksAsk.one": "{n} piste sans œuvre : la section des œuvres demande avant les recherches d’œuvres",
+      "log.worksAsk.other": "{n} pistes sans œuvre : la section des œuvres demande avant les recherches d’œuvres",
+      "log.worksLookupsOn": "Recherches d’œuvres : lancées",
+      "log.worksLookupsOff": "Recherches d’œuvres : pas maintenant (la matrice des œuvres reste)",
+      "log.worksSkipped.one": "Matrice des œuvres ignorée pour cette parution ({n} ligne sur « Skip »), les recherches d’œuvres sont suspendues",
+      "log.worksSkipped.other": "Matrice des œuvres ignorée pour cette parution ({n} lignes sur « Skip »), les recherches d’œuvres sont suspendues",
+      "log.worksTaken.one": "Matrice des œuvres reprise ({n} ligne de retour)",
+      "log.worksTaken.other": "Matrice des œuvres reprise ({n} lignes de retour)",
       "log.workRecheck.one": "Les auteurs de {n} piste ont changé – ses œuvres homonymes sont cherchées à nouveau",
       "log.workRecheck.other": "Les auteurs de {n} pistes ont changé – leurs œuvres homonymes sont cherchées à nouveau",
       "log.stageSummary": "Ajout terminé : {added} ajoutées, {updated} mises à jour, {removed} retirées, {changed} modifiées dans l’éditeur lui-même, {remove} à retirer à la main",
@@ -4802,6 +4931,24 @@
       "busy.applyProgress": "Ajout {i} sur {n} …",
       "matrix.searchProgress": "Œuvres homonymes : {done} pistes sur {total} vérifiées ",
       "matrix.searchCancel": "arrêter",
+      "matrix.fold": "Replier la matrice des œuvres",
+      "matrix.unfold": "Déplier la matrice des œuvres",
+      "matrix.skip": "Ignorer la matrice des œuvres",
+      "matrix.skipTitle": "Rien de la matrice des œuvres n’est créé : ni œuvres, ni liens vers des œuvres, ni relations d’œuvre (auteurs, éditeurs, arrangeurs …) ; les recherches d’œuvres sont suspendues. Gardé pour cette parution.",
+      "matrix.skipped": "ignorée",
+      "matrix.unskip": "Reprendre la matrice des œuvres",
+      "matrix.skippedHint": "Ignorée pour cette parution : rien de la matrice des œuvres n’est préparé – ni œuvres, ni liens vers des œuvres, ni relations d’œuvre (ses lignes sont sur « Skip ») ; ce qui en était préparé est retiré de l’éditeur. Les recherches d’œuvres sont suspendues.",
+      "matrix.skippedRows.one": "{n} ligne sur « Skip »",
+      "matrix.skippedRows.other": "{n} lignes sur « Skip »",
+      "matrix.cols.one": "{n} colonne",
+      "matrix.cols.other": "{n} colonnes",
+      "matrix.askLookups.one": "Rechercher les œuvres de {n} piste sans œuvre ?",
+      "matrix.askLookups.other": "Rechercher les œuvres de {n} pistes sans œuvre ?",
+      "matrix.askTime": "Œuvres du même nom et œuvres des artistes : environ {min} min (MusicBrainz répond à une requête par seconde ; plus long avec de grands catalogues). Sans elles, la matrice reste telle quelle.",
+      "matrix.lookupsYes": "Rechercher les œuvres",
+      "matrix.lookupsNo": "Pas maintenant",
+      "matrix.lookupsOff": "Recherches d’œuvres laissées de côté (œuvres du même nom, œuvres des artistes).",
+      "matrix.lookupsNow": "Rechercher maintenant",
       "footer.cap": "au plus {n} par ajout",
       "footer.capTitle": "Garde chaque « Enter edit » vérifiable ; désactivez pour tout ajouter en une fois",
       "log.mediumAuto": "Grande parution ({n} pistes) : support {m} affiché",
@@ -4971,6 +5118,7 @@
       "dgStatus.isOff": "désactivé ici",
       "bc.offNote": "Désactivé sur {site} (un clic sur sa marque) : « Ignorer ». Un autre clic là-bas le réactive, tout comme choisir un niveau ici.",
       "ms.3.17.0": "Vue Bandcamp dans le compagnon (1.8.0) : un onglet Bandcamp suit le tableau de bord comme un onglet Discogs – marques de statut devant chaque partie d’une ligne de crédits (pages d’album et de morceau), un clic sur une marque affiche sa ligne, une ligne saute à son endroit (du texte « about » : à sa phrase), surlignage des pistes, statut sur la page de la parution MusicBrainz ; « ouvrir en arrière-plan » et « Y charger la parution » aussi pour Bandcamp. Les lignes des pages de morceau y renvoient.",
+      "ms.3.18.0": "Matrice des œuvres : « Ignorer la matrice des œuvres » (gardé pour la parution) – rien n’en est préparé (ni œuvres, ni liens vers des œuvres, ni relations d’œuvre), ses lignes passent sur « Skip » et les recherches d’œuvres sont suspendues ; « Reprendre la matrice des œuvres » rétablit tout. La matrice se replie et se déplie par son en-tête. À partir de 100 pistes sans œuvre (réglage), la section des œuvres demande avant les recherches d’œuvres, avec leur durée approximative. « Ajouter une entrée manuellement » est une ligne au-dessus des dates enregistrées, toujours visible.",
       "log.stagedRemoved": "Retirée de l’éditeur (plus voulue) : {text}",
       "msg.stagedRemovedAll.one": "{n} relation déjà ajoutée n’est plus voulue et a été retirée de l’éditeur.",
       "msg.stagedRemovedAll.other": "{n} relations déjà ajoutées ne sont plus voulues et ont été retirées de l’éditeur.",
@@ -7562,11 +7710,152 @@
   }
 
   // ===========================================================================
+  // 3b. [3.19.0] Release editor and release page: start the import right after "Enter edit"
+  // ===========================================================================
+
+  const AFTER_EDIT_KEY = 'dci-after-edit';        // the tick, remembered (localStorage)
+  const AFTER_EDIT_GO_KEY = 'dci-after-edit-go';  // { release: MBID or 'new', links, at } once "Enter edit" runs (sessionStorage of the tab)
+  const AUTOSTART_KEY = 'dci-autostart';          // { release, links, at } for the relationship editor (sessionStorage of the tab)
+  const AFTER_EDIT_MAX_MS = 10 * 60 * 1000;
+
+  /** Which page of a release this is: the relationship editor, the release editor (add or edit), the release page, or another. */
+  function releasePageKind(path) {
+    const p = String(path || '');
+    if (/^\/release\/[0-9a-f-]{36}\/edit-relationships/i.test(p)) return 'relationships';
+    if (/^\/release\/add\/?$/i.test(p) || /^\/release\/[0-9a-f-]{36}\/edit\/?$/i.test(p)) return 'editor';
+    if (/^\/release\/[0-9a-f-]{36}\/?$/i.test(p)) return 'release';
+    return null;
+  }
+
+  /** The Discogs releases and Bandcamp albums among some URLs, as links of the dashboard ({ source, id, url }). */
+  function sourceLinksOf(urls) {
+    const rels = urls.map((u) => ({ 'target-type': 'url', url: { resource: u } }));
+    return LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(rels).map((l) => ({ ...l, source: k })));
+  }
+
+  const afterEditLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : String(l.url || l.id).replace(/^https?:\/\//, '')}`;
+
+  /**
+   * [3.19.0] Release editor: the tick next to "Enter edit" (only on the tab "Edit note", only with a Discogs or Bandcamp
+   * link – those of the tab "External links", saved or just entered). Ticked, the start of the submission is noted for
+   * this tab; MusicBrainz then shows the release page, which goes on to the relationship editor (initReleasePageHook).
+   */
+  function initReleaseEditorHook() {
+    const mbid = (location.pathname.match(MBID_RE) || [])[0] || 'new';
+    const win = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
+    let box = null;
+    let hooked = false;
+    const linksNow = () => {
+      const urls = [...document.querySelectorAll('#external-links-editor tr.external-link-item')].flatMap((row) => {
+        const a = row.querySelector('a.url[href]');
+        const input = row.querySelector('input.value');
+        if (a && /\brel-remove\b/.test(a.className)) return [];
+        return [a ? a.getAttribute('href') : '', input ? input.value : ''].filter(Boolean);
+      });
+      return sourceLinksOf(urls);
+    };
+    const ensureBox = () => {
+      const btn = document.getElementById('enter-edit');
+      if (!btn) return null;
+      if (!box || !box.isConnected) {
+        box = document.createElement('label');
+        box.id = 'dci-after-edit';
+        box.style.cssText = 'display: none; align-items: center; gap: 4px; margin: 0 12px 0 0; vertical-align: middle; cursor: pointer;';
+        box.innerHTML = '<input type="checkbox"> <span></span>';
+        const input = box.querySelector('input');
+        input.checked = readJson('localStorage', AFTER_EDIT_KEY, false) === true;
+        input.addEventListener('change', () => writeJson('localStorage', AFTER_EDIT_KEY, input.checked || null));
+        btn.before(box);
+      }
+      return box;
+    };
+    const update = () => {
+      const b = ensureBox();
+      if (!b) return;
+      const btn = document.getElementById('enter-edit');
+      const links = linksNow();
+      // MusicBrainz shows "Enter edit" only on the tab "Edit note"
+      const visible = btn.style.display !== 'none' && btn.getClientRects().length > 0;
+      b.style.display = links.length && visible ? 'inline-flex' : 'none';
+      b.querySelector('span').textContent = tr('afterEdit.label');
+      b.title = tr('afterEdit.title', { links: links.map(afterEditLinkLabel).join(', ') });
+    };
+    const markGo = () => {
+      const input = box && box.querySelector('input');
+      const links = linksNow();
+      if (!input || !input.checked || !links.length || box.style.display === 'none') return;
+      writeJson('sessionStorage', AFTER_EDIT_GO_KEY, { release: mbid, links, at: Date.now() });
+    };
+    // MusicBrainz's own sign that the edits are submitted ("Enter edit" or Enter in a field); false again: an error
+    const hook = () => {
+      const re = win.MB && win.MB.releaseEditor;
+      const obs = re && re.submissionInProgress;
+      if (hooked || !obs || typeof obs.subscribe !== 'function') return;
+      hooked = true;
+      obs.subscribe((on) => {
+        if (on) markGo();
+        else writeJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
+      });
+    };
+    // without that sign (another version of MusicBrainz): the click on "Enter edit"
+    document.addEventListener('click', (e) => {
+      if (!hooked && e.target && e.target.closest && e.target.closest('#enter-edit')) markGo();
+    }, true);
+    let timer = null;
+    const later = () => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        hook();
+        update();
+      }, 150);
+    };
+    new MutationObserver(later).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'href', 'value'] });
+    document.addEventListener('input', later, true);
+    document.addEventListener('change', later, true);
+    hook();
+    update();
+  }
+
+  /**
+   * [3.19.0] Release page: right after "Enter edit" with the tick (in this tab, within 10 minutes; a new release only when
+   * the page comes from "Add release") it goes on to "Edit relationships", where the dashboard opens by itself.
+   */
+  function initReleasePageHook() {
+    const mbid = (location.pathname.match(MBID_RE) || [])[0];
+    const go = readJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
+    if (!go || !mbid) return;
+    writeJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
+    let from = '';
+    try {
+      from = document.referrer ? new URL(document.referrer).pathname : '';
+    } catch (e) { /* no referrer */ }
+    const fresh = Date.now() - (Number(go.at) || 0) < AFTER_EDIT_MAX_MS;
+    // a new release: only the page MusicBrainz opens from "Add release" (not one typed in or opened otherwise meanwhile)
+    const mine = go.release === 'new' ? /^\/release\/add/i.test(from) : String(go.release).toLowerCase() === mbid.toLowerCase();
+    if (!fresh || !mine) return;
+    writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: Array.isArray(go.links) ? go.links : [], at: Date.now() });
+    location.assign(`/release/${mbid}/edit-relationships`);
+  }
+
+  // ===========================================================================
   // 4. MusicBrainz access (web service and page internals)
   // ===========================================================================
 
   const releaseMbid = (location.pathname.match(MBID_RE) || [])[0];
-  if (!releaseMbid) return;
+  // [3.19.0] The script runs on all pages of a release; besides the relationship editor it only adds, in the release
+  // editor ("Add release", "Edit release"), the tick "open relationship editor and start import dashboard" next to
+  // "Enter edit", and goes on from the release page MusicBrainz shows afterwards. Other pages: nothing.
+  const PAGE_KIND = releasePageKind(location.pathname);
+  if (PAGE_KIND === 'editor') {
+    initReleaseEditorHook();
+    return;
+  }
+  if (PAGE_KIND === 'release') {
+    initReleasePageHook();
+    return;
+  }
+  if (PAGE_KIND !== 'relationships' || !releaseMbid) return;
 
   const pageWindow = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
   const getMB = () => pageWindow.MB;
@@ -8569,7 +8858,8 @@
 
     // Planned recording→work links come first: work credits below depend on them.
     const perf = idx().performanceLt;
-    for (const [i, plan] of S.workPlan) {
+    // [3.18.0] works matrix skipped: no links to works (those staged before are taken out of the editor)
+    for (const [i, plan] of S.worksSkip ? [] : S.workPlan) {
       const t = S.mbTracks[i];
       if (!t || !perf) continue;
       // Attributes chosen in the matrix, with the preselected "live" (S021)
@@ -8602,6 +8892,11 @@
       const info = { issues: [], ready: 0, existing: 0, applied: 0, loose: 0, noWork: 0, mb: null };
       rowInfo.set(row.id, info);
       if (row.level === 'skip') continue;
+      // [3.18.0] a row put on the works level by hand while the works matrix is skipped: nothing of it is staged
+      if (row.level === 'work' && S.worksSkip) {
+        info.issues.push(tr('issue.worksSkipped'));
+        continue;
+      }
       const artist = S.artists.get(row.artistKey);
       if (!artist || !artist.mbid) {
         const missing = row.company ? 'issue.missingCompany' : 'issue.missingArtist';
@@ -8726,7 +9021,7 @@
       }
     }
     // Attributes added to links recording → work that exist in MusicBrainz (an edit of each link)
-    if (perf && S.scope !== 'nonwork') {
+    if (perf && S.scope !== 'nonwork' && !S.worksSkip) {
       const types = linkAttrTypes();
       for (const t of S.mbTracks) {
         if (!matrixTrack(t) || !inMedium(t.idx)) continue;
@@ -8745,7 +9040,7 @@
       }
     }
     // Dates for relationships already in MusicBrainz (works matrix): an edit of each existing relationship
-    for (const [key, f] of S.dateFills) {
+    for (const [key, f] of S.worksSkip ? [] : S.dateFills) {
       const t = S.mbTracks[f.track];
       const work = t && t.works.find((w) => w.gid === f.workGid);
       const lt = idx().ltById.get(f.ltId);
@@ -8773,7 +9068,7 @@
     const waiting = new Set();
     for (const row of S.rows) {
       const a = S.artists.get(row.artistKey);
-      if (row.level !== 'work' || !a || !a.mbid || !currentLinkType(row)) continue;
+      if (row.level !== 'work' || S.worksSkip || !a || !a.mbid || !currentLinkType(row)) continue;
       row.tracks.forEach((i) => { if (S.mbTracks[i] && matrixTrack(S.mbTracks[i]) && !worksForTrack(i).length) waiting.add(i); });
     }
     // Staged before but no longer wanted in the dashboard (row skipped, cell switched off, other type …)
@@ -8826,6 +9121,16 @@
   // --- Log window ----------------------------------------------------------------
 
   S.log = readJson('sessionStorage', LOG_KEY, []);
+  // [3.19.0] Started from the release editor ("open relationship editor and start import dashboard"): the links of its tab
+  // "External links" (also those not in MusicBrainz yet); the dashboard opens by itself. Read once.
+  S.editorLinks = (() => {
+    const a = readJson('sessionStorage', AUTOSTART_KEY, null);
+    if (!a) return null;
+    writeJson('sessionStorage', AUTOSTART_KEY, null);
+    if (String(a.release).toLowerCase() !== releaseMbid.toLowerCase() || Date.now() - (Number(a.at) || 0) >= AFTER_EDIT_MAX_MS) return null;
+    return (Array.isArray(a.links) ? a.links : []).filter((l) => l && LINKED_SOURCES.includes(l.source) && l.id);
+  })();
+  S.autostart = !!S.editorLinks;
   S.datePool = readJson('localStorage', POOL_KEY, null) || [];
   S.syncMode = readJson('localStorage', 'dci-sync-mode', 'click') === 'hover' ? 'hover' : 'click';
 
@@ -9846,6 +10151,15 @@
    * source of the preference list (physical or digital media) that is linked – one link: load it; several: ask.
    */
   function startSource() {
+    // [3.19.0] started from the release editor: its links count as linked too (they may not be in MusicBrainz yet, e.g.
+    // while the edit is open); a single one of them that MusicBrainz does not have yet is loaded at once
+    if (S.editorLinks) {
+      const same = (a, b) => a.source === b.source && String(a.id) === String(b.id);
+      const fresh = S.editorLinks.filter((l) => !S.sourceLinks.some((x) => same(x, l)));
+      S.sourceLinks = [...S.sourceLinks, ...fresh];
+      S.editorLinks = null;
+      if (fresh.length === 1) return { link: fresh[0], fromEditor: true };
+    }
     const kept = (readJson('localStorage', SOURCE_PICK_KEY, {}) || {})[releaseMbid];
     const keptLink = kept && S.sourceLinks.find((x) => x.source === kept.source && x.id === kept.id);
     if (keptLink) return { link: keptLink, kept: true };
@@ -9864,6 +10178,7 @@
       renderDatalists();
       setBusy('busy.mb');
       log('info', 'start', { mbid: releaseMbid });
+      if (S.autostart && S.editorLinks) log('info', 'fromEditor', { links: S.editorLinks.map(afterEditLinkLabel).join(', ') || '–' });
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
         + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits');
       if (!ws) throw new Error(tr('err.releaseMissing'));
@@ -9949,6 +10264,7 @@
     const start = startSource();
     if (start.link) {
       if (start.kept) log('info', 'sourceKept', { src: SOURCES[start.link.source].name });
+      if (start.fromEditor) log('info', 'sourceFromEditor', { src: afterEditLinkLabel(start.link) });
       await loadRelease(start.link.id, { source: SOURCES[start.link.source], confirmed: true });
     } else if (start.multi) {
       showMessage('info', 'msg.multiLinks', { n: start.multi, src: SOURCES[start.source].name });
@@ -9976,8 +10292,9 @@
     S.poolForm = null;
     S.trackForm = null;
     S.dm = { cells: [], found: '', dirty: false };
-    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY, BC_OFF_KEY, SRC_OFF_KEY].forEach((k) => writeJson('localStorage', k, null));
+    [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY, BC_OFF_KEY, SRC_OFF_KEY, WORKS_SKIP_KEY].forEach((k) => writeJson('localStorage', k, null));
     S.aboutOff = false;
+    Object.assign(S, { worksSkip: false, worksFolded: false });
     S.srcOff = new Set();
     S.mediaSel = null;
     S.supp = null;
@@ -10222,6 +10539,8 @@
       }
     }
     sp.items = sp.items.filter((it) => !chosen.includes(it));
+    // [3.18.0] the works matrix skipped: work rows taken over go to "Skip" with it
+    if (S.worksSkip) setWorksRowsSkipped(true);
     log('ok', 'suppApplied', { name: sp.source.name, n: chosen.length });
     renderSupp();
     renderGroups();
@@ -10730,6 +11049,8 @@
           if (!r.manual && !r.supp && S.srcOff.has(srcOffKey(r))) Object.assign(r, { srcOff: true, srcOffLevel: r.level, level: 'skip' });
         });
       }
+      // [3.18.0] works matrix skipped for this release: its rows on "Skip" at once
+      if (S.worksSkip) setWorksRowsSkipped(true);
       S.dateSuggestions = dateSuggestions(rel);
       // Dates in the notes with a word naming their group: suggestions in the date matrix (once per release)
       autoPlaceFoundDates();
@@ -10756,6 +11077,11 @@
             r.level = 'work';
             resolveRowType(r);
           }
+        }
+        // [3.18.0] the works matrix skipped: those too
+        if (S.worksSkip && setWorksRowsSkipped(true)) {
+          renderGroups();
+          renderWorks();
         }
       }
       if (S.artists.size) {
@@ -11054,7 +11380,12 @@
       roleInput.setAttribute('list', 'dci-dl-roles-artist');
       refresh();
       const added = S.overlay.querySelector(`tr[data-row="${row.id}"]`);
-      if (added) added.scrollIntoView({ block: 'nearest' });
+      if (added) {
+        added.scrollIntoView({ block: 'nearest' });
+        // [3.18.0] the line sits above the pool now: the new row lights up where it was added
+        added.classList.add('dci-flash');
+        setTimeout(() => added.classList.remove('dci-flash'), 2500);
+      }
     } catch (err) {
       errEl.textContent = err.message;
     }
@@ -11931,7 +12262,9 @@
   }
 
   function levelCell(row) {
-    const btn = (level) => `<button type="button" data-act="level" data-level="${level}" aria-pressed="${row.level === level}">${esc(tr(`level.${level}`))}</button>`;
+    // [3.18.0] the works matrix skipped: no works level (taking the matrix again brings it back)
+    const off = (level) => (level === 'work' && S.worksSkip && row.level !== 'work' ? ` disabled title="${esc(tr('level.workSkipped'))}"` : '');
+    const btn = (level) => `<button type="button" data-act="level" data-level="${level}" aria-pressed="${row.level === level}"${off(level)}>${esc(tr(`level.${level}`))}</button>`;
     const et = row.entityType || 'artist';
     const lt = currentLinkType(row);
     // Only levels where MB has the row's relationship type (no "Work" for producer or mix credits)
@@ -12297,10 +12630,13 @@
     const key = srcOffKey(row);
     if (!key || !!row.srcOff === !!off) return;
     if (!off) {
-      setLevel(row, creditOn(row));
+      const level = creditOn(row);
+      setLevel(row, level === 'work' && S.worksSkip ? 'skip' : level);
+      // [3.18.0] the works matrix skipped: a work row stays on "Skip" with it
+      if (level === 'work' && S.worksSkip) row.mxSkipped = true;
       return;
     }
-    Object.assign(row, { srcOff: true, srcOffLevel: row.level });
+    Object.assign(row, { srcOff: true, srcOffLevel: row.mxSkipped ? 'work' : row.level });
     S.srcOff.add(key);
     saveSrcOff();
     const a = S.artists.get(row.artistKey);
@@ -12320,6 +12656,8 @@
         r.level = r.aboutLevel || r.level;
         delete r.aboutHidden;
         delete r.aboutLevel;
+        // [3.18.0] the works matrix skipped: a work row stays on "Skip" with it
+        if (S.worksSkip && r.level === 'work') Object.assign(r, { level: 'skip', mxSkipped: true });
         n++;
       }
     }
@@ -14374,6 +14712,8 @@
     awSlowSec: { key: 'dci-aw-slow-s', def: 10, min: 1, max: 120, step: 1 },
     awSlowN: { key: 'dci-aw-slow-n', def: 900, min: 100, max: 10000, step: 100 },
     awDays: { key: 'dci-aw-days', def: 7, min: 1, max: 90, step: 1 },
+    // [3.18.0] from so many tracks without a work the works section asks before the work lookups (0: never)
+    awAsk: { key: 'dci-aw-ask', def: 100, min: 0, max: 10000, step: 1 },
   };
   /** A number of a setting within its limits (rounded to its step); the default when it is no number. */
   function awValue(name, v) {
@@ -14383,6 +14723,13 @@
   }
   S.awOn = readJson('localStorage', 'dci-aw-on', true) !== false;
   Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = awValue(name, readJson('localStorage', d.key, d.def)); });
+  // [3.18.0] "Skip works matrix" for this release (stored): no works, no links to works, no work relationships, the work
+  // lookups rest; the matrix folded (not stored, folded with the skip); the work lookups after the question for many
+  // tracks: null (not decided), 'ask' (the question is shown), 'yes', 'no' ("Not now", for this page)
+  const WORKS_SKIP_KEY = `dci-works-skip:${releaseMbid}`;
+  S.worksSkip = !!readJson('localStorage', WORKS_SKIP_KEY, null);
+  S.worksFolded = S.worksSkip;
+  S.worksLookups = null;
   S.mxMenu = null;
   S.pubRels = new Map();
   S.workRowOpts = new Map();
@@ -15036,6 +15383,8 @@
     const max = S.awMax;
     const entry = { name, works: new Map(), recordings: 0, total: 0, linked: 0, linkedRead: 0, capped: false, max };
     for (let offset = 0; offset < max; offset += 100) {
+      // [3.18.0] the works matrix skipped (or "Not now"): stopped between two requests
+      if (worksResting()) return Object.assign(entry, { stopped: true });
       const d = await mbWsIdle(`work?artist=${mbid}&inc=aliases&limit=100&offset=${offset}`);
       const list = (d && d.works) || [];
       list.forEach((w) => entry.works.set(w.id, { gid: w.id, title: w.title, aliases: (w.aliases || []).map((x) => x.name).filter(Boolean),
@@ -15060,6 +15409,7 @@
         entry.capped = true;
         break;
       }
+      if (worksResting()) return Object.assign(entry, { stopped: true });
       const d = await mbWsIdle(`recording?artist=${mbid}&inc=work-rels&limit=${Math.min(100, rest - offset)}&offset=${offset}`);
       const list = (d && d.recordings) || [];
       entry.total = (d && d['recording-count']) || entry.recordings + list.length;
@@ -15210,6 +15560,86 @@
     }
   }
 
+  /** [3.18.0] The work lookups rest: the works matrix skipped, or "Not now" (or the question still open). */
+  const worksResting = () => S.worksSkip || S.worksLookups === 'no' || S.worksLookups === 'ask';
+
+  /**
+   * [3.18.0] Whether the work lookups (same-named works, works of the artists) may run now. With many tracks without a
+   * work (setting, 100) the works section asks first, with how long it may take; "Not now" leaves out only the lookups.
+   */
+  function worksLookupsAllowed() {
+    if (worksResting()) return false;
+    if (S.worksLookups === 'yes' || !S.awAsk || !S.release) return true;
+    const n = tracksWithoutWork().length;
+    if (n < S.awAsk) return true;
+    S.worksLookups = 'ask';
+    log('info', 'worksAsk', { n });
+    renderWorks();
+    return false;
+  }
+
+  /** [3.18.0] About how many minutes the work lookups take: a request a second, one per track, some per artist. */
+  function worksLookupMinutes() {
+    const targets = S.awOn ? artistWorkTargets().size : 0;
+    return Math.max(1, Math.round(((tracksWithoutWork().length + targets * 3) * 1.1) / 60));
+  }
+
+  /** [3.18.0] The answer to the question: look up the works now (also later, after "Not now") or not now. */
+  function setWorksLookups(yes) {
+    S.worksLookups = yes ? 'yes' : 'no';
+    log('info', yes ? 'worksLookupsOn' : 'worksLookupsOff');
+    renderWorks();
+    if (!yes) return;
+    autoSearchWorks();
+    runArtistWorks();
+  }
+
+  /**
+   * [3.18.0] The work-level rows of the works matrix (writers, publishers, arrangers …) to "Skip" with the matrix, or back
+   * to the works level. A row switched off at its source or hidden with the "about" text keeps that, and gets the works
+   * level back with it. The number of rows changed.
+   */
+  function setWorksRowsSkipped(skip) {
+    let n = 0;
+    for (const r of S.rows) {
+      if (skip && r.level === 'work' && !r.mxSkipped) {
+        delete r.scopeLevel;
+        Object.assign(r, { mxSkipped: true, level: 'skip' });
+        n++;
+      } else if (!skip && r.mxSkipped) {
+        delete r.mxSkipped;
+        if (r.srcOff) r.srcOffLevel = 'work';
+        else if (r.aboutHidden) r.aboutLevel = 'work';
+        else if (r.level === 'skip') {
+          r.level = 'work';
+          resolveRowType(r);
+        }
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /**
+   * [3.18.0] "Skip works matrix" (stored for this release) or "Take works matrix again": skipped, the matrix folds, its
+   * rows go to "Skip", nothing of it is staged (what was staged of it is taken out of the editor) and the work lookups
+   * stop; taken again, all of it comes back as it was and the lookups go on.
+   */
+  function setWorksSkip(skip) {
+    S.worksSkip = skip;
+    S.worksFolded = skip;
+    writeJson('localStorage', WORKS_SKIP_KEY, skip || null);
+    const n = setWorksRowsSkipped(skip);
+    if (skip && S.searchRunning) S.searchCancel = true;
+    log('info', skip ? 'worksSkipped' : 'worksTaken', { n });
+    renderGroups();
+    renderWorks();
+    refresh();
+    if (skip) return;
+    autoSearchWorks();
+    runArtistWorks();
+  }
+
   /**
    * [3.15.0] Compares the tracks without a work with all works of the release's artists, its writers and its performers
    * (in the background; works read once per session). Longer than 10 seconds: a message says why (a large catalogue);
@@ -15229,6 +15659,8 @@
       }
       return;
     }
+    // [3.18.0] the works matrix skipped, "Not now" or the question for many tracks open: no lookups
+    if (!worksLookupsAllowed()) return;
     const targets = artistWorkTargets();
     S.artistWorkTargets = targets;
     for (const [id, info] of targets.special || []) {
@@ -15243,7 +15675,7 @@
     S.artistWorksRunning = true;
     try {
       for (const [mbid, info] of targets) {
-        if (S.artistWorksAgain) break;
+        if (S.artistWorksAgain || worksResting()) break;
         // [3.16.0] read before (in this browser, within the days of the setting): from the store
         if (!S.artistWorks.has(mbid)) {
           const rec = await awGet(mbid);
@@ -15264,6 +15696,8 @@
             showMessage('info', 'msg.artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
             log('info', 'artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
           });
+          // [3.18.0] stopped (works matrix skipped): what was read of this artist is not kept as complete
+          if (e.stopped) break;
           e.readAt = Date.now();
           S.artistWorks.set(mbid, e);
           awPut(awPack(mbid, e, e.readAt));
@@ -15282,7 +15716,7 @@
     if (matchArtistWorks()) renderWorksBackground();
     const n = [...S.artistWorkHits.values()].reduce((sum, list) => sum + list.length, 0);
     const tracks = [...S.artistWorkHits.keys()].sort((a, b) => a - b).map((i) => trackLabel(S.mbTracks[i])).join(', ');
-    if (!S.artistWorksAgain) log('ok', n ? 'artistWorksDone' : 'artistWorksNone', { n, tracks });
+    if (!S.artistWorksAgain && !worksResting()) log('ok', n ? 'artistWorksDone' : 'artistWorksNone', { n, tracks });
     if (S.artistWorksAgain) {
       S.artistWorksAgain = false;
       runArtistWorks();
@@ -15296,12 +15730,13 @@
       return;
     }
     const todo = S.mbTracks.filter((t) => matrixTrack(t) && !isPlaceholderTitle(t.title) && !worksForTrack(t.idx).length && !S.workSearch.has(t.idx));
-    if (!todo.length) return;
+    // [3.18.0] the works matrix skipped, "Not now" or the question for many tracks open: no lookups
+    if (!todo.length || !worksLookupsAllowed()) return;
     S.searchRunning = true;
     S.searchCancel = false;
     S.searchProgress = { done: 0, total: todo.length };
     for (const t of todo) {
-      if (S.searchCancel) break;
+      if (S.searchCancel || worksResting()) break;
       await runWorkSearch(t.idx);
       S.searchProgress.done++;
       const el = S.overlay && S.overlay.querySelector('[data-el="search-progress"]');
@@ -15311,7 +15746,7 @@
     const again = S.searchAgain;
     Object.assign(S, { searchProgress: null, searchRunning: false, searchAgain: false });
     renderWorks();
-    log('ok', 'checksDone', { n: done });
+    if (!worksResting()) log('ok', 'checksDone', { n: done });
     if (again) autoSearchWorks();
   }
 
@@ -15632,10 +16067,32 @@
     const cols = matrixColumns();
     const missing = S.mbTracks.filter((x) => matrixTrack(x) && !worksForTrack(x.idx).length).length;
     const codesSelect = `<label>${esc(tr('matrix.codes'))} <select data-f="mx-codes">${['names', 'cisac', 'gema'].map((c) => `<option value="${c}" ${S.roleCodes === c ? 'selected' : ''}>${esc(tr(`matrix.codes.${c}`))}</option>`).join('')}</select></label>`;
+    // [3.18.0] the head: fold / unfold, "Skip works matrix" (or "Take works matrix again"), what it holds while folded
+    const folded = S.worksFolded;
+    const skipped = S.worksSkip;
+    el.classList.toggle('dci-works-off', skipped);
+    const head = `<div class="dci-works-head">
+        <h3><button type="button" class="dci-textbtn dci-works-fold" data-act="mx-fold" aria-expanded="${!folded}" title="${esc(tr(folded ? 'matrix.unfold' : 'matrix.fold'))}">${folded ? '▸' : '▾'} ${esc(tr('matrix.title'))}</button></h3>
+        ${skipped ? `<span class="dci-works-skipped">${esc(tr('matrix.skipped'))}</span> <button type="button" class="dci-small" data-act="mx-skip" data-on="0">${esc(tr('matrix.unskip'))}</button>`
+    : `<button type="button" class="dci-small" data-act="mx-skip" data-on="1" title="${esc(tr('matrix.skipTitle'))}">${esc(tr('matrix.skip'))}</button>`}
+        ${folded ? `<span class="dci-sub" data-el="works-folded">${esc(`${tr('matrix.countTracks', { n: uniq(mrows.map((m) => m.i)).length })} · ${tr('matrix.colWorks', { n: mrows.filter((m) => m.work).length })} · ${
+    skipped ? tr('matrix.skippedRows', { n: S.rows.filter((r) => r.mxSkipped).length }) : tr('matrix.cols', { n: cols.length })}`)}</span>` : ''}
+      </div>
+      ${skipped ? `<p class="dci-sub">${esc(tr('matrix.skippedHint'))}</p>` : ''}
+      ${!skipped && S.worksLookups === 'ask' ? `<div class="dci-mx-ask" data-el="works-ask"><strong>${esc(tr('matrix.askLookups', { n: tracksWithoutWork().length }))}</strong>
+        <span class="dci-sub">${esc(tr('matrix.askTime', { min: worksLookupMinutes() }))}</span>
+        <button type="button" class="dci-primary" data-act="mx-lookups" data-on="1">${esc(tr('matrix.lookupsYes'))}</button>
+        <button type="button" data-act="mx-lookups" data-on="0">${esc(tr('matrix.lookupsNo'))}</button></div>` : ''}
+      ${!skipped && S.worksLookups === 'no' && tracksWithoutWork().length ? `<p class="dci-sub" data-el="works-lookups-off">${esc(tr('matrix.lookupsOff'))}
+        <button type="button" class="dci-textbtn" data-act="mx-lookups" data-on="1">${esc(tr('matrix.lookupsNow'))}</button></p>` : ''}`;
+    if (folded) {
+      el.innerHTML = head;
+      return;
+    }
     el.innerHTML = `
-      <h3>${esc(tr('matrix.title'))}</h3>
+      ${head}
       <p class="dci-muted">${esc(missing ? tr('works.missing', { n: missing }) : tr('works.allDone'))} ${esc(tr('matrix.explain'))}</p>
-      <div class="dci-works-bar">
+      ${skipped ? '' : `<div class="dci-works-bar">
         ${codesSelect}
         <label>${esc(tr('works.type'))} <select data-f="work-type">${workOptionsHtml(S.workOptions.types, S.workDefaults.typeId)}</select>${typeAutoHtml(S.workDefaults)}</label>
         <label>${esc(tr('works.lang'))} ${languagesHtml(S.workDefaults.languageIds, 'default')}</label>
@@ -15653,8 +16110,8 @@
         <button type="button" class="dci-textbtn" data-act="works-create-all">${esc(tr('works.createAllForm'))}</button></div>` : ''}
       ${addColumnHtml()}
       ${S.searchProgress ? `<p class="dci-sub" data-el="search-progress">${esc(tr('matrix.searchProgress', S.searchProgress))}<button type="button" class="dci-textbtn" data-act="mx-search-cancel">${esc(tr('matrix.searchCancel'))}</button></p>` : ''}
-      ${cols.length ? '' : `<p class="dci-sub">${esc(trSrc('matrix.empty'))}</p>`}
-      <div class="dci-mx-wrap">
+      ${cols.length ? '' : `<p class="dci-sub">${esc(trSrc('matrix.empty'))}</p>`}`}
+      <div class="dci-mx-wrap"${skipped ? ' inert' : ''}>
         <table class="dci-table dci-matrix">
           <thead><tr><th scope="col" class="dci-mx-front"><div class="dci-mx-card dci-mx-frontcard"><div class="dci-mx-cardline"><strong>${esc(tr('matrix.work'))}</strong>
             <span class="dci-sub">${esc(`${tr('matrix.countTracks', { n: uniq(mrows.map((m) => m.i)).length })} · ${tr('matrix.colWorks', { n: mrows.filter((m) => m.work).length })}`)}</span></div>${linkAttrsHeadHtml()}</div></th>${cols.map(columnHeadHtml).join('')}</tr></thead>
@@ -15805,6 +16262,17 @@
       case 'mx-search-cancel':
         S.searchCancel = true;
         return true;
+      case 'mx-fold':
+        // [3.18.0] fold / unfold the works matrix (not stored)
+        S.worksFolded = !S.worksFolded;
+        renderWorks();
+        return true;
+      case 'mx-skip':
+        setWorksSkip(btn.dataset.on === '1');
+        return true;
+      case 'mx-lookups':
+        setWorksLookups(btn.dataset.on === '1');
+        return true;
       case 'mx-wattr': {
         // One attribute of one work's link (MusicBrainz's own stay)
         const tr1 = btn.closest('tr[data-mrow]');
@@ -15888,6 +16356,7 @@
         S.mxRemoved.set(c.key, { key: c.key, name: c.name, mbid: c.mbid, entityType: c.entityType, artist: c.artist, rowIds: c.rows.map((r) => r.id) });
         c.rows.forEach((r) => {
           delete r.scopeLevel;
+          delete r.mxSkipped;
           r.level = 'skip';
           r.levelTouched = true;
         });
@@ -16554,6 +17023,7 @@
 
   function setLevel(row, level) {
     delete row.scopeLevel;
+    delete row.mxSkipped;
     const toOrFromWork = level === 'work' || row.level === 'work';
     row.level = level;
     row.levelTouched = true;
@@ -16980,8 +17450,8 @@
   function dragAutoScroll(e) {
     const d = S.dmDrag;
     if (!d) return;
-    const dates = $('dates');
-    const top = dates && !dates.hidden ? dates.getBoundingClientRect().bottom : 0;
+    const stick = $('stick');
+    const top = stick && stick.offsetHeight ? stick.getBoundingClientRect().bottom : 0;
     let bottom;
     if (inPage()) {
       const foot = S.overlay.querySelector('.dci-foot');
@@ -17208,6 +17678,7 @@
           if (btn.dataset.level === 'only-works') {
             if (r.level === 'work' || r.levelBeforeSkip === 'work' || r.scopeLevel === 'work') {
               delete r.scopeLevel;
+              delete r.mxSkipped;
               if (r.level === 'skip') {
                 r.level = 'work';
                 resolveRowType(r);
@@ -17216,6 +17687,7 @@
             }
             if (r.level !== 'skip') r.levelBeforeSkip = r.level;
             delete r.scopeLevel;
+            delete r.mxSkipped;
             r.level = 'skip';
             r.levelTouched = true;
             continue;
@@ -17224,6 +17696,7 @@
           if ((r.work || r.company || r.other || r.existingAll) && btn.dataset.level !== 'skip') continue;
           // A level chosen by hand: no longer "only hidden" by "Stage: only …", so staged relationships follow it
           delete r.scopeLevel;
+          delete r.mxSkipped;
           r.level = btn.dataset.level;
           r.levelTouched = true;
           resolveRowType(r);
@@ -17305,6 +17778,7 @@
         row.types = [o.type];
         row.creditFromRole = o.task || '';
         delete row.scopeLevel;
+        delete row.mxSkipped;
         row.level = o.level;
         row.levelTouched = true;
         resolveRowType(row);
@@ -17732,6 +18206,13 @@
       case 'add-manual':
         addManualEntry();
         break;
+      case 'manual-search': {
+        // [3.18.0] the search links of "Add entry manually" behind its "?"
+        const box = $('manual-search');
+        box.hidden = !box.hidden;
+        btn.setAttribute('aria-expanded', String(!box.hidden));
+        break;
+      }
       case 'discogs-load': {
         // Another source: a Bandcamp album URL, else a Discogs release (URL or ID); remembered for this release
         const input = S.overlay.querySelector('[data-f="discogs-input"]');
@@ -18606,7 +19087,20 @@
           <div class="dci-settings" data-el="settings" role="region" aria-label="${esc(tr('settings.title'))}" hidden></div>
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
           <div class="dci-msgs" data-el="msgs" aria-live="polite"></div>
-          <section class="dci-dates" data-el="dates" aria-label="${esc(tr('date.title'))}" hidden></section>
+          <div class="dci-stick" data-el="stick">
+            <div class="dci-manual" data-el="manual" role="group" aria-label="${esc(tr('manual.title'))}" hidden>
+              <strong class="dci-manual-title" title="${esc(tr('manual.hint'))}">${esc(tr('manual.title'))}</strong>
+              <input type="text" data-f="manual-artist" placeholder="${esc(tr('manual.entityPlaceholder'))}" aria-label="${esc(tr('manual.artistAria'))}" title="${esc(tr('manual.hint'))}">
+              <input type="text" data-f="manual-role" list="dci-dl-roles-artist" placeholder="${esc(tr('manual.rolePlaceholder'))}" aria-label="${esc(tr('role.aria'))}">
+              <button type="button" class="dci-small" data-act="add-manual">${esc(tr('manual.add'))}</button>
+              <button type="button" class="dci-textbtn dci-manual-help" data-act="manual-search" aria-expanded="false" title="${esc(tr('manual.searchTitle'))}" aria-label="${esc(tr('manual.searchTitle'))}">?</button>
+              <div class="dci-sub dci-manual-search" data-el="manual-search" hidden>${esc(tr('manual.search'))}
+                ${['artist', 'label', 'place', 'area', 'event', 'series', 'recording', 'release', 'release_group', 'work', 'instrument']
+                  .map((et) => `<a href="/search?type=${et}&method=indexed" target="_blank" rel="noopener">${esc(tr(`entity.${et}`))}</a>`).join(' · ')}</div>
+              <div class="dci-err" data-el="manual-err"></div>
+            </div>
+            <section class="dci-dates" data-el="dates" aria-label="${esc(tr('date.title'))}" hidden></section>
+          </div>
           <section class="dci-supp" data-el="supp" aria-label="${esc(tr('supp.with'))}" hidden></section>
           <div class="dci-toolbar" data-el="toolbar" hidden>
             <span>${esc(tr('toolbar.levelAll'))}</span>
@@ -18636,19 +19130,6 @@
           <section class="dci-companies" data-el="companies" hidden></section>
           <section class="dci-companies dci-others" data-el="others" hidden></section>
           <section class="dci-works" data-el="works" hidden></section>
-          <div class="dci-manual" data-el="manual" hidden>
-            <h3>${esc(tr('manual.title'))}</h3>
-            <p class="dci-muted">${esc(tr('manual.hint'))}</p>
-            <div class="dci-manual-form">
-              <input type="text" data-f="manual-artist" placeholder="${esc(tr('manual.entityPlaceholder'))}" aria-label="${esc(tr('manual.artistAria'))}">
-              <input type="text" data-f="manual-role" list="dci-dl-roles-artist" placeholder="${esc(tr('manual.rolePlaceholder'))}" aria-label="${esc(tr('role.aria'))}">
-              <button type="button" data-act="add-manual">${esc(tr('manual.add'))}</button>
-            </div>
-            <div class="dci-sub">${esc(tr('manual.search'))}
-              ${['artist', 'label', 'place', 'area', 'event', 'series', 'recording', 'release', 'release_group', 'work', 'instrument']
-                .map((et) => `<a href="/search?type=${et}&method=indexed" target="_blank" rel="noopener">${esc(tr(`entity.${et}`))}</a>`).join(' · ')}</div>
-            <div class="dci-err" data-el="manual-err"></div>
-          </div>
           <div data-el="datalists"></div>
         </div>
         <div class="dci-preview" data-el="preview" hidden></div>
@@ -18702,17 +19183,14 @@
     applyScale();
     makeMovable(overlay.querySelector('.dci-panel'), '.dci-head', 'panel');
     applyPlacement();
-    // "Add entry manually" sits above the works matrix
-    const worksEl = overlay.querySelector('[data-el="works"]');
-    const manualEl = overlay.querySelector('[data-el="manual"]');
-    if (worksEl && manualEl) worksEl.parentNode.insertBefore(manualEl, worksEl);
-    // Rows scrolled into view (keyboard, jumps) must not end up under the sticky date pool.
+    // Rows scrolled into view (keyboard, jumps) must not end up under the sticky date pool ([3.18.0] with the line
+    // "Add entry manually" above it, always in view)
     const body = overlay.querySelector('[data-el="body"]');
-    const datesBar = overlay.querySelector('[data-el="dates"]');
+    const stick = overlay.querySelector('[data-el="stick"]');
     new ResizeObserver(() => {
-      body.style.scrollPaddingTop = `${datesBar.offsetHeight + 8}px`;
+      body.style.scrollPaddingTop = `${stick.offsetHeight + 8}px`;
       updatePageScrollPadding();
-    }).observe(datesBar);
+    }).observe(stick);
     overlay.addEventListener('focusin', onFocusSource);
     overlay.addEventListener('click', onFocusSource);
     overlay.addEventListener('mouseover', onHover);
@@ -18794,9 +19272,9 @@
   function updatePageScrollPadding() {
     const html = document.documentElement;
     const on = S.overlay && inPage() && !S.overlay.hidden;
-    const dates = on && S.overlay.querySelector('[data-el="dates"]');
+    const stick = on && S.overlay.querySelector('[data-el="stick"]');
     const foot = on && S.overlay.querySelector('.dci-foot');
-    html.style.scrollPaddingTop = dates && !dates.hidden ? `${dates.offsetHeight + 8}px` : '';
+    html.style.scrollPaddingTop = stick && stick.offsetHeight ? `${stick.offsetHeight + 8}px` : '';
     html.style.scrollPaddingBottom = foot ? `${foot.offsetHeight + 8}px` : '';
   }
 
@@ -18884,6 +19362,7 @@
         row(`<label>${esc(tr('settings.awMax'))} ${num('awMax')}</label> <span class="dci-sub" data-el="aw-cost">${esc(tr('settings.awCost', { req, sec: Math.round(req * 1.1) }))}</span>`),
         row(`${esc(tr('settings.awSlow'))} ${num('awSlowSec')} ${esc(tr('settings.awSlowSec'))} ${num('awSlowN')} ${esc(tr('settings.awSlowN'))}`),
         row(`<label>${esc(tr('settings.awDays'))} ${num('awDays')}</label>`),
+        row(`<label>${esc(tr('settings.awAsk'))} ${num('awAsk')} ${esc(tr('settings.awAskTracks'))}</label>`),
         row(`<button type="button" class="dci-small" data-act="aw-clear">${esc(tr('settings.awClear'))}</button>
           ${S.awStoreCount == null ? '' : `<span class="dci-sub">${esc(tr('settings.awStored', { n: S.awStoreCount }))}</span>`}`),
         row(`<label>${esc(tr('matrix.codes'))} <select data-f="mx-codes">${['names', 'cisac', 'gema'].map((c) => `<option value="${c}" ${S.roleCodes === c ? 'selected' : ''}>${esc(tr(`matrix.codes.${c}`))}</option>`).join('')}</select></label>`),
@@ -18969,6 +19448,13 @@
         for (const [id, e] of S.artistWorks) if (e.capped && e.max < S.awMax) S.artistWorks.delete(id);
         runArtistWorks();
       }
+      // [3.18.0] the question for many tracks still open: asked again with the new number (or the lookups start)
+      if (k === 'awAsk' && S.worksLookups === 'ask') {
+        S.worksLookups = null;
+        renderWorks();
+        autoSearchWorks();
+        runArtistWorks();
+      }
     } else if (k === 'wattr-long') {
       S.wattrLong = el.checked;
       writeJson('localStorage', 'dci-wattr-long', S.wattrLong || null);
@@ -19023,7 +19509,7 @@
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks'];
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY];
 
   function renderReset() {
     if (!S.overlay) return;
@@ -19107,6 +19593,20 @@
     if (!S.initialized) await init();
   }
 
+  /**
+   * [3.19.0] Started from the release editor: the dashboard opens by itself once the relationship editor has its data
+   * (its relationship types), at most after 30 seconds.
+   */
+  function openWhenReady(tries = 0) {
+    const le = getMB() && getMB().linkedEntities;
+    const ready = le && le.link_type && Object.keys(le.link_type).length;
+    if (!ready && tries < 100) {
+      setTimeout(() => openWhenReady(tries + 1), 300);
+      return;
+    }
+    if (!S.overlay || S.overlay.hidden) openDashboard();
+  }
+
   /** Opens the dashboard, or brings it back into view and to the front if it is already open. */
   function showDashboard() {
     if (!S.overlay || S.overlay.hidden) {
@@ -19135,6 +19635,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.18.0', label: 'Credits Importer 3.18.0' },
     { v: '3.17.0', label: 'Credits Importer 3.17.0 · Companion 1.8.0' },
     { v: '3.16.0', label: 'Credits Importer 3.16.0' },
     { v: '3.15.0', label: 'Credits Importer 3.15.0' },
@@ -19742,6 +20243,13 @@
         border: 1px solid #c8c5d6; background: #fff; border-radius: 3px; padding: 1px calc(var(--u, 1px) * 8); }
       .dci-works { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 22); padding: 2px 0 calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); border-left: 3px solid var(--teal); }
       .dci-works h3 { margin: 0 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 15); font-weight: 600; }
+      .dci-works-head { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: 0 0 calc(var(--u, 1px) * 4); }
+      .dci-works-head h3 { margin: 0; }
+      .dci-works-head .dci-works-fold { font: inherit; font-weight: 600; color: inherit; padding: 0; text-decoration: none; }
+      .dci-works-skipped { padding: 1px calc(var(--u, 1px) * 8); border-radius: 10px; background: #eee; color: #555; font-size: calc(var(--u, 1px) * 12); }
+      .dci-works.dci-works-off { border-left-color: #bbb; }
+      .dci-works-off .dci-mx-wrap { opacity: .45; }
+      .dci-mx-ask { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border-radius: 4px; background: #eef6fb; border: 1px solid #9cc7e0; }
       .dci-works > p { margin: 0 0 calc(var(--u, 1px) * 8); max-width: 80ch; }
       .dci-works-bar { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 16); margin-bottom: calc(var(--u, 1px) * 8); }
       .dci-candidates { list-style: none; margin: calc(var(--u, 1px) * 6) 0 0; padding: 0; }
@@ -19844,7 +20352,18 @@
       .dci-sync { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); }
 
       /* Date pool: stays visible at the top while scrolling */
-      .dci-dates { position: sticky; top: calc(var(--u, 1px) * -14); z-index: 3; margin: calc(var(--u, 1px) * -14) calc(var(--u, 1px) * -20) calc(var(--u, 1px) * 14); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 20); background: #fbfaff; border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(38, 36, 48, 0.06); }
+      .dci-stick { position: sticky; top: calc(var(--u, 1px) * -14); z-index: 3; margin: calc(var(--u, 1px) * -14) calc(var(--u, 1px) * -20) calc(var(--u, 1px) * 14); background: #fbfaff; border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(38, 36, 48, 0.06); }
+      .dci-stick:not(:has(> :not([hidden]))) { display: none; }
+      .dci-dates { padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 20); }
+      .dci-manual { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 20); }
+      .dci-manual:not([hidden]) + .dci-dates:not([hidden]) { border-top: 1px dashed var(--line); }
+      .dci-manual-title { font-size: calc(var(--u, 1px) * 13); font-weight: 600; cursor: help; }
+      .dci-manual input[data-f="manual-artist"] { width: calc(var(--u, 1px) * 240); }
+      .dci-manual input[data-f="manual-role"] { flex: 1 1 calc(var(--u, 1px) * 220); }
+      .dci-manual-help { font-weight: 600; padding: 0 calc(var(--u, 1px) * 4); }
+      .dci-manual-search { flex-basis: 100%; }
+      .dci-manual .dci-err { margin-top: 0; }
+      .dci-manual .dci-err:empty { display: none; }
       .dci-dates-bar { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); }
       .dci-date-chip { display: inline-flex; align-items: stretch; border: 1px solid #c8c5d6; border-radius: 12px; background: #fff; overflow: hidden; }
       .dci-date-chip button { border: 0; background: none; color: var(--ink); padding: 2px calc(var(--u, 1px) * 8); }
@@ -20046,10 +20565,6 @@
       .dci-sugg .dci-tn::after { content: ""; margin-left: calc(var(--u, 1px) * 4); }
 
       .dci-textbtn { border: 0; background: none; color: var(--purple-d); padding: 2px 0; text-decoration: underline; }
-      .dci-manual { margin-top: calc(var(--u, 1px) * 10); padding-top: calc(var(--u, 1px) * 14); border-top: 1px solid var(--line); }
-      .dci-manual h3 { margin: 0 0 calc(var(--u, 1px) * 8); font-size: calc(var(--u, 1px) * 14); font-weight: 600; }
-      .dci-manual-form { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); }
-      .dci-manual-form input { width: calc(var(--u, 1px) * 300); }
 
       .dci-preview { max-height: 32vh; overflow: auto; padding: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 20); border-top: 1px solid var(--line); background: var(--soft); }
       .dci-preview[hidden] { display: none; }
@@ -20069,7 +20584,7 @@
         resize: none; overflow: visible; box-shadow: 0 1px 6px rgba(38, 36, 48, 0.14); }
       #dci-overlay.dci-inline .dci-head { cursor: default; }
       #dci-overlay.dci-inline .dci-body { overflow: visible; }
-      #dci-overlay.dci-inline .dci-dates { top: 0; }
+      #dci-overlay.dci-inline .dci-stick { top: 0; }
       .dci-jump { display: inline-flex; gap: calc(var(--u, 1px) * 2); }
       .dci-jump .dci-iconbtn { border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; padding: 1px calc(var(--u, 1px) * 7); line-height: 1.2; }
       #dci-overlay.dci-inline .dci-foot { position: sticky; bottom: 0; z-index: 4; background: #fff; box-shadow: 0 -2px 6px rgba(38, 36, 48, 0.08); border-radius: 0 0 4px 4px; }
@@ -20081,7 +20596,7 @@
       @media (max-width: 700px) {
         #dci-overlay { padding: 0; }
         .dci-panel { border-radius: 0; }
-        .dci-other input, .dci-gmatch input, .dci-manual-form input { width: 100%; }
+        .dci-other input, .dci-gmatch input, .dci-manual input[data-f] { width: 100%; }
       }
     `;
     document.head.appendChild(style);
@@ -20109,6 +20624,7 @@
   injectStyles();
   insertLauncher();
   resumePanicIfRequested();
+  if (S.autostart) openWhenReady();
   setTimeout(() => {
     if (document.querySelectorAll('#dci-styles').length > 1) showTwiceWarning();
   }, 3000);
