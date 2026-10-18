@@ -8,7 +8,8 @@ B) In the dashboard: an entry "Jane Roe" with the row "Liner Notes" (liner notes
    “about” text"; MusicBrainz artists of that name only as suggestions (nothing assigned); the date by the name in the
    date pool as a suggestion named for the liner notes.
 C) "Leave out the about text": the row hidden and the date out of the pool; ticked off again, both back.
-D) With the companion: the row jumps to the name's line in the "about" text (only that sentence, no mark)."""
+D) With the companion: the row jumps to the name's line in the "about" text (only that sentence, no mark).
+E) 3.17.6: the liner notes row shows that date as a suggestion (dashed, yellow) in its date cell; ✓ takes it."""
 import json
 import subprocess
 from playwright.sync_api import sync_playwright
@@ -132,6 +133,15 @@ with sync_playwright() as p:
     print('C) ausgelassen:', c1, '| wieder da:', c2)
     results.append((c1[0] is None or not c1[0][6] or c1[0][3] == 'skip') and not any(n == 'Liner notes – Jane Roe' for n, _ in c1[1])
                    and c2[0] is not None and c2[0][3] == 'release' and ['Liner notes – Jane Roe', [2019, 5]] in c2[1])
+    # E) the date as a suggestion at the row; ✓ takes it
+    SUGG = f"""(() => {{ const tr = document.querySelector('tr[data-row="{rid}"]'); const c = tr && tr.querySelector('.dci-datechip-sugg');
+      const d = tr && tr.querySelector('.dci-datechip:not(.dci-datechip-sugg)'); return [c ? c.textContent.replace(/[✓✕]/g, '').trim() : null, d ? d.dataset.date : null]; }})()"""
+    e1 = pg.evaluate(SUGG)
+    pg.locator(f'tr[data-row="{rid}"] [data-act=date-take]').click()
+    pg.wait_for_timeout(500)
+    e2 = pg.evaluate(SUGG)
+    print('E) Vorschlag an der Zeile:', e1, '| übernommen:', e2)
+    results.append(e1[0] is not None and 'Liner notes – Jane Roe' in e1[0] and e1[1] is None and e2[0] is None and e2[1] == '2019-05')
     print('Fehler:', real(errs), real(bcerr))
     results.append(not real(errs) and not real(bcerr))
     b.close()
