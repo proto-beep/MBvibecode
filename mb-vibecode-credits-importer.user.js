@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.18.0
+// @version      3.19.0
 // @date         2026-10-18
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -13,8 +13,8 @@
 // @supportURL   https://github.com/proto-beep/MBvibecode/issues
 // @downloadURL  https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js
 // @updateURL    https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js
-// @match        *://musicbrainz.org/release/*/edit-relationships*
-// @match        *://*.musicbrainz.org/release/*/edit-relationships*
+// @match        *://musicbrainz.org/release/*
+// @match        *://*.musicbrainz.org/release/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      bandcamp.com
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.18.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.19.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -194,6 +194,8 @@
       "log.artistSpelling": "{name}: found via its {src} link, but MusicBrainz spells it differently ({mb}) – only a suggestion",
       "log.artistCreditSpelling": "{name}: found via its {src} link, but the release names it differently in its artist credit ({mb}) – only a suggestion",
       "log.sourceKept": "Source chosen for this release before: {src}",
+      "log.fromEditor": "Started from the release editor (“open relationship editor and start import dashboard”) – links there: {links}",
+      "log.sourceFromEditor": "Source entered in the release editor, not in MusicBrainz yet: {src}",
       "log.sourceOrder": "Order of the sources for {kind}: {list}",
       "log.bcTest": "Bandcamp test: {text}",
       "source.text": "Paste text …",
@@ -906,6 +908,8 @@
       "ms.0.1.0": "First version: the credits of the linked Discogs release in the release relationship editor",
       "notice.title": "MB x Vibecode: Credits Importer {version} – what’s new",
       "old.twice": "Two importer scripts are running on this page: the old “MB x Vibecode: Import Discogs credits” (or a second copy) and “MB x Vibecode: Credits Importer”. Please delete the old one in your script manager (Tampermonkey, Violentmonkey) and reload the page.",
+      "afterEdit.label": "open relationship editor and start import dashboard",
+      "afterEdit.title": "Credits Importer: after “Enter edit”, “Edit relationships” of this release opens with the import dashboard, which loads the credits of its source – {links}",
       "notice.reset": "With this update all settings and stored data of the script were reset once – a fresh start: language, switches, own mapping rules, date and track pools, the chosen sources and the list of created works.",
       "notice.changelog": "Changelog",
       "notice.close": "Close this message",
@@ -1504,6 +1508,8 @@
       "log.artistSpelling": "{name}: über den {src}-Link gefunden, aber MusicBrainz schreibt den Namen anders ({mb}) – nur ein Vorschlag",
       "log.artistCreditSpelling": "{name}: über den {src}-Link gefunden, aber das Release nennt den Namen im Artist Credit anders ({mb}) – nur ein Vorschlag",
       "log.sourceKept": "Für dieses Release früher gewählte Quelle: {src}",
+      "log.fromEditor": "Aus dem Release-Editor gestartet („Beziehungs-Editor öffnen und Import-Dashboard starten“) – Links dort: {links}",
+      "log.sourceFromEditor": "Quelle im Release-Editor eingetragen, noch nicht in MusicBrainz: {src}",
       "log.sourceOrder": "Reihenfolge der Quellen für {kind}: {list}",
       "log.bcTest": "Bandcamp-Test: {text}",
       "source.text": "Text einfügen …",
@@ -2216,6 +2222,8 @@
       "ms.0.1.0": "Erste Version: die Credits des verknüpften Discogs-Release im Relationship-Editor",
       "notice.title": "MB x Vibecode: Credits Importer {version} – das ist neu",
       "old.twice": "Auf dieser Seite laufen zwei Import-Skripte: das alte „MB x Vibecode: Import Discogs credits“ (oder eine zweite Kopie) und „MB x Vibecode: Credits Importer“. Bitte lösche das alte im Skript-Manager (Tampermonkey, Violentmonkey) und lade die Seite neu.",
+      "afterEdit.label": "Beziehungs-Editor öffnen und Import-Dashboard starten",
+      "afterEdit.title": "Credits Importer: nach „Enter edit“ öffnet sich „Edit relationships“ dieses Releases mit dem Import-Dashboard, das die Credits seiner Quelle lädt – {links}",
       "notice.reset": "Mit diesem Update wurden alle Einstellungen und gespeicherten Daten des Skripts einmal zurückgesetzt – ein Neuanfang: Sprache, Schalter, eigene Mapping-Regeln, Datums- und Track-Pools, die gewählten Quellen und die Liste der angelegten Werke.",
       "notice.changelog": "Changelog",
       "notice.close": "Diese Nachricht schließen",
@@ -2814,6 +2822,8 @@
       "log.artistSpelling": "{name}: encontrado por su enlace de {src}, pero MusicBrainz lo escribe distinto ({mb}); solo una sugerencia",
       "log.artistCreditSpelling": "{name}: encontrado por su enlace de {src}, pero la publicación lo nombra distinto en su crédito de artista ({mb}); solo una sugerencia",
       "log.sourceKept": "Fuente elegida antes para esta publicación: {src}",
+      "log.fromEditor": "Iniciado desde el editor de publicaciones («abrir el editor de relaciones e iniciar el panel de importación») – enlaces allí: {links}",
+      "log.sourceFromEditor": "Fuente introducida en el editor de publicaciones, aún no en MusicBrainz: {src}",
       "log.sourceOrder": "Orden de las fuentes para {kind}: {list}",
       "log.bcTest": "Prueba de Bandcamp: {text}",
       "source.text": "Pegar texto…",
@@ -3526,6 +3536,8 @@
       "ms.0.1.0": "Primera versión: los créditos de la publicación de Discogs enlazada en el editor de relaciones",
       "notice.title": "MB x Vibecode: Credits Importer {version} – novedades",
       "old.twice": "En esta página se ejecutan dos scripts de importación: el antiguo «MB x Vibecode: Import Discogs credits» (o una segunda copia) y «MB x Vibecode: Credits Importer». Borra el antiguo en tu gestor de scripts (Tampermonkey, Violentmonkey) y vuelve a cargar la página.",
+      "afterEdit.label": "abrir el editor de relaciones e iniciar el panel de importación",
+      "afterEdit.title": "Credits Importer: tras «Enter edit» se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links}",
       "notice.reset": "Con esta actualización se restablecieron una vez todos los ajustes y datos guardados del script – un nuevo comienzo: idioma, interruptores, reglas propias, pools de fechas y pistas, las fuentes elegidas y la lista de obras creadas.",
       "notice.changelog": "Registro de cambios",
       "notice.close": "Cerrar este mensaje",
@@ -4124,6 +4136,8 @@
       "log.artistSpelling": "{name} : trouvé via son lien {src}, mais MusicBrainz l’écrit autrement ({mb}) – seulement une suggestion",
       "log.artistCreditSpelling": "{name} : trouvé via son lien {src}, mais la parution le nomme autrement dans son crédit d’artiste ({mb}) – seulement une suggestion",
       "log.sourceKept": "Source choisie auparavant pour cette parution : {src}",
+      "log.fromEditor": "Lancé depuis l’éditeur de parution (« ouvrir l’éditeur de relations et lancer le tableau de bord d’import ») – liens : {links}",
+      "log.sourceFromEditor": "Source saisie dans l’éditeur de parution, pas encore dans MusicBrainz : {src}",
       "log.sourceOrder": "Ordre des sources pour {kind} : {list}",
       "log.bcTest": "Test Bandcamp : {text}",
       "source.text": "Coller un texte…",
@@ -4836,6 +4850,8 @@
       "ms.0.1.0": "Première version : les crédits de la parution Discogs liée dans l’éditeur de relations",
       "notice.title": "MB x Vibecode: Credits Importer {version} – nouveautés",
       "old.twice": "Deux scripts d’import tournent sur cette page : l’ancien « MB x Vibecode: Import Discogs credits » (ou une deuxième copie) et « MB x Vibecode: Credits Importer ». Supprimez l’ancien dans votre gestionnaire de scripts (Tampermonkey, Violentmonkey) et rechargez la page.",
+      "afterEdit.label": "ouvrir l’éditeur de relations et lancer le tableau de bord d’import",
+      "afterEdit.title": "Credits Importer : après « Enter edit », « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links}",
       "notice.reset": "Avec cette mise à jour, tous les réglages et données enregistrées du script ont été réinitialisés une fois – un nouveau départ : langue, interrupteurs, règles personnelles, pools de dates et de plages, sources choisies et liste des œuvres créées.",
       "notice.changelog": "Journal des modifications",
       "notice.close": "Fermer ce message",
@@ -7694,11 +7710,152 @@
   }
 
   // ===========================================================================
+  // 3b. [3.19.0] Release editor and release page: start the import right after "Enter edit"
+  // ===========================================================================
+
+  const AFTER_EDIT_KEY = 'dci-after-edit';        // the tick, remembered (localStorage)
+  const AFTER_EDIT_GO_KEY = 'dci-after-edit-go';  // { release: MBID or 'new', links, at } once "Enter edit" runs (sessionStorage of the tab)
+  const AUTOSTART_KEY = 'dci-autostart';          // { release, links, at } for the relationship editor (sessionStorage of the tab)
+  const AFTER_EDIT_MAX_MS = 10 * 60 * 1000;
+
+  /** Which page of a release this is: the relationship editor, the release editor (add or edit), the release page, or another. */
+  function releasePageKind(path) {
+    const p = String(path || '');
+    if (/^\/release\/[0-9a-f-]{36}\/edit-relationships/i.test(p)) return 'relationships';
+    if (/^\/release\/add\/?$/i.test(p) || /^\/release\/[0-9a-f-]{36}\/edit\/?$/i.test(p)) return 'editor';
+    if (/^\/release\/[0-9a-f-]{36}\/?$/i.test(p)) return 'release';
+    return null;
+  }
+
+  /** The Discogs releases and Bandcamp albums among some URLs, as links of the dashboard ({ source, id, url }). */
+  function sourceLinksOf(urls) {
+    const rels = urls.map((u) => ({ 'target-type': 'url', url: { resource: u } }));
+    return LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(rels).map((l) => ({ ...l, source: k })));
+  }
+
+  const afterEditLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : String(l.url || l.id).replace(/^https?:\/\//, '')}`;
+
+  /**
+   * [3.19.0] Release editor: the tick next to "Enter edit" (only on the tab "Edit note", only with a Discogs or Bandcamp
+   * link – those of the tab "External links", saved or just entered). Ticked, the start of the submission is noted for
+   * this tab; MusicBrainz then shows the release page, which goes on to the relationship editor (initReleasePageHook).
+   */
+  function initReleaseEditorHook() {
+    const mbid = (location.pathname.match(MBID_RE) || [])[0] || 'new';
+    const win = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
+    let box = null;
+    let hooked = false;
+    const linksNow = () => {
+      const urls = [...document.querySelectorAll('#external-links-editor tr.external-link-item')].flatMap((row) => {
+        const a = row.querySelector('a.url[href]');
+        const input = row.querySelector('input.value');
+        if (a && /\brel-remove\b/.test(a.className)) return [];
+        return [a ? a.getAttribute('href') : '', input ? input.value : ''].filter(Boolean);
+      });
+      return sourceLinksOf(urls);
+    };
+    const ensureBox = () => {
+      const btn = document.getElementById('enter-edit');
+      if (!btn) return null;
+      if (!box || !box.isConnected) {
+        box = document.createElement('label');
+        box.id = 'dci-after-edit';
+        box.style.cssText = 'display: none; align-items: center; gap: 4px; margin: 0 12px 0 0; vertical-align: middle; cursor: pointer;';
+        box.innerHTML = '<input type="checkbox"> <span></span>';
+        const input = box.querySelector('input');
+        input.checked = readJson('localStorage', AFTER_EDIT_KEY, false) === true;
+        input.addEventListener('change', () => writeJson('localStorage', AFTER_EDIT_KEY, input.checked || null));
+        btn.before(box);
+      }
+      return box;
+    };
+    const update = () => {
+      const b = ensureBox();
+      if (!b) return;
+      const btn = document.getElementById('enter-edit');
+      const links = linksNow();
+      // MusicBrainz shows "Enter edit" only on the tab "Edit note"
+      const visible = btn.style.display !== 'none' && btn.getClientRects().length > 0;
+      b.style.display = links.length && visible ? 'inline-flex' : 'none';
+      b.querySelector('span').textContent = tr('afterEdit.label');
+      b.title = tr('afterEdit.title', { links: links.map(afterEditLinkLabel).join(', ') });
+    };
+    const markGo = () => {
+      const input = box && box.querySelector('input');
+      const links = linksNow();
+      if (!input || !input.checked || !links.length || box.style.display === 'none') return;
+      writeJson('sessionStorage', AFTER_EDIT_GO_KEY, { release: mbid, links, at: Date.now() });
+    };
+    // MusicBrainz's own sign that the edits are submitted ("Enter edit" or Enter in a field); false again: an error
+    const hook = () => {
+      const re = win.MB && win.MB.releaseEditor;
+      const obs = re && re.submissionInProgress;
+      if (hooked || !obs || typeof obs.subscribe !== 'function') return;
+      hooked = true;
+      obs.subscribe((on) => {
+        if (on) markGo();
+        else writeJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
+      });
+    };
+    // without that sign (another version of MusicBrainz): the click on "Enter edit"
+    document.addEventListener('click', (e) => {
+      if (!hooked && e.target && e.target.closest && e.target.closest('#enter-edit')) markGo();
+    }, true);
+    let timer = null;
+    const later = () => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        hook();
+        update();
+      }, 150);
+    };
+    new MutationObserver(later).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'href', 'value'] });
+    document.addEventListener('input', later, true);
+    document.addEventListener('change', later, true);
+    hook();
+    update();
+  }
+
+  /**
+   * [3.19.0] Release page: right after "Enter edit" with the tick (in this tab, within 10 minutes; a new release only when
+   * the page comes from "Add release") it goes on to "Edit relationships", where the dashboard opens by itself.
+   */
+  function initReleasePageHook() {
+    const mbid = (location.pathname.match(MBID_RE) || [])[0];
+    const go = readJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
+    if (!go || !mbid) return;
+    writeJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
+    let from = '';
+    try {
+      from = document.referrer ? new URL(document.referrer).pathname : '';
+    } catch (e) { /* no referrer */ }
+    const fresh = Date.now() - (Number(go.at) || 0) < AFTER_EDIT_MAX_MS;
+    // a new release: only the page MusicBrainz opens from "Add release" (not one typed in or opened otherwise meanwhile)
+    const mine = go.release === 'new' ? /^\/release\/add/i.test(from) : String(go.release).toLowerCase() === mbid.toLowerCase();
+    if (!fresh || !mine) return;
+    writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: Array.isArray(go.links) ? go.links : [], at: Date.now() });
+    location.assign(`/release/${mbid}/edit-relationships`);
+  }
+
+  // ===========================================================================
   // 4. MusicBrainz access (web service and page internals)
   // ===========================================================================
 
   const releaseMbid = (location.pathname.match(MBID_RE) || [])[0];
-  if (!releaseMbid) return;
+  // [3.19.0] The script runs on all pages of a release; besides the relationship editor it only adds, in the release
+  // editor ("Add release", "Edit release"), the tick "open relationship editor and start import dashboard" next to
+  // "Enter edit", and goes on from the release page MusicBrainz shows afterwards. Other pages: nothing.
+  const PAGE_KIND = releasePageKind(location.pathname);
+  if (PAGE_KIND === 'editor') {
+    initReleaseEditorHook();
+    return;
+  }
+  if (PAGE_KIND === 'release') {
+    initReleasePageHook();
+    return;
+  }
+  if (PAGE_KIND !== 'relationships' || !releaseMbid) return;
 
   const pageWindow = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
   const getMB = () => pageWindow.MB;
@@ -8964,6 +9121,16 @@
   // --- Log window ----------------------------------------------------------------
 
   S.log = readJson('sessionStorage', LOG_KEY, []);
+  // [3.19.0] Started from the release editor ("open relationship editor and start import dashboard"): the links of its tab
+  // "External links" (also those not in MusicBrainz yet); the dashboard opens by itself. Read once.
+  S.editorLinks = (() => {
+    const a = readJson('sessionStorage', AUTOSTART_KEY, null);
+    if (!a) return null;
+    writeJson('sessionStorage', AUTOSTART_KEY, null);
+    if (String(a.release).toLowerCase() !== releaseMbid.toLowerCase() || Date.now() - (Number(a.at) || 0) >= AFTER_EDIT_MAX_MS) return null;
+    return (Array.isArray(a.links) ? a.links : []).filter((l) => l && LINKED_SOURCES.includes(l.source) && l.id);
+  })();
+  S.autostart = !!S.editorLinks;
   S.datePool = readJson('localStorage', POOL_KEY, null) || [];
   S.syncMode = readJson('localStorage', 'dci-sync-mode', 'click') === 'hover' ? 'hover' : 'click';
 
@@ -9984,6 +10151,15 @@
    * source of the preference list (physical or digital media) that is linked – one link: load it; several: ask.
    */
   function startSource() {
+    // [3.19.0] started from the release editor: its links count as linked too (they may not be in MusicBrainz yet, e.g.
+    // while the edit is open); a single one of them that MusicBrainz does not have yet is loaded at once
+    if (S.editorLinks) {
+      const same = (a, b) => a.source === b.source && String(a.id) === String(b.id);
+      const fresh = S.editorLinks.filter((l) => !S.sourceLinks.some((x) => same(x, l)));
+      S.sourceLinks = [...S.sourceLinks, ...fresh];
+      S.editorLinks = null;
+      if (fresh.length === 1) return { link: fresh[0], fromEditor: true };
+    }
     const kept = (readJson('localStorage', SOURCE_PICK_KEY, {}) || {})[releaseMbid];
     const keptLink = kept && S.sourceLinks.find((x) => x.source === kept.source && x.id === kept.id);
     if (keptLink) return { link: keptLink, kept: true };
@@ -10002,6 +10178,7 @@
       renderDatalists();
       setBusy('busy.mb');
       log('info', 'start', { mbid: releaseMbid });
+      if (S.autostart && S.editorLinks) log('info', 'fromEditor', { links: S.editorLinks.map(afterEditLinkLabel).join(', ') || '–' });
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
         + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits');
       if (!ws) throw new Error(tr('err.releaseMissing'));
@@ -10087,6 +10264,7 @@
     const start = startSource();
     if (start.link) {
       if (start.kept) log('info', 'sourceKept', { src: SOURCES[start.link.source].name });
+      if (start.fromEditor) log('info', 'sourceFromEditor', { src: afterEditLinkLabel(start.link) });
       await loadRelease(start.link.id, { source: SOURCES[start.link.source], confirmed: true });
     } else if (start.multi) {
       showMessage('info', 'msg.multiLinks', { n: start.multi, src: SOURCES[start.source].name });
@@ -19331,7 +19509,7 @@
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks'];
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY];
 
   function renderReset() {
     if (!S.overlay) return;
@@ -19413,6 +19591,20 @@
     clearInterval(S.syncTimer);
     S.syncTimer = setInterval(() => toDiscogs({ type: 'ping' }), 3000);
     if (!S.initialized) await init();
+  }
+
+  /**
+   * [3.19.0] Started from the release editor: the dashboard opens by itself once the relationship editor has its data
+   * (its relationship types), at most after 30 seconds.
+   */
+  function openWhenReady(tries = 0) {
+    const le = getMB() && getMB().linkedEntities;
+    const ready = le && le.link_type && Object.keys(le.link_type).length;
+    if (!ready && tries < 100) {
+      setTimeout(() => openWhenReady(tries + 1), 300);
+      return;
+    }
+    if (!S.overlay || S.overlay.hidden) openDashboard();
   }
 
   /** Opens the dashboard, or brings it back into view and to the front if it is already open. */
@@ -20432,6 +20624,7 @@
   injectStyles();
   insertLauncher();
   resumePanicIfRequested();
+  if (S.autostart) openWhenReady();
   setTimeout(() => {
     if (document.querySelectorAll('#dci-styles').length > 1) showTwiceWarning();
   }, 3000);

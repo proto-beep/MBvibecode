@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-18 | 3.17.3 – 3.18.0 | 1.8.2 – 1.8.3 |
+| 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
@@ -75,6 +75,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-18
+
+### Import 3.19.0
+
+#### Added
+
+- **Start from the release editor** (collected item 18; maintainer: "bitte beim Edit release … bei der Edit Note, wo sich Enter Edit anklicken lässt ein Haken einführen … das soll nur möglich sein sofern bandcamp oder discogs als relationship hinterlegt sind", decided: also on "Add release", the tick remembered, a link entered in "External links" goes straight to the dashboard, the text follows the dashboard language). In the release editor (**Add release**, **Edit release**) the tick **open relationship editor and start import dashboard** stands next to **Enter edit** (tab "Edit note"), only when the release has a Discogs release or Bandcamp album among its links – saved or just entered. Ticked, after "Enter edit" the release page MusicBrainz shows goes on to **Edit relationships**, where the dashboard opens by itself and loads the credits; a link MusicBrainz does not have yet (e.g. while the edit is open) is handed over and loaded at once. Only in the same tab, right after "Enter edit"; an error while submitting notes nothing.
+- The script now runs on all pages of a release (`@match …/release/*`); on pages other than the relationship editor, the release editor and the release page it does nothing.
+
 
 ### Import 3.18.0
 
