@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.17.2
+// @version      3.17.3
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -5748,6 +5748,8 @@
       show: () => ({ pairs: [...SPECIAL_ARTISTS.map(([id, name]) => [name, id]), ['[…]', SPECIAL_ARTIST_NAME]] }) },
     { id: 'T027', where: 'LINER_NOT_NAME, LINER_PARTICLE', note: 'Bandcamp (3.17.2): liner notes below the "about" text – a first word that makes the line no name ("Special Thanks"), and particles inside a name ("Jan van Roe")',
       show: () => ({ pairs: [['no name', LINER_NOT_NAME], ['particles', LINER_PARTICLE]] }) },
+    { id: 'T028', where: 'TEXT_DISTRIBUTION', note: 'Texts (3.17.3): words for the distribution of a release ("Distribution - !K7", "Distributor: X", "Vertrieb: X") – read as "Distributed By" (C006)',
+      show: () => ({ pattern: TEXT_DISTRIBUTION }) },
   ];
 
   /** Discogs spelling → possible MB instrument names (tried in this order). */
@@ -5894,6 +5896,10 @@
   // [T023] Texts (3.14.0): a person without a name after "by" ("a (cat assisted) human", "the band", "himself") – the
   // release's artists are offered for it, only as a suggestion
   const PLACEHOLDER_WHO = /^(?:an?\s+)?(?:human(?:\s+being)?|me|myself|us|ourselves|the\s+artists?|the\s+band|the\s+musicians?|himself|herself|themselves)$/i;
+
+  // [T028] Texts (3.17.3): words for the distribution of a release – "Distribution - !K7", "Distribution: X", "Distribution by
+  // X", "Distributor: X", "Vertrieb: X" … are read as "Distributed By" (C006: label → distributed)
+  const TEXT_DISTRIBUTION = /^(?:distribution|distributions|distributor|distributors|distributed|vertrieb|vertrieben|distribución|distribuidora|distribuido|distribuidor|distribution exclusive|distribué|distribuée|distribuzione|distribuito|distributie)$/i;
 
   // [T024] Texts (3.14.0): a line that only names the label of the release ("An Echo Elberfeld release.", "Released on
   // X Records") is left out – the label is set in the release editor; ℗ / © lines are credits
@@ -6756,9 +6762,12 @@
         const m2 = r.match(/^(.+?)\s+(\p{L}+ed)$/iu);
         return m2 ? `${cap(m2[2])} By [${cap(m2[1])}]` : roleOf(r);
       };
+      // [3.17.3] "Distribution", "Distributor", "Vertrieb" … (T028): the company role "Distributed By"
+      const distribution = (t) => (TEXT_DISTRIBUTION.test(clean(t).replace(/\s+(?:by|par|por|da|durch|via)$/i, '')) ? ['Distributed By'] : null);
       const byRoles = (left) => {
         const l = noDates(left);
         if (!l) return [];
+        if (distribution(l)) return distribution(l);
         if (isRole(`${cap(l)} By`)) return [`${cap(l)} By`];
         // [3.14.0] "Layout by X": the role is "Layout"
         if (isRole(cap(l))) return [cap(l)];
@@ -6766,6 +6775,7 @@
         return parts.length && parts.every(isRole) ? parts : [];
       };
       const listRoles = (side) => {
+        if (distribution(side)) return distribution(side);
         const parts = splitRoles(side);
         return parts.length && parts.every(isRole) ? parts : null;
       };
@@ -6839,6 +6849,11 @@
         for (const [ci, clause] of (found ? [] : clauses(line)).entries()) {
           part0 = clause;
           pi0 = ci;
+          // [3.17.3] "Distribué par X", "Distribuido por X", "Vertrieben durch X", "Distributed through X" (T028)
+          if ((m = clause.match(/^(\S+(?:\s+\S+)?)\s+(?:par|por|da|durch|via|through)\s+(.+)$/i)) && distribution(m[1])) {
+            for (const n of names(m[2])) if (addCredit(n, 'Distributed By', scope)) found++;
+            continue;
+          }
           // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
           const place = (verb, where) => {
             const role = `${cap(verb)} At`;

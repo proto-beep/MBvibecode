@@ -155,6 +155,8 @@ BC_PAGES = {}
 BC_ARTISTS = {}
 # The release's artist credit (below its title): [(MB gid, MB name, name as credited, join phrase)]
 RELEASE_AC = []
+# [3.17.3] lookups to fail: {'release': n} – the next n lookups of the release answer 503
+WS_FAIL = {}
 
 
 def bc_page(data):
@@ -547,6 +549,10 @@ def install_routes(ctx):
         if p == f'/release/{REL}':
             return route.fulfill(body=mb_release_page(), content_type='text/html')
         if p == f'/ws/2/release/{REL}':
+            # [3.17.3] a test can let the next lookups of the release fail (MusicBrainz busy: 503)
+            if WS_FAIL.get('release', 0) > 0:
+                WS_FAIL['release'] -= 1
+                return route.fulfill(status=503, body='{}', content_type='application/json')
             return json_route(route, ws_release())
         m = re.match(r'/ws/2/label/([0-9a-f-]{36})', p)
         if m:
