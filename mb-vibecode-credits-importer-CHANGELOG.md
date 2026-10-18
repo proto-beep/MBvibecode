@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-18 | 3.17.3 – 3.17.6 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
@@ -71,6 +72,47 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-18
+
+### Import 3.17.6
+
+#### Added
+
+- **The date of the liner notes at their row** (collected item 21; maintainer: "ja probieren wir es"): the date by the name below the "about" text ("— Jane Roe, Berlin, May 2019"), in the date pool as "Liner notes – Jane Roe" since 3.17.2, now also stands in the date cell of the liner notes row as a suggestion (dashed, yellow). **✓** takes it onto the row, **✕** leaves it out; nothing is set by itself.
+
+
+### Import 3.17.5 · COMPANION 1.8.3
+
+#### Changed
+
+- **A click on a mark switches its credit – on Bandcamp and on Discogs** (collected item 20; maintainer: "das extra symbol brauchen wir gar nicht extra, es kann ja auch einfach das "○" angeklickt werden", "discogs soll sich auch umschalten lassen"). The ⊘ of 3.17.1 is gone: a click on the mark itself skips the credit (its row goes to "Skip") or takes it again. Resting the pointer on a mark for about half a second shows its row in the dashboard (no line in the log). On Discogs a line whose marks are all off is greyed. What was switched off is stored per release and source (`dci-src-off:<MBID>`; what 3.17.1 stored for Bandcamp is taken over).
+- New switch **Click switches** (navigation and settings, on by default): off, a click on a mark shows its row, as before.
+
+#### Added
+
+- **Keep marks** (collected item 23; maintainer: "Discogs die Verbindung nicht mehr darstellt sobald der verbundene MB Tab geschlossen wird. Bitte eine Option anbieten …"): a switch in the navigation and the settings (off by default). On, the marks stay on Discogs and Bandcamp with the last state of the release also when the relationship editor and the release page are closed – for all releases (the last 30); a state checked on the release page is kept as checked. No mark of difference ("bitte gar nicht anzeigen"); a click on them does nothing while no editor is open.
+
+
+### Import 3.17.4
+
+#### Added
+
+- **The source next to the status in the navigation bar** (collected item 22; maintainer: "es fehlt noch der Link zu Bandcamp neben dem status zu "Bandcamp View"", meant: the navigation bar above "Import credits …"). Next to "Bandcamp view: …" (or "Discogs view: …") the bar links the release at its source – **↗ Bandcamp** / **↗ Discogs**, in a new tab, also without the companion – and offers **open in background** (no tab open) or **Load the release there** (a tab on another page), which were only in the dashboard's head before.
+- **A link at each name suggestion** (collected item 24): the small **↗** at a suggestion opens its MusicBrainz entry (artist, label, place) in a new tab, to check it before assigning.
+
+
+### Import 3.17.3 · COMPANION 1.8.2
+
+#### Fixed
+
+- **The check on the MusicBrainz release page keeps its result** (collected item 27; maintainer: "funktioniert, aber nach kurzer zeit wurde wieder der in bearbeitung status angezeigt (ist im hintergrund passiert, während ich in einem anderen tab war)"). The release page checks right away, after 20 seconds and after a minute, each time from the status the dashboard sent; when MusicBrainz did not answer one of the later checks (e.g. too many requests at once), the unchecked marks (●) came back instead of ✓. Now the last result stays and the check is tried again after 15 seconds (up to 8 times).
+- **Pages in background tabs:** the browser slows their timers down to about once a minute. The status of a release page or editor in a background tab now counts as alive for 75 seconds without a new sign of life (a visible one 8 seconds, as before), so the marks on Discogs and Bandcamp no longer go and come back.
+
+#### Added
+
+- **Distribution** (collected item 28; maintainer: "für das mapping kann noch "Distribution - !K7" und varianten davon aufgenommen werden. label -> distributor"; "distributed by" was already read): "Distribution - !K7", "Distribution: X", "Distribution by X", "Distributor: X", "Distributed through X", "Vertrieb: X", "Vertrieben durch X", "Distribución: X", "Distribuido por X", "Distribué par X" … give the company with the role "Distributed By" – a label that distributes the release (MusicBrainz: distributed, rule C006). The words are table T028 of the register.
+
 
 ## 2026-10-17
 
