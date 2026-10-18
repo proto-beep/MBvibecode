@@ -434,6 +434,53 @@ def mb_release_page():
     return '<!doctype html><html lang="en"><head><title>Testalbum</title></head><body><div id="content"><h1>Testalbum</h1></div></body></html>'
 
 
+# [3.19.0] The release editor ("Edit release" /release/<MBID>/edit, "Add release" /release/add), built like MusicBrainz's
+# own (2026-10): tabs, the external links editor (#external-links-editor: saved links as a.url, the last row an input),
+# the buttons with "Enter edit" (#enter-edit, shown only on the tab "Edit note") and MB.releaseEditor.submissionInProgress
+# (a knockout observable). Helpers for a test: __tab('edit-note'), __submit(gid, fail) (as "Enter edit" does: in progress,
+# then the release page – or false again on an error); the release a new release becomes: window.__gid (default REL).
+EDITOR_LINKS = {'edit': [f'https://www.discogs.com/release/{DISCOGS_ID}'], 'add': []}
+
+
+def mb_release_editor_page(kind):
+    links = EDITOR_LINKS.get(kind, [])
+    rows = ''.join(f'<tr class="external-link-item"><td></td><td class="link-actions"></td><td><a class="url " href="{u}" target="_blank">{u}</a></td></tr>'
+                   for u in links)
+    rows += '<tr class="external-link-item"><td></td><td class="link-actions"></td><td><input class="value with-button" type="url" placeholder="Add link" value=""></td></tr>'
+    title = 'Add release' if kind == 'add' else 'Testalbum'
+    return f"""<!doctype html><html lang="en"><head><title>{title}</title></head><body><div id="content"><h1>{title}</h1>
+<div id="release-editor"><ul><li><a href="#information">Release information</a></li><li><a href="#edit-note">Edit note</a></li></ul>
+<div id="information"><table class="row-form" id="external-links-editor"><tbody>{rows}</tbody></table></div>
+<div id="edit-note" style="display: none;"><textarea id="edit-note-text"></textarea></div>
+<div class="buttons"><button type="button" id="enter-edit" class="positive" style="display: none;">Enter edit</button>
+<button type="button" class="negative">Cancel</button><button type="button" data-click="nextTab">Next »</button></div></div></div>
+<script>
+(function () {{
+  function obs(v) {{ const subs = []; const f = function (x) {{ if (!arguments.length) return v; v = x; subs.forEach((s) => s(x)); }};
+    f.subscribe = (s) => subs.push(s); return f; }}
+  window.MB = {{ releaseEditor: {{ submissionInProgress: obs(false), rootField: {{ release: obs({{}}) }} }} }};
+  window.__tab = (id) => {{ for (const t of ['information', 'edit-note']) document.getElementById(t).style.display = t === id ? '' : 'none';
+    document.getElementById('enter-edit').style.display = id === 'edit-note' ? '' : 'none'; }};
+  window.__submit = (gid, fail) => {{ MB.releaseEditor.submissionInProgress(true);
+    setTimeout(() => {{ if (fail) {{ MB.releaseEditor.submissionInProgress(false); return; }} window.location.pathname = '/release/' + gid; }}, 300); }};
+  document.getElementById('enter-edit').addEventListener('click', () => window.__submit(window.__gid || '{REL}', window.__fail));
+}})();
+</script></body></html>"""
+
+
+def open_mb_any(ctx, url, gm_xhr=True):
+    """[3.19.0] A MusicBrainz tab whose pages all get the main script (as a userscript manager does), also after a
+    navigation of the page itself; only in the page, not in its frames."""
+    pg = ctx.new_page()
+    errs = errors_of(pg)
+    codes = ([GM_XHR_SHIM] if gm_xhr else []) + [MAIN]
+    pg.add_init_script(script="if (window.top === window && location.hostname === 'musicbrainz.org') window.addEventListener('DOMContentLoaded', () => {"
+                       " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
+                       % json.dumps(codes))
+    pg.goto(url)
+    return pg, errs
+
+
 # --- Shared GM storage ---------------------------------------------------------------------------
 
 class Store:
@@ -548,6 +595,10 @@ def install_routes(ctx):
             return route.fulfill(body=mb_edit_page(), content_type='text/html')
         if p == f'/release/{REL}':
             return route.fulfill(body=mb_release_page(), content_type='text/html')
+        if p == f'/release/{REL}/edit':
+            return route.fulfill(body=mb_release_editor_page('edit'), content_type='text/html')
+        if p == '/release/add':
+            return route.fulfill(body=mb_release_editor_page('add'), content_type='text/html')
         if p == f'/ws/2/release/{REL}':
             # [3.17.3] a test can let the next lookups of the release fail (MusicBrainz busy: 503)
             if WS_FAIL.get('release', 0) > 0:

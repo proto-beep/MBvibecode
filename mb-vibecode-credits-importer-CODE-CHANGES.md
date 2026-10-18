@@ -13,12 +13,27 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.18.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.19.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.19.0 · 2026-10-18
+
+The tick "open relationship editor and start import dashboard" in the release editor (collect item 18).
+
+- **Header:** `@match *://musicbrainz.org/release/*` and `*://*.musicbrainz.org/release/*` instead of `…/release/*/edit-relationships*`.
+- **New section 3b** (before "4. MusicBrainz access"): `AFTER_EDIT_KEY` (`dci-after-edit`, localStorage, the tick; in `SETTINGS_KEYS`), `AFTER_EDIT_GO_KEY` (`dci-after-edit-go`, sessionStorage: `{ release: MBID or 'new', links, at }`), `AUTOSTART_KEY` (`dci-autostart`, sessionStorage: `{ release, links, at }`), `AFTER_EDIT_MAX_MS` (10 min); `releasePageKind(path)` (`relationships`, `editor` for `/release/add` and `/release/<MBID>/edit`, `release`, else `null`), `sourceLinksOf(urls)` (through `SOURCES[k].releaseLinks`), `afterEditLinkLabel(l)`.
+- **`initReleaseEditorHook()`:** the label `#dci-after-edit` (checkbox, `afterEdit.label`, title `afterEdit.title` with the links) before `#enter-edit`; shown (`inline-flex`) only while the button is visible and `#external-links-editor tr.external-link-item` has a Discogs release or Bandcamp album (`a.url` without `rel-remove`, or the `input.value`); updated by a `MutationObserver` and `input`/`change` (150 ms). Submission: `MB.releaseEditor.submissionInProgress.subscribe` – true writes `AFTER_EDIT_GO_KEY` (ticked, shown, with links), false (an error) removes it; without the observable a click on `#enter-edit` (capture) writes it.
+- **`initReleasePageHook()`:** reads and removes `AFTER_EDIT_GO_KEY`; within 10 minutes and for this release (a new release: `document.referrer` from `/release/add`) it writes `AUTOSTART_KEY` and goes to `/release/<MBID>/edit-relationships` (`location.assign`).
+- **Section 4:** after `releaseMbid` the page kind decides: `editor` → `initReleaseEditorHook`, `release` → `initReleasePageHook`, other than `relationships` → nothing (return before anything of the dashboard).
+- **Relationship editor:** `S.editorLinks` (read once from `AUTOSTART_KEY` for this release, within 10 minutes), `S.autostart`; `init` logs `fromEditor`; `startSource` merges `S.editorLinks` into `S.sourceLinks` and returns a single link MusicBrainz does not have (`fromEditor`, logged as `sourceFromEditor` in `startImport`); new `openWhenReady()` (waits for `MB.linkedEntities.link_type`, up to 30 s) is called after `insertLauncher` when `S.autostart`.
+- **Texts (4 languages):** `afterEdit.label`, `afterEdit.title`, `log.fromEditor`, `log.sourceFromEditor`.
+- **Harness:** `EDITOR_LINKS`, `mb_release_editor_page(kind)` (tabs, `#external-links-editor`, `#enter-edit`, `MB.releaseEditor.submissionInProgress`, `__tab`, `__submit`), routes `/release/<REL>/edit` and `/release/add`, `open_mb_any(ctx, url)` (the main script on every MusicBrainz page of the tab, also after navigations).
+- **Tests:** new `t_afteredit.py`.
+
 
 ## Import 3.18.0 · 2026-10-18
 
