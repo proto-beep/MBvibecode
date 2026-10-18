@@ -134,6 +134,10 @@ python3 t_relcheck.py     # the release page keeps its check (1.8.2): ✓ after 
 python3 t_distrib.py      # "Distribution - !K7" and variants (3.17.3, T028): company "Distributed By", label → release distributed
 python3 t_navlink.py      # the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
 python3 t_keepmarks.py    # a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
+python3 t_worksskip.py    # the works matrix (3.18.0): fold / unfold (not kept), "Skip works matrix" (rows on "Skip", nothing of it planned,
+                          # no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later)
+python3 t_manualtop.py    # "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
+                          # page), an entry added from there is shown
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)
