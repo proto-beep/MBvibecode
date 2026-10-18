@@ -127,7 +127,8 @@ python3 t_bcview.py       # the Bandcamp view of the companion (3.17.0 / 1.8.0):
 python3 t_bcoff.py        # credits switched off on Bandcamp (3.17.1; 3.17.5: a click on the mark, the pointer shows the row): off → "Skip" with a note and greyed, a
                           # group of marks, on again with its level, kept across a reload, a level chosen, "Delete stored import"
 python3 t_linernotes.py   # liner notes in Bandcamp's about text (3.17.2): the three places of the name, five sentences over several
-                          # paragraphs, cases without (4 sentences, "Special Thanks" …), entry as suggestion, pool name, jump, left out
+                          # paragraphs, cases without (4 sentences, "Special Thanks" …), entry as suggestion, pool name, jump, left out,
+                          # 3.17.6: the date as a suggestion at the row, ✓ takes it
 python3 t_relcheck.py     # the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
                           # retried, a background page's beat counts 75 s
 python3 t_distrib.py      # "Distribution - !K7" and variants (3.17.3, T028): company "Distributed By", label → release distributed

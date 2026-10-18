@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.17.5
+// @version      3.17.6
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -562,6 +562,9 @@
       "date.namePlaceholder": "optional, e.g. Session 2",
       "date.copyTitle": "Copy begin date to end date",
       "date.addRow": "+ Date",
+      "date.suggLiner": "Suggested from the “about” text (the date by the name of the liner notes) – ✓ takes it, ✕ leaves it out",
+      "date.take": "Take this date",
+      "date.dropSugg": "Not this date",
       "date.fromPool": "from pool …",
       "date.toPool": "save to pool",
       "date.clear": "remove date",
@@ -1836,6 +1839,9 @@
       "date.namePlaceholder": "optional, z. B. Session 2",
       "date.copyTitle": "Beginn in das Ende kopieren",
       "date.addRow": "+ Datum",
+      "date.suggLiner": "Vorschlag aus dem „about“-Text (das Datum beim Namen der Liner Notes) – ✓ übernimmt es, ✕ lässt es weg",
+      "date.take": "Dieses Datum übernehmen",
+      "date.dropSugg": "Nicht dieses Datum",
       "date.fromPool": "aus dem Pool …",
       "date.toPool": "in den Pool",
       "date.clear": "Datum entfernen",
@@ -3110,6 +3116,9 @@
       "date.namePlaceholder": "opcional, p. ej. Sesión 2",
       "date.copyTitle": "Copiar la fecha de inicio en la de fin",
       "date.addRow": "+ Fecha",
+      "date.suggLiner": "Sugerido por el texto «about» (la fecha junto al nombre de las notas del disco) – ✓ la toma, ✕ la omite",
+      "date.take": "Tomar esta fecha",
+      "date.dropSugg": "No esta fecha",
       "date.fromPool": "de las guardadas…",
       "date.toPool": "guardar fecha",
       "date.clear": "quitar fecha",
@@ -4384,6 +4393,9 @@
       "date.namePlaceholder": "facultatif, p. ex. Session 2",
       "date.copyTitle": "Copier la date de début dans la date de fin",
       "date.addRow": "+ Date",
+      "date.suggLiner": "Suggéré par le texte « about » (la date près du nom des notes de pochette) – ✓ la reprend, ✕ la laisse de côté",
+      "date.take": "Reprendre cette date",
+      "date.dropSugg": "Pas cette date",
       "date.fromPool": "parmi les dates…",
       "date.toPool": "enregistrer la date",
       "date.clear": "retirer la date",
@@ -11977,13 +11989,29 @@
       <label class="dci-check dci-mbdate-ended"><input type="checkbox" data-f="${prefix}-ended" ${v.ended || endSet ? 'checked' : ''} ${endSet ? 'disabled' : ''}> ${esc(tr('date.ended'))}</label>`;
   }
 
+  /**
+   * [3.17.6] The date by the name of the liner notes (from the "about" text, in the pool as "Liner notes – Name"): a
+   * suggestion in the date cell of the liner notes row, until it is taken (✓) or left out (✕).
+   */
+  function linerDateSugg(row) {
+    const liner = S.release && S.release.liner;
+    if (!liner || !row.fromAbout || row.linerDateOff || norm(row.raw) !== 'liner notes') return null;
+    const a = S.artists.get(row.artistKey);
+    if (!a || norm(a.rawName || a.name) !== norm(liner.name)) return null;
+    return S.datePool.find((x) => x.liner === liner.name) || null;
+  }
+
   function dateCell(row) {
     if (row.level === 'skip') return '';
     const lt = currentLinkType(row);
     if (lt && lt.has_dates === false) return `<span class="dci-muted">${esc(tr('date.notAllowed'))}</span>`;
     const d = row.date;
     if (!row.dateOpen && !hasDateInput(d)) {
-      return `<button type="button" class="dci-textbtn dci-date-add" data-act="date-open">${esc(tr('date.addRow'))}</button>`;
+      const sugg = linerDateSugg(row);
+      return `${sugg ? `<span class="dci-datechip dci-datechip-sugg" title="${esc(tr('date.suggLiner'))}"><span class="dci-datechip-text">${esc(poolLabel(sugg))}</span>
+          <button type="button" class="dci-iconbtn" data-act="date-take" data-pool="${esc(sugg.id)}" title="${esc(tr('date.take'))}" aria-label="${esc(tr('date.take'))}">✓</button>
+          <button type="button" class="dci-iconbtn" data-act="date-sugg-off" title="${esc(tr('date.dropSugg'))}" aria-label="${esc(tr('date.dropSugg'))}">✕</button></span>` : ''}
+        <button type="button" class="dci-textbtn dci-date-add" data-act="date-open">${esc(tr('date.addRow'))}</button>`;
     }
     const info = rowDateInfo(row, lt);
     const pool = d && d.poolId && S.datePool.find((x) => x.id === d.poolId);
@@ -12819,6 +12847,8 @@
       const liner = S.release && S.release.liner;
       const forLiner = liner && x0.index >= liner.at && x0.index < liner.at + liner.len;
       const e = poolDateFor(x.value, group, key, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
+      // [3.17.6] marked for the liner notes: their row shows it as a suggestion
+      if (forLiner) e.liner = liner.name;
       addCommonDate(e.begin, e.end, group, key, e);
       if (!group) return;
       const here = m.cells.find((c) => c.col === group.key && c.date === e.id);
@@ -17112,6 +17142,18 @@
       case 'panic':
         startPanic();
         break;
+      // [3.17.6] the suggested date of the liner notes taken, or left out
+      case 'date-take': {
+        const entry = row && S.datePool.find((x) => x.id === btn.dataset.pool);
+        if (entry && applyPoolToRow(row, entry)) refresh();
+        break;
+      }
+      case 'date-sugg-off':
+        if (row) {
+          row.linerDateOff = true;
+          rerenderRow(row);
+        }
+        break;
       case 'level':
         if (row) {
           // [3.17.1] a level chosen for a credit switched off on Bandcamp switches it on again
@@ -19988,6 +20030,7 @@
       }
       .dci-datechip { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 2); max-width: 100%; padding: 1px calc(var(--u, 1px) * 2) 1px calc(var(--u, 1px) * 8);
         border: 1px solid var(--date-line); border-radius: 999px; background: var(--date-bg); color: var(--date-d); font-weight: 600; }
+      #dci-overlay .dci-datechip.dci-datechip-sugg { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); margin-right: calc(var(--u, 1px) * 6); }
       .dci-datechip-text { min-width: 0; overflow-wrap: anywhere; }
       .dci-datechip .dci-iconbtn { border: 0; background: none; color: var(--date-d); padding: 0 calc(var(--u, 1px) * 4); }
       .dci-picker-actions { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); margin-bottom: calc(var(--u, 1px) * 8); }

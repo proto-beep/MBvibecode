@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-18 | 3.17.3 – 3.17.5 | 1.8.2 – 1.8.3 |
+| 2026-10-18 | 3.17.3 – 3.17.6 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
@@ -74,6 +74,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-18
+
+### Import 3.17.6
+
+#### Added
+
+- **The date of the liner notes at their row** (collected item 21; maintainer: "ja probieren wir es"): the date by the name below the "about" text ("— Jane Roe, Berlin, May 2019"), in the date pool as "Liner notes – Jane Roe" since 3.17.2, now also stands in the date cell of the liner notes row as a suggestion (dashed, yellow). **✓** takes it onto the row, **✕** leaves it out; nothing is set by itself.
+
 
 ### Import 3.17.5 · COMPANION 1.8.3
 
