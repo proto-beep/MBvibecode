@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.17.3
+// @version      3.17.4
 // @date         2026-10-17
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -30,7 +30,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.17.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1095,6 +1095,8 @@
       "sync.load": "Load the release there",
       "sync.loadTitle": "Opens this release in the connected Discogs tab",
       "sync.loaded": "release loaded",
+      "sync.srcLinkTitle": "Opens this release on {site} in a new tab",
+      "match.openNew": "Opens it in MusicBrainz, in a new tab",
       "sync.offSite": "{site} view: off",
       "sync.noTabSite": "{site} view: no {site} tab",
       "sync.connectedSite": "{site} view: connected ({where})",
@@ -2360,6 +2362,8 @@
       "sync.load": "Release dort laden",
       "sync.loadTitle": "Öffnet dieses Release im verbundenen Discogs-Tab",
       "sync.loaded": "Release geladen",
+      "sync.srcLinkTitle": "Öffnet dieses Release auf {site} in einem neuen Tab",
+      "match.openNew": "Öffnet den Eintrag in MusicBrainz, in einem neuen Tab",
       "sync.offSite": "{site}-Ansicht: aus",
       "sync.noTabSite": "{site}-Ansicht: kein {site}-Tab",
       "sync.connectedSite": "{site}-Ansicht: verbunden ({where})",
@@ -3625,6 +3629,8 @@
       "sync.load": "Cargar la publicación allí",
       "sync.loadTitle": "Abre esta publicación en la pestaña de Discogs conectada",
       "sync.loaded": "publicación cargada",
+      "sync.srcLinkTitle": "Abre esta publicación en {site} en una pestaña nueva",
+      "match.openNew": "Lo abre en MusicBrainz, en una pestaña nueva",
       "sync.offSite": "Vista de {site}: desactivada",
       "sync.noTabSite": "Vista de {site}: ninguna pestaña de {site}",
       "sync.connectedSite": "Vista de {site}: conectada ({where})",
@@ -4890,6 +4896,8 @@
       "sync.load": "Y charger la parution",
       "sync.loadTitle": "Ouvre cette parution dans l’onglet Discogs connecté",
       "sync.loaded": "parution chargée",
+      "sync.srcLinkTitle": "Ouvre cette parution sur {site} dans un nouvel onglet",
+      "match.openNew": "L’ouvre dans MusicBrainz, dans un nouvel onglet",
       "sync.offSite": "Vue {site} : désactivée",
       "sync.noTabSite": "Vue {site} : aucun onglet {site}",
       "sync.connectedSite": "Vue {site} : connectée ({where})",
@@ -11574,20 +11582,24 @@
   function suggestStackHtml(a) {
     if (a.mbid) return '';
     const mark = (key, params) => ` <span class="dci-similar">${esc(tr(key, params))}</span>`;
+    // [3.17.4] each suggestion with a small ↗ to its MusicBrainz entry (a new tab)
+    const item = (btn, type, mbid) => `<span class="dci-suggitem">${btn}<a class="dci-sugglink" href="/${esc(type)}/${esc(mbid)}" target="_blank" rel="noopener"
+      title="${esc(tr('match.openNew'))}" aria-label="${esc(tr('match.openNew'))}">↗</a></span>`;
     const items = [];
     const heads = [];
     if (a.aliasHits && a.aliasHits.length) {
       heads.push(tr('match.aliasSuggest'));
-      a.aliasHits.forEach((h) => items.push(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="alias-use" data-mbid="${esc(h.c.mbid)}"
-        title="${esc(`${tr('match.aliasSuggest')} ${tr('match.aliasUseTitle', { alias: h.alias })}`)}">${esc(h.c.name)}${h.c.disambiguation ? ` (${esc(h.c.disambiguation)})` : ''}${mark('match.viaAlias', { alias: h.alias })}</button>`));
+      a.aliasHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="alias-use" data-mbid="${esc(h.c.mbid)}"
+        title="${esc(`${tr('match.aliasSuggest')} ${tr('match.aliasUseTitle', { alias: h.alias })}`)}">${esc(h.c.name)}${h.c.disambiguation ? ` (${esc(h.c.disambiguation)})` : ''}${mark('match.viaAlias', { alias: h.alias })}</button>`, 'artist', h.c.mbid)));
     }
     if (a.nameHits && a.nameHits.length) {
       const head = a.strictMiss ? tr('match.linkSuggest', { mb: a.strictSpelled || '–' })
         : a.releaseMbid ? tr('match.placeholderSuggest', { said: a.placeholder }) : tr('match.nameSuggest');
       heads.push(head);
       const why = a.strictMiss ? mark('match.markSpelled') : a.releaseMbid ? mark('match.markRelease') : '';
-      a.nameHits.forEach((h) => items.push(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}"
-        title="${esc(`${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`)}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.similar ? mark('match.similarName') : ''}${why}</button>`));
+      a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}"
+        title="${esc(`${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`)}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.similar ? mark('match.similarName') : ''}${why}</button>`,
+        h.entityType || (a.company ? 'label' : 'artist'), h.mbid)));
     }
     if (!items.length) return '';
     const rest = items.length - SUGG_VISIBLE;
@@ -16104,22 +16116,29 @@
     log('ok', 'workRunDone', { n });
   }
 
+  /** [3.17.4] The release at its source (Bandcamp album, Discogs release), in a new tab – also without the companion. */
+  function srcLinkHtml() {
+    if (!companionReleaseId() || !/^https:\/\//.test(String(S.release.url || ''))) return '';
+    const site = VIEW_NAMES[viewSite()];
+    return ` <a class="dci-srclink" href="${esc(S.release.url)}" target="_blank" rel="noopener" title="${esc(tr('sync.srcLinkTitle', { site }))}">↗ ${esc(site)}</a>`;
+  }
+
+  // [3.17.4] withDetails: the dashboard's head (with the last jump's result); the buttons and the link to the source are
+  // in the navigation bar too
   function syncStatusHtml(withDetails) {
-    if (!S.sync.installed) return `<span class="dci-muted" title="${esc(tr('sync.offTitle'))}">${esc(trView('sync.off'))}</span>`;
+    if (!S.sync.installed) return `<span class="dci-muted" title="${esc(tr('sync.offTitle'))}">${esc(trView('sync.off'))}</span>${srcLinkHtml()}`;
     // [3.17.0] The tabs of the loaded source's site (Discogs or Bandcamp)
     const st = syncSite();
-    if (st.old) return `<span class="dci-muted">${esc(tr('sync.oldSite', { site: VIEW_NAMES[viewSite()] }))}</span>`;
-    if (!st.tabs) {
-      return `${esc(trView('sync.noTab'))}${withDetails && companionReleaseId() ? ` <button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>` : ''}`;
-    }
-    const where = tr(st.target && st.target.visible ? 'sync.visible' : 'sync.background');
+    if (st.old) return `<span class="dci-muted">${esc(tr('sync.oldSite', { site: VIEW_NAMES[viewSite()] }))}</span>${srcLinkHtml()}`;
     const openBtn = `<button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>`;
+    if (!st.tabs) return `${esc(trView('sync.noTab'))}${srcLinkHtml()}${companionReleaseId() ? ` ${openBtn}` : ''}`;
+    const where = tr(st.target && st.target.visible ? 'sync.visible' : 'sync.background');
     // A Discogs (Bandcamp) tab is open, but none of them shows this release
     if (companionReleaseId() && !(st.releases || []).includes(String(companionReleaseId()))) {
-      return `${esc(trView('sync.otherPage'))}${withDetails ? ` <button type="button" data-act="sync-load" title="${esc(trView('sync.loadTitle'))}">${esc(tr('sync.load'))}</button> ${openBtn}` : ''}`;
+      return `${esc(trView('sync.otherPage'))}${srcLinkHtml()} <button type="button" data-act="sync-load" title="${esc(trView('sync.loadTitle'))}">${esc(tr('sync.load'))}</button> ${openBtn}`;
     }
     const last = S.sync.last;
-    return `${esc(trView('sync.connected', { where }))} <button type="button" class="dci-iconbtn" data-sync-reload title="${esc(trView('sync.reloadTitle'))}" aria-label="${esc(trView('sync.reloadTitle'))}">↻</button>${withDetails && last ? ` <span class="dci-sub">${esc(trView(`sync.${last}`))}</span>` : ''}`;
+    return `${esc(trView('sync.connected', { where }))}${srcLinkHtml()} <button type="button" class="dci-iconbtn" data-sync-reload title="${esc(trView('sync.reloadTitle'))}" aria-label="${esc(trView('sync.reloadTitle'))}">↻</button>${withDetails && last ? ` <span class="dci-sub">${esc(trView(`sync.${last}`))}</span>` : ''}`;
   }
 
   /** Switch: the Discogs tab follows the dashboard on mouse-over or on click. */
@@ -16166,6 +16185,13 @@
     if (!bar) return;
     bar.hidden = !S.sync.installed;
     if (S.sync.installed) updateSyncArea(bar, false);
+  }
+
+  /** "open in background" / "Load the release there" – in the dashboard's head and [3.17.4] in the navigation bar. */
+  function syncAction(act) {
+    if (!companionReleaseId()) return;
+    if (act === 'sync-open') toDiscogs({ type: 'open', url: S.release.url });
+    else toDiscogs({ type: 'show', site: viewSite(), releaseId: companionReleaseId(), loadOnly: true, id: Date.now() });
   }
 
   function setSyncMode(mode) {
@@ -17838,10 +17864,8 @@
         openInBackground(allWorkGids().map(workUrl));
         break;
       case 'sync-open':
-        if (companionReleaseId()) toDiscogs({ type: 'open', url: S.release.url });
-        break;
       case 'sync-load':
-        if (companionReleaseId()) toDiscogs({ type: 'show', site: viewSite(), releaseId: companionReleaseId(), loadOnly: true, id: Date.now() });
+        syncAction(act);
         break;
       default:
         break;
@@ -19181,6 +19205,9 @@
     }
     const placeBtn = e.target.closest && e.target.closest('#dci-launcher [data-place]');
     if (placeBtn && placeBtn.dataset.place !== S.place) setPlace(placeBtn.dataset.place);
+    // [3.17.4] the buttons of the navigation bar (outside the dashboard)
+    const barBtn = e.target.closest && e.target.closest('#dci-controls [data-act="sync-open"], #dci-controls [data-act="sync-load"]');
+    if (barBtn) syncAction(barBtn.dataset.act);
     if (e.target.closest && e.target.closest('[data-sync-reload]')) {
       toDiscogs({ type: 'reload', site: viewSite(), releaseId: companionReleaseId() });
       logView('info', 'dgReload');
@@ -19275,6 +19302,8 @@
       #dci-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 10px 0 0; font-size: 12px; color: #4b4585; }
       #dci-controls[hidden] { display: none; }
       #dci-controls .dci-syncstatus { color: #6d6a7c; }
+      #dci-controls .dci-syncstatus button { font: inherit; padding: 0 6px; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #262430; cursor: pointer; }
+      .dci-srclink { margin-left: 4px; white-space: nowrap; }
       .dci-syncmode { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-seg.dci-seg-small button { padding: 1px calc(var(--u, 1px) * 8); font-size: calc(var(--u, 1px) * 12); }
       #dci-controls .dci-seg { display: inline-flex; border: 1px solid #c8c5d6; border-radius: 3px; overflow: hidden; }
@@ -19668,6 +19697,11 @@
       .dci-track-form .dci-chips { max-height: calc(var(--u, 1px) * 220); overflow: auto; }
       /* [3.15.2, 3.15.3] the suggestions: a block of their own below the head line, side by side, wrapping into more lines */
       .dci-sugg-stack { flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 6); }
+      .dci-suggitem { display: inline-flex; align-items: stretch; }
+      #dci-overlay .dci-suggitem .dci-suggbtn { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+      #dci-overlay .dci-sugglink { display: inline-flex; align-items: center; padding: 0 calc(var(--u, 1px) * 5); border: 1px dashed var(--sugg-line); border-left: 0;
+        border-radius: 0 3px 3px 0; background: var(--sugg-bg); color: var(--sugg-ink); text-decoration: none; font-size: 0.9em; }
+      #dci-overlay .dci-sugglink:hover, #dci-overlay .dci-sugglink:focus { background: #fff; }
       #dci-overlay .dci-sugg-stack .dci-suggbtn { text-align: left; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); line-height: 1.35; }
       #dci-overlay .dci-suggmore { border: 2px solid var(--sugg-line); border-radius: 3px; background: #fff; color: var(--sugg-ink);
         font: inherit; font-weight: 700; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); cursor: pointer; }

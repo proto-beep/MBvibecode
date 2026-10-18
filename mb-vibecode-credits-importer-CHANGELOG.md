@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-18 | 3.17.3 | 1.8.2 |
+| 2026-10-18 | 3.17.3 – 3.17.4 | 1.8.2 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
@@ -74,6 +74,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-18
+
+### Import 3.17.4
+
+#### Added
+
+- **The source next to the status in the navigation bar** (collected item 22; maintainer: "es fehlt noch der Link zu Bandcamp neben dem status zu "Bandcamp View"", meant: the navigation bar above "Import credits …"). Next to "Bandcamp view: …" (or "Discogs view: …") the bar links the release at its source – **↗ Bandcamp** / **↗ Discogs**, in a new tab, also without the companion – and offers **open in background** (no tab open) or **Load the release there** (a tab on another page), which were only in the dashboard's head before.
+- **A link at each name suggestion** (collected item 24): the small **↗** at a suggestion opens its MusicBrainz entry (artist, label, place) in a new tab, to check it before assigning.
+
 
 ### Import 3.17.3 · COMPANION 1.8.2
 
