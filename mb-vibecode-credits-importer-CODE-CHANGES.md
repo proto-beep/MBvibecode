@@ -13,12 +13,62 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.17.2, Companion 1.6.0 – 1.8.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.17.6, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.17.6 · 2026-10-18
+
+The date of the liner notes as a suggestion at their row (collect item 21).
+
+- **`autoPlaceFoundDates`:** the pool entry of a date inside the liner notes' signature gets `liner` (the name).
+- **New `linerDateSugg(row)`:** the pool entry with `liner` for the liner notes row of that name (`fromAbout`, role "Liner Notes", not `row.linerDateOff`).
+- **`dateCell`:** without a date, the suggestion as `.dci-datechip.dci-datechip-sugg` (title `date.suggLiner`) with ✓ (`date-take`, `data-pool`) and ✕ (`date-sugg-off`) before "+ Date".
+- **`onClick`:** `date-take` → `applyPoolToRow` + `refresh`; `date-sugg-off` → `row.linerDateOff`, `rerenderRow`.
+- **CSS:** `.dci-datechip-sugg` (dashed, the colours of suggestions).
+- **Texts (4 languages):** `date.suggLiner`, `date.take`, `date.dropSugg`.
+- **Tests:** `t_linernotes.py` E (the suggestion at the row, ✓ takes it).
+
+
+## Import 3.17.5 · Companion 1.8.3 · 2026-10-18
+
+A click on a mark switches its credit, also on Discogs (collect item 20); marks kept after the editor is closed (collect item 23).
+
+- **Renamed and generalized (3.17.1 → 3.17.5):** `S.bcOff` → `S.srcOff` (entries `source|name|role`), `BC_OFF_KEY` kept only to take over its entries (as `bandcamp|…`) and cleared, new `SRC_OFF_KEY` (`dci-src-off:<MBID>`), `bcOffKey` → `srcOffKey`, `saveBcOff` → `saveSrcOff`, `bcCreditOn` → `creditOn`, `toggleBcCredit` → `toggleCredit`, `bcOffHtml` → `srcOffHtml` (`.dci-srcoff`, `bc.offNote` with `{site}`), `row.bcOff`/`bcOffLevel` → `row.srcOff`/`srcOffLevel`. `loadRelease` restores switched-off rows for any source the companion shows (not manual, not of a supplement). Logs `log.srcOff`/`log.srcOn` with `{site}` (`log.bcOff`/`log.bcOn` removed).
+- **`sendDiscogsStatus`:** Discogs items get `off` too; label `hover`; the map gets `toggle` (`S.clickToggle`) and `keepAfterClose` (`S.keepMarks`).
+- **`onFromDiscogs`:** `focus-row` with `hover` only in an open dashboard and without a log line; `toggle-credit` for both sites, only with `S.clickToggle`.
+- **New settings:** `S.clickToggle` (`dci-click-toggle`, default on, stored only when off), `S.keepMarks` (`dci-keep-marks`, default off); buttons `data-click-toggle` / `data-keep-marks` in `syncModeHtml` (navigation, dashboard head, settings topic), pressed states in `updateSyncArea`, document click handler (log `log.clickToggle` / `log.keepMarks`, `sendDiscogsStatus`); `TOPIC_KEYS.discogs`, `SETTINGS_KEYS`, topic reset and `resetSettings`.
+- **Texts (4 languages):** `sync.clickToggle`, `sync.clickToggleTitle`, `sync.keepMarks`, `sync.keepMarksTitle`, `dgStatus.hover`, `log.srcOff`, `log.srcOn`, `log.clickToggle`, `log.keepMarks`; changed `dgStatus.off`, `dgStatus.on` ("click: skip this credit …" / "click: take this credit again"), `bc.offNote`.
+- **Companion 1.8.3:** MB side stores `keepMarks` from the status map (GM). `initSourceSide`: `forHere(map)`, `keptMap()` (with `keepMarks`: the per-release map `statusMap:<MBID>` of this page from `statusMapIndex`), `showMap` shows the live map or the kept one (`shownMap`, `live`, `shownSig`; the 3-second check compares the signature); click on `.dci-dg-mark`: nothing when not `live`, `toggle-credit` with `shownMap.toggle` (off = the mark is not `.dci-mark-off`), else `focus-row`; mouse resting on a mark (`MARK_HOVER_MS` 450) → `focus-row` with `hover`. New `markTitle(map, item, status, note, where)` for Discogs and Bandcamp marks. Discogs `renderStatus`: `.dci-mark-off`, the credit's `li` greyed (`.dci-dg-offline`) when all its marks are off. Bandcamp: no ⊘ (`.dci-bc-markwrap`, `.dci-bc-off` gone), `.dci-mark-off` instead of `.dci-bc-isoff`. Release page: a checked map is also written to `statusMap:<MBID>` (kept marks show the checked state).
+- **Tests:** `t_bcoff.py` adapted (a click on the mark; resting the pointer shows the row; `dci-src-off`), `t_bcview.py` D with "Click switches" off; new `t_keepmarks.py` (A–C: Discogs hover → row, click off/on with greyed line, "Click switches" off → row, "Keep marks" off/on, kept marks do not send clicks).
+
+
+## Import 3.17.4 · 2026-10-18
+
+The source in the navigation bar (collect item 22), links at name suggestions (collect item 24).
+
+- **New `srcLinkHtml()`:** `a.dci-srclink` to `S.release.url` (https only, a source the companion knows), "↗ " + `VIEW_NAMES[viewSite()]`, title `sync.srcLinkTitle`.
+- **`syncStatusHtml(withDetails)`:** the link after every status; "open in background" (`sync-open`) and "Load the release there" (`sync-load`) also without `withDetails` (navigation bar); `withDetails` now only adds the last jump's result.
+- **New `syncAction(act)`** (from the `onClick` cases `sync-open` / `sync-load`); the document click handler calls it for those buttons inside `#dci-controls` (outside the dashboard).
+- **`suggestStackHtml`:** each suggestion wrapped by `item(btn, type, mbid)` in `.dci-suggitem` with `a.dci-sugglink` (`/<type>/<mbid>`, new tab, `match.openNew`); type: `artist` for alias hits, `h.entityType` (else label/artist) for name hits.
+- **CSS:** `.dci-suggitem`, `.dci-sugglink` (joined to the suggestion box), buttons of `#dci-controls .dci-syncstatus`, `.dci-srclink`.
+- **Texts (4 languages):** `sync.srcLinkTitle`, `match.openNew`.
+- **Tests:** new `t_navlink.py` (A–D: bar with link and "open in background", "Load the release there" from the bar, Discogs link, ↗ at artist and label suggestions).
+
+
+## Import 3.17.3 · Companion 1.8.2 · 2026-10-18
+
+The release page keeps its result (collect item 27), distribution (collect item 28).
+
+- **Companion 1.8.2, `initReleasePage`:** `checkOnce` returns `false` without writing when the release cannot be read (`!res.ok` or an error) – before, it wrote the dashboard's items unchecked (`checked: 0`); `check` retries after `RECHECK_MS` (15 s, at most 8 times), `retries` reset after a check that read MusicBrainz. Beat also on `visibilitychange`.
+- **Companion 1.8.2, beats:** `statusBeat` of the edit page and of the release page carries `hidden` (`document.visibilityState`); the edit page beats again on `visibilitychange` and sets its beat to 0 on `pagehide` (as the release page did); `senderAlive` allows `BEAT_HIDDEN_MS` (75 s) for a hidden sender, 8 s otherwise.
+- **Register:** new table **T028** `TEXT_DISTRIBUTION` (distribution, distributor, distributed, vertrieb, distribución, distribué … ) in `TABLES`.
+- **`TEXT.parse`:** `distribution(t)` (T028, a trailing by/par/por/da/durch/via left out) → `['Distributed By']`; used first in `byRoles` ("Distribution by X") and `listRoles` ("Distribution - X", "Distribution: X"); a clause "<word> par/por/da/durch/via/through X" whose word is in T028 adds X with "Distributed By" (before the place rules). The company role itself is C006 as before.
+- **Tests:** new `t_relcheck.py` (A–C: ✓ after "Enter edit", a failing check keeps ✓ and is retried, a hidden sender's beat counts 75 s; with companion 1.8.1 B shows ● – the reported fault), new `t_distrib.py` (A in Node: 11 variants and a sentence without; B in the dashboard: "!K7" with "Distributed By", label → release distributed, only suggested); harness `WS_FAIL` (`{'release': n}`: the next n lookups of the release answer 503). Golden file written anew: only T028 added (sections `lists` and `tables`).
+
 
 ## Import 3.17.2 · 2026-10-17
 
