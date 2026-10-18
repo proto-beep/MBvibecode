@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-18 | 3.17.3 – 3.17.4 | 1.8.2 |
+| 2026-10-18 | 3.17.3 – 3.17.5 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
 | 2026-10-13 | 3.1.0 – 3.5.0 | 1.6.0 – 1.7.0 |
@@ -74,6 +74,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-18
+
+### Import 3.17.5 · COMPANION 1.8.3
+
+#### Changed
+
+- **A click on a mark switches its credit – on Bandcamp and on Discogs** (collected item 20; maintainer: "das extra symbol brauchen wir gar nicht extra, es kann ja auch einfach das "○" angeklickt werden", "discogs soll sich auch umschalten lassen"). The ⊘ of 3.17.1 is gone: a click on the mark itself skips the credit (its row goes to "Skip") or takes it again. Resting the pointer on a mark for about half a second shows its row in the dashboard (no line in the log). On Discogs a line whose marks are all off is greyed. What was switched off is stored per release and source (`dci-src-off:<MBID>`; what 3.17.1 stored for Bandcamp is taken over).
+- New switch **Click switches** (navigation and settings, on by default): off, a click on a mark shows its row, as before.
+
+#### Added
+
+- **Keep marks** (collected item 23; maintainer: "Discogs die Verbindung nicht mehr darstellt sobald der verbundene MB Tab geschlossen wird. Bitte eine Option anbieten …"): a switch in the navigation and the settings (off by default). On, the marks stay on Discogs and Bandcamp with the last state of the release also when the relationship editor and the release page are closed – for all releases (the last 30); a state checked on the release page is kept as checked. No mark of difference ("bitte gar nicht anzeigen"); a click on them does nothing while no editor is open.
+
 
 ### Import 3.17.4
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.8.2
+// @version      1.8.3
 // @date         2026-10-17
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -49,6 +49,8 @@
   const BEAT_HIDDEN_MS = 75000;
   // [1.8.2] a check of the release page that could not read MusicBrainz is tried again after this long (at most 8 times)
   const RECHECK_MS = 15000;
+  // [1.8.3] how long the pointer rests on a mark before the dashboard shows its row
+  const MARK_HOVER_MS = 450;
   const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
   const isMusicBrainz = /(^|\.)musicbrainz\.org$/i.test(location.hostname);
   const isBandcamp = /(^|\.)bandcamp\.com$/i.test(location.hostname);
@@ -173,6 +175,8 @@
       } else if (msg.type === 'status-map') {
         // Status of every Discogs credit, shown on the Discogs page (all tabs of that release)
         const map = { ...msg, pageId, ts: Date.now() };
+        // [1.8.3] the dashboard's switch "Keep marks", for the Discogs and Bandcamp tabs when no editor is open
+        if (GM_getValue('keepMarks') !== !!msg.keepAfterClose) GM_setValue('keepMarks', !!msg.keepAfterClose);
         GM_setValue('statusMap', map);
         if (msg.mbRelease) keepPerRelease(map);
         statusBeat();
@@ -279,14 +283,35 @@
       return !!(map && same && Date.now() - beat.ts < (beat.hidden ? BEAT_HIDDEN_MS : 8000));
     };
     // A status map of this site and of the release this page shows
-    const isHere = (map) => !!(map && siteOf(map) === side.id && String(map.releaseId) === currentReleaseId() && senderAlive(map));
+    const forHere = (map) => !!(map && siteOf(map) === side.id && String(map.releaseId) === currentReleaseId());
+    const isHere = (map) => forHere(map) && senderAlive(map);
+    /**
+     * [1.8.3] "Keep marks" (switched on in the dashboard): with no editor or release page of the release open, its last
+     * status as kept for its release page (the last 30 releases).
+     */
+    const keptMap = () => {
+      if (!GM_getValue('keepMarks')) return null;
+      for (const id of GM_getValue('statusMapIndex') || []) {
+        const m = GM_getValue(`statusMap:${id}`);
+        if (forHere(m) && m.enabled) return m;
+      }
+      return null;
+    };
     let artShown = false;
+    // the map shown and whether a page of MusicBrainz is open for it (a click on a mark reaches the dashboard only then)
+    let shownMap = null;
+    let live = false;
+    let shownSig = '';
     const showMap = (map) => {
       lastMap = map;
       const here = isHere(map);
-      shown = here && !!map.enabled;
+      const use = here ? map : keptMap();
+      shown = !!(use && use.enabled);
+      live = here;
+      shownMap = shown ? use : null;
+      shownSig = shownMap ? `${here}|${shownMap.ts}|${shownMap.pageId}` : '';
       artShown = here && !!map.artwork && !!side.artwork;
-      side.renderStatus(shown ? map : null);
+      side.renderStatus(shownMap);
       if (side.artwork) renderArtwork(artShown ? map : null);
     };
     GM_addValueChangeListener('statusMap', (name, oldValue, map) => showMap(map || null));
@@ -298,27 +323,43 @@
     if (GM_getValue('statusMap')) setTimeout(() => showMap(lastMap || GM_getValue('statusMap') || null), 1500);
     // Discogs renders parts of the page later: mark again once the credits are there
     setTimeout(() => { if (lastMap) showMap(lastMap); }, 4000);
-    // The edit page was closed (or crashed): remove the marks; they come back when it reports again
+    // The edit page was closed (or crashed): remove the marks; they come back when it reports again ([1.8.3] or the kept
+    // ones are shown)
     setInterval(() => {
-      if (!lastMap) return;
+      if (!lastMap && !GM_getValue('keepMarks')) return;
       const here = isHere(lastMap);
-      if (shown !== (here && !!lastMap.enabled) || artShown !== (here && !!lastMap.artwork && !!side.artwork)) showMap(lastMap);
+      const use = here ? lastMap : keptMap();
+      const sig = use && use.enabled ? `${here}|${use.ts}|${use.pageId}` : '';
+      if (sig !== shownSig || artShown !== (here && !!lastMap.artwork && !!side.artwork)) showMap(lastMap);
     }, 3000);
     document.addEventListener('click', (e) => {
-      // [1.8.1] ⊘ next to a Bandcamp mark: the credit off (its row "Skip") or on again
-      const off = e.target.closest && e.target.closest('.dci-bc-off');
-      if (off) {
-        e.preventDefault();
-        e.stopPropagation();
-        GM_setValue('fromDiscogs', { type: 'toggle-credit', row: off.dataset.row, off: off.dataset.off === '1', releaseId: currentReleaseId(), ts: Date.now() });
-        return;
-      }
       const mark = e.target.closest && e.target.closest('.dci-dg-mark');
       if (!mark) return;
       e.preventDefault();
       e.stopPropagation();
-      GM_setValue('fromDiscogs', { type: 'focus-row', row: mark.dataset.row, releaseId: currentReleaseId(), ts: Date.now() });
+      // only kept marks (no editor open): nothing to show or switch
+      if (!live) return;
+      // [1.8.3] "Click switches" (dashboard): the credit off (its row "Skip") or on again; else its row in the dashboard
+      if (shownMap && shownMap.toggle) {
+        GM_setValue('fromDiscogs', { type: 'toggle-credit', row: mark.dataset.row, off: !mark.classList.contains('dci-mark-off'), releaseId: currentReleaseId(), ts: Date.now() });
+      } else {
+        GM_setValue('fromDiscogs', { type: 'focus-row', row: mark.dataset.row, releaseId: currentReleaseId(), ts: Date.now() });
+      }
     }, true);
+    // [1.8.3] the pointer resting on a mark: its row in the dashboard
+    let markTimer = null;
+    let markEl = null;
+    document.addEventListener('mouseover', (e) => {
+      const mark = e.target.closest && e.target.closest('.dci-dg-mark');
+      if (mark === markEl) return;
+      markEl = mark;
+      clearTimeout(markTimer);
+      if (mark && live && shownMap && shownMap.toggle) {
+        markTimer = setTimeout(() => {
+          if (markEl === mark) GM_setValue('fromDiscogs', { type: 'focus-row', hover: true, row: mark.dataset.row, releaseId: currentReleaseId(), ts: Date.now() });
+        }, MARK_HOVER_MS);
+      }
+    });
     let hoverTimer = null;
     let lastPos = '';
     document.addEventListener('mouseover', (e) => {
@@ -395,11 +436,8 @@
       #dci-artwork.dci-art-collapsed .dci-art-img { display: none; }
       .dci-dg-unmapped-line { background-color: #fff3c4 !important; }
       .dci-bc-hl { background-color: rgba(235, 116, 59, 0.22) !important; box-shadow: 0 0 0 2px rgba(235, 116, 59, 0.6); border-radius: 2px; scroll-margin: 120px; }
-      .dci-bc-markwrap { position: relative; display: inline-block; }
-      .dci-bc-off { display: none; position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); z-index: 5; padding: 0 0.3em;
-        border: 1px solid #c0392b; border-radius: 3px; background: #fff; color: #c0392b; font: bold 12px/1.4 sans-serif; cursor: pointer; }
-      .dci-bc-markwrap:hover .dci-bc-off, .dci-bc-off:focus { display: inline-block; }
-      .dci-dg-mark.dci-bc-isoff { opacity: 0.55; }
+      .dci-dg-mark.dci-mark-off { opacity: 0.55; }
+      .dci-dg-offline { opacity: 0.5; }
       .dci-bc-offtext { opacity: 0.45; text-decoration: line-through; }`;
     document.head.appendChild(style);
   }
@@ -596,24 +634,40 @@
 
   const MARK_SYMBOL = { mb: '✓', staged: '●', open: '○', skip: '–', unmapped: '!', pending: '✗' };
 
+  /**
+   * The tooltip of a mark: where (track position or role), status, note, checked; [1.8.3] switched off, and what a click
+   * does ("Click switches": skip / take again, resting the pointer shows the row; else: show the row).
+   */
+  function markTitle(map, item, status, note, where) {
+    const labels = map.labels || {};
+    const checked = map.checked && (status === 'mb' || status === 'pending') ? ` (${labels.checked || ''})` : '';
+    const off = item.off ? ` (${labels.isOff || ''})` : '';
+    const act = map.toggle ? `${(item.off ? labels.on : labels.off) || ''}; ${labels.hover || ''}` : labels.click || '';
+    return `${where ? `${where}: ` : ''}${labels[status] || status}${note ? ` ${note}` : ''}${checked}${off} – ${act}`.trim();
+  }
+
   function renderStatus(map) {
     ensureStyle();
     document.querySelectorAll('.dci-dg-mark').forEach((m) => m.remove());
     document.querySelectorAll('.dci-dg-unmapped-line').forEach((m) => m.classList.remove('dci-dg-unmapped-line'));
+    document.querySelectorAll('.dci-dg-offline').forEach((m) => m.classList.remove('dci-dg-offline'));
     if (!map || !map.enabled) return;
     expandCredits();
-    const labels = map.labels || {};
+    // [1.8.3] lines whose marks are all switched off are greyed
+    const lines = new Map();
     const place = (item, found, status, note, pos = '') => {
       const mark = document.createElement('button');
       mark.type = 'button';
-      mark.className = `dci-dg-mark dci-dg-${status}`;
+      mark.className = `dci-dg-mark dci-dg-${status}${item.off ? ' dci-mark-off' : ''}`;
       mark.dataset.row = item.row;
       if (pos) mark.dataset.pos = pos;
       mark.textContent = MARK_SYMBOL[status] || '?';
-      const checked = map.checked && (status === 'mb' || status === 'pending') ? ` (${labels.checked || ''})` : '';
-      mark.title = `${pos ? `${pos}: ` : ''}${labels[status] || status}${note ? ` ${note}` : ''}${checked} – ${labels.click || ''}`.trim();
+      mark.title = markTitle(map, item, status, note, pos);
       found.el.insertBefore(mark, found.el.firstChild);
       if (item.unmapped) found.el.classList.add('dci-dg-unmapped-line');
+      // (the credit's list item; the element found may be only the name inside it)
+      const line = found.el.closest('li') || found.el;
+      lines.set(line, (lines.get(line) !== false) && !!item.off);
     };
     for (const item of map.items || []) {
       // A credit on Discogs track lines: a mark on each of its lines, with the status of that track
@@ -631,6 +685,7 @@
       if (!found || found.score < 3) continue;
       place(item, found, item.unmapped ? 'unmapped' : item.status, item.note || '');
     }
+    lines.forEach((allOff, el) => { if (allOff) el.classList.add('dci-dg-offline'); });
   }
 
   /** The credit line of an artist (or label) with a role inside the Discogs line of one track. */
@@ -915,7 +970,6 @@
     root.normalize();
     if (!map || !map.enabled) return;
     const page = bandcampPage().page;
-    const labels = map.labels || {};
     const todo = [];
     (map.items || []).forEach((item, order) => (item.refs || []).forEach((r, k) => {
       if (r.about || (r.page || '') !== page) return;
@@ -937,28 +991,14 @@
       const status = item.unmapped ? 'unmapped' : (r.status || item.status);
       const mark = document.createElement('button');
       mark.type = 'button';
-      mark.className = `dci-dg-mark dci-dg-${status} dci-bc-mark${item.off ? ' dci-bc-isoff' : ''}`;
+      // [1.8.3] the mark itself switches the credit (no ⊘ any more); switched off: greyed
+      mark.className = `dci-dg-mark dci-dg-${status} dci-bc-mark${item.off ? ' dci-mark-off' : ''}`;
       mark.dataset.row = item.row;
       mark.textContent = MARK_SYMBOL[status] || '?';
-      const note = r.note || item.note || '';
-      const checked = map.checked && (status === 'mb' || status === 'pending') ? ` (${labels.checked || ''})` : '';
-      const off = item.off ? ` (${labels.isOff || ''})` : '';
-      mark.title = `${item.role ? `${item.role}: ` : ''}${labels[status] || status}${note ? ` ${note}` : ''}${checked}${off} – ${labels.click || ''}`.trim();
-      // [1.8.1] ⊘ (shown while the pointer is on the mark) switches the credit off or on again
-      const wrap = document.createElement('span');
-      wrap.className = 'dci-bc-markwrap';
-      const tgl = document.createElement('button');
-      tgl.type = 'button';
-      tgl.className = 'dci-bc-off';
-      tgl.dataset.row = item.row;
-      tgl.dataset.off = item.off ? '0' : '1';
-      tgl.textContent = '⊘';
-      tgl.title = (item.off ? labels.on : labels.off) || '';
-      tgl.setAttribute('aria-label', tgl.title);
-      wrap.append(mark, tgl);
+      mark.title = markTitle(map, item, status, r.note || item.note || '', item.role);
       if (!atPos.has(pos)) atPos.set(pos, { frag: document.createDocumentFragment(), range, allOff: true });
       const at = atPos.get(pos);
-      at.frag.appendChild(wrap);
+      at.frag.appendChild(mark);
       if (!item.off) at.allOff = false;
     }
     // From the end: a part whose credits are all off is greyed, then its marks go before it
@@ -1190,7 +1230,12 @@
       });
       // The dashboard may have sent a newer map meanwhile: only this release's marks are replaced
       const now = stored();
-      if (now && now.ts === map.ts) GM_setValue('statusMap', { ...map, items, pageId, checked: Date.now(), ts: Date.now() });
+      if (now && now.ts === map.ts) {
+        const checkedMap = { ...map, items, pageId, checked: Date.now(), ts: Date.now() };
+        GM_setValue('statusMap', checkedMap);
+        // [1.8.3] kept for the release too: "Keep marks" shows the checked state after the release page is closed
+        GM_setValue(`statusMap:${mbRelease}`, checkedMap);
+      }
       return true;
     };
     beat();
