@@ -131,6 +131,7 @@ python3 t_linernotes.py   # liner notes in Bandcamp's about text (3.17.2): the t
 python3 t_relcheck.py     # the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
                           # retried, a background page's beat counts 75 s
 python3 t_distrib.py      # "Distribution - !K7" and variants (3.17.3, T028): company "Distributed By", label → release distributed
+python3 t_navlink.py      # the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)

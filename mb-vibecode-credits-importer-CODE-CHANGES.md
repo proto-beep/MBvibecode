@@ -13,12 +13,25 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.17.3, Companion 1.6.0 – 1.8.2 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.17.4, Companion 1.6.0 – 1.8.2 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.17.4 · 2026-10-18
+
+The source in the navigation bar (collect item 22), links at name suggestions (collect item 24).
+
+- **New `srcLinkHtml()`:** `a.dci-srclink` to `S.release.url` (https only, a source the companion knows), "↗ " + `VIEW_NAMES[viewSite()]`, title `sync.srcLinkTitle`.
+- **`syncStatusHtml(withDetails)`:** the link after every status; "open in background" (`sync-open`) and "Load the release there" (`sync-load`) also without `withDetails` (navigation bar); `withDetails` now only adds the last jump's result.
+- **New `syncAction(act)`** (from the `onClick` cases `sync-open` / `sync-load`); the document click handler calls it for those buttons inside `#dci-controls` (outside the dashboard).
+- **`suggestStackHtml`:** each suggestion wrapped by `item(btn, type, mbid)` in `.dci-suggitem` with `a.dci-sugglink` (`/<type>/<mbid>`, new tab, `match.openNew`); type: `artist` for alias hits, `h.entityType` (else label/artist) for name hits.
+- **CSS:** `.dci-suggitem`, `.dci-sugglink` (joined to the suggestion box), buttons of `#dci-controls .dci-syncstatus`, `.dci-srclink`.
+- **Texts (4 languages):** `sync.srcLinkTitle`, `match.openNew`.
+- **Tests:** new `t_navlink.py` (A–D: bar with link and "open in background", "Load the release there" from the bar, Discogs link, ↗ at artist and label suggestions).
+
 
 ## Import 3.17.3 · Companion 1.8.2 · 2026-10-18
 
