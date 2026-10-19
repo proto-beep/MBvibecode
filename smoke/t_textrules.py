@@ -3,7 +3,8 @@ A) "Music played and recorded by X in March and April 2025" → X played by (per
    off the name. "Mixed and mastered by X in May 2025" → mixed by, mastered by. "Layout by X" (the role is "Layout").
    "Photography Sam Lee" (a role, then a name, no separator); "mastering john doe" (small letters).
 B) The dates: "March and April 2025" is one period 2025-03 – 2025-04; "May 2025".
-C) "A Northern Echo release." is left out (not listed as not recognized); prose stays not recognized.
+C) "A Northern Echo release." is left out (not listed as not recognized); prose stays not recognized; [3.21.0] thanks are
+   listed apart as left out on purpose.
 D) "Music and artwork of this release were entirely created by a (cat assisted) human. No AI tools were used.": no name
    – the release's artist is offered for music and artwork, as its own entry with a suggestion; nothing is assigned."""
 from playwright.sync_api import sync_playwright
@@ -23,6 +24,7 @@ mastering john doe
 Music and artwork of this release were entirely created by a (cat assisted) human. No AI tools were used.
 
 A Northern Echo release.
+We had a great time together
 Thanks to the cat for keeping us company"""
 GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
   [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()),
@@ -46,14 +48,15 @@ with sync_playwright() as p:
     for x in g:
         print('   ', x)
     unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+    ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent)")
     pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [JSON.stringify(d.begin), JSON.stringify(d.end)].join(' '))")
-    print('   nicht erkannt:', unrec)
+    print('   nicht erkannt:', unrec, '| ausgelassen:', ign)
     print('   Pool:', pool)
     named = [x for x in g if x[0] == 'Jane Roe' and 'names no one' not in x[2]]
     ok_a = bool(named) and named[0][1] == ['Played By', 'Recorded By', 'Mixed By', 'Mastered By', 'Layout'] \
         and ['Sam Lee', ['Photography By']] in [x[:2] for x in g] and ['john doe', ['Mastering']] in [x[:2] for x in g]
     ok_b = '{"year":2025,"month":3,"day":null} {"year":2025,"month":4,"day":null}' in pool and '{"year":2025,"month":5,"day":null} {"year":2025,"month":5,"day":null}' in pool
-    ok_c = unrec == ['Thanks to the cat for keeping us company']
+    ok_c = unrec == ['We had a great time together'] and ign == ['Thanks to the cat for keeping us company']
     ph = [x for x in g if x[0] == 'Jane Roe' and 'names no one' in x[2]]
     ok_d = bool(ph) and 'a human' in ph[0][2] and ph[0][3] == [JR] and ph[0][4] == 'missing' and ph[0][1] == ['Artwork']
     mark = pg.evaluate("[...document.querySelectorAll('.dci-sugg-stack [data-act=name-use] .dci-similar')].map(x => x.textContent)")

@@ -9,7 +9,10 @@ B) "Skip works matrix": the matrix folds, says "skipped", its rows (writers, pub
 C) "Take works matrix again": the rows come back to the works level, the matrix unfolds, the lookups run.
 D) From so many tracks without a work (setting "Ask before the work lookups from …", 100; here 3) the works section
    asks first, with about how long it takes; nothing is looked up until then. "Not now" leaves out only the lookups
-   (the matrix stays); "Look up now" starts them later. The setting is in the menu, topic Works (100 by default)."""
+   (the matrix stays); "Look up now" starts them later. The setting is in the menu, topic Works (100 by default).
+   [3.19.3] The question and the setting say in a tooltip what is counted (tracks without a work).
+G) [3.19.3] Setting "Show the rows skipped with the works matrix with their entries" (on): off, their entry says how
+   many are not shown; on again, they are back."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -127,7 +130,8 @@ with sync_playwright() as p:
     pg.wait_for_timeout(2500)
     d1 = head(pg)
     n1 = [len(H.WORK_QUERIES) - q2, len(H.BROWSES)]
-    print('D) Frage:', d1['ask'], '| Abfragen bis dahin:', n1, '| Matrix:', d1['table'])
+    tip = pg.evaluate("document.querySelector('[data-el=works-ask] strong').title")
+    print('D) Frage:', d1['ask'], '| Abfragen bis dahin:', n1, '| Matrix:', d1['table'], '| Tooltip:', tip)
     click(pg, '[data-el=works] [data-act=mx-lookups][data-on=\"0\"]')
     pg.wait_for_timeout(600)
     d2 = head(pg)
@@ -145,10 +149,28 @@ with sync_playwright() as p:
     pg.wait_for_timeout(300)
     pg.locator('[data-act=settings-topic][data-topic=works]').evaluate('b => b.click()')
     pg.wait_for_timeout(300)
-    f = pg.evaluate("(() => { const i = document.querySelector('[data-set=awAsk]'); return i ? [i.value, i.min, i.getAttribute('aria-label'), i.closest('label').textContent.replace(/\\s+/g, ' ').trim()] : null; })()")
+    f = pg.evaluate("(() => { const i = document.querySelector('[data-set=awAsk]'); return i ? [i.value, i.min, i.getAttribute('aria-label'), i.closest('label').textContent.replace(/\\s+/g, ' ').trim(), i.closest('label').title] : null; })()")
     pg.evaluate("localStorage.removeItem('dci-aw-ask')")
     print('   Einstellung:', f)
-    results.append(f is not None and f[0] == '3' and f[1] == '0' and 'tracks without a work (0: never)' in f[3])
+    results.append(f is not None and f[0] == '3' and f[1] == '0' and 'tracks without a work (0: never)' in f[3]
+                   and tip.startswith('Counted are the tracks without a work') and f[4] == tip)
+    # G) [3.19.3] the rows skipped with the works matrix: shown with their entries (setting, on) or not
+    click(pg, '[data-el=works] [data-act=mx-skip]')
+    pg.wait_for_timeout(500)
+    GROUP = """(n) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === n);
+      return g ? [g.querySelectorAll('tr.dci-row').length, [...g.querySelectorAll('.dci-work-note')].map(p => p.textContent.trim())] : null; }"""
+    g1 = pg.evaluate(f"({GROUP})('Writer W')")
+    pg.locator('[data-set=mx-skiprows]').evaluate('i => i.click()')
+    pg.wait_for_timeout(400)
+    g2 = [pg.evaluate(f"({GROUP})('Writer W')"), pg.evaluate("localStorage.getItem('dci-mx-skiprows')")]
+    pg.locator('[data-set=mx-skiprows]').evaluate('i => i.click()')
+    pg.wait_for_timeout(400)
+    g3 = [pg.evaluate(f"({GROUP})('Writer W')"), pg.evaluate("localStorage.getItem('dci-mx-skiprows')")]
+    click(pg, '[data-el=works] [data-act=mx-skip]')
+    pg.wait_for_timeout(500)
+    print('G) übersprungen, gezeigt:', g1, '| Einstellung aus:', g2, '| wieder an:', g3)
+    results.append(g1 is not None and g1[0] >= 1 and g2[0][0] == 0 and g2[0][1] == ['1 row skipped with the works matrix is not shown (setting)'] and g2[1] == 'false'
+                   and g3[0][0] == g1[0] and g3[1] is None)
     print('Fehler:', errs, errs2, errs3)
     results.append(not errs and not errs2 and not errs3)
     b.close()

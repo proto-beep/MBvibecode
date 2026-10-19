@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-19 | 3.19.1 | – |
+| 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
@@ -37,6 +37,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-19 | Import 3.21.0 | Text recognition, part 1: several sentences in one line are read one by one ("Graphic design: X. Text: Y. Produced by Z."); "℗ & ©", "P + ©" and "(P) & (C)" give both, without codes like "DDD" or catalogue numbers; web addresses are never part of a name – a profile (Instagram, SoundCloud …) after a name is looked up in MusicBrainz as a suggestion and filled in by "Create artist", Linktree and other addresses are left out; "Logo by" is design with the credit "logo"; a title in quotation marks with its year before "by" and "courtesy of …" are no part of a credit; "Text: X" asks: liner notes or lyrics; thanks and endorsements are listed as left out on purpose |
 | 2026-10-18 | Import 3.18.0 | Works matrix: "Skip works matrix" (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to "Skip" and the work lookups rest; "Take works matrix again" brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. "Add entry manually" is one line above the date pool, always in view |
 | 2026-10-17 | Import 3.17.0 · COMPANION 1.8.0 | Bandcamp view in the companion: a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the "about" text: to its sentence), track highlight both ways, status on the MusicBrainz release page; "open in background" and "Load the release there" for Bandcamp too. Rows from track pages link to them |
 | 2026-10-17 | Import 3.16.0 | A menu "⚙ Settings" with all settings by topic (General, Sources, Discogs view, Works, Staging, Dates & tracks), each with its own "↺"; the switches stay where they are too. Works of the artists: on or off, how many works and recordings per artist are read (4,000), when a large catalogue is named, and how long the works read are kept – now beyond reloading the page (7 days) |
@@ -76,6 +77,58 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-19
+
+### Import 3.21.0 · milestone
+
+Text recognition, part 1 – pasted texts and Bandcamp credits (collected items 33 and 37; examples from the maintainer's Bandcamp releases).
+
+#### Added
+
+- **Several sentences in one line** (33a): "Cover art: … Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy." is read sentence by sentence (before: the whole line not recognized). A period after an initial ("J. Smith"), after short words such as "Vol.", "feat.", "St." or before a small letter ends no sentence; a line is only cut when a later sentence starts a credit, so prose stays whole.
+- **℗ and © together** (33f; maintainer: "P + © 2023 Maya Recordings DDD · MCD 2301 (must be recognized)"): "P + ©", "℗ & ©", "(P) & (C)", "℗©" and "©©" give both the phonographic copyright and the copyright of the label, also with year ranges; a code of how it was recorded ("DDD", "ADD"), a catalogue number after "·" and "All rights reserved" are no part of the name.
+- **Web addresses next to names** (37; maintainer: "bitte instagram links nicht importieren und als artist name übersetzen. höchstens im zwischenspeicher halten, falls man auf "create artist" klickt" – "Linktree lässt sich nicht in MB übernehmen. aber die anderen gerne. generell aber web adressen ignorieren"): an address is never part of a name. A profile right after a name (Instagram, Facebook, X/Twitter, SoundCloud, YouTube, TikTok, Bluesky, Threads, Mixcloud, Vimeo, Myspace, a Bandcamp page) stays with the entry: it is shown next to the name, MusicBrainz is asked for an artist with it – shown first among the suggestions, marked "via instagram.com", **still only a suggestion** – and **Create artist …** fills it in as the artist's link. Linktree, home pages, e-mail addresses and every other address are left out; a line of only addresses ("www.…", "Contact: …", "Follow us: …") is listed as left out.
+- **"Logo by X"** (maintainer: "-> design mit credit "logo""): design with the credit "logo" (before: graphic design without a credit).
+- **"Text: X" asks** (33c): liner notes (an essay in the booklet) or the lyrics (in German "Text" is the lyrics)? Nothing is assumed until you choose; "lyricist" moves the row to the works matrix.
+- **Lines left out on purpose** (33g; maintainer: "thanks (should not be recognized)", "Thomastik-Infeld strings (should not)"): thanks ("Thanks to …", "Special thanks", "Danke", "Gracias", "Merci" …), endorsements ("X plays exclusively on Y bass strings", "uses Z cymbals") and "appears courtesy of …" are listed in their own list **n lines left out on purpose**, apart from the lines not recognized.
+
+#### Changed
+
+- **Titles in quotation marks and "courtesy of"** (33b): "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate" gives Albert Irvin for the cover art – the title of the painting and its year are no part of the role (and 1988 no longer lands in the date pool), "courtesy of …" is no name. A "by" inside a title in quotation marks ("Cover: “Stand by Me” by X") does not count.
+
+#### Fixed
+
+- After a choice in a type question that goes to the work level, the works matrix is drawn again (it showed the row only after the next change).
+
+Still to come (text recognition, part 2): "Recorded by Yunclas in Xixon, Asturies, Spain in the Spring/Summer, 2017" (a name with the place where it was recorded, 33d) and "Piano in ‘…' and '…' is a contribution by X" (tracks named by their titles, 33e).
+
+
+### Import 3.20.0
+
+#### Added
+
+- **The media dialog loads the chosen media in the relationship editor** (collected item 34; maintainer: "im "Which media should be imported?" muss es möglich sein alle medien im hintergrund auszuklappen. sonst kann man gar nicht alle öffnen"). New tick **Load the chosen media in the relationship editor in the background** (off at first, remembered): MusicBrainz's editor shows the tracks of large releases only when a medium is opened, and while the dialog is open its media cannot be opened by hand. Ticked, the chosen media not loaded yet (the dialog names them) are opened one after another while the import runs; the log names each, a message says when all are there.
+- **The works question in the media dialog** (maintainer: "hier könnte die info über die werke schon stattfinden falls über 100 tracks"): from as many tracks without a work in the chosen media as the setting says (100), the dialog asks **Look up works** (pressed), **Not now** or **Skip works matrix**, with about how long the lookups take; the number follows the chosen media, and the works section does not ask again.
+
+
+### Import 3.19.3
+
+#### Added
+
+- **What the works question counts** (collected item 35; maintainer: "ja, bitte tracks ohne werk. die anderen müssen ja nicht mehr gesucht werden. evtl tooltip was da gezählt wird"): the question before the work lookups and its setting say in a tooltip that only the tracks without a work are counted – only they are looked up.
+- **Show the rows skipped with the works matrix** (collected item 36; maintainer: "erst einmal sichtbar lassen. evtl option für werk-matrix?"): a setting under ⚙ Settings → Works, on by default. Off, the rows that "Skip works matrix" put on "Skip" are not listed with their entries; the entry says how many are not shown.
+
+
+### Import 3.19.2
+
+#### Added
+
+- **Harmony: the relationship editor in a background tab** (collected item 32; maintainer: "falls per harmonies importiert wird soll die option das relationship nach dem "enter edit" button nur in einem neuen hintergrundtab geöffnet werden falls es aktiviert ist", "bitte wirklich nur bei Bandcamp importen anbieten", "ja gut auch bei discogs", "trotz öffnen von hintergrund tab (checkbox) sollte das auf harmony angezeigt werden"). In a release editor opened by Harmony with a Bandcamp album or Discogs release among the links, the tick is back: "open relationship editor and start import dashboard in a background tab". Ticked, MusicBrainz goes on to Harmony's Release Actions as usual, and that page opens "Edit relationships" with the dashboard in a background tab (once) and says "– opened in a background tab" next to its link "Edit relationships with Credits Importer", which stays. New permission: open tabs (`@grant GM_openInTab`).
+- **⚙ Settings → Sources:** "Release editor: after “Enter edit”, open the relationship editor and start the import" (the same value as the tick next to "Enter edit") and "Imported with Harmony (Bandcamp, Discogs): open it in a background tab" (on by default); off, there is only the note.
+
+#### Changed
+
+- **The note in a release editor opened by Harmony** (collected item 38; maintainer: "bitte mehr in die richtung "for the credits importer: use... on harmony""): "for the Credits Importer: after “Enter edit”, use “Edit relationships with Credits Importer” on Harmony".
+
 
 ### Import 3.19.1
 

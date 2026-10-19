@@ -3,7 +3,7 @@
 "Written by A, mixed by B" (two clauses), "Recorded live at Place, City, date by Name" (a person and a place),
 "Mastered by A at Studio", "Tracks 3–4: Strings arranged by Z" (tracks, "Arranged By [Strings]"),
 "Published by X (1, 3)" (a company for tracks 1 and 3), "℗ 2019 Label"; a line without credits is listed as not
-recognized. Names have no links: MusicBrainz entries of the same name are only suggested (dashed, yellow), a click
+recognized ([3.21.0] thanks: listed apart as left out on purpose). Names have no links: MusicBrainz entries of the same name are only suggested (dashed, yellow), a click
 assigns one. Track lists are not read again as notes (S022). The edit note names the text's origin."""
 import re
 from playwright.sync_api import sync_playwright
@@ -48,9 +48,10 @@ with sync_playwright() as p:
         print('   ', name, '|', g[1], '| Vorschläge:', g[2])
     src = pg.evaluate("document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').slice(0, 120)")
     unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
-    print('A) Quelle:', src, '| nicht erkannt:', unrec)
+    ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent)")
+    print('A) Quelle:', src, '| nicht erkannt:', unrec, '| ausgelassen:', ign)
     roles = lambda name: [r[0] for r in groups.get(name, ['', [], []])[1]]
-    ok_a = 'Text: Booklet' in src and unrec == ['Thanks to everyone who came.'] \
+    ok_a = 'Text: Booklet' in src and unrec == [] and ign == ['Thanks to everyone who came.'] \
         and roles('Peter Evans') == ['trumpet'] and roles('Bass Man') == ['bass', 'vocals'] \
         and roles('Guitar Guy') == ['Guitar'] and roles('Nobody Known') == ['Guitar'] \
         and roles('John Doe') == ['Recorded live By'] and sorted(roles('Jane Roe')) == ['Mastered By', 'Mixed By'] \
