@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.19.1
-// @date         2026-10-18
+// @version      3.19.2
+// @date         2026-10-19
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
 // @description:es Panel de importación en el editor de relaciones de la publicación: revisa los créditos de la publicación de Discogs o del álbum de Bandcamp enlazados (o de un texto pegado), asigna artistas mediante enlaces o nombres, elige roles, nivel y pistas y prepáralos como relaciones. El envío («Enter edit») siempre lo haces tú.
@@ -17,13 +17,14 @@
 // @match        *://*.musicbrainz.org/release/*
 // @match        https://harmony.pulsewidth.org.uk/release/actions*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_openInTab
 // @grant        unsafeWindow
 // @connect      bandcamp.com
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
 
-/* global GM_info, unsafeWindow, module, GM_xmlhttpRequest */
+/* global GM_info, unsafeWindow, module, GM_xmlhttpRequest, GM_openInTab */
 (function () {
   'use strict';
 
@@ -31,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.19.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.19.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -913,8 +914,13 @@
       "old.twice": "Two importer scripts are running on this page: the old “MB x Vibecode: Import Discogs credits” (or a second copy) and “MB x Vibecode: Credits Importer”. Please delete the old one in your script manager (Tampermonkey, Violentmonkey) and reload the page.",
       "afterEdit.label": "open relationship editor and start import dashboard",
       "afterEdit.title": "Credits Importer: after “Enter edit”, “Edit relationships” of this release opens with the import dashboard, which loads the credits of its source – {links}",
-      "afterEdit.toHarmony": "after “Enter edit” MusicBrainz goes on to Harmony – there: “Edit relationships with Credits Importer”",
+      "afterEdit.toHarmony": "for the Credits Importer: after “Enter edit”, use “Edit relationships with Credits Importer” on Harmony",
       "afterEdit.toOther": "after “Enter edit” MusicBrainz goes on to {host}; the relationship editor does not open by itself",
+      "afterEdit.labelBg": "open relationship editor and start import dashboard in a background tab",
+      "afterEdit.titleBg": "Credits Importer: after “Enter edit” MusicBrainz goes on to Harmony; the relationship editor of this release opens in a background tab with the import dashboard, which loads {links}. Harmony’s page also has “Edit relationships with Credits Importer”.",
+      "settings.afterEdit": "Release editor: after “Enter edit”, open the relationship editor and start the import (the tick next to “Enter edit”)",
+      "settings.afterEditBg": "Imported with Harmony (Bandcamp, Discogs): open it in a background tab, Harmony’s page stays in front",
+      "harmony.opened": "– opened in a background tab",
       "harmony.link": "Edit relationships with Credits Importer",
       "harmony.title": "Opens “Edit relationships” of this release on MusicBrainz in a new tab; the import dashboard starts by itself and loads {links}",
       "harmony.titleNone": "Opens “Edit relationships” of this release on MusicBrainz in a new tab; the import dashboard starts by itself and loads the source MusicBrainz links",
@@ -2234,8 +2240,13 @@
       "old.twice": "Auf dieser Seite laufen zwei Import-Skripte: das alte „MB x Vibecode: Import Discogs credits“ (oder eine zweite Kopie) und „MB x Vibecode: Credits Importer“. Bitte lösche das alte im Skript-Manager (Tampermonkey, Violentmonkey) und lade die Seite neu.",
       "afterEdit.label": "Beziehungs-Editor öffnen und Import-Dashboard starten",
       "afterEdit.title": "Credits Importer: nach „Enter edit“ öffnet sich „Edit relationships“ dieses Releases mit dem Import-Dashboard, das die Credits seiner Quelle lädt – {links}",
-      "afterEdit.toHarmony": "nach „Enter edit“ geht MusicBrainz weiter zu Harmony – dort: „Edit relationships with Credits Importer“",
+      "afterEdit.toHarmony": "für den Credits Importer: nach „Enter edit“ bei Harmony „Edit relationships with Credits Importer“ verwenden",
       "afterEdit.toOther": "nach „Enter edit“ geht MusicBrainz weiter zu {host}; der Beziehungs-Editor öffnet sich nicht von selbst",
+      "afterEdit.labelBg": "Beziehungs-Editor im Hintergrund-Tab öffnen und Import-Dashboard starten",
+      "afterEdit.titleBg": "Credits Importer: nach „Enter edit“ geht MusicBrainz weiter zu Harmony; der Beziehungs-Editor dieses Releases öffnet sich in einem Hintergrund-Tab mit dem Import-Dashboard, das {links} lädt. Auf Harmonys Seite steht außerdem „Edit relationships with Credits Importer“.",
+      "settings.afterEdit": "Release-Editor: nach „Enter edit“ den Beziehungs-Editor öffnen und den Import starten (der Haken neben „Enter edit“)",
+      "settings.afterEditBg": "Mit Harmony importiert (Bandcamp, Discogs): im Hintergrund-Tab öffnen, Harmonys Seite bleibt vorne",
+      "harmony.opened": "– im Hintergrund-Tab geöffnet",
       "harmony.link": "Beziehungen mit dem Credits Importer bearbeiten",
       "harmony.title": "Öffnet „Edit relationships“ dieses Releases auf MusicBrainz in einem neuen Tab; das Import-Dashboard startet von selbst und lädt {links}",
       "harmony.titleNone": "Öffnet „Edit relationships“ dieses Releases auf MusicBrainz in einem neuen Tab; das Import-Dashboard startet von selbst und lädt die Quelle, die MusicBrainz verlinkt",
@@ -3555,8 +3566,13 @@
       "old.twice": "En esta página se ejecutan dos scripts de importación: el antiguo «MB x Vibecode: Import Discogs credits» (o una segunda copia) y «MB x Vibecode: Credits Importer». Borra el antiguo en tu gestor de scripts (Tampermonkey, Violentmonkey) y vuelve a cargar la página.",
       "afterEdit.label": "abrir el editor de relaciones e iniciar el panel de importación",
       "afterEdit.title": "Credits Importer: tras «Enter edit» se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links}",
-      "afterEdit.toHarmony": "tras «Enter edit» MusicBrainz sigue a Harmony – allí: «Edit relationships with Credits Importer»",
+      "afterEdit.toHarmony": "para Credits Importer: tras «Enter edit», usa «Edit relationships with Credits Importer» en Harmony",
       "afterEdit.toOther": "tras «Enter edit» MusicBrainz sigue a {host}; el editor de relaciones no se abre solo",
+      "afterEdit.labelBg": "abrir el editor de relaciones en una pestaña en segundo plano e iniciar el panel de importación",
+      "afterEdit.titleBg": "Credits Importer: tras «Enter edit» MusicBrainz sigue a Harmony; el editor de relaciones de esta publicación se abre en una pestaña en segundo plano con el panel de importación, que carga {links}. La página de Harmony también tiene «Edit relationships with Credits Importer».",
+      "settings.afterEdit": "Editor de publicaciones: tras «Enter edit», abrir el editor de relaciones e iniciar la importación (la casilla junto a «Enter edit»)",
+      "settings.afterEditBg": "Importado con Harmony (Bandcamp, Discogs): abrirlo en una pestaña en segundo plano, la página de Harmony queda delante",
+      "harmony.opened": "– abierto en una pestaña en segundo plano",
       "harmony.link": "Editar relaciones con Credits Importer",
       "harmony.title": "Abre «Edit relationships» de esta publicación en MusicBrainz en una pestaña nueva; el panel de importación se inicia solo y carga {links}",
       "harmony.titleNone": "Abre «Edit relationships» de esta publicación en MusicBrainz en una pestaña nueva; el panel de importación se inicia solo y carga la fuente que enlaza MusicBrainz",
@@ -4876,8 +4892,13 @@
       "old.twice": "Deux scripts d’import tournent sur cette page : l’ancien « MB x Vibecode: Import Discogs credits » (ou une deuxième copie) et « MB x Vibecode: Credits Importer ». Supprimez l’ancien dans votre gestionnaire de scripts (Tampermonkey, Violentmonkey) et rechargez la page.",
       "afterEdit.label": "ouvrir l’éditeur de relations et lancer le tableau de bord d’import",
       "afterEdit.title": "Credits Importer : après « Enter edit », « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links}",
-      "afterEdit.toHarmony": "après « Enter edit », MusicBrainz continue vers Harmony – là : « Edit relationships with Credits Importer »",
+      "afterEdit.toHarmony": "pour Credits Importer : après « Enter edit », utilisez « Edit relationships with Credits Importer » sur Harmony",
       "afterEdit.toOther": "après « Enter edit », MusicBrainz continue vers {host} ; l’éditeur de relations ne s’ouvre pas tout seul",
+      "afterEdit.labelBg": "ouvrir l’éditeur de relations dans un onglet en arrière-plan et lancer le tableau de bord d’import",
+      "afterEdit.titleBg": "Credits Importer : après « Enter edit », MusicBrainz continue vers Harmony ; l’éditeur de relations de cette parution s’ouvre dans un onglet en arrière-plan avec le tableau de bord d’import, qui charge {links}. La page d’Harmony a aussi « Edit relationships with Credits Importer ».",
+      "settings.afterEdit": "Éditeur de parution : après « Enter edit », ouvrir l’éditeur de relations et lancer l’import (la case près de « Enter edit »)",
+      "settings.afterEditBg": "Importé avec Harmony (Bandcamp, Discogs) : l’ouvrir dans un onglet en arrière-plan, la page d’Harmony reste devant",
+      "harmony.opened": "– ouvert dans un onglet en arrière-plan",
       "harmony.link": "Modifier les relations avec Credits Importer",
       "harmony.title": "Ouvre « Edit relationships » de cette parution sur MusicBrainz dans un nouvel onglet ; le tableau de bord d’import démarre tout seul et charge {links}",
       "harmony.titleNone": "Ouvre « Edit relationships » de cette parution sur MusicBrainz dans un nouvel onglet ; le tableau de bord d’import démarre tout seul et charge la source liée dans MusicBrainz",
@@ -7749,6 +7770,9 @@
   // [3.19.1] Harmony (the official instance) and the # of a link that opens the dashboard by itself
   const HARMONY_HOST_RE = /^harmony\.pulsewidth\.org\.uk$/i;
   const IMPORT_HASH = 'dci-import';
+  // [3.19.2] imported with Harmony: the relationship editor in a background tab (setting, on), the sign for Harmony's page
+  const AFTER_EDIT_BG_KEY = 'dci-after-edit-bg';
+  const OPEN_HASH = 'dci-open';
 
   /** Which page of a release this is: the relationship editor, the release editor (add or edit), the release page, or another. */
   function releasePageKind(path) {
@@ -7820,17 +7844,43 @@
       try {
         host = to ? new URL(to, location.href).hostname : '';
       } catch (e) { /* not a URL */ }
-      // [3.19.1] going on elsewhere: no tick, a note instead (on Harmony's page the link does it)
-      b.querySelector('input').style.display = to ? 'none' : '';
+      const harmony = HARMONY_HOST_RE.test(host);
+      // [3.19.1] going on elsewhere: no tick, a note instead (on Harmony's page the link does it); [3.19.2] Harmony with the
+      // setting "in a background tab" (on): the tick again, for a background tab
+      const bg = !!to && harmony && readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false;
+      const tick = !to || bg;
+      const list = links.map(afterEditLinkLabel).join(', ');
+      b.querySelector('input').style.display = tick ? '' : 'none';
       b.dataset.redirect = to ? host : '';
-      b.querySelector('span').textContent = !to ? tr('afterEdit.label') : HARMONY_HOST_RE.test(host) ? tr('afterEdit.toHarmony') : tr('afterEdit.toOther', { host });
-      b.title = to ? b.querySelector('span').textContent : tr('afterEdit.title', { links: links.map(afterEditLinkLabel).join(', ') });
-      b.style.cursor = to ? 'default' : 'pointer';
+      b.dataset.bg = bg ? '1' : '';
+      b.querySelector('span').textContent = !to ? tr('afterEdit.label') : bg ? tr('afterEdit.labelBg') : harmony ? tr('afterEdit.toHarmony') : tr('afterEdit.toOther', { host });
+      b.title = !to ? tr('afterEdit.title', { links: list }) : bg ? tr('afterEdit.titleBg', { links: list }) : b.querySelector('span').textContent;
+      b.style.cursor = tick ? 'pointer' : 'default';
+    };
+    // [3.19.2] the return address as it was before the sign for a background tab was added (back on an error)
+    let plainRedirect = null;
+    const restoreRedirect = () => {
+      const re = win.MB && win.MB.releaseEditor;
+      if (re && plainRedirect != null) re.redirectURI = plainRedirect;
+      plainRedirect = null;
     };
     const markGo = () => {
       const input = box && box.querySelector('input');
       const links = linksNow();
-      if (!input || !input.checked || !links.length || box.style.display === 'none' || redirect()) return;
+      if (!input || !input.checked || !links.length || box.style.display === 'none') return;
+      const to = redirect();
+      if (to) {
+        // [3.19.2] Harmony: a sign in its return address (#dci-open, not sent to Harmony); its page then opens the
+        // relationship editor in a background tab
+        if (box.dataset.bg !== '1') return;
+        try {
+          const u = new URL(to, location.href);
+          u.hash = OPEN_HASH;
+          if (plainRedirect == null) plainRedirect = win.MB.releaseEditor.redirectURI;
+          win.MB.releaseEditor.redirectURI = u.href;
+        } catch (e) { /* the return address stays */ }
+        return;
+      }
       writeJson('sessionStorage', AFTER_EDIT_GO_KEY, { release: mbid, links, at: Date.now() });
     };
     // MusicBrainz's own sign that the edits are submitted ("Enter edit" or Enter in a field); false again: an error
@@ -7841,7 +7891,10 @@
       hooked = true;
       obs.subscribe((on) => {
         if (on) markGo();
-        else writeJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
+        else {
+          writeJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
+          restoreRedirect();
+        }
       });
     };
     // without that sign (another version of MusicBrainz): the click on "Enter edit"
@@ -7937,8 +7990,23 @@
       a.title = links.length ? tr('harmony.title', { links: links.map(afterEditLinkLabel).join(', ') }) : tr('harmony.titleNone');
       if (anchor) anchor.after(box);
       else main.append(box);
+      openBackground();
       return true;
     };
+    // [3.19.2] "Enter edit" with the tick for a background tab (#dci-open): the relationship editor opens in a background tab
+    // (once: the sign is taken off the address); the link stays
+    function openBackground() {
+      if (String(location.hash) !== `#${OPEN_HASH}`) return;
+      try {
+        history.replaceState(history.state, '', location.pathname + location.search);
+      } catch (e) { /* the sign stays */ }
+      const a = document.querySelector('#dci-harmony a');
+      const href = a ? a.href : importUrl('https://musicbrainz.org', mbid, links.map((l) => l.url));
+      if (typeof GM_openInTab === 'function') GM_openInTab(href, { active: false, insert: true, setParent: true });
+      else if (typeof GM !== 'undefined' && GM && typeof GM.openInTab === 'function') GM.openInTab(href, true);
+      else return;
+      if (a) a.after(document.createTextNode(` ${tr('harmony.opened')}`));
+    }
     if (place()) return;
     // the page not built yet: once it is (at most 30 seconds)
     const obs = new MutationObserver(() => {
@@ -19448,7 +19516,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-scale', 'dci-place', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    sources: ['dci-source-order', 'dci-bc-tracks'],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap'],
@@ -19482,6 +19550,9 @@
       sources: () => [
         row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
         row(check('data-f="bc-tracks"', S.bcTracks, tr('bc.tracks'), tr('bc.tracksTitle'))),
+        // [3.19.2] the tick of the release editor and, imported with Harmony, the background tab
+        row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_KEY, false) === true, tr('settings.afterEdit'))),
+        row(check('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'))),
       ],
       discogs: () => [row(syncModeHtml()), `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`],
       works: () => [
@@ -19582,6 +19653,11 @@
         autoSearchWorks();
         runArtistWorks();
       }
+    } else if (k === 'after-edit' || k === 'after-edit-bg') {
+      // [3.19.2] the same values as the tick in the release editor
+      if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_KEY, el.checked || null);
+      else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'wattr-long') {
       S.wattrLong = el.checked;
       writeJson('localStorage', 'dci-wattr-long', S.wattrLong || null);
@@ -19636,7 +19712,7 @@
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY];
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY];
 
   function renderReset() {
     if (!S.overlay) return;
