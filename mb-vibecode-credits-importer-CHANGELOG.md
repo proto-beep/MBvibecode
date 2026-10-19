@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-19 | 3.19.1 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
@@ -73,6 +74,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-19
+
+### Import 3.19.1
+
+#### Added
+
+- **Harmony: "Edit relationships with Credits Importer"** (collected item 29; maintainer: "funktioniert noch nicht wenn ich ein neues Bandcamp release mit Harmony importiere", "kann da nicht einfach darunter "edit relationships with credits importer" stehen?"). A release imported with [Harmony](https://harmony.pulsewidth.org.uk/) does not go on to the relationship editor after "Enter edit": Harmony tells MusicBrainz to go to its page **Release Actions** (its setting "Redirect to Release Actions after import", on by default). On that page the script now adds, right below **Add cover art**, the action **Edit relationships with Credits Importer**: "Edit relationships" of the release in a new tab, the dashboard starts by itself and loads the Bandcamp album (or Discogs release) Harmony looked up, also before MusicBrainz has the link. Harmony's page stays open. Only on the official instance (`@match https://harmony.pulsewidth.org.uk/release/actions*`); the link is in English there.
+- Such a link opens the dashboard from anywhere: `…/release/<MBID>/edit-relationships#dci-import&src=<source URL>`.
+
+#### Changed
+
+- **Release editor:** when another tool sends MusicBrainz elsewhere after "Enter edit" (Harmony), the tick "open relationship editor and start import dashboard" is replaced by a note – for Harmony: "there: Edit relationships with Credits Importer".
+
 
 ## 2026-10-18
 
