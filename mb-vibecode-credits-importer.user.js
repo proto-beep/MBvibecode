@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.20.0
+// @version      3.21.0
 // @date         2026-10-19
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.20.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -215,20 +215,26 @@
       "unrec.title.one": "{n} line not recognized",
       "unrec.title.other": "{n} lines not recognized",
       "unrec.hint": "Add what is missing by hand (“Add entry manually”) or rewrite the line and read the text again.",
+      "ignored.title.one": "{n} line left out on purpose",
+      "ignored.title.other": "{n} lines left out on purpose",
+      "ignored.hint": "Thanks, endorsements (“plays … strings”) and web addresses give no credit and are left out. If there is a credit after all, add it by hand (“Add entry manually”).",
       "msg.textEmpty": "The text is empty.",
       "busy.source": "Reading {source} …",
       "log.sourceLoaded.one": "{source} read: {artists} entries, {n} role, {u} lines not recognized",
       "log.sourceLoaded.other": "{source} read: {artists} entries, {n} roles, {u} lines not recognized",
       "log.nameSuggested": "{name}: same name in MusicBrainz (only a suggestion): {list}",
+      "log.webSuggested": "{name}: MusicBrainz artist with the web link from the text (only a suggestion): {list}",
       "match.nameSuggest": "Same name in MusicBrainz (a suggestion – check before assigning):",
       "match.linkSuggest": "Found via the {src} link, but spelled differently ({mb}) – a suggestion, check before assigning:",
       "match.nameUseTitle": "Assign this MusicBrainz entry",
       "match.similarName": "similar name",
       "match.markSpelled": "spelled differently",
       "match.markRelease": "release artist",
+      "match.markWeb": "via {site}",
       "match.suggMore": "+ {n} more",
       "match.suggLess": "− fewer",
       "match.similarTitle": "A similar name in MusicBrainz (a middle name or an initial more or less) – check before assigning",
+      "match.webUseTitle": "MusicBrainz has an artist with this link ({url}), found next to the name in the text – only a suggestion: check before assigning",
       "match.placeholderSuggest": "The text names no one here (“{said}”) – the release's artist? A suggestion, check before assigning:",
       "log.placeholderSuggested": "{name}: the text says “{said}” – the release's artist is suggested",
       "sync.off": "Discogs view: off",
@@ -417,6 +423,8 @@
       "type.person": "person",
       "part.urls.one": "{n} web link (including the {src} link)",
       "part.urls.other": "{n} web links (including the {src} link)",
+      "part.webUrls.one": "{n} web link found next to the name in the text",
+      "part.webUrls.other": "{n} web links found next to the name in the text",
       "part.members.one": "a “member of band” relationship to {names}",
       "part.members.other": "{n} “member of band” relationships to {names}",
       "artistDlg.notInMb": "Not in MusicBrainz and therefore not linked: {list}.",
@@ -683,6 +691,7 @@
       "dir.work": "each work of the selected tracks",
       "link.mbTitle": "Open on MusicBrainz",
       "link.discogsTitle": "Open on {src}",
+      "link.webTitle": "Found next to the name in the text: MusicBrainz is asked for artists with this link (only a suggestion), and “Create artist …” fills it in",
       "works.openAll.one": "Open {n} work in a background tab",
       "works.openAll.other": "Open {n} works in background tabs",
       "works.openAllTitle": "Opens every work that is linked or will be linked, without leaving this page",
@@ -1208,6 +1217,7 @@
       "bc.offNote": "Switched off on {site} (a click on its mark): “Skip”. Another click there switches it on again, so does choosing a level here.",
       "ms.3.17.0": "Bandcamp view in the companion (1.8.0): a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the “about” text: to its sentence), track highlight, status on the MusicBrainz release page; “open in background” and “Load the release there” for Bandcamp too. Rows from track pages link to them.",
       "ms.3.18.0": "Works matrix: “Skip works matrix” (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to “Skip” and the work lookups rest; “Take works matrix again” brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. “Add entry manually” is one line above the date pool, always in view.",
+      "ms.3.21.0": "Text recognition, part 1: several sentences in one line are read one by one (“Graphic design: X. Text: Y. Produced by Z.”); “℗ & ©”, “P + ©” and “(P) & (C)” give both, without codes like “DDD” or catalogue numbers; web addresses are never part of a name – a profile (Instagram, SoundCloud …) after a name is looked up in MusicBrainz as a suggestion and filled in by “Create artist”, Linktree and other addresses are left out; “Logo by” is design with the credit “logo”; a title in quotation marks with its year before “by” and “courtesy of …” are no part of a credit; “Text: X” asks: liner notes or lyrics; thanks and endorsements are listed as left out on purpose.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -1431,6 +1441,7 @@
       "rules.rowRules": "Rules of this row: {list}",
       "rules.gotoTitle": "Click: show this rule in “Mapping rules”",
       "typeAsk.ask": "“{role}” is not always conducting – please choose:",
+      "typeAsk.askText": "“{role}” can be liner notes (an essay in the booklet) or the lyrics – please choose:",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
       "typeAsk.pending": "Until you choose, the row is not added.",
       "log.typePicked": "“{role}” chosen as {type}",
@@ -1558,20 +1569,26 @@
       "unrec.title.one": "{n} Zeile nicht erkannt",
       "unrec.title.other": "{n} Zeilen nicht erkannt",
       "unrec.hint": "Fehlendes von Hand ergänzen („Eintrag manuell hinzufügen“) oder die Zeile umformulieren und den Text neu lesen.",
+      "ignored.title.one": "{n} Zeile absichtlich ausgelassen",
+      "ignored.title.other": "{n} Zeilen absichtlich ausgelassen",
+      "ignored.hint": "Danksagungen, Herstellerhinweise („spielt … Saiten“) und Web-Adressen ergeben keinen Credit und werden ausgelassen. Ist doch ein Credit dabei, von Hand ergänzen („Eintrag manuell hinzufügen“).",
       "msg.textEmpty": "Der Text ist leer.",
       "busy.source": "{source} wird gelesen …",
       "log.sourceLoaded.one": "{source} gelesen: {artists} Einträge, {n} Rolle, {u} Zeilen nicht erkannt",
       "log.sourceLoaded.other": "{source} gelesen: {artists} Einträge, {n} Rollen, {u} Zeilen nicht erkannt",
       "log.nameSuggested": "{name}: gleicher Name in MusicBrainz (nur ein Vorschlag): {list}",
+      "log.webSuggested": "{name}: MusicBrainz-Artist mit dem Web-Link aus dem Text (nur ein Vorschlag): {list}",
       "match.nameSuggest": "Gleicher Name in MusicBrainz (ein Vorschlag – vor dem Zuordnen prüfen):",
       "match.linkSuggest": "Über den {src}-Link gefunden, aber anders geschrieben ({mb}) – ein Vorschlag, vor dem Zuordnen prüfen:",
       "match.nameUseTitle": "Diesen MusicBrainz-Eintrag zuordnen",
       "match.similarName": "ähnlicher Name",
       "match.markSpelled": "anders geschrieben",
       "match.markRelease": "Release-Artist",
+      "match.markWeb": "über {site}",
       "match.suggMore": "+ {n} weitere",
       "match.suggLess": "− weniger",
       "match.similarTitle": "Ähnlicher Name in MusicBrainz (ein Mittelname oder eine Initiale mehr oder weniger) – vor dem Zuordnen prüfen",
+      "match.webUseTitle": "MusicBrainz hat einen Artist mit diesem Link ({url}), der neben dem Namen im Text steht – nur ein Vorschlag: vor dem Zuordnen prüfen",
       "match.placeholderSuggest": "Der Text nennt hier niemanden („{said}“) – der Artist des Releases? Ein Vorschlag, vor dem Zuordnen prüfen:",
       "log.placeholderSuggested": "{name}: Der Text sagt „{said}“ – der Artist des Releases wird vorgeschlagen",
       "sync.off": "Discogs-Ansicht: aus",
@@ -1760,6 +1777,8 @@
       "type.person": "Person",
       "part.urls.one": "{n} Weblink (inklusive {src}-Link)",
       "part.urls.other": "{n} Weblinks (inklusive {src}-Link)",
+      "part.webUrls.one": "{n} Weblink, der im Text neben dem Namen steht",
+      "part.webUrls.other": "{n} Weblinks, die im Text neben dem Namen stehen",
       "part.members.one": "eine „member of band“-Beziehung zu {names}",
       "part.members.other": "{n} „member of band“-Beziehungen zu {names}",
       "artistDlg.notInMb": "Nicht in MusicBrainz und daher nicht verknüpft: {list}.",
@@ -2026,6 +2045,7 @@
       "dir.work": "jedes Werk der gewählten Tracks",
       "link.mbTitle": "Auf MusicBrainz öffnen",
       "link.discogsTitle": "Auf {src} öffnen",
+      "link.webTitle": "Neben dem Namen im Text gefunden: MusicBrainz wird nach Artists mit diesem Link gefragt (nur ein Vorschlag), „Artist anlegen …“ trägt ihn ein",
       "works.openAll.one": "{n} Werk im Hintergrund-Tab öffnen",
       "works.openAll.other": "{n} Werke in Hintergrund-Tabs öffnen",
       "works.openAllTitle": "Öffnet alle verknüpften und zum Verknüpfen vorgemerkten Werke, ohne diese Seite zu verlassen",
@@ -2551,6 +2571,7 @@
       "bc.offNote": "Auf {site} abgeschaltet (Klick auf seine Marke): „Überspringen“. Ein weiterer Klick dort schaltet ihn wieder an, ebenso eine hier gewählte Ebene.",
       "ms.3.17.0": "Bandcamp-Ansicht im Companion (1.8.0): ein Bandcamp-Tab folgt dem Dashboard wie ein Discogs-Tab – Status-Zeichen vor jedem Teil einer Credits-Zeile (Album- und Track-Seiten), ein Klick auf ein Zeichen zeigt seine Zeile, eine Zeile springt zu ihrer Stelle (aus dem „about“-Text: zu ihrem Satz), Track-Hervorhebung, Status auf der MusicBrainz-Release-Seite; „im Hintergrund öffnen“ und „Release dort laden“ auch für Bandcamp. Zeilen von Track-Seiten verlinken sie.",
       "ms.3.18.0": "Werk-Matrix: „Werk-Matrix überspringen“ (für das Release gemerkt) – nichts davon wird vorgemerkt (keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen), ihre Zeilen gehen auf „Skip“ und die Werk-Abfragen ruhen; „Werk-Matrix wieder nehmen“ bringt alles zurück. Die Matrix lässt sich an ihrem Kopf zu- und aufklappen. Ab 100 Tracks ohne Werk (Einstellung) fragt der Werk-Bereich vor den Werk-Abfragen, mit ungefährer Dauer. „Eintrag manuell hinzufügen“ ist eine Zeile über dem Datums-Pool, immer sichtbar.",
+      "ms.3.21.0": "Texterkennung, Teil 1: mehrere Sätze in einer Zeile werden einzeln gelesen („Graphic design: X. Text: Y. Produced by Z.“); „℗ & ©“, „P + ©“ und „(P) & (C)“ ergeben beides, ohne Codes wie „DDD“ und Katalognummern; Web-Adressen sind nie Teil eines Namens – ein Profil (Instagram, SoundCloud …) hinter einem Namen wird in MusicBrainz als Vorschlag gesucht und von „Artist anlegen“ eingetragen, Linktree und andere Adressen bleiben weg; „Logo by“ ist Design mit dem Credit „logo“; ein Titel in Anführungszeichen mit Jahr vor „by“ und „courtesy of …“ gehören nicht zum Credit; „Text: X“ fragt: Liner Notes oder Liedtext; Danksagungen und Herstellerhinweise stehen als absichtlich ausgelassen in einer eigenen Liste.",
       "log.stagedRemoved": "Aus dem Editor genommen (nicht mehr gewünscht): {text}",
       "msg.stagedRemovedAll.one": "{n} schon übernommene Beziehung ist nicht mehr gewünscht und wurde aus dem Editor genommen.",
       "msg.stagedRemovedAll.other": "{n} schon übernommene Beziehungen sind nicht mehr gewünscht und wurden aus dem Editor genommen.",
@@ -2774,6 +2795,7 @@
       "rules.rowRules": "Regeln dieser Zeile: {list}",
       "rules.gotoTitle": "Klick: diese Regel in „Mapping-Regeln“ zeigen",
       "typeAsk.ask": "„{role}“ ist nicht immer Dirigieren – bitte wählen:",
+      "typeAsk.askText": "„{role}“ kann Liner Notes (ein Text im Booklet) oder der Liedtext sein – bitte wählen:",
       "typeAsk.chosen": "„{role}“ – gewählt (zum Ändern ein anderes anklicken):",
       "typeAsk.pending": "Bis zur Wahl wird die Zeile nicht übernommen.",
       "log.typePicked": "„{role}“ als {type} gewählt",
@@ -2901,20 +2923,26 @@
       "unrec.title.one": "{n} línea no reconocida",
       "unrec.title.other": "{n} líneas no reconocidas",
       "unrec.hint": "Añade lo que falta a mano («Añadir entrada manualmente») o reformula la línea y vuelve a leer el texto.",
+      "ignored.title.one": "{n} línea omitida a propósito",
+      "ignored.title.other": "{n} líneas omitidas a propósito",
+      "ignored.hint": "Los agradecimientos, los avisos de marcas («toca … cuerdas») y las direcciones web no dan ningún crédito y se omiten. Si aun así hay un crédito, añádelo a mano («Añadir entrada manualmente»).",
       "msg.textEmpty": "El texto está vacío.",
       "busy.source": "Leyendo {source}…",
       "log.sourceLoaded.one": "{source} leído: {artists} entradas, {n} rol, {u} líneas no reconocidas",
       "log.sourceLoaded.other": "{source} leído: {artists} entradas, {n} roles, {u} líneas no reconocidas",
       "log.nameSuggested": "{name}: mismo nombre en MusicBrainz (solo una sugerencia): {list}",
+      "log.webSuggested": "{name}: artista de MusicBrainz con el enlace web del texto (solo una sugerencia): {list}",
       "match.nameSuggest": "Mismo nombre en MusicBrainz (una sugerencia: compruébala antes de asignar):",
       "match.linkSuggest": "Encontrado por el enlace de {src}, pero escrito distinto ({mb}); una sugerencia, compruébala antes de asignarla:",
       "match.nameUseTitle": "Asignar esta entrada de MusicBrainz",
       "match.similarName": "nombre parecido",
       "match.markSpelled": "escrito de otra forma",
       "match.markRelease": "artista de la publicación",
+      "match.markWeb": "vía {site}",
       "match.suggMore": "+ {n} más",
       "match.suggLess": "− menos",
       "match.similarTitle": "Nombre parecido en MusicBrainz (un segundo nombre o una inicial de más o de menos); compruébalo antes de asignarlo",
+      "match.webUseTitle": "MusicBrainz tiene un artista con este enlace ({url}), que está junto al nombre en el texto – solo una sugerencia: compruébalo antes de asignarlo",
       "match.placeholderSuggest": "El texto no nombra a nadie aquí («{said}»): ¿el artista de la publicación? Una sugerencia, compruébala antes de asignarla:",
       "log.placeholderSuggested": "{name}: el texto dice «{said}»; se sugiere el artista de la publicación",
       "sync.off": "Vista de Discogs: desactivada",
@@ -3103,6 +3131,8 @@
       "type.person": "persona",
       "part.urls.one": "{n} enlace web (incluido el enlace de {src})",
       "part.urls.other": "{n} enlaces web (incluido el enlace de {src})",
+      "part.webUrls.one": "{n} enlace web que está junto al nombre en el texto",
+      "part.webUrls.other": "{n} enlaces web que están junto al nombre en el texto",
       "part.members.one": "una relación «member of band» con {names}",
       "part.members.other": "{n} relaciones «member of band» con {names}",
       "artistDlg.notInMb": "No están en MusicBrainz y por eso no se enlazan: {list}.",
@@ -3369,6 +3399,7 @@
       "dir.work": "cada obra de las pistas seleccionadas",
       "link.mbTitle": "Abrir en MusicBrainz",
       "link.discogsTitle": "Abrir en {src}",
+      "link.webTitle": "Encontrado junto al nombre en el texto: se busca en MusicBrainz artistas con este enlace (solo una sugerencia) y «Crear artista …» lo rellena",
       "works.openAll.one": "Abrir {n} obra en una pestaña en segundo plano",
       "works.openAll.other": "Abrir {n} obras en pestañas en segundo plano",
       "works.openAllTitle": "Abre todas las obras enlazadas o preparadas para enlazar, sin salir de esta página",
@@ -3894,6 +3925,7 @@
       "bc.offNote": "Desactivado en {site} (un clic en su marca): «Omitir». Otro clic allí lo vuelve a activar, igual que elegir un nivel aquí.",
       "ms.3.17.0": "Vista de Bandcamp en el complemento (1.8.0): una pestaña de Bandcamp sigue al panel como una de Discogs – marcas de estado delante de cada parte de una línea de créditos (páginas de álbum y de pista), un clic en una marca muestra su fila, una fila salta a su línea (del texto «about»: a su frase), resaltado de pistas, estado en la página de la publicación de MusicBrainz; «abrir en segundo plano» y «Cargar la publicación allí» también para Bandcamp. Las filas de páginas de pista enlazan a ellas.",
       "ms.3.18.0": "Matriz de obras: «Omitir la matriz de obras» (se guarda para la publicación) – no se prepara nada de ella (ni obras, ni enlaces a obras, ni relaciones de obra), sus filas pasan a «Skip» y las búsquedas de obras descansan; «Volver a tomar la matriz de obras» lo devuelve todo. La matriz se pliega y despliega en su cabecera. A partir de 100 pistas sin obra (ajuste) la sección de obras pregunta antes de las búsquedas de obras, con cuánto tardan más o menos. «Añadir entrada manualmente» es una línea encima de las fechas guardadas, siempre visible.",
+      "ms.3.21.0": "Reconocimiento de texto, parte 1: varias frases en una línea se leen una a una («Graphic design: X. Text: Y. Produced by Z.»); «℗ & ©», «P + ©» y «(P) & (C)» dan ambos, sin códigos como «DDD» ni números de catálogo; las direcciones web nunca forman parte de un nombre – un perfil (Instagram, SoundCloud …) tras un nombre se busca en MusicBrainz como sugerencia y «Crear artista» lo rellena, Linktree y otras direcciones se omiten; «Logo by» es diseño con el crédito «logo»; un título entre comillas con su año antes de «by» y «courtesy of …» no forman parte de un crédito; «Text: X» pregunta: notas de presentación o letra; los agradecimientos y avisos de marcas aparecen como omitidos a propósito.",
       "log.stagedRemoved": "Quitada del editor (ya no deseada): {text}",
       "msg.stagedRemovedAll.one": "{n} relación ya añadida ya no se quiere y se quitó del editor.",
       "msg.stagedRemovedAll.other": "{n} relaciones ya añadidas ya no se quieren y se quitaron del editor.",
@@ -4117,6 +4149,7 @@
       "rules.rowRules": "Reglas de esta fila: {list}",
       "rules.gotoTitle": "Clic: mostrar esta regla en «Reglas de asignación»",
       "typeAsk.ask": "«{role}» no siempre es dirección de orquesta – elige:",
+      "typeAsk.askText": "«{role}» pueden ser notas de presentación (un texto en el libreto) o la letra – elige:",
       "typeAsk.chosen": "«{role}» – elegido (haz clic en otro para cambiar):",
       "typeAsk.pending": "Hasta que elijas, la fila no se añade.",
       "log.typePicked": "«{role}» elegido como {type}",
@@ -4244,20 +4277,26 @@
       "unrec.title.one": "{n} ligne non reconnue",
       "unrec.title.other": "{n} lignes non reconnues",
       "unrec.hint": "Complétez à la main (« Ajouter une entrée manuellement ») ou reformulez la ligne et relisez le texte.",
+      "ignored.title.one": "{n} ligne laissée de côté exprès",
+      "ignored.title.other": "{n} lignes laissées de côté exprès",
+      "ignored.hint": "Les remerciements, les mentions de marques (« joue … cordes ») et les adresses web ne donnent aucun crédit et sont laissés de côté. S’il y a quand même un crédit, ajoutez-le à la main (« Ajouter une entrée manuellement »).",
       "msg.textEmpty": "Le texte est vide.",
       "busy.source": "Lecture de {source}…",
       "log.sourceLoaded.one": "{source} lu : {artists} entrées, {n} rôle, {u} lignes non reconnues",
       "log.sourceLoaded.other": "{source} lu : {artists} entrées, {n} rôles, {u} lignes non reconnues",
       "log.nameSuggested": "{name} : même nom dans MusicBrainz (seulement une suggestion) : {list}",
+      "log.webSuggested": "{name} : artiste MusicBrainz avec le lien web du texte (seulement une suggestion) : {list}",
       "match.nameSuggest": "Même nom dans MusicBrainz (une suggestion – à vérifier avant d’associer) :",
       "match.linkSuggest": "Trouvé via le lien {src}, mais écrit autrement ({mb}) – une suggestion, à vérifier avant d’attribuer :",
       "match.nameUseTitle": "Associer cette entrée MusicBrainz",
       "match.similarName": "nom proche",
       "match.markSpelled": "écrit autrement",
       "match.markRelease": "artiste de la parution",
+      "match.markWeb": "via {site}",
       "match.suggMore": "+ {n} de plus",
       "match.suggLess": "− moins",
       "match.similarTitle": "Nom proche dans MusicBrainz (un deuxième prénom ou une initiale de plus ou de moins) – à vérifier avant d’attribuer",
+      "match.webUseTitle": "MusicBrainz a un artiste avec ce lien ({url}), trouvé à côté du nom dans le texte – seulement une suggestion : à vérifier avant d’attribuer",
       "match.placeholderSuggest": "Le texte ne nomme personne ici (« {said} ») – l’artiste de la parution ? Une suggestion, à vérifier avant de l’attribuer :",
       "log.placeholderSuggested": "{name} : le texte dit « {said} » – l’artiste de la parution est suggéré",
       "sync.off": "Vue Discogs : désactivée",
@@ -4446,6 +4485,8 @@
       "type.person": "personne",
       "part.urls.one": "{n} lien web (lien {src} compris)",
       "part.urls.other": "{n} liens web (lien {src} compris)",
+      "part.webUrls.one": "{n} lien web trouvé à côté du nom dans le texte",
+      "part.webUrls.other": "{n} liens web trouvés à côté du nom dans le texte",
       "part.members.one": "une relation « member of band » avec {names}",
       "part.members.other": "{n} relations « member of band » avec {names}",
       "artistDlg.notInMb": "Absents de MusicBrainz et donc non liés : {list}.",
@@ -4712,6 +4753,7 @@
       "dir.work": "chaque œuvre des pistes choisies",
       "link.mbTitle": "Ouvrir sur MusicBrainz",
       "link.discogsTitle": "Ouvrir sur {src}",
+      "link.webTitle": "Trouvé à côté du nom dans le texte : MusicBrainz est interrogé sur les artistes ayant ce lien (seulement une suggestion), et « Créer l’artiste … » le remplit",
       "works.openAll.one": "Ouvrir {n} œuvre dans un onglet en arrière-plan",
       "works.openAll.other": "Ouvrir {n} œuvres dans des onglets en arrière-plan",
       "works.openAllTitle": "Ouvre toutes les œuvres liées ou prévues pour un lien, sans quitter cette page",
@@ -5237,6 +5279,7 @@
       "bc.offNote": "Désactivé sur {site} (un clic sur sa marque) : « Ignorer ». Un autre clic là-bas le réactive, tout comme choisir un niveau ici.",
       "ms.3.17.0": "Vue Bandcamp dans le compagnon (1.8.0) : un onglet Bandcamp suit le tableau de bord comme un onglet Discogs – marques de statut devant chaque partie d’une ligne de crédits (pages d’album et de morceau), un clic sur une marque affiche sa ligne, une ligne saute à son endroit (du texte « about » : à sa phrase), surlignage des pistes, statut sur la page de la parution MusicBrainz ; « ouvrir en arrière-plan » et « Y charger la parution » aussi pour Bandcamp. Les lignes des pages de morceau y renvoient.",
       "ms.3.18.0": "Matrice des œuvres : « Ignorer la matrice des œuvres » (gardé pour la parution) – rien n’en est préparé (ni œuvres, ni liens vers des œuvres, ni relations d’œuvre), ses lignes passent sur « Skip » et les recherches d’œuvres sont suspendues ; « Reprendre la matrice des œuvres » rétablit tout. La matrice se replie et se déplie par son en-tête. À partir de 100 pistes sans œuvre (réglage), la section des œuvres demande avant les recherches d’œuvres, avec leur durée approximative. « Ajouter une entrée manuellement » est une ligne au-dessus des dates enregistrées, toujours visible.",
+      "ms.3.21.0": "Reconnaissance du texte, 1re partie : plusieurs phrases d’une ligne sont lues une à une (« Graphic design: X. Text: Y. Produced by Z. ») ; « ℗ & © », « P + © » et « (P) & (C) » donnent les deux, sans codes comme « DDD » ni numéros de catalogue ; les adresses web ne font jamais partie d’un nom – un profil (Instagram, SoundCloud …) après un nom est cherché dans MusicBrainz comme suggestion et « Créer l’artiste » le remplit, Linktree et les autres adresses sont laissés de côté ; « Logo by » est du design avec le crédit « logo » ; un titre entre guillemets avec son année avant « by » et « courtesy of … » ne font pas partie d’un crédit ; « Text: X » demande : notes de pochette ou paroles ; les remerciements et mentions de marques sont listés comme laissés de côté exprès.",
       "log.stagedRemoved": "Retirée de l’éditeur (plus voulue) : {text}",
       "msg.stagedRemovedAll.one": "{n} relation déjà ajoutée n’est plus voulue et a été retirée de l’éditeur.",
       "msg.stagedRemovedAll.other": "{n} relations déjà ajoutées ne sont plus voulues et ont été retirées de l’éditeur.",
@@ -5460,6 +5503,7 @@
       "rules.rowRules": "Règles de cette ligne : {list}",
       "rules.gotoTitle": "Clic : afficher cette règle dans « Règles de correspondance »",
       "typeAsk.ask": "« {role} » n’est pas toujours de la direction d’orchestre – veuillez choisir :",
+      "typeAsk.askText": "« {role} » peut être des notes de pochette (un texte dans le livret) ou les paroles – veuillez choisir :",
       "typeAsk.chosen": "« {role} » – choisi (cliquer sur un autre pour changer) :",
       "typeAsk.pending": "Tant que rien n’est choisi, la ligne n’est pas ajoutée.",
       "log.typePicked": "« {role} » choisi comme {type}",
@@ -5707,6 +5751,11 @@
         { type: 'creative direction', level: 'release' },
         { type: 'misc', level: 'recording', task: 'director', label: 'miscellaneous support (task “director”)' },
       ] },
+    { id: 'Q005', base: 'text', rule: 'R100', ask: 'typeAsk.askText', note: '"Text" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German "Text" is the lyrics)? Nothing is assumed',
+      options: [
+        { type: 'liner notes', level: 'release' },
+        { type: 'lyricist', level: 'work' },
+      ] },
   ];
 
   /**
@@ -5826,6 +5875,7 @@
     { id: 'R055', kind: 'simple', note: "", re: /^(conductor|conducted by)$/, types: ['conductor'], level: 'recording' },
     { id: 'R056', kind: 'simple', note: "", re: /^(music director|musical director)$/, types: ['conductor'], level: 'recording', credit: true },
     { id: 'R097', kind: 'special', note: "\"Directed By\" is not always conducting: no type is assumed, the dashboard asks (Q003)", re: /^directed by$/, types: [], level: 'recording' },
+    { id: 'R100', kind: 'special', note: "\"Text\" alone: liner notes (an essay in the booklet) or the lyrics (German \"Text\")? No type is assumed, the dashboard asks (Q005, 3.21.0)", re: /^text$/, types: [], level: 'release' },
     { id: 'R057', kind: 'simple', note: "", re: /^(chorus master|choirmaster|choir master|chorus director|choir director)$/, types: ['chorus master'], level: 'recording' },
     { id: 'R058', kind: 'simple', note: "", re: /^(concertmaster|concertmistress)$/, types: ['concertmaster'], level: 'recording' },
     { id: 'R059', kind: 'simple', note: "", re: /^(orchestra|performing orchestra)$/, types: ['performing orchestra', 'orchestra'], level: 'recording' },
@@ -5843,7 +5893,8 @@
     { id: 'R070', kind: 'simple', note: "", re: /^cover art$/, types: ['artwork', 'design/illustration'], level: 'release', credit: 'cover art' },
     { id: 'R071', kind: 'simple', note: "", re: /^(photography by|photography|photographer|photos by|photo|photos|photograph by|photographed by|photographs by)$/, types: ['photography'], level: 'release' },
     { id: 'R072', kind: 'simple', note: "", re: /^(graphic design|graphics|graphic designer)$/, types: ['graphic design', 'design'], level: 'release' },
-    { id: 'R073', kind: 'simple', note: "", re: /^(typography|lettering|logo|calligraphy|desk-top publishing|desktop publishing|realization|realisation)$/, types: ['graphic design', 'design'], level: 'release', credit: true },
+    { id: 'R101', kind: 'simple', note: "\"Logo\", \"Logo by\": design with the credit \"logo\" (3.21.0)", re: /^(logo|logo by|logo design|logo designed by)$/, types: ['design', 'graphic design'], level: 'release', credit: 'logo' },
+    { id: 'R073', kind: 'simple', note: "", re: /^(typography|lettering|calligraphy|desk-top publishing|desktop publishing|realization|realisation)$/, types: ['graphic design', 'design'], level: 'release', credit: true },
     { id: 'R074', kind: 'simple', note: "", re: /^(design concept)$/, types: ['design'], level: 'release', credit: true },
     { id: 'R075', kind: 'simple', note: "", re: /^(drawing|drawings by)$/, types: ['illustration'], level: 'release', credit: true },
     { id: 'R076', kind: 'simple', note: "", re: /^(film director|video director|director)$/, types: ['video director'], level: 'release' },
@@ -5971,6 +6022,7 @@
       return out(['arranger']);
     } },
       R097: { run: () => out([], { notes: ['askType'] }) },
+      R100: { run: () => out([], { notes: ['askType'] }) },
       R062: { test: () => /\bdesign(ed|s)?\b/.test(allWords) && !/\bgraphic/.test(allWords), run: () => {
       ms.forEach((x) => consumed.add(x));
       const rest = uniq(allWords.replace(/\b(designed|designs|design|designer|by)\b/g, ' ').split(/[\s,]+/).filter(Boolean));
@@ -6064,6 +6116,16 @@
       show: () => ({ pairs: [['no name', LINER_NOT_NAME], ['particles', LINER_PARTICLE]] }) },
     { id: 'T028', where: 'TEXT_DISTRIBUTION', note: 'Texts (3.17.3): words for the distribution of a release ("Distribution - !K7", "Distributor: X", "Vertrieb: X") – read as "Distributed By" (C006)',
       show: () => ({ pattern: TEXT_DISTRIBUTION }) },
+    { id: 'T029', where: 'TEXT_ABBREV', note: 'Texts (3.21.0): a line with several sentences ("Graphic design: X. Text: Y. Produced by Z.") is read sentence by sentence – a period after these words, after an initial ("J. Smith") or before a small letter ends no sentence',
+      show: () => ({ pattern: TEXT_ABBREV }) },
+    { id: 'T030', where: 'TEXT_IGNORE_LINE', note: 'Texts (3.21.0): lines left out on purpose – thanks ("Thanks to …", "Danke an …"), endorsements ("X plays exclusively on Y bass strings"), "appears courtesy of …"; listed apart from the lines not recognized',
+      show: () => ({ pattern: TEXT_IGNORE_LINE }) },
+    { id: 'T031', where: 'TEXT_COURTESY, TEXT_QUOTED_TITLE', note: 'Texts (3.21.0): after a name "courtesy of …" ("by kind permission of …") is no name; a title in quotation marks with its year before "by" ("Cover art: “Madison” 1988 by X") is no part of the role',
+      show: () => ({ pairs: [['courtesy', TEXT_COURTESY], ['title', TEXT_QUOTED_TITLE]] }) },
+    { id: 'T032', where: 'WEB_ADDRESS, SOCIAL_HOSTS, WEB_LABEL', note: 'Texts (3.21.0): web addresses are never part of a name; a profile on these sites after a name becomes a link of the entry (MusicBrainz is asked for it, "Create artist" fills it in); Linktree, e-mail and any other address are left out, as is a line of only addresses ("Contact: …")',
+      show: () => ({ pairs: [['address', WEB_ADDRESS], ['profiles', SOCIAL_HOSTS], ['words for them', WEB_LABEL]] }) },
+    { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
+      show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
 
   /** Discogs spelling → possible MB instrument names (tried in this order). */
@@ -6214,6 +6276,26 @@
   // [T028] Texts (3.17.3): words for the distribution of a release – "Distribution - !K7", "Distribution: X", "Distribution by
   // X", "Distributor: X", "Vertrieb: X" … are read as "Distributed By" (C006: label → distributed)
   const TEXT_DISTRIBUTION = /^(?:distribution|distributions|distributor|distributors|distributed|vertrieb|vertrieben|distribución|distribuidora|distribuido|distribuidor|distribution exclusive|distribué|distribuée|distribuzione|distribuito|distributie)$/i;
+
+  // [T029] Texts (3.21.0): a period after these words ends no sentence ("Vol. 2", "feat. X", "St. Louis")
+  const TEXT_ABBREV = /^(?:vol|vols|no|nos|nr|st|ste|dr|mr|mrs|ms|mme|mlle|prof|feat|ft|op|opp|vs|jr|sr|inc|ltd|co|corp|bros|mt|ca|approx|incl|arr|orch|dept|nb|cf|pp|bzw|bspw|ggf|usw|etc)$/i;
+
+  // [T030] Texts (3.21.0): lines left out on purpose – thanks, endorsements, "appears courtesy of"
+  const TEXT_IGNORE_LINE = /^(?:(?:very\s+|extra\s+|a\s+)?special\s+thanks?|many\s+thanks|big\s+thanks|huge\s+thanks|thanks?\b|thank\s+you\b|dank(?:e|en)?\b|vielen\s+dank|besonderer\s+dank|gracias\b|agradecimientos|merci\b|remerciements|grazie\b|ringraziamenti|tack\b|bedankt\b|kiitos\b)|\b(?:plays?|uses?|endorses?)\s+(?:exclusively|only)\s|\b(?:plays?|uses?)\s+(?:on\s+|with\s+)?(?:\S+\s+){1,3}(?:strings|cymbals|reeds|sticks|mallets|drumheads|heads|pickups|amps?|amplifiers|mouthpieces?|ligatures?|picks)\b|\b(?:appears?|appearing)\s+(?:by\s+)?(?:kind\s+)?(?:courtesy|permission)\s+of\b|\bendorse[sd]?\b/i;
+
+  // [T031] Texts (3.21.0): "courtesy of …" after a name, and a title in quotation marks with its year before "by"
+  const TEXT_COURTESY = /(?:^|[\s,;(])(?:(?:by|with|appears?)\s+)?(?:kind\s+)?(?:courtesy|permission)\s+(?:of|from)\b|used\s+(?:with|by)\s+permission|mit\s+freundlicher\s+genehmigung|cortes[ií]a\s+de|avec\s+l[’']aimable\s+autorisation/i;
+  const TEXT_QUOTED_TITLE = /(?:[“„«‘"][^“”„«»‘’"']{1,80}[”“»’"']|(?<!\p{L})'[^'\n]{1,80}'(?!\p{L}))(?:\s*,?\s*\(?(?:1[89]|20)\d{2}\)?)?/gu;
+
+  // [T032] Texts (3.21.0): web addresses (never part of a name) and the sites whose profiles become links of an entry
+  const WEB_ADDRESS = /(?:https?:\/\/)?(?:www\.)?(?:[a-z0-9-]+\.)+(?:com|net|org|info|biz|io|me|fm|tv|co|app|ee|be|de|at|ch|fr|es|it|nl|uk|us|ca|au|jp|se|no|dk|fi|pl|pt|ie|ru|br|mx|ar|cl|nz|online|site|store|music|band|art|studio|world|live|xyz|link|page|social)(?![a-z0-9-])(?:\/[^\s,;()<>“”"'\]]*)?/gi;
+  const WEB_LABEL = /^(?:contact|kontakt|contacto|e-?mail|mail|correo|web|website|webseite|homepage|home page|site|site web|sitio web|info|infos|booking|follow(?:\s+(?:us|me))?|more|more info|links?|shop|store|orders?|bestellungen|pedidos)\b[\s:.\-–—]*(?:on|at|unter|en|sur)?[\s:]*$/i;
+  const SOCIAL_HOSTS = /^(?:instagram\.com|facebook\.com|fb\.com|twitter\.com|x\.com|soundcloud\.com|youtube\.com|tiktok\.com|bsky\.app|threads\.net|mixcloud\.com|vimeo\.com|myspace\.com|[a-z0-9-]+\.bandcamp\.com)$/i;
+
+  // [T033] Texts (3.21.0): ℗ and © at the start of a line (also both: "P + ©", "℗ & ©", "(P) & (C)"), and what is left out
+  // after the name: a code of how it was recorded ("DDD"), a catalogue number after "·" or "|", "All rights reserved"
+  const TEXT_PC_SIGNS = /^(©\s*©|(?:℗|Ⓟ|\(p\)|p)\s*(?:\+|&|\/|,|and|und|et|y)?\s*(?:©|\(c\))|(?:©|\(c\))\s*(?:\+|&|\/|,|and|und|et|y)?\s*(?:℗|Ⓟ|\(p\))|℗|Ⓟ|\(p\)|©|\(c\))\s*(?:(?:19|20)\d{2}(?:\s*[-–/,&]\s*(?:19|20)?\d{2,4})*\s*)?(.+)$/i;
+  const TEXT_PC_STRIP = /\s+[·|•]\s+.*$|\s+[–—]\s+[A-Z]{2,}[\s-]?\d+.*$|\s+(?:AAD|ADD|DDD|DAD)\b|[,.]?\s*(?:[Aa]ll\s+[Rr]ights\s+[Rr]eserved|ALL\s+RIGHTS\s+RESERVED).*$/g;
 
   // [T024] Texts (3.14.0): a line that only names the label of the release ("An Echo Elberfeld release.", "Released on
   // X Records") is left out – the label is set in the release editor; ℗ / © lines are credits
@@ -6614,6 +6696,7 @@
     { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
     { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
+    { id: 'D016', note: 'A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0)' },
   ];
 
   const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
@@ -6695,6 +6778,7 @@
     { id: 'D011', re: '(?:(?:early|mid|late|the|frühe[n]?|späte[n]?|mitte der)[-\\s]+)?(?:\\d{2})?\\d0\'?s(?![\\p{L}])|(?:\\d{2})?\\d0er(?:\\s+jahren?)?', make: () => 'skip' },
     { id: 'D009', re: `${P.SEASON}(?:\\s+(?:of|de|du))?\\s+${P.Y}`, make: (m) => single(ymd(m[2])) },
     { id: 'D008', re: `${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[2], monthNo(m[1]))) },
+    { id: 'D016', re: '(?<=[”"’»\'],?\\s{0,2}\\(?)(1[89]\\d{2}|20\\d{2})(?![\\d/-])', make: () => 'skip' },
     { id: 'D010', re: '(?<![\\d./-])(1[89]\\d{2}|20\\d{2})(?![\\d/-]|\\.\\d)', make: (m) => single(ymd(m[1])) },
   ].map((x) => ({ ...x, rx: new RegExp(x.re, 'giu') }));
 
@@ -6773,7 +6857,9 @@
   //   companies  { who, role, catno, tracks } – labels, studios and the like with their role (tracks: null = all)
   //   series     { id, name, number, links }
   //   optional:  noteSource – the source as the edit note names it (else url); unrecognized – lines of a text
-  //              that gave no credit
+  //              that gave no credit; ignored – [3.21.0] lines (or sentences) of a text left out on purpose: thanks,
+  //              endorsements, only web addresses (T030, T032). A name without an id may have links (who.links): web
+  //              profiles found after it in a text, looked up in MusicBrainz as suggestions and given to "Create artist"
   // A role is written in the dashboard's notation, the one Discogs uses: "Role [Detail, Detail]", several
   // roles separated by commas. Mapping (rules R, W, C, S …) belongs to the register (section 2); an adapter only reads
   // its word lists (the text adapter: T009–T014).
@@ -7032,10 +7118,99 @@
     /** Dates and numbers out of a role phrase ("Recorded 12 May 2019" → "Recorded"). */
     const noDates = (s) => clean(String(s || '').replace(/\d+(?:[./–—-]\d+)*(?:st|nd|rd|th)?/g, ' ').replace(TEXT_MONTHS, ' ').replace(/\s+(?:on|am|le|el)\s*$/i, ''));
 
+    /** [3.21.0] A later sentence of a line that starts a credit ("Text: X", "Produced by X", "℗ …") or is left out (T030). */
+    const creditLike = (u) => /^[^:]{1,40}:\s/.test(u) || /\sby\s/i.test(` ${u} `) || /^(?:℗|Ⓟ|©|\(p\)|\(c\))/i.test(u) || /\s[–—]\s/.test(u) || TEXT_IGNORE_LINE.test(u);
+
+    /**
+     * [3.21.0] The sentences of a line (T029): "Graphic design: X. Text: Y. Produced by Z." → three. A period (! ?) ends a
+     * sentence only before a capital letter (or ℗ / ©), not after an initial ("J. Smith"), a short word of TEXT_ABBREV
+     * ("Vol. 2", "feat. X") or a word with dots ("a.k.a."; an address ends a sentence). The line stays whole unless a
+     * later sentence starts a credit – prose ("… by a human. No AI tools were used.") is not cut up.
+     */
+    function sentencesOf(line) {
+      const out = [];
+      let start = 0;
+      const re = /[.!?]\s+(?=[\p{Lu}℗©Ⓟ(“"‘'])/gu;
+      let m;
+      while ((m = re.exec(line))) {
+        const word = (line.slice(start, m.index).match(/(\S+)$/) || ['', ''])[1].replace(/^[(“"‘']+/, '');
+        const dotted = /\.\S/.test(word) && !/\.[a-z]{2,}(?:\/\S*)?$/i.test(word);
+        if (/^\p{L}$/u.test(word) || TEXT_ABBREV.test(word) || dotted) continue;
+        out.push(line.slice(start, m.index + 1));
+        start = m.index + m[0].length;
+      }
+      out.push(line.slice(start));
+      const units = out.map(clean).filter(Boolean);
+      return units.length > 1 && units.slice(1).some(creditLike) ? units : [line];
+    }
+
+    /**
+     * [3.21.0] A web address as a profile MusicBrainz keeps for an artist (T032), in the form MusicBrainz writes it
+     * (its own clean-up of links), '' for any other address (Linktree, home pages, posts …).
+     */
+    function webProfile(u0) {
+      let u = String(u0 || '').replace(/[.,;:!?)\]]+$/, '');
+      if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
+      let url;
+      try { url = new URL(u); } catch (e) { return ''; }
+      const host = url.hostname.toLowerCase().replace(/^(?:www|m|mobile)\./, '');
+      if (!SOCIAL_HOSTS.test(host)) return '';
+      const p = url.pathname.split('/').filter(Boolean).map((x) => { try { return decodeURIComponent(x); } catch (e) { return x; } });
+      const one = p.length === 1 ? p[0] : '';
+      const bc = host.match(/^([a-z0-9-]+)\.bandcamp\.com$/);
+      if (bc) return p.length ? '' : `https://${bc[1]}.bandcamp.com/`;
+      if (host === 'instagram.com') return one && !/^(?:p|tv|reel|reels|stories|explore)$/i.test(one) ? `https://www.instagram.com/${one}/` : '';
+      if (host === 'facebook.com' || host === 'fb.com') return one && !/^(?:groups|events|watch|share|pages|profile\.php|people)$/i.test(one) ? `https://www.facebook.com/${one}` : '';
+      if (host === 'twitter.com' || host === 'x.com') return one && !/^(?:i|intent|home|search|hashtag|share)$/i.test(one) ? `https://twitter.com/${one.replace(/^@/, '')}` : '';
+      if (host === 'soundcloud.com') return one && !/^(?:search|tags|discover|stream)$/i.test(one) ? `https://soundcloud.com/${one}` : '';
+      if (host === 'youtube.com') {
+        if (/^@/.test(one)) return `https://www.youtube.com/${one}`;
+        if (p.length === 2 && /^(?:channel|user)$/i.test(p[0])) return `https://www.youtube.com/${p[0].toLowerCase()}/${p[1]}`;
+        return p.length === 2 && p[0] === 'c' ? `https://www.youtube.com/${p[1]}` : '';
+      }
+      if (host === 'tiktok.com') return /^@/.test(one) ? `https://www.tiktok.com/${one}` : '';
+      if (host === 'bsky.app') return p.length === 2 && p[0] === 'profile' ? `https://bsky.app/profile/${p[1]}` : '';
+      if (/^threads\.(?:net|com)$/.test(host)) return /^@/.test(one) ? `https://www.threads.com/${one}` : '';
+      if (host === 'mixcloud.com') return one ? `https://www.mixcloud.com/${one}/` : '';
+      if (host === 'vimeo.com') return one && !/^\d+$/.test(one) ? `https://vimeo.com/${one}` : '';
+      if (host === 'myspace.com') return one ? `https://myspace.com/${one}` : '';
+      return '';
+    }
+
+    /**
+     * [3.21.0] The web addresses out of a sentence (T032) – never part of a name: → { text, links: [{ url, before }] },
+     * a profile (webProfile) with the text before it (the name it belongs to is the last one there); e-mail addresses,
+     * Linktree and every other address are left out.
+     */
+    function takeUrls(s) {
+      const src = String(s || '').replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, ' ');
+      const links = [];
+      let text = '';
+      let last = 0;
+      let any = false;
+      let m;
+      WEB_ADDRESS.lastIndex = 0;
+      while ((m = WEB_ADDRESS.exec(src))) {
+        any = true;
+        text += src.slice(last, m.index);
+        const url = webProfile(m[0]);
+        if (url && !links.some((l) => l.url === url)) links.push({ url, before: text });
+        text += ' ';
+        last = m.index + m[0].length;
+      }
+      text += src.slice(last);
+      if (!any && src === s) return { text: s, links, cut: false };
+      // brackets left empty and separators left at the end ("Jane Roe (linktr.ee/x)", "Jane Roe – ")
+      text = text.replace(/\(\s*[,;/|]*\s*\)|\[\s*\]/g, ' ').replace(/(?:\s+(?:and|und|&|\/|\||·|–|—|-))+\s*$/i, '');
+      return { text: clean(text), links, cut: true };
+    }
+
     function parse(text, { isRole, isCompanyRole, resolveTracks }) {
       const credits = [];
       const companies = [];
       const unrecognized = [];
+      // [3.21.0] lines (or sentences of a line) left out on purpose: thanks, endorsements, only web addresses (T030, T032)
+      const ignored = [];
       const who = (name) => ({ id: 0, name, rawName: name, links: [] });
       const tracksOf = (scope) => (scope ? { indexes: [...scope.set], spec: scope.spec, unresolved: [] } : { all: true });
       // The line a credit comes from (shown when the text supplements another source)
@@ -7065,7 +7240,14 @@
       // [3.14.0] A role with "By" ("Mixed By"), else without ("Layout", "Photography", "Artwork")
       const roleOf = (word) => (isRole(`${cap(word)} By`) || !isRole(cap(word)) ? `${cap(word)} By` : cap(word));
       /** [3.14.0] The first sentence of a text ("a human. No AI tools were used." → "a human"); initials stay ("T. Name"). */
-      const firstSentence = (t) => String(t || '').split(/(?<=[^\s.]{2})\.\s+/)[0];
+      const firstSentence = (t0) => {
+        const t = String(t0 || '');
+        const re = /(?<=[^\s.]{2})\.\s+/g;
+        let m;
+        // [3.21.0] not after a short word of T029 ("Vol. 2", "feat. X")
+        while ((m = re.exec(t))) if (!TEXT_ABBREV.test((t.slice(0, m.index).match(/(\S+)$/) || ['', ''])[1].replace(/^[(“"‘']+/, ''))) return t.slice(0, m.index);
+        return t;
+      };
       /**
        * "Mixed and mastered" → ["Mixed By", "Mastered By"]; one known role stays one ("Music and lyrics by");
        * "Strings arranged" → "Arranged By [Strings]".
@@ -7124,45 +7306,31 @@
       };
       const names = (side) => side.split(TEXT_NAME_SEP).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
 
-      for (const raw of String(text || '').split(/\r?\n/)) {
-        let line = clean(raw);
-        if (!line) continue;
-        line0 = raw.trim();
-        const sameKey = line0.replace(/\s+/g, ' ').toLowerCase();
-        n0 = lineCount.get(sameKey) || 0;
-        lineCount.set(sameKey, n0 + 1);
-        // A track list for the line (only when it names tracks of this release)
-        let scope = null;
-        let m;
-        const useScope = (spec, rest) => {
-          const set = resolveTracks(spec);
-          if (!set || !set.size) return false;
-          scope = { set, spec: spec.trim() };
-          line = clean(rest);
-          return true;
-        };
-        if (!((m = line.match(PREFIX)) && useScope(m[1], m[2]))) {
-          if (!((m = line.match(SUFFIX)) && m[1] && useScope(m[2], m[1]))) {
-            if ((m = line.match(NUMBERS)) && m[1]) useScope(m[2], m[1]);
-          }
-        }
+      /**
+       * [3.21.0] The credits of one sentence of a line (mostly the whole line), its track list given (scope); pi: the
+       * number of its first part on the line (the companion marks each part). → { found, unknown, parts }
+       */
+      const readUnit = (unit, scope, pi) => {
+        const line = unit;
         let found = 0;
+        let m;
         const unknownParts = [];
         part0 = line;
-        pi0 = 0;
-        // [3.14.0] a line that only names the label of the release is left out (T024)
-        if (TEXT_LABEL_LINE.test(line)) continue;
-        // ℗ / © with a year: the label of the copyright
-        if ((m = line.match(/^(℗|\(p\)|©|\(c\))\s*(?:\d{4}\s*)?(.+)$/i))) {
-          const role = /℗|\(p\)/i.test(m[1]) ? 'Phonographic Copyright (p)' : 'Copyright (c)';
-          if (looksLikeName(clean(m[2]))) {
-            companies.push({ who: who(clean(m[2])), role, catno: '', tracks: null, ...at() });
+        pi0 = pi;
+        // ℗ / © with a year: the label of the copyright; [3.21.0] both at once ("P + © 2023 X", "℗ & ©", "(P) & (C)"), and
+        // after the name no code ("DDD"), catalogue number ("· MCD 2301") or "All rights reserved" (T033)
+        if ((m = line.match(TEXT_PC_SIGNS))) {
+          const name = clean(m[2].replace(TEXT_PC_STRIP, ''));
+          const roles = [/℗|Ⓟ|\(p\)|^p|©\s*©/i.test(m[1]) && 'Phonographic Copyright (p)', /©|\(c\)/i.test(m[1]) && 'Copyright (c)'].filter(Boolean);
+          if (looksLikeName(name)) {
+            roles.forEach((role) => companies.push({ who: who(name), role, catno: '', tracks: null, ...at() }));
             found++;
           }
         }
-        for (const [ci, clause] of (found ? [] : clauses(line)).entries()) {
+        const parts = found ? [] : clauses(line);
+        for (const [ci, clause] of parts.entries()) {
           part0 = clause;
-          pi0 = ci;
+          pi0 = pi + ci;
           // [3.17.3] "Distribué par X", "Distribuido por X", "Vertrieben durch X", "Distributed through X" (T028)
           if ((m = clause.match(/^(\S+(?:\s+\S+)?)\s+(?:par|por|da|durch|via|through)\s+(.+)$/i)) && distribution(m[1])) {
             for (const n of names(m[2])) if (addCredit(n, 'Distributed By', scope)) found++;
@@ -7176,9 +7344,12 @@
             companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: scope ? tracksOf(scope) : null, ...at() });
             found++;
           };
-          if ((m = clause.match(/^(.+?)\s+by\s+(.+)$/i))) {
-            let left = m[1];
-            let right = m[2];
+          // [3.21.0] a "by" inside a title in quotation marks ("“Stand by me”") does not count (T031)
+          const masked = clause.replace(TEXT_QUOTED_TITLE, (q) => q.replace(/\s/g, '_'));
+          if ((m = masked.match(/^(.+?)\s+by\s+(.+)$/i))) {
+            // [3.21.0] a title in quotation marks with its year is no part of the role ("Cover art: “Madison” 1988 by X")
+            let left = clause.slice(0, m[1].length).replace(TEXT_QUOTED_TITLE, ' ');
+            let right = clause.slice(m[0].length - m[2].length);
             const verb = (clean(left).match(/^\p{L}+/u) || [''])[0];
             // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
             const at = left.match(/^(.*?)\s+at\s+(.+)$/i);
@@ -7192,6 +7363,9 @@
               place(verb, placeOf(at2[2]));
               right = at2[1];
             }
+            // [3.21.0] "…, courtesy of the X Estate" is no name (T031)
+            const courtesy = right.search(TEXT_COURTESY);
+            if (courtesy >= 0) right = right.slice(0, courtesy);
             // [3.14.0] "Music and artwork of this release were entirely created by …" (T022): a sentence (with "of this …",
             // "was/were …" or "entirely …") names its roles before the verb; otherwise the verbs are the roles
             const sentence = /\s(?:of|on|for)\s+(?:this|the)\s|\s(?:was|were|is|are|been)\s|\s(?:entirely|completely|fully|solely|exclusively)\s/i.test(` ${left} `);
@@ -7241,7 +7415,7 @@
         // words (small letters too) that has no word of a sentence in it (T025) and is no list of roles
         if (!found) {
           part0 = line;
-          pi0 = 0;
+          pi0 = pi;
           const words = line.split(' ');
           for (let k = Math.min(3, words.length - 2); k >= 1 && !found; k--) {
             const role = words.slice(0, k).join(' ');
@@ -7252,10 +7426,83 @@
             if (addCredit(name, roleOf(role), scope)) found++;
           }
         }
-        if (!found) unrecognized.push(raw.trim());
-        else if (unknownParts.length) unrecognized.push(`${raw.trim()} → ? ${unknownParts.map((x) => `“${x}”`).join(', ')}`);
+        return { found, unknown: unknownParts, parts: Math.max(1, parts.length) };
+      };
+
+      /** [3.21.0] A profile found after a name (T032) becomes a link of that name's credits in this sentence. */
+      const giveLinks = (links, list) => {
+        for (const l of links) {
+          let best = null;
+          let bestAt = -1;
+          for (const c of list) {
+            const i = l.before.lastIndexOf(c.who.name);
+            if (c.who.name && i > bestAt) [best, bestAt] = [c.who.name, i];
+          }
+          if (best == null) continue;
+          list.filter((c) => c.who.name === best && !c.who.links.includes(l.url)).forEach((c) => c.who.links.push(l.url));
+        }
+      };
+
+      for (const raw of String(text || '').split(/\r?\n/)) {
+        let line = clean(raw);
+        if (!line) continue;
+        line0 = raw.trim();
+        const sameKey = line0.replace(/\s+/g, ' ').toLowerCase();
+        n0 = lineCount.get(sameKey) || 0;
+        lineCount.set(sameKey, n0 + 1);
+        // A track list for the line (only when it names tracks of this release)
+        let scope = null;
+        let m;
+        const useScope = (spec, rest) => {
+          const set = resolveTracks(spec);
+          if (!set || !set.size) return false;
+          scope = { set, spec: spec.trim() };
+          line = clean(rest);
+          return true;
+        };
+        if (!((m = line.match(PREFIX)) && useScope(m[1], m[2]))) {
+          if (!((m = line.match(SUFFIX)) && m[1] && useScope(m[2], m[1]))) {
+            if ((m = line.match(NUMBERS)) && m[1]) useScope(m[2], m[1]);
+          }
+        }
+        part0 = line;
+        pi0 = 0;
+        // [3.14.0] a line that only names the label of the release is left out (T024)
+        if (TEXT_LABEL_LINE.test(line)) continue;
+        // [3.21.0] sentence by sentence (T029); thanks and endorsements are left out (T030), web addresses taken out (T032)
+        const units = sentencesOf(line);
+        let found = 0;
+        let pi = 0;
+        const unknownParts = [];
+        const missed = [];
+        for (const unit of units) {
+          const whole = units.length === 1 ? line0 : unit;
+          if (TEXT_IGNORE_LINE.test(unit)) {
+            ignored.push(whole);
+            continue;
+          }
+          const web = takeUrls(unit);
+          // only addresses, or a word for them ("Contact: info@…", "Web: …")
+          if (!web.text || !/\p{L}{2}/u.test(web.text) || (web.cut && WEB_LABEL.test(web.text))) {
+            ignored.push(whole);
+            continue;
+          }
+          const c0 = credits.length;
+          const r = readUnit(web.text, scope, pi);
+          pi += r.parts;
+          found += r.found;
+          unknownParts.push(...r.unknown);
+          if (!r.found) missed.push(unit);
+          else if (web.links.length) giveLinks(web.links, credits.slice(c0));
+        }
+        if (!found) {
+          if (missed.length) unrecognized.push(line0);
+        } else {
+          missed.forEach((u) => unrecognized.push(u));
+          if (unknownParts.length) unrecognized.push(`${line0} → ? ${unknownParts.map((x) => `“${x}”`).join(', ')}`);
+        }
       }
-      return { credits, companies, unrecognized };
+      return { credits, companies, unrecognized, ignored };
     }
 
     /** The neutral release of a pasted text (ctx: the MB tracks and the core's helpers, see sourceContext). */
@@ -7277,6 +7524,7 @@
         companies: res.companies,
         series: [],
         unrecognized: res.unrecognized,
+        ignored: res.ignored,
       };
     }
 
@@ -7400,6 +7648,7 @@
       companies.push(...TEXT.parse(cur.about || '', { ...ctx, resolveTracks }).companies.filter((c) => /\bat$/i.test(c.role))
         .map((c) => ({ ...c, fromAbout: true }))); // [3.16.1] can be left out ("Leave out the about text")
       const unrecognized = [...album.unrecognized];
+      const ignored = [...(album.ignored || [])];
       (trackCredits || []).forEach((text, i) => {
         if (!text || !tracks[i]) return;
         const res = TEXT.parse(text, { ...ctx, resolveTracks });
@@ -7409,6 +7658,7 @@
         res.credits.forEach((c) => credits.push({ ...c, ...page, tracks: c.tracks.all ? on : c.tracks }));
         res.companies.forEach((c) => companies.push({ ...c, ...page, tracks: c.tracks || on }));
         res.unrecognized.forEach((l) => unrecognized.push(`${tracks[i].position}: ${l}`));
+        (res.ignored || []).forEach((l) => ignored.push(`${tracks[i].position}: ${l}`));
       });
       // [3.17.2] Liner notes at the end of the "about" text: a credit "Liner Notes" of the name below it – a name like any
       // other (only suggested), from the about text (left out with it)
@@ -7438,6 +7688,7 @@
         companies: companies.map((c) => ({ ...c, who: linkBand(c.who) })),
         series: [],
         unrecognized,
+        ignored,
         band,
         released: cur.release_date || '',
       };
@@ -7527,6 +7778,8 @@
           ...(who.placeholder ? { placeholder: who.placeholder, releaseMbid: who.releaseMbid || '' } : {}) });
       }
       const group = groups.get(gKey);
+      // [3.21.0] a name without an id: the web profiles found next to it anywhere in the text (T032)
+      if (!who.id && (who.links || []).length) group.links = uniq([...group.links, ...who.links]);
       if (!c.role) continue;
       const anv = c.credited || '';
       const at = c.tracks || { all: true };
@@ -11467,6 +11720,32 @@
       : artists.map((p) => ({ ...c, who: { id: 0, name: p.name, rawName: p.name, links: [], placeholder: c.who.placeholder, releaseMbid: p.mbid } }))));
   }
 
+  /** [3.21.0] A web address shortened for the dashboard: "instagram.com/name". */
+  const webShort = (u) => String(u || '').replace(/^https?:\/\/(?:www\.)?/i, '').replace(/\/+$/, '');
+
+  /**
+   * [3.21.0] The MB artists with one of the entry's web profiles (found next to its name in a text, T032) → suggestions
+   * ({ mbid, name, disambiguation, entityType, viaWeb }); each address asked with and without its "/" at the end.
+   */
+  async function webLinkHits(a) {
+    const urls = a.company || a.dId ? [] : (a.links || []).filter((u) => /^https?:\/\//i.test(u));
+    if (!urls.length) return [];
+    const key = (u) => String(u || '').toLowerCase().replace(/\/+$/, '');
+    const ask = uniq(urls.flatMap((u) => [u, /\/$/.test(u) ? u.replace(/\/+$/, '') : `${u}/`]));
+    const out = [];
+    try {
+      const found = await lookupUrls(ask, 'artist', key);
+      for (const u of urls) {
+        for (const c of found.get(key(u)) || []) {
+          if (!out.some((h) => h.mbid === c.mbid)) out.push({ mbid: c.mbid, name: c.name, disambiguation: c.disambiguation || '', entityType: 'artist', similar: false, viaWeb: u });
+        }
+      }
+    } catch (e) {
+      console.warn('[Credits-Importer] web links', urls, e);
+    }
+    return out;
+  }
+
   async function suggestByName(list) {
     for (const a of list) {
       // [3.14.0] an artist of the release offered for a credit without a name: that artist is the suggestion
@@ -11502,6 +11781,12 @@
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
         a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name].filter(Boolean).join(', ') }));
+        // [3.21.0] the artists MusicBrainz has with a web profile found next to the name (T032): first, only suggested
+        const web = await webLinkHits(a);
+        if (web.length) {
+          a.nameHits = [...web, ...a.nameHits.filter((h) => !web.some((w) => w.mbid === h.mbid))];
+          log('info', 'webSuggested', { name: a.name, list: web.map((h) => `${h.name} (${webShort(h.viaWeb)})`).join(', ') });
+        }
         if (a.nameHits.length) {
           const listed = a.nameHits.slice(0, 5).map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ');
           log('info', 'nameSuggested', { name: a.name, list: listed + (a.nameHits.length > 5 ? ` … (+${a.nameHits.length - 5})` : '') });
@@ -12140,6 +12425,10 @@
     const unrec = (rel && rel.unrecognized) || [];
     const unrecHtml = unrec.length ? `<details class="dci-unrec"><summary>${esc(tr('unrec.title', { n: unrec.length }))}</summary>
       <ol>${unrec.map((l) => `<li>${esc(l)}</li>`).join('')}</ol><p class="dci-sub">${esc(tr('unrec.hint'))}</p></details>` : '';
+    // [3.21.0] lines left out on purpose (thanks, endorsements, web addresses – T030, T032), apart from those not recognized
+    const ign = (rel && rel.ignored) || [];
+    const ignHtml = ign.length ? `<details class="dci-ignored"><summary>${esc(tr('ignored.title', { n: ign.length }))}</summary>
+      <ol>${ign.map((l) => `<li>${esc(l)}</li>`).join('')}</ol><p class="dci-sub">${esc(tr('ignored.hint'))}</p></details>` : '';
     const f = S.textForm;
     const textForm = f ? `<div class="dci-textsrc${f.supp ? ' dci-textsrc-supp' : ''}" role="group" aria-label="${esc(tr(f.supp ? 'supp.textTitle' : 'textsrc.title'))}">
         ${f.supp ? `<p class="dci-sub">${esc(tr('supp.textTitle'))}</p>` : ''}
@@ -12171,7 +12460,7 @@
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
-      ${suppBarHtml()}${unrecHtml}${textForm}`;
+      ${suppBarHtml()}${unrecHtml}${ignHtml}${textForm}`;
   }
 
   /**
@@ -12263,8 +12552,10 @@
         : a.releaseMbid ? tr('match.placeholderSuggest', { said: a.placeholder }) : tr('match.nameSuggest');
       heads.push(head);
       const why = a.strictMiss ? mark('match.markSpelled') : a.releaseMbid ? mark('match.markRelease') : '';
+      // [3.21.0] found through a web profile next to the name in the text (T032): first, still only a suggestion
+      const titleOf = (h) => (h.viaWeb ? tr('match.webUseTitle', { url: h.viaWeb }) : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
       a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}"
-        title="${esc(`${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`)}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.similar ? mark('match.similarName') : ''}${why}</button>`,
+        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.similar ? mark('match.similarName') : ''}${h.viaWeb ? '' : why}</button>`,
         h.entityType || (a.company ? 'label' : 'artist'), h.mbid)));
     }
     if (!items.length) return '';
@@ -12379,7 +12670,9 @@
     const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
     const sourceLink = a.dId && (a.links || [])[0]
       ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(tr('link.discogsTitle'))}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span>${esc(a.rawName || a.name)}</a>`
-      : '';
+      // [3.21.0] a name from a text: the web profiles found next to it (T032)
+      : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
+        title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}" data-group="${a.key}">
         <div class="dci-ghead">
@@ -14160,7 +14453,7 @@
     if (!q || row.level === 'skip') return '';
     const pick = (o, i) => `<button type="button" class="dci-textbtn" data-act="type-pick" data-opt="${i}" aria-pressed="${row.typeAnswer === i}">${esc(o.label || o.type)}</button>`;
     const chosen = row.typeAnswer != null;
-    return `<div class="dci-bass-ask dci-type-ask" data-question="${q.id}">${esc(tr(chosen ? 'typeAsk.chosen' : 'typeAsk.ask', { role: row.raw || row.base }))}
+    return `<div class="dci-bass-ask dci-type-ask" data-question="${q.id}">${esc(tr(chosen ? 'typeAsk.chosen' : q.ask || 'typeAsk.ask', { role: row.raw || row.base }))}
       ${q.options.map(pick).join(' · ')}${chosen ? '' : `<span class="dci-sub">${esc(tr('typeAsk.pending'))}</span>`}</div>`;
   }
 
@@ -14584,10 +14877,12 @@
       }
     }
     const type = person ? person.type : null;
+    // [3.21.0] a name from a text: the web profiles found next to it (T032) as its links
+    const web = !artist.dId && !person ? (artist.links || []).filter((u) => /^https?:\/\//i.test(u)) : [];
     const params = buildArtistSeed({
       name: artist.name,
       sourceUrl: srcUrlOf(artist),
-      person,
+      person: person || (web.length ? { urls: web } : null),
       typeId: type === 'group' ? 2 : type === 'person' ? 1 : null,
       sourceLinkTypeId: sourceUrlLtId('artist'),
       rels,
@@ -14597,7 +14892,7 @@
     const displayName = (person && person.name) || artist.name;
     const prefilled = [tr('part.name')];
     if (type) prefilled.push(tr('part.type', { type: tr(`type.${type}`) }));
-    if (urlCount) prefilled.push(tr('part.urls', { n: urlCount }));
+    if (urlCount) prefilled.push(tr(web.length && !srcUrlOf(artist) ? 'part.webUrls' : 'part.urls', { n: urlCount }));
     if (rels.length) prefilled.push(tr('part.members', { n: rels.length, names: rels.map((r) => r.name).join(', ') }));
     const info = [`<p>${esc(tr('artistDlg.prefilled', { list: prefilled.join(', ') }))}</p>`];
     if (notInMb.length) {
@@ -18098,13 +18393,17 @@
         row.creditFromRole = o.task || '';
         delete row.scopeLevel;
         delete row.mxSkipped;
-        row.level = o.level;
+        // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
+        row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
         row.levelTouched = true;
         resolveRowType(row);
         refreshRowDetails(row);
         log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
-        if (row.level === 'work') renderGroups();
-        else rerenderRow(row);
+        // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
+        if (row.level === 'work') {
+          renderGroups();
+          renderWorks();
+        } else rerenderRow(row);
         refresh();
         break;
       }
@@ -19969,6 +20268,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.21.0', label: 'Credits Importer 3.21.0' },
     { v: '3.18.0', label: 'Credits Importer 3.18.0' },
     { v: '3.17.0', label: 'Credits Importer 3.17.0 · Companion 1.8.0' },
     { v: '3.16.0', label: 'Credits Importer 3.16.0' },
@@ -20353,6 +20653,10 @@
       .dci-unrec { width: 100%; margin-top: calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 12); }
       .dci-unrec summary { cursor: pointer; color: var(--warn); }
       .dci-unrec ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }
+      .dci-ignored { width: 100%; margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); }
+      .dci-ignored summary { cursor: pointer; color: var(--muted); }
+      .dci-ignored ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }
+      .dci-weblink { font-size: calc(var(--u, 1px) * 11); color: var(--muted); margin-left: calc(var(--u, 1px) * 4); }
       /* Order of the linked sources (physical / digital media) and the Bandcamp settings */
       .dci-srcorder, .dci-bcset { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 24); align-items: flex-start; width: 100%; margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 6px; background: var(--soft); }
       .dci-srcorder ol { margin: calc(var(--u, 1px) * 4) 0 0; padding-left: calc(var(--u, 1px) * 22); }
