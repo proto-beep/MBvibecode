@@ -440,6 +440,8 @@ def mb_release_page():
 # (a knockout observable). Helpers for a test: __tab('edit-note'), __submit(gid, fail) (as "Enter edit" does: in progress,
 # then the release page – or false again on an error); the release a new release becomes: window.__gid (default REL).
 EDITOR_LINKS = {'edit': [f'https://www.discogs.com/release/{DISCOGS_ID}'], 'add': []}
+# [3.19.1] a seeded "redirect_uri" (Harmony: its "Release Actions"): kind → URL; "Enter edit" then goes there with ?…&release_mbid=
+EDITOR_REDIRECT = {}
 
 
 def mb_release_editor_page(kind):
@@ -458,23 +460,27 @@ def mb_release_editor_page(kind):
 (function () {{
   function obs(v) {{ const subs = []; const f = function (x) {{ if (!arguments.length) return v; v = x; subs.forEach((s) => s(x)); }};
     f.subscribe = (s) => subs.push(s); return f; }}
-  window.MB = {{ releaseEditor: {{ submissionInProgress: obs(false), rootField: {{ release: obs({{}}) }} }} }};
+  window.MB = {{ releaseEditor: {{ submissionInProgress: obs(false), rootField: {{ release: obs({{}}) }}, redirectURI: {json.dumps(EDITOR_REDIRECT.get(kind, ''))} }} }};
   window.__tab = (id) => {{ for (const t of ['information', 'edit-note']) document.getElementById(t).style.display = t === id ? '' : 'none';
     document.getElementById('enter-edit').style.display = id === 'edit-note' ? '' : 'none'; }};
   window.__submit = (gid, fail) => {{ MB.releaseEditor.submissionInProgress(true);
-    setTimeout(() => {{ if (fail) {{ MB.releaseEditor.submissionInProgress(false); return; }} window.location.pathname = '/release/' + gid; }}, 300); }};
+    setTimeout(() => {{ if (fail) {{ MB.releaseEditor.submissionInProgress(false); return; }}
+      if (MB.releaseEditor.redirectURI) {{ const a = document.createElement('a'); a.href = MB.releaseEditor.redirectURI;
+        a.search += /^\\?/.test(a.search) ? '&' : '?'; a.search += 'release_mbid=' + gid; window.location.href = a.href; return; }}
+      window.location.pathname = '/release/' + gid; }}, 300); }};
   document.getElementById('enter-edit').addEventListener('click', () => window.__submit(window.__gid || '{REL}', window.__fail));
 }})();
 </script></body></html>"""
 
 
-def open_mb_any(ctx, url, gm_xhr=True):
+def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     """[3.19.0] A MusicBrainz tab whose pages all get the main script (as a userscript manager does), also after a
-    navigation of the page itself; only in the page, not in its frames."""
+    navigation of the page itself; only in the page, not in its frames. [3.19.1] Also on Harmony's pages; all_tabs: in every
+    tab of the context (also those a link opens)."""
     pg = ctx.new_page()
     errs = errors_of(pg)
     codes = ([GM_XHR_SHIM] if gm_xhr else []) + [MAIN]
-    pg.add_init_script(script="if (window.top === window && location.hostname === 'musicbrainz.org') window.addEventListener('DOMContentLoaded', () => {"
+    (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
                        % json.dumps(codes))
     pg.goto(url)
@@ -659,6 +665,21 @@ def install_routes(ctx):
         return route.fulfill(body='<!doctype html><html><body><h1>Discogs</h1></body></html>', content_type='text/html')
 
     ctx.route('https://musicbrainz.org/**', mb)
+
+    def harmony(route):
+        # [3.19.1] Harmony's "Release Actions", built like its own page (2026-10): actions as div.action with an icon
+        u = urllib.parse.urlparse(route.request.url)
+        if u.path != '/release/actions':
+            return route.fulfill(status=404, body='')
+        mbid = urllib.parse.parse_qs(u.query).get('release_mbid', [''])[0]
+        rel = f'https://musicbrainz.org/release/{mbid}'
+        acts = ('<div class="action"><svg class="icon"></svg><p><a href="../release?x=1">Switch to Release Lookup</a></p></div>'
+                f'<div class="action"><svg class="icon"></svg><p><a href="{rel}">Open in MusicBrainz</a></p></div>'
+                f'<div class="action"><svg class="icon"></svg><div><p><a href="{rel}/add-cover-art">Add cover art</a></p></div></div>'
+                '<figure class="cover-image">cover</figure>') if mbid else '<form><input name="release_mbid"></form>'
+        return route.fulfill(body=f'<!doctype html><html><head><title>Release Actions – Harmony</title></head><body><main><h2>Release Actions</h2>{acts}</main></body></html>',
+                             content_type='text/html')
+    ctx.route('https://harmony.pulsewidth.org.uk/**', harmony)
     ctx.route('https://api.discogs.com/**', dg_api)
     ctx.route('https://www.discogs.com/**', dg_web)
 

@@ -13,12 +13,26 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.19.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.19.1, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.19.1 · 2026-10-19
+
+The link "Edit relationships with Credits Importer" on Harmony's "Release Actions" (collect item 29).
+
+- **Header:** `@match https://harmony.pulsewidth.org.uk/release/actions*`.
+- **Section 3b:** `HARMONY_HOST_RE`, `IMPORT_HASH` (`dci-import`); new `importUrl(base, mbid, urls)` (`…/release/<MBID>/edit-relationships#dci-import&src=…`), `harmonySourceUrls(params)` (Harmony's `bandcamp=band/title` and `band/track/title`, `discogs=<id>`, `url=…`), `initHarmonyHook()` (with `release_mbid`: `div.action#dci-harmony` – Harmony's sprite icon `database-edit`, a link with target `_blank`, text `harmony.link`, title `harmony.title`/`harmony.titleNone` – after the action of "Add cover art", else of "Open in MusicBrainz", else at the end of `main`; the MusicBrainz origin taken from those links when it is `*.musicbrainz.org`; a `MutationObserver` for 30 s if the page is not built yet).
+- **Section 4:** on Harmony's host only `initHarmonyHook()` (on `/release/actions`), before anything else.
+- **`initReleaseEditorHook`:** new `redirect()` (`MB.releaseEditor.redirectURI`); with one, the checkbox is hidden and the label says `afterEdit.toHarmony` or `afterEdit.toOther` (`{host}`), `data-redirect` the host; `markGo` notes nothing then.
+- **Relationship editor:** `S.autostartFrom` (`'editor'` or `'link'`); `S.editorLinks` also from `#dci-import&src=…` (through `sourceLinksOf`, the # taken off with `history.replaceState`); the logs `fromLink`/`sourceFromLink` instead of `fromEditor`/`sourceFromEditor` for a link.
+- **Texts (4 languages):** `afterEdit.toHarmony`, `afterEdit.toOther`, `harmony.link`, `harmony.title`, `harmony.titleNone`, `log.fromLink`, `log.sourceFromLink`.
+- **Harness:** `EDITOR_REDIRECT` (a seeded `redirectURI` per kind; "Enter edit" then goes there with `release_mbid` as MusicBrainz does), a route for Harmony's `/release/actions` (actions as `div.action`), `open_mb_any(…, all_tabs=True)` (the script in every tab of the context; also on Harmony).
+- **Tests:** new `t_harmony.py`.
+
 
 ## Import 3.19.0 · 2026-10-18
 
