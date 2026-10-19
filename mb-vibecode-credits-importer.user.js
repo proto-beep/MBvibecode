@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.19.2
+// @version      3.19.3
 // @date         2026-10-19
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.19.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.19.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -832,6 +832,10 @@
       "matrix.langAdd": "add a language …",
       "matrix.empty": "No writing credits yet. They appear here once Discogs is loaded, or add them with “Add entry manually” and a work-level role such as composer.",
       "group.workNote": "The writing credits of this entry are in the works matrix.",
+      "matrix.askCountTitle": "Counted are the tracks without a work: only they are looked up (same-named works, works of the artists); tracks that have a work are not.",
+      "settings.mxSkipRows": "Show the rows skipped with the works matrix with their entries",
+      "group.mxHidden.one": "{n} row skipped with the works matrix is not shown (setting)",
+      "group.mxHidden.other": "{n} rows skipped with the works matrix are not shown (setting)",
       "log.pubEvidence.one": "Publisher {name}: evidence for {n} work",
       "log.pubEvidence.other": "Publisher {name}: evidence for {n} works",
       "note.seriesMissing": "No MusicBrainz series has this Discogs link, so the series is only shown and not added.",
@@ -2158,6 +2162,10 @@
       "matrix.langAdd": "Sprache hinzufügen …",
       "matrix.empty": "Noch keine Writing Credits. Sie erscheinen hier, sobald Discogs geladen ist, oder du fügst sie über „Eintrag von Hand hinzufügen“ mit einer Werk-Rolle wie composer hinzu.",
       "group.workNote": "Die Writing Credits dieses Eintrags stehen in der Werke-Matrix.",
+      "matrix.askCountTitle": "Gezählt werden die Tracks ohne Werk: nur sie werden abgefragt (gleichnamige Werke, Werke der Artists); Tracks mit Werk nicht.",
+      "settings.mxSkipRows": "Mit der Werk-Matrix übersprungene Zeilen bei ihren Einträgen zeigen",
+      "group.mxHidden.one": "{n} mit der Werk-Matrix übersprungene Zeile wird nicht gezeigt (Einstellung)",
+      "group.mxHidden.other": "{n} mit der Werk-Matrix übersprungene Zeilen werden nicht gezeigt (Einstellung)",
       "log.pubEvidence.one": "Verlag {name}: Beleg für {n} Werk",
       "log.pubEvidence.other": "Verlag {name}: Belege für {n} Werke",
       "note.seriesMissing": "Keine MusicBrainz-Serie hat diesen Discogs-Link, daher wird die Serie nur angezeigt und nicht übernommen.",
@@ -3484,6 +3492,10 @@
       "matrix.langAdd": "añadir un idioma …",
       "matrix.empty": "Aún no hay créditos de autoría. Aparecen aquí al cargar Discogs, o añádelos con «Añadir entrada a mano» y un rol de obra como composer.",
       "group.workNote": "Los créditos de autoría de esta entrada están en la matriz de obras.",
+      "matrix.askCountTitle": "Se cuentan las pistas sin obra: solo se buscan ellas (obras del mismo nombre, obras de los artistas); las pistas con obra no.",
+      "settings.mxSkipRows": "Mostrar con sus entradas las filas omitidas con la matriz de obras",
+      "group.mxHidden.one": "{n} fila omitida con la matriz de obras no se muestra (ajuste)",
+      "group.mxHidden.other": "{n} filas omitidas con la matriz de obras no se muestran (ajuste)",
       "log.pubEvidence.one": "Editorial {name}: prueba para {n} obra",
       "log.pubEvidence.other": "Editorial {name}: pruebas para {n} obras",
       "note.seriesMissing": "Ninguna serie de MusicBrainz tiene este enlace de Discogs, así que la serie solo se muestra y no se añade.",
@@ -4810,6 +4822,10 @@
       "matrix.langAdd": "ajouter une langue …",
       "matrix.empty": "Pas encore de crédits d’écriture. Ils apparaissent ici une fois Discogs chargé, ou ajoutez-les avec « Ajouter une entrée à la main » et un rôle d’œuvre comme composer.",
       "group.workNote": "Les crédits d’écriture de cette entrée sont dans la matrice des œuvres.",
+      "matrix.askCountTitle": "Sont comptées les pistes sans œuvre : seules elles sont recherchées (œuvres du même nom, œuvres des artistes) ; les pistes avec une œuvre ne le sont pas.",
+      "settings.mxSkipRows": "Afficher avec leurs entrées les lignes ignorées avec la matrice des œuvres",
+      "group.mxHidden.one": "{n} ligne ignorée avec la matrice des œuvres n’est pas affichée (réglage)",
+      "group.mxHidden.other": "{n} lignes ignorées avec la matrice des œuvres ne sont pas affichées (réglage)",
       "log.pubEvidence.one": "Éditeur {name} : preuve pour {n} œuvre",
       "log.pubEvidence.other": "Éditeur {name} : preuves pour {n} œuvres",
       "note.seriesMissing": "Aucune série MusicBrainz n’a ce lien Discogs ; la série est seulement affichée, pas ajoutée.",
@@ -12274,8 +12290,10 @@
 
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
-    // Work-level roles are shown in the works matrix only (no second place for the same relationship).
-    const rows = allRows.filter((r) => r.level !== 'work');
+    // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
+    // skipped with the works matrix only with the setting (on)
+    const rows = allRows.filter((r) => r.level !== 'work' && (S.mxSkipRows || !r.mxSkipped));
+    const mxHidden = allRows.filter((r) => r.mxSkipped && !S.mxSkipRows).length;
     const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
     const sourceLink = a.dId && (a.links || [])[0]
       ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(tr('link.discogsTitle'))}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span>${esc(a.rawName || a.name)}</a>`
@@ -12293,7 +12311,8 @@
             <tbody>${rows.map(rowHtml).join('')}</tbody>
           </table>
         </div>
-        ${allRows.length > rows.length ? `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>` : ''}
+        ${allRows.some((r) => r.level === 'work') ? `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>` : ''}
+        ${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}
         <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>
       </section>`;
   }
@@ -14925,6 +14944,8 @@
   S.worksSkip = !!readJson('localStorage', WORKS_SKIP_KEY, null);
   S.worksFolded = S.worksSkip;
   S.worksLookups = null;
+  // [3.19.3] the rows skipped with the works matrix shown with their entries (setting, on; only "off" is stored)
+  S.mxSkipRows = readJson('localStorage', 'dci-mx-skiprows', true) !== false;
   S.mxMenu = null;
   S.pubRels = new Map();
   S.workRowOpts = new Map();
@@ -16274,7 +16295,7 @@
     skipped ? tr('matrix.skippedRows', { n: S.rows.filter((r) => r.mxSkipped).length }) : tr('matrix.cols', { n: cols.length })}`)}</span>` : ''}
       </div>
       ${skipped ? `<p class="dci-sub">${esc(tr('matrix.skippedHint'))}</p>` : ''}
-      ${!skipped && S.worksLookups === 'ask' ? `<div class="dci-mx-ask" data-el="works-ask"><strong>${esc(tr('matrix.askLookups', { n: tracksWithoutWork().length }))}</strong>
+      ${!skipped && S.worksLookups === 'ask' ? `<div class="dci-mx-ask" data-el="works-ask"><strong title="${esc(tr('matrix.askCountTitle'))}">${esc(tr('matrix.askLookups', { n: tracksWithoutWork().length }))}</strong>
         <span class="dci-sub">${esc(tr('matrix.askTime', { min: worksLookupMinutes() }))}</span>
         <button type="button" class="dci-primary" data-act="mx-lookups" data-on="1">${esc(tr('matrix.lookupsYes'))}</button>
         <button type="button" data-act="mx-lookups" data-on="0">${esc(tr('matrix.lookupsNo'))}</button></div>` : ''}
@@ -19518,7 +19539,7 @@
     general: ['dci-lang', 'dci-scale', 'dci-place', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
-    works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long'],
+    works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap'],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
   };
@@ -19560,7 +19581,8 @@
         row(`<label>${esc(tr('settings.awMax'))} ${num('awMax')}</label> <span class="dci-sub" data-el="aw-cost">${esc(tr('settings.awCost', { req, sec: Math.round(req * 1.1) }))}</span>`),
         row(`${esc(tr('settings.awSlow'))} ${num('awSlowSec')} ${esc(tr('settings.awSlowSec'))} ${num('awSlowN')} ${esc(tr('settings.awSlowN'))}`),
         row(`<label>${esc(tr('settings.awDays'))} ${num('awDays')}</label>`),
-        row(`<label>${esc(tr('settings.awAsk'))} ${num('awAsk')} ${esc(tr('settings.awAskTracks'))}</label>`),
+        row(`<label title="${esc(tr('matrix.askCountTitle'))}">${esc(tr('settings.awAsk'))} ${num('awAsk')} ${esc(tr('settings.awAskTracks'))}</label>`),
+        row(check('data-set="mx-skiprows"', S.mxSkipRows, tr('settings.mxSkipRows'))),
         row(`<button type="button" class="dci-small" data-act="aw-clear">${esc(tr('settings.awClear'))}</button>
           ${S.awStoreCount == null ? '' : `<span class="dci-sub">${esc(tr('settings.awStored', { n: S.awStoreCount }))}</span>`}`),
         row(`<label>${esc(tr('matrix.codes'))} <select data-f="mx-codes">${['names', 'cisac', 'gema'].map((c) => `<option value="${c}" ${S.roleCodes === c ? 'selected' : ''}>${esc(tr(`matrix.codes.${c}`))}</option>`).join('')}</select></label>`),
@@ -19658,6 +19680,11 @@
       if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_KEY, el.checked || null);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'mx-skiprows') {
+      S.mxSkipRows = el.checked;
+      writeJson('localStorage', 'dci-mx-skiprows', el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.mxSkipRows'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderGroups();
     } else if (k === 'wattr-long') {
       S.wattrLong = el.checked;
       writeJson('localStorage', 'dci-wattr-long', S.wattrLong || null);
@@ -19694,8 +19721,9 @@
       const was = { on: S.awOn, max: S.awMax };
       S.awOn = true;
       Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
-      Object.assign(S, { roleCodes: 'names', wattrLong: false });
+      Object.assign(S, { roleCodes: 'names', wattrLong: false, mxSkipRows: true });
       renderWorks();
+      renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
       Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null });
@@ -19712,7 +19740,7 @@
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY];
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows'];
 
   function renderReset() {
     if (!S.overlay) return;
@@ -19747,7 +19775,7 @@
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
-      awOn: true, settingsOpen: false,
+      awOn: true, settingsOpen: false, mxSkipRows: true,
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });

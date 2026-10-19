@@ -135,7 +135,8 @@ python3 t_distrib.py      # "Distribution - !K7" and variants (3.17.3, T028): co
 python3 t_navlink.py      # the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
 python3 t_keepmarks.py    # a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
 python3 t_worksskip.py    # the works matrix (3.18.0): fold / unfold (not kept), "Skip works matrix" (rows on "Skip", nothing of it planned,
-                          # no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later)
+                          # no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later);
+                          # 3.19.3: the tooltips of what is counted, the setting for the skipped rows
 python3 t_manualtop.py    # "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
                           # page), an entry added from there is shown
 python3 t_afteredit.py    # "open relationship editor and start import dashboard" in the release editor (3.19.0): only on "Edit note" with a

@@ -13,12 +13,23 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.19.2, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.19.3, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.19.3 · 2026-10-19
+
+A tooltip for what the works question counts (collect item 35), a setting for the rows skipped with the works matrix (item 36).
+
+- **State and storage:** `S.mxSkipRows` (`dci-mx-skiprows`, on; only `false` is stored; in `TOPIC_KEYS.works`, `SETTINGS_KEYS`, `resetTopic('works')`, `resetSettings`).
+- **`groupHtml`:** rows with `mxSkipped` only when `S.mxSkipRows`; the hidden ones counted in `group.mxHidden`; `group.workNote` now when the entry has rows on the works level (before: whenever rows were left out).
+- **`renderWorksInner`:** the question's `<strong>` has the title `matrix.askCountTitle`; **settings:** the label of `awAsk` has it too, new check `data-set="mx-skiprows"` (`settingsChange`: stores, logs `settingValue`, `renderGroups`).
+- **Texts (4 languages):** `matrix.askCountTitle`, `settings.mxSkipRows`, `group.mxHidden`.
+- **Tests:** `t_worksskip.py` (D: the tooltips; G: the setting off and on).
+
 
 ## Import 3.19.2 · 2026-10-19
 
