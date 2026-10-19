@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.19.3
+// @version      3.20.0
 // @date         2026-10-19
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.19.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.20.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -979,6 +979,17 @@
       "media.bad": "Not a medium of this release: {list} (media: {known})",
       "media.release": "Also import relationships on the release level (release and release group)",
       "media.remember": "Remember this choice for this release",
+      "media.load": "Load the chosen media in the relationship editor in the background",
+      "media.loadTitle": "MusicBrainz's relationship editor shows the tracks of large releases only when a medium is opened, and relationships can be staged only on loaded media. The chosen media are opened one after another while the import runs.",
+      "media.loadState.one": "({n} of them not loaded yet: {list})",
+      "media.loadState.other": "({n} of them not loaded yet: {list})",
+      "media.loadDone": "(all of them loaded)",
+      "media.worksN.one": "{n} track without a work in the chosen media:",
+      "media.worksN.other": "{n} tracks without a work in the chosen media:",
+      "media.worksTime": "looking up their works takes about {min} min (longer with large catalogues of the artists)",
+      "media.works.yes": "Look up works",
+      "media.works.no": "Not now",
+      "media.works.skip": "Skip works matrix",
       "media.askHint": "You are asked before every import of this release.",
       "media.savedHint": "Preselected: the choice remembered for this release. You are still asked before every import.",
       "media.sum.one": "{m} of {all} media · {n} track",
@@ -1031,6 +1042,8 @@
       "log.mediumFilter": "Medium: {medium}",
       "log.mediumNoToggle": "Medium {m}: no toggle found in the editor",
       "log.mediumLoaded": "Medium {m} loaded in the editor",
+      "log.mediaLoadBackground": "Media {list} are loaded in the editor in the background",
+      "log.worksChosen": "Works of the tracks without a work (media choice): {choice}",
       "log.mediumNotLoaded": "Medium {m} did not load in the editor",
       "medium.unknownFormat": "unknown format",
       "busy.applyProgressRound": "Round {k} of {x}: staging {i} of {n} …",
@@ -2309,6 +2322,17 @@
       "media.bad": "Kein Medium dieses Releases: {list} (Medien: {known})",
       "media.release": "Beziehungen auf Release-Ebene mit importieren (Release und Release-Gruppe)",
       "media.remember": "Auswahl für dieses Release merken",
+      "media.load": "Gewählte Medien im Beziehungs-Editor im Hintergrund laden",
+      "media.loadTitle": "Der Beziehungs-Editor von MusicBrainz zeigt die Tracks großer Releases erst, wenn ein Medium aufgeklappt wird, und Beziehungen lassen sich nur auf geladenen Medien vormerken. Die gewählten Medien werden nacheinander aufgeklappt, während der Import läuft.",
+      "media.loadState.one": "({n} davon noch nicht geladen: {list})",
+      "media.loadState.other": "({n} davon noch nicht geladen: {list})",
+      "media.loadDone": "(alle geladen)",
+      "media.worksN.one": "{n} Track ohne Werk in den gewählten Medien:",
+      "media.worksN.other": "{n} Tracks ohne Werk in den gewählten Medien:",
+      "media.worksTime": "ihre Werke abzufragen dauert etwa {min} Min. (länger bei großen Katalogen der Artists)",
+      "media.works.yes": "Werke abfragen",
+      "media.works.no": "Jetzt nicht",
+      "media.works.skip": "Werk-Matrix überspringen",
       "media.askHint": "Vor jedem Import dieses Releases wird gefragt.",
       "media.savedHint": "Vorausgewählt: die für dieses Release gemerkte Auswahl. Gefragt wird trotzdem vor jedem Import.",
       "media.sum.one": "{m} von {all} Medien · {n} Track",
@@ -2361,6 +2385,8 @@
       "log.mediumFilter": "Medium: {medium}",
       "log.mediumNoToggle": "Medium {m}: kein Schalter im Editor gefunden",
       "log.mediumLoaded": "Medium {m} im Editor geladen",
+      "log.mediaLoadBackground": "Medien {list} werden im Editor im Hintergrund geladen",
+      "log.worksChosen": "Werke der Tracks ohne Werk (Medienauswahl): {choice}",
       "log.mediumNotLoaded": "Medium {m} wurde im Editor nicht geladen",
       "medium.unknownFormat": "Format unbekannt",
       "busy.applyProgressRound": "Durchlauf {k} von {x}: übernehme {i} von {n} …",
@@ -3639,6 +3665,17 @@
       "media.bad": "No es un medio de esta publicación: {list} (medios: {known})",
       "media.release": "Importar también las relaciones a nivel de publicación (publicación y grupo de publicaciones)",
       "media.remember": "Recordar esta selección para esta publicación",
+      "media.load": "Cargar los medios elegidos en el editor de relaciones en segundo plano",
+      "media.loadTitle": "El editor de relaciones de MusicBrainz muestra las pistas de publicaciones grandes solo cuando se abre un medio, y las relaciones solo se pueden preparar en medios cargados. Los medios elegidos se abren uno tras otro mientras corre la importación.",
+      "media.loadState.one": "({n} de ellos aún sin cargar: {list})",
+      "media.loadState.other": "({n} de ellos aún sin cargar: {list})",
+      "media.loadDone": "(todos cargados)",
+      "media.worksN.one": "{n} pista sin obra en los medios elegidos:",
+      "media.worksN.other": "{n} pistas sin obra en los medios elegidos:",
+      "media.worksTime": "buscar sus obras tarda unos {min} min (más con catálogos grandes de los artistas)",
+      "media.works.yes": "Buscar obras",
+      "media.works.no": "Ahora no",
+      "media.works.skip": "Omitir la matriz de obras",
       "media.askHint": "Se pregunta antes de cada importación de esta publicación.",
       "media.savedHint": "Preseleccionado: la selección recordada para esta publicación. Aun así se pregunta antes de cada importación.",
       "media.sum.one": "{m} de {all} medios · {n} pista",
@@ -3691,6 +3728,8 @@
       "log.mediumFilter": "Medio: {medium}",
       "log.mediumNoToggle": "Medio {m}: no se encontró el interruptor en el editor",
       "log.mediumLoaded": "Medio {m} cargado en el editor",
+      "log.mediaLoadBackground": "Los medios {list} se cargan en el editor en segundo plano",
+      "log.worksChosen": "Obras de las pistas sin obra (elección de medios): {choice}",
       "log.mediumNotLoaded": "El medio {m} no se cargó en el editor",
       "medium.unknownFormat": "formato desconocido",
       "busy.applyProgressRound": "Ronda {k} de {x}: añadiendo {i} de {n} …",
@@ -4969,6 +5008,17 @@
       "media.bad": "Pas un support de cette parution : {list} (supports : {known})",
       "media.release": "Importer aussi les relations au niveau de la parution (parution et groupe de parutions)",
       "media.remember": "Mémoriser ce choix pour cette parution",
+      "media.load": "Charger les supports choisis dans l’éditeur de relations en arrière-plan",
+      "media.loadTitle": "L’éditeur de relations de MusicBrainz n’affiche les pistes des grandes parutions que lorsqu’un support est ouvert, et les relations ne peuvent être préparées que sur des supports chargés. Les supports choisis sont ouverts l’un après l’autre pendant l’import.",
+      "media.loadState.one": "({n} d’entre eux pas encore chargé : {list})",
+      "media.loadState.other": "({n} d’entre eux pas encore chargés : {list})",
+      "media.loadDone": "(tous chargés)",
+      "media.worksN.one": "{n} piste sans œuvre dans les supports choisis :",
+      "media.worksN.other": "{n} pistes sans œuvre dans les supports choisis :",
+      "media.worksTime": "rechercher leurs œuvres prend environ {min} min (plus long avec de grands catalogues des artistes)",
+      "media.works.yes": "Rechercher les œuvres",
+      "media.works.no": "Pas maintenant",
+      "media.works.skip": "Ignorer la matrice des œuvres",
       "media.askHint": "La question est posée avant chaque import de cette parution.",
       "media.savedHint": "Présélectionné : le choix mémorisé pour cette parution. La question est quand même posée avant chaque import.",
       "media.sum.one": "{m} sur {all} supports · {n} piste",
@@ -5021,6 +5071,8 @@
       "log.mediumFilter": "Support : {medium}",
       "log.mediumNoToggle": "Support {m} : aucun bouton trouvé dans l’éditeur",
       "log.mediumLoaded": "Support {m} chargé dans l’éditeur",
+      "log.mediaLoadBackground": "Les supports {list} sont chargés dans l’éditeur en arrière-plan",
+      "log.worksChosen": "Œuvres des pistes sans œuvre (choix des supports) : {choice}",
       "log.mediumNotLoaded": "Le support {m} ne s’est pas chargé dans l’éditeur",
       "medium.unknownFormat": "format inconnu",
       "busy.applyProgressRound": "Passe {k} sur {x} : ajout {i} sur {n} …",
@@ -10949,6 +11001,14 @@
     let sel = new Set(saved ? saved.media.filter((m) => media.includes(m)) : media);
     let release = saved ? saved.release !== false : true;
     let textBad = false;
+    // [3.20.0] load the chosen media in MB's editor in the background (setting of the dialog, remembered); the works of
+    // the tracks without a work: looked up, not now, or the works matrix skipped (asked here from the number of the setting)
+    const loadOn = readJson('localStorage', 'dci-media-load', false) === true;
+    let works = S.worksLookups === 'no' ? 'no' : 'yes';
+    const loadedRecs = pageRecordings();
+    const unloadedIn = (set) => uniq(S.mbTracks.filter((t) => set.has(t.medium) && t.recordingGid && !loadedRecs.has(t.recordingGid)).map((t) => t.medium));
+    const withoutWork = (set) => S.mbTracks.filter((t) => set.has(t.medium) && !isPlaceholderTitle(t.title) && !worksForTrack(t.idx).length).length;
+    const askWorks = (n) => !!S.awAsk && !S.worksSkip && S.worksLookups !== 'yes' && n >= S.awAsk;
     const count = (m) => S.mbTracks.filter((t) => t.medium === m).length;
     const label = (m) => {
       const info = (S.mediaInfo && S.mediaInfo.get(m)) || {};
@@ -10969,6 +11029,12 @@
           <label class="dci-media-text">${esc(tr('media.text'))} <input type="text" data-mf="text" placeholder="${esc(tr('media.textPlaceholder'))}" autocomplete="off"></label>
           <p class="dci-bad" data-mel="err" hidden></p>
           <label class="dci-check"><input type="checkbox" data-mf="release" ${release ? 'checked' : ''}> ${esc(tr('media.release'))}</label>
+          <label class="dci-check" title="${esc(tr('media.loadTitle'))}"><input type="checkbox" data-mf="load" ${loadOn ? 'checked' : ''}> ${esc(tr('media.load'))}
+            <span class="dci-sub" data-mel="load"></span></label>
+          <div class="dci-media-works" data-mel="works" role="group" hidden>
+            <strong data-mel="works-n" title="${esc(tr('matrix.askCountTitle'))}"></strong> <span class="dci-sub" data-mel="works-time"></span>
+            <span class="dci-seg dci-seg-small">${['yes', 'no', 'skip'].map((w) => `<button type="button" data-mact="works" data-w="${w}" aria-pressed="${works === w}">${esc(tr(`media.works.${w}`))}</button>`).join('')}</span>
+          </div>
           <label class="dci-check"><input type="checkbox" data-mf="remember" ${saved ? 'checked' : ''}> ${esc(tr('media.remember'))}</label>
           <p class="dci-sub">${esc(tr(saved ? 'media.savedHint' : 'media.askHint'))}</p>
         </div>
@@ -10991,6 +11057,15 @@
       const n = S.mbTracks.filter((t) => sel.has(t.medium)).length;
       el.querySelector('[data-mel="sum"]').textContent = tr('media.sum', { m: sel.size, n, all: media.length });
       ok.disabled = textBad || (!sel.size && !release);
+      // [3.20.0] how many of the chosen media MB's editor has not loaded; the works question for many tracks without a work
+      const unl = unloadedIn(sel);
+      el.querySelector('[data-mel="load"]').textContent = unl.length ? tr('media.loadState', { n: unl.length, list: formatMediaList(unl) }) : tr('media.loadDone');
+      const nw = withoutWork(sel);
+      const box = el.querySelector('[data-mel="works"]');
+      box.hidden = !askWorks(nw);
+      el.querySelector('[data-mel="works-n"]').textContent = tr('media.worksN', { n: nw });
+      el.querySelector('[data-mel="works-time"]').textContent = tr('media.worksTime', { min: Math.max(1, Math.round((nw * 1.1) / 60)) });
+      el.querySelectorAll('[data-mact="works"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.w === works)));
     };
     sync();
     el.hidden = false;
@@ -11015,19 +11090,23 @@
           const m = Number(b.dataset.m);
           if (sel.has(m)) sel.delete(m);
           else sel.add(m);
+        } else if (act === 'works') {
+          works = b.dataset.w;
         } else if (act === 'cancel') {
           done(null);
           return;
         } else if (act === 'ok') {
           if (ok.disabled) return;
           const all = sel.size === media.length;
+          const load = el.querySelector('[data-mf="load"]').checked;
+          writeJson('localStorage', 'dci-media-load', load || null);
           const st = readJson('localStorage', MEDIA_SEL_KEY, {}) || {};
           if (el.querySelector('[data-mf="remember"]').checked) st[releaseMbid] = { media: [...sel].sort((a, c) => a - c), release, at: Date.now() };
           else delete st[releaseMbid];
           // only the last 50 releases are remembered
           const keep = Object.entries(st).sort((a, c) => (c[1].at || 0) - (a[1].at || 0)).slice(0, 50);
           writeJson('localStorage', MEDIA_SEL_KEY, keep.length ? Object.fromEntries(keep) : null);
-          done({ media: new Set(sel), release, all });
+          done({ media: new Set(sel), release, all, load, works: askWorks(withoutWork(sel)) ? works : null });
           return;
         }
         sync();
@@ -11156,6 +11235,9 @@
       const rel = await source.release(id, sourceContext());
       applyMediaChoice(choice);
       if (S.mediaSel) log('info', 'mediaChosen', { text: mediaChoiceText() });
+      // [3.20.0] the choices of the dialog: the media loaded in MB's editor in the background, the works decided
+      if (choice.works) applyWorksChoice(choice.works);
+      if (choice.load) loadMediaInEditor([...choice.media], { quiet: true });
       S.source = source;
       SOURCE_NAME = source.name;
       S.release = rel;
@@ -15800,6 +15882,20 @@
     return Math.max(1, Math.round(((tracksWithoutWork().length + targets * 3) * 1.1) / 60));
   }
 
+  /**
+   * [3.20.0] The works decided in the media dialog (many tracks without a work): looked up ('yes'), not now ('no') or the
+   * works matrix skipped for this release ('skip') – the works section does not ask again.
+   */
+  function applyWorksChoice(w) {
+    log('info', 'worksChosen', { choice: tr(`media.works.${w}`) });
+    if (w === 'skip') {
+      Object.assign(S, { worksSkip: true, worksFolded: true });
+      writeJson('localStorage', WORKS_SKIP_KEY, true);
+      return;
+    }
+    S.worksLookups = w === 'no' ? 'no' : 'yes';
+  }
+
   /** [3.18.0] The answer to the question: look up the works now (also later, after "Not now") or not now. */
   function setWorksLookups(yes) {
     S.worksLookups = yes ? 'yes' : 'no';
@@ -17186,22 +17282,29 @@
   }
 
   /** Opens the media of the current filter in MB's editor, one after another, until their tracks are there. */
-  async function loadMediaInEditor() {
-    const media = unloadedMedia();
+  async function loadMediaInEditor(list = null, { quiet = false } = {}) {
+    // [3.20.0] also given media (the media dialog), then quietly in the background (no busy line: the import runs)
+    const unloaded = (m) => {
+      const loaded = pageRecordings();
+      return S.mbTracks.some((t) => t.medium === m && t.recordingGid && !loaded.has(t.recordingGid));
+    };
+    const media = list ? list.filter(unloaded) : unloadedMedia();
+    if (list && !media.length) return;
+    if (quiet) log('info', 'mediaLoadBackground', { list: formatMediaList(media) });
     for (const m of media) {
       const toggle = findMediumToggle(m);
       if (!toggle) {
         log('warn', 'mediumNoToggle', { m });
         continue;
       }
-      setBusy('busy.mediumLoading', { m });
+      if (!quiet) setBusy('busy.mediumLoading', { m });
       toggle.click();
       const end = Date.now() + 20000;
-      while (Date.now() < end && unloadedMedia().includes(m)) await new Promise((r) => setTimeout(r, 300));
-      log(unloadedMedia().includes(m) ? 'warn' : 'ok', unloadedMedia().includes(m) ? 'mediumNotLoaded' : 'mediumLoaded', { m });
+      while (Date.now() < end && unloaded(m)) await new Promise((r) => setTimeout(r, 300));
+      log(unloaded(m) ? 'warn' : 'ok', unloaded(m) ? 'mediumNotLoaded' : 'mediumLoaded', { m });
     }
-    setBusy('');
-    const left = unloadedMedia();
+    if (!quiet) setBusy('');
+    const left = list ? media.filter(unloaded) : unloadedMedia();
     if (left.length) showMessage('warn', 'msg.mediaNotLoaded', { list: left.join(', ') });
     else showMessage('ok', 'msg.mediaLoaded', { n: media.length });
     renderMediumFilter();
@@ -19739,7 +19842,7 @@
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows'];
 
   function renderReset() {
@@ -20500,6 +20603,8 @@
       .dci-media-btns .dci-media-btn[aria-pressed="true"] { background: #736dab; border-color: #736dab; color: #fff; }
       .dci-media-sep { align-self: stretch; width: 1px; margin: 0 calc(var(--u, 1px) * 4); background: var(--line); }
       .dci-media-text input { width: calc(var(--u, 1px) * 200); margin-left: calc(var(--u, 1px) * 4); }
+      .dci-media-works { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border-radius: 4px; background: #eef6fb; border: 1px solid #9cc7e0; }
+      .dci-media-works[hidden] { display: none; }
       .dci-media-foot { display: flex; align-items: center; justify-content: flex-end; gap: calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 16); border-top: 1px solid var(--line); }
       .dci-media-foot [data-mel="sum"] { margin-right: auto; }
       .dci-media-now { margin: 0 calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 8); color: #4b4585; }

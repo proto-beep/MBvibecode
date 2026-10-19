@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-19 | 3.19.1 – 3.19.3 | – |
+| 2026-10-19 | 3.19.1 – 3.20.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
@@ -76,6 +76,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-19
+
+### Import 3.20.0
+
+#### Added
+
+- **The media dialog loads the chosen media in the relationship editor** (collected item 34; maintainer: "im "Which media should be imported?" muss es möglich sein alle medien im hintergrund auszuklappen. sonst kann man gar nicht alle öffnen"). New tick **Load the chosen media in the relationship editor in the background** (off at first, remembered): MusicBrainz's editor shows the tracks of large releases only when a medium is opened, and while the dialog is open its media cannot be opened by hand. Ticked, the chosen media not loaded yet (the dialog names them) are opened one after another while the import runs; the log names each, a message says when all are there.
+- **The works question in the media dialog** (maintainer: "hier könnte die info über die werke schon stattfinden falls über 100 tracks"): from as many tracks without a work in the chosen media as the setting says (100), the dialog asks **Look up works** (pressed), **Not now** or **Skip works matrix**, with about how long the lookups take; the number follows the chosen media, and the works section does not ask again.
+
 
 ### Import 3.19.3
 

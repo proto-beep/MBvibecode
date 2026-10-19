@@ -13,12 +13,25 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.19.3, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.20.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.20.0 · 2026-10-19
+
+The media dialog: the chosen media loaded in MB's editor in the background, the works question there (collect item 34).
+
+- **`chooseMedia`:** new tick `data-mf="load"` (title `media.loadTitle`, `dci-media-load`, in `SETTINGS_KEYS`) with `[data-mel=load]` (`media.loadState` / `media.loadDone`: the chosen media whose recordings `pageRecordings()` does not have); the box `[data-mel=works]` (`media.worksN` with the title `matrix.askCountTitle`, `media.worksTime`, `data-mact="works"` `data-w` yes/no/skip) shown while the tracks without a work of the chosen media reach `S.awAsk` (not when the matrix is skipped or the lookups were already started); both follow the choice in `sync()`. The result gets `load` and `works` (null when not asked).
+- **`loadRelease`:** after `applyMediaChoice`: `applyWorksChoice(choice.works)` and `loadMediaInEditor([...choice.media], { quiet: true })` (not awaited).
+- **New `applyWorksChoice(w)`:** logs `worksChosen`; `skip` sets `S.worksSkip`/`S.worksFolded` and `WORKS_SKIP_KEY` (the rows follow at the import), otherwise `S.worksLookups` `yes`/`no`.
+- **`loadMediaInEditor(list = null, { quiet })`:** given media (only those not loaded), quiet without the busy line (log `mediaLoadBackground`); waits per medium on its own recordings (before: the media of the filter).
+- **CSS:** `.dci-media-works`.
+- **Texts (4 languages):** `media.load`, `media.loadTitle`, `media.loadState`, `media.loadDone`, `media.worksN`, `media.worksTime`, `media.works.yes|no|skip`, `log.mediaLoadBackground`, `log.worksChosen`.
+- **Tests:** new `t_mediaload.py` (media 2 and 3 of the mock editor not loaded, with toggles).
+
 
 ## Import 3.19.3 · 2026-10-19
 

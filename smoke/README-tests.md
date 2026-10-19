@@ -142,6 +142,8 @@ python3 t_manualtop.py    # "Add entry manually" as one line above the date pool
 python3 t_afteredit.py    # "open relationship editor and start import dashboard" in the release editor (3.19.0): only on "Edit note" with a
                           # Discogs/Bandcamp link, not ticked, ticked (remembered) → relationship editor with the dashboard, an error, "Add
                           # release" with a Bandcamp link typed in (German, loaded at once), other release pages untouched
+python3 t_mediaload.py    # the media dialog (3.20.0): load the chosen media in the editor in the background (mock: media 2 and 3 not
+                          # loaded, with toggles), the works question there ("Not now", "Skip works matrix")
 python3 t_harmony.py      # Harmony (3.19.1): a release editor seeded by Harmony (note instead of the tick, "Enter edit" → Harmony's Release
                           # Actions), there "Edit relationships with Credits Importer" below "Add cover art", the link opens the dashboard
                           # and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2: the tick for a
