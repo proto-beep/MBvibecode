@@ -100,6 +100,8 @@ with sync_playwright() as p:
     g = pg.evaluate(GROUPS)
     calls = pg.evaluate('window.__gmXhr')
     unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+    # [3.21.0] thanks: listed apart as left out on purpose
+    unrec += ['ignored: ' + x for x in pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent)")]
     print('B) Quelle:', source(pg), '| Abrufe:', len(calls), calls[:2])
     for k, v in g.items():
         print('   ', k, v)
@@ -107,7 +109,7 @@ with sync_playwright() as p:
     ok_b = 'Testalbum (Bandcamp)' in source(pg) and calls[0] == ALBUM and len(calls) == 5 \
         and g['Test Band'][0] == 'linked' and g['Test Band'][1] == ['guitar · 4 of 4 tracks'] \
         and g['Jane Roe'][1] == ['Mixed By · 4 of 4 tracks'] and g['Peter Evans'][1] == ['Trumpet · 4 of 4 tracks'] \
-        and g['Anna Viola'][1] == ['Viola · 1 of 4 tracks'] and unrec == ['Thanks Mom.']
+        and g['Anna Viola'][1] == ['Viola · 1 of 4 tracks'] and unrec == ['ignored: Thanks Mom.']
     pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
     pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
     note = pg.evaluate("document.getElementById('edit-note-text').value")

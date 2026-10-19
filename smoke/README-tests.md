@@ -23,6 +23,8 @@ MBvibecode/ (this repository)
   smoke/t_*.py                        tests (each prints OK/FEHLER lines)
   smoke/register_corpus.json          frozen input of the register's golden test (t_register.py)
   smoke/register_golden.json          its expected results (written with UPDATE=1)
+  smoke/text_corpus.json              credits lines from real releases and cases around them, with their stored reading
+                                      ('expect', written with UPDATE=1 by t_textcorpus.py; 'later': still read wrong, planned)
 ```
 
 ## Running
@@ -135,19 +137,32 @@ python3 t_distrib.py      # "Distribution - !K7" and variants (3.17.3, T028): co
 python3 t_navlink.py      # the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
 python3 t_keepmarks.py    # a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
 python3 t_worksskip.py    # the works matrix (3.18.0): fold / unfold (not kept), "Skip works matrix" (rows on "Skip", nothing of it planned,
-                          # no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later)
+                          # no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later);
+                          # 3.19.3: the tooltips of what is counted, the setting for the skipped rows
 python3 t_manualtop.py    # "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
                           # page), an entry added from there is shown
 python3 t_afteredit.py    # "open relationship editor and start import dashboard" in the release editor (3.19.0): only on "Edit note" with a
                           # Discogs/Bandcamp link, not ticked, ticked (remembered) → relationship editor with the dashboard, an error, "Add
                           # release" with a Bandcamp link typed in (German, loaded at once), other release pages untouched
+python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
+                          # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
+                          # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
+                          # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
+python3 t_mediaload.py    # the media dialog (3.20.0): load the chosen media in the editor in the background (mock: media 2 and 3 not
+                          # loaded, with toggles), the works question there ("Not now", "Skip works matrix")
 python3 t_harmony.py      # Harmony (3.19.1): a release editor seeded by Harmony (note instead of the tick, "Enter edit" → Harmony's Release
                           # Actions), there "Edit relationships with Credits Importer" below "Add cover art", the link opens the dashboard
-                          # and loads the Bandcamp album; no release, "discogs=", another tool's redirect
+                          # and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2: the tick for a
+                          # background tab (opened once by Harmony's page), an error, the settings
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)
 ```
+
+**Text corpus (3.21.0):** `text_corpus.json` collects credits lines as they are written on releases. Each new case of
+the text recognition goes there; `UPDATE=1 python3 t_textcorpus.py` writes the readings anew – check the changed lines
+(the test prints each one that differs before) and say so in the code changes. `harness.WEB_URLS` (url → (gid, name)) gives
+artists MusicBrainz has with a web profile, for `/ws/2/url`.
 
 **Golden test of the register:** `register_corpus.json` was made once from Import 3.10.0 and stays as it is (more roles
 can be added; then write the golden file anew). `register_golden.json` holds the results. A refactoring of the register
@@ -180,6 +195,7 @@ main script on every page, also after the page navigated by itself. `harness.EDI
 `redirect_uri`: "Enter edit" then goes there with `release_mbid` as MusicBrainz does; Harmony's `/release/actions` is served
 as a small page like Harmony's own; `open_mb_any(…, all_tabs=True)` puts the script into every tab of the context (a tab
 opened by a click on a link still gets none – open its address in a new page instead).
+`open_mb_any` records the tabs the script opens with `GM_openInTab` in `window.__gmTabs` (3.19.2).
 `open_mb_edit(ctx, gm_xhr=True)` adds `harness.GM_XHR_SHIM`, a `GM_xmlhttpRequest` that fetches through the mock and
 records the URLs in `window.__gmXhr` (without it the script falls back to `fetch`). The MusicBrainz search
 (`/ws/2/artist|label|place?query=…`) finds the artists and companies of the mock whose name (or alias) has all the words

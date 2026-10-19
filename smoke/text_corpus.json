@@ -1,0 +1,473 @@
+{
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (33d, 33e).",
+  "lines": [
+    {
+      "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
+      "expect": {
+        "credits": [
+          [
+            "Albert Irvin",
+            "Cover art"
+          ],
+          [
+            "Jonas Schoder",
+            "Graphic design"
+          ],
+          [
+            "Evan Parker",
+            "Text"
+          ],
+          [
+            "Maya Homburger",
+            "Produced By"
+          ],
+          [
+            "Barry Guy",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Thanks to Mike Eden, Romana Bellinger, Caroline Forbes, Victoria Long at Gimpel Fils, London, Celia Irvin and Priscilla Hashmi.",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          "Thanks to Mike Eden, Romana Bellinger, Caroline Forbes, Victoria Long at Gimpel Fils, London, Celia Irvin and Priscilla Hashmi."
+        ]
+      }
+    },
+    {
+      "text": "Barry Guy plays exclusively on Thomastik-Infeld bass strings.",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          "Barry Guy plays exclusively on Thomastik-Infeld bass strings."
+        ]
+      }
+    },
+    {
+      "text": "www.maya-recordings.com P + © 2023 Maya Recordings DDD · MCD 2301",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Maya Recordings",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Maya Recordings",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "℗ & © 2023 Maya Recordings",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Maya Recordings",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Maya Recordings",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "(P) & (C) 2019–2023 Some Label, all rights reserved",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Some Label",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Some Label",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "©© 2001 Old Label",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Old Label",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Old Label",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "℗ 2023 Maya Recordings",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Maya Recordings",
+            "Phonographic Copyright (p)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "© 2020 Add Records",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Add Records",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Logo by Cole Barrington instagram.com/blueeyedhorse84",
+      "expect": {
+        "credits": [
+          [
+            "Cole Barrington",
+            "Logo By",
+            [
+              "https://www.instagram.com/blueeyedhorse84/"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Logo: Cole Barrington",
+      "expect": {
+        "credits": [
+          [
+            "Cole Barrington",
+            "Logo"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Photography by Jane Roe https://www.instagram.com/janeroe/ and John Doe (linktr.ee/johndoe)",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Photography By",
+            [
+              "https://www.instagram.com/janeroe/"
+            ]
+          ],
+          [
+            "John Doe",
+            "Photography By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe (soundcloud.com/janeroe), mastered by John Doe – www.johndoe-mastering.com",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By",
+            [
+              "https://soundcloud.com/janeroe"
+            ]
+          ],
+          [
+            "John Doe",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded by J. Smith. Mixed by Vol. Tester.",
+      "expect": {
+        "credits": [
+          [
+            "J. Smith",
+            "Recorded By"
+          ],
+          [
+            "Vol. Tester",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered by A. B. Cee at Studio X",
+      "expect": {
+        "credits": [
+          [
+            "A. B. Cee",
+            "Mastered By"
+          ]
+        ],
+        "companies": [
+          [
+            "Studio X",
+            "Mastered At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Cover art: Albert Irvin",
+      "expect": {
+        "credits": [
+          [
+            "Albert Irvin",
+            "Cover art"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Text: Evan Parker",
+      "expect": {
+        "credits": [
+          [
+            "Evan Parker",
+            "Text"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Liner notes: Evan Parker",
+      "expect": {
+        "credits": [
+          [
+            "Evan Parker",
+            "Liner notes"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Jane Roe, mastered by John Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Mixed By"
+          ],
+          [
+            "John Doe",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Barry Guy. Special thanks to Z.",
+      "expect": {
+        "credits": [
+          [
+            "Barry Guy",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          "Special thanks to Z"
+        ]
+      }
+    },
+    {
+      "text": "Drums – Bob Drummer. He uses Zildjian cymbals.",
+      "expect": {
+        "credits": [
+          [
+            "Bob Drummer",
+            "Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          "He uses Zildjian cymbals"
+        ]
+      }
+    },
+    {
+      "text": "Cover: “Stand by Me” by Jane Roe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Cover By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Artwork: ‘Untitled' (2019) by Jane Roe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Artwork By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Music and artwork of this release were entirely created by a human. No AI tools were used.",
+      "expect": {
+        "credits": [
+          [
+            "(a human)",
+            "Music"
+          ],
+          [
+            "(a human)",
+            "Artwork"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "www.example.com",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          "www.example.com"
+        ]
+      }
+    },
+    {
+      "text": "contact: info@label.com",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          "contact: info@label.com"
+        ]
+      }
+    },
+    {
+      "text": "Follow us: instagram.com/somelabel",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          "Follow us: instagram.com/somelabel"
+        ]
+      }
+    },
+    {
+      "text": "Recorded by Yunclas in Xixon, Asturies, Spain in the Spring/Summer, 2017",
+      "later": "33d: Yunclas recorded it, Xixon (Gijón) is the place; today three names",
+      "expect": {
+        "credits": [
+          [
+            "Yunclas in Xixon",
+            "Recorded By"
+          ],
+          [
+            "Asturies",
+            "Recorded By"
+          ],
+          [
+            "Spain",
+            "Recorded By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Piano in ‘En Cualquier Lugar Del Mundo' and 'Phenomenology of misery' is a contribution by Juanjo Infraser Haller",
+      "later": "33e: piano on the two tracks named by their titles; today not recognized",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Piano in ‘En Cualquier Lugar Del Mundo' and 'Phenomenology of misery' is a contribution by Juanjo Infraser Haller"
+        ],
+        "ignored": []
+      }
+    }
+  ]
+}

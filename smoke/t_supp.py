@@ -25,7 +25,7 @@ H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
 H.BC_ARTISTS[BAND] = H.ARTISTS[3040]
 H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
 H.MB_SEARCH['artist'] = [{'id': H.uid('dddddddd', 42), 'name': 'Anna Viola', 'disambiguation': 'violist', 'score': 100}]
-CREDITS = 'Bass Man – bass\nTrumpet: Guitar Guy (track 2)\nKeys Guy – synth (tracks 1–2)\nViola: Anna Viola\nTest Band – guitar\nThanks Mom.'
+CREDITS = 'Bass Man – bass\nTrumpet: Guitar Guy (track 2)\nKeys Guy – synth (tracks 1–2)\nViola: Anna Viola\nTest Band – guitar\nSee you on tour.'
 OTHER = 'https://otherband.bandcamp.com/album/live'
 H.BC_PAGES[OTHER] = H.bc_page({'artist': 'Other Band', 'current': {'title': 'Live', 'credits': 'Bass Man – bass\nTrumpet: Drum Guy (track 3)', 'about': ''},
                                'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
@@ -77,7 +77,7 @@ with sync_playwright() as p:
     kinds = {(k, n): (sel, t) for k, n, sel, t in items}
     b_ok = kinds.get(('new role', 'Guitar Guy')) == (True, '2') and kinds.get(('new entry', 'Anna Viola')) == (True, 'all') \
         and kinds.get(('new entry', 'Test Band')) == (True, 'all') and kinds.get(('differs', 'Keys Guy'), (None, ''))[0] is False \
-        and '1, 2' in kinds.get(('differs', 'Keys Guy'), (None, ''))[1] and ('not recognized', 'Thanks Mom.') not in kinds \
+        and '1, 2' in kinds.get(('differs', 'Keys Guy'), (None, ''))[1] and ('not recognized', 'See you on tour.') not in kinds \
         and any(k == 'not recognized' for k, *_ in items) and summary.startswith('confirmed: 1 · new: 3 · differing: 1 · not recognized: 1') \
         and m_bass == ['DG', 'BC'] and m_keys == ['DG', 'BC ≠'] and any('suggestion: Anna Viola (violist)' in h for h in hints) \
         and any('via the Bandcamp link: Test Band' in h for h in hints)

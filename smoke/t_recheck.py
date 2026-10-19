@@ -17,7 +17,7 @@ H.WORK_SEARCH.append({'id': GID, 'title': H.TITLES[1], 'aliases': [], 'type': 'S
                       'relations': [{'target-type': 'artist', 'type': 'composer', 'artist': {'id': AG, 'name': 'Agustí Fernández'}}]})
 TEXT = """Written by Agusti Fernández (2, 3)
 Bass Man – bass
-thanks to everybody"""
+see you all next time"""
 results = []
 with sync_playwright() as p:
     b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -38,7 +38,7 @@ with sync_playwright() as p:
     opened = pg.evaluate("document.querySelector('.dci-unrec').open")
     lines = pg.locator('.dci-unrec li').all_inner_texts()
     print('A) im Fenster:', not inline, '| aufgeklappt:', opened, '|', lines)
-    results.append(not inline and opened and lines == ['thanks to everybody'])
+    results.append(not inline and opened and lines == ['see you all next time'])
     # D) the text import searched itself (two "Checks complete": Discogs, then the text), nothing "again" yet
     checks = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'Checks complete' in x]
     again0 = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'looked up again' in x]
