@@ -13,12 +13,26 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.19.1, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.19.2, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.19.2 · 2026-10-19
+
+The relationship editor in a background tab after an import with Harmony (collect item 32), the note reworded (item 38).
+
+- **Header:** `@grant GM_openInTab`; `@date` 2026-10-19; `/* global … GM_openInTab */`.
+- **Section 3b:** `AFTER_EDIT_BG_KEY` (`dci-after-edit-bg`, localStorage, default on: only `false` is stored), `OPEN_HASH` (`dci-open`).
+- **`initReleaseEditorHook`:** with a redirect to Harmony and the setting on, the checkbox is shown (`data-bg="1"`, `afterEdit.labelBg`, title `afterEdit.titleBg`); otherwise the note (`afterEdit.toHarmony`, reworded; `afterEdit.toOther`). `markGo` with such a redirect: sets `#dci-open` on `MB.releaseEditor.redirectURI` (the plain one kept in `plainRedirect`, back with `restoreRedirect()` when `submissionInProgress` turns false), writes no `AFTER_EDIT_GO_KEY`.
+- **`initHarmonyHook`:** new inner `openBackground()` – with `#dci-open`: the sign taken off (`history.replaceState`), `GM_openInTab(href, { active: false, insert: true, setParent: true })` (else `GM.openInTab(href, true)`), the text `harmony.opened` after the link; called after the action is placed.
+- **Settings:** topic `sources` gets `data-set="after-edit"` and `data-set="after-edit-bg"` (`settingsChange`, log `settingValue`); `TOPIC_KEYS.sources` and `SETTINGS_KEYS` with both keys.
+- **Texts (4 languages):** `afterEdit.toHarmony` (changed), `afterEdit.labelBg`, `afterEdit.titleBg`, `settings.afterEdit`, `settings.afterEditBg`, `harmony.opened`.
+- **Harness:** `open_mb_any` records `GM_openInTab` calls in `window.__gmTabs`.
+- **Tests:** `t_harmony.py` (A: note with the setting off; A2: tick and background tab; A3: error – return address as before; E: settings).
+
 
 ## Import 3.19.1 · 2026-10-19
 

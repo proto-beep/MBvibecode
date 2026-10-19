@@ -143,7 +143,8 @@ python3 t_afteredit.py    # "open relationship editor and start import dashboard
                           # release" with a Bandcamp link typed in (German, loaded at once), other release pages untouched
 python3 t_harmony.py      # Harmony (3.19.1): a release editor seeded by Harmony (note instead of the tick, "Enter edit" → Harmony's Release
                           # Actions), there "Edit relationships with Credits Importer" below "Add cover art", the link opens the dashboard
-                          # and loads the Bandcamp album; no release, "discogs=", another tool's redirect
+                          # and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2: the tick for a
+                          # background tab (opened once by Harmony's page), an error, the settings
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)
@@ -180,6 +181,7 @@ main script on every page, also after the page navigated by itself. `harness.EDI
 `redirect_uri`: "Enter edit" then goes there with `release_mbid` as MusicBrainz does; Harmony's `/release/actions` is served
 as a small page like Harmony's own; `open_mb_any(…, all_tabs=True)` puts the script into every tab of the context (a tab
 opened by a click on a link still gets none – open its address in a new page instead).
+`open_mb_any` records the tabs the script opens with `GM_openInTab` in `window.__gmTabs` (3.19.2).
 `open_mb_edit(ctx, gm_xhr=True)` adds `harness.GM_XHR_SHIM`, a `GM_xmlhttpRequest` that fetches through the mock and
 records the URLs in `window.__gmXhr` (without it the script falls back to `fetch`). The MusicBrainz search
 (`/ws/2/artist|label|place?query=…`) finds the artists and companies of the mock whose name (or alias) has all the words

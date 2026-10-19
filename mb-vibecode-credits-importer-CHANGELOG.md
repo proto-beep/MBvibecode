@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-19 | 3.19.1 | – |
+| 2026-10-19 | 3.19.1 – 3.19.2 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
@@ -76,6 +76,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-19
+
+### Import 3.19.2
+
+#### Added
+
+- **Harmony: the relationship editor in a background tab** (collected item 32; maintainer: "falls per harmonies importiert wird soll die option das relationship nach dem "enter edit" button nur in einem neuen hintergrundtab geöffnet werden falls es aktiviert ist", "bitte wirklich nur bei Bandcamp importen anbieten", "ja gut auch bei discogs", "trotz öffnen von hintergrund tab (checkbox) sollte das auf harmony angezeigt werden"). In a release editor opened by Harmony with a Bandcamp album or Discogs release among the links, the tick is back: "open relationship editor and start import dashboard in a background tab". Ticked, MusicBrainz goes on to Harmony's Release Actions as usual, and that page opens "Edit relationships" with the dashboard in a background tab (once) and says "– opened in a background tab" next to its link "Edit relationships with Credits Importer", which stays. New permission: open tabs (`@grant GM_openInTab`).
+- **⚙ Settings → Sources:** "Release editor: after “Enter edit”, open the relationship editor and start the import" (the same value as the tick next to "Enter edit") and "Imported with Harmony (Bandcamp, Discogs): open it in a background tab" (on by default); off, there is only the note.
+
+#### Changed
+
+- **The note in a release editor opened by Harmony** (collected item 38; maintainer: "bitte mehr in die richtung "for the credits importer: use... on harmony""): "for the Credits Importer: after “Enter edit”, use “Edit relationships with Credits Importer” on Harmony".
+
 
 ### Import 3.19.1
 

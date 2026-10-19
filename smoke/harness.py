@@ -479,7 +479,9 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     tab of the context (also those a link opens)."""
     pg = ctx.new_page()
     errs = errors_of(pg)
-    codes = ([GM_XHR_SHIM] if gm_xhr else []) + [MAIN]
+    # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
+    tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
+    codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
                        % json.dumps(codes))
