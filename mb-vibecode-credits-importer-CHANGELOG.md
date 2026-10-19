@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-19 | 3.19.1 – 3.19.2 | – |
+| 2026-10-19 | 3.19.1 – 3.19.3 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
@@ -76,6 +76,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-19
+
+### Import 3.19.3
+
+#### Added
+
+- **What the works question counts** (collected item 35; maintainer: "ja, bitte tracks ohne werk. die anderen müssen ja nicht mehr gesucht werden. evtl tooltip was da gezählt wird"): the question before the work lookups and its setting say in a tooltip that only the tracks without a work are counted – only they are looked up.
+- **Show the rows skipped with the works matrix** (collected item 36; maintainer: "erst einmal sichtbar lassen. evtl option für werk-matrix?"): a setting under ⚙ Settings → Works, on by default. Off, the rows that "Skip works matrix" put on "Skip" are not listed with their entries; the entry says how many are not shown.
+
 
 ### Import 3.19.2
 
