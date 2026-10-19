@@ -13,12 +13,36 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.20.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.21.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.21.0 · 2026-10-19 · milestone
+
+Text recognition, part 1 (collect items 33a, 33b, 33c, 33f, 33g and 37): sentences of a line, ℗ and © together, web addresses, "Logo by", titles in quotation marks and "courtesy of", "Text", lines left out on purpose. Milestone (`ms.3.21.0`, `MILESTONES`).
+
+- **Text adapter (`TEXT`, section 3):**
+  - **`parse`** restructured: per line the track list and `TEXT_LABEL_LINE` as before, then **`sentencesOf(line)`** (new) and per sentence **`readUnit(unit, scope, pi)`** (new; the former body of the line loop: ℗ / ©, clauses, "by", places, "Name – roles", "Role: names", "Photography Tom Barrett"). `pi0` runs over all parts of the line (the companion marks each part). Not recognized: the whole line when nothing of it gave a credit, else each sentence that gave none. Returns `ignored` too.
+  - **New `sentencesOf(line)`** (T029): splits at `. ! ?` before a capital letter, ℗ / © or a quotation mark – not after an initial, a word of `TEXT_ABBREV` or a word with dots (an address ends a sentence); only when a later sentence is `creditLike` (new: `Role: …`, `… by …`, ℗ / ©, `Name – …`, or a line of T030).
+  - **New `takeUrls(s)`** and **`webProfile(u)`** (T032): `WEB_ADDRESS` (TLD list) and e-mail addresses out of the sentence; a profile on `SOCIAL_HOSTS` in MusicBrainz's own form (after `URLCleanup.js`: `https://www.instagram.com/<n>/`, `https://twitter.com/<n>` for x.com too, `https://soundcloud.com/<n>`, `https://www.youtube.com/@<n>`, `https://www.tiktok.com/@<n>`, `https://bsky.app/profile/<n>`, `https://www.threads.com/@<n>`, `https://www.mixcloud.com/<n>/`, `https://vimeo.com/<n>`, `https://myspace.com/<n>`, `https://<n>.bandcamp.com/`; posts and other paths: none) with the text before it; **`giveLinks`** gives it to the credits of the last name before it (`who.links`). Linktree and any other address: left out. A sentence of only addresses, or with a word of `WEB_LABEL` ("Contact: …", "Follow us: …"): `ignored`.
+  - **℗ / ©:** `TEXT_PC_SIGNS` (T033) instead of the inline pattern: `P + ©`, `℗ & ©`, `(P) & (C)`, `©©`, year ranges → both company roles; `TEXT_PC_STRIP` takes " · …", " – CAT 123", SPARS codes (`AAD|ADD|DDD|DAD`, capitals only) and "All rights reserved" off the name.
+  - **"by":** the match runs on the clause with titles in quotation marks masked (`TEXT_QUOTED_TITLE`, T031: a "by" inside a title does not count); the title with its year is removed from the left side; the right side is cut at `TEXT_COURTESY`. `firstSentence` no longer cuts after a word of `TEXT_ABBREV`.
+  - **`TEXT_IGNORE_LINE`** (T030): thanks in several languages at the start, "plays/uses exclusively/only …", "plays/uses … strings/cymbals/reeds/sticks …", "appears courtesy of", "endorse(s/d)" → `ignored` (per sentence; a line of one sentence as it is).
+  - **`toRelease`** (text) and the Bandcamp **`toRelease`** pass `ignored` (track pages with their position in front). Neutral release comment: `ignored`, `who.links` of a name without an id.
+- **Register:** new **R100** (special, `/^text$/`, no type, `askType`; impl in the special rules) with **Q005** in `TYPE_QUESTIONS` (liner notes · release, lyricist · work; new field `ask: 'typeAsk.askText'`, read by `typeAskHtml`); new **R101** (`logo`, `logo by`, `logo design`, `logo designed by` → design, graphic design, credit `logo`), "logo" out of R073; new date rule **D016** (`DATE_RULES`, matcher before D010: a year right after a closing quotation mark → `skip`); new tables **T029–T033** (`TEXT_ABBREV`, `TEXT_IGNORE_LINE`, `TEXT_COURTESY` + `TEXT_QUOTED_TITLE`, `WEB_ADDRESS` + `SOCIAL_HOSTS` + `WEB_LABEL`, `TEXT_PC_SIGNS` + `TEXT_PC_STRIP`).
+- **`groupCredits`:** a name without an id collects the links of all its credits.
+- **Suggestions:** new **`webLinkHits(a)`** (`lookupUrls` with each address with and without "/" at the end, keyed in lower case) for artists without an id; **`suggestByName`** puts them first in `a.nameHits` (`viaWeb`), log `webSuggested`. **`suggestStackHtml`:** mark `match.markWeb` ("via instagram.com"), title `match.webUseTitle`. Still only suggestions.
+- **`groupHtml`:** a name without an id shows its web profiles (`.dci-weblink`, `webShort()`, title `link.webTitle`).
+- **`startArtistCreate`:** without a source id and person data, the entry's web links as `person.urls` (`buildArtistSeed`); the dialog names them `part.webUrls`.
+- **`renderSource`:** `<details class="dci-ignored">` (`ignored.title`, `ignored.hint`) after the list of lines not recognized.
+- **`type-pick`:** a work level while the works matrix is skipped → `skip`; at work level `renderWorks()` too (before, the matrix was not drawn again – no question had a work level until Q005).
+- **CSS:** `.dci-ignored` (summary, ol), `.dci-weblink`.
+- **Texts (4 languages):** `ignored.title.one|other`, `ignored.hint`, `link.webTitle`, `match.markWeb`, `match.webUseTitle`, `log.webSuggested`, `typeAsk.askText`, `part.webUrls.one|other`, `ms.3.21.0`.
+- **Tests:** new `t_textcorpus.py` with `text_corpus.json` (29 lines from real releases and cases around them, golden; `UPDATE=1`); harness `WEB_URLS` (profiles MusicBrainz has, for `/ws/2/url`); `t_register` golden updated (only R073/R100/R101, Logo, Q005, D016, T029–T033 and "Thanks to everybody" → left out); `t_textrules`, `t_freetext`, `t_bandcamp` (thanks now left out on purpose), `t_recheck` and `t_supp` (another line not recognized instead of the thanks; a supplement does not list lines left out), `t_notice` (3.21.0, 3.18.0, 3.17.0).
+
 
 ## Import 3.20.0 · 2026-10-19
 

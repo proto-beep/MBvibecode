@@ -306,10 +306,18 @@ def ws_search(kind, query):
     return {kind + 's': hits, 'count': len(hits)}
 
 
+# [3.21.0] web profiles MusicBrainz has for artists: url → (gid, name)
+WEB_URLS = {}
+
+
 def ws_url(query):
     qs = urllib.parse.parse_qs(query)
     out = []
     for res in qs.get('resource', []):
+        if res in WEB_URLS:
+            gid, name = WEB_URLS[res]
+            out.append({'resource': res, 'relations': [{'target-type': 'artist', 'artist': {'id': gid, 'name': name, 'disambiguation': 'artist with this link'}}]})
+            continue
         bc = re.match(r'https?://([a-z0-9-]+\.bandcamp\.com)/?$', res)
         if bc and res in BC_ARTISTS:
             gid, name = BC_ARTISTS[res]

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-19 | 3.19.1 – 3.20.0 | – |
+| 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
 | 2026-10-16 | 3.5.1 – 3.10.0 | – |
@@ -37,6 +37,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-19 | Import 3.21.0 | Text recognition, part 1: several sentences in one line are read one by one ("Graphic design: X. Text: Y. Produced by Z."); "℗ & ©", "P + ©" and "(P) & (C)" give both, without codes like "DDD" or catalogue numbers; web addresses are never part of a name – a profile (Instagram, SoundCloud …) after a name is looked up in MusicBrainz as a suggestion and filled in by "Create artist", Linktree and other addresses are left out; "Logo by" is design with the credit "logo"; a title in quotation marks with its year before "by" and "courtesy of …" are no part of a credit; "Text: X" asks: liner notes or lyrics; thanks and endorsements are listed as left out on purpose |
 | 2026-10-18 | Import 3.18.0 | Works matrix: "Skip works matrix" (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to "Skip" and the work lookups rest; "Take works matrix again" brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. "Add entry manually" is one line above the date pool, always in view |
 | 2026-10-17 | Import 3.17.0 · COMPANION 1.8.0 | Bandcamp view in the companion: a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the "about" text: to its sentence), track highlight both ways, status on the MusicBrainz release page; "open in background" and "Load the release there" for Bandcamp too. Rows from track pages link to them |
 | 2026-10-17 | Import 3.16.0 | A menu "⚙ Settings" with all settings by topic (General, Sources, Discogs view, Works, Staging, Dates & tracks), each with its own "↺"; the switches stay where they are too. Works of the artists: on or off, how many works and recordings per artist are read (4,000), when a large catalogue is named, and how long the works read are kept – now beyond reloading the page (7 days) |
@@ -76,6 +77,30 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-19
+
+### Import 3.21.0 · milestone
+
+Text recognition, part 1 – pasted texts and Bandcamp credits (collected items 33 and 37; examples from the maintainer's Bandcamp releases).
+
+#### Added
+
+- **Several sentences in one line** (33a): "Cover art: … Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy." is read sentence by sentence (before: the whole line not recognized). A period after an initial ("J. Smith"), after short words such as "Vol.", "feat.", "St." or before a small letter ends no sentence; a line is only cut when a later sentence starts a credit, so prose stays whole.
+- **℗ and © together** (33f; maintainer: "P + © 2023 Maya Recordings DDD · MCD 2301 (must be recognized)"): "P + ©", "℗ & ©", "(P) & (C)", "℗©" and "©©" give both the phonographic copyright and the copyright of the label, also with year ranges; a code of how it was recorded ("DDD", "ADD"), a catalogue number after "·" and "All rights reserved" are no part of the name.
+- **Web addresses next to names** (37; maintainer: "bitte instagram links nicht importieren und als artist name übersetzen. höchstens im zwischenspeicher halten, falls man auf "create artist" klickt" – "Linktree lässt sich nicht in MB übernehmen. aber die anderen gerne. generell aber web adressen ignorieren"): an address is never part of a name. A profile right after a name (Instagram, Facebook, X/Twitter, SoundCloud, YouTube, TikTok, Bluesky, Threads, Mixcloud, Vimeo, Myspace, a Bandcamp page) stays with the entry: it is shown next to the name, MusicBrainz is asked for an artist with it – shown first among the suggestions, marked "via instagram.com", **still only a suggestion** – and **Create artist …** fills it in as the artist's link. Linktree, home pages, e-mail addresses and every other address are left out; a line of only addresses ("www.…", "Contact: …", "Follow us: …") is listed as left out.
+- **"Logo by X"** (maintainer: "-> design mit credit "logo""): design with the credit "logo" (before: graphic design without a credit).
+- **"Text: X" asks** (33c): liner notes (an essay in the booklet) or the lyrics (in German "Text" is the lyrics)? Nothing is assumed until you choose; "lyricist" moves the row to the works matrix.
+- **Lines left out on purpose** (33g; maintainer: "thanks (should not be recognized)", "Thomastik-Infeld strings (should not)"): thanks ("Thanks to …", "Special thanks", "Danke", "Gracias", "Merci" …), endorsements ("X plays exclusively on Y bass strings", "uses Z cymbals") and "appears courtesy of …" are listed in their own list **n lines left out on purpose**, apart from the lines not recognized.
+
+#### Changed
+
+- **Titles in quotation marks and "courtesy of"** (33b): "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate" gives Albert Irvin for the cover art – the title of the painting and its year are no part of the role (and 1988 no longer lands in the date pool), "courtesy of …" is no name. A "by" inside a title in quotation marks ("Cover: “Stand by Me” by X") does not count.
+
+#### Fixed
+
+- After a choice in a type question that goes to the work level, the works matrix is drawn again (it showed the row only after the next change).
+
+Still to come (text recognition, part 2): "Recorded by Yunclas in Xixon, Asturies, Spain in the Spring/Summer, 2017" (a name with the place where it was recorded, 33d) and "Piano in ‘…' and '…' is a contribution by X" (tracks named by their titles, 33e).
+
 
 ### Import 3.20.0
 

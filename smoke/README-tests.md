@@ -23,6 +23,8 @@ MBvibecode/ (this repository)
   smoke/t_*.py                        tests (each prints OK/FEHLER lines)
   smoke/register_corpus.json          frozen input of the register's golden test (t_register.py)
   smoke/register_golden.json          its expected results (written with UPDATE=1)
+  smoke/text_corpus.json              credits lines from real releases and cases around them, with their stored reading
+                                      ('expect', written with UPDATE=1 by t_textcorpus.py; 'later': still read wrong, planned)
 ```
 
 ## Running
@@ -142,6 +144,10 @@ python3 t_manualtop.py    # "Add entry manually" as one line above the date pool
 python3 t_afteredit.py    # "open relationship editor and start import dashboard" in the release editor (3.19.0): only on "Edit note" with a
                           # Discogs/Bandcamp link, not ticked, ticked (remembered) → relationship editor with the dashboard, an error, "Add
                           # release" with a Bandcamp link typed in (German, loaded at once), other release pages untouched
+python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
+                          # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
+                          # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
+                          # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
 python3 t_mediaload.py    # the media dialog (3.20.0): load the chosen media in the editor in the background (mock: media 2 and 3 not
                           # loaded, with toggles), the works question there ("Not now", "Skip works matrix")
 python3 t_harmony.py      # Harmony (3.19.1): a release editor seeded by Harmony (note instead of the tick, "Enter edit" → Harmony's Release
@@ -152,6 +158,11 @@ python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's wo
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)
 ```
+
+**Text corpus (3.21.0):** `text_corpus.json` collects credits lines as they are written on releases. Each new case of
+the text recognition goes there; `UPDATE=1 python3 t_textcorpus.py` writes the readings anew – check the changed lines
+(the test prints each one that differs before) and say so in the code changes. `harness.WEB_URLS` (url → (gid, name)) gives
+artists MusicBrainz has with a web profile, for `/ws/2/url`.
 
 **Golden test of the register:** `register_corpus.json` was made once from Import 3.10.0 and stays as it is (more roles
 can be added; then write the golden file anew). `register_golden.json` holds the results. A refactoring of the register
