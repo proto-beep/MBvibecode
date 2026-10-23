@@ -468,6 +468,225 @@
         ],
         "ignored": []
       }
+    },
+    {
+      "text": "Guitarra eléctrica: Juan Pérez",
+      "expect": {
+        "credits": [
+          [
+            "Juan Pérez",
+            "Guitarra eléctrica",
+            "= Electric Guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Schlagzeug – Max Mustermann",
+      "expect": {
+        "credits": [
+          [
+            "Max Mustermann",
+            "Schlagzeug",
+            "= Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Marie Dupont : contrebasse, voix",
+      "expect": {
+        "credits": [
+          [
+            "Marie Dupont",
+            "contrebasse",
+            "= Double Bass"
+          ],
+          [
+            "Marie Dupont",
+            "voix",
+            "= Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Ana López – saxo tenor y soprano",
+      "expect": {
+        "credits": [
+          [
+            "Ana López",
+            "saxo tenor",
+            "= Tenor Saxophone"
+          ],
+          [
+            "Ana López",
+            "saxo soprano",
+            "= Soprano Saxophone"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Carlos Ruiz – guitarra y voz",
+      "expect": {
+        "credits": [
+          [
+            "Carlos Ruiz",
+            "guitarra",
+            "= Guitar"
+          ],
+          [
+            "Carlos Ruiz",
+            "voz",
+            "= Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Coros: Lucía y Marta",
+      "expect": {
+        "credits": [
+          [
+            "Lucía",
+            "Coros",
+            "= Backing Vocals"
+          ],
+          [
+            "Marta",
+            "Coros",
+            "= Backing Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Flügel: Hans Meier",
+      "expect": {
+        "credits": [
+          [
+            "Hans Meier",
+            "Flügel",
+            "= Grand Piano"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Batterie : Paul Martin",
+      "expect": {
+        "credits": [
+          [
+            "Paul Martin",
+            "Batterie",
+            "= Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Alto: Pierre Leroux",
+      "expect": {
+        "credits": [
+          [
+            "Pierre Leroux",
+            "Alto",
+            "= ? (asked, R102)"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "José – bajo",
+      "expect": {
+        "credits": [
+          [
+            "José",
+            "bajo",
+            "= Bass"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Klavier, Orgel – Peter Weiß",
+      "expect": {
+        "credits": [
+          [
+            "Peter Weiß",
+            "Klavier",
+            "= Piano"
+          ],
+          [
+            "Peter Weiß",
+            "Orgel",
+            "= Organ"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Guitarra electrica: Pedro",
+      "expect": {
+        "credits": [
+          [
+            "Pedro",
+            "Guitarra electrica",
+            "= Electric Guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Kevin Y Lee – guitar",
+      "expect": {
+        "credits": [
+          [
+            "Kevin Y Lee",
+            "guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
     }
   ]
 }

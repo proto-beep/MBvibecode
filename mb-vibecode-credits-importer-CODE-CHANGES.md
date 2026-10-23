@@ -13,12 +13,25 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.21.1, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.21.2, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.21.2 · 2026-10-23
+
+Instruments and voices in German, Spanish and French (collected item 43).
+
+- **Register:** new table **T034** `FOREIGN_TERMS` (English term as Discogs writes it → `"spelling@lang; spelling@lang,lang; …"`), `foldWord()` (lower case, no accents, ß → ss, ’ → ') and `FOREIGN_INDEX` (folded spelling → { term, word, langs }); new special rule **S025** (translations get no role credit); new role rule **R102** (`/^alto$/`, special, `askType`, `translated: 'alto'`) with **Q006** in `TYPE_QUESTIONS` (options with `instrument`: viola, alto saxophone, alto vocals; `ask: 'typeAsk.askAlto'`); **T011** shows `INSTRUMENT_MODIFIER_AFTER` (new) beside `INSTRUMENT_MODIFIER`; **T009** with "y" (`TEXT_ROLE_SEP` `\s+y\s+`, `TEXT_AND_SEP`, new `TEXT_NAME_SEP_Y` – lower case only).
+- **`mapRole(base, mods, { noTranslation })`:** a spelling of `FOREIGN_INDEX` is mapped as its term (`noTranslation` for that call, no loop when term and spelling fold alike) and returns `base` (as written), `translated`, `translatedBase`, `langs`.
+- **Rows:** `makeRow`, `remapRow` and the role typed by hand carry `translated` / `translatedBase`; **`roleCreditForInner`** returns '' for a translation after the details (S025; a wording rule such as W "Kontrabass" still comes first); **`questionRuleFor`** compares `translatedBase || base` ("bajo" asks like "Bass"); **`instrumentAskHtml`** says so (`instrAsk.otherwiseTr`); a chosen option with `instrument` sets `primaryText` (type-pick and `remapRow`).
+- **`isKnownRole`:** the candidates of `mapRole` too (a translation's English term).
+- **Text adapter:** `splitRoles` with "y" and the kind after the instrument (`INSTRUMENT_MODIFIER_AFTER`, "saxo tenor y soprano"); `names()` splits at " y ".
+- **Texts (4 languages):** `typeAsk.askAlto`, `instrAsk.otherwiseTr`.
+- **Tests:** new `t_foreign.py`; `text_corpus.json` +13 lines (de/es/fr), `t_textcorpus.py` stores the English term of a translation ("= Drums", "= ? (asked, R102)"); `t_register` golden updated (only "Coro" → choir without credit, "Kontrabass" via T034, R102, Q006, S025, T034, T011, T009).
+
 
 ## Import 3.21.1 · 2026-10-23
 
