@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
@@ -37,6 +38,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-23 | Import 3.22.0 | Text recognition, part 2: instruments and voices in German, Spanish and French ("Schlagzeug", "batería", "contrebasse") become MusicBrainz's own names without a role credit, words with several meanings ("bajo", "Alto") are asked; tracks named by their titles in quotation marks ("Piano in ‘A' and 'B' is a contribution by X") are found on the release; "Recorded by X in Xixon, Asturies, Spain" gives X and the area where it was recorded (recorded, mixed or mastered in – found by its other names too, only suggested); credits for a medium the release does not have ("Vinyl LP mastering") are left out, and each line left out on purpose says why; "Translated by" on Bandcamp suggests liner notes; artist pages of streaming services and profiles after labels and studios are filled in by "Create …", the links at the entries are shown by a setting; large releases: every medium in the choice, the chosen ones loaded at once with MusicBrainz's own controls |
 | 2026-10-19 | Import 3.21.0 | Text recognition, part 1: several sentences in one line are read one by one ("Graphic design: X. Text: Y. Produced by Z."); "℗ & ©", "P + ©" and "(P) & (C)" give both, without codes like "DDD" or catalogue numbers; web addresses are never part of a name – a profile (Instagram, SoundCloud …) after a name is looked up in MusicBrainz as a suggestion and filled in by "Create artist", Linktree and other addresses are left out; "Logo by" is design with the credit "logo"; a title in quotation marks with its year before "by" and "courtesy of …" are no part of a credit; "Text: X" asks: liner notes or lyrics; thanks and endorsements are listed as left out on purpose |
 | 2026-10-18 | Import 3.18.0 | Works matrix: "Skip works matrix" (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to "Skip" and the work lookups rest; "Take works matrix again" brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. "Add entry manually" is one line above the date pool, always in view |
 | 2026-10-17 | Import 3.17.0 · COMPANION 1.8.0 | Bandcamp view in the companion: a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the "about" text: to its sentence), track highlight both ways, status on the MusicBrainz release page; "open in background" and "Load the release there" for Bandcamp too. Rows from track pages link to them |
@@ -75,6 +77,69 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-23
+
+### Import 3.22.0
+
+Milestone: text recognition, part 2 (with 3.21.1 – 3.21.4).
+
+#### Added
+
+- **Tracks named by their titles** (collected item 33e): "Piano in ‘En Cualquier Lugar Del Mundo' and 'Phenomenology of misery' is a contribution by Juanjo Infraser Haller" – piano on the two tracks of these titles; also "Guitar on “Song”: X", "X – trumpet on 'A' and 'B'", "… was played by X". The titles are looked for among the tracks (a pasted text: MusicBrainz's, Bandcamp: the album's); case, accents and punctuation do not count, one letter off is fine; a title not found is shown as "Not matched" at the row, and its tracks are chosen by hand. The row names the titles ("Text: “A”, “B”"). Rules S027, T036.
+- **The area where it was recorded** (33d): "Recorded by Yunclas in Xixon, Asturies, Spain in the Spring/Summer, 2017" gives Yunclas (recording) and an entry of the new kind **Area** – "Xixon (Asturies, Spain)", type **recorded in** on the recordings; "Recorded in Berlin, Germany", "Mixed live in Paris by X", "Mastered in Frankfurt am Main by X" likewise (recorded in, mixed in, mastered in; rules C038 – C040, T037). MusicBrainz is searched with the other names of areas too – "Xixon" finds Gijón by its alias "Xixón" – and the area it is part of is shown with the suggestion; as with names, nothing is assigned. Areas have no **Create …** (MusicBrainz's area editors add them); a hint says so. Bandcamp's "about" text gives its areas like its places. The season and year go to the date pool as before. Rule S028.
+- An "in …" that is no area ("Recorded in the living room by X", "Mixed in Dolby Atmos by X", "Produced by X in Berlin" – no area type for producing) no longer hides the person: X is read, the rest is listed as not recognized ("→ ? “in the living room”").
+
+#### Changed
+
+- The text corpus has no lines marked "later" any more; 33d and 33e are read, eleven lines more.
+
+
+### Import 3.21.4
+
+#### Added
+
+- **The medium of the release decides** (collected item 39; maintainer: ""Vinyl LP mastering by Sean Price at Misery Loves Co." … kann kein mastering für ein digitales release sein" – "absichtlich auslassen aber anzeigen warum … Wichtig sind das MB release medium und wie sich die texte dazu verhalten" – "bei digitalen releases brauchen wir nicht das vinyl mastering"): a credit for a medium the MusicBrainz release does not have ("Vinyl LP mastering", "Mastered for vinyl", "Mastered by X (vinyl)", "Vinyl master", "Lacquer cut", Discogs "Mastered By [Vinyl]") gives no row; it is listed as left out on purpose with the reason ("for Vinyl LP – this release: Digital Media"), and so is a studio named only for it. "Vinyl LP mastering and digital mastering by X" keeps the digital mastering. Rule S026, words T035; for every source.
+- **"Translated by" in Bandcamp credits asks** (33h; maintainer: "nur in Bandcamp Texten bitte. mit der automatischen übernahme muss vorsichtig umgegangen werden"): liner notes (suggested, role credit "translation") or translator (lyrics); nothing is added until you choose (Q007).
+- **Each line left out on purpose says why:** thanks, a maker's note, "appears courtesy of …", only web addresses, another medium.
+
+
+### Import 3.21.3
+
+#### Added
+
+- **Streaming links next to names** (collected item 37b; maintainer: "Die artist links bei Streaming Diensten können auch mitgenommen werden (wirklich nur für create artist)"): artist pages of Spotify, Apple Music, Deezer, Tidal, YouTube Music, Qobuz and Amazon Music after a name, in MusicBrainz's form ("open.spotify.com/intl-de/artist/…?si=…" → "https://open.spotify.com/artist/…"), are filled in by **Create artist …** – MusicBrainz is not asked for them.
+- **Profiles of labels and places** (37c; maintainer: "ja das kann man machen wenn auch weniger relevant"): a profile after a label or studio ("℗ 2023 X Records instagram.com/xrecords", "Recorded at Studio Sol instagram.com/studiosol") is filled in by **Create label …** / **Create place …**.
+- **Setting "Show the web links found next to names in a text at their entries"** (⚙ Settings → Sources, off; maintainer: "unsichtbar standardeinstellung aber anzeigbar machen in den einstellungen" – "für alle"): the links stay with the entries and the suggestions through them stay, but they are shown next to the names only with this setting.
+
+#### Changed
+
+- The web links of 3.21.0 (Instagram …) are no longer shown at the entries by default (see the setting above).
+- The dialog of **Create label …** / **Create place …** for a company from a text names what is prefilled (the name, web links) instead of a source link it does not have.
+
+
+### Import 3.21.2
+
+#### Added
+
+- **Instruments and voices in German, Spanish and French** (collected item 43; maintainer: "für die texterkennung brauchen wir außerdem erst einmal spanische, französische und deutsche instrumentenbezeichnungen"): "Schlagzeug", "Guitarra eléctrica", "contrebasse", "Gesang", "voz", "Coros", "chœurs", "Klavier", "Orgel", "Geige", "Bratsche", "Querflöte", "saxo tenor" … (about 220 spellings of 61 instruments and voices) are read as their English terms and mapped like them. Each spelling carries its language (maintainer: "ob sich das auch durch eine art identifier vor dem eintrag lösen lassen würde … "[Kontrabass]@de""): `Kontrabass@de`, `contrabajo@es`, `contrebasse@fr` – table T034 in "Mapping rules", whose search finds a language ("@fr"). Accents do not count.
+- **No role credit for a translation** (maintainer: "Flügel ist immer "grand piano" und batterie ist immer "drums (drum set)" hier nicht den role credit "drums" da es sich um eine übersetzung handelt und wir das MB standardvokabular benutzen"): rule S025.
+- **Questions for words that differ by language** (maintainer: "ja bitte nachfragen wie bei bass"): "bajo" and "basse" ask like "Bass" (and say that there is no role credit); "Alto" alone asks viola · alto saxophone · alto vocals (R102, Q006) – nothing is assumed.
+- **Spanish and French word order:** the kind after the instrument is shared ("saxo tenor y soprano" → tenor saxophone, soprano saxophone); "y" separates roles and names ("guitarra y voz", "Coros: Lucía y Marta"; a capital "Y" in a name stays).
+
+
+### Import 3.21.1
+
+#### Fixed
+
+- **"Load the chosen media in the relationship editor in the background" opened nothing** (collected item 44; maintainer: "lädt nicht direkt"): the dashboard looked for headings like "Medium 2" or "CD 2", but MusicBrainz's relationship editor writes "2 ▶ CD" (the number before the format). It now uses MusicBrainz's own heading of each medium, **Expand all mediums** when all media are chosen, and **Load all tracks...** for a medium MusicBrainz shows only in part (more than 100 tracks). The same fix applies to **Load medium … in the editor** in the toolbar.
+- The chosen media are opened **right after the dialog**, while the source is read (before: once it was read – with Bandcamp track pages that took a while).
+
+#### Added
+
+- **Media without a tracklist** (maintainer: "der Medien Dialog zeigt nur zwei medien 1 und 14"): "Eternal" has tracks in MusicBrainz on CD 1 and CD 14 only; CDs 2–13 have their titles but no tracks, so nothing can be imported for them. The media dialog now says so below its intro ("Without a tracklist in MusicBrainz: media 2-13 – add their tracks in the release editor first"), counts all media ("This release has 14 media"), and the log names them.
+- **Tracks the web service leaves out** are read from MusicBrainz's relationship editor (its pages of tracks), with the relationships of their recordings and works: a medium whose tracks are missing in the release lookup, or whose recordings come without relationships (MusicBrainz leaves them out for releases with very many recordings), is offered in the media choice all the same, and its works and existing relationships are known. The log names such media.
+
 
 ## 2026-10-19
 

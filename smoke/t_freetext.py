@@ -48,7 +48,7 @@ with sync_playwright() as p:
         print('   ', name, '|', g[1], '| Vorschläge:', g[2])
     src = pg.evaluate("document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').slice(0, 120)")
     unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
-    ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent)")
+    ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li .dci-ign-text')].map(li => li.textContent)")
     print('A) Quelle:', src, '| nicht erkannt:', unrec, '| ausgelassen:', ign)
     roles = lambda name: [r[0] for r in groups.get(name, ['', [], []])[1]]
     ok_a = 'Text: Booklet' in src and unrec == [] and ign == ['Thanks to everyone who came.'] \

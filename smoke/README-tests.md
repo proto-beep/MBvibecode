@@ -144,12 +144,25 @@ python3 t_manualtop.py    # "Add entry manually" as one line above the date pool
 python3 t_afteredit.py    # "open relationship editor and start import dashboard" in the release editor (3.19.0): only on "Edit note" with a
                           # Discogs/Bandcamp link, not ticked, ticked (remembered) → relationship editor with the dashboard, an error, "Add
                           # release" with a Bandcamp link typed in (German, loaded at once), other release pages untouched
+python3 t_medium.py       # the medium of the release decides (3.21.4): vinyl mastering, "(vinyl)", lacquer cut on Digital Media left out
+                          # with the reason (and a studio only for it), the digital half kept; "Translated by" on Bandcamp asks
+python3 t_foreign.py      # instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
+                          # "saxo tenor y soprano", "y" between names, "bajo" asks like "Bass", "Alto" asks (viola …), T034 in the window
 python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                           # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                           # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
                           # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
-python3 t_mediaload.py    # the media dialog (3.20.0): load the chosen media in the editor in the background (mock: media 2 and 3 not
-                          # loaded, with toggles), the works question there ("Not now", "Skip works matrix")
+                          # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
+                          # with a studio's profile
+                          # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
+python3 t_areas.py        # text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
+                          # Gijón suggested by its alias "Xixón", no "Create", "recorded in" staged on the recordings); tracks by their
+                          # titles ("Piano in ‘A' and 'B' is a contribution by X", one letter off, "Not matched"); Bandcamp: titles of the
+                          # album, the area of the "about" text
+python3 t_mediaload.py    # the media dialog (3.20.0, 3.21.1): load the chosen media in the editor in the background – MB's editor built
+                          # as MusicBrainz builds it (a.expand-medium#disc<n>, "Expand all mediums", "Load all tracks..."), a medium
+                          # without a tracklist named, the works question there ("Not now", "Skip works matrix"), media 1 and 3 only,
+                          # tracks and relationships the release lookup leaves out read from /ws/js/tracks
 python3 t_harmony.py      # Harmony (3.19.1): a release editor seeded by Harmony (note instead of the tick, "Enter edit" → Harmony's Release
                           # Actions), there "Edit relationships with Credits Importer" below "Add cover art", the link opens the dashboard
                           # and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2: the tick for a
@@ -173,6 +186,11 @@ The rows of the dashboard rearrange with its width (3.9.0) and a pool or matrix 
 row's date fields use `common_rows.date_field(row, f)`, `rows_of` reads the chip's `data-date`. A button the floating
 log window may cover in the 1500 × 1000 test window ("Apply" of the date matrix) is clicked by script
 (`locator.evaluate('b => b.click()')`).
+
+MusicBrainz's media (3.21.1): `split_media` gives each medium an id (4500 + position) and its number of tracks;
+`harness.WS_DROP_TRACKS` (positions whose tracks the release lookup leaves out) and `harness.WS_NO_RELS` (positions
+whose recordings come without relationships) let a test do what MusicBrainz does with large releases; `/ws/js/tracks/<id>`
+answers like MB's own pages of tracks (`JS_TRACKS_PAGE` tracks a page, calls in `JS_TRACKS_CALLS`).
 
 `harness.DG_API` gives a test its own answers of the Discogs API (path → JSON, `None`: 404), e.g.
 `H.DG_API['/artists/3030'] = {...}` for an artist with members or aliases.

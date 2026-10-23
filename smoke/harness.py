@@ -114,7 +114,7 @@ LINKED = {
 # --- MusicBrainz web service -------------------------------------------------------------------
 
 
-def ws_release():
+def ws_release(full=False):
     tracks = []
     for i, gid in enumerate(REC):
         rels = []
@@ -134,7 +134,16 @@ def ws_release():
             'artist-credit': [{'name': n, 'joinphrase': j, 'artist': {'id': g, 'name': mbn}} for g, mbn, n, j in RELEASE_AC],
             'relations': [{'target-type': 'url', 'type': 'discogs', 'url': {'resource': f'https://www.discogs.com/release/{DISCOGS_ID}'}}]
             + MB_EXTRA.get(REL, []),
-            'media': split_media(tracks, 'title')}
+            'media': split_media(tracks, 'title') if full else [trim_medium(m) for m in split_media(tracks, 'title')]}
+
+
+def trim_medium(m):
+    """[3.21.1] A medium as the release lookup gives it (WS_DROP_TRACKS: without tracks, WS_NO_RELS: recordings without relationships)."""
+    if m['position'] in WS_DROP_TRACKS:
+        return dict(m, tracks=[])
+    if m['position'] in WS_NO_RELS:
+        return dict(m, tracks=[dict(t, recording={k: v for k, v in t['recording'].items() if k != 'relations'}) for t in m['tracks']])
+    return m
 
 
 # MB artist–label "personal publisher" relationships (as the web service names them)
@@ -216,9 +225,53 @@ def split_media(tracks, title_key):
             t['position'] = j + 1
             t['number'] = str(j + 1)
             part.append(t)
-        out.append({'position': pos, 'format': 'CD', title_key: '', 'tracks': part})
+        # [3.21.1] the medium's id and number of tracks, as MusicBrainz gives them (web service: "track-count", page data: track_count)
+        out.append({'position': pos, 'format': 'CD', title_key: '', 'tracks': part, 'id': 4500 + pos,
+                    ('track-count' if title_key == 'title' else 'track_count'): n})
         k += n
     return out
+
+
+# [3.21.1] media whose tracks the release lookup leaves out (positions), media whose recordings come without relationships
+# (MusicBrainz leaves them out with very many recordings), and MB's own pages of tracks (/ws/js/tracks/<medium id>)
+WS_DROP_TRACKS = set()
+WS_NO_RELS = set()
+JS_TRACKS_PAGE = 100
+JS_TRACKS_CALLS = []
+
+
+def ws_to_js_rel(r):
+    """A relationship of the web service as MB's relationship editor has it in its JSON."""
+    et = r['target-type']
+    e = r.get(et) or {}
+    lt_id = next((k for k, v in LTS.items() if v['gid'] == r.get('type-id')), None)
+    by_name = {v['name']: v for v in ATTRS.values()}
+    attrs = []
+    for a in r.get('attributes', []):
+        if a in by_name:
+            x = {'type': {'gid': by_name[a]['gid']}}
+            if a in (r.get('attribute-values') or {}):
+                x['text_value'] = r['attribute-values'][a]
+            attrs.append(x)
+    return {'id': 1, 'linkTypeID': lt_id, 'backward': et == 'artist', 'target_type': et, 'attributes': attrs,
+            'entity0_credit': r.get('target-credit', '') if et == 'artist' else '', 'entity1_credit': '', 'begin_date': None, 'end_date': None, 'ended': False,
+            'target': {'entityType': et, 'gid': e.get('id'), 'name': e.get('name') or e.get('title'),
+                       'relationships': [ws_to_js_rel(x) for x in e.get('relations', [])]}}
+
+
+def js_tracks(medium_id, page):
+    """MB's own page of tracks of a medium (/ws/js/tracks/<id>?page=N), with the relationships of the recordings."""
+    JS_TRACKS_CALLS.append((medium_id, page))
+    media = ws_release(full=True)['media']
+    m = next((x for x in media if x['id'] == medium_id), None)
+    tracks = m['tracks'] if m else []
+    part = tracks[(page - 1) * JS_TRACKS_PAGE:page * JS_TRACKS_PAGE]
+    more = page * JS_TRACKS_PAGE < len(tracks)
+    return {'linked_entities': {'link_type': {}, 'link_attribute_type': {}},
+            'pager': {'current_page': page, 'next_page': page + 1 if more else None},
+            'tracks': [{'id': 7000 + t['position'], 'position': t['position'], 'number': t['number'], 'name': t['title'],
+                        'recording': {'entityType': 'recording', 'gid': t['recording']['id'], 'name': t['recording']['title'],
+                                      'relationships': [ws_to_js_rel(r) for r in t['recording'].get('relations', [])]}} for t in part]}
 
 
 # Relationships "submitted" in a test (as if "Enter edit" had been clicked): target gid -> relations
@@ -297,7 +350,8 @@ def ws_search(kind, query):
     items += MB_SEARCH.get(kind, [])
     if words:
         hits = [x for x in items if hit(x)]
-        area = re.search(r'area:\(([^)]*)\)', q)
+        # a place in an area ("place:(…) AND area:(…)"); [3.22.0] in a search of areas "area:" is the name itself
+        area = kind != 'area' and re.search(r'area:\(([^)]*)\)', q)
         if area:
             want = [fold(w) for w in area.group(1).split(' AND ') if w.strip()]
             hits = [x for x in hits if all(w in fold((x.get('area') or {}).get('name', '')).split() for w in want)]
@@ -644,11 +698,14 @@ def install_routes(ctx):
             ids = set(re.findall(r'arid:([0-9a-f-]{36})', q))
             return json_route(route, {'works': [dict(w, score=100) for w in WORK_SEARCH
                                                 if any(r.get('artist', {}).get('id') in ids for r in w.get('relations', []))]})
-        m = re.match(r'/ws/2/(artist|label|place)$', p)
+        m = re.match(r'/ws/2/(artist|label|place|area)$', p)
         if m:
             return json_route(route, ws_search(m.group(1), u.query))
         if p == '/ws/2/url':
             return json_route(route, ws_url(u.query))
+        m = re.match(r'/ws/js/tracks/(\d+)$', p)
+        if m:
+            return json_route(route, js_tracks(int(m.group(1)), int((urllib.parse.parse_qs(u.query).get('page') or ['1'])[0])))
         m = re.match(r'/ws/js/entity/([0-9a-f-]{36})', p)
         if m:
             return json_route(route, js_entity(m.group(1)))
