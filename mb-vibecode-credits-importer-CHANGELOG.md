@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-23 | 3.21.1 – 3.21.2 | – |
+| 2026-10-23 | 3.21.1 – 3.21.3 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
@@ -78,6 +78,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-23
+
+### Import 3.21.3
+
+#### Added
+
+- **Streaming links next to names** (collected item 37b; maintainer: "Die artist links bei Streaming Diensten können auch mitgenommen werden (wirklich nur für create artist)"): artist pages of Spotify, Apple Music, Deezer, Tidal, YouTube Music, Qobuz and Amazon Music after a name, in MusicBrainz's form ("open.spotify.com/intl-de/artist/…?si=…" → "https://open.spotify.com/artist/…"), are filled in by **Create artist …** – MusicBrainz is not asked for them.
+- **Profiles of labels and places** (37c; maintainer: "ja das kann man machen wenn auch weniger relevant"): a profile after a label or studio ("℗ 2023 X Records instagram.com/xrecords", "Recorded at Studio Sol instagram.com/studiosol") is filled in by **Create label …** / **Create place …**.
+- **Setting "Show the web links found next to names in a text at their entries"** (⚙ Settings → Sources, off; maintainer: "unsichtbar standardeinstellung aber anzeigbar machen in den einstellungen" – "für alle"): the links stay with the entries and the suggestions through them stay, but they are shown next to the names only with this setting.
+
+#### Changed
+
+- The web links of 3.21.0 (Instagram …) are no longer shown at the entries by default (see the setting above).
+- The dialog of **Create label …** / **Create place …** for a company from a text names what is prefilled (the name, web links) instead of a source link it does not have.
+
 
 ### Import 3.21.2
 

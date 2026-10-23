@@ -11,7 +11,10 @@ C) "Logo by Cole Barrington instagram.com/blueeyedhorse84": the name without the
    the profile is shown at the entry, MusicBrainz has an artist with it – the first suggestion, marked "via
    instagram.com", nothing assigned.
 D) "Create artist …" for Jane Roe fills in her Instagram profile; for John Doe (only Linktree) no link.
-E) "Text" answered with "lyricist": the row goes to the works matrix."""
+E) "Text" answered with "lyricist": the row goes to the works matrix.
+F) [3.21.3] The links at the entries are hidden at first; the setting (⚙ Settings → Sources) shows them. A Spotify artist
+   page after a name is only for "Create artist …" – MusicBrainz is not asked for it, although it has an artist with it;
+   a profile after a studio ("Recorded at Studio Sol instagram.com/studiosol") goes to "Create place …"."""
 import json
 import os
 import re
@@ -38,7 +41,7 @@ const out = corpus.lines.map((l) => {
   // [3.21.2] a translation (T034) with the English term it is mapped as
   const term = (c) => { const x = m.mapRole(c.base, c.details); return x.translated ? [x.translatedBase ? `= ${x.translatedBase}` : `= ? (asked, ${x.rule})`] : []; };
   return { credits: r.credits.map((c) => [c.who.name || `(${c.who.placeholder})`, c.role, ...(c.who.links.length ? [c.who.links] : []), ...term(c)]),
-    companies: r.companies.map((c) => [c.who.name, c.role]), unrecognized: r.unrecognized, ignored: r.ignored };
+    companies: r.companies.map((c) => [c.who.name, c.role, ...(c.who.links.length ? [c.who.links] : [])]), unrecognized: r.unrecognized, ignored: r.ignored };
 });
 const all = corpus.lines.map((l) => l.text).join('\n');
 const dates = m.findDates(all).map((d) => `${d.rule} ${JSON.stringify((d.value || {}).begin || d.value)}`);
@@ -67,12 +70,15 @@ results.append(not diff and not years and any('"year":2023' in d for d in res['d
 
 COLE = H.uid('cccccccc', 77)
 H.WEB_URLS['https://www.instagram.com/blueeyedhorse84/'] = (COLE, 'Cole Barrington')
+H.WEB_URLS['https://open.spotify.com/artist/4Z8W4fKeB5YxbusRsdQVPb'] = (H.uid('cccccccc', 78), 'Sam Stream')
 TEXT = """Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.
 Thanks to Mike Eden, Romana Bellinger, Caroline Forbes, Victoria Long at Gimpel Fils, London, Celia Irvin and Priscilla Hashmi.
 Barry Guy plays exclusively on Thomastik-Infeld bass strings.
 www.maya-recordings.com P + © 2023 Maya Recordings DDD · MCD 2301
 Logo by Cole Barrington instagram.com/blueeyedhorse84
-Photography by Jane Roe https://www.instagram.com/janeroe/ and John Doe (linktr.ee/johndoe)"""
+Photography by Jane Roe https://www.instagram.com/janeroe/ and John Doe (linktr.ee/johndoe)
+Mixed by Sam Stream open.spotify.com/intl-de/artist/4Z8W4fKeB5YxbusRsdQVPb?si=abc
+Recorded at Studio Sol instagram.com/studiosol"""
 GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => ({ name: g.querySelector('.dci-gname strong').textContent.trim(),
   key: g.dataset.group, status: g.className.match(/dci-st-(\\w+)/)[1],
   rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const c = tr.querySelector('[data-f=role-credit]');
@@ -111,9 +117,27 @@ with sync_playwright() as p:
     cole = g.get('Cole Barrington', {})
     logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'web link' in x]
     print('C) Cole Barrington:', cole.get('rows'), cole.get('web'), cole.get('sugg'), cole.get('status'), '|', logs)
-    ok_c = cole.get('rows') == [['Logo By', 'design', 'logo', '']] and cole.get('web') == [['instagram.com/blueeyedhorse84', 'https://www.instagram.com/blueeyedhorse84/']] \
+    ok_c = cole.get('rows') == [['Logo By', 'design', 'logo', '']] and cole.get('web') == [] \
         and (cole.get('sugg') or [[None]])[0] == [COLE, 'via instagram.com'] and cole.get('status') == 'missing' \
         and logs == ['Cole Barrington: MusicBrainz artist with the web link from the text (only a suggestion): Cole Barrington (instagram.com/blueeyedhorse84)']
+
+    # F) the links shown with the setting
+    pg.click('[data-act=settings-open]')
+    pg.wait_for_timeout(200)
+    if not pg.locator('[data-set=weblinks-show]').count():
+        pg.click('[data-act=settings-topic][data-topic=sources]')
+        pg.wait_for_timeout(200)
+    pg.check('[data-set=weblinks-show]')
+    pg.wait_for_timeout(500)
+    g = {x['name']: x for x in pg.evaluate(GROUPS)}
+    shown = {k: g[k]['web'] for k in ('Cole Barrington', 'Jane Roe', 'Sam Stream', 'Studio Sol') if k in g}
+    print('F) mit der Einstellung:', shown, '| Sam Stream Vorschläge:', g.get('Sam Stream', {}).get('sugg'), '| gemerkt:', pg.evaluate("localStorage.getItem('dci-weblinks-show')"))
+    ok_f = shown.get('Cole Barrington') == [['instagram.com/blueeyedhorse84', 'https://www.instagram.com/blueeyedhorse84/']] \
+        and shown.get('Sam Stream') == [['open.spotify.com/artist/4Z8W4fKeB5YxbusRsdQVPb', 'https://open.spotify.com/artist/4Z8W4fKeB5YxbusRsdQVPb']] \
+        and g.get('Sam Stream', {}).get('sugg') == [] and shown.get('Studio Sol') == [['instagram.com/studiosol', 'https://www.instagram.com/studiosol/']] \
+        and pg.evaluate("localStorage.getItem('dci-weblinks-show')") == 'true'
+    pg.click('[data-act=settings-open]')
+    pg.wait_for_timeout(200)
 
     # D) "Create artist …" with the profile
     def form(key):
@@ -127,8 +151,19 @@ with sync_playwright() as p:
         return q.path, dict(urllib.parse.parse_qsl(q.query)), info
     jane = form(g['Jane Roe']['key'])
     john = form(g['John Doe']['key'])
+    sam = form(g['Sam Stream']['key'])
+    pg.click(f"section[data-group=\"{g['Studio Sol']['key']}\"] [data-act=company-create]")
+    pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+    sol = urllib.parse.urlparse(pg.evaluate("document.querySelector('[data-el=sub-frame]').src"))
+    sol_info = pg.evaluate("document.querySelector('[data-el=sub-info]').textContent")
+    pg.click('[data-act=sub-close]')
+    pg.wait_for_timeout(200)
+    sol_q = dict(urllib.parse.parse_qsl(sol.query))
     print('D) Jane Roe:', jane[0], jane[1], '|', re.sub(r'\s+', ' ', jane[2])[:120])
-    print('   John Doe:', john[1])
+    print('   John Doe:', john[1], '| Sam Stream:', sam[1], '| Studio Sol:', sol.path, sol_q, re.sub(r'\s+', ' ', sol_info)[:100])
+    ok_f = ok_f and sam[1].get('edit-artist.url.0.text') == 'https://open.spotify.com/artist/4Z8W4fKeB5YxbusRsdQVPb' \
+        and sol.path in ('/place/create', '/label/create') and any(v == 'https://www.instagram.com/studiosol/' for k, v in sol_q.items() if k.endswith('.url.0.text')) \
+        and '1 web link found next to the name in the text' in sol_info
     ok_d = jane[0] == '/artist/create' and jane[1].get('edit-artist.url.0.text') == 'https://www.instagram.com/janeroe/' and 'edit-artist.url.1.text' not in jane[1] \
         and '1 web link found next to the name in the text' in jane[2] \
         and not any(k.startswith('edit-artist.url') for k in john[1]) and g['Jane Roe']['web'] == [['instagram.com/janeroe', 'https://www.instagram.com/janeroe/']] \
@@ -140,8 +175,8 @@ with sync_playwright() as p:
     in_matrix = pg.evaluate("[...document.querySelectorAll('.dci-matrix th[data-colhead]')].some(th => /Evan Parker/.test(th.textContent))")
     print('E) Evan Parker danach:', after.get('Evan Parker', {}).get('rows'), '| in der Werk-Matrix:', in_matrix)
     ok_e = after.get('Evan Parker', {}).get('rows') == [] and in_matrix
-    print('B)', ok_b, '| C)', ok_c, '| D)', ok_d, '| E)', ok_e)
-    results += [ok_b, ok_c, ok_d, ok_e]
+    print('B)', ok_b, '| C)', ok_c, '| D)', ok_d, '| E)', ok_e, '| F)', ok_f)
+    results += [ok_b, ok_c, ok_d, ok_e, ok_f]
     print('Fehler:', errs)
     results.append(not errs)
     b.close()

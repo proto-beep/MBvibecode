@@ -13,12 +13,25 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.21.2, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.21.3, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.21.3 · 2026-10-23
+
+Links next to names: streaming pages, profiles of labels and places, shown only with a setting (collected items 37b, 37c, answer on 37).
+
+- **T032:** `SOCIAL_HOSTS` with open.spotify.com, music.apple.com, deezer.com, tidal.com, music.youtube.com, qobuz.com, music.amazon.*; new `STREAM_URL`; **`webProfile`** gives their artist pages in MusicBrainz's form (URLCleanup: Spotify without "intl-xx" and query, Apple Music with its country or "us", Deezer without the language, Tidal without "browse", YouTube Music channels, Qobuz "interpreter" pages, Amazon Music "artists/<ASIN>").
+- **`parse`:** `giveLinks` also gets the companies of the sentence (`k0`); **`groupCompanies`** merges the links of a name without an id.
+- **`webLinkHits`:** leaves out `STREAM_URL` (only for "Create artist …").
+- **`startCompanyCreate`:** the web links of a company without a source id as `edit-<type>.url.<n>.text`; the dialog text without a source link via `artistDlg.prefilled` (name, `part.webUrls`).
+- **State and setting:** `S.webLinksShow` (`dci-weblinks-show`, off; in `TOPIC_KEYS.sources`, `SETTINGS_KEYS`, `resetTopic('sources')`, `resetSettings`), checkbox `data-set="weblinks-show"` in ⚙ → Sources (`settings.webLinksShow`, title `settings.webLinksShowTitle`), `settingsChange` redraws the entries; **`groupHtml`** shows `.dci-weblink` only with it.
+- **Texts (4 languages):** `settings.webLinksShow`, `settings.webLinksShowTitle`; es/fr texts name "Crear artista…", "Créer l’artiste…" as the buttons do.
+- **Tests:** `t_textcorpus.py` part F (links hidden at first, the setting, Spotify only for "Create artist", "Create place …" with Studio Sol's profile; companies with their links in the corpus output), `text_corpus.json` +5 lines; `t_register` golden updated (only T032).
+
 
 ## Import 3.21.2 · 2026-10-23
 

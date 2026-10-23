@@ -150,6 +150,8 @@ python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_c
                           # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                           # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
                           # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
+                          # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
+                          # with a studio's profile
 python3 t_mediaload.py    # the media dialog (3.20.0, 3.21.1): load the chosen media in the editor in the background – MB's editor built
                           # as MusicBrainz builds it (a.expand-medium#disc<n>, "Expand all mediums", "Load all tracks..."), a medium
                           # without a tracklist named, the works question there ("Not now", "Skip works matrix"), media 1 and 3 only,

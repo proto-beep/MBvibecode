@@ -687,6 +687,92 @@
         "unrecognized": [],
         "ignored": []
       }
+    },
+    {
+      "text": "Mixed by Sam Stream open.spotify.com/intl-de/artist/4Z8W4fKeB5YxbusRsdQVPb?si=abc",
+      "expect": {
+        "credits": [
+          [
+            "Sam Stream",
+            "Mixed By",
+            [
+              "https://open.spotify.com/artist/4Z8W4fKeB5YxbusRsdQVPb"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio Sol instagram.com/studiosol",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio Sol",
+            "Recorded At",
+            [
+              "https://www.instagram.com/studiosol/"
+            ]
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "℗ 2023 Maya Recordings instagram.com/mayarecordings",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Maya Recordings",
+            "Phonographic Copyright (p)",
+            [
+              "https://www.instagram.com/mayarecordings/"
+            ]
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Bass – Ana Ruiz music.apple.com/es/artist/ana-ruiz/1234567 tidal.com/browse/artist/998877",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "Bass",
+            [
+              "https://music.apple.com/es/artist/1234567",
+              "https://tidal.com/artist/998877"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Drums – Leo Beat www.deezer.com/de/artist/556677 linktr.ee/leobeat",
+      "expect": {
+        "credits": [
+          [
+            "Leo Beat",
+            "Drums",
+            [
+              "https://www.deezer.com/artist/556677"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
     }
   ]
 }
