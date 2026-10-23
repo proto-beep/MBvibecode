@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.21.0
-// @date         2026-10-19
+// @version      3.21.1
+// @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
 // @description:es Panel de importación en el editor de relaciones de la publicación: revisa los créditos de la publicación de Discogs o del álbum de Bandcamp enlazados (o de un texto pegado), asigna artistas mediante enlaces o nombres, elige roles, nivel y pistas y prepáralos como relaciones. El envío («Enter edit») siempre lo haces tú.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -981,6 +981,8 @@
       "medium.option.other": "Medium {label} ({n} tracks)",
       "media.title": "Which media should be imported?",
       "media.intro": "This release has {n} media. The credits of the chosen media are imported; credits without track information go onto the tracks of the chosen media.",
+      "media.empty.one": "Without a tracklist in MusicBrainz: medium {list} – add its tracks in the release editor first (“Edit release”), then its credits can be imported.",
+      "media.empty.other": "Without a tracklist in MusicBrainz: media {list} – add their tracks in the release editor first (“Edit release”), then their credits can be imported.",
       "media.all": "All",
       "media.none": "None",
       "media.text": "Media:",
@@ -1050,6 +1052,13 @@
       "log.mediumAuto": "Large release ({n} tracks): showing medium {m}",
       "log.mediumFilter": "Medium: {medium}",
       "log.mediumNoToggle": "Medium {m}: no toggle found in the editor",
+      "log.mbMediaEmpty.one": "Medium {list} has no tracklist in MusicBrainz – nothing can be imported for it",
+      "log.mbMediaEmpty.other": "Media {list} have no tracklist in MusicBrainz – nothing can be imported for them",
+      "log.mbMediaPartial": "MusicBrainz’s web service left out tracks or relationships of medium {list}: read from the relationship editor",
+      "log.mbMediumRead.one": "Medium {m}: {n} track read from the relationship editor",
+      "log.mbMediumRead.other": "Medium {m}: {n} tracks read from the relationship editor",
+      "log.mbMediumReadFailed": "Medium {m}: its tracks could not be read from the relationship editor ({msg})",
+      "err.noMediumId": "the editor does not name the medium",
       "log.mediumLoaded": "Medium {m} loaded in the editor",
       "log.mediaLoadBackground": "Media {list} are loaded in the editor in the background",
       "log.worksChosen": "Works of the tracks without a work (media choice): {choice}",
@@ -2335,6 +2344,8 @@
       "medium.option.other": "Medium {label} ({n} Tracks)",
       "media.title": "Welche Medien sollen importiert werden?",
       "media.intro": "Dieses Release hat {n} Medien. Importiert werden die Credits der gewählten Medien; Credits ohne Track-Angabe kommen auf die Tracks der gewählten Medien.",
+      "media.empty.one": "Ohne Trackliste in MusicBrainz: Medium {list} – erst im Release-Editor die Tracks ergänzen („Edit release“), dann lassen sich seine Credits importieren.",
+      "media.empty.other": "Ohne Trackliste in MusicBrainz: Medien {list} – erst im Release-Editor die Tracks ergänzen („Edit release“), dann lassen sich ihre Credits importieren.",
       "media.all": "Alle",
       "media.none": "Keine",
       "media.text": "Medien:",
@@ -2404,6 +2415,13 @@
       "log.mediumAuto": "Großes Release ({n} Tracks): zeige Medium {m}",
       "log.mediumFilter": "Medium: {medium}",
       "log.mediumNoToggle": "Medium {m}: kein Schalter im Editor gefunden",
+      "log.mbMediaEmpty.one": "Medium {list} hat in MusicBrainz keine Trackliste – dafür lässt sich nichts importieren",
+      "log.mbMediaEmpty.other": "Medien {list} haben in MusicBrainz keine Trackliste – dafür lässt sich nichts importieren",
+      "log.mbMediaPartial": "MusicBrainz’ Web-Service hat Tracks oder Beziehungen von Medium {list} ausgelassen: aus dem Beziehungs-Editor gelesen",
+      "log.mbMediumRead.one": "Medium {m}: {n} Track aus dem Beziehungs-Editor gelesen",
+      "log.mbMediumRead.other": "Medium {m}: {n} Tracks aus dem Beziehungs-Editor gelesen",
+      "log.mbMediumReadFailed": "Medium {m}: seine Tracks ließen sich nicht aus dem Beziehungs-Editor lesen ({msg})",
+      "err.noMediumId": "der Editor nennt das Medium nicht",
       "log.mediumLoaded": "Medium {m} im Editor geladen",
       "log.mediaLoadBackground": "Medien {list} werden im Editor im Hintergrund geladen",
       "log.worksChosen": "Werke der Tracks ohne Werk (Medienauswahl): {choice}",
@@ -3689,6 +3707,8 @@
       "medium.option.other": "Medio {label} ({n} pistas)",
       "media.title": "¿Qué medios se importan?",
       "media.intro": "Esta publicación tiene {n} medios. Se importan los créditos de los medios elegidos; los créditos sin indicación de pistas van a las pistas de los medios elegidos.",
+      "media.empty.one": "Sin lista de pistas en MusicBrainz: medio {list} – añade primero sus pistas en el editor de la publicación («Edit release»); después se pueden importar sus créditos.",
+      "media.empty.other": "Sin lista de pistas en MusicBrainz: medios {list} – añade primero sus pistas en el editor de la publicación («Edit release»); después se pueden importar sus créditos.",
       "media.all": "Todos",
       "media.none": "Ninguno",
       "media.text": "Medios:",
@@ -3758,6 +3778,13 @@
       "log.mediumAuto": "Publicación grande ({n} pistas): mostrando el medio {m}",
       "log.mediumFilter": "Medio: {medium}",
       "log.mediumNoToggle": "Medio {m}: no se encontró el interruptor en el editor",
+      "log.mbMediaEmpty.one": "El medio {list} no tiene lista de pistas en MusicBrainz – no se puede importar nada para él",
+      "log.mbMediaEmpty.other": "Los medios {list} no tienen lista de pistas en MusicBrainz – no se puede importar nada para ellos",
+      "log.mbMediaPartial": "El servicio web de MusicBrainz omitió pistas o relaciones del medio {list}: leídas del editor de relaciones",
+      "log.mbMediumRead.one": "Medio {m}: {n} pista leída del editor de relaciones",
+      "log.mbMediumRead.other": "Medio {m}: {n} pistas leídas del editor de relaciones",
+      "log.mbMediumReadFailed": "Medio {m}: no se pudieron leer sus pistas del editor de relaciones ({msg})",
+      "err.noMediumId": "el editor no nombra el medio",
       "log.mediumLoaded": "Medio {m} cargado en el editor",
       "log.mediaLoadBackground": "Los medios {list} se cargan en el editor en segundo plano",
       "log.worksChosen": "Obras de las pistas sin obra (elección de medios): {choice}",
@@ -5043,6 +5070,8 @@
       "medium.option.other": "Support {label} ({n} pistes)",
       "media.title": "Quels supports importer ?",
       "media.intro": "Cette parution a {n} supports. Les crédits des supports choisis sont importés ; les crédits sans indication de pistes vont sur les pistes des supports choisis.",
+      "media.empty.one": "Sans liste de pistes dans MusicBrainz : support {list} – ajoutez d’abord ses pistes dans l’éditeur de parution (« Edit release »), ensuite ses crédits pourront être importés.",
+      "media.empty.other": "Sans liste de pistes dans MusicBrainz : supports {list} – ajoutez d’abord leurs pistes dans l’éditeur de parution (« Edit release »), ensuite leurs crédits pourront être importés.",
       "media.all": "Tous",
       "media.none": "Aucun",
       "media.text": "Supports :",
@@ -5112,6 +5141,13 @@
       "log.mediumAuto": "Grande parution ({n} pistes) : support {m} affiché",
       "log.mediumFilter": "Support : {medium}",
       "log.mediumNoToggle": "Support {m} : aucun bouton trouvé dans l’éditeur",
+      "log.mbMediaEmpty.one": "Le support {list} n’a pas de liste de pistes dans MusicBrainz – rien ne peut être importé pour lui",
+      "log.mbMediaEmpty.other": "Les supports {list} n’ont pas de liste de pistes dans MusicBrainz – rien ne peut être importé pour eux",
+      "log.mbMediaPartial": "Le service web de MusicBrainz a omis des pistes ou des relations du support {list} : lues dans l’éditeur de relations",
+      "log.mbMediumRead.one": "Support {m} : {n} piste lue dans l’éditeur de relations",
+      "log.mbMediumRead.other": "Support {m} : {n} pistes lues dans l’éditeur de relations",
+      "log.mbMediumReadFailed": "Support {m} : ses pistes n’ont pas pu être lues dans l’éditeur de relations ({msg})",
+      "err.noMediumId": "l’éditeur ne nomme pas le support",
       "log.mediumLoaded": "Support {m} chargé dans l’éditeur",
       "log.mediaLoadBackground": "Les supports {list} sont chargés dans l’éditeur en arrière-plan",
       "log.worksChosen": "Œuvres des pistes sans œuvre (choix des supports) : {choice}",
@@ -10687,6 +10723,111 @@
     return {};
   }
 
+  /**
+   * [3.21.1] The media of the release as MB's relationship editor knows them – all of them, also those whose tracks it
+   * has not loaded yet: [{ id, position, format, name, count, tracks }] (tracks: null when not loaded).
+   */
+  function pageMediums() {
+    const mb = getMB();
+    let release = null;
+    try {
+      release = typeof mb.getSourceEntityInstance === 'function' ? mb.getSourceEntityInstance() : null;
+    } catch (e) { /* ignore */ }
+    release = release || (mb.relationshipEditor && mb.relationshipEditor.state && mb.relationshipEditor.state.entity);
+    return ((release && release.mediums) || []).filter((m) => m && m.position != null).map((m) => ({
+      id: m.id, position: Number(m.position), format: (m.format && m.format.name) || '', name: m.name || '',
+      count: Number(m.track_count != null ? m.track_count : (m.tracks || []).length) || 0, tracks: Array.isArray(m.tracks) ? m.tracks : null,
+    }));
+  }
+
+  /** [3.21.1] The tracks of a medium from MB's own pages of tracks, as its relationship editor loads them (100 a page). */
+  async function fetchMediumTracks(id) {
+    const tracks = [];
+    const linked = { link_type: {}, link_attribute_type: {} };
+    let page = 1;
+    for (let n = 0; page && n < 100; n++) {
+      const res = await fetch(`/ws/js/tracks/${id}?page=${page}`, { headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(tr('err.mbHttp', { status: res.status }));
+      const data = await res.json();
+      tracks.push(...(data.tracks || []));
+      const le = data.linked_entities || {};
+      Object.assign(linked.link_type, le.link_type || {});
+      Object.assign(linked.link_attribute_type, le.link_attribute_type || {});
+      const next = data.pager && data.pager.next_page;
+      page = next && Number(next) > page ? Number(next) : 0;
+      if (page) await sleep(250);
+    }
+    return { tracks, linked };
+  }
+
+  /**
+   * [3.21.1] A relationship of MB's relationship editor (its JSON) in the form of the web service, so a track read from
+   * the editor goes through the same code (works, writers, existing relationships): target type, type and its id,
+   * attribute names with their values and credits, the credit of the target, dates.
+   */
+  function wsRelOf(r, linked) {
+    const t = r.target || {};
+    const et = String(r.target_type || t.entityType || '');
+    const x = idx();
+    const lt = (linked.link_type || {})[r.linkTypeID] || x.ltById.get(r.linkTypeID) || {};
+    const byGid = (gid) => Object.values(linked.link_attribute_type || {}).find((a) => a.gid === gid) || [...x.atById.values()].find((a) => a.gid === gid) || null;
+    const day = (d) => (d && d.year ? [d.year, d.month, d.day].filter((v) => v != null).map((v, i) => String(v).padStart(i ? 2 : 4, '0')).join('-') : '');
+    const out = { 'target-type': et, type: lt.name || '', 'type-id': lt.gid || '', attributes: [], 'attribute-values': {}, 'attribute-credits': {},
+      'target-credit': (r.backward ? r.entity0_credit : r.entity1_credit) || '', begin: day(r.begin_date), end: day(r.end_date), ended: !!r.ended,
+      direction: r.backward ? 'backward' : 'forward' };
+    for (const a of r.attributes || []) {
+      const at = byGid(a.type && a.type.gid);
+      if (!at) continue;
+      out.attributes.push(at.name);
+      if (a.text_value != null) out['attribute-values'][at.name] = a.text_value;
+      if (a.credited_as) out['attribute-credits'][at.name] = a.credited_as;
+    }
+    out[et] = { id: t.gid, name: t.name, title: t.name, disambiguation: t.comment || '', type: t.typeName || '',
+      relations: (t.relationships || []).map((y) => wsRelOf(y, linked)) };
+    return out;
+  }
+
+  /**
+   * [3.21.1] Media whose tracks the web service did not give (fewer than the medium has), or whose recordings come without
+   * relationships (MusicBrainz leaves them out of a release lookup with very many recordings): their tracks – with the
+   * relationships of the recordings and of their works – are read from MB's relationship editor and put into the answer
+   * of the web service, so every medium is offered in the media choice and its works are known (Punkt 44).
+   */
+  async function completeMedia(ws) {
+    ws.media = ws.media || [];
+    const pm = pageMediums();
+    for (const m of pm) {
+      if (!ws.media.some((x) => x.position === m.position)) ws.media.push({ position: m.position, format: m.format, title: m.name, 'track-count': m.count, tracks: [] });
+    }
+    ws.media.sort((a, b) => a.position - b.position);
+    const given = (m) => (m.tracks || []).length + (m['data-tracks'] || []).length + (m.pregap ? 1 : 0);
+    const needs = (m) => {
+      const p = pm.find((x) => x.position === m.position);
+      const count = Math.max(Number(m['track-count']) || 0, (p && p.count) || 0);
+      return given(m) < count || (m.tracks || []).some((t) => t.recording && !Array.isArray(t.recording.relations));
+    };
+    const missing = ws.media.filter(needs);
+    if (!missing.length) return;
+    log('warn', 'mbMediaPartial', { list: formatMediaList(missing.map((m) => m.position)) });
+    for (const m of missing) {
+      const p = pm.find((x) => x.position === m.position);
+      if (!p || p.id == null) {
+        log('warn', 'mbMediumReadFailed', { m: m.position, msg: tr('err.noMediumId') });
+        continue;
+      }
+      try {
+        const { tracks, linked } = await fetchMediumTracks(p.id);
+        m.tracks = tracks.filter((t) => t && t.recording && !t.isDataTrack).sort((a, b) => a.position - b.position).map((t) => ({
+          position: t.position, number: t.number || String(t.position), title: t.name,
+          recording: { id: t.recording.gid, title: t.recording.name, relations: (t.recording.relationships || []).map((r) => wsRelOf(r, linked)) },
+        }));
+        log('info', 'mbMediumRead', { m: m.position, n: m.tracks.length });
+      } catch (e) {
+        log('warn', 'mbMediumReadFailed', { m: m.position, msg: e.message });
+      }
+    }
+  }
+
   async function init() {
     try {
       clearMessages();
@@ -10698,8 +10839,14 @@
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
         + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits');
       if (!ws) throw new Error(tr('err.releaseMissing'));
+      // [3.21.1] tracks or recording relationships the web service left out: read from MB's relationship editor (Punkt 44)
+      await completeMedia(ws);
       S.mbTracks = [];
-      S.mediaInfo = new Map((ws.media || []).map((m) => [m.position, { format: m.format || '', title: m.title || '' }]));
+      S.mediaInfo = new Map((ws.media || []).map((m) => [m.position, { format: m.format || '', title: m.title || '', count: (m.tracks || []).length }]));
+      // [3.21.1] media without a tracklist in MusicBrainz (only a title): nothing can be imported for them (named in the log
+      // and in the media choice, e.g. a box set whose discs were entered without their tracks)
+      const empty = (ws.media || []).filter((m) => !(m.tracks || []).length).map((m) => m.position);
+      if (empty.length) log('warn', 'mbMediaEmpty', { n: empty.length, list: formatMediaList(empty) });
       (ws.media || []).forEach((m) => (m.tracks || []).forEach((track) => {
         const rels = (track.recording && track.recording.relations) || [];
         S.mbTracks.push({
@@ -11249,6 +11396,8 @@
   function chooseMedia() {
     const media = uniq(S.mbTracks.map((t) => t.medium));
     if (media.length < 2 || !S.overlay) return Promise.resolve({ media: new Set(media), release: true, all: true });
+    // [3.21.1] media without a tracklist in MusicBrainz cannot be chosen: named below the intro
+    const empty = [...((S.mediaInfo && S.mediaInfo.keys()) || [])].filter((m) => !media.includes(m)).sort((a, b) => a - b);
     const store = readJson('localStorage', MEDIA_SEL_KEY, {}) || {};
     const saved = store[releaseMbid] && Array.isArray(store[releaseMbid].media) ? store[releaseMbid] : null;
     let sel = new Set(saved ? saved.media.filter((m) => media.includes(m)) : media);
@@ -11272,7 +11421,8 @@
       <div class="dci-sub-panel dci-media-panel" role="dialog" aria-modal="true" aria-labelledby="dci-media-title">
         <header class="dci-sub-head"><h3 id="dci-media-title">${esc(tr('media.title'))}</h3></header>
         <div class="dci-media-body">
-          <p>${esc(tr('media.intro', { n: media.length }))}</p>
+          <p>${esc(tr('media.intro', { n: media.length + empty.length }))}</p>
+          ${empty.length ? `<p class="dci-sub" data-mel="empty">${esc(tr('media.empty', { n: empty.length, list: formatMediaList(empty) }))}</p>` : ''}
           <div class="dci-media-btns">
             <button type="button" data-mact="all">${esc(tr('media.all'))}</button>
             <button type="button" data-mact="none">${esc(tr('media.none'))}</button>
@@ -11482,15 +11632,16 @@
       renderSource();
       return;
     }
+    // [3.21.1] the chosen media are opened in MB's editor at once, while the source is read (before: once it was read)
+    if (choice.load) loadMediaInEditor([...choice.media], { quiet: true });
     try {
       clearMessages();
       setBusy(source === DISCOGS ? 'busy.discogs' : 'busy.source', { id, source: source.name });
       const rel = await source.release(id, sourceContext());
       applyMediaChoice(choice);
       if (S.mediaSel) log('info', 'mediaChosen', { text: mediaChoiceText() });
-      // [3.20.0] the choices of the dialog: the media loaded in MB's editor in the background, the works decided
+      // [3.20.0] the choices of the dialog: the works decided
       if (choice.works) applyWorksChoice(choice.works);
-      if (choice.load) loadMediaInEditor([...choice.media], { quiet: true });
       S.source = source;
       SOURCE_NAME = source.name;
       S.release = rel;
@@ -17565,8 +17716,14 @@
       ${unloaded.length ? `<button type="button" data-act="load-media" title="${esc(tr('medium.loadTitle'))}">${esc(tr('medium.load', { list: unloaded.join(', ') }))}</button>` : ''}`;
   }
 
-  /** MB's own toggle for a medium in the relationship editor (best effort: a heading that names the medium). */
+  /**
+   * MB's own toggle for a medium in the relationship editor: [3.21.1] its link `a.expand-medium#disc<position>`
+   * ("2 ▶ Digital Media", the number before the format – musicbrainz-server, usePagedMediumTable); else, best effort,
+   * a heading that names the medium.
+   */
   function findMediumToggle(m) {
+    const own = document.getElementById(`disc${m}`);
+    if (own && own.matches('a, button') && !own.closest('#dci-overlay, #dci-log, #dci-controls')) return own;
     const re = new RegExp(`(medium|disc|disk|cd|vinyl|cassette|side|dvd)\\s*${m}(\\D|$)`, 'i');
     return [...document.querySelectorAll('button, a')].find((el) => {
       if (el.closest('#dci-overlay, #dci-log, #dci-controls') || el.offsetParent === null) return false;
@@ -17575,6 +17732,20 @@
       return !!box && re.test(box.textContent.replace(/\s+/g, ' '));
     }) || null;
   }
+
+  /** [3.21.1] A toggle of MB's editor that shows its medium folded (▶; MB's own link has no aria-expanded). */
+  const mediumFolded = (el) => {
+    const tri = el.querySelector('.expand-triangle');
+    if (tri) return /\u25B6|▸|►/.test(tri.textContent);
+    return el.getAttribute('aria-expanded') !== 'true';
+  };
+
+  /** [3.21.1] MB's "Load all tracks..." of a medium shown only in part (more than 100 tracks), if there. */
+  const mediumMoreLink = (toggle) => {
+    const head = toggle.closest('tbody');
+    const body = head && head.nextElementSibling;
+    return (body && body.querySelector('a.load-tracks')) || null;
+  };
 
   /** Opens the media of the current filter in MB's editor, one after another, until their tracks are there. */
   async function loadMediaInEditor(list = null, { quiet = false } = {}) {
@@ -17586,6 +17757,13 @@
     const media = list ? list.filter(unloaded) : unloadedMedia();
     if (list && !media.length) return;
     if (quiet) log('info', 'mediaLoadBackground', { list: formatMediaList(media) });
+    // [3.21.1] all media of the release: MB's own "Expand all mediums" opens them at once (MB loads each one itself)
+    const allMedia = uniq(S.mbTracks.map((t) => t.medium));
+    const expandAll = document.getElementById('expand-all-mediums');
+    if (expandAll && media.length > 1 && allMedia.every((m) => !unloaded(m) || media.includes(m))) {
+      expandAll.click();
+      await sleep(300);
+    }
     for (const m of media) {
       const toggle = findMediumToggle(m);
       if (!toggle) {
@@ -17593,9 +17771,19 @@
         continue;
       }
       if (!quiet) setBusy('busy.mediumLoading', { m });
-      toggle.click();
-      const end = Date.now() + 20000;
-      while (Date.now() < end && unloaded(m)) await new Promise((r) => setTimeout(r, 300));
+      if (mediumFolded(toggle)) toggle.click();
+      // a long medium: MB loads 100 tracks, "Load all tracks..." the rest (clicked once it is there)
+      const n = S.mbTracks.filter((t) => t.medium === m).length;
+      const end = Date.now() + Math.max(20000, n * 200);
+      let more = null;
+      while (Date.now() < end && unloaded(m)) {
+        const link = mediumMoreLink(toggle);
+        if (link && link !== more) {
+          more = link;
+          link.click();
+        }
+        await sleep(300);
+      }
       log(unloaded(m) ? 'warn' : 'ok', unloaded(m) ? 'mediumNotLoaded' : 'mediumLoaded', { m });
     }
     if (!quiet) setBusy('');

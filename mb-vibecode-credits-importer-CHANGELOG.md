@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-23 | 3.21.1 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
@@ -75,6 +76,21 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-23
+
+### Import 3.21.1
+
+#### Fixed
+
+- **"Load the chosen media in the relationship editor in the background" opened nothing** (collected item 44; maintainer: "lädt nicht direkt"): the dashboard looked for headings like "Medium 2" or "CD 2", but MusicBrainz's relationship editor writes "2 ▶ CD" (the number before the format). It now uses MusicBrainz's own heading of each medium, **Expand all mediums** when all media are chosen, and **Load all tracks...** for a medium MusicBrainz shows only in part (more than 100 tracks). The same fix applies to **Load medium … in the editor** in the toolbar.
+- The chosen media are opened **right after the dialog**, while the source is read (before: once it was read – with Bandcamp track pages that took a while).
+
+#### Added
+
+- **Media without a tracklist** (maintainer: "der Medien Dialog zeigt nur zwei medien 1 und 14"): "Eternal" has tracks in MusicBrainz on CD 1 and CD 14 only; CDs 2–13 have their titles but no tracks, so nothing can be imported for them. The media dialog now says so below its intro ("Without a tracklist in MusicBrainz: media 2-13 – add their tracks in the release editor first"), counts all media ("This release has 14 media"), and the log names them.
+- **Tracks the web service leaves out** are read from MusicBrainz's relationship editor (its pages of tracks), with the relationships of their recordings and works: a medium whose tracks are missing in the release lookup, or whose recordings come without relationships (MusicBrainz leaves them out for releases with very many recordings), is offered in the media choice all the same, and its works and existing relationships are known. The log names such media.
+
 
 ## 2026-10-19
 
