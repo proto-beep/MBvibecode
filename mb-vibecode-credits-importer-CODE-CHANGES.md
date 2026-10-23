@@ -13,12 +13,24 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.21.3, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.21.4, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.21.4 · 2026-10-23
+
+The medium of the release decides (collected item 39), "Translated by" on Bandcamp asks (33h), reasons of the lines left out.
+
+- **Register:** new table **T035** (`MEDIUM_WORDS` vinyl / cd / cassette / digital, `mediumKindOf(text)`, `formatKind(format)`), new special rule **S026**, new question **Q007** (`TYPE_QUESTIONS`, rule R004, `flag: 'askTranslation'`; options liner notes – `suggested`, `task: 'translation'` – and translator); `typeQuestionFor` honours `q.flag`; new **`blankForQuestion(row)`** (no type until answered, on the first option's level; also in `remapRow`); `typeAskHtml` marks a `suggested` option (`.dci-type-sugg`, `typeAsk.suggested`, `typeAsk.suggestedTitle`). `TEXT_THANKS` and `TEXT_COURTESY_LINE` name the reason of a line of `TEXT_IGNORE_LINE`.
+- **Text adapter:** `withMedium(t)` (leading medium words, "for vinyl", "(vinyl)"; "master" → Mastering) gives `Role [Medium]`; used by `byRoles` and `listRoles` when the plain roles are none; "Mastered by X (vinyl)" puts the medium on the role; the verb of a place skips medium words and turns "-ing" into "-ed" ("Vinyl LP mastering … at X": Mastered At); a place of roles that are all for one medium gets `medium` (carried by `groupCompanies`). `ignored` entries are `{ text, why }` (`thanks`, `endorsement`, `courtesy`, `web`; Bandcamp track pages with their position).
+- **Core:** new `askTranslation(row)` (Bandcamp rows of R004 without details; also for a Bandcamp supplement), `releaseMediaKinds()`, `mediumMissing(kind)` (only when every medium has a known format), `releaseFormats()`, `noteLeftOut()`, `mediumOfRow(row)` (a detail naming a medium, or a lacquer cut), `leftOutForMedium(row, rel, text, fromText)` (left out with `{ why: 'medium', medium, release }` in `rel.ignored`, log `mediumLeftOut`; a fitting medium word of a text is removed from the details), `companyLeftOutForMedium()`; `loadRelease` drops such rows and entries left without one (`leftOutKeys`), `suppRow` and the supplement list too.
+- **`renderSource`:** each left-out line `.dci-ign-text` with `.dci-ign-why` (`ignored.why.*`).
+- **Texts (4 languages):** `ignored.why.thanks|endorsement|courtesy|web|medium`, `typeAsk.askTranslation`, `typeAsk.suggested`, `typeAsk.suggestedTitle`, `log.mediumLeftOut`.
+- **Tests:** new `t_medium.py`; `t_textrules`, `t_freetext`, `t_bandcamp`, `t_textcorpus` read `.dci-ign-text`; `text_corpus.json` +7 lines (left-out entries with their reason, places with their medium); `t_register` golden updated (T035, S026, Q007, "Thanks to everybody" with its reason).
+
 
 ## Import 3.21.3 · 2026-10-23
 

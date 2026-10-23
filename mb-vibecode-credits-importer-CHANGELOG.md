@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-23 | 3.21.1 – 3.21.3 | – |
+| 2026-10-23 | 3.21.1 – 3.21.4 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
@@ -78,6 +78,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-23
+
+### Import 3.21.4
+
+#### Added
+
+- **The medium of the release decides** (collected item 39; maintainer: ""Vinyl LP mastering by Sean Price at Misery Loves Co." … kann kein mastering für ein digitales release sein" – "absichtlich auslassen aber anzeigen warum … Wichtig sind das MB release medium und wie sich die texte dazu verhalten" – "bei digitalen releases brauchen wir nicht das vinyl mastering"): a credit for a medium the MusicBrainz release does not have ("Vinyl LP mastering", "Mastered for vinyl", "Mastered by X (vinyl)", "Vinyl master", "Lacquer cut", Discogs "Mastered By [Vinyl]") gives no row; it is listed as left out on purpose with the reason ("for Vinyl LP – this release: Digital Media"), and so is a studio named only for it. "Vinyl LP mastering and digital mastering by X" keeps the digital mastering. Rule S026, words T035; for every source.
+- **"Translated by" in Bandcamp credits asks** (33h; maintainer: "nur in Bandcamp Texten bitte. mit der automatischen übernahme muss vorsichtig umgegangen werden"): liner notes (suggested, role credit "translation") or translator (lyrics); nothing is added until you choose (Q007).
+- **Each line left out on purpose says why:** thanks, a maker's note, "appears courtesy of …", only web addresses, another medium.
+
 
 ### Import 3.21.3
 

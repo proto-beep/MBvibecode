@@ -41,7 +41,7 @@ const out = corpus.lines.map((l) => {
   // [3.21.2] a translation (T034) with the English term it is mapped as
   const term = (c) => { const x = m.mapRole(c.base, c.details); return x.translated ? [x.translatedBase ? `= ${x.translatedBase}` : `= ? (asked, ${x.rule})`] : []; };
   return { credits: r.credits.map((c) => [c.who.name || `(${c.who.placeholder})`, c.role, ...(c.who.links.length ? [c.who.links] : []), ...term(c)]),
-    companies: r.companies.map((c) => [c.who.name, c.role, ...(c.who.links.length ? [c.who.links] : [])]), unrecognized: r.unrecognized, ignored: r.ignored };
+    companies: r.companies.map((c) => [c.who.name, c.role, ...(c.who.links.length ? [c.who.links] : []), ...(c.medium ? [`for ${c.medium}`] : [])]), unrecognized: r.unrecognized, ignored: r.ignored };
 });
 const all = corpus.lines.map((l) => l.text).join('\n');
 const dates = m.findDates(all).map((d) => `${d.rule} ${JSON.stringify((d.value || {}).begin || d.value)}`);
@@ -102,7 +102,7 @@ with sync_playwright() as p:
     for x in g.values():
         print('   ', x['name'], x['status'], x['rows'], x['web'], x['sugg'])
     unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
-    ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent)")
+    ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li .dci-ign-text')].map(li => li.textContent)")
     ign_title = pg.evaluate("(document.querySelector('.dci-ignored summary') || {}).textContent")
     pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => JSON.stringify(d.begin))")
     print('B) nicht erkannt:', unrec, '| ausgelassen:', ign_title, ign, '| Pool:', pool)
