@@ -1256,6 +1256,7 @@
   "Mastered By [Remaster]",
   "Mastered For",
   "Mastered For By",
+  "Mastered In",
   "Mixed At",
   "Mixed At By",
   "Mixed By",
@@ -1263,6 +1264,7 @@
   "Mixed By [Mixing]",
   "Mixed For",
   "Mixed For By",
+  "Mixed In",
   "Music And Lyrics By",
   "Music By [All Music By]",
   "Orchestrated By",
@@ -1294,6 +1296,7 @@
   "Recorded By",
   "Recorded By By",
   "Recorded By [Recording]",
+  "Recorded In",
   "Recorded Live By",
   "Remastered By",
   "Remixed At",
@@ -1372,7 +1375,8 @@
   "recorded at Loft in Cologne, june 16/17 2018\nmixed at home in Oslo, july 2018\nRecorded at the first week of November 1979\nMixed at last, in the summer of 1980\nrecorded at the same time as the album",
   "Bass Man – bass\nMastered at Studio Nord, Bremen\nRecorded at Abbey Road Studios, London\nLoft, Cologne – recorded at\nProduced by Pro Ducer at Big Room\nEngineered at Small Room by Eng Ineer",
   "Vocals – Sue Sing\nBacking Vocals – Al Back, Bea Back\nSaxophone [Tenor] – Sax Man\nKeyboards, Synthesizer – Key Board\nPercussion: Perc One & Perc Two\nThanks to everybody",
-  "Music played and recorded by Jane Roe in March and April 2025.\nMixed and mastered by Jane Roe in May 2025.\nPhotography Sam Lee.\nLayout by Jane Roe.\nMusic and artwork of this release were entirely created by a (cat assisted) human. No AI tools were used.\nA Northern Echo release.\nmastering john doe"
+  "Music played and recorded by Jane Roe in March and April 2025.\nMixed and mastered by Jane Roe in May 2025.\nPhotography Sam Lee.\nLayout by Jane Roe.\nMusic and artwork of this release were entirely created by a (cat assisted) human. No AI tools were used.\nA Northern Echo release.\nmastering john doe",
+  "Recorded by Yunclas in Xixon, Asturies, Spain in the Spring/Summer, 2017\nPiano in ‘Song One' and 'Song Four' is a contribution by Juanjo Infraser Haller\nGuitar on “Song Two”: Keith Richards\nMixed live in Paris by Jean Dupont"
  ],
  "instruments": [
   "12 string guitar",
@@ -1446,5 +1450,5 @@
   "woodwind",
   "wurlitzer electric piano"
  ],
- "textCompanyRe": "^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)"
+ "textCompanyRe": "^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered) in|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)"
 }

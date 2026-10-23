@@ -13,12 +13,25 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.21.4, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.22.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.22.0 · 2026-10-23
+
+Milestone "Text recognition, part 2": tracks named by their titles (collected item 33e), the area where it was recorded (33d).
+
+- **Register:** new tables **T036** (`TEXT_TITLE_Q`, `TEXT_TITLE_SCOPE`, `TEXT_CONTRIBUTION`) and **T037** (`TEXT_AREA_PARTICLE`, `TEXT_NOT_AREA`), new special rules **S027** (titles → tracks) and **S028** (area entries); `COMPANY_ROLES` **C038** recorded/overdubbed in, **C039** mixed in, **C040** mastered in with `area` type options (shown in the rules window); `mapCompanyRole` gives `typeOptions.area` and `prefer: 'area'`; `TEXT_COMPANY_RE` with "(recorded|overdubbed|mixed|mastered) in".
+- **Text adapter (`TEXT.parse`):** new parameter `resolveTitles`; `tracksOf` keeps `scope.unresolved`; new `titleScope(phrase)` (the role before "in/on ‘A' and 'B'", the scope with the resolved tracks and the titles not found); `readUnit` has a scope per clause (`cScope`) – the "by" branch strips `TEXT_CONTRIBUTION` and reads the titles before masking quotations, the list branch ("Role: names", "Name – roles") reads them on either side; new `areaOf(text)` beside `placeOf`; new closures `areaRole`, `inArea(verb, where)` (an area company `{ who: { name, area }, role: 'Recorded In' … }`; a verb without an area type: the name without it, `in …` to the unknown parts); in the "by" branch an area on the left (`inL`, after "live/again") or after the name (`inR`), "in <anything else>" before "by" as an unknown part (`inOther`); a new branch for "Recorded in X, Y" without a person.
+- **Core:** new **`tracksByTitles(titles, srcTracks)`** (`normTitle` + `workTitleOf` without accents, then `withinOne`), in `sourceContext` as `resolveTitles`; the Bandcamp adapter passes `resolveTitles` for its album tracks and keeps the areas of the "about" text (`/\b(?:at|in)$/`).
+- **Area entries:** `groupKindOf` gives the kind `area` (CSS `.dci-kind-area`); `suggestByName` searches areas with `area:(…) OR alias:(…)`, the suggestion names its type and the area it is part of (new `areaContext(x)`: the backward "part of" relation); `matchHtmlInner` shows no **Create** for areas but the hint `match.areaNoCreate`.
+- **Texts (4 languages):** `match.areaNoCreate`, milestone `ms.3.22.0`; `MILESTONES` entry 3.22.0.
+- **Tests:** new `t_areas.py` (area entry, suggestion via alias, no create, titles → tracks with "not matched", staged "recorded in", Bandcamp titles and about area); `harness.py`: `/ws/2/area` search (and "area:" there is the name, not a place's area); `text_corpus.json` +11 lines, no "later" lines, `t_textcorpus` prints the titles ("on …") and the larger areas ("(Asturies, Spain)"); `register_corpus.json` + "Recorded In", "Mixed In", "Mastered In" and a text with titles and areas, golden updated; `t_notice` expects 3.22.0, 3.21.0, 3.18.0 (not 3.17.0).
+- **Watch out:** the area link types are taken from MusicBrainz's relationship editor like all others ("recorded in", "mixed in": area–recording; "mastered in": area–release); a level without the type falls back as for places. `TEXT_NOT_AREA` keeps "Dolby Atmos", seasons, "Studio …" and the like from becoming areas.
+
 
 ## Import 3.21.4 · 2026-10-23
 

@@ -1,7 +1,9 @@
 """Credits Importer 3.21.0: text recognition, part 1 – a corpus of credits lines (text_corpus.json; golden test).
 A) In Node: every line of the corpus through the text adapter (credits, companies, web links, not recognized, left out on
    purpose) equals its stored reading ('expect'; UPDATE=1 writes it anew after a change that is meant). Lines marked
-   'later' (33d, 33e) are stored as they are read today. The dates: "“Madison” 1988" gives none (D016), "© 2023" does.
+   'later' are stored as they are read today (none since 3.22.0). The dates: "“Madison” 1988" gives none (D016), "© 2023"
+   does. [3.22.0] A credit with the titles it is for ("on “A”, “B”", T036), a place or area with the larger areas
+   after it ("(Asturies, Spain)", T037).
 B) In the dashboard, the Maya Recordings credits pasted as a text: one line with four sentences gives Albert Irvin (cover
    art – the title and its year, "courtesy of …" left out), Jonas Schoder, Evan Parker ("Text": the question liner notes
    or lyrics, nothing assumed), Maya Homburger and Barry Guy (produced); "P + ©" gives ℗ and © for Maya Recordings
@@ -35,13 +37,16 @@ const corpus = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));
 // roles as the dashboard knows them (the register; a few instruments as MusicBrainz has them)
 const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
   const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated || /^(piano|bass|guitar|drums|vocals|synth|saxophone|viola|trumpet)$/i.test(p.base); };
-const isCompanyRole = (role) => /copyright|phonographic|published|distributed|recorded at|mixed at|mastered at|pressed|manufactured|licensed/i.test(role) && !!m.mapCompanyRole(role).rule;
+const isCompanyRole = (role) => /copyright|phonographic|published|distributed|recorded at|mixed at|mastered at|recorded in|mixed in|mastered in|pressed|manufactured|licensed/i.test(role) && !!m.mapCompanyRole(role).rule;
 const out = corpus.lines.map((l) => {
   const r = m.SOURCES.text.parse(l.text, { isRole, isCompanyRole, resolveTracks: () => null });
   // [3.21.2] a translation (T034) with the English term it is mapped as
   const term = (c) => { const x = m.mapRole(c.base, c.details); return x.translated ? [x.translatedBase ? `= ${x.translatedBase}` : `= ? (asked, ${x.rule})`] : []; };
-  return { credits: r.credits.map((c) => [c.who.name || `(${c.who.placeholder})`, c.role, ...(c.who.links.length ? [c.who.links] : []), ...term(c)]),
-    companies: r.companies.map((c) => [c.who.name, c.role, ...(c.who.links.length ? [c.who.links] : []), ...(c.medium ? [`for ${c.medium}`] : [])]), unrecognized: r.unrecognized, ignored: r.ignored };
+  // [3.22.0] the titles a credit is for (T036; here never matched: no tracks) and the larger areas after a place or area (T037)
+  const titles = (c) => (c.tracks && c.tracks.spec ? [`on ${c.tracks.spec}`] : []);
+  return { credits: r.credits.map((c) => [c.who.name || `(${c.who.placeholder})`, c.role, ...(c.who.links.length ? [c.who.links] : []), ...term(c), ...titles(c)]),
+    companies: r.companies.map((c) => [c.who.name, c.role, ...(c.who.area ? [`(${c.who.area})`] : []), ...(c.who.links.length ? [c.who.links] : []), ...(c.medium ? [`for ${c.medium}`] : [])]),
+    unrecognized: r.unrecognized, ignored: r.ignored };
 });
 const all = corpus.lines.map((l) => l.text).join('\n');
 const dates = m.findDates(all).map((d) => `${d.rule} ${JSON.stringify((d.value || {}).begin || d.value)}`);

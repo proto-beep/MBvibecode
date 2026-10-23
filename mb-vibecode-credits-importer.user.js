@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.21.4
+// @version      3.22.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.22.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -546,6 +546,7 @@
       "match.placeholderCompany": "URL or MBID of an MB label, place or artist",
       "match.createLabel": "Create label …",
       "match.createPlace": "Create place …",
+      "match.areaNoCreate": "Areas are added by MusicBrainz's area editors only – choose one that was found, or enter its MBID.",
       "msg.notCompany": "This MBID is not an artist, and not a label or place that fits these roles.",
       "companyDlg.titleLabel": "Create label: {name}",
       "companyDlg.titlePlace": "Create place: {name}",
@@ -1236,6 +1237,7 @@
       "ms.3.17.0": "Bandcamp view in the companion (1.8.0): a Bandcamp tab follows the dashboard like a Discogs tab – status marks before each part of a credits line (album and track pages), a click on a mark shows its row, a row jumps to its line (from the “about” text: to its sentence), track highlight, status on the MusicBrainz release page; “open in background” and “Load the release there” for Bandcamp too. Rows from track pages link to them.",
       "ms.3.18.0": "Works matrix: “Skip works matrix” (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to “Skip” and the work lookups rest; “Take works matrix again” brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. “Add entry manually” is one line above the date pool, always in view.",
       "ms.3.21.0": "Text recognition, part 1: several sentences in one line are read one by one (“Graphic design: X. Text: Y. Produced by Z.”); “℗ & ©”, “P + ©” and “(P) & (C)” give both, without codes like “DDD” or catalogue numbers; web addresses are never part of a name – a profile (Instagram, SoundCloud …) after a name is looked up in MusicBrainz as a suggestion and filled in by “Create artist”, Linktree and other addresses are left out; “Logo by” is design with the credit “logo”; a title in quotation marks with its year before “by” and “courtesy of …” are no part of a credit; “Text: X” asks: liner notes or lyrics; thanks and endorsements are listed as left out on purpose.",
+      "ms.3.22.0": "Text recognition, part 2: instruments and voices in German, Spanish and French (“Schlagzeug”, “batería”, “contrebasse”) become MusicBrainz's own names without a role credit, words with several meanings (“bajo”, “Alto”) are asked; tracks named by their titles in quotation marks (“Piano in ‘A’ and ‘B’ is a contribution by X”) are found on the release; “Recorded by X in Xixon, Asturies, Spain” gives X and the area where it was recorded (recorded, mixed or mastered in – found by its other names too, only suggested); credits for a medium the release does not have (“Vinyl LP mastering”) are left out, and each line left out on purpose says why; “Translated by” on Bandcamp suggests liner notes; artist pages of streaming services and profiles after labels and studios are filled in by “Create …”, the links at the entries are shown by a setting; large releases: every medium in the choice, the chosen ones loaded at once with MusicBrainz's own controls",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -1922,6 +1924,7 @@
       "match.placeholderCompany": "URL oder MBID eines MB-Labels, -Orts oder -Artists",
       "match.createLabel": "Label anlegen …",
       "match.createPlace": "Ort anlegen …",
+      "match.areaNoCreate": "Gebiete legen nur die Gebiets-Editoren von MusicBrainz an – ein gefundenes wählen oder seine MBID eingeben.",
       "msg.notCompany": "Diese MBID gehört weder zu einem Artist noch zu einem Label oder Ort, der zu diesen Rollen passt.",
       "companyDlg.titleLabel": "Label anlegen: {name}",
       "companyDlg.titlePlace": "Ort anlegen: {name}",
@@ -2612,6 +2615,7 @@
       "ms.3.17.0": "Bandcamp-Ansicht im Companion (1.8.0): ein Bandcamp-Tab folgt dem Dashboard wie ein Discogs-Tab – Status-Zeichen vor jedem Teil einer Credits-Zeile (Album- und Track-Seiten), ein Klick auf ein Zeichen zeigt seine Zeile, eine Zeile springt zu ihrer Stelle (aus dem „about“-Text: zu ihrem Satz), Track-Hervorhebung, Status auf der MusicBrainz-Release-Seite; „im Hintergrund öffnen“ und „Release dort laden“ auch für Bandcamp. Zeilen von Track-Seiten verlinken sie.",
       "ms.3.18.0": "Werk-Matrix: „Werk-Matrix überspringen“ (für das Release gemerkt) – nichts davon wird vorgemerkt (keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen), ihre Zeilen gehen auf „Skip“ und die Werk-Abfragen ruhen; „Werk-Matrix wieder nehmen“ bringt alles zurück. Die Matrix lässt sich an ihrem Kopf zu- und aufklappen. Ab 100 Tracks ohne Werk (Einstellung) fragt der Werk-Bereich vor den Werk-Abfragen, mit ungefährer Dauer. „Eintrag manuell hinzufügen“ ist eine Zeile über dem Datums-Pool, immer sichtbar.",
       "ms.3.21.0": "Texterkennung, Teil 1: mehrere Sätze in einer Zeile werden einzeln gelesen („Graphic design: X. Text: Y. Produced by Z.“); „℗ & ©“, „P + ©“ und „(P) & (C)“ ergeben beides, ohne Codes wie „DDD“ und Katalognummern; Web-Adressen sind nie Teil eines Namens – ein Profil (Instagram, SoundCloud …) hinter einem Namen wird in MusicBrainz als Vorschlag gesucht und von „Artist anlegen“ eingetragen, Linktree und andere Adressen bleiben weg; „Logo by“ ist Design mit dem Credit „logo“; ein Titel in Anführungszeichen mit Jahr vor „by“ und „courtesy of …“ gehören nicht zum Credit; „Text: X“ fragt: Liner Notes oder Liedtext; Danksagungen und Herstellerhinweise stehen als absichtlich ausgelassen in einer eigenen Liste.",
+      "ms.3.22.0": "Texterkennung, Teil 2: Instrumente und Stimmen auf Deutsch, Spanisch und Französisch („Schlagzeug“, „batería“, „contrebasse“) werden zu den Namen von MusicBrainz, ohne Role Credit, mehrdeutige Wörter („bajo“, „Alto“) werden erfragt; Tracks, die über ihre Titel in Anführungszeichen genannt sind („Piano in ‘A’ and ‘B’ is a contribution by X“), werden im Release gefunden; „Recorded by X in Xixon, Asturies, Spain“ ergibt X und das Gebiet der Aufnahme (recorded, mixed oder mastered in – auch über andere Namen gefunden, nur vorgeschlagen); Credits für ein Medium, das das Release nicht hat („Vinyl LP mastering“), bleiben weg, und jede absichtlich ausgelassene Zeile nennt den Grund; „Translated by“ bei Bandcamp schlägt Liner Notes vor; Künstlerseiten von Streamingdiensten und Profile hinter Labels und Studios trägt „… anlegen“ ein, die Links an den Einträgen zeigt eine Einstellung; große Releases: alle Medien in der Auswahl, die gewählten sofort mit MusicBrainz' eigenen Schaltern geladen",
       "log.stagedRemoved": "Aus dem Editor genommen (nicht mehr gewünscht): {text}",
       "msg.stagedRemovedAll.one": "{n} schon übernommene Beziehung ist nicht mehr gewünscht und wurde aus dem Editor genommen.",
       "msg.stagedRemovedAll.other": "{n} schon übernommene Beziehungen sind nicht mehr gewünscht und wurden aus dem Editor genommen.",
@@ -3298,6 +3302,7 @@
       "match.placeholderCompany": "URL o MBID de un sello, lugar o artista de MB",
       "match.createLabel": "Crear sello…",
       "match.createPlace": "Crear lugar…",
+      "match.areaNoCreate": "Las zonas solo las añaden los editores de zonas de MusicBrainz: elige una encontrada o introduce su MBID.",
       "msg.notCompany": "Este MBID no es un artista, ni un sello o lugar adecuado para estos roles.",
       "companyDlg.titleLabel": "Crear sello: {name}",
       "companyDlg.titlePlace": "Crear lugar: {name}",
@@ -3988,6 +3993,7 @@
       "ms.3.17.0": "Vista de Bandcamp en el complemento (1.8.0): una pestaña de Bandcamp sigue al panel como una de Discogs – marcas de estado delante de cada parte de una línea de créditos (páginas de álbum y de pista), un clic en una marca muestra su fila, una fila salta a su línea (del texto «about»: a su frase), resaltado de pistas, estado en la página de la publicación de MusicBrainz; «abrir en segundo plano» y «Cargar la publicación allí» también para Bandcamp. Las filas de páginas de pista enlazan a ellas.",
       "ms.3.18.0": "Matriz de obras: «Omitir la matriz de obras» (se guarda para la publicación) – no se prepara nada de ella (ni obras, ni enlaces a obras, ni relaciones de obra), sus filas pasan a «Skip» y las búsquedas de obras descansan; «Volver a tomar la matriz de obras» lo devuelve todo. La matriz se pliega y despliega en su cabecera. A partir de 100 pistas sin obra (ajuste) la sección de obras pregunta antes de las búsquedas de obras, con cuánto tardan más o menos. «Añadir entrada manualmente» es una línea encima de las fechas guardadas, siempre visible.",
       "ms.3.21.0": "Reconocimiento de texto, parte 1: varias frases en una línea se leen una a una («Graphic design: X. Text: Y. Produced by Z.»); «℗ & ©», «P + ©» y «(P) & (C)» dan ambos, sin códigos como «DDD» ni números de catálogo; las direcciones web nunca forman parte de un nombre – un perfil (Instagram, SoundCloud …) tras un nombre se busca en MusicBrainz como sugerencia y «Crear artista» lo rellena, Linktree y otras direcciones se omiten; «Logo by» es diseño con el crédito «logo»; un título entre comillas con su año antes de «by» y «courtesy of …» no forman parte de un crédito; «Text: X» pregunta: notas de presentación o letra; los agradecimientos y avisos de marcas aparecen como omitidos a propósito.",
+      "ms.3.22.0": "Reconocimiento de texto, parte 2: instrumentos y voces en alemán, español y francés («Schlagzeug», «batería», «contrebasse») pasan a los nombres de MusicBrainz, sin crédito de rol, y las palabras con varios sentidos («bajo», «Alto») se preguntan; las pistas nombradas por sus títulos entre comillas («Piano in ‘A’ and ‘B’ is a contribution by X») se encuentran en la publicación; «Recorded by X in Xixon, Asturies, Spain» da X y la zona de la grabación (recorded, mixed o mastered in – encontrada también por sus otros nombres, solo sugerida); los créditos para un medio que la publicación no tiene («Vinyl LP mastering») se omiten, y cada línea omitida a propósito dice por qué; «Translated by» en Bandcamp sugiere notas; las páginas de artista de los servicios de streaming y los perfiles tras sellos y estudios los rellena «Crear …», los enlaces en las entradas se muestran con un ajuste; publicaciones grandes: todos los medios en la elección, los elegidos cargados en seguida con los controles de MusicBrainz",
       "log.stagedRemoved": "Quitada del editor (ya no deseada): {text}",
       "msg.stagedRemovedAll.one": "{n} relación ya añadida ya no se quiere y se quitó del editor.",
       "msg.stagedRemovedAll.other": "{n} relaciones ya añadidas ya no se quieren y se quitaron del editor.",
@@ -4674,6 +4680,7 @@
       "match.placeholderCompany": "URL ou MBID d’un label, lieu ou artiste MB",
       "match.createLabel": "Créer le label…",
       "match.createPlace": "Créer le lieu…",
+      "match.areaNoCreate": "Seuls les éditeurs de régions de MusicBrainz ajoutent des régions : choisissez-en une trouvée ou saisissez son MBID.",
       "msg.notCompany": "Ce MBID n’est ni un artiste, ni un label ou lieu adapté à ces rôles.",
       "companyDlg.titleLabel": "Créer le label : {name}",
       "companyDlg.titlePlace": "Créer le lieu : {name}",
@@ -5364,6 +5371,7 @@
       "ms.3.17.0": "Vue Bandcamp dans le compagnon (1.8.0) : un onglet Bandcamp suit le tableau de bord comme un onglet Discogs – marques de statut devant chaque partie d’une ligne de crédits (pages d’album et de morceau), un clic sur une marque affiche sa ligne, une ligne saute à son endroit (du texte « about » : à sa phrase), surlignage des pistes, statut sur la page de la parution MusicBrainz ; « ouvrir en arrière-plan » et « Y charger la parution » aussi pour Bandcamp. Les lignes des pages de morceau y renvoient.",
       "ms.3.18.0": "Matrice des œuvres : « Ignorer la matrice des œuvres » (gardé pour la parution) – rien n’en est préparé (ni œuvres, ni liens vers des œuvres, ni relations d’œuvre), ses lignes passent sur « Skip » et les recherches d’œuvres sont suspendues ; « Reprendre la matrice des œuvres » rétablit tout. La matrice se replie et se déplie par son en-tête. À partir de 100 pistes sans œuvre (réglage), la section des œuvres demande avant les recherches d’œuvres, avec leur durée approximative. « Ajouter une entrée manuellement » est une ligne au-dessus des dates enregistrées, toujours visible.",
       "ms.3.21.0": "Reconnaissance du texte, 1re partie : plusieurs phrases d’une ligne sont lues une à une (« Graphic design: X. Text: Y. Produced by Z. ») ; « ℗ & © », « P + © » et « (P) & (C) » donnent les deux, sans codes comme « DDD » ni numéros de catalogue ; les adresses web ne font jamais partie d’un nom – un profil (Instagram, SoundCloud …) après un nom est cherché dans MusicBrainz comme suggestion et « Créer l’artiste » le remplit, Linktree et les autres adresses sont laissés de côté ; « Logo by » est du design avec le crédit « logo » ; un titre entre guillemets avec son année avant « by » et « courtesy of … » ne font pas partie d’un crédit ; « Text: X » demande : notes de pochette ou paroles ; les remerciements et mentions de marques sont listés comme laissés de côté exprès.",
+      "ms.3.22.0": "Reconnaissance du texte, 2e partie : les instruments et voix en allemand, espagnol et français (« Schlagzeug », « batería », « contrebasse ») deviennent les noms de MusicBrainz, sans crédit de rôle, et les mots à plusieurs sens (« bajo », « Alto ») sont demandés ; les pistes nommées par leurs titres entre guillemets (« Piano in ‘A’ and ‘B’ is a contribution by X ») sont trouvées sur la parution ; « Recorded by X in Xixon, Asturies, Spain » donne X et la région de l’enregistrement (recorded, mixed ou mastered in – trouvée aussi par ses autres noms, seulement suggérée) ; les crédits pour un support que la parution n’a pas (« Vinyl LP mastering ») sont laissés de côté, et chaque ligne laissée de côté exprès dit pourquoi ; « Translated by » sur Bandcamp suggère des notes de pochette ; les pages d’artiste des services de streaming et les profils après les labels et studios sont remplis par « Créer… », les liens aux entrées sont affichés par un réglage ; grandes parutions : tous les supports dans le choix, ceux choisis chargés tout de suite avec les commandes de MusicBrainz",
       "log.stagedRemoved": "Retirée de l’éditeur (plus voulue) : {text}",
       "msg.stagedRemovedAll.one": "{n} relation déjà ajoutée n’est plus voulue et a été retirée de l’éditeur.",
       "msg.stagedRemovedAll.other": "{n} relations déjà ajoutées ne sont plus voulues et ont été retirées de l’éditeur.",
@@ -5815,6 +5823,8 @@
     { id: 'S024', where: 'suggestCommissioned', note: '"Commissioned By" (R099, C037) without a track list: "commissioned" is suggested on all works (dashed, yellow; ✓ keeps it, × takes it out, it is staged like the others). With a track list it is set on the works of those tracks' },
     { id: 'S019', where: 'repeatedDetails', note: 'Details that only repeat the role in another word form are no role credit: "Mixed By [Mixing]", "Mastered By [Mastering]", "Music By [All Music By]", "Recorded By [Recording]"; "[Cover Photo]" stays' },
     { id: 'S026', where: 'loadRelease, suppRow, mediumOfRow (MEDIUM_WORDS)', note: 'A credit for a medium the MusicBrainz release does not have ("Vinyl LP mastering", "Mastered By [Vinyl]", "Lacquer Cut By" on a release of Digital Media) is no row: it is listed as left out on purpose, with the reason. "Vinyl LP mastering and digital mastering by X" keeps the digital mastering. A medium word of a text that fits the release is no role credit (3.21.4)' },
+    { id: 'S027', where: 'titleScope, tracksByTitles (TEXT_TITLE_SCOPE)', note: 'Tracks named by their titles in a text (T036: "Piano in ‘A\' and \'B\' is a contribution by X", "Guitar on “Song”: Y"): each title is looked for among the tracks of the source (a pasted text: MusicBrainz\'s, Bandcamp: the album\'s) – case, accents and punctuation do not count, one letter more, less or other is allowed; a title not found is shown as "not matched", its tracks are chosen by hand (3.22.0)' },
+    { id: 'S028', where: 'suggestByName, groupKindOf, matchHtmlInner (C038 …)', note: 'An area of a text ("Recorded by X in Xixon, Asturies, Spain", T037) is an entry of the kind "Area" with the larger areas after it; MusicBrainz is searched with its other names too ("Xixon" finds Gijón with the alias "Xixón") – only suggested, nothing assigned; there is no "Create" (areas are added by MusicBrainz\'s area editors). Its type: recorded in, mixed in (recording) or mastered in (release) (3.22.0)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -5903,6 +5913,10 @@
     [/^designed (by|at)/, { id: 'C033', label: ['design'], artist: ['design'], level: 'release' }],
     [/^artwork by/, { id: 'C034', label: ['artwork'], artist: ['artwork'], level: 'release' }],
     [/^photography by/, { id: 'C035', label: ['photography'], artist: ['photography'], level: 'release' }],
+    // [3.22.0] The area where it was done ("Recorded in Xixon, Asturies, Spain", "Recorded by X in Berlin"; T037, S028)
+    [/^(recorded|overdubbed) in/, { id: 'C038', area: ['recorded in'], level: 'recording' }],
+    [/^mixed in/, { id: 'C039', area: ['mixed in'], level: 'recording' }],
+    [/^mastered in/, { id: 'C040', area: ['mastered in'], level: 'release' }],
   ];
 
   /** The MusicBrainz types of the design rules (R062, R064–R067). */
@@ -6175,7 +6189,7 @@
     { id: 'T001', where: 'INSTRUMENT_ALIASES', note: 'Discogs spellings of instruments → MusicBrainz instruments' },
     { id: 'T002', where: 'GENERIC_WORDS', note: 'Words written in lower case in role credits (S011)' },
     { id: 'T003', where: 'ART_TYPES', note: 'Artwork relationship types whose role credits are entirely in lower case (S011)', show: () => ({ words: ART_TYPES }) },
-    { id: 'T004', where: 'COMPANY_ROLES', note: '"Companies, etc." roles → MusicBrainz types for labels, places and artists (rules C001 …)' },
+    { id: 'T004', where: 'COMPANY_ROLES', note: '"Companies, etc." roles → MusicBrainz types for labels, places, areas (3.22.0) and artists (rules C001 …)' },
     { id: 'T005', where: 'DETAIL_FLAGS', note: 'Details that stand for a MusicBrainz checkbox or attribute ("Additional Musicians" → additional, "Remaster" → re) (S002)',
       show: () => ({ pairs: DETAIL_FLAGS.map(([re, flag]) => [re, flag]) }) },
     { id: 'T006', where: 'WORDING_SYNONYMS', note: 'Words that only name the kind of relationship and are no role credit ("Music By" = composer, "Engineer [Mix]" = mix)',
@@ -6231,6 +6245,10 @@
       show: () => ({ pairs: FOREIGN_TERMS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
     { id: 'T035', where: 'MEDIUM_WORDS, mediumKindOf, formatKind', note: 'Texts and all sources (3.21.4): words for a medium in a role ("Vinyl LP mastering", "Mastered for vinyl", "Mastering [Vinyl]", "(CD)", "Lacquer Cut") and the kinds of MusicBrainz media formats – a credit for a medium the release does not have is left out (S026)',
       show: () => ({ pairs: Object.entries(MEDIUM_WORDS) }) },
+    { id: 'T036', where: 'TEXT_TITLE_SCOPE, TEXT_CONTRIBUTION', note: 'Texts (3.22.0): tracks named by their titles in quotation marks after a role and "in", "on" ("Piano in ‘A\' and \'B\'", "Guitar on “Song”"; the marks may be mixed) – the tracks of these titles (S027); "is a contribution", "was played", "were performed" before "by" leave the role',
+      show: () => ({ pairs: [['titles', TEXT_TITLE_SCOPE], ['before “by”', TEXT_CONTRIBUTION]] }) },
+    { id: 'T037', where: 'areaOf, TEXT_AREA_PARTICLE, TEXT_NOT_AREA', note: 'Texts (3.22.0): an area after a name ("Recorded by X in Xixon, Asturies, Spain") or a verb ("Recorded in Berlin", "Mixed live in Paris") – words with capitals (particles between them: "Frankfurt am Main", "Rio de Janeiro"), up to four parts, no number, month or season, none of these words first; a time after it ("in the spring, 2017") is left out. Only for recorded, mixed and mastered (C038 …, S028)',
+      show: () => ({ pairs: [['particles', TEXT_AREA_PARTICLE], ['no area', TEXT_NOT_AREA]] }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
@@ -6502,6 +6520,17 @@
   const TEXT_COURTESY = /(?:^|[\s,;(])(?:(?:by|with|appears?)\s+)?(?:kind\s+)?(?:courtesy|permission)\s+(?:of|from)\b|used\s+(?:with|by)\s+permission|mit\s+freundlicher\s+genehmigung|cortes[ií]a\s+de|avec\s+l[’']aimable\s+autorisation/i;
   const TEXT_QUOTED_TITLE = /(?:[“„«‘"][^“”„«»‘’"']{1,80}[”“»’"']|(?<!\p{L})'[^'\n]{1,80}'(?!\p{L}))(?:\s*,?\s*\(?(?:1[89]|20)\d{2}\)?)?/gu;
 
+  // [T036] Texts (3.22.0): tracks named by their titles after a role ("Piano in ‘A' and 'B'", "Guitar on “Song”"; the
+  // quotation marks may be mixed), and "is a contribution", "was played" before "by"
+  const TEXT_TITLE_Q = '(?:[“„«‘"][^“”„«»‘’"\']{1,80}[”“»’"\']|(?<!\\p{L})\'[^\'\\n]{1,80}\'(?!\\p{L}))';
+  const TEXT_TITLE_SCOPE = new RegExp(`^(.*?\\S)\\s+(?:in|on|auf|bei|en|sur|dans)\\s+(?:(?:the\\s+)?(?:songs?|tracks?|pieces?|titles?)\\s+)?(${TEXT_TITLE_Q}(?:\\s*(?:,|&|\\band\\b|\\bund\\b|\\by\\b|\\bet\\b)\\s*${TEXT_TITLE_Q})*)$`, 'iu');
+  const TEXT_CONTRIBUTION = /\s+(?:is|are|was|were)\s+(?:(?:a|an)\s+)?(?:(?:kind|generous|special|guest)\s+)?(?:contributions?|played|performed)$/i;
+
+  // [T037] Texts (3.22.0): an area after a name or a verb ("Recorded by X in Xixon, Asturies, Spain", "Recorded in
+  // Berlin"): words with capitals (particles between them), no number, month or season – and none of these words first
+  const TEXT_AREA_PARTICLE = /^(?:de|del|de la|la|le|les|el|am|an|im|upon|on|sur|sous|di|da|do|dos|das|e|y|of)$/i;
+  const TEXT_NOT_AREA = /^(?:the|a|an|my|our|his|her|their|this|that|dolby|atmos|stereo|mono|surround|spatial|binaural|analog(?:ue)?|digital|hi-?res|one|real|collaboration|cooperation|association|memory|loving|honou?r|spring|summer|autumn|fall|winter|early|late|mid|session|sessions|studio|studios|house|home)\b/i;
+
   // [T032] Texts (3.21.0): web addresses (never part of a name) and the sites whose profiles become links of an entry
   const WEB_ADDRESS = /(?:https?:\/\/)?(?:www\.)?(?:[a-z0-9-]+\.)+(?:com|net|org|info|biz|io|me|fm|tv|co|app|ee|be|de|at|ch|fr|es|it|nl|uk|us|ca|au|jp|se|no|dk|fi|pl|pt|ie|ru|br|mx|ar|cl|nz|online|site|store|music|band|art|studio|world|live|xyz|link|page|social)(?![a-z0-9-])(?:\/[^\s,;()<>“”"'\]]*)?/gi;
   const WEB_LABEL = /^(?:contact|kontakt|contacto|e-?mail|mail|correo|web|website|webseite|homepage|home page|site|site web|sitio web|info|infos|booking|follow(?:\s+(?:us|me))?|more|more info|links?|shop|store|orders?|bestellungen|pedidos)\b[\s:.\-–—]*(?:on|at|unter|en|sur)?[\s:]*$/i;
@@ -6550,7 +6579,7 @@
     || names.some((n) => SPECIAL_ARTIST_NAME.test(String(n || '').trim()));
 
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
-  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
+  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered) in|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
 
   // [T014] Dates: month names (English, German, Spanish, French; D004)
   const MONTH_NAMES = {
@@ -6904,9 +6933,10 @@
     const typeOptions = {};
     if (spec.label) typeOptions.label = spec.label;
     if (spec.place) typeOptions.place = spec.place;
+    if (spec.area) typeOptions.area = spec.area;
     typeOptions.artist = spec.artist || [];
     const companyFlags = spec.flags || [];
-    const prefer = spec.prefer || (spec.place && (!spec.label || / at$/.test(r)) ? 'place' : spec.label ? 'label' : 'artist');
+    const prefer = spec.prefer || (spec.area ? 'area' : spec.place && (!spec.label || / at$/.test(r)) ? 'place' : spec.label ? 'label' : 'artist');
     return { typeOptions, level: spec.level, prefer, notes: [], flags: companyFlags, rule: ruleId };
   }
 
@@ -7331,6 +7361,21 @@
       return { name: clean(name), area: clean(noDates(area)) };
     }
 
+    /**
+     * [3.22.0] An area and the larger ones after it: "Xixon, Asturies, Spain" → { name: 'Xixon', area: 'Asturies,
+     * Spain' }; null for anything else (T037: words with capitals, particles between them, no month or season, not one
+     * of TEXT_NOT_AREA first). Parts with digits are left out ("Berlin, 2019").
+     */
+    function areaOf(text) {
+      const parts = String(text || '').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
+      if (!parts.length || parts.length > 4 || TEXT_NOT_AREA.test(parts[0])) return null;
+      const placeLike = (x) => {
+        const words = x.split(' ');
+        return words.length <= 4 && noDates(x) === x && words.every((w, i) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || (i > 0 && i < words.length - 1 && TEXT_AREA_PARTICLE.test(w)));
+      };
+      return parts.every(placeLike) ? { name: parts[0], area: parts.slice(1).join(', ') } : null;
+    }
+
     /** Clauses of a line: "Written by A, mixed by B" → two; other commas stay inside their clause. */
     function clauses(line) {
       const out = [];
@@ -7461,14 +7506,26 @@
       return { text: clean(text), links, cut: true };
     }
 
-    function parse(text, { isRole, isCompanyRole, resolveTracks }) {
+    function parse(text, { isRole, isCompanyRole, resolveTracks, resolveTitles }) {
       const credits = [];
       const companies = [];
       const unrecognized = [];
       // [3.21.0] lines (or sentences of a line) left out on purpose: thanks, endorsements, only web addresses (T030, T032)
       const ignored = [];
       const who = (name) => ({ id: 0, name, rawName: name, links: [] });
-      const tracksOf = (scope) => (scope ? { indexes: [...scope.set], spec: scope.spec, unresolved: [] } : { all: true });
+      const tracksOf = (scope) => (scope ? { indexes: [...scope.set], spec: scope.spec, unresolved: scope.unresolved || [] } : { all: true });
+      /**
+       * [3.22.0] Tracks named by their titles at the end of a role phrase (T036): "Piano in ‘A' and 'B'" → { rest:
+       * 'Piano', scope } with the tracks of these titles (S027; a title not found is "not matched"), null if none.
+       */
+      const titleScope = (phrase) => {
+        const m = String(phrase || '').match(TEXT_TITLE_SCOPE);
+        if (!m) return null;
+        const titles = [...m[2].matchAll(new RegExp(TEXT_TITLE_Q, 'gu'))].map((x) => clean(x[0].slice(1, -1))).filter(Boolean);
+        if (!titles.length) return null;
+        const res = (resolveTitles && resolveTitles(titles)) || { indexes: new Set(), unresolved: titles.map((t) => `“${t}”`) };
+        return { rest: clean(m[1]), scope: { set: res.indexes, spec: titles.map((t) => `“${t}”`).join(', '), unresolved: res.unresolved } };
+      };
       // The line a credit comes from (shown when the text supplements another source)
       let line0 = '';
       // [3.17.0] Where on that line (the companion marks each part of a line on Bandcamp): the part ("mixed by B" of
@@ -7621,9 +7678,11 @@
         for (const [ci, clause] of parts.entries()) {
           part0 = clause;
           pi0 = pi + ci;
+          // [3.22.0] the tracks of this clause: those of the line, or those its titles name (T036)
+          let cScope = scope;
           // [3.17.3] "Distribué par X", "Distribuido por X", "Vertrieben durch X", "Distributed through X" (T028)
           if ((m = clause.match(/^(\S+(?:\s+\S+)?)\s+(?:par|por|da|durch|via|through)\s+(.+)$/i)) && distribution(m[1])) {
-            for (const n of names(m[2])) if (addCredit(n, 'Distributed By', scope)) found++;
+            for (const n of names(m[2])) if (addCredit(n, 'Distributed By', cScope)) found++;
             continue;
           }
           // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
@@ -7631,14 +7690,35 @@
             const role = `${cap(verb)} At`;
             const n = where && clean(where.name);
             if (!looksLikeName(n) || !isCompanyRole(role)) return;
-            companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: scope ? tracksOf(scope) : null, ...at() });
+            companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at() });
             found++;
+          };
+          // [3.22.0] "Recorded by X in Xixon, Asturies, Spain", "Recorded in Berlin": the area (T037; C038 …)
+          const areaRole = (verb) => `${cap(verb)} In`;
+          const inArea = (verb, where) => {
+            if (!where || !looksLikeName(where.name)) return false;
+            // a verb without an area type ("Produced by X in Berlin"): the name without it, the area listed as not recognized
+            if (!isCompanyRole(areaRole(verb))) {
+              unknownParts.push(`in ${[where.name, where.area].filter(Boolean).join(', ')}`);
+              return true;
+            }
+            companies.push({ who: { ...who(where.name), area: where.area || '' }, role: areaRole(verb), catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at() });
+            found++;
+            return true;
           };
           // [3.21.0] a "by" inside a title in quotation marks ("“Stand by me”") does not count (T031)
           const masked = clause.replace(TEXT_QUOTED_TITLE, (q) => q.replace(/\s/g, '_'));
           if ((m = masked.match(/^(.+?)\s+by\s+(.+)$/i))) {
             // [3.21.0] a title in quotation marks with its year is no part of the role ("Cover art: “Madison” 1988 by X")
-            let left = clause.slice(0, m[1].length).replace(TEXT_QUOTED_TITLE, ' ');
+            // [3.22.0] "… is a contribution by X", "… was played by X"; tracks named by their titles ("Piano in ‘A' and
+            // 'B'", T036)
+            let leftRaw = clause.slice(0, m[1].length).replace(TEXT_CONTRIBUTION, '');
+            const ts = titleScope(leftRaw);
+            if (ts) {
+              cScope = ts.scope;
+              leftRaw = ts.rest;
+            }
+            let left = leftRaw.replace(TEXT_QUOTED_TITLE, ' ');
             let right = clause.slice(m[0].length - m[2].length);
             // [3.21.4] the verb after the words of a medium, "mastering" as "mastered" ("Vinyl LP mastering … at X": mastered at)
             const kc0 = companies.length;
@@ -7648,6 +7728,15 @@
             if (at) {
               place(verb, placeOf(at[2]));
               left = at[1];
+            }
+            // [3.22.0] "Recorded in Xixon, Asturies by X"
+            const inL = !at && left.match(/^(.*?)(?:\s+(?:live|again))?\s+in\s+(\p{Lu}.*)$/u);
+            if (inL && inArea(verb, areaOf(inL[2].replace(TEXT_TIME_AFTER_NAME, '')))) left = inL[1];
+            // "Recorded in the living room by X", "Mixed in Dolby Atmos by X": X, the rest listed as not recognized
+            const inOther = !at && !byRoles(left).length && left.match(/^(\p{L}+(?:\s+(?:live|again))?)\s+in\s+(.+)$/u);
+            if (inOther && byRoles(inOther[1]).length) {
+              unknownParts.push(`in ${clean(inOther[2])}`);
+              left = inOther[1];
             }
             // "Mixed by X at Studio Y"
             const at2 = right.match(/^(.+?)\s+at\s+(.+)$/i);
@@ -7666,10 +7755,13 @@
             const roles = madeParts.length && madeParts.every(isRole) ? madeParts : byRoles(left);
             // [3.14.0] the first sentence only, and a time after the name cut off (T020): "X in October 2026" → X
             right = firstSentence(right).replace(TEXT_TIME_AFTER_NAME, '');
+            // [3.22.0] "Recorded by X in Xixon, Asturies, Spain (in the spring, 2017)": X, and the area (T037)
+            const inR = right.match(/^(.+?)\s+in\s+(\p{Lu}.*)$/u);
+            if (inR && looksLikeName(clean(inR[1])) && inArea(verb, areaOf(inR[2]))) right = inR[1];
             // [3.14.0] a person without a name ("a (cat assisted) human", "the band"): the release's artists (T023)
             const nobody = clean(right.replace(/\s*\([^)]*\)/g, ''));
             if (roles.length && PLACEHOLDER_WHO.test(nobody)) {
-              roles.forEach((r) => { if (addPlaceholder(nobody, r, scope)) found++; });
+              roles.forEach((r) => { if (addPlaceholder(nobody, r, cScope)) found++; });
               continue;
             }
             // [3.21.4] "Mastered by X (vinyl)": the medium belongs to the role (T035)
@@ -7680,7 +7772,7 @@
             // the place of roles that are all for one medium is for that medium too
             const meds = rolesM.map((r) => (r.match(/\[([^\]]+)\]$/) || [])[1] || '').filter((x) => mediumKindOf(x));
             if (rolesM.length && meds.length === rolesM.length && new Set(meds.map(mediumKindOf)).size === 1) companies.slice(kc0).forEach((c) => { c.medium = meds[0]; });
-            for (const n of rolesM.length ? names(right) : []) rolesM.forEach((r) => { if (addCredit(n, r, scope)) found++; });
+            for (const n of rolesM.length ? names(right) : []) rolesM.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
             continue;
           }
           // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person)
@@ -7688,6 +7780,9 @@
             place(m[1], placeOf(m[2]));
             continue;
           }
+          // [3.22.0] "Recorded in Xixon, Asturies, Spain in 2017", "Mixed live in Berlin" (an area without a person, T037)
+          if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+(\p{Lu}.*)$/u))
+            && inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, '')))) continue;
           // "Name – roles", "Name: roles", "Role: names", "Role – names", "Name (roles)"
           let left = null;
           let right = null;
@@ -7696,17 +7791,25 @@
           if (!left) continue;
           left = clean(left);
           right = clean(right);
+          // [3.22.0] tracks by their titles on either side ("Piano on ‘Song’: X", "X – piano on ‘Song’", T036)
+          const tsL = titleScope(left);
+          const tsR = !tsL && titleScope(right);
+          if (tsL || tsR) {
+            cScope = (tsL || tsR).scope;
+            if (tsL) left = tsL.rest;
+            else right = tsR.rest;
+          }
           const rolesRight = listRoles(right);
           const rolesLeft = listRoles(left);
           if (rolesRight && !rolesLeft) {
-            rolesRight.forEach((r) => { if (addCredit(left, r, scope)) found++; });
+            rolesRight.forEach((r) => { if (addCredit(left, r, cScope)) found++; });
           } else if (rolesLeft && !rolesRight) {
-            for (const n of names(right)) rolesLeft.forEach((r) => { if (addCredit(n, r, scope)) found++; });
+            for (const n of names(right)) rolesLeft.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
           } else if (!rolesLeft && !rolesRight && looksLikeName(left) && !roleParts(left).known.length) {
             // [3.6.0] Some roles known, some not: the known ones are taken, the rest is listed as not recognized
             const rp = roleParts(right);
             if (rp.known.length) {
-              rp.known.forEach((r) => { if (addCredit(left, r, scope)) found++; });
+              rp.known.forEach((r) => { if (addCredit(left, r, cScope)) found++; });
               if (found) unknownParts.push(...rp.unknown);
             }
           }
@@ -7942,19 +8045,22 @@
       const cur = data.current || {};
       const tracks = (data.trackinfo || []).map((t, i) => ({ position: String(t.track_num || i + 1), title: t.title || '', aliases: [] }));
       const resolveTracks = (spec) => ctx.resolveTracks(spec, tracks);
+      // [3.22.0] titles named in the credits: this album's tracks (S027)
+      const resolveTitles = ctx.resolveTitles ? (titles) => ctx.resolveTitles(titles, tracks) : null;
       const band = { name: String(data.artist || '').trim(), url: bandUrl(url) };
-      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks });
+      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles });
       const credits = [...album.credits];
       const companies = [...album.companies];
       // [3.7.0] The "about" text is mostly prose: only its places ("recorded at Loft in Cologne, june 16/17 2018");
       // its dates are found in the notes like those of the credits
-      companies.push(...TEXT.parse(cur.about || '', { ...ctx, resolveTracks }).companies.filter((c) => /\bat$/i.test(c.role))
+      // [3.22.0] and its areas ("recorded in Berlin")
+      companies.push(...TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles }).companies.filter((c) => /\b(?:at|in)$/i.test(c.role))
         .map((c) => ({ ...c, fromAbout: true }))); // [3.16.1] can be left out ("Leave out the about text")
       const unrecognized = [...album.unrecognized];
       const ignored = [...(album.ignored || [])];
       (trackCredits || []).forEach((text, i) => {
         if (!text || !tracks[i]) return;
-        const res = TEXT.parse(text, { ...ctx, resolveTracks });
+        const res = TEXT.parse(text, { ...ctx, resolveTracks, resolveTitles });
         const on = { indexes: [i], position: tracks[i].position };
         // [3.17.0] the track page a credit is on (its path), for the companion and the hint in the dashboard
         const page = { page: String(((data.trackinfo || [])[i] || {}).title_link || ''), pos: tracks[i].position };
@@ -10192,7 +10298,7 @@
         ${TYPE_QUESTIONS.map((q) => row(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note])).join('')}</tbody></table>`),
       sect('special', `${tr('rules.specialTitle')} (S001 … · ${where('SPECIAL_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')])}<tbody>${SPECIAL_RULES.map((r) => row(r.id, [r.id, r.note, r.where || ''])).join('')}</tbody></table>`),
       sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level')])}<tbody>
-        ${COMPANY_ROLES.map(([re, o]) => row(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.artist || [])]).join(', '), o.level || ''])).join('')}</tbody></table>`),
+        ${COMPANY_ROLES.map(([re, o]) => row(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.area || []), ...(o.artist || [])]).join(', '), o.level || ''])).join('')}</tbody></table>`),
       sect('instruments', `${tr('rules.instruments')} (T001 · ${where('INSTRUMENT_ALIASES')})`, `<table>${head([trRules('rules.discogs'), tr('rules.mb')], false)}<tbody>
         ${Object.entries(INSTRUMENT_ALIASES).map(([k, v]) => `<tr>${cell(k)}${cell(v.join(' / '))}</tr>`).join('')}</tbody></table>`),
       sect('words', `${tr('rules.words')} (T002 · ${where('GENERIC_WORDS')})`, `<p>${esc([...GENERIC_WORDS].sort().join(', '))}</p>`),
@@ -11957,6 +12063,8 @@
       tracks, input: S.textInput, sig: textSig, isRole: isKnownRole, isCompanyRole: isTextCompanyRole, httpGet,
       settings: { bandcampTracks: S.bcTracks },
       resolveTracks: (spec, srcTracks = tracks) => tracksInText(`tracks ${spec}`, srcTracks),
+      // [3.22.0] tracks named by their titles (S027)
+      resolveTitles: (titles, srcTracks = tracks) => tracksByTitles(titles, srcTracks),
     };
   }
 
@@ -12258,6 +12366,9 @@
     return out;
   }
 
+  /** [3.22.0] An area of MusicBrainz's search: its type and the area it is part of ("City, Asturias"; S028). */
+  const areaContext = (x) => [x.type, ...((x.relations || []).filter((r) => r.type === 'part of' && r.direction === 'backward' && r.area).slice(0, 1).map((r) => r.area.name))];
+
   async function suggestByName(list) {
     for (const a of list) {
       // [3.14.0] an artist of the release offered for a credit without a name: that artist is the suggestion
@@ -12271,8 +12382,9 @@
         const words = luceneWords(a.name);
         // [3.7.0] A place with the area the source names ("Loft, Cologne"): only places in that area
         const area = a.company && type === 'place' && a.area ? luceneWords(a.area) : '';
+        // [3.22.0] an area with its other names too ("Xixon" → Gijón, alias "Xixón"; S028)
         const query = area && words ? `place:(${words}) AND area:(${area})`
-          : words && !a.company ? `${type}:(${words}) OR alias:(${words})` : `${type}:${lucenePhrase(a.name)}`;
+          : words && (!a.company || type === 'area') ? `${type}:(${words}) OR alias:(${words})` : `${type}:${lucenePhrase(a.name)}`;
         const data = await mbWs(`${type}?query=${encodeURIComponent(query)}&limit=25`);
         const items = (data && data[`${type}s`]) || [];
         // [3.13.0] A name with an initial ("T. Snekkestad", "Torben S. Snekkestad"): MusicBrainz's search needs every
@@ -12292,7 +12404,7 @@
           .sort((p, q) => (p.fit === q.fit ? 0 : p.fit === 'same' ? -1 : 1));
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
         a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
-          disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name].filter(Boolean).join(', ') }));
+          disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name, ...(type === 'area' ? areaContext(x) : [])].filter(Boolean).join(', ') }));
         // [3.21.0] the artists MusicBrainz has with a web profile found next to the name (T032): first, only suggested
         const web = await webLinkHits(a);
         if (web.length) {
@@ -13088,7 +13200,9 @@
     const searchType = a.other ? a.entityType : a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
     const searchUrl = `/search?query=${encodeURIComponent(a.name)}&type=${searchType}&method=indexed`;
     const createButtons = a.other ? (CREATABLE.includes(a.entityType) ? `<button type="button" data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
-      ? companyTypes(a).map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' ')
+      // [3.22.0] areas are added by MusicBrainz's area editors only: no "Create", a hint (S028)
+      ? companyTypes(a).filter((et) => et !== 'area').map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' ')
+        + (companyTypes(a).includes('area') ? `<span class="dci-sub">${esc(tr('match.areaNoCreate'))}</span>` : '')
       : `<button type="button" data-act="artist-create">${esc(tr('match.create'))}</button>`;
     const editor = (labelKey) => `
       <span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>
@@ -13164,7 +13278,7 @@
     if (a.other) return { kind: 'other', type: a.entityType || 'series' };
     if (a.company) {
       const type = a.entityType || (companyTypes(a)[0]) || 'label';
-      return { kind: type === 'place' ? 'place' : type === 'artist' ? 'artist' : 'label', type };
+      return { kind: type === 'place' || type === 'area' || type === 'artist' ? type : 'label', type };
     }
     return { kind: 'artist', type: 'artist' };
   }
@@ -13598,6 +13712,26 @@
    * [S015] Tracks named in a sentence ("Tracks 1 to 5", "track 3", "tracks 6, 8 and 10", "A1 to A3",
    * "side B", "CD2, tracks 1–5"), as indexes of the MusicBrainz tracks; null if it names none.
    */
+  /**
+   * [3.22.0] Tracks named by their titles (S027, T036): each title against the tracks of the source (a text: MusicBrainz's,
+   * Bandcamp: the album's) – case, accents and punctuation do not count, one letter more, less or other is allowed.
+   * → { indexes: Set, unresolved: ['“title”' …] }
+   */
+  function tracksByTitles(titles, srcTracks = S.srcTracks) {
+    const key = (t) => normTitle(workTitleOf(t)).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const keys = (srcTracks || []).map((t) => key((t && t.title) || ''));
+    const indexes = new Set();
+    const unresolved = [];
+    for (const title of titles) {
+      const k = key(title);
+      let hits = k ? keys.flatMap((x, i) => (x === k ? [i] : [])) : [];
+      if (!hits.length && k) hits = keys.flatMap((x, i) => (x && withinOne(x, k) ? [i] : []));
+      if (hits.length) hits.forEach((i) => indexes.add(i));
+      else unresolved.push(`“${title}”`);
+    }
+    return { indexes, unresolved };
+  }
+
   function tracksInText(text, srcTracks = S.srcTracks) {
     const out = new Set();
     let named = false;
@@ -20837,6 +20971,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.22.0', label: 'Credits Importer 3.22.0' },
     { v: '3.21.0', label: 'Credits Importer 3.21.0' },
     { v: '3.18.0', label: 'Credits Importer 3.18.0' },
     { v: '3.17.0', label: 'Credits Importer 3.17.0 · Companion 1.8.0' },
@@ -21295,6 +21430,7 @@
       .dci-kind-artist { --kind: #5b6f8c; --kind-bg: #eef1f6; }
       .dci-kind-label { --kind: #2a8a8a; --kind-bg: #e8f4f4; }
       .dci-kind-place { --kind: #4e8a3e; --kind-bg: #edf5e9; }
+      .dci-kind-area { --kind: #8a6a3e; --kind-bg: #f6f0e7; }
       .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind); color: #fff;
         font-size: calc(var(--u, 1px) * 11); font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }
       /* Not found in MusicBrainz: the bar is red whatever the kind */

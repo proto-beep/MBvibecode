@@ -350,7 +350,8 @@ def ws_search(kind, query):
     items += MB_SEARCH.get(kind, [])
     if words:
         hits = [x for x in items if hit(x)]
-        area = re.search(r'area:\(([^)]*)\)', q)
+        # a place in an area ("place:(…) AND area:(…)"); [3.22.0] in a search of areas "area:" is the name itself
+        area = kind != 'area' and re.search(r'area:\(([^)]*)\)', q)
         if area:
             want = [fold(w) for w in area.group(1).split(' AND ') if w.strip()]
             hits = [x for x in hits if all(w in fold((x.get('area') or {}).get('name', '')).split() for w in want)]
@@ -697,7 +698,7 @@ def install_routes(ctx):
             ids = set(re.findall(r'arid:([0-9a-f-]{36})', q))
             return json_route(route, {'works': [dict(w, score=100) for w in WORK_SEARCH
                                                 if any(r.get('artist', {}).get('id') in ids for r in w.get('relations', []))]})
-        m = re.match(r'/ws/2/(artist|label|place)$', p)
+        m = re.match(r'/ws/2/(artist|label|place|area)$', p)
         if m:
             return json_route(route, ws_search(m.group(1), u.query))
         if p == '/ws/2/url':

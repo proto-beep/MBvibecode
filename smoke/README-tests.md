@@ -154,6 +154,11 @@ python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_c
                           # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
                           # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                           # with a studio's profile
+                          # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
+python3 t_areas.py        # text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
+                          # Gijón suggested by its alias "Xixón", no "Create", "recorded in" staged on the recordings); tracks by their
+                          # titles ("Piano in ‘A' and 'B' is a contribution by X", one letter off, "Not matched"); Bandcamp: titles of the
+                          # album, the area of the "about" text
 python3 t_mediaload.py    # the media dialog (3.20.0, 3.21.1): load the chosen media in the editor in the background – MB's editor built
                           # as MusicBrainz builds it (a.expand-medium#disc<n>, "Expand all mediums", "Load all tracks..."), a medium
                           # without a tracklist named, the works question there ("Not now", "Skip works matrix"), media 1 and 3 only,
