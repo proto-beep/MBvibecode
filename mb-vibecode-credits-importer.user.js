@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.21.2
+// @version      3.21.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -933,6 +933,8 @@
       "afterEdit.titleBg": "Credits Importer: after “Enter edit” MusicBrainz goes on to Harmony; the relationship editor of this release opens in a background tab with the import dashboard, which loads {links}. Harmony’s page also has “Edit relationships with Credits Importer”.",
       "settings.afterEdit": "Release editor: after “Enter edit”, open the relationship editor and start the import (the tick next to “Enter edit”)",
       "settings.afterEditBg": "Imported with Harmony (Bandcamp, Discogs): open it in a background tab, Harmony’s page stays in front",
+      "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
+      "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
       "harmony.opened": "– opened in a background tab",
       "harmony.link": "Edit relationships with Credits Importer",
       "harmony.title": "Opens “Edit relationships” of this release on MusicBrainz in a new tab; the import dashboard starts by itself and loads {links}",
@@ -2298,6 +2300,8 @@
       "afterEdit.titleBg": "Credits Importer: nach „Enter edit“ geht MusicBrainz weiter zu Harmony; der Beziehungs-Editor dieses Releases öffnet sich in einem Hintergrund-Tab mit dem Import-Dashboard, das {links} lädt. Auf Harmonys Seite steht außerdem „Edit relationships with Credits Importer“.",
       "settings.afterEdit": "Release-Editor: nach „Enter edit“ den Beziehungs-Editor öffnen und den Import starten (der Haken neben „Enter edit“)",
       "settings.afterEditBg": "Mit Harmony importiert (Bandcamp, Discogs): im Hintergrund-Tab öffnen, Harmonys Seite bleibt vorne",
+      "settings.webLinksShow": "Web-Links, die im Text neben Namen stehen, bei den Einträgen zeigen",
+      "settings.webLinksShowTitle": "Profile wie instagram.com/… oder open.spotify.com/artist/… neben einem Namen im eingefügten Text oder in Bandcamp-Credits. Sie werden auf jeden Fall gemerkt: „Artist anlegen …“ und „Label anlegen …“ tragen sie ein, und MusicBrainz wird nach Artists mit ihnen gefragt (nicht bei Streaming-Seiten).",
       "harmony.opened": "– im Hintergrund-Tab geöffnet",
       "harmony.link": "Beziehungen mit dem Credits Importer bearbeiten",
       "harmony.title": "Öffnet „Edit relationships“ dieses Releases auf MusicBrainz in einem neuen Tab; das Import-Dashboard startet von selbst und lädt {links}",
@@ -3421,7 +3425,7 @@
       "dir.work": "cada obra de las pistas seleccionadas",
       "link.mbTitle": "Abrir en MusicBrainz",
       "link.discogsTitle": "Abrir en {src}",
-      "link.webTitle": "Encontrado junto al nombre en el texto: se busca en MusicBrainz artistas con este enlace (solo una sugerencia) y «Crear artista …» lo rellena",
+      "link.webTitle": "Encontrado junto al nombre en el texto: se busca en MusicBrainz artistas con este enlace (solo una sugerencia) y «Crear artista…» lo rellena",
       "works.openAll.one": "Abrir {n} obra en una pestaña en segundo plano",
       "works.openAll.other": "Abrir {n} obras en pestañas en segundo plano",
       "works.openAllTitle": "Abre todas las obras enlazadas o preparadas para enlazar, sin salir de esta página",
@@ -3663,6 +3667,8 @@
       "afterEdit.titleBg": "Credits Importer: tras «Enter edit» MusicBrainz sigue a Harmony; el editor de relaciones de esta publicación se abre en una pestaña en segundo plano con el panel de importación, que carga {links}. La página de Harmony también tiene «Edit relationships with Credits Importer».",
       "settings.afterEdit": "Editor de publicaciones: tras «Enter edit», abrir el editor de relaciones e iniciar la importación (la casilla junto a «Enter edit»)",
       "settings.afterEditBg": "Importado con Harmony (Bandcamp, Discogs): abrirlo en una pestaña en segundo plano, la página de Harmony queda delante",
+      "settings.webLinksShow": "Mostrar en sus entradas los enlaces web que están junto a nombres en un texto",
+      "settings.webLinksShowTitle": "Perfiles como instagram.com/… u open.spotify.com/artist/… junto a un nombre en un texto pegado o en los créditos de Bandcamp. Se guardan de todos modos: «Crear artista…» y «Crear sello…» los rellenan, y se busca en MusicBrainz artistas con ellos (no con páginas de streaming).",
       "harmony.opened": "– abierto en una pestaña en segundo plano",
       "harmony.link": "Editar relaciones con Credits Importer",
       "harmony.title": "Abre «Edit relationships» de esta publicación en MusicBrainz en una pestaña nueva; el panel de importación se inicia solo y carga {links}",
@@ -4786,7 +4792,7 @@
       "dir.work": "chaque œuvre des pistes choisies",
       "link.mbTitle": "Ouvrir sur MusicBrainz",
       "link.discogsTitle": "Ouvrir sur {src}",
-      "link.webTitle": "Trouvé à côté du nom dans le texte : MusicBrainz est interrogé sur les artistes ayant ce lien (seulement une suggestion), et « Créer l’artiste … » le remplit",
+      "link.webTitle": "Trouvé à côté du nom dans le texte : MusicBrainz est interrogé sur les artistes ayant ce lien (seulement une suggestion), et « Créer l’artiste… » le remplit",
       "works.openAll.one": "Ouvrir {n} œuvre dans un onglet en arrière-plan",
       "works.openAll.other": "Ouvrir {n} œuvres dans des onglets en arrière-plan",
       "works.openAllTitle": "Ouvre toutes les œuvres liées ou prévues pour un lien, sans quitter cette page",
@@ -5028,6 +5034,8 @@
       "afterEdit.titleBg": "Credits Importer : après « Enter edit », MusicBrainz continue vers Harmony ; l’éditeur de relations de cette parution s’ouvre dans un onglet en arrière-plan avec le tableau de bord d’import, qui charge {links}. La page d’Harmony a aussi « Edit relationships with Credits Importer ».",
       "settings.afterEdit": "Éditeur de parution : après « Enter edit », ouvrir l’éditeur de relations et lancer l’import (la case près de « Enter edit »)",
       "settings.afterEditBg": "Importé avec Harmony (Bandcamp, Discogs) : l’ouvrir dans un onglet en arrière-plan, la page d’Harmony reste devant",
+      "settings.webLinksShow": "Afficher aux entrées les liens web trouvés à côté des noms dans un texte",
+      "settings.webLinksShowTitle": "Des profils comme instagram.com/… ou open.spotify.com/artist/… à côté d’un nom dans un texte collé ou les crédits Bandcamp. Ils sont gardés dans tous les cas : « Créer l’artiste… » et « Créer le label… » les remplissent, et MusicBrainz est interrogé sur les artistes qui les ont (pas pour les pages de streaming).",
       "harmony.opened": "– ouvert dans un onglet en arrière-plan",
       "harmony.link": "Modifier les relations avec Credits Importer",
       "harmony.title": "Ouvre « Edit relationships » de cette parution sur MusicBrainz dans un nouvel onglet ; le tableau de bord d’import démarre tout seul et charge {links}",
@@ -6175,8 +6183,8 @@
       show: () => ({ pattern: TEXT_IGNORE_LINE }) },
     { id: 'T031', where: 'TEXT_COURTESY, TEXT_QUOTED_TITLE', note: 'Texts (3.21.0): after a name "courtesy of …" ("by kind permission of …") is no name; a title in quotation marks with its year before "by" ("Cover art: “Madison” 1988 by X") is no part of the role',
       show: () => ({ pairs: [['courtesy', TEXT_COURTESY], ['title', TEXT_QUOTED_TITLE]] }) },
-    { id: 'T032', where: 'WEB_ADDRESS, SOCIAL_HOSTS, WEB_LABEL', note: 'Texts (3.21.0): web addresses are never part of a name; a profile on these sites after a name becomes a link of the entry (MusicBrainz is asked for it, "Create artist" fills it in); Linktree, e-mail and any other address are left out, as is a line of only addresses ("Contact: …")',
-      show: () => ({ pairs: [['address', WEB_ADDRESS], ['profiles', SOCIAL_HOSTS], ['words for them', WEB_LABEL]] }) },
+    { id: 'T032', where: 'WEB_ADDRESS, SOCIAL_HOSTS, WEB_LABEL', note: 'Texts (3.21.0): web addresses are never part of a name; a profile on these sites after a name becomes a link of the entry (MusicBrainz is asked for it, "Create artist" fills it in); Linktree, e-mail and any other address are left out, as is a line of only addresses ("Contact: …"). 3.21.3: artist pages of streaming services (Spotify, Apple Music, Deezer, Tidal, YouTube Music, Qobuz, Amazon Music) only for "Create artist" (STREAM_URL), profiles after a label or place for "Create label/place"; shown at the entry only with the setting',
+      show: () => ({ pairs: [['address', WEB_ADDRESS], ['profiles', SOCIAL_HOSTS], ['streaming (only "Create artist")', STREAM_URL], ['words for them', WEB_LABEL]] }) },
     { id: 'T034', where: 'FOREIGN_TERMS, foldWord', note: 'Texts (3.21.2): instruments and voices in German, Spanish and French, each spelling with its language (word@de, word@es,fr; the search field filters "@de") → the English term the register maps; a translation gets no role credit (S025), accents do not count',
       show: () => ({ pairs: FOREIGN_TERMS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
@@ -6431,7 +6439,9 @@
   // [T032] Texts (3.21.0): web addresses (never part of a name) and the sites whose profiles become links of an entry
   const WEB_ADDRESS = /(?:https?:\/\/)?(?:www\.)?(?:[a-z0-9-]+\.)+(?:com|net|org|info|biz|io|me|fm|tv|co|app|ee|be|de|at|ch|fr|es|it|nl|uk|us|ca|au|jp|se|no|dk|fi|pl|pt|ie|ru|br|mx|ar|cl|nz|online|site|store|music|band|art|studio|world|live|xyz|link|page|social)(?![a-z0-9-])(?:\/[^\s,;()<>“”"'\]]*)?/gi;
   const WEB_LABEL = /^(?:contact|kontakt|contacto|e-?mail|mail|correo|web|website|webseite|homepage|home page|site|site web|sitio web|info|infos|booking|follow(?:\s+(?:us|me))?|more|more info|links?|shop|store|orders?|bestellungen|pedidos)\b[\s:.\-–—]*(?:on|at|unter|en|sur)?[\s:]*$/i;
-  const SOCIAL_HOSTS = /^(?:instagram\.com|facebook\.com|fb\.com|twitter\.com|x\.com|soundcloud\.com|youtube\.com|tiktok\.com|bsky\.app|threads\.net|mixcloud\.com|vimeo\.com|myspace\.com|[a-z0-9-]+\.bandcamp\.com)$/i;
+  const SOCIAL_HOSTS = /^(?:instagram\.com|facebook\.com|fb\.com|twitter\.com|x\.com|soundcloud\.com|youtube\.com|tiktok\.com|bsky\.app|threads\.net|mixcloud\.com|vimeo\.com|myspace\.com|[a-z0-9-]+\.bandcamp\.com|open\.spotify\.com|music\.apple\.com|deezer\.com|tidal\.com|music\.youtube\.com|qobuz\.com|music\.amazon\.[a-z.]+)$/i;
+  // [3.21.3] artist pages of streaming services: kept only for "Create artist …" (not looked up in MusicBrainz, 37b)
+  const STREAM_URL = /^https:\/\/(?:open\.spotify\.com|music\.apple\.com|www\.deezer\.com|tidal\.com|music\.youtube\.com|www\.qobuz\.com|music\.amazon\.[a-z.]+)\//i;
 
   // [T033] Texts (3.21.0): ℗ and © at the start of a line (also both: "P + ©", "℗ & ©", "(P) & (C)"), and what is left out
   // after the name: a code of how it was recorded ("DDD"), a catalogue number after "·" or "|", "All rights reserved"
@@ -7321,6 +7331,29 @@
       if (host === 'mixcloud.com') return one ? `https://www.mixcloud.com/${one}/` : '';
       if (host === 'vimeo.com') return one && !/^\d+$/.test(one) ? `https://vimeo.com/${one}` : '';
       if (host === 'myspace.com') return one ? `https://myspace.com/${one}` : '';
+      // [3.21.3] artist pages of streaming services, in MusicBrainz's form (URLCleanup)
+      if (host === 'open.spotify.com') {
+        const q = p[0] && /^intl-/.test(p[0]) ? p.slice(1) : p;
+        return q.length === 2 && q[0] === 'artist' ? `https://open.spotify.com/artist/${q[1]}` : '';
+      }
+      if (host === 'music.apple.com') {
+        const cc = /^[a-z]{2}$/.test(p[0] || '') ? p[0] : 'us';
+        const q = /^[a-z]{2}$/.test(p[0] || '') ? p.slice(1) : p;
+        const id = q[0] === 'artist' ? (q[q.length - 1] || '').replace(/^id/, '') : '';
+        return /^\d+$/.test(id) ? `https://music.apple.com/${cc}/artist/${id}` : '';
+      }
+      if (host === 'deezer.com') {
+        const q = /^[a-z]{2}$/.test(p[0] || '') ? p.slice(1) : p;
+        return q.length === 2 && q[0] === 'artist' && /^\d+$/.test(q[1]) ? `https://www.deezer.com/artist/${q[1]}` : '';
+      }
+      if (host === 'tidal.com') {
+        const q = p[0] === 'browse' ? p.slice(1) : p;
+        return q.length === 2 && q[0] === 'artist' && /^\d+$/.test(q[1]) ? `https://tidal.com/artist/${q[1]}` : '';
+      }
+      if (host === 'music.youtube.com') return p.length === 2 && p[0] === 'channel' ? `https://music.youtube.com/channel/${p[1]}` : '';
+      if (host === 'qobuz.com') return p.includes('interpreter') ? `https://www.qobuz.com/${p.join('/')}` : '';
+      const amazon = host.match(/^music\.amazon\.([a-z.]+)$/);
+      if (amazon) return p[0] === 'artists' && p[1] ? `https://music.amazon.${amazon[1]}/artists/${p[1]}` : '';
       return '';
     }
 
@@ -7642,12 +7675,14 @@
             continue;
           }
           const c0 = credits.length;
+          const k0 = companies.length;
           const r = readUnit(web.text, scope, pi);
           pi += r.parts;
           found += r.found;
           unknownParts.push(...r.unknown);
           if (!r.found) missed.push(unit);
-          else if (web.links.length) giveLinks(web.links, credits.slice(c0));
+          // [3.21.3] also to labels and places ("℗ 2023 X Records instagram.com/x": "Create label …" fills it in, 37c)
+          else if (web.links.length) giveLinks(web.links, [...credits.slice(c0), ...companies.slice(k0)]);
         }
         if (!found) {
           if (missed.length) unrecognized.push(line0);
@@ -7966,6 +8001,8 @@
       const key = who.id ? `id:${who.id}` : `name:${norm(who.rawName || who.name)}`;
       if (!byKey.has(key)) byKey.set(key, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: [], ...(who.area ? { area: who.area } : {}) });
       const g = byKey.get(key);
+      // [3.21.3] a name without an id: the web profiles found next to it (T032)
+      if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
       if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), refs: [] });
       addSrcRef((same || g.roles[g.roles.length - 1]).refs, c);
@@ -12004,7 +12041,8 @@
    * ({ mbid, name, disambiguation, entityType, viaWeb }); each address asked with and without its "/" at the end.
    */
   async function webLinkHits(a) {
-    const urls = a.company || a.dId ? [] : (a.links || []).filter((u) => /^https?:\/\//i.test(u));
+    // [3.21.3] streaming pages only for "Create artist …" (37b)
+    const urls = a.company || a.dId ? [] : (a.links || []).filter((u) => /^https?:\/\//i.test(u) && !STREAM_URL.test(u));
     if (!urls.length) return [];
     const key = (u) => String(u || '').toLowerCase().replace(/\/+$/, '');
     const ask = uniq(urls.flatMap((u) => [u, /\/$/.test(u) ? u.replace(/\/+$/, '') : `${u}/`]));
@@ -12946,8 +12984,8 @@
     const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
     const sourceLink = a.dId && (a.links || [])[0]
       ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(tr('link.discogsTitle'))}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span>${esc(a.rawName || a.name)}</a>`
-      // [3.21.0] a name from a text: the web profiles found next to it (T032)
-      : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
+      // [3.21.0] a name from a text: the web profiles found next to it (T032); [3.21.3] only with the setting (off)
+      : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}" data-group="${a.key}">
@@ -15260,11 +15298,17 @@
       params.push([`edit-${entityType}.url.0.text`, srcUrlOf(company)]);
       params.push([`edit-${entityType}.url.0.link_type_id`, String(sourceUrlLtId(entityType))]);
     }
+    // [3.21.3] a name from a text: the web profiles found next to it (T032, 37c)
+    const web = company.dId ? [] : (company.links || []).filter((u) => /^https?:\/\//i.test(u));
+    web.forEach((u, i) => params.push([`edit-${entityType}.url.${i + (srcUrlOf(company) ? 1 : 0)}.text`, u]));
     params.push([`edit-${entityType}.edit_note`, [
       srcUrlOf(company) ? `Source: ${srcUrlOf(company)}` : '',
       prefilledBy(true),
     ].filter(Boolean).join('\n')]);
-    const info = `<p>${esc(tr('companyDlg.prefilled'))}</p><p>${esc(tr(entityType === 'place' ? 'companyDlg.checkPlace' : 'companyDlg.checkLabel'))}</p>`;
+    // [3.21.3] without a link of the source (a text): the name and the web links found next to it
+    const what = srcUrlOf(company) ? tr('companyDlg.prefilled')
+      : tr('artistDlg.prefilled', { list: [tr('part.name'), ...(web.length ? [tr('part.webUrls', { n: web.length })] : [])].join(', ') });
+    const info = `<p>${esc(what)}</p><p>${esc(tr(entityType === 'place' ? 'companyDlg.checkPlace' : 'companyDlg.checkLabel'))}</p>`;
     log('info', 'companyForm', { name: company.name, type: tr(`entity.${entityType}`) });
     openCreateDialog({
       title: tr(entityType === 'place' ? 'companyDlg.titlePlace' : 'companyDlg.titleLabel', { name: company.name }),
@@ -15599,6 +15643,8 @@
   S.worksLookups = null;
   // [3.19.3] the rows skipped with the works matrix shown with their entries (setting, on; only "off" is stored)
   S.mxSkipRows = readJson('localStorage', 'dci-mx-skiprows', true) !== false;
+  // [3.21.3] the web profiles found next to names in a text are shown at their entries only with this setting (off)
+  S.webLinksShow = readJson('localStorage', 'dci-weblinks-show', false) === true;
   S.mxMenu = null;
   S.pubRels = new Map();
   S.workRowOpts = new Map();
@@ -20255,7 +20301,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-scale', 'dci-place', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY, 'dci-weblinks-show'],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap'],
@@ -20292,6 +20338,8 @@
         // [3.19.2] the tick of the release editor and, imported with Harmony, the background tab
         row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_KEY, false) === true, tr('settings.afterEdit'))),
         row(check('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'))),
+        // [3.21.3] web profiles next to names in a text
+        row(check('data-set="weblinks-show"', S.webLinksShow, tr('settings.webLinksShow'), tr('settings.webLinksShowTitle'))),
       ],
       discogs: () => [row(syncModeHtml()), `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`],
       works: () => [
@@ -20398,6 +20446,11 @@
       if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_KEY, el.checked || null);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'weblinks-show') {
+      S.webLinksShow = el.checked;
+      writeJson('localStorage', 'dci-weblinks-show', el.checked || null);
+      log('info', 'settingValue', { what: tr('settings.webLinksShow'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderGroups();
     } else if (k === 'mx-skiprows') {
       S.mxSkipRows = el.checked;
       writeJson('localStorage', 'dci-mx-skiprows', el.checked ? null : false);
@@ -20429,8 +20482,9 @@
       if (S.place !== 'window') setPlace('window');
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'sources') {
-      Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
+      Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true, webLinksShow: false });
       renderSource();
+      renderGroups();
     } else if (t === 'discogs') {
       Object.assign(S, { syncMode: 'click', dgStatus: true, dgHover: true, dgRelease: true, dgArtwork: true, clickToggle: true, keepMarks: false });
       renderSync();
@@ -20458,7 +20512,7 @@
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows'];
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show'];
 
   function renderReset() {
     if (!S.overlay) return;
@@ -20493,7 +20547,7 @@
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
-      awOn: true, settingsOpen: false, mxSkipRows: true,
+      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false,
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
