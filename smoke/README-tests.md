@@ -144,6 +144,8 @@ python3 t_manualtop.py    # "Add entry manually" as one line above the date pool
 python3 t_afteredit.py    # "open relationship editor and start import dashboard" in the release editor (3.19.0): only on "Edit note" with a
                           # Discogs/Bandcamp link, not ticked, ticked (remembered) → relationship editor with the dashboard, an error, "Add
                           # release" with a Bandcamp link typed in (German, loaded at once), other release pages untouched
+python3 t_foreign.py      # instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
+                          # "saxo tenor y soprano", "y" between names, "bajo" asks like "Bass", "Alto" asks (viola …), T034 in the window
 python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                           # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                           # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via

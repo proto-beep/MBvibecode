@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-23 | 3.21.1 | – |
+| 2026-10-23 | 3.21.1 – 3.21.2 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
 | 2026-10-17 | 3.11.0 – 3.17.2 | 1.8.0 – 1.8.1 |
@@ -78,6 +78,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-23
+
+### Import 3.21.2
+
+#### Added
+
+- **Instruments and voices in German, Spanish and French** (collected item 43; maintainer: "für die texterkennung brauchen wir außerdem erst einmal spanische, französische und deutsche instrumentenbezeichnungen"): "Schlagzeug", "Guitarra eléctrica", "contrebasse", "Gesang", "voz", "Coros", "chœurs", "Klavier", "Orgel", "Geige", "Bratsche", "Querflöte", "saxo tenor" … (about 220 spellings of 61 instruments and voices) are read as their English terms and mapped like them. Each spelling carries its language (maintainer: "ob sich das auch durch eine art identifier vor dem eintrag lösen lassen würde … "[Kontrabass]@de""): `Kontrabass@de`, `contrabajo@es`, `contrebasse@fr` – table T034 in "Mapping rules", whose search finds a language ("@fr"). Accents do not count.
+- **No role credit for a translation** (maintainer: "Flügel ist immer "grand piano" und batterie ist immer "drums (drum set)" hier nicht den role credit "drums" da es sich um eine übersetzung handelt und wir das MB standardvokabular benutzen"): rule S025.
+- **Questions for words that differ by language** (maintainer: "ja bitte nachfragen wie bei bass"): "bajo" and "basse" ask like "Bass" (and say that there is no role credit); "Alto" alone asks viola · alto saxophone · alto vocals (R102, Q006) – nothing is assumed.
+- **Spanish and French word order:** the kind after the instrument is shared ("saxo tenor y soprano" → tenor saxophone, soprano saxophone); "y" separates roles and names ("guitarra y voz", "Coros: Lucía y Marta"; a capital "Y" in a name stays).
+
 
 ### Import 3.21.1
 

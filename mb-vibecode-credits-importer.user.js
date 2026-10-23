@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.21.1
+// @version      3.21.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1175,6 +1175,7 @@
       "datefind.alsoRangeTitleAny": "The pool gets the days as the source gives them and also the period from the first to the last day; in the matrix you choose which to use",
       "pools.reloadAny": "↻ load again from the source ({src})",
       "instrAsk.otherwise": "(otherwise it stays “{credit}”, without a role credit; with another choice the role credit is “{credit}”)",
+      "instrAsk.otherwiseTr": "(otherwise it stays “{credit}”; “{word}” is a translation, so there is no role credit)",
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
       "rules.questions": "Instrument questions",
       "rules.options": "Choices",
@@ -1451,6 +1452,7 @@
       "rules.gotoTitle": "Click: show this rule in “Mapping rules”",
       "typeAsk.ask": "“{role}” is not always conducting – please choose:",
       "typeAsk.askText": "“{role}” can be liner notes (an essay in the booklet) or the lyrics – please choose:",
+      "typeAsk.askAlto": "“{role}” alone: the viola (Spanish, French), an alto saxophone or an alto voice? – please choose:",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
       "typeAsk.pending": "Until you choose, the row is not added.",
       "log.typePicked": "“{role}” chosen as {type}",
@@ -2538,6 +2540,7 @@
       "datefind.alsoRangeTitleAny": "Der Pool bekommt die Tage wie in der Quelle und zusätzlich den Zeitraum vom ersten bis zum letzten Tag; in der Matrix wählst du, was gilt",
       "pools.reloadAny": "↻ aus der Quelle neu laden ({src})",
       "instrAsk.otherwise": "(sonst bleibt es „{credit}“, ohne Rollen-Credit; bei einer anderen Wahl ist der Rollen-Credit „{credit}“)",
+      "instrAsk.otherwiseTr": "(sonst bleibt es „{credit}“; „{word}“ ist eine Übersetzung, daher kein Rollen-Credit)",
       "log.instrPicked": "{name}: {instrument} (Rollen-Credit „{credit}“)",
       "rules.questions": "Instrument-Nachfragen",
       "rules.options": "Auswahl",
@@ -2814,6 +2817,7 @@
       "rules.gotoTitle": "Klick: diese Regel in „Mapping-Regeln“ zeigen",
       "typeAsk.ask": "„{role}“ ist nicht immer Dirigieren – bitte wählen:",
       "typeAsk.askText": "„{role}“ kann Liner Notes (ein Text im Booklet) oder der Liedtext sein – bitte wählen:",
+      "typeAsk.askAlto": "„{role}“ allein: die Bratsche (spanisch, französisch), ein Altsaxophon oder eine Altstimme? – bitte wählen:",
       "typeAsk.chosen": "„{role}“ – gewählt (zum Ändern ein anderes anklicken):",
       "typeAsk.pending": "Bis zur Wahl wird die Zeile nicht übernommen.",
       "log.typePicked": "„{role}“ als {type} gewählt",
@@ -3901,6 +3905,7 @@
       "datefind.alsoRangeTitleAny": "Las fechas guardadas reciben los días tal como los da la fuente y además el periodo del primero al último día; en la matriz eliges cuál usar",
       "pools.reloadAny": "↻ volver a cargar de la fuente ({src})",
       "instrAsk.otherwise": "(si no, queda «{credit}», sin crédito del rol; con otra elección el crédito del rol es «{credit}»)",
+      "instrAsk.otherwiseTr": "(si no, queda «{credit}»; «{word}» es una traducción, así que no hay crédito de rol)",
       "log.instrPicked": "{name}: {instrument} (crédito del rol «{credit}»)",
       "rules.questions": "Preguntas de instrumento",
       "rules.options": "Opciones",
@@ -4177,6 +4182,7 @@
       "rules.gotoTitle": "Clic: mostrar esta regla en «Reglas de asignación»",
       "typeAsk.ask": "«{role}» no siempre es dirección de orquesta – elige:",
       "typeAsk.askText": "«{role}» pueden ser notas de presentación (un texto en el libreto) o la letra – elige:",
+      "typeAsk.askAlto": "«{role}» solo: la viola (en español y francés), un saxofón alto o una voz de alto? – elige:",
       "typeAsk.chosen": "«{role}» – elegido (haz clic en otro para cambiar):",
       "typeAsk.pending": "Hasta que elijas, la fila no se añade.",
       "log.typePicked": "«{role}» elegido como {type}",
@@ -5264,6 +5270,7 @@
       "datefind.alsoRangeTitleAny": "Les dates enregistrées reçoivent les jours tels que la source les donne et aussi la période du premier au dernier jour ; dans la matrice, vous choisissez lesquels utiliser",
       "pools.reloadAny": "↻ recharger depuis la source ({src})",
       "instrAsk.otherwise": "(sinon cela reste « {credit} », sans crédit du rôle ; avec un autre choix le crédit du rôle est « {credit} »)",
+      "instrAsk.otherwiseTr": "(sinon, cela reste « {credit} » ; « {word} » est une traduction, il n’y a donc pas de crédit de rôle)",
       "log.instrPicked": "{name} : {instrument} (crédit du rôle « {credit} »)",
       "rules.questions": "Questions d’instrument",
       "rules.options": "Choix",
@@ -5540,6 +5547,7 @@
       "rules.gotoTitle": "Clic : afficher cette règle dans « Règles de correspondance »",
       "typeAsk.ask": "« {role} » n’est pas toujours de la direction d’orchestre – veuillez choisir :",
       "typeAsk.askText": "« {role} » peut être des notes de pochette (un texte dans le livret) ou les paroles – veuillez choisir :",
+      "typeAsk.askAlto": "« {role} » seul : l’alto (l’instrument à cordes, comme « alto » en espagnol), un saxophone alto ou une voix d’alto ? – veuillez choisir :",
       "typeAsk.chosen": "« {role} » – choisi (cliquer sur un autre pour changer) :",
       "typeAsk.pending": "Tant que rien n’est choisi, la ligne n’est pas ajoutée.",
       "log.typePicked": "« {role} » choisi comme {type}",
@@ -5762,6 +5770,7 @@
     { id: 'S023', where: 'dropTracksOnMatrix', note: 'A track group dropped onto the works matrix: onto an attribute in the head of the track column (the links of these tracks get it, the others lose it), onto a role of a column (that role only for the works of these tracks) or onto a column head (all its roles); with Shift added instead. Relationships and attributes already in MusicBrainz stay' },
     { id: 'S024', where: 'suggestCommissioned', note: '"Commissioned By" (R099, C037) without a track list: "commissioned" is suggested on all works (dashed, yellow; ✓ keeps it, × takes it out, it is staged like the others). With a track list it is set on the works of those tracks' },
     { id: 'S019', where: 'repeatedDetails', note: 'Details that only repeat the role in another word form are no role credit: "Mixed By [Mixing]", "Mastered By [Mastering]", "Music By [All Music By]", "Recorded By [Recording]"; "[Cover Photo]" stays' },
+    { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
 
@@ -5786,6 +5795,12 @@
         { type: 'chorus master', level: 'recording' },
         { type: 'creative direction', level: 'release' },
         { type: 'misc', level: 'recording', task: 'director', label: 'miscellaneous support (task “director”)' },
+      ] },
+    { id: 'Q006', base: 'alto', rule: 'R102', ask: 'typeAsk.askAlto', note: '"Alto" alone (3.21.2): the viola (Spanish, French), an alto saxophone or an alto voice? Nothing is assumed, no role credit',
+      options: [
+        { type: 'instrument', level: 'recording', instrument: 'viola', label: 'viola' },
+        { type: 'instrument', level: 'recording', instrument: 'alto saxophone', label: 'alto saxophone' },
+        { type: 'vocal', level: 'recording', instrument: 'alto vocals', label: 'alto vocals' },
       ] },
     { id: 'Q005', base: 'text', rule: 'R100', ask: 'typeAsk.askText', note: '"Text" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German "Text" is the lyrics)? Nothing is assumed',
       options: [
@@ -5911,6 +5926,7 @@
     { id: 'R055', kind: 'simple', note: "", re: /^(conductor|conducted by)$/, types: ['conductor'], level: 'recording' },
     { id: 'R056', kind: 'simple', note: "", re: /^(music director|musical director)$/, types: ['conductor'], level: 'recording', credit: true },
     { id: 'R097', kind: 'special', note: "\"Directed By\" is not always conducting: no type is assumed, the dashboard asks (Q003)", re: /^directed by$/, types: [], level: 'recording' },
+    { id: 'R102', kind: 'special', note: "\"Alto\" alone: in Spanish and French the viola, in English an alto saxophone or an alto voice – nothing is assumed, the dashboard asks (Q006); no role credit (3.21.2)", re: /^alto$/, types: [], level: 'recording' },
     { id: 'R100', kind: 'special', note: "\"Text\" alone: liner notes (an essay in the booklet) or the lyrics (German \"Text\")? No type is assumed, the dashboard asks (Q005, 3.21.0)", re: /^text$/, types: [], level: 'release' },
     { id: 'R057', kind: 'simple', note: "", re: /^(chorus master|choirmaster|choir master|chorus director|choir director)$/, types: ['chorus master'], level: 'recording' },
     { id: 'R058', kind: 'simple', note: "", re: /^(concertmaster|concertmistress)$/, types: ['concertmaster'], level: 'recording' },
@@ -6058,6 +6074,7 @@
       return out(['arranger']);
     } },
       R097: { run: () => out([], { notes: ['askType'] }) },
+      R102: { run: () => ({ ...out([], { notes: ['askType'] }), translated: 'alto' }) },
       R100: { run: () => out([], { notes: ['askType'] }) },
       R062: { test: () => /\bdesign(ed|s)?\b/.test(allWords) && !/\bgraphic/.test(allWords), run: () => {
       ms.forEach((x) => consumed.add(x));
@@ -6120,7 +6137,7 @@
       show: () => ({ pairs: [['names', TEXT_NAME_SEP], ['roles', TEXT_ROLE_SEP], ['shared instrument word', TEXT_AND_SEP]] }) },
     { id: 'T010', where: 'TEXT_TRACK_WORDS', note: 'Texts: words for tracks ("Tracks 3–5:", "(tracks 1, 4)"; also German, Spanish, French)', show: () => ({ pattern: TEXT_TRACK_WORDS }) },
     { id: 'T011', where: 'INSTRUMENT_MODIFIER', note: 'Texts: words that name a kind of an instrument and share its noun ("tenor & soprano sax" → tenor and soprano saxophone)',
-      show: () => ({ pattern: INSTRUMENT_MODIFIER }) },
+      show: () => ({ pairs: [['before (English)', INSTRUMENT_MODIFIER], ['after (Spanish, French; 3.21.2)', INSTRUMENT_MODIFIER_AFTER]] }) },
     { id: 'T012', where: 'PRIVATE_PLACE', note: 'Texts: private places that are no MusicBrainz place ("recorded at home", "at my place")', show: () => ({ pattern: PRIVATE_PLACE }) },
     { id: 'T013', where: 'TEXT_COMPANY_RE', note: 'Texts: roles that name a company (published by, recorded at, ℗ / ©); other "… by" are people', show: () => ({ pattern: TEXT_COMPANY_RE }) },
     { id: 'T014', where: 'MONTH_NAMES, ORDINALS, TEXT_MONTHS', note: 'Dates: month names (English, German, Spanish, French) and ordinal words (D004, D005)',
@@ -6160,6 +6177,8 @@
       show: () => ({ pairs: [['courtesy', TEXT_COURTESY], ['title', TEXT_QUOTED_TITLE]] }) },
     { id: 'T032', where: 'WEB_ADDRESS, SOCIAL_HOSTS, WEB_LABEL', note: 'Texts (3.21.0): web addresses are never part of a name; a profile on these sites after a name becomes a link of the entry (MusicBrainz is asked for it, "Create artist" fills it in); Linktree, e-mail and any other address are left out, as is a line of only addresses ("Contact: …")',
       show: () => ({ pairs: [['address', WEB_ADDRESS], ['profiles', SOCIAL_HOSTS], ['words for them', WEB_LABEL]] }) },
+    { id: 'T034', where: 'FOREIGN_TERMS, foldWord', note: 'Texts (3.21.2): instruments and voices in German, Spanish and French, each spelling with its language (word@de, word@es,fr; the search field filters "@de") → the English term the register maps; a translation gets no role credit (S025), accents do not count',
+      show: () => ({ pairs: FOREIGN_TERMS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
@@ -6274,15 +6293,101 @@
   // [T009] Texts: names in a list ("A, B & C", "A and B", "A / B"), roles in a list ("guitar, vocals", "mixed and
   // mastered"), and the separators after which a shared instrument word goes to the word before ("tenor & soprano sax")
   const TEXT_NAME_SEP = /\s*(?:,|&|\+|\/|;|\band\b|\bund\b|\bet\b)\s*/i;
-  const TEXT_ROLE_SEP = /\s*(?:,|&|\+|\/|\band\b|\bund\b|\bet\b)\s*/i;
-  const TEXT_AND_SEP = /^(&|\+|\/|and|und|et)$/;
+  // [3.21.2] Spanish "y" between names only in small letters ("Kevin Y Lee" keeps its initial)
+  const TEXT_NAME_SEP_Y = /\s+y\s+/;
+  const TEXT_ROLE_SEP = /\s*(?:,|&|\+|\/|\band\b|\bund\b|\bet\b)\s*|\s+y\s+/i;
+  const TEXT_AND_SEP = /^(&|\+|\/|and|und|et|y)$/;
 
   // [T010] Texts: words for tracks ("Tracks 3–5:", "(tracks 1, 4)", "on track 2"; German, Spanish, French)
   const TEXT_TRACK_WORDS = '(?:tracks?|titles?|songs?|stücke?|pistas?|plages?|morceaux)';
 
+  // [T034] Texts (3.21.2): instruments and voices in German, Spanish and French. Each spelling carries its language
+  // (word@de, word@es,fr), several in a cell; the English term is what the register maps (as Discogs writes it). A
+  // translation gets no role credit – MusicBrainz's own names are used (S025). Spellings are compared without accents
+  // and with ß as ss ("electrica" = "eléctrica"). Words that differ by language ("alto": viola in Spanish and French)
+  // are asked (R102, Q006); "Bass", "bajo", "basse" ask like "Bass" (Q001).
+  const FOREIGN_TERMS = [
+    ['Vocals', 'Gesang@de; Stimme@de; Gesang und Stimme@de; voz@es; voces@es; canto@es; chant@fr; voix@fr'],
+    ['Lead Vocals', 'Leadgesang@de; Hauptgesang@de; Lead-Gesang@de; voz principal@es; voz solista@es; chant principal@fr; voix principale@fr; voix lead@fr'],
+    ['Backing Vocals', 'Hintergrundgesang@de; Backgroundgesang@de; Begleitgesang@de; Background-Gesang@de; coros@es; voces de fondo@es; chœurs@fr; choeurs@fr'],
+    ['Choir', 'Chor@de; coro@es; chœur@fr; choeur@fr'],
+    ['Voice', 'Sprecher@de; Sprecherin@de; Erzähler@de; Erzählerin@de; narrador@es; narradora@es; voz hablada@es; récitant@fr; récitante@fr; narrateur@fr; narratrice@fr'],
+    ['Drums', 'Schlagzeug@de; batería@es; batterie@fr'],
+    ['Percussion', 'Perkussion@de; Schlagwerk@de; percusión@es; percusiones@es; percussions@fr'],
+    ['Grand Piano', 'Flügel@de; Konzertflügel@de; piano de cola@es; piano à queue@fr'],
+    ['Piano', 'Klavier@de'],
+    ['Electric Piano', 'E-Piano@de; Elektrisches Klavier@de; piano eléctrico@es; piano électrique@fr'],
+    ['Keyboards', 'teclado@es; teclados@es; clavier@fr; claviers@fr'],
+    ['Organ', 'Orgel@de; órgano@es; orgue@fr'],
+    ['Hammond Organ', 'Hammondorgel@de; Hammond-Orgel@de; órgano Hammond@es; orgue Hammond@fr'],
+    ['Harpsichord', 'Cembalo@de; clavecín@es; clavecin@fr'],
+    ['Synthesizer', 'sintetizador@es; sintetizadores@es; synthétiseur@fr; synthétiseurs@fr; synthé@fr'],
+    ['Accordion', 'Akkordeon@de; Ziehharmonika@de; acordeón@es; accordéon@fr'],
+    ['Bandoneon', 'bandoneón@es; bandonéon@fr'],
+    ['Harmonica', 'Mundharmonika@de; armónica@es'],
+    ['Guitar', 'Gitarre@de; Gitarren@de; guitarra@es; guitarras@es; guitare@fr; guitares@fr'],
+    ['Acoustic Guitar', 'Akustikgitarre@de; Akustische Gitarre@de; Westerngitarre@de; guitarra acústica@es; guitare acoustique@fr'],
+    ['Electric Guitar', 'E-Gitarre@de; Elektrische Gitarre@de; Elektrogitarre@de; guitarra eléctrica@es; guitare électrique@fr'],
+    ['Classical Guitar', 'Konzertgitarre@de; Klassische Gitarre@de; guitarra clásica@es; guitarra española@es; guitare classique@fr'],
+    ['Bass', 'bajo@es; basse@fr'],
+    ['Electric Bass', 'E-Bass@de; bajo eléctrico@es; basse électrique@fr'],
+    ['Double Bass', 'Kontrabass@de; contrabajo@es; contrebasse@fr'],
+    ['Violin', 'Violine@de; Geige@de; violín@es; violon@fr'],
+    ['Viola', 'Bratsche@de'],
+    ['Cello', 'Violoncello@de; violonchelo@es; chelo@es; violoncelle@fr'],
+    ['Harp', 'Harfe@de; arpa@es; harpe@fr'],
+    ['Flute', 'Flöte@de; Querflöte@de; flauta@es; flauta travesera@es; flûte@fr; flûte traversière@fr'],
+    ['Piccolo Flute', 'Piccoloflöte@de; Pikkoloflöte@de; flautín@es'],
+    ['Recorder', 'Blockflöte@de; flauta dulce@es; flûte à bec@fr'],
+    ['Oboe', 'hautbois@fr'],
+    ['Clarinet', 'Klarinette@de; clarinete@es; clarinette@fr'],
+    ['Bass Clarinet', 'Bassklarinette@de; clarinete bajo@es; clarinette basse@fr'],
+    ['Bassoon', 'Fagott@de; fagot@es; basson@fr'],
+    ['Saxophone', 'Saxophon@de; Saxofon@de; saxofón@es; saxo@es'],
+    ['Soprano Saxophone', 'Sopransaxophon@de; Sopransaxofon@de; saxo soprano@es; saxofón soprano@es; saxophone soprano@fr'],
+    ['Alto Saxophone', 'Altsaxophon@de; Altsaxofon@de; saxo alto@es; saxofón alto@es; saxophone alto@fr'],
+    ['Tenor Saxophone', 'Tenorsaxophon@de; Tenorsaxofon@de; saxo tenor@es; saxofón tenor@es; saxophone ténor@fr'],
+    ['Baritone Saxophone', 'Baritonsaxophon@de; Baritonsaxofon@de; saxo barítono@es; saxofón barítono@es; saxophone baryton@fr'],
+    ['Trumpet', 'Trompete@de; trompeta@es; trompette@fr'],
+    ['Flugelhorn', 'fliscorno@es; bugle@fr'],
+    ['Cornet', 'Kornett@de; corneta@es; cornet à pistons@fr'],
+    ['Trombone', 'Posaune@de; trombón@es'],
+    ['French Horn', 'Waldhorn@de; trompa@es; cor@fr; cor d’harmonie@fr'],
+    ['Vibraphone', 'Vibraphon@de; vibráfono@es'],
+    ['Xylophone', 'Xylophon@de; xilófono@es'],
+    ['Cymbal', 'Becken@de; platillos@es; cymbales@fr'],
+    ['Snare Drum', 'Kleine Trommel@de; caja@es; caisse claire@fr'],
+    ['Bass Drum', 'Große Trommel@de; bombo@es; grosse caisse@fr'],
+    ['Tambourine', 'Tamburin@de; Schellenkranz@de; pandereta@es'],
+    ['Congas', 'tumbadoras@es'],
+    ['Handclaps', 'Klatschen@de; palmas@es'],
+    ['Mandolin', 'Mandoline@de; mandolina@es; mandoline@fr'],
+    ['Lute', 'Laute@de; laúd@es; luth@fr'],
+    ['Zither', 'cítara@es; cithare@fr'],
+    ['Bagpipes', 'Dudelsack@de; gaita@es; cornemuse@fr'],
+    ['Melodica', 'Melodika@de; melódica@es; mélodica@fr'],
+    ['Strings', 'Streicher@de; cuerdas@es; cordes@fr'],
+    ['Electronics', 'Elektronik@de; electrónica@es; électronique@fr'],
+  ];
+  /** [T034] A spelling as compared: lower case, without accents, ß as ss, ’ as '. */
+  const foldWord = (t) => norm(t).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss').replace(/[’`]/g, "'");
+  const FOREIGN_INDEX = (() => {
+    const map = new Map();
+    for (const [term, cell] of FOREIGN_TERMS) {
+      for (const part of cell.split(/\s*;\s*/)) {
+        const m = part.match(/^(.+?)@([a-z]{2}(?:,[a-z]{2})*)$/);
+        if (m) map.set(foldWord(m[1]), { term, word: m[1], langs: m[2].split(',') });
+      }
+    }
+    return map;
+  })();
+
   // [T011] Texts (3.6.0): words that name a kind of an instrument and share its noun; not "bass" ("bass & electric
   // guitar" are two)
   const INSTRUMENT_MODIFIER = /^(sopranino|soprano|alto|tenor|baritone|bari|contrabass|acoustic|electric|classical|slide|fretless|upright|prepared|toy|grand|12-string|twelve-string|nylon-string|steel-string)$/i;
+  // [3.21.2] Spanish and French put the kind after the instrument and share the instrument before it ("saxo tenor y
+  // soprano" → saxo tenor, saxo soprano)
+  const INSTRUMENT_MODIFIER_AFTER = /^(sopranino|soprano|alto|tenor|ténor|barítono|baritono|baryton|bajo|basse|eléctrica|electrica|eléctrico|electrico|électrique|electrique|acústica|acustica|acústico|acustico|acoustique|clásica|clasica|classique)$/i;
 
   // [T012] Texts (3.7.0): "home", "home during lockdown", "my place", "their own living room" – a private place, not
   // one of MusicBrainz
@@ -6484,7 +6589,8 @@
   /** The question for a row: Discogs gives only the family word, without details other than checkboxes. */
   function questionRuleFor(row) {
     if (!ruleOn('S005') || remainingMods(row).length) return null;
-    return QUESTION_RULES.find((q) => ruleOn(q.id) && norm(row.base) === q.base) || null;
+    // [3.21.2] a translation asks like its English term ("bajo", "basse" like "Bass")
+    return QUESTION_RULES.find((q) => ruleOn(q.id) && norm(row.translatedBase || row.base) === q.base) || null;
   }
 
   // [S010]
@@ -6506,7 +6612,12 @@
    * recording: the role is mapped without it and goes on the release.
    */
   // [S003]
-  function mapRole(baseIn, modsIn) {
+  function mapRole(baseIn, modsIn, { noTranslation = false } = {}) {
+    // [S025, T034] a German, Spanish or French instrument or voice: mapped as its English term, without role credit
+    const tr0 = ruleOn('S025') && !noTranslation ? FOREIGN_INDEX.get(foldWord(baseIn)) : null;
+    if (tr0 && foldWord(tr0.term) !== foldWord(baseIn)) {
+      return { ...mapRole(tr0.term, modsIn, { noTranslation: true }), base: String(baseIn || '').trim(), translated: tr0.word, translatedBase: tr0.term, langs: tr0.langs };
+    }
     const m = String(baseIn || '').match(/^\s*(cd|cds|lp|lps|dvd|vinyl|cassette|sacd|blu-?ray|album)\s+(.+)$/i);
     if (m && ruleOn('S003') && !/design/i.test(baseIn)) {
       const res = mapRoleInner(m[2], modsIn);
@@ -7317,7 +7428,7 @@
        */
       const splitRoles = (side) => {
         // "and" only between words ("sticks-and-stones" stays one)
-        const tokens = String(side || '').split(/\s*(,|&|\+|\/|(?<=\s)(?:and|und|et)(?=\s))\s*/i);
+        const tokens = String(side || '').split(/\s*(,|&|\+|\/|(?<=\s)(?:and|und|et|y)(?=\s))\s*/i);
         const parts = [];
         const seps = [];
         for (let i = 0; i < tokens.length; i += 2) {
@@ -7334,13 +7445,20 @@
             parts[j] = `${parts[j]} ${noun}`;
           }
         }
+        // [3.21.2] the kind after the instrument (Spanish, French): "saxo tenor y soprano", "guitarra eléctrica y acústica"
+        for (let i = 1; i < parts.length; i++) {
+          const prev = parts[i - 1].split(' ');
+          if (parts[i].split(' ').length !== 1 || !INSTRUMENT_MODIFIER_AFTER.test(parts[i]) || prev.length < 2 || !INSTRUMENT_MODIFIER_AFTER.test(prev[prev.length - 1])) continue;
+          const joined = `${prev.slice(0, -1).join(' ')} ${parts[i]}`;
+          if (isRole(joined)) parts[i] = joined;
+        }
         return parts.filter(Boolean);
       };
       const roleParts = (side) => {
         const parts = splitRoles(side);
         return { parts, known: parts.filter(isRole), unknown: parts.filter((x) => !isRole(x)) };
       };
-      const names = (side) => side.split(TEXT_NAME_SEP).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
+      const names = (side) => side.split(TEXT_NAME_SEP).flatMap((n) => n.split(TEXT_NAME_SEP_Y)).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
 
       /**
        * [3.21.0] The credits of one sentence of a line (mostly the whole line), its track list given (scope); pi: the
@@ -9130,6 +9248,8 @@
     // [S009] No Discogs brackets in role credits: the details come before the role ("tour coordinator")
     if (task) return details ? (ruleOn('S009') ? `${details} ${task}` : `${task} [${details}]`) : task;
     if (details) return details;
+    // [S025] a translation ("Schlagzeug", "batería") gets no role credit: MusicBrainz's own name is used
+    if (row.translated && ruleOn('S025')) return '';
     // Discogs "Bass" keeps "bass" as role credit, whichever bass it turns out to be
     const question = questionRuleFor(row); // [S005] [Q001 …]
     // (no credit that only repeats the instrument: "Bass Guitar" left as bass guitar)
@@ -9254,7 +9374,7 @@
       m = mapRole(row.dBase, row.mods);
     }
     Object.assign(row, { types: m.types, notes: m.notes || [], work: m.work, primaryCands: m.primaryCands || [], consumed: m.consumed || [], defaultLevel: m.level,
-      creditFromRole: m.credit || '', ruleId: m.rule || '', linkTypeId: null });
+      creditFromRole: m.credit || '', ruleId: m.rule || '', linkTypeId: null, translated: m.translated || '', translatedBase: m.translatedBase || '' });
     if (!row.company && m.base) row.base = m.base;
     row.flags = new Set((m.flags || []).map(norm));
     if (!row.levelTouched) row.level = m.level;
@@ -9267,6 +9387,8 @@
     if (o) {
       Object.assign(row, { types: [o.type], creditFromRole: o.task || '' });
       resolveRowType(row);
+      // [Q006] with its instrument or voice
+      if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
     } else if (!tq) {
       delete row.typeAnswer;
     }
@@ -9343,6 +9465,8 @@
     };
     row.creditFromRole = m.credit || '';
     row.ruleId = m.rule || '';
+    // [S025] a translation (T034): the word as written and the English term it stands for
+    if (m.translated) Object.assign(row, { translated: m.translated, translatedBase: m.translatedBase || '' });
     if (!company && typeof dBase === 'string') row.dBase = dBase;
     resolveRowType(row);
     row.primaryText = pickPrimary(row);
@@ -11580,7 +11704,8 @@
     if (m.rule && m.rule !== 'R096' && !m.fallback) return true;
     const lt = typesFor('recording').find((l) => norm(l.name) === 'instrument');
     const root = lt ? primaryRootOf(lt) : null;
-    return !!root && instrumentCandidates(p.base, p.mods).some((c) => findChildAttr(root.id, c));
+    // [3.21.2] a translation: the candidates of its English term
+    return !!root && uniq([...(m.primaryCands || []), ...instrumentCandidates(p.base, p.mods)]).some((c) => findChildAttr(root.id, c));
   }
 
   const isTextCompanyRole = (role) => TEXT_COMPANY_RE.test(norm(role)) && !!mapCompanyRole(role).rule;
@@ -14595,7 +14720,7 @@
     if (row.level === 'skip' || !q || !lt || !primaryRootOf(lt) || norm(row.primaryText) !== q.base) return '';
     const pick = (name) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}">${esc(name)}</button>`;
     return `<div class="dci-bass-ask" data-question="${q.id}">${esc(trSrc('instrAsk.ask', { name: row.base }))} ${q.options.map(pick).join(' · ')}
-      <span class="dci-sub">${esc(tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
+      <span class="dci-sub">${esc(row.translated ? tr('instrAsk.otherwiseTr', { credit: q.credit, word: row.translated }) : tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
 
   /** [Q003 …] The type is asked (e.g. "Directed By"): the options, the chosen one pressed; until then "please choose". */
@@ -17956,6 +18081,7 @@
       Object.assign(row, {
         raw, base: parsed.base, mods: parsed.mods, consumed: m.consumed, types: m.types, notes: m.notes, work: m.work,
         primaryCands: m.primaryCands, flags: new Set(m.flags.map(norm)), creditFromRole: m.credit || '', defaultLevel: m.level,
+        translated: m.translated || '', translatedBase: m.translatedBase || '',
       });
       if (!row.levelTouched) row.level = m.level;
     }
@@ -18585,6 +18711,8 @@
         row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
         row.levelTouched = true;
         resolveRowType(row);
+        // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
+        if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
         refreshRowDetails(row);
         log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
         // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again

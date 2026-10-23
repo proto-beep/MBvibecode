@@ -31,11 +31,13 @@ const m = require(process.argv[1]);
 const corpus = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));
 // roles as the dashboard knows them (the register; a few instruments as MusicBrainz has them)
 const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
-  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || /^(piano|bass|guitar|drums|vocals|synth|saxophone|viola|trumpet)$/i.test(p.base); };
+  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated || /^(piano|bass|guitar|drums|vocals|synth|saxophone|viola|trumpet)$/i.test(p.base); };
 const isCompanyRole = (role) => /copyright|phonographic|published|distributed|recorded at|mixed at|mastered at|pressed|manufactured|licensed/i.test(role) && !!m.mapCompanyRole(role).rule;
 const out = corpus.lines.map((l) => {
   const r = m.SOURCES.text.parse(l.text, { isRole, isCompanyRole, resolveTracks: () => null });
-  return { credits: r.credits.map((c) => [c.who.name || `(${c.who.placeholder})`, c.role, ...(c.who.links.length ? [c.who.links] : [])]),
+  // [3.21.2] a translation (T034) with the English term it is mapped as
+  const term = (c) => { const x = m.mapRole(c.base, c.details); return x.translated ? [x.translatedBase ? `= ${x.translatedBase}` : `= ? (asked, ${x.rule})`] : []; };
+  return { credits: r.credits.map((c) => [c.who.name || `(${c.who.placeholder})`, c.role, ...(c.who.links.length ? [c.who.links] : []), ...term(c)]),
     companies: r.companies.map((c) => [c.who.name, c.role]), unrecognized: r.unrecognized, ignored: r.ignored };
 });
 const all = corpus.lines.map((l) => l.text).join('\n');
