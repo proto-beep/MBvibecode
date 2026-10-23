@@ -13,12 +13,77 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.21.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.22.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.22.0 · 2026-10-23
+
+Milestone "Text recognition, part 2": tracks named by their titles (collected item 33e), the area where it was recorded (33d).
+
+- **Register:** new tables **T036** (`TEXT_TITLE_Q`, `TEXT_TITLE_SCOPE`, `TEXT_CONTRIBUTION`) and **T037** (`TEXT_AREA_PARTICLE`, `TEXT_NOT_AREA`), new special rules **S027** (titles → tracks) and **S028** (area entries); `COMPANY_ROLES` **C038** recorded/overdubbed in, **C039** mixed in, **C040** mastered in with `area` type options (shown in the rules window); `mapCompanyRole` gives `typeOptions.area` and `prefer: 'area'`; `TEXT_COMPANY_RE` with "(recorded|overdubbed|mixed|mastered) in".
+- **Text adapter (`TEXT.parse`):** new parameter `resolveTitles`; `tracksOf` keeps `scope.unresolved`; new `titleScope(phrase)` (the role before "in/on ‘A' and 'B'", the scope with the resolved tracks and the titles not found); `readUnit` has a scope per clause (`cScope`) – the "by" branch strips `TEXT_CONTRIBUTION` and reads the titles before masking quotations, the list branch ("Role: names", "Name – roles") reads them on either side; new `areaOf(text)` beside `placeOf`; new closures `areaRole`, `inArea(verb, where)` (an area company `{ who: { name, area }, role: 'Recorded In' … }`; a verb without an area type: the name without it, `in …` to the unknown parts); in the "by" branch an area on the left (`inL`, after "live/again") or after the name (`inR`), "in <anything else>" before "by" as an unknown part (`inOther`); a new branch for "Recorded in X, Y" without a person.
+- **Core:** new **`tracksByTitles(titles, srcTracks)`** (`normTitle` + `workTitleOf` without accents, then `withinOne`), in `sourceContext` as `resolveTitles`; the Bandcamp adapter passes `resolveTitles` for its album tracks and keeps the areas of the "about" text (`/\b(?:at|in)$/`).
+- **Area entries:** `groupKindOf` gives the kind `area` (CSS `.dci-kind-area`); `suggestByName` searches areas with `area:(…) OR alias:(…)`, the suggestion names its type and the area it is part of (new `areaContext(x)`: the backward "part of" relation); `matchHtmlInner` shows no **Create** for areas but the hint `match.areaNoCreate`.
+- **Texts (4 languages):** `match.areaNoCreate`, milestone `ms.3.22.0`; `MILESTONES` entry 3.22.0.
+- **Tests:** new `t_areas.py` (area entry, suggestion via alias, no create, titles → tracks with "not matched", staged "recorded in", Bandcamp titles and about area); `harness.py`: `/ws/2/area` search (and "area:" there is the name, not a place's area); `text_corpus.json` +11 lines, no "later" lines, `t_textcorpus` prints the titles ("on …") and the larger areas ("(Asturies, Spain)"); `register_corpus.json` + "Recorded In", "Mixed In", "Mastered In" and a text with titles and areas, golden updated; `t_notice` expects 3.22.0, 3.21.0, 3.18.0 (not 3.17.0).
+- **Watch out:** the area link types are taken from MusicBrainz's relationship editor like all others ("recorded in", "mixed in": area–recording; "mastered in": area–release); a level without the type falls back as for places. `TEXT_NOT_AREA` keeps "Dolby Atmos", seasons, "Studio …" and the like from becoming areas.
+
+
+## Import 3.21.4 · 2026-10-23
+
+The medium of the release decides (collected item 39), "Translated by" on Bandcamp asks (33h), reasons of the lines left out.
+
+- **Register:** new table **T035** (`MEDIUM_WORDS` vinyl / cd / cassette / digital, `mediumKindOf(text)`, `formatKind(format)`), new special rule **S026**, new question **Q007** (`TYPE_QUESTIONS`, rule R004, `flag: 'askTranslation'`; options liner notes – `suggested`, `task: 'translation'` – and translator); `typeQuestionFor` honours `q.flag`; new **`blankForQuestion(row)`** (no type until answered, on the first option's level; also in `remapRow`); `typeAskHtml` marks a `suggested` option (`.dci-type-sugg`, `typeAsk.suggested`, `typeAsk.suggestedTitle`). `TEXT_THANKS` and `TEXT_COURTESY_LINE` name the reason of a line of `TEXT_IGNORE_LINE`.
+- **Text adapter:** `withMedium(t)` (leading medium words, "for vinyl", "(vinyl)"; "master" → Mastering) gives `Role [Medium]`; used by `byRoles` and `listRoles` when the plain roles are none; "Mastered by X (vinyl)" puts the medium on the role; the verb of a place skips medium words and turns "-ing" into "-ed" ("Vinyl LP mastering … at X": Mastered At); a place of roles that are all for one medium gets `medium` (carried by `groupCompanies`). `ignored` entries are `{ text, why }` (`thanks`, `endorsement`, `courtesy`, `web`; Bandcamp track pages with their position).
+- **Core:** new `askTranslation(row)` (Bandcamp rows of R004 without details; also for a Bandcamp supplement), `releaseMediaKinds()`, `mediumMissing(kind)` (only when every medium has a known format), `releaseFormats()`, `noteLeftOut()`, `mediumOfRow(row)` (a detail naming a medium, or a lacquer cut), `leftOutForMedium(row, rel, text, fromText)` (left out with `{ why: 'medium', medium, release }` in `rel.ignored`, log `mediumLeftOut`; a fitting medium word of a text is removed from the details), `companyLeftOutForMedium()`; `loadRelease` drops such rows and entries left without one (`leftOutKeys`), `suppRow` and the supplement list too.
+- **`renderSource`:** each left-out line `.dci-ign-text` with `.dci-ign-why` (`ignored.why.*`).
+- **Texts (4 languages):** `ignored.why.thanks|endorsement|courtesy|web|medium`, `typeAsk.askTranslation`, `typeAsk.suggested`, `typeAsk.suggestedTitle`, `log.mediumLeftOut`.
+- **Tests:** new `t_medium.py`; `t_textrules`, `t_freetext`, `t_bandcamp`, `t_textcorpus` read `.dci-ign-text`; `text_corpus.json` +7 lines (left-out entries with their reason, places with their medium); `t_register` golden updated (T035, S026, Q007, "Thanks to everybody" with its reason).
+
+
+## Import 3.21.3 · 2026-10-23
+
+Links next to names: streaming pages, profiles of labels and places, shown only with a setting (collected items 37b, 37c, answer on 37).
+
+- **T032:** `SOCIAL_HOSTS` with open.spotify.com, music.apple.com, deezer.com, tidal.com, music.youtube.com, qobuz.com, music.amazon.*; new `STREAM_URL`; **`webProfile`** gives their artist pages in MusicBrainz's form (URLCleanup: Spotify without "intl-xx" and query, Apple Music with its country or "us", Deezer without the language, Tidal without "browse", YouTube Music channels, Qobuz "interpreter" pages, Amazon Music "artists/<ASIN>").
+- **`parse`:** `giveLinks` also gets the companies of the sentence (`k0`); **`groupCompanies`** merges the links of a name without an id.
+- **`webLinkHits`:** leaves out `STREAM_URL` (only for "Create artist …").
+- **`startCompanyCreate`:** the web links of a company without a source id as `edit-<type>.url.<n>.text`; the dialog text without a source link via `artistDlg.prefilled` (name, `part.webUrls`).
+- **State and setting:** `S.webLinksShow` (`dci-weblinks-show`, off; in `TOPIC_KEYS.sources`, `SETTINGS_KEYS`, `resetTopic('sources')`, `resetSettings`), checkbox `data-set="weblinks-show"` in ⚙ → Sources (`settings.webLinksShow`, title `settings.webLinksShowTitle`), `settingsChange` redraws the entries; **`groupHtml`** shows `.dci-weblink` only with it.
+- **Texts (4 languages):** `settings.webLinksShow`, `settings.webLinksShowTitle`; es/fr texts name "Crear artista…", "Créer l’artiste…" as the buttons do.
+- **Tests:** `t_textcorpus.py` part F (links hidden at first, the setting, Spotify only for "Create artist", "Create place …" with Studio Sol's profile; companies with their links in the corpus output), `text_corpus.json` +5 lines; `t_register` golden updated (only T032).
+
+
+## Import 3.21.2 · 2026-10-23
+
+Instruments and voices in German, Spanish and French (collected item 43).
+
+- **Register:** new table **T034** `FOREIGN_TERMS` (English term as Discogs writes it → `"spelling@lang; spelling@lang,lang; …"`), `foldWord()` (lower case, no accents, ß → ss, ’ → ') and `FOREIGN_INDEX` (folded spelling → { term, word, langs }); new special rule **S025** (translations get no role credit); new role rule **R102** (`/^alto$/`, special, `askType`, `translated: 'alto'`) with **Q006** in `TYPE_QUESTIONS` (options with `instrument`: viola, alto saxophone, alto vocals; `ask: 'typeAsk.askAlto'`); **T011** shows `INSTRUMENT_MODIFIER_AFTER` (new) beside `INSTRUMENT_MODIFIER`; **T009** with "y" (`TEXT_ROLE_SEP` `\s+y\s+`, `TEXT_AND_SEP`, new `TEXT_NAME_SEP_Y` – lower case only).
+- **`mapRole(base, mods, { noTranslation })`:** a spelling of `FOREIGN_INDEX` is mapped as its term (`noTranslation` for that call, no loop when term and spelling fold alike) and returns `base` (as written), `translated`, `translatedBase`, `langs`.
+- **Rows:** `makeRow`, `remapRow` and the role typed by hand carry `translated` / `translatedBase`; **`roleCreditForInner`** returns '' for a translation after the details (S025; a wording rule such as W "Kontrabass" still comes first); **`questionRuleFor`** compares `translatedBase || base` ("bajo" asks like "Bass"); **`instrumentAskHtml`** says so (`instrAsk.otherwiseTr`); a chosen option with `instrument` sets `primaryText` (type-pick and `remapRow`).
+- **`isKnownRole`:** the candidates of `mapRole` too (a translation's English term).
+- **Text adapter:** `splitRoles` with "y" and the kind after the instrument (`INSTRUMENT_MODIFIER_AFTER`, "saxo tenor y soprano"); `names()` splits at " y ".
+- **Texts (4 languages):** `typeAsk.askAlto`, `instrAsk.otherwiseTr`.
+- **Tests:** new `t_foreign.py`; `text_corpus.json` +13 lines (de/es/fr), `t_textcorpus.py` stores the English term of a translation ("= Drums", "= ? (asked, R102)"); `t_register` golden updated (only "Coro" → choir without credit, "Kontrabass" via T034, R102, Q006, S025, T034, T011, T009).
+
+
+## Import 3.21.1 · 2026-10-23
+
+Media: MB's real toggle in the relationship editor, media without a tracklist, tracks the web service leaves out (collected item 44). Checked with musicbrainz-server (`common/hooks/usePagedMediumTable.js`, `release/components/MediumRelationshipEditor.js`, `MediumToolbox.js`, `Controller/WS/js.pm` `tracks`, `Controller/WS/2/Release.pm`) and the release lookup of "Eternal" (57095656-…, 14 CDs, tracks on CD 1 and 14 only).
+
+- **`findMediumToggle(m)`:** first MB's own link `#disc<position>` (`a.expand-medium`, text "2 ▶ CD", no `aria-expanded`); the heading heuristic stays as fallback. New **`mediumFolded(el)`** (`.expand-triangle` ▶) and **`mediumMoreLink(toggle)`** (`a.load-tracks` in the next tbody).
+- **`loadMediaInEditor`:** `#expand-all-mediums` when every unloaded medium is in the list; a toggle is clicked only when folded; while waiting, "Load all tracks..." is clicked once it appears; time per medium `max(20 s, 0.2 s × tracks)`.
+- **`loadRelease`:** `loadMediaInEditor([...choice.media], { quiet: true })` before `source.release` (was after `applyMediaChoice`).
+- **New `pageMediums()`** (the media of MB's page data: id, position, format, name, `track_count`, tracks or null), **`fetchMediumTracks(id)`** (`/ws/js/tracks/<id>?page=N`, all pages, 250 ms apart, with their `linked_entities`), **`wsRelOf(r, linked)`** (a relationship of the editor's JSON in the form of the web service: `target-type`, `type`, `type-id` (link type gid), attribute names, `attribute-values`, `attribute-credits`, `target-credit`, `begin`/`end`, the target with its own relations) and **`completeMedia(ws)`** (called in `init` right after the release lookup: media missing in `ws.media` are added from the page data; a medium with fewer tracks than its `track-count` / `track_count`, or with recordings without `relations`, gets its tracks from `fetchMediumTracks`, converted, so `S.mbTracks`, works and `indexExistingRelationships` work unchanged; logs `mbMediaPartial`, `mbMediumRead`, `mbMediumReadFailed`).
+- **`init`:** `S.mediaInfo` with `count`; media without tracks logged (`mbMediaEmpty`).
+- **`chooseMedia`:** `empty` (media of `S.mediaInfo` without tracks) named below the intro (`[data-mel=empty]`, `media.empty`); `media.intro` counts all media.
+- **Texts (4 languages):** `media.empty.one|other`, `log.mbMediaEmpty.one|other`, `log.mbMediaPartial`, `log.mbMediumRead.one|other`, `log.mbMediumReadFailed`, `err.noMediumId`.
+- **Tests:** `t_mediaload.py` rebuilt: MB's editor as MusicBrainz builds it (`a.expand-medium#disc<n>`, hidden tbody, `#expand-all-mediums`, a medium in part with `a.load-tracks`), four media (1, 2, 1, 0 tracks), parts D (media 1 and 3: own toggle) and E (the lookup leaves out medium 2's tracks and medium 1's relationships: read from `/ws/js/tracks`). Harness: `split_media` gives medium ids (4500 + position) and `track-count` / `track_count`; `WS_DROP_TRACKS`, `WS_NO_RELS`, `JS_TRACKS_PAGE`, `JS_TRACKS_CALLS`, `ws_to_js_rel`, `js_tracks`, route `/ws/js/tracks/<id>`, `ws_release(full=False)` with `trim_medium`.
+
 
 ## Import 3.21.0 · 2026-10-19 · milestone
 

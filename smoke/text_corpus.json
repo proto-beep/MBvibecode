@@ -1,5 +1,5 @@
 {
-  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (33d, 33e).",
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0).",
   "lines": [
     {
       "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
@@ -38,7 +38,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "Thanks to Mike Eden, Romana Bellinger, Caroline Forbes, Victoria Long at Gimpel Fils, London, Celia Irvin and Priscilla Hashmi."
+          {
+            "text": "Thanks to Mike Eden, Romana Bellinger, Caroline Forbes, Victoria Long at Gimpel Fils, London, Celia Irvin and Priscilla Hashmi.",
+            "why": "thanks"
+          }
         ]
       }
     },
@@ -49,7 +52,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "Barry Guy plays exclusively on Thomastik-Infeld bass strings."
+          {
+            "text": "Barry Guy plays exclusively on Thomastik-Infeld bass strings.",
+            "why": "endorsement"
+          }
         ]
       }
     },
@@ -335,7 +341,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "Special thanks to Z"
+          {
+            "text": "Special thanks to Z",
+            "why": "thanks"
+          }
         ]
       }
     },
@@ -351,7 +360,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "He uses Zildjian cymbals"
+          {
+            "text": "He uses Zildjian cymbals",
+            "why": "endorsement"
+          }
         ]
       }
     },
@@ -408,7 +420,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "www.example.com"
+          {
+            "text": "www.example.com",
+            "why": "web"
+          }
         ]
       }
     },
@@ -419,7 +434,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "contact: info@label.com"
+          {
+            "text": "contact: info@label.com",
+            "why": "web"
+          }
         ]
       }
     },
@@ -430,26 +448,41 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "Follow us: instagram.com/somelabel"
+          {
+            "text": "Follow us: instagram.com/somelabel",
+            "why": "web"
+          }
         ]
       }
     },
     {
       "text": "Recorded by Yunclas in Xixon, Asturies, Spain in the Spring/Summer, 2017",
-      "later": "33d: Yunclas recorded it, Xixon (Gijón) is the place; today three names",
       "expect": {
         "credits": [
           [
-            "Yunclas in Xixon",
+            "Yunclas",
             "Recorded By"
-          ],
+          ]
+        ],
+        "companies": [
           [
-            "Asturies",
-            "Recorded By"
-          ],
+            "Xixon",
+            "Recorded In",
+            "(Asturies, Spain)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Piano in ‘En Cualquier Lugar Del Mundo' and 'Phenomenology of misery' is a contribution by Juanjo Infraser Haller",
+      "expect": {
+        "credits": [
           [
-            "Spain",
-            "Recorded By"
+            "Juanjo Infraser Haller",
+            "Piano",
+            "on “En Cualquier Lugar Del Mundo”, “Phenomenology of misery”"
           ]
         ],
         "companies": [],
@@ -458,13 +491,596 @@
       }
     },
     {
-      "text": "Piano in ‘En Cualquier Lugar Del Mundo' and 'Phenomenology of misery' is a contribution by Juanjo Infraser Haller",
-      "later": "33e: piano on the two tracks named by their titles; today not recognized",
+      "text": "Guitarra eléctrica: Juan Pérez",
+      "expect": {
+        "credits": [
+          [
+            "Juan Pérez",
+            "Guitarra eléctrica",
+            "= Electric Guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Schlagzeug – Max Mustermann",
+      "expect": {
+        "credits": [
+          [
+            "Max Mustermann",
+            "Schlagzeug",
+            "= Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Marie Dupont : contrebasse, voix",
+      "expect": {
+        "credits": [
+          [
+            "Marie Dupont",
+            "contrebasse",
+            "= Double Bass"
+          ],
+          [
+            "Marie Dupont",
+            "voix",
+            "= Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Ana López – saxo tenor y soprano",
+      "expect": {
+        "credits": [
+          [
+            "Ana López",
+            "saxo tenor",
+            "= Tenor Saxophone"
+          ],
+          [
+            "Ana López",
+            "saxo soprano",
+            "= Soprano Saxophone"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Carlos Ruiz – guitarra y voz",
+      "expect": {
+        "credits": [
+          [
+            "Carlos Ruiz",
+            "guitarra",
+            "= Guitar"
+          ],
+          [
+            "Carlos Ruiz",
+            "voz",
+            "= Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Coros: Lucía y Marta",
+      "expect": {
+        "credits": [
+          [
+            "Lucía",
+            "Coros",
+            "= Backing Vocals"
+          ],
+          [
+            "Marta",
+            "Coros",
+            "= Backing Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Flügel: Hans Meier",
+      "expect": {
+        "credits": [
+          [
+            "Hans Meier",
+            "Flügel",
+            "= Grand Piano"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Batterie : Paul Martin",
+      "expect": {
+        "credits": [
+          [
+            "Paul Martin",
+            "Batterie",
+            "= Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Alto: Pierre Leroux",
+      "expect": {
+        "credits": [
+          [
+            "Pierre Leroux",
+            "Alto",
+            "= ? (asked, R102)"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "José – bajo",
+      "expect": {
+        "credits": [
+          [
+            "José",
+            "bajo",
+            "= Bass"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Klavier, Orgel – Peter Weiß",
+      "expect": {
+        "credits": [
+          [
+            "Peter Weiß",
+            "Klavier",
+            "= Piano"
+          ],
+          [
+            "Peter Weiß",
+            "Orgel",
+            "= Organ"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Guitarra electrica: Pedro",
+      "expect": {
+        "credits": [
+          [
+            "Pedro",
+            "Guitarra electrica",
+            "= Electric Guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Kevin Y Lee – guitar",
+      "expect": {
+        "credits": [
+          [
+            "Kevin Y Lee",
+            "guitar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed by Sam Stream open.spotify.com/intl-de/artist/4Z8W4fKeB5YxbusRsdQVPb?si=abc",
+      "expect": {
+        "credits": [
+          [
+            "Sam Stream",
+            "Mixed By",
+            [
+              "https://open.spotify.com/artist/4Z8W4fKeB5YxbusRsdQVPb"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio Sol instagram.com/studiosol",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio Sol",
+            "Recorded At",
+            [
+              "https://www.instagram.com/studiosol/"
+            ]
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "℗ 2023 Maya Recordings instagram.com/mayarecordings",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Maya Recordings",
+            "Phonographic Copyright (p)",
+            [
+              "https://www.instagram.com/mayarecordings/"
+            ]
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Bass – Ana Ruiz music.apple.com/es/artist/ana-ruiz/1234567 tidal.com/browse/artist/998877",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "Bass",
+            [
+              "https://music.apple.com/es/artist/1234567",
+              "https://tidal.com/artist/998877"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Drums – Leo Beat www.deezer.com/de/artist/556677 linktr.ee/leobeat",
+      "expect": {
+        "credits": [
+          [
+            "Leo Beat",
+            "Drums",
+            [
+              "https://www.deezer.com/artist/556677"
+            ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vinyl LP mastering by Sean Price at Misery Loves Co.",
+      "expect": {
+        "credits": [
+          [
+            "Sean Price",
+            "Mastering [Vinyl LP]"
+          ]
+        ],
+        "companies": [
+          [
+            "Misery Loves Co",
+            "Mastered At",
+            "for Vinyl LP"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vinyl LP mastering and digital mastering by Dana Digital at Sound House",
+      "expect": {
+        "credits": [
+          [
+            "Dana Digital",
+            "Mastering [Vinyl LP]"
+          ],
+          [
+            "Dana Digital",
+            "Mastering [digital]"
+          ]
+        ],
+        "companies": [
+          [
+            "Sound House",
+            "Mastered At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered by Max Vinyl (vinyl)",
+      "expect": {
+        "credits": [
+          [
+            "Max Vinyl",
+            "Mastered By [vinyl]"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vinyl master: Vic Master",
+      "expect": {
+        "credits": [
+          [
+            "Vic Master",
+            "Mastering [Vinyl]"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered for vinyl by Ann Cut",
+      "expect": {
+        "credits": [
+          [
+            "Ann Cut",
+            "Mastering [vinyl]"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Lacquer cut by Lou Lacquer",
+      "expect": {
+        "credits": [
+          [
+            "Lou Lacquer",
+            "Lacquer cut By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Translated by Ana Ruiz",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "Translated By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Berlin, Germany in March 2019",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Berlin",
+            "Recorded In",
+            "(Germany)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in March 2019",
       "expect": {
         "credits": [],
         "companies": [],
         "unrecognized": [
-          "Piano in ‘En Cualquier Lugar Del Mundo' and 'Phenomenology of misery' is a contribution by Juanjo Infraser Haller"
+          "Recorded in March 2019"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed live in Paris by Jean Dupont",
+      "expect": {
+        "credits": [
+          [
+            "Jean Dupont",
+            "Mixed By"
+          ]
+        ],
+        "companies": [
+          [
+            "Paris",
+            "Mixed In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Xixon, Asturies by Yunclas",
+      "expect": {
+        "credits": [
+          [
+            "Yunclas",
+            "Recorded By"
+          ]
+        ],
+        "companies": [
+          [
+            "Xixon",
+            "Recorded In",
+            "(Asturies)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered in Frankfurt am Main by Max Master",
+      "expect": {
+        "credits": [
+          [
+            "Max Master",
+            "Mastered By"
+          ]
+        ],
+        "companies": [
+          [
+            "Frankfurt am Main",
+            "Mastered In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Produced by Pat Prod in Berlin",
+      "expect": {
+        "credits": [
+          [
+            "Pat Prod",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Produced by Pat Prod in Berlin → ? “in Berlin”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed in Dolby Atmos by Sam Sound",
+      "expect": {
+        "credits": [
+          [
+            "Sam Sound",
+            "Mixed By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Mixed in Dolby Atmos by Sam Sound → ? “in Dolby Atmos”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Guitar on “Love in Vain”: Keith Richards",
+      "expect": {
+        "credits": [
+          [
+            "Keith Richards",
+            "Guitar",
+            "on “Love in Vain”"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Ana Ruiz – trumpet on 'Song Three' and 'Missing Song'",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "trumpet",
+            "on “Song Three”, “Missing Song”"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Saxophone on 'Song Three' was played by Sam Sax",
+      "expect": {
+        "credits": [
+          [
+            "Sam Sax",
+            "Saxophone",
+            "on “Song Three”"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in the living room by Ana Ruiz",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "Recorded By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Recorded in the living room by Ana Ruiz → ? “in the living room”"
         ],
         "ignored": []
       }

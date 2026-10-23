@@ -101,7 +101,7 @@ with sync_playwright() as p:
     calls = pg.evaluate('window.__gmXhr')
     unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
     # [3.21.0] thanks: listed apart as left out on purpose
-    unrec += ['ignored: ' + x for x in pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent)")]
+    unrec += ['ignored: ' + x for x in pg.evaluate("[...document.querySelectorAll('.dci-ignored li .dci-ign-text')].map(li => li.textContent)")]
     print('B) Quelle:', source(pg), '| Abrufe:', len(calls), calls[:2])
     for k, v in g.items():
         print('   ', k, v)
