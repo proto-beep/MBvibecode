@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.21.3
+// @version      3.21.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.21.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -218,6 +218,11 @@
       "ignored.title.one": "{n} line left out on purpose",
       "ignored.title.other": "{n} lines left out on purpose",
       "ignored.hint": "Thanks, endorsements (“plays … strings”) and web addresses give no credit and are left out. If there is a credit after all, add it by hand (“Add entry manually”).",
+      "ignored.why.thanks": "thanks",
+      "ignored.why.endorsement": "a maker’s note",
+      "ignored.why.courtesy": "“appears courtesy of …”",
+      "ignored.why.web": "only web addresses",
+      "ignored.why.medium": "for {medium} – this release: {release}",
       "msg.textEmpty": "The text is empty.",
       "busy.source": "Reading {source} …",
       "log.sourceLoaded.one": "{source} read: {artists} entries, {n} role, {u} lines not recognized",
@@ -1060,6 +1065,7 @@
       "log.mbMediumRead.one": "Medium {m}: {n} track read from the relationship editor",
       "log.mbMediumRead.other": "Medium {m}: {n} tracks read from the relationship editor",
       "log.mbMediumReadFailed": "Medium {m}: its tracks could not be read from the relationship editor ({msg})",
+      "log.mediumLeftOut": "“{role}” is for {medium} – this release is {release}: left out",
       "err.noMediumId": "the editor does not name the medium",
       "log.mediumLoaded": "Medium {m} loaded in the editor",
       "log.mediaLoadBackground": "Media {list} are loaded in the editor in the background",
@@ -1455,6 +1461,9 @@
       "typeAsk.ask": "“{role}” is not always conducting – please choose:",
       "typeAsk.askText": "“{role}” can be liner notes (an essay in the booklet) or the lyrics – please choose:",
       "typeAsk.askAlto": "“{role}” alone: the viola (Spanish, French), an alto saxophone or an alto voice? – please choose:",
+      "typeAsk.askTranslation": "“{role}” in Bandcamp credits: mostly the translation of the liner notes, sometimes of the lyrics – please choose:",
+      "typeAsk.suggested": "suggested",
+      "typeAsk.suggestedTitle": "What it mostly means – a suggestion: the row is added only once you choose",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
       "typeAsk.pending": "Until you choose, the row is not added.",
       "log.typePicked": "“{role}” chosen as {type}",
@@ -1585,6 +1594,11 @@
       "ignored.title.one": "{n} Zeile absichtlich ausgelassen",
       "ignored.title.other": "{n} Zeilen absichtlich ausgelassen",
       "ignored.hint": "Danksagungen, Herstellerhinweise („spielt … Saiten“) und Web-Adressen ergeben keinen Credit und werden ausgelassen. Ist doch ein Credit dabei, von Hand ergänzen („Eintrag manuell hinzufügen“).",
+      "ignored.why.thanks": "Danksagung",
+      "ignored.why.endorsement": "Herstellerhinweis",
+      "ignored.why.courtesy": "„appears courtesy of …“",
+      "ignored.why.web": "nur Web-Adressen",
+      "ignored.why.medium": "für {medium} – dieses Release: {release}",
       "msg.textEmpty": "Der Text ist leer.",
       "busy.source": "{source} wird gelesen …",
       "log.sourceLoaded.one": "{source} gelesen: {artists} Einträge, {n} Rolle, {u} Zeilen nicht erkannt",
@@ -2427,6 +2441,7 @@
       "log.mbMediumRead.one": "Medium {m}: {n} Track aus dem Beziehungs-Editor gelesen",
       "log.mbMediumRead.other": "Medium {m}: {n} Tracks aus dem Beziehungs-Editor gelesen",
       "log.mbMediumReadFailed": "Medium {m}: seine Tracks ließen sich nicht aus dem Beziehungs-Editor lesen ({msg})",
+      "log.mediumLeftOut": "„{role}“ ist für {medium} – dieses Release ist {release}: ausgelassen",
       "err.noMediumId": "der Editor nennt das Medium nicht",
       "log.mediumLoaded": "Medium {m} im Editor geladen",
       "log.mediaLoadBackground": "Medien {list} werden im Editor im Hintergrund geladen",
@@ -2822,6 +2837,9 @@
       "typeAsk.ask": "„{role}“ ist nicht immer Dirigieren – bitte wählen:",
       "typeAsk.askText": "„{role}“ kann Liner Notes (ein Text im Booklet) oder der Liedtext sein – bitte wählen:",
       "typeAsk.askAlto": "„{role}“ allein: die Bratsche (spanisch, französisch), ein Altsaxophon oder eine Altstimme? – bitte wählen:",
+      "typeAsk.askTranslation": "„{role}“ in Bandcamp-Credits: meist die Übersetzung der Liner Notes, manchmal die des Liedtexts – bitte wählen:",
+      "typeAsk.suggested": "Vorschlag",
+      "typeAsk.suggestedTitle": "Was meist gemeint ist – ein Vorschlag: die Zeile kommt erst nach deiner Wahl dazu",
       "typeAsk.chosen": "„{role}“ – gewählt (zum Ändern ein anderes anklicken):",
       "typeAsk.pending": "Bis zur Wahl wird die Zeile nicht übernommen.",
       "log.typePicked": "„{role}“ als {type} gewählt",
@@ -2952,6 +2970,11 @@
       "ignored.title.one": "{n} línea omitida a propósito",
       "ignored.title.other": "{n} líneas omitidas a propósito",
       "ignored.hint": "Los agradecimientos, los avisos de marcas («toca … cuerdas») y las direcciones web no dan ningún crédito y se omiten. Si aun así hay un crédito, añádelo a mano («Añadir entrada manualmente»).",
+      "ignored.why.thanks": "agradecimiento",
+      "ignored.why.endorsement": "nota de un fabricante",
+      "ignored.why.courtesy": "«appears courtesy of …»",
+      "ignored.why.web": "solo direcciones web",
+      "ignored.why.medium": "para {medium} – esta publicación: {release}",
       "msg.textEmpty": "El texto está vacío.",
       "busy.source": "Leyendo {source}…",
       "log.sourceLoaded.one": "{source} leído: {artists} entradas, {n} rol, {u} líneas no reconocidas",
@@ -3794,6 +3817,7 @@
       "log.mbMediumRead.one": "Medio {m}: {n} pista leída del editor de relaciones",
       "log.mbMediumRead.other": "Medio {m}: {n} pistas leídas del editor de relaciones",
       "log.mbMediumReadFailed": "Medio {m}: no se pudieron leer sus pistas del editor de relaciones ({msg})",
+      "log.mediumLeftOut": "«{role}» es para {medium} – esta publicación es {release}: omitido",
       "err.noMediumId": "el editor no nombra el medio",
       "log.mediumLoaded": "Medio {m} cargado en el editor",
       "log.mediaLoadBackground": "Los medios {list} se cargan en el editor en segundo plano",
@@ -4189,6 +4213,9 @@
       "typeAsk.ask": "«{role}» no siempre es dirección de orquesta – elige:",
       "typeAsk.askText": "«{role}» pueden ser notas de presentación (un texto en el libreto) o la letra – elige:",
       "typeAsk.askAlto": "«{role}» solo: la viola (en español y francés), un saxofón alto o una voz de alto? – elige:",
+      "typeAsk.askTranslation": "«{role}» en créditos de Bandcamp: casi siempre la traducción de las notas, a veces la de la letra – elige:",
+      "typeAsk.suggested": "sugerencia",
+      "typeAsk.suggestedTitle": "Lo que suele significar – una sugerencia: la fila se añade solo cuando eliges",
       "typeAsk.chosen": "«{role}» – elegido (haz clic en otro para cambiar):",
       "typeAsk.pending": "Hasta que elijas, la fila no se añade.",
       "log.typePicked": "«{role}» elegido como {type}",
@@ -4319,6 +4346,11 @@
       "ignored.title.one": "{n} ligne laissée de côté exprès",
       "ignored.title.other": "{n} lignes laissées de côté exprès",
       "ignored.hint": "Les remerciements, les mentions de marques (« joue … cordes ») et les adresses web ne donnent aucun crédit et sont laissés de côté. S’il y a quand même un crédit, ajoutez-le à la main (« Ajouter une entrée manuellement »).",
+      "ignored.why.thanks": "remerciements",
+      "ignored.why.endorsement": "mention d’un fabricant",
+      "ignored.why.courtesy": "« appears courtesy of … »",
+      "ignored.why.web": "seulement des adresses web",
+      "ignored.why.medium": "pour {medium} – cette parution : {release}",
       "msg.textEmpty": "Le texte est vide.",
       "busy.source": "Lecture de {source}…",
       "log.sourceLoaded.one": "{source} lu : {artists} entrées, {n} rôle, {u} lignes non reconnues",
@@ -5161,6 +5193,7 @@
       "log.mbMediumRead.one": "Support {m} : {n} piste lue dans l’éditeur de relations",
       "log.mbMediumRead.other": "Support {m} : {n} pistes lues dans l’éditeur de relations",
       "log.mbMediumReadFailed": "Support {m} : ses pistes n’ont pas pu être lues dans l’éditeur de relations ({msg})",
+      "log.mediumLeftOut": "« {role} » est pour {medium} – cette parution est {release} : laissé de côté",
       "err.noMediumId": "l’éditeur ne nomme pas le support",
       "log.mediumLoaded": "Support {m} chargé dans l’éditeur",
       "log.mediaLoadBackground": "Les supports {list} sont chargés dans l’éditeur en arrière-plan",
@@ -5556,6 +5589,9 @@
       "typeAsk.ask": "« {role} » n’est pas toujours de la direction d’orchestre – veuillez choisir :",
       "typeAsk.askText": "« {role} » peut être des notes de pochette (un texte dans le livret) ou les paroles – veuillez choisir :",
       "typeAsk.askAlto": "« {role} » seul : l’alto (l’instrument à cordes, comme « alto » en espagnol), un saxophone alto ou une voix d’alto ? – veuillez choisir :",
+      "typeAsk.askTranslation": "« {role} » dans les crédits Bandcamp : le plus souvent la traduction des notes de pochette, parfois celle des paroles – veuillez choisir :",
+      "typeAsk.suggested": "suggestion",
+      "typeAsk.suggestedTitle": "Ce que cela veut dire le plus souvent – une suggestion : la ligne n’est ajoutée qu’après votre choix",
       "typeAsk.chosen": "« {role} » – choisi (cliquer sur un autre pour changer) :",
       "typeAsk.pending": "Tant que rien n’est choisi, la ligne n’est pas ajoutée.",
       "log.typePicked": "« {role} » choisi comme {type}",
@@ -5778,6 +5814,7 @@
     { id: 'S023', where: 'dropTracksOnMatrix', note: 'A track group dropped onto the works matrix: onto an attribute in the head of the track column (the links of these tracks get it, the others lose it), onto a role of a column (that role only for the works of these tracks) or onto a column head (all its roles); with Shift added instead. Relationships and attributes already in MusicBrainz stay' },
     { id: 'S024', where: 'suggestCommissioned', note: '"Commissioned By" (R099, C037) without a track list: "commissioned" is suggested on all works (dashed, yellow; ✓ keeps it, × takes it out, it is staged like the others). With a track list it is set on the works of those tracks' },
     { id: 'S019', where: 'repeatedDetails', note: 'Details that only repeat the role in another word form are no role credit: "Mixed By [Mixing]", "Mastered By [Mastering]", "Music By [All Music By]", "Recorded By [Recording]"; "[Cover Photo]" stays' },
+    { id: 'S026', where: 'loadRelease, suppRow, mediumOfRow (MEDIUM_WORDS)', note: 'A credit for a medium the MusicBrainz release does not have ("Vinyl LP mastering", "Mastered By [Vinyl]", "Lacquer Cut By" on a release of Digital Media) is no row: it is listed as left out on purpose, with the reason. "Vinyl LP mastering and digital mastering by X" keeps the digital mastering. A medium word of a text that fits the release is no role credit (3.21.4)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -5809,6 +5846,11 @@
         { type: 'instrument', level: 'recording', instrument: 'viola', label: 'viola' },
         { type: 'instrument', level: 'recording', instrument: 'alto saxophone', label: 'alto saxophone' },
         { type: 'vocal', level: 'recording', instrument: 'alto vocals', label: 'alto vocals' },
+      ] },
+    { id: 'Q007', base: 'translated by', rule: 'R004', flag: 'askTranslation', ask: 'typeAsk.askTranslation', note: '"Translated By", "Translation", "Translator" in Bandcamp credits (3.21.4): mostly the liner notes (suggested), sometimes the lyrics – nothing is assumed; elsewhere it stays translator (R004)',
+      options: [
+        { type: 'liner notes', level: 'release', label: 'liner notes', suggested: true, task: 'translation' },
+        { type: 'translator', level: 'work', label: 'translator (lyrics)' },
       ] },
     { id: 'Q005', base: 'text', rule: 'R100', ask: 'typeAsk.askText', note: '"Text" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German "Text" is the lyrics)? Nothing is assumed',
       options: [
@@ -6187,6 +6229,8 @@
       show: () => ({ pairs: [['address', WEB_ADDRESS], ['profiles', SOCIAL_HOSTS], ['streaming (only "Create artist")', STREAM_URL], ['words for them', WEB_LABEL]] }) },
     { id: 'T034', where: 'FOREIGN_TERMS, foldWord', note: 'Texts (3.21.2): instruments and voices in German, Spanish and French, each spelling with its language (word@de, word@es,fr; the search field filters "@de") → the English term the register maps; a translation gets no role credit (S025), accents do not count',
       show: () => ({ pairs: FOREIGN_TERMS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
+    { id: 'T035', where: 'MEDIUM_WORDS, mediumKindOf, formatKind', note: 'Texts and all sources (3.21.4): words for a medium in a role ("Vinyl LP mastering", "Mastered for vinyl", "Mastering [Vinyl]", "(CD)", "Lacquer Cut") and the kinds of MusicBrainz media formats – a credit for a medium the release does not have is left out (S026)',
+      show: () => ({ pairs: Object.entries(MEDIUM_WORDS) }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
@@ -6430,6 +6474,28 @@
   const TEXT_ABBREV = /^(?:vol|vols|no|nos|nr|st|ste|dr|mr|mrs|ms|mme|mlle|prof|feat|ft|op|opp|vs|jr|sr|inc|ltd|co|corp|bros|mt|ca|approx|incl|arr|orch|dept|nb|cf|pp|bzw|bspw|ggf|usw|etc)$/i;
 
   // [T030] Texts (3.21.0): lines left out on purpose – thanks, endorsements, "appears courtesy of"
+  // [3.21.4] which kind of line was left out on purpose: thanks, a note of courtesy, else a maker's (endorsement) note
+  const TEXT_THANKS = /^(?:(?:very\s+|extra\s+|a\s+)?special\s+thanks?|many\s+thanks|big\s+thanks|huge\s+thanks|thanks?\b|thank\s+you\b|dank(?:e|en)?\b|vielen\s+dank|besonderer\s+dank|gracias\b|agradecimientos|merci\b|remerciements|grazie\b|ringraziamenti|tack\b|bedankt\b|kiitos\b)/i;
+  const TEXT_COURTESY_LINE = /\b(?:appears?|appearing)\s+(?:by\s+)?(?:kind\s+)?(?:courtesy|permission)\s+of\b/i;
+
+  // [T035] Texts and all sources (3.21.4): words for a medium in a role ("Vinyl LP mastering", "Mastered for vinyl",
+  // "Mastering [Vinyl]", "(CD)"); a credit for a medium the MusicBrainz release does not have is left out (S026)
+  const MEDIUM_WORDS = {
+    vinyl: /^(?:vinyl|vinyls|lp|lps|lacquer|lacquers|lack|acetate|dmm|12"|7"|10"|schallplatte|platte|vinilo|vinyle)$/i,
+    cd: /^(?:cd|cds|compact|sacd|hdcd)$/i,
+    cassette: /^(?:cassette|cassettes|tape|tapes|mc|kassette|casete|cassete)$/i,
+    digital: /^(?:digital|streaming|download|downloads|hi-res|hires|high-res|mp3|flac|online)$/i,
+  };
+  /** [T035] The kind of medium a word or a few words name ('vinyl', 'cd', 'cassette', 'digital'), '' if not all are such words. */
+  const mediumKindOf = (text) => {
+    const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+    const kinds = words.map((w) => Object.keys(MEDIUM_WORDS).find((k) => MEDIUM_WORDS[k].test(w.replace(/[.,;:]+$/, ''))) || '');
+    return words.length && kinds.every(Boolean) ? kinds[0] : '';
+  };
+  /** [T035] The kind of a medium format of MusicBrainz ("Digital Media", "12\" Vinyl", "CD", "Cassette" …), 'other' else. */
+  const formatKind = (f) => (/digital media/i.test(f) ? 'digital' : /vinyl|"|\blp\b|shellac|acetate|flexi/i.test(f) ? 'vinyl'
+    : /\bcd\b|sacd|hdcd|compact disc|dualdisc|blu-spec|shm/i.test(f) ? 'cd' : /cassette|tape|dcc/i.test(f) ? 'cassette' : 'other');
+
   const TEXT_IGNORE_LINE = /^(?:(?:very\s+|extra\s+|a\s+)?special\s+thanks?|many\s+thanks|big\s+thanks|huge\s+thanks|thanks?\b|thank\s+you\b|dank(?:e|en)?\b|vielen\s+dank|besonderer\s+dank|gracias\b|agradecimientos|merci\b|remerciements|grazie\b|ringraziamenti|tack\b|bedankt\b|kiitos\b)|\b(?:plays?|uses?|endorses?)\s+(?:exclusively|only)\s|\b(?:plays?|uses?)\s+(?:on\s+|with\s+)?(?:\S+\s+){1,3}(?:strings|cymbals|reeds|sticks|mallets|drumheads|heads|pickups|amps?|amplifiers|mouthpieces?|ligatures?|picks)\b|\b(?:appears?|appearing)\s+(?:by\s+)?(?:kind\s+)?(?:courtesy|permission)\s+of\b|\bendorse[sd]?\b/i;
 
   // [T031] Texts (3.21.0): "courtesy of …" after a name, and a title in quotation marks with its year before "by"
@@ -6588,7 +6654,17 @@
     return WORDING_RULES.find((r) => ruleOn(r.id) && r.phrases.some((x) => phrases.includes(x))) || null;
   }
 
-  const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && row.ruleId === q.rule) || null);
+  const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && row.ruleId === q.rule && (!q.flag || row[q.flag])) || null);
+
+  /** [3.21.4] A question that only some rows get (Q007): until it is answered the row has no type, on the first option's level. */
+  function blankForQuestion(row) {
+    const q = typeQuestionFor(row);
+    if (!q || !q.flag || row.typeAnswer != null) return;
+    row.types = [];
+    if (!row.levelTouched) row.level = q.options[0].level;
+    row.defaultLevel = q.options[0].level;
+    resolveRowType(row);
+  }
 
   /** Details in brackets that are neither checkboxes (e.g. "Additional") nor part of the instrument name. */
   function remainingMods(row) {
@@ -7440,6 +7516,27 @@
       };
       // [3.17.3] "Distribution", "Distributor", "Vertrieb" … (T028): the company role "Distributed By"
       const distribution = (t) => (TEXT_DISTRIBUTION.test(clean(t).replace(/\s+(?:by|par|por|da|durch|via)$/i, '')) ? ['Distributed By'] : null);
+      /**
+       * [3.21.4] A role with the medium it is for ("Vinyl LP mastering", "Mastered for vinyl", "digital mastering",
+       * "Vinyl master"): the role with the medium as its detail ("Mastering [Vinyl LP]", T035), null if it is none.
+       */
+      const withMedium = (t) => {
+        let rest = clean(t);
+        const words = [];
+        for (let m = rest.match(/^(\S+)\s+(.+)$/); m && mediumKindOf(m[1]); m = rest.match(/^(\S+)\s+(.+)$/)) {
+          words.push(m[1]);
+          rest = m[2];
+        }
+        const tail = rest.match(/^(.+?)\s+(?:for|für|para|pour)\s+(?:the\s+|die\s+|el\s+|le\s+|la\s+)?(\S+(?:\s\S+)?)$/i) || rest.match(/^(.+?)\s*\(([^)]+)\)$/);
+        if (tail && mediumKindOf(tail[2])) {
+          words.push(tail[2]);
+          rest = tail[1];
+        }
+        if (!words.length) return null;
+        if (/^(?:master|masters|mastering|mastered)$/i.test(rest)) rest = 'Mastering';
+        const role = isRole(`${cap(rest)} By`) ? `${cap(rest)} By` : isRole(cap(rest)) ? cap(rest) : '';
+        return role ? `${role} [${words.join(' ')}]` : null;
+      };
       const byRoles = (left) => {
         const l = noDates(left);
         if (!l) return [];
@@ -7448,12 +7545,18 @@
         // [3.14.0] "Layout by X": the role is "Layout"
         if (isRole(cap(l))) return [cap(l)];
         const parts = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map(byRole);
-        return parts.length && parts.every(isRole) ? parts : [];
+        if (parts.length && parts.every(isRole)) return parts;
+        // [3.21.4] roles with their medium ("Vinyl LP mastering and digital mastering by X")
+        const withM = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map((x) => (isRole(byRole(x)) ? byRole(x) : withMedium(x)));
+        return withM.length && withM.every(Boolean) ? withM : [];
       };
       const listRoles = (side) => {
         if (distribution(side)) return distribution(side);
         const parts = splitRoles(side);
-        return parts.length && parts.every(isRole) ? parts : null;
+        if (parts.length && parts.every(isRole)) return parts;
+        // [3.21.4] "Vinyl master: X"
+        const withM = parts.map((x) => (isRole(x) ? x : withMedium(x)));
+        return withM.length && withM.every(Boolean) ? withM : null;
       };
       /**
        * [3.6.0] The roles of a list, with a shared instrument word given to each of its modifiers ("tenor & soprano
@@ -7537,7 +7640,9 @@
             // [3.21.0] a title in quotation marks with its year is no part of the role ("Cover art: “Madison” 1988 by X")
             let left = clause.slice(0, m[1].length).replace(TEXT_QUOTED_TITLE, ' ');
             let right = clause.slice(m[0].length - m[2].length);
-            const verb = (clean(left).match(/^\p{L}+/u) || [''])[0];
+            // [3.21.4] the verb after the words of a medium, "mastering" as "mastered" ("Vinyl LP mastering … at X": mastered at)
+            const kc0 = companies.length;
+            const verb = ((clean(left).split(' ').find((w) => !mediumKindOf(w)) || '').match(/^\p{L}+/u) || [''])[0].replace(/ing$/i, 'ed');
             // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
             const at = left.match(/^(.*?)\s+at\s+(.+)$/i);
             if (at) {
@@ -7567,7 +7672,15 @@
               roles.forEach((r) => { if (addPlaceholder(nobody, r, scope)) found++; });
               continue;
             }
-            for (const n of roles.length ? names(right) : []) roles.forEach((r) => { if (addCredit(n, r, scope)) found++; });
+            // [3.21.4] "Mastered by X (vinyl)": the medium belongs to the role (T035)
+            const tailMedium = right.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+            const medium = tailMedium && mediumKindOf(tailMedium[2]) ? tailMedium[2] : '';
+            if (medium) right = tailMedium[1];
+            const rolesM = medium ? roles.map((r) => `${r} [${medium}]`) : roles;
+            // the place of roles that are all for one medium is for that medium too
+            const meds = rolesM.map((r) => (r.match(/\[([^\]]+)\]$/) || [])[1] || '').filter((x) => mediumKindOf(x));
+            if (rolesM.length && meds.length === rolesM.length && new Set(meds.map(mediumKindOf)).size === 1) companies.slice(kc0).forEach((c) => { c.medium = meds[0]; });
+            for (const n of rolesM.length ? names(right) : []) rolesM.forEach((r) => { if (addCredit(n, r, scope)) found++; });
             continue;
           }
           // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person)
@@ -7664,14 +7777,15 @@
         const missed = [];
         for (const unit of units) {
           const whole = units.length === 1 ? line0 : unit;
+          // [3.21.4] with the reason (shown in the list)
           if (TEXT_IGNORE_LINE.test(unit)) {
-            ignored.push(whole);
+            ignored.push({ text: whole, why: TEXT_THANKS.test(unit) ? 'thanks' : TEXT_COURTESY_LINE.test(unit) ? 'courtesy' : 'endorsement' });
             continue;
           }
           const web = takeUrls(unit);
           // only addresses, or a word for them ("Contact: info@…", "Web: …")
           if (!web.text || !/\p{L}{2}/u.test(web.text) || (web.cut && WEB_LABEL.test(web.text))) {
-            ignored.push(whole);
+            ignored.push({ text: whole, why: 'web' });
             continue;
           }
           const c0 = credits.length;
@@ -7847,7 +7961,7 @@
         res.credits.forEach((c) => credits.push({ ...c, ...page, tracks: c.tracks.all ? on : c.tracks }));
         res.companies.forEach((c) => companies.push({ ...c, ...page, tracks: c.tracks || on }));
         res.unrecognized.forEach((l) => unrecognized.push(`${tracks[i].position}: ${l}`));
-        (res.ignored || []).forEach((l) => ignored.push(`${tracks[i].position}: ${l}`));
+        (res.ignored || []).forEach((l) => ignored.push({ ...l, text: `${tracks[i].position}: ${l.text}` }));
       });
       // [3.17.2] Liner notes at the end of the "about" text: a credit "Liner Notes" of the name below it – a name like any
       // other (only suggested), from the about text (left out with it)
@@ -8004,7 +8118,7 @@
       // [3.21.3] a name without an id: the web profiles found next to it (T032)
       if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
-      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), refs: [] });
+      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.medium ? { medium: c.medium } : {}), refs: [] });
       addSrcRef((same || g.roles[g.roles.length - 1]).refs, c);
       if (!same) continue;
       if (!c.fromAbout) delete same.fromAbout;
@@ -9428,6 +9542,8 @@
       if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
     } else if (!tq) {
       delete row.typeAnswer;
+    } else {
+      blankForQuestion(row);
     }
     refreshRowDetails(row);
   }
@@ -11258,6 +11374,9 @@
         const tracks = suppTracks(c);
         if (S.mediaSel && !c.allTracks && c.indexes.size && !tracks.length) continue;
         const probe = makeRow('supp', { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv });
+        // [S026] a credit for a medium the release does not have is no supplement either
+        const pm = mediumOfRow(probe);
+        if (pm && mediumMissing(pm.kind)) continue;
         const info = { name: g.name, line: c.lines[0] || c.role.raw, rel: rowRelText(probe), tracks, all: !!c.allTracks, c };
         if (!a) {
           fresh.push(info);
@@ -11279,6 +11398,8 @@
         const tracks = some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx();
         if (some && !tracks.length) continue;
         const probe = makeRow('supp', { raw: r.role, company: a || { entityType: null } });
+        const rk = r.medium ? mediumKindOf(r.medium) : /lacquer\s+cut/i.test(r.role || '') ? 'vinyl' : '';
+        if (rk && mediumMissing(rk)) continue;
         const info = { name: g.name, line: r.line || r.role, rel: rowRelText(probe), tracks, all: !some, r, company: true };
         if (!a) {
           fresh.push(info);
@@ -11307,6 +11428,64 @@
     sp.mismatch = sp.source.usesMbTracks || sp.rel.tracks.length === S.mbTracks.length ? null : { n: sp.rel.tracks.length, m: S.mbTracks.length };
   }
 
+  /** [3.21.4] "Translated By", "Translation", "Translator" alone in Bandcamp credits: asked (Q007) instead of translator. */
+  function askTranslation(row) {
+    if (row.ruleId !== 'R004' || (row.mods || []).length) return;
+    row.askTranslation = true;
+    blankForQuestion(row);
+    refreshRowDetails(row);
+  }
+
+  /** [T035] The kinds of media of the release, from MusicBrainz's formats: 'digital', 'cd', 'vinyl', 'cassette', 'other'. */
+  const releaseMediaKinds = () => new Set([...((S.mediaInfo && S.mediaInfo.values()) || [])].map((m) => formatKind(m.format || '')));
+  /** [S026] A medium the release does not have (its media all of known formats): credits for it are left out. */
+  const mediumMissing = (kind) => {
+    const kinds = releaseMediaKinds();
+    return ruleOn('S026') && !!kinds.size && !kinds.has('other') && !kinds.has(kind);
+  };
+  const releaseFormats = () => uniq([...((S.mediaInfo && S.mediaInfo.values()) || [])].map((m) => m.format).filter(Boolean)).join(', ');
+  const noteLeftOut = (rel, text, word, role) => {
+    rel.ignored = rel.ignored || [];
+    if (!rel.ignored.some((x) => x.text === text && x.why === 'medium')) rel.ignored.push({ text, why: 'medium', medium: word, release: releaseFormats() });
+    log('info', 'mediumLeftOut', { role, medium: word, release: releaseFormats() });
+  };
+
+  /** [S026] The medium a row is for: a detail naming one ("Mastering [Vinyl LP]", "Mastered By [Vinyl]"), or a lacquer cut. */
+  function mediumOfRow(row) {
+    for (const m of row.mods || []) {
+      const kind = mediumKindOf(m);
+      if (kind) return { kind, word: m };
+    }
+    if ((row.types || []).some((t) => norm(t) === 'lacquer cut') || /\blacquer\b/i.test(row.base || '')) return { kind: 'vinyl', word: 'lacquer cut' };
+    return null;
+  }
+
+  /**
+   * [S026] A row for a medium the release does not have ("Vinyl LP mastering" on Digital Media) is left out: listed with
+   * the reason among the lines left out on purpose (true). For a medium it has, a text's medium word is no role credit.
+   */
+  function leftOutForMedium(row, rel, text, fromText) {
+    const bound = ruleOn('S026') ? mediumOfRow(row) : null;
+    if (!bound) return false;
+    if (mediumMissing(bound.kind)) {
+      noteLeftOut(rel, text, bound.word, row.raw || row.base);
+      return true;
+    }
+    if (fromText && bound.word !== 'lacquer cut' && releaseMediaKinds().has(bound.kind)) {
+      row.mods = (row.mods || []).filter((m) => m !== bound.word);
+      refreshRowDetails(row);
+    }
+    return false;
+  }
+
+  /** [S026] A company row for a medium the release does not have: a lacquer cut, or the place of a text's vinyl mastering. */
+  function companyLeftOutForMedium(row, r, rel, text) {
+    const kind = r.medium ? mediumKindOf(r.medium) : /lacquer\s+cut/i.test(r.role || '') || (row.types || []).some((t) => norm(t) === 'lacquer cut') ? 'vinyl' : '';
+    if (!kind || !mediumMissing(kind)) return false;
+    noteLeftOut(rel, text, r.medium || 'lacquer cut', r.role);
+    return true;
+  }
+
   /** A row of the second source, built as the import builds rows (tracks from it, its mark). */
   function suppRow(artistKey, info, company) {
     const row = company ? makeRow(artistKey, { raw: info.r.role, company })
@@ -11321,6 +11500,9 @@
     row.suggested = new Set(info.tracks);
     row.supp = S.supp.source.short;
     row.suppName = S.supp.source.name;
+    // [3.21.4] as in the import: "Translated By" from Bandcamp asks; a credit for another medium is left out
+    if (!company && S.supp.source === BANDCAMP) askTranslation(row);
+    if (company ? companyLeftOutForMedium(row, info.r, S.supp.rel || {}, info.r.line || info.r.role) : leftOutForMedium(row, S.supp.rel || {}, (info.c.lines || [])[0] || info.c.role.raw, !!S.supp.source.nameSearch)) return null;
     if (!releaseLevelChosen(row) || noMediaFor(row)) return null;
     suggestCommissioned(row);
     return row;
@@ -11829,6 +12011,8 @@
         log('warn', 'trackMismatch', { d: S.srcTracks.length, m: S.mbTracks.length });
       }
 
+      // [S026] entries whose credits were all left out for a medium the release does not have
+      const leftOutKeys = new Set();
       for (const g of groupCredits(placeholderCredits(rel.credits))) {
         const artist = {
           key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending',
@@ -11841,6 +12025,12 @@
           const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv });
           if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
           row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
+          // [3.21.4] "Translated By" in Bandcamp credits asks (Q007); [S026] a credit for a medium the release does not have
+          if (source === BANDCAMP) askTranslation(row);
+          if (leftOutForMedium(row, rel, (c.lines || [])[0] || `${g.name} – ${c.role.raw}`, !!source.nameSearch)) {
+            leftOutKeys.add(artist.key);
+            continue;
+          }
           if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
           row.dSpec = c.specs.join(', ');
           row.dPositions = c.positions;
@@ -11880,6 +12070,11 @@
           const row = makeRow(company.key, { raw: r.role, company });
           if (r.fromAbout) row.fromAbout = true;
           row.srcRefs = r.refs || []; // [3.17.0]
+          // [S026] a place or company for a medium the release does not have ("Lacquer Cut At", the studio of a vinyl mastering)
+          if (companyLeftOutForMedium(row, r, rel, r.line || `${g.name} – ${r.role}`)) {
+            leftOutKeys.add(company.key);
+            continue;
+          }
           // A company for some tracks only (a text: "Published by X (1, 3)"), otherwise for all of them
           const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
           row.dAllTracks = !some;
@@ -11899,6 +12094,9 @@
       }
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
+      // [S026] nor entries whose credits were all left out for a medium
+      [...leftOutKeys].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
+      if (leftOutKeys.size) renderSource();
       // [3.16.1] "about" text left out for this release: its rows hidden at once
       if (S.aboutOff) setAboutRowsHidden(true);
       if (rel.liner) log('info', 'linerFound', { name: rel.liner.name }); // [3.17.2]
@@ -12742,7 +12940,8 @@
     // [3.21.0] lines left out on purpose (thanks, endorsements, web addresses – T030, T032), apart from those not recognized
     const ign = (rel && rel.ignored) || [];
     const ignHtml = ign.length ? `<details class="dci-ignored"><summary>${esc(tr('ignored.title', { n: ign.length }))}</summary>
-      <ol>${ign.map((l) => `<li>${esc(l)}</li>`).join('')}</ol><p class="dci-sub">${esc(tr('ignored.hint'))}</p></details>` : '';
+      <ol>${ign.map((l) => `<li><span class="dci-ign-text">${esc(l.text != null ? l.text : l)}</span>${l.why ? ` <span class="dci-sub dci-ign-why">– ${esc(tr(`ignored.why.${l.why}`, l))}</span>` : ''}</li>`).join('')}</ol>
+      <p class="dci-sub">${esc(tr('ignored.hint'))}</p></details>` : '';
     const f = S.textForm;
     const textForm = f ? `<div class="dci-textsrc${f.supp ? ' dci-textsrc-supp' : ''}" role="group" aria-label="${esc(tr(f.supp ? 'supp.textTitle' : 'textsrc.title'))}">
         ${f.supp ? `<p class="dci-sub">${esc(tr('supp.textTitle'))}</p>` : ''}
@@ -14765,7 +14964,7 @@
   function typeAskHtml(row) {
     const q = typeQuestionFor(row);
     if (!q || row.level === 'skip') return '';
-    const pick = (o, i) => `<button type="button" class="dci-textbtn" data-act="type-pick" data-opt="${i}" aria-pressed="${row.typeAnswer === i}">${esc(o.label || o.type)}</button>`;
+    const pick = (o, i) => `<button type="button" class="dci-textbtn${o.suggested ? ' dci-type-sugg' : ''}" data-act="type-pick" data-opt="${i}" aria-pressed="${row.typeAnswer === i}"${o.suggested ? ` title="${esc(tr('typeAsk.suggestedTitle'))}"` : ''}>${esc(o.label || o.type)}${o.suggested ? ` <span class="dci-similar">${esc(tr('typeAsk.suggested'))}</span>` : ''}</button>`;
     const chosen = row.typeAnswer != null;
     return `<div class="dci-bass-ask dci-type-ask" data-question="${q.id}">${esc(tr(chosen ? 'typeAsk.chosen' : q.ask || 'typeAsk.ask', { role: row.raw || row.base }))}
       ${q.options.map(pick).join(' · ')}${chosen ? '' : `<span class="dci-sub">${esc(tr('typeAsk.pending'))}</span>`}</div>`;
@@ -21039,6 +21238,7 @@
       .dci-bctest input { width: calc(var(--u, 1px) * 300); }
       /* Suggestions of MB entries (same name, an alias): dashed and yellow like every suggestion */
       #dci-overlay .dci-suggbtn { border: 1px dashed var(--sugg-line); border-radius: 3px; background: var(--sugg-bg); color: var(--sugg-ink); padding: 0 calc(var(--u, 1px) * 6); text-decoration: none; }
+      #dci-overlay .dci-type-sugg { border: 1px dashed var(--sugg-line); border-radius: 3px; background: var(--sugg-bg); color: var(--sugg-ink); padding: 0 calc(var(--u, 1px) * 4); }
       .dci-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
       .dci-suppbar { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); flex-basis: 100%; margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 4px; background: #f7f6fb; }
       .dci-supp-url { display: inline-flex; gap: calc(var(--u, 1px) * 6); flex: 1 1 calc(var(--u, 1px) * 300); min-width: 0; }

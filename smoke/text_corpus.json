@@ -38,7 +38,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "Thanks to Mike Eden, Romana Bellinger, Caroline Forbes, Victoria Long at Gimpel Fils, London, Celia Irvin and Priscilla Hashmi."
+          {
+            "text": "Thanks to Mike Eden, Romana Bellinger, Caroline Forbes, Victoria Long at Gimpel Fils, London, Celia Irvin and Priscilla Hashmi.",
+            "why": "thanks"
+          }
         ]
       }
     },
@@ -49,7 +52,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "Barry Guy plays exclusively on Thomastik-Infeld bass strings."
+          {
+            "text": "Barry Guy plays exclusively on Thomastik-Infeld bass strings.",
+            "why": "endorsement"
+          }
         ]
       }
     },
@@ -335,7 +341,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "Special thanks to Z"
+          {
+            "text": "Special thanks to Z",
+            "why": "thanks"
+          }
         ]
       }
     },
@@ -351,7 +360,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "He uses Zildjian cymbals"
+          {
+            "text": "He uses Zildjian cymbals",
+            "why": "endorsement"
+          }
         ]
       }
     },
@@ -408,7 +420,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "www.example.com"
+          {
+            "text": "www.example.com",
+            "why": "web"
+          }
         ]
       }
     },
@@ -419,7 +434,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "contact: info@label.com"
+          {
+            "text": "contact: info@label.com",
+            "why": "web"
+          }
         ]
       }
     },
@@ -430,7 +448,10 @@
         "companies": [],
         "unrecognized": [],
         "ignored": [
-          "Follow us: instagram.com/somelabel"
+          {
+            "text": "Follow us: instagram.com/somelabel",
+            "why": "web"
+          }
         ]
       }
     },
@@ -767,6 +788,119 @@
             [
               "https://www.deezer.com/artist/556677"
             ]
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vinyl LP mastering by Sean Price at Misery Loves Co.",
+      "expect": {
+        "credits": [
+          [
+            "Sean Price",
+            "Mastering [Vinyl LP]"
+          ]
+        ],
+        "companies": [
+          [
+            "Misery Loves Co",
+            "Mastered At",
+            "for Vinyl LP"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vinyl LP mastering and digital mastering by Dana Digital at Sound House",
+      "expect": {
+        "credits": [
+          [
+            "Dana Digital",
+            "Mastering [Vinyl LP]"
+          ],
+          [
+            "Dana Digital",
+            "Mastering [digital]"
+          ]
+        ],
+        "companies": [
+          [
+            "Sound House",
+            "Mastered At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered by Max Vinyl (vinyl)",
+      "expect": {
+        "credits": [
+          [
+            "Max Vinyl",
+            "Mastered By [vinyl]"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vinyl master: Vic Master",
+      "expect": {
+        "credits": [
+          [
+            "Vic Master",
+            "Mastering [Vinyl]"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mastered for vinyl by Ann Cut",
+      "expect": {
+        "credits": [
+          [
+            "Ann Cut",
+            "Mastering [vinyl]"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Lacquer cut by Lou Lacquer",
+      "expect": {
+        "credits": [
+          [
+            "Lou Lacquer",
+            "Lacquer cut By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Translated by Ana Ruiz",
+      "expect": {
+        "credits": [
+          [
+            "Ana Ruiz",
+            "Translated By"
           ]
         ],
         "companies": [],

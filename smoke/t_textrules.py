@@ -48,7 +48,7 @@ with sync_playwright() as p:
     for x in g:
         print('   ', x)
     unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
-    ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent)")
+    ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li .dci-ign-text')].map(li => li.textContent)")
     pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [JSON.stringify(d.begin), JSON.stringify(d.end)].join(' '))")
     print('   nicht erkannt:', unrec, '| ausgelassen:', ign)
     print('   Pool:', pool)
