@@ -13,12 +13,26 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.21.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.21.1, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.21.1 · 2026-10-23
+
+Media: MB's real toggle in the relationship editor, media without a tracklist, tracks the web service leaves out (collected item 44). Checked with musicbrainz-server (`common/hooks/usePagedMediumTable.js`, `release/components/MediumRelationshipEditor.js`, `MediumToolbox.js`, `Controller/WS/js.pm` `tracks`, `Controller/WS/2/Release.pm`) and the release lookup of "Eternal" (57095656-…, 14 CDs, tracks on CD 1 and 14 only).
+
+- **`findMediumToggle(m)`:** first MB's own link `#disc<position>` (`a.expand-medium`, text "2 ▶ CD", no `aria-expanded`); the heading heuristic stays as fallback. New **`mediumFolded(el)`** (`.expand-triangle` ▶) and **`mediumMoreLink(toggle)`** (`a.load-tracks` in the next tbody).
+- **`loadMediaInEditor`:** `#expand-all-mediums` when every unloaded medium is in the list; a toggle is clicked only when folded; while waiting, "Load all tracks..." is clicked once it appears; time per medium `max(20 s, 0.2 s × tracks)`.
+- **`loadRelease`:** `loadMediaInEditor([...choice.media], { quiet: true })` before `source.release` (was after `applyMediaChoice`).
+- **New `pageMediums()`** (the media of MB's page data: id, position, format, name, `track_count`, tracks or null), **`fetchMediumTracks(id)`** (`/ws/js/tracks/<id>?page=N`, all pages, 250 ms apart, with their `linked_entities`), **`wsRelOf(r, linked)`** (a relationship of the editor's JSON in the form of the web service: `target-type`, `type`, `type-id` (link type gid), attribute names, `attribute-values`, `attribute-credits`, `target-credit`, `begin`/`end`, the target with its own relations) and **`completeMedia(ws)`** (called in `init` right after the release lookup: media missing in `ws.media` are added from the page data; a medium with fewer tracks than its `track-count` / `track_count`, or with recordings without `relations`, gets its tracks from `fetchMediumTracks`, converted, so `S.mbTracks`, works and `indexExistingRelationships` work unchanged; logs `mbMediaPartial`, `mbMediumRead`, `mbMediumReadFailed`).
+- **`init`:** `S.mediaInfo` with `count`; media without tracks logged (`mbMediaEmpty`).
+- **`chooseMedia`:** `empty` (media of `S.mediaInfo` without tracks) named below the intro (`[data-mel=empty]`, `media.empty`); `media.intro` counts all media.
+- **Texts (4 languages):** `media.empty.one|other`, `log.mbMediaEmpty.one|other`, `log.mbMediaPartial`, `log.mbMediumRead.one|other`, `log.mbMediumReadFailed`, `err.noMediumId`.
+- **Tests:** `t_mediaload.py` rebuilt: MB's editor as MusicBrainz builds it (`a.expand-medium#disc<n>`, hidden tbody, `#expand-all-mediums`, a medium in part with `a.load-tracks`), four media (1, 2, 1, 0 tracks), parts D (media 1 and 3: own toggle) and E (the lookup leaves out medium 2's tracks and medium 1's relationships: read from `/ws/js/tracks`). Harness: `split_media` gives medium ids (4500 + position) and `track-count` / `track_count`; `WS_DROP_TRACKS`, `WS_NO_RELS`, `JS_TRACKS_PAGE`, `JS_TRACKS_CALLS`, `ws_to_js_rel`, `js_tracks`, route `/ws/js/tracks/<id>`, `ws_release(full=False)` with `trim_medium`.
+
 
 ## Import 3.21.0 · 2026-10-19 · milestone
 
