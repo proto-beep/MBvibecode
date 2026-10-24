@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.29.0 | 1.8.4 – 1.9.0 |
+| 2026-10-24 | 3.22.1 – 3.29.1 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -82,6 +82,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.29.1
+
+#### Changed
+
+- **Noises, electronics, field recordings** (maintainer: "noises -> effects mit role credit "noises". electronics -> electronic instruments mit role credit "electronics". field recordings ist eine komplett andere beziehung. hier hat MB "field recordist for / field recordings" als eigenes relationship"): in brackets after a name in prose ("… by X (noises, electronics) & Y (field recordings)") and as roles anywhere: noises → the instrument effects credited "noises", electronics → electronic instruments credited "electronics", field recordings → field recordist (also "Field Recordings By", "Field recorded by").
+
 
 ### Import 3.29.0 – milestone "Text recognition, part 3"
 
