@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.28.3
+// @version      3.29.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.29.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -890,6 +890,7 @@
       "matrix.liveWhy.title": "the track title says live",
       "matrix.liveWhy.credit": "{src} credits “{role}” ({name}) for this track",
       "matrix.liveWhy.creditAll": "{src} credits “{role}” ({name}) for the whole release",
+      "matrix.liveWhy.notesTracks": "the notes say these tracks were recorded live (“in live concert” …)",
       "matrix.liveOfferRec": "Live recording – {reason}. This link exists in MusicBrainz without “live”: a click adds it (an edit). It is not set by itself.",
       "matrix.songAuto": "Preselected (rule S020) because {src} names music and lyrics in one credit (e.g. “Music And Lyrics By”); a type you choose stays",
       "preview.attrFillTitle": "Link exists in MusicBrainz; the attributes are added",
@@ -1340,6 +1341,7 @@
       "ms.3.21.0": "Text recognition, part 1: several sentences in one line are read one by one (“Graphic design: X. Text: Y. Produced by Z.”); “℗ & ©”, “P + ©” and “(P) & (C)” give both, without codes like “DDD” or catalogue numbers; web addresses are never part of a name – a profile (Instagram, SoundCloud …) after a name is looked up in MusicBrainz as a suggestion and filled in by “Create artist”, Linktree and other addresses are left out; “Logo by” is design with the credit “logo”; a title in quotation marks with its year before “by” and “courtesy of …” are no part of a credit; “Text: X” asks: liner notes or lyrics; thanks and endorsements are listed as left out on purpose.",
       "ms.3.22.0": "Text recognition, part 2: instruments and voices in German, Spanish and French (“Schlagzeug”, “batería”, “contrebasse”) become MusicBrainz's own names without a role credit, words with several meanings (“bajo”, “Alto”) are asked; tracks named by their titles in quotation marks (“Piano in ‘A’ and ‘B’ is a contribution by X”) are found on the release; “Recorded by X in Xixon, Asturies, Spain” gives X and the area where it was recorded (recorded, mixed or mastered in – found by its other names too, only suggested); credits for a medium the release does not have (“Vinyl LP mastering”) are left out, and each line left out on purpose says why; “Translated by” on Bandcamp suggests liner notes; artist pages of streaming services and profiles after labels and studios are filled in by “Create …”, the links at the entries are shown by a setting; large releases: every medium in the choice, the chosen ones loaded at once with MusicBrainz's own controls",
       "ms.3.27.0": "A clearer dashboard: the entries compact – one line per role (role → type and instrument, level, tracks, date), a click opens the row to change it; dates and track groups can still be dropped onto the line, what is open is in colour (red missing, yellow a question or suggestion), skipped rows are grey with ✕; “Compact | Full” is remembered. The head in one line with symbols of its own, “Source ▾” for everything about the source, “+ Supplement” only on request; the settings as tabs (also “Texts” and “ⓘ Connections” – every site, tool and script the script works with), “Reset all settings” in them; after the installation the language is asked once",
+      "ms.3.29.0": "Text recognition, part 3: credits in prose (\"… by K.M. (sounds, words) & E. (voice)\", \"Cover artwork channeled by …\", \"Logo carved by the guided hand of …\"), every place of joined verbs (\"Mixed and mastered at …\") and lists of kinds (\"Tenor, alto, soprano saxophones\"); a date goes to every group of joined words and takes its group only from its own sentence, years of a release are left out, \"19 & 20. 01. 2009\" and \"1973 October 19\" are read; \"C1 to D\" with a side of one track, \"in live concert\" only for the tracks named. Since 3.27.0 also: Bandcamp track pages as releases; Norwegian, Swedish and Danish roles, \"Logo Og Kunst\" as design \"logo\" and artwork \"art\", \"cover design\", \"wood flutes\" as flute; no \"credited as\" when only the case differs, the spelling of a text when it differs; the companion underlines the dates and track groups used in the Discogs notes and on Bandcamp.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -6048,7 +6050,9 @@
   /**
    * [S033] (3.28.2) The tasks of an artwork credit joined by "and" in its one detail – "Artwork [Logo Og Kunst]" (Norwegian:
    * logo and art) – or in a text's role ("Logo og kunst: X"): each task its own role as Discogs writes it in English (T040):
-   * design with the credit "logo" and artwork with the credit "art". Only when every part is such a task.
+   * design with the credit "logo" and artwork with the credit "art". Only when every part is such a task. [3.28.4] Tasks
+   * of one MusicBrainz type stay one role of that type, credited with the tasks in English ("Artwork [Design And Layout]"
+   * → design "design and layout"; maintainer: "beides ein design credit").
    */
   function splitArtTasks(role) {
     if (!ruleOn('S033')) return [role];
@@ -6059,7 +6063,16 @@
     if (tasks.some((t) => !t) || new Set(tasks.map((t) => t.term)).size < 2) return [role];
     // a detail: only of a role of the artwork ("Artwork", "Graphics", "Cover" …)
     if (role.mods.length && !(mapRole(role.base, []).types || []).some((t) => ART_TYPES.includes(norm(t)))) return [role];
-    return uniq(tasks.map((t) => t.term)).map((term) => {
+    const terms = uniq(tasks.map((t) => t.term));
+    const typeOf = (term) => { const p = parseRoleNotation(term)[0]; return norm((mapRole(p.base, p.mods).types || [])[0] || ''); };
+    if (new Set(terms.map(typeOf)).size === 1) {
+      // the task in English: its detail ("Design [Logo]" → logo), else its role ("Layout" → layout)
+      const words = terms.map((term) => { const p = parseRoleNotation(term)[0]; return norm(p.mods[0] || withoutBy(p.base)); });
+      const credit = words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}` : words[0];
+      const p = parseRoleNotation(terms[0])[0];
+      return [{ raw: role.raw, base: p.base, mods: [], splitBase: role.base, artTask: true, artCredit: credit }];
+    }
+    return terms.map((term) => {
       const p = parseRoleNotation(term)[0];
       return { raw: p.raw, base: p.base, mods: p.mods, splitFrom: role.splitFrom || role.raw, splitBase: role.base, artTask: true };
     });
@@ -6190,9 +6203,14 @@
     { id: 'S030', where: 'trackFit, titlesFit, loadRelease, chooseLink (TITLE_SMALL_WORDS)', note: 'Every import compares the tracks of the source with those of the MusicBrainz release: their number and their titles position by position (T038: case, accents, punctuation, notes in brackets, "feat. …" and small words do not count; a title fits when it has the same words, is in the other, is one letter off or shares more than half of the words of the shorter one; different numbers never). Different numbers or less than 80 % fitting titles: a yellow warning with what differs (the titles in the message). In the dialog of several linked releases each gets it, and the most data is chosen among those whose tracks fit (3.24.1)' },
     { id: 'S031', where: 'sourceCreditFor, syncSourceCredits', note: 'A name that differs from MusicBrainz\'s only in its case ("Voices Of Wonder" for Voices of Wonder, "VALFAR" for Valfar) gets no "credited as": MusicBrainz\'s spelling is used, for the name at the source and for a Discogs "credited as" (ANV). Typed in by hand, it stays (3.28.2)' },
     { id: 'S032', where: 'mapRole, repeatedDetails, roleCreditFor (ROLE_TERMS)', note: 'A role in Norwegian, Swedish or Danish (T039) – in a Discogs bracket that names the role itself ("Mixed By [Miksa Av]", "Graphics [Grafisk Utforming]", "Producer [Produsert Av]", "Mastered By [Mastering Av]") or as the role of a text ("Miksa av: X") – is a translation: mapped as its English term, no role credit (3.28.2)' },
-    { id: 'S033', where: 'splitArtTasks, parseRoles, groupCredits (ART_TASKS)', note: 'The tasks of an artwork credit joined by "and" ("Artwork [Logo Og Kunst]" – Norwegian for logo and art –, "Logo og kunst: X", "Logo and Art") each become their own role as Discogs writes it in English (T040): design with the credit "logo" and artwork with the credit "art". Only when every part is such a task; the row says the role as written at the source (3.28.2)' },
+    { id: 'S033', where: 'splitArtTasks, parseRoles, groupCredits (ART_TASKS)', note: 'The tasks of an artwork credit joined by "and" ("Artwork [Logo Og Kunst]" – Norwegian for logo and art –, "Logo og kunst: X", "Logo and Art") each become their own role as Discogs writes it in English (T040): design with the credit "logo" and artwork with the credit "art". Only when every part is such a task; the row says the role as written at the source (3.28.2). Tasks of one MusicBrainz type stay one row of that type, credited with the tasks in English: "Artwork [Design And Layout]" → design "design and layout" (3.28.4)' },
     { id: 'S034', where: 'roleCreditFor, caseCredit', note: 'The kind of a voice is written in lower case in its role credit ("Vocals [Screams]" → screams, "Vocals [Clean]" → clean), also words MusicBrainz does not know (3.28.2)' },
     { id: 'S035', where: 'instrumentCandidates, headNounCands, byHeadNoun, roleCreditFor', note: 'An instrument MusicBrainz does not have under its whole name (two to four words) is looked for by its last word ("wood flutes" → flute, after every other candidate); found only that way, the whole wording is its role credit, in lower case ("wood flutes"). In texts not for a name-like phrase ("John Bass") (3.28.2)' },
+    { id: 'S036', where: 'syncSourceCredits, sourceCreditFor', note: 'A name from a text or Bandcamp linked to a MusicBrainz entry is credited as written there ("K.M." for the artist it is linked to), unless it is the same or differs only in its case (S031); not a placeholder ("the band"), not a supplement. Typed in by hand, it stays (3.28.4)' },
+    { id: 'S037', where: 'roleRules (design rule R062, DESIGN_PARTS)', note: 'The design of a part of the package keeps its whole name as role credit: "Cover Design", "Cover Design By", "Design [Cover]", "Cover [Design]", "Artwork [Cover Design]" → design credited "cover design"; also sleeve, booklet, package, packaging, digipak, inlay, insert (3.28.4)' },
+    { id: 'S038', where: 'TEXT.parse (namesWithRoles, PROSE_ROLE_WORDS)', note: 'Prose with names and their roles in brackets after "by": "A chronicle of rabid deeds, dutifully unearthed … by K.M. (sounds, words) & E. (voice)" → K.M. performer and lyricist, E. vocals – the words before "by" are no role, the brackets are (T041, or roles of the register: "(guitar, vocals)"); every name needs a bracket (3.29.0)' },
+    { id: 'S039', where: 'TEXT.parse (place, placeOf)', note: 'Verbs joined before "at" each give the place: "Mixed and mastered at TQA.HQ (July 2026)" → mixed at and mastered at TQA.HQ; a date in brackets after the place is no part of it (3.29.0)' },
+    { id: 'S040', where: 'TEXT.parse (splitRoles, INSTRUMENT_MODIFIER)', note: 'A list of kinds before a shared instrument also with commas only ("Tenor, alto, soprano saxophones", "Tenor / alto / soprano saxophones") – each kind gets the instrument, in the singular when the list ends in the plural (tenor saxophone, alto saxophone, soprano saxophone) (3.29.0)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -6291,6 +6309,9 @@
     [/^engineered in/, { id: 'C043', area: ['engineered in'], level: 'recording' }],
   ];
 
+  // [S037] (3.28.4) parts of the package whose design keeps its whole name as role credit ("cover design")
+  const DESIGN_PARTS = ['cover', 'sleeve', 'booklet', 'package', 'packaging', 'digipak', 'digipack', 'inlay', 'insert'];
+
   /** The MusicBrainz types of the design rules (R062, R064–R067). */
   const DESIGN_TYPES = ['design', 'design/illustration', 'graphic design'];
 
@@ -6379,6 +6400,7 @@
     { id: 'R068', kind: 'simple', note: "", re: /^cover photo(s|graphy)?$/, types: ['photography'], level: 'release', credit: 'cover photo' },
     { id: 'R069', kind: 'simple', note: "", re: /^cover (painting|illustration|drawing)$/, types: ['illustration', 'design/illustration'], level: 'release' },
     { id: 'R070', kind: 'simple', note: "", re: /^cover art$/, types: ['artwork', 'design/illustration'], level: 'release', credit: 'cover art' },
+    { id: 'R103', kind: 'simple', note: "\"Cover Artwork\" (3.29.0)", re: /^cover artwork( by)?$/, types: ['artwork', 'design/illustration'], level: 'release', credit: 'cover artwork' },
     { id: 'R071', kind: 'simple', note: "", re: /^(photography by|photography|photographer|photos by|photo|photos|photograph by|photographed by|photographs by)$/, types: ['photography'], level: 'release' },
     { id: 'R072', kind: 'simple', note: "", re: /^(graphic design|graphics|graphic designer)$/, types: ['graphic design', 'design'], level: 'release' },
     { id: 'R101', kind: 'simple', note: "\"Logo\", \"Logo by\": design with the credit \"logo\" (3.21.0)", re: /^(logo|logo by|logo design|logo designed by)$/, types: ['design', 'graphic design'], level: 'release', credit: 'logo' },
@@ -6515,6 +6537,12 @@
       R062: { test: () => /\bdesign(ed|s)?\b/.test(allWords) && !/\bgraphic/.test(allWords), run: () => {
       ms.forEach((x) => consumed.add(x));
       const rest = uniq(allWords.replace(/\b(designed|designs|design|designer|by)\b/g, ' ').split(/[\s,]+/).filter(Boolean));
+      // [S037] (3.28.4) the design of a part of the package keeps its whole name: "Cover Design", "Design [Cover]", "Artwork
+      // [Cover Design]" → "cover design"; also sleeve, booklet, package(ing)
+      const part = ruleOn('S037') && rest.find((w) => DESIGN_PARTS.includes(w));
+      if (part && rest.every((w) => w === part || ['artwork', 'art', 'graphics', 'and'].includes(w))) {
+        return out(['design', 'design/illustration', 'graphic design'], { ...rel, credit: `${part} design` });
+      }
       return out(['design', 'design/illustration', 'graphic design'], { ...rel, credit: rest.join(' ') });
     } },
       R063: { run: () => {
@@ -6623,6 +6651,10 @@
       show: () => ({ pairs: [['particles', TEXT_AREA_PARTICLE], ['no area', TEXT_NOT_AREA]] }) },
     { id: 'T038', where: 'TITLE_SMALL_WORDS, TITLE_NOTE, titleWordsOf', note: 'Track titles compared with MusicBrainz\'s (3.24.1, S030): small words of English, German, Spanish, French, Italian, Portuguese and Dutch are left out ("The Song of the Sea" = "Song of Sea"), so are notes in brackets ("(Remastered)", "[Live]", "(feat. X)")',
       show: () => ({ pairs: [['small words', [...TITLE_SMALL_WORDS].join(' · ')], ['notes', TITLE_NOTE]] }) },
+    { id: 'T041', where: 'PROSE_ROLE_WORDS', note: 'Texts (3.29.0): role words in brackets after a name in prose (S038) and the role each stands for ("sounds" → performer, "words" → lyricist, "voice" → vocals)',
+      show: () => ({ pairs: Object.entries(PROSE_ROLE_WORDS) }) },
+    { id: 'T042', where: 'PROSE_FILLER_VERB, PROSE_FILLER_BEFORE_NAME', note: 'Texts (3.29.0): words of prose around a credit that are left out – a verb before "by" ("Cover artwork channeled by X", "Logo carved by …") and words before the name ("… by the guided hand of BMS Illustration")',
+      show: () => ({ pairs: [['verb before “by”', PROSE_FILLER_VERB], ['before the name', PROSE_FILLER_BEFORE_NAME]] }) },
     { id: 'T039', where: 'ROLE_TERMS, ROLE_INDEX, foldWord', note: 'All sources (3.28.2): roles in Norwegian, Swedish and Danish, each spelling with its language (word@no, word@sv, word@da; the search field filters "@no") → the English role the register maps; in a Discogs bracket or as a role of a text, a translation gets no role credit (S032)',
       show: () => ({ pairs: ROLE_TERMS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
     { id: 'T040', where: 'ART_TASKS, ART_TASK_INDEX, splitArtTasks', note: 'All sources (3.28.2): the tasks of an artwork credit that "and" (og, och, und, et, y, &, +) joins, with the role each becomes (S033)',
@@ -6905,6 +6937,14 @@
 
   // [T023] Texts (3.14.0): a person without a name after "by" ("a (cat assisted) human", "the band", "himself") – the
   // release's artists are offered for it, only as a suggestion
+  // [T041] Texts (3.29.0): role words in brackets after a name in prose ("… by K.M. (sounds, words) & E. (voice)", S038) that
+  // are no roles of the register themselves – the role each stands for
+  const PROSE_ROLE_WORDS = { sounds: 'Performer', noises: 'Performer', words: 'Lyrics By', lyrics: 'Lyrics By', texts: 'Lyrics By', voice: 'Vocals', voices: 'Vocals', vocals: 'Vocals', music: 'Music By' };
+  // [T042] Texts (3.29.0): words of prose around a credit that say nothing about the role – a verb before "by" ("Cover artwork
+  // channeled by X", "Logo carved by …") and words before the name ("… by the guided hand of BMS Illustration")
+  const PROSE_FILLER_VERB = /\s+(?:lovingly\s+|carefully\s+|dutifully\s+)?(?:channell?ed|carved|crafted|conjured|forged|summoned|woven|wrought|unearthed|captured|rendered|realized|realised|executed|handled|delivered|shaped|sculpted|etched|hewn|brought\s+to\s+life|put\s+together|taken\s+care\s+of)$/i;
+  const PROSE_FILLER_BEFORE_NAME = /^(?:the\s+)?(?:(?:guided|skilled|steady|capable|able|talented|trusted)\s+)?(?:hands?|mind|talents?|skills?|craft|eyes?|ears?)\s+of\s+/i;
+
   const PLACEHOLDER_WHO = /^(?:an?\s+)?(?:human(?:\s+being)?|me|myself|us|ourselves|the\s+artists?|the\s+band|the\s+musicians?|himself|herself|themselves)$/i;
 
   // [T028] Texts (3.17.3): words for the distribution of a release – "Distribution - !K7", "Distribution: X", "Distribution by
@@ -7050,6 +7090,9 @@
     ['copyright', /℗|©|\(p\)|\(c\)|copyright|phonographic/i],
     // [D015] whole words only: "Fuzzoramarecords" or "… Records" is a label name, not "recorded"
     ['performance', /\brecord(ed|ing|ings)?\b|\brec\.|\blive at\b|\bsessions?\b|aufgenommen|aufnahme|grabad|enregistr|\bconcert|\bkonzert/i],
+    // [D018] (3.28.5) a year of a release or issue ("originally issued on LP in 1974", "Released 2003") is no date of the
+    // credits: left out
+    ['issue', /\b(?:re-?)?(?:issued|released)\b|\bfirst (?:issued|released|published)\b|veröffentlicht|erschienen|\bpublicad[oa]\b|\beditad[oa]\b|\bpublié|\bsorti\b/i],
   ];
 
   // [T014] Texts: month names, only to take dates out of a role phrase ("Recorded 12 May 2019" → "Recorded")
@@ -7072,6 +7115,10 @@
   ];
   // test(name of the MB relationship type, row): the first group that takes it wins (Remastering before Mastering)
   DATE_GROUPS.forEach((g) => { g.test = (n, row) => g.types.includes(n) && (!g.only || g.only(n, row)); });
+
+  // [3.28.6] (S021) Notes that say live: "recorded live", "live recording", [3.28.6] "in live concert", "live in concert",
+  // "recorded in concert", "at a live performance"
+  const LIVE_NOTES = /\b(?:recorded|performed)\s+live\b|\blive\s+recording\b|\b(?:in|at|during)\s+(?:a\s+)?live\s+(?:concert|performance)\b|\blive\s+in\s+concert\b|\brecorded\s+in\s+concert\b/i;
 
   // [T017] (S021) Track titles that say "live": "(Live)", "(Live at …)", "[Live]", "– Live"
   const LIVE_TITLE = /\((?:live|live at [^)]*|live in [^)]*|live version)\)|\[(?:live|live at [^\]]*)\]|\s[-–—]\s*live\b/i;
@@ -7404,7 +7451,7 @@
 
   const DATE_RULES = [
     { id: 'D001', note: 'ISO and MusicBrainz dates and periods: 2022-11-01, 2022-11, 1998-03-01 – 1998-03-20, 1997–1998' },
-    { id: 'D002', note: 'Numbers with dots, day first: 01.11.2022' },
+    { id: 'D002', note: 'Numbers with dots, day first: 01.11.2022 · [3.28.5] also with spaces: 20. 01. 2009' },
     { id: 'D003', note: 'Numbers with slashes: 1/11/2022 – a number over 12 decides; otherwise the Discogs release country (US: month/day, elsewhere day/month), with a note and the other reading to choose' },
     { id: 'D004', note: 'Month names (English, German, Spanish, French): November 1, 2022 · November 1. 2022 · Nov. 1st, 2022 · 1 November 2022 · 1. November 2022 · 1st of November 2022 · 1 de noviembre de 2022' },
     { id: 'D005', note: 'Ordinal words: first of November 2022 · November the first, 2022' },
@@ -7415,10 +7462,14 @@
     { id: 'D010', note: 'A year alone: 1998' },
     { id: 'D011', note: 'Decades ("late 1970s", "the 70s") cannot be given as a MusicBrainz date and are left out' },
     { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
-    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows' },
+    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
     { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
     { id: 'D016', note: 'A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0)' },
+    { id: 'D017', note: 'Year, month name, day: 1973 October 19 · 1973, Oct. 19th (3.28.5)' },
+    { id: 'D018', note: 'A year of a release or issue is no date of the credits and is left out: "originally issued on LP in 1974", "Released 2003", "veröffentlicht 1999" (3.28.5)' },
+    { id: 'D019', note: 'The word naming the group of a date is looked for in its own sentence only ("Mixed May 2001. Released 2003." – 2003 is no mix date); a line ending in ":" counts as part of the next one (3.28.5)' },
+    { id: 'D020', note: 'Words naming groups joined by "and", "&" or commas give the date to each group: "Mixed and mastered by X in March 2026" → Mix and Mastering, "Recorded, mixed and mastered 2001" → Performance, Mix and Mastering (3.28.5)' },
   ];
 
   const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
@@ -7469,6 +7520,8 @@
   const DATE_MATCHERS = [
     { id: 'D013', re: `${P.M}\\s+(${DAYLIST}),?\\s+${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[1]), m[2]) },
     { id: 'D013', re: `(${DAYLIST})${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[2]), m[1]) },
+    // [3.28.5] the days of a date in numbers: "19 & 20. 01. 2009", "19./20.01.2009" (collected item 64a)
+    { id: 'D013', re: `(?<![\\d.])(${DAYLIST})\\s*(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)`, make: (m) => multiDays(m[3], m[2], m[1]) },
     { id: 'D007', re: `${P.M}\\s+${P.D}${P.TO}${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
     { id: 'D007', re: `${P.D}${P.OF}\\s+${P.M}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[2]), m[1]), ymd(m[5], monthNo(m[4]), m[3])) },
     { id: 'D007', re: `${P.M},?\\s+${P.Y}${P.TO}${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[2], monthNo(m[1])), ymd(m[4], monthNo(m[3]))) },
@@ -7482,10 +7535,12 @@
     { id: 'D007', re: '(?<!\\d)(\\d{4})\\s*/\\s*(\\d{2}|\\d{4})(?![\\d/])', make: (m) => span(ymd(m[1]), ymd(m[2].length === 2 ? `${m[1].slice(0, 2)}${m[2]}` : m[2])) },
     { id: 'D005', re: `${P.O}(?:\\s+day)?${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), ORDINALS.get(m[1].toLowerCase()))) },
     { id: 'D005', re: `${P.M}\\s+(?:the\\s+)?${P.O},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), ORDINALS.get(m[2].toLowerCase()))) },
+    // [D017] (3.28.5) year, month, day: "1973 October 19" (collected item 64d)
+    { id: 'D017', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}(?![\\d.])`, make: (m) => single(ymd(m[1], monthNo(m[2]), m[3])) },
     { id: 'D004', re: `${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), m[2])) },
     { id: 'D004', re: `${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), m[1])) },
     { id: 'D001', re: '(?<![\\d./-])(\\d{4})-(\\d{1,2})(?:-(\\d{1,2}))?(?![\\d-])', make: (m) => single(ymd(m[1], m[2], m[3])) },
-    { id: 'D002', re: '(?<![\\d.])(\\d{1,2})\\.(\\d{1,2})\\.(\\d{4})(?!\\d)', make: (m) => single(ymd(m[3], m[2], m[1])) },
+    { id: 'D002', re: '(?<![\\d.])(\\d{1,2})\\.\\s?(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)', make: (m) => single(ymd(m[3], m[2], m[1])) },
     { id: 'D003', re: '(?<![\\d/])(\\d{1,2})/(\\d{1,2})/(\\d{4})(?![\\d/])', make: (m, o) => {
       const a = Number(m[1]);
       const b = Number(m[2]);
@@ -7508,8 +7563,27 @@
   const COPYRIGHT_SIGN = /℗|©|\(p\)|\(c\)/i;
 
   /**
+   * [D019] (3.28.5) Where the sentence of a place of a text begins (its line; ";" and ". " before a capital end a
+   * sentence, not after an abbreviation of up to three letters; a line ending in ":" belongs to the next one).
+   */
+  function sentenceStartAt(src, a) {
+    let lineStart = src.lastIndexOf('\n', a - 1) + 1;
+    const line = src.slice(lineStart, a);
+    const re = /;|\.(?=\s+[A-Z*•–-])/g;
+    let cut = 0;
+    let m;
+    while ((m = re.exec(line))) {
+      if (m[0] === '.' && (line.slice(0, m.index).split(/\s+/).pop() || '').length <= 3) continue;
+      cut = m.index + 1;
+    }
+    if (!cut && lineStart > 0 && /:\s*$/.test(src.slice(src.lastIndexOf('\n', lineStart - 2) + 1, lineStart - 1))) lineStart = src.lastIndexOf('\n', lineStart - 2) + 1;
+    return lineStart + cut;
+  }
+
+  /**
    * All dates and periods in a text, in MusicBrainz form, with the rule that found them (D001 …), a short
    * snippet, the suggested group and, for slash dates that could be read either way, the other reading.
+   * [D020] hints: every group of joined words ("mixed and mastered"), when more than one.
    */
   function findDates(text, { usOrder = false } = {}) {
     const src = String(text || '');
@@ -7527,19 +7601,21 @@
         const v = mt.make(m, { usOrder });
         taken.push([a, b]);
         if (!v || v === 'skip') continue;
-        // The keyword closest before the date (or inside it) suggests the group
-        const before = src.slice(Math.max(0, a - 80), b);
+        // The keyword closest before the date (or inside it) suggests the group; [D019] only in its own sentence
+        const before = src.slice(Math.max(0, a - 80, ruleOn('D019') ? sentenceStartAt(src, a) : 0), b);
         // [D015] after a ℗ / © sign in the same sentence, capitalised keywords belong to a name ("℗ Fuzzorama Recordings 2005")
         const seg = before.slice(Math.max(...['.', ';', '\n'].map((c) => before.lastIndexOf(c, before.length - m[0].length - 1))) + 1);
         const segStart = before.length - seg.length;
         const sign = ruleOn('D015') ? seg.search(COPYRIGHT_SIGN) : -1;
         let hint = '';
         let at = -1;
+        const words = [];
         for (const [key, re] of DATE_HINTS) {
           const g = new RegExp(re.source, 'gi');
           let h;
           while ((h = g.exec(before))) {
             const inName = sign >= 0 && key !== 'copyright' && h.index > segStart + sign && /^[A-ZÄÖÜ]/.test(h[0]);
+            if (!inName) words.push({ key, index: h.index, end: h.index + h[0].length });
             if (h.index > at && !inName) {
               at = h.index;
               hint = key;
@@ -7547,12 +7623,32 @@
             if (!h[0]) break;
           }
         }
+        // [D020] (3.28.5) words joined by "and", "&" or commas before it: each names a group of the date
+        const chain = [];
+        if (hint && ruleOn('D020')) {
+          let cur = words.filter((w) => w.index === at && w.key === hint)[0];
+          chain.push(cur.key);
+          for (;;) {
+            const prev = words.filter((w) => w.end <= cur.index && /^\s*(?:,|and|&|und|y|et|\+|\/)\s*$/i.test(before.slice(w.end, cur.index)))
+              .sort((x, y) => y.end - x.end)[0];
+            if (!prev) break;
+            if (!chain.includes(prev.key)) chain.unshift(prev.key);
+            cur = prev;
+          }
+        }
+        // [D018] (3.28.5) a year of a release or issue: left out, unless another word of the chain names a group
+        if (hint === 'issue' && ruleOn('D018')) {
+          const other = chain.filter((k) => k !== 'issue');
+          if (!other.length) continue;
+          hint = other[other.length - 1];
+        }
+        const hints = chain.filter((k) => k !== 'issue');
         // [D015] "©©" is mostly a typo for "℗ ©": both, i.e. the group ℗/©
         const doubled = ruleOn('D015') && /©\s*©/.test(seg);
         if (doubled) hint = 'copyright';
         found.push({ index: a, text: m[0], rule: doubled ? `${mt.id} · D015` : mt.id, value: { begin: v.begin, end: v.end, ended: v.ended }, alt: v.alt || null, order: v.order || '',
           multi: v.multi || null, days: v.days || null, consecutive: !!v.consecutive,
-          hint, snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
+          hint, hints: doubled ? ['copyright'] : hints.length > 1 ? hints : [], snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
       }
     }
     return found.sort((x, y) => x.index - y.index);
@@ -7810,7 +7906,8 @@
      * area: 'Cologne' } (dates and other parts with digits are left out).
      */
     function placeOf(text) {
-      const parts = String(text || '').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
+      // [S039] (3.29.0) a date in brackets after the place ("TQA.HQ (July 2026)") is no part of it
+      const parts = String(text || '').replace(/\s*\([^)]*\d[^)]*\)/g, '').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
       if (!parts.length) return null;
       let name = parts[0];
       let area = parts[1] || '';
@@ -8089,10 +8186,18 @@
         }
         for (let i = parts.length - 1; i > 0; i--) {
           const words = parts[i].split(' ');
-          if (words.length < 2 || !TEXT_AND_SEP.test(seps[i - 1]) || !INSTRUMENT_MODIFIER.test(words[0])) continue;
-          const noun = words.slice(1).join(' ');
+          // [S040] (3.29.0) also a list with commas only, when every part before is one kind ("Tenor, alto, soprano saxophones")
+          const kindsOnly = ruleOn('S040') && parts.slice(0, i).every((x) => x.split(' ').length === 1 && INSTRUMENT_MODIFIER.test(x));
+          if (words.length < 2 || !(TEXT_AND_SEP.test(seps[i - 1]) || (seps[i - 1] === ',' && kindsOnly)) || !INSTRUMENT_MODIFIER.test(words[0])) continue;
+          let noun = words.slice(1).join(' ');
+          // [S040] each kind is one instrument: the noun in the singular ("saxophones" → saxophone), when that is known
+          const one = noun.replace(/(?<=[^s])s$/i, '');
+          if (ruleOn('S040') && one !== noun && isRole(`${words[0]} ${one}`)) {
+            noun = one;
+            parts[i] = `${words[0]} ${noun}`;
+          }
           // back through the list while the parts before are modifiers too ("alto, tenor & baritone sax")
-          for (let j = i - 1; j >= 0 && (j === i - 1 || /^(,|&|\+|\/|and|und|et)$/.test(seps[j])); j--) {
+          for (let j = i - 1; j >= 0 && (j === i - 1 || /^(,|&|\+|\/|and|und|et)$/.test(seps[j]) || kindsOnly); j--) {
             if (parts[j].split(' ').length !== 1 || !INSTRUMENT_MODIFIER.test(parts[j]) || !isRole(`${parts[j]} ${noun}`)) break;
             parts[j] = `${parts[j]} ${noun}`;
           }
@@ -8109,6 +8214,27 @@
       const roleParts = (side) => {
         const parts = splitRoles(side);
         return { parts, known: parts.filter(isRole), unknown: parts.filter((x) => !isRole(x)) };
+      };
+      /**
+       * [S038] (3.29.0) Names each with its roles in brackets: "K.M. (sounds, words) & E. (voice)" → [{ name: 'K.M.', roles:
+       * ['Performer', 'Lyrics By'] }, { name: 'E.', roles: ['Vocals'] }]; [] unless every name has roles and every word is one
+       * (T041 or a role of the register).
+       */
+      const namesWithRoles = (side) => {
+        const t = clean(side);
+        const re = /\s*(?:^|,|&|\+|\band\b|\bund\b|\bet\b|\by\b)\s*([^()&,;+]+?)\s*\(([^)]+)\)/giy;
+        const out = [];
+        let m;
+        let end = 0;
+        while ((m = re.exec(t))) {
+          // (an initial keeps its dot: "K.M.", "E.")
+          const name = String(m[1]).replace(/\s+/g, ' ').trim();
+          const roles = m[2].split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map((w) => PROSE_ROLE_WORDS[norm(w)] || (isRole(cap(w)) ? cap(w) : isRole(`${cap(w)} By`) ? `${cap(w)} By` : ''));
+          if (!looksLikeName(name) || !roles.length || roles.some((r) => !r)) return [];
+          out.push({ name, roles: uniq(roles) });
+          end = re.lastIndex;
+        }
+        return out.length && !clean(t.slice(end)) ? out : [];
       };
       const names = (side) => side.split(TEXT_NAME_SEP).flatMap((n) => n.split(TEXT_NAME_SEP_Y)).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
 
@@ -8211,7 +8337,19 @@
             const sentence = /\s(?:of|on|for)\s+(?:this|the)\s|\s(?:was|were|is|are|been)\s|\s(?:entirely|completely|fully|solely|exclusively)\s/i.test(` ${left} `);
             const made = sentence && clean(left).match(TEXT_MADE_BY);
             const madeParts = made ? made[1].split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map(cap) : [];
-            const roles = madeParts.length && madeParts.every(isRole) ? madeParts : byRoles(left);
+            let roles = madeParts.length && madeParts.every(isRole) ? madeParts : byRoles(left);
+            // [T042] (3.29.0) a verb of prose before "by" says nothing about the role ("Cover artwork channeled by X")
+            if (!roles.length && PROSE_FILLER_VERB.test(clean(left))) roles = byRoles(clean(left).replace(PROSE_FILLER_VERB, ''));
+            // [T042] … nor words before the name ("by the guided hand of BMS Illustration")
+            right = right.replace(PROSE_FILLER_BEFORE_NAME, '');
+            // [S038] (3.29.0) prose before "by", the roles in brackets after each name ("… by K.M. (sounds, words) & E. (voice)")
+            if (!roles.length && ruleOn('S038')) {
+              const withRoles = namesWithRoles(firstSentence(right));
+              if (withRoles.length) {
+                withRoles.forEach((x) => x.roles.forEach((r) => { if (addCredit(x.name, r, cScope)) found++; }));
+                continue;
+              }
+            }
             // [3.14.0] the first sentence only, and a time after the name cut off (T020): "X in October 2026" → X
             right = firstSentence(right).replace(TEXT_TIME_AFTER_NAME, '');
             // [3.22.0] "Recorded by X in Xixon, Asturies, Spain (in the spring, 2017)": X, and the area (T037)
@@ -8234,9 +8372,12 @@
             for (const n of rolesM.length ? names(right) : []) rolesM.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
             continue;
           }
-          // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person)
-          if ((m = clause.match(/^(\p{L}+)\b.*?\s+at\s+(.+)$/iu))) {
-            place(m[1], placeOf(m[2]));
+          // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person); [S039] (3.29.0) verbs joined before it
+          // each give the place ("Mixed and mastered at TQA.HQ (July 2026)")
+          if ((m = clause.match(/^(\p{L}+(?:\s*(?:,|\band\b|&|\+)\s*\p{L}+)*)\b.*?\s+at\s+(.+)$/iu))) {
+            const where = placeOf(m[2]);
+            const verbs = ruleOn('S039') ? m[1].split(/\s*(?:,|\band\b|&|\+)\s*/i).filter(Boolean) : [m[1].split(/[\s,&+]/)[0]];
+            verbs.filter((v, k) => k === 0 || isCompanyRole(`${cap(v)} At`)).forEach((v) => place(v, where));
             continue;
           }
           // [3.22.0] "Recorded in Xixon, Asturies, Spain in 2017", "Mixed live in Berlin" (an area without a person, T037)
@@ -10191,6 +10332,9 @@
       if (/'/.test(row.raw || '') && /’/.test(row.roleCredit || '')) ids.push('S012');
       // [3.28.3] a row of a joined artwork credit is S033, not S018 (engineer tasks)
       if (row.dSplitFrom) ids.push(row.artTask ? 'S033' : 'S018');
+      // [3.28.4] tasks of one type joined (S033), the design of a part of the package (S037)
+      if (row.artCredit) ids.push('S033');
+      if (row.ruleId === 'R062' && DESIGN_PARTS.some((w) => norm(row.creditFromRole) === `${w} design`)) ids.push('S037');
       if (repeatedDetails(row).length) ids.push('S019');
       // [3.28.3] the rules of 3.28.2 at their rows: a translation (S025 German/Spanish/French, S032 Nordic roles, also in
       // a bracket), the kind of a voice in lower case, an instrument found by its last word
@@ -10200,7 +10344,7 @@
       if (row.primaryText && byHeadNoun(row.base, row.primaryText, row.mods)) ids.push('S035');
     }
     const a = S.artists.get(row.artistKey);
-    if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push('S008');
+    if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
     // [3.28.3] no "credited as", because only the case differs (S031)
     if (a && a.mbid && !norm(row.credit) && !row.creditTouched && !row.manual && caseOnlyName(row, a)) ids.push('S031');
     return uniq(ids).filter((id) => /^U/.test(id) || ruleOn(id));
@@ -10232,7 +10376,7 @@
       m = mapRole(row.dBase, row.mods);
     }
     Object.assign(row, { types: m.types, notes: m.notes || [], work: m.work, primaryCands: m.primaryCands || [], consumed: m.consumed || [], defaultLevel: m.level,
-      creditFromRole: m.credit || '', ruleId: m.rule || '', linkTypeId: null, translated: m.translated || '', translatedBase: m.translatedBase || '' });
+      creditFromRole: row.artCredit || m.credit || '', ruleId: m.rule || '', linkTypeId: null, translated: m.translated || '', translatedBase: m.translatedBase || '' });
     if (!row.company && m.base) row.base = m.base;
     row.flags = new Set((m.flags || []).map(norm));
     if (!row.levelTouched) row.level = m.level;
@@ -10274,7 +10418,7 @@
     renderRulesBody();
   }
 
-  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null, artTask = false } = {}) {
+  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null, artTask = false, artCredit = '' } = {}) {
     let m;
     if (company) {
       const c = mapCompanyRole(raw);
@@ -10326,6 +10470,8 @@
       tracksOpen: false,
     };
     row.creditFromRole = m.credit || '';
+    // [S033] (3.28.4) tasks of one type joined: their credit ("design and layout")
+    if (artCredit) Object.assign(row, { artCredit, creditFromRole: artCredit });
     row.ruleId = m.rule || '';
     // [S025] a translation (T034): the word as written and the English term it stands for
     if (m.translated) Object.assign(row, { translated: m.translated, translatedBase: m.translatedBase || '' });
@@ -12270,7 +12416,7 @@
       for (const c of g.roles.values()) {
         const tracks = suppTracks(c);
         if (S.mediaSel && !c.allTracks && c.indexes.size && !tracks.length) continue;
-        const probe = makeRow('supp', { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask });
+        const probe = makeRow('supp', { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '' });
         // [S026] a credit for a medium the release does not have is no supplement either
         const pm = mediumOfRow(probe);
         if (pm && mediumMissing(pm.kind)) continue;
@@ -12386,7 +12532,7 @@
   /** A row of the second source, built as the import builds rows (tracks from it, its mark). */
   function suppRow(artistKey, info, company) {
     const row = company ? makeRow(artistKey, { raw: info.r.role, company })
-      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask });
+      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask, artCredit: info.c.role.artCredit || '' });
     row.dAllTracks = !!info.all;
     if (!company) {
       row.dSpec = info.c.specs.join(', ');
@@ -12952,7 +13098,7 @@
         };
         S.artists.set(artist.key, artist);
         for (const c of g.roles.values()) {
-          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask });
+          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '' });
           if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
           if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
           row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
@@ -14035,13 +14181,15 @@
 
   /** Applies sourceCreditFor to every row from Discogs whose credit was not edited by hand. */
   function syncSourceCredits() {
-    if (!ruleOn('S008')) return;
     let works = false;
     const groups = new Set();
     for (const row of S.rows) {
       if (row.creditTouched || row.manual) continue;
       const a = S.artists.get(row.artistKey);
-      if (!a || !a.dId || !a.mbid || a.other) continue;
+      if (!a || !a.mbid || a.other) continue;
+      // [S036] (3.28.4) a name from a text or Bandcamp (no Discogs id) linked to MusicBrainz: credited as written there
+      // (maintainer: "soll er erst einmal so gecredited bleiben wie er auf bandcamp angegeben ist"); not a placeholder
+      if (a.dId ? !ruleOn('S008') : !ruleOn('S036') || a.placeholder || row.supp || !(a.src || S.source || {}).nameSearch) continue;
       const want = sourceCreditFor(row, a);
       if (row.credit === want) continue;
       row.credit = want;
@@ -14160,6 +14308,9 @@
       <span class="dci-sub">– ${esc(tr(differs ? 'spell.differs' : 'spell.same'))}</span></span>`;
   }
 
+  /** [S031] (3.28.4) A name variation that differs from the MusicBrainz name only in its case: the header field stays empty. */
+  const caseOnlyAnv = (a, anv) => ruleOn('S031') && !!a.mbName && typo(anv).toLocaleLowerCase() === typo(a.mbName).toLocaleLowerCase();
+
   function variantsHtml(a) {
     const anvs = a.anvs || [];
     let spelled = '';
@@ -14171,7 +14322,7 @@
     }
     return `<span data-spell="${a.key}">${spellHtml(a)}</span>${spelled ? `<span>${spelled}</span>` : ''}
       <label class="dci-credit">${esc(tr('group.creditAll'))}
-        <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(anvs.length === 1 ? anvs[0] : '')}"
+        <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(anvs.length === 1 && !caseOnlyAnv(a, anvs[0]) ? anvs[0] : '')}"
           placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('group.creditAllAria', { name: a.name }))}">
       </label>
       <button type="button" data-act="artist-credit-all">${esc(tr('group.setAll'))}</button>
@@ -14760,10 +14911,19 @@
         addRange(ends);
       }
     }
-    const vinyl = /\b([A-H]\d{1,2})\s*(?:-|–|—|to|bis)\s*([A-H]\d{1,2})\b/g;
+    // [3.28.6] a side alone at either end ("C1 to D": side D is one track, or all of its tracks; collected item 64b)
+    const vinyl = /\b([A-H]\d{0,2})\s*(?:-|–|—|to|bis)\s*([A-H]\d{0,2})(?![\w])/g;
+    const sideOf = (L) => (srcTracks || []).map((t, i) => [normPos(t.position), i]).filter(([pos, i]) => i < S.mbTracks.length && new RegExp(`^${L}(?:\\d|$)`).test(pos)).map(([, i]) => i);
+    const endOf = (tok, last) => {
+      if (!/^[A-H]$/.test(tok) || posMap.has(normPos(tok))) return tok;
+      const side = sideOf(tok);
+      const i = side.length ? side[last ? side.length - 1 : 0] : null;
+      return i == null ? tok : (srcTracks[i] || {}).position || tok;
+    };
     while ((m = vinyl.exec(text))) {
+      if (/^[A-H]$/.test(m[1]) && /^[A-H]$/.test(m[2])) continue;
       named = true;
-      addRange([m[1], m[2]]);
+      addRange([endOf(m[1], false), endOf(m[2], true)]);
     }
     const side = /\bside\s+([A-H])\b/gi;
     while ((m = side.exec(text))) {
@@ -14787,11 +14947,12 @@
     const tok = '[A-Za-z]?\\d+(?:[-.]\\d+)?';
     const conn = '(?:-|–|—|to|bis|à|a|thru|through|,|&|and|und|y|et)';
     const res = [new RegExp(`\\b(?:tracks?|titles?|titel|pistas?|morceaux|plages?|songs?|stücke?)\\s*:?\\s*${tok}(?:\\s*${conn}\\s*${tok})*`, 'gi'),
-      /\b[A-H]\d{1,2}\s*(?:-|–|—|to|bis)\s*[A-H]\d{1,2}\b/g, /\bside\s+[A-H]\b/gi];
+      /\b[A-H]\d{0,2}\s*(?:-|–|—|to|bis)\s*[A-H]\d{0,2}(?![\w])/g, /\bside\s+[A-H]\b/gi];
     const out = [];
     for (const re of res) {
       let m;
       while ((m = re.exec(src))) {
+        if (/^[A-H]\s*(?:-|–|—|to|bis)\s*[A-H]$/.test(m[0])) continue;
         const tracks = tracksInText(m[0]);
         if (tracks && !out.some((o) => m.index < o.index + o.text.length && o.index < m.index + m[0].length)) out.push({ index: m.index, text: m[0], tracks });
       }
@@ -15420,30 +15581,35 @@
         if (!kept.size) return;
         x = { ...x, tracks: kept };
       }
-      const group = DATE_GROUPS.find((g) => g.key === x.hint) || null;
-      const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, '', { found: true }) : null;
-      const studios = (x.studios || []).map((k) => S.artists.get(k)).filter(Boolean).map(studioId);
-      if (x.multi) {
-        placed += placeSeparateDays(x, key, group, { auto: true, tg, studios });
-        return;
-      }
-      // Without such a word: only into the pool, to be dragged where it belongs ([3.17.2] named for the liner notes
-      // when it is in their signature: "Liner notes – Jane Roe")
-      const liner = S.release && S.release.liner;
-      const forLiner = liner && x0.index >= liner.at && x0.index < liner.at + liner.len;
-      const e = poolDateFor(x.value, group, key, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
-      // [3.17.6] marked for the liner notes: their row shows it as a suggestion
-      if (forLiner) e.liner = liner.name;
-      addCommonDate(e.begin, e.end, group, key, e);
-      if (!group) return;
-      const here = m.cells.find((c) => c.col === group.key && c.date === e.id);
-      if (here) {
-        if (here.auto) Object.assign(here, { tgs: uniq([...here.tgs, ...(tg ? [tg.id] : [])]), studios: uniq([...here.studios, ...studios]) });
-        return;
-      }
-      if (m.cells.some((c) => c.date === e.id)) return;
-      m.cells.push({ id: newCellId(), col: group.key, date: e.id, tgs: tg ? [tg.id] : [], studios, auto: true });
-      placed++;
+      // [D020] (3.28.5) joined words ("mixed and mastered … March 2026"): the date goes to each of their groups
+      const groups = uniq([x.hint, ...(x.hints || [])]).map((k) => DATE_GROUPS.find((g) => g.key === k) || null).filter((g, k) => g || k === 0);
+      groups.forEach((group, gi) => {
+        // the first group keeps the key of the find; the others get their own (their own pool entry, named for the group)
+        const gkey = gi ? `${key}~${group.key}` : key;
+        const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, '', { found: true }) : null;
+        const studios = (x.studios || []).map((k) => S.artists.get(k)).filter(Boolean).map(studioId);
+        if (x.multi) {
+          placed += placeSeparateDays(x, gkey, group, { auto: true, tg, studios });
+          return;
+        }
+        // Without such a word: only into the pool, to be dragged where it belongs ([3.17.2] named for the liner notes
+        // when it is in their signature: "Liner notes – Jane Roe")
+        const liner = S.release && S.release.liner;
+        const forLiner = liner && x0.index >= liner.at && x0.index < liner.at + liner.len;
+        const e = poolDateFor(x.value, group, gkey, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
+        // [3.17.6] marked for the liner notes: their row shows it as a suggestion
+        if (forLiner) e.liner = liner.name;
+        addCommonDate(e.begin, e.end, group, gkey, e);
+        if (!group) return;
+        const here = m.cells.find((c) => c.col === group.key && c.date === e.id);
+        if (here) {
+          if (here.auto) Object.assign(here, { tgs: uniq([...here.tgs, ...(tg ? [tg.id] : [])]), studios: uniq([...here.studios, ...studios]) });
+          return;
+        }
+        if (m.cells.some((c) => c.date === e.id)) return;
+        m.cells.push({ id: newCellId(), col: group.key, date: e.id, tgs: tg ? [tg.id] : [], studios, auto: true });
+        placed++;
+      });
     });
     const pooled = S.datePool.length - before;
     savePool();
@@ -17167,7 +17333,7 @@
     return tr(`matrix.liveWhy.${reason}`, c || { role: 'Live Recording By', name: '?' });
   }
   /** [S021] "li?": the track itself is a live recording (credit, title) or the release is live (group, format, notes). */
-  const liveOfferText = (i) => tr(['credit', 'creditAll', 'title'].includes(liveReason(i)) ? 'matrix.liveOfferRec' : 'matrix.liveOffer', { reason: liveWhyText(i) });
+  const liveOfferText = (i) => tr(['credit', 'creditAll', 'title', 'notesTracks'].includes(liveReason(i)) ? 'matrix.liveOfferRec' : 'matrix.liveOffer', { reason: liveWhyText(i) });
   /** Attributes a link has in MusicBrainz already (existing links only). */
   const mbLinkAttrs = (work) => new Set(work && !work.planned ? work.linkAttrs || [] : []);
   /**
@@ -17298,13 +17464,32 @@
    * title says so ("(live)", "[live]", "(live at …)", "– live"). A "Live Recording By" credit (R031) counts too:
    * for the tracks it names, or for the whole release when it names none.
    */
+  /**
+   * [3.28.6] The tracks of the sentences of the notes that say live and name tracks (empty when a sentence says live
+   * without tracks: then the whole release is live, as before).
+   */
+  function liveNotesTracks(notes) {
+    const out = new Set();
+    for (const line of String(notes).split('\n')) {
+      for (const sentence of line.split(/;|\.(?=\s+[A-Z])/)) {
+        if (!LIVE_NOTES.test(sentence)) continue;
+        const t = tracksInText(sentence);
+        if (!t) return new Set();
+        t.forEach((i) => out.add(i));
+      }
+    }
+    return out;
+  }
+
   function applyLiveDefault() {
     const reasons = { release: '', tracks: new Map(), credits: new Map(), releaseCredit: null };
     const types = ((S.releaseGroup && (S.releaseGroup['secondary-types'] || S.releaseGroup.secondaryTypes)) || []).map(norm);
     const d = S.release || { tags: [], notes: '' };
     if (types.includes('live')) reasons.release = 'rg';
     else if (d.tags.includes('live')) reasons.release = 'format';
-    else if (/\b(recorded|performed)\s+live\b|\blive\s+recording\b/i.test(d.notes || '')) reasons.release = 'notes';
+    else if (LIVE_NOTES.test(d.notes || '') && !liveNotesTracks(d.notes || '').size) reasons.release = 'notes';
+    // [3.28.6] a sentence that says live and names tracks: only those ("A1 to B2 recorded … in live concert …"; item 64c)
+    liveNotesTracks(d.notes || '').forEach((i) => { if (!reasons.tracks.has(i)) reasons.tracks.set(i, 'notesTracks'); });
     S.mbTracks.forEach((t) => {
       const dt = (S.srcTracks || [])[t.idx];
       if (LIVE_TITLE.test(t.title || '') || (dt && LIVE_TITLE.test(dt.title || ''))) reasons.tracks.set(t.idx, 'title');
@@ -22328,6 +22513,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.29.0', label: 'Credits Importer 3.29.0 · Companion 1.9.0' },
     { v: '3.27.0', label: 'Credits Importer 3.27.0' },
     { v: '3.22.0', label: 'Credits Importer 3.22.0' },
     { v: '3.21.0', label: 'Credits Importer 3.21.0' },
