@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.28.3
+// @version      3.28.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -6048,7 +6048,9 @@
   /**
    * [S033] (3.28.2) The tasks of an artwork credit joined by "and" in its one detail – "Artwork [Logo Og Kunst]" (Norwegian:
    * logo and art) – or in a text's role ("Logo og kunst: X"): each task its own role as Discogs writes it in English (T040):
-   * design with the credit "logo" and artwork with the credit "art". Only when every part is such a task.
+   * design with the credit "logo" and artwork with the credit "art". Only when every part is such a task. [3.28.4] Tasks
+   * of one MusicBrainz type stay one role of that type, credited with the tasks in English ("Artwork [Design And Layout]"
+   * → design "design and layout"; maintainer: "beides ein design credit").
    */
   function splitArtTasks(role) {
     if (!ruleOn('S033')) return [role];
@@ -6059,7 +6061,16 @@
     if (tasks.some((t) => !t) || new Set(tasks.map((t) => t.term)).size < 2) return [role];
     // a detail: only of a role of the artwork ("Artwork", "Graphics", "Cover" …)
     if (role.mods.length && !(mapRole(role.base, []).types || []).some((t) => ART_TYPES.includes(norm(t)))) return [role];
-    return uniq(tasks.map((t) => t.term)).map((term) => {
+    const terms = uniq(tasks.map((t) => t.term));
+    const typeOf = (term) => { const p = parseRoleNotation(term)[0]; return norm((mapRole(p.base, p.mods).types || [])[0] || ''); };
+    if (new Set(terms.map(typeOf)).size === 1) {
+      // the task in English: its detail ("Design [Logo]" → logo), else its role ("Layout" → layout)
+      const words = terms.map((term) => { const p = parseRoleNotation(term)[0]; return norm(p.mods[0] || withoutBy(p.base)); });
+      const credit = words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}` : words[0];
+      const p = parseRoleNotation(terms[0])[0];
+      return [{ raw: role.raw, base: p.base, mods: [], splitBase: role.base, artTask: true, artCredit: credit }];
+    }
+    return terms.map((term) => {
       const p = parseRoleNotation(term)[0];
       return { raw: p.raw, base: p.base, mods: p.mods, splitFrom: role.splitFrom || role.raw, splitBase: role.base, artTask: true };
     });
@@ -6190,9 +6201,11 @@
     { id: 'S030', where: 'trackFit, titlesFit, loadRelease, chooseLink (TITLE_SMALL_WORDS)', note: 'Every import compares the tracks of the source with those of the MusicBrainz release: their number and their titles position by position (T038: case, accents, punctuation, notes in brackets, "feat. …" and small words do not count; a title fits when it has the same words, is in the other, is one letter off or shares more than half of the words of the shorter one; different numbers never). Different numbers or less than 80 % fitting titles: a yellow warning with what differs (the titles in the message). In the dialog of several linked releases each gets it, and the most data is chosen among those whose tracks fit (3.24.1)' },
     { id: 'S031', where: 'sourceCreditFor, syncSourceCredits', note: 'A name that differs from MusicBrainz\'s only in its case ("Voices Of Wonder" for Voices of Wonder, "VALFAR" for Valfar) gets no "credited as": MusicBrainz\'s spelling is used, for the name at the source and for a Discogs "credited as" (ANV). Typed in by hand, it stays (3.28.2)' },
     { id: 'S032', where: 'mapRole, repeatedDetails, roleCreditFor (ROLE_TERMS)', note: 'A role in Norwegian, Swedish or Danish (T039) – in a Discogs bracket that names the role itself ("Mixed By [Miksa Av]", "Graphics [Grafisk Utforming]", "Producer [Produsert Av]", "Mastered By [Mastering Av]") or as the role of a text ("Miksa av: X") – is a translation: mapped as its English term, no role credit (3.28.2)' },
-    { id: 'S033', where: 'splitArtTasks, parseRoles, groupCredits (ART_TASKS)', note: 'The tasks of an artwork credit joined by "and" ("Artwork [Logo Og Kunst]" – Norwegian for logo and art –, "Logo og kunst: X", "Logo and Art") each become their own role as Discogs writes it in English (T040): design with the credit "logo" and artwork with the credit "art". Only when every part is such a task; the row says the role as written at the source (3.28.2)' },
+    { id: 'S033', where: 'splitArtTasks, parseRoles, groupCredits (ART_TASKS)', note: 'The tasks of an artwork credit joined by "and" ("Artwork [Logo Og Kunst]" – Norwegian for logo and art –, "Logo og kunst: X", "Logo and Art") each become their own role as Discogs writes it in English (T040): design with the credit "logo" and artwork with the credit "art". Only when every part is such a task; the row says the role as written at the source (3.28.2). Tasks of one MusicBrainz type stay one row of that type, credited with the tasks in English: "Artwork [Design And Layout]" → design "design and layout" (3.28.4)' },
     { id: 'S034', where: 'roleCreditFor, caseCredit', note: 'The kind of a voice is written in lower case in its role credit ("Vocals [Screams]" → screams, "Vocals [Clean]" → clean), also words MusicBrainz does not know (3.28.2)' },
     { id: 'S035', where: 'instrumentCandidates, headNounCands, byHeadNoun, roleCreditFor', note: 'An instrument MusicBrainz does not have under its whole name (two to four words) is looked for by its last word ("wood flutes" → flute, after every other candidate); found only that way, the whole wording is its role credit, in lower case ("wood flutes"). In texts not for a name-like phrase ("John Bass") (3.28.2)' },
+    { id: 'S036', where: 'syncSourceCredits, sourceCreditFor', note: 'A name from a text or Bandcamp linked to a MusicBrainz entry is credited as written there ("K.M." for the artist it is linked to), unless it is the same or differs only in its case (S031); not a placeholder ("the band"), not a supplement. Typed in by hand, it stays (3.28.4)' },
+    { id: 'S037', where: 'roleRules (design rule R062, DESIGN_PARTS)', note: 'The design of a part of the package keeps its whole name as role credit: "Cover Design", "Cover Design By", "Design [Cover]", "Cover [Design]", "Artwork [Cover Design]" → design credited "cover design"; also sleeve, booklet, package, packaging, digipak, inlay, insert (3.28.4)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -6290,6 +6303,9 @@
     [/^remixed in/, { id: 'C042', area: ['remixed in'], level: 'recording' }],
     [/^engineered in/, { id: 'C043', area: ['engineered in'], level: 'recording' }],
   ];
+
+  // [S037] (3.28.4) parts of the package whose design keeps its whole name as role credit ("cover design")
+  const DESIGN_PARTS = ['cover', 'sleeve', 'booklet', 'package', 'packaging', 'digipak', 'digipack', 'inlay', 'insert'];
 
   /** The MusicBrainz types of the design rules (R062, R064–R067). */
   const DESIGN_TYPES = ['design', 'design/illustration', 'graphic design'];
@@ -6515,6 +6531,12 @@
       R062: { test: () => /\bdesign(ed|s)?\b/.test(allWords) && !/\bgraphic/.test(allWords), run: () => {
       ms.forEach((x) => consumed.add(x));
       const rest = uniq(allWords.replace(/\b(designed|designs|design|designer|by)\b/g, ' ').split(/[\s,]+/).filter(Boolean));
+      // [S037] (3.28.4) the design of a part of the package keeps its whole name: "Cover Design", "Design [Cover]", "Artwork
+      // [Cover Design]" → "cover design"; also sleeve, booklet, package(ing)
+      const part = ruleOn('S037') && rest.find((w) => DESIGN_PARTS.includes(w));
+      if (part && rest.every((w) => w === part || ['artwork', 'art', 'graphics', 'and'].includes(w))) {
+        return out(['design', 'design/illustration', 'graphic design'], { ...rel, credit: `${part} design` });
+      }
       return out(['design', 'design/illustration', 'graphic design'], { ...rel, credit: rest.join(' ') });
     } },
       R063: { run: () => {
@@ -10191,6 +10213,9 @@
       if (/'/.test(row.raw || '') && /’/.test(row.roleCredit || '')) ids.push('S012');
       // [3.28.3] a row of a joined artwork credit is S033, not S018 (engineer tasks)
       if (row.dSplitFrom) ids.push(row.artTask ? 'S033' : 'S018');
+      // [3.28.4] tasks of one type joined (S033), the design of a part of the package (S037)
+      if (row.artCredit) ids.push('S033');
+      if (row.ruleId === 'R062' && DESIGN_PARTS.some((w) => norm(row.creditFromRole) === `${w} design`)) ids.push('S037');
       if (repeatedDetails(row).length) ids.push('S019');
       // [3.28.3] the rules of 3.28.2 at their rows: a translation (S025 German/Spanish/French, S032 Nordic roles, also in
       // a bracket), the kind of a voice in lower case, an instrument found by its last word
@@ -10200,7 +10225,7 @@
       if (row.primaryText && byHeadNoun(row.base, row.primaryText, row.mods)) ids.push('S035');
     }
     const a = S.artists.get(row.artistKey);
-    if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push('S008');
+    if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
     // [3.28.3] no "credited as", because only the case differs (S031)
     if (a && a.mbid && !norm(row.credit) && !row.creditTouched && !row.manual && caseOnlyName(row, a)) ids.push('S031');
     return uniq(ids).filter((id) => /^U/.test(id) || ruleOn(id));
@@ -10232,7 +10257,7 @@
       m = mapRole(row.dBase, row.mods);
     }
     Object.assign(row, { types: m.types, notes: m.notes || [], work: m.work, primaryCands: m.primaryCands || [], consumed: m.consumed || [], defaultLevel: m.level,
-      creditFromRole: m.credit || '', ruleId: m.rule || '', linkTypeId: null, translated: m.translated || '', translatedBase: m.translatedBase || '' });
+      creditFromRole: row.artCredit || m.credit || '', ruleId: m.rule || '', linkTypeId: null, translated: m.translated || '', translatedBase: m.translatedBase || '' });
     if (!row.company && m.base) row.base = m.base;
     row.flags = new Set((m.flags || []).map(norm));
     if (!row.levelTouched) row.level = m.level;
@@ -10274,7 +10299,7 @@
     renderRulesBody();
   }
 
-  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null, artTask = false } = {}) {
+  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null, artTask = false, artCredit = '' } = {}) {
     let m;
     if (company) {
       const c = mapCompanyRole(raw);
@@ -10326,6 +10351,8 @@
       tracksOpen: false,
     };
     row.creditFromRole = m.credit || '';
+    // [S033] (3.28.4) tasks of one type joined: their credit ("design and layout")
+    if (artCredit) Object.assign(row, { artCredit, creditFromRole: artCredit });
     row.ruleId = m.rule || '';
     // [S025] a translation (T034): the word as written and the English term it stands for
     if (m.translated) Object.assign(row, { translated: m.translated, translatedBase: m.translatedBase || '' });
@@ -12270,7 +12297,7 @@
       for (const c of g.roles.values()) {
         const tracks = suppTracks(c);
         if (S.mediaSel && !c.allTracks && c.indexes.size && !tracks.length) continue;
-        const probe = makeRow('supp', { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask });
+        const probe = makeRow('supp', { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '' });
         // [S026] a credit for a medium the release does not have is no supplement either
         const pm = mediumOfRow(probe);
         if (pm && mediumMissing(pm.kind)) continue;
@@ -12386,7 +12413,7 @@
   /** A row of the second source, built as the import builds rows (tracks from it, its mark). */
   function suppRow(artistKey, info, company) {
     const row = company ? makeRow(artistKey, { raw: info.r.role, company })
-      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask });
+      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask, artCredit: info.c.role.artCredit || '' });
     row.dAllTracks = !!info.all;
     if (!company) {
       row.dSpec = info.c.specs.join(', ');
@@ -12952,7 +12979,7 @@
         };
         S.artists.set(artist.key, artist);
         for (const c of g.roles.values()) {
-          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask });
+          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '' });
           if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
           if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
           row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
@@ -14035,13 +14062,15 @@
 
   /** Applies sourceCreditFor to every row from Discogs whose credit was not edited by hand. */
   function syncSourceCredits() {
-    if (!ruleOn('S008')) return;
     let works = false;
     const groups = new Set();
     for (const row of S.rows) {
       if (row.creditTouched || row.manual) continue;
       const a = S.artists.get(row.artistKey);
-      if (!a || !a.dId || !a.mbid || a.other) continue;
+      if (!a || !a.mbid || a.other) continue;
+      // [S036] (3.28.4) a name from a text or Bandcamp (no Discogs id) linked to MusicBrainz: credited as written there
+      // (maintainer: "soll er erst einmal so gecredited bleiben wie er auf bandcamp angegeben ist"); not a placeholder
+      if (a.dId ? !ruleOn('S008') : !ruleOn('S036') || a.placeholder || row.supp || !(a.src || S.source || {}).nameSearch) continue;
       const want = sourceCreditFor(row, a);
       if (row.credit === want) continue;
       row.credit = want;
@@ -14160,6 +14189,9 @@
       <span class="dci-sub">– ${esc(tr(differs ? 'spell.differs' : 'spell.same'))}</span></span>`;
   }
 
+  /** [S031] (3.28.4) A name variation that differs from the MusicBrainz name only in its case: the header field stays empty. */
+  const caseOnlyAnv = (a, anv) => ruleOn('S031') && !!a.mbName && typo(anv).toLocaleLowerCase() === typo(a.mbName).toLocaleLowerCase();
+
   function variantsHtml(a) {
     const anvs = a.anvs || [];
     let spelled = '';
@@ -14171,7 +14203,7 @@
     }
     return `<span data-spell="${a.key}">${spellHtml(a)}</span>${spelled ? `<span>${spelled}</span>` : ''}
       <label class="dci-credit">${esc(tr('group.creditAll'))}
-        <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(anvs.length === 1 ? anvs[0] : '')}"
+        <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(anvs.length === 1 && !caseOnlyAnv(a, anvs[0]) ? anvs[0] : '')}"
           placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('group.creditAllAria', { name: a.name }))}">
       </label>
       <button type="button" data-act="artist-credit-all">${esc(tr('group.setAll'))}</button>

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.28.3 | 1.8.4 – 1.9.0 |
+| 2026-10-24 | 3.22.1 – 3.28.4 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -81,6 +81,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.28.4
+
+#### Added
+
+- **Credited as from a text or Bandcamp** (collected item 83; maintainer: "wenn ich einen artist aus freitext (wie bandcamp) verknüpfe soll er erst einmal so gecredited bleiben wie er auf bandcamp angegeben ist."): a name from a pasted text or from Bandcamp linked to a MusicBrainz entry keeps the name as written there in "credited as", unless it is the same or differs only in its case; not for placeholders or supplements (rule S036).
+
+#### Changed
+
+- **"Cover Design" is design credited "cover design"** (collected item 84; maintainer: "kannst du "cover design" immer zu design mit role credit "cover design" machen?" – "ja bitte genau so behandeln"): also "Cover Design By", "Design [Cover]", "Cover [Design]", "Artwork [Cover Design]", and the same for sleeve, booklet, package, packaging, digipak, inlay and insert (S037); before, the credit was only "cover".
+- **Artwork tasks of one type stay one row** (maintainer: "in diesem fall ist wäre beides ein design credit. also fließt er von artwork (discogs) zu MB design mit role credit "design and layout""): "Artwork [Design And Layout]" is one design row credited "design and layout" – 3.28.2 made two rows; "Artwork [Logo Og Kunst]" stays two (design "logo", artwork "art").
+- **"Artist credit for all roles" stays empty when only the case differs** (maintainer: "Bei reiner Großschreibung bitte leer bleiben. Sonst aber die angegebenen Wortlaute nutzen"): "VALFAR" for Valfar leaves the field empty; a real name variation is filled in as before.
+
 
 ### Import 3.28.3 · COMPANION 1.9.0
 

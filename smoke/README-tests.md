@@ -176,6 +176,9 @@ python3 t_nordic.py       # Norwegian, Swedish and Danish roles (3.28.2): no rol
 python3 t_textmarks.py    # used dates and track groups underlined at the source (3.28.3 / companion 1.9.0): Discogs notes (matrix,
                           # a row, not the pool), status off/on, Bandcamp credits (a year also in "released …") and "about";
                           # two "Vocals [...]" lines of one artist
+python3 t_textcredit.py   # 3.28.4: "Cover/Sleeve/Booklet/Package Design" → design "… design", "Artwork [Design And Layout]" one row
+                          # "design and layout", "Artist credit for all roles" empty for a case-only spelling, a text's name linked:
+                          # credited as written (not when only the case differs)
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error
