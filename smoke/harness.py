@@ -168,11 +168,14 @@ RELEASE_AC = []
 WS_FAIL = {}
 
 
-def bc_page(data):
-    """A Bandcamp album or track page with its data in "data-tralbum" (as Bandcamp writes it, HTML-escaped)."""
+def bc_page(data, band=None):
+    """A Bandcamp album or track page with its data in "data-tralbum" (as Bandcamp writes it, HTML-escaped); [3.22.1] with
+    band (the name of the account) also "data-band" and "og:site_name", as Bandcamp writes them."""
     import html as _html
-    return ('<!doctype html><html><head><title>Bandcamp</title></head><body>'
-            f'<script type="text/javascript" src="tralbum.js" data-tralbum="{_html.escape(json.dumps(data), quote=True)}"></script>'
+    meta = f'<meta property="og:site_name" content="{_html.escape(band, quote=True)}">' if band else ''
+    band_attr = f' data-band="{_html.escape(json.dumps({"id": 1, "name": band}), quote=True)}"' if band else ''
+    return (f'<!doctype html><html><head><title>Bandcamp</title>{meta}</head><body>'
+            f'<script type="text/javascript" src="tralbum.js" data-tralbum="{_html.escape(json.dumps(data), quote=True)}"{band_attr}></script>'
             '<h2 class="trackTitle">x</h2></body></html>')
 
 

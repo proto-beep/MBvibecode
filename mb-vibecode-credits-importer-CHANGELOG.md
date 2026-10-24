@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-24 | 3.22.1 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -77,6 +78,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-24
+
+### Import 3.22.1
+
+#### Fixed
+
+- **An album on a label's Bandcamp page** (collected item 46; maintainer: ""Yunclas" no MB artist with this Bandcamp link wurde mir angezeigt, dabei heißt der artist des releases selbst Yunclas (und wird auch so auf MB geschrieben)" – "Es soll aber artists anbieten, insbesondere wenn sie gleichnamig sind!"): the album of Yunclas lies on the page of the label Grabaciones Autobombo, and the script took that page as Yunclas's own – MusicBrainz has no artist with it, and no suggestion came. Now the name of the Bandcamp account (its "data-band", else "og:site_name") is compared with the album's artist, as Harmony does it: another name means another account (mostly a label). The page is then no link of the artist (not looked up, not filled in by **Create artist …**), the artist is searched by name like any other – **the release's artist of that name comes first, marked "release artist"**, still only a suggestion. The entry says whose page it is (with a link) and names MusicBrainz's label with that page ("a label of this release ✓" when it is one); the source line says "on the Bandcamp page of …", the log too.
+
+#### Added
+
+- **People not found through their own link are searched by name** (maintainer: "ja und ja"): a Discogs or Bandcamp person whose link MusicBrainz does not have ("no MB artist with this Discogs link") gets the MusicBrainz entries of the same name as suggestions, the release's artist of that name first. Nothing is assigned by itself. Rule S029.
+
 
 ## 2026-10-23
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.22.0
+// @version      3.22.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.22.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.22.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -300,6 +300,10 @@
       "match.noLink": "no MB artist with this {src} link",
       "match.noId": "no Discogs ID",
       "match.byName": "not assigned yet (no link) – check the suggestions or enter an MBID",
+      "bcPage.notOwn": "The Bandcamp page of this album belongs to {page} – not {name}'s own page; {name} is searched by name (MusicBrainz entries of this name are only suggested).",
+      "bcPage.mbLabel": "in MusicBrainz: label",
+      "bcPage.ofRelease": "– a label of this release ✓",
+      "bcPage.source": "· on the Bandcamp page of {page}",
       "log.nameLookup": "{name}: no link to MusicBrainz – looking for the same name",
       "role.placeholder": "e.g. Keyboards",
       "role.aria": "Role",
@@ -500,6 +504,9 @@
       "log.artistLinked": "{name}: found via {src} link → {mb}",
       "log.artistAmbiguous": "{name}: {n} MB artists share the {src} link",
       "log.artistMissing": "{name}: no MB artist with this {src} link",
+      "log.bcPageOther": "{name}: the album is on the Bandcamp page of {page} (a label or another account) – {name} is searched by name",
+      "log.bcPageLabel": "Bandcamp page {page}: label {label} in MusicBrainz",
+      "log.bcPageLabelOfRelease": "Bandcamp page {page}: label {label} in MusicBrainz – a label of this release",
       "log.artistManual": "{name}: set manually → {mb}",
       "log.artistForm": "Create-artist form opened: {name}",
       "log.artistCreated": "Artist created: {name} ({mbid})",
@@ -1678,6 +1685,10 @@
       "match.noLink": "kein MB-Artist mit diesem {src}-Link",
       "match.noId": "ohne Discogs-ID",
       "match.byName": "noch nicht zugeordnet (kein Link) – Vorschläge prüfen oder MBID eingeben",
+      "bcPage.notOwn": "Die Bandcamp-Seite dieses Albums gehört {page} – nicht die eigene Seite von {name}; {name} wird über den Namen gesucht (MusicBrainz-Einträge dieses Namens sind nur Vorschläge).",
+      "bcPage.mbLabel": "in MusicBrainz: Label",
+      "bcPage.ofRelease": "– ein Label dieses Releases ✓",
+      "bcPage.source": "· auf der Bandcamp-Seite von {page}",
       "log.nameLookup": "{name}: kein Link zu MusicBrainz – suche nach dem gleichen Namen",
       "role.placeholder": "z. B. Keyboards",
       "role.aria": "Rolle",
@@ -1878,6 +1889,9 @@
       "log.artistLinked": "{name}: über {src}-Link gefunden → {mb}",
       "log.artistAmbiguous": "{name}: {n} MB-Artists teilen sich den {src}-Link",
       "log.artistMissing": "{name}: kein MB-Artist mit diesem {src}-Link",
+      "log.bcPageOther": "{name}: das Album liegt auf der Bandcamp-Seite von {page} (ein Label oder ein anderes Konto) – {name} wird über den Namen gesucht",
+      "log.bcPageLabel": "Bandcamp-Seite {page}: Label {label} in MusicBrainz",
+      "log.bcPageLabelOfRelease": "Bandcamp-Seite {page}: Label {label} in MusicBrainz – ein Label dieses Releases",
       "log.artistManual": "{name}: manuell gesetzt → {mb}",
       "log.artistForm": "Formular „Artist anlegen“ geöffnet: {name}",
       "log.artistCreated": "Artist angelegt: {name} ({mbid})",
@@ -3056,6 +3070,10 @@
       "match.noLink": "ningún artista de MB con este enlace de {src}",
       "match.noId": "sin ID de Discogs",
       "match.byName": "aún sin asignar (sin enlace): revisa las sugerencias o introduce un MBID",
+      "bcPage.notOwn": "La página de Bandcamp de este álbum pertenece a {page}, no es la página propia de {name}; {name} se busca por el nombre (las entradas de MusicBrainz con este nombre solo se sugieren).",
+      "bcPage.mbLabel": "en MusicBrainz: sello",
+      "bcPage.ofRelease": "– un sello de esta publicación ✓",
+      "bcPage.source": "· en la página de Bandcamp de {page}",
       "log.nameLookup": "{name}: sin enlace a MusicBrainz; buscando el mismo nombre",
       "role.placeholder": "p. ej. Keyboards",
       "role.aria": "Rol",
@@ -3256,6 +3274,9 @@
       "log.artistLinked": "{name}: encontrado por enlace de {src} → {mb}",
       "log.artistAmbiguous": "{name}: {n} artistas de MB comparten el enlace de {src}",
       "log.artistMissing": "{name}: ningún artista de MB con este enlace de {src}",
+      "log.bcPageOther": "{name}: el álbum está en la página de Bandcamp de {page} (un sello u otra cuenta); {name} se busca por el nombre",
+      "log.bcPageLabel": "Página de Bandcamp {page}: sello {label} en MusicBrainz",
+      "log.bcPageLabelOfRelease": "Página de Bandcamp {page}: sello {label} en MusicBrainz – un sello de esta publicación",
       "log.artistManual": "{name}: asignado manualmente → {mb}",
       "log.artistForm": "Formulario «Crear artista» abierto: {name}",
       "log.artistCreated": "Artista creado: {name} ({mbid})",
@@ -4434,6 +4455,10 @@
       "match.noLink": "aucun artiste MB avec ce lien {src}",
       "match.noId": "sans ID Discogs",
       "match.byName": "pas encore associé (sans lien) – vérifiez les suggestions ou saisissez un MBID",
+      "bcPage.notOwn": "La page Bandcamp de cet album appartient à {page} – ce n’est pas la page de {name} ; {name} est cherché par son nom (les entrées MusicBrainz de ce nom ne sont que suggérées).",
+      "bcPage.mbLabel": "dans MusicBrainz : label",
+      "bcPage.ofRelease": "– un label de cette parution ✓",
+      "bcPage.source": "· sur la page Bandcamp de {page}",
       "log.nameLookup": "{name} : pas de lien vers MusicBrainz – recherche du même nom",
       "role.placeholder": "p. ex. Keyboards",
       "role.aria": "Rôle",
@@ -4634,6 +4659,9 @@
       "log.artistLinked": "{name} : trouvé via le lien {src} → {mb}",
       "log.artistAmbiguous": "{name} : {n} artistes MB partagent le lien {src}",
       "log.artistMissing": "{name} : aucun artiste MB avec ce lien {src}",
+      "log.bcPageOther": "{name} : l’album est sur la page Bandcamp de {page} (un label ou un autre compte) – {name} est cherché par son nom",
+      "log.bcPageLabel": "Page Bandcamp {page} : label {label} dans MusicBrainz",
+      "log.bcPageLabelOfRelease": "Page Bandcamp {page} : label {label} dans MusicBrainz – un label de cette parution",
       "log.artistManual": "{name} : défini manuellement → {mb}",
       "log.artistForm": "Formulaire « Créer l’artiste » ouvert : {name}",
       "log.artistCreated": "Artiste créé : {name} ({mbid})",
@@ -5825,6 +5853,7 @@
     { id: 'S026', where: 'loadRelease, suppRow, mediumOfRow (MEDIUM_WORDS)', note: 'A credit for a medium the MusicBrainz release does not have ("Vinyl LP mastering", "Mastered By [Vinyl]", "Lacquer Cut By" on a release of Digital Media) is no row: it is listed as left out on purpose, with the reason. "Vinyl LP mastering and digital mastering by X" keeps the digital mastering. A medium word of a text that fits the release is no role credit (3.21.4)' },
     { id: 'S027', where: 'titleScope, tracksByTitles (TEXT_TITLE_SCOPE)', note: 'Tracks named by their titles in a text (T036: "Piano in ‘A\' and \'B\' is a contribution by X", "Guitar on “Song”: Y"): each title is looked for among the tracks of the source (a pasted text: MusicBrainz\'s, Bandcamp: the album\'s) – case, accents and punctuation do not count, one letter more, less or other is allowed; a title not found is shown as "not matched", its tracks are chosen by hand (3.22.0)' },
     { id: 'S028', where: 'suggestByName, groupKindOf, matchHtmlInner (C038 …)', note: 'An area of a text ("Recorded by X in Xixon, Asturies, Spain", T037) is an entry of the kind "Area" with the larger areas after it; MusicBrainz is searched with its other names too ("Xixon" finds Gijón with the alias "Xixón") – only suggested, nothing assigned; there is no "Create" (areas are added by MusicBrainz\'s area editors). Its type: recorded in, mixed in (recording) or mastered in (release) (3.22.0)' },
+    { id: 'S029', where: 'bandPageName, ownPage, linkBand, bandPageInfo, suggestByName', note: 'A Bandcamp album on another account\'s page – mostly a label\'s ("Grabaciones Autobombo" with an album of Yunclas): the name of the page (its "data-band", else "og:site_name") is not the album\'s artist (case, accents and "The" do not count; "Jane Roe & Friends" on Jane Roe\'s page is her own) – the page is no link of the artist, he is searched by name, the entry says whose page it is and names MusicBrainz\'s label with that page. People not found through their own link (Discogs, Bandcamp) get the same-named MusicBrainz entries as suggestions; an artist of the release\'s artist credit with that name comes first, marked "release artist" – only suggested (3.22.1)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -7975,19 +8004,42 @@
       const m = String(u || '').match(/^https?:\/\/([a-z0-9-]+\.bandcamp\.com)/i);
       return m ? `https://${m[1].toLowerCase()}/` : '';
     };
+    const named = { quot: '"', apos: "'", lt: '<', gt: '>', amp: '&', nbsp: '\u00a0' };
+    const unescapeHtml = (t) => String(t || '').replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, e) => (e[0] === '#'
+      ? String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : (named[e.toLowerCase()] ?? all)));
     /** The page data of an album or track page (the JSON in "data-tralbum"), or null. */
     function pageData(html) {
       const m = String(html || '').match(/data-tralbum="([^"]*)"/);
       if (!m) return null;
-      const named = { quot: '"', apos: "'", lt: '<', gt: '>', amp: '&', nbsp: '\u00a0' };
-      const json = m[1].replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, e) => (e[0] === '#'
-        ? String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : (named[e.toLowerCase()] ?? all)));
       try {
-        return JSON.parse(json);
+        return JSON.parse(unescapeHtml(m[1]));
       } catch (e) {
         return null;
       }
     }
+    /**
+     * [3.22.1] The name of the Bandcamp account an album page is on (its "data-band" JSON, else "og:site_name"): the
+     * artist's own page, or a label's (collected item 46: "Grabaciones Autobombo" with an album of Yunclas); '' if none.
+     */
+    function bandPageName(html) {
+      const h = String(html || '');
+      const band = h.match(/data-band="([^"]*)"/);
+      if (band) {
+        try {
+          const name = String((JSON.parse(unescapeHtml(band[1])) || {}).name || '').trim();
+          if (name) return name;
+        } catch (e) { /* the meta tag below */ }
+      }
+      const meta = h.match(/<meta[^>]+property=["']og:site_name["'][^>]*content=["']([^"']*)["']/i) || h.match(/<meta[^>]+content=["']([^"']*)["'][^>]*property=["']og:site_name["']/i);
+      return meta ? unescapeHtml(meta[1]).trim() : '';
+    }
+    /** [3.22.1] Names compared without case, accents, punctuation and a leading "The". */
+    const foldName = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/^the /, '');
+    /**
+     * [3.22.1] Whether the account is the artist's own (as Harmony decides it): the same name, or the album artist's
+     * name contains it ("Jane Roe & Friends" on Jane Roe's page); without a page name it is taken as the artist's.
+     */
+    const ownPage = (page, artist) => !page || foldName(page) === foldName(artist) || (` ${foldName(artist)} `).includes(` ${foldName(page)} `);
 
     // [3.17.2] Liner notes at the end of the "about" text: prose of at least five sentences and a name below it (T027)
     const LINER_MIN_SENTENCES = 5;
@@ -8041,13 +8093,15 @@
      * The neutral release from an album's page data. trackCredits: [credits text of each track page] (or []);
      * ctx: as for a text (see sourceContext), with this album's tracks.
      */
-    function toRelease(data, url, trackCredits, ctx) {
+    function toRelease(data, url, trackCredits, ctx, { pageName = '' } = {}) {
       const cur = data.current || {};
       const tracks = (data.trackinfo || []).map((t, i) => ({ position: String(t.track_num || i + 1), title: t.title || '', aliases: [] }));
       const resolveTracks = (spec) => ctx.resolveTracks(spec, tracks);
       // [3.22.0] titles named in the credits: this album's tracks (S027)
       const resolveTitles = ctx.resolveTitles ? (titles) => ctx.resolveTitles(titles, tracks) : null;
-      const band = { name: String(data.artist || '').trim(), url: bandUrl(url) };
+      // [3.22.1] page: the name of the Bandcamp account, own: whether it is the artist's own page (else a label's, 46)
+      const bandName = String(data.artist || '').trim();
+      const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
       const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles });
       const credits = [...album.credits];
       const companies = [...album.companies];
@@ -8078,8 +8132,10 @@
           tracks: { all: true }, line: liner.line, part: liner.part, pi: liner.pi, n: liner.n, fromAbout: true });
       }
       const aboutAt = cur.about ? (cur.credits ? cur.credits.length + 2 : 0) : null;
-      // [rule 4] The band's own name links to its Bandcamp page (found in MB only with exactly this spelling)
-      const linkBand = (w) => (band.url && w.name === band.name ? { ...w, id: band.url, links: [band.url] } : w);
+      // [rule 4] The band's own name links to its Bandcamp page (found in MB only with exactly this spelling); [3.22.1] not
+      // the page of a label: the name is searched like any other, and the entry says whose page it is
+      const linkBand = (w) => (!band.url || w.name !== band.name ? w : band.own ? { ...w, id: band.url, links: [band.url] }
+        : { ...w, pageOf: { name: band.page, url: band.url } });
       return {
         source: 'bandcamp',
         id: url,
@@ -8122,6 +8178,7 @@
       toRelease,
       linerNotes,
       urlKey: bandUrl,
+      bandPageName,
       /** Album pages of Bandcamp a MusicBrainz release links to (any link type: purchase, streaming …). */
       releaseLinks(relations) {
         const links = new Map();
@@ -8152,7 +8209,7 @@
             trackCredits.push(text);
           }
         }
-        return toRelease(data, id, trackCredits, ctx);
+        return toRelease(data, id, trackCredits, ctx, { pageName: bandPageName(html) });
       },
     };
   })();
@@ -8184,7 +8241,9 @@
       if (!groups.has(gKey)) {
         groups.set(gKey, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: new Map(),
           // [3.14.0] a credit without a name, given to one of the release's artists (placeholderCredits)
-          ...(who.placeholder ? { placeholder: who.placeholder, releaseMbid: who.releaseMbid || '' } : {}) });
+          ...(who.placeholder ? { placeholder: who.placeholder, releaseMbid: who.releaseMbid || '' } : {}),
+          // [3.22.1] the name of a Bandcamp album on a label's page: whose page it is (46)
+          ...(who.pageOf ? { pageOf: who.pageOf } : {}) });
       }
       const group = groups.get(gKey);
       // [3.21.0] a name without an id: the web profiles found next to it anywhere in the text (T032)
@@ -11220,7 +11279,7 @@
       log('info', 'start', { mbid: releaseMbid });
       if (S.autostart && S.editorLinks) log('info', S.autostartFrom === 'link' ? 'fromLink' : 'fromEditor', { links: S.editorLinks.map(afterEditLinkLabel).join(', ') || '–' });
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
-        + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits');
+        + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits+labels');
       if (!ws) throw new Error(tr('err.releaseMissing'));
       // [3.21.1] tracks or recording relationships the web service left out: read from MB's relationship editor (Punkt 44)
       await completeMedia(ws);
@@ -11256,6 +11315,8 @@
       S.existing = indexExistingRelationships(ws);
       // [rule 4] The release's artist credit, as named below its title (names from Bandcamp must match it exactly)
       S.releaseCredit = (ws['artist-credit'] || []).map((p) => ({ mbid: (p.artist && p.artist.id) || '', name: p.name || (p.artist && p.artist.name) || '', join: p.joinphrase || '' }));
+      // [3.22.1] the labels of the release (a Bandcamp page of one of them is named so, 46)
+      S.releaseLabels = (ws['label-info'] || []).map((li) => li && li.label && li.label.id).filter(Boolean);
       S.workOptions = await loadWorkOptions();
       // Nothing is preselected; the choice applies to every new work until it is changed.
       S.workDefaults = { typeId: '', languageIds: [] };
@@ -12072,6 +12133,26 @@
    * Imports a release of a source (default: the current one): the adapter delivers it as a neutral release
    * (section 3), and everything from here on works with that – entries and rows, dates, track lists, live, series.
    */
+  /**
+   * [3.22.1] An album on another account's Bandcamp page – mostly a label's ("Grabaciones Autobombo" with an album of
+   * Yunclas, collected item 46): logged; MusicBrainz's label with that page is named (marked when it is a label of
+   * the release).
+   */
+  async function bandPageInfo(rel) {
+    const band = rel && rel.band;
+    if (!band || band.own || !band.page || !band.url) return;
+    log('info', 'bcPageOther', { name: band.name, page: band.page });
+    try {
+      const found = (await lookupUrls([band.url], 'label', BANDCAMP.urlKey)).get(BANDCAMP.urlKey(band.url)) || [];
+      const label = found.find((x) => x.entityType === 'label');
+      if (!label) return;
+      band.label = { mbid: label.mbid, name: label.name, ofRelease: (S.releaseLabels || []).includes(label.mbid) };
+      log('info', band.label.ofRelease ? 'bcPageLabelOfRelease' : 'bcPageLabel', { page: band.page, label: label.name });
+    } catch (e) {
+      console.warn('[Credits-Importer] Bandcamp page label', band.url, e);
+    }
+  }
+
   async function loadRelease(id, { confirmed = false, source = S.source } = {}) {
     if (!confirmed && S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
       renderSource();
@@ -12097,6 +12178,8 @@
       S.source = source;
       SOURCE_NAME = source.name;
       S.release = rel;
+      // [3.22.1] an album on a label's Bandcamp page: logged, with the MusicBrainz label of that page (46)
+      await bandPageInfo(rel);
       refreshRulesWindow();
       S.srcTracks = rel.tracks;
       S.artists = new Map();
@@ -12125,6 +12208,7 @@
         const artist = {
           key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending',
           ...(g.placeholder ? { placeholder: g.placeholder, releaseMbid: g.releaseMbid } : {}),
+          ...(g.pageOf ? { pageOf: g.pageOf } : {}),
           mbid: null, mbName: '', candidates: [], editing: false, error: '',
           anvs: uniq([...g.roles.values()].map((c) => c.anv).filter(Boolean)),
         };
@@ -12405,6 +12489,15 @@
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
         a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name, ...(type === 'area' ? areaContext(x) : [])].filter(Boolean).join(', ') }));
+        // [3.22.1] an artist of the release's artist credit with this name: first, marked "release artist" (46)
+        if (!a.company) {
+          const rel = (S.releaseCredit || []).filter((p) => p.mbid && (nameFit(p.name, a.name) === 'same' || a.nameHits.some((h) => h.mbid === p.mbid && !h.similar)));
+          for (const p of [...rel].reverse()) {
+            const had = a.nameHits.find((h) => h.mbid === p.mbid);
+            a.nameHits = [{ ...(had || { mbid: p.mbid, name: p.name, entityType: 'artist', similar: false, disambiguation: '' }), release: true },
+              ...a.nameHits.filter((h) => h.mbid !== p.mbid)];
+          }
+        }
         // [3.21.0] the artists MusicBrainz has with a web profile found next to the name (T032): first, only suggested
         const web = await webLinkHits(a);
         if (web.length) {
@@ -12503,8 +12596,9 @@
     }
     // Not found by their own link: try their aliases at the source
     await resolveViaAliases(pending.filter((a) => !a.company && a.dId && a.status === 'missing'), source);
-    // [E1] Names without a link (a text): MusicBrainz entries of the same name, as suggestions only
-    if (source.nameSearch) await suggestByName(pending.filter((a) => !a.dId && a.status === 'missing'));
+    // [E1] Names without a link (a text): MusicBrainz entries of the same name, as suggestions only; [3.22.1] also people
+    // not found through their own link (Discogs, Bandcamp) – the release's artist of that name first (46)
+    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? !a.company && !(a.nameHits || []).length : source.nameSearch)));
     for (const a of pending) {
       if (a.company) rerenderGroup(a);
       else updateGroupHeader(a);
@@ -13070,7 +13164,9 @@
           ${S.sourceLinks.map((l) => `<option value="${esc(`${l.source}|${l.id}`)}" ${rel && S.source.id === l.source && l.id === rel.id ? 'selected' : ''}>${esc(linkLabel(l))}</option>`).join('')}
         </select>`
       : '';
-    el.innerHTML = `${current} ${picker}
+    // [3.22.1] an album on a label's Bandcamp page (46)
+    const bcPage = rel && rel.band && !rel.band.own && rel.band.page ? ` <span class="dci-sub dci-bcpage">${esc(tr('bcPage.source', { page: rel.band.page }))}</span>` : '';
+    el.innerHTML = `${current}${bcPage} ${picker}
       <span class="dci-other">
         <input type="text" data-f="discogs-input" placeholder="${esc(tr('source.other'))}" aria-label="${esc(tr('source.other'))}">
         <button type="button" data-act="discogs-load">${esc(tr('source.load'))}</button>
@@ -13180,7 +13276,7 @@
       // [3.21.0] found through a web profile next to the name in the text (T032): first, still only a suggestion
       const titleOf = (h) => (h.viaWeb ? tr('match.webUseTitle', { url: h.viaWeb }) : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
       a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}"
-        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.similar ? mark('match.similarName') : ''}${h.viaWeb ? '' : why}</button>`,
+        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.similar ? mark('match.similarName') : ''}${h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
         h.entityType || (a.company ? 'label' : 'artist'), h.mbid)));
     }
     if (!items.length) return '';
@@ -13288,6 +13384,18 @@
     return `<span class="dci-kind-tag">${esc(text.charAt(0).toUpperCase() + text.slice(1))}</span>`;
   };
 
+  /**
+   * [3.22.1] At the entry of a name whose Bandcamp album is on another account's page (a label's, 46): whose page it is,
+   * that it is searched by name, and MusicBrainz's label with that page.
+   */
+  function pageOfHtml(a) {
+    const PH = '\u0001';
+    const link = `<a href="${esc(a.pageOf.url)}" target="_blank" rel="noopener">${esc(a.pageOf.name)}</a>`;
+    const lb = S.release && S.release.band && S.release.band.label;
+    const label = lb ? ` · ${esc(tr('bcPage.mbLabel'))} <a class="dci-mblink" href="/label/${esc(lb.mbid)}" target="_blank" rel="noopener">${esc(lb.name)}</a>${lb.ofRelease ? ` ${esc(tr('bcPage.ofRelease'))}` : ''}` : '';
+    return `<p class="dci-sub dci-pageof">${esc(tr('bcPage.notOwn', { name: a.name, page: PH })).replace(PH, link)}${label}</p>`;
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -13306,6 +13414,7 @@
           <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
+        ${a.pageOf ? pageOfHtml(a) : ''}
         ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
         <div class="dci-tablewrap dci-rowswrap">
@@ -21431,6 +21540,7 @@
       .dci-kind-label { --kind: #2a8a8a; --kind-bg: #e8f4f4; }
       .dci-kind-place { --kind: #4e8a3e; --kind-bg: #edf5e9; }
       .dci-kind-area { --kind: #8a6a3e; --kind-bg: #f6f0e7; }
+      .dci-pageof { margin: 0 0 calc(var(--u, 1px) * 6); }
       .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind); color: #fff;
         font-size: calc(var(--u, 1px) * 11); font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }
       /* Not found in MusicBrainz: the bar is red whatever the kind */
