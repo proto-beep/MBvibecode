@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.28.6, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.29.0, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.29.0 · 2026-10-24 (milestone "Text recognition, part 3")
+
+Credits in prose, places of joined verbs, lists of kinds (collected items 70, 71, 77).
+
+- **Register:** new rule **R103** (`/^cover artwork( by)?$/` → artwork, credit "cover artwork"); new tables **T041** `PROSE_ROLE_WORDS` (sounds/noises → Performer, words/lyrics/texts → Lyrics By, voice/voices/vocals → Vocals, music → Music By) and **T042** `PROSE_FILLER_VERB`, `PROSE_FILLER_BEFORE_NAME`; special rules **S038** – **S040**.
+- **`TEXT.parse`:** in the "by" branch – no role before "by": a filler verb at its end is taken off and the role read again (T042); the words before the name ("the guided hand of") are taken off; still no role: new **`namesWithRoles(side)`** (S038: `NAME (roles) & NAME (roles)`, every word in T041 or a role of the register, every name with brackets, an initial keeps its dot) gives the credits. The place without a person: verbs joined by `,`, "and", "&", "+" before "at" each give the place (S039; `placeOf` drops a bracket with digits). **`splitRoles`:** a list of single kinds before the last part also with commas only (`kindsOnly`), and the shared noun in the singular when the kind with it is a role (S040).
+- **Milestone:** `MILESTONES` gets 3.29.0 (label with Companion 1.9.0), text `ms.3.29.0` (English only).
+- **Tests:** new `t_prose.py`; `text_corpus.json` with the seven lines (the two instrument lists as this test's few instruments read them); `t_notice.py` (milestones 3.29.0, 3.27.0, 3.22.0); `register_golden.json` written anew (only R103, S038 – S040, T041, T042 added).
+
 
 ## Import 3.28.6 · 2026-10-24
 
