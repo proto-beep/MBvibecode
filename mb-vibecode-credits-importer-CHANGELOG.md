@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.25.0 | – |
+| 2026-10-24 | 3.22.1 – 3.26.0 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -80,6 +80,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.26.0
+
+#### Changed
+
+- **The head of the dashboard in one line** (collected item 30; maintainer: "wir müssen den header ein wenig aufräumen" – "Textgröße immer sichtbar", "wie sehr kann man smarte symbole einführen für die verschiedenen einstellungen?", "sprachen bitte unter ⚙"): **Credits Importer** · the loaded source · **Source ▾** · **＋ Supplement** · the status of the companion's tab · **A− 100 % A+** · ⚙ Settings, Mapping rules, Log, ⓘ, ⤢, ✕. The buttons have small symbols drawn for the script (no emoji, nothing of others), each with its name as tooltip; in a wide dashboard (from about 1600 px) the names stand next to them. In a narrow dashboard the head wraps.
+- **Source ▾:** a menu with everything about the source – the linked sources to choose from, another source (URL or ID), **Paste text …**, **▸ Order of the sources**, **▸ Bandcamp**, **Leave out the “about” text**, **Delete stored import …**. A choice, Escape or a click elsewhere closes it; what the entries open is shown below the head, with the lines a text did not give.
+- **＋ Supplement** (maintainer: "Der Ergänzen-Balken ist zu groß und nicht jedes Mal nötig"): the bar "Supplement with" only on a click; it stays open while a supplement is loaded.
+- **Out of the head:** the language (⚙ Settings → General, and next to the **Import credits …** button), window or page (the same), the switches of the navigation (⚙ Settings → Discogs and Bandcamp view, and below the button).
+
+#### Added
+
+- **The language asked after the installation** (maintainer: "kann man beim ersten öffnen des skripts (also nach installation) fragen welche sprache?"): the page bar asks once – English · Deutsch · Español · Français, the browser's language preselected, the hint in the language chosen –; **OK** stores it. An update does not ask.
+
 
 ### Import 3.25.0
 

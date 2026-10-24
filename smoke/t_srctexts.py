@@ -26,7 +26,7 @@ with sync_playwright() as p:
     print('A) Discogs:', a['ask'][:1], '|', a['ph'], '|', a['tag'][:1])
     results.append(any(x.startswith('Discogs only says “Guitar”') for x in a['ask']) and 'a role as the source writes it' in a['ph']
                    and a['tag'] and a['tag'][0] == ['from Discogs', 'Taken from Discogs'])
-    pg.click('[data-act=text-open]')
+    H.src_menu(pg, 'text-open')
     pg.fill('[data-f=text-src]', 'Guitar – John Smith\nLayout by Jane Roe')
     pg.click('[data-act=text-load]')
     H.wait_for(pg, f"{LOGS}.filter(x => /Checks complete/.test(x)).length >= 2", 90)

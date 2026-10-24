@@ -19,6 +19,7 @@ with sync_playwright() as p:
     pg.reload(); H.with_companion(pg); pg.add_script_tag(content=H.MAIN)
     pg.wait_for_selector('#dci-open', timeout=20000)
     H.open_dashboard(pg)
+    H.open_settings(pg, 'general')  # [3.26.0] the language is only in the settings
     pg.select_option('[data-f=lang]', 'de'); pg.wait_for_timeout(300)
     pg.click('[data-act=zoom-in]'); pg.click('[data-act=zoom-in]')
     pg.click('.dci-pools-toggle'); pg.wait_for_timeout(150)
@@ -35,7 +36,7 @@ with sync_playwright() as p:
     print('   Titel:', pg.locator('#dci-title').inner_text(), '| Zoom:', pg.locator('[data-el=zoom]').inner_text(), '| Meldung:', [m for m in pg.locator('.dci-msg').all_inner_texts() if 'defaults' in m])
     print('   Cover auf Discogs (Position, eingeklappt):', art, '| Daten & Tracks offen:', pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'),
           '| automatisch anwenden:', pg.locator('[data-f=dm-auto]').is_checked() if pg.locator('[data-f=dm-auto]').count() else '–')
-    settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works):', k) and k not in ('dci-store-epoch', 'dci-notice-version')]
+    settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask')]  # [3.26.0] the question of the language is no setting
     ok1 = set(settings) <= {'dci-log-open'} and 'dci-date-pool:other' in after and 'dci-created-works:other' in after \
         and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
         and art == [None, None]
