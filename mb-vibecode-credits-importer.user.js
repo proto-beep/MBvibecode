@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.22.3
+// @version      3.23.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.22.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.23.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -196,7 +196,7 @@
       "log.artistSpelling": "{name}: found via its {src} link, but MusicBrainz spells it differently ({mb}) – only a suggestion",
       "log.artistCreditSpelling": "{name}: found via its {src} link, but the release names it differently in its artist credit ({mb}) – only a suggestion",
       "log.sourceKept": "Source chosen for this release before: {src}",
-      "log.fromEditor": "Started from the release editor (“open relationship editor and start import dashboard”) – links there: {links}",
+      "log.fromEditor": "Started from the release editor (“Enter edit & import credits”) – links there: {links}",
       "log.sourceFromEditor": "Source entered in the release editor, not in MusicBrainz yet: {src}",
       "log.fromLink": "Started from a link (“Edit relationships with Credits Importer”, e.g. on Harmony) – links in it: {links}",
       "log.sourceFromLink": "Source handed over by the link, not in MusicBrainz yet: {src}",
@@ -938,13 +938,14 @@
       "ms.0.1.0": "First version: the credits of the linked Discogs release in the release relationship editor",
       "notice.title": "MB x Vibecode: Credits Importer {version} – what’s new",
       "old.twice": "Two importer scripts are running on this page: the old “MB x Vibecode: Import Discogs credits” (or a second copy) and “MB x Vibecode: Credits Importer”. Please delete the old one in your script manager (Tampermonkey, Violentmonkey) and reload the page.",
-      "afterEdit.label": "open relationship editor and start import dashboard",
-      "afterEdit.title": "Credits Importer: after “Enter edit”, “Edit relationships” of this release opens with the import dashboard, which loads the credits of its source – {links}",
       "afterEdit.toHarmony": "for the Credits Importer: after “Enter edit”, use “Edit relationships with Credits Importer” on Harmony",
       "afterEdit.toOther": "after “Enter edit” MusicBrainz goes on to {host}; the relationship editor does not open by itself",
-      "afterEdit.labelBg": "open relationship editor and start import dashboard in a background tab",
-      "afterEdit.titleBg": "Credits Importer: after “Enter edit” MusicBrainz goes on to Harmony; the relationship editor of this release opens in a background tab with the import dashboard, which loads {links}. Harmony’s page also has “Edit relationships with Credits Importer”.",
-      "settings.afterEdit": "Release editor: after “Enter edit”, open the relationship editor and start the import (the tick next to “Enter edit”)",
+      "afterEdit.button": "{enter} & import credits",
+      "afterEdit.buttonTitle": "Credits Importer: “Enter edit”, then “Edit relationships” of this release opens with the import dashboard, which loads the credits of its source – {links} · {keys}",
+      "afterEdit.buttonTitleBg": "Credits Importer: “Enter edit” – MusicBrainz goes on to Harmony; the relationship editor of this release opens in a background tab with the import dashboard, which loads the credits of its source – {links} · {keys}",
+      "afterEdit.keys": "Ctrl+Alt+Enter",
+      "afterEdit.keysMac": "Control+Option+Return",
+      "settings.afterEdit": "Release editor: the button “Enter edit & import credits” next to “Enter edit” (Ctrl+Alt+Enter) – submits, then opens the relationship editor with the import",
       "settings.afterEditBg": "Imported with Harmony (Bandcamp, Discogs): open it in a background tab, Harmony’s page stays in front",
       "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
       "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
@@ -1581,7 +1582,7 @@
       "log.artistSpelling": "{name}: über den {src}-Link gefunden, aber MusicBrainz schreibt den Namen anders ({mb}) – nur ein Vorschlag",
       "log.artistCreditSpelling": "{name}: über den {src}-Link gefunden, aber das Release nennt den Namen im Artist Credit anders ({mb}) – nur ein Vorschlag",
       "log.sourceKept": "Für dieses Release früher gewählte Quelle: {src}",
-      "log.fromEditor": "Aus dem Release-Editor gestartet („Beziehungs-Editor öffnen und Import-Dashboard starten“) – Links dort: {links}",
+      "log.fromEditor": "Aus dem Release-Editor gestartet („Enter edit & Credits importieren“) – Links dort: {links}",
       "log.sourceFromEditor": "Quelle im Release-Editor eingetragen, noch nicht in MusicBrainz: {src}",
       "log.fromLink": "Über einen Link gestartet („Edit relationships with Credits Importer“, z. B. bei Harmony) – Links darin: {links}",
       "log.sourceFromLink": "Quelle vom Link übergeben, noch nicht in MusicBrainz: {src}",
@@ -2323,13 +2324,14 @@
       "ms.0.1.0": "Erste Version: die Credits des verknüpften Discogs-Release im Relationship-Editor",
       "notice.title": "MB x Vibecode: Credits Importer {version} – das ist neu",
       "old.twice": "Auf dieser Seite laufen zwei Import-Skripte: das alte „MB x Vibecode: Import Discogs credits“ (oder eine zweite Kopie) und „MB x Vibecode: Credits Importer“. Bitte lösche das alte im Skript-Manager (Tampermonkey, Violentmonkey) und lade die Seite neu.",
-      "afterEdit.label": "Beziehungs-Editor öffnen und Import-Dashboard starten",
-      "afterEdit.title": "Credits Importer: nach „Enter edit“ öffnet sich „Edit relationships“ dieses Releases mit dem Import-Dashboard, das die Credits seiner Quelle lädt – {links}",
       "afterEdit.toHarmony": "für den Credits Importer: nach „Enter edit“ bei Harmony „Edit relationships with Credits Importer“ verwenden",
       "afterEdit.toOther": "nach „Enter edit“ geht MusicBrainz weiter zu {host}; der Beziehungs-Editor öffnet sich nicht von selbst",
-      "afterEdit.labelBg": "Beziehungs-Editor im Hintergrund-Tab öffnen und Import-Dashboard starten",
-      "afterEdit.titleBg": "Credits Importer: nach „Enter edit“ geht MusicBrainz weiter zu Harmony; der Beziehungs-Editor dieses Releases öffnet sich in einem Hintergrund-Tab mit dem Import-Dashboard, das {links} lädt. Auf Harmonys Seite steht außerdem „Edit relationships with Credits Importer“.",
-      "settings.afterEdit": "Release-Editor: nach „Enter edit“ den Beziehungs-Editor öffnen und den Import starten (der Haken neben „Enter edit“)",
+      "afterEdit.button": "{enter} & Credits importieren",
+      "afterEdit.buttonTitle": "Credits Importer: „Enter edit“, danach öffnet sich „Edit relationships“ dieses Releases mit dem Import-Dashboard, das die Credits seiner Quelle lädt – {links} · {keys}",
+      "afterEdit.buttonTitleBg": "Credits Importer: „Enter edit“ – MusicBrainz geht weiter zu Harmony; der Beziehungs-Editor dieses Releases öffnet sich in einem Hintergrund-Tab mit dem Import-Dashboard, das die Credits seiner Quelle lädt – {links} · {keys}",
+      "afterEdit.keys": "Strg+Alt+Enter",
+      "afterEdit.keysMac": "Control+Option+Return",
+      "settings.afterEdit": "Release-Editor: der Knopf „Enter edit & Credits importieren“ neben „Enter edit“ (Strg+Alt+Enter) – abschicken, dann den Beziehungs-Editor mit dem Import öffnen",
       "settings.afterEditBg": "Mit Harmony importiert (Bandcamp, Discogs): im Hintergrund-Tab öffnen, Harmonys Seite bleibt vorne",
       "settings.webLinksShow": "Web-Links, die im Text neben Namen stehen, bei den Einträgen zeigen",
       "settings.webLinksShowTitle": "Profile wie instagram.com/… oder open.spotify.com/artist/… neben einem Namen im eingefügten Text oder in Bandcamp-Credits. Sie werden auf jeden Fall gemerkt: „Artist anlegen …“ und „Label anlegen …“ tragen sie ein, und MusicBrainz wird nach Artists mit ihnen gefragt (nicht bei Streaming-Seiten).",
@@ -2966,7 +2968,7 @@
       "log.artistSpelling": "{name}: encontrado por su enlace de {src}, pero MusicBrainz lo escribe distinto ({mb}); solo una sugerencia",
       "log.artistCreditSpelling": "{name}: encontrado por su enlace de {src}, pero la publicación lo nombra distinto en su crédito de artista ({mb}); solo una sugerencia",
       "log.sourceKept": "Fuente elegida antes para esta publicación: {src}",
-      "log.fromEditor": "Iniciado desde el editor de publicaciones («abrir el editor de relaciones e iniciar el panel de importación») – enlaces allí: {links}",
+      "log.fromEditor": "Iniciado desde el editor de publicaciones («Enter edit e importar créditos») – enlaces allí: {links}",
       "log.sourceFromEditor": "Fuente introducida en el editor de publicaciones, aún no en MusicBrainz: {src}",
       "log.fromLink": "Iniciado desde un enlace («Edit relationships with Credits Importer», p. ej. en Harmony) – enlaces en él: {links}",
       "log.sourceFromLink": "Fuente entregada por el enlace, aún no en MusicBrainz: {src}",
@@ -3708,13 +3710,14 @@
       "ms.0.1.0": "Primera versión: los créditos de la publicación de Discogs enlazada en el editor de relaciones",
       "notice.title": "MB x Vibecode: Credits Importer {version} – novedades",
       "old.twice": "En esta página se ejecutan dos scripts de importación: el antiguo «MB x Vibecode: Import Discogs credits» (o una segunda copia) y «MB x Vibecode: Credits Importer». Borra el antiguo en tu gestor de scripts (Tampermonkey, Violentmonkey) y vuelve a cargar la página.",
-      "afterEdit.label": "abrir el editor de relaciones e iniciar el panel de importación",
-      "afterEdit.title": "Credits Importer: tras «Enter edit» se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links}",
       "afterEdit.toHarmony": "para Credits Importer: tras «Enter edit», usa «Edit relationships with Credits Importer» en Harmony",
       "afterEdit.toOther": "tras «Enter edit» MusicBrainz sigue a {host}; el editor de relaciones no se abre solo",
-      "afterEdit.labelBg": "abrir el editor de relaciones en una pestaña en segundo plano e iniciar el panel de importación",
-      "afterEdit.titleBg": "Credits Importer: tras «Enter edit» MusicBrainz sigue a Harmony; el editor de relaciones de esta publicación se abre en una pestaña en segundo plano con el panel de importación, que carga {links}. La página de Harmony también tiene «Edit relationships with Credits Importer».",
-      "settings.afterEdit": "Editor de publicaciones: tras «Enter edit», abrir el editor de relaciones e iniciar la importación (la casilla junto a «Enter edit»)",
+      "afterEdit.button": "{enter} e importar créditos",
+      "afterEdit.buttonTitle": "Credits Importer: «Enter edit» y después se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links} · {keys}",
+      "afterEdit.buttonTitleBg": "Credits Importer: «Enter edit»; MusicBrainz sigue a Harmony y el editor de relaciones de esta publicación se abre en una pestaña en segundo plano con el panel de importación, que carga los créditos de su fuente – {links} · {keys}",
+      "afterEdit.keys": "Ctrl+Alt+Intro",
+      "afterEdit.keysMac": "Control+Opción+Retorno",
+      "settings.afterEdit": "Editor de publicaciones: el botón «Enter edit e importar créditos» junto a «Enter edit» (Ctrl+Alt+Intro): envía y después abre el editor de relaciones con la importación",
       "settings.afterEditBg": "Importado con Harmony (Bandcamp, Discogs): abrirlo en una pestaña en segundo plano, la página de Harmony queda delante",
       "settings.webLinksShow": "Mostrar en sus entradas los enlaces web que están junto a nombres en un texto",
       "settings.webLinksShowTitle": "Perfiles como instagram.com/… u open.spotify.com/artist/… junto a un nombre en un texto pegado o en los créditos de Bandcamp. Se guardan de todos modos: «Crear artista…» y «Crear sello…» los rellenan, y se busca en MusicBrainz artistas con ellos (no con páginas de streaming).",
@@ -4351,7 +4354,7 @@
       "log.artistSpelling": "{name} : trouvé via son lien {src}, mais MusicBrainz l’écrit autrement ({mb}) – seulement une suggestion",
       "log.artistCreditSpelling": "{name} : trouvé via son lien {src}, mais la parution le nomme autrement dans son crédit d’artiste ({mb}) – seulement une suggestion",
       "log.sourceKept": "Source choisie auparavant pour cette parution : {src}",
-      "log.fromEditor": "Lancé depuis l’éditeur de parution (« ouvrir l’éditeur de relations et lancer le tableau de bord d’import ») – liens : {links}",
+      "log.fromEditor": "Lancé depuis l’éditeur de parution (« Enter edit et importer les crédits ») – liens : {links}",
       "log.sourceFromEditor": "Source saisie dans l’éditeur de parution, pas encore dans MusicBrainz : {src}",
       "log.fromLink": "Lancé depuis un lien (« Edit relationships with Credits Importer », p. ex. sur Harmony) – liens : {links}",
       "log.sourceFromLink": "Source transmise par le lien, pas encore dans MusicBrainz : {src}",
@@ -5093,13 +5096,14 @@
       "ms.0.1.0": "Première version : les crédits de la parution Discogs liée dans l’éditeur de relations",
       "notice.title": "MB x Vibecode: Credits Importer {version} – nouveautés",
       "old.twice": "Deux scripts d’import tournent sur cette page : l’ancien « MB x Vibecode: Import Discogs credits » (ou une deuxième copie) et « MB x Vibecode: Credits Importer ». Supprimez l’ancien dans votre gestionnaire de scripts (Tampermonkey, Violentmonkey) et rechargez la page.",
-      "afterEdit.label": "ouvrir l’éditeur de relations et lancer le tableau de bord d’import",
-      "afterEdit.title": "Credits Importer : après « Enter edit », « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links}",
       "afterEdit.toHarmony": "pour Credits Importer : après « Enter edit », utilisez « Edit relationships with Credits Importer » sur Harmony",
       "afterEdit.toOther": "après « Enter edit », MusicBrainz continue vers {host} ; l’éditeur de relations ne s’ouvre pas tout seul",
-      "afterEdit.labelBg": "ouvrir l’éditeur de relations dans un onglet en arrière-plan et lancer le tableau de bord d’import",
-      "afterEdit.titleBg": "Credits Importer : après « Enter edit », MusicBrainz continue vers Harmony ; l’éditeur de relations de cette parution s’ouvre dans un onglet en arrière-plan avec le tableau de bord d’import, qui charge {links}. La page d’Harmony a aussi « Edit relationships with Credits Importer ».",
-      "settings.afterEdit": "Éditeur de parution : après « Enter edit », ouvrir l’éditeur de relations et lancer l’import (la case près de « Enter edit »)",
+      "afterEdit.button": "{enter} et importer les crédits",
+      "afterEdit.buttonTitle": "Credits Importer : « Enter edit », puis « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links} · {keys}",
+      "afterEdit.buttonTitleBg": "Credits Importer : « Enter edit » – MusicBrainz continue vers Harmony ; l’éditeur de relations de cette parution s’ouvre dans un onglet en arrière-plan avec le tableau de bord d’import, qui charge les crédits de sa source – {links} · {keys}",
+      "afterEdit.keys": "Ctrl+Alt+Entrée",
+      "afterEdit.keysMac": "Contrôle+Option+Retour",
+      "settings.afterEdit": "Éditeur de parution : le bouton « Enter edit et importer les crédits » près de « Enter edit » (Ctrl+Alt+Entrée) – soumet, puis ouvre l’éditeur de relations avec l’import",
       "settings.afterEditBg": "Importé avec Harmony (Bandcamp, Discogs) : l’ouvrir dans un onglet en arrière-plan, la page d’Harmony reste devant",
       "settings.webLinksShow": "Afficher aux entrées les liens web trouvés à côté des noms dans un texte",
       "settings.webLinksShowTitle": "Des profils comme instagram.com/… ou open.spotify.com/artist/… à côté d’un nom dans un texte collé ou les crédits Bandcamp. Ils sont gardés dans tous les cas : « Créer l’artiste… » et « Créer le label… » les remplissent, et MusicBrainz est interrogé sur les artistes qui les ont (pas pour les pages de streaming).",
@@ -8559,7 +8563,10 @@
   // 3b. [3.19.0] Release editor and release page: start the import right after "Enter edit"
   // ===========================================================================
 
-  const AFTER_EDIT_KEY = 'dci-after-edit';        // the tick, remembered (localStorage)
+  const AFTER_EDIT_KEY = 'dci-after-edit';        // the tick of 3.19.0 – 3.22.x (removed in 3.23.0: the button instead)
+  // [3.23.0] the button "Enter edit & import credits" next to "Enter edit" (setting, on; collected item 50)
+  const AFTER_EDIT_BTN_KEY = 'dci-after-edit-btn';
+  const AFTER_EDIT_BTN_COLOR = { bg: '#eb743b', line: '#c55a24', hover: '#c55a24', ink: '#fff' };
   const AFTER_EDIT_GO_KEY = 'dci-after-edit-go';  // { release: MBID or 'new', links, at } once "Enter edit" runs (sessionStorage of the tab)
   const AUTOSTART_KEY = 'dci-autostart';          // { release, links, at } for the relationship editor (sessionStorage of the tab)
   const AFTER_EDIT_MAX_MS = 10 * 60 * 1000;
@@ -8588,15 +8595,23 @@
   const afterEditLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : String(l.url || l.id).replace(/^https?:\/\//, '')}`;
 
   /**
-   * [3.19.0] Release editor: the tick next to "Enter edit" (only on the tab "Edit note", only with a Discogs or Bandcamp
-   * link – those of the tab "External links", saved or just entered). Ticked, the start of the submission is noted for
-   * this tab; MusicBrainz then shows the release page, which goes on to the relationship editor (initReleasePageHook).
+   * [3.19.0] Release editor: start the import right after "Enter edit" (only on the tab "Edit note", only with a Discogs or
+   * Bandcamp link – those of the tab "External links", saved or just entered). [3.23.0] Instead of the tick a button
+   * "Enter edit & import credits" next to "Enter edit" (orange, MusicBrainz's own look otherwise; Ctrl+Alt+Enter; setting,
+   * on; collected item 50): it notes the start of the submission for this tab and clicks "Enter edit"; MusicBrainz then
+   * shows the release page, which goes on to the relationship editor (initReleasePageHook). "Enter edit" itself stays as it is.
    */
   function initReleaseEditorHook() {
     const mbid = (location.pathname.match(MBID_RE) || [])[0] || 'new';
     const win = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
     let box = null;
+    let goBtn = null;
     let hooked = false;
+    // [3.23.0] the button was used: the next submission goes on to the relationship editor (for a moment only)
+    let goRequested = false;
+    let goTimer = null;
+    // the tick of 3.19.0 – 3.22.x is gone
+    if (readJson('localStorage', AFTER_EDIT_KEY, null) != null) writeJson('localStorage', AFTER_EDIT_KEY, null);
     const linksNow = () => {
       const urls = [...document.querySelectorAll('#external-links-editor tr.external-link-item')].flatMap((row) => {
         const a = row.querySelector('a.url[href]');
@@ -8606,20 +8621,48 @@
       });
       return sourceLinksOf(urls);
     };
+    /** The note next to "Enter edit" when MusicBrainz goes on elsewhere (Harmony, another tool). */
     const ensureBox = () => {
       const btn = document.getElementById('enter-edit');
       if (!btn) return null;
       if (!box || !box.isConnected) {
-        box = document.createElement('label');
+        box = document.createElement('span');
         box.id = 'dci-after-edit';
-        box.style.cssText = 'display: none; align-items: center; gap: 4px; margin: 0 12px 0 0; vertical-align: middle; cursor: pointer;';
-        box.innerHTML = '<input type="checkbox"> <span></span>';
-        const input = box.querySelector('input');
-        input.checked = readJson('localStorage', AFTER_EDIT_KEY, false) === true;
-        input.addEventListener('change', () => writeJson('localStorage', AFTER_EDIT_KEY, input.checked || null));
+        box.style.cssText = 'display: none; margin: 0 12px 0 0; vertical-align: middle;';
         btn.before(box);
       }
       return box;
+    };
+    /** [3.23.0] The button "Enter edit & import credits": MusicBrainz's button copied (its classes), only orange. */
+    const ensureGoBtn = () => {
+      const btn = document.getElementById('enter-edit');
+      if (!btn) return null;
+      if (!goBtn || !goBtn.isConnected) {
+        goBtn = document.createElement('button');
+        goBtn.type = 'button';
+        goBtn.id = 'dci-enter-import';
+        goBtn.className = btn.className;
+        const c = AFTER_EDIT_BTN_COLOR;
+        goBtn.style.cssText = `display: none; margin-left: 0.4em; background: ${c.bg}; border-color: ${c.line}; color: ${c.ink};`;
+        goBtn.addEventListener('mouseenter', () => { goBtn.style.background = c.hover; });
+        goBtn.addEventListener('mouseleave', () => { goBtn.style.background = c.bg; });
+        goBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          go();
+        });
+        btn.after(goBtn);
+      }
+      return goBtn;
+    };
+    /** [3.23.0] "Enter edit" with the start of the import: noted, then MusicBrainz's own button. */
+    const go = () => {
+      const btn = document.getElementById('enter-edit');
+      if (!btn || !goBtn || goBtn.style.display === 'none' || btn.disabled) return;
+      goRequested = true;
+      clearTimeout(goTimer);
+      // MusicBrainz starts the submission at once; without it (an error in the form) the next "Enter edit" is a plain one
+      goTimer = setTimeout(() => { goRequested = false; }, 3000);
+      btn.click();
     };
     // [3.19.1] where MusicBrainz goes after "Enter edit" when the editor was opened by another tool (seeded "redirect_uri",
     // Harmony: its "Release Actions"); '' when to the release page
@@ -8629,30 +8672,44 @@
     };
     const update = () => {
       const b = ensureBox();
-      if (!b) return;
+      const g = ensureGoBtn();
+      if (!b || !g) return;
       const btn = document.getElementById('enter-edit');
       const links = linksNow();
       // MusicBrainz shows "Enter edit" only on the tab "Edit note"
       const visible = btn.style.display !== 'none' && btn.getClientRects().length > 0;
-      b.style.display = links.length && visible ? 'inline-flex' : 'none';
       const to = redirect();
       let host = '';
       try {
         host = to ? new URL(to, location.href).hostname : '';
       } catch (e) { /* not a URL */ }
       const harmony = HARMONY_HOST_RE.test(host);
-      // [3.19.1] going on elsewhere: no tick, a note instead (on Harmony's page the link does it); [3.19.2] Harmony with the
-      // setting "in a background tab" (on): the tick again, for a background tab
+      // [3.19.1] going on elsewhere: no button, a note instead (on Harmony's page the link does it); [3.19.2] Harmony with
+      // the setting "in a background tab" (on): the button, for a background tab
       const bg = !!to && harmony && readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false;
-      const tick = !to || bg;
+      const button = (!to || bg) && readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false;
       const list = links.map(afterEditLinkLabel).join(', ');
-      b.querySelector('input').style.display = tick ? '' : 'none';
+      const shown = links.length && visible;
+      g.style.display = shown && button ? '' : 'none';
+      g.disabled = !!btn.disabled;
+      g.dataset.bg = bg ? '1' : '';
+      // the start of MusicBrainz's own text ("Enter edit", in MusicBrainz's language), the rest in the dashboard's
+      g.textContent = tr('afterEdit.button', { enter: btn.textContent.trim() || 'Enter edit' });
+      const keys = tr(/Mac/i.test(navigator.platform || navigator.userAgent || '') ? 'afterEdit.keysMac' : 'afterEdit.keys');
+      g.title = tr(bg ? 'afterEdit.buttonTitleBg' : 'afterEdit.buttonTitle', { links: list, keys });
+      b.style.display = shown && to && !bg ? 'inline' : 'none';
       b.dataset.redirect = to ? host : '';
-      b.dataset.bg = bg ? '1' : '';
-      b.querySelector('span').textContent = !to ? tr('afterEdit.label') : bg ? tr('afterEdit.labelBg') : harmony ? tr('afterEdit.toHarmony') : tr('afterEdit.toOther', { host });
-      b.title = !to ? tr('afterEdit.title', { links: list }) : bg ? tr('afterEdit.titleBg', { links: list }) : b.querySelector('span').textContent;
-      b.style.cursor = tick ? 'pointer' : 'default';
+      b.textContent = !to || bg ? '' : harmony ? tr('afterEdit.toHarmony') : tr('afterEdit.toOther', { host });
     };
+    // [3.23.0] Ctrl+Alt+Enter (Mac: Ctrl+Option+Enter) – the button, where it is shown
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || !e.ctrlKey || !e.altKey || e.shiftKey || e.metaKey) return;
+      update();
+      if (!goBtn || goBtn.style.display === 'none') return;
+      e.preventDefault();
+      e.stopPropagation();
+      go();
+    }, true);
     // [3.19.2] the return address as it was before the sign for a background tab was added (back on an error)
     let plainRedirect = null;
     const restoreRedirect = () => {
@@ -8661,14 +8718,15 @@
       plainRedirect = null;
     };
     const markGo = () => {
-      const input = box && box.querySelector('input');
       const links = linksNow();
-      if (!input || !input.checked || !links.length || box.style.display === 'none') return;
+      if (!goRequested || !links.length) return;
+      goRequested = false;
+      clearTimeout(goTimer);
       const to = redirect();
       if (to) {
         // [3.19.2] Harmony: a sign in its return address (#dci-open, not sent to Harmony); its page then opens the
         // relationship editor in a background tab
-        if (box.dataset.bg !== '1') return;
+        if (!goBtn || goBtn.dataset.bg !== '1') return;
         try {
           const u = new URL(to, location.href);
           u.hash = OPEN_HASH;
@@ -10109,7 +10167,7 @@
   // --- Log window ----------------------------------------------------------------
 
   S.log = readJson('sessionStorage', LOG_KEY, []);
-  // [3.19.0] Started from the release editor ("open relationship editor and start import dashboard"): the links of its tab
+  // [3.19.0] Started from the release editor ([3.23.0] "Enter edit & import credits"): the links of its tab
   // "External links" (also those not in MusicBrainz yet); the dashboard opens by itself. Read once.
   S.autostartFrom = 'editor';
   S.editorLinks = (() => {
@@ -20796,7 +20854,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-scale', 'dci-place', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY, 'dci-weblinks-show'],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-weblinks-show'],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap'],
@@ -20830,8 +20888,8 @@
       sources: () => [
         row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
         row(check('data-f="bc-tracks"', S.bcTracks, tr('bc.tracks'), tr('bc.tracksTitle'))),
-        // [3.19.2] the tick of the release editor and, imported with Harmony, the background tab
-        row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_KEY, false) === true, tr('settings.afterEdit'))),
+        // [3.19.2] the release editor and, imported with Harmony, the background tab; [3.23.0] the button instead of the tick
+        row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false, tr('settings.afterEdit'))),
         row(check('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'))),
         // [3.21.3] web profiles next to names in a text
         row(check('data-set="weblinks-show"', S.webLinksShow, tr('settings.webLinksShow'), tr('settings.webLinksShowTitle'))),
@@ -20937,8 +20995,8 @@
         runArtistWorks();
       }
     } else if (k === 'after-edit' || k === 'after-edit-bg') {
-      // [3.19.2] the same values as the tick in the release editor
-      if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_KEY, el.checked || null);
+      // [3.19.2] the release editor reads them; [3.23.0] the button (on unless switched off)
+      if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_BTN_KEY, el.checked ? null : false);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'weblinks-show') {
@@ -21007,7 +21065,7 @@
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show'];
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show'];
 
   function renderReset() {
     if (!S.overlay) return;

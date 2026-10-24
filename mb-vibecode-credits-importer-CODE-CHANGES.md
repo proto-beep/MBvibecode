@@ -13,12 +13,22 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.22.3, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.23.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.23.0 · 2026-10-24
+
+The button "Enter edit & import credits" in the release editor instead of the tick (collected item 50).
+
+- **`initReleaseEditorHook`:** the tick is gone; `#dci-after-edit` is now only the note (a span) for a release editor that goes on elsewhere (Harmony with the background tab off, another tool). New `ensureGoBtn()` – the button `#dci-enter-import` right after `#enter-edit`, with MusicBrainz's classes copied and `AFTER_EDIT_BTN_COLOR` (orange `#eb743b`, border/hover `#c55a24`, white text), `disabled` mirrored; new `go()` (sets `goRequested` for 3 s, then clicks `#enter-edit`); `markGo` acts on `goRequested` instead of the tick (and clears it); a `keydown` handler (capture) for Ctrl+Alt+Enter where the button is shown. Text: `afterEdit.button` with `{enter}` = MusicBrainz's own button text; tooltip `afterEdit.buttonTitle` / `afterEdit.buttonTitleBg` with `afterEdit.keys` / `afterEdit.keysMac`. The old stored tick `dci-after-edit` is removed on the release editor.
+- **Storage / settings:** new `AFTER_EDIT_BTN_KEY` (`dci-after-edit-btn`, on unless `false`) in ⚙ Settings → Sources (`data-set="after-edit"`, text `settings.afterEdit`), in `TOPIC_KEYS.sources` and the reset list instead of `AFTER_EDIT_KEY`.
+- **Texts (4 languages):** new `afterEdit.button`, `afterEdit.buttonTitle`, `afterEdit.buttonTitleBg`, `afterEdit.keys`, `afterEdit.keysMac`; changed `settings.afterEdit`, `log.fromEditor`; removed `afterEdit.label`, `afterEdit.title`, `afterEdit.labelBg`, `afterEdit.titleBg`.
+- **Tests:** `t_afteredit.py` rebuilt (button only on "Edit note", right after "Enter edit", orange, tooltip with links and keys; plain "Enter edit" stays plain; the button and Ctrl+Alt+Enter go on; an error; German; setting off; the old tick removed); `t_harmony.py` with the button (background tab, error, note, settings).
+
 
 ## Import 3.22.3 · 2026-10-24
 
