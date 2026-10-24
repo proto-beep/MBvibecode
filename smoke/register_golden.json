@@ -1460,7 +1460,7 @@
    {"id": "R082", "kind": "simple", "level": "release", "note": "", "re": "/^(liner notes|sleeve notes|notes|linernotes|text by)$/", "special": "", "types": ["liner notes"]},
    {"id": "R083", "kind": "simple", "level": "release", "note": "", "re": "/^(booklet editor|booklet)$/", "special": "", "types": ["booklet editor"]},
    {"id": "R084", "kind": "simple", "level": "release_group", "note": "", "re": "/^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\\s+(.+))?$/", "special": "", "types": ["artists and repertoire", "misc"]},
-   {"id": "R085", "kind": "simple", "level": "recording", "note": "Miscellaneous", "re": "/^(field recording|field recordings|field recordist)$/", "special": "", "types": ["field recordist"]},
+   {"id": "R085", "kind": "simple", "level": "recording", "note": "Miscellaneous", "re": "/^(field recording|field recordings|field recordist|field recordings by|field recorded by)$/", "special": "", "types": ["field recordist"]},
    {"id": "R086", "kind": "special", "level": "recording", "note": "", "re": "/^(technician|instrument technician|guitar technician|piano technician|drum technician|keyboard technician|tech|tuner|piano tuner)$/", "special": "", "types": ["instrument technician"]},
    {"id": "R087", "kind": "simple", "level": "release", "note": "", "re": "/^booking$/", "special": "", "types": ["booking"]},
    {"id": "R088", "kind": "simple", "level": "release", "note": "", "re": "/^(legal|lawyer|legal representation)$/", "special": "", "types": ["legal representation"]},
@@ -1664,6 +1664,9 @@
    "flugel-horn flugelhorn",
    "sax saxophone",
    "tenor sax tenor saxophone",
+   "noise effects",
+   "noises effects",
+   "electronic electronic instruments",
    "steel drum steelpan",
    "steel drums steelpan",
    "steel pan steelpan",
@@ -1879,9 +1882,13 @@
    "T038 · Track titles compared with MusicBrainz's (3.24.1, S030): small words of English, German, Spanish, French, Italian, Portuguese and Dutch are left out (\"The Song of the Sea\" = \"Song of Sea\"), so are notes in brackets (\"(Remastered)\", \"[Live]\", \"(feat. X)\") (Code: TITLE_SMALL_WORDS, TITLE_NOTE, titleWordsOf)",
    "small words a · an · the · of · at · in · on · to · and · or · for · with · from · by · as · der · die · das · den · dem · des · ein · eine · einen · einer · eines · und · oder · im · am · auf · von · vom · zu · zum · zur · mit · fur · el · la · lo · los · las · un · una · unos · unas · de · del · y · o · en · con · por · para · al · le · les · l · une · du · d · et · ou · au · aux · sur · pour · avec · il · gli · i · di · da · e · nel · nella · della · dei · os · um · uma · do · dos · em · no · na · het · een · van · op · met",
    "notes [([][^)\\]]*\\b(?:remaster(?:ed)?|live|mono|stereo|version|edit|mix|remix|demo|single|instrumental|bonus|acoustic|radio|album|explicit|clean|feat\\.?|ft\\.?|with)\\b[^)\\]]*[)\\]]",
-   "T041 · Texts (3.29.0): role words in brackets after a name in prose (S038) and the role each stands for (\"sounds\" → performer, \"words\" → lyricist, \"voice\" → vocals) (Code: PROSE_ROLE_WORDS)",
+   "T041 · Texts (3.29.0): role words in brackets after a name in prose (S038) and the role each stands for (\"sounds\" → performer, \"words\" → lyricist, \"voice\" → vocals; 3.29.1: \"noises\" → effects credited \"noises\", \"electronics\" → electronic instruments credited \"electronics\", \"field recordings\" → field recordist) (Code: PROSE_ROLE_WORDS)",
    "sounds Performer",
-   "noises Performer",
+   "noises Noises",
+   "noise Noises",
+   "electronics Electronics",
+   "field recordings Field Recordings",
+   "field recording Field Recording",
    "words Lyrics By",
    "lyrics Lyrics By",
    "texts Lyrics By",
@@ -2049,7 +2056,7 @@
    "R082 liner notes | sleeve notes | notes | linernotes | text by liner notes release",
    "R083 booklet editor | booklet booklet editor release",
    "R084 (?:a ?& ?r | artists? (?:and | &) repertoire)(?:s+(.+))? artists and repertoire, misc release_group",
-   "R085 field recording | field recordings | field recordist field recordist recording Miscellaneous",
+   "R085 field recording | field recordings | field recordist | field recordings by | field recorded by field recordist recording Miscellaneous",
    "R086 technician | instrument technician | guitar technician | piano technician | drum technician | keyboard technician | tech | tuner | piano tuner instrument technician recording",
    "R087 booking booking release",
    "R088 legal | lawyer | legal representation legal representation release",
@@ -2147,7 +2154,7 @@
    "T036 Texts (3.22.0): tracks named by their titles in quotation marks after a role and \"in\", \"on\" (\"Piano in ‘A' and 'B'\", \"Guitar on “Song”\"; the marks may be mixed) – the tracks of these titles (S027); \"is a contribution\", \"was played\", \"were performed\" before \"by\" leave the role TEXT_TITLE_SCOPE, TEXT_CONTRIBUTION",
    "T037 Texts (3.22.0): an area after a name (\"Recorded by X in Xixon, Asturies, Spain\") or a verb (\"Recorded in Berlin\", \"Mixed live in Paris\") – words with capitals (particles between them: \"Frankfurt am Main\", \"Rio de Janeiro\"), up to four parts, no number, month or season, none of these words first; a time after it (\"in the spring, 2017\") is left out. Only for recorded, mixed, mastered and (3.22.2) produced, remixed, engineered (C038 – C043, S028) areaOf, TEXT_AREA_PARTICLE, TEXT_NOT_AREA",
    "T038 Track titles compared with MusicBrainz's (3.24.1, S030): small words of English, German, Spanish, French, Italian, Portuguese and Dutch are left out (\"The Song of the Sea\" = \"Song of Sea\"), so are notes in brackets (\"(Remastered)\", \"[Live]\", \"(feat. X)\") TITLE_SMALL_WORDS, TITLE_NOTE, titleWordsOf",
-   "T041 Texts (3.29.0): role words in brackets after a name in prose (S038) and the role each stands for (\"sounds\" → performer, \"words\" → lyricist, \"voice\" → vocals) PROSE_ROLE_WORDS",
+   "T041 Texts (3.29.0): role words in brackets after a name in prose (S038) and the role each stands for (\"sounds\" → performer, \"words\" → lyricist, \"voice\" → vocals; 3.29.1: \"noises\" → effects credited \"noises\", \"electronics\" → electronic instruments credited \"electronics\", \"field recordings\" → field recordist) PROSE_ROLE_WORDS",
    "T042 Texts (3.29.0): words of prose around a credit that are left out – a verb before \"by\" (\"Cover artwork channeled by X\", \"Logo carved by …\") and words before the name (\"… by the guided hand of BMS Illustration\") PROSE_FILLER_VERB, PROSE_FILLER_BEFORE_NAME",
    "T039 All sources (3.28.2): roles in Norwegian, Swedish and Danish, each spelling with its language (word@no, word@sv, word@da; the search field filters \"@no\") → the English role the register maps; in a Discogs bracket or as a role of a text, a translation gets no role credit (S032) ROLE_TERMS, ROLE_INDEX, foldWord",
    "T040 All sources (3.28.2): the tasks of an artwork credit that \"and\" (og, och, und, et, y, &, +) joins, with the role each becomes (S033) ART_TASKS, ART_TASK_INDEX, splitArtTasks",
@@ -2167,7 +2174,7 @@
   ],
   "words": [
    "Words written in lower case in role credits (T002 · Code: GENERIC_WORDS)",
-   "12-string, 4-string, 5-string, 6-string, 7-string, acoustic, additional, alto, analog, backing, bari, baritone, bass, bow, bowed, brass, brushes, bs, choir, chorus, claps, clar, cymbals, digital, double, dr, drum, drums, effects, electric, fl, flgh, fretless, fx, grand, gtr, gtrs, guitar, guitars, handclaps, harmonies, harmony, hi-hat, horn, horns, intro, kbd, kbds, keyboard, keyboards, keys, kick, kit, lap, lead, live, loops, machine, mallets, modular, muted, organ, outro, overdubs, pedal, perc, piano, plucked, prepared, programming, reeds, rhythm, sampler, samples, sax, saxes, shaker, slide, snare, solo, soprano, spoken, steel, sticks, strings, synth, synthesizer, synthesizers, synths, tambourine, tbn, tenor, tour, toy, tpt, upright, vibes, vocals, voice, vox, whistle, whistling, winds, woodwinds, word"
+   "12-string, 4-string, 5-string, 6-string, 7-string, acoustic, additional, alto, analog, backing, bari, baritone, bass, bow, bowed, brass, brushes, bs, choir, chorus, claps, clar, cymbals, digital, double, dr, drum, drums, effects, electric, electronics, fl, flgh, fretless, fx, grand, gtr, gtrs, guitar, guitars, handclaps, harmonies, harmony, hi-hat, horn, horns, intro, kbd, kbds, keyboard, keyboards, keys, kick, kit, lap, lead, live, loops, machine, mallets, modular, muted, noise, noises, organ, outro, overdubs, pedal, perc, piano, plucked, prepared, programming, reeds, rhythm, sampler, samples, sax, saxes, shaker, slide, snare, solo, soprano, spoken, steel, sticks, strings, synth, synthesizer, synthesizers, synths, tambourine, tbn, tenor, tour, toy, tpt, upright, vibes, vocals, voice, vox, whistle, whistling, winds, woodwinds, word"
   ]
  }
 }

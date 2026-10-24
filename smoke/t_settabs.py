@@ -1,6 +1,6 @@
 """Credits Importer 3.25.0: the settings as tabs (collected items 42, 41, 40).
-A) "⚙ Settings" folds the settings out and in (only the gear: no "Close" inside); eight tabs, "General" chosen.
-B) Keys: ↓ the next tab (chosen, focused), End the last, Home the first.
+A) "⚙ Settings" folds the settings out and in (only the gear: no "Close" inside); eight tabs, "General" chosen ([3.29.2] nine: "Appearance" after "General").
+B) Keys: ↓ the next tab ("Appearance"; chosen, focused), End the last, Home the first.
 C) The tab is remembered (here "Texts", with "Show the web links …" and a button to "Mapping rules"); after reloading
    the settings open on it.
 D) The ⓘ in the head opens the settings at "ⓘ Connections": a table of ten connections (Harmony with its home page,
@@ -32,7 +32,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(200)
     a.append(pg.evaluate(f"{SET}.hidden"))
     print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
-    results.append([t for t, _, _ in t1] == ['general', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections']
+    results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections']
                    and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
     # B) keys
     pg.click(gear)
@@ -48,7 +48,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(150)
     k3 = [(t, f) for t, s, f in pg.evaluate(TABS) if s == 'true']
     print('B) ↓:', k1, '| Ende:', k2, '| Pos1:', k3)
-    results.append(k1 == [('sources', True)] and k2 == [('connections', True)] and k3 == [('general', True)])
+    results.append(k1 == [('appearance', True)] and k2 == [('connections', True)] and k3 == [('general', True)])
     # C) remembered
     pg.click('[data-el=settings] .dci-set-tab[data-topic=texts]')
     pg.wait_for_timeout(200)
