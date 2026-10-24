@@ -1,4 +1,5 @@
-"""Page bar and pools: the language is chosen in the page bar before the dashboard is opened; "Dates & tracks"
+"""Page bar and pools: the language is chosen before the dashboard is opened – [3.27.1] in the question after the
+installation (the page bar has no language list any more), later in ⚙ Settings → General; "Dates & tracks"
 folds also at its bottom; folded, the date pool stays in the bar (on by default) and its dates can be dragged
 onto rows from there; drag hints; the common month/year of recording periods (D014); "Horn [French]",
 "Flugel Horn" without role credit; "Produced By" in "Companies, etc." is producer."""
@@ -28,19 +29,21 @@ with sync_playwright() as p:
     ctx = H.new_context(b)
     pg, errs = H.open_mb_edit(ctx, companion=False)
     pg.wait_for_selector('#dci-open', timeout=20000)
-    # 1) language in the page bar, before the dashboard is opened
+    # 1) [3.27.1] the language: the question after the installation (no language list in the page bar), then the settings
     lab = lambda: re.sub(r'\s+', ' ', pg.locator('#dci-launcher').inner_text())
-    print('1) Seitenleiste:', lab()[:120])
-    pg.select_option('#dci-launcher [data-dci-lang]', 'de'); pg.wait_for_timeout(200)
-    print('   nach „Deutsch“:', lab()[:120], '| gespeichert:', pg.evaluate("localStorage.getItem('dci-lang')"))
-    ok1 = 'Sprache:' in lab() and 'Credits importieren' in lab() and pg.locator('#dci-overlay').count() == 0
+    print('1) Seitenleiste:', lab()[:120], '| Liste:', pg.locator('#dci-launcher [data-dci-lang]').count())
+    ok1 = pg.locator('#dci-launcher [data-dci-lang]').count() == 0 and 'Language' not in lab()
+    pg.check('#dci-langask input[value=de]')
+    pg.click('#dci-langask .dci-langask-ok'); pg.wait_for_timeout(300)
+    print('   nach „Deutsch“ + OK:', lab()[:120], '| gespeichert:', pg.evaluate("localStorage.getItem('dci-lang')"))
+    ok1 = ok1 and 'Credits importieren' in lab() and 'Sprache' not in lab() and pg.locator('#dci-overlay').count() == 0
     H.open_dashboard(pg)
     pg.wait_for_timeout(300)
     H.open_settings(pg, 'general')  # [3.26.0] the language is only in the settings
     ok1 = ok1 and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-f=lang]').input_value() == 'de'
     pg.select_option('[data-f=lang]', 'en'); pg.wait_for_timeout(300)
-    ok1 = ok1 and pg.locator('#dci-launcher [data-dci-lang]').input_value() == 'en' and 'Language:' in lab()
-    print('   Dashboard Deutsch, zurück auf Englisch im Kopf → Seitenleiste:', pg.locator('#dci-launcher [data-dci-lang]').input_value(), ok1)
+    ok1 = ok1 and 'Import credits' in lab()
+    print('   Dashboard Deutsch, in den Einstellungen zurück auf Englisch → Seitenleiste:', lab()[:40], ok1)
     # 2) D014: common month / year of recording periods
     chips = [re.sub(r'\s+', ' ', c) for c in pg.locator('.dci-pchip-date .dci-chip-main').all_inner_texts()]
     print('2) Pool:', chips)

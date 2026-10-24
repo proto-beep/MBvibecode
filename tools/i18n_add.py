@@ -2,6 +2,8 @@
 
 Usage: python3 i18n_add.py <anchor key> <json file {lang: {key: text}}>
 New keys go after the anchor key of each language block; existing keys are replaced in place.
+From Credits Importer 3.27.1 a file with English only is enough: the other languages show the English text until the
+next translation round (smoke/t_i18n.py lists what is not translated yet). Watch out: a key that exists is replaced.
 """
 import json
 import re
@@ -27,7 +29,11 @@ def blocks(s):
 
 def apply(anchor, texts):
     s = SCRIPT.read_text()
+    if 'en' not in texts:
+        raise SystemExit('English texts are needed (the other languages fall back to them)')
     for lang, a, b in reversed(blocks(s)):
+        if lang not in texts:
+            continue
         body = s[a:b]
         add = []
         for k, v in texts[lang].items():

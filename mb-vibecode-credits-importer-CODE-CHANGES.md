@@ -13,12 +13,25 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.27.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.27.1, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
+**Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
+
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.27.1 · 2026-10-24
+
+Languages: English first, no language list next to the import button, French spaces (collected items 68, 67, 69).
+
+- **Texts:** `tr()` unchanged (it already falls back to English, also for plurals); the rule for new texts is English only (see "How this file is kept"). All 1,457 texts of the four languages are there; no text added or removed.
+- **French:** 210 texts with a plain space before ":", ";", "?", "!", "»" or after "«" now have a no-break space (`\u00a0`).
+- **Page bar (`insertLauncher`, `renderLauncher`):** the language list (`.dci-bar-lang`, `[data-dci-lang]`) and its CSS are gone; `setLanguage(code, 'bar')` (from the question after the installation) no longer focuses a list.
+- **Tools:** `tools/i18n_add.py` takes English alone (other languages left out are skipped; English is required).
+- **Tests:** new `t_i18n.py` (keys of the code in English, no left-overs, no foreign placeholders, French spaces, the English fallback in German through Node, a report of the missing translations); `t_connections.py` needs the texts in English only; `t_bar.py` chooses the language in the question after the installation, then in the settings.
+
 
 ## Import 3.27.0 · 2026-10-24 · milestone
 
