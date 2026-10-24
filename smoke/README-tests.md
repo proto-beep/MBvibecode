@@ -181,6 +181,8 @@ python3 t_textcredit.py   # 3.28.4: "Cover/Sleeve/Booklet/Package Design" → de
                           # credited as written (not when only the case differs)
 python3 t_datewords.py    # 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
                           # the date's sentence, "mixed and mastered" → Mix and Mastering (Node and the date matrix)
+python3 t_facets.py       # 3.28.6: "C1 to D" (side D one track) and the other ranges of "Facets" as dated track groups in the matrix,
+                          # "in live concert" → "live" for the tracks of that sentence only, no places from the notes
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error

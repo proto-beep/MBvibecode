@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.28.5
+// @version      3.28.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -890,6 +890,7 @@
       "matrix.liveWhy.title": "the track title says live",
       "matrix.liveWhy.credit": "{src} credits “{role}” ({name}) for this track",
       "matrix.liveWhy.creditAll": "{src} credits “{role}” ({name}) for the whole release",
+      "matrix.liveWhy.notesTracks": "the notes say these tracks were recorded live (“in live concert” …)",
       "matrix.liveOfferRec": "Live recording – {reason}. This link exists in MusicBrainz without “live”: a click adds it (an edit). It is not set by itself.",
       "matrix.songAuto": "Preselected (rule S020) because {src} names music and lyrics in one credit (e.g. “Music And Lyrics By”); a type you choose stays",
       "preview.attrFillTitle": "Link exists in MusicBrainz; the attributes are added",
@@ -7097,6 +7098,10 @@
   ];
   // test(name of the MB relationship type, row): the first group that takes it wins (Remastering before Mastering)
   DATE_GROUPS.forEach((g) => { g.test = (n, row) => g.types.includes(n) && (!g.only || g.only(n, row)); });
+
+  // [3.28.6] (S021) Notes that say live: "recorded live", "live recording", [3.28.6] "in live concert", "live in concert",
+  // "recorded in concert", "at a live performance"
+  const LIVE_NOTES = /\b(?:recorded|performed)\s+live\b|\blive\s+recording\b|\b(?:in|at|during)\s+(?:a\s+)?live\s+(?:concert|performance)\b|\blive\s+in\s+concert\b|\brecorded\s+in\s+concert\b/i;
 
   // [T017] (S021) Track titles that say "live": "(Live)", "(Live at …)", "[Live]", "– Live"
   const LIVE_TITLE = /\((?:live|live at [^)]*|live in [^)]*|live version)\)|\[(?:live|live at [^\]]*)\]|\s[-–—]\s*live\b/i;
@@ -14844,10 +14849,19 @@
         addRange(ends);
       }
     }
-    const vinyl = /\b([A-H]\d{1,2})\s*(?:-|–|—|to|bis)\s*([A-H]\d{1,2})\b/g;
+    // [3.28.6] a side alone at either end ("C1 to D": side D is one track, or all of its tracks; collected item 64b)
+    const vinyl = /\b([A-H]\d{0,2})\s*(?:-|–|—|to|bis)\s*([A-H]\d{0,2})(?![\w])/g;
+    const sideOf = (L) => (srcTracks || []).map((t, i) => [normPos(t.position), i]).filter(([pos, i]) => i < S.mbTracks.length && new RegExp(`^${L}(?:\\d|$)`).test(pos)).map(([, i]) => i);
+    const endOf = (tok, last) => {
+      if (!/^[A-H]$/.test(tok) || posMap.has(normPos(tok))) return tok;
+      const side = sideOf(tok);
+      const i = side.length ? side[last ? side.length - 1 : 0] : null;
+      return i == null ? tok : (srcTracks[i] || {}).position || tok;
+    };
     while ((m = vinyl.exec(text))) {
+      if (/^[A-H]$/.test(m[1]) && /^[A-H]$/.test(m[2])) continue;
       named = true;
-      addRange([m[1], m[2]]);
+      addRange([endOf(m[1], false), endOf(m[2], true)]);
     }
     const side = /\bside\s+([A-H])\b/gi;
     while ((m = side.exec(text))) {
@@ -14871,11 +14885,12 @@
     const tok = '[A-Za-z]?\\d+(?:[-.]\\d+)?';
     const conn = '(?:-|–|—|to|bis|à|a|thru|through|,|&|and|und|y|et)';
     const res = [new RegExp(`\\b(?:tracks?|titles?|titel|pistas?|morceaux|plages?|songs?|stücke?)\\s*:?\\s*${tok}(?:\\s*${conn}\\s*${tok})*`, 'gi'),
-      /\b[A-H]\d{1,2}\s*(?:-|–|—|to|bis)\s*[A-H]\d{1,2}\b/g, /\bside\s+[A-H]\b/gi];
+      /\b[A-H]\d{0,2}\s*(?:-|–|—|to|bis)\s*[A-H]\d{0,2}(?![\w])/g, /\bside\s+[A-H]\b/gi];
     const out = [];
     for (const re of res) {
       let m;
       while ((m = re.exec(src))) {
+        if (/^[A-H]\s*(?:-|–|—|to|bis)\s*[A-H]$/.test(m[0])) continue;
         const tracks = tracksInText(m[0]);
         if (tracks && !out.some((o) => m.index < o.index + o.text.length && o.index < m.index + m[0].length)) out.push({ index: m.index, text: m[0], tracks });
       }
@@ -17256,7 +17271,7 @@
     return tr(`matrix.liveWhy.${reason}`, c || { role: 'Live Recording By', name: '?' });
   }
   /** [S021] "li?": the track itself is a live recording (credit, title) or the release is live (group, format, notes). */
-  const liveOfferText = (i) => tr(['credit', 'creditAll', 'title'].includes(liveReason(i)) ? 'matrix.liveOfferRec' : 'matrix.liveOffer', { reason: liveWhyText(i) });
+  const liveOfferText = (i) => tr(['credit', 'creditAll', 'title', 'notesTracks'].includes(liveReason(i)) ? 'matrix.liveOfferRec' : 'matrix.liveOffer', { reason: liveWhyText(i) });
   /** Attributes a link has in MusicBrainz already (existing links only). */
   const mbLinkAttrs = (work) => new Set(work && !work.planned ? work.linkAttrs || [] : []);
   /**
@@ -17387,13 +17402,32 @@
    * title says so ("(live)", "[live]", "(live at …)", "– live"). A "Live Recording By" credit (R031) counts too:
    * for the tracks it names, or for the whole release when it names none.
    */
+  /**
+   * [3.28.6] The tracks of the sentences of the notes that say live and name tracks (empty when a sentence says live
+   * without tracks: then the whole release is live, as before).
+   */
+  function liveNotesTracks(notes) {
+    const out = new Set();
+    for (const line of String(notes).split('\n')) {
+      for (const sentence of line.split(/;|\.(?=\s+[A-Z])/)) {
+        if (!LIVE_NOTES.test(sentence)) continue;
+        const t = tracksInText(sentence);
+        if (!t) return new Set();
+        t.forEach((i) => out.add(i));
+      }
+    }
+    return out;
+  }
+
   function applyLiveDefault() {
     const reasons = { release: '', tracks: new Map(), credits: new Map(), releaseCredit: null };
     const types = ((S.releaseGroup && (S.releaseGroup['secondary-types'] || S.releaseGroup.secondaryTypes)) || []).map(norm);
     const d = S.release || { tags: [], notes: '' };
     if (types.includes('live')) reasons.release = 'rg';
     else if (d.tags.includes('live')) reasons.release = 'format';
-    else if (/\b(recorded|performed)\s+live\b|\blive\s+recording\b/i.test(d.notes || '')) reasons.release = 'notes';
+    else if (LIVE_NOTES.test(d.notes || '') && !liveNotesTracks(d.notes || '').size) reasons.release = 'notes';
+    // [3.28.6] a sentence that says live and names tracks: only those ("A1 to B2 recorded … in live concert …"; item 64c)
+    liveNotesTracks(d.notes || '').forEach((i) => { if (!reasons.tracks.has(i)) reasons.tracks.set(i, 'notesTracks'); });
     S.mbTracks.forEach((t) => {
       const dt = (S.srcTracks || [])[t.idx];
       if (LIVE_TITLE.test(t.title || '') || (dt && LIVE_TITLE.test(dt.title || ''))) reasons.tracks.set(t.idx, 'title');

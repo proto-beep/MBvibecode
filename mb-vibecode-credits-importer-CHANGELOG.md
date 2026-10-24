@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.28.5 | 1.8.4 – 1.9.0 |
+| 2026-10-24 | 3.22.1 – 3.28.6 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -81,6 +81,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.28.6
+
+#### Added
+
+- **A side alone ends a range of tracks** (collected item 64b; maintainer: "„C1 to D" wird nicht verstanden" – Riley/Tippett/Guy/Stevens, "Facets"): "C1 to D" in the notes reaches to the end of side D – the one track "D" or all tracks of that side; also at the start ("D to E2").
+- **Live from the notes, for the tracks of the sentence** (collected item 64c): "in live concert", "live in concert", "recorded in concert" count like "recorded live"; a sentence that names tracks ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith's College, London") offers "live" for those tracks only, not for the whole release. As agreed, no places or areas are taken from the notes.
+
 
 ### Import 3.28.5
 
