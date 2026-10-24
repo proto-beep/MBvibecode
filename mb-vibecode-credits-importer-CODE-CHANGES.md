@@ -13,12 +13,27 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.24.1, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.25.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.25.0 · 2026-10-24
+
+The settings as tabs, "Reset all" in them, the connections (collected items 42, 41, 40).
+
+- **Settings (`settingsHtml`):** the topics are a tab list instead of folding sections – `.dci-set-wrap` with `.dci-set-side` (`.dci-set-tabs` `role="tablist"`, buttons `.dci-set-tab` `role="tab"` `data-act="settings-topic"` `data-topic`, `aria-selected`, roving `tabindex`; below them `.dci-set-resetall` `data-act="reset-open"`) and `.dci-set-pane` (`role="tabpanel"`: the chosen topic and its "↺" when `TOPIC_KEYS` has keys; with `S.resetOpen` instead `resetHtml()`). No close button inside: only the gear (`settings-open`) folds the settings in and out. `SETTING_TOPICS` gets `texts` and `connections`; `TOPIC_KEYS.sources` without `dci-weblinks-show`, new `TOPIC_KEYS.texts` (`dci-weblinks-show`), `TOPIC_KEYS.connections` empty; `resetTopic('texts')`.
+- **State / storage:** `S.settingsTab` (read from the new `SETTINGS_TAB_KEY` = `dci-settings-tab`, `general` not stored) instead of `S.settingsTopics`; `S.resetRules`, `S.resetPools` keep the two boxes of "Reset all" when the settings are drawn anew (`settingsAfterEvent` on `change`). `resetSettings` sets `settingsTab` back and clears `SETTINGS_TAB_KEY` (in `SETTINGS_KEYS`).
+- **Reset all (item 41):** the standalone `[data-el="reset"]` below the head is gone; new `resetHtml()` (the same question, boxes, "Reset", "Cancel") inside the pane; `renderReset()` opens the settings and redraws them; `reset-open` toggles and focuses "Cancel", `reset-cancel` focuses "↺ Reset all settings …" again. The head button `reset-open` ("↺ Defaults") is removed; `reset.button` removed (the log of the rules uses `reset.title`).
+- **Handlers:** `settings-topic` (chooses and stores the tab, focus on it), new `connections-open` (the ⓘ of the head: settings open at `connections`); `onKeydown`: ↑ ↓ ← → Home End on `.dci-set-tab`. `renderSettings` keeps the focus also on a button (`data-act` + `data-topic`) when it draws anew.
+- **Connections (item 40):** new constant **`CONNECTIONS`** (X001 – X010: `id`, `kind` – site, source, tool, script, manager, links –, `name`, `home`, `more`, `hosts`, `perms`, `since`), exported for Node; `connectionsHtml()` – the table `.dci-conn` (name with link, kind, `conn.<id>`, permissions, since); head button `.dci-headbtn` `data-act="connections-open"` "ⓘ".
+- **CSS:** `.dci-set-wrap`, `.dci-set-side`, `.dci-set-tabs`, `.dci-set-tab` (vertical, the chosen one joined to the pane), `.dci-set-pane`, `.dci-set-resetall`, `.dci-conn`; `.dci-settings { container-type: inline-size }` with `@container (max-width: 560px)`: the tabs in a row.
+- **Texts (4 languages):** new `settings.t.texts`, `settings.t.connections`, `settings.textsHint`, `settings.resetAll`, `connections.open`, `conn.intro`, `conn.th.*`, `conn.kind.*`, `conn.X001` – `conn.X010`, `conn.X004.name`, `conn.X009.name`; removed `reset.button`.
+- **Watch out:** the boundary test of the adapters (`t_adapter.py` A) counts `discogs.com/` outside the Discogs adapter – the home page of X002 is written without the last slash.
+- **Tests:** new `t_settabs.py` (tabs, keys, remembered tab, Texts, ⓘ → Connections, reset in the pane, narrow), new `t_connections.py` (Node: every address of the header and the code belongs to `CONNECTIONS`, ids unique, texts in 4 languages); `t_settings.py` one tab at a time (`open_set(pg, topic)`); new helper `harness.open_reset(pg)` for `t_reset.py`, `t_inline.py`, `t_logplace.py`; `t_textcorpus.py` (F) and `t_bcview.py` (G) read the tab Texts / the pane.
+
 
 ## Import 3.24.1 · 2026-10-24
 

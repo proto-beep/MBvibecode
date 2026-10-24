@@ -848,6 +848,15 @@ def open_mb_release(ctx):
     return pg, errs
 
 
+def open_reset(pg):
+    """[3.25.0] "↺ Reset all settings …" is in the settings (below their tabs): the settings open, then the question."""
+    if pg.evaluate("!document.querySelector('[data-el=settings]') || document.querySelector('[data-el=settings]').hidden"):
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+    pg.click('[data-el=settings] [data-act=reset-open]')
+    pg.wait_for_timeout(150)
+
+
 def wait_for(pg, js, timeout=30):
     pg.wait_for_function(js, timeout=timeout * 1000)
 

@@ -44,7 +44,8 @@ python3 t_artwork.py      # cover miniature on the Discogs page: shown when conn
 python3 t_rows.py         # remove a row (and undo), removal after staging, "only works"
 python3 t_matrix.py       # date matrix by hand: drag & drop, grip + "place here", editor, auto apply, stamp, after reload
 python3 t_pools.py        # "Dates & tracks" folds (remembered), clear all track groups / dates (also other releases)
-python3 t_reset.py        # "↺ Defaults": settings, own rules, pools of all releases, cover box on Discogs
+python3 t_reset.py        # "↺ Reset all settings …" (⚙ Settings, 3.25.0; before "↺ Defaults" in the head): settings, own
+                          # rules, pools of all releases, cover box on Discogs
 python3 t_choose.py       # separate days ("June 16 & 19"): both days and the period in the pool, "Choose" in the matrix
 python3 t_inline.py       # dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
 python3 t_dragdates.py    # pool dates dragged onto rows / works matrix, dates joined into periods, pools loaded again, "Cover Art"
@@ -122,6 +123,7 @@ python3 t_aboutoff.py     # "Leave out the about text" (3.16.1): place and dates
 python3 t_srctexts.py     # texts that named Discogs say "the source" with another source (3.16.2)
 python3 t_settings.py     # the menu "Settings" (3.16.0): topics, shared switches both ways, values in steps, a topic's "↺",
                           # the works of the artists kept across a reload (IndexedDB), clearing them, switched off
+                          # 3.25.0: the topics as tabs, one shown at a time
 python3 t_bcview.py       # the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
                           # "Load the release there", marks before each part of a line (none in the about text, shortened texts
                           # opened), mark → row, jumps (part of a line, sentence of the about text, track both ways), track
@@ -160,6 +162,12 @@ python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass (3.22.3: withou
                           # "contrabass", "Violoncello" → cello "violoncello";
                           # produced / remixed / engineered in (areas with the area they are part of); recording without role credit
                           # (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
+python3 t_settabs.py      # the settings as tabs (3.25.0): only the gear folds them out and in, eight tabs (General chosen), ↓ / End /
+                          # Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), the ⓘ in the head
+                          # opens "ⓘ Connections" (ten rows, Harmony with its home page), "↺ Reset all settings …" below the tabs shows
+                          # the question in the settings ("Cancel" back to the tab), no "↺ Defaults" in the head, narrow: tabs in a row
+python3 t_connections.py  # the connections (3.25.0, Node): every address of @match / @connect and of the code belongs to an entry of
+                          # CONNECTIONS, the ids are unique, every entry has its texts in the four languages
 python3 t_tracksfit.py    # tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
                           # most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
                           # the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
@@ -247,6 +255,7 @@ should count only its own kind.
 With several media (`harness.MEDIA = [2, 1, 1]` …) the dashboard asks for the media before the import:
 `harness.open_dashboard(pg)` answers "All" with the release level (the import as before),
 `open_dashboard(pg, media={'text': '2-3', 'release': False})` another choice, `media=False` leaves the question open.
+`harness.open_reset(pg)` (3.25.0) opens ⚙ Settings and there "↺ Reset all settings …" (until 3.24 "↺ Defaults" in the head).
 
 Relationship types of the mock are made with `harness.lt(id, gid, name, type0, type1, attrs, dates, deprecated)`; as on
 MusicBrainz, artist–recording "mastering" is deprecated (the dashboard leaves it out) and artist–release "mastering" (42)

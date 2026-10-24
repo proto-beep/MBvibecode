@@ -215,8 +215,9 @@ with sync_playwright() as p:
     pg.locator('.dci-head [data-act=settings-open]').click()
     pg.locator('[data-act=settings-topic][data-topic=discogs]').click()
     pg.wait_for_timeout(300)
-    g2 = pg.evaluate("""(() => { const t = document.querySelector('[data-el=settings] [data-topic=discogs]');
-      return [t.querySelector('[data-act=settings-topic]').textContent.replace(/[▸▾]/g, '').trim(), t.querySelector('[data-dg-status]').textContent.trim(),
+    # [3.25.0] the topic is a tab, its content the pane
+    g2 = pg.evaluate("""(() => { const s = document.querySelector('[data-el=settings]'); const t = s.querySelector('.dci-set-pane');
+      return [s.querySelector('[data-act=settings-topic][data-topic=discogs]').textContent.trim(), t.querySelector('[data-dg-status]').textContent.trim(),
         !!t.querySelector('[data-dg-artwork]'), t.querySelector('.dci-sub').textContent.trim().slice(0, 60)]; })()""")
     print('G) alter Companion:', g1, '| Menü:', g2)
     results.append(g1.startswith('Bandcamp view: needs the companion script 1.8.0') and g2[:3] == ['Discogs and Bandcamp view', 'Bandcamp status', False])
