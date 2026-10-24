@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.27.1 | – |
+| 2026-10-24 | 3.22.1 – 3.28.0 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -81,6 +81,31 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.28.0
+
+#### Changed
+
+- **The head of an entry** (collected item 61; maintainer: "nur der discogs-balken neben den einträgen soll zu discogs führen. das symbol für den link kann ja nebendran angezeigt werden. … damit wiederholt sich "bjork audio", das ist unschön. hier muss übrigens in der Kompaktansicht auch das artist crediting angezeigt werden … bitte schlage etwas sinnvolles vor." – "mach das mal, ich muss mir das dann anschauen"): only the "Discogs" tag links to Discogs, with ↗ – the name is no longer repeated. A chip says how the dashboard credits the entry on this release, e.g. **as “B. Audio”** (Discogs' spelling), "(+1)" with several spellings; without a chip the MusicBrainz name is used. In the compact view a row names its own credit when the entry is credited in more than one way.
+- **The bar below "Import credits …"** (collected item 66; maintainer: "wir müssen die "Navigation: jump to source on mouse-overon click Discogs status Track highlight Status on the release page Click switches Keep marks Artwork Discogs view: no Discogs tab" Leiste umbauen." – "tatsächlich stört mich daran alles. ist alles schon in den einstellungen zu finden?"): only the status as a badge – the link to the source, "open in background" or "Load the release there", ↻ – and ⚙, which opens the dashboard's settings at "Discogs and Bandcamp view", where all the switches are.
+
+
+### Import 3.27.3
+
+#### Changed
+
+- **Messages close and fold** (collected item 56; maintainer: "Meldungen wie "1 date from the notes was placed in the date matrix as a suggestion …" … oben in der ansicht sollen dismissable bzw. einklappbar sein" – "soll nur bis zum nächsten Import weggeklickt bleiben"): each message at the top has ✕; from two messages a line "▾ n messages" folds them in. Closed or folded stays until the next import; a new warning or error unfolds them.
+
+
+### Import 3.27.2
+
+#### Changed
+
+- **The full view is the default again** (collected item 72; maintainer: "die große ansicht soll standard sein und falls man auf kompakt umstellt soll das gespeichert werden."): every row with all its fields; the compact view is remembered once chosen.
+- **The compact view is a symbol in the head** (collected item 60; maintainer: "Compact / Full Ansicht soll per Symbol in der oberen Zeile links neben der Schriftzeichengröße angezeigt werden und nicht im Scrollfenster"): **☰** left of A− 100 % A+, pressed while compact; "Compact | Full" left the bar above the entries (it stays in ⚙ Settings → General).
+- **The heading "Settings" folds the settings in** (collected item 57; maintainer: "Die "Settings" sollen auch per Klick auf die Überschrift "Settings" einklappbar sein. dazu braucht es keine Hyperlinkbelegung von "Settings" nur einen Tooltip"), like ⚙; it looks like a heading and has a tooltip.
+- **"open in background", "Load the release there" and ↻ stand out** (collected item 65): filled purple, ↻ purple framed.
+
 
 ### Import 3.27.1
 
