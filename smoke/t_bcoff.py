@@ -141,7 +141,7 @@ with sync_playwright() as p:
     results.append(d1[0][1] == 'recording' and not d1[0][2] and d1[1] == [False, False, True, False, False, False]
                    and d1[2] == ['Bandcamp: Bob Mix – Mixed By switched on again'])
     # E) "Delete stored import"
-    pg.locator('[data-act=forget-open]').click()
+    H.src_menu(pg, 'forget-open')
     pg.locator('[data-act=forget-do]').click()
     H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
     pg.wait_for_timeout(1500)

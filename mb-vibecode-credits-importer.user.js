@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.25.0
+// @version      3.26.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.25.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.26.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -638,7 +638,6 @@
       "msg.datesMismatch.one": "{n} relationship in the editor does not have the date from the dashboard: {list}. Please check it in the editor.",
       "msg.datesMismatch.other": "{n} relationships in the editor do not have the date from the dashboard: {list}. Please check them in the editor.",
       "zoom.label": "Text size",
-      "settings.button": "⚙ Settings",
       "settings.buttonTitle": "All settings in one place, by topic",
       "settings.title": "Settings",
       "settings.hint": "All settings in one place, by topic – the switches stay where they are too. Stored in this browser.",
@@ -677,6 +676,13 @@
       "settings.textsHint": "Pasted texts and the credits texts of Bandcamp. What the text recognition reads (rules T020 – T038) is listed in",
       "settings.resetAll": "↺ Reset all settings …",
       "connections.open": "Connections to other sites, tools and scripts (⚙ Settings → ⓘ Connections)",
+      "srcmenu.button": "Source",
+      "srcmenu.title": "Another source, a pasted text, the order of the sources, Bandcamp, delete the stored import",
+      "supp.open": "Supplement",
+      "supp.openTitle": "Supplement the rows with a second source – another linked source, a URL or a pasted text; compared with the rows, nothing is taken over by itself",
+      "langAsk.hint": "Choose the language of the Credits Importer – you can change it any time in ⚙ Settings → General.",
+      "langAsk.ok": "OK",
+      "log.langAsked": "Language chosen after the installation: {lang}",
       "settings.resetTopic": "↺ Defaults of this topic",
       "settings.resetAsk": "Put the settings of “{topic}” back to their defaults?",
       "settings.place": "Dashboard",
@@ -1417,10 +1423,6 @@
       "dm.choiceRange": "period",
       "dm.choiceSingle": "single days",
       "log.dmChosen": "Matrix: {date} – {choice}",
-      "place.toPage": "▤ In the page",
-      "place.toWindow": "⧉ As window",
-      "place.toPageTitle": "Show the dashboard in the page, below the import button, instead of a window (remembered)",
-      "place.toWindowTitle": "Show the dashboard as a window over the page again (remembered)",
       "place.label": "Dashboard",
       "place.title": "Dashboard as a window over the page, or in the page below this button (remembered)",
       "place.window": "window",
@@ -2073,7 +2075,6 @@
       "msg.datesMismatch.one": "{n} Beziehung im Editor hat nicht das Datum aus dem Dashboard: {list}. Bitte im Editor prüfen.",
       "msg.datesMismatch.other": "{n} Beziehungen im Editor haben nicht das Datum aus dem Dashboard: {list}. Bitte im Editor prüfen.",
       "zoom.label": "Schriftgröße",
-      "settings.button": "⚙ Einstellungen",
       "settings.buttonTitle": "Alle Einstellungen an einem Ort, nach Themen",
       "settings.title": "Einstellungen",
       "settings.hint": "Alle Einstellungen an einem Ort, nach Themen – die Schalter bleiben auch an ihren Orten. Gespeichert in diesem Browser.",
@@ -2112,6 +2113,13 @@
       "settings.textsHint": "Eingefügte Texte und die Credits-Texte von Bandcamp. Was die Texterkennung liest (Regeln T020 – T038), steht in",
       "settings.resetAll": "↺ Alle Einstellungen zurücksetzen …",
       "connections.open": "Verbindungen zu anderen Seiten, Werkzeugen und Skripten (⚙ Einstellungen → ⓘ Verbindungen)",
+      "srcmenu.button": "Quelle",
+      "srcmenu.title": "Andere Quelle, eingefügter Text, Reihenfolge der Quellen, Bandcamp, gespeicherten Import löschen",
+      "supp.open": "Ergänzen",
+      "supp.openTitle": "Die Zeilen mit einer zweiten Quelle ergänzen – eine andere verknüpfte Quelle, eine URL oder ein eingefügter Text; mit den Zeilen verglichen, nichts wird von selbst übernommen",
+      "langAsk.hint": "Wähle die Sprache des Credits Importers – ändern kannst du sie jederzeit unter ⚙ Einstellungen → Allgemein.",
+      "langAsk.ok": "OK",
+      "log.langAsked": "Sprache nach der Installation gewählt: {lang}",
       "settings.resetTopic": "↺ Standard für dieses Thema",
       "settings.resetAsk": "Die Einstellungen von „{topic}“ wirklich auf den Standard zurücksetzen?",
       "settings.place": "Dashboard",
@@ -2852,10 +2860,6 @@
       "dm.choiceRange": "Zeitraum",
       "dm.choiceSingle": "einzelne Tage",
       "log.dmChosen": "Matrix: {date} – {choice}",
-      "place.toPage": "▤ In der Seite",
-      "place.toWindow": "⧉ Als Fenster",
-      "place.toPageTitle": "Das Dashboard in der Seite unter dem Import-Button zeigen statt als Fenster (wird gemerkt)",
-      "place.toWindowTitle": "Das Dashboard wieder als Fenster über der Seite zeigen (wird gemerkt)",
       "place.label": "Dashboard",
       "place.title": "Dashboard als Fenster über der Seite oder in der Seite unter diesem Button (wird gemerkt)",
       "place.window": "Fenster",
@@ -3508,7 +3512,6 @@
       "msg.datesMismatch.one": "{n} relación del editor no tiene la fecha del panel: {list}. Compruébala en el editor.",
       "msg.datesMismatch.other": "{n} relaciones del editor no tienen la fecha del panel: {list}. Compruébalas en el editor.",
       "zoom.label": "Tamaño del texto",
-      "settings.button": "⚙ Ajustes",
       "settings.buttonTitle": "Todos los ajustes en un lugar, por temas",
       "settings.title": "Ajustes",
       "settings.hint": "Todos los ajustes en un lugar, por temas – los interruptores siguen también en su sitio. Guardados en este navegador.",
@@ -3547,6 +3550,13 @@
       "settings.textsHint": "Textos pegados y los textos de créditos de Bandcamp. Lo que lee el reconocimiento de texto (reglas T020 – T038) está en",
       "settings.resetAll": "↺ Restablecer todos los ajustes…",
       "connections.open": "Conexiones con otros sitios, herramientas y scripts (⚙ Ajustes → ⓘ Conexiones)",
+      "srcmenu.button": "Fuente",
+      "srcmenu.title": "Otra fuente, un texto pegado, el orden de las fuentes, Bandcamp, borrar la importación guardada",
+      "supp.open": "Completar",
+      "supp.openTitle": "Completar las filas con una segunda fuente – otra fuente enlazada, una URL o un texto pegado; se compara con las filas, nada se adopta por sí solo",
+      "langAsk.hint": "Elige el idioma del Credits Importer – puedes cambiarlo cuando quieras en ⚙ Ajustes → General.",
+      "langAsk.ok": "Aceptar",
+      "log.langAsked": "Idioma elegido tras la instalación: {lang}",
       "settings.resetTopic": "↺ Valores por defecto de este tema",
       "settings.resetAsk": "¿Restablecer de verdad los ajustes de «{topic}»?",
       "settings.place": "Panel",
@@ -4287,10 +4297,6 @@
       "dm.choiceRange": "periodo",
       "dm.choiceSingle": "días sueltos",
       "log.dmChosen": "Matriz: {date} – {choice}",
-      "place.toPage": "▤ En la página",
-      "place.toWindow": "⧉ Como ventana",
-      "place.toPageTitle": "Mostrar el panel en la página, bajo el botón de importación, en vez de en una ventana (se recuerda)",
-      "place.toWindowTitle": "Volver a mostrar el panel como ventana sobre la página (se recuerda)",
       "place.label": "Panel",
       "place.title": "Panel como ventana sobre la página o en la página bajo este botón (se recuerda)",
       "place.window": "ventana",
@@ -4943,7 +4949,6 @@
       "msg.datesMismatch.one": "{n} relation dans l’éditeur n’a pas la date du tableau : {list}. Veuillez la vérifier dans l’éditeur.",
       "msg.datesMismatch.other": "{n} relations dans l’éditeur n’ont pas la date du tableau : {list}. Veuillez les vérifier dans l’éditeur.",
       "zoom.label": "Taille du texte",
-      "settings.button": "⚙ Réglages",
       "settings.buttonTitle": "Tous les réglages au même endroit, par thèmes",
       "settings.title": "Réglages",
       "settings.hint": "Tous les réglages au même endroit, par thèmes – les interrupteurs restent aussi à leur place. Enregistrés dans ce navigateur.",
@@ -4982,6 +4987,13 @@
       "settings.textsHint": "Textes collés et textes de crédits de Bandcamp. Ce que lit la reconnaissance du texte (règles T020 – T038) figure dans",
       "settings.resetAll": "↺ Réinitialiser tous les réglages…",
       "connections.open": "Connexions avec d’autres sites, outils et scripts (⚙ Réglages → ⓘ Connexions)",
+      "srcmenu.button": "Source",
+      "srcmenu.title": "Autre source, texte collé, ordre des sources, Bandcamp, supprimer l’import enregistré",
+      "supp.open": "Compléter",
+      "supp.openTitle": "Compléter les lignes avec une seconde source – une autre source liée, une URL ou un texte collé ; comparée aux lignes, rien n’est repris tout seul",
+      "langAsk.hint": "Choisissez la langue du Credits Importer – vous pouvez la changer à tout moment dans ⚙ Réglages → Général.",
+      "langAsk.ok": "OK",
+      "log.langAsked": "Langue choisie après l’installation : {lang}",
       "settings.resetTopic": "↺ Valeurs par défaut de ce thème",
       "settings.resetAsk": "Remettre vraiment les réglages de « {topic} » aux valeurs par défaut ?",
       "settings.place": "Tableau de bord",
@@ -5722,10 +5734,6 @@
       "dm.choiceRange": "période",
       "dm.choiceSingle": "jours séparés",
       "log.dmChosen": "Matrice : {date} – {choice}",
-      "place.toPage": "▤ Dans la page",
-      "place.toWindow": "⧉ En fenêtre",
-      "place.toPageTitle": "Afficher le tableau dans la page, sous le bouton d’import, au lieu d’une fenêtre (mémorisé)",
-      "place.toWindowTitle": "Afficher de nouveau le tableau en fenêtre au-dessus de la page (mémorisé)",
       "place.label": "Tableau",
       "place.title": "Tableau en fenêtre au-dessus de la page ou dans la page sous ce bouton (mémorisé)",
       "place.window": "fenêtre",
@@ -13653,22 +13661,53 @@
       : '';
     // [3.22.1] an album on a label's Bandcamp page (46)
     const bcPage = rel && rel.band && !rel.band.own && rel.band.page ? ` <span class="dci-sub dci-bcpage">${esc(tr('bcPage.source', { page: rel.band.page }))}</span>` : '';
-    el.innerHTML = `${current}${bcPage} ${picker}
-      <span class="dci-other">
-        <input type="text" data-f="discogs-input" placeholder="${esc(tr('source.other'))}" aria-label="${esc(tr('source.other'))}">
-        <button type="button" data-act="discogs-load">${esc(tr('source.load'))}</button>
-      </span>
-      <button type="button" class="dci-textbtn" data-act="text-open" aria-expanded="${!!f}" title="${esc(tr('source.textTitle'))}">${esc(tr('source.text'))}</button>
-      <button type="button" class="dci-textbtn dci-srcset-tgl" data-act="srcorder-toggle" aria-expanded="${S.srcOrderOpen}">${S.srcOrderOpen ? '▾' : '▸'} ${esc(tr('srcorder.toggle'))}</button>
-      <button type="button" class="dci-textbtn dci-srcset-tgl" data-act="bc-toggle" aria-expanded="${S.bcOpen}">${S.bcOpen ? '▾' : '▸'} Bandcamp</button>
-      <button type="button" class="dci-textbtn" data-act="forget-open" aria-expanded="${!!S.forgetOpen}" title="${esc(tr('forget.title'))}">${esc(tr('forget.button'))}</button>
-      ${rel && rel.aboutAt != null ? `<label class="dci-check" title="${esc(tr('about.offTitle'))}"><input type="checkbox" data-f="about-off" ${S.aboutOff ? 'checked' : ''}> ${esc(tr('about.off'))}</label>` : ''}
-      ${S.forgetOpen ? `<div class="dci-forget" role="group" aria-label="${esc(tr('forget.ask'))}"><strong>${esc(tr('forget.ask'))}</strong>
+    // [3.26.0] the head in one line (collected item 30): the loaded source, the menu "Source ▾" with everything about
+    // the source, "+ Supplement"; what these open is shown below the head (data-el="srcpanels")
+    const item = (act, label, extra = '', title = '') => `<button type="button" class="dci-menuitem" data-act="${act}" ${extra}${title ? ` title="${esc(title)}"` : ''}>${label}</button>`;
+    const menu = `<div class="dci-srcmenu" id="dci-srcmenu" role="group" aria-label="${esc(tr('srcmenu.button'))}" ${S.srcMenuOpen ? '' : 'hidden'}>
+        ${picker ? `<div class="dci-srcmenu-row">${picker}</div>` : ''}
+        <div class="dci-srcmenu-row dci-other">
+          <input type="text" data-f="discogs-input" placeholder="${esc(tr('source.other'))}" aria-label="${esc(tr('source.other'))}">
+          <button type="button" data-act="discogs-load">${esc(tr('source.load'))}</button>
+        </div>
+        ${item('text-open', esc(tr('source.text')), `aria-expanded="${!!f && !f.supp}"`, tr('source.textTitle'))}
+        ${item('srcorder-toggle', `${S.srcOrderOpen ? '▾' : '▸'} ${esc(tr('srcorder.toggle'))}`, `aria-expanded="${S.srcOrderOpen}"`)}
+        ${item('bc-toggle', `${S.bcOpen ? '▾' : '▸'} Bandcamp`, `aria-expanded="${S.bcOpen}"`)}
+        ${rel && rel.aboutAt != null ? `<label class="dci-check dci-menuitem" title="${esc(tr('about.offTitle'))}"><input type="checkbox" data-f="about-off" ${S.aboutOff ? 'checked' : ''}> ${esc(tr('about.off'))}</label>` : ''}
+        ${item('forget-open', esc(tr('forget.button')), `aria-expanded="${!!S.forgetOpen}"`, tr('forget.title'))}
+      </div>`;
+    const suppOpen = suppIsOpen();
+    const suppBtn = rel && S.rows.length ? `<button type="button" class="dci-headbtn dci-ibtn dci-supp-open${S.supp ? ' dci-on' : ''}" data-act="supp-open" aria-expanded="${suppOpen}"
+      title="${esc(tr('supp.openTitle'))}">${ico('plus')}<span>${esc(tr('supp.open'))}</span>${S.supp ? ` <span class="dci-supp-mark">${esc(S.supp.source.short)} ✓</span>` : ''}</button>` : '';
+    el.innerHTML = `${current}${bcPage}
+      <span class="dci-srcwrap"><button type="button" class="dci-headbtn dci-ibtn dci-srcmenu-btn" data-act="srcmenu" aria-expanded="${!!S.srcMenuOpen}" aria-controls="dci-srcmenu"
+        title="${esc(tr('srcmenu.title'))}"><span>${esc(tr('srcmenu.button'))}</span>${ico('down')}</button>${menu}</span>
+      ${suppBtn}`;
+    const panels = $('srcpanels');
+    if (!panels) return;
+    panels.innerHTML = `${S.forgetOpen ? `<div class="dci-forget" role="group" aria-label="${esc(tr('forget.ask'))}"><strong>${esc(tr('forget.ask'))}</strong>
         <p class="dci-sub">${esc(tr('forget.what'))}</p><p class="dci-sub">${esc(tr('forget.keeps'))}</p>
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
-      ${suppBarHtml()}${unrecHtml}${ignHtml}${textForm}`;
+      ${suppOpen ? suppBarHtml() : ''}${unrecHtml}${ignHtml}${textForm}`;
+    panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
+  }
+
+  /** [3.26.0] The bar "Supplement with" shows on "+ Supplement", and while a supplement is loaded. */
+  const suppIsOpen = () => !!(S.release && S.rows.length && (S.suppOpen || S.supp || (S.textForm && S.textForm.supp)));
+
+  /** [3.26.0] Closes the menu "Source ▾" without drawing the source anew (a field being used stays as it is). */
+  function closeSrcMenu(focusBtn = false) {
+    S.srcMenuOpen = false;
+    if (!S.overlay) return;
+    const menu = S.overlay.querySelector('.dci-srcmenu');
+    if (menu) menu.hidden = true;
+    const btn = S.overlay.querySelector('[data-act="srcmenu"]');
+    if (btn) {
+      btn.setAttribute('aria-expanded', 'false');
+      if (focusBtn) btn.focus();
+    }
   }
 
   /**
@@ -18612,11 +18651,12 @@
   // The mode switch only makes sense with the companion script, so it is hidden without it.
   // Status updates arrive every few seconds; they only change the text and the pressed state,
   // so the buttons are not replaced while someone clicks them.
-  function updateSyncArea(el, withDetails) {
+  function updateSyncArea(el, withDetails, withSwitches = true) {
     // [3.17.0] drawn anew for another site too (its names, no cover button for Bandcamp)
-    const want = `${S.sync.installed ? 'switch' : 'plain'}:${viewSite()}`;
+    // [3.26.0] the head of the dashboard only shows the status (the switches: page bar, ⚙ Settings → Discogs and Bandcamp view)
+    const want = `${S.sync.installed && withSwitches ? 'switch' : 'plain'}:${viewSite()}`;
     if (el.dataset.layout !== want || el.dataset.lang !== LANG) {
-      el.innerHTML = `${S.sync.installed ? syncModeHtml() : ''} <span class="dci-syncstatus"></span>`;
+      el.innerHTML = `${S.sync.installed && withSwitches ? syncModeHtml() : ''} <span class="dci-syncstatus"></span>`;
       el.dataset.layout = want;
       el.dataset.lang = LANG;
     }
@@ -18635,7 +18675,7 @@
   function renderSync() {
     renderControls();
     if (!S.overlay) return;
-    updateSyncArea($('sync'), true);
+    updateSyncArea($('sync'), true, false);
   }
 
   function renderControls() {
@@ -19550,11 +19590,34 @@
     if ((act.startsWith('mx-') || act === 'cd-copy' || act === 'xd-copy') && matrixAction(act, btn)) return;
     const row = rowOf(btn);
     const artist = artistOf(btn);
+    // [3.26.0] an entry of the menu "Source ▾" closes it
+    if (S.srcMenuOpen && btn.closest('.dci-srcmenu')) closeSrcMenu();
 
     switch (act) {
       case 'close':
         closeDashboard();
         break;
+      // [3.26.0] the head in one line (item 30): the menu "Source ▾" and "+ Supplement"
+      case 'srcmenu': {
+        S.srcMenuOpen = !S.srcMenuOpen;
+        renderSource();
+        const first = S.srcMenuOpen && S.overlay.querySelector('.dci-srcmenu select, .dci-srcmenu input, .dci-srcmenu button');
+        if (first) first.focus();
+        break;
+      }
+      case 'supp-open': {
+        // open while a supplement is loaded (then the button only brings the bar into view)
+        const close = suppIsOpen() && !S.supp;
+        S.suppOpen = !close;
+        if (close && S.textForm && S.textForm.supp) S.textForm = null;
+        renderSource();
+        const target = S.suppOpen && S.overlay.querySelector('.dci-suppbar button, .dci-suppbar input');
+        if (target) {
+          target.focus({ preventScroll: true });
+          target.closest('.dci-suppbar').scrollIntoView({ block: 'nearest' });
+        }
+        break;
+      }
       case 'log':
         setLogVisible(!S.logEl || S.logEl.hidden);
         break;
@@ -20267,6 +20330,7 @@
           }
           S.supp = null;
         }
+        S.suppOpen = false;
         renderSource();
         renderSupp();
         renderGroups();
@@ -20428,6 +20492,9 @@
       return;
     }
     S.changingEl = e.target;
+    // [3.26.0] a choice in the menu "Source ▾" (a linked source, "Leave out the about text") closes it; a text field not
+    // (its change comes before the click on "Load")
+    if (S.srcMenuOpen && e.target.closest && e.target.closest('.dci-srcmenu') && /^(SELECT|INPUT)$/.test(e.target.tagName) && e.target.type !== 'text') closeSrcMenu();
     try {
       onChangeInner(e);
     } finally {
@@ -20987,7 +21054,7 @@
       bringToFront(kind);
       const handle = e.target.closest(handleSelector);
       // [3.12.1] also foldable lists in the head (the lines a text did not give, "n lines not recognized")
-      if (!handle || e.button !== 0 || e.target.closest('button, input, select, textarea, a, label, option, summary, details')) return;
+      if (!handle || e.button !== 0 || e.target.closest('button, input, select, textarea, a, label, option, summary, details, .dci-srcmenu')) return;
       e.preventDefault();
       const start = geomOf(win);
       const dx = e.clientX - start.x;
@@ -21041,6 +21108,24 @@
 
   window.addEventListener('resize', () => movable.forEach((m) => clampWindow(m.win)));
 
+  /**
+   * [3.26.0] Small symbols of the head (collected item 30): drawn for this script (no emoji, no icons of others),
+   * in the colour of the text, as large as the text.
+   */
+  const ICONS = {
+    gear: '<circle cx="8" cy="8" r="4.2"/><circle cx="8" cy="8" r="1.6"/><path d="M12.5 9.9L14.2 10.6M9.9 12.5L10.6 14.2M6.1 12.5L5.4 14.2M3.5 9.9L1.8 10.6M3.5 6.1L1.8 5.4M6.1 3.5L5.4 1.8M9.9 3.5L10.6 1.8M12.5 6.1L14.2 5.4" stroke-width="2"/>',
+    rules: '<path d="M2 4h4.5M2 8h4.5M2 12h4.5M9 8h5M11.5 5.5L14 8l-2.5 2.5"/>',
+    log: '<rect x="3" y="1.8" width="10" height="12.4" rx="1.5"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/>',
+    info: '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4.2"/><circle cx="8" cy="4.9" r="0.5" fill="currentColor"/>',
+    fit: '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>',
+    close: '<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>',
+    down: '<path d="M4 6l4 4 4-4"/>',
+    plus: '<path d="M8 3v10M3 8h10"/>',
+  };
+  const ico = (name) => `<svg class="dci-ico" viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
+  /** A button of the head: its symbol, the word only in a wide dashboard (the tooltip and aria-label always). */
+  const headBtn = (act, icon, label, title, extra = '', cls = 'dci-headbtn') => `<button type="button" class="${cls} dci-ibtn" data-act="${act}" title="${esc(title)}" aria-label="${esc(label || title)}" ${extra}>${ico(icon)}${label ? `<span class="dci-hlabel">${esc(label)}</span>` : ''}</button>`;
+
   function buildOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'dci-overlay';
@@ -21054,25 +21139,22 @@
           <div class="dci-source" data-el="source"></div>
           <div class="dci-sync" data-el="sync" aria-live="polite"></div>
           <div class="dci-head-tools">
-            <label class="dci-lang">${esc(tr('lang.label'))}
-              <select data-f="lang">${Object.entries(LANGS).map(([code, name]) => `<option value="${code}" ${code === LANG ? 'selected' : ''}>${name}</option>`).join('')}</select>
-            </label>
             <span class="dci-zoom" role="group" aria-label="${esc(tr('zoom.label'))}">
               <button type="button" class="dci-headbtn" data-act="zoom-out" title="${esc(tr('zoom.smaller'))}" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
               <span data-el="zoom" aria-live="polite">${Math.round(S.scale * 100)} %</span>
               <button type="button" class="dci-headbtn" data-act="zoom-in" title="${esc(tr('zoom.larger'))}" aria-label="${esc(tr('zoom.larger'))}">A+</button>
             </span>
-            <button type="button" class="dci-headbtn" data-act="place-toggle" title="${esc(tr(inPage() ? 'place.toWindowTitle' : 'place.toPageTitle'))}">${esc(tr(inPage() ? 'place.toWindow' : 'place.toPage'))}</button>
-            <button type="button" class="dci-headbtn" data-act="settings-open" aria-expanded="false" title="${esc(tr('settings.buttonTitle'))}">${esc(tr('settings.button'))}</button>
-            <button type="button" class="dci-headbtn" data-act="connections-open" title="${esc(tr('connections.open'))}" aria-label="${esc(tr('connections.open'))}">ⓘ</button>
-            <button type="button" class="dci-headbtn" data-act="window-reset" title="${esc(tr('window.reset'))}" aria-label="${esc(tr('window.reset'))}">⤢</button>
-            <button type="button" class="dci-headbtn" data-act="rules">${esc(tr('rules.title'))}</button>
-            <button type="button" class="dci-headbtn" data-act="log">${esc(tr('log.title'))}</button>
-            <button type="button" class="dci-close" data-act="close">${esc(tr('common.close'))}</button>
+            ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
+            ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'))}
+            ${headBtn('log', 'log', tr('log.title'), tr('log.title'))}
+            ${headBtn('connections-open', 'info', '', tr('connections.open'))}
+            ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
+            ${headBtn('close', 'close', tr('common.close'), tr('common.close'), '', 'dci-close')}
           </div>
         </header>
         <div class="dci-body" data-el="body">
           <div class="dci-settings" data-el="settings" role="region" aria-label="${esc(tr('settings.title'))}" hidden></div>
+          <div class="dci-srcpanels" data-el="srcpanels"></div>
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
           <div class="dci-msgs" data-el="msgs" aria-live="polite"></div>
           <div class="dci-stick" data-el="stick">
@@ -21242,11 +21324,8 @@
       const saved = readJson('localStorage', GEOM_KEYS.panel, null);
       placeWindow(panel, saved && saved.w >= 160 && saved.h >= 100 ? saved : defaultGeom('panel'), true);
     }
-    const btn = o.querySelector('[data-act="place-toggle"]');
-    if (btn) {
-      btn.textContent = tr(inPage() ? 'place.toWindow' : 'place.toPage');
-      btn.title = tr(inPage() ? 'place.toWindowTitle' : 'place.toPageTitle');
-    }
+    // [3.26.0] window or page is no longer switched in the head: the page bar and ⚙ Settings → General
+    if (S.settingsOpen) renderSettings();
     updatePageScrollPadding();
     renderLauncher();
   }
@@ -21778,6 +21857,75 @@
       <a href="${esc(CHANGELOG_URL)}" target="_blank" rel="noopener">${esc(tr('notice.changelog'))}</a>`;
   }
 
+  /**
+   * [3.26.0] The question of the language once after the installation (collected item 30): English · Deutsch · Español ·
+   * Français, the browser's language preselected; answered, the language is stored and the question gone. An update
+   * does not ask (the version of the update notice is known then).
+   */
+  const LANG_ASK_KEY = 'dci-lang-ask';
+  (function markLangAsk() {
+    try {
+      const ls = window.localStorage;
+      if (!ls.getItem(NOTICE_KEY) && !ls.getItem('dci-updated-from') && !ls.getItem('dci-lang') && ls.getItem(LANG_ASK_KEY) == null) ls.setItem(LANG_ASK_KEY, 'true');
+    } catch (e) { /* storage blocked: no question */ }
+  })();
+
+  /** The language of the browser, if the dashboard has it, else English. */
+  function browserLang() {
+    const list = [...(navigator.languages || []), navigator.language || ''];
+    for (const l of list) {
+      const code = String(l || '').toLowerCase().split('-')[0];
+      if (LANGS[code]) return code;
+    }
+    return 'en';
+  }
+
+  const trIn = (code, key) => (I18N[code] && I18N[code][key]) || I18N.en[key] || key;
+
+  function renderLangAsk() {
+    const bar = document.getElementById('dci-pagebar');
+    if (!bar) return;
+    let box = document.getElementById('dci-langask');
+    if (readJson('localStorage', LANG_ASK_KEY, false) !== true) {
+      if (box) box.remove();
+      return;
+    }
+    if (box) return;
+    const pick = browserLang();
+    box = document.createElement('div');
+    box.id = 'dci-langask';
+    box.setAttribute('role', 'group');
+    box.setAttribute('aria-labelledby', 'dci-langask-t');
+    box.lang = pick;
+    box.innerHTML = `<strong id="dci-langask-t">Language · Sprache · Idioma · Langue</strong>
+      <span class="dci-langask-opts">${Object.entries(LANGS).map(([code, name]) => `<label lang="${code}"><input type="radio" name="dci-langask" value="${code}" ${code === pick ? 'checked' : ''}> ${name}</label>`).join('')}</span>
+      <button type="button" class="dci-langask-ok">${esc(trIn(pick, 'langAsk.ok'))}</button>
+      <span class="dci-langask-hint">${esc(trIn(pick, 'langAsk.hint'))}</span>`;
+    // the hint and the button follow the language chosen in the question
+    box.addEventListener('change', (e) => {
+      const code = e.target.value;
+      if (!LANGS[code]) return;
+      box.lang = code;
+      box.querySelector('.dci-langask-ok').textContent = trIn(code, 'langAsk.ok');
+      box.querySelector('.dci-langask-hint').textContent = trIn(code, 'langAsk.hint');
+    });
+    box.querySelector('.dci-langask-ok').addEventListener('click', () => {
+      const chosen = box.querySelector('input[name="dci-langask"]:checked');
+      const code = chosen && LANGS[chosen.value] ? chosen.value : 'en';
+      writeJson('localStorage', LANG_ASK_KEY, null);
+      writeJson('localStorage', 'dci-lang', code);
+      box.remove();
+      if (code !== LANG) setLanguage(code, 'bar');
+      else renderLauncher();
+      log('info', 'langAsked', { lang: LANGS[code] });
+      const open = document.getElementById('dci-open');
+      if (open) open.focus();
+    });
+    const notice = document.getElementById('dci-notice');
+    if (notice) notice.after(box);
+    else bar.prepend(box);
+  }
+
   function renderLauncher() {
     const bar = document.getElementById('dci-launcher');
     if (!bar) return;
@@ -21791,6 +21939,7 @@
       bar.querySelector('.dci-bar-lang span').textContent = `${tr('lang.label')}:`;
     }
     renderNotice();
+    renderLangAsk();
     const seg = bar.querySelector('.dci-place-seg');
     if (seg) {
       seg.setAttribute('aria-label', tr('place.label'));
@@ -21897,6 +22046,11 @@
     return [...document.querySelectorAll('.dialog, [role="dialog"]')].some((d) => !own(d) && d.offsetParent !== null);
   }
 
+  // [3.26.0] the menu "Source ▾" closes with a click anywhere else
+  document.addEventListener('pointerdown', (e) => {
+    if (S.srcMenuOpen && !(e.target.closest && e.target.closest('.dci-srcwrap'))) closeSrcMenu();
+  }, true);
+
   document.addEventListener('keydown', (e) => {
     // Alt+Shift+D (Option+Shift+D on a Mac) shows the dashboard or sends it to the background.
     // Ctrl+D is not used: browsers bookmark the page with it.
@@ -21917,6 +22071,12 @@
     if (!S.overlay || S.overlay.hidden) return;
     // The dashboard does not block the page: Escape closes it unless MusicBrainz needs the key.
     if (!S.overlay.contains(document.activeElement) && mbUsesEscape()) return;
+    // [3.26.0] the menu "Source ▾" first
+    if (S.srcMenuOpen) {
+      e.preventDefault();
+      closeSrcMenu(true);
+      return;
+    }
     if (S.dmPick || S.dmEdit) {
       S.dmPick = null;
       S.dmEdit = null;
@@ -21947,6 +22107,14 @@
       #dci-notice .dci-notice-v { display: inline-block; margin-right: 4px; padding: 0 6px; border-radius: 3px; background: #e9e7f5; color: #3b3570; font-size: 11px; font-variant-numeric: tabular-nums; }
       #dci-notice .dci-notice-x { position: absolute; top: 4px; right: 6px; border: 0; background: none; color: #6d6a7c; font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 6px; }
       #dci-notice .dci-notice-x:hover { color: #262430; }
+      /* [3.26.0] the question of the language after the installation */
+      #dci-langask { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; max-width: 80ch; margin: 0 0 12px; padding: 10px 14px; border: 1px solid #c8c5d6;
+        border-left: 4px solid #eb743b; border-radius: 4px; background: #fbf9ff; font-size: 13px; color: #262430; }
+      #dci-langask strong { color: #4b4585; }
+      #dci-langask .dci-langask-opts { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; }
+      #dci-langask label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+      #dci-langask .dci-langask-ok { font: inherit; padding: 2px 14px; border: 1px solid #4b4585; border-radius: 3px; background: #4b4585; color: #fff; cursor: pointer; }
+      #dci-langask .dci-langask-hint { flex-basis: 100%; color: #6d6a7c; font-size: 12px; }
       #dci-launcher .dci-bar-lang { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #4b4585; }
       #dci-launcher .dci-bar-lang select { font: inherit; padding: 1px 4px; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #262430; }
       #dci-launcher .dci-place-seg { display: inline-flex; border: 1px solid #c8c5d6; border-radius: 3px; overflow: hidden; font-size: 12px; }
@@ -22054,11 +22222,36 @@
       .dci-moving { user-select: none; opacity: 0.97; }
       .dci-zoom { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: calc(var(--u, 1px) * 12); font-variant-numeric: tabular-nums; }
       .dci-zoom [data-el="zoom"] { min-width: 3.4em; text-align: center; }
-      .dci-head { display: flex; align-items: center; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 20); flex-wrap: wrap; padding: calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 20); border-bottom: 1px solid var(--line); }
-      .dci-head h2 { margin: 0; font-size: calc(var(--u, 1px) * 18); font-weight: 600; color: var(--purple-d); }
-      .dci-source { flex: 1 1 calc(var(--u, 1px) * 400); display: flex; align-items: center; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); flex-wrap: wrap; color: var(--muted); }
+      /* [3.26.0] the head in one line (collected item 30): title · source · Source ▾ · + Supplement · status · tools */
+      .dci-head { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); flex-wrap: wrap; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 16);
+        border-bottom: 1px solid var(--line); container-type: inline-size; }
+      .dci-head h2 { margin: 0; font-size: calc(var(--u, 1px) * 17); font-weight: 600; color: var(--purple-d); white-space: nowrap; }
+      .dci-source { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); flex-wrap: wrap; color: var(--muted); }
+      .dci-source > a, .dci-source > span:first-child { min-width: 0; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .dci-other { display: inline-flex; gap: calc(var(--u, 1px) * 6); }
       .dci-other input { width: calc(var(--u, 1px) * 330); }
+      .dci-ibtn { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); white-space: nowrap; }
+      .dci-head .dci-ibtn { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 7); }
+      .dci-ico { width: calc(var(--u, 1px) * 15); height: calc(var(--u, 1px) * 15); flex: none; }
+      .dci-hlabel { display: none; }
+      @container (min-width: 1600px) { .dci-head .dci-hlabel { display: inline; } }
+      .dci-srcwrap { position: relative; display: inline-flex; }
+      .dci-srcmenu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; display: grid; gap: 2px; width: max-content; min-width: calc(var(--u, 1px) * 300);
+        max-width: min(92vw, calc(var(--u, 1px) * 520)); padding: calc(var(--u, 1px) * 8); background: #fff; color: var(--ink); border: 1px solid #c8c5d6; border-radius: 6px;
+        box-shadow: 0 6px 20px rgba(38, 36, 48, 0.22); cursor: default; }
+      .dci-srcmenu[hidden] { display: none; }
+      .dci-srcmenu-row { display: flex; gap: calc(var(--u, 1px) * 6); margin-bottom: calc(var(--u, 1px) * 4); }
+      .dci-srcmenu-row select, .dci-srcmenu .dci-other input { flex: 1 1 auto; width: auto; min-width: 0; }
+      .dci-menuitem { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); text-align: left; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border: 0; border-radius: 4px; background: none; color: var(--purple-d); }
+      #dci-overlay .dci-menuitem:hover, #dci-overlay .dci-menuitem:focus-visible { background: #f1f0f8; }
+      label.dci-menuitem { color: var(--ink); cursor: pointer; }
+      .dci-supp-open.dci-on { border-color: #1d6b78; background: #e5f2f4; color: #134a53; }
+      .dci-supp-mark { font-weight: 700; }
+      .dci-srcpanels { display: grid; gap: calc(var(--u, 1px) * 4); margin: 0 0 calc(var(--u, 1px) * 8); }
+      .dci-srcpanels[hidden] { display: none; }
+      .dci-srcpanels > * { margin-top: 0; }
+      .dci-head .dci-syncstatus { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8);
+        border: 1px solid var(--line); border-radius: 999px; background: var(--soft); }
       /* [E1] A pasted text as the source, and the lines it did not understand */
       .dci-textsrc { display: grid; gap: calc(var(--u, 1px) * 6); width: 100%; margin-top: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 6px; background: var(--soft); }
       .dci-textsrc-text { display: grid; gap: 2px; }
@@ -22117,8 +22310,7 @@
       .dci-spell-val { font-weight: 600; }
       .dci-spell-val.dci-spell-x { text-decoration: underline wavy var(--sugg-line); text-underline-offset: 3px; }
       .dci-close, .dci-headbtn { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); }
-      .dci-head-tools { display: flex; align-items: center; gap: calc(var(--u, 1px) * 8); margin-left: auto; }
-      .dci-lang { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
+      .dci-head-tools { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-left: auto; }
       .dci-panic { border: 1px solid var(--err); background: #fff; color: var(--err); border-radius: 3px; padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 10); font-weight: 600; }
       .dci-panic:hover { background: #fbeceb; }
 

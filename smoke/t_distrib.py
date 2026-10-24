@@ -48,7 +48,7 @@ with sync_playwright() as p:
     pg.on('dialog', lambda d: d.accept())
     pg.wait_for_selector('#dci-open', timeout=20000)
     H.open_dashboard(pg)
-    pg.click('[data-act=text-open]')
+    H.src_menu(pg, 'text-open')
     pg.fill('[data-f=text-src]', 'Distribution - !K7')
     pg.click('[data-act=text-load]')
     H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)

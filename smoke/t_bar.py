@@ -36,6 +36,7 @@ with sync_playwright() as p:
     ok1 = 'Sprache:' in lab() and 'Credits importieren' in lab() and pg.locator('#dci-overlay').count() == 0
     H.open_dashboard(pg)
     pg.wait_for_timeout(300)
+    H.open_settings(pg, 'general')  # [3.26.0] the language is only in the settings
     ok1 = ok1 and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-f=lang]').input_value() == 'de'
     pg.select_option('[data-f=lang]', 'en'); pg.wait_for_timeout(300)
     ok1 = ok1 and pg.locator('#dci-launcher [data-dci-lang]').input_value() == 'en' and 'Language:' in lab()

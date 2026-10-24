@@ -94,6 +94,7 @@ with sync_playwright() as p:
     results.append(ok_a)
 
     # B) Bandcamp chosen
+    H.src_menu(pg)
     pg.select_option('[data-f=discogs-pick]', f'bandcamp|{ALBUM}')
     done(pg, 2)
     pg.wait_for_timeout(800)
@@ -126,7 +127,7 @@ with sync_playwright() as p:
     b, ctx, pg, errs2 = fresh(p, digital=True)
     H.open_dashboard(pg)
     first = source(pg)
-    pg.click('[data-act=srcorder-toggle]'); pg.wait_for_timeout(200)
+    H.src_menu(pg, 'srcorder-toggle'); pg.wait_for_timeout(200)
     lists = pg.evaluate("[...document.querySelectorAll('[data-srcorder]')].map(ol => [ol.dataset.srcorder, [...ol.querySelectorAll('li')].map(li => li.dataset.id), ol.closest('.dci-srcorder-col').querySelector('strong').textContent.trim()])")
     pg.click('[data-act=srcorder-move][data-list=digital][data-src=discogs][data-dir="-1"]'); pg.wait_for_timeout(200)
     stored = pg.evaluate("JSON.parse(localStorage.getItem('dci-source-order'))")
@@ -137,13 +138,14 @@ with sync_playwright() as p:
     results.append(ok_c)
 
     # D) the Bandcamp menu: no track pages; the page test
-    pg.click('[data-act=bc-toggle]'); pg.wait_for_timeout(200)
+    H.src_menu(pg, 'bc-toggle'); pg.wait_for_timeout(200)
     pg.uncheck('[data-f=bc-tracks]'); pg.wait_for_timeout(100)
     pg.fill('[data-f=bc-test-url]', ALBUM + '?x=1')
     pg.click('[data-act=bc-test]')
     pg.wait_for_selector('[data-bc-result]:not(:empty)', timeout=10000)
     pg.wait_for_function("!/Loading/.test(document.querySelector('[data-bc-result]').textContent)", timeout=10000)
     test = pg.locator('[data-bc-result]').inner_text()
+    H.src_menu(pg)
     pg.select_option('[data-f=discogs-pick]', f'bandcamp|{ALBUM}')
     done(pg, 2)
     pg.wait_for_timeout(500)
@@ -154,6 +156,7 @@ with sync_playwright() as p:
     results.append(ok_d)
 
     # E) a band spelled differently in MusicBrainz: only a suggestion
+    H.src_menu(pg)
     pg.fill('[data-f=discogs-input]', 'https://strictband.bandcamp.com/album/x')
     pg.click('[data-act=discogs-load]')
     done(pg, 3)
@@ -167,6 +170,7 @@ with sync_playwright() as p:
     # F) the spelling as the release names it (artist credit), not as MusicBrainz names the artist
     gid = H.ARTISTS[3040][0]
     H.BC_ARTISTS[BAND] = (gid, 'The Test Band')
+    H.src_menu(pg)
     pg.fill('[data-f=discogs-input]', ALBUM)
     pg.click('[data-act=discogs-load]')
     done(pg, 4)

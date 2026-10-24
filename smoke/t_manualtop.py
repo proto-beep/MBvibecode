@@ -61,7 +61,7 @@ with sync_playwright() as p:
     print('C) hinzugefügt:', c1, [x for x in pg.evaluate(LOGS) if 'Extra Person' in x])
     results.append(c1 is not None and c1[:3] == [True, True, True] and c1[3:] == ['', ''])
     # D) in the page
-    pg.locator('.dci-head [data-act=place-toggle]').evaluate('b => b.click()')
+    H.toggle_place(pg)
     pg.wait_for_timeout(500)
     pg.evaluate("window.scrollTo(0, document.querySelector('[data-el=works]').getBoundingClientRect().top + window.scrollY - 300)")
     pg.wait_for_timeout(300)
@@ -69,7 +69,7 @@ with sync_playwright() as p:
       return [Math.round(window.scrollY), Math.round(st.getBoundingClientRect().top), Math.round(m.getBoundingClientRect().top), document.documentElement.style.scrollPaddingTop]; })()""")
     print('D) in der Seite:', d1)
     results.append(d1[0] > 300 and d1[1] == 0 and d1[2] >= 0 and d1[2] <= 2 and d1[3].endswith('px'))
-    pg.locator('.dci-head [data-act=place-toggle]').evaluate('b => b.click()')
+    H.toggle_place(pg)
     print('Fehler:', errs)
     results.append(not errs)
     b.close()

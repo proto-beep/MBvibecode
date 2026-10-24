@@ -83,7 +83,7 @@ with sync_playwright() as p:
     pg.locator('tr[data-work="3"] [data-act=work-unplan]').evaluate('b => b.click()')
     pg.wait_for_timeout(300)
     n0 = len(H.BROWSES)
-    pg.click('[data-act=text-open]')
+    H.src_menu(pg, 'text-open')
     pg.fill('[data-f=text-src]', 'Bass – Bass Man')
     pg.click('[data-act=text-load]')
     H.wait_for(pg, f"{LOGS}.filter(x => /Works of the artists compared/.test(x)).length >= 2", 60)

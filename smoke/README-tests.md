@@ -162,6 +162,9 @@ python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass (3.22.3: withou
                           # "contrabass", "Violoncello" → cello "violoncello";
                           # produced / remixed / engineered in (areas with the area they are part of); recording without role credit
                           # (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
+python3 t_head.py         # the head in one line (3.26.0): symbols with names (words only when wide), no language / place / switches in
+                          # the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
+                          # asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
 python3 t_settabs.py      # the settings as tabs (3.25.0): only the gear folds them out and in, eight tabs (General chosen), ↓ / End /
                           # Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), the ⓘ in the head
                           # opens "ⓘ Connections" (ten rows, Harmony with its home page), "↺ Reset all settings …" below the tabs shows
@@ -256,6 +259,11 @@ With several media (`harness.MEDIA = [2, 1, 1]` …) the dashboard asks for the 
 `harness.open_dashboard(pg)` answers "All" with the release level (the import as before),
 `open_dashboard(pg, media={'text': '2-3', 'release': False})` another choice, `media=False` leaves the question open.
 `harness.open_reset(pg)` (3.25.0) opens ⚙ Settings and there "↺ Reset all settings …" (until 3.24 "↺ Defaults" in the head).
+`harness.src_menu(pg, act=None)` (3.26.0) opens the menu "Source ▾" of the head and clicks `[data-act=act]` in it (pasting a text,
+another source, a linked source, the order of the sources, Bandcamp, "Leave out the about text", "Delete stored import …");
+`harness.open_supp(pg)` opens the bar "Supplement with"; `harness.toggle_place(pg)` switches window ⇄ page in the page bar;
+`harness.open_settings(pg, tab=None)` opens ⚙ Settings (the language is only there). Every test starts as a first installation, so
+the page bar shows the question of the language (`#dci-langask`); it does not stand in the way of the tests.
 
 Relationship types of the mock are made with `harness.lt(id, gid, name, type0, type1, attrs, dates, deprecated)`; as on
 MusicBrainz, artist–recording "mastering" is deprecated (the dashboard leaves it out) and artist–release "mastering" (42)
