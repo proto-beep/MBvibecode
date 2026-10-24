@@ -1,18 +1,19 @@
 """Credits Importer 3.19.1: Harmony's "Release Actions" get the link "Edit relationships with Credits Importer" (collected
 item 29). A release imported with Harmony goes on to Harmony's page after "Enter edit" (Harmony seeds "redirect_uri").
-[3.19.2] With the setting "Imported with Harmony: open it in a background tab" (on) the tick is back (items 32, 38).
-A) Release editor seeded by Harmony, setting off: instead of the tick the note "for the Credits Importer: … use … on
-   Harmony"; "Enter edit" leads to Harmony's "Release Actions" with the new MBID, nothing opens by itself.
-A2) Setting on (default), tick set: "… in a background tab"; "Enter edit" → Harmony's page, which opens the relationship
-   editor in a background tab (once, the sign #dci-open taken off) and says so next to its link.
-A3) An error while submitting: the return address is as before (no sign).
+[3.19.2] With the setting "Imported with Harmony: open it in a background tab" (on) the start is offered there too (items
+32, 38); [3.23.0] by the button "Enter edit & import credits" instead of the tick (item 50).
+A) Release editor seeded by Harmony, setting off: no button, the note "for the Credits Importer: … use … on Harmony";
+   "Enter edit" leads to Harmony's "Release Actions" with the new MBID, nothing opens by itself.
+A2) Setting on (default): the button, its tooltip names the background tab; it → Harmony's page, which opens the
+   relationship editor in a background tab (once, the sign #dci-open taken off) and says so next to its link.
+A3) An error while submitting with the button: the return address is as before (no sign).
 B) There, right below "Add cover art": the action "Edit relationships with Credits Importer" (Harmony's look: icon,
    link), to "Edit relationships" of the release in a new tab, with the Bandcamp album Harmony looked up.
 C) The link: "Edit relationships" opens, the dashboard starts by itself and loads that album at once (MusicBrainz does not
    have the link yet); the # is taken off the address.
 D) Harmony's page without a release: no link; "discogs=1234" gives the Discogs release; another tool's "redirect_uri":
    the note names its host.
-E) The settings (topic Sources): both options with the values of the release editor; "↺" of the topic sets them back."""
+E) The settings (topic Sources): the button (on) and the background tab (on); "↺" of the topic sets them back."""
 from urllib.parse import quote
 from playwright.sync_api import sync_playwright
 import harness as H
@@ -30,9 +31,9 @@ HARMONY = 'https://harmony.pulsewidth.org.uk/release/actions'
 H.EDITOR_LINKS['add'] = [ALBUM]
 H.EDITOR_REDIRECT['add'] = f'{HARMONY}?bandcamp=testband%2Ftestalbum'
 LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
-TICK = """(() => { const b = document.getElementById('dci-after-edit'); if (!b) return null; const i = b.querySelector('input');
-  return { shown: getComputedStyle(b).display !== 'none', box: getComputedStyle(i).display !== 'none', text: b.textContent.trim(), redirect: b.dataset.redirect,
-    bg: b.dataset.bg }; })()"""
+TICK = """(() => { const b = document.getElementById('dci-after-edit'); const g = document.getElementById('dci-enter-import'); if (!b || !g) return null;
+  return { shown: getComputedStyle(b).display !== 'none', box: getComputedStyle(g).display !== 'none', text: b.textContent.trim(), redirect: b.dataset.redirect,
+    bg: g.dataset.bg, title: g.title, button: g.textContent.trim() }; })()"""
 ACTION = """(() => { const d = document.getElementById('dci-harmony'); if (!d) return null; const a = d.querySelector('a');
   const prev = d.previousElementSibling; const use = d.querySelector('svg use');
   return { text: a.textContent, href: a.href, target: a.target, cls: d.className, after: prev ? prev.textContent.trim() : '',
@@ -44,7 +45,7 @@ with sync_playwright() as p:
     ctx = H.new_context(b)
     pg, errs = H.open_mb_any(ctx, 'https://musicbrainz.org/release/add', all_tabs=True)
     pg.on('dialog', lambda d: d.accept())
-    pg.evaluate("localStorage.setItem('dci-after-edit', 'true'); localStorage.setItem('dci-after-edit-bg', 'false')")
+    pg.evaluate("localStorage.setItem('dci-after-edit-bg', 'false')")
     pg.reload()
     pg.wait_for_selector('#dci-after-edit', state='attached', timeout=15000)
     pg.evaluate("__tab('edit-note')")
@@ -68,13 +69,13 @@ with sync_playwright() as p:
     pg.wait_for_selector('#dci-after-edit', state='attached', timeout=15000)
     pg.evaluate("__tab('edit-note'); window.__fail = true")
     pg.wait_for_timeout(400)
-    pg.click('#enter-edit')
+    pg.click('#dci-enter-import')
     pg.wait_for_timeout(800)
     a3 = pg.evaluate("MB.releaseEditor.redirectURI")
-    # A2) setting on: the tick, a background tab
+    # A2) setting on: the button, a background tab
     pg.evaluate("window.__fail = false")
     a4 = pg.evaluate(TICK)
-    pg.click('#enter-edit')
+    pg.click('#dci-enter-import')
     pg.wait_for_url(f'{HARMONY}**', timeout=15000)
     pg.wait_for_selector('#dci-harmony', timeout=10000)
     pg.wait_for_timeout(400)
@@ -82,7 +83,7 @@ with sync_playwright() as p:
     print('A3) Fehler beim Abschicken – Rücksprung:', a3)
     print('A2) Einstellung an:', a4, '| Harmony:', a5)
     results.append(a3 == f'{HARMONY}?bandcamp=testband%2Ftestalbum'
-                   and a4['shown'] and a4['box'] and a4['bg'] == '1' and a4['text'] == 'open relationship editor and start import dashboard in a background tab'
+                   and not a4['shown'] and a4['box'] and a4['bg'] == '1' and a4['button'] == 'Enter edit & import credits' and 'background tab' in a4['title']
                    and a5[0] == f'{HARMONY}?bandcamp=testband%2Ftestalbum&release_mbid={H.REL}'
                    and a5[1] == [[want, {'active': False, 'insert': True, 'setParent': True}]]
                    and a5[2] == 'Edit relationships with Credits Importer – opened in a background tab')
@@ -136,8 +137,8 @@ with sync_playwright() as p:
     print('D) ohne Release:', d1, '| Discogs:', d2, '| anderes Werkzeug:', d3)
     results.append(not d1 and d2.endswith('#dci-import&src=' + quote('https://www.discogs.com/release/1234', safe=''))
                    and d3['text'] == 'after “Enter edit” MusicBrainz goes on to example.org; the relationship editor does not open by itself' and not d3['box'])
-    # E) the settings (topic Sources): the tick of the release editor and the background tab, the same values
-    pg.evaluate("localStorage.setItem('dci-after-edit', 'true'); localStorage.removeItem('dci-after-edit-bg')")
+    # E) the settings (topic Sources): the button of the release editor and the background tab
+    pg.evaluate("localStorage.removeItem('dci-after-edit-btn'); localStorage.removeItem('dci-after-edit-bg')")
     pg.goto(f'https://musicbrainz.org/release/{H.REL}/edit-relationships')
     pg.wait_for_selector('#dci-open', timeout=20000)
     H.open_dashboard(pg)
@@ -148,15 +149,15 @@ with sync_playwright() as p:
     SET = "[...document.querySelectorAll('[data-set=after-edit], [data-set=after-edit-bg]')].map(i => [i.dataset.set, i.checked, i.closest('label').textContent.trim().slice(0, 40)])"
     e1 = pg.evaluate(SET)
     pg.locator('[data-set=after-edit-bg]').evaluate('i => i.click()')
+    pg.locator('[data-set=after-edit]').evaluate('i => i.click()')
     pg.wait_for_timeout(300)
-    e2 = [pg.evaluate("localStorage.getItem('dci-after-edit-bg')"), pg.evaluate(SET)]
+    e2 = [pg.evaluate("localStorage.getItem('dci-after-edit-bg')"), pg.evaluate("localStorage.getItem('dci-after-edit-btn')"), pg.evaluate(SET)]
     pg.locator('[data-el=settings] [data-act=settings-reset][data-topic=sources]').evaluate('b => b.click()')
     pg.wait_for_timeout(400)
-    e3 = [pg.evaluate("localStorage.getItem('dci-after-edit')"), pg.evaluate("localStorage.getItem('dci-after-edit-bg')"), pg.evaluate(SET)]
-    print('E) Einstellungen:', e1, '| Hintergrund aus:', e2, '| ↺ Quellen:', e3)
-    results.append(e1 == [['after-edit', True, 'Release editor: after “Enter edit”, open'], ['after-edit-bg', True, 'Imported with Harmony (Bandcamp, Discogs']]
-                   and e2[0] == 'false' and e3[0] is None and e3[1] is None and [x[1] for x in e3[2]] == [False, True])
-    pg.evaluate("localStorage.removeItem('dci-after-edit')")
+    e3 = [pg.evaluate("localStorage.getItem('dci-after-edit-btn')"), pg.evaluate("localStorage.getItem('dci-after-edit-bg')"), pg.evaluate(SET)]
+    print('E) Einstellungen:', e1, '| beide aus:', e2, '| ↺ Quellen:', e3)
+    results.append(e1 == [['after-edit', True, 'Release editor: the button “Enter edit &'], ['after-edit-bg', True, 'Imported with Harmony (Bandcamp, Discogs']]
+                   and e2[0] == 'false' and e2[1] == 'false' and e3[0] is None and e3[1] is None and [x[1] for x in e3[2]] == [True, True])
     print('Fehler:', real(errs), real(mb_errs))
     results.append(not real(errs) and not real(mb_errs))
     b.close()

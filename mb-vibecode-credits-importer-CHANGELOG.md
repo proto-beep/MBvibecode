@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-24 | 3.22.1 – 3.24.0 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -77,6 +78,60 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-24
+
+### Import 3.24.0
+
+#### Added
+
+- **Several linked releases of one source** (collected item 51; maintainer: "wie soll mit mehrfachen relationships zu unterschiedlichen discogs/bandcamp pages umgegangen werden? geht eine prüfung nach mehr vorhandenen daten/texten? kann manuell abgefragt werden welche seite verwendet werden soll? mit option beide in hintergrundtabs zu öffnen zum vergleich. gleichzeitig eine präferierte option vorauswählen und fett markieren, für datensätze mit mehr daten?" – "wie du vorschlägst"): instead of the message "Choose one above" a dialog lists the linked releases (Discogs releases or Bandcamp albums). Each is read in the background (Bandcamp without its track pages) and counted – title, credits, companies, tracks; the one with the most data is bold, marked "most data" and preselected. **Open all in background tabs** to compare them, **Import** (remembered for the release unless unticked), **Cancel** (the list at the top as before). The log names the counts and the choice.
+
+
+### Import 3.23.0
+
+#### Changed
+
+- **"Enter edit & import credits" instead of the tick** (collected item 50; maintainer: "bitte einen ähnlich aussehenden aber farblich unterschiedlichen button neben "enter edit" einführen … und die checkbox weglassen. plus per tastenkombination CTRL+ALT + ENTER (falls möglich). der Button soll im Einstellungsmenü aktivier/deaktivierbar sein." – name and colour: "bitte „Enter edit & import credits“ und Option C (orange gefüllter Knopf)"): in the release editor, right after MusicBrainz's **Enter edit**, a button of the same look in orange submits the edit and then opens **Edit relationships** with the import dashboard, which loads the Discogs release or Bandcamp album – what the tick "open relationship editor and start import dashboard" did. "Enter edit" itself stays a plain "Enter edit". It is there only when the release links to a source the script reads (Discogs, Bandcamp). Its first words are MusicBrainz's own, the rest follows the dashboard language ("Enter edit & Credits importieren").
+- **Ctrl+Alt+Enter** (Mac: Control+Option+Return) does the same, also from the edit note.
+- **⚙ Settings → Sources:** "Release editor: the button “Enter edit & import credits” next to “Enter edit”" (on). Imported with Harmony, the button opens the relationship editor in a background tab as the tick did (setting "Imported with Harmony … background tab", on); with that setting off, or for another tool, the note stays.
+- The tick and its stored value (`dci-after-edit`) are gone.
+
+
+### Import 3.22.3
+
+#### Changed
+
+- **The German "Kontrabass" is always double bass, without role credit** (collected item 47; maintainer: "bitte beim deutschen "Kontrabass" immer double bass. beim englischen "contrabass" = double bass mit Role Credit "contrabass""): a translation gets MusicBrainz's own name (as "Schlagzeug", "Flügel"); 3.22.2 credited it "contrabass". The English "Contrabass" stays double bass with the role credit "contrabass" (W002); "Violoncello" keeps "violoncello" (W008).
+
+
+### Import 3.22.2
+
+#### Changed
+
+- **"Kontrabass" is credited "contrabass"** (collected item 47; maintainer: "ja, aber "contrabass" soll als role credit genommen werden"): double bass with the role credit "contrabass" – on Discogs, in texts and on Bandcamp (before: "Kontrabass"). **"Violoncello"** is cello with the role credit "violoncello" (maintainer: "cello mit violoncello wäre auch ein role credit. aber ich erkenne darin jetzt keine muster.") – fixed pairs (W003, new W008), no rule for other words.
+
+#### Added
+
+- **More areas** (48; maintainer: "produced in, remixed in, engineered in"): "Produced by X in Berlin", "Remixed in Paris by X", "Engineered in Gijon by X" give the area with **produced in**, **remixed in**, **engineered in** (C041 – C043) – before, "in Berlin" was listed as not recognized.
+- **The area an area is part of** (maintainer: "lade gerne nach"): each area suggestion names it, read from MusicBrainz once per session – "Gijón (City, Asturias)" (MusicBrainz's search does not give it).
+
+#### Fixed
+
+- **The rules window showed a bracket too many** (45): "recorded | overdubbed) at" is now "(recorded | overdubbed) at" (C010, C023, C038, R069, R084 …); only the outer brackets of a pattern go. The mapping itself was right.
+- **No role credit for recording** (49; maintainer: "der rollen credit"): checked again for "Recorded by", "Recorded live by", "Live Recording By", "Recording engineer", "Recorded & produced by", "Recorded, mixed and mastered by" – recording (recording engineer) without role credit, also when the type has a task field; now covered by a test.
+
+
+### Import 3.22.1
+
+#### Fixed
+
+- **An album on a label's Bandcamp page** (collected item 46; maintainer: ""Yunclas" no MB artist with this Bandcamp link wurde mir angezeigt, dabei heißt der artist des releases selbst Yunclas (und wird auch so auf MB geschrieben)" – "Es soll aber artists anbieten, insbesondere wenn sie gleichnamig sind!"): the album of Yunclas lies on the page of the label Grabaciones Autobombo, and the script took that page as Yunclas's own – MusicBrainz has no artist with it, and no suggestion came. Now the name of the Bandcamp account (its "data-band", else "og:site_name") is compared with the album's artist, as Harmony does it: another name means another account (mostly a label). The page is then no link of the artist (not looked up, not filled in by **Create artist …**), the artist is searched by name like any other – **the release's artist of that name comes first, marked "release artist"**, still only a suggestion. The entry says whose page it is (with a link) and names MusicBrainz's label with that page ("a label of this release ✓" when it is one); the source line says "on the Bandcamp page of …", the log too.
+
+#### Added
+
+- **People not found through their own link are searched by name** (maintainer: "ja und ja"): a Discogs or Bandcamp person whose link MusicBrainz does not have ("no MB artist with this Discogs link") gets the MusicBrainz entries of the same name as suggestions, the release's artist of that name first. Nothing is assigned by itself. Rule S029.
+
 
 ## 2026-10-23
 
