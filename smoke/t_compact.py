@@ -9,7 +9,7 @@ C) The tracks and the date of the compact line are still drop targets: a track g
    onto it gives "tracks 1–2", a date of the pool shows on the line.
 D) The question answered in the opened row ("double bass"): the line says so, the yellow mark is gone.
 E) A skipped row: grey, with ✕ – out of the dashboard; the next import brings it back.
-F) "Compact" remembered after reloading; ⚙ Settings → General has the same switch: "Full" – every row with its fields,
+F) "Compact" remembered after reloading; ⚙ Settings → General ([3.29.2] Appearance) has the same switch: "Full" – every row with its fields,
    nothing stored.
 G) A jump to an incomplete row (› in the summary) opens it."""
 import re
@@ -106,7 +106,7 @@ with sync_playwright() as p:
     H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
     pg.wait_for_timeout(800)
     f2 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), line('Guitar Guy') is not None]
-    H.open_settings(pg, 'general')
+    H.open_settings(pg, 'appearance')  # [3.29.2] the view is under "Appearance" now
     f3 = pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-act=view]')].map(b => [b.dataset.view, b.getAttribute('aria-pressed')])")
     pg.click('[data-el=settings] [data-act=view][data-view=full]')
     pg.wait_for_timeout(300)

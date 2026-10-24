@@ -63,7 +63,7 @@ with sync_playwright() as p:
     vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
     print('A) Themen:', topics, '| Werke:', vals)
-    results.append([t for t, _ in topics] == ['general', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections']
+    results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections']
                    and [t for t, e in topics if e == 'true'] == ['general']
                    and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
     # B) shared switches

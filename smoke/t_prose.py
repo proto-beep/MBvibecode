@@ -9,15 +9,18 @@ B) "Mixed and mastered at TQA.HQ (July 2026). Thanks to EXEcentrer and Isohyet."
 C) "Frank Trompeter: Tenor, alto, soprano saxophones" → tenor, alto and soprano saxophone, no role credit (S040);
    "Richard Gilman-Opalsky: Drums, percussion, and wood flutes" → flute credited "wood flutes".
 D) "Mixed and mastered by Brandon Carnes in March 2026." → mix and mastering, March 2026 under Mix and Mastering.
-E) Nothing listed as not recognized."""
+E) Nothing listed as not recognized.
+F) [3.29.1] "Assembled by Kai Lurk (noises, electronics) & Fen Field (field recordings)." → Kai Lurk effects credited
+   "noises" and electronic instruments credited "electronics", Fen Field field recordist (T041)."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
-for i, n in [(9130, 'tenor saxophone'), (9131, 'soprano saxophone'), (9122, 'flute'), (9123, 'percussion')]:
+for i, n in [(9130, 'tenor saxophone'), (9131, 'soprano saxophone'), (9122, 'flute'), (9123, 'percussion'), (9124, 'effects'), (9125, 'electronic instruments')]:
     H.attr(i, n, 14, 14)
 H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
 H.lt(1202, '1d4c0b5b-0000-4000-8000-000000001202', 'artwork', 'artist', 'release', (1, 1150))
 H.lt(1204, '1d4c0b5b-0000-4000-8000-000000001204', 'mastered at', 'place', 'release', ())
+H.lt(1205, '1d4c0b5b-0000-4000-8000-000000001205', 'field recordist', 'artist', 'recording', (1,))
 H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
 TEXT = """A chronicle of rabid deeds, dutifully unearthed from accursed crossroads' soil by K.M. (sounds, words) & E. (voice).
 Cover artwork channeled by Drahmarduk.
@@ -25,7 +28,8 @@ Logo carved by the guided hand of BMS Illustration.
 Mixed and mastered at TQA.HQ (July 2026). Thanks to EXEcentrer and Isohyet.
 Frank Trompeter: Tenor, alto, soprano saxophones
 Richard Gilman-Opalsky: Drums, percussion, and wood flutes
-Mixed and mastered by Brandon Carnes in March 2026."""
+Mixed and mastered by Brandon Carnes in March 2026.
+Assembled by Kai Lurk (noises, electronics) & Fen Field (field recordings)."""
 ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
     const c = tr.querySelector('[data-f=role-credit]');
@@ -71,6 +75,11 @@ with sync_playwright() as p:
     d1 = role('Brandon Carnes')
     print('D) Brandon Carnes:', d1)
     results.append(d1 == ['Mixed By', 'Mastered By'])
+    # F) [3.29.1]
+    f1 = [g.get('Kai Lurk'), g.get('Fen Field')]
+    print('F) Kai Lurk, Fen Field:', f1)
+    results.append([x[1:] for x in (f1[0] or [])] == [['instrument', 'effects', 'noises'], ['instrument', 'electronic instruments', 'electronics']]
+                   and [x[1] for x in (f1[1] or [])] == ['field recordist'])
     unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
     print('E) nicht erkannt:', unrec)
     results.append(not unrec)
