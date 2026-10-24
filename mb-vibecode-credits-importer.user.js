@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.23.0
+// @version      3.24.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.23.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.24.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -197,6 +197,10 @@
       "log.artistCreditSpelling": "{name}: found via its {src} link, but the release names it differently in its artist credit ({mb}) – only a suggestion",
       "log.sourceKept": "Source chosen for this release before: {src}",
       "log.fromEditor": "Started from the release editor (“Enter edit & import credits”) – links there: {links}",
+      "log.linkChosen": "Chosen from {n} linked {src} releases: {link}",
+      "log.linkCounted": "{link}: “{title}” – credits: {credits} · companies: {companies} · tracks: {tracks}",
+      "log.linkCountFailed": "{link}: could not be read – {error}",
+      "log.linksTabs": "Opened in background tabs: {list}",
       "log.sourceFromEditor": "Source entered in the release editor, not in MusicBrainz yet: {src}",
       "log.fromLink": "Started from a link (“Edit relationships with Credits Importer”, e.g. on Harmony) – links in it: {links}",
       "log.sourceFromLink": "Source handed over by the link, not in MusicBrainz yet: {src}",
@@ -455,6 +459,18 @@
       "busy.apply.one": "Staging {n} relationship in the editor …",
       "busy.apply.other": "Staging {n} relationships in the editor …",
       "msg.multiLinks": "This release is linked to {n} {src} releases. Choose one above.",
+      "links.title": "This release is linked to {n} {src} releases",
+      "links.intro": "Which one should be imported? Each is read in the background and its data counted; the one with the most data is preselected.",
+      "links.introBc": "(Bandcamp: without its track pages.)",
+      "links.counting": "counting …",
+      "links.count": "“{title}” – credits: {credits} · companies: {companies} · tracks: {tracks}",
+      "links.countFailed": "could not be read: {error}",
+      "links.best": "most data",
+      "links.openOne": "Open this page in a new tab",
+      "links.tabs": "Open all in background tabs",
+      "links.tabsTitle": "To compare them: each page in a background tab",
+      "links.remember": "Remember this choice for this release",
+      "links.ok": "Import",
       "msg.trackMismatch": "{src} lists {d} tracks, MusicBrainz {m}. Tracks are matched in order. Check the track selection of recording and work relationships.",
       "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
@@ -1583,6 +1599,10 @@
       "log.artistCreditSpelling": "{name}: über den {src}-Link gefunden, aber das Release nennt den Namen im Artist Credit anders ({mb}) – nur ein Vorschlag",
       "log.sourceKept": "Für dieses Release früher gewählte Quelle: {src}",
       "log.fromEditor": "Aus dem Release-Editor gestartet („Enter edit & Credits importieren“) – Links dort: {links}",
+      "log.linkChosen": "Aus {n} verknüpften {src}-Releases gewählt: {link}",
+      "log.linkCounted": "{link}: „{title}“ – Credits: {credits} · Firmen: {companies} · Tracks: {tracks}",
+      "log.linkCountFailed": "{link}: nicht lesbar – {error}",
+      "log.linksTabs": "In Hintergrund-Tabs geöffnet: {list}",
       "log.sourceFromEditor": "Quelle im Release-Editor eingetragen, noch nicht in MusicBrainz: {src}",
       "log.fromLink": "Über einen Link gestartet („Edit relationships with Credits Importer“, z. B. bei Harmony) – Links darin: {links}",
       "log.sourceFromLink": "Quelle vom Link übergeben, noch nicht in MusicBrainz: {src}",
@@ -1841,6 +1861,18 @@
       "busy.apply.one": "Übernehme {n} Beziehung in den Editor …",
       "busy.apply.other": "Übernehme {n} Beziehungen in den Editor …",
       "msg.multiLinks": "Dieses Release ist mit {n} {src}-Releases verknüpft. Wähle oben eines aus.",
+      "links.title": "Dieses Release ist mit {n} {src}-Releases verknüpft",
+      "links.intro": "Welches soll importiert werden? Jedes wird im Hintergrund gelesen und seine Daten gezählt; das mit den meisten Daten ist vorgewählt.",
+      "links.introBc": "(Bandcamp: ohne seine Track-Seiten.)",
+      "links.counting": "wird gezählt …",
+      "links.count": "„{title}“ – Credits: {credits} · Firmen: {companies} · Tracks: {tracks}",
+      "links.countFailed": "nicht lesbar: {error}",
+      "links.best": "die meisten Daten",
+      "links.openOne": "Diese Seite in einem neuen Tab öffnen",
+      "links.tabs": "Alle in Hintergrund-Tabs öffnen",
+      "links.tabsTitle": "Zum Vergleichen: jede Seite in einem Hintergrund-Tab",
+      "links.remember": "Diese Wahl für dieses Release merken",
+      "links.ok": "Importieren",
       "msg.trackMismatch": "{src} listet {d} Tracks, MusicBrainz {m}. Die Zuordnung erfolgt der Reihe nach. Prüfe bei Recording- und Werk-Beziehungen die Trackauswahl.",
       "msg.noCredits": "Auf {src} sind für dieses Release keine Credits eingetragen. Du kannst unten Einträge manuell anlegen.",
       "msg.confirmDiscard": "Die aktuelle Auswahl im Dashboard wird verworfen. Fortfahren?",
@@ -2969,6 +3001,10 @@
       "log.artistCreditSpelling": "{name}: encontrado por su enlace de {src}, pero la publicación lo nombra distinto en su crédito de artista ({mb}); solo una sugerencia",
       "log.sourceKept": "Fuente elegida antes para esta publicación: {src}",
       "log.fromEditor": "Iniciado desde el editor de publicaciones («Enter edit e importar créditos») – enlaces allí: {links}",
+      "log.linkChosen": "Elegida entre {n} publicaciones de {src} enlazadas: {link}",
+      "log.linkCounted": "{link}: «{title}» – créditos: {credits} · empresas: {companies} · pistas: {tracks}",
+      "log.linkCountFailed": "{link}: no se pudo leer – {error}",
+      "log.linksTabs": "Abiertas en pestañas en segundo plano: {list}",
       "log.sourceFromEditor": "Fuente introducida en el editor de publicaciones, aún no en MusicBrainz: {src}",
       "log.fromLink": "Iniciado desde un enlace («Edit relationships with Credits Importer», p. ej. en Harmony) – enlaces en él: {links}",
       "log.sourceFromLink": "Fuente entregada por el enlace, aún no en MusicBrainz: {src}",
@@ -3227,6 +3263,18 @@
       "busy.apply.one": "Preparando {n} relación en el editor…",
       "busy.apply.other": "Preparando {n} relaciones en el editor…",
       "msg.multiLinks": "Esta publicación está enlazada con {n} publicaciones de {src}. Elige una arriba.",
+      "links.title": "Esta publicación está enlazada con {n} publicaciones de {src}",
+      "links.intro": "¿Cuál se importa? Cada una se lee en segundo plano y se cuentan sus datos; la que tiene más datos está preseleccionada.",
+      "links.introBc": "(Bandcamp: sin sus páginas de pista.)",
+      "links.counting": "contando…",
+      "links.count": "«{title}» – créditos: {credits} · empresas: {companies} · pistas: {tracks}",
+      "links.countFailed": "no se pudo leer: {error}",
+      "links.best": "más datos",
+      "links.openOne": "Abrir esta página en una pestaña nueva",
+      "links.tabs": "Abrir todas en pestañas en segundo plano",
+      "links.tabsTitle": "Para compararlas: cada página en una pestaña en segundo plano",
+      "links.remember": "Recordar esta elección para esta publicación",
+      "links.ok": "Importar",
       "msg.trackMismatch": "{src} lista {d} pistas y MusicBrainz {m}. Las pistas se asignan por orden. Revisa la selección de pistas en las relaciones de grabación y de obra.",
       "msg.noCredits": "{src} no tiene créditos para esta publicación. Puedes añadir entradas manualmente abajo.",
       "msg.confirmDiscard": "Se descartará la selección actual del panel. ¿Continuar?",
@@ -4355,6 +4403,10 @@
       "log.artistCreditSpelling": "{name} : trouvé via son lien {src}, mais la parution le nomme autrement dans son crédit d’artiste ({mb}) – seulement une suggestion",
       "log.sourceKept": "Source choisie auparavant pour cette parution : {src}",
       "log.fromEditor": "Lancé depuis l’éditeur de parution (« Enter edit et importer les crédits ») – liens : {links}",
+      "log.linkChosen": "Choisie parmi {n} parutions {src} liées : {link}",
+      "log.linkCounted": "{link} : « {title} » – crédits : {credits} · sociétés : {companies} · pistes : {tracks}",
+      "log.linkCountFailed": "{link} : illisible – {error}",
+      "log.linksTabs": "Ouvertes dans des onglets en arrière-plan : {list}",
       "log.sourceFromEditor": "Source saisie dans l’éditeur de parution, pas encore dans MusicBrainz : {src}",
       "log.fromLink": "Lancé depuis un lien (« Edit relationships with Credits Importer », p. ex. sur Harmony) – liens : {links}",
       "log.sourceFromLink": "Source transmise par le lien, pas encore dans MusicBrainz : {src}",
@@ -4613,6 +4665,18 @@
       "busy.apply.one": "Préparation de {n} relation dans l’éditeur…",
       "busy.apply.other": "Préparation de {n} relations dans l’éditeur…",
       "msg.multiLinks": "Cette parution est liée à {n} parutions {src}. Choisissez-en une ci-dessus.",
+      "links.title": "Cette parution est liée à {n} parutions {src}",
+      "links.intro": "Laquelle importer ? Chacune est lue en arrière-plan et ses données sont comptées ; celle qui en a le plus est présélectionnée.",
+      "links.introBc": "(Bandcamp : sans ses pages de piste.)",
+      "links.counting": "comptage…",
+      "links.count": "« {title} » – crédits : {credits} · sociétés : {companies} · pistes : {tracks}",
+      "links.countFailed": "illisible : {error}",
+      "links.best": "le plus de données",
+      "links.openOne": "Ouvrir cette page dans un nouvel onglet",
+      "links.tabs": "Tout ouvrir dans des onglets en arrière-plan",
+      "links.tabsTitle": "Pour les comparer : chaque page dans un onglet en arrière-plan",
+      "links.remember": "Mémoriser ce choix pour cette parution",
+      "links.ok": "Importer",
       "msg.trackMismatch": "{src} liste {d} pistes, MusicBrainz {m}. Les pistes sont associées dans l’ordre. Vérifiez la sélection des pistes pour les relations d’enregistrement et d’œuvre.",
       "msg.noCredits": "{src} n’a aucun crédit pour cette parution. Vous pouvez ajouter des entrées manuellement ci-dessous.",
       "msg.confirmDiscard": "La sélection actuelle du tableau sera abandonnée. Continuer ?",
@@ -11451,6 +11515,120 @@
     }
   }
 
+  /**
+   * [3.24.0] Several linked releases of one source (collected item 51): a dialog lists them, reads each in the background
+   * (Bandcamp without its track pages) and counts its data – credits, companies, tracks; the one with the most is
+   * preselected and bold. "Open all in background tabs" to compare them; the choice is remembered for this release
+   * (unless unticked), as a choice in the list at the top. → the chosen link, or null when cancelled.
+   */
+  function chooseLink(links) {
+    const el = $('links');
+    if (!el || !S.overlay || links.length < 2) return Promise.resolve(links[0] || null);
+    const source = SOURCES[links[0].source];
+    const pageUrl = (l) => (l.source === 'discogs' ? DISCOGS.releaseUrl(l.id) : String(l.url || l.id));
+    let pick = 0;
+    let touched = false;
+    let closed = false;
+    const counts = links.map(() => null);
+    el.innerHTML = `
+      <div class="dci-sub-panel dci-media-panel" role="dialog" aria-modal="true" aria-labelledby="dci-links-title">
+        <header class="dci-sub-head"><h3 id="dci-links-title">${esc(tr('links.title', { n: links.length, src: source.name }))}</h3></header>
+        <div class="dci-media-body">
+          <p>${esc(tr('links.intro'))}${source === BANDCAMP ? ` ${esc(tr('links.introBc'))}` : ''}</p>
+          <div class="dci-link-list" role="radiogroup" aria-labelledby="dci-links-title">
+            ${links.map((l, i) => `<div class="dci-link-opt" data-li="${i}"><label><input type="radio" name="dci-link-pick" value="${i}" ${i === pick ? 'checked' : ''}>
+              <span class="dci-link-name">${esc(sourceLinkLabel(l))}</span></label>
+              <a class="dci-sugglink" href="${esc(pageUrl(l))}" target="_blank" rel="noopener" title="${esc(tr('links.openOne'))}" aria-label="${esc(tr('links.openOne'))}">↗</a>
+              <span class="dci-link-bestmark" hidden>${esc(tr('links.best'))}</span>
+              <span class="dci-sub" data-lel="count">${esc(tr('links.counting'))}</span></div>`).join('')}
+          </div>
+          <div><button type="button" data-lact="tabs" title="${esc(tr('links.tabsTitle'))}">${esc(tr('links.tabs'))}</button></div>
+          <label class="dci-check"><input type="checkbox" data-lf="remember" checked> ${esc(tr('links.remember'))}</label>
+        </div>
+        <footer class="dci-media-foot">
+          <button type="button" class="dci-small" data-lact="ok">${esc(tr('links.ok'))}</button>
+          <button type="button" class="dci-textbtn" data-lact="cancel">${esc(tr('common.cancel'))}</button>
+        </footer>
+      </div>`;
+    const row = (i) => el.querySelector(`[data-li="${i}"]`);
+    const markBest = () => {
+      const ok = counts.map((c, i) => [c, i]).filter(([c]) => c && !c.error);
+      if (!ok.length) return;
+      const score = (c) => c.credits + c.companies;
+      const best = ok.reduce((a, b) => (score(b[0]) > score(a[0]) || (score(b[0]) === score(a[0]) && b[0].notes > a[0].notes) ? b : a))[1];
+      links.forEach((l, i) => {
+        row(i).classList.toggle('dci-link-best', i === best);
+        row(i).querySelector('.dci-link-bestmark').hidden = i !== best;
+      });
+      if (!touched) {
+        pick = best;
+        const input = row(best).querySelector('input');
+        if (input) input.checked = true;
+      }
+    };
+    // read one after the other (MusicBrainz's and the sources' limits), each shown as soon as it is counted
+    const ctx = sourceContext();
+    ctx.settings = { ...ctx.settings, bandcampTracks: false };
+    (async () => {
+      for (const [i, l] of links.entries()) {
+        if (closed) return;
+        try {
+          const rel = await source.release(l.id, ctx);
+          counts[i] = { title: rel.title || '', credits: (rel.credits || []).length, companies: (rel.companies || []).length,
+            tracks: (rel.tracks || []).length, notes: String(rel.notes || '').length };
+          log('info', 'linkCounted', { link: sourceLinkLabel(l), ...counts[i] });
+        } catch (e) {
+          counts[i] = { error: (e && e.message) || String(e) };
+          log('warn', 'linkCountFailed', { link: sourceLinkLabel(l), error: counts[i].error });
+        }
+        if (closed) return;
+        const c = counts[i];
+        row(i).querySelector('[data-lel="count"]').textContent = c.error ? tr('links.countFailed', { error: c.error }) : tr('links.count', c);
+        markBest();
+      }
+    })();
+    el.hidden = false;
+    return new Promise((resolve) => {
+      const done = (result) => {
+        closed = true;
+        el.removeEventListener('click', onClickL);
+        el.removeEventListener('change', onChangeL);
+        el.hidden = true;
+        el.innerHTML = '';
+        if (S.subDialog === handle) S.subDialog = null;
+        resolve(result);
+      };
+      const onChangeL = (e) => {
+        if (e.target.name === 'dci-link-pick') {
+          pick = Number(e.target.value);
+          touched = true;
+        }
+      };
+      const onClickL = (e) => {
+        const b = e.target.closest('[data-lact]');
+        if (!b) return;
+        if (b.dataset.lact === 'cancel') done(null);
+        else if (b.dataset.lact === 'tabs') {
+          const urls = links.map(pageUrl);
+          urls.forEach((u) => {
+            if (typeof GM_openInTab === 'function') GM_openInTab(u, { active: false, insert: true, setParent: true });
+            else window.open(u, '_blank', 'noopener');
+          });
+          log('info', 'linksTabs', { list: links.map(sourceLinkLabel).join(', ') });
+        } else if (b.dataset.lact === 'ok') {
+          const link = links[pick];
+          if (el.querySelector('[data-lf="remember"]').checked) keepSourcePick(source, link.id);
+          done(link);
+        }
+      };
+      const handle = { cancel: () => done(null) };
+      el.addEventListener('click', onClickL);
+      el.addEventListener('change', onChangeL);
+      S.subDialog = handle;
+      el.querySelector('[data-lact="ok"]').focus();
+    });
+  }
+
   /** Imports the source chosen for this release, else the first linked one of the preference list. */
   async function startImport() {
     const start = startSource();
@@ -11459,7 +11637,14 @@
       if (start.fromEditor) log('info', S.autostartFrom === 'link' ? 'sourceFromLink' : 'sourceFromEditor', { src: afterEditLinkLabel(start.link) });
       await loadRelease(start.link.id, { source: SOURCES[start.link.source], confirmed: true });
     } else if (start.multi) {
-      showMessage('info', 'msg.multiLinks', { n: start.multi, src: SOURCES[start.source].name });
+      // [3.24.0] several linked releases of one source: a dialog compares them (51)
+      const link = await chooseLink(S.sourceLinks.filter((x) => x.source === start.source));
+      if (link) {
+        log('info', 'linkChosen', { n: start.multi, src: SOURCES[start.source].name, link: sourceLinkLabel(link) });
+        await loadRelease(link.id, { source: SOURCES[link.source], confirmed: true });
+      } else {
+        showMessage('info', 'msg.multiLinks', { n: start.multi, src: SOURCES[start.source].name });
+      }
     } else {
       showMessage('info', 'msg.noSourceLink');
     }
@@ -20697,7 +20882,8 @@
           <iframe class="dci-sub-frame" data-el="sub-frame" title="${esc(tr('sub.frameTitle'))}"></iframe>
         </div>
       </div>
-      <div class="dci-subdlg dci-media-dlg" data-el="media" hidden></div>`;
+      <div class="dci-subdlg dci-media-dlg" data-el="media" hidden></div>
+      <div class="dci-subdlg dci-media-dlg" data-el="links" hidden></div>`;
     document.body.appendChild(overlay);
     overlay.classList.toggle('dci-only-missing', S.onlyMissing);
     overlay.addEventListener('click', onClick);
@@ -21829,6 +22015,10 @@
       .dci-media-panel { width: min(calc(var(--u, 1px) * 680), 100%); height: auto; max-height: 100%; border-top-color: #736dab; }
       .dci-media-body { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 16); overflow: auto; }
       .dci-media-body p { margin: 0; max-width: 80ch; }
+      .dci-link-list { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); }
+      .dci-link-opt { display: flex; align-items: baseline; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); }
+      .dci-link-best .dci-link-name { font-weight: 700; }
+      .dci-link-bestmark { padding: 0 calc(var(--u, 1px) * 6); border-radius: 8px; background: var(--ok); color: #fff; font-size: calc(var(--u, 1px) * 11); font-weight: 600; }
       .dci-media-btns { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-media-btns button { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: 3px calc(var(--u, 1px) * 10); cursor: pointer; }
       .dci-media-btns .dci-media-btn[aria-pressed="true"] { background: #736dab; border-color: #736dab; color: #fff; }

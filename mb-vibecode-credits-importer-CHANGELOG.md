@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.23.0 | – |
+| 2026-10-24 | 3.22.1 – 3.24.0 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -80,6 +80,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.24.0
+
+#### Added
+
+- **Several linked releases of one source** (collected item 51; maintainer: "wie soll mit mehrfachen relationships zu unterschiedlichen discogs/bandcamp pages umgegangen werden? geht eine prüfung nach mehr vorhandenen daten/texten? kann manuell abgefragt werden welche seite verwendet werden soll? mit option beide in hintergrundtabs zu öffnen zum vergleich. gleichzeitig eine präferierte option vorauswählen und fett markieren, für datensätze mit mehr daten?" – "wie du vorschlägst"): instead of the message "Choose one above" a dialog lists the linked releases (Discogs releases or Bandcamp albums). Each is read in the background (Bandcamp without its track pages) and counted – title, credits, companies, tracks; the one with the most data is bold, marked "most data" and preselected. **Open all in background tabs** to compare them, **Import** (remembered for the release unless unticked), **Cancel** (the list at the top as before). The log names the counts and the choice.
+
 
 ### Import 3.23.0
 
