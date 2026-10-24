@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.28.0
+// @version      3.28.1
 // @date         2026-10-23
-// @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
+// @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
 // @description:es Panel de importación en el editor de relaciones de la publicación: revisa los créditos de la publicación de Discogs o del álbum de Bandcamp enlazados (o de un texto pegado), asigna artistas mediante enlaces o nombres, elige roles, nivel y pistas y prepáralos como relaciones. El envío («Enter edit») siempre lo haces tú.
 // @description:fr Tableau d'import dans l'éditeur de relations de la parution : vérifiez les crédits de la parution Discogs ou de l'album Bandcamp liés (ou d'un texte collé), associez les artistes via leurs liens ou leurs noms, choisissez rôles, niveau et pistes et préparez-les comme relations. L'envoi (« Enter edit ») reste toujours à vous.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -111,7 +111,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "No source loaded yet",
       "source.pick": "Choose a linked source …",
-      "source.other": "Other source: Discogs release (URL or ID) or Bandcamp album URL",
+      "source.other": "Other source: Discogs release (URL or ID) or Bandcamp album or track URL",
       "source.load": "Load",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text.",
@@ -123,7 +123,7 @@
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
-      "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album URL",
+      "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album or track URL",
       "supp.urlLoad": "Supplement",
       "supp.sameAsLoaded": "That is the source loaded already.",
       "supp.textTitle": "Supplement the loaded source with a pasted text (booklet, liner notes …)",
@@ -183,11 +183,11 @@
       "srcorder.up": "{src} up",
       "srcorder.down": "{src} down",
       "srcorder.hint": "The first source in the list that the release links to is loaded (digital: all its media are “Digital Media”). A source you choose for a release yourself is remembered and comes first.",
-      "bc.tracks": "Read the credits of the track pages too",
+      "bc.tracks": "Read the credits of the Bandcamp track pages too",
       "bc.tracksTitle": "One request to Bandcamp per track; credits there count only for their track",
-      "bc.testPh": "Bandcamp album URL to test",
+      "bc.testPh": "Bandcamp album or track URL to test",
       "bc.test": "Test page",
-      "bc.testBadUrl": "That is no Bandcamp album URL (https://artist.bandcamp.com/album/name).",
+      "bc.testBadUrl": "That is no Bandcamp album or track URL (https://artist.bandcamp.com/album/name, …/track/name).",
       "bc.testRunning": "Loading the page …",
       "bc.testOk": "Read: “{title}”, {n} tracks, {lines} lines of credits, {pages} track pages (via {via}).",
       "err.bandcampData": "No album data found on {url}.",
@@ -478,7 +478,7 @@
       "msg.tracksDiffer": "{src} differs from the MusicBrainz release: {what}{list}. Tracks are matched in order – check the track selection of recording and work relationships.",
       "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
-      "msg.badDiscogsId": "No Discogs release or Bandcamp album recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
+      "msg.badDiscogsId": "No Discogs release or Bandcamp album or track recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
       "msg.badMbid": "No MBID recognized. Paste the URL of an MB artist page or an MBID.",
       "msg.notArtist": "This MBID does not belong to an artist.",
       "msg.editorNotReady": "The relationship editor is not ready yet. Wait until the page has fully loaded and try again.",
@@ -661,7 +661,7 @@
       "conn.kind.links": "Links only",
       "conn.X001": "Reads the release, its tracks, works and relationships (web service, relationship editor), searches artists, labels, places and areas, stages relationships in the relationship editor and prefills MusicBrainz’s forms for new entries – it never submits.",
       "conn.X002": "Reads the linked Discogs release (credits, companies, notes, tracks) and artists’ aliases through Discogs’ API; the companion shows the release page.",
-      "conn.X003": "Reads the linked album page and, when switched on, its track pages (credits, “about” text, tracks); the companion shows them.",
+      "conn.X003": "Reads the linked album page (or track page) and, when switched on, the album’s track pages (credits, “about” text, tracks); the companion shows them.",
       "conn.X004.name": "Pasted text",
       "conn.X004": "A credits text you paste (booklet, liner notes, a list of musicians) – nothing is fetched.",
       "conn.X005": "Adds “Edit relationships with Credits Importer” to Harmony’s “Release Actions”; after “Enter edit & import credits” the relationship editor opens there in a background tab.",
@@ -1583,7 +1583,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "Noch keine Quelle geladen",
       "source.pick": "Verknüpfte Quelle wählen …",
-      "source.other": "Andere Quelle: Discogs-Release (URL oder ID) oder Bandcamp-Album-URL",
+      "source.other": "Andere Quelle: Discogs-Release (URL oder ID) oder Bandcamp-Album- oder -Track-URL",
       "source.load": "Laden",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "Dieses Release ist noch nicht mit Discogs oder Bandcamp verknüpft. Gib oben eine URL ein oder füge einen Text ein.",
@@ -1595,7 +1595,7 @@
       "log.aboutOn": "„about“-Text wieder aufgenommen (Zeilen zurück: {rows}, Daten zurück: {dates})",
       "supp.with": "Ergänzen mit",
       "supp.text": "Text …",
-      "supp.urlPh": "oder eine andere: Discogs-Release (URL oder ID) oder Bandcamp-Album-URL",
+      "supp.urlPh": "oder eine andere: Discogs-Release (URL oder ID) oder Bandcamp-Album- oder -Track-URL",
       "supp.urlLoad": "Ergänzen",
       "supp.sameAsLoaded": "Das ist schon die geladene Quelle.",
       "supp.textTitle": "Die geladene Quelle mit einem eingefügten Text ergänzen (Booklet, Liner Notes …)",
@@ -1655,11 +1655,11 @@
       "srcorder.up": "{src} nach oben",
       "srcorder.down": "{src} nach unten",
       "srcorder.hint": "Geladen wird die erste Quelle der Liste, mit der das Release verknüpft ist (digital: alle Medien „Digital Media“). Eine Quelle, die du für ein Release selbst wählst, wird gemerkt und hat Vorrang.",
-      "bc.tracks": "Credits der Track-Seiten mitlesen",
+      "bc.tracks": "Credits der Bandcamp-Track-Seiten mitlesen",
       "bc.tracksTitle": "Eine Anfrage an Bandcamp pro Track; Credits dort gelten nur für ihren Track",
-      "bc.testPh": "Bandcamp-Album-URL zum Testen",
+      "bc.testPh": "Bandcamp-Album- oder -Track-URL zum Testen",
       "bc.test": "Seite testen",
-      "bc.testBadUrl": "Das ist keine Bandcamp-Album-URL (https://artist.bandcamp.com/album/name).",
+      "bc.testBadUrl": "Das ist keine Bandcamp-Album- oder -Track-URL (https://artist.bandcamp.com/album/name, …/track/name).",
       "bc.testRunning": "Seite wird geladen …",
       "bc.testOk": "Gelesen: „{title}“, {n} Tracks, {lines} Zeilen Credits, {pages} Track-Seiten (über {via}).",
       "err.bandcampData": "Keine Album-Daten gefunden auf {url}.",
@@ -1950,7 +1950,7 @@
       "msg.tracksDiffer": "{src} unterscheidet sich vom MusicBrainz-Release: {what}{list}. Die Tracks werden der Reihe nach zugeordnet – prüfe bei Recording- und Werk-Beziehungen die Trackauswahl.",
       "msg.noCredits": "Auf {src} sind für dieses Release keine Credits eingetragen. Du kannst unten Einträge manuell anlegen.",
       "msg.confirmDiscard": "Die aktuelle Auswahl im Dashboard wird verworfen. Fortfahren?",
-      "msg.badDiscogsId": "Kein Discogs-Release und kein Bandcamp-Album erkannt. Beispiele: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
+      "msg.badDiscogsId": "Kein Discogs-Release und kein Bandcamp-Album oder -Track erkannt. Beispiele: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
       "msg.badMbid": "Keine MBID erkannt. Füge die URL einer MB-Artist-Seite oder die MBID ein.",
       "msg.notArtist": "Diese MBID gehört nicht zu einem Artist.",
       "msg.editorNotReady": "Der Beziehungseditor ist noch nicht bereit. Warte, bis die Seite vollständig geladen ist, und versuche es erneut.",
@@ -2133,7 +2133,7 @@
       "conn.kind.links": "Nur Links",
       "conn.X001": "Liest das Release, seine Tracks, Werke und Beziehungen (Web-Service, Beziehungs-Editor), sucht Artists, Labels, Orte und Gebiete, merkt Beziehungen im Beziehungs-Editor vor und füllt MusicBrainz’ Formulare für neue Einträge vor – es schickt nie ab.",
       "conn.X002": "Liest das verknüpfte Discogs-Release (Credits, Firmen, Notizen, Tracks) und die Aliasse der Artists über Discogs’ API; der Companion zeigt die Release-Seite.",
-      "conn.X003": "Liest die verknüpfte Albumseite und, wenn eingeschaltet, ihre Track-Seiten (Credits, „about“-Text, Tracks); der Companion zeigt sie.",
+      "conn.X003": "Liest die verknüpfte Albumseite (oder Track-Seite) und, wenn eingeschaltet, die Track-Seiten des Albums (Credits, „about“-Text, Tracks); der Companion zeigt sie.",
       "conn.X004.name": "Eingefügter Text",
       "conn.X004": "Ein Credits-Text, den du einfügst (Booklet, Liner Notes, eine Liste der Musiker) – es wird nichts abgerufen.",
       "conn.X005": "Fügt Harmonys „Release Actions“ „Edit relationships with Credits Importer“ hinzu; nach „Enter edit & Credits importieren“ öffnet sich dort der Beziehungs-Editor in einem Hintergrund-Tab.",
@@ -3042,7 +3042,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "Aún no se ha cargado ninguna fuente",
       "source.pick": "Elige una fuente enlazada…",
-      "source.other": "Otra fuente: publicación de Discogs (URL o ID) o URL de un álbum de Bandcamp",
+      "source.other": "Otra fuente: publicación de Discogs (URL o ID) o URL de un álbum o una pista de Bandcamp",
       "source.load": "Cargar",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "Esta publicación aún no está enlazada con Discogs ni Bandcamp. Introduce una URL arriba o pega un texto.",
@@ -3054,7 +3054,7 @@
       "log.aboutOn": "Texto «about» incluido de nuevo (filas de vuelta: {rows}, fechas de vuelta: {dates})",
       "supp.with": "Completar con",
       "supp.text": "Texto…",
-      "supp.urlPh": "u otra: publicación de Discogs (URL o ID) o URL de un álbum de Bandcamp",
+      "supp.urlPh": "u otra: publicación de Discogs (URL o ID) o URL de un álbum o una pista de Bandcamp",
       "supp.urlLoad": "Completar",
       "supp.sameAsLoaded": "Esa ya es la fuente cargada.",
       "supp.textTitle": "Completar la fuente cargada con un texto pegado (libreto, notas…)",
@@ -3114,11 +3114,11 @@
       "srcorder.up": "{src} arriba",
       "srcorder.down": "{src} abajo",
       "srcorder.hint": "Se carga la primera fuente de la lista enlazada con la publicación (digital: todos sus medios son «Digital Media»). Una fuente que eliges tú para una publicación se recuerda y tiene prioridad.",
-      "bc.tracks": "Leer también los créditos de las páginas de pista",
+      "bc.tracks": "Leer también los créditos de las páginas de pista de Bandcamp",
       "bc.tracksTitle": "Una petición a Bandcamp por pista; los créditos allí valen solo para su pista",
-      "bc.testPh": "URL de un álbum de Bandcamp para probar",
+      "bc.testPh": "URL de un álbum o una pista de Bandcamp para probar",
       "bc.test": "Probar página",
-      "bc.testBadUrl": "Eso no es una URL de álbum de Bandcamp (https://artist.bandcamp.com/album/name).",
+      "bc.testBadUrl": "Eso no es una URL de álbum ni de pista de Bandcamp (https://artist.bandcamp.com/album/name, …/track/name).",
       "bc.testRunning": "Cargando la página…",
       "bc.testOk": "Leído: «{title}», {n} pistas, {lines} líneas de créditos, {pages} páginas de pista (mediante {via}).",
       "err.bandcampData": "No se encontraron datos del álbum en {url}.",
@@ -3409,7 +3409,7 @@
       "msg.tracksDiffer": "{src} se diferencia de la publicación de MusicBrainz: {what}{list}. Las pistas se asignan por orden: revisa la selección de pistas en las relaciones de grabación y de obra.",
       "msg.noCredits": "{src} no tiene créditos para esta publicación. Puedes añadir entradas manualmente abajo.",
       "msg.confirmDiscard": "Se descartará la selección actual del panel. ¿Continuar?",
-      "msg.badDiscogsId": "No se reconoce ninguna publicación de Discogs ni álbum de Bandcamp. Ejemplos: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
+      "msg.badDiscogsId": "No se reconoce ninguna publicación de Discogs ni álbum o pista de Bandcamp. Ejemplos: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
       "msg.badMbid": "No se reconoce ningún MBID. Pega la URL de una página de artista de MB o un MBID.",
       "msg.notArtist": "Este MBID no pertenece a un artista.",
       "msg.editorNotReady": "El editor de relaciones aún no está listo. Espera a que la página termine de cargar e inténtalo de nuevo.",
@@ -3592,7 +3592,7 @@
       "conn.kind.links": "Solo enlaces",
       "conn.X001": "Lee la publicación, sus pistas, obras y relaciones (servicio web, editor de relaciones), busca artistas, sellos, lugares y zonas, prepara relaciones en el editor de relaciones y rellena los formularios de MusicBrainz para entradas nuevas; nunca envía nada.",
       "conn.X002": "Lee la publicación de Discogs enlazada (créditos, empresas, notas, pistas) y los alias de los artistas mediante la API de Discogs; el companion muestra la página de la publicación.",
-      "conn.X003": "Lee la página del álbum enlazado y, si está activado, sus páginas de pista (créditos, texto «about», pistas); el companion las muestra.",
+      "conn.X003": "Lee la página del álbum enlazado (o de la pista) y, si está activado, las páginas de pista del álbum (créditos, texto «about», pistas); el companion las muestra.",
       "conn.X004.name": "Texto pegado",
       "conn.X004": "Un texto de créditos que pegas (libreto, notas, una lista de músicos): no se descarga nada.",
       "conn.X005": "Añade «Edit relationships with Credits Importer» a las «Release Actions» de Harmony; tras «Enter edit e importar créditos» el editor de relaciones se abre allí en una pestaña en segundo plano.",
@@ -4501,7 +4501,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "Aucune source chargée pour l’instant",
       "source.pick": "Choisir une source liée…",
-      "source.other": "Autre source : parution Discogs (URL ou ID) ou URL d’un album Bandcamp",
+      "source.other": "Autre source : parution Discogs (URL ou ID) ou URL d’un album ou d’une piste Bandcamp",
       "source.load": "Charger",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "Cette parution n’est pas encore liée à Discogs ni à Bandcamp. Saisissez une URL ci-dessus ou collez un texte.",
@@ -4513,7 +4513,7 @@
       "log.aboutOn": "Texte « about » repris (lignes de retour : {rows}, dates de retour : {dates})",
       "supp.with": "Compléter avec",
       "supp.text": "Texte…",
-      "supp.urlPh": "ou une autre : parution Discogs (URL ou ID) ou URL d’un album Bandcamp",
+      "supp.urlPh": "ou une autre : parution Discogs (URL ou ID) ou URL d’un album ou d’une piste Bandcamp",
       "supp.urlLoad": "Compléter",
       "supp.sameAsLoaded": "C’est déjà la source chargée.",
       "supp.textTitle": "Compléter la source chargée avec un texte collé (livret, notes de pochette…)",
@@ -4573,11 +4573,11 @@
       "srcorder.up": "{src} vers le haut",
       "srcorder.down": "{src} vers le bas",
       "srcorder.hint": "La première source de la liste liée à la parution est chargée (numérique : tous ses supports sont « Digital Media »). Une source que vous choisissez vous-même pour une parution est retenue et passe en premier.",
-      "bc.tracks": "Lire aussi les crédits des pages de piste",
+      "bc.tracks": "Lire aussi les crédits des pages de piste Bandcamp",
       "bc.tracksTitle": "Une requête à Bandcamp par piste ; les crédits qui s’y trouvent ne valent que pour leur piste",
-      "bc.testPh": "URL d’un album Bandcamp à tester",
+      "bc.testPh": "URL d’un album ou d’une piste Bandcamp à tester",
       "bc.test": "Tester la page",
-      "bc.testBadUrl": "Ce n’est pas une URL d’album Bandcamp (https://artist.bandcamp.com/album/name).",
+      "bc.testBadUrl": "Ce n’est pas une URL d’album ou de piste Bandcamp (https://artist.bandcamp.com/album/name, …/track/name).",
       "bc.testRunning": "Chargement de la page…",
       "bc.testOk": "Lu : « {title} », {n} pistes, {lines} lignes de crédits, {pages} pages de piste (via {via}).",
       "err.bandcampData": "Aucune donnée d’album trouvée sur {url}.",
@@ -4868,7 +4868,7 @@
       "msg.tracksDiffer": "{src} diffère de la parution MusicBrainz : {what}{list}. Les pistes sont associées dans l’ordre – vérifiez la sélection des pistes des relations d’enregistrement et d’œuvre.",
       "msg.noCredits": "{src} n’a aucun crédit pour cette parution. Vous pouvez ajouter des entrées manuellement ci-dessous.",
       "msg.confirmDiscard": "La sélection actuelle du tableau sera abandonnée. Continuer ?",
-      "msg.badDiscogsId": "Aucune parution Discogs ni album Bandcamp reconnu. Exemples : https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
+      "msg.badDiscogsId": "Aucune parution Discogs ni album ou piste Bandcamp reconnu. Exemples : https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
       "msg.badMbid": "Aucun MBID reconnu. Collez l’URL d’une page d’artiste MB ou un MBID.",
       "msg.notArtist": "Ce MBID n’appartient pas à un artiste.",
       "msg.editorNotReady": "L’éditeur de relations n’est pas encore prêt. Attendez que la page soit entièrement chargée et réessayez.",
@@ -5051,7 +5051,7 @@
       "conn.kind.links": "Liens seulement",
       "conn.X001": "Lit la parution, ses pistes, œuvres et relations (service web, éditeur de relations), cherche artistes, labels, lieux et régions, prépare les relations dans l’éditeur de relations et préremplit les formulaires de MusicBrainz pour les nouvelles entrées – il ne soumet jamais.",
       "conn.X002": "Lit la parution Discogs liée (crédits, sociétés, notes, pistes) et les alias des artistes via l’API de Discogs ; le companion affiche la page de la parution.",
-      "conn.X003": "Lit la page de l’album lié et, si activé, ses pages de piste (crédits, texte « about », pistes) ; le companion les affiche.",
+      "conn.X003": "Lit la page de l’album lié (ou de la piste) et, si activé, les pages de piste de l’album (crédits, texte « about », pistes) ; le companion les affiche.",
       "conn.X004.name": "Texte collé",
       "conn.X004": "Un texte de crédits que vous collez (livret, notes, une liste de musiciens) – rien n’est téléchargé.",
       "conn.X005": "Ajoute « Edit relationships with Credits Importer » aux « Release Actions » d’Harmony ; après « Enter edit et importer les crédits », l’éditeur de relations s’y ouvre dans un onglet en arrière-plan.",
@@ -8322,12 +8322,18 @@
   // with a link (its Bandcamp page); everything else is found by name, as suggestions.
 
   const BANDCAMP = (() => {
-    const ALBUM_RE = /^https?:\/\/([a-z0-9-]+\.bandcamp\.com)\/album\/([^/?#\s]+)/i;
-    /** "https://band.bandcamp.com/album/name?x" → "https://band.bandcamp.com/album/name" ('' if no album page). */
-    const albumUrl = (u) => {
-      const m = String(u || '').trim().match(ALBUM_RE);
-      return m ? `https://${m[1].toLowerCase()}/album/${m[2]}` : '';
+    // [3.28.1] an album page or a track page (a release of one track, collected item 55)
+    const PAGE_RE = /^https?:\/\/([a-z0-9-]+\.bandcamp\.com)\/(album|track)\/([^/?#\s]+)/i;
+    /**
+     * "https://band.bandcamp.com/album/name?x" → "https://band.bandcamp.com/album/name" ('' if no album page);
+     * [3.28.1] "https://band.bandcamp.com/track/name" the same (a release can be a single track page).
+     */
+    const pageUrl = (u) => {
+      const m = String(u || '').trim().match(PAGE_RE);
+      return m ? `https://${m[1].toLowerCase()}/${m[2].toLowerCase()}/${m[3]}` : '';
     };
+    /** [3.28.1] Whether the address is a track page (its credits are the release's own, no other track pages). */
+    const isTrackPage = (u) => /^https:\/\/[^/]+\/track\//.test(pageUrl(u));
     const bandUrl = (u) => {
       const m = String(u || '').match(/^https?:\/\/([a-z0-9-]+\.bandcamp\.com)/i);
       return m ? `https://${m[1].toLowerCase()}/` : '';
@@ -8501,28 +8507,30 @@
       /** A link is only taken when the name is spelled exactly as in MusicBrainz (else it is a suggestion). */
       strictNames: true,
       urlLinkType: null,
-      albumUrl,
+      pageUrl,
+      isTrackPage,
       pageData,
       toRelease,
       linerNotes,
       urlKey: bandUrl,
       bandPageName,
-      /** Album pages of Bandcamp a MusicBrainz release links to (any link type: purchase, streaming …). */
+      /** Album pages ([3.28.1] and track pages) of Bandcamp a MusicBrainz release links to (any link type: purchase, streaming …). */
       releaseLinks(relations) {
         const links = new Map();
         for (const r of relations || []) {
-          const u = r['target-type'] === 'url' && r.url && albumUrl(r.url.resource);
+          const u = r['target-type'] === 'url' && r.url && pageUrl(r.url.resource);
           if (u && !links.has(u)) links.set(u, { id: u, url: u });
         }
         return [...links.values()];
       },
-      parseReleaseId: albumUrl,
+      parseReleaseId: pageUrl,
       async release(id, ctx) {
         const html = await ctx.httpGet(id);
         const data = pageData(html);
         if (!data || !data.current) throw new Error(tr('err.bandcampData', { url: id }));
         const trackCredits = [];
-        if (ctx.settings.bandcampTracks) {
+        // [3.28.1] a track page is its own only track: its credits are read once, as the release's (no second request)
+        if (ctx.settings.bandcampTracks && !isTrackPage(id)) {
           const origin = bandUrl(id).replace(/\/$/, '');
           for (const t of data.trackinfo || []) {
             let text = '';
@@ -11573,9 +11581,9 @@
     renderSource();
   }
 
-  /** [E2] What the script finds on a Bandcamp album page (to check that it can read Bandcamp in this browser). */
+  /** [E2] What the script finds on a Bandcamp album page ([3.28.1] or track page; to check that it can read Bandcamp in this browser). */
   async function testBandcampPage(input) {
-    const url = BANDCAMP.albumUrl(input);
+    const url = BANDCAMP.pageUrl(input);
     S.bcTest = { url: input, ok: false, text: tr('bc.testBadUrl') };
     if (url) {
       S.bcTest.text = tr('bc.testRunning');
@@ -11584,7 +11592,8 @@
         const data = BANDCAMP.pageData(await httpGet(url));
         if (!data || !data.current) throw new Error(tr('err.bandcampData', { url }));
         const lines = String(data.current.credits || '').split(/\r?\n/).filter((l) => l.trim()).length;
-        const pages = (data.trackinfo || []).filter((t) => t.title_link).length;
+        // [3.28.1] a track page has no other track pages to read
+        const pages = BANDCAMP.isTrackPage(url) ? 0 : (data.trackinfo || []).filter((t) => t.title_link).length;
         S.bcTest = { url: input, ok: true, text: tr('bc.testOk', { title: data.current.title || '?', n: (data.trackinfo || []).length, lines, pages, via: typeof GM_xmlhttpRequest === 'function' ? 'GM_xmlhttpRequest' : 'fetch' }) };
       } catch (e) {
         S.bcTest = { url: input, ok: false, text: e.message };
@@ -20585,7 +20594,7 @@
       case 'discogs-load': {
         // Another source: a Bandcamp album URL, else a Discogs release (URL or ID); remembered for this release
         const input = S.overlay.querySelector('[data-f="discogs-input"]');
-        const bc = BANDCAMP.albumUrl(input.value);
+        const bc = BANDCAMP.pageUrl(input.value);
         const source = bc ? BANDCAMP : DISCOGS;
         const id = bc || DISCOGS.parseReleaseId(input.value);
         if (id) {
@@ -20618,7 +20627,7 @@
       }
       case 'supp-url': {
         const input = S.overlay.querySelector('[data-f="supp-url"]');
-        const bc = BANDCAMP.albumUrl(input.value);
+        const bc = BANDCAMP.pageUrl(input.value);
         const source = bc ? BANDCAMP : DISCOGS;
         const id = bc || DISCOGS.parseReleaseId(input.value);
         if (!id) {
@@ -23060,6 +23069,9 @@
       .dci-set-resetall { align-self: flex-start; }
       .dci-set-pane { flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid #c9c4dd; border-radius: 0 4px 4px 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
       .dci-set-pane .dci-reset { margin: 0; }
+      /* [3.28.1] long texts of a switch wrap with the width of the settings (collected item 74); the box stays at the first line */
+      .dci-set-pane .dci-check { white-space: normal; align-items: baseline; max-width: 100%; }
+      .dci-set-pane .dci-check > input { flex: none; }
       @container (max-width: 560px) {
         .dci-set-wrap { flex-direction: column; gap: calc(var(--u, 1px) * 6); }
         .dci-set-side { flex-direction: row; flex-wrap: wrap; align-items: center; }

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.28.0 | – |
+| 2026-10-24 | 3.22.1 – 3.28.1 | 1.8.4 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -81,6 +81,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.28.1 · COMPANION 1.8.4
+
+#### Added
+
+- **A Bandcamp track page as the release** (collected item 55; maintainer: "bei einem anderen (track-) Import von Bandcamp wurde mir der Button gar nicht erst angezeigt obwohl ein bandcamp link … hinterlegt war. (https://intlanthem.bandcamp.com/track/night-gang-carl-stone-remix)"): a release linked to a track page (`….bandcamp.com/track/…`, a single) is read like an album – its credits, its "about" text, its one track; the page is asked for once. It counts everywhere the album pages did: the button **Enter edit & import credits** in the release editor, the linked sources of the dashboard, Harmony's link, **Other source**, **Supplement with** and **Test page**. A track page of an album is read as the release it is linked as.
+- **COMPANION 1.8.4:** a Bandcamp tab on such a track page is "connected" and has the marks of its credits; "Load the release there" loads it. A track page of an album belongs to the album and to itself.
+
+#### Changed
+
+- **"Read the credits of the Bandcamp track pages too"** (collected item 73; maintainer: "müsste heißen "Read the credits of the Bandcamp track pages too""), in all four languages; the texts about the other source name album or track.
+- **Long texts of the settings wrap** with the width of the dashboard (collected item 74; maintainer: "… braucht an die breite der Darstellung adaptierende Zeilenumbrüche. bei mir geht der satz gerade über das UI hinaus."), e.g. "Release editor: the button “Enter edit & import credits” …"; the box stays at the first line.
+
 
 ### Import 3.28.0
 
