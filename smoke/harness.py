@@ -925,3 +925,11 @@ def open_settings(pg, tab=None):
     if tab:
         pg.click(f'[data-el=settings] .dci-set-tab[data-topic={tab}]')
         pg.wait_for_timeout(150)
+
+
+def nav_switch(pg, attr):
+    """[3.28.0] A switch of the navigation (data-dg-artwork, data-click-toggle, data-keep-marks …): only in ⚙ Settings →
+    Discogs and Bandcamp view now (the bar below "Import credits …" has the status only)."""
+    open_settings(pg, 'discogs')
+    pg.locator(f'[data-el=settings] [{attr}]').evaluate('b => b.click()')
+    pg.wait_for_timeout(150)
