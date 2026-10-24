@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.28.1, Companion 1.6.0 – 1.8.4 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.28.2, Companion 1.6.0 – 1.8.4 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.28.2 · 2026-10-24
+
+Roles in Norwegian, Swedish and Danish, case-only names, an instrument by its last word (collected items 58, 59, 78).
+
+- **Register, tables:** new **`ROLE_TERMS`** (T039: roles `word@no|sv|da` → the English role) and **`ART_TASKS`** (T040: the tasks of an artwork credit → `Design [Logo]`, `Artwork [Art]`, …), indexed by the new **`termIndex(table)`** as **`ROLE_INDEX`**, **`ART_TASK_INDEX`** (`foldWord` as T034). `INSTRUMENT_ALIASES`: `steel drum(s)`, `steel pan(s)` → steelpan.
+- **Rules:** new special rules **S031** (`sourceCreditFor`: only the case differs → `''`), **S032** (`mapRole`: a base in `ROLE_INDEX` is mapped as its English term with `translated`; `repeatedDetails`: a detail in `ROLE_INDEX` whose English role has the row's type counts as repeated; `roleCreditForInner`: `translated` gives no credit with S025 or S032), **S033** (new **`splitArtTasks(role)`**, after `splitEngineerTasks` in `parseRoles` and `groupCredits`: one detail – or a role without details – of artwork tasks joined by og/och/and/und/et/y/&/+, every part in T040, at least two different roles → one role per task with `splitFrom`, `splitBase` and `artTask`; a detail only on a role of the artwork types), **S034** (`caseCredit(text, vocab, { lowerUnknown })`, used for vocal types), **S035** (new **`headNounCands(base, { bare })`** – the words before with the last word's other spellings, then the last word alone – appended by `instrumentCandidates(base, mods, { head })`; **`byHeadNoun(base, primary, mods)`**: found only by the last word alone → `roleCreditForInner` returns the wording in lower case; `isKnownRole` refuses that for a name-like phrase, and takes an artwork credit that `splitArtTasks` splits).
+- **Rows:** `makeRow(…, { artTask })` → `row.artTask` (S019 does not drop its detail: "Artwork [Art]" keeps "art"); `row.dSplitBase` (the role as written at the source) is the `base` of the status items and of the jump payload, so the companion finds the line "Artwork [Logo Og Kunst]".
+- **Tests:** new `t_nordic.py` (Windir-like Discogs credits, the marks of the split line, case-only names and a typed one, "Wood Flute", a pasted text); `register_golden.json` written anew: only instrument candidates were added (the head-noun ones, last), the rules list gained S031 – S035 and T039, T040, the dashboard reads "tenor & soprano sax" now (soprano saxophone through its last word).
+
 
 ## Import 3.28.1 · Companion 1.8.4 · 2026-10-24
 

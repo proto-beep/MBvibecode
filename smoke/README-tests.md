@@ -169,6 +169,9 @@ python3 t_msgs.py         # messages (3.27.3): ✕ on each, "▾ n messages" fol
 python3 t_bctrack.py      # a Bandcamp track page as the release (3.28.1 / companion 1.8.4): loaded from the link, its credits once,
                           # the tab "connected" with marks; a track of an album via "Other source", "Load the release there"; Test page;
                           # the text "… Bandcamp track pages too", long settings texts wrap
+python3 t_nordic.py       # Norwegian, Swedish and Danish roles (3.28.2): no role credit for a translation in brackets or a text, "Artwork
+                          # [Logo Og Kunst]" → design "logo" + artwork "art" (two marks on Discogs), vocals "screams"/"clean", case-only
+                          # names without "credited as" (typed in: kept), "Wood Flute"/"wood flutes" → flute credited so
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error

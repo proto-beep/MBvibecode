@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.28.1 | 1.8.4 |
+| 2026-10-24 | 3.22.1 – 3.28.2 | 1.8.4 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -81,6 +81,20 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.28.2
+
+#### Added
+
+- **Roles in Norwegian, Swedish and Danish** (collected item 58; maintainer: ""Grafisk Utforming" soll niemals role credit werden (norwegisch für graphic design), "Miksa Av" immer mixing engineer, "Produsert Av" immer Producer …" – "Schwedisch und Dänisch auch"): "Miksa av", "Mixad av", "Mixet af", "Produsert av", "Mastering av", "Grafisk utforming" … are read as their English roles, in all sources – in the brackets of Discogs ("Mixed By [Miksa Av]", "Graphics [Grafisk Utforming]", "Producer [Produsert Av]", "Mastered By [Mastering Av]") and as the role of a text ("Miksa av: X"). Such a translation gets no role credit (rule S032, table T039).
+- **Artwork tasks joined by "and"** (item 58; maintainer: "du hast richtig verstanden zwei Rollen, design mit Role Credit „logo" und artwork mit Role Credit „art""): "Artwork [Logo Og Kunst]" (Norwegian: logo and art), "Logo og kunst: X", "Logo and Art" become two rows, design credited "logo" and artwork credited "art"; each says the role as written at the source, and on the Discogs page the line gets both marks (S033, T040).
+- **An instrument by its last word** (collected item 78; maintainer: ""Richard Gilman-Opalsky: Drums, percussion, and wood flutes" -> flute fehlt role credit "wood flutes"" – "ja klein geschrieben und übernehmen."): when MusicBrainz has no instrument of the whole name, its last word is looked for, after every other spelling – "wood flutes" is flute credited "wood flutes", "Wood Flute" flute credited "wood flute", "Soprano Sax" soprano saxophone (S035). "Steel Drums" is the steelpan, not a drum set.
+
+#### Changed
+
+- **Only the case differs: no "credited as"** (collected item 59; maintainer: "primär sind die MB schreibweisen wichtig … bei of, the, a etc. sollen immer die MB standards gelten" – "ja soll so werden sofern auf MB der Artist wirklich "Valfar" genannt wird. es soll natürlich weiterhin möglich sein alles in Capslock zu schreiben sofern das bwusst gewünscht ist"): "Voices Of Wonder" on Discogs for the label Voices of Wonder, a name variation "VALFAR" for Valfar – the field stays empty, MusicBrainz's spelling is used; typed in by hand, it stays (S031).
+- **Kinds of voices in lower case** (item 58; maintainer: ""Screams" etc. klein als role credit"): "Vocals [Screams]" is credited "screams", "Vocals [Clean]" "clean" (S034).
+
 
 ### Import 3.28.1 · COMPANION 1.8.4
 
