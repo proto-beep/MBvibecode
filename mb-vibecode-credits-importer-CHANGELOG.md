@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.22.3 | – |
+| 2026-10-24 | 3.22.1 – 3.23.0 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -80,6 +80,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.23.0
+
+#### Changed
+
+- **"Enter edit & import credits" instead of the tick** (collected item 50; maintainer: "bitte einen ähnlich aussehenden aber farblich unterschiedlichen button neben "enter edit" einführen … und die checkbox weglassen. plus per tastenkombination CTRL+ALT + ENTER (falls möglich). der Button soll im Einstellungsmenü aktivier/deaktivierbar sein." – name and colour: "bitte „Enter edit & import credits“ und Option C (orange gefüllter Knopf)"): in the release editor, right after MusicBrainz's **Enter edit**, a button of the same look in orange submits the edit and then opens **Edit relationships** with the import dashboard, which loads the Discogs release or Bandcamp album – what the tick "open relationship editor and start import dashboard" did. "Enter edit" itself stays a plain "Enter edit". It is there only when the release links to a source the script reads (Discogs, Bandcamp). Its first words are MusicBrainz's own, the rest follows the dashboard language ("Enter edit & Credits importieren").
+- **Ctrl+Alt+Enter** (Mac: Control+Option+Return) does the same, also from the edit note.
+- **⚙ Settings → Sources:** "Release editor: the button “Enter edit & import credits” next to “Enter edit”" (on). Imported with Harmony, the button opens the relationship editor in a background tab as the tick did (setting "Imported with Harmony … background tab", on); with that setting off, or for another tool, the note stays.
+- The tick and its stored value (`dci-after-edit`) are gone.
+
 
 ### Import 3.22.3
 
