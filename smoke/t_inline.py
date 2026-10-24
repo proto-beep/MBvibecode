@@ -1,6 +1,6 @@
 """The dashboard in the page instead of a window: switched in the page bar before opening, placed below the
 import button, the page scrolls with it (dates block and footer stay in view), switched back in the dashboard
-header, remembered after a reload, back to the window with "↺ Defaults"."""
+header, remembered after a reload, back to the window with "↺ Reset all settings …" (⚙ Settings, until 3.24 "↺ Defaults")."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -49,8 +49,8 @@ with sync_playwright() as p:
     pg.click('#dci-open'); pg.wait_for_selector('.dci-inline .dci-pools-head', timeout=30000)
     print('5) nach Neuladen: in der Seite gedrückt', pressed, '| Dashboard in der Seite:', pg.locator('#dci-overlay.dci-inline').count())
     ok5 = pressed == 'true' and pg.locator('#dci-overlay.dci-inline').count() == 1
-    # 6) "↺ Defaults": window again
-    pg.click('[data-act=reset-open]'); pg.click('[data-act=reset-do]'); pg.wait_for_timeout(500)
+    # 6) "↺ Reset all settings …" (⚙ Settings, until 3.24 "↺ Defaults"): window again
+    H.open_reset(pg); pg.click('[data-act=reset-do]'); pg.wait_for_timeout(500)
     print('6) nach ↺ Standard: Fenster', pg.locator('#dci-overlay.dci-inline').count() == 0, '| Seitenleiste:', pg.locator('#dci-launcher [data-place=window]').get_attribute('aria-pressed'))
     ok6 = pg.locator('#dci-overlay.dci-inline').count() == 0 and pg.locator('#dci-launcher [data-place=window]').get_attribute('aria-pressed') == 'true'
     print('Ergebnis:', 'OK' if all([ok1, ok2, ok3, ok4, ok5, ok6]) else 'FEHLER', [ok1, ok2, ok3, ok4, ok5, ok6], '| Fehler:', errs)

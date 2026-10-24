@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.24.1 | – |
+| 2026-10-24 | 3.22.1 – 3.25.0 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -80,6 +80,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.25.0
+
+#### Changed
+
+- **The settings as tabs** (collected item 42; maintainer: "können die einstellungen in einer art tab-system umgebaut werden? auch vertikal möglich wie vielerorts üblich." – "die Einstellungen sollen aufklappbar sein und nur wenn man das Zahnrad anklickt aufklappen/zuklappen. also kein eigenes fenster."): **⚙ Settings** still folds out below the head and only the gear folds it in again (no "Close" inside). The topics are tabs, one below the other on the left – General, Sources, **Texts** (new), Discogs and Bandcamp view, Works, Staging, Dates & tracks, **ⓘ Connections** (new) –, the chosen one on the right with its "↺"; in a narrow dashboard the tabs stand in a row above. The tab chosen last is remembered; ↑ ↓ (← →), Home and End move between the tabs.
+- **Texts:** "Show the web links found next to names in a text at their entries" moved here from Sources, with a button to "Mapping rules", where the rules of the text recognition are listed.
+- **"↺ Defaults" is gone from the head** (collected item 41; maintainer: "der "defaults" button kann auf jeden fall in die einstellungen und muss nicht immer angezeigt werden"): **↺ Reset all settings …** stands below the tabs and asks in the settings, with the two boxes for own rules and the pools as before.
+
+#### Added
+
+- **ⓘ Connections** (collected item 40; maintainer: "bitte alle stellen an denen das script andere userscripts nutzt oder sie referenziert (wie harmony) an einer info stelle sammeln und zu ihren homepages verlinken (i). dies soll auch für zukünftig integrierte scripts/webseiten gelten. Datenquellen wie Discogs oder Bandcamp könnten da auch hinein mit erklärung."): **ⓘ** in the head opens the settings at this tab – MusicBrainz, Discogs, Bandcamp, pasted text, Harmony, the companion, the old "Import Discogs credits", Tampermonkey and Violentmonkey, web profiles, GitHub –, each with its home page, what the script does there, the permissions and since which version. The README has the same table; a test checks that every address of the script belongs to one of them, so a connection added later is listed too.
+
 
 ### Import 3.24.1
 

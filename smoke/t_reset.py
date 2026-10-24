@@ -1,4 +1,4 @@
-"""“↺ Defaults”: all settings back to their defaults (language, text size, switches, matrix and pool options,
+"""“↺ Reset all settings …” (⚙ Settings; until 3.24 “↺ Defaults” in the head): all settings back to their defaults (language, text size, switches, matrix and pool options,
 the cover box on Discogs through the companion); own rules and stored pools only when ticked; the list of
 created works never."""
 import re
@@ -25,7 +25,7 @@ with sync_playwright() as p:
     keys = lambda: pg.evaluate("Object.keys(localStorage).filter(k => k.startsWith('dci-') && !k.startsWith('dci-geom')).sort()")
     print('Vorher:', keys(), '| Titel:', pg.locator('#dci-title').inner_text(), '| Zoom:', pg.locator('[data-el=zoom]').inner_text())
     # 1) settings and own rules, not the pools
-    pg.click('[data-act=reset-open]'); pg.wait_for_timeout(150)
+    H.open_reset(pg); pg.wait_for_timeout(150)
     print('1) Dialog:', re.sub(r'\s+', ' ', pg.locator('[data-el=reset]').inner_text())[:260])
     pg.check('[data-f=reset-rules]')
     pg.click('[data-act=reset-do]'); pg.wait_for_timeout(2500)
@@ -40,7 +40,7 @@ with sync_playwright() as p:
         and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
         and art == [None, None]
     # 2) with the pools: the stored pools of all releases go, the created works stay
-    pg.click('[data-act=reset-open]'); pg.wait_for_timeout(150)
+    H.open_reset(pg); pg.wait_for_timeout(150)
     pg.check('[data-f=reset-pools]')
     pg.click('[data-act=reset-do]'); pg.wait_for_timeout(800)
     print('2) mit Pools:', keys())

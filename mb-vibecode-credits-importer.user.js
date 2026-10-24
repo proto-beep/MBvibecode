@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.24.1
+// @version      3.25.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.24.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.25.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -648,6 +648,35 @@
       "settings.t.works": "Works",
       "settings.t.staging": "Staging",
       "settings.t.dates": "Dates & tracks",
+      "conn.intro": "Where the script works with other sites, tools and userscripts – what it does there and which permissions it asks for. A test checks that every address in the script belongs to one of them.",
+      "conn.th.name": "Name",
+      "conn.th.kind": "Kind",
+      "conn.th.what": "What the script does with it",
+      "conn.th.perms": "Permissions",
+      "conn.th.since": "Since",
+      "conn.kind.site": "Website",
+      "conn.kind.source": "Source",
+      "conn.kind.tool": "Tool",
+      "conn.kind.script": "Userscript",
+      "conn.kind.manager": "Userscript manager",
+      "conn.kind.links": "Links only",
+      "conn.X001": "Reads the release, its tracks, works and relationships (web service, relationship editor), searches artists, labels, places and areas, stages relationships in the relationship editor and prefills MusicBrainz’s forms for new entries – it never submits.",
+      "conn.X002": "Reads the linked Discogs release (credits, companies, notes, tracks) and artists’ aliases through Discogs’ API; the companion shows the release page.",
+      "conn.X003": "Reads the linked album page and, when switched on, its track pages (credits, “about” text, tracks); the companion shows them.",
+      "conn.X004.name": "Pasted text",
+      "conn.X004": "A credits text you paste (booklet, liner notes, a list of musicians) – nothing is fetched.",
+      "conn.X005": "Adds “Edit relationships with Credits Importer” to Harmony’s “Release Actions”; after “Enter edit & import credits” the relationship editor opens there in a background tab.",
+      "conn.X006": "Optional second script on Discogs and Bandcamp: the tab follows the dashboard, status marks, jumps to the source of a credit (through the userscript manager’s shared storage).",
+      "conn.X007": "The old name of this script (until 3.3.0): if it still runs beside it, a warning asks to remove it – both would answer every click.",
+      "conn.X008": "Run the script; their functions read Bandcamp pages (GM_xmlhttpRequest) and open background tabs (GM_openInTab).",
+      "conn.X009.name": "Web profiles (Instagram, SoundCloud, Spotify …)",
+      "conn.X009": "Profiles next to names in a text are kept as links: MusicBrainz is asked for an artist with them, “Create …” fills them in – the profiles themselves are never opened.",
+      "conn.X010": "Home page, issues and updates of the script (@updateURL).",
+      "settings.t.texts": "Texts",
+      "settings.t.connections": "ⓘ Connections",
+      "settings.textsHint": "Pasted texts and the credits texts of Bandcamp. What the text recognition reads (rules T020 – T038) is listed in",
+      "settings.resetAll": "↺ Reset all settings …",
+      "connections.open": "Connections to other sites, tools and scripts (⚙ Settings → ⓘ Connections)",
       "settings.resetTopic": "↺ Defaults of this topic",
       "settings.resetAsk": "Put the settings of “{topic}” back to their defaults?",
       "settings.place": "Dashboard",
@@ -1460,7 +1489,6 @@
       "log.datesMerged": "Dates joined: {a} + {b} → {date}",
       "trackpool.pick": "choose tracks …",
       "trackpool.allMedia": "all media (one group each, {n})",
-      "reset.button": "↺ Defaults",
       "reset.title": "Reset all settings to their defaults",
       "reset.ask": "Reset all settings to their defaults?",
       "reset.what": "Language (English), text size, the dashboard as a window, positions and sizes of the windows, the switches of the navigation (Discogs status, MB release page, cover, hover, click/hover), the options of the footer, “apply automatically”, the folding of “Dates & tracks”, role codes, the log window – and, with the companion, place and folding of the cover on Discogs.",
@@ -2055,6 +2083,35 @@
       "settings.t.works": "Werke",
       "settings.t.staging": "Stagen",
       "settings.t.dates": "Daten & Tracks",
+      "conn.intro": "Wo das Skript mit anderen Seiten, Werkzeugen und Userskripten arbeitet – was es dort tut und welche Berechtigungen es braucht. Ein Test prüft, dass jede Adresse im Skript zu einer davon gehört.",
+      "conn.th.name": "Name",
+      "conn.th.kind": "Art",
+      "conn.th.what": "Was das Skript damit tut",
+      "conn.th.perms": "Berechtigungen",
+      "conn.th.since": "Seit",
+      "conn.kind.site": "Website",
+      "conn.kind.source": "Quelle",
+      "conn.kind.tool": "Werkzeug",
+      "conn.kind.script": "Userskript",
+      "conn.kind.manager": "Skript-Manager",
+      "conn.kind.links": "Nur Links",
+      "conn.X001": "Liest das Release, seine Tracks, Werke und Beziehungen (Web-Service, Beziehungs-Editor), sucht Artists, Labels, Orte und Gebiete, merkt Beziehungen im Beziehungs-Editor vor und füllt MusicBrainz’ Formulare für neue Einträge vor – es schickt nie ab.",
+      "conn.X002": "Liest das verknüpfte Discogs-Release (Credits, Firmen, Notizen, Tracks) und die Aliasse der Artists über Discogs’ API; der Companion zeigt die Release-Seite.",
+      "conn.X003": "Liest die verknüpfte Albumseite und, wenn eingeschaltet, ihre Track-Seiten (Credits, „about“-Text, Tracks); der Companion zeigt sie.",
+      "conn.X004.name": "Eingefügter Text",
+      "conn.X004": "Ein Credits-Text, den du einfügst (Booklet, Liner Notes, eine Liste der Musiker) – es wird nichts abgerufen.",
+      "conn.X005": "Fügt Harmonys „Release Actions“ „Edit relationships with Credits Importer“ hinzu; nach „Enter edit & Credits importieren“ öffnet sich dort der Beziehungs-Editor in einem Hintergrund-Tab.",
+      "conn.X006": "Optionales zweites Skript auf Discogs und Bandcamp: der Tab folgt dem Dashboard, Status-Marken, Sprung zur Quelle eines Credits (über den gemeinsamen Speicher des Skript-Managers).",
+      "conn.X007": "Der alte Name dieses Skripts (bis 3.3.0): läuft es noch daneben, bittet eine Warnung, es zu entfernen – beide würden jeden Klick beantworten.",
+      "conn.X008": "Führen das Skript aus; ihre Funktionen lesen Bandcamp-Seiten (GM_xmlhttpRequest) und öffnen Hintergrund-Tabs (GM_openInTab).",
+      "conn.X009.name": "Web-Profile (Instagram, SoundCloud, Spotify …)",
+      "conn.X009": "Profile hinter Namen in einem Text bleiben als Links: MusicBrainz wird nach einem Artist damit gefragt, „… anlegen“ trägt sie ein – die Profile selbst werden nie geöffnet.",
+      "conn.X010": "Homepage, Fehlermeldungen und Updates des Skripts (@updateURL).",
+      "settings.t.texts": "Texte",
+      "settings.t.connections": "ⓘ Verbindungen",
+      "settings.textsHint": "Eingefügte Texte und die Credits-Texte von Bandcamp. Was die Texterkennung liest (Regeln T020 – T038), steht in",
+      "settings.resetAll": "↺ Alle Einstellungen zurücksetzen …",
+      "connections.open": "Verbindungen zu anderen Seiten, Werkzeugen und Skripten (⚙ Einstellungen → ⓘ Verbindungen)",
       "settings.resetTopic": "↺ Standard für dieses Thema",
       "settings.resetAsk": "Die Einstellungen von „{topic}“ wirklich auf den Standard zurücksetzen?",
       "settings.place": "Dashboard",
@@ -2867,7 +2924,6 @@
       "log.datesMerged": "Daten zusammengeführt: {a} + {b} → {date}",
       "trackpool.pick": "Tracks auswählen …",
       "trackpool.allMedia": "alle Medien (je eine Gruppe, {n})",
-      "reset.button": "↺ Standard",
       "reset.title": "Alle Einstellungen auf Standard zurücksetzen",
       "reset.ask": "Alle Einstellungen auf Standard zurücksetzen?",
       "reset.what": "Sprache (Englisch), Textgröße, das Dashboard als Fenster, Position und Größe der Fenster, die Schalter der Navigation (Discogs-Status, MB-Release-Seite, Cover, Hover, Klick/Hover), die Optionen der Fußzeile, „automatisch anwenden“, das Einklappen von „Daten & Tracks“, Rollen-Codes, das Protokollfenster – und mit dem Companion Position und Einklappen des Covers auf Discogs.",
@@ -3462,6 +3518,35 @@
       "settings.t.works": "Obras",
       "settings.t.staging": "Preparar",
       "settings.t.dates": "Fechas y pistas",
+      "conn.intro": "Dónde trabaja el script con otros sitios, herramientas y userscripts: qué hace allí y qué permisos pide. Una prueba comprueba que cada dirección del script pertenece a uno de ellos.",
+      "conn.th.name": "Nombre",
+      "conn.th.kind": "Tipo",
+      "conn.th.what": "Qué hace el script con ello",
+      "conn.th.perms": "Permisos",
+      "conn.th.since": "Desde",
+      "conn.kind.site": "Sitio web",
+      "conn.kind.source": "Fuente",
+      "conn.kind.tool": "Herramienta",
+      "conn.kind.script": "Userscript",
+      "conn.kind.manager": "Gestor de userscripts",
+      "conn.kind.links": "Solo enlaces",
+      "conn.X001": "Lee la publicación, sus pistas, obras y relaciones (servicio web, editor de relaciones), busca artistas, sellos, lugares y zonas, prepara relaciones en el editor de relaciones y rellena los formularios de MusicBrainz para entradas nuevas; nunca envía nada.",
+      "conn.X002": "Lee la publicación de Discogs enlazada (créditos, empresas, notas, pistas) y los alias de los artistas mediante la API de Discogs; el companion muestra la página de la publicación.",
+      "conn.X003": "Lee la página del álbum enlazado y, si está activado, sus páginas de pista (créditos, texto «about», pistas); el companion las muestra.",
+      "conn.X004.name": "Texto pegado",
+      "conn.X004": "Un texto de créditos que pegas (libreto, notas, una lista de músicos): no se descarga nada.",
+      "conn.X005": "Añade «Edit relationships with Credits Importer» a las «Release Actions» de Harmony; tras «Enter edit e importar créditos» el editor de relaciones se abre allí en una pestaña en segundo plano.",
+      "conn.X006": "Segundo script opcional en Discogs y Bandcamp: la pestaña sigue al panel, marcas de estado, salto a la fuente de un crédito (mediante el almacenamiento compartido del gestor de userscripts).",
+      "conn.X007": "El nombre antiguo de este script (hasta 3.3.0): si todavía funciona a su lado, un aviso pide quitarlo; ambos responderían a cada clic.",
+      "conn.X008": "Ejecutan el script; sus funciones leen páginas de Bandcamp (GM_xmlhttpRequest) y abren pestañas en segundo plano (GM_openInTab).",
+      "conn.X009.name": "Perfiles web (Instagram, SoundCloud, Spotify…)",
+      "conn.X009": "Los perfiles tras nombres en un texto se guardan como enlaces: se pregunta a MusicBrainz por un artista con ellos y «Crear…» los rellena; los perfiles nunca se abren.",
+      "conn.X010": "Página de inicio, incidencias y actualizaciones del script (@updateURL).",
+      "settings.t.texts": "Textos",
+      "settings.t.connections": "ⓘ Conexiones",
+      "settings.textsHint": "Textos pegados y los textos de créditos de Bandcamp. Lo que lee el reconocimiento de texto (reglas T020 – T038) está en",
+      "settings.resetAll": "↺ Restablecer todos los ajustes…",
+      "connections.open": "Conexiones con otros sitios, herramientas y scripts (⚙ Ajustes → ⓘ Conexiones)",
       "settings.resetTopic": "↺ Valores por defecto de este tema",
       "settings.resetAsk": "¿Restablecer de verdad los ajustes de «{topic}»?",
       "settings.place": "Panel",
@@ -4274,7 +4359,6 @@
       "log.datesMerged": "Fechas unidas: {a} + {b} → {date}",
       "trackpool.pick": "elegir pistas …",
       "trackpool.allMedia": "todos los medios (un grupo cada uno, {n})",
-      "reset.button": "↺ Valores por defecto",
       "reset.title": "Restablecer todos los ajustes a sus valores por defecto",
       "reset.ask": "¿Restablecer todos los ajustes a sus valores por defecto?",
       "reset.what": "Idioma (inglés), tamaño del texto, el panel como ventana, posición y tamaño de las ventanas, los interruptores de la navegación (estado en Discogs, página de la publicación en MB, portada, hover, clic/hover), las opciones del pie, «aplicar automáticamente», el plegado de «Fechas y pistas», códigos de función, la ventana del registro – y, con el complemento, posición y plegado de la portada en Discogs.",
@@ -4869,6 +4953,35 @@
       "settings.t.works": "Œuvres",
       "settings.t.staging": "Préparation",
       "settings.t.dates": "Dates et pistes",
+      "conn.intro": "Où le script travaille avec d’autres sites, outils et userscripts – ce qu’il y fait et quelles autorisations il demande. Un test vérifie que chaque adresse du script appartient à l’un d’eux.",
+      "conn.th.name": "Nom",
+      "conn.th.kind": "Type",
+      "conn.th.what": "Ce que le script en fait",
+      "conn.th.perms": "Autorisations",
+      "conn.th.since": "Depuis",
+      "conn.kind.site": "Site web",
+      "conn.kind.source": "Source",
+      "conn.kind.tool": "Outil",
+      "conn.kind.script": "Userscript",
+      "conn.kind.manager": "Gestionnaire de userscripts",
+      "conn.kind.links": "Liens seulement",
+      "conn.X001": "Lit la parution, ses pistes, œuvres et relations (service web, éditeur de relations), cherche artistes, labels, lieux et régions, prépare les relations dans l’éditeur de relations et préremplit les formulaires de MusicBrainz pour les nouvelles entrées – il ne soumet jamais.",
+      "conn.X002": "Lit la parution Discogs liée (crédits, sociétés, notes, pistes) et les alias des artistes via l’API de Discogs ; le companion affiche la page de la parution.",
+      "conn.X003": "Lit la page de l’album lié et, si activé, ses pages de piste (crédits, texte « about », pistes) ; le companion les affiche.",
+      "conn.X004.name": "Texte collé",
+      "conn.X004": "Un texte de crédits que vous collez (livret, notes, une liste de musiciens) – rien n’est téléchargé.",
+      "conn.X005": "Ajoute « Edit relationships with Credits Importer » aux « Release Actions » d’Harmony ; après « Enter edit et importer les crédits », l’éditeur de relations s’y ouvre dans un onglet en arrière-plan.",
+      "conn.X006": "Second script facultatif sur Discogs et Bandcamp : l’onglet suit le tableau de bord, marques d’état, saut vers la source d’un crédit (via le stockage partagé du gestionnaire de userscripts).",
+      "conn.X007": "L’ancien nom de ce script (jusqu’à 3.3.0) : s’il tourne encore à côté, un avertissement demande de le retirer – les deux répondraient à chaque clic.",
+      "conn.X008": "Exécutent le script ; leurs fonctions lisent les pages Bandcamp (GM_xmlhttpRequest) et ouvrent des onglets en arrière-plan (GM_openInTab).",
+      "conn.X009.name": "Profils web (Instagram, SoundCloud, Spotify…)",
+      "conn.X009": "Les profils après des noms dans un texte sont gardés comme liens : MusicBrainz est interrogé pour un artiste qui les a, « Créer… » les remplit – les profils eux-mêmes ne sont jamais ouverts.",
+      "conn.X010": "Page d’accueil, signalements et mises à jour du script (@updateURL).",
+      "settings.t.texts": "Textes",
+      "settings.t.connections": "ⓘ Connexions",
+      "settings.textsHint": "Textes collés et textes de crédits de Bandcamp. Ce que lit la reconnaissance du texte (règles T020 – T038) figure dans",
+      "settings.resetAll": "↺ Réinitialiser tous les réglages…",
+      "connections.open": "Connexions avec d’autres sites, outils et scripts (⚙ Réglages → ⓘ Connexions)",
       "settings.resetTopic": "↺ Valeurs par défaut de ce thème",
       "settings.resetAsk": "Remettre vraiment les réglages de « {topic} » aux valeurs par défaut ?",
       "settings.place": "Tableau de bord",
@@ -5681,7 +5794,6 @@
       "log.datesMerged": "Dates réunies : {a} + {b} → {date}",
       "trackpool.pick": "choisir des plages …",
       "trackpool.allMedia": "tous les supports (un groupe chacun, {n})",
-      "reset.button": "↺ Par défaut",
       "reset.title": "Remettre tous les réglages par défaut",
       "reset.ask": "Remettre tous les réglages par défaut ?",
       "reset.what": "Langue (anglais), taille du texte, le tableau en fenêtre, position et taille des fenêtres, les interrupteurs de la navigation (statut Discogs, page de la parution MB, pochette, survol, clic/survol), les options du pied de page, « appliquer automatiquement », le repli de « Dates et plages », codes de rôle, la fenêtre du journal – et, avec le complément, position et repli de la pochette sur Discogs.",
@@ -8642,6 +8754,28 @@
 
   const toQuery = (params) => params.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
 
+  /**
+   * [3.25.0] Every site, tool and userscript the script works with (collected item 40) – shown in ⚙ Settings → "ⓘ
+   * Connections" and in the README; t_connections.py checks that each address of the script's header and code belongs to
+   * one of them (hosts). A new connection comes here first. What each does: the texts conn.<id>.
+   */
+  const CONNECTIONS = [
+    { id: 'X001', kind: 'site', name: 'MusicBrainz', home: 'https://musicbrainz.org/', hosts: ['musicbrainz.org'], perms: '@match …musicbrainz.org/release/* · unsafeWindow', since: '0.1.0' },
+    { id: 'X002', kind: 'source', name: 'Discogs', home: 'https://www.discogs.com', hosts: ['discogs.com'], perms: '–', since: '0.1.0' },
+    { id: 'X003', kind: 'source', name: 'Bandcamp', home: 'https://bandcamp.com/', hosts: ['bandcamp.com'], perms: '@connect bandcamp.com · GM_xmlhttpRequest', since: '3.3.0' },
+    { id: 'X004', kind: 'source', name: '', home: '', hosts: [], perms: '–', since: '3.2.0' },
+    { id: 'X005', kind: 'tool', name: 'Harmony', home: 'https://harmony.pulsewidth.org.uk/', hosts: ['harmony.pulsewidth.org.uk'], perms: '@match harmony.pulsewidth.org.uk/release/actions* · GM_openInTab', since: '3.19.1' },
+    { id: 'X006', kind: 'script', name: 'MB x Vibecode: Credits Importer Companion', home: 'https://github.com/proto-beep/MBvibecode', hosts: [], perms: '–', since: '0.3.0' },
+    { id: 'X007', kind: 'script', name: 'MB x Vibecode: Import Discogs credits', home: '', hosts: [], perms: '–', since: '3.3.2' },
+    { id: 'X008', kind: 'manager', name: 'Tampermonkey', home: 'https://www.tampermonkey.net/', more: [{ name: 'Violentmonkey', home: 'https://violentmonkey.github.io/' }],
+      hosts: ['tampermonkey.net', 'violentmonkey.github.io'],
+      perms: 'GM_xmlhttpRequest · GM_openInTab · unsafeWindow', since: '0.1.0' },
+    { id: 'X009', kind: 'links', name: '', home: '', perms: '–', since: '3.21.0',
+      hosts: ['instagram.com', 'facebook.com', 'twitter.com', 'x.com', 'soundcloud.com', 'youtube.com', 'tiktok.com', 'bsky.app', 'threads.com', 'threads.net', 'mixcloud.com',
+        'vimeo.com', 'myspace.com', 'open.spotify.com', 'music.apple.com', 'deezer.com', 'tidal.com', 'music.youtube.com', 'qobuz.com', 'music.amazon.*', 'linktr.ee'] },
+    { id: 'X010', kind: 'site', name: 'GitHub', home: 'https://github.com/proto-beep/MBvibecode', hosts: ['github.com', 'raw.githubusercontent.com'], perms: '@updateURL · @downloadURL', since: '0.9.2' },
+  ];
+
   if (IS_NODE_TEST) {
     module.exports = {
       splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
@@ -8653,7 +8787,7 @@
       isPlaceholderTitle: (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || '')),
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
-      titleWordsOf, titlesFit, trackFit,
+      titleWordsOf, titlesFit, trackFit, CONNECTIONS,
     };
     return;
   }
@@ -9535,7 +9669,8 @@
     artistWorkTargets: new Map(),
     artistWorksSpecialLogged: new Set(),
     settingsOpen: false,
-    settingsTopics: new Set(),
+    // [3.25.0] the tab of the settings (remembered); [3.16.0 – 3.24] a set of open topics
+    settingsTab: 'general',
     awStoreCount: null,
     workOptions: null,
     workDefaults: { typeId: '', languageIds: [] },
@@ -19936,9 +20071,8 @@
       // [3.16.0] the menu "Settings"
       case 'settings-open':
         S.settingsOpen = !S.settingsOpen;
+        S.resetOpen = false;
         if (S.settingsOpen) {
-          S.resetOpen = false;
-          renderReset();
           awCount().then((n) => {
             S.awStoreCount = n || 0;
             renderSettings();
@@ -19948,12 +20082,23 @@
         if (S.settingsOpen) $('settings').scrollIntoView({ block: 'nearest' });
         break;
       case 'settings-topic': {
-        const t = btn.dataset.topic;
-        if (S.settingsTopics.has(t)) S.settingsTopics.delete(t);
-        else S.settingsTopics.add(t);
+        // [3.25.0] a tab: its topic (remembered)
+        S.settingsTab = btn.dataset.topic;
+        S.resetOpen = false;
+        writeJson('localStorage', SETTINGS_TAB_KEY, S.settingsTab === 'general' ? null : S.settingsTab);
         renderSettings();
+        const tabBtn = $('settings').querySelector(`[data-act="settings-topic"][data-topic="${S.settingsTab}"]`);
+        if (tabBtn) tabBtn.focus();
         break;
       }
+      case 'connections-open':
+        // [3.25.0] the ⓘ in the head: the settings at the tab "Connections"
+        S.settingsOpen = true;
+        S.resetOpen = false;
+        S.settingsTab = 'connections';
+        renderSettings();
+        $('settings').scrollIntoView({ block: 'nearest' });
+        break;
       case 'settings-reset':
         if (confirm(tr('settings.resetAsk', { topic: tr(`settings.t.${btn.dataset.topic}`) }))) resetTopic(btn.dataset.topic);
         break;
@@ -19969,18 +20114,23 @@
         break;
       }
       // "Reset all to default"
-      case 'reset-open':
+      case 'reset-open': {
+        // [3.25.0] in the settings, below the tabs (item 41)
         S.resetOpen = !S.resetOpen;
-        if (S.resetOpen && S.settingsOpen) {
-          S.settingsOpen = false;
-          renderSettings();
-        }
+        S.resetRules = false;
+        S.resetPools = false;
         renderReset();
+        const cancel = S.resetOpen && $('settings').querySelector('[data-act="reset-cancel"]');
+        if (cancel) cancel.focus();
         break;
-      case 'reset-cancel':
+      }
+      case 'reset-cancel': {
         S.resetOpen = false;
         renderReset();
+        const back = $('settings') && $('settings').querySelector('[data-act="reset-open"]');
+        if (back) back.focus();
         break;
+      }
       case 'reset-do': {
         const box = (f) => { const el = S.overlay.querySelector(`[data-f="${f}"]`); return !!(el && el.checked); };
         resetSettings({ rules: box('reset-rules'), pools: box('reset-pools') });
@@ -20676,6 +20826,16 @@
   }
 
   function onKeydown(e) {
+    // [3.25.0] the tabs of the settings: arrows, Home, End
+    const tabBtn = e.target.closest && e.target.closest('.dci-set-tab');
+    if (tabBtn && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+      const all = [...tabBtn.parentElement.querySelectorAll('.dci-set-tab')];
+      const i = all.indexOf(tabBtn);
+      const to = e.key === 'Home' ? 0 : e.key === 'End' ? all.length - 1 : (i + (['ArrowUp', 'ArrowLeft'].includes(e.key) ? -1 : 1) + all.length) % all.length;
+      e.preventDefault();
+      all[to].click();
+      return;
+    }
     if (e.key !== 'Enter') return;
     const f = e.target.dataset && e.target.dataset.f;
     const map = {
@@ -20904,7 +21064,7 @@
             </span>
             <button type="button" class="dci-headbtn" data-act="place-toggle" title="${esc(tr(inPage() ? 'place.toWindowTitle' : 'place.toPageTitle'))}">${esc(tr(inPage() ? 'place.toWindow' : 'place.toPage'))}</button>
             <button type="button" class="dci-headbtn" data-act="settings-open" aria-expanded="false" title="${esc(tr('settings.buttonTitle'))}">${esc(tr('settings.button'))}</button>
-            <button type="button" class="dci-headbtn" data-act="reset-open" aria-expanded="false" title="${esc(tr('reset.title'))}">${esc(tr('reset.button'))}</button>
+            <button type="button" class="dci-headbtn" data-act="connections-open" title="${esc(tr('connections.open'))}" aria-label="${esc(tr('connections.open'))}">ⓘ</button>
             <button type="button" class="dci-headbtn" data-act="window-reset" title="${esc(tr('window.reset'))}" aria-label="${esc(tr('window.reset'))}">⤢</button>
             <button type="button" class="dci-headbtn" data-act="rules">${esc(tr('rules.title'))}</button>
             <button type="button" class="dci-headbtn" data-act="log">${esc(tr('log.title'))}</button>
@@ -20912,7 +21072,6 @@
           </div>
         </header>
         <div class="dci-body" data-el="body">
-          <div class="dci-reset" data-el="reset" role="dialog" aria-label="${esc(tr('reset.title'))}" hidden></div>
           <div class="dci-settings" data-el="settings" role="region" aria-label="${esc(tr('settings.title'))}" hidden></div>
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
           <div class="dci-msgs" data-el="msgs" aria-live="polite"></div>
@@ -21147,16 +21306,21 @@
   // --- "Defaults": all settings back to the defaults --------------------------------------------
 
   // --- [3.16.0] The menu "Settings": all settings in one place, by topic (the switches stay where they are too) ----------
-  const SETTING_TOPICS = ['general', 'sources', 'discogs', 'works', 'staging', 'dates'];
+  // [3.25.0] tabs (collected item 42): "Texts" and "ⓘ Connections" (item 40) new
+  const SETTING_TOPICS = ['general', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections'];
+  const SETTINGS_TAB_KEY = 'dci-settings-tab';
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-scale', 'dci-place', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-weblinks-show'],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
+    texts: ['dci-weblinks-show'],
+    connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap'],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
   };
+  S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   /** Settings the menu shares with switches elsewhere in the dashboard (data-f → the value they show). */
   const SHARED_SWITCHES = {
     'fill-credits': () => S.fillCredits, 'stage-cap': () => S.capOn, 'bc-tracks': () => S.bcTracks, 'dm-auto': () => S.dmAuto,
@@ -21188,9 +21352,15 @@
         // [3.19.2] the release editor and, imported with Harmony, the background tab; [3.23.0] the button instead of the tick
         row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false, tr('settings.afterEdit'))),
         row(check('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'))),
+      ],
+      // [3.25.0] pasted texts and the credits texts of Bandcamp
+      texts: () => [
         // [3.21.3] web profiles next to names in a text
         row(check('data-set="weblinks-show"', S.webLinksShow, tr('settings.webLinksShow'), tr('settings.webLinksShowTitle'))),
+        `<p class="dci-sub">${esc(tr('settings.textsHint'))} <button type="button" class="dci-textbtn" data-act="rules">${esc(tr('rules.title'))}</button></p>`,
       ],
+      // [3.25.0] where the script connects to other sites, tools and scripts (item 40)
+      connections: () => [connectionsHtml()],
       discogs: () => [row(syncModeHtml()), `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`],
       works: () => [
         row(check('data-set="aw-on"', S.awOn, tr('settings.awOn'))),
@@ -21214,17 +21384,47 @@
         row(check('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'))),
       ],
     };
-    const topic = (key) => {
-      const open = S.settingsTopics.has(key);
-      return `<div class="dci-set-topic" data-topic="${key}">
-        <button type="button" class="dci-textbtn dci-set-tgl" data-act="settings-topic" data-topic="${key}" aria-expanded="${open}">${open ? '▾' : '▸'} ${esc(tr(`settings.t.${key}`))}</button>
-        ${open ? `<div class="dci-set-body">${bodies[key]().join('')}
-          <div class="dci-set-reset"><button type="button" class="dci-textbtn" data-act="settings-reset" data-topic="${key}">${esc(tr('settings.resetTopic'))}</button></div></div>` : ''}
+    // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
+    const tab = SETTING_TOPICS.includes(S.settingsTab) ? S.settingsTab : 'general';
+    const tabs = SETTING_TOPICS.map((key) => {
+      const sel = !S.resetOpen && key === tab;
+      return `<button type="button" role="tab" class="dci-set-tab" id="dci-set-tab-${key}" data-act="settings-topic" data-topic="${key}" aria-selected="${sel}"
+        aria-controls="dci-set-pane" tabindex="${sel || (S.resetOpen && key === tab) ? 0 : -1}">${esc(tr(`settings.t.${key}`))}</button>`;
+    }).join('');
+    const pane = S.resetOpen ? resetHtml()
+      : `${bodies[tab]().join('')}${TOPIC_KEYS[tab].length ? `<div class="dci-set-reset"><button type="button" class="dci-textbtn" data-act="settings-reset" data-topic="${tab}">${esc(tr('settings.resetTopic'))}</button></div>` : ''}`;
+    return `<div class="dci-set-head"><strong>${esc(tr('settings.title'))}</strong> <span class="dci-sub">${esc(tr('settings.hint'))}</span></div>
+      <div class="dci-set-wrap">
+        <div class="dci-set-side">
+          <div class="dci-set-tabs" role="tablist" aria-orientation="vertical" aria-label="${esc(tr('settings.title'))}">${tabs}</div>
+          <button type="button" class="dci-textbtn dci-set-resetall" data-act="reset-open" aria-expanded="${!!S.resetOpen}" title="${esc(tr('reset.title'))}">${esc(tr('settings.resetAll'))}</button>
+        </div>
+        <div class="dci-set-pane" id="dci-set-pane" ${S.resetOpen ? 'role="group"' : `role="tabpanel" aria-labelledby="dci-set-tab-${tab}"`}>${pane}</div>
       </div>`;
-    };
-    return `<div class="dci-set-head"><strong>${esc(tr('settings.title'))}</strong> <span class="dci-sub">${esc(tr('settings.hint'))}</span>
-        <button type="button" class="dci-textbtn" data-act="settings-open">${esc(tr('common.close'))}</button></div>
-      ${SETTING_TOPICS.map(topic).join('')}`;
+  }
+
+  /** [3.25.0] The question "Reset all settings" in the settings (item 41; before 3.25.0 a box of its own from "↺ Defaults" in the head). */
+  function resetHtml() {
+    return `<div class="dci-reset" data-el="reset" role="group" aria-label="${esc(tr('reset.title'))}"><strong>${esc(tr('reset.ask'))}</strong>
+      <p class="dci-sub">${esc(tr('reset.what'))}</p>
+      <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, off: rulesOff().size }))}</label>
+      <label class="dci-check"><input type="checkbox" data-f="reset-pools" ${S.resetPools ? 'checked' : ''}> ${esc(tr('reset.pools'))}</label>
+      <p class="dci-sub">${esc(tr('reset.never'))}</p>
+      <div class="dci-mbdate-tools">
+        <button type="button" class="dci-small" data-act="reset-do">${esc(tr('reset.do'))}</button>
+        <button type="button" class="dci-textbtn" data-act="reset-cancel">${esc(tr('common.cancel'))}</button>
+      </div></div>`;
+  }
+
+  /** [3.25.0] The tab "ⓘ Connections" (item 40): every site, tool and script the script works with (CONNECTIONS). */
+  function connectionsHtml() {
+    const link = (c) => (c.home ? `<a href="${esc(c.home)}" target="_blank" rel="noopener">${esc(c.name || tr(`conn.${c.id}.name`))}</a>` : esc(c.name || tr(`conn.${c.id}.name`)));
+    return `<p class="dci-sub">${esc(tr('conn.intro'))}</p>
+      <div class="dci-tablewrap"><table class="dci-conn">
+        <thead><tr><th>${esc(tr('conn.th.name'))}</th><th>${esc(tr('conn.th.kind'))}</th><th>${esc(tr('conn.th.what'))}</th><th>${esc(tr('conn.th.perms'))}</th><th>${esc(tr('conn.th.since'))}</th></tr></thead>
+        <tbody>${CONNECTIONS.map((c) => `<tr data-conn="${c.id}"><td>${link(c)}${(c.more || []).map((m) => ` · <a href="${esc(m.home)}" target="_blank" rel="noopener">${esc(m.name)}</a>`).join('')}</td>
+          <td>${esc(tr(`conn.kind.${c.kind}`))}</td><td>${esc(tr(`conn.${c.id}`))}</td><td><code>${esc(c.perms)}</code></td><td>${esc(c.since)}</td></tr>`).join('')}</tbody>
+      </table></div>`;
   }
 
   /** The menu, drawn anew (the field being used keeps the focus). */
@@ -21239,7 +21439,9 @@
       return;
     }
     const active = document.activeElement;
-    const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]` : active.dataset.f ? `[data-f="${active.dataset.f}"]` : '') : '';
+    // [3.25.0] also a button (a tab, "Cancel"): the focus stays where it was
+    const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]` : active.dataset.f ? `[data-f="${active.dataset.f}"]`
+      : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.topic ? `[data-topic="${active.dataset.topic}"]` : ''}` : '') : '';
     el.innerHTML = settingsHtml();
     const again = key && el.querySelector(key);
     if (again) again.focus();
@@ -21258,6 +21460,9 @@
 
   /** After a click or a change anywhere in the dashboard: the menu and the shared switches follow (after all handlers ran). */
   function settingsAfterEvent(e) {
+    // [3.25.0] the two boxes of "Reset all settings" are kept when the settings are drawn anew
+    if (e.type === 'change' && e.target.dataset && e.target.dataset.f === 'reset-rules') S.resetRules = e.target.checked;
+    if (e.type === 'change' && e.target.dataset && e.target.dataset.f === 'reset-pools') S.resetPools = e.target.checked;
     if (e.type === 'click' && e.target.closest && e.target.closest('input, select, textarea')) return;
     setTimeout(() => {
       syncSharedSwitches();
@@ -21332,8 +21537,11 @@
       if (S.place !== 'window') setPlace('window');
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'sources') {
-      Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true, webLinksShow: false });
+      Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
+    } else if (t === 'texts') {
+      // [3.25.0] the web links next to names moved here from "Sources"
+      S.webLinksShow = false;
       renderGroups();
     } else if (t === 'discogs') {
       Object.assign(S, { syncMode: 'click', dgStatus: true, dgHover: true, dgRelease: true, dgArtwork: true, clickToggle: true, keepMarks: false });
@@ -21362,28 +21570,13 @@
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show'];
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
+    SETTINGS_TAB_KEY];
 
+  /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
-    if (!S.overlay) return;
-    const el = $('reset');
-    const btn = S.overlay.querySelector('[data-act="reset-open"]');
-    if (btn) btn.setAttribute('aria-expanded', String(!!S.resetOpen));
-    el.hidden = !S.resetOpen;
-    if (!S.resetOpen) {
-      el.innerHTML = '';
-      return;
-    }
-    el.innerHTML = `<strong>${esc(tr('reset.ask'))}</strong>
-      <p class="dci-sub">${esc(tr('reset.what'))}</p>
-      <label class="dci-check"><input type="checkbox" data-f="reset-rules"> ${esc(tr('reset.rules', { n: userRules().length, off: rulesOff().size }))}</label>
-      <label class="dci-check"><input type="checkbox" data-f="reset-pools"> ${esc(tr('reset.pools'))}</label>
-      <p class="dci-sub">${esc(tr('reset.never'))}</p>
-      <div class="dci-mbdate-tools">
-        <button type="button" class="dci-small" data-act="reset-do">${esc(tr('reset.do'))}</button>
-        <button type="button" class="dci-textbtn" data-act="reset-cancel">${esc(tr('common.cancel'))}</button>
-      </div>`;
-    el.querySelector('[data-act="reset-cancel"]').focus();
+    if (S.resetOpen) S.settingsOpen = true;
+    renderSettings();
   }
 
   /**
@@ -21397,7 +21590,7 @@
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
-      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false,
+      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general',
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -21407,7 +21600,7 @@
     if (rules) {
       userRulesCache = [];
       rulesOffCache = new Set();
-      applyRulesChange(tr('reset.button'));
+      applyRulesChange(tr('reset.title'));
       writeJson('localStorage', USER_RULES_KEY, null);
       writeJson('localStorage', RULES_OFF_KEY, null);
     }
@@ -22287,10 +22480,30 @@
         border-radius: 3px; background: #faf9fd; }
       .dci-settings[hidden] { display: none; }
       .dci-set-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); margin-bottom: calc(var(--u, 1px) * 6); }
-      .dci-set-head [data-act="settings-open"] { margin-left: auto; }
-      .dci-set-topic { border-top: 1px solid #e4e1ee; padding: calc(var(--u, 1px) * 4) 0; }
-      .dci-set-tgl { font-weight: 600; text-decoration: none; }
-      .dci-set-body { padding: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 18); }
+      /* [3.25.0] the topics as tabs: vertical on the left, at the top in a narrow dashboard */
+      .dci-settings { container-type: inline-size; }
+      .dci-set-wrap { display: flex; gap: calc(var(--u, 1px) * 14); align-items: flex-start; }
+      .dci-set-side { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 10); flex: 0 0 auto; }
+      .dci-set-tabs { display: flex; flex-direction: column; gap: 2px; }
+      .dci-set-tab { font: inherit; text-align: left; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); border: 1px solid transparent; border-radius: 4px 0 0 4px;
+        background: transparent; color: var(--purple-d); cursor: pointer; white-space: nowrap; }
+      .dci-set-tab:hover { background: #f1f0f8; }
+      .dci-set-tab[aria-selected="true"] { background: #fff; border-color: #c9c4dd; border-right-color: #fff; font-weight: 600; margin-right: -15px; position: relative; z-index: 1; }
+      .dci-set-tab:focus-visible { outline: 2px solid var(--purple); outline-offset: -2px; }
+      .dci-set-resetall { align-self: flex-start; }
+      .dci-set-pane { flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid #c9c4dd; border-radius: 0 4px 4px 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
+      .dci-set-pane .dci-reset { margin: 0; }
+      @container (max-width: 560px) {
+        .dci-set-wrap { flex-direction: column; gap: calc(var(--u, 1px) * 6); }
+        .dci-set-side { flex-direction: row; flex-wrap: wrap; align-items: center; }
+        .dci-set-tabs { flex-direction: row; flex-wrap: wrap; }
+        .dci-set-tab { border-radius: 4px; }
+        .dci-set-tab[aria-selected="true"] { margin-right: 0; border-right-color: #c9c4dd; }
+        .dci-set-pane { border-radius: 4px; width: 100%; box-sizing: border-box; }
+      }
+      .dci-conn { border-collapse: collapse; font-size: calc(var(--u, 1px) * 12); }
+      .dci-conn th, .dci-conn td { text-align: left; vertical-align: top; padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 8); border-bottom: 1px solid var(--line); }
+      .dci-conn code { font-size: calc(var(--u, 1px) * 11); white-space: normal; }
       .dci-set-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 5) 0; }
       .dci-set-row input[type="number"] { width: calc(var(--u, 1px) * 80); }
       .dci-set-reset { margin-top: calc(var(--u, 1px) * 6); }

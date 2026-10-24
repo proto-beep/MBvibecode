@@ -14,7 +14,7 @@ C) "Logo by Cole Barrington instagram.com/blueeyedhorse84": the name without the
    instagram.com", nothing assigned.
 D) "Create artist …" for Jane Roe fills in her Instagram profile; for John Doe (only Linktree) no link.
 E) "Text" answered with "lyricist": the row goes to the works matrix.
-F) [3.21.3] The links at the entries are hidden at first; the setting (⚙ Settings → Sources) shows them. A Spotify artist
+F) [3.21.3] The links at the entries are hidden at first; the setting (⚙ Settings → Sources; 3.25.0: Texts) shows them. A Spotify artist
    page after a name is only for "Create artist …" – MusicBrainz is not asked for it, although it has an artist with it;
    a profile after a studio ("Recorded at Studio Sol instagram.com/studiosol") goes to "Create place …"."""
 import json
@@ -130,7 +130,7 @@ with sync_playwright() as p:
     pg.click('[data-act=settings-open]')
     pg.wait_for_timeout(200)
     if not pg.locator('[data-set=weblinks-show]').count():
-        pg.click('[data-act=settings-topic][data-topic=sources]')
+        pg.click('[data-act=settings-topic][data-topic=texts]')
         pg.wait_for_timeout(200)
     pg.check('[data-set=weblinks-show]')
     pg.wait_for_timeout(500)
