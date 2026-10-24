@@ -191,6 +191,9 @@ python3 t_prose.py        # 3.29.0 (milestone): ekstasis' prose credits (K.M. (s
 python3 t_levels.py       # 3.29.2: the colours of the levels (full rows and compact line), the level of the compact line by a click
                           # (Recording → Release with the June date of the matrix → Skip → Recording with the March dates), the tab
                           # "Appearance" (text size, place, view, colours: own colour, off, ↺)
+python3 t_fold.py         # 3.29.3: the arrow next to "Artist credit for all roles" – one entry folded to compact lines in the full
+                          # view (a line opens its row, ▸ back, full again after the next import), its open rows closed in the
+                          # compact view
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.29.2 | 1.8.4 – 1.9.0 |
+| 2026-10-24 | 3.22.1 – 3.29.3 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -82,6 +82,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.29.3
+
+#### Added
+
+- **One entry compact** (collected item 82; maintainer: "neben "Artist credit for all roles" kann ein kleiner pfeil erscheinen um alles unterhalb dieses artists in den kompakt modus zu klappen", "nur bis zum nächsten Import"): in the full view the arrow ▾ next to "Artist credit for all roles" folds the rows of that entry to compact lines, ▸ shows their fields again; until the next import. In the compact view the arrow closes the open rows of the entry.
 
 ### Import 3.29.2
 

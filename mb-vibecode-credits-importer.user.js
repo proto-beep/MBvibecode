@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.29.2
+// @version      3.29.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.29.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.29.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -285,6 +285,9 @@
       "spell.same": "the same everywhere",
       "spell.differs": "differs – please check: spelling on the artwork, a typo, or does MusicBrainz name it differently?",
       "group.creditAll": "Artist credit for all roles",
+      "group.fold": "Fold the roles of {name} to compact lines (until the next import)",
+      "group.unfold": "Show the roles of {name} with all their fields again",
+      "group.foldOpen": "Close the open roles of {name}",
       "group.creditAllAria": "Artist credit for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
@@ -10044,6 +10047,8 @@
     // the rows opened in the compact view
     view: 'full',
     rowOpen: new Set(),
+    // [3.29.3] entries folded to compact lines in the full view (item 82; until the next import)
+    groupCompact: new Set(),
     awStoreCount: null,
     workOptions: null,
     workDefaults: { typeId: '', languageIds: [] },
@@ -12299,6 +12304,7 @@
     S.artists = new Map();
     S.rows = [];
     S.rowOpen.clear();
+    S.groupCompact.clear();
     S.textInput = null;
     $('toolbar').hidden = true;
     clearMessages();
@@ -13075,6 +13081,7 @@
       S.artists = new Map();
       S.rows = [];
       S.rowOpen.clear();
+    S.groupCompact.clear();
       S.supp = null;
       S.suppSources = new Map();
       // [3.12.1] the same-named works of the import before do not count for this one (they were never reset)
@@ -14329,8 +14336,12 @@
     } else if (a.dId && !(a.src || S.source).strictNames) {
       spelled = esc(tr('group.noVariant'));
     }
+    // [3.29.3] the arrow (item 82): folds the rows of the entry to compact lines (full view) or closes them (compact view)
+    const folded = groupFolded(a.key);
+    const foldTitle = tr(S.view === 'compact' ? 'group.foldOpen' : folded ? 'group.unfold' : 'group.fold', { name: a.name });
+    const fold = `<button type="button" class="dci-iconbtn dci-gfold" data-act="group-fold" aria-expanded="${!folded}" title="${esc(foldTitle)}" aria-label="${esc(foldTitle)}">${folded ? '▸' : '▾'}</button>`;
     return `<span data-spell="${a.key}">${spellHtml(a)}</span>${spelled ? `<span>${spelled}</span>` : ''}
-      <label class="dci-credit">${esc(tr('group.creditAll'))}
+      ${fold}<label class="dci-credit">${esc(tr('group.creditAll'))}
         <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(anvs.length === 1 && !caseOnlyAnv(a, anvs[0]) ? anvs[0] : '')}"
           placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('group.creditAllAria', { name: a.name }))}">
       </label>
@@ -14395,7 +14406,7 @@
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
-      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}" data-group="${a.key}">
+      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
           <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
@@ -16358,7 +16369,7 @@
    * the full row.
    */
   function clineHtml(row, info) {
-    if (S.view !== 'compact') return '';
+    if (!compactFor(row)) return '';
     const skip = row.level === 'skip';
     const lt = currentLinkType(row);
     const open = (cls, text, title = '') => `<button type="button" class="${cls}" data-act="row-open"${title ? ` title="${esc(title)}"` : ''}>${text}</button>`;
@@ -16399,6 +16410,39 @@
     return `<div class="dci-cline">${parts.join('')}</div>`;
   }
 
+  /** [3.29.3] An entry folded to compact lines in the full view (item 82: the arrow next to "Artist credit for all roles"). */
+  function groupFolded(key) {
+    return S.view === 'full' && S.groupCompact.has(key);
+  }
+  /** [3.29.3] A row shown as a compact line while it is closed: in the compact view, or its entry folded in the full view. */
+  function compactFor(row) {
+    return S.view === 'compact' || groupFolded(row.artistKey);
+  }
+
+  /**
+   * [3.29.3] The arrow of an entry (item 82; maintainer: "nur bis zum nächsten Import"): in the full view its rows fold
+   * to compact lines and out again; in the compact view it closes the rows of the entry that are open.
+   */
+  function foldGroup(a) {
+    const own = S.rows.filter((r) => r.artistKey === a.key);
+    if (S.view === 'compact') {
+      own.forEach((r) => S.rowOpen.delete(r.id));
+    } else if (S.groupCompact.has(a.key)) {
+      S.groupCompact.delete(a.key);
+    } else {
+      S.groupCompact.add(a.key);
+      own.forEach((r) => S.rowOpen.delete(r.id));
+    }
+    rerenderGroup(a);
+    refresh();
+    const b = S.overlay.querySelector(`[data-group="${a.key}"] [data-act="group-fold"]`);
+    if (b) b.focus({ preventScroll: true });
+    else {
+      const t = S.overlay.querySelector(`[data-group="${a.key}"] .dci-cl-tgl`);
+      if (t) t.focus({ preventScroll: true });
+    }
+  }
+
   /** [3.27.0] Opens or closes a row in the compact view (not remembered); the focus goes into it or back to its line. */
   function setRowOpen(row, open, focus = false) {
     if (open) S.rowOpen.add(row.id);
@@ -16410,7 +16454,7 @@
     if (!tr1) return;
     if (!open) {
       const cl = tr1.querySelector('.dci-c-cline');
-      if (cl && S.view === 'compact') cl.innerHTML = clineHtml(row, S.rowInfo && S.rowInfo.get(row.id));
+      if (cl && compactFor(row)) cl.innerHTML = clineHtml(row, S.rowInfo && S.rowInfo.get(row.id));
     }
     if (focus) {
       const target = open ? tr1.querySelector('.dci-c-type select, .dci-c-type input') || tr1.querySelector('.dci-cl-close') : tr1.querySelector('.dci-cl-tgl');
@@ -16421,7 +16465,7 @@
 
   /** [3.27.0] A row to jump to (incomplete rows, the companion, a new row): opened in the compact view. */
   function revealRow(row) {
-    if (row && S.view === 'compact' && !S.rowOpen.has(row.id)) setRowOpen(row, true);
+    if (row && compactFor(row) && !S.rowOpen.has(row.id)) setRowOpen(row, true);
   }
 
   /** [3.27.0] Compact or full: the toggle above the entries and in ⚙ Settings → General (remembered). */
@@ -16596,7 +16640,7 @@
         rowEl.classList.toggle('dci-exists-some', !allThere && (info.existing > 0 || info.loose > 0) && info.ready > 0);
         // [3.27.0] the compact line follows every change of its row
         const cl = rowEl.querySelector('.dci-c-cline');
-        if (cl && S.view === 'compact') {
+        if (cl && compactFor(row)) {
           const html = clineHtml(row, info);
           if (cl.dataset.html !== html) {
             cl.innerHTML = html;
@@ -20364,6 +20408,9 @@
       case 'row-open':
         if (row) setRowOpen(row, !S.rowOpen.has(row.id), true);
         break;
+      case 'group-fold':
+        if (artist) foldGroup(artist);
+        break;
       case 'view':
         if (btn.dataset.view !== S.view) setView(btn.dataset.view);
         break;
@@ -23711,6 +23758,17 @@
       #dci-overlay .dci-cl-tracks.dci-dm-over { outline: 2px solid var(--orange) !important; }
       .dci-viewseg button[aria-pressed="true"] { font-weight: 600; }
       #dci-overlay.dci-compact .dci-group { margin-bottom: calc(var(--u, 1px) * 14); }
+      /* [3.29.3] an entry folded in the full view (item 82): its rows as in the compact view, the "credited as" block stays */
+      #dci-overlay .dci-gcompact .dci-rows tr.dci-row:not(.dci-open) { display: block; padding: 0; margin-bottom: calc(var(--u, 1px) * 3); }
+      #dci-overlay .dci-gcompact .dci-rows tr.dci-row:not(.dci-open) > td:not(.dci-c-cline) { display: none; }
+      #dci-overlay .dci-gcompact .dci-rows tr.dci-row:not(.dci-open) > td.dci-c-cline { display: block; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
+      #dci-overlay .dci-gcompact .dci-rows tr.dci-tracksrow:not(.dci-open) { display: none; }
+      #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-open .dci-cl-close { display: inline-block; margin-bottom: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); }
+      #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) { background: var(--soft); border-left-color: #c8c5d6; }
+      #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline,
+      #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
+      .dci-gfold { padding: 0 calc(var(--u, 1px) * 4); color: var(--muted); font-size: calc(var(--u, 1px) * 13); }
+      .dci-gfold:hover { color: var(--ink); }
 
       /* Companies, etc. */
       .dci-companies { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 22); padding-top: calc(var(--u, 1px) * 10); border-top: 1px solid var(--line); }
