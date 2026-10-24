@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.24.0
+// @version      3.24.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.24.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.24.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -466,12 +466,16 @@
       "links.count": "“{title}” – credits: {credits} · companies: {companies} · tracks: {tracks}",
       "links.countFailed": "could not be read: {error}",
       "links.best": "most data",
+      "links.bestFit": "most data with matching tracks",
       "links.openOne": "Open this page in a new tab",
       "links.tabs": "Open all in background tabs",
       "links.tabsTitle": "To compare them: each page in a background tab",
       "links.remember": "Remember this choice for this release",
       "links.ok": "Import",
-      "msg.trackMismatch": "{src} lists {d} tracks, MusicBrainz {m}. Tracks are matched in order. Check the track selection of recording and work relationships.",
+      "trackFit.count": "{d} tracks instead of {m}",
+      "trackFit.titles": "{n} of {all} titles differ",
+      "links.tracksDiffer": "differs from the MusicBrainz release: {what}",
+      "msg.tracksDiffer": "{src} differs from the MusicBrainz release: {what}{list}. Tracks are matched in order – check the track selection of recording and work relationships.",
       "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
       "msg.badDiscogsId": "No Discogs release or Bandcamp album recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
@@ -514,7 +518,8 @@
       "log.start": "Dashboard opened for release {mbid}",
       "log.mbLoaded.one": "MusicBrainz loaded: {n} track ({works} with a work), linked sources: {links}",
       "log.mbLoaded.other": "MusicBrainz loaded: {n} tracks ({works} with a work), linked sources: {links}",
-      "log.trackMismatch": "Track count differs: {src} {d}, MusicBrainz {m}",
+      "log.tracksDiffer": "Tracks differ from MusicBrainz: {src} – {what}{list}",
+      "log.linkTracksDiffer": "{link}: tracks differ from MusicBrainz – {what}",
       "log.discogsLoaded.one": "Discogs release {id} loaded: {artists} artists, {n} role",
       "log.discogsLoaded.other": "Discogs release {id} loaded: {artists} artists, {n} roles",
       "log.artistLinked": "{name}: found via {src} link → {mb}",
@@ -1868,12 +1873,16 @@
       "links.count": "„{title}“ – Credits: {credits} · Firmen: {companies} · Tracks: {tracks}",
       "links.countFailed": "nicht lesbar: {error}",
       "links.best": "die meisten Daten",
+      "links.bestFit": "die meisten Daten mit passenden Tracks",
       "links.openOne": "Diese Seite in einem neuen Tab öffnen",
       "links.tabs": "Alle in Hintergrund-Tabs öffnen",
       "links.tabsTitle": "Zum Vergleichen: jede Seite in einem Hintergrund-Tab",
       "links.remember": "Diese Wahl für dieses Release merken",
       "links.ok": "Importieren",
-      "msg.trackMismatch": "{src} listet {d} Tracks, MusicBrainz {m}. Die Zuordnung erfolgt der Reihe nach. Prüfe bei Recording- und Werk-Beziehungen die Trackauswahl.",
+      "trackFit.count": "{d} statt {m} Tracks",
+      "trackFit.titles": "{n} von {all} Titeln anders",
+      "links.tracksDiffer": "unterscheidet sich vom MusicBrainz-Release: {what}",
+      "msg.tracksDiffer": "{src} unterscheidet sich vom MusicBrainz-Release: {what}{list}. Die Tracks werden der Reihe nach zugeordnet – prüfe bei Recording- und Werk-Beziehungen die Trackauswahl.",
       "msg.noCredits": "Auf {src} sind für dieses Release keine Credits eingetragen. Du kannst unten Einträge manuell anlegen.",
       "msg.confirmDiscard": "Die aktuelle Auswahl im Dashboard wird verworfen. Fortfahren?",
       "msg.badDiscogsId": "Kein Discogs-Release und kein Bandcamp-Album erkannt. Beispiele: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
@@ -1916,7 +1925,8 @@
       "log.start": "Dashboard geöffnet für Release {mbid}",
       "log.mbLoaded.one": "MusicBrainz geladen: {n} Track ({works} mit Werk), verknüpfte Quellen: {links}",
       "log.mbLoaded.other": "MusicBrainz geladen: {n} Tracks ({works} mit Werk), verknüpfte Quellen: {links}",
-      "log.trackMismatch": "Trackzahl weicht ab: {src} {d}, MusicBrainz {m}",
+      "log.tracksDiffer": "Tracks weichen von MusicBrainz ab: {src} – {what}{list}",
+      "log.linkTracksDiffer": "{link}: Tracks weichen von MusicBrainz ab – {what}",
       "log.discogsLoaded.one": "Discogs-Release {id} geladen: {artists} Artists, {n} Rolle",
       "log.discogsLoaded.other": "Discogs-Release {id} geladen: {artists} Artists, {n} Rollen",
       "log.artistLinked": "{name}: über {src}-Link gefunden → {mb}",
@@ -3270,12 +3280,16 @@
       "links.count": "«{title}» – créditos: {credits} · empresas: {companies} · pistas: {tracks}",
       "links.countFailed": "no se pudo leer: {error}",
       "links.best": "más datos",
+      "links.bestFit": "más datos con pistas que coinciden",
       "links.openOne": "Abrir esta página en una pestaña nueva",
       "links.tabs": "Abrir todas en pestañas en segundo plano",
       "links.tabsTitle": "Para compararlas: cada página en una pestaña en segundo plano",
       "links.remember": "Recordar esta elección para esta publicación",
       "links.ok": "Importar",
-      "msg.trackMismatch": "{src} lista {d} pistas y MusicBrainz {m}. Las pistas se asignan por orden. Revisa la selección de pistas en las relaciones de grabación y de obra.",
+      "trackFit.count": "{d} pistas en lugar de {m}",
+      "trackFit.titles": "{n} de {all} títulos distintos",
+      "links.tracksDiffer": "se diferencia de la publicación de MusicBrainz: {what}",
+      "msg.tracksDiffer": "{src} se diferencia de la publicación de MusicBrainz: {what}{list}. Las pistas se asignan por orden: revisa la selección de pistas en las relaciones de grabación y de obra.",
       "msg.noCredits": "{src} no tiene créditos para esta publicación. Puedes añadir entradas manualmente abajo.",
       "msg.confirmDiscard": "Se descartará la selección actual del panel. ¿Continuar?",
       "msg.badDiscogsId": "No se reconoce ninguna publicación de Discogs ni álbum de Bandcamp. Ejemplos: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
@@ -3318,7 +3332,8 @@
       "log.start": "Panel abierto para la publicación {mbid}",
       "log.mbLoaded.one": "MusicBrainz cargado: {n} pista ({works} con obra), fuentes enlazadas: {links}",
       "log.mbLoaded.other": "MusicBrainz cargado: {n} pistas ({works} con obra), fuentes enlazadas: {links}",
-      "log.trackMismatch": "El número de pistas difiere: {src} {d}, MusicBrainz {m}",
+      "log.tracksDiffer": "Las pistas difieren de MusicBrainz: {src} – {what}{list}",
+      "log.linkTracksDiffer": "{link}: las pistas difieren de MusicBrainz – {what}",
       "log.discogsLoaded.one": "Publicación de Discogs {id} cargada: {artists} artistas, {n} rol",
       "log.discogsLoaded.other": "Publicación de Discogs {id} cargada: {artists} artistas, {n} roles",
       "log.artistLinked": "{name}: encontrado por enlace de {src} → {mb}",
@@ -4672,12 +4687,16 @@
       "links.count": "« {title} » – crédits : {credits} · sociétés : {companies} · pistes : {tracks}",
       "links.countFailed": "illisible : {error}",
       "links.best": "le plus de données",
+      "links.bestFit": "le plus de données avec des pistes concordantes",
       "links.openOne": "Ouvrir cette page dans un nouvel onglet",
       "links.tabs": "Tout ouvrir dans des onglets en arrière-plan",
       "links.tabsTitle": "Pour les comparer : chaque page dans un onglet en arrière-plan",
       "links.remember": "Mémoriser ce choix pour cette parution",
       "links.ok": "Importer",
-      "msg.trackMismatch": "{src} liste {d} pistes, MusicBrainz {m}. Les pistes sont associées dans l’ordre. Vérifiez la sélection des pistes pour les relations d’enregistrement et d’œuvre.",
+      "trackFit.count": "{d} pistes au lieu de {m}",
+      "trackFit.titles": "{n} titres sur {all} différents",
+      "links.tracksDiffer": "diffère de la parution MusicBrainz : {what}",
+      "msg.tracksDiffer": "{src} diffère de la parution MusicBrainz : {what}{list}. Les pistes sont associées dans l’ordre – vérifiez la sélection des pistes des relations d’enregistrement et d’œuvre.",
       "msg.noCredits": "{src} n’a aucun crédit pour cette parution. Vous pouvez ajouter des entrées manuellement ci-dessous.",
       "msg.confirmDiscard": "La sélection actuelle du tableau sera abandonnée. Continuer ?",
       "msg.badDiscogsId": "Aucune parution Discogs ni album Bandcamp reconnu. Exemples : https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
@@ -4720,7 +4739,8 @@
       "log.start": "Tableau ouvert pour la parution {mbid}",
       "log.mbLoaded.one": "MusicBrainz chargé : {n} piste ({works} avec œuvre), sources liées : {links}",
       "log.mbLoaded.other": "MusicBrainz chargé : {n} pistes ({works} avec œuvre), sources liées : {links}",
-      "log.trackMismatch": "Nombre de pistes différent : {src} {d}, MusicBrainz {m}",
+      "log.tracksDiffer": "Les pistes diffèrent de MusicBrainz : {src} – {what}{list}",
+      "log.linkTracksDiffer": "{link} : les pistes diffèrent de MusicBrainz – {what}",
       "log.discogsLoaded.one": "Parution Discogs {id} chargée : {artists} artistes, {n} rôle",
       "log.discogsLoaded.other": "Parution Discogs {id} chargée : {artists} artistes, {n} rôles",
       "log.artistLinked": "{name} : trouvé via le lien {src} → {mb}",
@@ -5923,6 +5943,7 @@
     { id: 'S027', where: 'titleScope, tracksByTitles (TEXT_TITLE_SCOPE)', note: 'Tracks named by their titles in a text (T036: "Piano in ‘A\' and \'B\' is a contribution by X", "Guitar on “Song”: Y"): each title is looked for among the tracks of the source (a pasted text: MusicBrainz\'s, Bandcamp: the album\'s) – case, accents and punctuation do not count, one letter more, less or other is allowed; a title not found is shown as "not matched", its tracks are chosen by hand (3.22.0)' },
     { id: 'S028', where: 'suggestByName, groupKindOf, matchHtmlInner (C038 …)', note: 'An area of a text ("Recorded by X in Xixon, Asturies, Spain", T037) is an entry of the kind "Area" with the larger areas after it; MusicBrainz is searched with its other names too ("Xixon" finds Gijón with the alias "Xixón") – only suggested, nothing assigned; there is no "Create" (areas are added by MusicBrainz\'s area editors). Its type: recorded in, mixed in (recording) or mastered in (release) (3.22.0); produced in, remixed in, engineered in, and the area each suggestion is part of, read from MusicBrainz ("City, Asturias"; 3.22.2)' },
     { id: 'S029', where: 'bandPageName, ownPage, linkBand, bandPageInfo, suggestByName', note: 'A Bandcamp album on another account\'s page – mostly a label\'s ("Grabaciones Autobombo" with an album of Yunclas): the name of the page (its "data-band", else "og:site_name") is not the album\'s artist (case, accents and "The" do not count; "Jane Roe & Friends" on Jane Roe\'s page is her own) – the page is no link of the artist, he is searched by name, the entry says whose page it is and names MusicBrainz\'s label with that page. People not found through their own link (Discogs, Bandcamp) get the same-named MusicBrainz entries as suggestions; an artist of the release\'s artist credit with that name comes first, marked "release artist" – only suggested (3.22.1)' },
+    { id: 'S030', where: 'trackFit, titlesFit, loadRelease, chooseLink (TITLE_SMALL_WORDS)', note: 'Every import compares the tracks of the source with those of the MusicBrainz release: their number and their titles position by position (T038: case, accents, punctuation, notes in brackets, "feat. …" and small words do not count; a title fits when it has the same words, is in the other, is one letter off or shares more than half of the words of the shorter one; different numbers never). Different numbers or less than 80 % fitting titles: a yellow warning with what differs (the titles in the message). In the dialog of several linked releases each gets it, and the most data is chosen among those whose tracks fit (3.24.1)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -6351,6 +6372,8 @@
       show: () => ({ pairs: [['titles', TEXT_TITLE_SCOPE], ['before “by”', TEXT_CONTRIBUTION]] }) },
     { id: 'T037', where: 'areaOf, TEXT_AREA_PARTICLE, TEXT_NOT_AREA', note: 'Texts (3.22.0): an area after a name ("Recorded by X in Xixon, Asturies, Spain") or a verb ("Recorded in Berlin", "Mixed live in Paris") – words with capitals (particles between them: "Frankfurt am Main", "Rio de Janeiro"), up to four parts, no number, month or season, none of these words first; a time after it ("in the spring, 2017") is left out. Only for recorded, mixed, mastered and (3.22.2) produced, remixed, engineered (C038 – C043, S028)',
       show: () => ({ pairs: [['particles', TEXT_AREA_PARTICLE], ['no area', TEXT_NOT_AREA]] }) },
+    { id: 'T038', where: 'TITLE_SMALL_WORDS, TITLE_NOTE, titleWordsOf', note: 'Track titles compared with MusicBrainz\'s (3.24.1, S030): small words of English, German, Spanish, French, Italian, Portuguese and Dutch are left out ("The Song of the Sea" = "Song of Sea"), so are notes in brackets ("(Remastered)", "[Live]", "(feat. X)")',
+      show: () => ({ pairs: [['small words', [...TITLE_SMALL_WORDS].join(' · ')], ['notes', TITLE_NOTE]] }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
@@ -6621,6 +6644,17 @@
   // [T031] Texts (3.21.0): "courtesy of …" after a name, and a title in quotation marks with its year before "by"
   const TEXT_COURTESY = /(?:^|[\s,;(])(?:(?:by|with|appears?)\s+)?(?:kind\s+)?(?:courtesy|permission)\s+(?:of|from)\b|used\s+(?:with|by)\s+permission|mit\s+freundlicher\s+genehmigung|cortes[ií]a\s+de|avec\s+l[’']aimable\s+autorisation/i;
   const TEXT_QUOTED_TITLE = /(?:[“„«‘"][^“”„«»‘’"']{1,80}[”“»’"']|(?<!\p{L})'[^'\n]{1,80}'(?!\p{L}))(?:\s*,?\s*\(?(?:1[89]|20)\d{2}\)?)?/gu;
+
+  // [T038] Track titles compared with MusicBrainz's (3.24.1): small words of several languages do not count ("The Song
+  // of the Sea" = "Song of Sea", "La canción del mar" = "Canción mar"), nor a note in brackets ("(Remastered)", "[Live]")
+  const TITLE_SMALL_WORDS = new Set(('a an the of at in on to and or for with from by as '
+    + 'der die das den dem des ein eine einen einer eines und oder im in am an auf von vom zu zum zur mit fur '
+    + 'el la lo los las un una unos unas de del y o en con por para al '
+    + 'le la les l un une des de du d et ou en au aux a sur pour avec '
+    + 'il lo gli i di da e nel nella della dei '
+    + 'o os as um uma do da dos das em no na '
+    + 'het een van en op met').split(' '));
+  const TITLE_NOTE = /[([][^)\]]*\b(?:remaster(?:ed)?|live|mono|stereo|version|edit|mix|remix|demo|single|instrumental|bonus|acoustic|radio|album|explicit|clean|feat\.?|ft\.?|with)\b[^)\]]*[)\]]/gi;
 
   // [T036] Texts (3.22.0): tracks named by their titles after a role ("Piano in ‘A' and 'B'", "Guitar on “Song”"; the
   // quotation marks may be mixed), and "is a contribution", "was played" before "by"
@@ -8619,6 +8653,7 @@
       isPlaceholderTitle: (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || '')),
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
+      titleWordsOf, titlesFit, trackFit,
     };
     return;
   }
@@ -11540,7 +11575,8 @@
               <span class="dci-link-name">${esc(sourceLinkLabel(l))}</span></label>
               <a class="dci-sugglink" href="${esc(pageUrl(l))}" target="_blank" rel="noopener" title="${esc(tr('links.openOne'))}" aria-label="${esc(tr('links.openOne'))}">↗</a>
               <span class="dci-link-bestmark" hidden>${esc(tr('links.best'))}</span>
-              <span class="dci-sub" data-lel="count">${esc(tr('links.counting'))}</span></div>`).join('')}
+              <span class="dci-sub" data-lel="count">${esc(tr('links.counting'))}</span>
+              <span class="dci-link-warn" data-lel="tracks" hidden></span></div>`).join('')}
           </div>
           <div><button type="button" data-lact="tabs" title="${esc(tr('links.tabsTitle'))}">${esc(tr('links.tabs'))}</button></div>
           <label class="dci-check"><input type="checkbox" data-lf="remember" checked> ${esc(tr('links.remember'))}</label>
@@ -11552,13 +11588,21 @@
       </div>`;
     const row = (i) => el.querySelector(`[data-li="${i}"]`);
     const markBest = () => {
-      const ok = counts.map((c, i) => [c, i]).filter(([c]) => c && !c.error);
+      const read = counts.map((c, i) => [c, i]).filter(([c]) => c && !c.error);
+      // [3.24.1] the most data among those whose tracks fit MusicBrainz's; none fits: among all
+      const fitting = read.filter(([c]) => c.fit && c.fit.ok);
+      const ok = fitting.length ? fitting : read;
       if (!ok.length) return;
       const score = (c) => c.credits + c.companies;
-      const best = ok.reduce((a, b) => (score(b[0]) > score(a[0]) || (score(b[0]) === score(a[0]) && b[0].notes > a[0].notes) ? b : a))[1];
+      const top = (list) => list.reduce((a, b) => (score(b[0]) > score(a[0]) || (score(b[0]) === score(a[0]) && b[0].notes > a[0].notes) ? b : a))[1];
+      const best = top(ok);
+      // one with more data whose tracks differ: the mark says "with matching tracks"
+      const mark = tr(top(read) === best ? 'links.best' : 'links.bestFit');
       links.forEach((l, i) => {
         row(i).classList.toggle('dci-link-best', i === best);
-        row(i).querySelector('.dci-link-bestmark').hidden = i !== best;
+        const m = row(i).querySelector('.dci-link-bestmark');
+        m.hidden = i !== best;
+        m.textContent = mark;
       });
       if (!touched) {
         pick = best;
@@ -11576,7 +11620,10 @@
           const rel = await source.release(l.id, ctx);
           counts[i] = { title: rel.title || '', credits: (rel.credits || []).length, companies: (rel.companies || []).length,
             tracks: (rel.tracks || []).length, notes: String(rel.notes || '').length };
+          // [3.24.1] its tracks against MusicBrainz's (52)
+          counts[i].fit = trackFit(rel.tracks || [], S.mbTracks);
           log('info', 'linkCounted', { link: sourceLinkLabel(l), ...counts[i] });
+          if (!counts[i].fit.ok) log('warn', 'linkTracksDiffer', { link: sourceLinkLabel(l), what: trackFitText(counts[i].fit) });
         } catch (e) {
           counts[i] = { error: (e && e.message) || String(e) };
           log('warn', 'linkCountFailed', { link: sourceLinkLabel(l), error: counts[i].error });
@@ -11584,6 +11631,13 @@
         if (closed) return;
         const c = counts[i];
         row(i).querySelector('[data-lel="count"]').textContent = c.error ? tr('links.countFailed', { error: c.error }) : tr('links.count', c);
+        // [3.24.1] tracks that differ from MusicBrainz's: yellow, the titles in the tooltip
+        const warn = row(i).querySelector('[data-lel="tracks"]');
+        if (c.fit && !c.fit.ok) {
+          warn.hidden = false;
+          warn.textContent = tr('links.tracksDiffer', { what: trackFitText(c.fit) });
+          warn.title = c.fit.differ.length ? trackFitList(c.fit) : '';
+        }
         markBest();
       }
     })();
@@ -12467,9 +12521,11 @@
       renderSource();
       renderSupp();
 
-      if (S.srcTracks.length !== S.mbTracks.length) {
-        showMessage('warn', 'msg.trackMismatch', { d: S.srcTracks.length, m: S.mbTracks.length });
-        log('warn', 'trackMismatch', { d: S.srcTracks.length, m: S.mbTracks.length });
+      // [3.24.1] the tracks of the source against MusicBrainz's – their number and their titles (S030; a text has MB's own)
+      const fit = source.usesMbTracks ? null : trackFit(S.srcTracks, S.mbTracks);
+      if (fit && !fit.ok) {
+        showMessage('tracks', 'msg.tracksDiffer', { what: trackFitText(fit), list: fit.differ.length ? ` (${trackFitList(fit)})` : '' });
+        log('warn', 'tracksDiffer', { what: trackFitText(fit), list: fit.differ.length ? ` – ${trackFitList(fit)}` : '' });
       }
 
       // [S026] entries whose credits were all left out for a medium the release does not have
@@ -14122,6 +14178,61 @@
    * Bandcamp: the album's) – case, accents and punctuation do not count, one letter more, less or other is allowed.
    * → { indexes: Set, unresolved: ['“title”' …] }
    */
+  /**
+   * [3.24.1] A track title for comparing (T038): small letters, no accents, punctuation, notes in brackets, "feat. …" or
+   * small words → its words.
+   */
+  function titleWordsOf(t) {
+    const plain = String(t || '').replace(TITLE_NOTE, ' ').replace(/\s(?:feat\.?|ft\.?|featuring)\s.*$/i, ' ')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/ß/g, 'ss').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const words = plain.split(' ').filter(Boolean);
+    const big = words.filter((w) => !TITLE_SMALL_WORDS.has(w));
+    return big.length ? big : words;
+  }
+  /**
+   * [3.24.1] Whether two track titles are about the same (S030): the same words, one in the other, one letter more, less
+   * or other, or more than half of the words of the shorter title in the other; different numbers never ("Part 1" –
+   * "Part 2"). A title in square brackets ("[untitled]") or none counts as the same.
+   */
+  function titlesFit(a, b) {
+    const placeholder = (t) => !String(t || '').trim() || /^\s*\[[^\]]*\]\s*$/.test(String(t || ''));
+    if (placeholder(a) || placeholder(b)) return true;
+    const x = titleWordsOf(a);
+    const y = titleWordsOf(b);
+    const xs = x.join(' ');
+    const ys = y.join(' ');
+    if (!xs || !ys || xs === ys) return true;
+    // numbers count ("Part 1" ≠ "Part 2")
+    const nums = (w) => w.filter((v) => /^\d+$/.test(v)).join(' ');
+    if (nums(x) && nums(y) && nums(x) !== nums(y)) return false;
+    if (withinOne(xs, ys)) return true;
+    if (Math.min(xs.length, ys.length) >= 4 && (` ${xs} `.includes(` ${ys} `) || ` ${ys} `.includes(` ${xs} `))) return true;
+    const [short, long] = x.length <= y.length ? [x, y] : [y, x];
+    const hits = short.filter((w) => long.some((v) => v === w || (w.length > 3 && withinOne(v, w)))).length;
+    return hits * 2 > short.length;
+  }
+  /**
+   * [3.24.1] The tracks of a source against MusicBrainz's (S030): the counts, and the titles position by position.
+   * → { d, m, differ: [{ pos, src, mb }], compared, ok } – ok when the counts are the same and at least 80 % of the
+   * titles fit.
+   */
+  function trackFit(srcTracks, mbTracks = S.mbTracks) {
+    const src = srcTracks || [];
+    const mb = mbTracks || [];
+    const n = Math.min(src.length, mb.length);
+    const differ = [];
+    for (let i = 0; i < n; i++) {
+      if (!titlesFit(src[i].title, mb[i].title)) differ.push({ pos: (src[i].position || String(i + 1)), src: src[i].title, mb: mb[i].title });
+    }
+    const ok = src.length === mb.length && (!n || (n - differ.length) / n >= 0.8);
+    return { d: src.length, m: mb.length, differ, compared: n, ok };
+  }
+  /** [3.24.1] What differs, as text: "14 tracks instead of 12 · 3 of 12 titles differ". */
+  const trackFitText = (f) => [f.d !== f.m ? tr('trackFit.count', { d: f.d, m: f.m }) : '',
+    f.differ.length ? tr('trackFit.titles', { n: f.differ.length, all: f.compared }) : ''].filter(Boolean).join(' · ');
+  /** [3.24.1] The titles that differ ("2: “Here” ≠ “MusicBrainz”"), the first ten. */
+  const trackFitList = (f) => f.differ.slice(0, 10).map((x) => `${x.pos}: “${x.src}” ≠ “${x.mb}”`).join('; ') + (f.differ.length > 10 ? ' …' : '');
+
   function tracksByTitles(titles, srcTracks = S.srcTracks) {
     const key = (t) => normTitle(workTitleOf(t)).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const keys = (srcTracks || []).map((t) => key((t && t.title) || ''));
@@ -22018,6 +22129,8 @@
       .dci-link-list { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); }
       .dci-link-opt { display: flex; align-items: baseline; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); }
       .dci-link-best .dci-link-name { font-weight: 700; }
+      .dci-link-warn { border: 1px dashed var(--sugg-line); border-radius: 3px; background: var(--sugg-bg); color: var(--sugg-ink); padding: 0 calc(var(--u, 1px) * 6); }
+      .dci-msg-tracks { border-left-color: var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
       .dci-link-bestmark { padding: 0 calc(var(--u, 1px) * 6); border-radius: 8px; background: var(--ok); color: #fff; font-size: calc(var(--u, 1px) * 11); font-weight: 600; }
       .dci-media-btns { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-media-btns button { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: 3px calc(var(--u, 1px) * 10); cursor: pointer; }
