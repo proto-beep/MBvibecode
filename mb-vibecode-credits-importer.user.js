@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.22.2
+// @version      3.22.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.22.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.22.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -5815,7 +5815,7 @@
   const WORDING_RULES = [
     { id: 'W001', where: 'wordingRuleFor, roleCreditFor', note: 'Upright bass is a double bass; the Discogs word stays as role credit', phrases: ['upright bass', 'bass upright'], credit: 'upright bass' },
     { id: 'W002', where: 'wordingRuleFor, roleCreditFor', note: 'Contrabass is a double bass; the Discogs word stays as role credit', phrases: ['contrabass', 'bass contrabass', 'contrabass bass'], credit: 'contrabass' },
-    { id: 'W003', where: 'wordingRuleFor, roleCreditFor', note: 'Kontrabass (German) is a double bass, credited with the English word "contrabass" (3.22.2; before: "Kontrabass")', phrases: ['kontrabass', 'bass kontrabass', 'kontrabass bass'], credit: 'contrabass' },
+    { id: 'W003', where: 'wordingRuleFor, roleCreditFor', note: 'Kontrabass (German) is always a double bass – a translation, MusicBrainz\'s own name, no role credit (3.22.3; 3.22.2: "contrabass", before: "Kontrabass"). The English "Contrabass" keeps "contrabass" (W002)', phrases: ['kontrabass', 'bass kontrabass', 'kontrabass bass'], credit: '' },
     { id: 'W008', where: 'wordingRuleFor, roleCreditFor', note: 'Violoncello is a cello; the word stays as role credit "violoncello" (3.22.2; a fixed pair like W002, W003 – no rule for other words)', phrases: ['violoncello', 'violoncelli', 'cello violoncello', 'violoncello cello'], credit: 'violoncello' },
     { id: 'W004', where: 'wordingRuleFor, roleCreditFor', note: '"Horn [French]" and "French Horn" are the MusicBrainz instrument French horn, without role credit', phrases: ['horn french', 'french horn'], credit: '' },
     { id: 'W005', where: 'wordingRuleFor, roleCreditFor', note: '"Flugel Horn" (also Flügelhorn) is the MusicBrainz instrument flugelhorn, without role credit', phrases: ['flugel horn', 'flugelhorn', 'flügelhorn', 'flugel-horn'], credit: '' },

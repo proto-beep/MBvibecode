@@ -2091,7 +2091,7 @@
    "On Rule Role Role credit Note Code",
    "W001 upright bass | bass upright upright bass Upright bass is a double bass; the Discogs word stays as role credit wordingRuleFor, roleCreditFor",
    "W002 contrabass | bass contrabass | contrabass bass contrabass Contrabass is a double bass; the Discogs word stays as role credit wordingRuleFor, roleCreditFor",
-   "W003 kontrabass | bass kontrabass | kontrabass bass contrabass Kontrabass (German) is a double bass, credited with the English word \"contrabass\" (3.22.2; before: \"Kontrabass\") wordingRuleFor, roleCreditFor",
+   "W003 kontrabass | bass kontrabass | kontrabass bass Kontrabass (German) is always a double bass – a translation, MusicBrainz's own name, no role credit (3.22.3; 3.22.2: \"contrabass\", before: \"Kontrabass\"). The English \"Contrabass\" keeps \"contrabass\" (W002) wordingRuleFor, roleCreditFor",
    "W008 violoncello | violoncelli | cello violoncello | violoncello cello violoncello Violoncello is a cello; the word stays as role credit \"violoncello\" (3.22.2; a fixed pair like W002, W003 – no rule for other words) wordingRuleFor, roleCreditFor",
    "W004 horn french | french horn \"Horn [French]\" and \"French Horn\" are the MusicBrainz instrument French horn, without role credit wordingRuleFor, roleCreditFor",
    "W005 flugel horn | flugelhorn | flügelhorn | flugel-horn \"Flugel Horn\" (also Flügelhorn) is the MusicBrainz instrument flugelhorn, without role credit wordingRuleFor, roleCreditFor",
