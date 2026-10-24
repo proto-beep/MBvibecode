@@ -162,6 +162,9 @@ python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass (3.22.3: withou
                           # "contrabass", "Violoncello" → cello "violoncello";
                           # produced / remixed / engineered in (areas with the area they are part of); recording without role credit
                           # (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
+python3 t_compact.py      # the compact view (3.27.0, milestone): compact by default (a line per row, marks in colour, fields hidden),
+                          # open / "▴ compact", a track group and a pool date dropped onto the line, the question answered, a skipped
+                          # row grey with ✕ (back after reloading), "Full" remembered and in the settings, the jump to an incomplete row
 python3 t_head.py         # the head in one line (3.26.0): symbols with names (words only when wide), no language / place / switches in
                           # the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
                           # asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
@@ -262,7 +265,9 @@ With several media (`harness.MEDIA = [2, 1, 1]` …) the dashboard asks for the 
 `harness.src_menu(pg, act=None)` (3.26.0) opens the menu "Source ▾" of the head and clicks `[data-act=act]` in it (pasting a text,
 another source, a linked source, the order of the sources, Bandcamp, "Leave out the about text", "Delete stored import …");
 `harness.open_supp(pg)` opens the bar "Supplement with"; `harness.toggle_place(pg)` switches window ⇄ page in the page bar;
-`harness.open_settings(pg, tab=None)` opens ⚙ Settings (the language is only there). Every test starts as a first installation, so
+`harness.open_settings(pg, tab=None)` opens ⚙ Settings (the language is only there). `harness.open_mb_edit(ctx, …, view='full')`
+(3.27.0) sets the view of the entries to "Full" (`dci-view`, with the storage generation) before the script starts – the tests were
+written for the full rows; `view=None` keeps the default (compact, `t_compact.py`); `open_mb_any` sets "Full" too. Every test starts as a first installation, so
 the page bar shows the question of the language (`#dci-langask`); it does not stand in the way of the tests.
 
 Relationship types of the mock are made with `harness.lt(id, gid, name, type0, type1, attrs, dates, deprecated)`; as on
