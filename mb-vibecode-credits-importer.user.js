@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.27.1
+// @version      3.28.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.27.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -686,6 +686,19 @@
       "view.title": "Compact: one line per row – a click opens it to change it. Full: every row with all its fields.",
       "view.compact": "Compact",
       "view.full": "Full",
+      "view.toCompact": "Compact view: one line per role – a click opens a row to change it",
+      "view.toFull": "Compact view is on – click for the full view (every row with all its fields)",
+      "settings.foldTitle": "Fold the settings in (as ⚙ does)",
+      "msgs.count.one": "1 message",
+      "msgs.count.other": "{n} messages",
+      "msgs.fold": "Fold the messages in",
+      "msgs.unfold": "Show the messages",
+      "msgs.close": "Close this message (until the next import)",
+      "group.creditedAs": "as {name}",
+      "group.creditedAsMore": "as {name} (+{n})",
+      "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
+      "nav.settings": "⚙",
+      "nav.settingsTitle": "The switches of the navigation: ⚙ Settings → Discogs and Bandcamp view",
       "log.viewSet": "View of the entries: {view}",
       "cl.openTitle": "Open this row to change it",
       "cl.close": "compact",
@@ -9767,8 +9780,9 @@
     settingsOpen: false,
     // [3.25.0] the tab of the settings (remembered); [3.16.0 – 3.24] a set of open topics
     settingsTab: 'general',
-    // [3.27.0] the entries compact (a line per row, a click opens it) or full (remembered); the rows opened in the compact view
-    view: 'compact',
+    // [3.27.0] the entries compact (a line per row, a click opens it) or full (remembered; [3.27.2] full by default, item 72);
+    // the rows opened in the compact view
+    view: 'full',
     rowOpen: new Set(),
     awStoreCount: null,
     workOptions: null,
@@ -11326,15 +11340,36 @@
 
   function clearMessages() {
     S.messages = [];
+    // [3.27.3] a new import shows its messages unfolded again
+    S.msgsFolded = false;
     renderMessages();
   }
 
+  /** [3.27.3] Each message gets an id when it is first shown (to close it). */
+  let msgSeq = 0;
+
+  /**
+   * The messages at the top. [3.27.3] (collected item 56) each with ✕ – gone until the next import –, and from two
+   * messages a line "▾ n messages" that folds them in; a new warning or error unfolds them.
+   */
   function renderMessages() {
     if (!S.overlay) return;
-    $('msgs').innerHTML = S.messages.map((m) => `
-      <div class="dci-msg dci-msg-${m.kind}">${esc(tr(m.key, m.params))}${m.action
+    let fresh = false;
+    for (const m of S.messages) {
+      if (m.id != null) continue;
+      m.id = ++msgSeq;
+      if (m.kind === 'error' || m.kind === 'warn') fresh = true;
+    }
+    if (fresh) S.msgsFolded = false;
+    const n = S.messages.length;
+    const folded = n > 1 && !!S.msgsFolded;
+    const head = n > 1 ? `<div class="dci-msgs-head"><button type="button" class="dci-textbtn dci-msgs-fold" data-act="msgs-fold" aria-expanded="${!folded}"
+      title="${esc(tr(folded ? 'msgs.unfold' : 'msgs.fold'))}">${folded ? '▸' : '▾'} ${esc(tr('msgs.count', { n }))}</button></div>` : '';
+    const x = (m) => `<button type="button" class="dci-msg-x" data-act="msg-close" data-id="${m.id}" title="${esc(tr('msgs.close'))}" aria-label="${esc(tr('msgs.close'))}">${ico('close')}</button>`;
+    $('msgs').innerHTML = head + (folded ? '' : S.messages.map((m) => `
+      <div class="dci-msg dci-msg-${m.kind}" data-msg="${m.id}">${esc(tr(m.key, m.params))}${m.action
         ? ` <button type="button" class="dci-inline-btn" data-act="${esc(m.action.act)}" data-arg="${esc(m.action.arg || '')}">${esc(tr(m.action.label, m.params))}</button>` : ''}${m.closeButton
-        ? ` <button type="button" class="dci-inline-btn" data-act="close">${esc(tr('msg.toEditor'))}</button>` : ''}</div>`).join('');
+        ? ` <button type="button" class="dci-inline-btn" data-act="close">${esc(tr('msg.toEditor'))}</button>` : ''}${x(m)}</div>`).join(''));
   }
 
   function setBusy(key, params = {}) {
@@ -13690,7 +13725,8 @@
     }
     refresh();
     scrollDashboardTop();
-    const focusTarget = $('msgs').querySelector('button') || S.overlay.querySelector('.dci-close');
+    // [3.27.3] a button of a message (not its ✕, not the fold line)
+    const focusTarget = $('msgs').querySelector('.dci-inline-btn') || S.overlay.querySelector('.dci-close');
     focusTarget.focus({ preventScroll: true });
     return added;
   }
@@ -14017,6 +14053,22 @@
     return `<p class="dci-sub dci-pageof">${esc(tr('bcPage.notOwn', { name: a.name, page: PH })).replace(PH, link)}${label}</p>`;
   }
 
+  /**
+   * [3.28.0] How the dashboard credits an entry on this release (item 61): "as “B. Audio”" when its rows have a
+   * "credited as" (the MusicBrainz name otherwise), "(+1)" with several; the tooltip lists them.
+   */
+  function entryCredits(a) {
+    return uniq(S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip').map((r) => String(r.credit || '').trim()).filter(Boolean));
+  }
+  function creditChipHtml(a) {
+    const credits = entryCredits(a);
+    if (!credits.length) return '<span class="dci-gcredit" hidden></span>';
+    const name = tr('common.quoted', { text: credits[0] });
+    const text = credits.length > 1 ? tr('group.creditedAsMore', { name, n: credits.length - 1 }) : tr('group.creditedAs', { name });
+    const title = tr('group.creditedAsTitle', { list: credits.map((c) => tr('common.quoted', { text: c })).join(', ') });
+    return `<span class="dci-gcredit" title="${esc(title)}">${esc(text)}</span>`;
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -14024,15 +14076,16 @@
     const rows = allRows.filter((r) => r.level !== 'work' && (S.mxSkipRows || !r.mxSkipped));
     const mxHidden = allRows.filter((r) => r.mxSkipped && !S.mxSkipRows).length;
     const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
+    // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again)
     const sourceLink = a.dId && (a.links || [])[0]
-      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(tr('link.discogsTitle'))}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span>${esc(a.rawName || a.name)}</a>`
+      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle')}: ${a.rawName || a.name}`)}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
       // [3.21.0] a name from a text: the web profiles found next to it (T032); [3.21.3] only with the setting (off)
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink}</div>
+          <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -15948,6 +16001,9 @@
       const what = [rowTypeName(row), row.primaryText].filter(Boolean).map(esc).join(' · ');
       parts.push(`<span class="dci-cl-type"><span aria-hidden="true">→</span> ${what || `<span class="dci-cl-none">${esc(tr('cl.noType'))}</span>`}${row.roleCredit
         ? ` <span class="dci-cl-credit">${esc(tr('common.quoted', { text: row.roleCredit }))}</span>` : ''}</span>`);
+      // [3.28.0] the artist credit of this row when the entry is credited in more than one way (item 61; the head has the rest)
+      const a = S.artists.get(row.artistKey);
+      if (row.credit && a && entryCredits(a).length > 1) parts.push(`<span class="dci-cl-as">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: row.credit }) }))}</span>`);
     }
     parts.push(`<span class="dci-cl-level">${esc(tr(`level.${row.level}`))}</span>`);
     if (row.level === 'recording' || row.level === 'release') parts.push(open('dci-cl-tracks', esc(tracksShort(row)), tr('cl.tracksTitle')));
@@ -16000,15 +16056,16 @@
 
   /** [3.27.0] Compact or full: the toggle above the entries and in ⚙ Settings → General (remembered). */
   function setView(view) {
-    S.view = view === 'full' ? 'full' : 'compact';
-    writeJson('localStorage', VIEW_KEY, S.view === 'compact' ? null : 'full');
+    // [3.27.2] full is the default again (item 72): only "compact" is stored
+    S.view = view === 'compact' ? 'compact' : 'full';
+    writeJson('localStorage', VIEW_KEY, S.view === 'full' ? null : 'compact');
     log('info', 'viewSet', { view: tr(`view.${S.view}`) });
     applyView();
     renderGroups();
     refresh();
   }
 
-  /** "Compact | Full" (above the entries; small in the settings). */
+  /** "Compact | Full" in ⚙ Settings → General ([3.27.2] the head has a symbol for it; until then above the entries too). */
   const viewToggleHtml = (small = false) => `<span class="dci-seg${small ? ' dci-seg-small' : ''} dci-viewseg" role="group" aria-label="${esc(tr('view.label'))}" title="${esc(tr('view.title'))}">${
     ['compact', 'full'].map((v) => `<button type="button" data-act="view" data-view="${v}" aria-pressed="${S.view === v}">${esc(tr(`view.${v}`))}</button>`).join('')}</span>`;
 
@@ -16016,6 +16073,11 @@
     if (!S.overlay) return;
     S.overlay.classList.toggle('dci-compact', S.view === 'compact');
     S.overlay.querySelectorAll('[data-act="view"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === S.view)));
+    // [3.27.2] the symbol in the head (item 60): pressed while compact
+    S.overlay.querySelectorAll('[data-act="view-toggle"]').forEach((b) => {
+      b.setAttribute('aria-pressed', String(S.view === 'compact'));
+      b.title = tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact');
+    });
   }
 
   function renderGroups() {
@@ -16224,6 +16286,13 @@
     S.overlay.querySelectorAll('[data-group]').forEach((section) => {
       const rows = S.rows.filter((r) => r.artistKey === section.dataset.group);
       section.classList.toggle('dci-all-skip', rows.length > 0 && rows.every((r) => r.level === 'skip'));
+      // [3.28.0] the credit at the head follows the rows
+      const chip = section.querySelector('.dci-gcredit');
+      const a = S.artists.get(section.dataset.group);
+      if (chip && a) {
+        const html = creditChipHtml(a);
+        if (chip.outerHTML !== html) chip.outerHTML = html;
+      }
     });
     S.overlay.querySelector('[data-act="apply"]').disabled = !items.length && !(S.removals || []).length && !(S.waiting && S.waiting.size);
     renderMediumFilter();
@@ -18895,11 +18964,20 @@
     updateSyncArea($('sync'), true, false);
   }
 
+  /**
+   * The bar below "Import credits …" (with the companion). [3.28.0] only the status as a badge (item 66) – its source
+   * link, "open in background" / "Load the release there", ↻ – and ⚙ for the switches, which are in ⚙ Settings →
+   * Discogs and Bandcamp view now (before: all switches of the navigation here).
+   */
   function renderControls() {
     const bar = document.getElementById('dci-controls');
     if (!bar) return;
     bar.hidden = !S.sync.installed;
-    if (S.sync.installed) updateSyncArea(bar, false);
+    if (!S.sync.installed) return;
+    updateSyncArea(bar, false, false);
+    if (!bar.querySelector('[data-nav-settings]')) {
+      bar.insertAdjacentHTML('beforeend', `<button type="button" class="dci-nav-set" data-nav-settings title="${esc(tr('nav.settingsTitle'))}" aria-label="${esc(tr('nav.settingsTitle'))}">${esc(tr('nav.settings'))}</button>`);
+    }
   }
 
   /** "open in background" / "Load the release there" – in the dashboard's head and [3.17.4] in the navigation bar. */
@@ -19824,12 +19902,33 @@
         if (first) first.focus();
         break;
       }
+      // [3.27.3] a message closed (until the next import), the messages folded (item 56)
+      case 'msg-close':
+        S.messages = S.messages.filter((m) => String(m.id) !== btn.dataset.id);
+        renderMessages();
+        break;
+      case 'msgs-fold':
+        S.msgsFolded = !S.msgsFolded;
+        renderMessages();
+        if ($('msgs').querySelector('[data-act="msgs-fold"]')) $('msgs').querySelector('[data-act="msgs-fold"]').focus();
+        break;
       // [3.27.0] the compact view (item 31): a row opened or closed; compact or full
       case 'row-open':
         if (row) setRowOpen(row, !S.rowOpen.has(row.id), true);
         break;
       case 'view':
         if (btn.dataset.view !== S.view) setView(btn.dataset.view);
+        break;
+      // [3.27.2] the symbol in the head (item 60)
+      case 'view-toggle':
+        setView(S.view === 'compact' ? 'full' : 'compact');
+        break;
+      // [3.27.2] the heading "Settings" folds them in (item 57)
+      case 'settings-fold':
+        S.settingsOpen = false;
+        S.resetOpen = false;
+        renderSettings();
+        S.overlay.querySelector('.dci-head [data-act="settings-open"]').focus();
         break;
       case 'supp-open': {
         // open while a supplement is loaded (then the button only brings the bar into view)
@@ -21348,6 +21447,7 @@
     fit: '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>',
     close: '<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>',
     down: '<path d="M4 6l4 4 4-4"/>',
+    compact: '<path d="M2 3.5h12M2 8h12M2 12.5h12"/>',
     plus: '<path d="M8 3v10M3 8h10"/>',
   };
   const ico = (name) => `<svg class="dci-ico" viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
@@ -21367,6 +21467,7 @@
           <div class="dci-source" data-el="source"></div>
           <div class="dci-sync" data-el="sync" aria-live="polite"></div>
           <div class="dci-head-tools">
+            ${headBtn('view-toggle', 'compact', tr('view.compact'), tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact'), `aria-pressed="${S.view === 'compact'}"`)}
             <span class="dci-zoom" role="group" aria-label="${esc(tr('zoom.label'))}">
               <button type="button" class="dci-headbtn" data-act="zoom-out" title="${esc(tr('zoom.smaller'))}" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
               <span data-el="zoom" aria-live="polite">${Math.round(S.scale * 100)} %</span>
@@ -21401,7 +21502,6 @@
           </div>
           <section class="dci-supp" data-el="supp" aria-label="${esc(tr('supp.with'))}" hidden></section>
           <div class="dci-toolbar" data-el="toolbar" hidden>
-            ${viewToggleHtml()}
             <span>${esc(tr('toolbar.levelAll'))}</span>
             <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
               ${levelBtn('recording')}${levelBtn('release')}${levelBtn('skip')}
@@ -21618,7 +21718,7 @@
   // [3.25.0] tabs (collected item 42): "Texts" and "ⓘ Connections" (item 40) new
   const SETTING_TOPICS = ['general', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
-  // [3.27.0] the view of the entries: compact (default) or full
+  // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
@@ -21632,7 +21732,7 @@
     dates: ['dci-dm-auto', 'dci-pools-keep'],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
-  S.view = readJson('localStorage', VIEW_KEY, 'compact') === 'full' ? 'full' : 'compact';
+  S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
   /** Settings the menu shares with switches elsewhere in the dashboard (data-f → the value they show). */
   const SHARED_SWITCHES = {
     'fill-credits': () => S.fillCredits, 'stage-cap': () => S.capOn, 'bc-tracks': () => S.bcTracks, 'dm-auto': () => S.dmAuto,
@@ -21706,7 +21806,8 @@
     }).join('');
     const pane = S.resetOpen ? resetHtml()
       : `${bodies[tab]().join('')}${TOPIC_KEYS[tab].length ? `<div class="dci-set-reset"><button type="button" class="dci-textbtn" data-act="settings-reset" data-topic="${tab}">${esc(tr('settings.resetTopic'))}</button></div>` : ''}`;
-    return `<div class="dci-set-head"><strong>${esc(tr('settings.title'))}</strong> <span class="dci-sub">${esc(tr('settings.hint'))}</span></div>
+    // [3.27.2] the heading folds the settings in (item 57): a button that looks like the heading, with a tooltip
+    return `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="settings-fold" title="${esc(tr('settings.foldTitle'))}" aria-label="${esc(tr('settings.foldTitle'))}">${esc(tr('settings.title'))}</button> <span class="dci-sub">${esc(tr('settings.hint'))}</span></div>
       <div class="dci-set-wrap">
         <div class="dci-set-side">
           <div class="dci-set-tabs" role="tablist" aria-orientation="vertical" aria-label="${esc(tr('settings.title'))}">${tabs}</div>
@@ -21848,7 +21949,7 @@
       if (S.logEl) setLogVisible(true);
       setLogPlace('window');
       if (S.place !== 'window') setPlace('window');
-      if (S.view !== 'compact') setView('compact');
+      if (S.view !== 'full') setView('full');
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
@@ -21904,7 +22005,7 @@
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
-      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'compact',
+      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -22226,6 +22327,20 @@
     // [3.17.4] the buttons of the navigation bar (outside the dashboard)
     const barBtn = e.target.closest && e.target.closest('#dci-controls [data-act="sync-open"], #dci-controls [data-act="sync-load"]');
     if (barBtn) syncAction(barBtn.dataset.act);
+    // [3.28.0] ⚙ in the bar: the dashboard with its settings at "Discogs and Bandcamp view" (item 66)
+    if (e.target.closest && e.target.closest('#dci-controls [data-nav-settings]')) {
+      S.settingsOpen = true;
+      S.resetOpen = false;
+      S.settingsTab = 'discogs';
+      Promise.resolve(S.overlay && !S.overlay.hidden ? null : openDashboard()).then(() => {
+        renderSettings();
+        const tab = S.overlay && S.overlay.querySelector('.dci-set-tab[data-topic="discogs"]');
+        if (tab) {
+          tab.focus({ preventScroll: true });
+          $('settings').scrollIntoView({ block: 'nearest' });
+        }
+      });
+    }
     if (e.target.closest && e.target.closest('[data-sync-reload]')) {
       toDiscogs({ type: 'reload', site: viewSite(), releaseId: companionReleaseId() });
       logView('info', 'dgReload');
@@ -22351,8 +22466,14 @@
       #dci-launcher .dci-place-seg button[aria-pressed="true"] { background: #3d3a4f; color: #fff; }
       #dci-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 10px 0 0; font-size: 12px; color: #4b4585; }
       #dci-controls[hidden] { display: none; }
-      #dci-controls .dci-syncstatus { color: #6d6a7c; }
-      #dci-controls .dci-syncstatus button { font: inherit; padding: 0 6px; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #262430; cursor: pointer; }
+      /* [3.28.0] only the status, as a badge, and ⚙ (item 66) */
+      #dci-controls .dci-syncstatus { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 2px 10px; border: 1px solid #dddae8; border-radius: 999px;
+        background: #f6f5fb; color: #6d6a7c; }
+      #dci-controls .dci-syncstatus button { font: inherit; font-weight: 600; padding: 0 9px; border: 1px solid #4b4585; border-radius: 999px; background: #736dab; color: #fff; cursor: pointer; }
+      #dci-controls .dci-syncstatus button:hover { background: #4b4585; }
+      #dci-controls .dci-syncstatus button[data-sync-reload] { padding: 0 6px; background: #fff; color: #4b4585; border-color: #736dab; }
+      #dci-controls .dci-nav-set { font: inherit; padding: 0 6px; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
+      #dci-controls .dci-nav-set:hover { background: #f1f0f8; }
       .dci-srclink { margin-left: 4px; white-space: nowrap; }
       .dci-syncmode { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-seg.dci-seg-small button { padding: 1px calc(var(--u, 1px) * 8); font-size: calc(var(--u, 1px) * 12); }
@@ -22460,6 +22581,8 @@
       .dci-other input { width: calc(var(--u, 1px) * 330); }
       .dci-ibtn { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); white-space: nowrap; }
       .dci-head .dci-ibtn { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 7); }
+      /* [3.27.2] a symbol switched on (the compact view) */
+      #dci-overlay .dci-head .dci-headbtn[aria-pressed="true"] { background: #ecebf6; border-color: var(--purple); color: var(--purple-d); }
       .dci-ico { width: calc(var(--u, 1px) * 15); height: calc(var(--u, 1px) * 15); flex: none; }
       .dci-hlabel { display: none; }
       @container (min-width: 1600px) { .dci-head .dci-hlabel { display: inline; } }
@@ -22480,6 +22603,12 @@
       .dci-srcpanels > * { margin-top: 0; }
       .dci-head .dci-syncstatus { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8);
         border: 1px solid var(--line); border-radius: 999px; background: var(--soft); }
+      /* [3.27.2] "open in background", "Load the release there" and ↻ stand out (item 65) */
+      #dci-overlay .dci-syncstatus button { font: inherit; font-size: calc(var(--u, 1px) * 12); font-weight: 600; padding: 0 calc(var(--u, 1px) * 9); border: 1px solid var(--purple-d);
+        border-radius: 999px; background: var(--purple); color: #fff; cursor: pointer; }
+      #dci-overlay .dci-syncstatus button:hover { background: var(--purple-d); }
+      #dci-overlay .dci-syncstatus button[data-sync-reload] { padding: 0 calc(var(--u, 1px) * 6); background: #fff; color: var(--purple-d); border-color: var(--purple); }
+      #dci-overlay .dci-syncstatus button[data-sync-reload]:hover { background: #ecebf6; }
       /* [E1] A pasted text as the source, and the lines it did not understand */
       .dci-textsrc { display: grid; gap: calc(var(--u, 1px) * 6); width: 100%; margin-top: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 6px; background: var(--soft); }
       .dci-textsrc-text { display: grid; gap: 2px; }
@@ -22548,6 +22677,14 @@
       .dci-msg-warn { border-left-color: var(--warn); }
       .dci-msg-error { border-left-color: var(--err); }
       .dci-msg-ok { border-left-color: var(--ok); }
+      /* [3.27.3] ✕ on each message, the line that folds them (item 56) */
+      .dci-msg { position: relative; padding-right: calc(var(--u, 1px) * 34); }
+      .dci-msg-x { position: absolute; top: calc(var(--u, 1px) * 5); right: calc(var(--u, 1px) * 6); display: inline-flex; padding: calc(var(--u, 1px) * 3); border: 0;
+        border-radius: 3px; background: none; color: var(--muted); cursor: pointer; }
+      .dci-msg-x:hover { background: rgba(38, 36, 48, 0.08); color: var(--ink); }
+      .dci-msg-x .dci-ico { width: calc(var(--u, 1px) * 12); height: calc(var(--u, 1px) * 12); }
+      .dci-msgs-head { margin: 0 0 calc(var(--u, 1px) * 6); }
+      .dci-msgs-fold { font-weight: 600; text-decoration: none; }
       .dci-inline-btn { margin-left: calc(var(--u, 1px) * 8); border: 1px solid var(--ok); background: #fff; color: var(--ok); border-radius: 3px; padding: 1px calc(var(--u, 1px) * 8); }
 
       .dci-toolbar { display: flex; align-items: center; gap: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 16); flex-wrap: wrap; margin: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 16); }
@@ -22766,6 +22903,13 @@
       .dci-src-dg { background: #333; }
       .dci-src-mb { background: var(--purple); }
       a.dci-dglink { color: #333; text-decoration-color: #999; }
+      /* [3.28.0] only the tag links to the source (↗), the credit of the entry as a chip (item 61) */
+      a.dci-dglink { text-decoration: none; display: inline-flex; align-items: center; gap: 2px; }
+      .dci-dglink-ico { font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
+      a.dci-dglink:hover .dci-dglink-ico { color: var(--purple-d); }
+      .dci-gcredit { display: inline-block; padding: 0 calc(var(--u, 1px) * 8); border: 1px solid #c9d3e3; border-radius: 999px; background: #eef1f6; color: #3f5170;
+        font-size: calc(var(--u, 1px) * 12); font-weight: 400; }
+      .dci-cl-as { color: #3f5170; font-size: calc(var(--u, 1px) * 12); }
       a.dci-mblink { color: var(--purple); font-weight: 600; }
       .dci-disamb { color: var(--muted); }
       .dci-pv-update { color: #4b4585; font-weight: 700; }
@@ -22900,6 +23044,9 @@
         border-radius: 3px; background: #faf9fd; }
       .dci-settings[hidden] { display: none; }
       .dci-set-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); margin-bottom: calc(var(--u, 1px) * 6); }
+      /* [3.27.2] the heading folds the settings in (item 57) */
+      .dci-set-title { font: inherit; font-weight: 700; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; }
+      .dci-set-title:hover { color: var(--purple-d); }
       /* [3.25.0] the topics as tabs: vertical on the left, at the top in a narrow dashboard */
       .dci-settings { container-type: inline-size; }
       .dci-set-wrap { display: flex; gap: calc(var(--u, 1px) * 14); align-items: flex-start; }
