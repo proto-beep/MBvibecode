@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.26.0 | – |
+| 2026-10-24 | 3.22.1 – 3.27.0 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -39,6 +39,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-24 | Import 3.27.0 | A clearer dashboard: the entries compact – one line per role (role → type and instrument, level, tracks, date), a click opens the row to change it; dates and track groups can still be dropped onto the line, what is open is in colour (red missing, yellow a question or suggestion), skipped rows are grey with ✕; "Compact \| Full" is remembered. The head in one line with symbols of its own, "Source ▾" for everything about the source, "+ Supplement" only on request; the settings as tabs (also "Texts" and "ⓘ Connections" – every site, tool and script the script works with), "Reset all settings" in them; after the installation the language is asked once |
 | 2026-10-23 | Import 3.22.0 | Text recognition, part 2: instruments and voices in German, Spanish and French ("Schlagzeug", "batería", "contrebasse") become MusicBrainz's own names without a role credit, words with several meanings ("bajo", "Alto") are asked; tracks named by their titles in quotation marks ("Piano in ‘A' and 'B' is a contribution by X") are found on the release; "Recorded by X in Xixon, Asturies, Spain" gives X and the area where it was recorded (recorded, mixed or mastered in – found by its other names too, only suggested); credits for a medium the release does not have ("Vinyl LP mastering") are left out, and each line left out on purpose says why; "Translated by" on Bandcamp suggests liner notes; artist pages of streaming services and profiles after labels and studios are filled in by "Create …", the links at the entries are shown by a setting; large releases: every medium in the choice, the chosen ones loaded at once with MusicBrainz's own controls |
 | 2026-10-19 | Import 3.21.0 | Text recognition, part 1: several sentences in one line are read one by one ("Graphic design: X. Text: Y. Produced by Z."); "℗ & ©", "P + ©" and "(P) & (C)" give both, without codes like "DDD" or catalogue numbers; web addresses are never part of a name – a profile (Instagram, SoundCloud …) after a name is looked up in MusicBrainz as a suggestion and filled in by "Create artist", Linktree and other addresses are left out; "Logo by" is design with the credit "logo"; a title in quotation marks with its year before "by" and "courtesy of …" are no part of a credit; "Text: X" asks: liner notes or lyrics; thanks and endorsements are listed as left out on purpose |
 | 2026-10-18 | Import 3.18.0 | Works matrix: "Skip works matrix" (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to "Skip" and the work lookups rest; "Take works matrix again" brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. "Add entry manually" is one line above the date pool, always in view |
@@ -80,6 +81,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.27.0 · milestone
+
+#### Added
+
+- **The compact view of the entries** (collected item 31; maintainer: "evtl eine ansicht "short info" einführen" – "derzeit ist einfach sehr viel information sichtbar … kompakter darstellen und dann ausklappen falls man etwas ändern möchte. die drop felder könnten auch in kompaktem zustand beibehalten werden. falls offene fragen sind wie unverknüpfte artists oder die "bass"-Abfrage könnte das farblich codiert sein." – "bitte rollen auf skip grau bleiben lassen. evtl ein X daneben um betroffene zeilen zu entfernen" – das ✕ "nur aus dem dashboard nehmen. es muss beim nächsten import wieder mitkommen!"): each role of an entry is one line – the role as written → type and instrument or vocal (with the role credit), level, tracks in short ("tracks 1–3, 5"), date chip or "no date". A click opens the full row, **▴ compact** closes it. Dates and track groups can be dropped onto the line as onto the full row. What is open is coloured: red what is missing, yellow a question or a suggestion ("Bass: which instrument?", "type to choose", "date suggested"). Skipped rows are grey with **✕** – out of the dashboard only, the next import brings them back. New rows and rows jumped to open by themselves.
+- **Compact | Full** above the entries and in ⚙ Settings → General, remembered; compact is the default, **Full** is the view as before.
+- **Milestone** in the update notice: the compact view together with the head in one line (3.26.0) and the settings as tabs (3.25.0).
+
+#### Changed
+
+- French: no-break spaces in two texts of 3.26.0 (the tooltip of "+ Supplement", the log of the language asked).
+
 
 ### Import 3.26.0
 

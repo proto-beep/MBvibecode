@@ -13,12 +13,26 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.26.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.27.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.27.0 · 2026-10-24 · milestone
+
+The compact view of the entries (collected item 31).
+
+- **Rows (`rowHtml`):** a first cell **`td.dci-c-cline`** with **`clineHtml(row, info)`** (only in the compact view; `.dci-cline`: `.dci-cl-tgl` ▸, `.dci-cl-role`, `.dci-cl-type` – `rowTypeName`, `primaryText`, role credit –, `.dci-cl-level`, `.dci-cl-tracks` with **`tracksShort(row)`** – runs of consecutive tracks, `medium.number` with several media –, `.dci-cl-date` – pool label or `fieldsText` –, the marks `.dci-cl-flag` `.dci-cl-bad` – `info.issues`, `isUnmapped` – / `.dci-cl-ask` – `questionRuleFor` unanswered, `typeQuestionFor` without `typeAnswer` – / `.dci-cl-sugg` – `linerDateSugg` –; on a skipped row `.dci-cl-x` `data-act="remove-row"`); every button of the line `data-act="row-open"`. In the role cell `.dci-cl-close` "▴ compact". `tr.dci-row` and `tr.dci-tracksrow` get `.dci-open` from **`S.rowOpen`**. The compact cell is inside `tr[data-row]`, so `rowOf`, `rerenderRow`, `removeRow` and every query `tr[data-row="…"]` stay as they were.
+- **New:** `setRowOpen(row, open, focus)` (classes, focus into the type field or back to ▸), `revealRow(row)` (in `gotoIncomplete`, the companion's `focus-row`, a manual entry added), `setView(view)`, `applyView()` (`#dci-overlay.dci-compact`, `aria-pressed`), `viewToggleHtml(small)`. `refresh()` redraws each compact cell from `rowInfo` when its HTML changed (`data-html`). `add-role` opens the new row. `dmTargetOf`: `tr[data-row] .dci-cl-tracks` (track groups) and `tr[data-row] .dci-cl-date` (pool dates) are drop targets.
+- **State / storage:** `S.view` (from the new `VIEW_KEY` = `dci-view`; compact not stored, `full` stored), `S.rowOpen` (not stored; emptied by a new import and by `forgetImport`); `dci-view` in `TOPIC_KEYS.general` and `SETTINGS_KEYS`; `resetTopic('general')`, `resetSettings` back to compact. `onClick`: `row-open`, `view`.
+- **UI:** "Compact | Full" (`.dci-viewseg`, `data-act="view"`) first in the toolbar and in ⚙ Settings → General.
+- **CSS:** `.dci-c-cline` hidden except in `.dci-compact` for closed rows (the other cells and the track list hidden there), `.dci-cline`, `.dci-cl-*` (tracks in the colours of tracks, date in those of dates, marks red / yellow, skipped rows grey), drag outlines for the compact targets, the "credited as" block (`.dci-variants`) only when a row of the entry is open (`:has`), smaller gaps between cards.
+- **Milestone:** `MILESTONES` 3.27.0, `ms.3.27.0` (4 languages).
+- **Texts (4 languages):** new `view.label`, `view.title`, `view.compact`, `view.full`, `log.viewSet`, `cl.openTitle`, `cl.close`, `cl.closeTitle`, `cl.noType`, `cl.tracksTitle`, `cl.dateTitle`, `cl.noDate`, `cl.unmapped`, `cl.instrAsk`, `cl.typeAsk`, `cl.dateSugg`, `cl.removeTitle`, `cl.noTracks`, `cl.allTracks`, `cl.track`, `cl.tracks`, `ms.3.27.0`; French no-break spaces in `supp.openTitle` and `log.langAsked` (3.26.0).
+- **Tests:** new `t_compact.py` (the default compact: lines, marks, hidden fields; open / close with focus; a track group and a pool date dropped onto the line; the question answered; a skipped row grey with ✕ and back after reloading; "Full" remembered and in the settings; a new incomplete row and the jump to it). **`harness.open_mb_edit(…, view='full')`** sets `dci-view` (and the storage generation) before the script starts, so the other tests keep the full view; `open_mb_any` the same; `view=None` for the default. `t_notice.py`: the three latest milestones 3.27.0, 3.22.0, 3.21.0.
+
 
 ## Import 3.26.0 · 2026-10-24
 

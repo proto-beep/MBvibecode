@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.26.0
+// @version      3.27.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.26.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.27.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -682,6 +682,27 @@
       "supp.openTitle": "Supplement the rows with a second source – another linked source, a URL or a pasted text; compared with the rows, nothing is taken over by itself",
       "langAsk.hint": "Choose the language of the Credits Importer – you can change it any time in ⚙ Settings → General.",
       "langAsk.ok": "OK",
+      "view.label": "Entries:",
+      "view.title": "Compact: one line per row – a click opens it to change it. Full: every row with all its fields.",
+      "view.compact": "Compact",
+      "view.full": "Full",
+      "log.viewSet": "View of the entries: {view}",
+      "cl.openTitle": "Open this row to change it",
+      "cl.close": "compact",
+      "cl.closeTitle": "Back to the compact line",
+      "cl.noType": "no type",
+      "cl.tracksTitle": "Tracks – drop a track group here, or click to choose",
+      "cl.dateTitle": "Date – drop a date of the pool here, or click to enter one",
+      "cl.noDate": "no date",
+      "cl.unmapped": "no MusicBrainz type",
+      "cl.instrAsk": "{name}: which instrument?",
+      "cl.typeAsk": "type to choose",
+      "cl.dateSugg": "date suggested",
+      "cl.removeTitle": "Take this row out of the dashboard (the next import brings it back)",
+      "cl.noTracks": "no tracks",
+      "cl.allTracks": "all {n} tracks",
+      "cl.track": "track {list}",
+      "cl.tracks": "tracks {list}",
       "log.langAsked": "Language chosen after the installation: {lang}",
       "settings.resetTopic": "↺ Defaults of this topic",
       "settings.resetAsk": "Put the settings of “{topic}” back to their defaults?",
@@ -1302,6 +1323,7 @@
       "ms.3.18.0": "Works matrix: “Skip works matrix” (kept for the release) – nothing of it is staged (no works, no links to works, no work relationships), its rows go to “Skip” and the work lookups rest; “Take works matrix again” brings it all back. The matrix folds and unfolds at its head. From 100 tracks without a work (setting) the works section asks before the work lookups, with about how long they take. “Add entry manually” is one line above the date pool, always in view.",
       "ms.3.21.0": "Text recognition, part 1: several sentences in one line are read one by one (“Graphic design: X. Text: Y. Produced by Z.”); “℗ & ©”, “P + ©” and “(P) & (C)” give both, without codes like “DDD” or catalogue numbers; web addresses are never part of a name – a profile (Instagram, SoundCloud …) after a name is looked up in MusicBrainz as a suggestion and filled in by “Create artist”, Linktree and other addresses are left out; “Logo by” is design with the credit “logo”; a title in quotation marks with its year before “by” and “courtesy of …” are no part of a credit; “Text: X” asks: liner notes or lyrics; thanks and endorsements are listed as left out on purpose.",
       "ms.3.22.0": "Text recognition, part 2: instruments and voices in German, Spanish and French (“Schlagzeug”, “batería”, “contrebasse”) become MusicBrainz's own names without a role credit, words with several meanings (“bajo”, “Alto”) are asked; tracks named by their titles in quotation marks (“Piano in ‘A’ and ‘B’ is a contribution by X”) are found on the release; “Recorded by X in Xixon, Asturies, Spain” gives X and the area where it was recorded (recorded, mixed or mastered in – found by its other names too, only suggested); credits for a medium the release does not have (“Vinyl LP mastering”) are left out, and each line left out on purpose says why; “Translated by” on Bandcamp suggests liner notes; artist pages of streaming services and profiles after labels and studios are filled in by “Create …”, the links at the entries are shown by a setting; large releases: every medium in the choice, the chosen ones loaded at once with MusicBrainz's own controls",
+      "ms.3.27.0": "A clearer dashboard: the entries compact – one line per role (role → type and instrument, level, tracks, date), a click opens the row to change it; dates and track groups can still be dropped onto the line, what is open is in colour (red missing, yellow a question or suggestion), skipped rows are grey with ✕; “Compact | Full” is remembered. The head in one line with symbols of its own, “Source ▾” for everything about the source, “+ Supplement” only on request; the settings as tabs (also “Texts” and “ⓘ Connections” – every site, tool and script the script works with), “Reset all settings” in them; after the installation the language is asked once",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -2119,6 +2141,27 @@
       "supp.openTitle": "Die Zeilen mit einer zweiten Quelle ergänzen – eine andere verknüpfte Quelle, eine URL oder ein eingefügter Text; mit den Zeilen verglichen, nichts wird von selbst übernommen",
       "langAsk.hint": "Wähle die Sprache des Credits Importers – ändern kannst du sie jederzeit unter ⚙ Einstellungen → Allgemein.",
       "langAsk.ok": "OK",
+      "view.label": "Einträge:",
+      "view.title": "Kompakt: eine Zeile pro Rolle – ein Klick klappt sie zum Ändern auf. Voll: jede Zeile mit allen Feldern.",
+      "view.compact": "Kompakt",
+      "view.full": "Voll",
+      "log.viewSet": "Ansicht der Einträge: {view}",
+      "cl.openTitle": "Diese Zeile zum Ändern aufklappen",
+      "cl.close": "kompakt",
+      "cl.closeTitle": "Zurück zur kompakten Zeile",
+      "cl.noType": "kein Typ",
+      "cl.tracksTitle": "Tracks – eine Trackgruppe hierher ziehen oder klicken zum Wählen",
+      "cl.dateTitle": "Datum – ein Datum aus dem Pool hierher ziehen oder klicken zum Eingeben",
+      "cl.noDate": "kein Datum",
+      "cl.unmapped": "kein MusicBrainz-Typ",
+      "cl.instrAsk": "{name}: welches Instrument?",
+      "cl.typeAsk": "Typ wählen",
+      "cl.dateSugg": "Datum vorgeschlagen",
+      "cl.removeTitle": "Diese Zeile aus dem Dashboard nehmen (beim nächsten Import kommt sie wieder)",
+      "cl.noTracks": "keine Tracks",
+      "cl.allTracks": "alle {n} Tracks",
+      "cl.track": "Track {list}",
+      "cl.tracks": "Tracks {list}",
       "log.langAsked": "Sprache nach der Installation gewählt: {lang}",
       "settings.resetTopic": "↺ Standard für dieses Thema",
       "settings.resetAsk": "Die Einstellungen von „{topic}“ wirklich auf den Standard zurücksetzen?",
@@ -2739,6 +2782,7 @@
       "ms.3.18.0": "Werk-Matrix: „Werk-Matrix überspringen“ (für das Release gemerkt) – nichts davon wird vorgemerkt (keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen), ihre Zeilen gehen auf „Skip“ und die Werk-Abfragen ruhen; „Werk-Matrix wieder nehmen“ bringt alles zurück. Die Matrix lässt sich an ihrem Kopf zu- und aufklappen. Ab 100 Tracks ohne Werk (Einstellung) fragt der Werk-Bereich vor den Werk-Abfragen, mit ungefährer Dauer. „Eintrag manuell hinzufügen“ ist eine Zeile über dem Datums-Pool, immer sichtbar.",
       "ms.3.21.0": "Texterkennung, Teil 1: mehrere Sätze in einer Zeile werden einzeln gelesen („Graphic design: X. Text: Y. Produced by Z.“); „℗ & ©“, „P + ©“ und „(P) & (C)“ ergeben beides, ohne Codes wie „DDD“ und Katalognummern; Web-Adressen sind nie Teil eines Namens – ein Profil (Instagram, SoundCloud …) hinter einem Namen wird in MusicBrainz als Vorschlag gesucht und von „Artist anlegen“ eingetragen, Linktree und andere Adressen bleiben weg; „Logo by“ ist Design mit dem Credit „logo“; ein Titel in Anführungszeichen mit Jahr vor „by“ und „courtesy of …“ gehören nicht zum Credit; „Text: X“ fragt: Liner Notes oder Liedtext; Danksagungen und Herstellerhinweise stehen als absichtlich ausgelassen in einer eigenen Liste.",
       "ms.3.22.0": "Texterkennung, Teil 2: Instrumente und Stimmen auf Deutsch, Spanisch und Französisch („Schlagzeug“, „batería“, „contrebasse“) werden zu den Namen von MusicBrainz, ohne Role Credit, mehrdeutige Wörter („bajo“, „Alto“) werden erfragt; Tracks, die über ihre Titel in Anführungszeichen genannt sind („Piano in ‘A’ and ‘B’ is a contribution by X“), werden im Release gefunden; „Recorded by X in Xixon, Asturies, Spain“ ergibt X und das Gebiet der Aufnahme (recorded, mixed oder mastered in – auch über andere Namen gefunden, nur vorgeschlagen); Credits für ein Medium, das das Release nicht hat („Vinyl LP mastering“), bleiben weg, und jede absichtlich ausgelassene Zeile nennt den Grund; „Translated by“ bei Bandcamp schlägt Liner Notes vor; Künstlerseiten von Streamingdiensten und Profile hinter Labels und Studios trägt „… anlegen“ ein, die Links an den Einträgen zeigt eine Einstellung; große Releases: alle Medien in der Auswahl, die gewählten sofort mit MusicBrainz' eigenen Schaltern geladen",
+      "ms.3.27.0": "Ein aufgeräumteres Dashboard: die Einträge kompakt – eine Zeile pro Rolle (Rolle → Typ und Instrument, Ebene, Tracks, Datum), ein Klick klappt die Zeile zum Ändern auf; Daten und Trackgruppen lassen sich weiter auf die Zeile ziehen, Offenes ist farbig (rot: fehlt, gelb: Frage oder Vorschlag), übersprungene Zeilen sind grau mit ✕; „Kompakt | Voll“ wird gemerkt. Der Kopf in einer Zeile mit eigenen Symbolen, „Quelle ▾“ für alles zur Quelle, „+ Ergänzen“ nur auf Wunsch; die Einstellungen als Tabs (auch „Texte“ und „ⓘ Verbindungen“ – jede Seite, jedes Werkzeug und Skript, mit dem das Skript arbeitet), „Alle Einstellungen zurücksetzen“ darin; nach der Installation wird einmal nach der Sprache gefragt",
       "log.stagedRemoved": "Aus dem Editor genommen (nicht mehr gewünscht): {text}",
       "msg.stagedRemovedAll.one": "{n} schon übernommene Beziehung ist nicht mehr gewünscht und wurde aus dem Editor genommen.",
       "msg.stagedRemovedAll.other": "{n} schon übernommene Beziehungen sind nicht mehr gewünscht und wurden aus dem Editor genommen.",
@@ -3556,6 +3600,27 @@
       "supp.openTitle": "Completar las filas con una segunda fuente – otra fuente enlazada, una URL o un texto pegado; se compara con las filas, nada se adopta por sí solo",
       "langAsk.hint": "Elige el idioma del Credits Importer – puedes cambiarlo cuando quieras en ⚙ Ajustes → General.",
       "langAsk.ok": "Aceptar",
+      "view.label": "Entradas:",
+      "view.title": "Compacta: una línea por fila – un clic la abre para cambiarla. Completa: cada fila con todos sus campos.",
+      "view.compact": "Compacta",
+      "view.full": "Completa",
+      "log.viewSet": "Vista de las entradas: {view}",
+      "cl.openTitle": "Abrir esta fila para cambiarla",
+      "cl.close": "compacta",
+      "cl.closeTitle": "Volver a la línea compacta",
+      "cl.noType": "sin tipo",
+      "cl.tracksTitle": "Pistas – suelta aquí un grupo de pistas o haz clic para elegir",
+      "cl.dateTitle": "Fecha – suelta aquí una de las fechas guardadas o haz clic para introducirla",
+      "cl.noDate": "sin fecha",
+      "cl.unmapped": "sin tipo de MusicBrainz",
+      "cl.instrAsk": "{name}: ¿qué instrumento?",
+      "cl.typeAsk": "elegir el tipo",
+      "cl.dateSugg": "fecha sugerida",
+      "cl.removeTitle": "Quitar esta fila del panel (la próxima importación la trae de nuevo)",
+      "cl.noTracks": "ninguna pista",
+      "cl.allTracks": "las {n} pistas",
+      "cl.track": "pista {list}",
+      "cl.tracks": "pistas {list}",
       "log.langAsked": "Idioma elegido tras la instalación: {lang}",
       "settings.resetTopic": "↺ Valores por defecto de este tema",
       "settings.resetAsk": "¿Restablecer de verdad los ajustes de «{topic}»?",
@@ -4176,6 +4241,7 @@
       "ms.3.18.0": "Matriz de obras: «Omitir la matriz de obras» (se guarda para la publicación) – no se prepara nada de ella (ni obras, ni enlaces a obras, ni relaciones de obra), sus filas pasan a «Skip» y las búsquedas de obras descansan; «Volver a tomar la matriz de obras» lo devuelve todo. La matriz se pliega y despliega en su cabecera. A partir de 100 pistas sin obra (ajuste) la sección de obras pregunta antes de las búsquedas de obras, con cuánto tardan más o menos. «Añadir entrada manualmente» es una línea encima de las fechas guardadas, siempre visible.",
       "ms.3.21.0": "Reconocimiento de texto, parte 1: varias frases en una línea se leen una a una («Graphic design: X. Text: Y. Produced by Z.»); «℗ & ©», «P + ©» y «(P) & (C)» dan ambos, sin códigos como «DDD» ni números de catálogo; las direcciones web nunca forman parte de un nombre – un perfil (Instagram, SoundCloud …) tras un nombre se busca en MusicBrainz como sugerencia y «Crear artista» lo rellena, Linktree y otras direcciones se omiten; «Logo by» es diseño con el crédito «logo»; un título entre comillas con su año antes de «by» y «courtesy of …» no forman parte de un crédito; «Text: X» pregunta: notas de presentación o letra; los agradecimientos y avisos de marcas aparecen como omitidos a propósito.",
       "ms.3.22.0": "Reconocimiento de texto, parte 2: instrumentos y voces en alemán, español y francés («Schlagzeug», «batería», «contrebasse») pasan a los nombres de MusicBrainz, sin crédito de rol, y las palabras con varios sentidos («bajo», «Alto») se preguntan; las pistas nombradas por sus títulos entre comillas («Piano in ‘A’ and ‘B’ is a contribution by X») se encuentran en la publicación; «Recorded by X in Xixon, Asturies, Spain» da X y la zona de la grabación (recorded, mixed o mastered in – encontrada también por sus otros nombres, solo sugerida); los créditos para un medio que la publicación no tiene («Vinyl LP mastering») se omiten, y cada línea omitida a propósito dice por qué; «Translated by» en Bandcamp sugiere notas; las páginas de artista de los servicios de streaming y los perfiles tras sellos y estudios los rellena «Crear …», los enlaces en las entradas se muestran con un ajuste; publicaciones grandes: todos los medios en la elección, los elegidos cargados en seguida con los controles de MusicBrainz",
+      "ms.3.27.0": "Un panel más ordenado: las entradas compactas – una línea por rol (rol → tipo e instrumento, nivel, pistas, fecha), un clic abre la fila para cambiarla; las fechas y los grupos de pistas se siguen soltando sobre la línea, lo pendiente va en color (rojo: falta, amarillo: una pregunta o sugerencia), las filas omitidas son grises con ✕; «Compacta | Completa» se recuerda. La cabecera en una línea con símbolos propios, «Fuente ▾» para todo lo de la fuente, «+ Completar» solo a petición; los ajustes en pestañas (también «Textos» y «ⓘ Conexiones» – cada sitio, herramienta y script con el que trabaja el script), «Restablecer todos los ajustes» dentro; tras la instalación se pregunta una vez el idioma",
       "log.stagedRemoved": "Quitada del editor (ya no deseada): {text}",
       "msg.stagedRemovedAll.one": "{n} relación ya añadida ya no se quiere y se quitó del editor.",
       "msg.stagedRemovedAll.other": "{n} relaciones ya añadidas ya no se quieren y se quitaron del editor.",
@@ -4990,10 +5056,31 @@
       "srcmenu.button": "Source",
       "srcmenu.title": "Autre source, texte collé, ordre des sources, Bandcamp, supprimer l’import enregistré",
       "supp.open": "Compléter",
-      "supp.openTitle": "Compléter les lignes avec une seconde source – une autre source liée, une URL ou un texte collé ; comparée aux lignes, rien n’est repris tout seul",
+      "supp.openTitle": "Compléter les lignes avec une seconde source – une autre source liée, une URL ou un texte collé ; comparée aux lignes, rien n’est repris tout seul",
       "langAsk.hint": "Choisissez la langue du Credits Importer – vous pouvez la changer à tout moment dans ⚙ Réglages → Général.",
       "langAsk.ok": "OK",
-      "log.langAsked": "Langue choisie après l’installation : {lang}",
+      "view.label": "Entrées :",
+      "view.title": "Compacte : une ligne par rôle – un clic l’ouvre pour la modifier. Complète : chaque ligne avec tous ses champs.",
+      "view.compact": "Compacte",
+      "view.full": "Complète",
+      "log.viewSet": "Vue des entrées : {view}",
+      "cl.openTitle": "Ouvrir cette ligne pour la modifier",
+      "cl.close": "compacte",
+      "cl.closeTitle": "Revenir à la ligne compacte",
+      "cl.noType": "aucun type",
+      "cl.tracksTitle": "Pistes – déposez ici un groupe de pistes ou cliquez pour choisir",
+      "cl.dateTitle": "Date – déposez ici une des dates enregistrées ou cliquez pour la saisir",
+      "cl.noDate": "aucune date",
+      "cl.unmapped": "aucun type MusicBrainz",
+      "cl.instrAsk": "{name} : quel instrument ?",
+      "cl.typeAsk": "type à choisir",
+      "cl.dateSugg": "date suggérée",
+      "cl.removeTitle": "Retirer cette ligne du tableau (le prochain import la ramène)",
+      "cl.noTracks": "aucune piste",
+      "cl.allTracks": "les {n} pistes",
+      "cl.track": "piste {list}",
+      "cl.tracks": "pistes {list}",
+      "log.langAsked": "Langue choisie après l’installation : {lang}",
       "settings.resetTopic": "↺ Valeurs par défaut de ce thème",
       "settings.resetAsk": "Remettre vraiment les réglages de « {topic} » aux valeurs par défaut ?",
       "settings.place": "Tableau de bord",
@@ -5613,6 +5700,7 @@
       "ms.3.18.0": "Matrice des œuvres : « Ignorer la matrice des œuvres » (gardé pour la parution) – rien n’en est préparé (ni œuvres, ni liens vers des œuvres, ni relations d’œuvre), ses lignes passent sur « Skip » et les recherches d’œuvres sont suspendues ; « Reprendre la matrice des œuvres » rétablit tout. La matrice se replie et se déplie par son en-tête. À partir de 100 pistes sans œuvre (réglage), la section des œuvres demande avant les recherches d’œuvres, avec leur durée approximative. « Ajouter une entrée manuellement » est une ligne au-dessus des dates enregistrées, toujours visible.",
       "ms.3.21.0": "Reconnaissance du texte, 1re partie : plusieurs phrases d’une ligne sont lues une à une (« Graphic design: X. Text: Y. Produced by Z. ») ; « ℗ & © », « P + © » et « (P) & (C) » donnent les deux, sans codes comme « DDD » ni numéros de catalogue ; les adresses web ne font jamais partie d’un nom – un profil (Instagram, SoundCloud …) après un nom est cherché dans MusicBrainz comme suggestion et « Créer l’artiste » le remplit, Linktree et les autres adresses sont laissés de côté ; « Logo by » est du design avec le crédit « logo » ; un titre entre guillemets avec son année avant « by » et « courtesy of … » ne font pas partie d’un crédit ; « Text: X » demande : notes de pochette ou paroles ; les remerciements et mentions de marques sont listés comme laissés de côté exprès.",
       "ms.3.22.0": "Reconnaissance du texte, 2e partie : les instruments et voix en allemand, espagnol et français (« Schlagzeug », « batería », « contrebasse ») deviennent les noms de MusicBrainz, sans crédit de rôle, et les mots à plusieurs sens (« bajo », « Alto ») sont demandés ; les pistes nommées par leurs titres entre guillemets (« Piano in ‘A’ and ‘B’ is a contribution by X ») sont trouvées sur la parution ; « Recorded by X in Xixon, Asturies, Spain » donne X et la région de l’enregistrement (recorded, mixed ou mastered in – trouvée aussi par ses autres noms, seulement suggérée) ; les crédits pour un support que la parution n’a pas (« Vinyl LP mastering ») sont laissés de côté, et chaque ligne laissée de côté exprès dit pourquoi ; « Translated by » sur Bandcamp suggère des notes de pochette ; les pages d’artiste des services de streaming et les profils après les labels et studios sont remplis par « Créer… », les liens aux entrées sont affichés par un réglage ; grandes parutions : tous les supports dans le choix, ceux choisis chargés tout de suite avec les commandes de MusicBrainz",
+      "ms.3.27.0": "Un tableau plus clair : les entrées compactes – une ligne par rôle (rôle → type et instrument, niveau, pistes, date), un clic ouvre la ligne pour la modifier ; les dates et les groupes de pistes se déposent toujours sur la ligne, ce qui reste à faire est en couleur (rouge : manque, jaune : une question ou une suggestion), les lignes ignorées sont grises avec ✕ ; « Compacte | Complète » est mémorisé. L’en-tête sur une ligne avec des symboles propres, « Source ▾ » pour tout ce qui concerne la source, « + Compléter » seulement sur demande ; les réglages en onglets (aussi « Textes » et « ⓘ Connexions » – chaque site, outil et script avec lequel le script travaille), « Réinitialiser tous les réglages » dedans ; après l’installation, la langue est demandée une fois",
       "log.stagedRemoved": "Retirée de l’éditeur (plus voulue) : {text}",
       "msg.stagedRemovedAll.one": "{n} relation déjà ajoutée n’est plus voulue et a été retirée de l’éditeur.",
       "msg.stagedRemovedAll.other": "{n} relations déjà ajoutées ne sont plus voulues et ont été retirées de l’éditeur.",
@@ -9679,6 +9767,9 @@
     settingsOpen: false,
     // [3.25.0] the tab of the settings (remembered); [3.16.0 – 3.24] a set of open topics
     settingsTab: 'general',
+    // [3.27.0] the entries compact (a line per row, a click opens it) or full (remembered); the rows opened in the compact view
+    view: 'compact',
+    rowOpen: new Set(),
     awStoreCount: null,
     workOptions: null,
     workDefaults: { typeId: '', languageIds: [] },
@@ -10959,6 +11050,7 @@
     if (!ids.length) return;
     S.incIdx = ((S.incIdx == null || S.incIdx < 0 ? (step > 0 ? -1 : 0) : S.incIdx) + step + ids.length) % ids.length;
     const row = S.rows.find((r) => r.id === ids[S.incIdx]);
+    revealRow(row);
     const tr1 = row && S.overlay.querySelector(`tr[data-row="${row.id}"]`);
     refresh();
     if (!tr1) return;
@@ -11881,6 +11973,7 @@
     S.release = null;
     S.artists = new Map();
     S.rows = [];
+    S.rowOpen.clear();
     S.textInput = null;
     $('toolbar').hidden = true;
     clearMessages();
@@ -12651,6 +12744,7 @@
       S.srcTracks = rel.tracks;
       S.artists = new Map();
       S.rows = [];
+      S.rowOpen.clear();
       S.supp = null;
       S.suppSources = new Map();
       // [3.12.1] the same-named works of the import before do not count for this one (they were never reset)
@@ -13169,6 +13263,7 @@
       entityInput.value = '';
       roleInput.value = '';
       roleInput.setAttribute('list', 'dci-dl-roles-artist');
+      revealRow(row);
       refresh();
       const added = S.overlay.querySelector(`tr[data-row="${row.id}"]`);
       if (added) {
@@ -15796,18 +15891,131 @@
 
   function rowHtml(row) {
     const open = row.tracksOpen && (row.level === 'recording' || row.level === 'work');
+    // [3.27.0] the compact line (shown in the compact view while the row is closed) and, there, "▴" to close it again
+    const rowOpen = S.rowOpen.has(row.id) ? ' dci-open' : '';
     return `
-      <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden ? ' dci-about-hidden' : ''}" data-row="${row.id}">
-        <td class="dci-c-role">${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${typeAskHtml(row)}</td>
+      <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
+        <td class="dci-c-cline">${clineHtml(row, S.rowInfo && S.rowInfo.get(row.id))}</td>
+        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${typeAskHtml(row)}</td>
         <td class="dci-c-type"><div class="dci-cap">${esc(tr('th.type'))}</div>${typeCell(row)}</td>
         <td class="dci-c-attr"><div class="dci-cap">${esc(tr('th.attrs'))}</div>${attrCell(row)}</td>
         <td class="dci-c-level"><div class="dci-cap">${esc(tr('th.level'))}</div>${levelCell(row)}</td>
         <td class="dci-c-date"><div class="dci-cap">${esc(tr('th.date'))}</div>${dateCell(row)}</td>
         <td class="dci-c-tracks"><div class="dci-cap">${esc(tr('th.tracks'))}</div>${tracksCell(row)}</td>
       </tr>
-      <tr class="dci-tracksrow" data-tracksrow="${row.id}" ${open ? '' : 'hidden'}>
+      <tr class="dci-tracksrow${rowOpen}" data-tracksrow="${row.id}" ${open ? '' : 'hidden'}>
         <td colspan="6">${tracksPicker(row)}</td>
       </tr>`;
+  }
+
+  // --- [3.27.0] The compact view (collected item 31) ---------------------------------------------------------------
+
+  /** "tracks 1–3, 5", "all 12 tracks", "whole release": the tracks of a row in short. */
+  function tracksShort(row) {
+    if (row.level === 'release') return tr('tracks.wholeRelease');
+    if (row.level !== 'recording') return '';
+    const sel = selTracks();
+    const on = sel.filter((x) => row.tracks.has(x.idx));
+    if (!on.length) return tr('cl.noTracks');
+    if (on.length === sel.length) return tr('cl.allTracks', { n: on.length });
+    const multi = new Set(sel.map((x) => x.medium)).size > 1;
+    const label = (x) => (multi ? `${x.medium}.${x.number}` : String(x.number));
+    const pos = new Map(sel.map((x, i) => [x.idx, i]));
+    const runs = [];
+    for (const x of on) {
+      const i = pos.get(x.idx);
+      const last = runs[runs.length - 1];
+      if (last && i === last[1] + 1) last[1] = i;
+      else runs.push([i, i]);
+    }
+    return tr(on.length === 1 ? 'cl.track' : 'cl.tracks', { list: runs.map(([a, b]) => (a === b ? label(sel[a]) : `${label(sel[a])}–${label(sel[b])}`)).join(', ') });
+  }
+
+  /**
+   * The compact line of a row: the role as written → type, instrument or vocal, role credit · level · tracks · date
+   * (both still drop targets for track groups and pool dates) · what is open (red: missing; yellow: a question or a
+   * suggestion); a skipped row grey with ✕ (out of the dashboard only – the next import brings it back). A click opens
+   * the full row.
+   */
+  function clineHtml(row, info) {
+    if (S.view !== 'compact') return '';
+    const skip = row.level === 'skip';
+    const lt = currentLinkType(row);
+    const open = (cls, text, title = '') => `<button type="button" class="${cls}" data-act="row-open"${title ? ` title="${esc(title)}"` : ''}>${text}</button>`;
+    const parts = [`<button type="button" class="dci-cl-tgl" data-act="row-open" aria-expanded="false" title="${esc(tr('cl.openTitle'))}" aria-label="${esc(tr('cl.openTitle'))}">▸</button>`,
+      open('dci-cl-role', esc(row.raw || (lt && lt.name) || '–'), tr('cl.openTitle'))];
+    if (!skip) {
+      const what = [rowTypeName(row), row.primaryText].filter(Boolean).map(esc).join(' · ');
+      parts.push(`<span class="dci-cl-type"><span aria-hidden="true">→</span> ${what || `<span class="dci-cl-none">${esc(tr('cl.noType'))}</span>`}${row.roleCredit
+        ? ` <span class="dci-cl-credit">${esc(tr('common.quoted', { text: row.roleCredit }))}</span>` : ''}</span>`);
+    }
+    parts.push(`<span class="dci-cl-level">${esc(tr(`level.${row.level}`))}</span>`);
+    if (row.level === 'recording' || row.level === 'release') parts.push(open('dci-cl-tracks', esc(tracksShort(row)), tr('cl.tracksTitle')));
+    if (!skip && !(lt && lt.has_dates === false)) {
+      const d = row.date;
+      const pool = d && d.poolId && S.datePool.find((x) => x.id === d.poolId);
+      const text = pool ? poolLabel(pool) : hasDateInput(d) ? fieldsText(d) : '';
+      parts.push(open(`dci-cl-date${text ? ' dci-cl-has' : ''}`, esc(text || tr('cl.noDate')), tr('cl.dateTitle')));
+    }
+    if (!skip) {
+      const flags = [];
+      if (info && info.issues && info.issues.length) flags.push(['bad', info.issues.join(', ')]);
+      if (isUnmapped(row)) flags.push(['bad', tr('cl.unmapped')]);
+      const q = questionRuleFor(row);
+      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) flags.push(['ask', tr('cl.instrAsk', { name: row.base })]);
+      const tq = typeQuestionFor(row);
+      if (tq && row.typeAnswer == null) flags.push(['ask', tr('cl.typeAsk')]);
+      if (!hasDateInput(row.date) && linerDateSugg(row)) flags.push(['sugg', tr('cl.dateSugg')]);
+      flags.forEach(([kind, text]) => parts.push(open(`dci-cl-flag dci-cl-${kind}`, esc(text), tr('cl.openTitle'))));
+    } else {
+      parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
+    }
+    return `<div class="dci-cline">${parts.join('')}</div>`;
+  }
+
+  /** [3.27.0] Opens or closes a row in the compact view (not remembered); the focus goes into it or back to its line. */
+  function setRowOpen(row, open, focus = false) {
+    if (open) S.rowOpen.add(row.id);
+    else S.rowOpen.delete(row.id);
+    if (!S.overlay) return;
+    const tr1 = S.overlay.querySelector(`tr[data-row="${row.id}"]`);
+    const tr2 = S.overlay.querySelector(`tr[data-tracksrow="${row.id}"]`);
+    [tr1, tr2].forEach((el) => el && el.classList.toggle('dci-open', open));
+    if (!tr1) return;
+    if (!open) {
+      const cl = tr1.querySelector('.dci-c-cline');
+      if (cl && S.view === 'compact') cl.innerHTML = clineHtml(row, S.rowInfo && S.rowInfo.get(row.id));
+    }
+    if (focus) {
+      const target = open ? tr1.querySelector('.dci-c-type select, .dci-c-type input') || tr1.querySelector('.dci-cl-close') : tr1.querySelector('.dci-cl-tgl');
+      if (target) target.focus({ preventScroll: true });
+      tr1.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  /** [3.27.0] A row to jump to (incomplete rows, the companion, a new row): opened in the compact view. */
+  function revealRow(row) {
+    if (row && S.view === 'compact' && !S.rowOpen.has(row.id)) setRowOpen(row, true);
+  }
+
+  /** [3.27.0] Compact or full: the toggle above the entries and in ⚙ Settings → General (remembered). */
+  function setView(view) {
+    S.view = view === 'full' ? 'full' : 'compact';
+    writeJson('localStorage', VIEW_KEY, S.view === 'compact' ? null : 'full');
+    log('info', 'viewSet', { view: tr(`view.${S.view}`) });
+    applyView();
+    renderGroups();
+    refresh();
+  }
+
+  /** "Compact | Full" (above the entries; small in the settings). */
+  const viewToggleHtml = (small = false) => `<span class="dci-seg${small ? ' dci-seg-small' : ''} dci-viewseg" role="group" aria-label="${esc(tr('view.label'))}" title="${esc(tr('view.title'))}">${
+    ['compact', 'full'].map((v) => `<button type="button" data-act="view" data-view="${v}" aria-pressed="${S.view === v}">${esc(tr(`view.${v}`))}</button>`).join('')}</span>`;
+
+  function applyView() {
+    if (!S.overlay) return;
+    S.overlay.classList.toggle('dci-compact', S.view === 'compact');
+    S.overlay.querySelectorAll('[data-act="view"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === S.view)));
   }
 
   function renderGroups() {
@@ -15954,6 +16162,15 @@
         const allThere = row.existingAll || (info.existing > 0 && !info.ready && !info.noWork && !info.issues.length);
         rowEl.classList.toggle('dci-exists', allThere);
         rowEl.classList.toggle('dci-exists-some', !allThere && (info.existing > 0 || info.loose > 0) && info.ready > 0);
+        // [3.27.0] the compact line follows every change of its row
+        const cl = rowEl.querySelector('.dci-c-cline');
+        if (cl && S.view === 'compact') {
+          const html = clineHtml(row, info);
+          if (cl.dataset.html !== html) {
+            cl.innerHTML = html;
+            cl.dataset.html = html;
+          }
+        }
       }
       el.className = 'dci-status';
       if (row.level === 'skip') {
@@ -18717,6 +18934,7 @@
       // [3.17.5] the pointer resting on a mark: the row shown in an open dashboard, without a line in the log
       if (msg.hover && (!S.overlay || S.overlay.hidden)) return;
       showDashboard();
+      if (row.level !== 'work') revealRow(row);
       const el = row.level === 'work'
         ? S.overlay.querySelector(`[data-colhead="k:${row.artistKey}"]`)
         : S.overlay.querySelector(`tr[data-row="${row.id}"]`);
@@ -19321,7 +19539,8 @@
         const card = t.closest('[data-colhead]:not(.dci-mx-locked) .dci-mx-card');
         if (card) return { el: card, kind: 'mx-col' };
       }
-      const place = t.closest('tr[data-row] .dci-c-tracks, tr[data-tracksrow]');
+      // [3.27.0] also the tracks of the compact line
+      const place = t.closest('tr[data-row] .dci-c-tracks, tr[data-tracksrow], tr[data-row] .dci-cl-tracks');
       const row = place && rowOf(place);
       return row && tracksDropFits(row) ? { el: place, kind: 'row-tracks' } : null;
     }
@@ -19338,7 +19557,7 @@
     if (col) return { el: col, kind: 'place' };
     if (d.kind !== 'date') return null;
     // Date fields of rows, work links and the works matrix
-    const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-card, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date');
+    const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-card, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date, tr[data-row] .dci-cl-date');
     if (!field || field.closest('[data-el="dates"]')) return null;
     return { el: field, kind: 'row' };
   }
@@ -19605,6 +19824,13 @@
         if (first) first.focus();
         break;
       }
+      // [3.27.0] the compact view (item 31): a row opened or closed; compact or full
+      case 'row-open':
+        if (row) setRowOpen(row, !S.rowOpen.has(row.id), true);
+        break;
+      case 'view':
+        if (btn.dataset.view !== S.view) setView(btn.dataset.view);
+        break;
       case 'supp-open': {
         // open while a supplement is loaded (then the button only brings the bar into view)
         const close = suppIsOpen() && !S.supp;
@@ -20207,6 +20433,8 @@
         }
         r.tracks = new Set(selIdx());
         S.rows.push(r);
+        // [3.27.0] a new row is open (its role is still to type)
+        S.rowOpen.add(r.id);
         S.overlay.querySelector(`[data-group="${artist.key}"] tbody`).insertAdjacentHTML('beforeend', rowHtml(r));
         S.overlay.querySelector(`tr[data-row="${r.id}"] [data-f="role-text"]`).focus();
         refresh();
@@ -21173,6 +21401,7 @@
           </div>
           <section class="dci-supp" data-el="supp" aria-label="${esc(tr('supp.with'))}" hidden></section>
           <div class="dci-toolbar" data-el="toolbar" hidden>
+            ${viewToggleHtml()}
             <span>${esc(tr('toolbar.levelAll'))}</span>
             <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
               ${levelBtn('recording')}${levelBtn('release')}${levelBtn('skip')}
@@ -21251,6 +21480,7 @@
     overlay.addEventListener('drop', onDrop);
     overlay.addEventListener('dragend', dmDragEnd);
     S.overlay = overlay;
+    applyView();
     applyScale();
     makeMovable(overlay.querySelector('.dci-panel'), '.dci-head', 'panel');
     applyPlacement();
@@ -21388,9 +21618,11 @@
   // [3.25.0] tabs (collected item 42): "Texts" and "ⓘ Connections" (item 40) new
   const SETTING_TOPICS = ['general', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
+  // [3.27.0] the view of the entries: compact (default) or full
+  const VIEW_KEY = 'dci-view';
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
-    general: ['dci-lang', 'dci-scale', 'dci-place', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
+    general: ['dci-lang', 'dci-scale', 'dci-place', VIEW_KEY, 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -21400,6 +21632,7 @@
     dates: ['dci-dm-auto', 'dci-pools-keep'],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
+  S.view = readJson('localStorage', VIEW_KEY, 'compact') === 'full' ? 'full' : 'compact';
   /** Settings the menu shares with switches elsewhere in the dashboard (data-f → the value they show). */
   const SHARED_SWITCHES = {
     'fill-credits': () => S.fillCredits, 'stage-cap': () => S.capOn, 'bc-tracks': () => S.bcTracks, 'dm-auto': () => S.dmAuto,
@@ -21422,6 +21655,7 @@
         row(`${esc(tr('settings.place'))} <span class="dci-seg dci-seg-small" role="group">${['window', 'page'].map((pl) => (inPage() === (pl === 'page')
           ? `<button type="button" aria-pressed="true" disabled>${esc(tr(`settings.place.${pl}`))}</button>`
           : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
+        row(`${esc(tr('view.label'))} ${viewToggleHtml(true)}`),
         row(check('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'))),
         row(`<label>${esc(tr('settings.logPlace'))} <select data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select></label>`),
       ],
@@ -21614,6 +21848,7 @@
       if (S.logEl) setLogVisible(true);
       setLogPlace('window');
       if (S.place !== 'window') setPlace('window');
+      if (S.view !== 'compact') setView('compact');
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
@@ -21650,7 +21885,7 @@
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
-    SETTINGS_TAB_KEY];
+    SETTINGS_TAB_KEY, VIEW_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -21669,7 +21904,7 @@
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
-      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general',
+      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'compact',
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -21760,6 +21995,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.27.0', label: 'Credits Importer 3.27.0' },
     { v: '3.22.0', label: 'Credits Importer 3.22.0' },
     { v: '3.21.0', label: 'Credits Importer 3.21.0' },
     { v: '3.18.0', label: 'Credits Importer 3.18.0' },
@@ -22771,6 +23007,41 @@
       #dci-overlay .dci-c-date.dci-dm-over, #dci-overlay.dci-dm-drag-date .dci-mx-card.dci-dm-over, #dci-overlay .dci-mx-cell.dci-dm-over, #dci-overlay .dci-w-date.dci-dm-over,
       #dci-overlay .dci-pchip-date.dci-dm-over, #dci-overlay .dci-dm-date.dci-dm-over { outline: 2px solid var(--date) !important; background: var(--date-bg); }
       #dci-overlay .dci-dm-cell .dci-dm-date { border-radius: 3px; }
+
+      /* [3.27.0] The compact view (collected item 31): a line per row, a click opens the full row */
+      .dci-rows tr.dci-row > td.dci-c-cline, #dci-overlay .dci-cl-close { display: none; }
+      #dci-overlay.dci-compact .dci-rows tr.dci-row:not(.dci-open) { display: block; padding: 0; }
+      #dci-overlay.dci-compact .dci-rows tr.dci-row:not(.dci-open) > td:not(.dci-c-cline) { display: none; }
+      #dci-overlay.dci-compact .dci-rows tr.dci-row:not(.dci-open) > td.dci-c-cline { display: block; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
+      #dci-overlay.dci-compact .dci-rows tr.dci-tracksrow:not(.dci-open) { display: none; }
+      #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-open .dci-cl-close { display: inline-block; margin-bottom: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); }
+      #dci-overlay.dci-compact .dci-group:not(:has(tr.dci-row.dci-open)) .dci-variants { display: none; }
+      #dci-overlay.dci-compact .dci-rows tr.dci-row:not(.dci-open) { margin-bottom: calc(var(--u, 1px) * 3); }
+      .dci-cline { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); min-height: calc(var(--u, 1px) * 24); }
+      .dci-cline button { font: inherit; }
+      .dci-cl-tgl { border: 0; background: none; padding: 0 calc(var(--u, 1px) * 2); color: var(--muted); }
+      .dci-cl-role { border: 0; background: none; padding: 0; font-weight: 600; color: var(--ink); text-align: left; max-width: 34ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .dci-cl-type { color: var(--ink); min-width: 0; }
+      .dci-cl-type > span[aria-hidden] { color: var(--muted); }
+      .dci-cl-credit { color: var(--muted); font-style: italic; }
+      .dci-cl-none { color: var(--err); }
+      .dci-cl-level { padding: 0 calc(var(--u, 1px) * 7); border-radius: 999px; background: #ecebf3; color: #4a4658; font-size: calc(var(--u, 1px) * 12); }
+      .dci-cl-tracks { padding: 0 calc(var(--u, 1px) * 8); border: 1px solid var(--track-line); border-radius: 999px; background: var(--track-bg); color: var(--track-d); font-size: calc(var(--u, 1px) * 12); }
+      .dci-cl-date { padding: 0 calc(var(--u, 1px) * 8); border: 1px dashed var(--date-line); border-radius: 999px; background: #fff; color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
+      .dci-cl-date.dci-cl-has { border-style: solid; background: var(--date-bg); color: var(--date-d); font-weight: 600; }
+      .dci-cl-flag { padding: 0 calc(var(--u, 1px) * 8); border-radius: 3px; font-size: calc(var(--u, 1px) * 12); }
+      .dci-cl-bad { border: 1px solid #e6a49e; background: #fbeceb; color: var(--err); }
+      .dci-cl-ask, .dci-cl-sugg { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      .dci-cl-x { margin-left: auto; color: var(--muted); }
+      #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
+      #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
+      #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) { background: var(--soft); border-left-color: #c8c5d6; }
+      #dci-overlay.dci-dm-drag-pool .dci-cl-date { outline: 1px dashed var(--date-line); outline-offset: 1px; }
+      #dci-overlay .dci-cl-date.dci-dm-over { outline: 2px solid var(--date) !important; background: var(--date-bg); }
+      #dci-overlay.dci-dm-drag-tg .dci-cl-tracks { outline: 1px dashed var(--track-line); outline-offset: 1px; }
+      #dci-overlay .dci-cl-tracks.dci-dm-over { outline: 2px solid var(--orange) !important; }
+      .dci-viewseg button[aria-pressed="true"] { font-weight: 600; }
+      #dci-overlay.dci-compact .dci-group { margin-bottom: calc(var(--u, 1px) * 14); }
 
       /* Companies, etc. */
       .dci-companies { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 22); padding-top: calc(var(--u, 1px) * 10); border-top: 1px solid var(--line); }

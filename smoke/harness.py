@@ -548,7 +548,8 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     errs = errors_of(pg)
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
-    codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, MAIN]
+    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) (%s)('full');" % VIEW_PRESET
+    codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
                        % json.dumps(codes))
@@ -795,10 +796,16 @@ def with_companion(pg):
     pg.add_script_tag(content=SYNC)
 
 
-def open_mb_edit(ctx, companion=True, gm_xhr=False):
+# [3.27.0] the tests were written for the full view of the entries; the compact view (the default) has a test of its own
+VIEW_PRESET = "(v) => { if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); if (localStorage.getItem('dci-view') === null) localStorage.setItem('dci-view', JSON.stringify(v)); }"
+
+
+def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
     pg = ctx.new_page()
     errs = errors_of(pg)
     pg.goto(f'https://musicbrainz.org/release/{REL}/edit-relationships')
+    if view:
+        pg.evaluate(VIEW_PRESET, view)
     if companion:
         with_companion(pg)
     if gm_xhr:
