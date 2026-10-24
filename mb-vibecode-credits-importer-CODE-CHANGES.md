@@ -13,12 +13,62 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.22.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.24.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.24.0 · 2026-10-24
+
+A dialog for several linked releases of one source (collected item 51).
+
+- **New `chooseLink(links)`** (a sub-dialog `[data-el="links"]` next to the media dialog, built like it): radio buttons per link (`sourceLinkLabel`, ↗ to its page), the links read one after another with `source.release(id, ctx)` (`sourceContext()` with `bandcampTracks: false`) and counted (`title`, `credits`, `companies`, `tracks`, `notes` length; logs `linkCounted` / `linkCountFailed`); `markBest` – most credits + companies, then the longer notes – bold (`.dci-link-best`), "most data" (`.dci-link-bestmark`), preselected unless a choice was made by hand; "Open all in background tabs" (`GM_openInTab` not active, else `window.open`; log `linksTabs`); OK remembers with `keepSourcePick` unless unticked; `S.subDialog` handle for Escape. **`startImport`:** `start.multi` → `chooseLink`, then `loadRelease` (log `linkChosen`); cancelled → the message `msg.multiLinks` as before.
+- **CSS:** `.dci-link-list`, `.dci-link-opt`, `.dci-link-best`, `.dci-link-bestmark`.
+- **Texts (4 languages):** `links.title`, `links.intro`, `links.introBc`, `links.counting`, `links.count`, `links.countFailed`, `links.best`, `links.openOne`, `links.tabs`, `links.tabsTitle`, `links.remember`, `links.ok`, `log.linkChosen`, `log.linkCounted`, `log.linkCountFailed`, `log.linksTabs`.
+- **Tests:** new `t_links.py`; `t_adapter.py` C8 goes through the dialog.
+
+
+## Import 3.23.0 · 2026-10-24
+
+The button "Enter edit & import credits" in the release editor instead of the tick (collected item 50).
+
+- **`initReleaseEditorHook`:** the tick is gone; `#dci-after-edit` is now only the note (a span) for a release editor that goes on elsewhere (Harmony with the background tab off, another tool). New `ensureGoBtn()` – the button `#dci-enter-import` right after `#enter-edit`, with MusicBrainz's classes copied and `AFTER_EDIT_BTN_COLOR` (orange `#eb743b`, border/hover `#c55a24`, white text), `disabled` mirrored; new `go()` (sets `goRequested` for 3 s, then clicks `#enter-edit`); `markGo` acts on `goRequested` instead of the tick (and clears it); a `keydown` handler (capture) for Ctrl+Alt+Enter where the button is shown. Text: `afterEdit.button` with `{enter}` = MusicBrainz's own button text; tooltip `afterEdit.buttonTitle` / `afterEdit.buttonTitleBg` with `afterEdit.keys` / `afterEdit.keysMac`. The old stored tick `dci-after-edit` is removed on the release editor.
+- **Storage / settings:** new `AFTER_EDIT_BTN_KEY` (`dci-after-edit-btn`, on unless `false`) in ⚙ Settings → Sources (`data-set="after-edit"`, text `settings.afterEdit`), in `TOPIC_KEYS.sources` and the reset list instead of `AFTER_EDIT_KEY`.
+- **Texts (4 languages):** new `afterEdit.button`, `afterEdit.buttonTitle`, `afterEdit.buttonTitleBg`, `afterEdit.keys`, `afterEdit.keysMac`; changed `settings.afterEdit`, `log.fromEditor`; removed `afterEdit.label`, `afterEdit.title`, `afterEdit.labelBg`, `afterEdit.titleBg`.
+- **Tests:** `t_afteredit.py` rebuilt (button only on "Edit note", right after "Enter edit", orange, tooltip with links and keys; plain "Enter edit" stays plain; the button and Ctrl+Alt+Enter go on; an error; German; setting off; the old tick removed); `t_harmony.py` with the button (background tab, error, note, settings).
+
+
+## Import 3.22.3 · 2026-10-24
+
+"Kontrabass" without role credit (collected item 47, answer of the maintainer).
+
+- **Register:** `WORDING_RULES` **W003** credit '' (3.22.2: "contrabass"; before: "Kontrabass"), its note.
+- **Tests:** `t_v3222.py` part A ("Kontrabass" in a text and from Discogs without credit, "Contrabass" with "contrabass"); register golden (W003).
+
+
+## Import 3.22.2 · 2026-10-24
+
+Fixed credit pairs (collected item 47), more areas and their larger area (48), role credit of recording checked (49), patterns in the rules window (45).
+
+- **Register:** `WORDING_RULES` **W003** credit "contrabass" (was "Kontrabass"), new **W008** (violoncello → credit "violoncello"); `COMPANY_ROLES` **C041** produced in, **C042** remixed in, **C043** engineered in (area); `TEXT_COMPANY_RE` with "(recorded|overdubbed|mixed|mastered|produced|remixed|engineered) in"; notes of T037 and S028.
+- **`patternText`:** the outer brackets (also "(?:") go only when they enclose the whole pattern (a small scan of the brackets, escapes and character classes skipped).
+- **Areas:** new **`areaParent(mbid)`** (`area/<MBID>?inc=area-rels`, the backward "part of" relation, `S.areaParents` per session); `suggestByName` adds it to the disambiguation of the shown area suggestions (`SUGG_VISIBLE`).
+- **Role credit of recording:** no code change – W007 already gives none; a test now covers the wordings.
+- **Tests:** new `t_v3222.py`; `harness.py`: `/ws/2/area/<MBID>` with `AREA_PARENTS`; `t_textcorpus` mirrors the new area roles ("Produced by Pat Prod in Berlin" gives the area); register golden (W003, W008, C041 – C043, the patterns).
+
+
+## Import 3.22.1 · 2026-10-24
+
+An album on a label's Bandcamp page (collected item 46); people not found through their own link are searched by name.
+
+- **Bandcamp adapter:** `unescapeHtml` (from `pageData`), new **`bandPageName(html)`** (the account's name from "data-band", else "og:site_name"; exported on the adapter), `foldName`, **`ownPage(page, artist)`** (same name without case, accents, punctuation and a leading "The", or the artist's name contains it – as Harmony's Bandcamp provider decides); `toRelease(data, url, trackCredits, ctx, { pageName })` gives `band: { name, url, page, own }`; `linkBand` links the band's name only on its own page, on another page the credit gets `who.pageOf: { name, url }` (no id). `release()` passes `bandPageName(html)`.
+- **Core:** `groupCredits` and the artist entries keep `pageOf`; new **`bandPageInfo(rel)`** (log `bcPageOther`; `lookupUrls` of the page as a label → `band.label: { mbid, name, ofRelease }`, log `bcPageLabel` / `bcPageLabelOfRelease`), called in `loadRelease` after `S.release`; the release lookup includes `labels` → new `S.releaseLabels`; new **`pageOfHtml(a)`** below the head of such an entry (`.dci-pageof`), `renderSource` adds "on the Bandcamp page of …" (`.dci-bcpage`). The name search (`suggestByName`) now also runs for people with a source id whose link found nothing (not companies, not after a spelling miss); in `suggestByName` an artist of `S.releaseCredit` with the same name (or found the same) comes first with `release: true` – the stack marks it with `match.markRelease`.
+- **Register:** new special rule **S029**.
+- **Texts (4 languages):** `bcPage.notOwn`, `bcPage.mbLabel`, `bcPage.ofRelease`, `bcPage.source`, `log.bcPageOther`, `log.bcPageLabel`, `log.bcPageLabelOfRelease`.
+- **Tests:** new `t_labelpage.py`; `harness.bc_page(data, band=None)` writes "data-band" and "og:site_name"; register golden (S029).
+
 
 ## Import 3.22.0 · 2026-10-23
 

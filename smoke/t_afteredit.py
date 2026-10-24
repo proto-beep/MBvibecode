@@ -1,14 +1,18 @@
-"""Credits Importer 3.19.0: "open relationship editor and start import dashboard" in the release editor (collected item 18).
-A) "Edit release" with a Discogs link: the tick stands next to "Enter edit" only on the tab "Edit note" (where
-   MusicBrainz shows that button), off at first; its tooltip names the link.
-B) Not ticked: "Enter edit" leads to the release page, which stays.
-C) Ticked (remembered): "Enter edit" → release page → "Edit relationships", the dashboard opens by itself and loads the
-   Discogs release; the log says it was started from the release editor.
-D) An error while submitting (MusicBrainz's "in progress" back to false): nothing is noted, the release page stays.
-E) "Add release" without a link: no tick; a Bandcamp album typed into "External links" brings it (in the dashboard
-   language, here German). After "Enter edit" the new release's relationship editor loads that album at once, though
-   MusicBrainz does not have the link yet.
-F) Other pages of a release (e.g. its cover art): the script adds nothing."""
+"""Credits Importer 3.19.0 / 3.23.0: start the import from the release editor (collected items 18, 50). [3.23.0] Instead
+of the tick the button "Enter edit & import credits" next to "Enter edit" (orange, MusicBrainz's button otherwise;
+Ctrl+Alt+Enter; setting, on).
+A) "Edit release" with a Discogs link: the button stands right after "Enter edit" only on the tab "Edit note" (where
+   MusicBrainz shows that button), orange, its tooltip names the link and the keys; no tick any more (the old one is
+   removed from the storage).
+B) "Enter edit": the release page, which stays.
+C) "Enter edit & import credits" → release page → "Edit relationships", the dashboard opens by itself and loads the
+   Discogs release; the log says it was started from the release editor. C2) Ctrl+Alt+Enter in the edit note: the same.
+D) An error while submitting (MusicBrainz's "in progress" back to false): nothing is noted, the release page stays;
+   a plain "Enter edit" afterwards stays a plain one.
+E) "Add release" without a link: no button; a Bandcamp album typed into "External links" brings it (in the dashboard
+   language, here German: "Enter edit & Credits importieren"). After it the new release's relationship editor loads that
+   album at once, though MusicBrainz does not have the link yet.
+F) The setting off ("dci-after-edit-btn" false): no button. G) Other pages of a release (e.g. its cover art): nothing."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -24,20 +28,20 @@ for t in TRACKS:
 EDIT = f'https://musicbrainz.org/release/{H.REL}/edit'
 RELPAGE = f'https://musicbrainz.org/release/{H.REL}'
 LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
-TICK = """(() => { const b = document.getElementById('dci-after-edit'); if (!b) return null;
-  return { shown: getComputedStyle(b).display !== 'none', on: b.querySelector('input').checked, text: b.textContent.trim(), title: b.title,
-    before: b.nextElementSibling && b.nextElementSibling.id }; })()"""
+BTN = """(() => { const b = document.getElementById('dci-enter-import'); if (!b) return null;
+  return { shown: getComputedStyle(b).display !== 'none', text: b.textContent.trim(), title: b.title, prev: b.previousElementSibling && b.previousElementSibling.id,
+    bg: getComputedStyle(b).backgroundColor, cls: b.className, tick: !!document.querySelector('#dci-after-edit input') }; })()"""
 results = []
 
 
-def tick(pg):
-    return pg.evaluate(TICK)
+def btn(pg):
+    return pg.evaluate(BTN)
 
 
 def at_editor(pg, url=EDIT):
     if pg.url != url:
         pg.goto(url)
-    pg.wait_for_selector('#dci-after-edit', state='attached', timeout=15000)
+    pg.wait_for_selector('#dci-enter-import', state='attached', timeout=15000)
     pg.wait_for_timeout(300)
 
 
@@ -52,53 +56,63 @@ with sync_playwright() as p:
     pg, errs = H.open_mb_any(ctx, EDIT)
     pg.on('dialog', lambda d: d.accept())
     # A)
+    pg.evaluate("localStorage.setItem('dci-after-edit', 'true')")
+    pg.reload()
     at_editor(pg)
-    a1 = tick(pg)
+    a1 = btn(pg)
     pg.evaluate("__tab('edit-note')")
     pg.wait_for_timeout(400)
-    a2 = tick(pg)
+    a2 = btn(pg)
+    old = pg.evaluate("localStorage.getItem('dci-after-edit')")
     print('A) Reiter Release-Info:', a1)
-    print('   Reiter Edit note:', a2)
-    results.append(a1 is not None and not a1['shown'] and a2['shown'] and not a2['on'] and a2['before'] == 'enter-edit'
-                   and a2['text'] == 'open relationship editor and start import dashboard' and 'Discogs 1234' in a2['title'])
-    # B) not ticked
+    print('   Reiter Edit note:', a2, '| alter Haken gespeichert:', old)
+    results.append(a1 is not None and not a1['shown'] and a2['shown'] and a2['prev'] == 'enter-edit' and a2['text'] == 'Enter edit & import credits'
+                   and a2['bg'] == 'rgb(235, 116, 59)' and a2['cls'] == 'positive' and not a2['tick'] and 'Discogs 1234' in a2['title']
+                   and 'Ctrl+Alt+Enter' in a2['title'] and old is None)
+    # B) "Enter edit"
     pg.click('#enter-edit')
     pg.wait_for_url(RELPAGE, timeout=10000)
     pg.wait_for_timeout(1500)
     b1 = [path(pg), pg.evaluate("sessionStorage.getItem('dci-after-edit-go')")]
-    print('B) ohne Haken:', b1)
+    print('B) Enter edit:', b1)
     results.append(b1 == [f'/release/{H.REL}', None])
-    # C) ticked
+    # C) "Enter edit & import credits"
+    pg.goto(EDIT)
     at_editor(pg)
     pg.evaluate("__tab('edit-note')")
     pg.wait_for_timeout(300)
-    pg.locator('#dci-after-edit input').check()
-    stored = pg.evaluate("localStorage.getItem('dci-after-edit')")
-    pg.goto(RELPAGE)
-    at_editor(pg)
-    pg.evaluate("__tab('edit-note')")
-    pg.wait_for_timeout(300)
-    kept = tick(pg)['on']
-    pg.click('#enter-edit')
+    pg.click('#dci-enter-import')
     pg.wait_for_url(f'**/release/{H.REL}/edit-relationships', timeout=15000)
     H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
     pg.wait_for_timeout(800)
     c1 = [x for x in pg.evaluate(LOGS) if 'release editor' in x or 'Discogs release' in x.lower() or 'Discogs 1234' in x]
-    src = pg.evaluate("(document.querySelector('[data-el=source]') || document.body).textContent.includes('Discogs 1234')")
-    print('C) gemerkt:', stored, kept, '| Protokoll:', c1, '| Discogs geladen:', src, '| Seite:', path(pg))
-    results.append(stored == 'true' and kept and any('Started from the release editor' in x and 'Discogs 1234' in x for x in c1)
+    print('C) Protokoll:', c1, '| Seite:', path(pg))
+    results.append(any('Started from the release editor' in x and 'Discogs 1234' in x for x in c1)
                    and pg.evaluate("!document.getElementById('dci-overlay').hidden") and pg.evaluate("sessionStorage.getItem('dci-autostart')") is None)
-    # D) an error while submitting
+    # C2) Ctrl+Alt+Enter in the edit note
+    pg.goto(EDIT)
+    at_editor(pg)
+    pg.evaluate("__tab('edit-note')")
+    pg.wait_for_timeout(300)
+    pg.focus('#edit-note-text')
+    pg.keyboard.press('Control+Alt+Enter')
+    pg.wait_for_url(f'**/release/{H.REL}/edit-relationships', timeout=15000)
+    H.wait_for(pg, f"{LOGS}.some(x => /Started from the release editor/.test(x))", 60)
+    print('C2) Strg+Alt+Enter:', path(pg))
+    results.append(path(pg) == f'/release/{H.REL}/edit-relationships')
+    # D) an error while submitting, then a plain "Enter edit"
     pg.goto(EDIT)
     at_editor(pg)
     pg.evaluate("__tab('edit-note'); window.__fail = true")
     pg.wait_for_timeout(300)
-    pg.click('#enter-edit')
+    pg.click('#dci-enter-import')
     pg.wait_for_timeout(800)
     d1 = pg.evaluate("sessionStorage.getItem('dci-after-edit-go')")
-    pg.goto(RELPAGE)
+    pg.evaluate("window.__fail = false")
+    pg.click('#enter-edit')
+    pg.wait_for_url(RELPAGE, timeout=10000)
     pg.wait_for_timeout(1500)
-    print('D) Fehler beim Abschicken – vorgemerkt:', d1, '| Seite:', path(pg))
+    print('D) Fehler beim Abschicken – vorgemerkt:', d1, '| danach Enter edit – Seite:', path(pg))
     results.append(d1 is None and path(pg) == f'/release/{H.REL}')
     # E) Add release, a Bandcamp album typed in, German
     pg.evaluate("localStorage.setItem('dci-lang', JSON.stringify('de'))")
@@ -106,14 +120,14 @@ with sync_playwright() as p:
     at_editor(pg, 'https://musicbrainz.org/release/add')
     pg.evaluate("__tab('edit-note')")
     pg.wait_for_timeout(300)
-    e1 = tick(pg)
+    e1 = btn(pg)
     pg.evaluate("__tab('information')")
     pg.fill('#external-links-editor input.value', ALBUM)
     pg.evaluate("__tab('edit-note')")
     pg.wait_for_timeout(400)
-    e2 = tick(pg)
+    e2 = btn(pg)
     print('E) ohne Link:', e1['shown'], '| mit Bandcamp:', e2)
-    pg.click('#enter-edit')
+    pg.click('#dci-enter-import')
     pg.wait_for_url(f'**/release/{H.REL}/edit-relationships', timeout=15000)
     H.wait_for(pg, f"{LOGS}.some(x => /Quelle im Release-Editor/.test(x))", 60)
     H.wait_for(pg, f"{LOGS}.filter(x => /Import (complete|abgeschlossen)/.test(x)).length >= 2", 60)
@@ -122,16 +136,26 @@ with sync_playwright() as p:
     bc = pg.evaluate("[...document.querySelectorAll('.dci-gname strong')].map(s => s.textContent.trim())")
     print('   Einträge:', bc)
     print('   Protokoll:', e3)
-    results.append(not e1['shown'] and e2['shown'] and e2['on'] and e2['text'] == 'Beziehungs-Editor öffnen und Import-Dashboard starten'
+    results.append(not e1['shown'] and e2['shown'] and e2['text'] == 'Enter edit & Credits importieren' and 'Strg+Alt+Enter' in e2['title']
                    and 'Bandcamp testband.bandcamp.com/album/testalbum' in e2['title']
                    and any('Quelle im Release-Editor eingetragen' in x and 'testband.bandcamp.com/album/testalbum' in x for x in e3) and 'Jane Roe' in bc)
-    pg.evaluate("localStorage.removeItem('dci-lang'); localStorage.removeItem('dci-after-edit')")
-    # F) another page of the release
+    pg.evaluate("localStorage.removeItem('dci-lang')")
+    # F) the setting off
+    pg.evaluate("localStorage.setItem('dci-after-edit-btn', 'false')")
+    pg.goto(EDIT)
+    at_editor(pg)
+    pg.evaluate("__tab('edit-note')")
+    pg.wait_for_timeout(400)
+    f1 = btn(pg)
+    print('F) Einstellung aus:', f1['shown'])
+    results.append(not f1['shown'])
+    pg.evaluate("localStorage.removeItem('dci-after-edit-btn')")
+    # G) another page of the release
     pg.goto(f'https://musicbrainz.org/release/{H.REL}/cover-art')
     pg.wait_for_timeout(1000)
-    f1 = pg.evaluate("[!!document.getElementById('dci-pagebar'), !!document.getElementById('dci-after-edit'), !!document.getElementById('dci-styles')]")
-    print('F) Cover-Art-Seite:', f1)
-    results.append(f1 == [False, False, False])
+    g1 = pg.evaluate("[!!document.getElementById('dci-pagebar'), !!document.getElementById('dci-enter-import'), !!document.getElementById('dci-styles')]")
+    print('G) Cover-Art-Seite:', g1)
+    results.append(g1 == [False, False, False])
     print('Fehler:', real(errs))
     results.append(not real(errs))
     b.close()

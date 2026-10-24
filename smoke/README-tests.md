@@ -141,9 +141,10 @@ python3 t_worksskip.py    # the works matrix (3.18.0): fold / unfold (not kept),
                           # 3.19.3: the tooltips of what is counted, the setting for the skipped rows
 python3 t_manualtop.py    # "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
                           # page), an entry added from there is shown
-python3 t_afteredit.py    # "open relationship editor and start import dashboard" in the release editor (3.19.0): only on "Edit note" with a
-                          # Discogs/Bandcamp link, not ticked, ticked (remembered) → relationship editor with the dashboard, an error, "Add
-                          # release" with a Bandcamp link typed in (German, loaded at once), other release pages untouched
+python3 t_afteredit.py    # start from the release editor (3.19.0; 3.23.0: the button "Enter edit & import credits" instead of the tick): only
+                          # on "Edit note" with a Discogs/Bandcamp link, right after "Enter edit", orange; "Enter edit" stays plain; the
+                          # button and Ctrl+Alt+Enter → relationship editor with the dashboard, an error, "Add release" with a Bandcamp
+                          # link typed in (German, loaded at once), the setting off, other release pages untouched
 python3 t_medium.py       # the medium of the release decides (3.21.4): vinyl mastering, "(vinyl)", lacquer cut on Digital Media left out
                           # with the reason (and a studio only for it), the digital half kept; "Translated by" on Bandcamp asks
 python3 t_foreign.py      # instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -155,6 +156,17 @@ python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_c
                           # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                           # with a studio's profile
                           # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
+python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass (3.22.3: without role credit; text and Discogs), "Contrabass" credited
+                          # "contrabass", "Violoncello" → cello "violoncello";
+                          # produced / remixed / engineered in (areas with the area they are part of); recording without role credit
+                          # (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
+python3 t_links.py        # several linked releases of one source (3.24.0): the dialog counts each (one cannot be read), the one with the
+                          # most data bold and preselected, all in background tabs, "Import" (remembered, loaded at once next time),
+                          # another one by hand without remembering, "Cancel" (the message as before)
+python3 t_labelpage.py    # an album on a label's Bandcamp page (3.22.1): no link for the artist, searched by name (the release's artist
+                          # first, "release artist"), the hint with the page and MB's label ("a label of this release ✓"), the source
+                          # line, the log; the account's name from "data-band" / "og:site_name" (Node); Discogs: a person without MB
+                          # link gets same-named suggestions
 python3 t_areas.py        # text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
                           # Gijón suggested by its alias "Xixón", no "Create", "recorded in" staged on the recordings); tracks by their
                           # titles ("Piano in ‘A' and 'B' is a contribution by X", one letter off, "Not matched"); Bandcamp: titles of the
@@ -163,10 +175,10 @@ python3 t_mediaload.py    # the media dialog (3.20.0, 3.21.1): load the chosen m
                           # as MusicBrainz builds it (a.expand-medium#disc<n>, "Expand all mediums", "Load all tracks..."), a medium
                           # without a tracklist named, the works question there ("Not now", "Skip works matrix"), media 1 and 3 only,
                           # tracks and relationships the release lookup leaves out read from /ws/js/tracks
-python3 t_harmony.py      # Harmony (3.19.1): a release editor seeded by Harmony (note instead of the tick, "Enter edit" → Harmony's Release
+python3 t_harmony.py      # Harmony (3.19.1): a release editor seeded by Harmony (a note, no button, "Enter edit" → Harmony's Release
                           # Actions), there "Edit relationships with Credits Importer" below "Add cover art", the link opens the dashboard
-                          # and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2: the tick for a
-                          # background tab (opened once by Harmony's page), an error, the settings
+                          # and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2 (3.23.0: the button
+                          # instead of the tick): a background tab (opened once by Harmony's page), an error, the settings
 python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                           # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                           # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)

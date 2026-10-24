@@ -232,9 +232,14 @@ if 'C' in PARTS:
         pg2.on('dialog', lambda d: d.accept())
         pg2.wait_for_selector('#dci-open', timeout=20000)
         pg2.click('#dci-open')
+        # [3.24.0] two linked Discogs releases: the dialog – 999 cannot be read, 1234 is preselected
+        pg2.wait_for_selector('[data-el=links]:not([hidden])', timeout=20000)
+        H.wait_for(pg2, "![...document.querySelectorAll('[data-el=links] [data-lel=count]')].some(s => /counting/.test(s.textContent))", 60)
+        best = pg2.evaluate("[...document.querySelectorAll('[data-el=links] .dci-link-best .dci-link-name')].map(s => s.textContent.trim())")
+        pg2.click('[data-el=links] [data-lf=remember]')
+        pg2.click('[data-el=links] [data-lact=ok]')
         pg2.wait_for_selector('[data-f=discogs-pick]', timeout=20000)
         opts = pg2.evaluate("[...document.querySelectorAll('[data-f=discogs-pick] option')].map(o => o.textContent.trim())")
-        pg2.select_option('[data-f=discogs-pick]', 'discogs|1234')
         H.wait_for(pg2, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete/.test(li.textContent))", 60)
         rows = pg2.locator('tr.dci-row').count()
         pg2.fill('[data-f=discogs-input]', 'https://www.discogs.com/release/999-Some-Title')
@@ -243,9 +248,9 @@ if 'C' in PARTS:
         pg2.fill('[data-f=discogs-input]', 'no release here')
         pg2.click('[data-act=discogs-load]'); pg2.wait_for_timeout(500)
         msgs = pg2.locator('.dci-msg').all_inner_texts()
-        print('C8) Auswahl:', opts, '| Zeilen nach Wahl:', rows, '| 999:', err999[:1], '| Text ohne Release:', [m[:60] for m in msgs][-1:])
+        print('C8) Dialog vorgewählt:', best, '| Auswahl:', opts, '| Zeilen nach Wahl:', rows, '| 999:', err999[:1], '| Text ohne Release:', [m[:60] for m in msgs][-1:])
         ok8 = opts == ['Choose a Discogs release …', 'Discogs 1234', 'Discogs 999'] or (opts[1:] == ['Discogs 1234', 'Discogs 999'])
-        ok8 = ok8 and rows > 5 and err999 and len(msgs) >= 1 and not errs2
+        ok8 = ok8 and best == ['Discogs 1234'] and rows > 5 and err999 and len(msgs) >= 1 and not errs2
         results.append(bool(ok8))
         b.close()
 # --- D) update from 2.19.1: the fresh start of 3.5.0 (generation 4); within generation 4 no reset -------------

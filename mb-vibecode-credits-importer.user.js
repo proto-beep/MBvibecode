@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.22.0
+// @version      3.24.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.22.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.24.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -196,7 +196,11 @@
       "log.artistSpelling": "{name}: found via its {src} link, but MusicBrainz spells it differently ({mb}) – only a suggestion",
       "log.artistCreditSpelling": "{name}: found via its {src} link, but the release names it differently in its artist credit ({mb}) – only a suggestion",
       "log.sourceKept": "Source chosen for this release before: {src}",
-      "log.fromEditor": "Started from the release editor (“open relationship editor and start import dashboard”) – links there: {links}",
+      "log.fromEditor": "Started from the release editor (“Enter edit & import credits”) – links there: {links}",
+      "log.linkChosen": "Chosen from {n} linked {src} releases: {link}",
+      "log.linkCounted": "{link}: “{title}” – credits: {credits} · companies: {companies} · tracks: {tracks}",
+      "log.linkCountFailed": "{link}: could not be read – {error}",
+      "log.linksTabs": "Opened in background tabs: {list}",
       "log.sourceFromEditor": "Source entered in the release editor, not in MusicBrainz yet: {src}",
       "log.fromLink": "Started from a link (“Edit relationships with Credits Importer”, e.g. on Harmony) – links in it: {links}",
       "log.sourceFromLink": "Source handed over by the link, not in MusicBrainz yet: {src}",
@@ -300,6 +304,10 @@
       "match.noLink": "no MB artist with this {src} link",
       "match.noId": "no Discogs ID",
       "match.byName": "not assigned yet (no link) – check the suggestions or enter an MBID",
+      "bcPage.notOwn": "The Bandcamp page of this album belongs to {page} – not {name}'s own page; {name} is searched by name (MusicBrainz entries of this name are only suggested).",
+      "bcPage.mbLabel": "in MusicBrainz: label",
+      "bcPage.ofRelease": "– a label of this release ✓",
+      "bcPage.source": "· on the Bandcamp page of {page}",
       "log.nameLookup": "{name}: no link to MusicBrainz – looking for the same name",
       "role.placeholder": "e.g. Keyboards",
       "role.aria": "Role",
@@ -451,6 +459,18 @@
       "busy.apply.one": "Staging {n} relationship in the editor …",
       "busy.apply.other": "Staging {n} relationships in the editor …",
       "msg.multiLinks": "This release is linked to {n} {src} releases. Choose one above.",
+      "links.title": "This release is linked to {n} {src} releases",
+      "links.intro": "Which one should be imported? Each is read in the background and its data counted; the one with the most data is preselected.",
+      "links.introBc": "(Bandcamp: without its track pages.)",
+      "links.counting": "counting …",
+      "links.count": "“{title}” – credits: {credits} · companies: {companies} · tracks: {tracks}",
+      "links.countFailed": "could not be read: {error}",
+      "links.best": "most data",
+      "links.openOne": "Open this page in a new tab",
+      "links.tabs": "Open all in background tabs",
+      "links.tabsTitle": "To compare them: each page in a background tab",
+      "links.remember": "Remember this choice for this release",
+      "links.ok": "Import",
       "msg.trackMismatch": "{src} lists {d} tracks, MusicBrainz {m}. Tracks are matched in order. Check the track selection of recording and work relationships.",
       "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
@@ -500,6 +520,9 @@
       "log.artistLinked": "{name}: found via {src} link → {mb}",
       "log.artistAmbiguous": "{name}: {n} MB artists share the {src} link",
       "log.artistMissing": "{name}: no MB artist with this {src} link",
+      "log.bcPageOther": "{name}: the album is on the Bandcamp page of {page} (a label or another account) – {name} is searched by name",
+      "log.bcPageLabel": "Bandcamp page {page}: label {label} in MusicBrainz",
+      "log.bcPageLabelOfRelease": "Bandcamp page {page}: label {label} in MusicBrainz – a label of this release",
       "log.artistManual": "{name}: set manually → {mb}",
       "log.artistForm": "Create-artist form opened: {name}",
       "log.artistCreated": "Artist created: {name} ({mbid})",
@@ -931,13 +954,14 @@
       "ms.0.1.0": "First version: the credits of the linked Discogs release in the release relationship editor",
       "notice.title": "MB x Vibecode: Credits Importer {version} – what’s new",
       "old.twice": "Two importer scripts are running on this page: the old “MB x Vibecode: Import Discogs credits” (or a second copy) and “MB x Vibecode: Credits Importer”. Please delete the old one in your script manager (Tampermonkey, Violentmonkey) and reload the page.",
-      "afterEdit.label": "open relationship editor and start import dashboard",
-      "afterEdit.title": "Credits Importer: after “Enter edit”, “Edit relationships” of this release opens with the import dashboard, which loads the credits of its source – {links}",
       "afterEdit.toHarmony": "for the Credits Importer: after “Enter edit”, use “Edit relationships with Credits Importer” on Harmony",
       "afterEdit.toOther": "after “Enter edit” MusicBrainz goes on to {host}; the relationship editor does not open by itself",
-      "afterEdit.labelBg": "open relationship editor and start import dashboard in a background tab",
-      "afterEdit.titleBg": "Credits Importer: after “Enter edit” MusicBrainz goes on to Harmony; the relationship editor of this release opens in a background tab with the import dashboard, which loads {links}. Harmony’s page also has “Edit relationships with Credits Importer”.",
-      "settings.afterEdit": "Release editor: after “Enter edit”, open the relationship editor and start the import (the tick next to “Enter edit”)",
+      "afterEdit.button": "{enter} & import credits",
+      "afterEdit.buttonTitle": "Credits Importer: “Enter edit”, then “Edit relationships” of this release opens with the import dashboard, which loads the credits of its source – {links} · {keys}",
+      "afterEdit.buttonTitleBg": "Credits Importer: “Enter edit” – MusicBrainz goes on to Harmony; the relationship editor of this release opens in a background tab with the import dashboard, which loads the credits of its source – {links} · {keys}",
+      "afterEdit.keys": "Ctrl+Alt+Enter",
+      "afterEdit.keysMac": "Control+Option+Return",
+      "settings.afterEdit": "Release editor: the button “Enter edit & import credits” next to “Enter edit” (Ctrl+Alt+Enter) – submits, then opens the relationship editor with the import",
       "settings.afterEditBg": "Imported with Harmony (Bandcamp, Discogs): open it in a background tab, Harmony’s page stays in front",
       "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
       "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
@@ -1574,7 +1598,11 @@
       "log.artistSpelling": "{name}: über den {src}-Link gefunden, aber MusicBrainz schreibt den Namen anders ({mb}) – nur ein Vorschlag",
       "log.artistCreditSpelling": "{name}: über den {src}-Link gefunden, aber das Release nennt den Namen im Artist Credit anders ({mb}) – nur ein Vorschlag",
       "log.sourceKept": "Für dieses Release früher gewählte Quelle: {src}",
-      "log.fromEditor": "Aus dem Release-Editor gestartet („Beziehungs-Editor öffnen und Import-Dashboard starten“) – Links dort: {links}",
+      "log.fromEditor": "Aus dem Release-Editor gestartet („Enter edit & Credits importieren“) – Links dort: {links}",
+      "log.linkChosen": "Aus {n} verknüpften {src}-Releases gewählt: {link}",
+      "log.linkCounted": "{link}: „{title}“ – Credits: {credits} · Firmen: {companies} · Tracks: {tracks}",
+      "log.linkCountFailed": "{link}: nicht lesbar – {error}",
+      "log.linksTabs": "In Hintergrund-Tabs geöffnet: {list}",
       "log.sourceFromEditor": "Quelle im Release-Editor eingetragen, noch nicht in MusicBrainz: {src}",
       "log.fromLink": "Über einen Link gestartet („Edit relationships with Credits Importer“, z. B. bei Harmony) – Links darin: {links}",
       "log.sourceFromLink": "Quelle vom Link übergeben, noch nicht in MusicBrainz: {src}",
@@ -1678,6 +1706,10 @@
       "match.noLink": "kein MB-Artist mit diesem {src}-Link",
       "match.noId": "ohne Discogs-ID",
       "match.byName": "noch nicht zugeordnet (kein Link) – Vorschläge prüfen oder MBID eingeben",
+      "bcPage.notOwn": "Die Bandcamp-Seite dieses Albums gehört {page} – nicht die eigene Seite von {name}; {name} wird über den Namen gesucht (MusicBrainz-Einträge dieses Namens sind nur Vorschläge).",
+      "bcPage.mbLabel": "in MusicBrainz: Label",
+      "bcPage.ofRelease": "– ein Label dieses Releases ✓",
+      "bcPage.source": "· auf der Bandcamp-Seite von {page}",
       "log.nameLookup": "{name}: kein Link zu MusicBrainz – suche nach dem gleichen Namen",
       "role.placeholder": "z. B. Keyboards",
       "role.aria": "Rolle",
@@ -1829,6 +1861,18 @@
       "busy.apply.one": "Übernehme {n} Beziehung in den Editor …",
       "busy.apply.other": "Übernehme {n} Beziehungen in den Editor …",
       "msg.multiLinks": "Dieses Release ist mit {n} {src}-Releases verknüpft. Wähle oben eines aus.",
+      "links.title": "Dieses Release ist mit {n} {src}-Releases verknüpft",
+      "links.intro": "Welches soll importiert werden? Jedes wird im Hintergrund gelesen und seine Daten gezählt; das mit den meisten Daten ist vorgewählt.",
+      "links.introBc": "(Bandcamp: ohne seine Track-Seiten.)",
+      "links.counting": "wird gezählt …",
+      "links.count": "„{title}“ – Credits: {credits} · Firmen: {companies} · Tracks: {tracks}",
+      "links.countFailed": "nicht lesbar: {error}",
+      "links.best": "die meisten Daten",
+      "links.openOne": "Diese Seite in einem neuen Tab öffnen",
+      "links.tabs": "Alle in Hintergrund-Tabs öffnen",
+      "links.tabsTitle": "Zum Vergleichen: jede Seite in einem Hintergrund-Tab",
+      "links.remember": "Diese Wahl für dieses Release merken",
+      "links.ok": "Importieren",
       "msg.trackMismatch": "{src} listet {d} Tracks, MusicBrainz {m}. Die Zuordnung erfolgt der Reihe nach. Prüfe bei Recording- und Werk-Beziehungen die Trackauswahl.",
       "msg.noCredits": "Auf {src} sind für dieses Release keine Credits eingetragen. Du kannst unten Einträge manuell anlegen.",
       "msg.confirmDiscard": "Die aktuelle Auswahl im Dashboard wird verworfen. Fortfahren?",
@@ -1878,6 +1922,9 @@
       "log.artistLinked": "{name}: über {src}-Link gefunden → {mb}",
       "log.artistAmbiguous": "{name}: {n} MB-Artists teilen sich den {src}-Link",
       "log.artistMissing": "{name}: kein MB-Artist mit diesem {src}-Link",
+      "log.bcPageOther": "{name}: das Album liegt auf der Bandcamp-Seite von {page} (ein Label oder ein anderes Konto) – {name} wird über den Namen gesucht",
+      "log.bcPageLabel": "Bandcamp-Seite {page}: Label {label} in MusicBrainz",
+      "log.bcPageLabelOfRelease": "Bandcamp-Seite {page}: Label {label} in MusicBrainz – ein Label dieses Releases",
       "log.artistManual": "{name}: manuell gesetzt → {mb}",
       "log.artistForm": "Formular „Artist anlegen“ geöffnet: {name}",
       "log.artistCreated": "Artist angelegt: {name} ({mbid})",
@@ -2309,13 +2356,14 @@
       "ms.0.1.0": "Erste Version: die Credits des verknüpften Discogs-Release im Relationship-Editor",
       "notice.title": "MB x Vibecode: Credits Importer {version} – das ist neu",
       "old.twice": "Auf dieser Seite laufen zwei Import-Skripte: das alte „MB x Vibecode: Import Discogs credits“ (oder eine zweite Kopie) und „MB x Vibecode: Credits Importer“. Bitte lösche das alte im Skript-Manager (Tampermonkey, Violentmonkey) und lade die Seite neu.",
-      "afterEdit.label": "Beziehungs-Editor öffnen und Import-Dashboard starten",
-      "afterEdit.title": "Credits Importer: nach „Enter edit“ öffnet sich „Edit relationships“ dieses Releases mit dem Import-Dashboard, das die Credits seiner Quelle lädt – {links}",
       "afterEdit.toHarmony": "für den Credits Importer: nach „Enter edit“ bei Harmony „Edit relationships with Credits Importer“ verwenden",
       "afterEdit.toOther": "nach „Enter edit“ geht MusicBrainz weiter zu {host}; der Beziehungs-Editor öffnet sich nicht von selbst",
-      "afterEdit.labelBg": "Beziehungs-Editor im Hintergrund-Tab öffnen und Import-Dashboard starten",
-      "afterEdit.titleBg": "Credits Importer: nach „Enter edit“ geht MusicBrainz weiter zu Harmony; der Beziehungs-Editor dieses Releases öffnet sich in einem Hintergrund-Tab mit dem Import-Dashboard, das {links} lädt. Auf Harmonys Seite steht außerdem „Edit relationships with Credits Importer“.",
-      "settings.afterEdit": "Release-Editor: nach „Enter edit“ den Beziehungs-Editor öffnen und den Import starten (der Haken neben „Enter edit“)",
+      "afterEdit.button": "{enter} & Credits importieren",
+      "afterEdit.buttonTitle": "Credits Importer: „Enter edit“, danach öffnet sich „Edit relationships“ dieses Releases mit dem Import-Dashboard, das die Credits seiner Quelle lädt – {links} · {keys}",
+      "afterEdit.buttonTitleBg": "Credits Importer: „Enter edit“ – MusicBrainz geht weiter zu Harmony; der Beziehungs-Editor dieses Releases öffnet sich in einem Hintergrund-Tab mit dem Import-Dashboard, das die Credits seiner Quelle lädt – {links} · {keys}",
+      "afterEdit.keys": "Strg+Alt+Enter",
+      "afterEdit.keysMac": "Control+Option+Return",
+      "settings.afterEdit": "Release-Editor: der Knopf „Enter edit & Credits importieren“ neben „Enter edit“ (Strg+Alt+Enter) – abschicken, dann den Beziehungs-Editor mit dem Import öffnen",
       "settings.afterEditBg": "Mit Harmony importiert (Bandcamp, Discogs): im Hintergrund-Tab öffnen, Harmonys Seite bleibt vorne",
       "settings.webLinksShow": "Web-Links, die im Text neben Namen stehen, bei den Einträgen zeigen",
       "settings.webLinksShowTitle": "Profile wie instagram.com/… oder open.spotify.com/artist/… neben einem Namen im eingefügten Text oder in Bandcamp-Credits. Sie werden auf jeden Fall gemerkt: „Artist anlegen …“ und „Label anlegen …“ tragen sie ein, und MusicBrainz wird nach Artists mit ihnen gefragt (nicht bei Streaming-Seiten).",
@@ -2952,7 +3000,11 @@
       "log.artistSpelling": "{name}: encontrado por su enlace de {src}, pero MusicBrainz lo escribe distinto ({mb}); solo una sugerencia",
       "log.artistCreditSpelling": "{name}: encontrado por su enlace de {src}, pero la publicación lo nombra distinto en su crédito de artista ({mb}); solo una sugerencia",
       "log.sourceKept": "Fuente elegida antes para esta publicación: {src}",
-      "log.fromEditor": "Iniciado desde el editor de publicaciones («abrir el editor de relaciones e iniciar el panel de importación») – enlaces allí: {links}",
+      "log.fromEditor": "Iniciado desde el editor de publicaciones («Enter edit e importar créditos») – enlaces allí: {links}",
+      "log.linkChosen": "Elegida entre {n} publicaciones de {src} enlazadas: {link}",
+      "log.linkCounted": "{link}: «{title}» – créditos: {credits} · empresas: {companies} · pistas: {tracks}",
+      "log.linkCountFailed": "{link}: no se pudo leer – {error}",
+      "log.linksTabs": "Abiertas en pestañas en segundo plano: {list}",
       "log.sourceFromEditor": "Fuente introducida en el editor de publicaciones, aún no en MusicBrainz: {src}",
       "log.fromLink": "Iniciado desde un enlace («Edit relationships with Credits Importer», p. ej. en Harmony) – enlaces en él: {links}",
       "log.sourceFromLink": "Fuente entregada por el enlace, aún no en MusicBrainz: {src}",
@@ -3056,6 +3108,10 @@
       "match.noLink": "ningún artista de MB con este enlace de {src}",
       "match.noId": "sin ID de Discogs",
       "match.byName": "aún sin asignar (sin enlace): revisa las sugerencias o introduce un MBID",
+      "bcPage.notOwn": "La página de Bandcamp de este álbum pertenece a {page}, no es la página propia de {name}; {name} se busca por el nombre (las entradas de MusicBrainz con este nombre solo se sugieren).",
+      "bcPage.mbLabel": "en MusicBrainz: sello",
+      "bcPage.ofRelease": "– un sello de esta publicación ✓",
+      "bcPage.source": "· en la página de Bandcamp de {page}",
       "log.nameLookup": "{name}: sin enlace a MusicBrainz; buscando el mismo nombre",
       "role.placeholder": "p. ej. Keyboards",
       "role.aria": "Rol",
@@ -3207,6 +3263,18 @@
       "busy.apply.one": "Preparando {n} relación en el editor…",
       "busy.apply.other": "Preparando {n} relaciones en el editor…",
       "msg.multiLinks": "Esta publicación está enlazada con {n} publicaciones de {src}. Elige una arriba.",
+      "links.title": "Esta publicación está enlazada con {n} publicaciones de {src}",
+      "links.intro": "¿Cuál se importa? Cada una se lee en segundo plano y se cuentan sus datos; la que tiene más datos está preseleccionada.",
+      "links.introBc": "(Bandcamp: sin sus páginas de pista.)",
+      "links.counting": "contando…",
+      "links.count": "«{title}» – créditos: {credits} · empresas: {companies} · pistas: {tracks}",
+      "links.countFailed": "no se pudo leer: {error}",
+      "links.best": "más datos",
+      "links.openOne": "Abrir esta página en una pestaña nueva",
+      "links.tabs": "Abrir todas en pestañas en segundo plano",
+      "links.tabsTitle": "Para compararlas: cada página en una pestaña en segundo plano",
+      "links.remember": "Recordar esta elección para esta publicación",
+      "links.ok": "Importar",
       "msg.trackMismatch": "{src} lista {d} pistas y MusicBrainz {m}. Las pistas se asignan por orden. Revisa la selección de pistas en las relaciones de grabación y de obra.",
       "msg.noCredits": "{src} no tiene créditos para esta publicación. Puedes añadir entradas manualmente abajo.",
       "msg.confirmDiscard": "Se descartará la selección actual del panel. ¿Continuar?",
@@ -3256,6 +3324,9 @@
       "log.artistLinked": "{name}: encontrado por enlace de {src} → {mb}",
       "log.artistAmbiguous": "{name}: {n} artistas de MB comparten el enlace de {src}",
       "log.artistMissing": "{name}: ningún artista de MB con este enlace de {src}",
+      "log.bcPageOther": "{name}: el álbum está en la página de Bandcamp de {page} (un sello u otra cuenta); {name} se busca por el nombre",
+      "log.bcPageLabel": "Página de Bandcamp {page}: sello {label} en MusicBrainz",
+      "log.bcPageLabelOfRelease": "Página de Bandcamp {page}: sello {label} en MusicBrainz – un sello de esta publicación",
       "log.artistManual": "{name}: asignado manualmente → {mb}",
       "log.artistForm": "Formulario «Crear artista» abierto: {name}",
       "log.artistCreated": "Artista creado: {name} ({mbid})",
@@ -3687,13 +3758,14 @@
       "ms.0.1.0": "Primera versión: los créditos de la publicación de Discogs enlazada en el editor de relaciones",
       "notice.title": "MB x Vibecode: Credits Importer {version} – novedades",
       "old.twice": "En esta página se ejecutan dos scripts de importación: el antiguo «MB x Vibecode: Import Discogs credits» (o una segunda copia) y «MB x Vibecode: Credits Importer». Borra el antiguo en tu gestor de scripts (Tampermonkey, Violentmonkey) y vuelve a cargar la página.",
-      "afterEdit.label": "abrir el editor de relaciones e iniciar el panel de importación",
-      "afterEdit.title": "Credits Importer: tras «Enter edit» se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links}",
       "afterEdit.toHarmony": "para Credits Importer: tras «Enter edit», usa «Edit relationships with Credits Importer» en Harmony",
       "afterEdit.toOther": "tras «Enter edit» MusicBrainz sigue a {host}; el editor de relaciones no se abre solo",
-      "afterEdit.labelBg": "abrir el editor de relaciones en una pestaña en segundo plano e iniciar el panel de importación",
-      "afterEdit.titleBg": "Credits Importer: tras «Enter edit» MusicBrainz sigue a Harmony; el editor de relaciones de esta publicación se abre en una pestaña en segundo plano con el panel de importación, que carga {links}. La página de Harmony también tiene «Edit relationships with Credits Importer».",
-      "settings.afterEdit": "Editor de publicaciones: tras «Enter edit», abrir el editor de relaciones e iniciar la importación (la casilla junto a «Enter edit»)",
+      "afterEdit.button": "{enter} e importar créditos",
+      "afterEdit.buttonTitle": "Credits Importer: «Enter edit» y después se abre «Edit relationships» de esta publicación con el panel de importación, que carga los créditos de su fuente – {links} · {keys}",
+      "afterEdit.buttonTitleBg": "Credits Importer: «Enter edit»; MusicBrainz sigue a Harmony y el editor de relaciones de esta publicación se abre en una pestaña en segundo plano con el panel de importación, que carga los créditos de su fuente – {links} · {keys}",
+      "afterEdit.keys": "Ctrl+Alt+Intro",
+      "afterEdit.keysMac": "Control+Opción+Retorno",
+      "settings.afterEdit": "Editor de publicaciones: el botón «Enter edit e importar créditos» junto a «Enter edit» (Ctrl+Alt+Intro): envía y después abre el editor de relaciones con la importación",
       "settings.afterEditBg": "Importado con Harmony (Bandcamp, Discogs): abrirlo en una pestaña en segundo plano, la página de Harmony queda delante",
       "settings.webLinksShow": "Mostrar en sus entradas los enlaces web que están junto a nombres en un texto",
       "settings.webLinksShowTitle": "Perfiles como instagram.com/… u open.spotify.com/artist/… junto a un nombre en un texto pegado o en los créditos de Bandcamp. Se guardan de todos modos: «Crear artista…» y «Crear sello…» los rellenan, y se busca en MusicBrainz artistas con ellos (no con páginas de streaming).",
@@ -4330,7 +4402,11 @@
       "log.artistSpelling": "{name} : trouvé via son lien {src}, mais MusicBrainz l’écrit autrement ({mb}) – seulement une suggestion",
       "log.artistCreditSpelling": "{name} : trouvé via son lien {src}, mais la parution le nomme autrement dans son crédit d’artiste ({mb}) – seulement une suggestion",
       "log.sourceKept": "Source choisie auparavant pour cette parution : {src}",
-      "log.fromEditor": "Lancé depuis l’éditeur de parution (« ouvrir l’éditeur de relations et lancer le tableau de bord d’import ») – liens : {links}",
+      "log.fromEditor": "Lancé depuis l’éditeur de parution (« Enter edit et importer les crédits ») – liens : {links}",
+      "log.linkChosen": "Choisie parmi {n} parutions {src} liées : {link}",
+      "log.linkCounted": "{link} : « {title} » – crédits : {credits} · sociétés : {companies} · pistes : {tracks}",
+      "log.linkCountFailed": "{link} : illisible – {error}",
+      "log.linksTabs": "Ouvertes dans des onglets en arrière-plan : {list}",
       "log.sourceFromEditor": "Source saisie dans l’éditeur de parution, pas encore dans MusicBrainz : {src}",
       "log.fromLink": "Lancé depuis un lien (« Edit relationships with Credits Importer », p. ex. sur Harmony) – liens : {links}",
       "log.sourceFromLink": "Source transmise par le lien, pas encore dans MusicBrainz : {src}",
@@ -4434,6 +4510,10 @@
       "match.noLink": "aucun artiste MB avec ce lien {src}",
       "match.noId": "sans ID Discogs",
       "match.byName": "pas encore associé (sans lien) – vérifiez les suggestions ou saisissez un MBID",
+      "bcPage.notOwn": "La page Bandcamp de cet album appartient à {page} – ce n’est pas la page de {name} ; {name} est cherché par son nom (les entrées MusicBrainz de ce nom ne sont que suggérées).",
+      "bcPage.mbLabel": "dans MusicBrainz : label",
+      "bcPage.ofRelease": "– un label de cette parution ✓",
+      "bcPage.source": "· sur la page Bandcamp de {page}",
       "log.nameLookup": "{name} : pas de lien vers MusicBrainz – recherche du même nom",
       "role.placeholder": "p. ex. Keyboards",
       "role.aria": "Rôle",
@@ -4585,6 +4665,18 @@
       "busy.apply.one": "Préparation de {n} relation dans l’éditeur…",
       "busy.apply.other": "Préparation de {n} relations dans l’éditeur…",
       "msg.multiLinks": "Cette parution est liée à {n} parutions {src}. Choisissez-en une ci-dessus.",
+      "links.title": "Cette parution est liée à {n} parutions {src}",
+      "links.intro": "Laquelle importer ? Chacune est lue en arrière-plan et ses données sont comptées ; celle qui en a le plus est présélectionnée.",
+      "links.introBc": "(Bandcamp : sans ses pages de piste.)",
+      "links.counting": "comptage…",
+      "links.count": "« {title} » – crédits : {credits} · sociétés : {companies} · pistes : {tracks}",
+      "links.countFailed": "illisible : {error}",
+      "links.best": "le plus de données",
+      "links.openOne": "Ouvrir cette page dans un nouvel onglet",
+      "links.tabs": "Tout ouvrir dans des onglets en arrière-plan",
+      "links.tabsTitle": "Pour les comparer : chaque page dans un onglet en arrière-plan",
+      "links.remember": "Mémoriser ce choix pour cette parution",
+      "links.ok": "Importer",
       "msg.trackMismatch": "{src} liste {d} pistes, MusicBrainz {m}. Les pistes sont associées dans l’ordre. Vérifiez la sélection des pistes pour les relations d’enregistrement et d’œuvre.",
       "msg.noCredits": "{src} n’a aucun crédit pour cette parution. Vous pouvez ajouter des entrées manuellement ci-dessous.",
       "msg.confirmDiscard": "La sélection actuelle du tableau sera abandonnée. Continuer ?",
@@ -4634,6 +4726,9 @@
       "log.artistLinked": "{name} : trouvé via le lien {src} → {mb}",
       "log.artistAmbiguous": "{name} : {n} artistes MB partagent le lien {src}",
       "log.artistMissing": "{name} : aucun artiste MB avec ce lien {src}",
+      "log.bcPageOther": "{name} : l’album est sur la page Bandcamp de {page} (un label ou un autre compte) – {name} est cherché par son nom",
+      "log.bcPageLabel": "Page Bandcamp {page} : label {label} dans MusicBrainz",
+      "log.bcPageLabelOfRelease": "Page Bandcamp {page} : label {label} dans MusicBrainz – un label de cette parution",
       "log.artistManual": "{name} : défini manuellement → {mb}",
       "log.artistForm": "Formulaire « Créer l’artiste » ouvert : {name}",
       "log.artistCreated": "Artiste créé : {name} ({mbid})",
@@ -5065,13 +5160,14 @@
       "ms.0.1.0": "Première version : les crédits de la parution Discogs liée dans l’éditeur de relations",
       "notice.title": "MB x Vibecode: Credits Importer {version} – nouveautés",
       "old.twice": "Deux scripts d’import tournent sur cette page : l’ancien « MB x Vibecode: Import Discogs credits » (ou une deuxième copie) et « MB x Vibecode: Credits Importer ». Supprimez l’ancien dans votre gestionnaire de scripts (Tampermonkey, Violentmonkey) et rechargez la page.",
-      "afterEdit.label": "ouvrir l’éditeur de relations et lancer le tableau de bord d’import",
-      "afterEdit.title": "Credits Importer : après « Enter edit », « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links}",
       "afterEdit.toHarmony": "pour Credits Importer : après « Enter edit », utilisez « Edit relationships with Credits Importer » sur Harmony",
       "afterEdit.toOther": "après « Enter edit », MusicBrainz continue vers {host} ; l’éditeur de relations ne s’ouvre pas tout seul",
-      "afterEdit.labelBg": "ouvrir l’éditeur de relations dans un onglet en arrière-plan et lancer le tableau de bord d’import",
-      "afterEdit.titleBg": "Credits Importer : après « Enter edit », MusicBrainz continue vers Harmony ; l’éditeur de relations de cette parution s’ouvre dans un onglet en arrière-plan avec le tableau de bord d’import, qui charge {links}. La page d’Harmony a aussi « Edit relationships with Credits Importer ».",
-      "settings.afterEdit": "Éditeur de parution : après « Enter edit », ouvrir l’éditeur de relations et lancer l’import (la case près de « Enter edit »)",
+      "afterEdit.button": "{enter} et importer les crédits",
+      "afterEdit.buttonTitle": "Credits Importer : « Enter edit », puis « Edit relationships » de cette parution s’ouvre avec le tableau de bord d’import, qui charge les crédits de sa source – {links} · {keys}",
+      "afterEdit.buttonTitleBg": "Credits Importer : « Enter edit » – MusicBrainz continue vers Harmony ; l’éditeur de relations de cette parution s’ouvre dans un onglet en arrière-plan avec le tableau de bord d’import, qui charge les crédits de sa source – {links} · {keys}",
+      "afterEdit.keys": "Ctrl+Alt+Entrée",
+      "afterEdit.keysMac": "Contrôle+Option+Retour",
+      "settings.afterEdit": "Éditeur de parution : le bouton « Enter edit et importer les crédits » près de « Enter edit » (Ctrl+Alt+Entrée) – soumet, puis ouvre l’éditeur de relations avec l’import",
       "settings.afterEditBg": "Importé avec Harmony (Bandcamp, Discogs) : l’ouvrir dans un onglet en arrière-plan, la page d’Harmony reste devant",
       "settings.webLinksShow": "Afficher aux entrées les liens web trouvés à côté des noms dans un texte",
       "settings.webLinksShowTitle": "Des profils comme instagram.com/… ou open.spotify.com/artist/… à côté d’un nom dans un texte collé ou les crédits Bandcamp. Ils sont gardés dans tous les cas : « Créer l’artiste… » et « Créer le label… » les remplissent, et MusicBrainz est interrogé sur les artistes qui les ont (pas pour les pages de streaming).",
@@ -5787,7 +5883,8 @@
   const WORDING_RULES = [
     { id: 'W001', where: 'wordingRuleFor, roleCreditFor', note: 'Upright bass is a double bass; the Discogs word stays as role credit', phrases: ['upright bass', 'bass upright'], credit: 'upright bass' },
     { id: 'W002', where: 'wordingRuleFor, roleCreditFor', note: 'Contrabass is a double bass; the Discogs word stays as role credit', phrases: ['contrabass', 'bass contrabass', 'contrabass bass'], credit: 'contrabass' },
-    { id: 'W003', where: 'wordingRuleFor, roleCreditFor', note: 'Kontrabass (German) is a double bass; kept as a German noun with a capital letter', phrases: ['kontrabass', 'bass kontrabass', 'kontrabass bass'], credit: 'Kontrabass' },
+    { id: 'W003', where: 'wordingRuleFor, roleCreditFor', note: 'Kontrabass (German) is always a double bass – a translation, MusicBrainz\'s own name, no role credit (3.22.3; 3.22.2: "contrabass", before: "Kontrabass"). The English "Contrabass" keeps "contrabass" (W002)', phrases: ['kontrabass', 'bass kontrabass', 'kontrabass bass'], credit: '' },
+    { id: 'W008', where: 'wordingRuleFor, roleCreditFor', note: 'Violoncello is a cello; the word stays as role credit "violoncello" (3.22.2; a fixed pair like W002, W003 – no rule for other words)', phrases: ['violoncello', 'violoncelli', 'cello violoncello', 'violoncello cello'], credit: 'violoncello' },
     { id: 'W004', where: 'wordingRuleFor, roleCreditFor', note: '"Horn [French]" and "French Horn" are the MusicBrainz instrument French horn, without role credit', phrases: ['horn french', 'french horn'], credit: '' },
     { id: 'W005', where: 'wordingRuleFor, roleCreditFor', note: '"Flugel Horn" (also Flügelhorn) is the MusicBrainz instrument flugelhorn, without role credit', phrases: ['flugel horn', 'flugelhorn', 'flügelhorn', 'flugel-horn'], credit: '' },
     { id: 'W006', where: 'wordingRuleFor, roleCreditFor', note: '"Mix", "Mixed By", "Engineer [Mix]" … are the MusicBrainz relationship mix, without role credit', phrases: ['mix', 'mixing', 'mixed by', 'mixed-by', 'mix engineer', 'mixing engineer', 'engineer mix', 'engineer mixing', 'engineered by mix', 'mixdown', 'engineer mixdown'], credit: '' },
@@ -5824,7 +5921,8 @@
     { id: 'S019', where: 'repeatedDetails', note: 'Details that only repeat the role in another word form are no role credit: "Mixed By [Mixing]", "Mastered By [Mastering]", "Music By [All Music By]", "Recorded By [Recording]"; "[Cover Photo]" stays' },
     { id: 'S026', where: 'loadRelease, suppRow, mediumOfRow (MEDIUM_WORDS)', note: 'A credit for a medium the MusicBrainz release does not have ("Vinyl LP mastering", "Mastered By [Vinyl]", "Lacquer Cut By" on a release of Digital Media) is no row: it is listed as left out on purpose, with the reason. "Vinyl LP mastering and digital mastering by X" keeps the digital mastering. A medium word of a text that fits the release is no role credit (3.21.4)' },
     { id: 'S027', where: 'titleScope, tracksByTitles (TEXT_TITLE_SCOPE)', note: 'Tracks named by their titles in a text (T036: "Piano in ‘A\' and \'B\' is a contribution by X", "Guitar on “Song”: Y"): each title is looked for among the tracks of the source (a pasted text: MusicBrainz\'s, Bandcamp: the album\'s) – case, accents and punctuation do not count, one letter more, less or other is allowed; a title not found is shown as "not matched", its tracks are chosen by hand (3.22.0)' },
-    { id: 'S028', where: 'suggestByName, groupKindOf, matchHtmlInner (C038 …)', note: 'An area of a text ("Recorded by X in Xixon, Asturies, Spain", T037) is an entry of the kind "Area" with the larger areas after it; MusicBrainz is searched with its other names too ("Xixon" finds Gijón with the alias "Xixón") – only suggested, nothing assigned; there is no "Create" (areas are added by MusicBrainz\'s area editors). Its type: recorded in, mixed in (recording) or mastered in (release) (3.22.0)' },
+    { id: 'S028', where: 'suggestByName, groupKindOf, matchHtmlInner (C038 …)', note: 'An area of a text ("Recorded by X in Xixon, Asturies, Spain", T037) is an entry of the kind "Area" with the larger areas after it; MusicBrainz is searched with its other names too ("Xixon" finds Gijón with the alias "Xixón") – only suggested, nothing assigned; there is no "Create" (areas are added by MusicBrainz\'s area editors). Its type: recorded in, mixed in (recording) or mastered in (release) (3.22.0); produced in, remixed in, engineered in, and the area each suggestion is part of, read from MusicBrainz ("City, Asturias"; 3.22.2)' },
+    { id: 'S029', where: 'bandPageName, ownPage, linkBand, bandPageInfo, suggestByName', note: 'A Bandcamp album on another account\'s page – mostly a label\'s ("Grabaciones Autobombo" with an album of Yunclas): the name of the page (its "data-band", else "og:site_name") is not the album\'s artist (case, accents and "The" do not count; "Jane Roe & Friends" on Jane Roe\'s page is her own) – the page is no link of the artist, he is searched by name, the entry says whose page it is and names MusicBrainz\'s label with that page. People not found through their own link (Discogs, Bandcamp) get the same-named MusicBrainz entries as suggestions; an artist of the release\'s artist credit with that name comes first, marked "release artist" – only suggested (3.22.1)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -5917,6 +6015,10 @@
     [/^(recorded|overdubbed) in/, { id: 'C038', area: ['recorded in'], level: 'recording' }],
     [/^mixed in/, { id: 'C039', area: ['mixed in'], level: 'recording' }],
     [/^mastered in/, { id: 'C040', area: ['mastered in'], level: 'release' }],
+    // [3.22.2] more areas (collected item 48)
+    [/^produced in/, { id: 'C041', area: ['produced in'], level: 'recording' }],
+    [/^remixed in/, { id: 'C042', area: ['remixed in'], level: 'recording' }],
+    [/^engineered in/, { id: 'C043', area: ['engineered in'], level: 'recording' }],
   ];
 
   /** The MusicBrainz types of the design rules (R062, R064–R067). */
@@ -6247,7 +6349,7 @@
       show: () => ({ pairs: Object.entries(MEDIUM_WORDS) }) },
     { id: 'T036', where: 'TEXT_TITLE_SCOPE, TEXT_CONTRIBUTION', note: 'Texts (3.22.0): tracks named by their titles in quotation marks after a role and "in", "on" ("Piano in ‘A\' and \'B\'", "Guitar on “Song”"; the marks may be mixed) – the tracks of these titles (S027); "is a contribution", "was played", "were performed" before "by" leave the role',
       show: () => ({ pairs: [['titles', TEXT_TITLE_SCOPE], ['before “by”', TEXT_CONTRIBUTION]] }) },
-    { id: 'T037', where: 'areaOf, TEXT_AREA_PARTICLE, TEXT_NOT_AREA', note: 'Texts (3.22.0): an area after a name ("Recorded by X in Xixon, Asturies, Spain") or a verb ("Recorded in Berlin", "Mixed live in Paris") – words with capitals (particles between them: "Frankfurt am Main", "Rio de Janeiro"), up to four parts, no number, month or season, none of these words first; a time after it ("in the spring, 2017") is left out. Only for recorded, mixed and mastered (C038 …, S028)',
+    { id: 'T037', where: 'areaOf, TEXT_AREA_PARTICLE, TEXT_NOT_AREA', note: 'Texts (3.22.0): an area after a name ("Recorded by X in Xixon, Asturies, Spain") or a verb ("Recorded in Berlin", "Mixed live in Paris") – words with capitals (particles between them: "Frankfurt am Main", "Rio de Janeiro"), up to four parts, no number, month or season, none of these words first; a time after it ("in the spring, 2017") is left out. Only for recorded, mixed, mastered and (3.22.2) produced, remixed, engineered (C038 – C043, S028)',
       show: () => ({ pairs: [['particles', TEXT_AREA_PARTICLE], ['no area', TEXT_NOT_AREA]] }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
@@ -6579,7 +6681,7 @@
     || names.some((n) => SPECIAL_ARTIST_NAME.test(String(n || '').trim()));
 
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
-  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered) in|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
+  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered) in|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
 
   // [T014] Dates: month names (English, German, Spanish, French; D004)
   const MONTH_NAMES = {
@@ -7975,19 +8077,42 @@
       const m = String(u || '').match(/^https?:\/\/([a-z0-9-]+\.bandcamp\.com)/i);
       return m ? `https://${m[1].toLowerCase()}/` : '';
     };
+    const named = { quot: '"', apos: "'", lt: '<', gt: '>', amp: '&', nbsp: '\u00a0' };
+    const unescapeHtml = (t) => String(t || '').replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, e) => (e[0] === '#'
+      ? String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : (named[e.toLowerCase()] ?? all)));
     /** The page data of an album or track page (the JSON in "data-tralbum"), or null. */
     function pageData(html) {
       const m = String(html || '').match(/data-tralbum="([^"]*)"/);
       if (!m) return null;
-      const named = { quot: '"', apos: "'", lt: '<', gt: '>', amp: '&', nbsp: '\u00a0' };
-      const json = m[1].replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, e) => (e[0] === '#'
-        ? String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : (named[e.toLowerCase()] ?? all)));
       try {
-        return JSON.parse(json);
+        return JSON.parse(unescapeHtml(m[1]));
       } catch (e) {
         return null;
       }
     }
+    /**
+     * [3.22.1] The name of the Bandcamp account an album page is on (its "data-band" JSON, else "og:site_name"): the
+     * artist's own page, or a label's (collected item 46: "Grabaciones Autobombo" with an album of Yunclas); '' if none.
+     */
+    function bandPageName(html) {
+      const h = String(html || '');
+      const band = h.match(/data-band="([^"]*)"/);
+      if (band) {
+        try {
+          const name = String((JSON.parse(unescapeHtml(band[1])) || {}).name || '').trim();
+          if (name) return name;
+        } catch (e) { /* the meta tag below */ }
+      }
+      const meta = h.match(/<meta[^>]+property=["']og:site_name["'][^>]*content=["']([^"']*)["']/i) || h.match(/<meta[^>]+content=["']([^"']*)["'][^>]*property=["']og:site_name["']/i);
+      return meta ? unescapeHtml(meta[1]).trim() : '';
+    }
+    /** [3.22.1] Names compared without case, accents, punctuation and a leading "The". */
+    const foldName = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/^the /, '');
+    /**
+     * [3.22.1] Whether the account is the artist's own (as Harmony decides it): the same name, or the album artist's
+     * name contains it ("Jane Roe & Friends" on Jane Roe's page); without a page name it is taken as the artist's.
+     */
+    const ownPage = (page, artist) => !page || foldName(page) === foldName(artist) || (` ${foldName(artist)} `).includes(` ${foldName(page)} `);
 
     // [3.17.2] Liner notes at the end of the "about" text: prose of at least five sentences and a name below it (T027)
     const LINER_MIN_SENTENCES = 5;
@@ -8041,13 +8166,15 @@
      * The neutral release from an album's page data. trackCredits: [credits text of each track page] (or []);
      * ctx: as for a text (see sourceContext), with this album's tracks.
      */
-    function toRelease(data, url, trackCredits, ctx) {
+    function toRelease(data, url, trackCredits, ctx, { pageName = '' } = {}) {
       const cur = data.current || {};
       const tracks = (data.trackinfo || []).map((t, i) => ({ position: String(t.track_num || i + 1), title: t.title || '', aliases: [] }));
       const resolveTracks = (spec) => ctx.resolveTracks(spec, tracks);
       // [3.22.0] titles named in the credits: this album's tracks (S027)
       const resolveTitles = ctx.resolveTitles ? (titles) => ctx.resolveTitles(titles, tracks) : null;
-      const band = { name: String(data.artist || '').trim(), url: bandUrl(url) };
+      // [3.22.1] page: the name of the Bandcamp account, own: whether it is the artist's own page (else a label's, 46)
+      const bandName = String(data.artist || '').trim();
+      const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
       const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles });
       const credits = [...album.credits];
       const companies = [...album.companies];
@@ -8078,8 +8205,10 @@
           tracks: { all: true }, line: liner.line, part: liner.part, pi: liner.pi, n: liner.n, fromAbout: true });
       }
       const aboutAt = cur.about ? (cur.credits ? cur.credits.length + 2 : 0) : null;
-      // [rule 4] The band's own name links to its Bandcamp page (found in MB only with exactly this spelling)
-      const linkBand = (w) => (band.url && w.name === band.name ? { ...w, id: band.url, links: [band.url] } : w);
+      // [rule 4] The band's own name links to its Bandcamp page (found in MB only with exactly this spelling); [3.22.1] not
+      // the page of a label: the name is searched like any other, and the entry says whose page it is
+      const linkBand = (w) => (!band.url || w.name !== band.name ? w : band.own ? { ...w, id: band.url, links: [band.url] }
+        : { ...w, pageOf: { name: band.page, url: band.url } });
       return {
         source: 'bandcamp',
         id: url,
@@ -8122,6 +8251,7 @@
       toRelease,
       linerNotes,
       urlKey: bandUrl,
+      bandPageName,
       /** Album pages of Bandcamp a MusicBrainz release links to (any link type: purchase, streaming …). */
       releaseLinks(relations) {
         const links = new Map();
@@ -8152,7 +8282,7 @@
             trackCredits.push(text);
           }
         }
-        return toRelease(data, id, trackCredits, ctx);
+        return toRelease(data, id, trackCredits, ctx, { pageName: bandPageName(html) });
       },
     };
   })();
@@ -8184,7 +8314,9 @@
       if (!groups.has(gKey)) {
         groups.set(gKey, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: new Map(),
           // [3.14.0] a credit without a name, given to one of the release's artists (placeholderCredits)
-          ...(who.placeholder ? { placeholder: who.placeholder, releaseMbid: who.releaseMbid || '' } : {}) });
+          ...(who.placeholder ? { placeholder: who.placeholder, releaseMbid: who.releaseMbid || '' } : {}),
+          // [3.22.1] the name of a Bandcamp album on a label's page: whose page it is (46)
+          ...(who.pageOf ? { pageOf: who.pageOf } : {}) });
       }
       const group = groups.get(gKey);
       // [3.21.0] a name without an id: the web profiles found next to it anywhere in the text (T032)
@@ -8495,7 +8627,10 @@
   // 3b. [3.19.0] Release editor and release page: start the import right after "Enter edit"
   // ===========================================================================
 
-  const AFTER_EDIT_KEY = 'dci-after-edit';        // the tick, remembered (localStorage)
+  const AFTER_EDIT_KEY = 'dci-after-edit';        // the tick of 3.19.0 – 3.22.x (removed in 3.23.0: the button instead)
+  // [3.23.0] the button "Enter edit & import credits" next to "Enter edit" (setting, on; collected item 50)
+  const AFTER_EDIT_BTN_KEY = 'dci-after-edit-btn';
+  const AFTER_EDIT_BTN_COLOR = { bg: '#eb743b', line: '#c55a24', hover: '#c55a24', ink: '#fff' };
   const AFTER_EDIT_GO_KEY = 'dci-after-edit-go';  // { release: MBID or 'new', links, at } once "Enter edit" runs (sessionStorage of the tab)
   const AUTOSTART_KEY = 'dci-autostart';          // { release, links, at } for the relationship editor (sessionStorage of the tab)
   const AFTER_EDIT_MAX_MS = 10 * 60 * 1000;
@@ -8524,15 +8659,23 @@
   const afterEditLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : String(l.url || l.id).replace(/^https?:\/\//, '')}`;
 
   /**
-   * [3.19.0] Release editor: the tick next to "Enter edit" (only on the tab "Edit note", only with a Discogs or Bandcamp
-   * link – those of the tab "External links", saved or just entered). Ticked, the start of the submission is noted for
-   * this tab; MusicBrainz then shows the release page, which goes on to the relationship editor (initReleasePageHook).
+   * [3.19.0] Release editor: start the import right after "Enter edit" (only on the tab "Edit note", only with a Discogs or
+   * Bandcamp link – those of the tab "External links", saved or just entered). [3.23.0] Instead of the tick a button
+   * "Enter edit & import credits" next to "Enter edit" (orange, MusicBrainz's own look otherwise; Ctrl+Alt+Enter; setting,
+   * on; collected item 50): it notes the start of the submission for this tab and clicks "Enter edit"; MusicBrainz then
+   * shows the release page, which goes on to the relationship editor (initReleasePageHook). "Enter edit" itself stays as it is.
    */
   function initReleaseEditorHook() {
     const mbid = (location.pathname.match(MBID_RE) || [])[0] || 'new';
     const win = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
     let box = null;
+    let goBtn = null;
     let hooked = false;
+    // [3.23.0] the button was used: the next submission goes on to the relationship editor (for a moment only)
+    let goRequested = false;
+    let goTimer = null;
+    // the tick of 3.19.0 – 3.22.x is gone
+    if (readJson('localStorage', AFTER_EDIT_KEY, null) != null) writeJson('localStorage', AFTER_EDIT_KEY, null);
     const linksNow = () => {
       const urls = [...document.querySelectorAll('#external-links-editor tr.external-link-item')].flatMap((row) => {
         const a = row.querySelector('a.url[href]');
@@ -8542,20 +8685,48 @@
       });
       return sourceLinksOf(urls);
     };
+    /** The note next to "Enter edit" when MusicBrainz goes on elsewhere (Harmony, another tool). */
     const ensureBox = () => {
       const btn = document.getElementById('enter-edit');
       if (!btn) return null;
       if (!box || !box.isConnected) {
-        box = document.createElement('label');
+        box = document.createElement('span');
         box.id = 'dci-after-edit';
-        box.style.cssText = 'display: none; align-items: center; gap: 4px; margin: 0 12px 0 0; vertical-align: middle; cursor: pointer;';
-        box.innerHTML = '<input type="checkbox"> <span></span>';
-        const input = box.querySelector('input');
-        input.checked = readJson('localStorage', AFTER_EDIT_KEY, false) === true;
-        input.addEventListener('change', () => writeJson('localStorage', AFTER_EDIT_KEY, input.checked || null));
+        box.style.cssText = 'display: none; margin: 0 12px 0 0; vertical-align: middle;';
         btn.before(box);
       }
       return box;
+    };
+    /** [3.23.0] The button "Enter edit & import credits": MusicBrainz's button copied (its classes), only orange. */
+    const ensureGoBtn = () => {
+      const btn = document.getElementById('enter-edit');
+      if (!btn) return null;
+      if (!goBtn || !goBtn.isConnected) {
+        goBtn = document.createElement('button');
+        goBtn.type = 'button';
+        goBtn.id = 'dci-enter-import';
+        goBtn.className = btn.className;
+        const c = AFTER_EDIT_BTN_COLOR;
+        goBtn.style.cssText = `display: none; margin-left: 0.4em; background: ${c.bg}; border-color: ${c.line}; color: ${c.ink};`;
+        goBtn.addEventListener('mouseenter', () => { goBtn.style.background = c.hover; });
+        goBtn.addEventListener('mouseleave', () => { goBtn.style.background = c.bg; });
+        goBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          go();
+        });
+        btn.after(goBtn);
+      }
+      return goBtn;
+    };
+    /** [3.23.0] "Enter edit" with the start of the import: noted, then MusicBrainz's own button. */
+    const go = () => {
+      const btn = document.getElementById('enter-edit');
+      if (!btn || !goBtn || goBtn.style.display === 'none' || btn.disabled) return;
+      goRequested = true;
+      clearTimeout(goTimer);
+      // MusicBrainz starts the submission at once; without it (an error in the form) the next "Enter edit" is a plain one
+      goTimer = setTimeout(() => { goRequested = false; }, 3000);
+      btn.click();
     };
     // [3.19.1] where MusicBrainz goes after "Enter edit" when the editor was opened by another tool (seeded "redirect_uri",
     // Harmony: its "Release Actions"); '' when to the release page
@@ -8565,30 +8736,44 @@
     };
     const update = () => {
       const b = ensureBox();
-      if (!b) return;
+      const g = ensureGoBtn();
+      if (!b || !g) return;
       const btn = document.getElementById('enter-edit');
       const links = linksNow();
       // MusicBrainz shows "Enter edit" only on the tab "Edit note"
       const visible = btn.style.display !== 'none' && btn.getClientRects().length > 0;
-      b.style.display = links.length && visible ? 'inline-flex' : 'none';
       const to = redirect();
       let host = '';
       try {
         host = to ? new URL(to, location.href).hostname : '';
       } catch (e) { /* not a URL */ }
       const harmony = HARMONY_HOST_RE.test(host);
-      // [3.19.1] going on elsewhere: no tick, a note instead (on Harmony's page the link does it); [3.19.2] Harmony with the
-      // setting "in a background tab" (on): the tick again, for a background tab
+      // [3.19.1] going on elsewhere: no button, a note instead (on Harmony's page the link does it); [3.19.2] Harmony with
+      // the setting "in a background tab" (on): the button, for a background tab
       const bg = !!to && harmony && readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false;
-      const tick = !to || bg;
+      const button = (!to || bg) && readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false;
       const list = links.map(afterEditLinkLabel).join(', ');
-      b.querySelector('input').style.display = tick ? '' : 'none';
+      const shown = links.length && visible;
+      g.style.display = shown && button ? '' : 'none';
+      g.disabled = !!btn.disabled;
+      g.dataset.bg = bg ? '1' : '';
+      // the start of MusicBrainz's own text ("Enter edit", in MusicBrainz's language), the rest in the dashboard's
+      g.textContent = tr('afterEdit.button', { enter: btn.textContent.trim() || 'Enter edit' });
+      const keys = tr(/Mac/i.test(navigator.platform || navigator.userAgent || '') ? 'afterEdit.keysMac' : 'afterEdit.keys');
+      g.title = tr(bg ? 'afterEdit.buttonTitleBg' : 'afterEdit.buttonTitle', { links: list, keys });
+      b.style.display = shown && to && !bg ? 'inline' : 'none';
       b.dataset.redirect = to ? host : '';
-      b.dataset.bg = bg ? '1' : '';
-      b.querySelector('span').textContent = !to ? tr('afterEdit.label') : bg ? tr('afterEdit.labelBg') : harmony ? tr('afterEdit.toHarmony') : tr('afterEdit.toOther', { host });
-      b.title = !to ? tr('afterEdit.title', { links: list }) : bg ? tr('afterEdit.titleBg', { links: list }) : b.querySelector('span').textContent;
-      b.style.cursor = tick ? 'pointer' : 'default';
+      b.textContent = !to || bg ? '' : harmony ? tr('afterEdit.toHarmony') : tr('afterEdit.toOther', { host });
     };
+    // [3.23.0] Ctrl+Alt+Enter (Mac: Ctrl+Option+Enter) – the button, where it is shown
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || !e.ctrlKey || !e.altKey || e.shiftKey || e.metaKey) return;
+      update();
+      if (!goBtn || goBtn.style.display === 'none') return;
+      e.preventDefault();
+      e.stopPropagation();
+      go();
+    }, true);
     // [3.19.2] the return address as it was before the sign for a background tab was added (back on an error)
     let plainRedirect = null;
     const restoreRedirect = () => {
@@ -8597,14 +8782,15 @@
       plainRedirect = null;
     };
     const markGo = () => {
-      const input = box && box.querySelector('input');
       const links = linksNow();
-      if (!input || !input.checked || !links.length || box.style.display === 'none') return;
+      if (!goRequested || !links.length) return;
+      goRequested = false;
+      clearTimeout(goTimer);
       const to = redirect();
       if (to) {
         // [3.19.2] Harmony: a sign in its return address (#dci-open, not sent to Harmony); its page then opens the
         // relationship editor in a background tab
-        if (box.dataset.bg !== '1') return;
+        if (!goBtn || goBtn.dataset.bg !== '1') return;
         try {
           const u = new URL(to, location.href);
           u.hash = OPEN_HASH;
@@ -10045,7 +10231,7 @@
   // --- Log window ----------------------------------------------------------------
 
   S.log = readJson('sessionStorage', LOG_KEY, []);
-  // [3.19.0] Started from the release editor ("open relationship editor and start import dashboard"): the links of its tab
+  // [3.19.0] Started from the release editor ([3.23.0] "Enter edit & import credits"): the links of its tab
   // "External links" (also those not in MusicBrainz yet); the dashboard opens by itself. Read once.
   S.autostartFrom = 'editor';
   S.editorLinks = (() => {
@@ -10253,7 +10439,29 @@
   // --- "Mapping rules": the register at a glance, and a field to try a Discogs role ------------------
 
   /** A Discogs pattern of the register in readable form: "Producer | Produced By". */
-  const patternText = (re) => (re ? String(re.source).replace(/^\^\(?|\)?\$$/g, '').replace(/\\/g, '').split('|').join(' | ') : '');
+  /**
+   * A pattern of the register as text: "^(a|b)$" → "a | b". [3.22.2] The outer brackets go only when they hold the whole
+   * pattern – "^(recorded|overdubbed) at" is "(recorded | overdubbed) at" (before: "recorded | overdubbed) at").
+   */
+  const patternText = (re) => {
+    if (!re) return '';
+    let t = String(re.source).replace(/^\^/, '').replace(/\$$/, '');
+    const open = t.match(/^\((?:\?:)?/);
+    if (open) {
+      let depth = 0;
+      let end = -1;
+      let inClass = false;
+      for (let i = 0; i < t.length && end < 0; i++) {
+        if (t[i] === '\\') i++;
+        else if (inClass) inClass = t[i] !== ']';
+        else if (t[i] === '[') inClass = true;
+        else if (t[i] === '(') depth++;
+        else if (t[i] === ')' && --depth === 0) end = i;
+      }
+      if (end === t.length - 1) t = t.slice(open[0].length, -1);
+    }
+    return t.replace(/\\/g, '').split('|').join(' | ');
+  };
 
   /**
    * [3.11.0] A pattern of the register as a list of words where it is a plain list ("mix · mixing · mixed …",
@@ -11220,7 +11428,7 @@
       log('info', 'start', { mbid: releaseMbid });
       if (S.autostart && S.editorLinks) log('info', S.autostartFrom === 'link' ? 'fromLink' : 'fromEditor', { links: S.editorLinks.map(afterEditLinkLabel).join(', ') || '–' });
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
-        + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits');
+        + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits+labels');
       if (!ws) throw new Error(tr('err.releaseMissing'));
       // [3.21.1] tracks or recording relationships the web service left out: read from MB's relationship editor (Punkt 44)
       await completeMedia(ws);
@@ -11256,6 +11464,8 @@
       S.existing = indexExistingRelationships(ws);
       // [rule 4] The release's artist credit, as named below its title (names from Bandcamp must match it exactly)
       S.releaseCredit = (ws['artist-credit'] || []).map((p) => ({ mbid: (p.artist && p.artist.id) || '', name: p.name || (p.artist && p.artist.name) || '', join: p.joinphrase || '' }));
+      // [3.22.1] the labels of the release (a Bandcamp page of one of them is named so, 46)
+      S.releaseLabels = (ws['label-info'] || []).map((li) => li && li.label && li.label.id).filter(Boolean);
       S.workOptions = await loadWorkOptions();
       // Nothing is preselected; the choice applies to every new work until it is changed.
       S.workDefaults = { typeId: '', languageIds: [] };
@@ -11305,6 +11515,120 @@
     }
   }
 
+  /**
+   * [3.24.0] Several linked releases of one source (collected item 51): a dialog lists them, reads each in the background
+   * (Bandcamp without its track pages) and counts its data – credits, companies, tracks; the one with the most is
+   * preselected and bold. "Open all in background tabs" to compare them; the choice is remembered for this release
+   * (unless unticked), as a choice in the list at the top. → the chosen link, or null when cancelled.
+   */
+  function chooseLink(links) {
+    const el = $('links');
+    if (!el || !S.overlay || links.length < 2) return Promise.resolve(links[0] || null);
+    const source = SOURCES[links[0].source];
+    const pageUrl = (l) => (l.source === 'discogs' ? DISCOGS.releaseUrl(l.id) : String(l.url || l.id));
+    let pick = 0;
+    let touched = false;
+    let closed = false;
+    const counts = links.map(() => null);
+    el.innerHTML = `
+      <div class="dci-sub-panel dci-media-panel" role="dialog" aria-modal="true" aria-labelledby="dci-links-title">
+        <header class="dci-sub-head"><h3 id="dci-links-title">${esc(tr('links.title', { n: links.length, src: source.name }))}</h3></header>
+        <div class="dci-media-body">
+          <p>${esc(tr('links.intro'))}${source === BANDCAMP ? ` ${esc(tr('links.introBc'))}` : ''}</p>
+          <div class="dci-link-list" role="radiogroup" aria-labelledby="dci-links-title">
+            ${links.map((l, i) => `<div class="dci-link-opt" data-li="${i}"><label><input type="radio" name="dci-link-pick" value="${i}" ${i === pick ? 'checked' : ''}>
+              <span class="dci-link-name">${esc(sourceLinkLabel(l))}</span></label>
+              <a class="dci-sugglink" href="${esc(pageUrl(l))}" target="_blank" rel="noopener" title="${esc(tr('links.openOne'))}" aria-label="${esc(tr('links.openOne'))}">↗</a>
+              <span class="dci-link-bestmark" hidden>${esc(tr('links.best'))}</span>
+              <span class="dci-sub" data-lel="count">${esc(tr('links.counting'))}</span></div>`).join('')}
+          </div>
+          <div><button type="button" data-lact="tabs" title="${esc(tr('links.tabsTitle'))}">${esc(tr('links.tabs'))}</button></div>
+          <label class="dci-check"><input type="checkbox" data-lf="remember" checked> ${esc(tr('links.remember'))}</label>
+        </div>
+        <footer class="dci-media-foot">
+          <button type="button" class="dci-small" data-lact="ok">${esc(tr('links.ok'))}</button>
+          <button type="button" class="dci-textbtn" data-lact="cancel">${esc(tr('common.cancel'))}</button>
+        </footer>
+      </div>`;
+    const row = (i) => el.querySelector(`[data-li="${i}"]`);
+    const markBest = () => {
+      const ok = counts.map((c, i) => [c, i]).filter(([c]) => c && !c.error);
+      if (!ok.length) return;
+      const score = (c) => c.credits + c.companies;
+      const best = ok.reduce((a, b) => (score(b[0]) > score(a[0]) || (score(b[0]) === score(a[0]) && b[0].notes > a[0].notes) ? b : a))[1];
+      links.forEach((l, i) => {
+        row(i).classList.toggle('dci-link-best', i === best);
+        row(i).querySelector('.dci-link-bestmark').hidden = i !== best;
+      });
+      if (!touched) {
+        pick = best;
+        const input = row(best).querySelector('input');
+        if (input) input.checked = true;
+      }
+    };
+    // read one after the other (MusicBrainz's and the sources' limits), each shown as soon as it is counted
+    const ctx = sourceContext();
+    ctx.settings = { ...ctx.settings, bandcampTracks: false };
+    (async () => {
+      for (const [i, l] of links.entries()) {
+        if (closed) return;
+        try {
+          const rel = await source.release(l.id, ctx);
+          counts[i] = { title: rel.title || '', credits: (rel.credits || []).length, companies: (rel.companies || []).length,
+            tracks: (rel.tracks || []).length, notes: String(rel.notes || '').length };
+          log('info', 'linkCounted', { link: sourceLinkLabel(l), ...counts[i] });
+        } catch (e) {
+          counts[i] = { error: (e && e.message) || String(e) };
+          log('warn', 'linkCountFailed', { link: sourceLinkLabel(l), error: counts[i].error });
+        }
+        if (closed) return;
+        const c = counts[i];
+        row(i).querySelector('[data-lel="count"]').textContent = c.error ? tr('links.countFailed', { error: c.error }) : tr('links.count', c);
+        markBest();
+      }
+    })();
+    el.hidden = false;
+    return new Promise((resolve) => {
+      const done = (result) => {
+        closed = true;
+        el.removeEventListener('click', onClickL);
+        el.removeEventListener('change', onChangeL);
+        el.hidden = true;
+        el.innerHTML = '';
+        if (S.subDialog === handle) S.subDialog = null;
+        resolve(result);
+      };
+      const onChangeL = (e) => {
+        if (e.target.name === 'dci-link-pick') {
+          pick = Number(e.target.value);
+          touched = true;
+        }
+      };
+      const onClickL = (e) => {
+        const b = e.target.closest('[data-lact]');
+        if (!b) return;
+        if (b.dataset.lact === 'cancel') done(null);
+        else if (b.dataset.lact === 'tabs') {
+          const urls = links.map(pageUrl);
+          urls.forEach((u) => {
+            if (typeof GM_openInTab === 'function') GM_openInTab(u, { active: false, insert: true, setParent: true });
+            else window.open(u, '_blank', 'noopener');
+          });
+          log('info', 'linksTabs', { list: links.map(sourceLinkLabel).join(', ') });
+        } else if (b.dataset.lact === 'ok') {
+          const link = links[pick];
+          if (el.querySelector('[data-lf="remember"]').checked) keepSourcePick(source, link.id);
+          done(link);
+        }
+      };
+      const handle = { cancel: () => done(null) };
+      el.addEventListener('click', onClickL);
+      el.addEventListener('change', onChangeL);
+      S.subDialog = handle;
+      el.querySelector('[data-lact="ok"]').focus();
+    });
+  }
+
   /** Imports the source chosen for this release, else the first linked one of the preference list. */
   async function startImport() {
     const start = startSource();
@@ -11313,7 +11637,14 @@
       if (start.fromEditor) log('info', S.autostartFrom === 'link' ? 'sourceFromLink' : 'sourceFromEditor', { src: afterEditLinkLabel(start.link) });
       await loadRelease(start.link.id, { source: SOURCES[start.link.source], confirmed: true });
     } else if (start.multi) {
-      showMessage('info', 'msg.multiLinks', { n: start.multi, src: SOURCES[start.source].name });
+      // [3.24.0] several linked releases of one source: a dialog compares them (51)
+      const link = await chooseLink(S.sourceLinks.filter((x) => x.source === start.source));
+      if (link) {
+        log('info', 'linkChosen', { n: start.multi, src: SOURCES[start.source].name, link: sourceLinkLabel(link) });
+        await loadRelease(link.id, { source: SOURCES[link.source], confirmed: true });
+      } else {
+        showMessage('info', 'msg.multiLinks', { n: start.multi, src: SOURCES[start.source].name });
+      }
     } else {
       showMessage('info', 'msg.noSourceLink');
     }
@@ -12072,6 +12403,26 @@
    * Imports a release of a source (default: the current one): the adapter delivers it as a neutral release
    * (section 3), and everything from here on works with that – entries and rows, dates, track lists, live, series.
    */
+  /**
+   * [3.22.1] An album on another account's Bandcamp page – mostly a label's ("Grabaciones Autobombo" with an album of
+   * Yunclas, collected item 46): logged; MusicBrainz's label with that page is named (marked when it is a label of
+   * the release).
+   */
+  async function bandPageInfo(rel) {
+    const band = rel && rel.band;
+    if (!band || band.own || !band.page || !band.url) return;
+    log('info', 'bcPageOther', { name: band.name, page: band.page });
+    try {
+      const found = (await lookupUrls([band.url], 'label', BANDCAMP.urlKey)).get(BANDCAMP.urlKey(band.url)) || [];
+      const label = found.find((x) => x.entityType === 'label');
+      if (!label) return;
+      band.label = { mbid: label.mbid, name: label.name, ofRelease: (S.releaseLabels || []).includes(label.mbid) };
+      log('info', band.label.ofRelease ? 'bcPageLabelOfRelease' : 'bcPageLabel', { page: band.page, label: label.name });
+    } catch (e) {
+      console.warn('[Credits-Importer] Bandcamp page label', band.url, e);
+    }
+  }
+
   async function loadRelease(id, { confirmed = false, source = S.source } = {}) {
     if (!confirmed && S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
       renderSource();
@@ -12097,6 +12448,8 @@
       S.source = source;
       SOURCE_NAME = source.name;
       S.release = rel;
+      // [3.22.1] an album on a label's Bandcamp page: logged, with the MusicBrainz label of that page (46)
+      await bandPageInfo(rel);
       refreshRulesWindow();
       S.srcTracks = rel.tracks;
       S.artists = new Map();
@@ -12125,6 +12478,7 @@
         const artist = {
           key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending',
           ...(g.placeholder ? { placeholder: g.placeholder, releaseMbid: g.releaseMbid } : {}),
+          ...(g.pageOf ? { pageOf: g.pageOf } : {}),
           mbid: null, mbName: '', candidates: [], editing: false, error: '',
           anvs: uniq([...g.roles.values()].map((c) => c.anv).filter(Boolean)),
         };
@@ -12366,6 +12720,25 @@
     return out;
   }
 
+  /**
+   * [3.22.2] The area an area is part of ("Gijón" → "Asturias"): MusicBrainz's search does not give it, so it is read
+   * once per session (`area/<MBID>?inc=area-rels`, the "part of" relation backward); '' if none.
+   */
+  async function areaParent(mbid) {
+    if (!S.areaParents) S.areaParents = new Map();
+    if (S.areaParents.has(mbid)) return S.areaParents.get(mbid);
+    let name = '';
+    try {
+      const d = await mbWs(`area/${mbid}?inc=area-rels`);
+      const r = ((d && d.relations) || []).find((x) => x.type === 'part of' && x.direction === 'backward' && x.area);
+      name = r ? r.area.name || '' : '';
+    } catch (e) {
+      console.warn('[Credits-Importer] area', mbid, e);
+    }
+    S.areaParents.set(mbid, name);
+    return name;
+  }
+
   /** [3.22.0] An area of MusicBrainz's search: its type and the area it is part of ("City, Asturias"; S028). */
   const areaContext = (x) => [x.type, ...((x.relations || []).filter((r) => r.type === 'part of' && r.direction === 'backward' && r.area).slice(0, 1).map((r) => r.area.name))];
 
@@ -12405,6 +12778,22 @@
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
         a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name, ...(type === 'area' ? areaContext(x) : [])].filter(Boolean).join(', ') }));
+        // [3.22.2] areas: the area each one shown is part of (48)
+        if (type === 'area') {
+          for (const h of a.nameHits.slice(0, SUGG_VISIBLE)) {
+            const parent = await areaParent(h.mbid);
+            if (parent && !h.disambiguation.split(', ').includes(parent)) h.disambiguation = [h.disambiguation, parent].filter(Boolean).join(', ');
+          }
+        }
+        // [3.22.1] an artist of the release's artist credit with this name: first, marked "release artist" (46)
+        if (!a.company) {
+          const rel = (S.releaseCredit || []).filter((p) => p.mbid && (nameFit(p.name, a.name) === 'same' || a.nameHits.some((h) => h.mbid === p.mbid && !h.similar)));
+          for (const p of [...rel].reverse()) {
+            const had = a.nameHits.find((h) => h.mbid === p.mbid);
+            a.nameHits = [{ ...(had || { mbid: p.mbid, name: p.name, entityType: 'artist', similar: false, disambiguation: '' }), release: true },
+              ...a.nameHits.filter((h) => h.mbid !== p.mbid)];
+          }
+        }
         // [3.21.0] the artists MusicBrainz has with a web profile found next to the name (T032): first, only suggested
         const web = await webLinkHits(a);
         if (web.length) {
@@ -12503,8 +12892,9 @@
     }
     // Not found by their own link: try their aliases at the source
     await resolveViaAliases(pending.filter((a) => !a.company && a.dId && a.status === 'missing'), source);
-    // [E1] Names without a link (a text): MusicBrainz entries of the same name, as suggestions only
-    if (source.nameSearch) await suggestByName(pending.filter((a) => !a.dId && a.status === 'missing'));
+    // [E1] Names without a link (a text): MusicBrainz entries of the same name, as suggestions only; [3.22.1] also people
+    // not found through their own link (Discogs, Bandcamp) – the release's artist of that name first (46)
+    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? !a.company && !(a.nameHits || []).length : source.nameSearch)));
     for (const a of pending) {
       if (a.company) rerenderGroup(a);
       else updateGroupHeader(a);
@@ -13070,7 +13460,9 @@
           ${S.sourceLinks.map((l) => `<option value="${esc(`${l.source}|${l.id}`)}" ${rel && S.source.id === l.source && l.id === rel.id ? 'selected' : ''}>${esc(linkLabel(l))}</option>`).join('')}
         </select>`
       : '';
-    el.innerHTML = `${current} ${picker}
+    // [3.22.1] an album on a label's Bandcamp page (46)
+    const bcPage = rel && rel.band && !rel.band.own && rel.band.page ? ` <span class="dci-sub dci-bcpage">${esc(tr('bcPage.source', { page: rel.band.page }))}</span>` : '';
+    el.innerHTML = `${current}${bcPage} ${picker}
       <span class="dci-other">
         <input type="text" data-f="discogs-input" placeholder="${esc(tr('source.other'))}" aria-label="${esc(tr('source.other'))}">
         <button type="button" data-act="discogs-load">${esc(tr('source.load'))}</button>
@@ -13180,7 +13572,7 @@
       // [3.21.0] found through a web profile next to the name in the text (T032): first, still only a suggestion
       const titleOf = (h) => (h.viaWeb ? tr('match.webUseTitle', { url: h.viaWeb }) : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
       a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}"
-        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.similar ? mark('match.similarName') : ''}${h.viaWeb ? '' : why}</button>`,
+        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.similar ? mark('match.similarName') : ''}${h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
         h.entityType || (a.company ? 'label' : 'artist'), h.mbid)));
     }
     if (!items.length) return '';
@@ -13288,6 +13680,18 @@
     return `<span class="dci-kind-tag">${esc(text.charAt(0).toUpperCase() + text.slice(1))}</span>`;
   };
 
+  /**
+   * [3.22.1] At the entry of a name whose Bandcamp album is on another account's page (a label's, 46): whose page it is,
+   * that it is searched by name, and MusicBrainz's label with that page.
+   */
+  function pageOfHtml(a) {
+    const PH = '\u0001';
+    const link = `<a href="${esc(a.pageOf.url)}" target="_blank" rel="noopener">${esc(a.pageOf.name)}</a>`;
+    const lb = S.release && S.release.band && S.release.band.label;
+    const label = lb ? ` · ${esc(tr('bcPage.mbLabel'))} <a class="dci-mblink" href="/label/${esc(lb.mbid)}" target="_blank" rel="noopener">${esc(lb.name)}</a>${lb.ofRelease ? ` ${esc(tr('bcPage.ofRelease'))}` : ''}` : '';
+    return `<p class="dci-sub dci-pageof">${esc(tr('bcPage.notOwn', { name: a.name, page: PH })).replace(PH, link)}${label}</p>`;
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -13306,6 +13710,7 @@
           <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
+        ${a.pageOf ? pageOfHtml(a) : ''}
         ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
         <div class="dci-tablewrap dci-rowswrap">
@@ -20477,7 +20882,8 @@
           <iframe class="dci-sub-frame" data-el="sub-frame" title="${esc(tr('sub.frameTitle'))}"></iframe>
         </div>
       </div>
-      <div class="dci-subdlg dci-media-dlg" data-el="media" hidden></div>`;
+      <div class="dci-subdlg dci-media-dlg" data-el="media" hidden></div>
+      <div class="dci-subdlg dci-media-dlg" data-el="links" hidden></div>`;
     document.body.appendChild(overlay);
     overlay.classList.toggle('dci-only-missing', S.onlyMissing);
     overlay.addEventListener('click', onClick);
@@ -20634,7 +21040,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-scale', 'dci-place', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY, 'dci-weblinks-show'],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-weblinks-show'],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap'],
@@ -20668,8 +21074,8 @@
       sources: () => [
         row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
         row(check('data-f="bc-tracks"', S.bcTracks, tr('bc.tracks'), tr('bc.tracksTitle'))),
-        // [3.19.2] the tick of the release editor and, imported with Harmony, the background tab
-        row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_KEY, false) === true, tr('settings.afterEdit'))),
+        // [3.19.2] the release editor and, imported with Harmony, the background tab; [3.23.0] the button instead of the tick
+        row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false, tr('settings.afterEdit'))),
         row(check('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'))),
         // [3.21.3] web profiles next to names in a text
         row(check('data-set="weblinks-show"', S.webLinksShow, tr('settings.webLinksShow'), tr('settings.webLinksShowTitle'))),
@@ -20775,8 +21181,8 @@
         runArtistWorks();
       }
     } else if (k === 'after-edit' || k === 'after-edit-bg') {
-      // [3.19.2] the same values as the tick in the release editor
-      if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_KEY, el.checked || null);
+      // [3.19.2] the release editor reads them; [3.23.0] the button (on unless switched off)
+      if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_BTN_KEY, el.checked ? null : false);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'weblinks-show') {
@@ -20845,7 +21251,7 @@
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show'];
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show'];
 
   function renderReset() {
     if (!S.overlay) return;
@@ -21431,6 +21837,7 @@
       .dci-kind-label { --kind: #2a8a8a; --kind-bg: #e8f4f4; }
       .dci-kind-place { --kind: #4e8a3e; --kind-bg: #edf5e9; }
       .dci-kind-area { --kind: #8a6a3e; --kind-bg: #f6f0e7; }
+      .dci-pageof { margin: 0 0 calc(var(--u, 1px) * 6); }
       .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind); color: #fff;
         font-size: calc(var(--u, 1px) * 11); font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }
       /* Not found in MusicBrainz: the bar is red whatever the kind */
@@ -21608,6 +22015,10 @@
       .dci-media-panel { width: min(calc(var(--u, 1px) * 680), 100%); height: auto; max-height: 100%; border-top-color: #736dab; }
       .dci-media-body { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 16); overflow: auto; }
       .dci-media-body p { margin: 0; max-width: 80ch; }
+      .dci-link-list { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); }
+      .dci-link-opt { display: flex; align-items: baseline; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); }
+      .dci-link-best .dci-link-name { font-weight: 700; }
+      .dci-link-bestmark { padding: 0 calc(var(--u, 1px) * 6); border-radius: 8px; background: var(--ok); color: #fff; font-size: calc(var(--u, 1px) * 11); font-weight: 600; }
       .dci-media-btns { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-media-btns button { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: 3px calc(var(--u, 1px) * 10); cursor: pointer; }
       .dci-media-btns .dci-media-btn[aria-pressed="true"] { background: #736dab; border-color: #736dab; color: #fff; }
