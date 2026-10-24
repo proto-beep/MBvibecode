@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.27.2
+// @version      3.27.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.27.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.27.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -689,6 +689,11 @@
       "view.toCompact": "Compact view: one line per role – a click opens a row to change it",
       "view.toFull": "Compact view is on – click for the full view (every row with all its fields)",
       "settings.foldTitle": "Fold the settings in (as ⚙ does)",
+      "msgs.count.one": "1 message",
+      "msgs.count.other": "{n} messages",
+      "msgs.fold": "Fold the messages in",
+      "msgs.unfold": "Show the messages",
+      "msgs.close": "Close this message (until the next import)",
       "log.viewSet": "View of the entries: {view}",
       "cl.openTitle": "Open this row to change it",
       "cl.close": "compact",
@@ -11330,15 +11335,36 @@
 
   function clearMessages() {
     S.messages = [];
+    // [3.27.3] a new import shows its messages unfolded again
+    S.msgsFolded = false;
     renderMessages();
   }
 
+  /** [3.27.3] Each message gets an id when it is first shown (to close it). */
+  let msgSeq = 0;
+
+  /**
+   * The messages at the top. [3.27.3] (collected item 56) each with ✕ – gone until the next import –, and from two
+   * messages a line "▾ n messages" that folds them in; a new warning or error unfolds them.
+   */
   function renderMessages() {
     if (!S.overlay) return;
-    $('msgs').innerHTML = S.messages.map((m) => `
-      <div class="dci-msg dci-msg-${m.kind}">${esc(tr(m.key, m.params))}${m.action
+    let fresh = false;
+    for (const m of S.messages) {
+      if (m.id != null) continue;
+      m.id = ++msgSeq;
+      if (m.kind === 'error' || m.kind === 'warn') fresh = true;
+    }
+    if (fresh) S.msgsFolded = false;
+    const n = S.messages.length;
+    const folded = n > 1 && !!S.msgsFolded;
+    const head = n > 1 ? `<div class="dci-msgs-head"><button type="button" class="dci-textbtn dci-msgs-fold" data-act="msgs-fold" aria-expanded="${!folded}"
+      title="${esc(tr(folded ? 'msgs.unfold' : 'msgs.fold'))}">${folded ? '▸' : '▾'} ${esc(tr('msgs.count', { n }))}</button></div>` : '';
+    const x = (m) => `<button type="button" class="dci-msg-x" data-act="msg-close" data-id="${m.id}" title="${esc(tr('msgs.close'))}" aria-label="${esc(tr('msgs.close'))}">${ico('close')}</button>`;
+    $('msgs').innerHTML = head + (folded ? '' : S.messages.map((m) => `
+      <div class="dci-msg dci-msg-${m.kind}" data-msg="${m.id}">${esc(tr(m.key, m.params))}${m.action
         ? ` <button type="button" class="dci-inline-btn" data-act="${esc(m.action.act)}" data-arg="${esc(m.action.arg || '')}">${esc(tr(m.action.label, m.params))}</button>` : ''}${m.closeButton
-        ? ` <button type="button" class="dci-inline-btn" data-act="close">${esc(tr('msg.toEditor'))}</button>` : ''}</div>`).join('');
+        ? ` <button type="button" class="dci-inline-btn" data-act="close">${esc(tr('msg.toEditor'))}</button>` : ''}${x(m)}</div>`).join(''));
   }
 
   function setBusy(key, params = {}) {
@@ -13694,7 +13720,8 @@
     }
     refresh();
     scrollDashboardTop();
-    const focusTarget = $('msgs').querySelector('button') || S.overlay.querySelector('.dci-close');
+    // [3.27.3] a button of a message (not its ✕, not the fold line)
+    const focusTarget = $('msgs').querySelector('.dci-inline-btn') || S.overlay.querySelector('.dci-close');
     focusTarget.focus({ preventScroll: true });
     return added;
   }
@@ -19834,6 +19861,16 @@
         if (first) first.focus();
         break;
       }
+      // [3.27.3] a message closed (until the next import), the messages folded (item 56)
+      case 'msg-close':
+        S.messages = S.messages.filter((m) => String(m.id) !== btn.dataset.id);
+        renderMessages();
+        break;
+      case 'msgs-fold':
+        S.msgsFolded = !S.msgsFolded;
+        renderMessages();
+        if ($('msgs').querySelector('[data-act="msgs-fold"]')) $('msgs').querySelector('[data-act="msgs-fold"]').focus();
+        break;
       // [3.27.0] the compact view (item 31): a row opened or closed; compact or full
       case 'row-open':
         if (row) setRowOpen(row, !S.rowOpen.has(row.id), true);
@@ -22579,6 +22616,14 @@
       .dci-msg-warn { border-left-color: var(--warn); }
       .dci-msg-error { border-left-color: var(--err); }
       .dci-msg-ok { border-left-color: var(--ok); }
+      /* [3.27.3] ✕ on each message, the line that folds them (item 56) */
+      .dci-msg { position: relative; padding-right: calc(var(--u, 1px) * 34); }
+      .dci-msg-x { position: absolute; top: calc(var(--u, 1px) * 5); right: calc(var(--u, 1px) * 6); display: inline-flex; padding: calc(var(--u, 1px) * 3); border: 0;
+        border-radius: 3px; background: none; color: var(--muted); cursor: pointer; }
+      .dci-msg-x:hover { background: rgba(38, 36, 48, 0.08); color: var(--ink); }
+      .dci-msg-x .dci-ico { width: calc(var(--u, 1px) * 12); height: calc(var(--u, 1px) * 12); }
+      .dci-msgs-head { margin: 0 0 calc(var(--u, 1px) * 6); }
+      .dci-msgs-fold { font-weight: 600; text-decoration: none; }
       .dci-inline-btn { margin-left: calc(var(--u, 1px) * 8); border: 1px solid var(--ok); background: #fff; color: var(--ok); border-radius: 3px; padding: 1px calc(var(--u, 1px) * 8); }
 
       .dci-toolbar { display: flex; align-items: center; gap: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 16); flex-wrap: wrap; margin: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 16); }
