@@ -185,7 +185,9 @@ python3 t_facets.py       # 3.28.6: "C1 to D" (side D one track) and the other r
                           # "in live concert" → "live" for the tracks of that sentence only, no places from the notes
 python3 t_prose.py        # 3.29.0 (milestone): ekstasis' prose credits (K.M. (sounds, words) & E. (voice), "channeled by", "the
                           # guided hand of"), "Mixed and mastered at TQA.HQ (July 2026)", "Tenor, alto, soprano saxophones",
-                          # "wood flutes", "Mixed and mastered by … in March 2026" – rows, places and the date matrix
+                          # "wood flutes", "Mixed and mastered by … in March 2026" – rows, places and the date matrix;
+                          # 3.29.1: "(noises, electronics)" → effects "noises", electronic instruments "electronics", "(field
+                          # recordings)" → field recordist
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.29.0
+// @version      3.29.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.29.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.29.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -6416,7 +6416,7 @@
     { id: 'R082', kind: 'simple', note: "", re: /^(liner notes|sleeve notes|notes|linernotes|text by)$/, types: ['liner notes'], level: 'release' },
     { id: 'R083', kind: 'simple', note: "", re: /^(booklet editor|booklet)$/, types: ['booklet editor'], level: 'release' },
     { id: 'R084', kind: 'simple', note: "", re: /^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\s+(.+))?$/, types: ['artists and repertoire', 'misc'], level: 'release_group' },
-    { id: 'R085', kind: 'simple', note: "Miscellaneous", re: /^(field recording|field recordings|field recordist)$/, types: ['field recordist'], level: 'recording' },
+    { id: 'R085', kind: 'simple', note: "Miscellaneous", re: /^(field recording|field recordings|field recordist|field recordings by|field recorded by)$/, types: ['field recordist'], level: 'recording' },
     { id: 'R086', kind: 'special', note: "", re: /^(technician|instrument technician|guitar technician|piano technician|drum technician|keyboard technician|tech|tuner|piano tuner)$/, types: ['instrument technician'], level: 'recording' },
     { id: 'R087', kind: 'simple', note: "", re: /^booking$/, types: ['booking'], level: 'release' },
     { id: 'R088', kind: 'simple', note: "", re: /^(legal|lawyer|legal representation)$/, types: ['legal representation'], level: 'release' },
@@ -6651,7 +6651,7 @@
       show: () => ({ pairs: [['particles', TEXT_AREA_PARTICLE], ['no area', TEXT_NOT_AREA]] }) },
     { id: 'T038', where: 'TITLE_SMALL_WORDS, TITLE_NOTE, titleWordsOf', note: 'Track titles compared with MusicBrainz\'s (3.24.1, S030): small words of English, German, Spanish, French, Italian, Portuguese and Dutch are left out ("The Song of the Sea" = "Song of Sea"), so are notes in brackets ("(Remastered)", "[Live]", "(feat. X)")',
       show: () => ({ pairs: [['small words', [...TITLE_SMALL_WORDS].join(' · ')], ['notes', TITLE_NOTE]] }) },
-    { id: 'T041', where: 'PROSE_ROLE_WORDS', note: 'Texts (3.29.0): role words in brackets after a name in prose (S038) and the role each stands for ("sounds" → performer, "words" → lyricist, "voice" → vocals)',
+    { id: 'T041', where: 'PROSE_ROLE_WORDS', note: 'Texts (3.29.0): role words in brackets after a name in prose (S038) and the role each stands for ("sounds" → performer, "words" → lyricist, "voice" → vocals; 3.29.1: "noises" → effects credited "noises", "electronics" → electronic instruments credited "electronics", "field recordings" → field recordist)',
       show: () => ({ pairs: Object.entries(PROSE_ROLE_WORDS) }) },
     { id: 'T042', where: 'PROSE_FILLER_VERB, PROSE_FILLER_BEFORE_NAME', note: 'Texts (3.29.0): words of prose around a credit that are left out – a verb before "by" ("Cover artwork channeled by X", "Logo carved by …") and words before the name ("… by the guided hand of BMS Illustration")',
       show: () => ({ pairs: [['verb before “by”', PROSE_FILLER_VERB], ['before the name', PROSE_FILLER_BEFORE_NAME]] }) },
@@ -6698,6 +6698,8 @@
     'flugel-horn': ['flugelhorn'],
     'sax': ['saxophone'],
     'tenor sax': ['tenor saxophone'],
+    // [3.29.1] (maintainer: "noises -> effects mit role credit "noises". electronics -> electronic instruments mit role credit "electronics"")
+    'noise': ['effects'], 'noises': ['effects'], 'electronic': ['electronic instruments'],
     // [3.28.2] not a drum set: with S035 "Steel Drums" would otherwise be found by its last word
     'steel drum': ['steelpan'], 'steel drums': ['steelpan'], 'steel pan': ['steelpan'], 'steel pans': ['steelpan'],
     'alto sax': ['alto saxophone'],
@@ -6715,7 +6717,7 @@
   };
 
   // [T002] (S011)
-  const GENERIC_WORDS = new Set(['brushes', 'mallets', 'sticks', 'bow', 'bowed', 'plucked', 'muted', 'effects', 'fx', 'loops', 'samples',
+  const GENERIC_WORDS = new Set(['brushes', 'mallets', 'sticks', 'bow', 'bowed', 'plucked', 'muted', 'effects', 'fx', 'loops', 'samples', 'noise', 'noises', 'electronics',
     'sampler', 'programming', 'overdubs', 'synth', 'synths', 'keys', 'keyboard', 'keyboards', 'vox', 'sax', 'perc', 'gtr', 'lead', 'rhythm',
     'backing', 'solo', 'additional', 'tour', 'live', 'intro', 'outro', 'harmony', 'harmonies', 'chorus', 'choir', 'strings', 'horns', 'brass',
     'woodwinds', 'tenor', 'alto', 'soprano', 'baritone', 'bass', 'acoustic', 'electric', 'fretless', 'slide', 'steel', 'pedal', 'lap',
@@ -6939,7 +6941,9 @@
   // release's artists are offered for it, only as a suggestion
   // [T041] Texts (3.29.0): role words in brackets after a name in prose ("… by K.M. (sounds, words) & E. (voice)", S038) that
   // are no roles of the register themselves – the role each stands for
-  const PROSE_ROLE_WORDS = { sounds: 'Performer', noises: 'Performer', words: 'Lyrics By', lyrics: 'Lyrics By', texts: 'Lyrics By', voice: 'Vocals', voices: 'Vocals', vocals: 'Vocals', music: 'Music By' };
+  // [3.29.1] noises → effects ("noises"), electronics → electronic instruments ("electronics"), field recordings → field recordist
+  const PROSE_ROLE_WORDS = { sounds: 'Performer', noises: 'Noises', noise: 'Noises', electronics: 'Electronics', 'field recordings': 'Field Recordings',
+    'field recording': 'Field Recording', words: 'Lyrics By', lyrics: 'Lyrics By', texts: 'Lyrics By', voice: 'Vocals', voices: 'Vocals', vocals: 'Vocals', music: 'Music By' };
   // [T042] Texts (3.29.0): words of prose around a credit that say nothing about the role – a verb before "by" ("Cover artwork
   // channeled by X", "Logo carved by …") and words before the name ("… by the guided hand of BMS Illustration")
   const PROSE_FILLER_VERB = /\s+(?:lovingly\s+|carefully\s+|dutifully\s+)?(?:channell?ed|carved|crafted|conjured|forged|summoned|woven|wrought|unearthed|captured|rendered|realized|realised|executed|handled|delivered|shaped|sculpted|etched|hewn|brought\s+to\s+life|put\s+together|taken\s+care\s+of)$/i;
