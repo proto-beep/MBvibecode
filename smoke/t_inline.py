@@ -37,7 +37,7 @@ with sync_playwright() as p:
     print('3) Kopf gezogen → Stil:', repr(style))
     ok3 = 'left' not in style
     # 4) back to a window – [3.26.0] in ⚙ Settings → General (the head has no switch any more); remembered
-    H.open_settings(pg, 'general')
+    H.open_settings(pg, 'appearance')  # [3.29.2] the place is under "Appearance" now
     pg.click('[data-el=settings] [data-act=place-toggle]'); pg.wait_for_timeout(300)
     back = pg.evaluate("""(() => { const o = document.getElementById('dci-overlay'); return { parent: o.parentNode === document.body,
       position: getComputedStyle(o.querySelector('.dci-panel')).position, stored: localStorage.getItem('dci-place') }; })()""")

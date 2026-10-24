@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.29.1, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.29.2, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.29.2 · 2026-10-24
+
+Colours of the levels, the level of the compact line by a click, the tab "Appearance" (collected items 79, 81).
+
+- **New `rowLevels(row)`** (`{ levels, names }`, out of `levelCell`), **`workLevelOff(row, level)`** (works matrix skipped), **`nextLevel(row)`** (the row's levels without a switched-off Work, then skip, round). `levelCell` uses them.
+- **`clineHtml`:** the level is a `<button class="dci-cl-level" data-act="level-next" data-level data-next>` with the tooltip `cl.levelNext` (a `<span>` when there is no other level); every `.dci-cl-level` has `data-level`. **Click handler `level-next`:** `creditOn` when a row switched off at its source leaves skip, `setLevel(row, next)` (dates of the matrix via `matrixDateForLevel` as before), the focus back on the new button.
+- **Settings:** `SETTING_TOPICS` + `appearance` after `general`; the body `appearance` (zoom, place, view – out of `general` – and new: `data-set="level-colors"`, colour inputs `data-set="level-color" data-level`, each with a level pill as preview); `TOPIC_KEYS.general` = lang and log, `TOPIC_KEYS.appearance` = `dci-scale`, `dci-place`, `dci-view`, `dci-level-colors`, `dci-level-palette`; `resetTopic('appearance')` (scale, place, view, colours); `settingsChange` `level-colors`, `level-color`; `onInput` shows a colour while it is chosen (stored on change); `SETTINGS_KEYS` and `resetSettings` know both keys.
+- **State and storage:** `S.levelColors` (`dci-level-colors`, only `false` stored), `S.levelPalette` (`dci-level-palette`, only the colours that differ from `LEVEL_PALETTE_DEFAULT`: recording #2f6db5, release #2e8b57, release_group #b0700c, work #8a4f9e; `LEVEL_SKIP_COLOR` #8b8898); `levelPaletteRead`, `saveLevelPalette`, `inkOn(hex)` (dark or white text by luminance), **`applyLevelColors()`** (class `dci-lvlc` on the overlay, CSS variables `--dci-lvl-<level>` and `--dci-lvl-<level>-ink`; called in `buildOverlay`).
+- **CSS:** `#dci-overlay.dci-lvlc [data-level=…]` sets `--lvl`/`--lvl-ink`; pressed level buttons filled, the others `box-shadow: inset 0 -3px 0 var(--lvl)`; `.dci-cl-level[data-level]` filled; `button.dci-cl-level`; `.dci-lvl-pick`.
+- **Texts (English only):** `settings.t.appearance`, `settings.levelColors`, `settings.levelColorsTitle`, `settings.levelColor`, `cl.levelNext`.
+- **Tests:** new `t_levels.py`; `t_settabs.py`, `t_settings.py` (nine tabs, ↓ from General to Appearance), `t_inline.py`, `t_compact.py` (place and view under Appearance).
 
 ## Import 3.29.1 · 2026-10-24
 

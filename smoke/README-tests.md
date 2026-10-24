@@ -188,6 +188,9 @@ python3 t_prose.py        # 3.29.0 (milestone): ekstasis' prose credits (K.M. (s
                           # "wood flutes", "Mixed and mastered by … in March 2026" – rows, places and the date matrix;
                           # 3.29.1: "(noises, electronics)" → effects "noises", electronic instruments "electronics", "(field
                           # recordings)" → field recordist
+python3 t_levels.py       # 3.29.2: the colours of the levels (full rows and compact line), the level of the compact line by a click
+                          # (Recording → Release with the June date of the matrix → Skip → Recording with the March dates), the tab
+                          # "Appearance" (text size, place, view, colours: own colour, off, ↺)
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error
@@ -198,7 +201,7 @@ python3 t_compact.py      # the compact view (3.27.0, milestone; 3.27.2: full by
 python3 t_head.py         # the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
                           # the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
                           # asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
-python3 t_settabs.py      # the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (General chosen), ↓ / End /
+python3 t_settabs.py      # the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
                           # Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), the ⓘ in the head
                           # opens "ⓘ Connections" (ten rows, Harmony with its home page), "↺ Reset all settings …" below the tabs shows
                           # the question in the settings ("Cancel" back to the tab), no "↺ Defaults" in the head, narrow: tabs in a row
