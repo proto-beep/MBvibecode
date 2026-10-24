@@ -194,6 +194,9 @@ python3 t_levels.py       # 3.29.2: the colours of the levels (full rows and com
 python3 t_fold.py         # 3.29.3: the arrow next to "Artist credit for all roles" – one entry folded to compact lines in the full
                           # view (a line opens its row, ▸ back, full again after the next import), its open rows closed in the
                           # compact view
+python3 t_rulesdock.py    # 3.30.0: "Mapping rules" in the dashboard below its head (default), never together with ⚙ Settings,
+                          # "⧉ As window" (stored, ⚙ beside it), remembered after reloading, "in the dashboard" in Appearance,
+                          # closed by the symbol and Escape, a rule id at a row opens them at that rule
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error

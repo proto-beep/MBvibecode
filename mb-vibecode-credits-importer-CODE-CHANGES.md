@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.29.3, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.30.0, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.30.0 · 2026-10-24
+
+"Mapping rules" in the dashboard (collected item 75).
+
+- **State and storage:** `S.rulesPlace` (`dci-rules-place`, `RULES_PLACE_KEY`: "dashboard" by default, only "window" stored); in `TOPIC_KEYS.appearance`, `SETTINGS_KEYS`, `resetSettings`, `resetTopic('appearance')`.
+- **New:** `rulesDocked()`, `rulesShown()`, `rulesHeadToolsHtml()` (`data-rules-place`, ✕), **`placeRules()`** (docked: `#dci-rules` moved into the new `<div class="dci-rules-dock" data-el="rules-dock">` after `[data-el=settings]`, class `dci-rules-docked`, `role=region`, no inline geometry; window: back into `document.body`, `role=dialog`, the stored geometry or `defaultGeom('rules')`, to the front), `syncRulesBtn()` (`aria-expanded` of the head symbol), `closeRules()`, `setRulesPlace(place)` (stored, logged, stays open).
+- **`openRules`:** the element starts hidden; its head has `<span data-rf="head-tools">`; in the dashboard ⚙ Settings (and the reset question) close; `placeRules`, then the body; scrolled into view, the test field focused without scrolling. Click listener: `data-rules-close` → `closeRules` (focus back on the head symbol when docked), `data-rules-place` → `setRulesPlace`.
+- **Click handler:** `rules` toggles from the head (opens elsewhere, e.g. ⚙ Settings → Texts); new `rules-place` (Appearance); `settings-open` closes the docked rules. **Escape:** `rulesShown()` / `closeRules()` instead of the window only.
+- **`rebuildDashboard`:** the rules element is taken out of the old dashboard and placed again. **`makeMovable`, `clampWindow`, `resetWindows`:** a docked rules element is neither moved, measured nor reset.
+- **Settings → Appearance:** "Mapping rules: in the dashboard | as a window" (`data-act="rules-place" data-place`).
+- **CSS:** `.dci-rules-dock[hidden]`, `#dci-rules.dci-rules-docked` (static, full width, at most 72vh, resizable in height, the look of ⚙ Settings), `.dci-rules-tools`.
+- **Texts (English only):** `rules.toWindow`, `rules.toWindowTitle`, `rules.toDock`, `rules.toDockTitle`, `settings.rulesPlace`, `settings.rulesPlace.dashboard`, `settings.rulesPlace.window`.
+- **Tests:** new `t_rulesdock.py`.
 
 ## Import 3.29.3 · 2026-10-24
 
