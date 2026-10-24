@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.24.0 | – |
+| 2026-10-24 | 3.22.1 – 3.24.1 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -80,6 +80,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.24.1
+
+#### Added
+
+- **Every import compares the tracks with the MusicBrainz release** (collected item 52; maintainer: "hier müsste noch eine abfrage her, ob die tracks übereinstimmen. also, stimmt die trackanzahl und sind die titel einigermaßen ähnlich. um dann eine (gelbliche) warnung auszugeben" – "Der Vergleich der Trackanzahl und von stark abweichenden Tracktiteln soll auf jeden Fall bei jedem Import durchgeführt werden."): the number of tracks and their titles, position by position. A yellow message names what differs – "Discogs differs from the MusicBrainz release: 5 tracks instead of 4" or "2 of 4 titles differ (1: “Intro” ≠ “Song One”; …)" – when the numbers differ or less than 80 % of the titles fit. Before, only a different number was named.
+- **Titles fit despite small differences** (maintainer: "hier könnte auch noch "at" "in" "the" "of" oder ähnliches im titel ignoriert werden. auch anderer sprachen."): case, accents, punctuation, small words of English, German, Spanish, French, Italian, Portuguese and Dutch, notes in brackets ("(Remastered)", "[Live]", "(feat. X)"), one letter off, one title in the other, more than half of the words; different numbers never ("Part 1" – "Part 2"). Rule S030, words T038.
+- **In the dialog of several linked releases** each is compared: one that differs gets the yellow note (the titles in its tooltip), and the preselection is the one with the most data among those whose tracks fit ("most data with matching tracks").
+
 
 ### Import 3.24.0
 
