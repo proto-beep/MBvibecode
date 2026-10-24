@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.27.1 | – |
+| 2026-10-24 | 3.22.1 – 3.27.2 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -81,6 +81,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.27.2
+
+#### Changed
+
+- **The full view is the default again** (collected item 72; maintainer: "die große ansicht soll standard sein und falls man auf kompakt umstellt soll das gespeichert werden."): every row with all its fields; the compact view is remembered once chosen.
+- **The compact view is a symbol in the head** (collected item 60; maintainer: "Compact / Full Ansicht soll per Symbol in der oberen Zeile links neben der Schriftzeichengröße angezeigt werden und nicht im Scrollfenster"): **☰** left of A− 100 % A+, pressed while compact; "Compact | Full" left the bar above the entries (it stays in ⚙ Settings → General).
+- **The heading "Settings" folds the settings in** (collected item 57; maintainer: "Die "Settings" sollen auch per Klick auf die Überschrift "Settings" einklappbar sein. dazu braucht es keine Hyperlinkbelegung von "Settings" nur einen Tooltip"), like ⚙; it looks like a heading and has a tooltip.
+- **"open in background", "Load the release there" and ↻ stand out** (collected item 65): filled purple, ↻ purple framed.
+
 
 ### Import 3.27.1
 

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.27.1, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.27.2, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.27.2 · 2026-10-24
+
+Full view by default, the compact view as a symbol in the head, the heading of the settings, the buttons of the status (collected items 72, 60, 57, 65).
+
+- **View (item 72):** `S.view` defaults to `full`; `VIEW_KEY` (`dci-view`) stores only `compact` (a stored `full` of 3.27.0 reads as full); `setView`, `resetSettings`, `resetTopic('general')` go back to full.
+- **Head (item 60):** new `headBtn('view-toggle', 'compact', …)` first in `.dci-head-tools` (new icon `ICONS.compact`), `aria-pressed` while compact, its tooltip `view.toCompact` / `view.toFull` (updated in `applyView`); `onClick` `view-toggle`. `viewToggleHtml()` only in ⚙ Settings → General – no longer in the toolbar.
+- **Settings (item 57):** the heading is a button `.dci-set-title` `data-act="settings-fold"` (tooltip `settings.foldTitle`); `onClick` `settings-fold` closes the settings (and the reset question) and focuses ⚙.
+- **Status (item 65):** CSS `#dci-overlay .dci-syncstatus button` filled purple, `[data-sync-reload]` purple framed; `.dci-head .dci-headbtn[aria-pressed="true"]`, `.dci-set-title`.
+- **Texts (English only, item 68):** new `view.toCompact`, `view.toFull`, `settings.foldTitle` – German, Spanish and French show them in English until the next translation round.
+- **Tests:** `t_compact.py` (full at first, ☰ switches and remembers compact, the settings switch back to full); `t_head.py` (the symbol first in the tools; I – with the companion and no Discogs tab, "open in background" purple); `t_settabs.py` (G – the heading folds the settings in, focus on ⚙). The harness still sets `dci-view` = full for the other tests (harmless now).
+
 
 ## Import 3.27.1 · 2026-10-24
 

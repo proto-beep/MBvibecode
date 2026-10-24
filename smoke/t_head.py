@@ -9,7 +9,9 @@ C) "+ Supplement" opens and closes the bar "Supplement with".
 D) After the installation the page bar asks for the language once (the browser's preselected: English; fr-FR:
    Français); the hint follows the choice; OK stores it and the question is gone, also after reloading. An update
    (the version of the update notice known) does not ask.
-E) The language in ⚙ Settings → General: Español – the dashboard in Spanish, the settings still open at General."""
+E) The language in ⚙ Settings → General: Español – the dashboard in Spanish, the settings still open at General.
+I) [3.27.2] With the companion and no Discogs tab: "open in background" in the status stands out (purple, white, bold).
+[3.27.2] The symbol of the compact view first in the tools of the head (item 60)."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -60,8 +62,9 @@ with sync_playwright() as p:
     pg.wait_for_timeout(300)
     a2 = pg.evaluate(HEAD)
     print('A) Kopf:', {k: v for k, v in a1.items() if k != 'btns'}, '\n   Knöpfe:', a1['btns'], '\n   breit:', a2['spread'], a2['label'])
-    results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['settings-open', 'rules', 'log', 'connections-open', 'window-reset', 'close']
-                   and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][0][2] == 'Settings' and a1['zoom'] == '100 %'
+    # [3.27.2] the symbol of the compact view first, left of the text size (item 60)
+    results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'settings-open', 'rules', 'log', 'connections-open', 'window-reset', 'close']
+                   and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][1][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
                    and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
                    and a2['spread'] <= 6 and a2['label'] != 'none')
     pg.set_viewport_size({'width': 1500, 'height': 1000})
@@ -109,9 +112,21 @@ with sync_playwright() as p:
     print('Fehler:', errs)
     results.append(not errs)
     b.close()
+    b = p.chromium.launch(args=H.LAUNCH_ARGS)
+
+    # I) [3.27.2] with the companion and no Discogs tab: "open in background" stands out (item 65)
+    ctx4 = H.new_context(b)
+    pg4, errs4 = H.open_mb_edit(ctx4, companion=True)
+    pg4.wait_for_selector('#dci-open', timeout=20000)
+    H.open_dashboard(pg4)
+    H.wait_for(pg4, "!!document.querySelector('.dci-head .dci-syncstatus [data-act=sync-open]')", 30)
+    i1 = pg4.evaluate("""(() => { const b = document.querySelector('.dci-head .dci-syncstatus [data-act=sync-open]'); const st = getComputedStyle(b);
+      return [b.textContent.trim(), st.backgroundColor, st.color, st.fontWeight]; })()""")
+    print('I) Status-Knopf:', i1)
+    results.append(i1[0] == 'open in background' and i1[1] == 'rgb(115, 109, 171)' and i1[2] == 'rgb(255, 255, 255)' and i1[3] in ('600', '700'))
+    pg4.close()
 
     # D2) another browser language; D3) an update does not ask
-    b = p.chromium.launch(args=H.LAUNCH_ARGS)
     ctx2 = b.new_context(viewport={'width': 1500, 'height': 1000}, locale='fr-FR')
     H.install_routes(ctx2)
     pg2, errs2 = H.open_mb_edit(ctx2, companion=False)
