@@ -51,7 +51,8 @@ python3 t_inline.py       # dashboard in the page instead of a window: placement
 python3 t_dragdates.py    # pool dates dragged onto rows / works matrix, dates joined into periods, pools loaded again, "Cover Art"
 python3 t_notice.py       # update notice (milestones, closed, language) and the one-time resets of stored data (generations 2 to 4, also companion;
                           # generation 4 clears the list of created works too)
-python3 t_bar.py          # language in the page bar, fold at the bottom, date pool kept when folded, common month/year, horns, producer
+python3 t_bar.py          # language before opening (3.27.1: the question after the installation, then the settings), fold at the
+                          # bottom, date pool kept when folded, common month/year, horns, producer
 python3 t_tracksdrop.py   # track groups dragged onto rows (Shift adds, release level moves), track pool kept when folded,
                           # works matrix cells that cannot take a date, work credits checked on the works (release page)
 python3 t_fill.py         # dates added to MB's dateless relationships from the works matrix (edit, ×, edit note),
@@ -162,6 +163,9 @@ python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass (3.22.3: withou
                           # "contrabass", "Violoncello" → cello "violoncello";
                           # produced / remixed / engineered in (areas with the area they are part of); recording without role credit
                           # (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
+python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
+                          # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
+                          # per language (LIST=1: all keys) – not an error
 python3 t_compact.py      # the compact view (3.27.0, milestone): compact by default (a line per row, marks in colour, fields hidden),
                           # open / "▴ compact", a track group and a pool date dropped onto the line, the question answered, a skipped
                           # row grey with ✕ (back after reloading), "Full" remembered and in the settings, the jump to an incomplete row
@@ -173,7 +177,7 @@ python3 t_settabs.py      # the settings as tabs (3.25.0): only the gear folds t
                           # opens "ⓘ Connections" (ten rows, Harmony with its home page), "↺ Reset all settings …" below the tabs shows
                           # the question in the settings ("Cancel" back to the tab), no "↺ Defaults" in the head, narrow: tabs in a row
 python3 t_connections.py  # the connections (3.25.0, Node): every address of @match / @connect and of the code belongs to an entry of
-                          # CONNECTIONS, the ids are unique, every entry has its texts in the four languages
+                          # CONNECTIONS, the ids are unique, every entry has its texts in English (3.27.1; before: four languages)
 python3 t_tracksfit.py    # tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
                           # most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
                           # the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
@@ -280,4 +284,5 @@ records these lookups). A test can put relationships that are already in MusicBr
 `existingRels`; an update of one of them moves it to `added`, as MusicBrainz shows it as changed.
 
 Chromium is started with `harness.LAUNCH_ARGS` (web security off), so the pages may call the local storage server.
-Texts are added with `python3 tools/i18n_add.py <anchor key> <file.json>`; the JSON holds `{lang: {key: text}}`.
+Texts are added with `python3 tools/i18n_add.py <anchor key> <file.json>`; the JSON holds `{lang: {key: text}}` – from 3.27.1
+English alone (`{"en": {…}}`) is enough, the other languages follow in a translation round (`t_i18n.py` lists what is missing).
