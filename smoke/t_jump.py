@@ -20,7 +20,7 @@ with sync_playwright() as p:
     print('Fenster: ▼', down, '| ▲', up)
     results.append(down[1] > 100 and abs(down[0] - down[1]) <= 2 and up == 0)
     # in the page
-    pg.click('[data-act=place-toggle]'); pg.wait_for_timeout(600)
+    H.toggle_place(pg); pg.wait_for_timeout(300)
     inline = pg.evaluate("!!document.querySelector('.dci-inline')")
     pg.locator('[data-act=jump-bottom]').evaluate('b => b.click()'); pg.wait_for_timeout(1500)
     y1 = pg.evaluate("[Math.round(scrollY), Math.round(document.documentElement.scrollHeight - innerHeight)]")

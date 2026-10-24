@@ -1,7 +1,7 @@
 """Log placement ("Place:" in the log's head): beside the edit note (right / left: the edit note keeps its place and
 gets the rest of its width, the log takes its height and follows it), above it (full width, the dragged height is
 remembered) or its own window again. Too narrow beside it → above, with a hint; MusicBrainz drawing the edit note
-anew → the log follows; the place is remembered after reloading; "↺ Defaults" → window."""
+anew → the log follows; the place is remembered after reloading; "↺ Reset all settings …" (⚙ Settings, until 3.24 "↺ Defaults") → window."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -85,7 +85,7 @@ with sync_playwright() as p:
     ok_c = ok_c and g['before'] and 'dci-log-dock-right' in g['cls']
     results.append(ok_c)
 
-    # D) remembered after reloading; "↺ Defaults" → window
+    # D) remembered after reloading; "↺ Reset all settings …" (⚙ Settings, until 3.24 "↺ Defaults") → window
     pg.reload()
     pg.add_style_tag(content=CSS)
     pg.add_script_tag(content=H.MAIN)
@@ -94,7 +94,7 @@ with sync_playwright() as p:
     g = pg.evaluate(GEOM)
     print('D1) nach Neuladen:', g['cls'], g['before'])
     ok_d = 'dci-log-dock-right' in g['cls'] and g['before']
-    pg.click('[data-act=reset-open]'); pg.wait_for_timeout(200)
+    H.open_reset(pg); pg.wait_for_timeout(200)
     pg.click('[data-act=reset-do]'); pg.wait_for_timeout(600)
     g = pg.evaluate(GEOM)
     print('D2) Standard:', g['pos'], g['parent'], g['stored'], '| Breite Notiz:', repr(g['noteW']))

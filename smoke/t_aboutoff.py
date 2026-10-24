@@ -60,6 +60,7 @@ with sync_playwright() as p:
     pg.evaluate(f"(() => {{ const i = {loft_credit}; i.value = 'The Loft'; i.dispatchEvent(new Event('input', {{ bubbles: true }})); i.dispatchEvent(new Event('change', {{ bubbles: true }})); }})()")
     pg.wait_for_timeout(300)
     # B) ticked
+    H.src_menu(pg)
     pg.locator('[data-f=about-off]').check(); pg.wait_for_timeout(600)
     s1 = pg.evaluate(STATE)
     log = [x for x in pg.evaluate(LOGS) if '“about” text' in x]
@@ -67,6 +68,7 @@ with sync_playwright() as p:
     results.append(s1['box'] is True and s1['loft'] == [False] and s1['nord'] == [True] and not s1['june'] and s1['march'] and s1['stored']
                    and log and log[-1] == '“about” text left out (rows hidden: 1, dates out of the pool: 2)')
     # C) off again: back, with the change
+    H.src_menu(pg)
     pg.locator('[data-f=about-off]').uncheck(); pg.wait_for_timeout(600)
     s2 = pg.evaluate(STATE)
     kept = pg.evaluate(f"{loft_credit}.value")
@@ -74,6 +76,7 @@ with sync_playwright() as p:
     print('C)', s2, '| „credited as“:', kept, '|', log[-1:])
     results.append(s2['box'] is False and s2['loft'] == [True] and s2['june'] and not s2['stored'] and kept == 'The Loft' and log[-1] == '“about” text taken in again (rows back: 1, dates back: 2)')
     # D) kept for the release
+    H.src_menu(pg)
     pg.locator('[data-f=about-off]').check(); pg.wait_for_timeout(600)
     pg.reload(); pg.add_script_tag(content=H.GM_XHR_SHIM); pg.add_script_tag(content=H.MAIN)
     pg.wait_for_selector('#dci-open', timeout=20000)
@@ -83,7 +86,7 @@ with sync_playwright() as p:
     print('D) nach Neuladen:', s3)
     results.append(s3['box'] is True and s3['loft'] == [False] and not s3['june'] and s3['march'])
     # E) "Delete stored import" sets it back
-    pg.click('[data-act=forget-open]'); pg.wait_for_timeout(200)
+    H.src_menu(pg, 'forget-open')
     pg.click('[data-act=forget-do]')
     imported(pg, 1)  # the log of the release starts anew
     s4 = pg.evaluate(STATE)

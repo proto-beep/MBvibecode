@@ -124,9 +124,11 @@ with sync_playwright() as p:
     print('D) Sprung:', d1)
     results.append(d1 == ['— Jane Roe, Berlin, May 2019', 0])
     # C) leave out the about text
+    H.src_menu(pg)
     pg.locator('[data-f=about-off]').check()
     pg.wait_for_timeout(800)
     c1 = [pg.evaluate(ENTRY), pg.evaluate(POOL)]
+    H.src_menu(pg)
     pg.locator('[data-f=about-off]').uncheck()
     pg.wait_for_timeout(800)
     c2 = [pg.evaluate(ENTRY), pg.evaluate(POOL)]
