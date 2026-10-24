@@ -10,7 +10,9 @@ C) Only the case differs from MusicBrainz: "VALFAR" (credited as, ANV) for Valfa
    stays. Typed in by hand, "VALFAR" stays.
 D) "Wood Flute" (Discogs) is the instrument flute with the role credit "wood flute" (S035).
 E) A pasted text: "Drums, percussion, and wood flutes" – flute credited "wood flutes" (S035); "Miksa av: X" mix without
-   role credit (S032); "Logo og kunst: Y" design "logo" and artwork "art" (S033)."""
+   role credit (S032); "Logo og kunst: Y" design "logo" and artwork "art" (S033).
+F) [3.28.3] The rules at the rows (before C types a credit): S032 (Grafik Mann), S033 and not S018 (Kunst Mann), S034 and
+   S031 (Valfar), S035 (Flute Frau)."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -74,6 +76,9 @@ with sync_playwright() as p:
     for k, v in g.items():
         print('   ', k, v)
     row = lambda name, i=0: ((g.get(name) or []) + [['', '', '', '', '', '']] * (i + 1))[i]
+    RULES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [...tr.querySelectorAll('.dci-ruleid')].map(b => b.textContent.trim())) : null; }"""
+    f1 = {n: pg.evaluate(RULES, n) for n in ('Grafik Mann', 'KUNST MANN', 'Valfar', 'Flute Frau')}
     # A)
     a = [row('Grafik Mann'), row('Master Mann'), row('Mix Mann'), row('Bob Producer'), row('Valfar', 0), row('Valfar', 1)]
     print('A) nordisch:', [x[:4] for x in a])
@@ -103,6 +108,10 @@ with sync_playwright() as p:
     d1 = row('Flute Frau')
     print('D) Wood Flute:', d1[:4])
     results.append(d1[:4] == ['Wood Flute', 'instrument', 'flute', 'wood flute'])
+    # F) [3.28.3] the rules named at the rows (read before C)
+    print('F) Regeln an den Zeilen:', f1)
+    results.append('S032' in f1['Grafik Mann'][0] and all('S033' in r and 'S018' not in r for r in f1['KUNST MANN'])
+                   and all('S034' in r and 'S031' in r for r in f1['Valfar']) and 'S035' in f1['Flute Frau'][0])
     # E) a pasted text
     H.src_menu(pg, 'text-open')
     pg.fill('[data-f=text-src]', TEXT)

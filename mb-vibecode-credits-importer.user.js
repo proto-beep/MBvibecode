@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.28.2
+// @version      3.28.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1296,6 +1296,9 @@
       "sync.keepMarks": "Keep marks",
       "sync.keepMarksTitle": "Show the import marks on Discogs and Bandcamp also after the relationship editor is closed – the last state of the release",
       "dgStatus.hover": "rest the pointer on it: its row in the dashboard",
+      "textMark.dateMatrix": "Credits Importer: “{date}” is in the date matrix",
+      "textMark.dateRow": "Credits Importer: “{date}” is the date of a row",
+      "textMark.tracks": "Credits Importer: the track group “{name}” is in the date matrix",
       "log.srcOff": "{site}: {name} – {role} switched off (“Skip”)",
       "log.srcOn": "{site}: {name} – {role} switched on again",
       "log.clickToggle": "A click on a mark switches the credit: {state}",
@@ -10186,11 +10189,20 @@
       if (/[\s-]by$/i.test(base0)) ids.push('S010');
       if ((lt && ART_TYPES.includes(norm(lt.name)) && remainingMods(row).length) || /[A-Z]/.test(row.roleCredit || '')) ids.push('S011');
       if (/'/.test(row.raw || '') && /’/.test(row.roleCredit || '')) ids.push('S012');
-      if (row.dSplitFrom) ids.push('S018');
+      // [3.28.3] a row of a joined artwork credit is S033, not S018 (engineer tasks)
+      if (row.dSplitFrom) ids.push(row.artTask ? 'S033' : 'S018');
       if (repeatedDetails(row).length) ids.push('S019');
+      // [3.28.3] the rules of 3.28.2 at their rows: a translation (S025 German/Spanish/French, S032 Nordic roles, also in
+      // a bracket), the kind of a voice in lower case, an instrument found by its last word
+      if (row.translated) ids.push(ROLE_INDEX.has(foldWord(row.translated)) ? 'S032' : 'S025');
+      if ((row.mods || []).some((x) => ROLE_INDEX.has(foldWord(x)))) ids.push('S032');
+      if (lt && norm(lt.name) === 'vocal' && remainingMods(row).length) ids.push('S034');
+      if (row.primaryText && byHeadNoun(row.base, row.primaryText, row.mods)) ids.push('S035');
     }
     const a = S.artists.get(row.artistKey);
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push('S008');
+    // [3.28.3] no "credited as", because only the case differs (S031)
+    if (a && a.mbid && !norm(row.credit) && !row.creditTouched && !row.manual && caseOnlyName(row, a)) ids.push('S031');
     return uniq(ids).filter((id) => /^U/.test(id) || ruleOn(id));
   }
 
@@ -14005,6 +14017,13 @@
    * like Discogs' "(2)" or a trailing "*" left out), whenever it differs from the MusicBrainz name; empty if the same.
    */
   // [S008]
+  /** [S031] Whether the name at the source differs from MusicBrainz's only in its case ("VALFAR" for Valfar). */
+  function caseOnlyName(row, a) {
+    const shown = typo(String(row.anv || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim());
+    const mb = typo(String(a.mbName || '').trim());
+    return !!shown && !!mb && shown !== mb && shown.toLocaleLowerCase() === mb.toLocaleLowerCase();
+  }
+
   function sourceCreditFor(row, a) {
     const shown = String(row.anv || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim();
     const mb = String(a.mbName || '').trim();
@@ -14757,6 +14776,27 @@
       named = out.size > 0;
     }
     return named && out.size ? out : null;
+  }
+
+  /**
+   * [3.28.3] The track references of a text as written ("Tracks 1-4", "A1 to B2", "Side C") with where they are and
+   * their tracks – what tracksInText reads, one by one (for the companion's underlines, collected item 63).
+   */
+  function trackRefsIn(text) {
+    const src = String(text || '');
+    const tok = '[A-Za-z]?\\d+(?:[-.]\\d+)?';
+    const conn = '(?:-|–|—|to|bis|à|a|thru|through|,|&|and|und|y|et)';
+    const res = [new RegExp(`\\b(?:tracks?|titles?|titel|pistas?|morceaux|plages?|songs?|stücke?)\\s*:?\\s*${tok}(?:\\s*${conn}\\s*${tok})*`, 'gi'),
+      /\b[A-H]\d{1,2}\s*(?:-|–|—|to|bis)\s*[A-H]\d{1,2}\b/g, /\bside\s+[A-H]\b/gi];
+    const out = [];
+    for (const re of res) {
+      let m;
+      while ((m = re.exec(src))) {
+        const tracks = tracksInText(m[0]);
+        if (tracks && !out.some((o) => m.index < o.index + o.text.length && o.index < m.index + m[0].length)) out.push({ index: m.index, text: m[0], tracks });
+      }
+    }
+    return out.sort((a, b) => a.index - b.index);
   }
 
   /** [S016] Entries of "Companies, etc." named in a sentence (by their Discogs or MusicBrainz name). */
@@ -19012,10 +19052,69 @@
         'off', 'on', 'isOff', 'hover']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
       // [3.17.5] toggle: a click on a mark switches its credit; keepAfterClose: the marks stay after the editor is closed
-      toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items, labels,
+      // [3.28.3] the dates and track groups used, underlined by the companion (1.9.0) in the notes and texts
+      const texts = S.dgStatus ? usedTextMarks() : [];
+      toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items, labels, texts,
         targets: [...targetIndex.keys()], mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease,
         toggle: !!S.clickToggle, keepAfterClose: !!S.keepMarks });
     }, 800);
+  }
+
+  /**
+   * [3.28.3] The dates and track groups of the Discogs notes (on Bandcamp: of the credits and the "about" text) that the
+   * dashboard uses – a date in the date matrix or on a row (not skipped), a track group in the date matrix –, for the
+   * companion, which underlines them there in their colours (collected item 63): the text as written, its line (and which
+   * of the same lines, ln) and which one of the same text in that line (ni) – the line is found first, so a text that is
+   * also elsewhere on the page ("released …" above Bandcamp's credits) is not taken –, which one of the same text in its
+   * part (n, if the line is not found; as the companion reads it: lower case, single spaces), the part, a tooltip.
+   */
+  function usedTextMarks() {
+    const notes = String((S.release && S.release.notes) || '');
+    if (!notes.trim()) return [];
+    const m = dm();
+    const site = viewSite();
+    const aboutAt = S.release.aboutAt != null ? S.release.aboutAt : null;
+    const partOf = (i) => (site !== 'bandcamp' ? ['notes', 0, notes.length] : aboutAt != null && i >= aboutAt ? ['about', aboutAt, notes.length]
+      : ['credits', 0, aboutAt != null ? aboutAt : notes.length]);
+    const flat = (t) => String(t).toLowerCase().replace(/\s+/g, ' ');
+    const out = [];
+    const add = (kind, index, text, title) => {
+      if (out.some((o) => o.kind === kind && o.index === index)) return;
+      const [part, from, to] = partOf(index);
+      if (index >= to) return;
+      const needle = flat(text).trim();
+      const count = (hay, x) => {
+        let c = 0;
+        for (let k = hay.indexOf(x); k >= 0; k = hay.indexOf(x, k + x.length)) c++;
+        return c;
+      };
+      const ls = Math.max(from, notes.lastIndexOf('\n', index - 1) + 1);
+      const le = notes.indexOf('\n', index) < 0 ? to : Math.min(to, notes.indexOf('\n', index));
+      const line = notes.slice(ls, le).trim();
+      const ln = notes.slice(from, ls).split('\n').filter((l) => flat(l).trim() === flat(line).trim()).length;
+      out.push({ kind, index, part, text, line, ln, ni: count(flat(notes.slice(ls, index)).trimStart(), needle),
+        n: count(flat(notes.slice(from, index)).replace(/^ /, ''), needle), title });
+    };
+    const used = (g) => m.cells.some((c) => (c.tgs || []).includes(g.id));
+    dateFinds().notes.forEach((x, i) => {
+      if (S.aboutOff && fromAboutText(x)) return;
+      const value = formatDateValue(x.value);
+      const ids = S.datePool.filter((d) => d.found === `notes:${i}` || d.found === `notes:${i}:range`
+        || (String(d.found || '').startsWith('notes:') && formatDateValue(d) === value)).map((d) => d.id);
+      if (!ids.length) return;
+      const inMatrix = m.cells.some((c) => ids.includes(c.date) || ids.includes(c.lcd) || (c.alt || []).some((a) => ids.includes(a)));
+      const onRow = S.rows.some((r) => r.level !== 'skip' && r.date && ids.includes(r.date.poolId));
+      if (!inMatrix && !onRow) return;
+      add('date', x.index, x.text, tr(inMatrix ? 'textMark.dateMatrix' : 'textMark.dateRow', { date: x.text }));
+      // the track groups of its sentence, as far as the date matrix uses them
+      const at = notes.lastIndexOf(x.sentence, x.index);
+      if (at < 0) return;
+      for (const ref of trackRefsIn(x.sentence)) {
+        const g = S.trackPool.find((t) => sameTracks(new Set(t.tracks), ref.tracks));
+        if (g && used(g)) add('tracks', at + ref.index, ref.text, tr('textMark.tracks', { name: g.name }));
+      }
+    });
+    return out.sort((a, b) => a.index - b.index).map(({ index, ...rest }) => rest);
   }
 
   /** Ends a "create missing works one by one" run and offers to open the new works. */
