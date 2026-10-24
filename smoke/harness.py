@@ -325,6 +325,8 @@ def ws_browse(kind, query):
     return {'recording-count': len(recs), 'recording-offset': offset, 'recordings': page}
 # Areas of the places in COMPANIES, for the search with an area ("Abbey Road Studios, London")
 PLACE_AREAS = {'Abbey Road Studios': 'London'}
+# [3.22.2] areas: the area each one is part of (gid → name)
+AREA_PARENTS = {}
 
 
 def fold(x):
@@ -701,6 +703,12 @@ def install_routes(ctx):
             ids = set(re.findall(r'arid:([0-9a-f-]{36})', q))
             return json_route(route, {'works': [dict(w, score=100) for w in WORK_SEARCH
                                                 if any(r.get('artist', {}).get('id') in ids for r in w.get('relations', []))]})
+        # [3.22.2] an area with the area it is part of (AREA_PARENTS: gid → name)
+        m = re.match(r'/ws/2/area/([0-9a-f-]{36})$', p)
+        if m:
+            parent = AREA_PARENTS.get(m.group(1))
+            return json_route(route, {'id': m.group(1), 'relations': [{'type': 'part of', 'direction': 'backward', 'target-type': 'area',
+                                                                       'area': {'id': uid('aaaaaaaa', 1), 'name': parent}}] if parent else []})
         m = re.match(r'/ws/2/(artist|label|place|area)$', p)
         if m:
             return json_route(route, ws_search(m.group(1), u.query))

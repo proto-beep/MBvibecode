@@ -13,12 +13,23 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.22.1, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.22.2, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.22.2 · 2026-10-24
+
+Fixed credit pairs (collected item 47), more areas and their larger area (48), role credit of recording checked (49), patterns in the rules window (45).
+
+- **Register:** `WORDING_RULES` **W003** credit "contrabass" (was "Kontrabass"), new **W008** (violoncello → credit "violoncello"); `COMPANY_ROLES` **C041** produced in, **C042** remixed in, **C043** engineered in (area); `TEXT_COMPANY_RE` with "(recorded|overdubbed|mixed|mastered|produced|remixed|engineered) in"; notes of T037 and S028.
+- **`patternText`:** the outer brackets (also "(?:") go only when they enclose the whole pattern (a small scan of the brackets, escapes and character classes skipped).
+- **Areas:** new **`areaParent(mbid)`** (`area/<MBID>?inc=area-rels`, the backward "part of" relation, `S.areaParents` per session); `suggestByName` adds it to the disambiguation of the shown area suggestions (`SUGG_VISIBLE`).
+- **Role credit of recording:** no code change – W007 already gives none; a test now covers the wordings.
+- **Tests:** new `t_v3222.py`; `harness.py`: `/ws/2/area/<MBID>` with `AREA_PARENTS`; `t_textcorpus` mirrors the new area roles ("Produced by Pat Prod in Berlin" gives the area); register golden (W003, W008, C041 – C043, the patterns).
+
 
 ## Import 3.22.1 · 2026-10-24
 

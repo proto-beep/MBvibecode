@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 | – |
+| 2026-10-24 | 3.22.1 – 3.22.2 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -80,6 +80,23 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.22.2
+
+#### Changed
+
+- **"Kontrabass" is credited "contrabass"** (collected item 47; maintainer: "ja, aber "contrabass" soll als role credit genommen werden"): double bass with the role credit "contrabass" – on Discogs, in texts and on Bandcamp (before: "Kontrabass"). **"Violoncello"** is cello with the role credit "violoncello" (maintainer: "cello mit violoncello wäre auch ein role credit. aber ich erkenne darin jetzt keine muster.") – fixed pairs (W003, new W008), no rule for other words.
+
+#### Added
+
+- **More areas** (48; maintainer: "produced in, remixed in, engineered in"): "Produced by X in Berlin", "Remixed in Paris by X", "Engineered in Gijon by X" give the area with **produced in**, **remixed in**, **engineered in** (C041 – C043) – before, "in Berlin" was listed as not recognized.
+- **The area an area is part of** (maintainer: "lade gerne nach"): each area suggestion names it, read from MusicBrainz once per session – "Gijón (City, Asturias)" (MusicBrainz's search does not give it).
+
+#### Fixed
+
+- **The rules window showed a bracket too many** (45): "recorded | overdubbed) at" is now "(recorded | overdubbed) at" (C010, C023, C038, R069, R084 …); only the outer brackets of a pattern go. The mapping itself was right.
+- **No role credit for recording** (49; maintainer: "der rollen credit"): checked again for "Recorded by", "Recorded live by", "Live Recording By", "Recording engineer", "Recorded & produced by", "Recorded, mixed and mastered by" – recording (recording engineer) without role credit, also when the type has a task field; now covered by a test.
+
 
 ### Import 3.22.1
 

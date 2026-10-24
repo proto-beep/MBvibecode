@@ -37,7 +37,7 @@ const corpus = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));
 // roles as the dashboard knows them (the register; a few instruments as MusicBrainz has them)
 const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
   const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || !!r.translated || /^(piano|bass|guitar|drums|vocals|synth|saxophone|viola|trumpet)$/i.test(p.base); };
-const isCompanyRole = (role) => /copyright|phonographic|published|distributed|recorded at|mixed at|mastered at|recorded in|mixed in|mastered in|pressed|manufactured|licensed/i.test(role) && !!m.mapCompanyRole(role).rule;
+const isCompanyRole = (role) => /copyright|phonographic|published|distributed|recorded at|mixed at|mastered at|recorded in|mixed in|mastered in|produced in|remixed in|engineered in|pressed|manufactured|licensed/i.test(role) && !!m.mapCompanyRole(role).rule;
 const out = corpus.lines.map((l) => {
   const r = m.SOURCES.text.parse(l.text, { isRole, isCompanyRole, resolveTracks: () => null });
   // [3.21.2] a translation (T034) with the English term it is mapped as
