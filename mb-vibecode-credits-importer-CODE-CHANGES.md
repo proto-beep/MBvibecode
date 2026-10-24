@@ -13,12 +13,22 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.23.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.24.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.24.0 · 2026-10-24
+
+A dialog for several linked releases of one source (collected item 51).
+
+- **New `chooseLink(links)`** (a sub-dialog `[data-el="links"]` next to the media dialog, built like it): radio buttons per link (`sourceLinkLabel`, ↗ to its page), the links read one after another with `source.release(id, ctx)` (`sourceContext()` with `bandcampTracks: false`) and counted (`title`, `credits`, `companies`, `tracks`, `notes` length; logs `linkCounted` / `linkCountFailed`); `markBest` – most credits + companies, then the longer notes – bold (`.dci-link-best`), "most data" (`.dci-link-bestmark`), preselected unless a choice was made by hand; "Open all in background tabs" (`GM_openInTab` not active, else `window.open`; log `linksTabs`); OK remembers with `keepSourcePick` unless unticked; `S.subDialog` handle for Escape. **`startImport`:** `start.multi` → `chooseLink`, then `loadRelease` (log `linkChosen`); cancelled → the message `msg.multiLinks` as before.
+- **CSS:** `.dci-link-list`, `.dci-link-opt`, `.dci-link-best`, `.dci-link-bestmark`.
+- **Texts (4 languages):** `links.title`, `links.intro`, `links.introBc`, `links.counting`, `links.count`, `links.countFailed`, `links.best`, `links.openOne`, `links.tabs`, `links.tabsTitle`, `links.remember`, `links.ok`, `log.linkChosen`, `log.linkCounted`, `log.linkCountFailed`, `log.linksTabs`.
+- **Tests:** new `t_links.py`; `t_adapter.py` C8 goes through the dialog.
+
 
 ## Import 3.23.0 · 2026-10-24
 
