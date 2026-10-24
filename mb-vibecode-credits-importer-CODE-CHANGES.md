@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.28.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.28.1, Companion 1.6.0 – 1.8.4 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.28.1 · Companion 1.8.4 · 2026-10-24
+
+A Bandcamp track page as the release, a text, long texts in the settings (collected items 55, 73, 74).
+
+- **`BANDCAMP`:** `ALBUM_RE` → **`PAGE_RE`** (`/album/` or `/track/`); `albumUrl` → **`pageUrl`** (host and kind in lower case, the slug as written; exported as `BANDCAMP.pageUrl`), new **`isTrackPage(u)`**; `releaseLinks` and `parseReleaseId` take track pages – so do the release editor's button (`sourceLinksOf`), Harmony's `src` (`harmonySourceUrls` already wrote `…/track/…`), the release page's links, `discogs-load`, `supp-url` and `testBandcampPage` (which now calls `pageUrl` too). `release()`: with "track pages too" on, a track page is not asked for again (`!isTrackPage(id)`); `testBandcampPage` reports 0 track pages for one.
+- **CSS:** `.dci-set-pane .dci-check { white-space: normal; align-items: baseline }`, `.dci-set-pane .dci-check > input { flex: none }` – `.dci-check` stays `nowrap` elsewhere (head, bars).
+- **Texts (all four languages – changed texts, not new):** `bc.tracks` ("… the Bandcamp track pages too"), `source.other`, `supp.urlPh`, `bc.testPh`, `bc.testBadUrl`, `msg.badDiscogsId`, `conn.X003`; `@description` names "album or track".
+- **Companion 1.8.4:** `bandcampPage()` also returns `trackUrl` (a track page: `https://host/track/slug`); `BANDCAMP_SIDE.releaseId()` is the album or else the track page, new **`releaseIds()`** (album and track page); the heartbeat stores `releaseIds`, `pickTab`/`status` use them (**`tabReleases(t)`**, older tabs: `[releaseId]`), `forHere(map)` matches any of them, and the messages back (`focus-row`, `toggle-credit`, `hover-track`) carry the release of the marks shown (`currentReleaseId()` from `lastMap`). New **`bcPageIn(releaseId)`**: a track page that is the release counts as the release's own page (`''`) for `renderBandcampStatus` and `bandcampLocate` (its title is its one track). `pageFor` loads a track release's page itself.
+- **Tests:** new `t_bctrack.py` (a track release from the link, credits once, the tab connected with marks; a track page of an album via "Other source" and "Load the release there"; Node: `parseReleaseId`, `releaseLinks`, `isTrackPage`; "Test page"; the text and the wrapping of the settings in a narrow dashboard).
+
 
 ## Import 3.28.0 · 2026-10-24
 

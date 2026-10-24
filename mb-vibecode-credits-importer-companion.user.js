@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.8.3
-// @date         2026-10-17
+// @version      1.8.4
+// @date         2026-10-24
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
 // @description:es Complemento de «MB x Vibecode: Credits Importer»: conecta el panel de importación con una pestaña de Discogs o Bandcamp (p. ej. la otra mitad de una vista dividida), carga allí la publicación y resalta de dónde viene cada crédito.
@@ -122,11 +122,14 @@
       return tabs;
     };
 
+    // [1.8.4] the releases a tab shows: a Bandcamp track page is its album's and a release of its own (Credits Importer 3.28.1)
+    const tabReleases = (t) => (Array.isArray(t.releaseIds) && t.releaseIds.length ? t.releaseIds : [t.releaseId]).map((x) => String(x || '')).filter(Boolean);
+
     const pickTab = (tabs, releaseId = null, site = 'discogs') => {
       // [1.8.0] Only tabs of the site (Discogs or Bandcamp) of the command
       const own = tabs.filter((t) => siteOf(t) === site);
       // A tab that already shows the release comes first, then a visible one, then the last viewed one
-      const same = releaseId ? own.filter((t) => String(t.releaseId) === String(releaseId)) : [];
+      const same = releaseId ? own.filter((t) => tabReleases(t).includes(String(releaseId))) : [];
       return [...(same.length ? same : own)].sort((a, b) => (Number(b.visible) - Number(a.visible)) || (b.lastVisible - a.lastVisible))[0] || null;
     };
 
@@ -139,7 +142,7 @@
           tabs: own.length,
           target: target && { id: target.id, visible: target.visible, releaseId: target.releaseId },
           // Releases shown in the open tabs of the site: "connected" means one of them is the dashboard's release
-          releases: own.map((t) => String(t.releaseId || '')).filter(Boolean),
+          releases: [...new Set(own.flatMap(tabReleases))],
         };
       };
       const sites = Object.fromEntries(SITES.map((site) => [site, ofSite(site)]));
@@ -228,12 +231,13 @@
       sessionStorage.setItem('dci-tab-id', tabId);
     }
     let lastVisible = 0;
-    const currentReleaseId = side.releaseId;
+    // [1.8.4] the release of the page – and every release it belongs to (a Bandcamp track page: its album and itself)
+    const releaseIds = () => (side.releaseIds ? side.releaseIds() : [side.releaseId()]).map(String).filter(Boolean);
 
     const beat = () => {
       const visible = document.visibilityState === 'visible';
       if (visible) lastVisible = Date.now();
-      GM_setValue(`tab:${tabId}`, { id: tabId, site: side.id, ts: Date.now(), visible, lastVisible, releaseId: currentReleaseId() });
+      GM_setValue(`tab:${tabId}`, { id: tabId, site: side.id, ts: Date.now(), visible, lastVisible, releaseId: side.releaseId(), releaseIds: releaseIds() });
     };
     beat();
     setInterval(beat, HEARTBEAT_MS);
@@ -283,7 +287,9 @@
       return !!(map && same && Date.now() - beat.ts < (beat.hidden ? BEAT_HIDDEN_MS : 8000));
     };
     // A status map of this site and of the release this page shows
-    const forHere = (map) => !!(map && siteOf(map) === side.id && String(map.releaseId) === currentReleaseId());
+    const forHere = (map) => !!(map && siteOf(map) === side.id && releaseIds().includes(String(map.releaseId)));
+    // [1.8.4] the release a message back to the dashboard is about: the one whose marks are shown (the album or the track)
+    const currentReleaseId = () => (forHere(lastMap) ? String(lastMap.releaseId) : side.releaseId());
     const isHere = (map) => forHere(map) && senderAlive(map);
     /**
      * [1.8.3] "Keep marks" (switched on in the dashboard): with no editor or release page of the release open, its last
@@ -808,8 +814,19 @@
     const isTrack = /^\/track\/[^/]+$/.test(path);
     const album = slug(path) || (isTrack && data ? slug(data.album_url) : '');
     const info = isTrack && data && (data.trackinfo || [])[0];
-    return { album: album ? `https://${host}/album/${album}` : '', page: isTrack ? path : '', track: info ? String(info.track_num || '') : '' };
+    // [1.8.4] a track page is also a release of its own (a single; Credits Importer 3.28.1 reads it as one)
+    return { album: album ? `https://${host}/album/${album}` : '', trackUrl: isTrack ? `https://${host}${path}` : '', page: isTrack ? path : '',
+      track: info ? String(info.track_num || '') : '' };
   }
+
+  /**
+   * [1.8.4] This page as the dashboard names the place of a credit: '' for the release's own page (the album page, or a
+   * track page that is the release), else the path of the track page.
+   */
+  const bcPageIn = (releaseId) => {
+    const h = bandcampPage();
+    return h.trackUrl && h.trackUrl.toLowerCase() === String(releaseId || '').toLowerCase() ? '' : h.page;
+  };
 
   const bcCredits = () => document.querySelector('.tralbumData.tralbum-credits') || document.querySelector('.tralbum-credits');
   const bcAbout = () => document.querySelector('.tralbumData.tralbum-about') || document.querySelector('.tralbum-about');
@@ -969,7 +986,7 @@
     root.querySelectorAll(`.${BC_OFF}`).forEach((x) => x.replaceWith(...x.childNodes));
     root.normalize();
     if (!map || !map.enabled) return;
-    const page = bandcampPage().page;
+    const page = bcPageIn(map.releaseId);
     const todo = [];
     (map.items || []).forEach((item, order) => (item.refs || []).forEach((r, k) => {
       if (r.about || (r.page || '') !== page) return;
@@ -1013,7 +1030,7 @@
     ensureStyle();
     bcUnwrap(BC_HL);
     document.querySelectorAll(`.${HIGHLIGHT}`).forEach((x) => x.classList.remove(HIGHLIGHT));
-    const here = bandcampPage();
+    const here = { ...bandcampPage(), page: bcPageIn(cmd.releaseId) };
     const refs = (cmd.refs || []).filter((r) => (r.page || '') === here.page);
     if (refs.length) bcExpand();
     const spans = [];
@@ -1034,7 +1051,8 @@
     if (pos) {
       const row = !here.page && [...document.querySelectorAll('#track_table tr.track_row_view, tr.track_row_view')]
         .find((tr) => (String(tr.getAttribute('rel') || '').match(/tracknum=(\d+)/) || [])[1] === pos);
-      const title = here.page && here.track === pos && document.querySelector('#name-section .trackTitle, h2.trackTitle');
+      // [1.8.4] a track page that is the release: its only track is its title
+      const title = ((here.page && here.track === pos) || (!here.page && here.trackUrl)) && document.querySelector('#name-section .trackTitle, h2.trackTitle');
       if (row || title) {
         highlight(row || title);
         return 'track';
@@ -1046,10 +1064,13 @@
   const BANDCAMP_SIDE = {
     id: 'bandcamp',
     artwork: false,
-    releaseId: () => bandcampPage().album,
-    /** The album page, or the track page a credit is on; null for a command that is no Bandcamp album. */
+    releaseId: () => { const h = bandcampPage(); return h.album || h.trackUrl; },
+    releaseIds: () => { const h = bandcampPage(); return [h.album, h.trackUrl].filter(Boolean); },
+    /** The album page, or the track page a credit is on; null for a command that is no Bandcamp album (or track). */
     pageFor(cmd) {
       const want = String(cmd.releaseId || '');
+      // [1.8.4] a release that is a track page: that page, nothing else
+      if (/^https:\/\/[a-z0-9-]+\.bandcamp\.com\/track\/[^/?#\s]+$/i.test(want)) return bandcampPage().trackUrl.toLowerCase() === want.toLowerCase() ? '' : want;
       const m = want.match(/^(https:\/\/[a-z0-9-]+\.bandcamp\.com)\/album\/[^/?#\s]+$/i);
       if (!m) return null;
       const here = bandcampPage();
