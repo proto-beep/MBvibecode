@@ -1,7 +1,7 @@
-"""Credits Importer 3.22.2: fixed credit pairs, more areas, no role credit for recording, patterns in the rules window
+"""Credits Importer 3.22.2 (3.22.3): fixed credit pairs, more areas, no role credit for recording, patterns in the rules window
 (collected items 47, 48, 49, 45).
-A) "Kontrabass" (a pasted text and Discogs) is double bass with the role credit "contrabass" (W003, before
-   "Kontrabass"); "Violoncello" is cello with "violoncello" (W008).
+A) [3.22.3] "Kontrabass" (a pasted text and Discogs) is double bass without role credit (W003: German, a translation;
+   3.22.2 "contrabass"), the English "Contrabass" keeps "contrabass" (W002); "Violoncello" is cello with "violoncello" (W008).
 B) "Produced by X in Berlin", "Remixed in Paris by Y", "Engineered in Gijon by Z": areas with produced in, remixed in,
    engineered in (C041 – C043); the suggestion names the area it is part of, read from MusicBrainz ("City, Asturias").
 C) "Recorded by", "Recorded live by", "Live Recording By", "Recording engineer", "Recorded & produced by", "Recorded,
@@ -26,6 +26,7 @@ H.MB_SEARCH['area'] = [{'id': BERLIN, 'name': 'Berlin', 'type': 'City', 'disambi
                        {'id': GIJON, 'name': 'Gijón', 'type': 'City', 'disambiguation': '', 'score': 100, 'aliases': [{'name': 'Xixón'}]}]
 H.AREA_PARENTS.update({GIJON: 'Asturias', PARIS: 'Île-de-France'})
 TEXT = """Kontrabass: Karl Bass
+Contrabass: Connie Bass
 Violoncello: Vera Cello
 Produced by Pat Prod in Berlin
 Remixed in Paris by Rita Remix
@@ -59,8 +60,9 @@ with sync_playwright() as p:
         print('   ', k, v)
     row = lambda name, i=0: ((g.get(name) or {'rows': []})['rows'] + [['', '', '', '']] * (i + 1))[i]
     # A)
-    ok_a = row('Karl Bass') == ['Kontrabass', 'instrument', 'double bass', 'contrabass'] and row('Vera Cello') == ['Violoncello', 'instrument', 'cello', 'violoncello']
-    print('A) Kontrabass:', row('Karl Bass'), '| Violoncello:', row('Vera Cello'), ok_a)
+    ok_a = row('Karl Bass') == ['Kontrabass', 'instrument', 'double bass', ''] and row('Connie Bass') == ['Contrabass', 'instrument', 'double bass', 'contrabass'] \
+        and row('Vera Cello') == ['Violoncello', 'instrument', 'cello', 'violoncello']
+    print('A) Kontrabass:', row('Karl Bass'), '| Contrabass:', row('Connie Bass'), '| Violoncello:', row('Vera Cello'), ok_a)
     # B)
     area = lambda name: (g.get(name) or {'rows': [['', '']], 'sugg': []})
     ok_b = row('Berlin')[:2] == ['Produced In', 'produced in'] and row('Paris')[:2] == ['Remixed In', 'remixed in'] and row('Gijon')[:2] == ['Engineered In', 'engineered in'] \
@@ -102,7 +104,7 @@ with sync_playwright() as p:
     H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
     pg.wait_for_timeout(800)
     kb = ((pg.evaluate(ROWS).get('Karl Bass') or {'rows': [['']]})['rows'] or [['']])[0]
-    ok_a2 = kb == ['Kontrabass', 'instrument', 'double bass', 'contrabass']
+    ok_a2 = kb == ['Kontrabass', 'instrument', 'double bass', '']
     print('A2) Discogs Kontrabass:', kb, ok_a2)
     results.append(ok_a2)
     print('Fehler:', errs)
