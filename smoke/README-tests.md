@@ -155,6 +155,10 @@ python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_c
                           # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                           # with a studio's profile
                           # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
+python3 t_labelpage.py    # an album on a label's Bandcamp page (3.22.1): no link for the artist, searched by name (the release's artist
+                          # first, "release artist"), the hint with the page and MB's label ("a label of this release ✓"), the source
+                          # line, the log; the account's name from "data-band" / "og:site_name" (Node); Discogs: a person without MB
+                          # link gets same-named suggestions
 python3 t_areas.py        # text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
                           # Gijón suggested by its alias "Xixón", no "Create", "recorded in" staged on the recordings); tracks by their
                           # titles ("Piano in ‘A' and 'B' is a contribution by X", one letter off, "Not matched"); Bandcamp: titles of the
