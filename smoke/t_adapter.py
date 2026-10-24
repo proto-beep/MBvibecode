@@ -164,7 +164,7 @@ if 'C' in PARTS:
         alias = pg.evaluate(f"[...document.querySelectorAll('section[data-group=\"{ag}\"] [data-act=alias-use]')].map(b => b.dataset.mbid)")
         src_link = pg.evaluate(f"(() => {{ const a = document.querySelector('section[data-group=\"{ag}\"] .dci-dglink'); return [a.href, a.textContent]; }})()")
         print('C1) Alias:', alias, '| Protokoll:', [x[9:] for x in logs if 'Alias Guy' in x][-1:], '| Link:', src_link)
-        ok1 = alias == [H.ARTISTS[3021][0]] and src_link == ['https://www.discogs.com/artist/3020', 'DiscogsAlias Guy']
+        ok1 = alias == [H.ARTISTS[3021][0]] and src_link == ['https://www.discogs.com/artist/3020', 'Discogs↗']  # [3.28.0] only the tag (item 61)
         # C2) series with its parent label, and its form
         sg = group(pg, 'Test Series')
         slabel = pg.evaluate(f"(() => {{ const s = document.querySelector('section[data-group=\"{sg}\"] .dci-series-label'); return s ? [...s.querySelectorAll('a')].map(a => [a.href, a.textContent]) : null; }})()")

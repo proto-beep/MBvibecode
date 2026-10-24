@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.27.3
+// @version      3.28.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.27.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -694,6 +694,11 @@
       "msgs.fold": "Fold the messages in",
       "msgs.unfold": "Show the messages",
       "msgs.close": "Close this message (until the next import)",
+      "group.creditedAs": "as {name}",
+      "group.creditedAsMore": "as {name} (+{n})",
+      "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
+      "nav.settings": "⚙",
+      "nav.settingsTitle": "The switches of the navigation: ⚙ Settings → Discogs and Bandcamp view",
       "log.viewSet": "View of the entries: {view}",
       "cl.openTitle": "Open this row to change it",
       "cl.close": "compact",
@@ -14048,6 +14053,22 @@
     return `<p class="dci-sub dci-pageof">${esc(tr('bcPage.notOwn', { name: a.name, page: PH })).replace(PH, link)}${label}</p>`;
   }
 
+  /**
+   * [3.28.0] How the dashboard credits an entry on this release (item 61): "as “B. Audio”" when its rows have a
+   * "credited as" (the MusicBrainz name otherwise), "(+1)" with several; the tooltip lists them.
+   */
+  function entryCredits(a) {
+    return uniq(S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip').map((r) => String(r.credit || '').trim()).filter(Boolean));
+  }
+  function creditChipHtml(a) {
+    const credits = entryCredits(a);
+    if (!credits.length) return '<span class="dci-gcredit" hidden></span>';
+    const name = tr('common.quoted', { text: credits[0] });
+    const text = credits.length > 1 ? tr('group.creditedAsMore', { name, n: credits.length - 1 }) : tr('group.creditedAs', { name });
+    const title = tr('group.creditedAsTitle', { list: credits.map((c) => tr('common.quoted', { text: c })).join(', ') });
+    return `<span class="dci-gcredit" title="${esc(title)}">${esc(text)}</span>`;
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -14055,15 +14076,16 @@
     const rows = allRows.filter((r) => r.level !== 'work' && (S.mxSkipRows || !r.mxSkipped));
     const mxHidden = allRows.filter((r) => r.mxSkipped && !S.mxSkipRows).length;
     const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
+    // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again)
     const sourceLink = a.dId && (a.links || [])[0]
-      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(tr('link.discogsTitle'))}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span>${esc(a.rawName || a.name)}</a>`
+      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle')}: ${a.rawName || a.name}`)}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
       // [3.21.0] a name from a text: the web profiles found next to it (T032); [3.21.3] only with the setting (off)
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink}</div>
+          <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -15979,6 +16001,9 @@
       const what = [rowTypeName(row), row.primaryText].filter(Boolean).map(esc).join(' · ');
       parts.push(`<span class="dci-cl-type"><span aria-hidden="true">→</span> ${what || `<span class="dci-cl-none">${esc(tr('cl.noType'))}</span>`}${row.roleCredit
         ? ` <span class="dci-cl-credit">${esc(tr('common.quoted', { text: row.roleCredit }))}</span>` : ''}</span>`);
+      // [3.28.0] the artist credit of this row when the entry is credited in more than one way (item 61; the head has the rest)
+      const a = S.artists.get(row.artistKey);
+      if (row.credit && a && entryCredits(a).length > 1) parts.push(`<span class="dci-cl-as">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: row.credit }) }))}</span>`);
     }
     parts.push(`<span class="dci-cl-level">${esc(tr(`level.${row.level}`))}</span>`);
     if (row.level === 'recording' || row.level === 'release') parts.push(open('dci-cl-tracks', esc(tracksShort(row)), tr('cl.tracksTitle')));
@@ -16261,6 +16286,13 @@
     S.overlay.querySelectorAll('[data-group]').forEach((section) => {
       const rows = S.rows.filter((r) => r.artistKey === section.dataset.group);
       section.classList.toggle('dci-all-skip', rows.length > 0 && rows.every((r) => r.level === 'skip'));
+      // [3.28.0] the credit at the head follows the rows
+      const chip = section.querySelector('.dci-gcredit');
+      const a = S.artists.get(section.dataset.group);
+      if (chip && a) {
+        const html = creditChipHtml(a);
+        if (chip.outerHTML !== html) chip.outerHTML = html;
+      }
     });
     S.overlay.querySelector('[data-act="apply"]').disabled = !items.length && !(S.removals || []).length && !(S.waiting && S.waiting.size);
     renderMediumFilter();
@@ -18932,11 +18964,20 @@
     updateSyncArea($('sync'), true, false);
   }
 
+  /**
+   * The bar below "Import credits …" (with the companion). [3.28.0] only the status as a badge (item 66) – its source
+   * link, "open in background" / "Load the release there", ↻ – and ⚙ for the switches, which are in ⚙ Settings →
+   * Discogs and Bandcamp view now (before: all switches of the navigation here).
+   */
   function renderControls() {
     const bar = document.getElementById('dci-controls');
     if (!bar) return;
     bar.hidden = !S.sync.installed;
-    if (S.sync.installed) updateSyncArea(bar, false);
+    if (!S.sync.installed) return;
+    updateSyncArea(bar, false, false);
+    if (!bar.querySelector('[data-nav-settings]')) {
+      bar.insertAdjacentHTML('beforeend', `<button type="button" class="dci-nav-set" data-nav-settings title="${esc(tr('nav.settingsTitle'))}" aria-label="${esc(tr('nav.settingsTitle'))}">${esc(tr('nav.settings'))}</button>`);
+    }
   }
 
   /** "open in background" / "Load the release there" – in the dashboard's head and [3.17.4] in the navigation bar. */
@@ -22286,6 +22327,20 @@
     // [3.17.4] the buttons of the navigation bar (outside the dashboard)
     const barBtn = e.target.closest && e.target.closest('#dci-controls [data-act="sync-open"], #dci-controls [data-act="sync-load"]');
     if (barBtn) syncAction(barBtn.dataset.act);
+    // [3.28.0] ⚙ in the bar: the dashboard with its settings at "Discogs and Bandcamp view" (item 66)
+    if (e.target.closest && e.target.closest('#dci-controls [data-nav-settings]')) {
+      S.settingsOpen = true;
+      S.resetOpen = false;
+      S.settingsTab = 'discogs';
+      Promise.resolve(S.overlay && !S.overlay.hidden ? null : openDashboard()).then(() => {
+        renderSettings();
+        const tab = S.overlay && S.overlay.querySelector('.dci-set-tab[data-topic="discogs"]');
+        if (tab) {
+          tab.focus({ preventScroll: true });
+          $('settings').scrollIntoView({ block: 'nearest' });
+        }
+      });
+    }
     if (e.target.closest && e.target.closest('[data-sync-reload]')) {
       toDiscogs({ type: 'reload', site: viewSite(), releaseId: companionReleaseId() });
       logView('info', 'dgReload');
@@ -22411,8 +22466,14 @@
       #dci-launcher .dci-place-seg button[aria-pressed="true"] { background: #3d3a4f; color: #fff; }
       #dci-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 10px 0 0; font-size: 12px; color: #4b4585; }
       #dci-controls[hidden] { display: none; }
-      #dci-controls .dci-syncstatus { color: #6d6a7c; }
-      #dci-controls .dci-syncstatus button { font: inherit; padding: 0 6px; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #262430; cursor: pointer; }
+      /* [3.28.0] only the status, as a badge, and ⚙ (item 66) */
+      #dci-controls .dci-syncstatus { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 2px 10px; border: 1px solid #dddae8; border-radius: 999px;
+        background: #f6f5fb; color: #6d6a7c; }
+      #dci-controls .dci-syncstatus button { font: inherit; font-weight: 600; padding: 0 9px; border: 1px solid #4b4585; border-radius: 999px; background: #736dab; color: #fff; cursor: pointer; }
+      #dci-controls .dci-syncstatus button:hover { background: #4b4585; }
+      #dci-controls .dci-syncstatus button[data-sync-reload] { padding: 0 6px; background: #fff; color: #4b4585; border-color: #736dab; }
+      #dci-controls .dci-nav-set { font: inherit; padding: 0 6px; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
+      #dci-controls .dci-nav-set:hover { background: #f1f0f8; }
       .dci-srclink { margin-left: 4px; white-space: nowrap; }
       .dci-syncmode { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-seg.dci-seg-small button { padding: 1px calc(var(--u, 1px) * 8); font-size: calc(var(--u, 1px) * 12); }
@@ -22842,6 +22903,13 @@
       .dci-src-dg { background: #333; }
       .dci-src-mb { background: var(--purple); }
       a.dci-dglink { color: #333; text-decoration-color: #999; }
+      /* [3.28.0] only the tag links to the source (↗), the credit of the entry as a chip (item 61) */
+      a.dci-dglink { text-decoration: none; display: inline-flex; align-items: center; gap: 2px; }
+      .dci-dglink-ico { font-size: calc(var(--u, 1px) * 12); color: var(--muted); }
+      a.dci-dglink:hover .dci-dglink-ico { color: var(--purple-d); }
+      .dci-gcredit { display: inline-block; padding: 0 calc(var(--u, 1px) * 8); border: 1px solid #c9d3e3; border-radius: 999px; background: #eef1f6; color: #3f5170;
+        font-size: calc(var(--u, 1px) * 12); font-weight: 400; }
+      .dci-cl-as { color: #3f5170; font-size: calc(var(--u, 1px) * 12); }
       a.dci-mblink { color: var(--purple); font-weight: 600; }
       .dci-disamb { color: var(--muted); }
       .dci-pv-update { color: #4b4585; font-weight: 700; }

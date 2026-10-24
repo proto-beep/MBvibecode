@@ -136,7 +136,7 @@ with sync_playwright() as p:
             ['○', 'Photography Tom ', 'Photography By']]
     results.append(c1 == want and c_about == 0 and shown == [''])
     # D) a click on a mark: its row in the dashboard (3.17.5: with "Click switches" off)
-    pg.locator('#dci-controls [data-click-toggle]').evaluate('b => b.click()')
+    H.nav_switch(pg, 'data-click-toggle')
     poll(bc, "document.querySelector('.tralbum-credits .dci-dg-mark').title.includes('click to show it')")
     bc.locator('.tralbum-credits .dci-dg-mark').nth(1).click()
     H.wait_for(pg, f"{LOGS}.some(x => /From Bandcamp: Bob Mix/.test(x))", 15)
@@ -144,7 +144,7 @@ with sync_playwright() as p:
     flash = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').textContent.trim())")
     print('D) Protokoll:', d1, '| hervorgehoben:', flash)
     results.append(d1 == ['From Bandcamp: Bob Mix – Mixed By'] and flash == ['Mixed By'])
-    pg.locator('#dci-controls [data-click-toggle]').evaluate('b => b.click()')
+    H.nav_switch(pg, 'data-click-toggle')
     # E) jumps: a part of a line, a sentence of the "about" text, a track
     e1 = jump(pg, bc, 'Peter Evans', 'Trumpet')
     e2 = jump(pg, bc, 'Bob Mix', 'Mixed By')

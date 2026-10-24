@@ -163,6 +163,8 @@ python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass (3.22.3: withou
                           # "contrabass", "Violoncello" → cello "violoncello";
                           # produced / remixed / engineered in (areas with the area they are part of); recording without role credit
                           # (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
+python3 t_entryhead.py    # the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), the chip
+                          # "as “B. Man”" (+1), the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
 python3 t_msgs.py         # messages (3.27.3): ✕ on each, "▾ n messages" folds them, a new error unfolds, a fresh import shows them again
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
@@ -271,7 +273,8 @@ With several media (`harness.MEDIA = [2, 1, 1]` …) the dashboard asks for the 
 `harness.src_menu(pg, act=None)` (3.26.0) opens the menu "Source ▾" of the head and clicks `[data-act=act]` in it (pasting a text,
 another source, a linked source, the order of the sources, Bandcamp, "Leave out the about text", "Delete stored import …");
 `harness.open_supp(pg)` opens the bar "Supplement with"; `harness.toggle_place(pg)` switches window ⇄ page in the page bar;
-`harness.open_settings(pg, tab=None)` opens ⚙ Settings (the language is only there). `harness.open_mb_edit(ctx, …, view='full')`
+`harness.open_settings(pg, tab=None)` opens ⚙ Settings (the language is only there). `harness.nav_switch(pg, attr)` (3.28.0) clicks a switch of the
+navigation (`data-dg-artwork`, `data-click-toggle` …) in ⚙ Settings → Discogs and Bandcamp view – the bar below the button has none any more. `harness.open_mb_edit(ctx, …, view='full')`
 (3.27.0) sets the view of the entries to "Full" (`dci-view`, with the storage generation) before the script starts – the tests were
 written for the full rows; `view=None` keeps the default (compact, `t_compact.py`); `open_mb_any` sets "Full" too. Every test starts as a first installation, so
 the page bar shows the question of the language (`#dci-langask`); it does not stand in the way of the tests.
