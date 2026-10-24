@@ -13,12 +13,23 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.24.0, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.24.1, Companion 1.6.0 – 1.8.3 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.24.1 · 2026-10-24
+
+The tracks of a source compared with MusicBrainz's on every import and in the dialog of several releases (collected item 52).
+
+- **Register:** new table **T038** (`TITLE_SMALL_WORDS` – en, de, es, fr, it, pt, nl –, `TITLE_NOTE`), new special rule **S030**.
+- **Core:** new `titleWordsOf(t)`, **`titlesFit(a, b)`** (same words, `withinOne`, one in the other, more than half of the words of the shorter; numbers must match; placeholders and empty titles fit), **`trackFit(srcTracks, mbTracks)`** → `{ d, m, differ, compared, ok }` (ok: same number and ≥ 80 % fitting), `trackFitText`, `trackFitList`; exported for Node (`titleWordsOf`, `titlesFit`, `trackFit`). `loadRelease`: instead of the count-only warning a message of the new kind `tracks` (`.dci-msg-tracks`, the yellow of suggestions) and the log `tracksDiffer` for every source with tracks of its own (not `usesMbTracks`). `chooseLink`: `counts[i].fit`, a yellow note per row (`[data-lel="tracks"]`, `.dci-link-warn`, the titles as tooltip; log `linkTracksDiffer`), `markBest` among the fitting ones, the mark `links.bestFit` when another has more data.
+- **Texts (4 languages):** new `trackFit.count`, `trackFit.titles`, `links.tracksDiffer`, `links.bestFit`, `msg.tracksDiffer`, `log.tracksDiffer`, `log.linkTracksDiffer`; removed `msg.trackMismatch`, `log.trackMismatch`.
+- **Watch out:** `tools/i18n_add.py` replaces a key that exists – a first name `tracks.count` would have hidden the plural `tracks.count.one/.other` of the rows; the new keys are `trackFit.*`.
+- **Tests:** new `t_tracksfit.py`; register golden (S030, T038).
+
 
 ## Import 3.24.0 · 2026-10-24
 

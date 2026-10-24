@@ -160,6 +160,9 @@ python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass (3.22.3: withou
                           # "contrabass", "Violoncello" → cello "violoncello";
                           # produced / remixed / engineered in (areas with the area they are part of); recording without role credit
                           # (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
+python3 t_tracksfit.py    # tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
+                          # most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
+                          # the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
 python3 t_links.py        # several linked releases of one source (3.24.0): the dialog counts each (one cannot be read), the one with the
                           # most data bold and preselected, all in background tabs, "Import" (remembered, loaded at once next time),
                           # another one by hand without remembering, "Cancel" (the message as before)
