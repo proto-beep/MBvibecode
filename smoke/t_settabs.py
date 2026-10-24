@@ -7,7 +7,8 @@ D) The ⓘ in the head opens the settings at "ⓘ Connections": a table of ten c
    kind, what the script does, permissions, since).
 E) "↺ Reset all settings …" below the tabs shows the question in the settings (no tab chosen); "Cancel" goes back to
    the tab. The head has no "↺ Defaults" any more.
-F) A narrow dashboard: the tabs stand in a row above the content."""
+F) A narrow dashboard: the tabs stand in a row above the content.
+G) [3.27.2] A click on the heading "Settings" (a tooltip, no link look) folds them in; the focus goes to ⚙ (item 57)."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -94,6 +95,17 @@ with sync_playwright() as p:
     narrow = pg.evaluate(tops)
     print('F) breit (oben):', wide, '| schmal:', narrow)
     results.append(wide[0] != wide[1] and narrow[0] == narrow[1])
+    # G) [3.27.2] the heading "Settings" folds them in (item 57)
+    if pg.evaluate(f"{SET}.hidden"):
+        pg.click(gear)
+        pg.wait_for_timeout(200)
+    title = pg.locator('[data-el=settings] .dci-set-title')
+    g1 = [title.inner_text(), title.get_attribute('title'), pg.evaluate("getComputedStyle(document.querySelector('[data-el=settings] .dci-set-title')).textDecorationLine")]
+    title.click()
+    pg.wait_for_timeout(200)
+    g2 = [pg.evaluate(f"{SET}.hidden"), pg.locator(gear).get_attribute('aria-expanded'), pg.evaluate("document.activeElement.dataset.act")]
+    print('G) Überschrift:', g1, '| danach zu, aria, Fokus:', g2)
+    results.append(g1 == ['Settings', 'Fold the settings in (as ⚙ does)', 'none'] and g2 == [True, 'false', 'settings-open'])
     print('Fehler:', errs)
     results.append(not errs)
     b.close()

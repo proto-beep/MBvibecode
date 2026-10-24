@@ -166,13 +166,14 @@ python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass (3.22.3: withou
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error
-python3 t_compact.py      # the compact view (3.27.0, milestone): compact by default (a line per row, marks in colour, fields hidden),
+python3 t_compact.py      # the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
+                          # a line per row, marks in colour, fields hidden,
                           # open / "▴ compact", a track group and a pool date dropped onto the line, the question answered, a skipped
                           # row grey with ✕ (back after reloading), "Full" remembered and in the settings, the jump to an incomplete row
-python3 t_head.py         # the head in one line (3.26.0): symbols with names (words only when wide), no language / place / switches in
+python3 t_head.py         # the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
                           # the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
                           # asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
-python3 t_settabs.py      # the settings as tabs (3.25.0): only the gear folds them out and in, eight tabs (General chosen), ↓ / End /
+python3 t_settabs.py      # the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (General chosen), ↓ / End /
                           # Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), the ⓘ in the head
                           # opens "ⓘ Connections" (ten rows, Harmony with its home page), "↺ Reset all settings …" below the tabs shows
                           # the question in the settings ("Cancel" back to the tab), no "↺ Defaults" in the head, narrow: tabs in a row

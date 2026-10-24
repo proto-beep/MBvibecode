@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.27.1
+// @version      3.27.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.27.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.27.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -686,6 +686,9 @@
       "view.title": "Compact: one line per row – a click opens it to change it. Full: every row with all its fields.",
       "view.compact": "Compact",
       "view.full": "Full",
+      "view.toCompact": "Compact view: one line per role – a click opens a row to change it",
+      "view.toFull": "Compact view is on – click for the full view (every row with all its fields)",
+      "settings.foldTitle": "Fold the settings in (as ⚙ does)",
       "log.viewSet": "View of the entries: {view}",
       "cl.openTitle": "Open this row to change it",
       "cl.close": "compact",
@@ -9767,8 +9770,9 @@
     settingsOpen: false,
     // [3.25.0] the tab of the settings (remembered); [3.16.0 – 3.24] a set of open topics
     settingsTab: 'general',
-    // [3.27.0] the entries compact (a line per row, a click opens it) or full (remembered); the rows opened in the compact view
-    view: 'compact',
+    // [3.27.0] the entries compact (a line per row, a click opens it) or full (remembered; [3.27.2] full by default, item 72);
+    // the rows opened in the compact view
+    view: 'full',
     rowOpen: new Set(),
     awStoreCount: null,
     workOptions: null,
@@ -16000,15 +16004,16 @@
 
   /** [3.27.0] Compact or full: the toggle above the entries and in ⚙ Settings → General (remembered). */
   function setView(view) {
-    S.view = view === 'full' ? 'full' : 'compact';
-    writeJson('localStorage', VIEW_KEY, S.view === 'compact' ? null : 'full');
+    // [3.27.2] full is the default again (item 72): only "compact" is stored
+    S.view = view === 'compact' ? 'compact' : 'full';
+    writeJson('localStorage', VIEW_KEY, S.view === 'full' ? null : 'compact');
     log('info', 'viewSet', { view: tr(`view.${S.view}`) });
     applyView();
     renderGroups();
     refresh();
   }
 
-  /** "Compact | Full" (above the entries; small in the settings). */
+  /** "Compact | Full" in ⚙ Settings → General ([3.27.2] the head has a symbol for it; until then above the entries too). */
   const viewToggleHtml = (small = false) => `<span class="dci-seg${small ? ' dci-seg-small' : ''} dci-viewseg" role="group" aria-label="${esc(tr('view.label'))}" title="${esc(tr('view.title'))}">${
     ['compact', 'full'].map((v) => `<button type="button" data-act="view" data-view="${v}" aria-pressed="${S.view === v}">${esc(tr(`view.${v}`))}</button>`).join('')}</span>`;
 
@@ -16016,6 +16021,11 @@
     if (!S.overlay) return;
     S.overlay.classList.toggle('dci-compact', S.view === 'compact');
     S.overlay.querySelectorAll('[data-act="view"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === S.view)));
+    // [3.27.2] the symbol in the head (item 60): pressed while compact
+    S.overlay.querySelectorAll('[data-act="view-toggle"]').forEach((b) => {
+      b.setAttribute('aria-pressed', String(S.view === 'compact'));
+      b.title = tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact');
+    });
   }
 
   function renderGroups() {
@@ -19831,6 +19841,17 @@
       case 'view':
         if (btn.dataset.view !== S.view) setView(btn.dataset.view);
         break;
+      // [3.27.2] the symbol in the head (item 60)
+      case 'view-toggle':
+        setView(S.view === 'compact' ? 'full' : 'compact');
+        break;
+      // [3.27.2] the heading "Settings" folds them in (item 57)
+      case 'settings-fold':
+        S.settingsOpen = false;
+        S.resetOpen = false;
+        renderSettings();
+        S.overlay.querySelector('.dci-head [data-act="settings-open"]').focus();
+        break;
       case 'supp-open': {
         // open while a supplement is loaded (then the button only brings the bar into view)
         const close = suppIsOpen() && !S.supp;
@@ -21348,6 +21369,7 @@
     fit: '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>',
     close: '<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>',
     down: '<path d="M4 6l4 4 4-4"/>',
+    compact: '<path d="M2 3.5h12M2 8h12M2 12.5h12"/>',
     plus: '<path d="M8 3v10M3 8h10"/>',
   };
   const ico = (name) => `<svg class="dci-ico" viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
@@ -21367,6 +21389,7 @@
           <div class="dci-source" data-el="source"></div>
           <div class="dci-sync" data-el="sync" aria-live="polite"></div>
           <div class="dci-head-tools">
+            ${headBtn('view-toggle', 'compact', tr('view.compact'), tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact'), `aria-pressed="${S.view === 'compact'}"`)}
             <span class="dci-zoom" role="group" aria-label="${esc(tr('zoom.label'))}">
               <button type="button" class="dci-headbtn" data-act="zoom-out" title="${esc(tr('zoom.smaller'))}" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
               <span data-el="zoom" aria-live="polite">${Math.round(S.scale * 100)} %</span>
@@ -21401,7 +21424,6 @@
           </div>
           <section class="dci-supp" data-el="supp" aria-label="${esc(tr('supp.with'))}" hidden></section>
           <div class="dci-toolbar" data-el="toolbar" hidden>
-            ${viewToggleHtml()}
             <span>${esc(tr('toolbar.levelAll'))}</span>
             <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
               ${levelBtn('recording')}${levelBtn('release')}${levelBtn('skip')}
@@ -21618,7 +21640,7 @@
   // [3.25.0] tabs (collected item 42): "Texts" and "ⓘ Connections" (item 40) new
   const SETTING_TOPICS = ['general', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
-  // [3.27.0] the view of the entries: compact (default) or full
+  // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
@@ -21632,7 +21654,7 @@
     dates: ['dci-dm-auto', 'dci-pools-keep'],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
-  S.view = readJson('localStorage', VIEW_KEY, 'compact') === 'full' ? 'full' : 'compact';
+  S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
   /** Settings the menu shares with switches elsewhere in the dashboard (data-f → the value they show). */
   const SHARED_SWITCHES = {
     'fill-credits': () => S.fillCredits, 'stage-cap': () => S.capOn, 'bc-tracks': () => S.bcTracks, 'dm-auto': () => S.dmAuto,
@@ -21706,7 +21728,8 @@
     }).join('');
     const pane = S.resetOpen ? resetHtml()
       : `${bodies[tab]().join('')}${TOPIC_KEYS[tab].length ? `<div class="dci-set-reset"><button type="button" class="dci-textbtn" data-act="settings-reset" data-topic="${tab}">${esc(tr('settings.resetTopic'))}</button></div>` : ''}`;
-    return `<div class="dci-set-head"><strong>${esc(tr('settings.title'))}</strong> <span class="dci-sub">${esc(tr('settings.hint'))}</span></div>
+    // [3.27.2] the heading folds the settings in (item 57): a button that looks like the heading, with a tooltip
+    return `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="settings-fold" title="${esc(tr('settings.foldTitle'))}" aria-label="${esc(tr('settings.foldTitle'))}">${esc(tr('settings.title'))}</button> <span class="dci-sub">${esc(tr('settings.hint'))}</span></div>
       <div class="dci-set-wrap">
         <div class="dci-set-side">
           <div class="dci-set-tabs" role="tablist" aria-orientation="vertical" aria-label="${esc(tr('settings.title'))}">${tabs}</div>
@@ -21848,7 +21871,7 @@
       if (S.logEl) setLogVisible(true);
       setLogPlace('window');
       if (S.place !== 'window') setPlace('window');
-      if (S.view !== 'compact') setView('compact');
+      if (S.view !== 'full') setView('full');
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
@@ -21904,7 +21927,7 @@
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
-      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'compact',
+      awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -22460,6 +22483,8 @@
       .dci-other input { width: calc(var(--u, 1px) * 330); }
       .dci-ibtn { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); white-space: nowrap; }
       .dci-head .dci-ibtn { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 7); }
+      /* [3.27.2] a symbol switched on (the compact view) */
+      #dci-overlay .dci-head .dci-headbtn[aria-pressed="true"] { background: #ecebf6; border-color: var(--purple); color: var(--purple-d); }
       .dci-ico { width: calc(var(--u, 1px) * 15); height: calc(var(--u, 1px) * 15); flex: none; }
       .dci-hlabel { display: none; }
       @container (min-width: 1600px) { .dci-head .dci-hlabel { display: inline; } }
@@ -22480,6 +22505,12 @@
       .dci-srcpanels > * { margin-top: 0; }
       .dci-head .dci-syncstatus { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8);
         border: 1px solid var(--line); border-radius: 999px; background: var(--soft); }
+      /* [3.27.2] "open in background", "Load the release there" and ↻ stand out (item 65) */
+      #dci-overlay .dci-syncstatus button { font: inherit; font-size: calc(var(--u, 1px) * 12); font-weight: 600; padding: 0 calc(var(--u, 1px) * 9); border: 1px solid var(--purple-d);
+        border-radius: 999px; background: var(--purple); color: #fff; cursor: pointer; }
+      #dci-overlay .dci-syncstatus button:hover { background: var(--purple-d); }
+      #dci-overlay .dci-syncstatus button[data-sync-reload] { padding: 0 calc(var(--u, 1px) * 6); background: #fff; color: var(--purple-d); border-color: var(--purple); }
+      #dci-overlay .dci-syncstatus button[data-sync-reload]:hover { background: #ecebf6; }
       /* [E1] A pasted text as the source, and the lines it did not understand */
       .dci-textsrc { display: grid; gap: calc(var(--u, 1px) * 6); width: 100%; margin-top: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 6px; background: var(--soft); }
       .dci-textsrc-text { display: grid; gap: 2px; }
@@ -22900,6 +22931,9 @@
         border-radius: 3px; background: #faf9fd; }
       .dci-settings[hidden] { display: none; }
       .dci-set-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); margin-bottom: calc(var(--u, 1px) * 6); }
+      /* [3.27.2] the heading folds the settings in (item 57) */
+      .dci-set-title { font: inherit; font-weight: 700; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; }
+      .dci-set-title:hover { color: var(--purple-d); }
       /* [3.25.0] the topics as tabs: vertical on the left, at the top in a narrow dashboard */
       .dci-settings { container-type: inline-size; }
       .dci-set-wrap { display: flex; gap: calc(var(--u, 1px) * 14); align-items: flex-start; }

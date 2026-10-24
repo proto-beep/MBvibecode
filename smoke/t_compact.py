@@ -1,5 +1,7 @@
-"""Credits Importer 3.27.0: the compact view of the entries (collected item 31; milestone).
-A) Compact is the default: "Compact | Full" above the entries (Compact pressed); one line per row – the role as written
+"""Credits Importer 3.27.0: the compact view of the entries (collected item 31; milestone). [3.27.2] Full is the default
+again (item 72), the symbol in the head switches (item 60).
+A) Full at first (nothing stored); the symbol in the head (not pressed) switches to compact – pressed, stored "compact"
+   (until 3.27.1: compact by default, "Compact | Full" above the entries); one line per row – the role as written
    → type and instrument, level, tracks in short, date (or "no date"), what is open in colour (yellow "Bass: which
    instrument?"); the fields of the full row and the "credited as" block hidden.
 B) A click on the line opens the full row (its type field focused); "▴ compact" closes it again.
@@ -7,7 +9,8 @@ C) The tracks and the date of the compact line are still drop targets: a track g
    onto it gives "tracks 1–2", a date of the pool shows on the line.
 D) The question answered in the opened row ("double bass"): the line says so, the yellow mark is gone.
 E) A skipped row: grey, with ✕ – out of the dashboard; the next import brings it back.
-F) "Full": every row with its fields, remembered (dci-view) after reloading; ⚙ Settings → General has the same switch.
+F) "Compact" remembered after reloading; ⚙ Settings → General has the same switch: "Full" – every row with its fields,
+   nothing stored.
 G) A jump to an incomplete row (› in the summary) opens it."""
 import re
 from playwright.sync_api import sync_playwright
@@ -31,14 +34,18 @@ with sync_playwright() as p:
     H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
     pg.wait_for_timeout(800)
     line = lambda name: pg.evaluate(LINE, name)
-    # A)
-    a0 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"),
-          pg.evaluate("[...document.querySelectorAll('.dci-toolbar [data-act=view]')].map(b => [b.textContent, b.getAttribute('aria-pressed')])"),
+    # A) full at first; the symbol in the head
+    VIEWBTN = '.dci-head [data-act=view-toggle]'
+    a_full = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), pg.locator(VIEWBTN).get_attribute('aria-pressed'),
+              pg.evaluate("document.querySelectorAll('.dci-toolbar [data-act=view]').length"), line('Bass Man')[0]['typeVisible']]
+    pg.click(VIEWBTN)
+    pg.wait_for_timeout(400)
+    a0 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), pg.locator(VIEWBTN).get_attribute('aria-pressed'),
           pg.evaluate("[...document.querySelectorAll('.dci-variants')].filter(v => v.offsetParent !== null).length"),
           pg.evaluate("localStorage.getItem('dci-view')")]
     bass = line('Bass Man')
-    print('A) kompakt:', a0, '\n   Bass Man:', bass)
-    results.append(a0 == [True, [['Compact', 'true'], ['Full', 'false']], 0, None] and bass and bass[0]['text'].startswith('▸ Bass → instrument · bass Recording all 4 tracks no date')
+    print('A) zuerst voll:', a_full, '| nach dem Symbol:', a0, '\n   Bass Man:', bass)
+    results.append(a_full == [False, 'false', 0, True] and a0 == [True, 'true', 0, '"compact"'] and bass and bass[0]['text'].startswith('▸ Bass → instrument · bass Recording all 4 tracks no date')
                    and bass[0]['flags'] == [['dci-cl-ask', 'Bass: which instrument?']] and not bass[0]['typeVisible'])
     # B) open, close
     rid = bass[0]['id']
@@ -90,9 +97,7 @@ with sync_playwright() as p:
     e2 = [line('Guitar Guy'), [m for m in pg.locator('.dci-msg').all_inner_texts() if 'Guitar Guy' in m][:1]]
     print('E) Skip:', e1['text'], e1['x'], e1['bg'], '| ✕:', e2)
     results.append(e1['text'].startswith('▸ Guitar Skip') and e1['x'] and e1['bg'] != 'rgb(255, 255, 255)' and e2[0] is None and bool(e2[1]))
-    # F) full, remembered
-    pg.click('.dci-toolbar [data-act=view][data-view=full]')
-    pg.wait_for_timeout(300)
+    # F) compact remembered, full in the settings
     f1 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), line('Bass Man')[0]['typeVisible'], pg.evaluate("localStorage.getItem('dci-view')")]
     pg.reload()
     pg.add_script_tag(content=H.MAIN)
@@ -103,12 +108,14 @@ with sync_playwright() as p:
     f2 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), line('Guitar Guy') is not None]
     H.open_settings(pg, 'general')
     f3 = pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-act=view]')].map(b => [b.dataset.view, b.getAttribute('aria-pressed')])")
-    pg.click('[data-el=settings] [data-act=view][data-view=compact]')
+    pg.click('[data-el=settings] [data-act=view][data-view=full]')
     pg.wait_for_timeout(300)
     f4 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), pg.evaluate("localStorage.getItem('dci-view')"),
-          pg.evaluate("[...document.querySelectorAll('.dci-toolbar [data-act=view]')].map(b => b.getAttribute('aria-pressed'))")]
-    print('F) voll:', f1, '| neu geladen:', f2, '| Einstellungen:', f3, '| kompakt dort:', f4)
-    results.append(f1 == [False, True, '"full"'] and f2 == [False, True] and f3 == [['compact', 'false'], ['full', 'true']] and f4 == [True, None, ['true', 'false']])
+          pg.locator(VIEWBTN).get_attribute('aria-pressed'), line('Bass Man')[0]['typeVisible']]
+    pg.click('[data-el=settings] [data-act=view][data-view=compact]')
+    pg.wait_for_timeout(300)
+    print('F) kompakt:', f1, '| neu geladen:', f2, '| Einstellungen:', f3, '| voll dort:', f4)
+    results.append(f1 == [True, False, '"compact"'] and f2 == [True, True] and f3 == [['compact', 'true'], ['full', 'false']] and f4 == [False, None, 'false', True])
     pg.click('.dci-head [data-act=settings-open]')
     # G) a new row ("+ Another role") is open; closed and incomplete, a jump to it (› in the summary) opens it again
     pg.click('section.dci-group:has(.dci-gname strong:text-is("Bass Man")) [data-act=add-role]')

@@ -796,7 +796,8 @@ def with_companion(pg):
     pg.add_script_tag(content=SYNC)
 
 
-# [3.27.0] the tests were written for the full view of the entries; the compact view (the default) has a test of its own
+# [3.27.0] the tests were written for the full view of the entries; the compact view has a test of its own ([3.27.2] full is
+# the default again – the preset stays, harmless)
 VIEW_PRESET = "(v) => { if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); if (localStorage.getItem('dci-view') === null) localStorage.setItem('dci-view', JSON.stringify(v)); }"
 
 
