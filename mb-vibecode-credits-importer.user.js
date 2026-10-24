@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.28.4
+// @version      3.28.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -7072,6 +7072,9 @@
     ['copyright', /℗|©|\(p\)|\(c\)|copyright|phonographic/i],
     // [D015] whole words only: "Fuzzoramarecords" or "… Records" is a label name, not "recorded"
     ['performance', /\brecord(ed|ing|ings)?\b|\brec\.|\blive at\b|\bsessions?\b|aufgenommen|aufnahme|grabad|enregistr|\bconcert|\bkonzert/i],
+    // [D018] (3.28.5) a year of a release or issue ("originally issued on LP in 1974", "Released 2003") is no date of the
+    // credits: left out
+    ['issue', /\b(?:re-?)?(?:issued|released)\b|\bfirst (?:issued|released|published)\b|veröffentlicht|erschienen|\bpublicad[oa]\b|\beditad[oa]\b|\bpublié|\bsorti\b/i],
   ];
 
   // [T014] Texts: month names, only to take dates out of a role phrase ("Recorded 12 May 2019" → "Recorded")
@@ -7426,7 +7429,7 @@
 
   const DATE_RULES = [
     { id: 'D001', note: 'ISO and MusicBrainz dates and periods: 2022-11-01, 2022-11, 1998-03-01 – 1998-03-20, 1997–1998' },
-    { id: 'D002', note: 'Numbers with dots, day first: 01.11.2022' },
+    { id: 'D002', note: 'Numbers with dots, day first: 01.11.2022 · [3.28.5] also with spaces: 20. 01. 2009' },
     { id: 'D003', note: 'Numbers with slashes: 1/11/2022 – a number over 12 decides; otherwise the Discogs release country (US: month/day, elsewhere day/month), with a note and the other reading to choose' },
     { id: 'D004', note: 'Month names (English, German, Spanish, French): November 1, 2022 · November 1. 2022 · Nov. 1st, 2022 · 1 November 2022 · 1. November 2022 · 1st of November 2022 · 1 de noviembre de 2022' },
     { id: 'D005', note: 'Ordinal words: first of November 2022 · November the first, 2022' },
@@ -7437,10 +7440,14 @@
     { id: 'D010', note: 'A year alone: 1998' },
     { id: 'D011', note: 'Decades ("late 1970s", "the 70s") cannot be given as a MusicBrainz date and are left out' },
     { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
-    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows' },
+    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
     { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
     { id: 'D016', note: 'A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0)' },
+    { id: 'D017', note: 'Year, month name, day: 1973 October 19 · 1973, Oct. 19th (3.28.5)' },
+    { id: 'D018', note: 'A year of a release or issue is no date of the credits and is left out: "originally issued on LP in 1974", "Released 2003", "veröffentlicht 1999" (3.28.5)' },
+    { id: 'D019', note: 'The word naming the group of a date is looked for in its own sentence only ("Mixed May 2001. Released 2003." – 2003 is no mix date); a line ending in ":" counts as part of the next one (3.28.5)' },
+    { id: 'D020', note: 'Words naming groups joined by "and", "&" or commas give the date to each group: "Mixed and mastered by X in March 2026" → Mix and Mastering, "Recorded, mixed and mastered 2001" → Performance, Mix and Mastering (3.28.5)' },
   ];
 
   const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
@@ -7491,6 +7498,8 @@
   const DATE_MATCHERS = [
     { id: 'D013', re: `${P.M}\\s+(${DAYLIST}),?\\s+${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[1]), m[2]) },
     { id: 'D013', re: `(${DAYLIST})${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[2]), m[1]) },
+    // [3.28.5] the days of a date in numbers: "19 & 20. 01. 2009", "19./20.01.2009" (collected item 64a)
+    { id: 'D013', re: `(?<![\\d.])(${DAYLIST})\\s*(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)`, make: (m) => multiDays(m[3], m[2], m[1]) },
     { id: 'D007', re: `${P.M}\\s+${P.D}${P.TO}${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
     { id: 'D007', re: `${P.D}${P.OF}\\s+${P.M}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[2]), m[1]), ymd(m[5], monthNo(m[4]), m[3])) },
     { id: 'D007', re: `${P.M},?\\s+${P.Y}${P.TO}${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[2], monthNo(m[1])), ymd(m[4], monthNo(m[3]))) },
@@ -7504,10 +7513,12 @@
     { id: 'D007', re: '(?<!\\d)(\\d{4})\\s*/\\s*(\\d{2}|\\d{4})(?![\\d/])', make: (m) => span(ymd(m[1]), ymd(m[2].length === 2 ? `${m[1].slice(0, 2)}${m[2]}` : m[2])) },
     { id: 'D005', re: `${P.O}(?:\\s+day)?${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), ORDINALS.get(m[1].toLowerCase()))) },
     { id: 'D005', re: `${P.M}\\s+(?:the\\s+)?${P.O},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), ORDINALS.get(m[2].toLowerCase()))) },
+    // [D017] (3.28.5) year, month, day: "1973 October 19" (collected item 64d)
+    { id: 'D017', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}(?![\\d.])`, make: (m) => single(ymd(m[1], monthNo(m[2]), m[3])) },
     { id: 'D004', re: `${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), m[2])) },
     { id: 'D004', re: `${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), m[1])) },
     { id: 'D001', re: '(?<![\\d./-])(\\d{4})-(\\d{1,2})(?:-(\\d{1,2}))?(?![\\d-])', make: (m) => single(ymd(m[1], m[2], m[3])) },
-    { id: 'D002', re: '(?<![\\d.])(\\d{1,2})\\.(\\d{1,2})\\.(\\d{4})(?!\\d)', make: (m) => single(ymd(m[3], m[2], m[1])) },
+    { id: 'D002', re: '(?<![\\d.])(\\d{1,2})\\.\\s?(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)', make: (m) => single(ymd(m[3], m[2], m[1])) },
     { id: 'D003', re: '(?<![\\d/])(\\d{1,2})/(\\d{1,2})/(\\d{4})(?![\\d/])', make: (m, o) => {
       const a = Number(m[1]);
       const b = Number(m[2]);
@@ -7530,8 +7541,27 @@
   const COPYRIGHT_SIGN = /℗|©|\(p\)|\(c\)/i;
 
   /**
+   * [D019] (3.28.5) Where the sentence of a place of a text begins (its line; ";" and ". " before a capital end a
+   * sentence, not after an abbreviation of up to three letters; a line ending in ":" belongs to the next one).
+   */
+  function sentenceStartAt(src, a) {
+    let lineStart = src.lastIndexOf('\n', a - 1) + 1;
+    const line = src.slice(lineStart, a);
+    const re = /;|\.(?=\s+[A-Z*•–-])/g;
+    let cut = 0;
+    let m;
+    while ((m = re.exec(line))) {
+      if (m[0] === '.' && (line.slice(0, m.index).split(/\s+/).pop() || '').length <= 3) continue;
+      cut = m.index + 1;
+    }
+    if (!cut && lineStart > 0 && /:\s*$/.test(src.slice(src.lastIndexOf('\n', lineStart - 2) + 1, lineStart - 1))) lineStart = src.lastIndexOf('\n', lineStart - 2) + 1;
+    return lineStart + cut;
+  }
+
+  /**
    * All dates and periods in a text, in MusicBrainz form, with the rule that found them (D001 …), a short
    * snippet, the suggested group and, for slash dates that could be read either way, the other reading.
+   * [D020] hints: every group of joined words ("mixed and mastered"), when more than one.
    */
   function findDates(text, { usOrder = false } = {}) {
     const src = String(text || '');
@@ -7549,19 +7579,21 @@
         const v = mt.make(m, { usOrder });
         taken.push([a, b]);
         if (!v || v === 'skip') continue;
-        // The keyword closest before the date (or inside it) suggests the group
-        const before = src.slice(Math.max(0, a - 80), b);
+        // The keyword closest before the date (or inside it) suggests the group; [D019] only in its own sentence
+        const before = src.slice(Math.max(0, a - 80, ruleOn('D019') ? sentenceStartAt(src, a) : 0), b);
         // [D015] after a ℗ / © sign in the same sentence, capitalised keywords belong to a name ("℗ Fuzzorama Recordings 2005")
         const seg = before.slice(Math.max(...['.', ';', '\n'].map((c) => before.lastIndexOf(c, before.length - m[0].length - 1))) + 1);
         const segStart = before.length - seg.length;
         const sign = ruleOn('D015') ? seg.search(COPYRIGHT_SIGN) : -1;
         let hint = '';
         let at = -1;
+        const words = [];
         for (const [key, re] of DATE_HINTS) {
           const g = new RegExp(re.source, 'gi');
           let h;
           while ((h = g.exec(before))) {
             const inName = sign >= 0 && key !== 'copyright' && h.index > segStart + sign && /^[A-ZÄÖÜ]/.test(h[0]);
+            if (!inName) words.push({ key, index: h.index, end: h.index + h[0].length });
             if (h.index > at && !inName) {
               at = h.index;
               hint = key;
@@ -7569,12 +7601,32 @@
             if (!h[0]) break;
           }
         }
+        // [D020] (3.28.5) words joined by "and", "&" or commas before it: each names a group of the date
+        const chain = [];
+        if (hint && ruleOn('D020')) {
+          let cur = words.filter((w) => w.index === at && w.key === hint)[0];
+          chain.push(cur.key);
+          for (;;) {
+            const prev = words.filter((w) => w.end <= cur.index && /^\s*(?:,|and|&|und|y|et|\+|\/)\s*$/i.test(before.slice(w.end, cur.index)))
+              .sort((x, y) => y.end - x.end)[0];
+            if (!prev) break;
+            if (!chain.includes(prev.key)) chain.unshift(prev.key);
+            cur = prev;
+          }
+        }
+        // [D018] (3.28.5) a year of a release or issue: left out, unless another word of the chain names a group
+        if (hint === 'issue' && ruleOn('D018')) {
+          const other = chain.filter((k) => k !== 'issue');
+          if (!other.length) continue;
+          hint = other[other.length - 1];
+        }
+        const hints = chain.filter((k) => k !== 'issue');
         // [D015] "©©" is mostly a typo for "℗ ©": both, i.e. the group ℗/©
         const doubled = ruleOn('D015') && /©\s*©/.test(seg);
         if (doubled) hint = 'copyright';
         found.push({ index: a, text: m[0], rule: doubled ? `${mt.id} · D015` : mt.id, value: { begin: v.begin, end: v.end, ended: v.ended }, alt: v.alt || null, order: v.order || '',
           multi: v.multi || null, days: v.days || null, consecutive: !!v.consecutive,
-          hint, snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
+          hint, hints: doubled ? ['copyright'] : hints.length > 1 ? hints : [], snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
       }
     }
     return found.sort((x, y) => x.index - y.index);
@@ -15452,30 +15504,35 @@
         if (!kept.size) return;
         x = { ...x, tracks: kept };
       }
-      const group = DATE_GROUPS.find((g) => g.key === x.hint) || null;
-      const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, '', { found: true }) : null;
-      const studios = (x.studios || []).map((k) => S.artists.get(k)).filter(Boolean).map(studioId);
-      if (x.multi) {
-        placed += placeSeparateDays(x, key, group, { auto: true, tg, studios });
-        return;
-      }
-      // Without such a word: only into the pool, to be dragged where it belongs ([3.17.2] named for the liner notes
-      // when it is in their signature: "Liner notes – Jane Roe")
-      const liner = S.release && S.release.liner;
-      const forLiner = liner && x0.index >= liner.at && x0.index < liner.at + liner.len;
-      const e = poolDateFor(x.value, group, key, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
-      // [3.17.6] marked for the liner notes: their row shows it as a suggestion
-      if (forLiner) e.liner = liner.name;
-      addCommonDate(e.begin, e.end, group, key, e);
-      if (!group) return;
-      const here = m.cells.find((c) => c.col === group.key && c.date === e.id);
-      if (here) {
-        if (here.auto) Object.assign(here, { tgs: uniq([...here.tgs, ...(tg ? [tg.id] : [])]), studios: uniq([...here.studios, ...studios]) });
-        return;
-      }
-      if (m.cells.some((c) => c.date === e.id)) return;
-      m.cells.push({ id: newCellId(), col: group.key, date: e.id, tgs: tg ? [tg.id] : [], studios, auto: true });
-      placed++;
+      // [D020] (3.28.5) joined words ("mixed and mastered … March 2026"): the date goes to each of their groups
+      const groups = uniq([x.hint, ...(x.hints || [])]).map((k) => DATE_GROUPS.find((g) => g.key === k) || null).filter((g, k) => g || k === 0);
+      groups.forEach((group, gi) => {
+        // the first group keeps the key of the find; the others get their own (their own pool entry, named for the group)
+        const gkey = gi ? `${key}~${group.key}` : key;
+        const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, '', { found: true }) : null;
+        const studios = (x.studios || []).map((k) => S.artists.get(k)).filter(Boolean).map(studioId);
+        if (x.multi) {
+          placed += placeSeparateDays(x, gkey, group, { auto: true, tg, studios });
+          return;
+        }
+        // Without such a word: only into the pool, to be dragged where it belongs ([3.17.2] named for the liner notes
+        // when it is in their signature: "Liner notes – Jane Roe")
+        const liner = S.release && S.release.liner;
+        const forLiner = liner && x0.index >= liner.at && x0.index < liner.at + liner.len;
+        const e = poolDateFor(x.value, group, gkey, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
+        // [3.17.6] marked for the liner notes: their row shows it as a suggestion
+        if (forLiner) e.liner = liner.name;
+        addCommonDate(e.begin, e.end, group, gkey, e);
+        if (!group) return;
+        const here = m.cells.find((c) => c.col === group.key && c.date === e.id);
+        if (here) {
+          if (here.auto) Object.assign(here, { tgs: uniq([...here.tgs, ...(tg ? [tg.id] : [])]), studios: uniq([...here.studios, ...studios]) });
+          return;
+        }
+        if (m.cells.some((c) => c.date === e.id)) return;
+        m.cells.push({ id: newCellId(), col: group.key, date: e.id, tgs: tg ? [tg.id] : [], studios, auto: true });
+        placed++;
+      });
     });
     const pooled = S.datePool.length - before;
     savePool();

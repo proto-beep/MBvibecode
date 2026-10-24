@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.28.4, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.28.5, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.28.5 · 2026-10-24
+
+Dates in the notes (collected items 64a, 64d, 80, 71/76 for the dates).
+
+- **`DATE_MATCHERS`:** a D013 matcher for days in numbers (`DAYLIST` + month in numbers + year: "19 & 20. 01. 2009", "19./20.01.2009", through `multiDays`), D002 allows a space after each dot, new **D017** (year, month name, day; before D004).
+- **`DATE_HINTS`:** new key **`issue`** (issued, released, reissued, first published/released, veröffentlicht, erschienen, publicado, editado, publié, sorti).
+- **`findDates`:** the hint is searched only from the new **`sentenceStartAt(src, a)`** on (D019: the cuts of `sentenceAround`; a line ending in ":" counts for the next line); every hint word is kept (`words`), and words joined by `,`, "and", "&", "und", "y", "et", "+", "/" before the closest one form a chain (D020) – returned as **`hints`** when more than one (`[]` otherwise; "©©" gives `['copyright']`); a closest word `issue` drops the date (D018) unless the chain has another group, which becomes the hint.
+- **`autoPlaceFoundDates`:** places a find in each of `[hint, ...hints]` – the first with the key `notes:i`, the others with `notes:i~<group>` (their own pool entry, named for the group; `usedTextMarks` finds them by value).
+- **Rules:** D017 – D020 new; the notes of D002 and D013 name the new forms.
+- **Tests:** new `t_datewords.py`; `t_dragdates.py` takes "Dedicated to the band, 1975." as its date without a group (its "Originally released 1975." is a release year now, D018); `register_golden.json` written anew (the dates carry `hints`; the dashboard's pool has May 2025 under Mix too, for "Mixed and mastered by Jane Roe in May 2025").
+
 
 ## Import 3.28.4 · 2026-10-24
 

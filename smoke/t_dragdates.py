@@ -12,7 +12,8 @@ orig = H.discogs_release
 
 def rel():
     d = orig()
-    d['notes'] = 'Originally released 1975.\n' + d['notes']
+    # (a year without a word naming its group; [3.28.5] "Originally released 1975" is a release year now and left out, D018)
+    d['notes'] = 'Dedicated to the band, 1975.\n' + d['notes']
     d['extraartists'].append({'name': 'Photo Guy', 'anv': '', 'role': 'Cover Art', 'tracks': '', 'id': 3006, 'join': ''})
     return d
 
