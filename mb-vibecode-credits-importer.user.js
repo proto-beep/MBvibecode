@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.28.0
+// @version      3.28.3
 // @date         2026-10-23
-// @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
+// @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
 // @description:es Panel de importación en el editor de relaciones de la publicación: revisa los créditos de la publicación de Discogs o del álbum de Bandcamp enlazados (o de un texto pegado), asigna artistas mediante enlaces o nombres, elige roles, nivel y pistas y prepáralos como relaciones. El envío («Enter edit») siempre lo haces tú.
 // @description:fr Tableau d'import dans l'éditeur de relations de la parution : vérifiez les crédits de la parution Discogs ou de l'album Bandcamp liés (ou d'un texte collé), associez les artistes via leurs liens ou leurs noms, choisissez rôles, niveau et pistes et préparez-les comme relations. L'envoi (« Enter edit ») reste toujours à vous.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.28.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -111,7 +111,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "No source loaded yet",
       "source.pick": "Choose a linked source …",
-      "source.other": "Other source: Discogs release (URL or ID) or Bandcamp album URL",
+      "source.other": "Other source: Discogs release (URL or ID) or Bandcamp album or track URL",
       "source.load": "Load",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text.",
@@ -123,7 +123,7 @@
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
-      "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album URL",
+      "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album or track URL",
       "supp.urlLoad": "Supplement",
       "supp.sameAsLoaded": "That is the source loaded already.",
       "supp.textTitle": "Supplement the loaded source with a pasted text (booklet, liner notes …)",
@@ -183,11 +183,11 @@
       "srcorder.up": "{src} up",
       "srcorder.down": "{src} down",
       "srcorder.hint": "The first source in the list that the release links to is loaded (digital: all its media are “Digital Media”). A source you choose for a release yourself is remembered and comes first.",
-      "bc.tracks": "Read the credits of the track pages too",
+      "bc.tracks": "Read the credits of the Bandcamp track pages too",
       "bc.tracksTitle": "One request to Bandcamp per track; credits there count only for their track",
-      "bc.testPh": "Bandcamp album URL to test",
+      "bc.testPh": "Bandcamp album or track URL to test",
       "bc.test": "Test page",
-      "bc.testBadUrl": "That is no Bandcamp album URL (https://artist.bandcamp.com/album/name).",
+      "bc.testBadUrl": "That is no Bandcamp album or track URL (https://artist.bandcamp.com/album/name, …/track/name).",
       "bc.testRunning": "Loading the page …",
       "bc.testOk": "Read: “{title}”, {n} tracks, {lines} lines of credits, {pages} track pages (via {via}).",
       "err.bandcampData": "No album data found on {url}.",
@@ -478,7 +478,7 @@
       "msg.tracksDiffer": "{src} differs from the MusicBrainz release: {what}{list}. Tracks are matched in order – check the track selection of recording and work relationships.",
       "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
-      "msg.badDiscogsId": "No Discogs release or Bandcamp album recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
+      "msg.badDiscogsId": "No Discogs release or Bandcamp album or track recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
       "msg.badMbid": "No MBID recognized. Paste the URL of an MB artist page or an MBID.",
       "msg.notArtist": "This MBID does not belong to an artist.",
       "msg.editorNotReady": "The relationship editor is not ready yet. Wait until the page has fully loaded and try again.",
@@ -661,7 +661,7 @@
       "conn.kind.links": "Links only",
       "conn.X001": "Reads the release, its tracks, works and relationships (web service, relationship editor), searches artists, labels, places and areas, stages relationships in the relationship editor and prefills MusicBrainz’s forms for new entries – it never submits.",
       "conn.X002": "Reads the linked Discogs release (credits, companies, notes, tracks) and artists’ aliases through Discogs’ API; the companion shows the release page.",
-      "conn.X003": "Reads the linked album page and, when switched on, its track pages (credits, “about” text, tracks); the companion shows them.",
+      "conn.X003": "Reads the linked album page (or track page) and, when switched on, the album’s track pages (credits, “about” text, tracks); the companion shows them.",
       "conn.X004.name": "Pasted text",
       "conn.X004": "A credits text you paste (booklet, liner notes, a list of musicians) – nothing is fetched.",
       "conn.X005": "Adds “Edit relationships with Credits Importer” to Harmony’s “Release Actions”; after “Enter edit & import credits” the relationship editor opens there in a background tab.",
@@ -1296,6 +1296,9 @@
       "sync.keepMarks": "Keep marks",
       "sync.keepMarksTitle": "Show the import marks on Discogs and Bandcamp also after the relationship editor is closed – the last state of the release",
       "dgStatus.hover": "rest the pointer on it: its row in the dashboard",
+      "textMark.dateMatrix": "Credits Importer: “{date}” is in the date matrix",
+      "textMark.dateRow": "Credits Importer: “{date}” is the date of a row",
+      "textMark.tracks": "Credits Importer: the track group “{name}” is in the date matrix",
       "log.srcOff": "{site}: {name} – {role} switched off (“Skip”)",
       "log.srcOn": "{site}: {name} – {role} switched on again",
       "log.clickToggle": "A click on a mark switches the credit: {state}",
@@ -1583,7 +1586,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "Noch keine Quelle geladen",
       "source.pick": "Verknüpfte Quelle wählen …",
-      "source.other": "Andere Quelle: Discogs-Release (URL oder ID) oder Bandcamp-Album-URL",
+      "source.other": "Andere Quelle: Discogs-Release (URL oder ID) oder Bandcamp-Album- oder -Track-URL",
       "source.load": "Laden",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "Dieses Release ist noch nicht mit Discogs oder Bandcamp verknüpft. Gib oben eine URL ein oder füge einen Text ein.",
@@ -1595,7 +1598,7 @@
       "log.aboutOn": "„about“-Text wieder aufgenommen (Zeilen zurück: {rows}, Daten zurück: {dates})",
       "supp.with": "Ergänzen mit",
       "supp.text": "Text …",
-      "supp.urlPh": "oder eine andere: Discogs-Release (URL oder ID) oder Bandcamp-Album-URL",
+      "supp.urlPh": "oder eine andere: Discogs-Release (URL oder ID) oder Bandcamp-Album- oder -Track-URL",
       "supp.urlLoad": "Ergänzen",
       "supp.sameAsLoaded": "Das ist schon die geladene Quelle.",
       "supp.textTitle": "Die geladene Quelle mit einem eingefügten Text ergänzen (Booklet, Liner Notes …)",
@@ -1655,11 +1658,11 @@
       "srcorder.up": "{src} nach oben",
       "srcorder.down": "{src} nach unten",
       "srcorder.hint": "Geladen wird die erste Quelle der Liste, mit der das Release verknüpft ist (digital: alle Medien „Digital Media“). Eine Quelle, die du für ein Release selbst wählst, wird gemerkt und hat Vorrang.",
-      "bc.tracks": "Credits der Track-Seiten mitlesen",
+      "bc.tracks": "Credits der Bandcamp-Track-Seiten mitlesen",
       "bc.tracksTitle": "Eine Anfrage an Bandcamp pro Track; Credits dort gelten nur für ihren Track",
-      "bc.testPh": "Bandcamp-Album-URL zum Testen",
+      "bc.testPh": "Bandcamp-Album- oder -Track-URL zum Testen",
       "bc.test": "Seite testen",
-      "bc.testBadUrl": "Das ist keine Bandcamp-Album-URL (https://artist.bandcamp.com/album/name).",
+      "bc.testBadUrl": "Das ist keine Bandcamp-Album- oder -Track-URL (https://artist.bandcamp.com/album/name, …/track/name).",
       "bc.testRunning": "Seite wird geladen …",
       "bc.testOk": "Gelesen: „{title}“, {n} Tracks, {lines} Zeilen Credits, {pages} Track-Seiten (über {via}).",
       "err.bandcampData": "Keine Album-Daten gefunden auf {url}.",
@@ -1950,7 +1953,7 @@
       "msg.tracksDiffer": "{src} unterscheidet sich vom MusicBrainz-Release: {what}{list}. Die Tracks werden der Reihe nach zugeordnet – prüfe bei Recording- und Werk-Beziehungen die Trackauswahl.",
       "msg.noCredits": "Auf {src} sind für dieses Release keine Credits eingetragen. Du kannst unten Einträge manuell anlegen.",
       "msg.confirmDiscard": "Die aktuelle Auswahl im Dashboard wird verworfen. Fortfahren?",
-      "msg.badDiscogsId": "Kein Discogs-Release und kein Bandcamp-Album erkannt. Beispiele: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
+      "msg.badDiscogsId": "Kein Discogs-Release und kein Bandcamp-Album oder -Track erkannt. Beispiele: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
       "msg.badMbid": "Keine MBID erkannt. Füge die URL einer MB-Artist-Seite oder die MBID ein.",
       "msg.notArtist": "Diese MBID gehört nicht zu einem Artist.",
       "msg.editorNotReady": "Der Beziehungseditor ist noch nicht bereit. Warte, bis die Seite vollständig geladen ist, und versuche es erneut.",
@@ -2133,7 +2136,7 @@
       "conn.kind.links": "Nur Links",
       "conn.X001": "Liest das Release, seine Tracks, Werke und Beziehungen (Web-Service, Beziehungs-Editor), sucht Artists, Labels, Orte und Gebiete, merkt Beziehungen im Beziehungs-Editor vor und füllt MusicBrainz’ Formulare für neue Einträge vor – es schickt nie ab.",
       "conn.X002": "Liest das verknüpfte Discogs-Release (Credits, Firmen, Notizen, Tracks) und die Aliasse der Artists über Discogs’ API; der Companion zeigt die Release-Seite.",
-      "conn.X003": "Liest die verknüpfte Albumseite und, wenn eingeschaltet, ihre Track-Seiten (Credits, „about“-Text, Tracks); der Companion zeigt sie.",
+      "conn.X003": "Liest die verknüpfte Albumseite (oder Track-Seite) und, wenn eingeschaltet, die Track-Seiten des Albums (Credits, „about“-Text, Tracks); der Companion zeigt sie.",
       "conn.X004.name": "Eingefügter Text",
       "conn.X004": "Ein Credits-Text, den du einfügst (Booklet, Liner Notes, eine Liste der Musiker) – es wird nichts abgerufen.",
       "conn.X005": "Fügt Harmonys „Release Actions“ „Edit relationships with Credits Importer“ hinzu; nach „Enter edit & Credits importieren“ öffnet sich dort der Beziehungs-Editor in einem Hintergrund-Tab.",
@@ -3042,7 +3045,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "Aún no se ha cargado ninguna fuente",
       "source.pick": "Elige una fuente enlazada…",
-      "source.other": "Otra fuente: publicación de Discogs (URL o ID) o URL de un álbum de Bandcamp",
+      "source.other": "Otra fuente: publicación de Discogs (URL o ID) o URL de un álbum o una pista de Bandcamp",
       "source.load": "Cargar",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "Esta publicación aún no está enlazada con Discogs ni Bandcamp. Introduce una URL arriba o pega un texto.",
@@ -3054,7 +3057,7 @@
       "log.aboutOn": "Texto «about» incluido de nuevo (filas de vuelta: {rows}, fechas de vuelta: {dates})",
       "supp.with": "Completar con",
       "supp.text": "Texto…",
-      "supp.urlPh": "u otra: publicación de Discogs (URL o ID) o URL de un álbum de Bandcamp",
+      "supp.urlPh": "u otra: publicación de Discogs (URL o ID) o URL de un álbum o una pista de Bandcamp",
       "supp.urlLoad": "Completar",
       "supp.sameAsLoaded": "Esa ya es la fuente cargada.",
       "supp.textTitle": "Completar la fuente cargada con un texto pegado (libreto, notas…)",
@@ -3114,11 +3117,11 @@
       "srcorder.up": "{src} arriba",
       "srcorder.down": "{src} abajo",
       "srcorder.hint": "Se carga la primera fuente de la lista enlazada con la publicación (digital: todos sus medios son «Digital Media»). Una fuente que eliges tú para una publicación se recuerda y tiene prioridad.",
-      "bc.tracks": "Leer también los créditos de las páginas de pista",
+      "bc.tracks": "Leer también los créditos de las páginas de pista de Bandcamp",
       "bc.tracksTitle": "Una petición a Bandcamp por pista; los créditos allí valen solo para su pista",
-      "bc.testPh": "URL de un álbum de Bandcamp para probar",
+      "bc.testPh": "URL de un álbum o una pista de Bandcamp para probar",
       "bc.test": "Probar página",
-      "bc.testBadUrl": "Eso no es una URL de álbum de Bandcamp (https://artist.bandcamp.com/album/name).",
+      "bc.testBadUrl": "Eso no es una URL de álbum ni de pista de Bandcamp (https://artist.bandcamp.com/album/name, …/track/name).",
       "bc.testRunning": "Cargando la página…",
       "bc.testOk": "Leído: «{title}», {n} pistas, {lines} líneas de créditos, {pages} páginas de pista (mediante {via}).",
       "err.bandcampData": "No se encontraron datos del álbum en {url}.",
@@ -3409,7 +3412,7 @@
       "msg.tracksDiffer": "{src} se diferencia de la publicación de MusicBrainz: {what}{list}. Las pistas se asignan por orden: revisa la selección de pistas en las relaciones de grabación y de obra.",
       "msg.noCredits": "{src} no tiene créditos para esta publicación. Puedes añadir entradas manualmente abajo.",
       "msg.confirmDiscard": "Se descartará la selección actual del panel. ¿Continuar?",
-      "msg.badDiscogsId": "No se reconoce ninguna publicación de Discogs ni álbum de Bandcamp. Ejemplos: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
+      "msg.badDiscogsId": "No se reconoce ninguna publicación de Discogs ni álbum o pista de Bandcamp. Ejemplos: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
       "msg.badMbid": "No se reconoce ningún MBID. Pega la URL de una página de artista de MB o un MBID.",
       "msg.notArtist": "Este MBID no pertenece a un artista.",
       "msg.editorNotReady": "El editor de relaciones aún no está listo. Espera a que la página termine de cargar e inténtalo de nuevo.",
@@ -3592,7 +3595,7 @@
       "conn.kind.links": "Solo enlaces",
       "conn.X001": "Lee la publicación, sus pistas, obras y relaciones (servicio web, editor de relaciones), busca artistas, sellos, lugares y zonas, prepara relaciones en el editor de relaciones y rellena los formularios de MusicBrainz para entradas nuevas; nunca envía nada.",
       "conn.X002": "Lee la publicación de Discogs enlazada (créditos, empresas, notas, pistas) y los alias de los artistas mediante la API de Discogs; el companion muestra la página de la publicación.",
-      "conn.X003": "Lee la página del álbum enlazado y, si está activado, sus páginas de pista (créditos, texto «about», pistas); el companion las muestra.",
+      "conn.X003": "Lee la página del álbum enlazado (o de la pista) y, si está activado, las páginas de pista del álbum (créditos, texto «about», pistas); el companion las muestra.",
       "conn.X004.name": "Texto pegado",
       "conn.X004": "Un texto de créditos que pegas (libreto, notas, una lista de músicos): no se descarga nada.",
       "conn.X005": "Añade «Edit relationships with Credits Importer» a las «Release Actions» de Harmony; tras «Enter edit e importar créditos» el editor de relaciones se abre allí en una pestaña en segundo plano.",
@@ -4501,7 +4504,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "Aucune source chargée pour l’instant",
       "source.pick": "Choisir une source liée…",
-      "source.other": "Autre source : parution Discogs (URL ou ID) ou URL d’un album Bandcamp",
+      "source.other": "Autre source : parution Discogs (URL ou ID) ou URL d’un album ou d’une piste Bandcamp",
       "source.load": "Charger",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "Cette parution n’est pas encore liée à Discogs ni à Bandcamp. Saisissez une URL ci-dessus ou collez un texte.",
@@ -4513,7 +4516,7 @@
       "log.aboutOn": "Texte « about » repris (lignes de retour : {rows}, dates de retour : {dates})",
       "supp.with": "Compléter avec",
       "supp.text": "Texte…",
-      "supp.urlPh": "ou une autre : parution Discogs (URL ou ID) ou URL d’un album Bandcamp",
+      "supp.urlPh": "ou une autre : parution Discogs (URL ou ID) ou URL d’un album ou d’une piste Bandcamp",
       "supp.urlLoad": "Compléter",
       "supp.sameAsLoaded": "C’est déjà la source chargée.",
       "supp.textTitle": "Compléter la source chargée avec un texte collé (livret, notes de pochette…)",
@@ -4573,11 +4576,11 @@
       "srcorder.up": "{src} vers le haut",
       "srcorder.down": "{src} vers le bas",
       "srcorder.hint": "La première source de la liste liée à la parution est chargée (numérique : tous ses supports sont « Digital Media »). Une source que vous choisissez vous-même pour une parution est retenue et passe en premier.",
-      "bc.tracks": "Lire aussi les crédits des pages de piste",
+      "bc.tracks": "Lire aussi les crédits des pages de piste Bandcamp",
       "bc.tracksTitle": "Une requête à Bandcamp par piste ; les crédits qui s’y trouvent ne valent que pour leur piste",
-      "bc.testPh": "URL d’un album Bandcamp à tester",
+      "bc.testPh": "URL d’un album ou d’une piste Bandcamp à tester",
       "bc.test": "Tester la page",
-      "bc.testBadUrl": "Ce n’est pas une URL d’album Bandcamp (https://artist.bandcamp.com/album/name).",
+      "bc.testBadUrl": "Ce n’est pas une URL d’album ou de piste Bandcamp (https://artist.bandcamp.com/album/name, …/track/name).",
       "bc.testRunning": "Chargement de la page…",
       "bc.testOk": "Lu : « {title} », {n} pistes, {lines} lignes de crédits, {pages} pages de piste (via {via}).",
       "err.bandcampData": "Aucune donnée d’album trouvée sur {url}.",
@@ -4868,7 +4871,7 @@
       "msg.tracksDiffer": "{src} diffère de la parution MusicBrainz : {what}{list}. Les pistes sont associées dans l’ordre – vérifiez la sélection des pistes des relations d’enregistrement et d’œuvre.",
       "msg.noCredits": "{src} n’a aucun crédit pour cette parution. Vous pouvez ajouter des entrées manuellement ci-dessous.",
       "msg.confirmDiscard": "La sélection actuelle du tableau sera abandonnée. Continuer ?",
-      "msg.badDiscogsId": "Aucune parution Discogs ni album Bandcamp reconnu. Exemples : https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name",
+      "msg.badDiscogsId": "Aucune parution Discogs ni album ou piste Bandcamp reconnu. Exemples : https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
       "msg.badMbid": "Aucun MBID reconnu. Collez l’URL d’une page d’artiste MB ou un MBID.",
       "msg.notArtist": "Ce MBID n’appartient pas à un artiste.",
       "msg.editorNotReady": "L’éditeur de relations n’est pas encore prêt. Attendez que la page soit entièrement chargée et réessayez.",
@@ -5051,7 +5054,7 @@
       "conn.kind.links": "Liens seulement",
       "conn.X001": "Lit la parution, ses pistes, œuvres et relations (service web, éditeur de relations), cherche artistes, labels, lieux et régions, prépare les relations dans l’éditeur de relations et préremplit les formulaires de MusicBrainz pour les nouvelles entrées – il ne soumet jamais.",
       "conn.X002": "Lit la parution Discogs liée (crédits, sociétés, notes, pistes) et les alias des artistes via l’API de Discogs ; le companion affiche la page de la parution.",
-      "conn.X003": "Lit la page de l’album lié et, si activé, ses pages de piste (crédits, texte « about », pistes) ; le companion les affiche.",
+      "conn.X003": "Lit la page de l’album lié (ou de la piste) et, si activé, les pages de piste de l’album (crédits, texte « about », pistes) ; le companion les affiche.",
       "conn.X004.name": "Texte collé",
       "conn.X004": "Un texte de crédits que vous collez (livret, notes, une liste de musiciens) – rien n’est téléchargé.",
       "conn.X005": "Ajoute « Edit relationships with Credits Importer » aux « Release Actions » d’Harmony ; après « Enter edit et importer les crédits », l’éditeur de relations s’y ouvre dans un onglet en arrière-plan.",
@@ -6025,7 +6028,7 @@
   }
 
   /** Roles typed in the dashboard (rule test, rows added by hand): the notation, engineer tasks split (S018). */
-  const parseRoles = (roleString) => parseRoleNotation(roleString).flatMap(splitEngineerTasks);
+  const parseRoles = (roleString) => parseRoleNotation(roleString).flatMap(splitEngineerTasks).flatMap(splitArtTasks);
 
   /**
    * [S018] An engineer with several tasks ("Engineer [Mix, Recording]") is one role per task – mix and recording –
@@ -6039,6 +6042,26 @@
     return tasks.map((t) => {
       const mods = [t, ...rest];
       return { raw: `${role.base} [${mods.join(', ')}]`, base: role.base, mods, splitFrom: role.raw };
+    });
+  }
+
+  /**
+   * [S033] (3.28.2) The tasks of an artwork credit joined by "and" in its one detail – "Artwork [Logo Og Kunst]" (Norwegian:
+   * logo and art) – or in a text's role ("Logo og kunst: X"): each task its own role as Discogs writes it in English (T040):
+   * design with the credit "logo" and artwork with the credit "art". Only when every part is such a task.
+   */
+  function splitArtTasks(role) {
+    if (!ruleOn('S033')) return [role];
+    const text = role.mods.length === 1 ? role.mods[0] : role.mods.length ? '' : role.base;
+    const parts = String(text || '').split(/\s+(?:og|och|and|und|et|y)\s+|\s*[&+]\s*/i).map((x) => x.trim()).filter(Boolean);
+    if (parts.length < 2) return [role];
+    const tasks = parts.map((x) => ART_TASK_INDEX.get(foldWord(x.replace(/\s+by$/i, ''))));
+    if (tasks.some((t) => !t) || new Set(tasks.map((t) => t.term)).size < 2) return [role];
+    // a detail: only of a role of the artwork ("Artwork", "Graphics", "Cover" …)
+    if (role.mods.length && !(mapRole(role.base, []).types || []).some((t) => ART_TYPES.includes(norm(t)))) return [role];
+    return uniq(tasks.map((t) => t.term)).map((term) => {
+      const p = parseRoleNotation(term)[0];
+      return { raw: p.raw, base: p.base, mods: p.mods, splitFrom: role.splitFrom || role.raw, splitBase: role.base, artTask: true };
     });
   }
 
@@ -6165,6 +6188,11 @@
     { id: 'S028', where: 'suggestByName, groupKindOf, matchHtmlInner (C038 …)', note: 'An area of a text ("Recorded by X in Xixon, Asturies, Spain", T037) is an entry of the kind "Area" with the larger areas after it; MusicBrainz is searched with its other names too ("Xixon" finds Gijón with the alias "Xixón") – only suggested, nothing assigned; there is no "Create" (areas are added by MusicBrainz\'s area editors). Its type: recorded in, mixed in (recording) or mastered in (release) (3.22.0); produced in, remixed in, engineered in, and the area each suggestion is part of, read from MusicBrainz ("City, Asturias"; 3.22.2)' },
     { id: 'S029', where: 'bandPageName, ownPage, linkBand, bandPageInfo, suggestByName', note: 'A Bandcamp album on another account\'s page – mostly a label\'s ("Grabaciones Autobombo" with an album of Yunclas): the name of the page (its "data-band", else "og:site_name") is not the album\'s artist (case, accents and "The" do not count; "Jane Roe & Friends" on Jane Roe\'s page is her own) – the page is no link of the artist, he is searched by name, the entry says whose page it is and names MusicBrainz\'s label with that page. People not found through their own link (Discogs, Bandcamp) get the same-named MusicBrainz entries as suggestions; an artist of the release\'s artist credit with that name comes first, marked "release artist" – only suggested (3.22.1)' },
     { id: 'S030', where: 'trackFit, titlesFit, loadRelease, chooseLink (TITLE_SMALL_WORDS)', note: 'Every import compares the tracks of the source with those of the MusicBrainz release: their number and their titles position by position (T038: case, accents, punctuation, notes in brackets, "feat. …" and small words do not count; a title fits when it has the same words, is in the other, is one letter off or shares more than half of the words of the shorter one; different numbers never). Different numbers or less than 80 % fitting titles: a yellow warning with what differs (the titles in the message). In the dialog of several linked releases each gets it, and the most data is chosen among those whose tracks fit (3.24.1)' },
+    { id: 'S031', where: 'sourceCreditFor, syncSourceCredits', note: 'A name that differs from MusicBrainz\'s only in its case ("Voices Of Wonder" for Voices of Wonder, "VALFAR" for Valfar) gets no "credited as": MusicBrainz\'s spelling is used, for the name at the source and for a Discogs "credited as" (ANV). Typed in by hand, it stays (3.28.2)' },
+    { id: 'S032', where: 'mapRole, repeatedDetails, roleCreditFor (ROLE_TERMS)', note: 'A role in Norwegian, Swedish or Danish (T039) – in a Discogs bracket that names the role itself ("Mixed By [Miksa Av]", "Graphics [Grafisk Utforming]", "Producer [Produsert Av]", "Mastered By [Mastering Av]") or as the role of a text ("Miksa av: X") – is a translation: mapped as its English term, no role credit (3.28.2)' },
+    { id: 'S033', where: 'splitArtTasks, parseRoles, groupCredits (ART_TASKS)', note: 'The tasks of an artwork credit joined by "and" ("Artwork [Logo Og Kunst]" – Norwegian for logo and art –, "Logo og kunst: X", "Logo and Art") each become their own role as Discogs writes it in English (T040): design with the credit "logo" and artwork with the credit "art". Only when every part is such a task; the row says the role as written at the source (3.28.2)' },
+    { id: 'S034', where: 'roleCreditFor, caseCredit', note: 'The kind of a voice is written in lower case in its role credit ("Vocals [Screams]" → screams, "Vocals [Clean]" → clean), also words MusicBrainz does not know (3.28.2)' },
+    { id: 'S035', where: 'instrumentCandidates, headNounCands, byHeadNoun, roleCreditFor', note: 'An instrument MusicBrainz does not have under its whole name (two to four words) is looked for by its last word ("wood flutes" → flute, after every other candidate); found only that way, the whole wording is its role credit, in lower case ("wood flutes"). In texts not for a name-like phrase ("John Bass") (3.28.2)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -6595,6 +6623,10 @@
       show: () => ({ pairs: [['particles', TEXT_AREA_PARTICLE], ['no area', TEXT_NOT_AREA]] }) },
     { id: 'T038', where: 'TITLE_SMALL_WORDS, TITLE_NOTE, titleWordsOf', note: 'Track titles compared with MusicBrainz\'s (3.24.1, S030): small words of English, German, Spanish, French, Italian, Portuguese and Dutch are left out ("The Song of the Sea" = "Song of Sea"), so are notes in brackets ("(Remastered)", "[Live]", "(feat. X)")',
       show: () => ({ pairs: [['small words', [...TITLE_SMALL_WORDS].join(' · ')], ['notes', TITLE_NOTE]] }) },
+    { id: 'T039', where: 'ROLE_TERMS, ROLE_INDEX, foldWord', note: 'All sources (3.28.2): roles in Norwegian, Swedish and Danish, each spelling with its language (word@no, word@sv, word@da; the search field filters "@no") → the English role the register maps; in a Discogs bracket or as a role of a text, a translation gets no role credit (S032)',
+      show: () => ({ pairs: ROLE_TERMS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
+    { id: 'T040', where: 'ART_TASKS, ART_TASK_INDEX, splitArtTasks', note: 'All sources (3.28.2): the tasks of an artwork credit that "and" (og, och, und, et, y, &, +) joins, with the role each becomes (S033)',
+      show: () => ({ pairs: ART_TASKS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
@@ -6634,6 +6666,8 @@
     'flugel-horn': ['flugelhorn'],
     'sax': ['saxophone'],
     'tenor sax': ['tenor saxophone'],
+    // [3.28.2] not a drum set: with S035 "Steel Drums" would otherwise be found by its last word
+    'steel drum': ['steelpan'], 'steel drums': ['steelpan'], 'steel pan': ['steelpan'], 'steel pans': ['steelpan'],
     'alto sax': ['alto saxophone'],
     'baritone sax': ['baritone saxophone'],
     'soprano sax': ['soprano saxophone'],
@@ -6785,6 +6819,36 @@
     ['Strings', 'Streicher@de; cuerdas@es; cordes@fr'],
     ['Electronics', 'Elektronik@de; electrónica@es; électronique@fr'],
   ];
+  // [T039] All sources (3.28.2): roles in Norwegian, Swedish and Danish (word@no, word@sv, word@da) – in the brackets of
+  // Discogs ("Mixed By [Miksa Av]", "Graphics [Grafisk Utforming]") and as the role of a text ("Miksa av: X"). The English
+  // term is what the register maps; a translation names the role itself and gets no role credit (S032). Words that are
+  // also English (Design, Illustration, Logo …) are not here.
+  const ROLE_TERMS = [
+    ['Mixed By', 'Miksa av@no; Mikset av@no; Miksing@no; Miksing av@no; Mixad av@sv; Mixning@sv; Mixning av@sv; Mixet af@da; Mixning af@da'],
+    ['Mastered By', 'Mastering av@no,sv; Mastra av@no; Mastret av@no; Mastrad av@sv; Mastring@sv; Mastering af@da; Mastereret af@da'],
+    ['Producer', 'Produsert av@no; Produsent@no; Produksjon@no; Producerad av@sv; Producent@sv,da; Produktion@sv,da; Produceret af@da'],
+    ['Recorded By', 'Innspilt av@no; Innspelt av@no; Spilt inn av@no; Inspelad av@sv; Inspelning@sv; Indspillet af@da; Indspilning@da'],
+    ['Engineer', 'Lydtekniker@no,da; Tekniker@no,sv,da; Ljudtekniker@sv'],
+    ['Graphic Design', 'Grafisk utforming@no; Grafisk design@no,sv,da; Grafisk formgivning@no,sv; Grafisk tilrettelæggelse@da; Grafikk@no'],
+    ['Design', 'Utforming@no; Formgivning@no,sv'],
+    ['Photography By', 'Foto@no,sv,da; Fotografi@no,sv,da; Fotografert av@no; Fotograferad av@sv; Fotograferet af@da'],
+    ['Artwork', 'Kunst@no,da; Konst@sv; Omslagskunst@no; Omslag@no,sv'],
+    ['Music By', 'Musikk av@no; Musikk@no; Musik av@sv; Musik af@da'],
+    ['Lyrics By', 'Tekst av@no; Tekster av@no; Text av@sv; Texter av@sv; Tekst af@da; Tekster af@da'],
+    ['Arranged By', 'Arrangert av@no; Arrangerad av@sv; Arrangeret af@da'],
+    ['Vocals', 'Vokal@no,sv,da; Sang@no,da; Sång@sv'],
+  ];
+  // [T040] All sources (3.28.2): the tasks of an artwork credit joined by "and" ("Artwork [Logo Og Kunst]" – Norwegian for
+  // logo and art): each becomes its own role, as Discogs writes it in English (S033); the words in their languages
+  const ART_TASKS = [
+    ['Design [Logo]', 'logo@en,no,sv,da; logos@en; logoer@no,da; logotyp@sv; logotype@en'],
+    ['Artwork [Art]', 'art@en; kunst@no,da; konst@sv'],
+    ['Artwork', 'artwork@en'],
+    ['Design', 'design@en,no,sv,da'],
+    ['Photography By', 'photography@en; photos@en; foto@no,sv,da; fotografi@no,sv,da'],
+    ['Illustration', 'illustration@en,sv,da; illustrations@en; illustrasjon@no; illustrasjoner@no; illustrationer@sv,da'],
+    ['Layout', 'layout@en,no,sv,da'],
+  ];
   /** [T034] A spelling as compared: lower case, without accents, ß as ss, ’ as '. */
   const foldWord = (t) => norm(t).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss').replace(/[’`]/g, "'");
   const FOREIGN_INDEX = (() => {
@@ -6797,6 +6861,19 @@
     }
     return map;
   })();
+  /** [T039, T040] The same index for a table of [English term, 'word@lang; …']. */
+  const termIndex = (table) => {
+    const map = new Map();
+    for (const [term, cell] of table) {
+      for (const part of cell.split(/\s*;\s*/)) {
+        const m = part.match(/^(.+?)@([a-z]{2}(?:,[a-z]{2})*)$/);
+        if (m) map.set(foldWord(m[1]), { term, word: m[1], langs: m[2].split(',') });
+      }
+    }
+    return map;
+  };
+  const ROLE_INDEX = termIndex(ROLE_TERMS);
+  const ART_TASK_INDEX = termIndex(ART_TASKS);
 
   // [T011] Texts (3.6.0): words that name a kind of an instrument and share its noun; not "bass" ("bass & electric
   // guitar" are two)
@@ -7011,7 +7088,7 @@
 
   // --- 2e. Applying the rules ------------------------------------------------------------------------------------------
 
-  function instrumentCandidates(base, mods) {
+  function instrumentCandidates(base, mods, { head = true } = {}) {
     const b = norm(base);
     const out = [];
     const push = (x) => {
@@ -7029,8 +7106,30 @@
     if (/[^s]s$/.test(b)) aliasesFor(b.slice(0, -1)).forEach(push);
     push(b);
     if (b.length > 3 && b.endsWith('s')) push(b.slice(0, -1));
+    // [S035] (3.28.2) after everything else: the last word of an instrument MusicBrainz does not have ("wood flutes" → flute)
+    if (head) headNounCands(b).forEach(push);
     return out;
   }
+
+  /**
+   * [S035] The candidates from the last word of an instrument of two to four words: first the words before it with the
+   * last word's other spellings ("soprano sax" → soprano saxophone), then the last word alone ("wood flutes" → flutes,
+   * flute; with bare: false not); none for one word or with the rule off. What is found only by the last word alone keeps
+   * the whole wording as its role credit.
+   */
+  function headNounCands(base, { bare = true } = {}) {
+    const words = norm(base).split(' ').filter(Boolean);
+    if (!ruleOn('S035') || words.length < 2 || words.length > 4) return [];
+    const last = words[words.length - 1];
+    if (last.length < 3 || /^(by|and|und|et|y)$/.test(last)) return [];
+    const one = last.length > 3 && last.endsWith('s') ? last.slice(0, -1) : '';
+    const spellings = uniq([...aliasesFor(last), last, ...(one ? [...aliasesFor(one), one] : [])].map(norm));
+    const before = words.slice(0, -1).join(' ');
+    return uniq([...spellings.filter((x) => x !== last && x !== one).map((x) => `${before} ${x}`), ...(bare ? spellings : [])]);
+  }
+  /** [S035] Whether an instrument was found only by the last word of the role alone ("flute" for "Wood Flutes"). */
+  const byHeadNoun = (base, primary, mods = []) => !!norm(primary) && headNounCands(base).includes(norm(primary))
+    && !headNounCands(base, { bare: false }).includes(norm(primary)) && !instrumentCandidates(base, mods || [], { head: false }).includes(norm(primary));
 
   /** Wording rule for a row: its role and details (checkbox details left out), in either order. */
   function wordingRuleFor(row) {
@@ -7086,7 +7185,8 @@
   // [S003]
   function mapRole(baseIn, modsIn, { noTranslation = false } = {}) {
     // [S025, T034] a German, Spanish or French instrument or voice: mapped as its English term, without role credit
-    const tr0 = ruleOn('S025') && !noTranslation ? FOREIGN_INDEX.get(foldWord(baseIn)) : null;
+    // [S032, T039] (3.28.2) a role in Norwegian, Swedish or Danish ("Miksa av", "Produsert av"): the same
+    const tr0 = !noTranslation ? (ruleOn('S025') && FOREIGN_INDEX.get(foldWord(baseIn))) || (ruleOn('S032') && ROLE_INDEX.get(foldWord(baseIn))) || null : null;
     if (tr0 && foldWord(tr0.term) !== foldWord(baseIn)) {
       return { ...mapRole(tr0.term, modsIn, { noTranslation: true }), base: String(baseIn || '').trim(), translated: tr0.word, translatedBase: tr0.term, langs: tr0.langs };
     }
@@ -7214,8 +7314,10 @@
 
   /** Applies the word rule to a credit text, keeping separators and brackets. */
   // [S011] which words stay capitalised (instrument models) and which are written in lower case
-  function caseCredit(text, vocab = { lower: new Set(), proper: new Map() }) {
-    return String(text || '').replace(/[^\s,\[\]()/]+/g, (w) => caseWord(w, vocab));
+  function caseCredit(text, vocab = { lower: new Set(), proper: new Map() }, { lowerUnknown = false } = {}) {
+    // [S034, S035] (3.28.2) lowerUnknown: also the words MusicBrainz does not know are written in lower case (only its
+    // proper names and models with digits keep their capitals)
+    return String(text || '').replace(/[^\s,\[\]()/]+/g, (w) => (lowerUnknown && !/\d/.test(w) && !vocab.proper.has(w.toLowerCase()) ? w.toLowerCase() : caseWord(w, vocab)));
   }
 
   /**
@@ -8322,12 +8424,18 @@
   // with a link (its Bandcamp page); everything else is found by name, as suggestions.
 
   const BANDCAMP = (() => {
-    const ALBUM_RE = /^https?:\/\/([a-z0-9-]+\.bandcamp\.com)\/album\/([^/?#\s]+)/i;
-    /** "https://band.bandcamp.com/album/name?x" → "https://band.bandcamp.com/album/name" ('' if no album page). */
-    const albumUrl = (u) => {
-      const m = String(u || '').trim().match(ALBUM_RE);
-      return m ? `https://${m[1].toLowerCase()}/album/${m[2]}` : '';
+    // [3.28.1] an album page or a track page (a release of one track, collected item 55)
+    const PAGE_RE = /^https?:\/\/([a-z0-9-]+\.bandcamp\.com)\/(album|track)\/([^/?#\s]+)/i;
+    /**
+     * "https://band.bandcamp.com/album/name?x" → "https://band.bandcamp.com/album/name" ('' if no album page);
+     * [3.28.1] "https://band.bandcamp.com/track/name" the same (a release can be a single track page).
+     */
+    const pageUrl = (u) => {
+      const m = String(u || '').trim().match(PAGE_RE);
+      return m ? `https://${m[1].toLowerCase()}/${m[2].toLowerCase()}/${m[3]}` : '';
     };
+    /** [3.28.1] Whether the address is a track page (its credits are the release's own, no other track pages). */
+    const isTrackPage = (u) => /^https:\/\/[^/]+\/track\//.test(pageUrl(u));
     const bandUrl = (u) => {
       const m = String(u || '').match(/^https?:\/\/([a-z0-9-]+\.bandcamp\.com)/i);
       return m ? `https://${m[1].toLowerCase()}/` : '';
@@ -8501,28 +8609,30 @@
       /** A link is only taken when the name is spelled exactly as in MusicBrainz (else it is a suggestion). */
       strictNames: true,
       urlLinkType: null,
-      albumUrl,
+      pageUrl,
+      isTrackPage,
       pageData,
       toRelease,
       linerNotes,
       urlKey: bandUrl,
       bandPageName,
-      /** Album pages of Bandcamp a MusicBrainz release links to (any link type: purchase, streaming …). */
+      /** Album pages ([3.28.1] and track pages) of Bandcamp a MusicBrainz release links to (any link type: purchase, streaming …). */
       releaseLinks(relations) {
         const links = new Map();
         for (const r of relations || []) {
-          const u = r['target-type'] === 'url' && r.url && albumUrl(r.url.resource);
+          const u = r['target-type'] === 'url' && r.url && pageUrl(r.url.resource);
           if (u && !links.has(u)) links.set(u, { id: u, url: u });
         }
         return [...links.values()];
       },
-      parseReleaseId: albumUrl,
+      parseReleaseId: pageUrl,
       async release(id, ctx) {
         const html = await ctx.httpGet(id);
         const data = pageData(html);
         if (!data || !data.current) throw new Error(tr('err.bandcampData', { url: id }));
         const trackCredits = [];
-        if (ctx.settings.bandcampTracks) {
+        // [3.28.1] a track page is its own only track: its credits are read once, as the release's (no second request)
+        if (ctx.settings.bandcampTracks && !isTrackPage(id)) {
           const origin = bandUrl(id).replace(/\/$/, '');
           for (const t of data.trackinfo || []) {
             let text = '';
@@ -8579,7 +8689,7 @@
       if (!c.role) continue;
       const anv = c.credited || '';
       const at = c.tracks || { all: true };
-      for (const role of splitEngineerTasks({ raw: c.role, base: c.base, mods: [...(c.details || [])] })) {
+      for (const role of splitEngineerTasks({ raw: c.role, base: c.base, mods: [...(c.details || [])] }).flatMap(splitArtTasks)) {
         const rKey = `${norm(role.raw)}|${norm(anv)}`;
         if (!group.roles.has(rKey)) {
           group.roles.set(rKey, { role, anv, allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
@@ -9951,14 +10061,21 @@
    * (without "all" and a final "by") has to be a form of the Discogs role or of the MB type ("[Cover Photo]" stays).
    */
   function repeatedDetails(row) {
-    if (!ruleOn('S019')) return [];
     const lt = currentLinkType(row);
+    // [S032] (3.28.2) a detail that names the role in Norwegian, Swedish or Danish ("Mixed By [Miksa Av]", "Graphics
+    // [Grafisk Utforming]", "Producer [Produsert Av]"): a translation of the role, no role credit
+    const translated = ruleOn('S032') && lt ? (row.mods || []).filter((m) => {
+      const t = ROLE_INDEX.get(foldWord(m));
+      return t && (mapRole(t.term, [], { noTranslation: true }).types || []).some((x) => norm(x) === norm(lt.name));
+    }) : [];
+    // [S033] a task of a joined artwork credit ("Artwork [Art]" from "Logo Og Kunst"): its detail is the credit
+    if (!ruleOn('S019') || row.artTask) return translated;
     const refs = [withoutBy(row.base), lt ? lt.name : '', ...(lt ? WORDING_SYNONYMS[norm(lt.name)] || [] : [])].filter(Boolean);
     const words = (t) => norm(t).split(/[\s\-/]+/).filter((w) => w && !['all', 'by', 'and', '&', 'the'].includes(w));
-    return (row.mods || []).filter((m) => {
+    return uniq([...translated, ...(row.mods || []).filter((m) => {
       const ws = words(m);
       return ws.length && ws.every((w) => refs.some((r) => sameWording(w, r)));
-    });
+    })]);
   }
 
   function roleCreditForInner(row) {
@@ -9969,19 +10086,25 @@
     const lt0 = currentLinkType(row);
     const art = lt0 && ART_TYPES.includes(norm(lt0.name));
     const raw = suggestRoleCredit(row.mods, [...(row.consumed || []), ...(row.flagMods || []), ...repeatedDetails(row)], row.primaryText);
-    const details = raw ? (!ruleOn('S011') ? raw : art ? norm(raw) : caseCredit(raw, vocab)) : ''; // [S011]
+    // [S034] (3.28.2) the kind of a voice is written in lower case ("Vocals [Screams]" → screams, "[Clean]" → clean)
+    const vocal = !!lt0 && norm(lt0.name) === 'vocal' && ruleOn('S034');
+    const details = raw ? (!ruleOn('S011') ? raw : art ? norm(raw) : caseCredit(raw, vocab, { lowerUnknown: vocal })) : ''; // [S011]
     const task = row.creditFromRole ? withoutBy(norm(row.creditFromRole)) : '';
     // [S009] No Discogs brackets in role credits: the details come before the role ("tour coordinator")
     if (task) return details ? (ruleOn('S009') ? `${details} ${task}` : `${task} [${details}]`) : task;
     if (details) return details;
-    // [S025] a translation ("Schlagzeug", "batería") gets no role credit: MusicBrainz's own name is used
-    if (row.translated && ruleOn('S025')) return '';
+    // [S025] a translation ("Schlagzeug", "batería") gets no role credit: MusicBrainz's own name is used; [S032] a role
+    // in Norwegian, Swedish or Danish ("Miksa av") neither
+    if (row.translated && (ruleOn('S025') || ruleOn('S032'))) return '';
     // Discogs "Bass" keeps "bass" as role credit, whichever bass it turns out to be
     const question = questionRuleFor(row); // [S005] [Q001 …]
     // (no credit that only repeats the instrument: "Bass Guitar" left as bass guitar)
     if (question) return norm(row.primaryText) === norm(question.credit) ? '' : question.credit;
     const lt = currentLinkType(row);
-    return wordingCredit(row.base, row.mods, row.primaryText, lt ? lt.name : '', vocab) || fixedRoleCredit(row.base, row.primaryText);
+    const wording = wordingCredit(row.base, row.mods, row.primaryText, lt ? lt.name : '', vocab);
+    // [S035] (3.28.2) an instrument found by the last word of the role: the whole wording, in lower case ("wood flutes")
+    if (wording && byHeadNoun(row.base, row.primaryText, row.mods)) return caseCredit(wording, vocab, { lowerUnknown: true });
+    return wording || fixedRoleCredit(row.base, row.primaryText);
   }
 
   /** After the type changed: tick matching attributes and, unless edited by hand, refresh the role credit. */
@@ -10066,11 +10189,20 @@
       if (/[\s-]by$/i.test(base0)) ids.push('S010');
       if ((lt && ART_TYPES.includes(norm(lt.name)) && remainingMods(row).length) || /[A-Z]/.test(row.roleCredit || '')) ids.push('S011');
       if (/'/.test(row.raw || '') && /’/.test(row.roleCredit || '')) ids.push('S012');
-      if (row.dSplitFrom) ids.push('S018');
+      // [3.28.3] a row of a joined artwork credit is S033, not S018 (engineer tasks)
+      if (row.dSplitFrom) ids.push(row.artTask ? 'S033' : 'S018');
       if (repeatedDetails(row).length) ids.push('S019');
+      // [3.28.3] the rules of 3.28.2 at their rows: a translation (S025 German/Spanish/French, S032 Nordic roles, also in
+      // a bracket), the kind of a voice in lower case, an instrument found by its last word
+      if (row.translated) ids.push(ROLE_INDEX.has(foldWord(row.translated)) ? 'S032' : 'S025');
+      if ((row.mods || []).some((x) => ROLE_INDEX.has(foldWord(x)))) ids.push('S032');
+      if (lt && norm(lt.name) === 'vocal' && remainingMods(row).length) ids.push('S034');
+      if (row.primaryText && byHeadNoun(row.base, row.primaryText, row.mods)) ids.push('S035');
     }
     const a = S.artists.get(row.artistKey);
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push('S008');
+    // [3.28.3] no "credited as", because only the case differs (S031)
+    if (a && a.mbid && !norm(row.credit) && !row.creditTouched && !row.manual && caseOnlyName(row, a)) ids.push('S031');
     return uniq(ids).filter((id) => /^U/.test(id) || ruleOn(id));
   }
 
@@ -10142,7 +10274,7 @@
     renderRulesBody();
   }
 
-  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null } = {}) {
+  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null, artTask = false } = {}) {
     let m;
     if (company) {
       const c = mapCompanyRole(raw);
@@ -10171,6 +10303,8 @@
       mods,
       consumed: m.consumed,
       anv,
+      // [S033] (3.28.2) one task of an artwork credit joined by "and": its detail is its role credit ("art"), no repetition
+      ...(artTask ? { artTask: true } : {}),
       roleCredit: '',
       roleCreditSuggest: '',
       roleCreditTouched: false,
@@ -11573,9 +11707,9 @@
     renderSource();
   }
 
-  /** [E2] What the script finds on a Bandcamp album page (to check that it can read Bandcamp in this browser). */
+  /** [E2] What the script finds on a Bandcamp album page ([3.28.1] or track page; to check that it can read Bandcamp in this browser). */
   async function testBandcampPage(input) {
-    const url = BANDCAMP.albumUrl(input);
+    const url = BANDCAMP.pageUrl(input);
     S.bcTest = { url: input, ok: false, text: tr('bc.testBadUrl') };
     if (url) {
       S.bcTest.text = tr('bc.testRunning');
@@ -11584,7 +11718,8 @@
         const data = BANDCAMP.pageData(await httpGet(url));
         if (!data || !data.current) throw new Error(tr('err.bandcampData', { url }));
         const lines = String(data.current.credits || '').split(/\r?\n/).filter((l) => l.trim()).length;
-        const pages = (data.trackinfo || []).filter((t) => t.title_link).length;
+        // [3.28.1] a track page has no other track pages to read
+        const pages = BANDCAMP.isTrackPage(url) ? 0 : (data.trackinfo || []).filter((t) => t.title_link).length;
         S.bcTest = { url: input, ok: true, text: tr('bc.testOk', { title: data.current.title || '?', n: (data.trackinfo || []).length, lines, pages, via: typeof GM_xmlhttpRequest === 'function' ? 'GM_xmlhttpRequest' : 'fetch' }) };
       } catch (e) {
         S.bcTest = { url: input, ok: false, text: e.message };
@@ -12135,7 +12270,7 @@
       for (const c of g.roles.values()) {
         const tracks = suppTracks(c);
         if (S.mediaSel && !c.allTracks && c.indexes.size && !tracks.length) continue;
-        const probe = makeRow('supp', { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv });
+        const probe = makeRow('supp', { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask });
         // [S026] a credit for a medium the release does not have is no supplement either
         const pm = mediumOfRow(probe);
         if (pm && mediumMissing(pm.kind)) continue;
@@ -12251,7 +12386,7 @@
   /** A row of the second source, built as the import builds rows (tracks from it, its mark). */
   function suppRow(artistKey, info, company) {
     const row = company ? makeRow(artistKey, { raw: info.r.role, company })
-      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv });
+      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask });
     row.dAllTracks = !!info.all;
     if (!company) {
       row.dSpec = info.c.specs.join(', ');
@@ -12681,12 +12816,17 @@
   function isKnownRole(phrase) {
     const p = parseRoleNotation(phrase)[0];
     if (!p || !p.base || /\d/.test(p.base) || p.base.split(' ').length > 6) return false;
+    // [S033] (3.28.2) "Logo og kunst": tasks of the artwork joined by "and"
+    if (splitArtTasks(p).length > 1) return true;
     const m = mapRole(p.base, p.mods);
     if (m.rule && m.rule !== 'R096' && !m.fallback) return true;
     const lt = typesFor('recording').find((l) => norm(l.name) === 'instrument');
     const root = lt ? primaryRootOf(lt) : null;
     // [3.21.2] a translation: the candidates of its English term
-    return !!root && uniq([...(m.primaryCands || []), ...instrumentCandidates(p.base, p.mods)]).some((c) => findChildAttr(root.id, c));
+    const hit = root ? uniq([...(m.primaryCands || []), ...instrumentCandidates(p.base, p.mods)]).find((c) => findChildAttr(root.id, c)) : null;
+    if (!hit) return false;
+    // [S035] found only by its last word: not a phrase that looks like a name ("John Bass", "Jane Harp")
+    return !(byHeadNoun(p.base, hit, p.mods) && /^\p{Lu}\S*(?:\s+\p{Lu}\S*)+$/u.test(String(p.base).trim()));
   }
 
   const isTextCompanyRole = (role) => TEXT_COMPANY_RE.test(norm(role)) && !!mapCompanyRole(role).rule;
@@ -12812,8 +12952,9 @@
         };
         S.artists.set(artist.key, artist);
         for (const c of g.roles.values()) {
-          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv });
+          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask });
           if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
+          if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
           row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
           // [3.21.4] "Translated By" in Bandcamp credits asks (Q007); [S026] a credit for a medium the release does not have
           if (source === BANDCAMP) askTranslation(row);
@@ -13876,9 +14017,20 @@
    * like Discogs' "(2)" or a trailing "*" left out), whenever it differs from the MusicBrainz name; empty if the same.
    */
   // [S008]
+  /** [S031] Whether the name at the source differs from MusicBrainz's only in its case ("VALFAR" for Valfar). */
+  function caseOnlyName(row, a) {
+    const shown = typo(String(row.anv || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim());
+    const mb = typo(String(a.mbName || '').trim());
+    return !!shown && !!mb && shown !== mb && shown.toLocaleLowerCase() === mb.toLocaleLowerCase();
+  }
+
   function sourceCreditFor(row, a) {
     const shown = String(row.anv || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim();
-    return shown && a.mbName && shown !== String(a.mbName).trim() ? typo(shown) : ''; // [S012]
+    const mb = String(a.mbName || '').trim();
+    // [S031] (3.28.2) only the case differs ("Voices Of Wonder" for Voices of Wonder, "VALFAR" for Valfar): MusicBrainz's
+    // spelling, no "credited as" (typed in by hand it stays)
+    if (shown && mb && ruleOn('S031') && typo(shown).toLocaleLowerCase() === typo(mb).toLocaleLowerCase()) return '';
+    return shown && mb && shown !== mb ? typo(shown) : ''; // [S012]
   }
 
   /** Applies sourceCreditFor to every row from Discogs whose credit was not edited by hand. */
@@ -14624,6 +14776,27 @@
       named = out.size > 0;
     }
     return named && out.size ? out : null;
+  }
+
+  /**
+   * [3.28.3] The track references of a text as written ("Tracks 1-4", "A1 to B2", "Side C") with where they are and
+   * their tracks – what tracksInText reads, one by one (for the companion's underlines, collected item 63).
+   */
+  function trackRefsIn(text) {
+    const src = String(text || '');
+    const tok = '[A-Za-z]?\\d+(?:[-.]\\d+)?';
+    const conn = '(?:-|–|—|to|bis|à|a|thru|through|,|&|and|und|y|et)';
+    const res = [new RegExp(`\\b(?:tracks?|titles?|titel|pistas?|morceaux|plages?|songs?|stücke?)\\s*:?\\s*${tok}(?:\\s*${conn}\\s*${tok})*`, 'gi'),
+      /\b[A-H]\d{1,2}\s*(?:-|–|—|to|bis)\s*[A-H]\d{1,2}\b/g, /\bside\s+[A-H]\b/gi];
+    const out = [];
+    for (const re of res) {
+      let m;
+      while ((m = re.exec(src))) {
+        const tracks = tracksInText(m[0]);
+        if (tracks && !out.some((o) => m.index < o.index + o.text.length && o.index < m.index + m[0].length)) out.push({ index: m.index, text: m[0], tracks });
+      }
+    }
+    return out.sort((a, b) => a.index - b.index);
   }
 
   /** [S016] Entries of "Companies, etc." named in a sentence (by their Discogs or MusicBrainz name). */
@@ -18871,7 +19044,7 @@
           // Credits on Discogs track lines: a status for each line (each track), with its targets for the release page
           let byPos = null;
           if ((row.dPositions || []).length && row.level !== 'skip') byPos = row.dPositions.map((pos) => ({ pos, ...ofTrack(pos) }));
-          items.push({ row: row.id, artistId: a.company ? null : a.dId, labelId: a.company ? a.dId : null, role: row.raw, base: row.base,
+          items.push({ row: row.id, artistId: a.company ? null : a.dId, labelId: a.company ? a.dId : null, role: row.raw, base: row.dSplitBase || row.base,
             positions: row.dPositions || [], status, unmapped: isUnmapped(row), mb, byPos, ...(row.srcOff ? { off: true } : {}) });
         }
       }
@@ -18879,10 +19052,69 @@
         'off', 'on', 'isOff', 'hover']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
       // [3.17.5] toggle: a click on a mark switches its credit; keepAfterClose: the marks stay after the editor is closed
-      toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items, labels,
+      // [3.28.3] the dates and track groups used, underlined by the companion (1.9.0) in the notes and texts
+      const texts = S.dgStatus ? usedTextMarks() : [];
+      toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items, labels, texts,
         targets: [...targetIndex.keys()], mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease,
         toggle: !!S.clickToggle, keepAfterClose: !!S.keepMarks });
     }, 800);
+  }
+
+  /**
+   * [3.28.3] The dates and track groups of the Discogs notes (on Bandcamp: of the credits and the "about" text) that the
+   * dashboard uses – a date in the date matrix or on a row (not skipped), a track group in the date matrix –, for the
+   * companion, which underlines them there in their colours (collected item 63): the text as written, its line (and which
+   * of the same lines, ln) and which one of the same text in that line (ni) – the line is found first, so a text that is
+   * also elsewhere on the page ("released …" above Bandcamp's credits) is not taken –, which one of the same text in its
+   * part (n, if the line is not found; as the companion reads it: lower case, single spaces), the part, a tooltip.
+   */
+  function usedTextMarks() {
+    const notes = String((S.release && S.release.notes) || '');
+    if (!notes.trim()) return [];
+    const m = dm();
+    const site = viewSite();
+    const aboutAt = S.release.aboutAt != null ? S.release.aboutAt : null;
+    const partOf = (i) => (site !== 'bandcamp' ? ['notes', 0, notes.length] : aboutAt != null && i >= aboutAt ? ['about', aboutAt, notes.length]
+      : ['credits', 0, aboutAt != null ? aboutAt : notes.length]);
+    const flat = (t) => String(t).toLowerCase().replace(/\s+/g, ' ');
+    const out = [];
+    const add = (kind, index, text, title) => {
+      if (out.some((o) => o.kind === kind && o.index === index)) return;
+      const [part, from, to] = partOf(index);
+      if (index >= to) return;
+      const needle = flat(text).trim();
+      const count = (hay, x) => {
+        let c = 0;
+        for (let k = hay.indexOf(x); k >= 0; k = hay.indexOf(x, k + x.length)) c++;
+        return c;
+      };
+      const ls = Math.max(from, notes.lastIndexOf('\n', index - 1) + 1);
+      const le = notes.indexOf('\n', index) < 0 ? to : Math.min(to, notes.indexOf('\n', index));
+      const line = notes.slice(ls, le).trim();
+      const ln = notes.slice(from, ls).split('\n').filter((l) => flat(l).trim() === flat(line).trim()).length;
+      out.push({ kind, index, part, text, line, ln, ni: count(flat(notes.slice(ls, index)).trimStart(), needle),
+        n: count(flat(notes.slice(from, index)).replace(/^ /, ''), needle), title });
+    };
+    const used = (g) => m.cells.some((c) => (c.tgs || []).includes(g.id));
+    dateFinds().notes.forEach((x, i) => {
+      if (S.aboutOff && fromAboutText(x)) return;
+      const value = formatDateValue(x.value);
+      const ids = S.datePool.filter((d) => d.found === `notes:${i}` || d.found === `notes:${i}:range`
+        || (String(d.found || '').startsWith('notes:') && formatDateValue(d) === value)).map((d) => d.id);
+      if (!ids.length) return;
+      const inMatrix = m.cells.some((c) => ids.includes(c.date) || ids.includes(c.lcd) || (c.alt || []).some((a) => ids.includes(a)));
+      const onRow = S.rows.some((r) => r.level !== 'skip' && r.date && ids.includes(r.date.poolId));
+      if (!inMatrix && !onRow) return;
+      add('date', x.index, x.text, tr(inMatrix ? 'textMark.dateMatrix' : 'textMark.dateRow', { date: x.text }));
+      // the track groups of its sentence, as far as the date matrix uses them
+      const at = notes.lastIndexOf(x.sentence, x.index);
+      if (at < 0) return;
+      for (const ref of trackRefsIn(x.sentence)) {
+        const g = S.trackPool.find((t) => sameTracks(new Set(t.tracks), ref.tracks));
+        if (g && used(g)) add('tracks', at + ref.index, ref.text, tr('textMark.tracks', { name: g.name }));
+      }
+    });
+    return out.sort((a, b) => a.index - b.index).map(({ index, ...rest }) => rest);
   }
 
   /** Ends a "create missing works one by one" run and offers to open the new works. */
@@ -19083,7 +19315,7 @@
       artistName: artist ? (artist.rawName || artist.name) : '',
       anv: row.anv || '',
       role: row.raw,
-      base: row.base,
+      base: row.dSplitBase || row.base,
       positions: row.dPositions,
       spec: row.dSpec,
     };
@@ -20585,7 +20817,7 @@
       case 'discogs-load': {
         // Another source: a Bandcamp album URL, else a Discogs release (URL or ID); remembered for this release
         const input = S.overlay.querySelector('[data-f="discogs-input"]');
-        const bc = BANDCAMP.albumUrl(input.value);
+        const bc = BANDCAMP.pageUrl(input.value);
         const source = bc ? BANDCAMP : DISCOGS;
         const id = bc || DISCOGS.parseReleaseId(input.value);
         if (id) {
@@ -20618,7 +20850,7 @@
       }
       case 'supp-url': {
         const input = S.overlay.querySelector('[data-f="supp-url"]');
-        const bc = BANDCAMP.albumUrl(input.value);
+        const bc = BANDCAMP.pageUrl(input.value);
         const source = bc ? BANDCAMP : DISCOGS;
         const id = bc || DISCOGS.parseReleaseId(input.value);
         if (!id) {
@@ -23060,6 +23292,9 @@
       .dci-set-resetall { align-self: flex-start; }
       .dci-set-pane { flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid #c9c4dd; border-radius: 0 4px 4px 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
       .dci-set-pane .dci-reset { margin: 0; }
+      /* [3.28.1] long texts of a switch wrap with the width of the settings (collected item 74); the box stays at the first line */
+      .dci-set-pane .dci-check { white-space: normal; align-items: baseline; max-width: 100%; }
+      .dci-set-pane .dci-check > input { flex: none; }
       @container (max-width: 560px) {
         .dci-set-wrap { flex-direction: column; gap: calc(var(--u, 1px) * 6); }
         .dci-set-side { flex-direction: row; flex-wrap: wrap; align-items: center; }
