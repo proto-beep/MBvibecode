@@ -2,8 +2,9 @@
 A) Every address of the script – its header (@match, @connect, @updateURL, @downloadURL, @homepageURL, @supportURL,
    @namespace) and every https:// address in its code – belongs to a connection of the list (by its hosts); a new site
    cannot be added to the script without the list.
-B) Each connection has an id of its own, its kind and a text of what the script does with it in all four languages; a
-   connection without a name of its own has one in the texts."""
+B) Each connection has an id of its own, its kind and a text of what the script does with it in English ([3.27.1] the
+   other languages may follow later – until then English shows; before: all four required); a connection without a name
+   of its own has one in the texts."""
 import json
 import os
 import re
@@ -61,6 +62,6 @@ results.append(len(hosts) >= 10 and not missing)
 ids = [c['id'] for c in conns]
 need = [f'conn.{c["id"]}' for c in conns] + [f'conn.{c["id"]}.name' for c in conns if not c['name']] + [f'conn.kind.{c["kind"]}' for c in conns]
 gaps = {lang: [k for k in need if k not in keys] for lang, keys in res['texts'].items()}
-print('B) Verbindungen:', ids, '| fehlende Texte:', {k: v for k, v in gaps.items() if v})
-results.append(len(ids) == len(set(ids)) and len(ids) >= 10 and not any(gaps.values()) and set(gaps) == {'en', 'de', 'es', 'fr'})
+print('B) Verbindungen:', ids, '| fehlende Texte (nur Englisch zählt):', {k: v for k, v in gaps.items() if v})
+results.append(len(ids) == len(set(ids)) and len(ids) >= 10 and not gaps['en'])
 print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)

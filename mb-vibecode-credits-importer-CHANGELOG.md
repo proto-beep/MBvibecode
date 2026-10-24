@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.27.0 | – |
+| 2026-10-24 | 3.22.1 – 3.27.1 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -81,6 +81,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.27.1
+
+#### Changed
+
+- **English first** (collected item 68; maintainer: "Meine Überlegung ist alle Texte die im Skript lesbar sind auf englisch zu speichern und bei bedarf mit einer anderen Sprache auszutauschen. Ich will mittelfristig die Sprachen nicht mit jeder neuen Aufgabe mit übersetzen sondern nur alle paar versionen. daher sollte einfach englisch angezeigt werden falls ein tooltip oder ähnliches noch nicht übersetzt wurden."): new texts are written in English; German, Spanish and French follow in a translation round every few versions, and until then the English text shows (the script already fell back to English for a missing text). Nothing changes in what you see today – every text is translated.
+- **No language list next to "Import credits …"** (collected item 67; maintainer: "außerdem kann das "Language" weg sobald das skript zum ersten mal in einer ausgewählten sprache gestartet wurde."): the language is asked once after the installation (3.26.0) and changed in ⚙ Settings → General.
+- **French:** a no-break space before ":", ";", "?" and "!" and inside « » in all texts (collected item 69; maintainer: "ziehe die alten nach.") – about 200 older texts had a plain space.
+
 
 ### Import 3.27.0 · milestone
 
