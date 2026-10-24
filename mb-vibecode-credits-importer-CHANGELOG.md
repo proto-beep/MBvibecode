@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.29.1 | 1.8.4 – 1.9.0 |
+| 2026-10-24 | 3.22.1 – 3.29.2 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -82,6 +82,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.29.2
+
+#### Added
+
+- **Colours for the levels** (collected item 79; maintainer: "bitte biete noch eine farbliche unterscheidung für recording/release/release group. eventuell farblich gleich im compact view als auch im vollen view wo man es einstellt"): the chosen level of a row is filled in its colour – recording blue, release green, release group ochre, work violet, skip grey –, the other levels are underlined in theirs; the compact line shows its level in the same colour. On by default.
+- **The level in the compact line switches by a click** (collected item 81; maintainer: "bitte erlaube in der compact version … auf das release zu klicken und alles was bei der jeweiligen rolle ist durchzuschalten (recording, release, rg, skip). dabei sollen sich die dates (recording/release) auch aktualisieren"): Recording → Release → Release group → Work (only the levels the row can have) → Skip → Recording …; the tooltip names the next one; a date of the date matrix follows as in the full row.
+- **⚙ Settings → Appearance** (maintainer: "vielleicht in einem reiter "Darstellung" alles was solche fragen betrifft sammeln?"): a new tab after General with the text size, window or page and Compact | Full (from General) and the colours of the levels – on or off, a colour of your own for each level; its ↺ sets them back.
 
 ### Import 3.29.1
 

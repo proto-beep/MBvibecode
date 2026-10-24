@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.29.1
+// @version      3.29.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.29.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.29.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -642,6 +642,10 @@
       "settings.title": "Settings",
       "settings.hint": "All settings in one place, by topic – the switches stay where they are too. Stored in this browser.",
       "settings.t.general": "General",
+      "settings.t.appearance": "Appearance",
+      "settings.levelColors": "Colours for the levels",
+      "settings.levelColorsTitle": "Recording, release, release group and work each in its own colour – in the rows and in the compact view",
+      "settings.levelColor": "Colour of the level “{level}”",
       "settings.t.sources": "Sources",
       "settings.t.discogs": "Discogs and Bandcamp view",
       "settings.t.works": "Works",
@@ -701,6 +705,7 @@
       "nav.settingsTitle": "The switches of the navigation: ⚙ Settings → Discogs and Bandcamp view",
       "log.viewSet": "View of the entries: {view}",
       "cl.openTitle": "Open this row to change it",
+      "cl.levelNext": "Level – a click switches to “{level}”",
       "cl.close": "compact",
       "cl.closeTitle": "Back to the compact line",
       "cl.noType": "no type",
@@ -14567,18 +14572,37 @@
     if (el) el.textContent = roleCreditHint(row);
   }
 
-  function levelCell(row) {
-    // [3.18.0] the works matrix skipped: no works level (taking the matrix again brings it back)
-    const off = (level) => (level === 'work' && S.worksSkip && row.level !== 'work' ? ` disabled title="${esc(tr('level.workSkipped'))}"` : '');
-    const btn = (level) => `<button type="button" data-act="level" data-level="${level}" aria-pressed="${row.level === level}"${off(level)}>${esc(tr(`level.${level}`))}</button>`;
+  /**
+   * The levels a row can have: those where MusicBrainz has its relationship type (no "Work" for producer or mix
+   * credits); `names` – the names of its types (one level only: the button says so).
+   */
+  function rowLevels(row) {
     const et = row.entityType || 'artist';
     const lt = currentLinkType(row);
-    // Only levels where MB has the row's relationship type (no "Work" for producer or mix credits)
     const names = uniq([...(lt ? [lt.name] : []), ...(row.types || [])]);
     const has = (level) => row.level === level || (names.length
       ? names.some((n) => levelsOfType(n, et).includes(level))
       : (level !== 'release_group' || (row.other && typesFor('release_group', et).length > 0)));
-    const levels = ['recording', 'release', 'release_group', 'work'].filter(has);
+    return { levels: ['recording', 'release', 'release_group', 'work'].filter(has), names };
+  }
+
+  /** [3.18.0] The works matrix skipped: no works level (taking the matrix again brings it back). */
+  const workLevelOff = (row, level) => level === 'work' && S.worksSkip && row.level !== 'work';
+
+  /**
+   * [3.29.2] The next level of a row in the compact view (item 81): its levels in the order of the full row, then
+   * "Skip", then from the start again.
+   */
+  function nextLevel(row) {
+    const list = [...rowLevels(row).levels.filter((l) => !workLevelOff(row, l)), 'skip'];
+    const i = list.indexOf(row.level);
+    return list[(i + 1) % list.length];
+  }
+
+  function levelCell(row) {
+    const off = (level) => (workLevelOff(row, level) ? ` disabled title="${esc(tr('level.workSkipped'))}"` : '');
+    const btn = (level) => `<button type="button" data-act="level" data-level="${level}" aria-pressed="${row.level === level}"${off(level)}>${esc(tr(`level.${level}`))}</button>`;
+    const { levels, names } = rowLevels(row);
     // [3.15.1] one level only (mastering: MusicBrainz has it on the release only) – the button says so on mouse-over
     const only = levels.length === 1 && names.length ? ` title="${esc(tr('level.onlyHere', { level: tr(`level.${levels[0]}`) }))}"` : '';
     return `<div class="dci-seg" role="group" aria-label="${esc(tr('th.level'))}"${only}>
@@ -16348,7 +16372,10 @@
       const a = S.artists.get(row.artistKey);
       if (row.credit && a && entryCredits(a).length > 1) parts.push(`<span class="dci-cl-as">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: row.credit }) }))}</span>`);
     }
-    parts.push(`<span class="dci-cl-level">${esc(tr(`level.${row.level}`))}</span>`);
+    // [3.29.2] the level a button: a click switches to the next one (item 81; the dates follow as in the full row)
+    const next = nextLevel(row);
+    parts.push(next === row.level ? `<span class="dci-cl-level" data-level="${row.level}">${esc(tr(`level.${row.level}`))}</span>`
+      : `<button type="button" class="dci-cl-level" data-act="level-next" data-level="${row.level}" data-next="${next}" title="${esc(tr('cl.levelNext', { level: tr(`level.${next}`) }))}">${esc(tr(`level.${row.level}`))}</button>`);
     if (row.level === 'recording' || row.level === 'release') parts.push(open('dci-cl-tracks', esc(tracksShort(row)), tr('cl.tracksTitle')));
     if (!skip && !(lt && lt.has_dates === false)) {
       const d = row.date;
@@ -20398,6 +20425,16 @@
           setLevel(row, btn.dataset.level);
         }
         break;
+      // [3.29.2] the level in the compact line: the next one (item 81); the focus stays on it
+      case 'level-next':
+        if (row) {
+          const next = nextLevel(row);
+          if (row.srcOff && next !== 'skip') creditOn(row);
+          setLevel(row, next);
+          const b = S.overlay.querySelector(`tr[data-row="${row.id}"] [data-act="level-next"]`);
+          if (b) b.focus({ preventScroll: true });
+        }
+        break;
       case 'scope':
         setScope(btn.dataset.scope);
         break;
@@ -21547,6 +21584,12 @@
   function onInput(e) {
     const el = e.target;
     const f = el.dataset && el.dataset.f;
+    // [3.29.2] a colour of a level shown while it is chosen (stored on "change")
+    if (el.dataset && el.dataset.set === 'level-color' && /^#[0-9a-f]{6}$/i.test(el.value) && LEVEL_PALETTE_DEFAULT[el.dataset.level]) {
+      S.levelPalette[el.dataset.level] = el.value.toLowerCase();
+      applyLevelColors();
+      return;
+    }
     if (f === 'tg-name' && S.trackForm) {
       S.trackForm.name = el.value;
       return;
@@ -22003,6 +22046,7 @@
     S.overlay = overlay;
     applyView();
     applyScale();
+    applyLevelColors();
     makeMovable(overlay.querySelector('.dci-panel'), '.dci-head', 'panel');
     applyPlacement();
     // Rows scrolled into view (keyboard, jumps) must not end up under the sticky date pool ([3.18.0] with the line
@@ -22137,13 +22181,20 @@
 
   // --- [3.16.0] The menu "Settings": all settings in one place, by topic (the switches stay where they are too) ----------
   // [3.25.0] tabs (collected item 42): "Texts" and "ⓘ Connections" (item 40) new
-  const SETTING_TOPICS = ['general', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections'];
+  // [3.29.2] "Appearance" new (item 79): text size, the place of the dashboard, the view and the colours of the levels
+  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
+  // [3.29.2] the colours of the levels (item 79): on by default; own colours in ⚙ Settings → Appearance
+  const LEVEL_COLORS_KEY = 'dci-level-colors';
+  const LEVEL_PALETTE_KEY = 'dci-level-palette';
+  const LEVEL_PALETTE_DEFAULT = { recording: '#2f6db5', release: '#2e8b57', release_group: '#b0700c', work: '#8a4f9e' };
+  const LEVEL_SKIP_COLOR = '#8b8898';
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
-    general: ['dci-lang', 'dci-scale', 'dci-place', VIEW_KEY, 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
+    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -22154,6 +22205,35 @@
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
+  S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
+  S.levelPalette = levelPaletteRead();
+
+  /** The stored colours of the levels (each a "#rrggbb"; the others as by default). */
+  function levelPaletteRead() {
+    const stored = readJson('localStorage', LEVEL_PALETTE_KEY, null) || {};
+    return Object.fromEntries(Object.entries(LEVEL_PALETTE_DEFAULT).map(([k, d]) => [k, /^#[0-9a-f]{6}$/i.test(stored[k] || '') ? stored[k].toLowerCase() : d]));
+  }
+
+  /** Dark or light text on a colour (by its relative luminance). */
+  function inkOn(hex) {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.36 ? '#1f1d29' : '#ffffff';
+  }
+
+  /** [3.29.2] The colours of the levels on the dashboard (CSS variables; the class "dci-lvlc" while they are on). */
+  function applyLevelColors() {
+    if (!S.overlay) return;
+    S.overlay.classList.toggle('dci-lvlc', !!S.levelColors);
+    Object.entries({ ...S.levelPalette, skip: LEVEL_SKIP_COLOR }).forEach(([level, c]) => {
+      S.overlay.style.setProperty(`--dci-lvl-${level}`, c);
+      S.overlay.style.setProperty(`--dci-lvl-${level}-ink`, inkOn(c));
+    });
+  }
+
+  function saveLevelPalette() {
+    const own = Object.fromEntries(Object.entries(S.levelPalette).filter(([k, c]) => c !== LEVEL_PALETTE_DEFAULT[k]));
+    writeJson('localStorage', LEVEL_PALETTE_KEY, Object.keys(own).length ? own : null);
+  }
   /** Settings the menu shares with switches elsewhere in the dashboard (data-f → the value they show). */
   const SHARED_SWITCHES = {
     'fill-credits': () => S.fillCredits, 'stage-cap': () => S.capOn, 'bc-tracks': () => S.bcTracks, 'dm-auto': () => S.dmAuto,
@@ -22171,14 +22251,21 @@
     const bodies = {
       general: () => [
         row(`<label>${esc(tr('lang.label'))} <select data-f="lang">${Object.entries(LANGS).map(([code, name]) => `<option value="${code}" ${code === LANG ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`),
+        row(check('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'))),
+        row(`<label>${esc(tr('settings.logPlace'))} <select data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select></label>`),
+      ],
+      // [3.29.2] how the dashboard looks (item 79; text size, place and view came from "General")
+      appearance: () => [
         row(`${esc(tr('zoom.label'))} <button type="button" class="dci-headbtn" data-act="zoom-out" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
           <span data-el="zoom-set">${Math.round(S.scale * 100)} %</span> <button type="button" class="dci-headbtn" data-act="zoom-in" aria-label="${esc(tr('zoom.larger'))}">A+</button>`),
         row(`${esc(tr('settings.place'))} <span class="dci-seg dci-seg-small" role="group">${['window', 'page'].map((pl) => (inPage() === (pl === 'page')
           ? `<button type="button" aria-pressed="true" disabled>${esc(tr(`settings.place.${pl}`))}</button>`
           : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
         row(`${esc(tr('view.label'))} ${viewToggleHtml(true)}`),
-        row(check('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'))),
-        row(`<label>${esc(tr('settings.logPlace'))} <select data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select></label>`),
+        row(check('data-set="level-colors"', S.levelColors, tr('settings.levelColors'), tr('settings.levelColorsTitle'))),
+        row(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
+          value="${S.levelPalette[level]}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColor', { level: tr(`level.${level}`) }))}">
+          <span class="dci-cl-level" data-level="${level}">${esc(tr(`level.${level}`))}</span></label>`).join('')}</span>`),
       ],
       sources: () => [
         row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
@@ -22309,6 +22396,19 @@
   function settingsChange(el) {
     const k = el.dataset.set;
     if (k === 'log-open') setLogVisible(el.checked);
+    else if (k === 'level-colors') {
+      S.levelColors = el.checked;
+      writeJson('localStorage', LEVEL_COLORS_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.levelColors'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      applyLevelColors();
+    } else if (k === 'level-color') {
+      if (/^#[0-9a-f]{6}$/i.test(el.value) && LEVEL_PALETTE_DEFAULT[el.dataset.level]) {
+        S.levelPalette[el.dataset.level] = el.value.toLowerCase();
+        saveLevelPalette();
+        log('info', 'settingValue', { what: tr('settings.levelColor', { level: tr(`level.${el.dataset.level}`) }), value: el.value.toLowerCase() });
+        applyLevelColors();
+      }
+    }
     else if (k === 'log-place') setLogPlace(el.value);
     else if (k === 'aw-on') {
       S.awOn = el.checked;
@@ -22366,12 +22466,16 @@
     (TOPIC_KEYS[t] || []).forEach((k) => writeJson('localStorage', k, null));
     log('info', 'settingsTopicReset', { topic: tr(`settings.t.${t}`) });
     if (t === 'general') {
-      setScale(1);
       if (S.logEl) setLogVisible(true);
       setLogPlace('window');
+      if (LANG !== 'en') setLanguage('en');
+    } else if (t === 'appearance') {
+      setScale(1);
       if (S.place !== 'window') setPlace('window');
       if (S.view !== 'full') setView('full');
-      if (LANG !== 'en') setLanguage('en');
+      S.levelColors = true;
+      S.levelPalette = { ...LEVEL_PALETTE_DEFAULT };
+      applyLevelColors();
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
@@ -22407,7 +22511,7 @@
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
-    SETTINGS_TAB_KEY, VIEW_KEY];
+    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -22427,6 +22531,7 @@
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
+      levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT },
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -23613,6 +23718,22 @@
       .dci-companies > p { margin: 0 0 calc(var(--u, 1px) * 12); }
       /* A chosen level looks the same on every level: dark */
       #dci-overlay .dci-seg button[aria-pressed="true"][data-level] { background: #3d3a4f; color: #fff; }
+      /* [3.29.2] the colours of the levels (item 79; ⚙ Settings → Appearance): the chosen one filled, the others underlined,
+         the level in the compact line the same colour */
+      #dci-overlay.dci-lvlc [data-level="recording"] { --lvl: var(--dci-lvl-recording); --lvl-ink: var(--dci-lvl-recording-ink); }
+      #dci-overlay.dci-lvlc [data-level="release"] { --lvl: var(--dci-lvl-release); --lvl-ink: var(--dci-lvl-release-ink); }
+      #dci-overlay.dci-lvlc [data-level="release_group"] { --lvl: var(--dci-lvl-release_group); --lvl-ink: var(--dci-lvl-release_group-ink); }
+      #dci-overlay.dci-lvlc [data-level="work"] { --lvl: var(--dci-lvl-work); --lvl-ink: var(--dci-lvl-work-ink); }
+      #dci-overlay.dci-lvlc [data-level="skip"] { --lvl: var(--dci-lvl-skip); --lvl-ink: var(--dci-lvl-skip-ink); }
+      #dci-overlay.dci-lvlc .dci-seg button[aria-pressed="true"][data-level] { background: var(--lvl); color: var(--lvl-ink); }
+      #dci-overlay.dci-lvlc .dci-seg button[data-level]:not([aria-pressed="true"]):not(:disabled) { box-shadow: inset 0 calc(var(--u, 1px) * -3) 0 var(--lvl); }
+      #dci-overlay.dci-lvlc .dci-cl-level[data-level] { background: var(--lvl); color: var(--lvl-ink); }
+      button.dci-cl-level { border: 0; cursor: pointer; }
+      button.dci-cl-level:hover { filter: brightness(0.92); }
+      .dci-lvl-pick { display: inline-flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
+      .dci-lvl-pick label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); }
+      .dci-lvl-pick input[type="color"] { width: calc(var(--u, 1px) * 30); height: calc(var(--u, 1px) * 22); padding: 0 2px; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; }
+      .dci-lvl-pick input[type="color"]:disabled { opacity: 0.45; }
       #dci-overlay .dci-seg button[aria-pressed="true"][data-sync-mode] { background: var(--purple); color: #fff; }
       #dci-overlay .dci-sync .dci-seg button { border-radius: 0; border-top: 0; border-bottom: 0; border-right: 0; }
 
