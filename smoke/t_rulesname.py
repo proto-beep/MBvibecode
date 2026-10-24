@@ -26,7 +26,7 @@ with sync_playwright() as p:
     print('A)', a)
     results.append(a['label'] == 'Try a Discogs role:' and a['col'] == 'Discogs' and a['kind'][0] == 'Discogs role → MusicBrainz'
                    and a['field'].startswith('Discogs role (without details)') and 'as on Discogs' in a['hint'])
-    pg.click('[data-act=text-open]')
+    H.src_menu(pg, 'text-open')
     pg.fill('[data-f=text-src]', 'Bass Man – bass')
     pg.click('[data-act=text-load]')
     H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
@@ -35,6 +35,7 @@ with sync_playwright() as p:
     print('B)', bb)
     results.append(bb['label'] == 'Try a role:' and bb['col'] == 'Role' and bb['kind'] == ['Role → MusicBrainz', 'Spelling → MB instrument']
                    and bb['field'].startswith('Role (without details)') and 'as the source writes it' in bb['hint'])
+    H.src_menu(pg)
     pg.fill('[data-f=discogs-input]', '1234')
     pg.click('[data-act=discogs-load]')
     H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 90)

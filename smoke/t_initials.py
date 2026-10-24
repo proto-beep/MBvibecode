@@ -30,7 +30,7 @@ with sync_playwright() as p:
     H.open_dashboard(pg)
     queries = []
     pg.on('request', lambda r: queries.append(r.url) if '/ws/2/artist?' in r.url else None)
-    pg.click('[data-act=text-open]')
+    H.src_menu(pg, 'text-open')
     pg.fill('[data-f=text-src]', TEXT)
     pg.click('[data-act=text-load]')
     H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)

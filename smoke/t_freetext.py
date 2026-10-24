@@ -37,7 +37,7 @@ with sync_playwright() as p:
     H.open_dashboard(pg)
     pg.wait_for_timeout(500)
     # A) paste the text
-    pg.click('[data-act=text-open]')
+    H.src_menu(pg, 'text-open')
     pg.fill('[data-f=text-src]', TEXT)
     pg.fill('[data-f=text-origin]', 'Booklet')
     pg.click('[data-act=text-load]')

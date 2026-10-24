@@ -1,6 +1,6 @@
 """The dashboard in the page instead of a window: switched in the page bar before opening, placed below the
-import button, the page scrolls with it (dates block and footer stay in view), switched back in the dashboard
-header, remembered after a reload, back to the window with "↺ Defaults"."""
+import button, the page scrolls with it (dates block and footer stay in view), switched back in ⚙ Settings → General
+(3.26.0; before: in the dashboard header), remembered after a reload, back to the window with "↺ Reset all settings …" (⚙ Settings, until 3.24 "↺ Defaults")."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -20,8 +20,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(400)
     where = pg.evaluate("""(() => { const o = document.getElementById('dci-overlay'); const panel = o.querySelector('.dci-panel');
       return { afterBar: document.getElementById('dci-pagebar').nextElementSibling === o, inline: o.classList.contains('dci-inline'),
-        position: getComputedStyle(panel).position, bodyOverflow: getComputedStyle(o.querySelector('.dci-body')).overflowY,
-        head: o.querySelector('[data-act=place-toggle]').textContent.trim() }; })()""")
+        position: getComputedStyle(panel).position, bodyOverflow: getComputedStyle(o.querySelector('.dci-body')).overflowY }; })()""")
     print('1) in der Seite:', where)
     ok1 = where['afterBar'] and where['inline'] and where['position'] == 'relative' and where['bodyOverflow'] == 'visible' and pressed0 == ['false', 'true']
     # 2) the page scrolls; the dates block ([3.18.0] with the line "Add entry manually") sticks to the top, the footer to the bottom
@@ -37,20 +36,21 @@ with sync_playwright() as p:
     style = pg.evaluate("document.querySelector('.dci-panel').getAttribute('style') || ''")
     print('3) Kopf gezogen → Stil:', repr(style))
     ok3 = 'left' not in style
-    # 4) back to a window in the dashboard header; remembered
-    pg.click('[data-act=place-toggle]'); pg.wait_for_timeout(300)
+    # 4) back to a window – [3.26.0] in ⚙ Settings → General (the head has no switch any more); remembered
+    H.open_settings(pg, 'general')
+    pg.click('[data-el=settings] [data-act=place-toggle]'); pg.wait_for_timeout(300)
     back = pg.evaluate("""(() => { const o = document.getElementById('dci-overlay'); return { parent: o.parentNode === document.body,
       position: getComputedStyle(o.querySelector('.dci-panel')).position, stored: localStorage.getItem('dci-place') }; })()""")
     print('4) zurück als Fenster:', back)
     ok4 = back['parent'] and back['position'] == 'fixed' and back['stored'] is None
-    pg.click('[data-act=place-toggle]'); pg.wait_for_timeout(200)
+    pg.click('[data-el=settings] [data-act=place-toggle]'); pg.wait_for_timeout(200)
     pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
     pressed = pg.locator('#dci-launcher [data-place=page]').get_attribute('aria-pressed')
     pg.click('#dci-open'); pg.wait_for_selector('.dci-inline .dci-pools-head', timeout=30000)
     print('5) nach Neuladen: in der Seite gedrückt', pressed, '| Dashboard in der Seite:', pg.locator('#dci-overlay.dci-inline').count())
     ok5 = pressed == 'true' and pg.locator('#dci-overlay.dci-inline').count() == 1
-    # 6) "↺ Defaults": window again
-    pg.click('[data-act=reset-open]'); pg.click('[data-act=reset-do]'); pg.wait_for_timeout(500)
+    # 6) "↺ Reset all settings …" (⚙ Settings, until 3.24 "↺ Defaults"): window again
+    H.open_reset(pg); pg.click('[data-act=reset-do]'); pg.wait_for_timeout(500)
     print('6) nach ↺ Standard: Fenster', pg.locator('#dci-overlay.dci-inline').count() == 0, '| Seitenleiste:', pg.locator('#dci-launcher [data-place=window]').get_attribute('aria-pressed'))
     ok6 = pg.locator('#dci-overlay.dci-inline').count() == 0 and pg.locator('#dci-launcher [data-place=window]').get_attribute('aria-pressed') == 'true'
     print('Ergebnis:', 'OK' if all([ok1, ok2, ok3, ok4, ok5, ok6]) else 'FEHLER', [ok1, ok2, ok3, ok4, ok5, ok6], '| Fehler:', errs)

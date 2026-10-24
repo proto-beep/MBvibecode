@@ -1,5 +1,5 @@
 """Import 3.16.0: the menu "Settings" and the stored works of the artists.
-A) "⚙ Settings" in the head opens the menu: six topics, folded; "Works" shows its defaults (on, 4000 with "= 40 requests,
+A) "⚙ Settings" in the head opens the menu: [3.25.0] eight tabs, "General" chosen; "Works" shows its defaults (on, 4000 with "= 40 requests,
    about 44 s per artist", 10 seconds, 900 entries, 7 days).
 B) Shared switches: "apply automatically" ticked in the menu ticks the switch below the date matrix (and is stored);
    "add role credits" ticked in the footer shows ticked in the menu.
@@ -23,12 +23,12 @@ SET = "document.querySelector('[data-el=settings]')"
 results = []
 
 
-def open_set(pg, *topics):
+def open_set(pg, topic=None):
+    """[3.25.0] the settings open, the tab of a topic chosen (one at a time)."""
     if pg.evaluate(f"{SET}.hidden"):
         pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
-    for t in topics:
-        if pg.locator(f'[data-act=settings-topic][data-topic={t}]').get_attribute('aria-expanded') != 'true':
-            pg.locator(f'[data-act=settings-topic][data-topic={t}]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+    if topic and pg.locator(f'[data-act=settings-topic][data-topic={topic}]').get_attribute('aria-selected') != 'true':
+        pg.locator(f'[data-act=settings-topic][data-topic={topic}]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
 
 
 def load(pg, wait_compare=True):
@@ -58,23 +58,26 @@ with sync_playwright() as p:
     pg.wait_for_timeout(300)
     # A) the menu
     open_set(pg)
-    topics = pg.evaluate(f"[...{SET}.querySelectorAll('[data-act=settings-topic]')].map(b => [b.dataset.topic, b.getAttribute('aria-expanded')])")
+    topics = pg.evaluate(f"[...{SET}.querySelectorAll('[data-act=settings-topic]')].map(b => [b.dataset.topic, b.getAttribute('aria-selected')])")
     open_set(pg, 'works')
     vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
     print('A) Themen:', topics, '| Werke:', vals)
-    results.append([t for t, _ in topics] == ['general', 'sources', 'discogs', 'works', 'staging', 'dates'] and all(e == 'false' for _, e in topics)
+    results.append([t for t, _ in topics] == ['general', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections']
+                   and [t for t, e in topics if e == 'true'] == ['general']
                    and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
     # B) shared switches
-    open_set(pg, 'dates', 'staging')
+    open_set(pg, 'dates')
     pg.locator('[data-el=settings] [data-f=dm-auto]').check(); pg.wait_for_timeout(400)
     below = pg.evaluate("[...document.querySelectorAll('[data-f=dm-auto]')].filter(x => !x.closest('[data-el=settings]')).map(x => x.checked)")
     stored = pg.evaluate("localStorage.getItem('dci-dm-auto')")
+    open_set(pg, 'staging')
     pg.locator('footer [data-f=fill-credits]').evaluate('x => x.click()'); pg.wait_for_timeout(400)
     menu_fill = pg.evaluate(f"{SET}.querySelector('[data-f=fill-credits]').checked")
     print('B) „automatisch anwenden“ unter der Matrix:', below, '| gespeichert:', stored, '| „Rollen-Credits“ im Menü nach Klick unten:', menu_fill)
     results.append(below == [True] and stored == 'true' and menu_fill is True)
     # C) a value, steps, a topic's reset
+    open_set(pg, 'works')
     f = pg.locator('[data-el=settings] [data-set=awMax]')
     f.fill('2000'); f.press('Enter'); pg.wait_for_timeout(300)
     v1 = [pg.evaluate("localStorage.getItem('dci-aw-max')"), pg.evaluate(f"{SET}.querySelector('[data-el=aw-cost]').textContent")]

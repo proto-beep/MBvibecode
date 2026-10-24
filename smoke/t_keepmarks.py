@@ -63,7 +63,7 @@ with sync_playwright() as p:
     results.append(a0 == [['Bass Man'], []] and a1[0] == 'skip' and a1[1] == ['–', True, True] and a1[2] == ['Discogs: Bass Man – Bass switched off (“Skip”)']
                    and a2[0] == lv0 and a2[1][1:] == [False, False])
     # B) "Click switches" off: a click shows the row
-    pg.locator('[data-el=sync] [data-click-toggle]').click()
+    pg.locator('#dci-controls [data-click-toggle]').evaluate('b => b.click()')
     poll(dg, f"!(({MARK})('Guitar Guy') || [''])[3].includes('skip')")
     title = mark(dg, 'Guitar Guy')[3]
     dg.locator('#release-credits li', has_text='Guitar Guy').locator('.dci-dg-mark').click()
@@ -71,14 +71,14 @@ with sync_playwright() as p:
     b1 = [level(pg, 'Guitar Guy'), mark(dg, 'Guitar Guy')[1], title]
     print('B) „Klick schaltet“ aus:', b1)
     results.append(b1[0] != 'skip' and b1[1] is False and 'click to show it in the dashboard' in b1[2])
-    pg.locator('[data-el=sync] [data-click-toggle]').click()
+    pg.locator('#dci-controls [data-click-toggle]').evaluate('b => b.click()')
     # C) keep marks: off – they go; on – they stay
     pg.wait_for_timeout(1200)
     pg.close()
     poll(dg, f"{MARKS} === 0", 15)
     pg, errs2 = editor(ctx)
     poll(dg, f"{MARKS} > 0")
-    pg.locator('[data-el=sync] [data-keep-marks]').click()
+    pg.locator('#dci-controls [data-keep-marks]').evaluate('b => b.click()')
     H.wait_for(pg, f"{LOGS}.some(x => /Marks kept after the editor is closed: on/.test(x))", 10)
     pg.wait_for_timeout(1500)
     n0 = dg.evaluate(MARKS)

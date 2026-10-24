@@ -57,9 +57,12 @@ with sync_playwright() as p:
     pg.wait_for_selector('#dci-open', timeout=20000)
     H.open_dashboard(pg)
     pg.wait_for_timeout(500)
-    # A) on request only
+    # A) on request only; [3.26.0] the bar only on "+ Supplement" in the head
+    closed = pg.evaluate("[!document.querySelector('.dci-suppbar'), document.querySelector('.dci-head [data-act=supp-open]').getAttribute('aria-expanded')]")
+    H.open_supp(pg)
+    print('A) vor „Ergänzen“ zu:', closed)
     bar = pg.evaluate("[...document.querySelectorAll('.dci-suppbar .dci-supp-btn')].map(b => b.textContent.trim())")
-    a_ok = bar == ['＋ Bandcamp testband.bandcamp.com/album/testalbum', '＋ Text …'] and pg.evaluate("document.querySelector('[data-el=supp]').hidden") \
+    a_ok = closed == [True, 'false'] and bar == ['＋ Bandcamp testband.bandcamp.com/album/testalbum', '＋ Text …'] and pg.evaluate("document.querySelector('[data-el=supp]').hidden") \
         and not pg.evaluate("window.__gmXhr.length") and not pg.locator('.dci-srcmark').count()
     print('A) Leiste:', bar, '| Bandcamp-Abrufe:', pg.evaluate("window.__gmXhr.length"), '| Marken:', pg.locator('.dci-srcmark').count())
     results.append(a_ok)
@@ -109,9 +112,11 @@ with sync_playwright() as p:
         and any(l.startswith('Sources differ: Keys Guy, synthesizer – Discogs: 2, Bandcamp: 1, 2; kept Discogs') for l in note)
     results.append(d_ok)
     # G) a typed source that is not linked
+    H.open_supp(pg)
     pg.fill('[data-f=supp-url]', 'https://www.discogs.com/release/1234')
     pg.click('[data-act=supp-url]'); pg.wait_for_timeout(400)
     same = pg.locator('.dci-msg').all_inner_texts()
+    H.open_supp(pg)
     pg.fill('[data-f=supp-url]', OTHER + '?from=x')
     pg.click('[data-act=supp-url]')
     H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Supplement from Bandcamp/.test(li.textContent)).length >= 2", 60)
@@ -124,11 +129,12 @@ with sync_playwright() as p:
         and ('new role', 'Drum Guy', '3') in [(k, n, t) for k, n, _, t in items_g]
     results.append(g_ok)
     # E) delete the stored import
+    H.src_menu(pg)
     pg.select_option('[data-f=discogs-pick]', 'discogs|1234')
     done(pg, 2)
     pg.wait_for_timeout(500)
     picked = pg.evaluate(f"Object.keys(JSON.parse(localStorage.getItem('dci-source-pick') || '{{}}'))")
-    pg.click('[data-act=forget-open]')
+    H.src_menu(pg, 'forget-open')
     asked = pg.locator('.dci-forget strong').inner_text()
     pg.click('[data-act=forget-do]')
     done(pg, 1)

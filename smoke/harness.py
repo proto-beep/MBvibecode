@@ -548,7 +548,8 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     errs = errors_of(pg)
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
-    codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, MAIN]
+    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) (%s)('full');" % VIEW_PRESET
+    codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
                        % json.dumps(codes))
@@ -795,10 +796,16 @@ def with_companion(pg):
     pg.add_script_tag(content=SYNC)
 
 
-def open_mb_edit(ctx, companion=True, gm_xhr=False):
+# [3.27.0] the tests were written for the full view of the entries; the compact view (the default) has a test of its own
+VIEW_PRESET = "(v) => { if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); if (localStorage.getItem('dci-view') === null) localStorage.setItem('dci-view', JSON.stringify(v)); }"
+
+
+def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
     pg = ctx.new_page()
     errs = errors_of(pg)
     pg.goto(f'https://musicbrainz.org/release/{REL}/edit-relationships')
+    if view:
+        pg.evaluate(VIEW_PRESET, view)
     if companion:
         with_companion(pg)
     if gm_xhr:
@@ -848,6 +855,15 @@ def open_mb_release(ctx):
     return pg, errs
 
 
+def open_reset(pg):
+    """[3.25.0] "↺ Reset all settings …" is in the settings (below their tabs): the settings open, then the question."""
+    if pg.evaluate("!document.querySelector('[data-el=settings]') || document.querySelector('[data-el=settings]').hidden"):
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+    pg.click('[data-el=settings] [data-act=reset-open]')
+    pg.wait_for_timeout(150)
+
+
 def wait_for(pg, js, timeout=30):
     pg.wait_for_function(js, timeout=timeout * 1000)
 
@@ -874,3 +890,37 @@ def open_dashboard(pg, media=None):
     if media is False:
         return
     wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete|Prüfungen abgeschlossen/.test(li.textContent))", 60)
+
+
+def src_menu(pg, act=None):
+    """[3.26.0] The menu "Source ▾" in the head (a linked source, another source, paste text, the order of the sources,
+    Bandcamp, "Leave out the about text", delete the stored import): opened if closed, then `act` clicked in it."""
+    if pg.evaluate("(() => { const m = document.querySelector('#dci-overlay .dci-srcmenu'); return !m || m.hidden; })()"):
+        pg.click('#dci-overlay [data-act=srcmenu]')
+        pg.wait_for_timeout(150)
+    if act:
+        pg.click(f'#dci-overlay .dci-srcmenu [data-act={act}]')
+        pg.wait_for_timeout(150)
+
+
+def open_supp(pg):
+    """[3.26.0] "+ Supplement" in the head opens the bar "Supplement with" (open anyway while a supplement is loaded)."""
+    if not pg.evaluate("!!document.querySelector('#dci-overlay .dci-suppbar')"):
+        pg.click('#dci-overlay [data-act=supp-open]')
+        pg.wait_for_timeout(150)
+
+
+def toggle_place(pg):
+    """[3.26.0] Window ⇄ in the page with the switch of the page bar (the head of the dashboard has none any more)."""
+    pg.locator('#dci-launcher [data-place][aria-pressed=false]').evaluate('b => b.click()')
+    pg.wait_for_timeout(300)
+
+
+def open_settings(pg, tab=None):
+    """⚙ Settings opened (if closed), at the tab `tab` if given ([3.26.0] the language is only there)."""
+    if pg.evaluate("!document.querySelector('[data-el=settings]') || document.querySelector('[data-el=settings]').hidden"):
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+    if tab:
+        pg.click(f'[data-el=settings] .dci-set-tab[data-topic={tab}]')
+        pg.wait_for_timeout(150)
