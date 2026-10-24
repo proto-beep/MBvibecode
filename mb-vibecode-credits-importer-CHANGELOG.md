@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.28.2 | 1.8.4 |
+| 2026-10-24 | 3.22.1 – 3.28.3 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -81,6 +81,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.28.3 · COMPANION 1.9.0
+
+#### Added
+
+- **Used dates and track groups underlined at the source** (collected item 63; maintainer: "ich meinte einfach nur, dass die Marken erscheinen wie sie das auf Bandcamp tun. … wäre es möglich das datum einfach gestrichelt zu unterschreichen sofern es verwendet wurde? ebenso mit track groups? (in den jeweiligen farben)"): with **Discogs status** on, the companion underlines in the Discogs notes – and in Bandcamp's credits and "about" text – the dates the dashboard uses (in the date matrix or as the date of a row; dashed purple) and the track groups of their sentences in the date matrix ("Tracks 1-2", "A1 to B2", "Side C"; dashed orange). The tooltip says where; dates only in the pool stay as they are.
+
+#### Fixed
+
+- **The rules at a row** (ⓘ) name those of 3.28.2: a row of "Artwork [Logo Og Kunst]" says S033 (not S018, the engineer tasks), a translated role S032 (or S025), a kind of voice S034, an instrument found by its last word S035, a name without "credited as" because only its case differs S031.
+- **COMPANION 1.9.0:** two Discogs lines of one artist with the same role ("Vocals [Clean]", "Vocals [Screams]") each get their mark and their jump; before, both went to the first line.
+
 
 ### Import 3.28.2
 
