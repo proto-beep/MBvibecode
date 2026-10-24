@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-24 | 3.22.1 – 3.27.2 | – |
+| 2026-10-24 | 3.22.1 – 3.27.3 | – |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
 | 2026-10-18 | 3.17.3 – 3.19.0 | 1.8.2 – 1.8.3 |
@@ -81,6 +81,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-24
+
+### Import 3.27.3
+
+#### Changed
+
+- **Messages close and fold** (collected item 56; maintainer: "Meldungen wie "1 date from the notes was placed in the date matrix as a suggestion …" … oben in der ansicht sollen dismissable bzw. einklappbar sein" – "soll nur bis zum nächsten Import weggeklickt bleiben"): each message at the top has ✕; from two messages a line "▾ n messages" folds them in. Closed or folded stays until the next import; a new warning or error unfolds them.
+
 
 ### Import 3.27.2
 
