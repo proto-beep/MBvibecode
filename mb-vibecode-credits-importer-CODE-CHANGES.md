@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.28.3, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.28.4, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.28.4 · 2026-10-24
+
+Credited as from a text, the design of a part of the package, joined design tasks (collected items 83, 84; answers of 19:33).
+
+- **`syncSourceCredits`:** no longer only for entries with a Discogs id – an entry without one (a text, Bandcamp: `(a.src || S.source).nameSearch`) gets `sourceCreditFor` with the new rule **S036** (not for `a.placeholder`, not for supplement rows); Discogs entries keep S008. `rulesOfRow` names S036 for them.
+- **R062 (design rule):** with the new **S037** and **`DESIGN_PARTS`** (cover, sleeve, booklet, package, packaging, digipak, digipack, inlay, insert) a part among the other words (with only artwork/art/graphics/and besides) gives the credit "`<part> design`".
+- **`splitArtTasks`:** tasks whose terms map to the same first type (`mapRole(…).types[0]`) give one role `{ raw: as at the source, base: the first term's, splitBase, artTask, artCredit }` – `artCredit` is the tasks in English joined with "and" (the detail of a term, else its role without "by"). `makeRow(…, { artCredit })` sets `row.artCredit` and `creditFromRole`; `remapRow` keeps it. `rulesOfRow`: S033 for `artCredit`, S037 for an R062 row credited "`<part> design`".
+- **`variantsHtml`:** "Artist credit for all roles" is empty when the one name variation differs from the MusicBrainz name only in its case (new **`caseOnlyAnv(a, anv)`**, S031).
+- **Tests:** new `t_textcredit.py`; `register_golden.json` written anew (seven roles: "Cover Design", "Design [Cover]", "Package Design", "Sleeve Design" … now "… design"; the notes of S033, S036, S037).
+
 
 ## Import 3.28.3 · Companion 1.9.0 · 2026-10-24
 
