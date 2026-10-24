@@ -1,5 +1,5 @@
 {
-  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0).",
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see t_prose.py for the dashboard).",
   "lines": [
     {
       "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
@@ -1084,6 +1084,137 @@
         "companies": [],
         "unrecognized": [
           "Recorded in the living room by Ana Ruiz → ? “in the living room”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "A chronicle of rabid deeds, dutifully unearthed from accursed crossroads' soil by K.M. (sounds, words) & E. (voice).",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "K.M.",
+            "Performer"
+          ],
+          [
+            "K.M.",
+            "Lyrics By"
+          ],
+          [
+            "E.",
+            "Vocals"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Cover artwork channeled by Drahmarduk.",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "Drahmarduk",
+            "Cover artwork By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Logo carved by the guided hand of BMS Illustration.",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "BMS Illustration",
+            "Logo By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Mixed and mastered at TQA.HQ (July 2026). Thanks to EXEcentrer and Isohyet.",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "TQA.HQ",
+            "Mixed At"
+          ],
+          [
+            "TQA.HQ",
+            "Mastered At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Thanks to EXEcentrer and Isohyet",
+            "why": "thanks"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Mixed and mastered by Brandon Carnes in March 2026.",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "Brandon Carnes",
+            "Mixed By"
+          ],
+          [
+            "Brandon Carnes",
+            "Mastered By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Frank Trompeter: Tenor, alto, soprano saxophones",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "Frank Trompeter",
+            "alto",
+            "= ? (asked, R102)"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Frank Trompeter: Tenor, alto, soprano saxophones → ? “Tenor”, “soprano saxophones”"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Richard Gilman-Opalsky: Drums, percussion, and wood flutes",
+      "note": "3.29.0 (collected items 70, 71, 76, 77, 78)",
+      "expect": {
+        "credits": [
+          [
+            "Richard Gilman-Opalsky",
+            "Drums"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Richard Gilman-Opalsky: Drums, percussion, and wood flutes → ? “percussion”, “wood flutes”"
         ],
         "ignored": []
       }
