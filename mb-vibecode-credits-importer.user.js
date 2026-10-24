@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.22.1
+// @version      3.22.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.22.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.22.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -5815,7 +5815,8 @@
   const WORDING_RULES = [
     { id: 'W001', where: 'wordingRuleFor, roleCreditFor', note: 'Upright bass is a double bass; the Discogs word stays as role credit', phrases: ['upright bass', 'bass upright'], credit: 'upright bass' },
     { id: 'W002', where: 'wordingRuleFor, roleCreditFor', note: 'Contrabass is a double bass; the Discogs word stays as role credit', phrases: ['contrabass', 'bass contrabass', 'contrabass bass'], credit: 'contrabass' },
-    { id: 'W003', where: 'wordingRuleFor, roleCreditFor', note: 'Kontrabass (German) is a double bass; kept as a German noun with a capital letter', phrases: ['kontrabass', 'bass kontrabass', 'kontrabass bass'], credit: 'Kontrabass' },
+    { id: 'W003', where: 'wordingRuleFor, roleCreditFor', note: 'Kontrabass (German) is a double bass, credited with the English word "contrabass" (3.22.2; before: "Kontrabass")', phrases: ['kontrabass', 'bass kontrabass', 'kontrabass bass'], credit: 'contrabass' },
+    { id: 'W008', where: 'wordingRuleFor, roleCreditFor', note: 'Violoncello is a cello; the word stays as role credit "violoncello" (3.22.2; a fixed pair like W002, W003 – no rule for other words)', phrases: ['violoncello', 'violoncelli', 'cello violoncello', 'violoncello cello'], credit: 'violoncello' },
     { id: 'W004', where: 'wordingRuleFor, roleCreditFor', note: '"Horn [French]" and "French Horn" are the MusicBrainz instrument French horn, without role credit', phrases: ['horn french', 'french horn'], credit: '' },
     { id: 'W005', where: 'wordingRuleFor, roleCreditFor', note: '"Flugel Horn" (also Flügelhorn) is the MusicBrainz instrument flugelhorn, without role credit', phrases: ['flugel horn', 'flugelhorn', 'flügelhorn', 'flugel-horn'], credit: '' },
     { id: 'W006', where: 'wordingRuleFor, roleCreditFor', note: '"Mix", "Mixed By", "Engineer [Mix]" … are the MusicBrainz relationship mix, without role credit', phrases: ['mix', 'mixing', 'mixed by', 'mixed-by', 'mix engineer', 'mixing engineer', 'engineer mix', 'engineer mixing', 'engineered by mix', 'mixdown', 'engineer mixdown'], credit: '' },
@@ -5852,7 +5853,7 @@
     { id: 'S019', where: 'repeatedDetails', note: 'Details that only repeat the role in another word form are no role credit: "Mixed By [Mixing]", "Mastered By [Mastering]", "Music By [All Music By]", "Recorded By [Recording]"; "[Cover Photo]" stays' },
     { id: 'S026', where: 'loadRelease, suppRow, mediumOfRow (MEDIUM_WORDS)', note: 'A credit for a medium the MusicBrainz release does not have ("Vinyl LP mastering", "Mastered By [Vinyl]", "Lacquer Cut By" on a release of Digital Media) is no row: it is listed as left out on purpose, with the reason. "Vinyl LP mastering and digital mastering by X" keeps the digital mastering. A medium word of a text that fits the release is no role credit (3.21.4)' },
     { id: 'S027', where: 'titleScope, tracksByTitles (TEXT_TITLE_SCOPE)', note: 'Tracks named by their titles in a text (T036: "Piano in ‘A\' and \'B\' is a contribution by X", "Guitar on “Song”: Y"): each title is looked for among the tracks of the source (a pasted text: MusicBrainz\'s, Bandcamp: the album\'s) – case, accents and punctuation do not count, one letter more, less or other is allowed; a title not found is shown as "not matched", its tracks are chosen by hand (3.22.0)' },
-    { id: 'S028', where: 'suggestByName, groupKindOf, matchHtmlInner (C038 …)', note: 'An area of a text ("Recorded by X in Xixon, Asturies, Spain", T037) is an entry of the kind "Area" with the larger areas after it; MusicBrainz is searched with its other names too ("Xixon" finds Gijón with the alias "Xixón") – only suggested, nothing assigned; there is no "Create" (areas are added by MusicBrainz\'s area editors). Its type: recorded in, mixed in (recording) or mastered in (release) (3.22.0)' },
+    { id: 'S028', where: 'suggestByName, groupKindOf, matchHtmlInner (C038 …)', note: 'An area of a text ("Recorded by X in Xixon, Asturies, Spain", T037) is an entry of the kind "Area" with the larger areas after it; MusicBrainz is searched with its other names too ("Xixon" finds Gijón with the alias "Xixón") – only suggested, nothing assigned; there is no "Create" (areas are added by MusicBrainz\'s area editors). Its type: recorded in, mixed in (recording) or mastered in (release) (3.22.0); produced in, remixed in, engineered in, and the area each suggestion is part of, read from MusicBrainz ("City, Asturias"; 3.22.2)' },
     { id: 'S029', where: 'bandPageName, ownPage, linkBand, bandPageInfo, suggestByName', note: 'A Bandcamp album on another account\'s page – mostly a label\'s ("Grabaciones Autobombo" with an album of Yunclas): the name of the page (its "data-band", else "og:site_name") is not the album\'s artist (case, accents and "The" do not count; "Jane Roe & Friends" on Jane Roe\'s page is her own) – the page is no link of the artist, he is searched by name, the entry says whose page it is and names MusicBrainz\'s label with that page. People not found through their own link (Discogs, Bandcamp) get the same-named MusicBrainz entries as suggestions; an artist of the release\'s artist credit with that name comes first, marked "release artist" – only suggested (3.22.1)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
@@ -5946,6 +5947,10 @@
     [/^(recorded|overdubbed) in/, { id: 'C038', area: ['recorded in'], level: 'recording' }],
     [/^mixed in/, { id: 'C039', area: ['mixed in'], level: 'recording' }],
     [/^mastered in/, { id: 'C040', area: ['mastered in'], level: 'release' }],
+    // [3.22.2] more areas (collected item 48)
+    [/^produced in/, { id: 'C041', area: ['produced in'], level: 'recording' }],
+    [/^remixed in/, { id: 'C042', area: ['remixed in'], level: 'recording' }],
+    [/^engineered in/, { id: 'C043', area: ['engineered in'], level: 'recording' }],
   ];
 
   /** The MusicBrainz types of the design rules (R062, R064–R067). */
@@ -6276,7 +6281,7 @@
       show: () => ({ pairs: Object.entries(MEDIUM_WORDS) }) },
     { id: 'T036', where: 'TEXT_TITLE_SCOPE, TEXT_CONTRIBUTION', note: 'Texts (3.22.0): tracks named by their titles in quotation marks after a role and "in", "on" ("Piano in ‘A\' and \'B\'", "Guitar on “Song”"; the marks may be mixed) – the tracks of these titles (S027); "is a contribution", "was played", "were performed" before "by" leave the role',
       show: () => ({ pairs: [['titles', TEXT_TITLE_SCOPE], ['before “by”', TEXT_CONTRIBUTION]] }) },
-    { id: 'T037', where: 'areaOf, TEXT_AREA_PARTICLE, TEXT_NOT_AREA', note: 'Texts (3.22.0): an area after a name ("Recorded by X in Xixon, Asturies, Spain") or a verb ("Recorded in Berlin", "Mixed live in Paris") – words with capitals (particles between them: "Frankfurt am Main", "Rio de Janeiro"), up to four parts, no number, month or season, none of these words first; a time after it ("in the spring, 2017") is left out. Only for recorded, mixed and mastered (C038 …, S028)',
+    { id: 'T037', where: 'areaOf, TEXT_AREA_PARTICLE, TEXT_NOT_AREA', note: 'Texts (3.22.0): an area after a name ("Recorded by X in Xixon, Asturies, Spain") or a verb ("Recorded in Berlin", "Mixed live in Paris") – words with capitals (particles between them: "Frankfurt am Main", "Rio de Janeiro"), up to four parts, no number, month or season, none of these words first; a time after it ("in the spring, 2017") is left out. Only for recorded, mixed, mastered and (3.22.2) produced, remixed, engineered (C038 – C043, S028)',
       show: () => ({ pairs: [['particles', TEXT_AREA_PARTICLE], ['no area', TEXT_NOT_AREA]] }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
@@ -6608,7 +6613,7 @@
     || names.some((n) => SPECIAL_ARTIST_NAME.test(String(n || '').trim()));
 
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
-  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered) in|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
+  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered) in|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright)/;
 
   // [T014] Dates: month names (English, German, Spanish, French; D004)
   const MONTH_NAMES = {
@@ -10312,7 +10317,29 @@
   // --- "Mapping rules": the register at a glance, and a field to try a Discogs role ------------------
 
   /** A Discogs pattern of the register in readable form: "Producer | Produced By". */
-  const patternText = (re) => (re ? String(re.source).replace(/^\^\(?|\)?\$$/g, '').replace(/\\/g, '').split('|').join(' | ') : '');
+  /**
+   * A pattern of the register as text: "^(a|b)$" → "a | b". [3.22.2] The outer brackets go only when they hold the whole
+   * pattern – "^(recorded|overdubbed) at" is "(recorded | overdubbed) at" (before: "recorded | overdubbed) at").
+   */
+  const patternText = (re) => {
+    if (!re) return '';
+    let t = String(re.source).replace(/^\^/, '').replace(/\$$/, '');
+    const open = t.match(/^\((?:\?:)?/);
+    if (open) {
+      let depth = 0;
+      let end = -1;
+      let inClass = false;
+      for (let i = 0; i < t.length && end < 0; i++) {
+        if (t[i] === '\\') i++;
+        else if (inClass) inClass = t[i] !== ']';
+        else if (t[i] === '[') inClass = true;
+        else if (t[i] === '(') depth++;
+        else if (t[i] === ')' && --depth === 0) end = i;
+      }
+      if (end === t.length - 1) t = t.slice(open[0].length, -1);
+    }
+    return t.replace(/\\/g, '').split('|').join(' | ');
+  };
 
   /**
    * [3.11.0] A pattern of the register as a list of words where it is a plain list ("mix · mixing · mixed …",
@@ -12450,6 +12477,25 @@
     return out;
   }
 
+  /**
+   * [3.22.2] The area an area is part of ("Gijón" → "Asturias"): MusicBrainz's search does not give it, so it is read
+   * once per session (`area/<MBID>?inc=area-rels`, the "part of" relation backward); '' if none.
+   */
+  async function areaParent(mbid) {
+    if (!S.areaParents) S.areaParents = new Map();
+    if (S.areaParents.has(mbid)) return S.areaParents.get(mbid);
+    let name = '';
+    try {
+      const d = await mbWs(`area/${mbid}?inc=area-rels`);
+      const r = ((d && d.relations) || []).find((x) => x.type === 'part of' && x.direction === 'backward' && x.area);
+      name = r ? r.area.name || '' : '';
+    } catch (e) {
+      console.warn('[Credits-Importer] area', mbid, e);
+    }
+    S.areaParents.set(mbid, name);
+    return name;
+  }
+
   /** [3.22.0] An area of MusicBrainz's search: its type and the area it is part of ("City, Asturias"; S028). */
   const areaContext = (x) => [x.type, ...((x.relations || []).filter((r) => r.type === 'part of' && r.direction === 'backward' && r.area).slice(0, 1).map((r) => r.area.name))];
 
@@ -12489,6 +12535,13 @@
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
         a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name, ...(type === 'area' ? areaContext(x) : [])].filter(Boolean).join(', ') }));
+        // [3.22.2] areas: the area each one shown is part of (48)
+        if (type === 'area') {
+          for (const h of a.nameHits.slice(0, SUGG_VISIBLE)) {
+            const parent = await areaParent(h.mbid);
+            if (parent && !h.disambiguation.split(', ').includes(parent)) h.disambiguation = [h.disambiguation, parent].filter(Boolean).join(', ');
+          }
+        }
         // [3.22.1] an artist of the release's artist credit with this name: first, marked "release artist" (46)
         if (!a.company) {
           const rel = (S.releaseCredit || []).filter((p) => p.mbid && (nameFit(p.name, a.name) === 'same' || a.nameHits.some((h) => h.mbid === p.mbid && !h.similar)));

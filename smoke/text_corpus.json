@@ -1001,10 +1001,13 @@
             "Produced By"
           ]
         ],
-        "companies": [],
-        "unrecognized": [
-          "Produced by Pat Prod in Berlin → ? “in Berlin”"
+        "companies": [
+          [
+            "Berlin",
+            "Produced In"
+          ]
         ],
+        "unrecognized": [],
         "ignored": []
       }
     },

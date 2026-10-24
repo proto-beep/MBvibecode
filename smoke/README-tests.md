@@ -155,6 +155,9 @@ python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_c
                           # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                           # with a studio's profile
                           # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
+python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass credited "contrabass" (text and Discogs), "Violoncello" → cello "violoncello";
+                          # produced / remixed / engineered in (areas with the area they are part of); recording without role credit
+                          # (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
 python3 t_labelpage.py    # an album on a label's Bandcamp page (3.22.1): no link for the artist, searched by name (the release's artist
                           # first, "release artist"), the hint with the page and MB's label ("a label of this release ✓"), the source
                           # line, the log; the account's name from "data-band" / "og:site_name" (Node); Discogs: a person without MB
