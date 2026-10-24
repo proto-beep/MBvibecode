@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.29.3
+// @version      3.30.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.29.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -649,6 +649,9 @@
       "settings.levelColors": "Colours for the levels",
       "settings.levelColorsTitle": "Recording, release, release group and work each in its own colour – in the rows and in the compact view",
       "settings.levelColor": "Colour of the level “{level}”",
+      "settings.rulesPlace": "Mapping rules",
+      "settings.rulesPlace.dashboard": "in the dashboard",
+      "settings.rulesPlace.window": "as a window",
       "settings.t.sources": "Sources",
       "settings.t.discogs": "Discogs and Bandcamp view",
       "settings.t.works": "Works",
@@ -1255,6 +1258,10 @@
       "log.artistAliasSuggested": "{name}: not found by its Discogs link; suggested via Discogs aliases: {list}",
       "rules.title": "Mapping rules",
       "rules.close": "Close the mapping rules",
+      "rules.toWindow": "⧉ As window",
+      "rules.toWindowTitle": "Show the mapping rules in a window of their own (remembered; ⚙ Settings → Appearance)",
+      "rules.toDock": "Into the dashboard",
+      "rules.toDockTitle": "Show the mapping rules in the dashboard, below its head, instead of ⚙ Settings (remembered; ⚙ Settings → Appearance)",
       "rules.test": "Try a Discogs role:",
       "rules.testHint": "Type a Discogs role as on Discogs, e.g. “Bass [Upright]”; several separated by commas.",
       "rules.search": "Search the rules:",
@@ -11279,15 +11286,91 @@
     }).join('');
   }
 
+  /**
+   * [3.30.0] Where "Mapping rules" open (item 75; maintainer: "ja standardmäßig im Dashboard und ja soll sich die
+   * Einstellung merken. ja nur eines öffnen und das andere schließen"): below the head of the dashboard like ⚙ Settings
+   * (the default; never together with them), or as a window of its own (until 3.29: always). Only "window" is stored.
+   */
+  const RULES_PLACE_KEY = 'dci-rules-place';
+  S.rulesPlace = readJson('localStorage', RULES_PLACE_KEY, 'dashboard') === 'window' ? 'window' : 'dashboard';
+  const rulesDocked = () => S.rulesPlace === 'dashboard' && !!S.overlay;
+  /** The rules are open (in the dashboard or as a window). */
+  function rulesShown() {
+    const el = document.getElementById('dci-rules');
+    return !!(el && el.isConnected && !el.hidden && (!el.classList.contains('dci-rules-docked') || (S.overlay && !S.overlay.hidden)));
+  }
+
+  /** The head of the rules: "⧉ As window" in the dashboard, "Into the dashboard" as a window, and ✕. */
+  function rulesHeadToolsHtml() {
+    const docked = rulesDocked();
+    const t = tr(docked ? 'rules.toWindowTitle' : 'rules.toDockTitle');
+    return `<button type="button" class="dci-textbtn" data-rules-place="${docked ? 'window' : 'dashboard'}" title="${esc(t)}">${esc(tr(docked ? 'rules.toWindow' : 'rules.toDock'))}</button>
+      <button type="button" class="dci-iconbtn" data-rules-close aria-label="${esc(tr('rules.close'))}" title="${esc(tr('rules.close'))}">✕</button>`;
+  }
+
+  /** [3.30.0] Puts the rules where they belong now: into the dock below the head of the dashboard, or into a window. */
+  function placeRules() {
+    const el = document.getElementById('dci-rules');
+    if (!el) return;
+    const dock = S.overlay && S.overlay.querySelector('[data-el="rules-dock"]');
+    if (rulesDocked() && dock) {
+      if (el.parentNode !== dock) dock.appendChild(el);
+      el.classList.add('dci-rules-docked');
+      el.setAttribute('role', 'region');
+      ['left', 'top', 'width', 'height', 'right', 'bottom', 'zIndex'].forEach((k) => { el.style[k] = ''; });
+      dock.hidden = el.hidden;
+    } else {
+      if (dock) dock.hidden = true;
+      if (el.parentNode !== document.body || el.classList.contains('dci-rules-docked')) {
+        el.classList.remove('dci-rules-docked');
+        el.setAttribute('role', 'dialog');
+        document.body.appendChild(el);
+        const saved = readJson('localStorage', GEOM_KEYS.rules, null);
+        placeWindow(el, saved && saved.w >= 160 && saved.h >= 100 ? saved : defaultGeom('rules'), true);
+      }
+      el.style.zIndex = String(++topZ);
+    }
+    const tools = el.querySelector('[data-rf="head-tools"]');
+    if (tools) tools.innerHTML = rulesHeadToolsHtml();
+    syncRulesBtn();
+  }
+
+  /** The symbol "Mapping rules" in the head of the dashboard: pressed while they are open. */
+  function syncRulesBtn() {
+    if (!S.overlay) return;
+    S.overlay.querySelectorAll('.dci-head [data-act="rules"]').forEach((b) => b.setAttribute('aria-expanded', String(rulesShown())));
+  }
+
+  function closeRules() {
+    const el = document.getElementById('dci-rules');
+    if (!el) return;
+    el.hidden = true;
+    const dock = S.overlay && S.overlay.querySelector('[data-el="rules-dock"]');
+    if (dock) dock.hidden = true;
+    syncRulesBtn();
+  }
+
+  /** [3.30.0] "⧉ As window" / "Into the dashboard": the place of the rules changed and remembered; they stay open. */
+  function setRulesPlace(place) {
+    S.rulesPlace = place === 'window' ? 'window' : 'dashboard';
+    writeJson('localStorage', RULES_PLACE_KEY, S.rulesPlace === 'window' ? 'window' : null);
+    log('info', 'settingValue', { what: tr('settings.rulesPlace'), value: tr(`settings.rulesPlace.${S.rulesPlace}`) });
+    const open = rulesShown();
+    placeRules();
+    if (open) openRules();
+    if (S.settingsOpen) renderSettings();
+  }
+
   function openRules(focusId = null) {
     let el = document.getElementById('dci-rules');
     if (!el) {
       el = document.createElement('div');
       el.id = 'dci-rules';
+      el.hidden = true;
       el.setAttribute('role', 'dialog');
       el.setAttribute('aria-labelledby', 'dci-rules-title');
       el.innerHTML = `<div class="dci-rules-head"><h2 id="dci-rules-title">${esc(tr('rules.title'))}</h2>
-          <button type="button" class="dci-iconbtn" data-rules-close aria-label="${esc(tr('rules.close'))}">✕</button></div>
+          <span class="dci-rules-tools" data-rf="head-tools">${rulesHeadToolsHtml()}</span></div>
         <div class="dci-rules-body">
           <label class="dci-rules-test"><span data-rf="test-label">${esc(trRules('rules.test'))}</span> <input type="text" data-rf="test" placeholder="Bass [Upright], Coordinator [Tour]"></label>
           <div data-rf="result">${ruleTestHtml('')}</div>
@@ -11299,7 +11382,13 @@
       makeMovable(el, '.dci-rules-head', 'rules');
       el.addEventListener('click', (e) => {
         const t = e.target;
-        if (t.closest('[data-rules-close]')) el.hidden = true;
+        if (t.closest('[data-rules-close]')) {
+          closeRules();
+          const b = S.overlay && S.overlay.querySelector('.dci-head [data-act="rules"]');
+          if (b && el.classList.contains('dci-rules-docked')) b.focus({ preventScroll: true });
+        }
+        const pl = t.closest('[data-rules-place]');
+        if (pl) setRulesPlace(pl.dataset.rulesPlace);
         const edit = t.closest('[data-urule-edit]');
         if (edit) {
           S.ruleForm = { ...(userRules().find((u) => u.id === edit.dataset.uruleEdit) || {}) };
@@ -11345,11 +11434,18 @@
       });
     }
     el.hidden = false;
+    // [3.30.0] in the dashboard: ⚙ Settings close (only one of both is open there)
+    if (rulesDocked() && (S.settingsOpen || S.resetOpen)) {
+      S.settingsOpen = false;
+      S.resetOpen = false;
+      renderSettings();
+    }
+    // As a window above the dashboard and the log, which come to the front when used
+    placeRules();
     renderRulesBody();
-    // Above the dashboard and the log, which come to the front when used
-    el.style.zIndex = String(++topZ);
+    if (rulesDocked()) el.scrollIntoView({ block: 'nearest' });
     if (focusId) focusRule(focusId);
-    else el.querySelector('[data-rf="test"]').focus();
+    else el.querySelector('[data-rf="test"]').focus({ preventScroll: rulesDocked() });
   }
 
   /** The next (or previous) incomplete row: scrolled into view, with what is missing highlighted. */
@@ -20490,8 +20586,13 @@
       case 'jump-bottom':
         jumpDashboard(act === 'jump-top' ? 'top' : 'bottom');
         break;
+      case 'rules-place':
+        if (btn.dataset.place !== S.rulesPlace) setRulesPlace(btn.dataset.place);
+        break;
       case 'rules':
-        openRules();
+        // [3.30.0] the symbol in the head opens and closes them (item 75); elsewhere (⚙ Settings → Texts) it opens them
+        if (btn.closest('.dci-head') && rulesShown()) closeRules();
+        else openRules();
         break;
       case 'inc-next':
       case 'inc-prev':
@@ -20965,6 +21066,8 @@
       case 'settings-open':
         S.settingsOpen = !S.settingsOpen;
         S.resetOpen = false;
+        // [3.30.0] the mapping rules in the dashboard close (only one of both is open there, item 75)
+        if (S.settingsOpen && rulesDocked() && rulesShown()) closeRules();
         if (S.settingsOpen) {
           awCount().then((n) => {
             S.awStoreCount = n || 0;
@@ -21867,7 +21970,7 @@
   };
 
   function clampWindow(win) {
-    if (win.isConnected && win.getBoundingClientRect().width && !win.closest('.dci-inline') && !win.classList.contains('dci-log-docked')) placeWindow(win, geomOf(win), true);
+    if (win.isConnected && win.getBoundingClientRect().width && !win.closest('.dci-inline') && !win.classList.contains('dci-log-docked') && !win.classList.contains('dci-rules-docked')) placeWindow(win, geomOf(win), true);
   }
 
   function bringToFront(kind) {
@@ -21888,7 +21991,7 @@
     placeWindow(win, valid ? saved : defaultGeom(kind), true);
     win.addEventListener('pointerdown', (e) => {
       // In the page, the dashboard is part of the page: nothing to move or bring to the front
-      if (win.closest('.dci-inline') || win.classList.contains('dci-log-docked')) return;
+      if (win.closest('.dci-inline') || win.classList.contains('dci-log-docked') || win.classList.contains('dci-rules-docked')) return;
       bringToFront(kind);
       const handle = e.target.closest(handleSelector);
       // [3.12.1] also foldable lists in the head (the lines a text did not give, "n lines not recognized")
@@ -21917,7 +22020,7 @@
         ro.disconnect();
         return;
       }
-      if (!win.getBoundingClientRect().width || win.classList.contains('dci-moving') || win.closest('.dci-inline')) return;
+      if (!win.getBoundingClientRect().width || win.classList.contains('dci-moving') || win.closest('.dci-inline') || win.classList.contains('dci-rules-docked')) return;
       if (win.classList.contains('dci-log-docked')) {
         // above the edit note, the dragged height is kept; beside it, the log follows the edit note
         if (!win.classList.contains('dci-log-dock-above')) return;
@@ -21940,7 +22043,7 @@
     for (const m of movable) {
       if (!m.win.isConnected) continue;
       writeJson('localStorage', GEOM_KEYS[m.kind], null);
-      if (!m.win.closest('.dci-inline') && !m.win.classList.contains('dci-log-docked')) placeWindow(m.win, defaultGeom(m.kind));
+      if (!m.win.closest('.dci-inline') && !m.win.classList.contains('dci-log-docked') && !m.win.classList.contains('dci-rules-docked')) placeWindow(m.win, defaultGeom(m.kind));
     }
   }
 
@@ -21985,7 +22088,7 @@
               <button type="button" class="dci-headbtn" data-act="zoom-in" title="${esc(tr('zoom.larger'))}" aria-label="${esc(tr('zoom.larger'))}">A+</button>
             </span>
             ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
-            ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'))}
+            ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'), 'aria-expanded="false"')}
             ${headBtn('log', 'log', tr('log.title'), tr('log.title'))}
             ${headBtn('connections-open', 'info', '', tr('connections.open'))}
             ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
@@ -21994,6 +22097,7 @@
         </header>
         <div class="dci-body" data-el="body">
           <div class="dci-settings" data-el="settings" role="region" aria-label="${esc(tr('settings.title'))}" hidden></div>
+          <div class="dci-rules-dock" data-el="rules-dock" hidden></div>
           <div class="dci-srcpanels" data-el="srcpanels"></div>
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
           <div class="dci-msgs" data-el="msgs" aria-live="polite"></div>
@@ -22133,6 +22237,13 @@
   function rebuildDashboard() {
     if (S.subDialog) S.subDialog.cancel();
     const wasOpen = S.overlay && !S.overlay.hidden;
+    // [3.30.0] the mapping rules in the dashboard are kept (taken out before, put back after)
+    const rules = document.getElementById('dci-rules');
+    const rulesOpen = rulesShown();
+    if (rules && S.overlay && S.overlay.contains(rules)) {
+      rules.hidden = true;
+      document.body.appendChild(rules);
+    }
     if (S.overlay) S.overlay.remove();
     S.overlay = null;
     buildOverlay();
@@ -22141,6 +22252,10 @@
     renderLog();
     renderLauncher();
     renderControls();
+    if (rules) {
+      rules.hidden = !rulesOpen;
+      placeRules();
+    }
   }
 
   /**
@@ -22241,7 +22356,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -22309,6 +22424,9 @@
           ? `<button type="button" aria-pressed="true" disabled>${esc(tr(`settings.place.${pl}`))}</button>`
           : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
         row(`${esc(tr('view.label'))} ${viewToggleHtml(true)}`),
+        // [3.30.0] where the mapping rules open (item 75)
+        row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
+          data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
         row(check('data-set="level-colors"', S.levelColors, tr('settings.levelColors'), tr('settings.levelColorsTitle'))),
         row(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
           value="${S.levelPalette[level]}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColor', { level: tr(`level.${level}`) }))}">
@@ -22523,6 +22641,8 @@
       S.levelColors = true;
       S.levelPalette = { ...LEVEL_PALETTE_DEFAULT };
       applyLevelColors();
+      S.rulesPlace = 'dashboard';
+      placeRules();
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
@@ -22558,7 +22678,7 @@
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
-    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY];
+    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -22578,7 +22698,7 @@
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
-      levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT },
+      levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard',
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -22982,9 +23102,9 @@
     if (e.key !== 'Escape') return;
     // The small "Mapping rules" window goes first; the dashboard stays open
     const rules = document.getElementById('dci-rules');
-    if (rules && !rules.hidden) {
+    if (rules && rulesShown()) {
       e.preventDefault();
-      rules.hidden = true;
+      closeRules();
       return;
     }
     if (!S.overlay || S.overlay.hidden) return;
@@ -23064,6 +23184,13 @@
         font: calc(var(--u, 1px) * 13) / 1.4 system-ui, sans-serif;
       }
       #dci-rules[hidden] { display: none; }
+      /* [3.30.0] in the dashboard below its head, like ⚙ Settings (item 75) */
+      .dci-rules-dock[hidden] { display: none; }
+      #dci-rules.dci-rules-docked { position: static; width: auto; height: auto; max-height: 72vh; min-width: 0; min-height: calc(var(--u, 1px) * 160); resize: vertical;
+        margin: calc(var(--u, 1px) * 6) 0; border: 1px solid #c9c4dd; border-left: 4px solid var(--purple, #736dab); border-radius: 3px; box-shadow: none; background: #faf9fd; z-index: auto; }
+      #dci-rules.dci-rules-docked .dci-rules-head { cursor: default; background: transparent; }
+      #dci-rules .dci-rules-tools { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 10); }
+      #dci-rules .dci-rules-tools .dci-textbtn { border: 0; background: none; padding: 0; color: #4b4585; text-decoration: underline; cursor: pointer; font: inherit; }
       #dci-rules .dci-rules-head { display: flex; align-items: center; justify-content: space-between; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-bottom: 1px solid #dddae8; background: #f7f6fb; cursor: move; }
       #dci-rules h2 { margin: 0; font-size: calc(var(--u, 1px) * 15); }
       #dci-rules h3 { margin: calc(var(--u, 1px) * 12) 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 13); }
