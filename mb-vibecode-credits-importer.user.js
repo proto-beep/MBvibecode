@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.3
+// @version      3.30.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -11357,6 +11357,61 @@
   function syncRulesBtn() {
     if (!S.overlay) return;
     S.overlay.querySelectorAll('.dci-head [data-act="rules"]').forEach((b) => b.setAttribute('aria-expanded', String(rulesShown())));
+    placeBridges();
+  }
+
+  /**
+   * [3.30.4] A bridge from ⚙ (or "Mapping rules") in the head to what it opened below the head (item 87; maintainer: "kannst
+   * du zusätzlich wo im screenshot rot markiert eine visuelle brücke zum menu führen? es ist auch derzeit am symbol noch nicht
+   * eindeutig, dass das menü geöffnet ist. genau so verhält es sich auch beim mapping sofern man es im dashboard anzeigt."):
+   * the symbol pressed, a strip below it to the lower edge of the head (`--dci-bridge-down`) and one from there to the box
+   * (`--dci-bridge-x`, `-w`, `-h`), drawn by CSS; the box scrolled away: only the part at the symbol.
+   */
+  function placeBridges() {
+    if (!S.overlay || S.overlay.hidden) return;
+    const head = S.overlay.querySelector('.dci-head');
+    if (!head) return;
+    alignSettingsPane();
+    const hb = head.getBoundingClientRect().bottom;
+    const dock = S.overlay.querySelector('[data-el="rules-dock"]');
+    const pairs = [
+      [S.overlay.querySelector('.dci-head [data-act="settings-open"]'), $('settings'), !!S.settingsOpen],
+      [S.overlay.querySelector('.dci-head [data-act="rules"]'), dock, !!(dock && !dock.hidden && rulesDocked() && rulesShown())],
+    ];
+    for (const [btn, box, open] of pairs) {
+      if (!btn || !box) continue;
+      const on = open && !box.hidden && !!btn.offsetParent;
+      btn.classList.toggle('dci-bridged', on);
+      if (!on) {
+        box.classList.remove('dci-bridged-box');
+        continue;
+      }
+      const b = btn.getBoundingClientRect();
+      const p = box.getBoundingClientRect();
+      btn.style.setProperty('--dci-bridge-down', `${Math.max(0, Math.round(hb - b.bottom + 1))}px`);
+      box.classList.toggle('dci-bridged-box', p.top >= hb - 1);
+      box.style.setProperty('--dci-bridge-x', `${Math.round(b.left - p.left - box.clientLeft)}px`);
+      box.style.setProperty('--dci-bridge-w', `${Math.round(b.width)}px`);
+      box.style.setProperty('--dci-bridge-h', `${Math.max(0, Math.round(p.top - hb))}px`);
+    }
+  }
+
+  /**
+   * [3.30.4] The content of the settings starts at the height of the chosen tab (item 87; maintainer: "vielleicht könnte man
+   * den menüinhalt immer auf höhe der punkte starten lassen"), so every tab joins it; tabs in a row (narrow): at the top.
+   */
+  function alignSettingsPane() {
+    const el = S.overlay && $('settings');
+    if (!el || el.hidden) return;
+    const pane = el.querySelector('.dci-set-pane');
+    const wrap = el.querySelector('.dci-set-wrap');
+    const tabs = el.querySelector('.dci-set-tabs');
+    const sel = el.querySelector('.dci-set-tab[aria-selected="true"]');
+    if (!pane || !wrap) return;
+    pane.style.marginTop = '';
+    if (!sel || !tabs || getComputedStyle(tabs).flexDirection !== 'column') return;
+    const dy = Math.round(sel.getBoundingClientRect().top - wrap.getBoundingClientRect().top);
+    if (dy > 0) pane.style.marginTop = `${dy}px`;
   }
 
   function closeRules() {
@@ -22351,6 +22406,18 @@
     // "Add entry manually" above it, always in view)
     const body = overlay.querySelector('[data-el="body"]');
     const stick = overlay.querySelector('[data-el="stick"]');
+    // [3.30.4] the bridges follow the boxes when the body scrolls, and the head when it changes
+    let bridgeFrame = 0;
+    const bridgesLater = () => {
+      if (bridgeFrame) return;
+      bridgeFrame = requestAnimationFrame(() => {
+        bridgeFrame = 0;
+        placeBridges();
+      });
+    };
+    body.addEventListener('scroll', bridgesLater, { passive: true });
+    new ResizeObserver(bridgesLater).observe(overlay.querySelector('.dci-head'));
+    new ResizeObserver(bridgesLater).observe(body);
     new ResizeObserver(() => {
       body.style.scrollPaddingTop = `${stick.offsetHeight + 8}px`;
       updatePageScrollPadding();
@@ -22692,6 +22759,7 @@
     el.hidden = !S.settingsOpen;
     if (!S.settingsOpen) {
       el.innerHTML = '';
+      placeBridges();
       return;
     }
     const active = document.activeElement;
@@ -22701,6 +22769,7 @@
     el.innerHTML = settingsHtml();
     const again = key && el.querySelector(key);
     if (again) again.focus();
+    placeBridges();
   }
 
   /** The switches elsewhere in the dashboard show what was set in the menu (and the other way round). */
@@ -23455,6 +23524,15 @@
       .dci-head .dci-ibtn { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 7); }
       /* [3.27.2] a symbol switched on (the compact view) */
       #dci-overlay .dci-head .dci-headbtn[aria-pressed="true"] { background: #ecebf6; border-color: var(--purple); color: var(--purple-d); }
+      /* [3.30.4] ⚙ and "Mapping rules" pressed while open, with a bridge to their box below the head (item 87) */
+      #dci-overlay .dci-head .dci-headbtn[aria-expanded="true"] { background: #ecebf6; border-color: var(--purple); color: var(--purple-d); }
+      #dci-overlay .dci-head .dci-headbtn.dci-bridged { position: relative; }
+      #dci-overlay .dci-head .dci-headbtn.dci-bridged::after { content: ''; position: absolute; left: -1px; right: -1px; top: calc(100% - 1px);
+        height: var(--dci-bridge-down, 0px); background: #ecebf6; border-left: 1px solid var(--purple); border-right: 1px solid var(--purple); z-index: 2; pointer-events: none; }
+      #dci-overlay .dci-settings, #dci-overlay .dci-rules-dock { position: relative; }
+      #dci-overlay .dci-bridged-box::before { content: ''; position: absolute; left: var(--dci-bridge-x, 0px); width: var(--dci-bridge-w, 0px);
+        top: calc(-1 * var(--dci-bridge-h, 0px) - 1px); height: calc(var(--dci-bridge-h, 0px) + 2px); box-sizing: border-box;
+        background: #ecebf6; border-left: 1px solid var(--purple); border-right: 1px solid var(--purple); z-index: 2; pointer-events: none; }
       .dci-ico { width: calc(var(--u, 1px) * 15); height: calc(var(--u, 1px) * 15); flex: none; }
       .dci-hlabel { display: none; }
       @container (min-width: 1600px) { .dci-head .dci-hlabel { display: inline; } }
@@ -23943,7 +24021,7 @@
       .dci-set-tab { font: inherit; text-align: left; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); border: 1px solid transparent; border-radius: 4px 0 0 4px;
         background: transparent; color: var(--purple-d); cursor: pointer; white-space: nowrap; }
       .dci-set-tab:hover { background: #f1f0f8; }
-      .dci-set-tab[aria-selected="true"] { background: #fff; border-color: #c9c4dd; border-right-color: #fff; font-weight: 600; margin-right: -15px; position: relative; z-index: 1; }
+      .dci-set-tab[aria-selected="true"] { background: #fff; border-color: #c9c4dd; border-right-color: #fff; font-weight: 600; margin-right: calc(var(--u, 1px) * -14 - 1px); position: relative; z-index: 1; }
       .dci-set-tab:focus-visible { outline: 2px solid var(--purple); outline-offset: -2px; }
       .dci-set-resetall { align-self: flex-start; }
       .dci-set-pane { flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid #c9c4dd; border-radius: 0 4px 4px 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }

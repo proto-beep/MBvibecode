@@ -205,6 +205,8 @@ python3 t_rowrules.py     # 3.30.2: a rule id at a row opens the rules as a wind
                           # entry in the compact view opens / closes all its rows
 python3 t_poolsmx.py      # 3.30.3: date pool and track pool fold on their own (folded bar and open block, remembered); the scroll
                           # bars of the works matrix (above it; at the bottom while its lower edge is out of view), moving together
+python3 t_bridge.py       # 3.30.4: ⚙ pressed with a bridge to the settings (and the rules symbol to the docked rules), the content of
+                          # every tab at the height of the tab (100 % and 90 %), the bridge scrolled away and closed
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error
