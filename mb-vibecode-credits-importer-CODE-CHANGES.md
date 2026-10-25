@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.30.2, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.30.3, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.30.3 · 2026-10-25
+
+Pools fold on their own, scroll bars of the works matrix (collected items 93, 94).
+
+- **State and storage:** `S.poolFold` (`dci-pool-fold`, `POOL_FOLD_KEY`: `{ dates: true, tracks: true }` while folded, nothing when open; `SETTINGS_KEYS`, `resetSettings`).
+- **New `poolLabelHtml(pool, n)`:** the name of a pool as a button `data-act="pool-fold" data-pool` (▾/▸, "(n)" when folded); `datePoolHtml` and `trackPoolHtml` (open and kept) use it and return only it while folded. Click handler `pool-fold` (stored, `renderDates`, focus back).
+- **Works matrix:** `<div class="dci-mx-hs dci-mx-hs-top" data-mxhs="top">` before `.dci-mx-wrap`, `data-mxhs="bottom"` (sticky at the bottom; in the page above the footer, `--dci-foot-h` from `updatePageScrollPadding`) and `.dci-mx-end` after it. New **`setupMxScroll()`** (called by `renderWorks`): the inner width so that the bars scroll as far as the matrix, scroll positions kept together (a lock against loops), a `ResizeObserver` on the matrix, an `IntersectionObserver` on `.dci-mx-end` (root: the body of the window, the page in the page) shows the lower bar only while the lower edge is out of view; the observers of the drawing before are disconnected (`S.mxScrollObs`).
+- **CSS:** `button.dci-pool-fold`, `.dci-pool-n`; `.dci-mx-hs` (always a scroll bar, a light strip), `-top`, `-bottom`, `.dci-mx-end`.
+- **Texts (English only):** `pools.foldOne`, `pools.unfoldOne`.
+- **Tests:** new `t_poolsmx.py`.
 
 ## Import 3.30.2 · 2026-10-25
 

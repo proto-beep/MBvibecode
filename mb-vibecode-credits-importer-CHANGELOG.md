@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-25 | 3.30.1 – 3.30.2 | – |
+| 2026-10-25 | 3.30.1 – 3.30.3 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -83,6 +83,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-25
+
+### Import 3.30.3
+
+#### Added
+
+- **Date pool and track pool fold on their own** (collected item 93; maintainer: "bitte mach "Date pool" und "track pool" in der mitscrollenden leiste oben auf und zuklappbar. bei großen releases kann das sonst zu viel platz wegnehmen"): ▾ Date pool / ▾ Track pool, in the open block and in the folded bar; folded, only the name and the number of chips stay; remembered.
+- **Scroll bars of the works matrix** (item 94; maintainer: "wir brauchen in der work-matrix noch eine leiste um von links nach rechts zu scrollen. manchmal gibt es zu viele composer und publisher für eine anzeige auf einer bildschirmbreite"): one above the matrix, and one at the bottom of the visible area while the lower edge of the matrix is out of view.
 
 ### Import 3.30.2
 
