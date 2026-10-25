@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.6
+// @version      3.30.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -6242,6 +6242,7 @@
     { id: 'S038', where: 'TEXT.parse (namesWithRoles, PROSE_ROLE_WORDS)', note: 'Prose with names and their roles in brackets after "by": "A chronicle of rabid deeds, dutifully unearthed … by K.M. (sounds, words) & E. (voice)" → K.M. performer and lyricist, E. vocals – the words before "by" are no role, the brackets are (T041, or roles of the register: "(guitar, vocals)"); every name needs a bracket (3.29.0)' },
     { id: 'S039', where: 'TEXT.parse (place, placeOf)', note: 'Verbs joined before "at" each give the place: "Mixed and mastered at TQA.HQ (July 2026)" → mixed at and mastered at TQA.HQ; a date in brackets after the place is no part of it (3.29.0)' },
     { id: 'S040', where: 'TEXT.parse (splitRoles, INSTRUMENT_MODIFIER)', note: 'A list of kinds before a shared instrument also with commas only ("Tenor, alto, soprano saxophones", "Tenor / alto / soprano saxophones") – each kind gets the instrument, in the singular when the list ends in the plural (tenor saxophone, alto saxophone, soprano saxophone) (3.29.0)' },
+    { id: 'S041', where: 'TEXT.parse (TEXT_MEMBERS, isTheBand; BANDCAMP.toRelease)', note: 'The members of the band: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – the release\'s artist (or "the band", "we") before "are", "is", "consists of" – each name a performer on all tracks, as a suggestion (names with capitals only); also from the "about" text of Bandcamp, which otherwise gives only places (3.30.7, T043)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -6694,6 +6695,8 @@
       show: () => ({ pairs: Object.entries(PROSE_ROLE_WORDS) }) },
     { id: 'T042', where: 'PROSE_FILLER_VERB, PROSE_FILLER_BEFORE_NAME', note: 'Texts (3.29.0): words of prose around a credit that are left out – a verb before "by" ("Cover artwork channeled by X", "Logo carved by …") and words before the name ("… by the guided hand of BMS Illustration")',
       show: () => ({ pairs: [['verb before “by”', PROSE_FILLER_VERB], ['before the name', PROSE_FILLER_BEFORE_NAME]] }) },
+    { id: 'T043', where: 'TEXT_MEMBERS, TEXT_BAND_SELF', note: 'Texts (3.30.7): the members of a band – the release\'s artist (or the band named by itself: "the band", "the trio", "we") before "are", "is", "consists of" …, then the names (S041)',
+      show: () => ({ pairs: [['the sentence', TEXT_MEMBERS], ['the band by itself', TEXT_BAND_SELF]] }) },
     { id: 'T039', where: 'ROLE_TERMS, ROLE_INDEX, foldWord', note: 'All sources (3.28.2): roles in Norwegian, Swedish and Danish, each spelling with its language (word@no, word@sv, word@da; the search field filters "@no") → the English role the register maps; in a Discogs bracket or as a role of a text, a translation gets no role credit (S032)',
       show: () => ({ pairs: ROLE_TERMS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
     { id: 'T040', where: 'ART_TASKS, ART_TASK_INDEX, splitArtTasks', note: 'All sources (3.28.2): the tasks of an artwork credit that "and" (og, och, und, et, y, &, +) joins, with the role each becomes (S033)',
@@ -6816,6 +6819,9 @@
   // [T009] Texts: names in a list ("A, B & C", "A and B", "A / B"), roles in a list ("guitar, vocals", "mixed and
   // mastered"), and the separators after which a shared instrument word goes to the word before ("tenor & soprano sax")
   const TEXT_NAME_SEP = /\s*(?:,|&|\+|\/|;|\band\b|\bund\b|\bet\b)\s*/i;
+  // [T043] Texts (3.30.7): the members of a band – "<the release's artist> are A, B and C"; the band named by itself
+  const TEXT_MEMBERS = /^(.+?)\s+(?:are|is|consists? of|comprises?|features|were|was|sind|ist|besteht aus|son|es|sont|est)\s*:?\s+(.+)$/i;
+  const TEXT_BAND_SELF = /^(?:the\s+)?(?:band|group|trio|quartet|quintet|duo|line-?up)$|^(?:we|this band|die band|wir)$/i;
   // [3.21.2] Spanish "y" between names only in small letters ("Kevin Y Lee" keeps its initial)
   const TEXT_NAME_SEP_Y = /\s+y\s+/;
   const TEXT_ROLE_SEP = /\s*(?:,|&|\+|\/|\band\b|\bund\b|\bet\b)\s*|\s+y\s+/i;
@@ -8106,7 +8112,7 @@
       return { text: clean(text), links, cut: true };
     }
 
-    function parse(text, { isRole, isCompanyRole, resolveTracks, resolveTitles }) {
+    function parse(text, { isRole, isCompanyRole, resolveTracks, resolveTitles, artistNames = [] }) {
       const credits = [];
       const companies = [];
       const unrecognized = [];
@@ -8135,13 +8141,16 @@
       let n0 = 0;
       const lineCount = new Map();
       const at = () => ({ line: line0, part: part0, pi: pi0, n: n0 });
-      const addCredit = (name, role, scope) => {
+      const addCredit = (name, role, scope, extra = {}) => {
         const p = parseRoleNotation(role)[0];
         if (!p || !looksLikeName(name)) return false;
-        if (isCompanyRole(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at() });
-        else credits.push({ who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at() });
+        if (isCompanyRole(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra });
+        else credits.push({ who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
         return true;
       };
+      // [S041] (3.30.7) the release's artist as the band, or "the band", "we" (collected item 96)
+      const bandNames = new Set(artistNames.map((n) => norm(n)).filter(Boolean));
+      const isTheBand = (subject) => bandNames.has(norm(subject)) || TEXT_BAND_SELF.test(clean(subject));
       // [3.14.0] A credit without a name ("… created by a human"): the core offers the release's artists for it
       const addPlaceholder = (said, role, scope) => {
         const p = parseRoleNotation(role)[0];
@@ -8313,6 +8322,18 @@
           if ((m = clause.match(/^(\S+(?:\s+\S+)?)\s+(?:par|por|da|durch|via|through)\s+(.+)$/i)) && distribution(m[1])) {
             for (const n of names(m[2])) if (addCredit(n, 'Distributed By', cScope)) found++;
             continue;
+          }
+          // [S041] (3.30.7) the members of the band: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – the
+          // release's artist (or "the band", "we") before "are", "is", "consists of": each name a performer (T043; also in
+          // the "about" text of Bandcamp, marked `members`)
+          if (ruleOn('S041') && (m = clause.match(TEXT_MEMBERS)) && isTheBand(m[1])) {
+            const list = names(m[2].replace(TEXT_TIME_AFTER_NAME, '')).map((n) => clean(n));
+            const person = (n) => looksLikeName(n) && n.split(' ').length <= 4
+              && n.split(' ').every((w) => /^\p{Lu}/u.test(w) || /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|bin|al|el|y|zu)$/i.test(w));
+            if (list.length && list.every(person)) {
+              list.forEach((n) => { if (addCredit(n, 'Performer', cScope, { members: true })) found++; });
+              continue;
+            }
           }
           // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
           const place = (verb, where) => {
@@ -8723,13 +8744,16 @@
       // [3.22.1] page: the name of the Bandcamp account, own: whether it is the artist's own page (else a label's, 46)
       const bandName = String(data.artist || '').trim();
       const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
-      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles });
+      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
       const credits = [...album.credits];
       const companies = [...album.companies];
       // [3.7.0] The "about" text is mostly prose: only its places ("recorded at Loft in Cologne, june 16/17 2018");
       // its dates are found in the notes like those of the credits
       // [3.22.0] and its areas ("recorded in Berlin")
-      companies.push(...TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles }).companies.filter((c) => /\b(?:at|in)$/i.test(c.role))
+      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
+      // [3.30.7] the members of the band from the "about" text too (S041)
+      credits.push(...aboutRes.credits.filter((c) => c.members));
+      companies.push(...aboutRes.companies.filter((c) => /\b(?:at|in)$/i.test(c.role))
         .map((c) => ({ ...c, fromAbout: true }))); // [3.16.1] can be left out ("Leave out the about text")
       const unrecognized = [...album.unrecognized];
       const ignored = [...(album.ignored || [])];
@@ -13218,6 +13242,8 @@
       resolveTracks: (spec, srcTracks = tracks) => tracksInText(`tracks ${spec}`, srcTracks),
       // [3.22.0] tracks named by their titles (S027)
       resolveTitles: (titles, srcTracks = tracks) => tracksByTitles(titles, srcTracks),
+      // [3.30.7] the names of the release's artist (S041: "<artist> are A, B and C")
+      artistNames: uniq((S.releaseCredit || []).map((p) => p.name).filter(Boolean)),
     };
   }
 
