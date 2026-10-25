@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.1
+// @version      3.30.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -288,6 +288,8 @@
       "group.fold": "Fold the roles of {name} to compact lines (until the next import)",
       "group.unfold": "Show the roles of {name} with all their fields again",
       "group.foldOpen": "Close the open roles of {name}",
+      "group.openAll": "Open all roles of {name}",
+      "group.closeAll": "Close all roles of {name}",
       "group.creditAllAria": "Artist credit for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
@@ -654,6 +656,9 @@
       "settings.rulesPlace": "Mapping rules",
       "settings.rulesPlace.dashboard": "in the dashboard",
       "settings.rulesPlace.window": "as a window",
+      "settings.rulesRowPlace": "Rule ids and ⓘ at rows open them",
+      "settings.rulesRowPlace.window": "as a window",
+      "settings.rulesRowPlace.symbol": "like the symbol",
       "settings.t.sources": "Sources",
       "settings.t.discogs": "Discogs and Bandcamp view",
       "settings.t.works": "Works",
@@ -11295,7 +11300,13 @@
    */
   const RULES_PLACE_KEY = 'dci-rules-place';
   S.rulesPlace = readJson('localStorage', RULES_PLACE_KEY, 'dashboard') === 'window' ? 'window' : 'dashboard';
-  const rulesDocked = () => S.rulesPlace === 'dashboard' && !!S.overlay;
+  // [3.30.2] rule ids and ⓘ at the rows open the rules as a window (item 75b; maintainer: "bitte bei Klick auf Regel-ID das
+  // Mapping als fenster öffnen standardmäßig aber option in den einstellungen anbieten") – the row stays in view; with the
+  // setting "like the symbol" where the symbol opens them. Only "symbol" is stored.
+  const RULES_ROW_KEY = 'dci-rules-rowplace';
+  S.rulesRowPlace = readJson('localStorage', RULES_ROW_KEY, 'window') === 'symbol' ? 'symbol' : 'window';
+  S.rulesAsWindow = false;
+  const rulesDocked = () => S.rulesPlace === 'dashboard' && !S.rulesAsWindow && !!S.overlay;
   /** The rules are open (in the dashboard or as a window). */
   function rulesShown() {
     const el = document.getElementById('dci-rules');
@@ -11355,6 +11366,7 @@
   /** [3.30.0] "⧉ As window" / "Into the dashboard": the place of the rules changed and remembered; they stay open. */
   function setRulesPlace(place) {
     S.rulesPlace = place === 'window' ? 'window' : 'dashboard';
+    S.rulesAsWindow = false;
     writeJson('localStorage', RULES_PLACE_KEY, S.rulesPlace === 'window' ? 'window' : null);
     log('info', 'settingValue', { what: tr('settings.rulesPlace'), value: tr(`settings.rulesPlace.${S.rulesPlace}`) });
     const open = rulesShown();
@@ -11363,7 +11375,17 @@
     if (S.settingsOpen) renderSettings();
   }
 
-  function openRules(focusId = null) {
+  /** [3.30.2] "Rule ids at rows open them: as a window | like the symbol" (⚙ Settings → Appearance). */
+  function setRulesRowPlace(place) {
+    S.rulesRowPlace = place === 'symbol' ? 'symbol' : 'window';
+    writeJson('localStorage', RULES_ROW_KEY, S.rulesRowPlace === 'symbol' ? 'symbol' : null);
+    log('info', 'settingValue', { what: tr('settings.rulesRowPlace'), value: tr(`settings.rulesRowPlace.${S.rulesRowPlace}`) });
+    if (S.settingsOpen) renderSettings();
+  }
+
+  /** `fromRow`: opened at a row (ⓘ, a rule id) – as a window unless the setting says "like the symbol". */
+  function openRules(focusId = null, { fromRow = false } = {}) {
+    S.rulesAsWindow = fromRow && S.rulesRowPlace === 'window' && S.rulesPlace === 'dashboard';
     let el = document.getElementById('dci-rules');
     if (!el) {
       el = document.createElement('div');
@@ -14490,6 +14512,38 @@
     return `<span class="dci-gcredit" title="${esc(title)}">${esc(text)}</span>`;
   }
 
+  /** [3.30.2] The rows of an entry the dashboard shows (work-level roles are in the works matrix only). */
+  const shownRowsOf = (a) => S.rows.filter((r) => r.artistKey === a.key && r.level !== 'work' && (S.mxSkipRows || !r.mxSkipped));
+
+  /**
+   * [3.30.2] The arrow in the head of an entry in the compact view (item 82b; maintainer: "ja bitte gib mir den Pfeil"):
+   * opens all its rows, or closes them when all are open.
+   */
+  function openAllHtml(a, rows) {
+    const all = rows.every((r) => S.rowOpen.has(r.id));
+    const t = tr(all ? 'group.closeAll' : 'group.openAll', { name: a.name });
+    return `<button type="button" class="dci-iconbtn dci-gopen" data-act="group-openall" aria-expanded="${all}" title="${esc(t)}" aria-label="${esc(t)}">${all ? '▾' : '▸'}</button>`;
+  }
+
+  function openAllOfGroup(a) {
+    const rows = shownRowsOf(a);
+    const all = rows.length && rows.every((r) => S.rowOpen.has(r.id));
+    rows.forEach((r) => (all ? S.rowOpen.delete(r.id) : S.rowOpen.add(r.id)));
+    rerenderGroup(a);
+    refresh();
+    const b = S.overlay.querySelector(`[data-group="${a.key}"] [data-act="group-openall"]`);
+    if (b) b.focus({ preventScroll: true });
+  }
+
+  /** [3.30.2] The arrow in the head follows rows opened or closed one by one. */
+  function syncOpenAll(a) {
+    const b = a && S.overlay && S.overlay.querySelector(`[data-group="${a.key}"] [data-act="group-openall"]`);
+    if (!b) return;
+    const tmp = document.createElement('span');
+    tmp.innerHTML = openAllHtml(a, shownRowsOf(a));
+    b.replaceWith(tmp.firstElementChild);
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -14506,7 +14560,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -16551,6 +16605,7 @@
     const tr1 = S.overlay.querySelector(`tr[data-row="${row.id}"]`);
     const tr2 = S.overlay.querySelector(`tr[data-tracksrow="${row.id}"]`);
     [tr1, tr2].forEach((el) => el && el.classList.toggle('dci-open', open));
+    if (S.view === 'compact') syncOpenAll(S.artists.get(row.artistKey));
     if (!tr1) return;
     if (!open) {
       const cl = tr1.querySelector('.dci-c-cline');
@@ -20594,6 +20649,13 @@
       case 'rules-place':
         if (btn.dataset.place !== S.rulesPlace) setRulesPlace(btn.dataset.place);
         break;
+      case 'rules-rowplace':
+        if (btn.dataset.place !== S.rulesRowPlace) setRulesRowPlace(btn.dataset.place);
+        break;
+      // [3.30.2] the arrow in the head of an entry (compact view, item 82b)
+      case 'group-openall':
+        if (artist) openAllOfGroup(artist);
+        break;
       case 'rules':
         // [3.30.0] the symbol in the head opens and closes them (item 75); elsewhere (⚙ Settings → Texts) it opens them
         if (btn.closest('.dci-head') && rulesShown()) closeRules();
@@ -20605,8 +20667,8 @@
         break;
       case 'rule-info':
       case 'rule-goto': {
-        // The rules window with this row's Discogs role in the test field (and at the rule clicked)
-        openRules();
+        // The rules window with this row's Discogs role in the test field (and at the rule clicked); [3.30.2] as a window
+        openRules(null, { fromRow: true });
         const t = document.querySelector('#dci-rules [data-rf="test"]');
         if (t && row) {
           t.value = row.raw || row.base || '';
@@ -22380,7 +22442,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -22451,6 +22513,9 @@
         // [3.30.0] where the mapping rules open (item 75)
         row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
           data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
+        // [3.30.2] rule ids and ⓘ at rows (item 75b)
+        row(`${esc(tr('settings.rulesRowPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesRowPlace'))}">${['window', 'symbol'].map((pl) => `<button type="button"
+          data-act="rules-rowplace" data-place="${pl}" aria-pressed="${S.rulesRowPlace === pl}">${esc(tr(`settings.rulesRowPlace.${pl}`))}</button>`).join('')}</span>`),
         row(check('data-set="level-colors"', S.levelColors, tr('settings.levelColors'), tr('settings.levelColorsTitle'))),
         row(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
           value="${S.levelPalette[level]}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColor', { level: tr(`level.${level}`) }))}">
@@ -22666,6 +22731,8 @@
       S.levelPalette = { ...LEVEL_PALETTE_DEFAULT };
       applyLevelColors();
       S.rulesPlace = 'dashboard';
+      S.rulesRowPlace = 'window';
+      S.rulesAsWindow = false;
       placeRules();
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
@@ -22702,7 +22769,7 @@
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
-    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY];
+    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -22722,7 +22789,7 @@
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
-      levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard',
+      levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false,
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -23924,6 +23991,8 @@
       #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline,
       #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
       .dci-gfold { padding: 0 calc(var(--u, 1px) * 4); color: var(--muted); font-size: calc(var(--u, 1px) * 13); }
+      .dci-gopen { padding: 0 calc(var(--u, 1px) * 4); margin-right: calc(var(--u, 1px) * 6); color: var(--muted); font-size: calc(var(--u, 1px) * 13); }
+      .dci-gopen:hover { color: var(--ink); }
       .dci-gfold:hover { color: var(--ink); }
 
       /* Companies, etc. */

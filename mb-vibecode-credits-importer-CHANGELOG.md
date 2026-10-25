@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-25 | 3.30.1 | – |
+| 2026-10-25 | 3.30.1 – 3.30.2 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -83,6 +83,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-25
+
+### Import 3.30.2
+
+#### Added
+
+- **Rule ids at rows open the mapping rules as a window** (collected item 75b; maintainer: "bitte bei Klick auf Regel-ID das Mapping als fenster öffnen standardmäßig aber option in den einstellungen anbieten"): ⓘ and the rule ids at a row open the rules as a window, so the row stays in view; the symbol in the head still opens them in the dashboard. ⚙ Settings → Appearance: "Rule ids and ⓘ at rows open them: as a window | like the symbol".
+- **The arrow in the head of an entry** (item 82b; maintainer: "ja bitte gib mir den Pfeil"): in the compact view ▸ opens all rows of the entry, ▾ closes them.
 
 ### Import 3.30.1
 
