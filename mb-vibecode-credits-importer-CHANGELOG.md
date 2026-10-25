@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-25 | 3.30.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -80,6 +81,21 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-25
+
+### Import 3.30.1
+
+#### Fixed
+
+- **"▾ 2 messages" half covered** (collected item 86; maintainer: "bei "▾ 2 messages" oben in der leiste verschwindet die hälfte der schrift "▾ 2 messages" im "Add entry manually" bereich. oberhalb von "▾ 2 messages" ist dafür noch ein bißchen zu viel platz"): the bar with "Add entry manually" and the pools no longer covers the line of the messages (or the last message); less room above them.
+- **"Skip" stays in place in the compact view** (item 91): a skipped line keeps its type (grey), so the level does not jump when it is switched by a click.
+- **"in the page" no wider than the browser window** (item 95; maintainer: "das ganze Dashboard hat sich über den Rand ausgebreitet"): a page of MusicBrainz wider than the window no longer makes the dashboard as wide.
+
+#### Changed
+
+- **Tooltips for "on mouse-over" and "on click"** (item 89) in ⚙ Settings → Discogs and Bandcamp view.
+- **"only works"** (item 92; maintainer: "der "only works" hat noch nicht die Farbe aus dem einstellungsmenü. schau dir bitte auch mal den Button an, ob der so richtig sitzt."): a button of its own next to the levels (it is no level), underlined in the colour of works.
 
 ## 2026-10-24
 

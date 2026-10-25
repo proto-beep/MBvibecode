@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.0
+// @version      3.30.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -561,6 +561,8 @@
       "syncMode.label": "jump to source",
       "syncMode.hover": "on mouse-over",
       "syncMode.click": "on click",
+      "syncMode.hoverTitle": "When the pointer rests on a row, an entry or a work for a moment, the source page (the Discogs or Bandcamp tab) jumps to its credit",
+      "syncMode.clickTitle": "Only a click on a row, an entry or a work makes the source page (the Discogs or Bandcamp tab) jump to its credit",
       "log.syncMode": "Discogs view follows the dashboard {mode}",
       "companies.title": "Companies, etc.",
       "companies.explain": "Labels, studios and plants from {src}. They are matched to MB labels or places via their {src} links. {src} lists persons here as labels too: paste an MB artist to link one as a person.",
@@ -16471,13 +16473,15 @@
     const open = (cls, text, title = '') => `<button type="button" class="${cls}" data-act="row-open"${title ? ` title="${esc(title)}"` : ''}>${text}</button>`;
     const parts = [`<button type="button" class="dci-cl-tgl" data-act="row-open" aria-expanded="false" title="${esc(tr('cl.openTitle'))}" aria-label="${esc(tr('cl.openTitle'))}">▸</button>`,
       open('dci-cl-role', esc(row.raw || (lt && lt.name) || '–'), tr('cl.openTitle'))];
-    if (!skip) {
+    // [3.30.1] also on Skip (grey): the level stays where it is when it is switched by a click (item 91)
+    {
       const what = [rowTypeName(row), row.primaryText].filter(Boolean).map(esc).join(' · ');
       parts.push(`<span class="dci-cl-type"><span aria-hidden="true">→</span> ${what || `<span class="dci-cl-none">${esc(tr('cl.noType'))}</span>`}${row.roleCredit
         ? ` <span class="dci-cl-credit">${esc(tr('common.quoted', { text: row.roleCredit }))}</span>` : ''}</span>`);
       // [3.28.0] the artist credit of this row when the entry is credited in more than one way (item 61; the head has the rest)
       const a = S.artists.get(row.artistKey);
-      if (row.credit && a && entryCredits(a).length > 1) parts.push(`<span class="dci-cl-as">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: row.credit }) }))}</span>`);
+      const credits = a ? uniq([...entryCredits(a), String(row.credit || '').trim()].filter(Boolean)) : [];
+      if (row.credit && credits.length > 1) parts.push(`<span class="dci-cl-as">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: row.credit }) }))}</span>`);
     }
     // [3.29.2] the level a button: a click switches to the next one (item 81; the dates follow as in the full row)
     const next = nextLevel(row);
@@ -19510,7 +19514,8 @@
 
   /** Switch: the Discogs tab follows the dashboard on mouse-over or on click. */
   function syncModeHtml() {
-    const btn = (mode) => `<button type="button" data-sync-mode="${mode}" aria-pressed="${S.syncMode === mode}">${esc(tr(`syncMode.${mode}`))}</button>`;
+    // [3.30.1] with a tooltip each (item 89)
+    const btn = (mode) => `<button type="button" data-sync-mode="${mode}" aria-pressed="${S.syncMode === mode}" title="${esc(tr(`syncMode.${mode}Title`))}">${esc(tr(`syncMode.${mode}`))}</button>`;
     return `<span class="dci-syncmode" role="group" aria-label="${esc(tr('nav.label'))}"><strong>${esc(tr('nav.label'))}</strong>
       <span>${esc(tr('syncMode.label'))}</span>
       <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('syncMode.label'))}">${btn('hover')}${btn('click')}</span>
@@ -22120,6 +22125,8 @@
             <span>${esc(tr('toolbar.levelAll'))}</span>
             <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
               ${levelBtn('recording')}${levelBtn('release')}${levelBtn('skip')}
+            </div>
+            <div class="dci-seg dci-onlyworks" role="group">
               <button type="button" data-act="bulk-level" data-level="only-works" title="${esc(tr('toolbar.onlyWorksTitle'))}">${esc(tr('toolbar.onlyWorks'))}</button>
             </div>
             <span data-el="medium-filter"></span>
@@ -22276,7 +22283,9 @@
       if (bar && bar.nextSibling !== o) bar.after(o);
       else if (!bar && o.parentNode === document.body) (document.getElementById('content') || document.body).prepend(o);
       ['left', 'top', 'width', 'height', 'right', 'bottom'].forEach((k) => { panel.style[k] = ''; });
+      fitInline();
     } else {
+      o.style.removeProperty('--dci-inline-max');
       if (o.parentNode !== document.body) document.body.appendChild(o);
       const saved = readJson('localStorage', GEOM_KEYS.panel, null);
       placeWindow(panel, saved && saved.w >= 160 && saved.h >= 100 ? saved : defaultGeom('panel'), true);
@@ -22287,9 +22296,24 @@
     renderLauncher();
   }
 
+  /**
+   * [3.30.1] In the page: at most as wide as the browser window from where the dashboard starts (item 95; the page of
+   * MusicBrainz around it may be wider, e.g. with a wide relationship editor).
+   */
+  function fitInline() {
+    const o = S.overlay;
+    if (!o || !inPage()) return;
+    o.style.removeProperty('--dci-inline-max');
+    const left = o.getBoundingClientRect().left + window.scrollX;
+    const vw = document.documentElement.clientWidth || window.innerWidth;
+    o.style.setProperty('--dci-inline-max', `${Math.max(320, Math.floor(vw - Math.max(0, left) - 12))}px`);
+  }
+  window.addEventListener('resize', () => fitInline());
+
   /** Shows the dashboard where it is: a window comes into view, in the page it is scrolled to. */
   function revealDashboard() {
     if (!S.overlay || S.overlay.hidden || !inPage()) return;
+    fitInline();
     S.overlay.querySelector('.dci-panel').scrollIntoView({ block: 'start' });
   }
 
@@ -23385,6 +23409,8 @@
       .dci-msg-x:hover { background: rgba(38, 36, 48, 0.08); color: var(--ink); }
       .dci-msg-x .dci-ico { width: calc(var(--u, 1px) * 12); height: calc(var(--u, 1px) * 12); }
       .dci-msgs-head { margin: 0 0 calc(var(--u, 1px) * 6); }
+      /* [3.30.1] the bar below ("Add entry manually", pools) reaches 14 u up – the messages make room for it, less room above (item 86) */
+      .dci-msgs:not(:empty) { margin: calc(var(--u, 1px) * -5) 0 calc(var(--u, 1px) * 18); }
       .dci-msgs-fold { font-weight: 600; text-decoration: none; }
       .dci-inline-btn { margin-left: calc(var(--u, 1px) * 8); border: 1px solid var(--ok); background: #fff; color: var(--ok); border-radius: 3px; padding: 1px calc(var(--u, 1px) * 8); }
 
@@ -23657,6 +23683,9 @@
       .dci-waiting { margin: calc(var(--u, 1px) * 6) 0 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #fff8db; color: #7a5a00; }
       .dci-series-label { margin: calc(var(--u, 1px) * 4) 0; display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
       .dci-scope { margin-left: calc(var(--u, 1px) * 10); }
+      /* [3.30.1] "only works" apart from the levels (it is no level), "Stage:" on the line of its buttons (item 92) */
+      .dci-onlyworks { margin-left: calc(var(--u, 1px) * -8); }
+      .dci-scope > .dci-sub { align-self: center; padding: 0 calc(var(--u, 1px) * 8); }
       input.dci-from-dg { background: #fff8db; border-color: #e0a800; font-weight: 600; }
       .dci-flash { outline: 3px solid #eb743b !important; outline-offset: 2px; transition: outline-color 0.3s; }
       .dci-matrix tr.dci-mx-hover > th, .dci-matrix tr.dci-mx-hover > td { background-color: #fff3c4 !important; }
@@ -23910,6 +23939,8 @@
       #dci-overlay.dci-lvlc [data-level="release_group"] { --lvl: var(--dci-lvl-release_group); --lvl-ink: var(--dci-lvl-release_group-ink); }
       #dci-overlay.dci-lvlc [data-level="work"] { --lvl: var(--dci-lvl-work); --lvl-ink: var(--dci-lvl-work-ink); }
       #dci-overlay.dci-lvlc [data-level="skip"] { --lvl: var(--dci-lvl-skip); --lvl-ink: var(--dci-lvl-skip-ink); }
+      /* [3.30.1] "only works" in the colour of works (item 92) */
+      #dci-overlay.dci-lvlc [data-level="only-works"] { --lvl: var(--dci-lvl-work); --lvl-ink: var(--dci-lvl-work-ink); }
       #dci-overlay.dci-lvlc .dci-seg button[aria-pressed="true"][data-level] { background: var(--lvl); color: var(--lvl-ink); }
       #dci-overlay.dci-lvlc .dci-seg button[data-level]:not([aria-pressed="true"]):not(:disabled) { box-shadow: inset 0 calc(var(--u, 1px) * -3) 0 var(--lvl); }
       #dci-overlay.dci-lvlc .dci-cl-level[data-level] { background: var(--lvl); color: var(--lvl-ink); }
@@ -23996,6 +24027,8 @@
 
       /* The dashboard in the page (below the import button) instead of a window */
       #dci-overlay.dci-inline { position: relative; inset: auto; z-index: auto !important; pointer-events: auto; margin: 0 0 calc(var(--u, 1px) * 24); }
+      /* [3.30.1] never wider than the browser window, also when the page around it is wider (item 95) */
+      #dci-overlay.dci-inline { box-sizing: border-box; max-width: var(--dci-inline-max, 100%); min-width: 0; }
       #dci-overlay.dci-inline .dci-panel { position: relative; left: auto; top: auto; width: auto; height: auto; min-height: 0; max-width: none; max-height: none;
         resize: none; overflow: visible; box-shadow: 0 1px 6px rgba(38, 36, 48, 0.14); }
       #dci-overlay.dci-inline .dci-head { cursor: default; }

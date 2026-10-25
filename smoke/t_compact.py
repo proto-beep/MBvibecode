@@ -8,7 +8,8 @@ B) A click on the line opens the full row (its type field focused); "▴ compact
 C) The tracks and the date of the compact line are still drop targets: a track group ("Side A", tracks 1–2) dropped
    onto it gives "tracks 1–2", a date of the pool shows on the line.
 D) The question answered in the opened row ("double bass"): the line says so, the yellow mark is gone.
-E) A skipped row: grey, with ✕ – out of the dashboard; the next import brings it back.
+E) A skipped row: grey, with ✕ – out of the dashboard; the next import brings it back. [3.30.1] Its type stays on the
+   line (grey), so the level does not move.
 F) "Compact" remembered after reloading; ⚙ Settings → General ([3.29.2] Appearance) has the same switch: "Full" – every row with its fields,
    nothing stored.
 G) A jump to an incomplete row (› in the summary) opens it."""
@@ -96,7 +97,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(300)
     e2 = [line('Guitar Guy'), [m for m in pg.locator('.dci-msg').all_inner_texts() if 'Guitar Guy' in m][:1]]
     print('E) Skip:', e1['text'], e1['x'], e1['bg'], '| ✕:', e2)
-    results.append(e1['text'].startswith('▸ Guitar Skip') and e1['x'] and e1['bg'] != 'rgb(255, 255, 255)' and e2[0] is None and bool(e2[1]))
+    results.append(e1['text'].startswith('▸ Guitar → instrument · guitar Skip') and e1['x'] and e1['bg'] != 'rgb(255, 255, 255)' and e2[0] is None and bool(e2[1]))
     # F) compact remembered, full in the settings
     f1 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), line('Bass Man')[0]['typeVisible'], pg.evaluate("localStorage.getItem('dci-view')")]
     pg.reload()
