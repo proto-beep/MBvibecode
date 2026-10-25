@@ -214,6 +214,9 @@ python3 t_sounds.py       # 3.30.6: "Sounds" (Discogs, text, prose) – performe
                           # effects chosen gives the role credit "sounds"
 python3 t_members.py      # 3.30.7: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – three performers (pasted text
                           # and the "about" text of Bandcamp); "The band is now a trio." and "… is back with a new album." nothing
+python3 t_discnotes.py    # 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
+                          # Performance, the places of the notes (not when "Companies, etc." lists them; another role joins its
+                          # entry), as a text: the place line recognized, "Including a 52 p. booklet." left out
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error

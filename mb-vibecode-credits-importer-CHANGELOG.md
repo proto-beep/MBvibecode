@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-25 | 3.30.1 – 3.30.7 | – |
+| 2026-10-25 | 3.30.1 – 3.30.8 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -83,6 +83,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-25
+
+### Import 3.30.8
+
+#### Added
+
+- **Dates per disc** (collected item 98; maintainer, Discogs 18973900: "nur die erste disc bekommt im date/track pool ein datum und die dazu zugehörigen tracks angeboten. (und nur das erste datum ist unterstrichelt)"): "recorded … on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)" – each date goes under Performance with the tracks of its disc.
+- **Places from the Discogs notes** (item 98; maintainer: "ja tatsächlich wollen wir die orte hier angeboten bekommen … sofern es sich nicht um eine inhaltliche dopplung handelt können orte aus dem freitextfeld ergänzt werden."): "recorded … at Orange Music Sound Studios in West Orange, New Jersey", "mastered … at Turtle Tone Studio" – unless "Companies, etc." lists them with that role.
+- "Including a 52 p. booklet." in a text: left out on purpose ("about the package").
+
+#### Fixed
+
+- "Studio X in Berlin, Germany" in a text: the place is Studio X with the area Berlin, Germany (before: "Studio X in Berlin").
+- Two days of a month ("December 11 & 12, 2015") no longer give the message that a date has no word naming its group (it was their shared month).
 
 ### Import 3.30.7
 

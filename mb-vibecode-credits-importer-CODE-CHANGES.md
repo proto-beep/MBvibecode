@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.30.7, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.30.8, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.30.8 · 2026-10-25
+
+Dates per disc, places from the Discogs notes (collected item 98).
+
+- **Register:** new date rule **D021** (in `findDates`: a date without a group right after another one – between them only a bracket and a comma / "and" / "&" – takes its group(s); `MEDIUM_AFTER_DATE` in `datesWithContext`: "(Disc N)", "(CD N)", "(LP N)" right after a date on a release with several media → the tracks of that medium, `x.medium`; another date of the sentence with its own medium, this one none → no tracks); `autoPlaceFoundDates` names such a track group `mediumGroupName` ("Medium 2 · CD"). New special rule **S042** with the new **`addNotesCompanies(rel)`** (in `loadRelease` for Discogs: `TEXT.parse` of the notes, places "… At" not yet in `rel.companies` with that role; same name (`looseName`, also without generic words) with another role → Discogs's `who`; `fromNotes: true`; log `notesCompanies`).
+- **Texts:** `TEXT_WHAT_PREFIX` ("All music recorded ... at X": the words for the music, "was/were" and the dots before the verb) for the place branch; `placeOf` splits "Studios in West Orange, New Jersey" also when a part follows the comma; `TEXT_PACKAGE` (T030: "Including a 52 p. booklet.") → `ignored` with `why: 'package'`.
+- **Fix:** the count of dates without a group in `autoPlaceFoundDates` leaves out the shared month or year of separate days (`:lcd`, a cell's `lcd`).
+- **Texts (English only):** `ignored.why.package`, `log.notesCompanies`.
+- **Tests:** new `t_discnotes.py`; `register_golden.json` written anew (D021, S042, T030); `t_msgs.py` and `t_ui301.py` add a date without a group to the harness notes ("The band met on 4 July 2000.") – the shared month of "March 1–3, 2001" no longer gives the second message.
 
 ## Import 3.30.7 · 2026-10-25
 

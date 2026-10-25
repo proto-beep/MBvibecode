@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.7
+// @version      3.30.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.7';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -121,6 +121,8 @@
       "about.offTitle": "Only for this release: the places, liner notes and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
       "log.aboutOff": "“about” text left out (rows hidden: {rows}, dates out of the pool: {dates})",
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
+      "ignored.why.package": "about the package",
+      "log.notesCompanies": "From the Discogs notes: {n} places that Discogs does not list – {list}",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
       "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album or track URL",
@@ -6243,6 +6245,7 @@
     { id: 'S039', where: 'TEXT.parse (place, placeOf)', note: 'Verbs joined before "at" each give the place: "Mixed and mastered at TQA.HQ (July 2026)" → mixed at and mastered at TQA.HQ; a date in brackets after the place is no part of it (3.29.0)' },
     { id: 'S040', where: 'TEXT.parse (splitRoles, INSTRUMENT_MODIFIER)', note: 'A list of kinds before a shared instrument also with commas only ("Tenor, alto, soprano saxophones", "Tenor / alto / soprano saxophones") – each kind gets the instrument, in the singular when the list ends in the plural (tenor saxophone, alto saxophone, soprano saxophone) (3.29.0)' },
     { id: 'S041', where: 'TEXT.parse (TEXT_MEMBERS, isTheBand; BANDCAMP.toRelease)', note: 'The members of the band: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – the release\'s artist (or "the band", "we") before "are", "is", "consists of" – each name a performer on all tracks, as a suggestion (names with capitals only); also from the "about" text of Bandcamp, which otherwise gives only places (3.30.7, T043)' },
+    { id: 'S042', where: 'addNotesCompanies (TEXT.parse of the notes)', note: 'Discogs notes: the places they name ("All music recorded … at Orange Music Sound Studios in West Orange, New Jersey", "mastered … at Turtle Tone Studio in New York City") are added, read like a pasted text – unless Discogs lists the place with that role already; listed with another role, Discogs\'s entry gets it (3.30.8)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -6675,8 +6678,8 @@
       show: () => ({ pattern: TEXT_DISTRIBUTION }) },
     { id: 'T029', where: 'TEXT_ABBREV', note: 'Texts (3.21.0): a line with several sentences ("Graphic design: X. Text: Y. Produced by Z.") is read sentence by sentence – a period after these words, after an initial ("J. Smith") or before a small letter ends no sentence',
       show: () => ({ pattern: TEXT_ABBREV }) },
-    { id: 'T030', where: 'TEXT_IGNORE_LINE', note: 'Texts (3.21.0): lines left out on purpose – thanks ("Thanks to …", "Danke an …"), endorsements ("X plays exclusively on Y bass strings"), "appears courtesy of …"; listed apart from the lines not recognized',
-      show: () => ({ pattern: TEXT_IGNORE_LINE }) },
+    { id: 'T030', where: 'TEXT_IGNORE_LINE, TEXT_PACKAGE', note: 'Texts (3.21.0): lines left out on purpose – thanks ("Thanks to …", "Danke an …"), endorsements ("X plays exclusively on Y bass strings"), "appears courtesy of …", [3.30.8] the package ("Including a 52 p. booklet."); listed apart from the lines not recognized',
+      show: () => ({ pairs: [['thanks, endorsements, courtesy', TEXT_IGNORE_LINE], ['the package', TEXT_PACKAGE]] }) },
     { id: 'T031', where: 'TEXT_COURTESY, TEXT_QUOTED_TITLE', note: 'Texts (3.21.0): after a name "courtesy of …" ("by kind permission of …") is no name; a title in quotation marks with its year before "by" ("Cover art: “Madison” 1988 by X") is no part of the role',
       show: () => ({ pairs: [['courtesy', TEXT_COURTESY], ['title', TEXT_QUOTED_TITLE]] }) },
     { id: 'T032', where: 'WEB_ADDRESS, SOCIAL_HOSTS, WEB_LABEL', note: 'Texts (3.21.0): web addresses are never part of a name; a profile on these sites after a name becomes a link of the entry (MusicBrainz is asked for it, "Create artist" fills it in); Linktree, e-mail and any other address are left out, as is a line of only addresses ("Contact: …"). 3.21.3: artist pages of streaming services (Spotify, Apple Music, Deezer, Tidal, YouTube Music, Qobuz, Amazon Music) only for "Create artist" (STREAM_URL), profiles after a label or place for "Create label/place"; shown at the entry only with the setting',
@@ -6977,6 +6980,10 @@
   // [T021] Texts (3.14.0): words before a verb that only say what was done – "Music played and recorded by X" is
   // played by and recorded by X
   const TEXT_WHAT_WORDS = /^(?:the\s+)?(?:music|songs?|album|tracks?|record|recordings?|everything|all)\s+(?=\p{L}+ed$)/iu;
+  // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
+  const TEXT_WHAT_PREFIX = /^(?:all\s+)?(?:the\s+)?(?:music|songs?|album|tracks?|record|recordings?|material|pieces?|compositions?|everything|all)\s+(?:(?:was|were|is|are)\s+)?(?=\p{L}+ed\b)/iu;
+  // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
+  const TEXT_PACKAGE = /^(?:including|includes|incl\.?|comes\s+with|with)\s+(?:an?\s+|the\s+)?(?:\d+[\s-]*(?:p\.?|pp\.?|pages?|seiten|s\.)\s+)?(?:(?:full[\s-]colou?r|colou?r|printed|illustrated|extensive|deluxe|\d+[\s-]?panel)\s+)*(?:booklet|poster|insert|inlay|obi|sticker|postcard|print|download\s+(?:code|card)|liner\s+notes)\b/i;
 
   // [T022] Texts (3.14.0): roles named before a verb of making – "Music and artwork of this release were entirely
   // created by …": the roles are the words before "of this …" and the verb
@@ -7519,6 +7526,7 @@
     { id: 'D017', note: 'Year, month name, day: 1973 October 19 · 1973, Oct. 19th (3.28.5)' },
     { id: 'D018', note: 'A year of a release or issue is no date of the credits and is left out: "originally issued on LP in 1974", "Released 2003", "veröffentlicht 1999" (3.28.5)' },
     { id: 'D019', note: 'The word naming the group of a date is looked for in its own sentence only ("Mixed May 2001. Released 2003." – 2003 is no mix date); a line ending in ":" counts as part of the next one (3.28.5)' },
+    { id: 'D021', note: 'A list of dates after one word naming their group ("recorded … on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)") gives the group to each; a medium in brackets right after a date ("(Disc 2)", "(CD 2)") is the track group of that date (3.30.8)' },
     { id: 'D020', note: 'Words naming groups joined by "and", "&" or commas give the date to each group: "Mixed and mastered by X in March 2026" → Mix and Mastering, "Recorded, mixed and mastered 2001" → Performance, Mix and Mastering (3.28.5)' },
   ];
 
@@ -7701,7 +7709,20 @@
           hint, hints: doubled ? ['copyright'] : hints.length > 1 ? hints : [], snippet: src.slice(Math.max(0, a - 40), Math.min(src.length, b + 20)).replace(/\s+/g, ' ').trim() });
       }
     }
-    return found.sort((x, y) => x.index - y.index);
+    found.sort((x, y) => x.index - y.index);
+    // [D021] (3.30.8) a list of dates after one word naming the group: the dates after the first take its group(s) (collected
+    // item 98: "recorded … on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)")
+    if (ruleOn('D021')) {
+      for (let i = 1; i < found.length; i++) {
+        const prev = found[i - 1];
+        const cur = found[i];
+        if (cur.hint || !prev.hint) continue;
+        const between = src.slice(prev.index + prev.text.length, cur.index);
+        if (!/^\s*(?:\([^()\n]{0,30}\))?\s*(?:,|and|&|und|y|et)\s*(?:on\s+|am\s+|el\s+|le\s+)?$/i.test(between)) continue;
+        Object.assign(cur, { hint: prev.hint, hints: prev.hints || [], rule: `${cur.rule} · D021` });
+      }
+    }
+    return found;
   }
 
   // ===========================================================================
@@ -7961,8 +7982,9 @@
       if (!parts.length) return null;
       let name = parts[0];
       let area = parts[1] || '';
-      const inArea = !area && name.match(/^(.+?)\s+in\s+(\p{L}[\p{L}\s.'’-]*)$/u);
-      if (inArea) [, name, area] = inArea;
+      // [3.30.8] "Studios in West Orange, New Jersey": West Orange, New Jersey (before: the name kept "in West Orange")
+      const inArea = name.match(/^(.+?)\s+in\s+(\p{L}[\p{L}\s.'’-]*)$/u);
+      if (inArea) [name, area] = [inArea[1], [inArea[2], area].filter(Boolean).join(', ')];
       if (PRIVATE_PLACE.test(clean(name)) || NOT_A_PLACE.test(clean(name))) return null;
       return { name: clean(name), area: clean(noDates(area)) };
     }
@@ -8439,7 +8461,9 @@
           }
           // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person); [S039] (3.29.0) verbs joined before it
           // each give the place ("Mixed and mastered at TQA.HQ (July 2026)")
-          if ((m = clause.match(/^(\p{L}+(?:\s*(?:,|\band\b|&|\+)\s*\p{L}+)*)\b.*?\s+at\s+(.+)$/iu))) {
+          // [3.30.8] "All music recorded ... at X" (Discogs notes): the words for the music and the dots before the verb are no role
+          const clauseV = clause.replace(TEXT_WHAT_PREFIX, '').replace(/\s*(?:\.{3}|…)\s*/g, ' ');
+          if ((m = clauseV.match(/^(\p{L}+(?:\s*(?:,|\band\b|&|\+)\s*\p{L}+)*)\b.*?\s+at\s+(.+)$/iu))) {
             const where = placeOf(m[2]);
             const verbs = ruleOn('S039') ? m[1].split(/\s*(?:,|\band\b|&|\+)\s*/i).filter(Boolean) : [m[1].split(/[\s,&+]/)[0]];
             verbs.filter((v, k) => k === 0 || isCompanyRole(`${cap(v)} At`)).forEach((v) => place(v, where));
@@ -8548,6 +8572,11 @@
           // [3.21.4] with the reason (shown in the list)
           if (TEXT_IGNORE_LINE.test(unit)) {
             ignored.push({ text: whole, why: TEXT_THANKS.test(unit) ? 'thanks' : TEXT_COURTESY_LINE.test(unit) ? 'courtesy' : 'endorsement' });
+            continue;
+          }
+          // [3.30.8] about the package ("Including a 52 p. booklet.")
+          if (TEXT_PACKAGE.test(clean(unit))) {
+            ignored.push({ text: whole, why: 'package' });
             continue;
           }
           const web = takeUrls(unit);
@@ -13252,6 +13281,37 @@
    * (section 3), and everything from here on works with that – entries and rows, dates, track lists, live, series.
    */
   /**
+   * [S042] (3.30.8) What the Discogs notes name besides the credits (collected item 98; maintainer: "ja tatsächlich wollen
+   * wir die orte hier angeboten bekommen. sie können ähnlich wie die publisher auch mit dem discogs feld companies
+   * entgegengecheckt werden. sofern es sich nicht um eine inhaltliche dopplung handelt können orte aus dem freitextfeld
+   * ergänzt werden."): places ("All music recorded … at Orange Music Sound Studios in West Orange, New Jersey") read like
+   * a pasted text; one Discogs already lists with the same role is left out, one it lists with another role keeps
+   * Discogs's entry (its link). Marked `fromNotes`.
+   */
+  function addNotesCompanies(rel) {
+    if (!ruleOn('S042') || !rel || !String(rel.notes || '').trim()) return;
+    let res;
+    try {
+      res = TEXT.parse(rel.notes, sourceContext());
+    } catch (e) {
+      console.warn('[Discogs-Credits] notes', e);
+      return;
+    }
+    const wanted = (c) => /\s(?:At)$/.test(c.role);
+    const added = [];
+    for (const c of res.companies.filter(wanted)) {
+      const key = looseName(c.who.name);
+      if (!key) continue;
+      const same = rel.companies.filter((d) => looseName(d.who.name) === key || looseName(d.who.name, true) === looseName(c.who.name, true));
+      if (same.some((d) => norm(d.role) === norm(c.role))) continue;
+      const who = same.length ? same[0].who : { id: 0, name: c.who.name, rawName: c.who.rawName || c.who.name, links: [], area: c.who.area || '' };
+      rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true });
+      added.push(`${c.who.name} (${c.role})`);
+    }
+    if (added.length) log('info', 'notesCompanies', { n: added.length, list: added.join(', ') });
+  }
+
+  /**
    * [3.22.1] An album on another account's Bandcamp page – mostly a label's ("Grabaciones Autobombo" with an album of
    * Yunclas, collected item 46): logged; MusicBrainz's label with that page is named (marked when it is a label of
    * the release).
@@ -13289,6 +13349,8 @@
       clearMessages();
       setBusy(source === DISCOGS ? 'busy.discogs' : 'busy.source', { id, source: source.name });
       const rel = await source.release(id, sourceContext());
+      // [3.30.8] places named in the Discogs notes, unless Discogs lists them already (S042)
+      if (source === DISCOGS) addNotesCompanies(rel);
       applyMediaChoice(choice);
       if (S.mediaSel) log('info', 'mediaChosen', { text: mediaChoiceText() });
       // [3.20.0] the choices of the dialog: the works decided
@@ -15261,10 +15323,28 @@
   }
 
   /** Dates of a text with the tracks and studios named in their sentence. */
+  // [D021] (3.30.8) a medium in brackets right after a date: "May 26, 2016 (Disc 2)", "(CD 2)", "(LP 1)"
+  const MEDIUM_AFTER_DATE = /^\s*\(\s*(?:disc|disk|cd|lp|dvd|sacd|vinyl|record|platte)\s*(\d{1,2})\s*\)/i;
+
   function datesWithContext(src) {
-    return findDates(src, { usOrder: usDateOrder() }).map((x) => {
+    return findDates(src, { usOrder: usDateOrder() }).map((x, i, all) => {
       const sentence = sentenceAround(src, x.index, x.index + x.text.length);
-      return { ...x, sentence, tracks: tracksInText(sentence), studios: studiosInText(sentence).map((a) => a.key) };
+      let tracks = tracksInText(sentence);
+      let medium = null;
+      // [D021] the medium right after the date, on a release with several media: its tracks; another date of the sentence
+      // has its own medium, this one none: the tracks are not known (all)
+      if (ruleOn('D021') && multiMedium()) {
+        const mm = src.slice(x.index + x.text.length, x.index + x.text.length + 24).match(MEDIUM_AFTER_DATE);
+        const ofMedium = mm && S.mbTracks.filter((t) => t.medium === Number(mm[1])).map((t) => t.idx);
+        if (ofMedium && ofMedium.length) {
+          tracks = new Set(ofMedium);
+          medium = Number(mm[1]);
+        } else if (all.some((y) => y !== x && sentenceAround(src, y.index, y.index + y.text.length) === sentence
+          && MEDIUM_AFTER_DATE.test(src.slice(y.index + y.text.length, y.index + y.text.length + 24)))) {
+          tracks = null;
+        }
+      }
+      return { ...x, sentence, tracks, medium, studios: studiosInText(sentence).map((a) => a.key) };
     });
   }
 
@@ -15944,7 +16024,8 @@
       groups.forEach((group, gi) => {
         // the first group keeps the key of the find; the others get their own (their own pool entry, named for the group)
         const gkey = gi ? `${key}~${group.key}` : key;
-        const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, '', { found: true }) : null;
+        // [D021] (3.30.8) a whole medium named after the date: the group is named for it ("Medium 2 · CD")
+        const tg = group && x.tracks && x.tracks.size ? ensureTrackGroup(x.tracks, x.medium ? mediumGroupName(x.medium) : '', { found: true }) : null;
         const studios = (x.studios || []).map((k) => S.artists.get(k)).filter(Boolean).map(studioId);
         if (x.multi) {
           placed += placeSeparateDays(x, gkey, group, { auto: true, tg, studios });
@@ -15975,8 +16056,9 @@
       m.dirty = true;
       showMessage('info', 'dm.autoPlaced', { n: placed });
     }
-    const unplaced = S.datePool.filter((d) => String(d.found || '').startsWith('notes:') && !m.cells.some((c) => c.date === d.id || (c.alt || []).includes(d.id))
-      && !String(d.found).endsWith(':range')).length;
+    // [3.30.8] the month or year two days share (":lcd", e.g. "December 11 & 12, 2015" → December 2015) is no date without a group
+    const unplaced = S.datePool.filter((d) => String(d.found || '').startsWith('notes:') && !m.cells.some((c) => c.date === d.id || (c.alt || []).includes(d.id) || c.lcd === d.id)
+      && !/:(?:range|lcd)$/.test(String(d.found))).length;
     if (unplaced && pooled) showMessage('info', 'dm.autoPooled', { n: unplaced });
     if (placed || pooled) log('info', 'dmAuto', { n: placed, pooled });
     saveMatrix();
