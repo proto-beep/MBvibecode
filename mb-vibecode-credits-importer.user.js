@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.8
+// @version      3.30.9
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.9';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -6704,7 +6704,9 @@
       show: () => ({ pairs: ROLE_TERMS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
     { id: 'T040', where: 'ART_TASKS, ART_TASK_INDEX, splitArtTasks', note: 'All sources (3.28.2): the tasks of an artwork credit that "and" (og, och, und, et, y, &, +) joins, with the role each becomes (S033)',
       show: () => ({ pairs: ART_TASKS.map(([term, cell]) => [term, cell.split(/\s*;\s*/).join(' · ')]) }) },
-    { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both; after the name a code such as "DDD", a catalogue number after "·" and "All rights reserved" are left out',
+    { id: 'T044', where: 'COMPANY_FORM, withoutCompanyForm, suggestByName', note: 'All sources (3.30.9): the legal form at the end of a company\'s name (Oy, AB, AS, ApS, Ltd, GmbH, KG, Inc., LLC, Corp., S.A., S.L., S.r.l., B.V., N.V., Pty …): a name without a link is also searched without it – "TUM Records Oy" offers TUM Records Oy and TUM Records',
+      show: () => ({ pattern: COMPANY_FORM }) },
+    { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both, one sign only that one; after the name a code such as "DDD", a catalogue number after "·", "All rights reserved" and (3.30.9) a year ("© & ℗ TUM Records Oy 2021") are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
 
@@ -7072,7 +7074,9 @@
   // [T033] Texts (3.21.0): ℗ and © at the start of a line (also both: "P + ©", "℗ & ©", "(P) & (C)"), and what is left out
   // after the name: a code of how it was recorded ("DDD"), a catalogue number after "·" or "|", "All rights reserved"
   const TEXT_PC_SIGNS = /^(©\s*©|(?:℗|Ⓟ|\(p\)|p)\s*(?:\+|&|\/|,|and|und|et|y)?\s*(?:©|\(c\))|(?:©|\(c\))\s*(?:\+|&|\/|,|and|und|et|y)?\s*(?:℗|Ⓟ|\(p\))|℗|Ⓟ|\(p\)|©|\(c\))\s*(?:(?:19|20)\d{2}(?:\s*[-–/,&]\s*(?:19|20)?\d{2,4})*\s*)?(.+)$/i;
-  const TEXT_PC_STRIP = /\s+[·|•]\s+.*$|\s+[–—]\s+[A-Z]{2,}[\s-]?\d+.*$|\s+(?:AAD|ADD|DDD|DAD)\b|[,.]?\s*(?:[Aa]ll\s+[Rr]ights\s+[Rr]eserved|ALL\s+RIGHTS\s+RESERVED).*$/g;
+  const TEXT_PC_STRIP = /\s+[·|•]\s+.*$|\s+[–—]\s+[A-Z]{2,}[\s-]?\d+.*$|\s+(?:AAD|ADD|DDD|DAD)\b|[,.]?\s*(?:[Aa]ll\s+[Rr]ights\s+[Rr]eserved|ALL\s+RIGHTS\s+RESERVED).*$|[,\s]+(?:19|20)\d{2}(?:\s*[-–/&,]\s*(?:19|20)?\d{2,4})*\s*\.?$/g;
+  // [T044] (3.30.9) the legal form at the end of a company's name – searched without it too ("TUM Records Oy" → "TUM Records")
+  const COMPANY_FORM = /[\s,]+(?:oyj?|ab|asa?|a\/s|aps|ltd\.?|limited|gmbh|kg|ohg|ag|inc\.?|incorporated|llc|l\.l\.c\.|corp\.?|corporation|co\.?|plc|pty\.?|s\.?a\.?|s\.?l\.?|s\.?r\.?l\.?|b\.?v\.?|n\.?v\.?|sas|sarl|e\.\s?k\.?|s\.?p\.?a\.?|k\.?k\.?|sp\.?\s?z\s?o\.?\s?o\.?)$/i;
 
   // [T024] Texts (3.14.0): a line that only names the label of the release ("An Echo Elberfeld release.", "Released on
   // X Records") is left out – the label is set in the release editor; ℗ / © lines are credits
@@ -8956,6 +8960,8 @@
       const key = who.id ? `id:${who.id}` : `name:${norm(who.rawName || who.name)}`;
       if (!byKey.has(key)) byKey.set(key, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: [], ...(who.area ? { area: who.area } : {}) });
       const g = byKey.get(key);
+      // [3.30.9] an entry only from the Discogs notes: searched by its name (S042)
+      if (c.fromNotes && !who.id) g.fromNotes = true;
       // [3.21.3] a name without an id: the web profiles found next to it (T032)
       if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
@@ -13286,7 +13292,7 @@
    * entgegengecheckt werden. sofern es sich nicht um eine inhaltliche dopplung handelt können orte aus dem freitextfeld
    * ergänzt werden."): places ("All music recorded … at Orange Music Sound Studios in West Orange, New Jersey") read like
    * a pasted text; one Discogs already lists with the same role is left out, one it lists with another role keeps
-   * Discogs's entry (its link). Marked `fromNotes`.
+   * Discogs's entry (its link). Marked `fromNotes`. [3.30.9] Also the label of "℗ / © Name Year" (only the signs named).
    */
   function addNotesCompanies(rel) {
     if (!ruleOn('S042') || !rel || !String(rel.notes || '').trim()) return;
@@ -13297,7 +13303,8 @@
       console.warn('[Discogs-Credits] notes', e);
       return;
     }
-    const wanted = (c) => /\s(?:At)$/.test(c.role);
+    // [3.30.9] also ℗ and © ("© & ℗ TUM Records Oy 2021": both; one sign: that one – item 99)
+    const wanted = (c) => /\s(?:At)$/.test(c.role) || /^(?:Phonographic Copyright \(p\)|Copyright \(c\))$/.test(c.role);
     const added = [];
     for (const c of res.companies.filter(wanted)) {
       const key = looseName(c.who.name);
@@ -13441,6 +13448,7 @@
         const company = {
           key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
           entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], area: g.area || '',
+          ...(g.fromNotes ? { fromNotes: true } : {}),
         };
         S.artists.set(company.key, company);
         for (const r of g.roles) {
@@ -13595,6 +13603,12 @@
     }
     return 'similar';
   }
+  /** [T044] (3.30.9) A company's name without the legal form at its end ("TUM Records Oy" → "TUM Records"). */
+  function withoutCompanyForm(name) {
+    let x = String(name || '').trim();
+    for (let i = 0; i < 3 && COMPANY_FORM.test(x); i++) x = x.replace(COMPANY_FORM, '').trim();
+    return x || String(name || '').trim();
+  }
   /** Lucene words of a name, all required (finds names with a middle name too). */
   const luceneWords = (name) => nameWords(name).map((w) => w.replace(/[+\-!(){}[\]^"~*?:\\/&|]/g, '\\$&')).join(' AND ');
 
@@ -13675,6 +13689,12 @@
           : words && (!a.company || type === 'area') ? `${type}:(${words}) OR alias:(${words})` : `${type}:${lucenePhrase(a.name)}`;
         const data = await mbWs(`${type}?query=${encodeURIComponent(query)}&limit=25`);
         const items = (data && data[`${type}s`]) || [];
+        // [T044] (3.30.9) a company's name with its legal form: searched without it too ("TUM Records Oy" → TUM Records)
+        const bare = a.company && type !== 'area' ? withoutCompanyForm(a.name) : '';
+        if (bare && bare !== a.name) {
+          const data3 = await mbWs(`${type}?query=${encodeURIComponent(`${type}:${lucenePhrase(bare)}`)}&limit=25`);
+          for (const x of (data3 && data3[`${type}s`]) || []) if (!items.some((y) => y.id === x.id)) items.push(x);
+        }
         // [3.13.0] A name with an initial ("T. Snekkestad", "Torben S. Snekkestad"): MusicBrainz's search needs every
         // word, and "T" is no word of "Torben" – so the written-out words are searched too (nameFit decides)
         const initials = nameWords(a.name);
@@ -13686,6 +13706,8 @@
         }
         const fitOf = (x) => {
           const fits = [nameFit(x.name, a.name), ...(x.aliases || []).map((al) => nameFit(al.name, a.name))];
+          // [T044] the same name without the legal form: offered too, as similar
+          if (bare && bare !== a.name && [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(withoutCompanyForm(n), bare) === 'same')) fits.push('similar');
           return fits.includes('same') ? 'same' : fits.includes('similar') ? 'similar' : '';
         };
         const hits = items.map((x) => ({ x, fit: fitOf(x) })).filter((h) => h.fit)
@@ -13809,7 +13831,8 @@
     await resolveViaAliases(pending.filter((a) => !a.company && a.dId && a.status === 'missing'), source);
     // [E1] Names without a link (a text): MusicBrainz entries of the same name, as suggestions only; [3.22.1] also people
     // not found through their own link (Discogs, Bandcamp) – the release's artist of that name first (46)
-    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? !a.company && !(a.nameHits || []).length : source.nameSearch)));
+    // [3.30.9] an entry from the Discogs notes (no Discogs link) is looked for by its name, as from a text (S042)
+    await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? !a.company && !(a.nameHits || []).length : source.nameSearch || a.fromNotes)));
     for (const a of pending) {
       if (a.company) rerenderGroup(a);
       else updateGroupHeader(a);
@@ -14584,7 +14607,7 @@
           ${a.candidates.map((c) => `<option value="${esc(c.mbid)}">${esc(c.name)}${c.disambiguation ? ` (${esc(c.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${c.entityType}`))}` : ''}</option>`).join('')}
         </select>`;
     }
-    return editor(!a.dId && (a.src || S.source).nameSearch ? 'match.byName' : !a.dId ? 'match.noId' : a.srcSeries ? 'match.noLinkSeries' : a.company ? 'match.noLinkCompany' : 'match.noLink');
+    return editor(!a.dId && ((a.src || S.source).nameSearch || a.fromNotes) ? 'match.byName' : !a.dId ? 'match.noId' : a.srcSeries ? 'match.noLinkSeries' : a.company ? 'match.noLinkCompany' : 'match.noLink');
   }
 
   function artistVariants(a) {

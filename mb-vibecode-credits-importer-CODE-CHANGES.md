@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.30.8, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.30.9, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.30.9 · 2026-10-25
+
+The label of ℗ / © lines (collected item 99).
+
+- **Texts:** `TEXT_PC_STRIP` also takes off a year (or years) after the name ("© & ℗ TUM Records Oy 2021" was not recognized – the name kept "2021"); T033 note.
+- **`addNotesCompanies`:** also "Phonographic Copyright (p)" and "Copyright (c)" (the signs as named); **`groupCompanies`** passes `fromNotes` to the entry (only without a Discogs id), the entry keeps it; such an entry is searched by name (`suggestByName` for `source.nameSearch || a.fromNotes`) and says "not assigned yet (no link)" (`match.byName`).
+- **Register:** new table **T044** `COMPANY_FORM` with **`withoutCompanyForm(name)`** (Oy, Oyj, AB, AS, ASA, A/S, ApS, Ltd, Limited, GmbH, KG, OHG, AG, Inc., LLC, Corp., Co., PLC, Pty, S.A., S.L., S.r.l., B.V., N.V., SAS, SARL, e.K., S.p.A., K.K., Sp. z o.o.); `suggestByName` for a company also searches the name without it, and offers MusicBrainz names that are the same without their legal form (as "similar").
+- **Tests:** new `t_pcline.py`; `register_golden.json` written anew (T033, T044); `t_v217.py` 3: four incomplete rows (the label of "©© Fuzzoramarecords 2005" from the notes is not in MusicBrainz).
 
 ## Import 3.30.8 · 2026-10-25
 
