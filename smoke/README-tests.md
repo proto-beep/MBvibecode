@@ -219,6 +219,11 @@ python3 t_discnotes.py    # 3.30.8: Discogs notes of "Sacred Ceremonies" (three 
                           # entry), as a text: the place line recognized, "Including a 52 p. booklet." left out
 python3 t_pcline.py       # 3.30.9: "© & ℗ TUM Records Oy 2021" from the Discogs notes – both roles, MusicBrainz's TUM Records Oy and
                           # TUM Records suggested; Discogs lists © already: only ℗ joins its entry; a text: ℗ alone, © alone, both
+python3 t_publishers.py   # 3.31.0: "[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4 …" in the Discogs notes – the tracks
+                          # onto Discogs's publishers as suggestions (also "4WordSeaMusic" = "Fourwordseamusic"), one not listed an
+                          # entry, BMI once as rights society; the publisher Tomas Fujiwara a part of the person's column; MB
+                          # suggestions written apart ("Four Word Sea Music"), the society first; as a text with "Published by X
+                          # (ASCAP)" and "BIEM/GEMA"
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error
