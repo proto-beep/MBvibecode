@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.4
+// @version      3.30.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -660,7 +660,9 @@
       "settings.rulesRowPlace.window": "as a window",
       "settings.rulesRowPlace.symbol": "like the symbol",
       "settings.t.sources": "Sources",
-      "settings.t.discogs": "Discogs and Bandcamp view",
+      "settings.t.discogs": "Source pages",
+      "settingsOnly.hint": "Only the settings are open – the import of this release has not started.",
+      "settingsOnly.start": "Start import",
       "settings.t.works": "Works",
       "settings.t.staging": "Staging",
       "settings.t.dates": "Dates & tracks",
@@ -715,7 +717,7 @@
       "group.creditedAsMore": "as {name} (+{n})",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
       "nav.settings": "⚙",
-      "nav.settingsTitle": "The switches of the navigation: ⚙ Settings → Discogs and Bandcamp view",
+      "nav.settingsTitle": "⚙ Settings → Source pages: the switches of the navigation (opens only the settings, the import does not start)",
       "log.viewSet": "View of the entries: {view}",
       "cl.openTitle": "Open this row to change it",
       "cl.levelNext": "Level – a click switches to “{level}”",
@@ -1427,6 +1429,9 @@
       "trackpool.count.other": "{n} tracks",
       "trackpool.name": "Tracks {list}",
       "trackpool.namePlaceholder": "e.g. Session 1",
+      "trackpool.text": "Tracks:",
+      "trackpool.textPlaceholder": "e.g. 1-4, 6 · A1–B2 · 2.3",
+      "trackpool.textBad": "Not a track of the chosen media: {list}",
       "trackpool.formTitle": "Track group",
       "trackpool.editTitle": "Edit this track group",
       "trackpool.explain": "Groups of tracks (e.g. “Tracks 1–5”), from dates in the text or made by hand; drag them onto a date in the matrix, or let a row take their tracks.",
@@ -2144,7 +2149,7 @@
       "settings.hint": "Alle Einstellungen an einem Ort, nach Themen – die Schalter bleiben auch an ihren Orten. Gespeichert in diesem Browser.",
       "settings.t.general": "Allgemein",
       "settings.t.sources": "Quellen",
-      "settings.t.discogs": "Discogs- und Bandcamp-Ansicht",
+      "settings.t.discogs": "Quellseiten",
       "settings.t.works": "Werke",
       "settings.t.staging": "Stagen",
       "settings.t.dates": "Daten & Tracks",
@@ -3603,7 +3608,7 @@
       "settings.hint": "Todos los ajustes en un lugar, por temas – los interruptores siguen también en su sitio. Guardados en este navegador.",
       "settings.t.general": "General",
       "settings.t.sources": "Fuentes",
-      "settings.t.discogs": "Vista de Discogs y Bandcamp",
+      "settings.t.discogs": "Páginas de origen",
       "settings.t.works": "Obras",
       "settings.t.staging": "Preparar",
       "settings.t.dates": "Fechas y pistas",
@@ -5062,7 +5067,7 @@
       "settings.hint": "Tous les réglages au même endroit, par thèmes – les interrupteurs restent aussi à leur place. Enregistrés dans ce navigateur.",
       "settings.t.general": "Général",
       "settings.t.sources": "Sources",
-      "settings.t.discogs": "Vue Discogs et Bandcamp",
+      "settings.t.discogs": "Pages sources",
       "settings.t.works": "Œuvres",
       "settings.t.staging": "Préparation",
       "settings.t.dates": "Dates et pistes",
@@ -15238,6 +15243,71 @@
   }
 
   /** "1–5, 8": Discogs positions (or MusicBrainz numbers) of tracks, runs shortened. */
+  /**
+   * [3.30.5] The tracks typed into the form of a track group (item 90; like "Media:" in the media choice): "1-4, 6",
+   * "A1–B2" (positions of the source), "2.3" (medium 2, track 3); only tracks of the chosen media. `bad`: what is no track
+   * of them.
+   */
+  function tracksFromText(text) {
+    const sel = selTracks();
+    const allowed = new Set(sel.map((x) => x.idx));
+    const posMap = positionIndex(S.srcTracks || []);
+    const firstMedium = sel.length ? sel[0].medium : null;
+    const resolve = (tok) => {
+      const t = String(tok).trim();
+      const mt = t.match(/^(\d+)\.(\d+)$/);
+      if (mt) {
+        const hit = S.mbTracks.find((x) => x.medium === Number(mt[1]) && plainNo(x.number) === plainNo(mt[2]));
+        return hit ? hit.idx : undefined;
+      }
+      const p = posMap.get(normPos(t));
+      if (p !== undefined && p < S.mbTracks.length) return p;
+      const hit = S.mbTracks.find((x) => x.medium === firstMedium && plainNo(x.number) === plainNo(t));
+      return hit ? hit.idx : undefined;
+    };
+    const tracks = new Set();
+    const bad = [];
+    for (const part of String(text || '').split(/\s*[,;]\s*/).map((x) => x.trim()).filter(Boolean)) {
+      let ends = part.split(/\s*(?:–|—|\bto\b|\bbis\b)\s*/i).filter(Boolean);
+      if (ends.length === 1 && /^\S+\s*-\s*\S+$/.test(part) && !posMap.has(normPos(part))) ends = part.split(/\s*-\s*/);
+      const idx = ends.map(resolve);
+      if (ends.length > 2 || idx.some((i) => i === undefined || !allowed.has(i))) {
+        bad.push(part);
+        continue;
+      }
+      for (let i = Math.min(...idx); i <= Math.max(...idx); i++) if (allowed.has(i)) tracks.add(i);
+    }
+    return { tracks, bad };
+  }
+
+  /** [3.30.5] The field "Tracks:" typed in: the ticks follow (the form is not drawn anew, the focus stays). */
+  function applyTrackText(text) {
+    const f = S.trackForm;
+    if (!f) return;
+    f.text = text;
+    const { tracks, bad } = tracksFromText(text);
+    f.error = bad.length ? tr('trackpool.textBad', { list: bad.join(', ') }) : '';
+    if (!bad.length) f.tracks = tracks;
+    const form = S.overlay && S.overlay.querySelector('.dci-track-form');
+    if (!form) return;
+    form.querySelectorAll('input[data-f="tg-track"]').forEach((cb) => { cb.checked = f.tracks.has(Number(cb.dataset.i)); });
+    const err = form.querySelector('.dci-err');
+    if (err) err.textContent = f.error;
+  }
+
+  /** [3.30.5] Ticks changed: the field "Tracks:" shows them ("1–3, 5", positions of the source where known). */
+  function syncTrackText() {
+    const f = S.trackForm;
+    if (!f) return;
+    f.text = trackListLabel(f.tracks);
+    f.error = '';
+    const form = S.overlay && S.overlay.querySelector('.dci-track-form');
+    const input = form && form.querySelector('input[data-f="tg-text"]');
+    if (input && input !== document.activeElement) input.value = f.text;
+    const err = form && form.querySelector('.dci-err');
+    if (err) err.textContent = '';
+  }
+
   function trackListLabel(idxs) {
     const list = [...idxs].filter((i) => S.mbTracks[i]).sort((a, b) => a - b);
     const label = (i) => (S.srcTracks && S.srcTracks[i] && S.srcTracks[i].position) || (multiMedium() ? `${S.mbTracks[i].medium}.${S.mbTracks[i].number}` : S.mbTracks[i].number);
@@ -16357,6 +16427,8 @@
     }).join('');
     return `<div class="dci-date-form dci-track-form" role="group" aria-label="${esc(tr('trackpool.formTitle'))}">
       <label class="dci-pool-name">${esc(tr('date.name'))} <input type="text" data-f="tg-name" value="${esc(f.name)}" placeholder="${esc(tr('trackpool.namePlaceholder'))}" size="18"></label>
+      <label class="dci-pool-name dci-tg-text">${esc(tr('trackpool.text'))} <input type="text" data-f="tg-text" value="${esc(f.text != null ? f.text : trackListLabel(f.tracks))}"
+        placeholder="${esc(tr('trackpool.textPlaceholder'))}" size="22" autocomplete="off"></label>
       <div class="dci-picker"><div class="dci-chips">${chips}</div></div>
       <div class="dci-mbdate-tools">
         <button type="button" class="dci-apply dci-small" data-act="tg-save">${esc(tr('date.save'))}</button>
@@ -16369,6 +16441,13 @@
 
   function saveTrackForm() {
     const f = S.trackForm;
+    // [3.30.5] tracks typed in that are no tracks of the chosen media: not saved
+    const typed = f.text != null ? tracksFromText(f.text) : null;
+    if (typed && typed.bad.length) {
+      f.error = tr('trackpool.textBad', { list: typed.bad.join(', ') });
+      renderDates();
+      return;
+    }
     if (!f.tracks.size) {
       f.error = tr('trackpool.errEmpty');
       renderDates();
@@ -20772,6 +20851,10 @@
       case 'rules-place':
         if (btn.dataset.place !== S.rulesPlace) setRulesPlace(btn.dataset.place);
         break;
+      // [3.30.5] the message of the dashboard opened for its settings only
+      case 'start-import':
+        initOnce();
+        break;
       case 'rules-rowplace':
         if (btn.dataset.place !== S.rulesRowPlace) setRulesRowPlace(btn.dataset.place);
         break;
@@ -21187,6 +21270,8 @@
         const ids = S.mbTracks.filter((t) => t.medium === Number(btn.dataset.medium)).map((t) => t.idx);
         const allOn = ids.every((i) => S.trackForm.tracks.has(i));
         ids.forEach((i) => (allOn ? S.trackForm.tracks.delete(i) : S.trackForm.tracks.add(i)));
+        S.trackForm.text = trackListLabel(S.trackForm.tracks);
+        S.trackForm.error = '';
         renderDates();
         break;
       }
@@ -21644,6 +21729,7 @@
     if (f === 'tg-track' && S.trackForm) {
       if (el.checked) S.trackForm.tracks.add(Number(el.dataset.i));
       else S.trackForm.tracks.delete(Number(el.dataset.i));
+      syncTrackText();
       return;
     }
     if (f === 'about-off') {
@@ -21940,6 +22026,11 @@
       applyLevelColors();
       return;
     }
+    // [3.30.5] the tracks typed in (item 90)
+    if (f === 'tg-text' && S.trackForm) {
+      applyTrackText(el.value);
+      return;
+    }
     if (f === 'tg-name' && S.trackForm) {
       S.trackForm.name = el.value;
       return;
@@ -22061,6 +22152,9 @@
       'pf-ey': '[data-act="pool-save"]',
       'pf-em': '[data-act="pool-save"]',
       'pf-ed': '[data-act="pool-save"]',
+      // [3.30.5] the form of a track group
+      'tg-name': '[data-act="tg-save"]',
+      'tg-text': '[data-act="tg-save"]',
     };
     if (map[f]) {
       e.preventDefault();
@@ -22970,7 +23064,13 @@
     showMessage('ok', 'reset.done');
   }
 
-  async function openDashboard() {
+  /**
+   * `{ settingsOnly }` ([3.30.5], ⚙ in the bar below "Import credits …", collected item 88; maintainer: "wenn das
+   * einstellungsmenü außerhalb des Dashboards geöffnet wird soll auch wirklich nur das Einstellungsmenü gestartet werden",
+   * "Dashboard ohne import reicht an der Stelle"): the dashboard without starting the import – a message offers it.
+   */
+  async function openDashboard(opts) {
+    const settingsOnly = !!(opts && opts.settingsOnly);
     if (!S.overlay) buildOverlay();
     S.lastFocus = document.activeElement;
     S.overlay.hidden = false;
@@ -22984,7 +23084,23 @@
     toDiscogs({ type: 'ping' });
     clearInterval(S.syncTimer);
     S.syncTimer = setInterval(() => toDiscogs({ type: 'ping' }), 3000);
-    if (!S.initialized) await init();
+    if (S.initialized) return;
+    if (settingsOnly) {
+      if (!S.messages.some((m) => m.key === 'settingsOnly.hint')) showMessage('info', 'settingsOnly.hint', {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
+      return;
+    }
+    await initOnce();
+  }
+
+  /** [3.30.5] The import, started once (also from the message of the dashboard opened for its settings only). */
+  async function initOnce() {
+    if (S.initialized || S.importStarting) return;
+    S.importStarting = true;
+    try {
+      await init();
+    } finally {
+      S.importStarting = false;
+    }
   }
 
   /**
@@ -23261,12 +23377,13 @@
     // [3.17.4] the buttons of the navigation bar (outside the dashboard)
     const barBtn = e.target.closest && e.target.closest('#dci-controls [data-act="sync-open"], #dci-controls [data-act="sync-load"]');
     if (barBtn) syncAction(barBtn.dataset.act);
-    // [3.28.0] ⚙ in the bar: the dashboard with its settings at "Discogs and Bandcamp view" (item 66)
+    // [3.28.0] ⚙ in the bar: the dashboard with its settings at "Discogs and Bandcamp view" (item 66); [3.30.5] the tab is
+    // called "Source pages", and the dashboard opens without starting the import (item 88)
     if (e.target.closest && e.target.closest('#dci-controls [data-nav-settings]')) {
       S.settingsOpen = true;
       S.resetOpen = false;
       S.settingsTab = 'discogs';
-      Promise.resolve(S.overlay && !S.overlay.hidden ? null : openDashboard()).then(() => {
+      Promise.resolve(S.overlay && !S.overlay.hidden ? null : openDashboard({ settingsOnly: true })).then(() => {
         renderSettings();
         const tab = S.overlay && S.overlay.querySelector('.dci-set-tab[data-topic="discogs"]');
         if (tab) {
@@ -23678,6 +23795,8 @@
       .dci-mx-hs > div { height: 1px; }
       .dci-mx-hs-top { margin-bottom: calc(var(--u, 1px) * 3); }
       .dci-mx-hs-bottom { position: sticky; bottom: 0; z-index: 3; margin-top: calc(var(--u, 1px) * 3); box-shadow: 0 -2px 4px rgba(38, 36, 48, 0.08); }
+      /* [3.30.5] in the window at the very lower edge of the body (its 28 u padding below counts for sticky boxes) */
+      #dci-overlay:not(.dci-inline) .dci-mx-hs-bottom { bottom: calc(var(--u, 1px) * -28); }
       #dci-overlay.dci-inline .dci-mx-hs-bottom { bottom: var(--dci-foot-h, 0px); }
       .dci-mx-end { height: 1px; }
       .dci-table.dci-matrix { min-width: 0; width: max-content; border-collapse: separate; border-spacing: 0; }

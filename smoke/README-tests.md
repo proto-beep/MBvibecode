@@ -207,6 +207,9 @@ python3 t_poolsmx.py      # 3.30.3: date pool and track pool fold on their own (
                           # bars of the works matrix (above it; at the bottom while its lower edge is out of view), moving together
 python3 t_bridge.py       # 3.30.4: ⚙ pressed with a bridge to the settings (and the rules symbol to the docked rules), the content of
                           # every tab at the height of the tab (100 % and 90 %), the bridge scrolled away and closed
+python3 t_ui305.py        # 3.30.5: ⚙ below "Import credits …" before any import – only the settings ("Source pages"), no import, the
+                          # message "Start import" starts it; the field "Tracks:" of a track group (ranges, ticks, unknown tracks,
+                          # Enter saves, editing shows the tracks); German "Quellseiten"
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error

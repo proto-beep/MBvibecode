@@ -5,7 +5,7 @@ A) "Dates & tracks" folded with "keep the pools in the bar": "▾ Date pool" fol
 B) Open block: the same button folds the track pool there ("▸ Track pool (1)"), and shows it again.
 C) Works matrix, 1000 px wide: a scroll bar above the matrix (it is wider than the window); moving it moves the matrix,
    moving the matrix moves it. The lower edge of the matrix out of view: a second bar at the bottom of the visible
-   area; the lower edge in view: no second bar."""
+   area (at its very lower edge, [3.30.5]); the lower edge in view: no second bar."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -71,7 +71,8 @@ with sync_playwright() as p:
     MX = """(() => { const w = document.querySelector('.dci-mx-wrap'); const t = document.querySelector('[data-mxhs=top]'); const bt = document.querySelector('[data-mxhs=bottom]');
       const body = document.querySelector('#dci-overlay .dci-body').getBoundingClientRect();
       return { over: w.scrollWidth > w.clientWidth, top: !t.hidden, bottom: !bt.hidden, wl: Math.round(w.scrollLeft), tl: Math.round(t.scrollLeft), bl: Math.round(bt.scrollLeft),
-        bottomIn: !bt.hidden && bt.getBoundingClientRect().bottom <= body.bottom + 1 && bt.getBoundingClientRect().top >= body.top }; })()"""
+        bottomIn: !bt.hidden && bt.getBoundingClientRect().bottom <= body.bottom + 1 && bt.getBoundingClientRect().top >= body.top,
+        atEdge: !bt.hidden && Math.abs(bt.getBoundingClientRect().bottom - body.bottom) <= 2 }; })()"""
     pg.evaluate("document.querySelector('.dci-mx-wrap').scrollIntoView({ block: 'start' })")
     pg.wait_for_timeout(300)
     c0 = pg.evaluate(MX)
@@ -90,7 +91,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(500)
     c4 = pg.evaluate(MX)
     print('C) Matrix:', c0, '\n   oben 200:', c1, '\n   Matrix 60:', c2, '\n   unterer Rand außer Sicht:', c3, '\n   in Sicht:', c4)
-    results.append(c0['over'] and c0['top'] and c1['wl'] == 200 and c2['tl'] == 60 and c3['bottom'] and c3['bottomIn'] and c3['bl'] == 60 and not c4['bottom'])
+    results.append(c0['over'] and c0['top'] and c1['wl'] == 200 and c2['tl'] == 60 and c3['bottom'] and c3['bottomIn'] and c3['atEdge'] and c3['bl'] == 60 and not c4['bottom'])
     print('Fehler:', errs)
     results.append(not errs)
     b.close()

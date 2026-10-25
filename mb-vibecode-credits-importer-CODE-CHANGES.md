@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.30.4, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.30.5, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.30.5 · 2026-10-25
+
+Settings without the import, "Source pages", tracks typed into a track group (collected items 88, 90).
+
+- **`openDashboard(opts)`:** `{ settingsOnly }` (⚙ in `#dci-controls`, `data-nav-settings`) – not initialized: no `init()`, a message `settingsOnly.hint` with the action `start-import` instead. New **`initOnce()`** (`init()` once, `S.importStarting` against a second start) for `openDashboard` and the click handler `start-import`. (Careful: `startImport` is already the import of the source inside `init` – a first draft of this version reused the name and stopped every import; `t_ui305.py` B caught it.)
+- **Texts:** `settings.t.discogs` "Source pages" in all four languages (de "Quellseiten", es "Páginas de origen", fr "Pages sources"); `nav.settingsTitle` (English) names it; new (English only): `settingsOnly.hint`, `settingsOnly.start`, `trackpool.text`, `trackpool.textPlaceholder`, `trackpool.textBad`.
+- **New `tracksFromText(text)`** (ranges, Discogs positions via `positionIndex`, "medium.track", track numbers of the first chosen medium; only tracks of `selTracks()`; `bad` for the rest), **`applyTrackText`** (`onInput` of `data-f="tg-text"`: the ticks and the message without drawing the form anew), **`syncTrackText`** (ticks changed, `onChange` of `tg-track`; `tg-medium` too). `trackFormHtml`: the field "Tracks:" (`f.text`, else `trackListLabel(f.tracks)`). `saveTrackForm` refuses unknown tracks typed in. Enter in `tg-name` / `tg-text` saves.
+- **CSS (3.30.3 follow-up):** the lower scroll bar of the works matrix sits at the very lower edge of the window's body (`bottom: -28 u`: sticky boxes keep off the body's padding; it stood above two rows of the matrix).
+- **Tests:** new `t_ui305.py`; `t_bcview.py` G (the name of the tab); `t_poolsmx.py` C checks the lower bar at the lower edge.
 
 ## Import 3.30.4 · 2026-10-25
 

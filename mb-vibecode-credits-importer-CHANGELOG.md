@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-25 | 3.30.1 – 3.30.4 | – |
+| 2026-10-25 | 3.30.1 – 3.30.5 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -83,6 +83,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-25
+
+### Import 3.30.5
+
+#### Changed
+
+- **⚙ below "Import credits …" opens only the settings** (collected item 88; maintainer: "wenn das einstellungsmenü außerhalb des Dashboards geöffnet wird soll auch wirklich nur das Einstellungsmenü gestartet werden", "Dashboard ohne import reicht an der Stelle"): the dashboard opens with its settings without starting the import; a message offers "Start import".
+- **The tab "Discogs and Bandcamp view" is called "Source pages"** (item 88; maintainer: "Source Pages ist gut"; German "Quellseiten", Spanish "Páginas de origen", French "Pages sources").
+
+#### Added
+
+- **The lower scroll bar of the works matrix** (3.30.3) sits at the very lower edge of the window (it stood a little above it, over a row of the matrix).
+- **Tracks typed into a track group** (item 90; maintainer: "track pools brauchen neben dem "Name"-Feld noch ein manuelles Eingabe Feld wie bei der Medien Auswahl zu Beginn des Imports"): the field "Tracks:" – "1-4, 6", "A1–B2", "2.3"; it and the ticks follow each other; unknown tracks are named and the group is not saved.
 
 ### Import 3.30.4
 

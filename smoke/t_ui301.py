@@ -1,7 +1,7 @@
 """Credits Importer 3.30.1: small fixes of the dashboard (collected items 86, 89, 91, 92, 95; 2026-10-25).
 A) Two messages (dates from the notes), open and folded: the bar below ("Add entry manually") no longer covers
    "▾ 2 messages" / "▸ 2 messages" or the last message.
-B) ⚙ Settings → Discogs and Bandcamp view: "on mouse-over" and "on click" have tooltips.
+B) ⚙ Settings → Discogs and Bandcamp view ([3.30.5] Source pages): "on mouse-over" and "on click" have tooltips.
 C) Compact: the level of a line switched by clicks (Recording → Release → Skip → Recording) stays at the same place; on
    Skip the line still shows its type (grey).
 D) "only works": a button of its own next to the levels, underlined in the colour of works; "Stage:" on the line of
