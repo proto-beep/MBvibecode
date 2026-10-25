@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-25 | 3.30.1 – 3.31.0 | – |
+| 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -84,6 +84,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-25
+
+### Import 3.31.1
+
+#### Changed
+
+- **The smoke tests, merged** (collected item 103; maintainer: "führe die Tests zusammen. Vor dem nächsten Block"): the tests of a topic are cases of one file – 28 files instead of 96, every check kept (README-tests lists which former test is which case); one browser per file; the tests ask the mock MusicBrainz every 25 ms instead of the script's 1.1 s, so the whole suite runs in about 5 minutes instead of 10. The text corpus also has the lines of the cases "Sounds", band members, ℗ / ©, places from the notes and publishers. Nothing changes in the script itself (only its version number).
 
 ### Import 3.31.0 – milestone "Text recognition, part 4"
 
