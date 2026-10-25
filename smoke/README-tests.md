@@ -212,6 +212,8 @@ python3 t_ui305.py        # 3.30.5: ⚙ below "Import credits …" before any im
                           # Enter saves, editing shows the tracks); German "Quellseiten"
 python3 t_sounds.py       # 3.30.6: "Sounds" (Discogs, text, prose) – performer with the question performer · effects "sounds",
                           # effects chosen gives the role credit "sounds"
+python3 t_members.py      # 3.30.7: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – three performers (pasted text
+                          # and the "about" text of Bandcamp); "The band is now a trio." and "… is back with a new album." nothing
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error
