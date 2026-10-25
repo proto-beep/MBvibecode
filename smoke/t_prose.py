@@ -1,7 +1,7 @@
 """Credits Importer 3.29.0 (milestone "Text recognition, part 3"): credits in prose, places of joined verbs, lists of kinds
 (collected items 70, 71, 76, 77; the texts of ekstasis, Erosion and Antifascist Freedom Music on Bandcamp, pasted).
 A) "A chronicle of rabid deeds, dutifully unearthed from accursed crossroads' soil by K.M. (sounds, words) & E. (voice)."
-   → K.M. performer and lyricist, E. vocals (S038, T041); "Cover artwork channeled by Drahmarduk." → artwork credited
+   → K.M. performer and lyricist, E. vocals (S038, T041; [3.30.6] the performer row is "Sounds", asked – Q008); "Cover artwork channeled by Drahmarduk." → artwork credited
    "cover artwork" (R103, T042); "Logo carved by the guided hand of BMS Illustration." → BMS Illustration, design
    credited "logo" (T042).
 B) "Mixed and mastered at TQA.HQ (July 2026). Thanks to EXEcentrer and Isohyet." → TQA.HQ mixed at and mastered at (S039),
@@ -55,7 +55,7 @@ with sync_playwright() as p:
     # A)
     a1 = [role('K.M.'), g.get('E.'), g.get('Drahmarduk'), g.get('BMS Illustration')]
     print('A) Prosa:', a1, '| Werke-Spalten:', cols)
-    results.append('Performer' in role('K.M.') and any('K.M.' in c for c in cols) and (g.get('E.') or [[]])[0][:2] == ['Vocals', 'vocal']
+    results.append('Sounds' in role('K.M.') and ['Sounds', 'performer'] in [x[:2] for x in g.get('K.M.', [])] and any('K.M.' in c for c in cols) and (g.get('E.') or [[]])[0][:2] == ['Vocals', 'vocal']
                    and (g.get('Drahmarduk') or [[]])[0][1:4:2] == ['artwork', 'cover artwork'] and (g.get('BMS Illustration') or [[]])[0][1:4:2] == ['design', 'logo'])
     # B) + D) places and dates
     pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")
