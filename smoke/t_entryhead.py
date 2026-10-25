@@ -4,7 +4,7 @@ B) How the dashboard credits the entry: "as “B. Man”" (Discogs credits Bass 
    tooltip lists the credits; the MusicBrainz name (no "credited as") – no chip. A row credited otherwise: "as “B. Man”
    (+1)" at the head, the compact line of each row names its own credit.
 C) The bar below "Import credits …" (with the companion): the status as a badge (source link, "open in background")
-   and ⚙ – no switches of the navigation any more; ⚙ opens the settings of the dashboard at "Discogs and Bandcamp view"."""
+   and ⚙ – no switches of the navigation any more; ⚙ opens the settings of the dashboard at "Discogs and Bandcamp view" ([3.30.5] "Source pages")."""
 from playwright.sync_api import sync_playwright
 import harness as H
 

@@ -15,7 +15,7 @@ F) Credits of track pages: the row links its track pages ("From the track page: 
    which has a mark for its own credit only; the same place on two track pages is one row for both tracks (since
    3.16.1 the tracks had not been joined). Back on the album: staged credits ● ; after "Enter edit" the MB release page
    checks them: ✓.
-G) The menu: topic "Discogs and Bandcamp view", "Bandcamp status", no cover button; an old companion (before 1.8.0):
+G) The menu: topic "Discogs and Bandcamp view" ([3.30.5] "Source pages"), "Bandcamp status", no cover button; an old companion (before 1.8.0):
    "needs the companion script 1.8.0"."""
 import re
 from playwright.sync_api import sync_playwright
@@ -220,7 +220,7 @@ with sync_playwright() as p:
       return [s.querySelector('[data-act=settings-topic][data-topic=discogs]').textContent.trim(), t.querySelector('[data-dg-status]').textContent.trim(),
         !!t.querySelector('[data-dg-artwork]'), t.querySelector('.dci-sub').textContent.trim().slice(0, 60)]; })()""")
     print('G) alter Companion:', g1, '| Menü:', g2)
-    results.append(g1.startswith('Bandcamp view: needs the companion script 1.8.0') and g2[:3] == ['Discogs and Bandcamp view', 'Bandcamp status', False])
+    results.append(g1.startswith('Bandcamp view: needs the companion script 1.8.0') and g2[:3] == ['Source pages', 'Bandcamp status', False])
     print('Fehler:', errs)
     results.append(not errs)
     b.close()
