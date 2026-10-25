@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-25 | 3.30.1 – 3.30.8 | – |
+| 2026-10-25 | 3.30.1 – 3.30.9 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -83,6 +83,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-25
+
+### Import 3.30.9
+
+#### Added
+
+- **The label of "© & ℗ TUM Records Oy 2021"** (collected item 99; maintainer: "beim © & ℗ Teil wird das Datum schon korrekt hinterlegt, allerdings das Label nicht angeboten … ICh würde mir wünschen, dass hier beide Labels in der MB Datenbank zur Wahl für P/C angeboten werden also "TUM Records Oy" und "TUM Records"."; "nur wenn P und C auch erwähnt sind …"): from the Discogs notes (unless "Companies, etc." lists it with that role) and from texts, a year after the name too; ℗ and © only as named; MusicBrainz's labels with and without the legal form ("Oy") are suggested.
 
 ### Import 3.30.8
 

@@ -1927,9 +1927,11 @@
    "Photography By photography@en · photos@en · foto@no,sv,da · fotografi@no,sv,da",
    "Illustration illustration@en,sv,da · illustrations@en · illustrasjon@no · illustrasjoner@no · illustrationer@sv,da",
    "Layout layout@en,no,sv,da",
-   "T033 · Texts (3.21.0): ℗ and © together (\"P + © 2023 X\", \"℗ & ©\", \"(P) & (C)\") give both; after the name a code such as \"DDD\", a catalogue number after \"·\" and \"All rights reserved\" are left out (Code: TEXT_PC_SIGNS, TEXT_PC_STRIP)",
+   "T044 · All sources (3.30.9): the legal form at the end of a company's name (Oy, AB, AS, ApS, Ltd, GmbH, KG, Inc., LLC, Corp., S.A., S.L., S.r.l., B.V., N.V., Pty …): a name without a link is also searched without it – \"TUM Records Oy\" offers TUM Records Oy and TUM Records (Code: COMPANY_FORM, withoutCompanyForm, suggestByName)",
+   "[\\s,]+(?:oyj?|ab|asa?|a\\/s|aps|ltd\\.?|limited|gmbh|kg|ohg|ag|inc\\.?|incorporated|llc|l\\.l\\.c\\.|corp\\.?|corporation|co\\.?|plc|pty\\.?|s\\.?a\\.?|s\\.?l\\.?|s\\.?r\\.?l\\.?|b\\.?v\\.?|n\\.?v\\.?|sas|sarl|e\\.\\s?k\\.?|s\\.?p\\.?a\\.?|k\\.?k\\.?|sp\\.?\\s?z\\s?o\\.?\\s?o\\.?)$",
+   "T033 · Texts (3.21.0): ℗ and © together (\"P + © 2023 X\", \"℗ & ©\", \"(P) & (C)\") give both, one sign only that one; after the name a code such as \"DDD\", a catalogue number after \"·\", \"All rights reserved\" and (3.30.9) a year (\"© & ℗ TUM Records Oy 2021\") are left out (Code: TEXT_PC_SIGNS, TEXT_PC_STRIP)",
    "signs ^(©\\s*©|(?:℗|Ⓟ|\\(p\\)|p)\\s*(?:\\+|&|\\/|,|and|und|et|y)?\\s*(?:©|\\(c\\))|(?:©|\\(c\\))\\s*(?:\\+|&|\\/|,|and|und|et|y)?\\s*(?:℗|Ⓟ|\\(p\\))|℗|Ⓟ|\\(p\\)|©|\\(c\\))\\s*(?:(?:19|20)\\d{2}(?:\\s*[-–/,&]\\s*(?:19|20)?\\d{2,4})*\\s*)?(.+)$",
-   "left out \\s+[·|•]\\s+.*$|\\s+[–—]\\s+[A-Z]{2,}[\\s-]?\\d+.*$|\\s+(?:AAD|ADD|DDD|DAD)\\b|[,.]?\\s*(?:[Aa]ll\\s+[Rr]ights\\s+[Rr]eserved|ALL\\s+RIGHTS\\s+RESERVED).*$"
+   "left out \\s+[·|•]\\s+.*$|\\s+[–—]\\s+[A-Z]{2,}[\\s-]?\\d+.*$|\\s+(?:AAD|ADD|DDD|DAD)\\b|[,.]?\\s*(?:[Aa]ll\\s+[Rr]ights\\s+[Rr]eserved|ALL\\s+RIGHTS\\s+RESERVED).*$|[,\\s]+(?:19|20)\\d{2}(?:\\s*[-–/&,]\\s*(?:19|20)?\\d{2,4})*\\s*\\.?$"
   ],
   "own": [
    "Your rules (U001 … · stored in this browser, tried before the built-in rules)",
@@ -2169,7 +2171,8 @@
    "T043 Texts (3.30.7): the members of a band – the release's artist (or the band named by itself: \"the band\", \"the trio\", \"we\") before \"are\", \"is\", \"consists of\" …, then the names (S041) TEXT_MEMBERS, TEXT_BAND_SELF",
    "T039 All sources (3.28.2): roles in Norwegian, Swedish and Danish, each spelling with its language (word@no, word@sv, word@da; the search field filters \"@no\") → the English role the register maps; in a Discogs bracket or as a role of a text, a translation gets no role credit (S032) ROLE_TERMS, ROLE_INDEX, foldWord",
    "T040 All sources (3.28.2): the tasks of an artwork credit that \"and\" (og, och, und, et, y, &, +) joins, with the role each becomes (S033) ART_TASKS, ART_TASK_INDEX, splitArtTasks",
-   "T033 Texts (3.21.0): ℗ and © together (\"P + © 2023 X\", \"℗ & ©\", \"(P) & (C)\") give both; after the name a code such as \"DDD\", a catalogue number after \"·\" and \"All rights reserved\" are left out TEXT_PC_SIGNS, TEXT_PC_STRIP"
+   "T044 All sources (3.30.9): the legal form at the end of a company's name (Oy, AB, AS, ApS, Ltd, GmbH, KG, Inc., LLC, Corp., S.A., S.L., S.r.l., B.V., N.V., Pty …): a name without a link is also searched without it – \"TUM Records Oy\" offers TUM Records Oy and TUM Records COMPANY_FORM, withoutCompanyForm, suggestByName",
+   "T033 Texts (3.21.0): ℗ and © together (\"P + © 2023 X\", \"℗ & ©\", \"(P) & (C)\") give both, one sign only that one; after the name a code such as \"DDD\", a catalogue number after \"·\", \"All rights reserved\" and (3.30.9) a year (\"© & ℗ TUM Records Oy 2021\") are left out TEXT_PC_SIGNS, TEXT_PC_STRIP"
   ],
   "wording": [
    "Role credit wording (W001 … · Code: WORDING_RULES)",
