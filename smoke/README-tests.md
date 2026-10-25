@@ -197,6 +197,9 @@ python3 t_fold.py         # 3.29.3: the arrow next to "Artist credit for all rol
 python3 t_rulesdock.py    # 3.30.0: "Mapping rules" in the dashboard below its head (default), never together with ⚙ Settings,
                           # "⧉ As window" (stored, ⚙ beside it), remembered after reloading, "in the dashboard" in Appearance,
                           # closed by the symbol and Escape, a rule id at a row opens them at that rule
+python3 t_ui301.py        # 3.30.1: the bar below the messages covers nothing, tooltips of "on mouse-over / on click", the level of
+                          # a compact line stays in place on Skip, "only works" apart and in the colour of works, in the page no
+                          # wider than the window (inside a 2400 px page)
 python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                           # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                           # per language (LIST=1: all keys) – not an error

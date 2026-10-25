@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.30.0, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.30.1, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.30.1 · 2026-10-25
+
+Small fixes (collected items 86, 89, 91, 92, 95).
+
+- **CSS:** `.dci-msgs:not(:empty)` – a bottom margin of 18 u against the −14 u of `.dci-stick` (it covered "▸ 2 messages"), −5 u at the top; `.dci-onlyworks`, `.dci-scope > .dci-sub` (on the line of the buttons); `[data-level="only-works"]` takes the colour of work; `#dci-overlay.dci-inline` – `max-width: var(--dci-inline-max, 100%)`, `min-width: 0`, `box-sizing`.
+- **New `fitInline()`:** in the page, `--dci-inline-max` = the width of the browser window from the left edge of the dashboard (minus 12 px); called in `applyPlacement`, `revealDashboard` and on `resize`; the window removes it.
+- **`clineHtml`:** the type part ("→ type · instrument", role credit, "credited as") also on skipped lines; "credited as" counts the row's own credit (`entryCredits` leaves skipped rows out).
+- **Toolbar:** "only works" (`data-level="only-works"`) in a `.dci-seg.dci-onlyworks` of its own after the levels.
+- **`syncModeHtml`:** `title` with `syncMode.hoverTitle` / `syncMode.clickTitle` (English only).
+- **Tests:** new `t_ui301.py`; `t_compact.py` E (the skipped line keeps its type).
 
 ## Import 3.30.0 · 2026-10-24
 
