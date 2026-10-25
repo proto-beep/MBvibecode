@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-25 | 3.30.1 – 3.30.3 | – |
+| 2026-10-25 | 3.30.1 – 3.30.4 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -83,6 +83,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-25
+
+### Import 3.30.4
+
+#### Changed
+
+- **The settings join their tabs, a bridge to ⚙** (collected item 87; maintainer: "im settings menu ist "Discogs and Bandcamp view" und texts noch ein wenig verschoben und fügt sich noch nicht an den inhalt an. Dates & tracks und staging haben gar keinen connect. vielleicht könnte man den menüinhalt immer auf höhe der punkte starten lassen … kannst du zusätzlich wo im screenshot rot markiert eine visuelle brücke zum menu führen? es ist auch derzeit am symbol noch nicht eindeutig, dass das menü geöffnet ist. genau so verhält es sich auch beim mapping sofern man es im dashboard anzeigt."; "einfach bauen ich schaue es mir dann an"): the content starts at the height of the chosen tab, which reaches into its frame at every text size; ⚙ is pressed while the settings are open, with a strip in its colour down to them; the same for "Mapping rules" in the dashboard.
 
 ### Import 3.30.3
 

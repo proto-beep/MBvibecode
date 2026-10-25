@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.30.3, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.30.4, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.30.4 · 2026-10-25
+
+Settings join their tabs, bridges from the symbols (collected item 87).
+
+- **New `alignSettingsPane()`:** the top margin of `.dci-set-pane` = the distance of the chosen tab from the top of `.dci-set-wrap` (tabs in a column only; in a row, or with the reset question, none).
+- **New `placeBridges()`:** for ⚙ / `[data-el=settings]` and the rules symbol / `[data-el=rules-dock]` (docked and open): the class `dci-bridged` on the symbol with `--dci-bridge-down` (to the lower edge of the head), `dci-bridged-box` on the box with `--dci-bridge-x`, `-w`, `-h` (left edge and width of the symbol, distance from the head) – only while the box is below the head; calls `alignSettingsPane`. Called by `renderSettings`, `syncRulesBtn` (place, open, close of the rules), and – one frame later – on scrolling the body and when the head or the body change size (`ResizeObserver`s in `buildOverlay`).
+- **CSS:** the chosen tab overlaps by `-14 u - 1px` (the gap, before fixed −15 px); `.dci-headbtn[aria-expanded="true"]` looks pressed; `.dci-bridged::after` and `.dci-bridged-box::before` draw the strip (tint #ecebf6, purple sides); `.dci-settings` and `.dci-rules-dock` are positioned.
+- **Tests:** new `t_bridge.py`.
 
 ## Import 3.30.3 · 2026-10-25
 
