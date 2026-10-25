@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.30.1, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.30.2, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.30.2 · 2026-10-25
+
+Rule ids at rows open a window, the arrow in the head of an entry (collected items 75b, 82b).
+
+- **State and storage:** `S.rulesRowPlace` (`dci-rules-rowplace`, `RULES_ROW_KEY`: "window" by default, only "symbol" stored; `TOPIC_KEYS.appearance`, `SETTINGS_KEYS`, `resetSettings`, `resetTopic`), `S.rulesAsWindow` (this time opened from a row as a window; `rulesDocked()` is false then).
+- **`openRules(focusId, { fromRow })`:** `fromRow` and "window" and the place "dashboard" → `S.rulesAsWindow`; the handlers `rule-info` / `rule-goto` pass `fromRow`. `setRulesPlace` clears `S.rulesAsWindow` ("Into the dashboard" in such a window docks them). New `setRulesRowPlace`, click handler `rules-rowplace`, row in Settings → Appearance.
+- **New `shownRowsOf(a)`, `openAllHtml(a, rows)`, `openAllOfGroup(a)`, `syncOpenAll(a)`:** the button `data-act="group-openall"` (`.dci-gopen`, ▸/▾) first in `.dci-gname` in the compact view; `setRowOpen` updates it; click handler `group-openall`.
+- **Texts (English only):** `settings.rulesRowPlace` (+ `.window`, `.symbol`), `group.openAll`, `group.closeAll`.
+- **Tests:** new `t_rowrules.py`; `t_rulesdock.py` F (a rule id opens a window now).
 
 ## Import 3.30.1 · 2026-10-25
 
