@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.5
+// @version      3.30.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1592,6 +1592,8 @@
       "typeAsk.askText": "“{role}” can be liner notes (an essay in the booklet) or the lyrics – please choose:",
       "typeAsk.askAlto": "“{role}” alone: the viola (Spanish, French), an alto saxophone or an alto voice? – please choose:",
       "typeAsk.askTranslation": "“{role}” in Bandcamp credits: mostly the translation of the liner notes, sometimes of the lyrics – please choose:",
+      "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
+      "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
       "typeAsk.suggested": "suggested",
       "typeAsk.suggestedTitle": "What it mostly means – a suggestion: the row is added only once you choose",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
@@ -6277,6 +6279,13 @@
         { type: 'liner notes', level: 'release', label: 'liner notes', suggested: true, task: 'translation' },
         { type: 'translator', level: 'work', label: 'translator (lyrics)' },
       ] },
+    // [3.30.6] collected item 85 (maintainer: "bitte mit notizabfrage ob performer oder effects mit role "sounds" wie bei anderen
+    // instrumenten wie bass schon üblich", "die zwei reichen erst einmal"): unlike the others the row has a type before the answer
+    { id: 'Q008', base: 'sounds', rule: 'R104', ask: 'typeAsk.askSounds', pending: 'typeAsk.pendingSounds', note: '"Sounds" (3.30.6): performer (without role credit) or the instrument effects credited "sounds"? Until answered it stays performer',
+      options: [
+        { type: 'performer', level: 'recording', label: 'performer' },
+        { type: 'instrument', level: 'recording', instrument: 'effects', label: 'effects (credited “sounds”)' },
+      ] },
     { id: 'Q005', base: 'text', rule: 'R100', ask: 'typeAsk.askText', note: '"Text" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German "Text" is the lyrics)? Nothing is assumed',
       options: [
         { type: 'liner notes', level: 'release' },
@@ -6430,6 +6439,7 @@
     { id: 'R069', kind: 'simple', note: "", re: /^cover (painting|illustration|drawing)$/, types: ['illustration', 'design/illustration'], level: 'release' },
     { id: 'R070', kind: 'simple', note: "", re: /^cover art$/, types: ['artwork', 'design/illustration'], level: 'release', credit: 'cover art' },
     { id: 'R103', kind: 'simple', note: "\"Cover Artwork\" (3.29.0)", re: /^cover artwork( by)?$/, types: ['artwork', 'design/illustration'], level: 'release', credit: 'cover artwork' },
+    { id: 'R104', kind: 'simple', note: "\"Sounds\" (3.30.6): performer – or the instrument effects credited \"sounds\"; the dashboard asks (Q008), performer until then", re: /^sounds$/, types: ['performer'], level: 'recording' },
     { id: 'R071', kind: 'simple', note: "", re: /^(photography by|photography|photographer|photos by|photo|photos|photograph by|photographed by|photographs by)$/, types: ['photography'], level: 'release' },
     { id: 'R072', kind: 'simple', note: "", re: /^(graphic design|graphics|graphic designer)$/, types: ['graphic design', 'design'], level: 'release' },
     { id: 'R101', kind: 'simple', note: "\"Logo\", \"Logo by\": design with the credit \"logo\" (3.21.0)", re: /^(logo|logo by|logo design|logo designed by)$/, types: ['design', 'graphic design'], level: 'release', credit: 'logo' },
@@ -6680,7 +6690,7 @@
       show: () => ({ pairs: [['particles', TEXT_AREA_PARTICLE], ['no area', TEXT_NOT_AREA]] }) },
     { id: 'T038', where: 'TITLE_SMALL_WORDS, TITLE_NOTE, titleWordsOf', note: 'Track titles compared with MusicBrainz\'s (3.24.1, S030): small words of English, German, Spanish, French, Italian, Portuguese and Dutch are left out ("The Song of the Sea" = "Song of Sea"), so are notes in brackets ("(Remastered)", "[Live]", "(feat. X)")',
       show: () => ({ pairs: [['small words', [...TITLE_SMALL_WORDS].join(' · ')], ['notes', TITLE_NOTE]] }) },
-    { id: 'T041', where: 'PROSE_ROLE_WORDS', note: 'Texts (3.29.0): role words in brackets after a name in prose (S038) and the role each stands for ("sounds" → performer, "words" → lyricist, "voice" → vocals; 3.29.1: "noises" → effects credited "noises", "electronics" → electronic instruments credited "electronics", "field recordings" → field recordist)',
+    { id: 'T041', where: 'PROSE_ROLE_WORDS', note: 'Texts (3.29.0): role words in brackets after a name in prose (S038) and the role each stands for ("sounds" → performer (3.30.6: "Sounds", R104, the dashboard asks for effects – Q008), "words" → lyricist, "voice" → vocals; 3.29.1: "noises" → effects credited "noises", "electronics" → electronic instruments credited "electronics", "field recordings" → field recordist)',
       show: () => ({ pairs: Object.entries(PROSE_ROLE_WORDS) }) },
     { id: 'T042', where: 'PROSE_FILLER_VERB, PROSE_FILLER_BEFORE_NAME', note: 'Texts (3.29.0): words of prose around a credit that are left out – a verb before "by" ("Cover artwork channeled by X", "Logo carved by …") and words before the name ("… by the guided hand of BMS Illustration")',
       show: () => ({ pairs: [['verb before “by”', PROSE_FILLER_VERB], ['before the name', PROSE_FILLER_BEFORE_NAME]] }) },
@@ -6746,7 +6756,7 @@
   };
 
   // [T002] (S011)
-  const GENERIC_WORDS = new Set(['brushes', 'mallets', 'sticks', 'bow', 'bowed', 'plucked', 'muted', 'effects', 'fx', 'loops', 'samples', 'noise', 'noises', 'electronics',
+  const GENERIC_WORDS = new Set(['brushes', 'mallets', 'sticks', 'bow', 'bowed', 'plucked', 'muted', 'effects', 'fx', 'loops', 'samples', 'noise', 'noises', 'electronics', 'sounds',
     'sampler', 'programming', 'overdubs', 'synth', 'synths', 'keys', 'keyboard', 'keyboards', 'vox', 'sax', 'perc', 'gtr', 'lead', 'rhythm',
     'backing', 'solo', 'additional', 'tour', 'live', 'intro', 'outro', 'harmony', 'harmonies', 'chorus', 'choir', 'strings', 'horns', 'brass',
     'woodwinds', 'tenor', 'alto', 'soprano', 'baritone', 'bass', 'acoustic', 'electric', 'fretless', 'slide', 'steel', 'pedal', 'lap',
@@ -6971,7 +6981,8 @@
   // [T041] Texts (3.29.0): role words in brackets after a name in prose ("… by K.M. (sounds, words) & E. (voice)", S038) that
   // are no roles of the register themselves – the role each stands for
   // [3.29.1] noises → effects ("noises"), electronics → electronic instruments ("electronics"), field recordings → field recordist
-  const PROSE_ROLE_WORDS = { sounds: 'Performer', noises: 'Noises', noise: 'Noises', electronics: 'Electronics', 'field recordings': 'Field Recordings',
+  // [3.30.6] "sounds" → "Sounds" (R104: performer, the dashboard asks for effects – Q008)
+  const PROSE_ROLE_WORDS = { sounds: 'Sounds', noises: 'Noises', noise: 'Noises', electronics: 'Electronics', 'field recordings': 'Field Recordings',
     'field recording': 'Field Recording', words: 'Lyrics By', lyrics: 'Lyrics By', texts: 'Lyrics By', voice: 'Vocals', voices: 'Vocals', vocals: 'Vocals', music: 'Music By' };
   // [T042] Texts (3.29.0): words of prose around a credit that say nothing about the role – a verb before "by" ("Cover artwork
   // channeled by X", "Logo carved by …") and words before the name ("… by the guided hand of BMS Illustration")
@@ -16621,7 +16632,7 @@
     const pick = (o, i) => `<button type="button" class="dci-textbtn${o.suggested ? ' dci-type-sugg' : ''}" data-act="type-pick" data-opt="${i}" aria-pressed="${row.typeAnswer === i}"${o.suggested ? ` title="${esc(tr('typeAsk.suggestedTitle'))}"` : ''}>${esc(o.label || o.type)}${o.suggested ? ` <span class="dci-similar">${esc(tr('typeAsk.suggested'))}</span>` : ''}</button>`;
     const chosen = row.typeAnswer != null;
     return `<div class="dci-bass-ask dci-type-ask" data-question="${q.id}">${esc(tr(chosen ? 'typeAsk.chosen' : q.ask || 'typeAsk.ask', { role: row.raw || row.base }))}
-      ${q.options.map(pick).join(' · ')}${chosen ? '' : `<span class="dci-sub">${esc(tr('typeAsk.pending'))}</span>`}</div>`;
+      ${q.options.map(pick).join(' · ')}${chosen ? '' : `<span class="dci-sub">${esc(tr(q.pending || 'typeAsk.pending'))}</span>`}</div>`;
   }
 
   function rowHtml(row) {

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-25 | 3.30.1 – 3.30.5 | – |
+| 2026-10-25 | 3.30.1 – 3.30.6 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -83,6 +83,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-25
+
+### Import 3.30.6
+
+#### Added
+
+- **"Sounds" asks: performer or effects** (collected item 85; maintainer: "bitte mit notizabfrage ob performer oder effects mit role "sounds" wie bei anderen instrumenten wie bass schon üblich", "die zwei reichen erst einmal"): a performer row that asks "performer · effects (credited “sounds”)"; until answered it stays performer. Discogs, Bandcamp, texts and "(sounds)" in prose.
 
 ### Import 3.30.5
 
