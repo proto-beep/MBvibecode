@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.2
+// @version      3.30.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1493,6 +1493,8 @@
       "pools.title": "Dates & tracks",
       "pools.suggested": "suggestion from the notes (dashed, yellow) until you use it",
       "pools.toggleTitle": "Show or fold the date pool, the track pool and the matrix",
+      "pools.foldOne": "Fold “{name}” in (remembered)",
+      "pools.unfoldOne": "Show “{name}” again",
       "pools.nDates.one": "{n} date",
       "pools.nDates.other": "{n} dates",
       "pools.nTracks.one": "{n} track group",
@@ -10870,6 +10872,9 @@
   S.dmAuto = readJson('localStorage', 'dci-dm-auto', false) === true;
   // Dates & tracks open or folded; null until switched once: open when there are dates
   S.poolsOpen = readJson('localStorage', 'dci-pools-open', null);
+  // [3.30.3] the date pool and the track pool fold on their own (item 93): { dates: true } while folded
+  const POOL_FOLD_KEY = 'dci-pool-fold';
+  S.poolFold = readJson('localStorage', POOL_FOLD_KEY, null) || {};
   // Folded, the date pool stays in the bar (on by default)
   S.poolsKeep = readJson('localStorage', 'dci-pools-keep', true) !== false;
 
@@ -15981,6 +15986,17 @@
       title="${esc(tr(kind === 'date' ? 'dm.pickDate' : 'dm.pickTracks', { name }))}" aria-label="${esc(tr(kind === 'date' ? 'dm.pickDate' : 'dm.pickTracks', { name }))}">⠿</button>`;
   }
 
+  /**
+   * [3.30.3] The name of a pool, a button that folds it (item 93; maintainer: "bitte mach "Date pool" und "track pool" in
+   * der mitscrollenden leiste oben auf und zuklappbar"); folded, only the name and the number of chips stay.
+   */
+  function poolLabelHtml(pool, n) {
+    const folded = !!S.poolFold[pool];
+    const name = tr(pool === 'dates' ? 'date.title' : 'trackpool.title');
+    const t = tr(folded ? 'pools.unfoldOne' : 'pools.foldOne', { name });
+    return `<button type="button" class="dci-pool-label dci-pool-fold" data-act="pool-fold" data-pool="${pool}" aria-expanded="${!folded}" title="${esc(t)}">${folded ? '▸' : '▾'} ${esc(name)}${folded ? ` <span class="dci-pool-n">(${n})</span>` : ''}</button>`;
+  }
+
   /** The date pool; "kept": the chips alone, in the folded bar (to drag them onto rows while scrolling). */
   function datePoolHtml(kept = false) {
     const chips = S.datePool.map((d) => {
@@ -15996,11 +16012,12 @@
     const suggHtml = suggestions.length ? `<span class="dci-date-sugg"><span class="dci-sub">${esc(tr('date.suggestions'))}</span>
       ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin) }))}</button>`).join(' ')}</span>` : '';
     const hint = S.datePool.length ? `<span class="dci-drag-hint" title="${esc(tr('date.dragHintTitle'))}">⠿ ${esc(tr('date.dragHint'))}</span>` : '';
+    if (S.poolFold.dates) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}</div>`;
     if (kept) {
-      return `<div class="dci-dates-bar dci-pool-dates"><strong class="dci-pool-label">${esc(tr('date.title'))}</strong>${chips}${hint}</div>`;
+      return `<div class="dci-dates-bar dci-pool-dates">${poolLabelHtml('dates', S.datePool.length)}${chips}${hint}</div>`;
     }
     return `<div class="dci-dates-bar dci-pool-dates">
-        <strong class="dci-pool-label">${esc(tr('date.title'))}</strong>
+        ${poolLabelHtml('dates', S.datePool.length)}
         ${chips}
         <button type="button" class="dci-textbtn" data-act="pool-new">${esc(tr('date.poolNew'))}</button>
         ${hint}
@@ -16019,7 +16036,8 @@
       <button type="button" class="dci-chip-main" data-act="tg-edit" data-id="${esc(g.id)}" title="${esc(tr('trackpool.editTitle'))}${trackGroupSuggested(g) ? ` – ${esc(tr('pools.suggested'))}` : ''}">
       ${esc(g.name)} <span class="dci-chip-count">${esc(tr('trackpool.count', { n: g.tracks.length }))}</span></button></span>`).join('');
     const hint = `<span class="dci-drag-hint" title="${esc(tr('trackpool.dragHintTitle'))}">⠿ ${esc(tr('trackpool.dragHint'))}</span>`;
-    if (kept) return `<div class="dci-dates-bar dci-tracks-bar"><strong class="dci-pool-label">${esc(tr('trackpool.title'))}</strong>${chips}${hint}</div>`;
+    if (S.poolFold.tracks) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}</div>`;
+    if (kept) return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}${hint}</div>`;
     // Several media: a whole medium (or one group per medium) in one step (of the chosen media)
     const media = selMedia();
     const add = media.length > 1
@@ -16029,7 +16047,7 @@
           ${media.map((md) => `<option value="m:${md}">${esc(mediumGroupName(md))}</option>`).join('')}
           <option value="all">${esc(tr('trackpool.allMedia', { n: media.length }))}</option></select>`
       : `<button type="button" class="dci-textbtn" data-act="tg-new">${esc(tr('trackpool.new'))}</button>`;
-    return `<div class="dci-dates-bar dci-tracks-bar"><strong class="dci-pool-label">${esc(tr('trackpool.title'))}</strong>${chips}
+    return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}
         ${add}
         ${S.trackPool.length ? hint : `<span class="dci-sub">${esc(tr('trackpool.explain'))}</span>`}</div>`;
   }
@@ -18879,6 +18897,53 @@
     const wrap2 = S.overlay && S.overlay.querySelector('.dci-mx-wrap');
     if (wrap2 && pos) [wrap2.scrollTop, wrap2.scrollLeft] = pos;
     if (body && bodyTop != null) body.scrollTop = bodyTop;
+    setupMxScroll();
+  }
+
+  /**
+   * [3.30.3] Scroll bars of the works matrix to the right and left (item 94; maintainer: "wir brauchen in der work-matrix
+   * noch eine leiste um von links nach rechts zu scrollen"): one above the matrix, one at the bottom of the visible area
+   * while the lower edge of the matrix (with its own bar) is out of view; all three move together.
+   */
+  function setupMxScroll() {
+    (S.mxScrollObs || []).forEach((o) => o.disconnect());
+    S.mxScrollObs = [];
+    const wrap = S.overlay && S.overlay.querySelector('.dci-mx-wrap');
+    if (!wrap) return;
+    const bars = [...S.overlay.querySelectorAll('[data-mxhs]')];
+    const end = S.overlay.querySelector('.dci-mx-end');
+    let endSeen = true;
+    const fit = () => {
+      const over = wrap.scrollWidth > wrap.clientWidth + 1;
+      bars.forEach((b) => {
+        b.hidden = !over || (b.dataset.mxhs === 'bottom' && endSeen);
+        if (b.hidden) return;
+        b.firstElementChild.style.width = `${Math.max(0, wrap.scrollWidth - wrap.clientWidth + b.clientWidth)}px`;
+        b.scrollLeft = wrap.scrollLeft;
+      });
+    };
+    let lock = false;
+    const sync = (src) => {
+      if (lock) return;
+      lock = true;
+      [wrap, ...bars].forEach((e) => { if (e !== src && e.scrollLeft !== src.scrollLeft) e.scrollLeft = src.scrollLeft; });
+      lock = false;
+    };
+    [wrap, ...bars].forEach((e) => e.addEventListener('scroll', () => sync(e), { passive: true }));
+    const ro = new ResizeObserver(fit);
+    ro.observe(wrap);
+    const table = wrap.querySelector('table');
+    if (table) ro.observe(table);
+    S.mxScrollObs.push(ro);
+    if (end && typeof IntersectionObserver !== 'undefined') {
+      const io = new IntersectionObserver((entries) => {
+        endSeen = entries[entries.length - 1].isIntersecting;
+        fit();
+      }, { root: inPage() ? null : S.overlay.querySelector('.dci-body') });
+      io.observe(end);
+      S.mxScrollObs.push(io);
+    }
+    fit();
   }
 
   function renderWorksInner() {
@@ -18937,13 +19002,16 @@
       ${addColumnHtml()}
       ${S.searchProgress ? `<p class="dci-sub" data-el="search-progress">${esc(tr('matrix.searchProgress', S.searchProgress))}<button type="button" class="dci-textbtn" data-act="mx-search-cancel">${esc(tr('matrix.searchCancel'))}</button></p>` : ''}
       ${cols.length ? '' : `<p class="dci-sub">${esc(trSrc('matrix.empty'))}</p>`}`}
+      <div class="dci-mx-hs dci-mx-hs-top" data-mxhs="top" aria-hidden="true" hidden><div></div></div>
       <div class="dci-mx-wrap"${skipped ? ' inert' : ''}>
         <table class="dci-table dci-matrix">
           <thead><tr><th scope="col" class="dci-mx-front"><div class="dci-mx-card dci-mx-frontcard"><div class="dci-mx-cardline"><strong>${esc(tr('matrix.work'))}</strong>
             <span class="dci-sub">${esc(`${tr('matrix.countTracks', { n: uniq(mrows.map((m) => m.i)).length })} · ${tr('matrix.colWorks', { n: mrows.filter((m) => m.work).length })}`)}</span></div>${linkAttrsHeadHtml()}</div></th>${cols.map(columnHeadHtml).join('')}</tr></thead>
           <tbody>${mrows.map((m) => `<tr data-work="${m.i}" data-mrow="${esc(m.key)}"><th scope="row" class="dci-mx-front">${workFrontCell(m)}</th>${cols.map((c) => cellHtml(c, m)).join('')}</tr>`).join('')}</tbody>
         </table>
-      </div>`;
+      </div>
+      <div class="dci-mx-hs dci-mx-hs-bottom" data-mxhs="bottom" aria-hidden="true" hidden><div></div></div>
+      <div class="dci-mx-end" aria-hidden="true"></div>`;
   }
 
   /** Kept for the work flows that update one row; the matrix is redrawn as a whole. */
@@ -20936,6 +21004,16 @@
         break;
       }
       // Dates & tracks
+      case 'pool-fold': {
+        const pool = btn.dataset.pool === 'tracks' ? 'tracks' : 'dates';
+        S.poolFold = { ...S.poolFold, [pool]: !S.poolFold[pool] };
+        if (!S.poolFold[pool]) delete S.poolFold[pool];
+        writeJson('localStorage', POOL_FOLD_KEY, Object.keys(S.poolFold).length ? S.poolFold : null);
+        renderDates();
+        const b = S.overlay.querySelector(`[data-act="pool-fold"][data-pool="${pool}"]`);
+        if (b) b.focus({ preventScroll: true });
+        break;
+      }
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
         S.poolForm = null;
@@ -22387,6 +22465,8 @@
     const foot = on && S.overlay.querySelector('.dci-foot');
     html.style.scrollPaddingTop = stick && stick.offsetHeight ? `${stick.offsetHeight + 8}px` : '';
     html.style.scrollPaddingBottom = foot ? `${foot.offsetHeight + 8}px` : '';
+    // [3.30.3] the scroll bar of the works matrix at the bottom stays above the footer
+    if (S.overlay) S.overlay.style.setProperty('--dci-foot-h', foot ? `${foot.offsetHeight}px` : '0px');
   }
 
   function setPlace(place) {
@@ -22769,7 +22849,7 @@
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
-    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY];
+    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -22789,7 +22869,7 @@
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
-      levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false,
+      levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -23514,6 +23594,14 @@
       .dci-table { width: 100%; min-width: calc(var(--u, 1px) * 1180); border-collapse: collapse; }
       /* Works matrix: header row and first column stay in place while scrolling */
       .dci-mx-wrap { overflow: auto; max-height: 75vh; border: 1px solid var(--line); border-radius: 4px; position: relative; z-index: 0; isolation: isolate; }
+      /* [3.30.3] the scroll bars to the right and left (item 94) */
+      .dci-mx-hs { overflow-x: scroll; overflow-y: hidden; min-height: calc(var(--u, 1px) * 14); border: 1px solid var(--line); border-radius: 4px; background: var(--soft); box-sizing: border-box; }
+      .dci-mx-hs[hidden] { display: none; }
+      .dci-mx-hs > div { height: 1px; }
+      .dci-mx-hs-top { margin-bottom: calc(var(--u, 1px) * 3); }
+      .dci-mx-hs-bottom { position: sticky; bottom: 0; z-index: 3; margin-top: calc(var(--u, 1px) * 3); box-shadow: 0 -2px 4px rgba(38, 36, 48, 0.08); }
+      #dci-overlay.dci-inline .dci-mx-hs-bottom { bottom: var(--dci-foot-h, 0px); }
+      .dci-mx-end { height: 1px; }
       .dci-table.dci-matrix { min-width: 0; width: max-content; border-collapse: separate; border-spacing: 0; }
       .dci-matrix th, .dci-matrix td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: top; }
       .dci-matrix thead th { position: sticky; top: 0; z-index: 2; background: var(--soft); text-align: left; }
@@ -23807,6 +23895,9 @@
       .dci-date-chip .dci-chip-grip + .dci-chip-main { padding-left: calc(var(--u, 1px) * 4); }
       .dci-date-chip .dci-chip-grip[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
       .dci-pool-label { min-width: calc(var(--u, 1px) * 86); font-size: calc(var(--u, 1px) * 12); }
+      button.dci-pool-fold { font: inherit; font-size: calc(var(--u, 1px) * 12); font-weight: 700; text-align: left; border: 0; background: none; padding: 0; cursor: pointer; }
+      button.dci-pool-fold:hover { text-decoration: underline; }
+      .dci-pool-n { font-weight: 400; }
       .dci-pool-dates .dci-pool-label { color: var(--date-d); }
       .dci-tracks-bar .dci-pool-label { color: var(--track-d); }
       .dci-tg-newsel { font-size: calc(var(--u, 1px) * 12); color: var(--track-d); max-width: calc(var(--u, 1px) * 240); }
