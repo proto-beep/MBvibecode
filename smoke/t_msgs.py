@@ -9,6 +9,18 @@ D) A new import ("Delete stored import …", the release imported afresh) shows 
 from playwright.sync_api import sync_playwright
 import harness as H
 
+# [3.30.8] the shared month of "March 1–3, 2001" no longer counts as a date without a group: a date that really has none
+_orig_rel = H.discogs_release
+
+
+def _rel():
+    d = _orig_rel()
+    d['notes'] += ' The band met on 4 July 2000.'
+    return d
+
+
+H.discogs_release = _rel
+
 MSGS = """(() => { const el = document.querySelector('[data-el=msgs]'); const head = el.querySelector('.dci-msgs-fold');
   return { head: head ? head.textContent.replace(/\\s+/g, ' ').trim() : null, expanded: head ? head.getAttribute('aria-expanded') : null,
     msgs: [...el.querySelectorAll('.dci-msg')].map(m => [m.textContent.trim().slice(0, 40), !!m.querySelector('.dci-msg-x svg')]) }; })()"""

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.30.5, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.31.0, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,57 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.31.0 · 2026-10-25
+
+Milestone "Text recognition, part 4": publishers and rights societies (collected item 97), a person as publisher.
+
+- **Register:** new special rules **S043** (publishers below a heading, rights societies; `TEXT.parse`, `addNotesCompanies`, `resolveArtists`) and **S044** (a person as publisher; `matrixColumns` → new `personPublishers`, `columnHeadHtml`, `cellHtml`); new tables **T045** (`RIGHTS_SOCIETIES` with `societyForms`, `SOCIETY_ALT`, `SOCIETY_AFTER_NAME`, `SOCIETY_LINE`, `SOCIETY_WORD`, `societyName`, and `PUBLISHER_HEAD`) and **T046** (`NUMBER_WORDS`, `COMPANY_KIND_END`; new `digitWords`, `apartNames`, `sameCompanyName`). `TEXT_COMPANY_RE` (T013, the company roles of texts) also has "rights society".
+- **`TEXT.parse`:** a block state `pubBlock` (heading `PUBLISHER_HEAD`, its "(all BMI)" society, ended by an empty line after its items or a line that names no publisher); new `societiesIn`, `addSociety` (company "Rights Society", `society: true`), `PUB_TAIL` and `publisherOf` (name, societies, tracks – "Name (BMI): 1, 4, 6" without track words too; tracks not on the release → not recognized), `addPublisher` (company "Published By" with `pubBlock: true` and the tracks); a line of societies only (`SOCIETY_LINE`); in the "by" branch a society after a publisher's name ("Published by X (BMI)") is taken out of the name and added.
+- **`addNotesCompanies`:** also `pubBlock` and `society` companies (S043); the comparison is `sameCompanyName` (before: `looseName` and the generic `looseName` without a guard for names of generic words only); the same role at Discogs: a publisher's tracks from the notes go onto Discogs's company (`tracks`, `notesLine`, the notes' spelling as `who.altNames`); new log `notesPubTracks`.
+- **`groupCompanies`** keeps `altNames` and a role's `notesLine`; **`loadRelease`** gives the company entry `altNames` and a row with `notesLine` and tracks `notesTracks` and `suggest: { source: 'notes', text }`; after the import it logs `pubOfPerson` for each person's publisher.
+- **`resolveArtists`:** publishers and rights societies with a Discogs link that is not in MusicBrainz are searched by name too (`pubByName`). **`suggestByName`:** `apartNames` of the name and `altNames` searched as phrases; a rights society also by alias, those of the type Rights Society first; `fitOf` adds "similar" for the same `looseName(digitWords(…))`.
+- **`roleCell`:** a row of an entry from the notes says "from the notes" (`role.companyNotes`).
+- **CSS:** `.dci-mx-hassub` (dashed line to its part), `.dci-mx-subcol` (card with a violet edge, tinted), `.dci-mx-subcell`, `.dci-mx-pubof`.
+- **Milestone:** `MILESTONES` 3.31.0, `ms.3.31.0`.
+- **Texts (English only):** `log.notesPubTracks`, `log.pubOfPerson`, `matrix.pubOfPerson`, `matrix.pubOfPersonTitle`, `role.companyNotes`, `ms.3.31.0`; `log.notesCompanies` reworded (English only so far: it lists places, labels, publishers and societies).
+- **Tests:** new `t_publishers.py`; `t_notice.py` (the notice after a reset lists 3.31.0, 3.29.0, 3.27.0); `register_golden.json` written anew (S043, S044, T045, T046, the company roles of texts).
+
+## Import 3.30.9 · 2026-10-25
+
+The label of ℗ / © lines (collected item 99).
+
+- **Texts:** `TEXT_PC_STRIP` also takes off a year (or years) after the name ("© & ℗ TUM Records Oy 2021" was not recognized – the name kept "2021"); T033 note.
+- **`addNotesCompanies`:** also "Phonographic Copyright (p)" and "Copyright (c)" (the signs as named); **`groupCompanies`** passes `fromNotes` to the entry (only without a Discogs id), the entry keeps it; such an entry is searched by name (`suggestByName` for `source.nameSearch || a.fromNotes`) and says "not assigned yet (no link)" (`match.byName`).
+- **Register:** new table **T044** `COMPANY_FORM` with **`withoutCompanyForm(name)`** (Oy, Oyj, AB, AS, ASA, A/S, ApS, Ltd, Limited, GmbH, KG, OHG, AG, Inc., LLC, Corp., Co., PLC, Pty, S.A., S.L., S.r.l., B.V., N.V., SAS, SARL, e.K., S.p.A., K.K., Sp. z o.o.); `suggestByName` for a company also searches the name without it, and offers MusicBrainz names that are the same without their legal form (as "similar").
+- **Tests:** new `t_pcline.py`; `register_golden.json` written anew (T033, T044); `t_v217.py` 3: four incomplete rows (the label of "©© Fuzzoramarecords 2005" from the notes is not in MusicBrainz).
+
+## Import 3.30.8 · 2026-10-25
+
+Dates per disc, places from the Discogs notes (collected item 98).
+
+- **Register:** new date rule **D021** (in `findDates`: a date without a group right after another one – between them only a bracket and a comma / "and" / "&" – takes its group(s); `MEDIUM_AFTER_DATE` in `datesWithContext`: "(Disc N)", "(CD N)", "(LP N)" right after a date on a release with several media → the tracks of that medium, `x.medium`; another date of the sentence with its own medium, this one none → no tracks); `autoPlaceFoundDates` names such a track group `mediumGroupName` ("Medium 2 · CD"). New special rule **S042** with the new **`addNotesCompanies(rel)`** (in `loadRelease` for Discogs: `TEXT.parse` of the notes, places "… At" not yet in `rel.companies` with that role; same name (`looseName`, also without generic words) with another role → Discogs's `who`; `fromNotes: true`; log `notesCompanies`).
+- **Texts:** `TEXT_WHAT_PREFIX` ("All music recorded ... at X": the words for the music, "was/were" and the dots before the verb) for the place branch; `placeOf` splits "Studios in West Orange, New Jersey" also when a part follows the comma; `TEXT_PACKAGE` (T030: "Including a 52 p. booklet.") → `ignored` with `why: 'package'`.
+- **Fix:** the count of dates without a group in `autoPlaceFoundDates` leaves out the shared month or year of separate days (`:lcd`, a cell's `lcd`).
+- **Texts (English only):** `ignored.why.package`, `log.notesCompanies`.
+- **Tests:** new `t_discnotes.py`; `register_golden.json` written anew (D021, S042, T030); `t_msgs.py` and `t_ui301.py` add a date without a group to the harness notes ("The band met on 4 July 2000.") – the shared month of "March 1–3, 2001" no longer gives the second message.
+
+## Import 3.30.7 · 2026-10-25
+
+The members of a band (collected item 96).
+
+- **Register:** new special rule **S041**, new table **T043** (`TEXT_MEMBERS`: "<subject> are / is / consists of / comprises / features / were / was …" (also sind, ist, besteht aus, son, es, sont, est); `TEXT_BAND_SELF`: "the band", "the trio", "we" …).
+- **`TEXT.parse(text, { …, artistNames })`:** `isTheBand(subject)` (the names of the release's artist, or `TEXT_BAND_SELF`); in `readUnit`, before the "by" clauses: the names after the verb, each a person (≤ 4 words, capitals, particles like van, de, da) → `addCredit(name, 'Performer', scope, { members: true })` (`addCredit` takes extra fields).
+- **`sourceContext`:** `artistNames` from `S.releaseCredit`. **`BANDCAMP.toRelease`:** the credits and the "about" text with the band's name as artist too; from the "about" text, besides places, the credits marked `members`.
+- **Tests:** new `t_members.py`; `register_golden.json` written anew (S041, T043).
+
+## Import 3.30.6 · 2026-10-25
+
+"Sounds" asks (collected item 85).
+
+- **Register:** new rule **R104** (`/^sounds$/` → performer, recording); new type question **Q008** (`TYPE_QUESTIONS`: performer · instrument effects; `pending: 'typeAsk.pendingSounds'` – the row keeps its type until answered, unlike Q003/Q005/Q006); `typeAskHtml` shows `q.pending`. **T041** `PROSE_ROLE_WORDS`: sounds → "Sounds" (before "Performer"). `GENERIC_WORDS` + sounds (the role credit "sounds" in lower case).
+- **Texts (English only):** `typeAsk.askSounds`, `typeAsk.pendingSounds`.
+- **Tests:** new `t_sounds.py`; `t_prose.py` A, `text_corpus.json` (K.M. "Sounds"), `register_golden.json` written anew (R104, Q008, T041).
 
 ## Import 3.30.5 · 2026-10-25
 
