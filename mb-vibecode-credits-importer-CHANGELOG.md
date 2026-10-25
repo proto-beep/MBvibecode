@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-25 | 3.30.1 – 3.30.5 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -80,6 +81,53 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-25
+
+### Import 3.30.5
+
+#### Changed
+
+- **⚙ below "Import credits …" opens only the settings** (collected item 88; maintainer: "wenn das einstellungsmenü außerhalb des Dashboards geöffnet wird soll auch wirklich nur das Einstellungsmenü gestartet werden", "Dashboard ohne import reicht an der Stelle"): the dashboard opens with its settings without starting the import; a message offers "Start import".
+- **The tab "Discogs and Bandcamp view" is called "Source pages"** (item 88; maintainer: "Source Pages ist gut"; German "Quellseiten", Spanish "Páginas de origen", French "Pages sources").
+
+#### Added
+
+- **The lower scroll bar of the works matrix** (3.30.3) sits at the very lower edge of the window (it stood a little above it, over a row of the matrix).
+- **Tracks typed into a track group** (item 90; maintainer: "track pools brauchen neben dem "Name"-Feld noch ein manuelles Eingabe Feld wie bei der Medien Auswahl zu Beginn des Imports"): the field "Tracks:" – "1-4, 6", "A1–B2", "2.3"; it and the ticks follow each other; unknown tracks are named and the group is not saved.
+
+### Import 3.30.4
+
+#### Changed
+
+- **The settings join their tabs, a bridge to ⚙** (collected item 87; maintainer: "im settings menu ist "Discogs and Bandcamp view" und texts noch ein wenig verschoben und fügt sich noch nicht an den inhalt an. Dates & tracks und staging haben gar keinen connect. vielleicht könnte man den menüinhalt immer auf höhe der punkte starten lassen … kannst du zusätzlich wo im screenshot rot markiert eine visuelle brücke zum menu führen? es ist auch derzeit am symbol noch nicht eindeutig, dass das menü geöffnet ist. genau so verhält es sich auch beim mapping sofern man es im dashboard anzeigt."; "einfach bauen ich schaue es mir dann an"): the content starts at the height of the chosen tab, which reaches into its frame at every text size; ⚙ is pressed while the settings are open, with a strip in its colour down to them; the same for "Mapping rules" in the dashboard.
+
+### Import 3.30.3
+
+#### Added
+
+- **Date pool and track pool fold on their own** (collected item 93; maintainer: "bitte mach "Date pool" und "track pool" in der mitscrollenden leiste oben auf und zuklappbar. bei großen releases kann das sonst zu viel platz wegnehmen"): ▾ Date pool / ▾ Track pool, in the open block and in the folded bar; folded, only the name and the number of chips stay; remembered.
+- **Scroll bars of the works matrix** (item 94; maintainer: "wir brauchen in der work-matrix noch eine leiste um von links nach rechts zu scrollen. manchmal gibt es zu viele composer und publisher für eine anzeige auf einer bildschirmbreite"): one above the matrix, and one at the bottom of the visible area while the lower edge of the matrix is out of view.
+
+### Import 3.30.2
+
+#### Added
+
+- **Rule ids at rows open the mapping rules as a window** (collected item 75b; maintainer: "bitte bei Klick auf Regel-ID das Mapping als fenster öffnen standardmäßig aber option in den einstellungen anbieten"): ⓘ and the rule ids at a row open the rules as a window, so the row stays in view; the symbol in the head still opens them in the dashboard. ⚙ Settings → Appearance: "Rule ids and ⓘ at rows open them: as a window | like the symbol".
+- **The arrow in the head of an entry** (item 82b; maintainer: "ja bitte gib mir den Pfeil"): in the compact view ▸ opens all rows of the entry, ▾ closes them.
+
+### Import 3.30.1
+
+#### Fixed
+
+- **"▾ 2 messages" half covered** (collected item 86; maintainer: "bei "▾ 2 messages" oben in der leiste verschwindet die hälfte der schrift "▾ 2 messages" im "Add entry manually" bereich. oberhalb von "▾ 2 messages" ist dafür noch ein bißchen zu viel platz"): the bar with "Add entry manually" and the pools no longer covers the line of the messages (or the last message); less room above them.
+- **"Skip" stays in place in the compact view** (item 91): a skipped line keeps its type (grey), so the level does not jump when it is switched by a click.
+- **"in the page" no wider than the browser window** (item 95; maintainer: "das ganze Dashboard hat sich über den Rand ausgebreitet"): a page of MusicBrainz wider than the window no longer makes the dashboard as wide.
+
+#### Changed
+
+- **Tooltips for "on mouse-over" and "on click"** (item 89) in ⚙ Settings → Discogs and Bandcamp view.
+- **"only works"** (item 92; maintainer: "der "only works" hat noch nicht die Farbe aus dem einstellungsmenü. schau dir bitte auch mal den Button an, ob der so richtig sitzt."): a button of its own next to the levels (it is no level), underlined in the colour of works.
 
 ## 2026-10-24
 

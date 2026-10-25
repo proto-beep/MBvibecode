@@ -8,7 +8,7 @@ C) "⧉ As window": the rules float as a window (stored "window"), still open; �
 D) Reloaded: they open as a window again; ⚙ Settings → Appearance says "as a window"; "in the dashboard" there brings
    them back (nothing stored).
 E) The symbol closes them again, Escape too.
-F) A rule id at a row opens them in the dashboard at that rule (highlighted, in view)."""
+F) A rule id at a row opens them at that rule (highlighted, in view) – [3.30.2] as a window (item 75b; t_rowrules.py)."""
 from playwright.sync_api import sync_playwright
 import harness as H
 
@@ -96,7 +96,7 @@ with sync_playwright() as p:
       const body = document.querySelector('#dci-rules .dci-rules-body').getBoundingClientRect(); const rb = r.getBoundingClientRect();
       return [r.dataset.rid, rb.top >= body.top - 1 && rb.bottom <= body.bottom + 1]; })()""")
     print('F) Regel', rid, '→', f1, st()['docked'])
-    results.append(f1 == [rid, True] and st()['docked'])
+    results.append(f1 == [rid, True] and not st()['docked'] and st()['position'] == 'fixed')
     print('Fehler:', errs)
     results.append(not errs)
     b.close()
