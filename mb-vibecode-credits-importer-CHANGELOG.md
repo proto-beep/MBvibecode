@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-25 | 3.30.1 – 3.30.5 | – |
+| 2026-10-25 | 3.30.1 – 3.31.0 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
 | 2026-10-19 | 3.19.1 – 3.21.0 | – |
@@ -40,6 +40,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-25 | Import 3.31.0 | Text recognition, part 4: publishers below a heading ("[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5") on their tracks, their rights society (BMI, ASCAP, GEMA … – a list of the societies) on the release level, a publisher with the name of a person as a part of that person's column in the works matrix, names written together searched apart too ("Flizmo Music", "Four Word Sea Music"); the members of a band ("Vision Fortune are A, B and C") as performers, "sounds" asks performer or effects; from the Discogs notes dates per disc ("May 26, 2016 (Disc 2)"), places and the label of "© & ℗ TUM Records Oy 2021" (TUM Records offered too). Since 3.29.0 also: the mapping rules in the dashboard or as a window (also from a rule id at a row), colours for the levels, the level of a compact line switched by a click, ⚙ Settings → Appearance, an entry or a group compact at once, each pool folds on its own, scroll bars above and below the works matrix, the settings without an import ("Source pages"), the tracks of a track group typed in. |
 | 2026-10-24 | Import 3.29.0 | Text recognition, part 3: credits in prose ("… by K.M. (sounds, words) & E. (voice)", "Cover artwork channeled by …", "Logo carved by the guided hand of …"), every place of joined verbs ("Mixed and mastered at …") and lists of kinds ("Tenor, alto, soprano saxophones"); dates go to every group of joined words and take their group only from their own sentence, release years are left out, "19 & 20. 01. 2009" and "1973 October 19" are read; "C1 to D" with a side of one track, "in live concert" for the tracks named. Since 3.27.0 also Bandcamp track pages, Norwegian, Swedish and Danish roles, "cover design", "credited as" from texts and none for a case-only spelling, and the companion's underlines of the dates and track groups used. |
 | 2026-10-24 | Import 3.27.0 | A clearer dashboard: the entries compact – one line per role (role → type and instrument, level, tracks, date), a click opens the row to change it; dates and track groups can still be dropped onto the line, what is open is in colour (red missing, yellow a question or suggestion), skipped rows are grey with ✕; "Compact \| Full" is remembered. The head in one line with symbols of its own, "Source ▾" for everything about the source, "+ Supplement" only on request; the settings as tabs (also "Texts" and "ⓘ Connections" – every site, tool and script the script works with), "Reset all settings" in them; after the installation the language is asked once |
 | 2026-10-23 | Import 3.22.0 | Text recognition, part 2: instruments and voices in German, Spanish and French ("Schlagzeug", "batería", "contrebasse") become MusicBrainz's own names without a role credit, words with several meanings ("bajo", "Alto") are asked; tracks named by their titles in quotation marks ("Piano in ‘A' and 'B' is a contribution by X") are found on the release; "Recorded by X in Xixon, Asturies, Spain" gives X and the area where it was recorded (recorded, mixed or mastered in – found by its other names too, only suggested); credits for a medium the release does not have ("Vinyl LP mastering") are left out, and each line left out on purpose says why; "Translated by" on Bandcamp suggests liner notes; artist pages of streaming services and profiles after labels and studios are filled in by "Create …", the links at the entries are shown by a setting; large releases: every medium in the choice, the chosen ones loaded at once with MusicBrainz's own controls |
@@ -83,6 +84,50 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-25
+
+### Import 3.31.0 – milestone "Text recognition, part 4"
+
+#### Added
+
+- **Publishers below a heading** (collected item 97; maintainer, Discogs 6303626 with "[Publishers & Rights Societies] • Tomas Fujiwara-BMI : tracks 1, 6, 8 • FlizmoMusic-BMI : tracks 2, 4, 5 • 4WordSeaMusic-BMI : tracks 2, 3, 6, 10 • ThobulousMusic-BMI : tracks 4, 7, 8, 9": "die Publisher sollen alle korrekt zugewiesen werden. es ist auffällig, dass häufiger Leerzeichen fehlen. das soll berücksichtigt werden bei der abfrage."): below "[Publishers & Rights Societies]", "Publishers:", "Publishing:" … each line gives a publisher with its tracks. In the Discogs notes the tracks go onto the publisher Discogs lists (also "FlizmoMusic" = "Flizmo Music", "4WordSeaMusic" = "Fourwordseamusic") as suggestions in the works matrix; one Discogs does not list becomes an entry. In a pasted text the tracks are set.
+- **Rights societies** (maintainer: "BMI soll auf release ebene ebene angeboten werden. evtl muss die Skriptinterne Liste aller rights societys abgeglichen werden."): a list of the rights societies in the script (BMI, ASCAP, GEMA, SACEM, PRS, JASRAC …); a society after a publisher's name, in "Published by X (BMI)" or in a line of its own ("BIEM/GEMA") is the release's rights society, once each; MusicBrainz's label of the type Rights Society is suggested first.
+- **A person as publisher** (maintainer: "Ja auch Personen können Publisher sein, das soll in der Work Matrix ermöglicht werden." – "das soll in der Personen Spalte ergänzt werden. Eine Label Abfrage mit dem Namen ist nicht schlecht."): a publisher with the name of a person of the works matrix is a part of that person's column (right after it, tinted, "↳ Tomas Fujiwara as publisher") – with its own label, looked for by the name.
+- **Names written together** are searched apart too: "Flizmo Music", "4 Word Sea Music", "Four Word Sea Music", "Fourwordsea Music" – offered as "similar name". Publishers and rights societies not found through their Discogs link are looked for by name.
+
+#### Changed
+
+- An entry from the Discogs notes says so at its rows ("Discogs: from the notes").
+
+### Import 3.30.9
+
+#### Added
+
+- **The label of "© & ℗ TUM Records Oy 2021"** (collected item 99; maintainer: "beim © & ℗ Teil wird das Datum schon korrekt hinterlegt, allerdings das Label nicht angeboten … ICh würde mir wünschen, dass hier beide Labels in der MB Datenbank zur Wahl für P/C angeboten werden also "TUM Records Oy" und "TUM Records"."; "nur wenn P und C auch erwähnt sind …"): from the Discogs notes (unless "Companies, etc." lists it with that role) and from texts, a year after the name too; ℗ and © only as named; MusicBrainz's labels with and without the legal form ("Oy") are suggested.
+
+### Import 3.30.8
+
+#### Added
+
+- **Dates per disc** (collected item 98; maintainer, Discogs 18973900: "nur die erste disc bekommt im date/track pool ein datum und die dazu zugehörigen tracks angeboten. (und nur das erste datum ist unterstrichelt)"): "recorded … on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)" – each date goes under Performance with the tracks of its disc.
+- **Places from the Discogs notes** (item 98; maintainer: "ja tatsächlich wollen wir die orte hier angeboten bekommen … sofern es sich nicht um eine inhaltliche dopplung handelt können orte aus dem freitextfeld ergänzt werden."): "recorded … at Orange Music Sound Studios in West Orange, New Jersey", "mastered … at Turtle Tone Studio" – unless "Companies, etc." lists them with that role.
+- "Including a 52 p. booklet." in a text: left out on purpose ("about the package").
+
+#### Fixed
+
+- "Studio X in Berlin, Germany" in a text: the place is Studio X with the area Berlin, Germany (before: "Studio X in Berlin").
+- Two days of a month ("December 11 & 12, 2015") no longer give the message that a date has no word naming its group (it was their shared month).
+
+### Import 3.30.7
+
+#### Added
+
+- **The members of the band** (collected item 96; maintainer, https://visionfortune.bandcamp.com/album/iii: ""Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" soll die drei Künstler als performer setzen"): the release's artist (or "the band", "we") before "are", "is", "consists of" – each name a performer, as a suggestion; also in the "about" text of Bandcamp.
+
+### Import 3.30.6
+
+#### Added
+
+- **"Sounds" asks: performer or effects** (collected item 85; maintainer: "bitte mit notizabfrage ob performer oder effects mit role "sounds" wie bei anderen instrumenten wie bass schon üblich", "die zwei reichen erst einmal"): a performer row that asks "performer · effects (credited “sounds”)"; until answered it stays performer. Discogs, Bandcamp, texts and "(sounds)" in prose.
 
 ### Import 3.30.5
 

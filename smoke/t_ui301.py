@@ -10,6 +10,18 @@ E) In the page, inside a page of MusicBrainz that is 2400 px wide: the dashboard
 from playwright.sync_api import sync_playwright
 import harness as H
 
+# [3.30.8] the shared month of "March 1–3, 2001" no longer counts as a date without a group: a date that really has none
+_orig_rel = H.discogs_release
+
+
+def _rel():
+    d = _orig_rel()
+    d['notes'] += ' The band met on 4 July 2000.'
+    return d
+
+
+H.discogs_release = _rel
+
 # instruments on the release level exist in MusicBrainz too (as in t_levels.py)
 H.lt(44, '67555849-61e5-455b-96e3-29733f0115f5', 'instrument', 'artist', 'release', (14, 1, 194, 596))
 H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
