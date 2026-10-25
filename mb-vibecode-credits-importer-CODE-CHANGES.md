@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.30.9, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.31.0, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,21 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.31.0 · 2026-10-25
+
+Milestone "Text recognition, part 4": publishers and rights societies (collected item 97), a person as publisher.
+
+- **Register:** new special rules **S043** (publishers below a heading, rights societies; `TEXT.parse`, `addNotesCompanies`, `resolveArtists`) and **S044** (a person as publisher; `matrixColumns` → new `personPublishers`, `columnHeadHtml`, `cellHtml`); new tables **T045** (`RIGHTS_SOCIETIES` with `societyForms`, `SOCIETY_ALT`, `SOCIETY_AFTER_NAME`, `SOCIETY_LINE`, `SOCIETY_WORD`, `societyName`, and `PUBLISHER_HEAD`) and **T046** (`NUMBER_WORDS`, `COMPANY_KIND_END`; new `digitWords`, `apartNames`, `sameCompanyName`). `TEXT_COMPANY_RE` (T013, the company roles of texts) also has "rights society".
+- **`TEXT.parse`:** a block state `pubBlock` (heading `PUBLISHER_HEAD`, its "(all BMI)" society, ended by an empty line after its items or a line that names no publisher); new `societiesIn`, `addSociety` (company "Rights Society", `society: true`), `PUB_TAIL` and `publisherOf` (name, societies, tracks – "Name (BMI): 1, 4, 6" without track words too; tracks not on the release → not recognized), `addPublisher` (company "Published By" with `pubBlock: true` and the tracks); a line of societies only (`SOCIETY_LINE`); in the "by" branch a society after a publisher's name ("Published by X (BMI)") is taken out of the name and added.
+- **`addNotesCompanies`:** also `pubBlock` and `society` companies (S043); the comparison is `sameCompanyName` (before: `looseName` and the generic `looseName` without a guard for names of generic words only); the same role at Discogs: a publisher's tracks from the notes go onto Discogs's company (`tracks`, `notesLine`, the notes' spelling as `who.altNames`); new log `notesPubTracks`.
+- **`groupCompanies`** keeps `altNames` and a role's `notesLine`; **`loadRelease`** gives the company entry `altNames` and a row with `notesLine` and tracks `notesTracks` and `suggest: { source: 'notes', text }`; after the import it logs `pubOfPerson` for each person's publisher.
+- **`resolveArtists`:** publishers and rights societies with a Discogs link that is not in MusicBrainz are searched by name too (`pubByName`). **`suggestByName`:** `apartNames` of the name and `altNames` searched as phrases; a rights society also by alias, those of the type Rights Society first; `fitOf` adds "similar" for the same `looseName(digitWords(…))`.
+- **`roleCell`:** a row of an entry from the notes says "from the notes" (`role.companyNotes`).
+- **CSS:** `.dci-mx-hassub` (dashed line to its part), `.dci-mx-subcol` (card with a violet edge, tinted), `.dci-mx-subcell`, `.dci-mx-pubof`.
+- **Milestone:** `MILESTONES` 3.31.0, `ms.3.31.0`.
+- **Texts (English only):** `log.notesPubTracks`, `log.pubOfPerson`, `matrix.pubOfPerson`, `matrix.pubOfPersonTitle`, `role.companyNotes`, `ms.3.31.0`; `log.notesCompanies` reworded (English only so far: it lists places, labels, publishers and societies).
+- **Tests:** new `t_publishers.py`; `t_notice.py` (the notice after a reset lists 3.31.0, 3.29.0, 3.27.0); `register_golden.json` written anew (S043, S044, T045, T046, the company roles of texts).
 
 ## Import 3.30.9 · 2026-10-25
 
