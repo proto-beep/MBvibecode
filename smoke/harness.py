@@ -4,6 +4,7 @@ The userscript manager's shared storage (GM_*) is replaced by a small local HTTP
 companion script on several pages shares its values as it does in Tampermonkey.
 """
 import json
+import os
 import re
 import threading
 import unicodedata
@@ -14,6 +15,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MAIN = (ROOT / 'mb-vibecode-credits-importer.user.js').read_text()
 SYNC = (ROOT / 'mb-vibecode-credits-importer-companion.user.js').read_text()
+# [3.31.1] The script asks MusicBrainz's web service at most once every 1.1 s (MusicBrainz's rate limit). The test server
+# is local, so the tests use a short gap: an import takes about 1 s instead of 11 s. DCI_MB_GAP (milliseconds) sets it;
+# 0 keeps the script's own gap. Only the copy of the script the tests load is changed, never the file.
+MB_GAP = int(os.environ.get('DCI_MB_GAP', '25'))
+MAIN_SLOW = MAIN
+if MB_GAP:
+    assert MAIN.count('lastMbRequest + 1100') == 1, 'the gap between requests to MusicBrainz is no longer where the tests expect it'
+    MAIN = MAIN.replace('lastMbRequest + 1100', f'lastMbRequest + {MB_GAP}')
 
 REL = 'aaaaaaaa-1111-4111-8111-000000000001'
 RG = 'aaaaaaaa-1111-4111-8111-0000000000ff'

@@ -1,5 +1,7 @@
 from playwright.sync_api import sync_playwright
 import harness as H
+# [3.31.1] compared with a log of an older version: with the script's own gap between requests to MusicBrainz
+H.MAIN = H.MAIN_SLOW
 with sync_playwright() as p:
     b = p.chromium.launch(args=H.LAUNCH_ARGS)
     ctx = H.new_context(b)
