@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.30.0
+// @version      3.30.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.30.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -288,6 +288,8 @@
       "group.fold": "Fold the roles of {name} to compact lines (until the next import)",
       "group.unfold": "Show the roles of {name} with all their fields again",
       "group.foldOpen": "Close the open roles of {name}",
+      "group.openAll": "Open all roles of {name}",
+      "group.closeAll": "Close all roles of {name}",
       "group.creditAllAria": "Artist credit for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
@@ -561,6 +563,8 @@
       "syncMode.label": "jump to source",
       "syncMode.hover": "on mouse-over",
       "syncMode.click": "on click",
+      "syncMode.hoverTitle": "When the pointer rests on a row, an entry or a work for a moment, the source page (the Discogs or Bandcamp tab) jumps to its credit",
+      "syncMode.clickTitle": "Only a click on a row, an entry or a work makes the source page (the Discogs or Bandcamp tab) jump to its credit",
       "log.syncMode": "Discogs view follows the dashboard {mode}",
       "companies.title": "Companies, etc.",
       "companies.explain": "Labels, studios and plants from {src}. They are matched to MB labels or places via their {src} links. {src} lists persons here as labels too: paste an MB artist to link one as a person.",
@@ -652,8 +656,13 @@
       "settings.rulesPlace": "Mapping rules",
       "settings.rulesPlace.dashboard": "in the dashboard",
       "settings.rulesPlace.window": "as a window",
+      "settings.rulesRowPlace": "Rule ids and ⓘ at rows open them",
+      "settings.rulesRowPlace.window": "as a window",
+      "settings.rulesRowPlace.symbol": "like the symbol",
       "settings.t.sources": "Sources",
-      "settings.t.discogs": "Discogs and Bandcamp view",
+      "settings.t.discogs": "Source pages",
+      "settingsOnly.hint": "Only the settings are open – the import of this release has not started.",
+      "settingsOnly.start": "Start import",
       "settings.t.works": "Works",
       "settings.t.staging": "Staging",
       "settings.t.dates": "Dates & tracks",
@@ -708,7 +717,7 @@
       "group.creditedAsMore": "as {name} (+{n})",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
       "nav.settings": "⚙",
-      "nav.settingsTitle": "The switches of the navigation: ⚙ Settings → Discogs and Bandcamp view",
+      "nav.settingsTitle": "⚙ Settings → Source pages: the switches of the navigation (opens only the settings, the import does not start)",
       "log.viewSet": "View of the entries: {view}",
       "cl.openTitle": "Open this row to change it",
       "cl.levelNext": "Level – a click switches to “{level}”",
@@ -1420,6 +1429,9 @@
       "trackpool.count.other": "{n} tracks",
       "trackpool.name": "Tracks {list}",
       "trackpool.namePlaceholder": "e.g. Session 1",
+      "trackpool.text": "Tracks:",
+      "trackpool.textPlaceholder": "e.g. 1-4, 6 · A1–B2 · 2.3",
+      "trackpool.textBad": "Not a track of the chosen media: {list}",
       "trackpool.formTitle": "Track group",
       "trackpool.editTitle": "Edit this track group",
       "trackpool.explain": "Groups of tracks (e.g. “Tracks 1–5”), from dates in the text or made by hand; drag them onto a date in the matrix, or let a row take their tracks.",
@@ -1486,6 +1498,8 @@
       "pools.title": "Dates & tracks",
       "pools.suggested": "suggestion from the notes (dashed, yellow) until you use it",
       "pools.toggleTitle": "Show or fold the date pool, the track pool and the matrix",
+      "pools.foldOne": "Fold “{name}” in (remembered)",
+      "pools.unfoldOne": "Show “{name}” again",
       "pools.nDates.one": "{n} date",
       "pools.nDates.other": "{n} dates",
       "pools.nTracks.one": "{n} track group",
@@ -2135,7 +2149,7 @@
       "settings.hint": "Alle Einstellungen an einem Ort, nach Themen – die Schalter bleiben auch an ihren Orten. Gespeichert in diesem Browser.",
       "settings.t.general": "Allgemein",
       "settings.t.sources": "Quellen",
-      "settings.t.discogs": "Discogs- und Bandcamp-Ansicht",
+      "settings.t.discogs": "Quellseiten",
       "settings.t.works": "Werke",
       "settings.t.staging": "Stagen",
       "settings.t.dates": "Daten & Tracks",
@@ -3594,7 +3608,7 @@
       "settings.hint": "Todos los ajustes en un lugar, por temas – los interruptores siguen también en su sitio. Guardados en este navegador.",
       "settings.t.general": "General",
       "settings.t.sources": "Fuentes",
-      "settings.t.discogs": "Vista de Discogs y Bandcamp",
+      "settings.t.discogs": "Páginas de origen",
       "settings.t.works": "Obras",
       "settings.t.staging": "Preparar",
       "settings.t.dates": "Fechas y pistas",
@@ -5053,7 +5067,7 @@
       "settings.hint": "Tous les réglages au même endroit, par thèmes – les interrupteurs restent aussi à leur place. Enregistrés dans ce navigateur.",
       "settings.t.general": "Général",
       "settings.t.sources": "Sources",
-      "settings.t.discogs": "Vue Discogs et Bandcamp",
+      "settings.t.discogs": "Pages sources",
       "settings.t.works": "Œuvres",
       "settings.t.staging": "Préparation",
       "settings.t.dates": "Dates et pistes",
@@ -10863,6 +10877,9 @@
   S.dmAuto = readJson('localStorage', 'dci-dm-auto', false) === true;
   // Dates & tracks open or folded; null until switched once: open when there are dates
   S.poolsOpen = readJson('localStorage', 'dci-pools-open', null);
+  // [3.30.3] the date pool and the track pool fold on their own (item 93): { dates: true } while folded
+  const POOL_FOLD_KEY = 'dci-pool-fold';
+  S.poolFold = readJson('localStorage', POOL_FOLD_KEY, null) || {};
   // Folded, the date pool stays in the bar (on by default)
   S.poolsKeep = readJson('localStorage', 'dci-pools-keep', true) !== false;
 
@@ -11293,7 +11310,13 @@
    */
   const RULES_PLACE_KEY = 'dci-rules-place';
   S.rulesPlace = readJson('localStorage', RULES_PLACE_KEY, 'dashboard') === 'window' ? 'window' : 'dashboard';
-  const rulesDocked = () => S.rulesPlace === 'dashboard' && !!S.overlay;
+  // [3.30.2] rule ids and ⓘ at the rows open the rules as a window (item 75b; maintainer: "bitte bei Klick auf Regel-ID das
+  // Mapping als fenster öffnen standardmäßig aber option in den einstellungen anbieten") – the row stays in view; with the
+  // setting "like the symbol" where the symbol opens them. Only "symbol" is stored.
+  const RULES_ROW_KEY = 'dci-rules-rowplace';
+  S.rulesRowPlace = readJson('localStorage', RULES_ROW_KEY, 'window') === 'symbol' ? 'symbol' : 'window';
+  S.rulesAsWindow = false;
+  const rulesDocked = () => S.rulesPlace === 'dashboard' && !S.rulesAsWindow && !!S.overlay;
   /** The rules are open (in the dashboard or as a window). */
   function rulesShown() {
     const el = document.getElementById('dci-rules');
@@ -11339,6 +11362,61 @@
   function syncRulesBtn() {
     if (!S.overlay) return;
     S.overlay.querySelectorAll('.dci-head [data-act="rules"]').forEach((b) => b.setAttribute('aria-expanded', String(rulesShown())));
+    placeBridges();
+  }
+
+  /**
+   * [3.30.4] A bridge from ⚙ (or "Mapping rules") in the head to what it opened below the head (item 87; maintainer: "kannst
+   * du zusätzlich wo im screenshot rot markiert eine visuelle brücke zum menu führen? es ist auch derzeit am symbol noch nicht
+   * eindeutig, dass das menü geöffnet ist. genau so verhält es sich auch beim mapping sofern man es im dashboard anzeigt."):
+   * the symbol pressed, a strip below it to the lower edge of the head (`--dci-bridge-down`) and one from there to the box
+   * (`--dci-bridge-x`, `-w`, `-h`), drawn by CSS; the box scrolled away: only the part at the symbol.
+   */
+  function placeBridges() {
+    if (!S.overlay || S.overlay.hidden) return;
+    const head = S.overlay.querySelector('.dci-head');
+    if (!head) return;
+    alignSettingsPane();
+    const hb = head.getBoundingClientRect().bottom;
+    const dock = S.overlay.querySelector('[data-el="rules-dock"]');
+    const pairs = [
+      [S.overlay.querySelector('.dci-head [data-act="settings-open"]'), $('settings'), !!S.settingsOpen],
+      [S.overlay.querySelector('.dci-head [data-act="rules"]'), dock, !!(dock && !dock.hidden && rulesDocked() && rulesShown())],
+    ];
+    for (const [btn, box, open] of pairs) {
+      if (!btn || !box) continue;
+      const on = open && !box.hidden && !!btn.offsetParent;
+      btn.classList.toggle('dci-bridged', on);
+      if (!on) {
+        box.classList.remove('dci-bridged-box');
+        continue;
+      }
+      const b = btn.getBoundingClientRect();
+      const p = box.getBoundingClientRect();
+      btn.style.setProperty('--dci-bridge-down', `${Math.max(0, Math.round(hb - b.bottom + 1))}px`);
+      box.classList.toggle('dci-bridged-box', p.top >= hb - 1);
+      box.style.setProperty('--dci-bridge-x', `${Math.round(b.left - p.left - box.clientLeft)}px`);
+      box.style.setProperty('--dci-bridge-w', `${Math.round(b.width)}px`);
+      box.style.setProperty('--dci-bridge-h', `${Math.max(0, Math.round(p.top - hb))}px`);
+    }
+  }
+
+  /**
+   * [3.30.4] The content of the settings starts at the height of the chosen tab (item 87; maintainer: "vielleicht könnte man
+   * den menüinhalt immer auf höhe der punkte starten lassen"), so every tab joins it; tabs in a row (narrow): at the top.
+   */
+  function alignSettingsPane() {
+    const el = S.overlay && $('settings');
+    if (!el || el.hidden) return;
+    const pane = el.querySelector('.dci-set-pane');
+    const wrap = el.querySelector('.dci-set-wrap');
+    const tabs = el.querySelector('.dci-set-tabs');
+    const sel = el.querySelector('.dci-set-tab[aria-selected="true"]');
+    if (!pane || !wrap) return;
+    pane.style.marginTop = '';
+    if (!sel || !tabs || getComputedStyle(tabs).flexDirection !== 'column') return;
+    const dy = Math.round(sel.getBoundingClientRect().top - wrap.getBoundingClientRect().top);
+    if (dy > 0) pane.style.marginTop = `${dy}px`;
   }
 
   function closeRules() {
@@ -11353,6 +11431,7 @@
   /** [3.30.0] "⧉ As window" / "Into the dashboard": the place of the rules changed and remembered; they stay open. */
   function setRulesPlace(place) {
     S.rulesPlace = place === 'window' ? 'window' : 'dashboard';
+    S.rulesAsWindow = false;
     writeJson('localStorage', RULES_PLACE_KEY, S.rulesPlace === 'window' ? 'window' : null);
     log('info', 'settingValue', { what: tr('settings.rulesPlace'), value: tr(`settings.rulesPlace.${S.rulesPlace}`) });
     const open = rulesShown();
@@ -11361,7 +11440,17 @@
     if (S.settingsOpen) renderSettings();
   }
 
-  function openRules(focusId = null) {
+  /** [3.30.2] "Rule ids at rows open them: as a window | like the symbol" (⚙ Settings → Appearance). */
+  function setRulesRowPlace(place) {
+    S.rulesRowPlace = place === 'symbol' ? 'symbol' : 'window';
+    writeJson('localStorage', RULES_ROW_KEY, S.rulesRowPlace === 'symbol' ? 'symbol' : null);
+    log('info', 'settingValue', { what: tr('settings.rulesRowPlace'), value: tr(`settings.rulesRowPlace.${S.rulesRowPlace}`) });
+    if (S.settingsOpen) renderSettings();
+  }
+
+  /** `fromRow`: opened at a row (ⓘ, a rule id) – as a window unless the setting says "like the symbol". */
+  function openRules(focusId = null, { fromRow = false } = {}) {
+    S.rulesAsWindow = fromRow && S.rulesRowPlace === 'window' && S.rulesPlace === 'dashboard';
     let el = document.getElementById('dci-rules');
     if (!el) {
       el = document.createElement('div');
@@ -14488,6 +14577,38 @@
     return `<span class="dci-gcredit" title="${esc(title)}">${esc(text)}</span>`;
   }
 
+  /** [3.30.2] The rows of an entry the dashboard shows (work-level roles are in the works matrix only). */
+  const shownRowsOf = (a) => S.rows.filter((r) => r.artistKey === a.key && r.level !== 'work' && (S.mxSkipRows || !r.mxSkipped));
+
+  /**
+   * [3.30.2] The arrow in the head of an entry in the compact view (item 82b; maintainer: "ja bitte gib mir den Pfeil"):
+   * opens all its rows, or closes them when all are open.
+   */
+  function openAllHtml(a, rows) {
+    const all = rows.every((r) => S.rowOpen.has(r.id));
+    const t = tr(all ? 'group.closeAll' : 'group.openAll', { name: a.name });
+    return `<button type="button" class="dci-iconbtn dci-gopen" data-act="group-openall" aria-expanded="${all}" title="${esc(t)}" aria-label="${esc(t)}">${all ? '▾' : '▸'}</button>`;
+  }
+
+  function openAllOfGroup(a) {
+    const rows = shownRowsOf(a);
+    const all = rows.length && rows.every((r) => S.rowOpen.has(r.id));
+    rows.forEach((r) => (all ? S.rowOpen.delete(r.id) : S.rowOpen.add(r.id)));
+    rerenderGroup(a);
+    refresh();
+    const b = S.overlay.querySelector(`[data-group="${a.key}"] [data-act="group-openall"]`);
+    if (b) b.focus({ preventScroll: true });
+  }
+
+  /** [3.30.2] The arrow in the head follows rows opened or closed one by one. */
+  function syncOpenAll(a) {
+    const b = a && S.overlay && S.overlay.querySelector(`[data-group="${a.key}"] [data-act="group-openall"]`);
+    if (!b) return;
+    const tmp = document.createElement('span');
+    tmp.innerHTML = openAllHtml(a, shownRowsOf(a));
+    b.replaceWith(tmp.firstElementChild);
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -14504,7 +14625,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -15122,6 +15243,71 @@
   }
 
   /** "1–5, 8": Discogs positions (or MusicBrainz numbers) of tracks, runs shortened. */
+  /**
+   * [3.30.5] The tracks typed into the form of a track group (item 90; like "Media:" in the media choice): "1-4, 6",
+   * "A1–B2" (positions of the source), "2.3" (medium 2, track 3); only tracks of the chosen media. `bad`: what is no track
+   * of them.
+   */
+  function tracksFromText(text) {
+    const sel = selTracks();
+    const allowed = new Set(sel.map((x) => x.idx));
+    const posMap = positionIndex(S.srcTracks || []);
+    const firstMedium = sel.length ? sel[0].medium : null;
+    const resolve = (tok) => {
+      const t = String(tok).trim();
+      const mt = t.match(/^(\d+)\.(\d+)$/);
+      if (mt) {
+        const hit = S.mbTracks.find((x) => x.medium === Number(mt[1]) && plainNo(x.number) === plainNo(mt[2]));
+        return hit ? hit.idx : undefined;
+      }
+      const p = posMap.get(normPos(t));
+      if (p !== undefined && p < S.mbTracks.length) return p;
+      const hit = S.mbTracks.find((x) => x.medium === firstMedium && plainNo(x.number) === plainNo(t));
+      return hit ? hit.idx : undefined;
+    };
+    const tracks = new Set();
+    const bad = [];
+    for (const part of String(text || '').split(/\s*[,;]\s*/).map((x) => x.trim()).filter(Boolean)) {
+      let ends = part.split(/\s*(?:–|—|\bto\b|\bbis\b)\s*/i).filter(Boolean);
+      if (ends.length === 1 && /^\S+\s*-\s*\S+$/.test(part) && !posMap.has(normPos(part))) ends = part.split(/\s*-\s*/);
+      const idx = ends.map(resolve);
+      if (ends.length > 2 || idx.some((i) => i === undefined || !allowed.has(i))) {
+        bad.push(part);
+        continue;
+      }
+      for (let i = Math.min(...idx); i <= Math.max(...idx); i++) if (allowed.has(i)) tracks.add(i);
+    }
+    return { tracks, bad };
+  }
+
+  /** [3.30.5] The field "Tracks:" typed in: the ticks follow (the form is not drawn anew, the focus stays). */
+  function applyTrackText(text) {
+    const f = S.trackForm;
+    if (!f) return;
+    f.text = text;
+    const { tracks, bad } = tracksFromText(text);
+    f.error = bad.length ? tr('trackpool.textBad', { list: bad.join(', ') }) : '';
+    if (!bad.length) f.tracks = tracks;
+    const form = S.overlay && S.overlay.querySelector('.dci-track-form');
+    if (!form) return;
+    form.querySelectorAll('input[data-f="tg-track"]').forEach((cb) => { cb.checked = f.tracks.has(Number(cb.dataset.i)); });
+    const err = form.querySelector('.dci-err');
+    if (err) err.textContent = f.error;
+  }
+
+  /** [3.30.5] Ticks changed: the field "Tracks:" shows them ("1–3, 5", positions of the source where known). */
+  function syncTrackText() {
+    const f = S.trackForm;
+    if (!f) return;
+    f.text = trackListLabel(f.tracks);
+    f.error = '';
+    const form = S.overlay && S.overlay.querySelector('.dci-track-form');
+    const input = form && form.querySelector('input[data-f="tg-text"]');
+    if (input && input !== document.activeElement) input.value = f.text;
+    const err = form && form.querySelector('.dci-err');
+    if (err) err.textContent = '';
+  }
+
   function trackListLabel(idxs) {
     const list = [...idxs].filter((i) => S.mbTracks[i]).sort((a, b) => a - b);
     const label = (i) => (S.srcTracks && S.srcTracks[i] && S.srcTracks[i].position) || (multiMedium() ? `${S.mbTracks[i].medium}.${S.mbTracks[i].number}` : S.mbTracks[i].number);
@@ -15925,6 +16111,17 @@
       title="${esc(tr(kind === 'date' ? 'dm.pickDate' : 'dm.pickTracks', { name }))}" aria-label="${esc(tr(kind === 'date' ? 'dm.pickDate' : 'dm.pickTracks', { name }))}">⠿</button>`;
   }
 
+  /**
+   * [3.30.3] The name of a pool, a button that folds it (item 93; maintainer: "bitte mach "Date pool" und "track pool" in
+   * der mitscrollenden leiste oben auf und zuklappbar"); folded, only the name and the number of chips stay.
+   */
+  function poolLabelHtml(pool, n) {
+    const folded = !!S.poolFold[pool];
+    const name = tr(pool === 'dates' ? 'date.title' : 'trackpool.title');
+    const t = tr(folded ? 'pools.unfoldOne' : 'pools.foldOne', { name });
+    return `<button type="button" class="dci-pool-label dci-pool-fold" data-act="pool-fold" data-pool="${pool}" aria-expanded="${!folded}" title="${esc(t)}">${folded ? '▸' : '▾'} ${esc(name)}${folded ? ` <span class="dci-pool-n">(${n})</span>` : ''}</button>`;
+  }
+
   /** The date pool; "kept": the chips alone, in the folded bar (to drag them onto rows while scrolling). */
   function datePoolHtml(kept = false) {
     const chips = S.datePool.map((d) => {
@@ -15940,11 +16137,12 @@
     const suggHtml = suggestions.length ? `<span class="dci-date-sugg"><span class="dci-sub">${esc(tr('date.suggestions'))}</span>
       ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin) }))}</button>`).join(' ')}</span>` : '';
     const hint = S.datePool.length ? `<span class="dci-drag-hint" title="${esc(tr('date.dragHintTitle'))}">⠿ ${esc(tr('date.dragHint'))}</span>` : '';
+    if (S.poolFold.dates) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}</div>`;
     if (kept) {
-      return `<div class="dci-dates-bar dci-pool-dates"><strong class="dci-pool-label">${esc(tr('date.title'))}</strong>${chips}${hint}</div>`;
+      return `<div class="dci-dates-bar dci-pool-dates">${poolLabelHtml('dates', S.datePool.length)}${chips}${hint}</div>`;
     }
     return `<div class="dci-dates-bar dci-pool-dates">
-        <strong class="dci-pool-label">${esc(tr('date.title'))}</strong>
+        ${poolLabelHtml('dates', S.datePool.length)}
         ${chips}
         <button type="button" class="dci-textbtn" data-act="pool-new">${esc(tr('date.poolNew'))}</button>
         ${hint}
@@ -15963,7 +16161,8 @@
       <button type="button" class="dci-chip-main" data-act="tg-edit" data-id="${esc(g.id)}" title="${esc(tr('trackpool.editTitle'))}${trackGroupSuggested(g) ? ` – ${esc(tr('pools.suggested'))}` : ''}">
       ${esc(g.name)} <span class="dci-chip-count">${esc(tr('trackpool.count', { n: g.tracks.length }))}</span></button></span>`).join('');
     const hint = `<span class="dci-drag-hint" title="${esc(tr('trackpool.dragHintTitle'))}">⠿ ${esc(tr('trackpool.dragHint'))}</span>`;
-    if (kept) return `<div class="dci-dates-bar dci-tracks-bar"><strong class="dci-pool-label">${esc(tr('trackpool.title'))}</strong>${chips}${hint}</div>`;
+    if (S.poolFold.tracks) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}</div>`;
+    if (kept) return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}${hint}</div>`;
     // Several media: a whole medium (or one group per medium) in one step (of the chosen media)
     const media = selMedia();
     const add = media.length > 1
@@ -15973,7 +16172,7 @@
           ${media.map((md) => `<option value="m:${md}">${esc(mediumGroupName(md))}</option>`).join('')}
           <option value="all">${esc(tr('trackpool.allMedia', { n: media.length }))}</option></select>`
       : `<button type="button" class="dci-textbtn" data-act="tg-new">${esc(tr('trackpool.new'))}</button>`;
-    return `<div class="dci-dates-bar dci-tracks-bar"><strong class="dci-pool-label">${esc(tr('trackpool.title'))}</strong>${chips}
+    return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}
         ${add}
         ${S.trackPool.length ? hint : `<span class="dci-sub">${esc(tr('trackpool.explain'))}</span>`}</div>`;
   }
@@ -16228,6 +16427,8 @@
     }).join('');
     return `<div class="dci-date-form dci-track-form" role="group" aria-label="${esc(tr('trackpool.formTitle'))}">
       <label class="dci-pool-name">${esc(tr('date.name'))} <input type="text" data-f="tg-name" value="${esc(f.name)}" placeholder="${esc(tr('trackpool.namePlaceholder'))}" size="18"></label>
+      <label class="dci-pool-name dci-tg-text">${esc(tr('trackpool.text'))} <input type="text" data-f="tg-text" value="${esc(f.text != null ? f.text : trackListLabel(f.tracks))}"
+        placeholder="${esc(tr('trackpool.textPlaceholder'))}" size="22" autocomplete="off"></label>
       <div class="dci-picker"><div class="dci-chips">${chips}</div></div>
       <div class="dci-mbdate-tools">
         <button type="button" class="dci-apply dci-small" data-act="tg-save">${esc(tr('date.save'))}</button>
@@ -16240,6 +16441,13 @@
 
   function saveTrackForm() {
     const f = S.trackForm;
+    // [3.30.5] tracks typed in that are no tracks of the chosen media: not saved
+    const typed = f.text != null ? tracksFromText(f.text) : null;
+    if (typed && typed.bad.length) {
+      f.error = tr('trackpool.textBad', { list: typed.bad.join(', ') });
+      renderDates();
+      return;
+    }
     if (!f.tracks.size) {
       f.error = tr('trackpool.errEmpty');
       renderDates();
@@ -16471,13 +16679,15 @@
     const open = (cls, text, title = '') => `<button type="button" class="${cls}" data-act="row-open"${title ? ` title="${esc(title)}"` : ''}>${text}</button>`;
     const parts = [`<button type="button" class="dci-cl-tgl" data-act="row-open" aria-expanded="false" title="${esc(tr('cl.openTitle'))}" aria-label="${esc(tr('cl.openTitle'))}">▸</button>`,
       open('dci-cl-role', esc(row.raw || (lt && lt.name) || '–'), tr('cl.openTitle'))];
-    if (!skip) {
+    // [3.30.1] also on Skip (grey): the level stays where it is when it is switched by a click (item 91)
+    {
       const what = [rowTypeName(row), row.primaryText].filter(Boolean).map(esc).join(' · ');
       parts.push(`<span class="dci-cl-type"><span aria-hidden="true">→</span> ${what || `<span class="dci-cl-none">${esc(tr('cl.noType'))}</span>`}${row.roleCredit
         ? ` <span class="dci-cl-credit">${esc(tr('common.quoted', { text: row.roleCredit }))}</span>` : ''}</span>`);
       // [3.28.0] the artist credit of this row when the entry is credited in more than one way (item 61; the head has the rest)
       const a = S.artists.get(row.artistKey);
-      if (row.credit && a && entryCredits(a).length > 1) parts.push(`<span class="dci-cl-as">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: row.credit }) }))}</span>`);
+      const credits = a ? uniq([...entryCredits(a), String(row.credit || '').trim()].filter(Boolean)) : [];
+      if (row.credit && credits.length > 1) parts.push(`<span class="dci-cl-as">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: row.credit }) }))}</span>`);
     }
     // [3.29.2] the level a button: a click switches to the next one (item 81; the dates follow as in the full row)
     const next = nextLevel(row);
@@ -16547,6 +16757,7 @@
     const tr1 = S.overlay.querySelector(`tr[data-row="${row.id}"]`);
     const tr2 = S.overlay.querySelector(`tr[data-tracksrow="${row.id}"]`);
     [tr1, tr2].forEach((el) => el && el.classList.toggle('dci-open', open));
+    if (S.view === 'compact') syncOpenAll(S.artists.get(row.artistKey));
     if (!tr1) return;
     if (!open) {
       const cl = tr1.querySelector('.dci-c-cline');
@@ -18820,6 +19031,53 @@
     const wrap2 = S.overlay && S.overlay.querySelector('.dci-mx-wrap');
     if (wrap2 && pos) [wrap2.scrollTop, wrap2.scrollLeft] = pos;
     if (body && bodyTop != null) body.scrollTop = bodyTop;
+    setupMxScroll();
+  }
+
+  /**
+   * [3.30.3] Scroll bars of the works matrix to the right and left (item 94; maintainer: "wir brauchen in der work-matrix
+   * noch eine leiste um von links nach rechts zu scrollen"): one above the matrix, one at the bottom of the visible area
+   * while the lower edge of the matrix (with its own bar) is out of view; all three move together.
+   */
+  function setupMxScroll() {
+    (S.mxScrollObs || []).forEach((o) => o.disconnect());
+    S.mxScrollObs = [];
+    const wrap = S.overlay && S.overlay.querySelector('.dci-mx-wrap');
+    if (!wrap) return;
+    const bars = [...S.overlay.querySelectorAll('[data-mxhs]')];
+    const end = S.overlay.querySelector('.dci-mx-end');
+    let endSeen = true;
+    const fit = () => {
+      const over = wrap.scrollWidth > wrap.clientWidth + 1;
+      bars.forEach((b) => {
+        b.hidden = !over || (b.dataset.mxhs === 'bottom' && endSeen);
+        if (b.hidden) return;
+        b.firstElementChild.style.width = `${Math.max(0, wrap.scrollWidth - wrap.clientWidth + b.clientWidth)}px`;
+        b.scrollLeft = wrap.scrollLeft;
+      });
+    };
+    let lock = false;
+    const sync = (src) => {
+      if (lock) return;
+      lock = true;
+      [wrap, ...bars].forEach((e) => { if (e !== src && e.scrollLeft !== src.scrollLeft) e.scrollLeft = src.scrollLeft; });
+      lock = false;
+    };
+    [wrap, ...bars].forEach((e) => e.addEventListener('scroll', () => sync(e), { passive: true }));
+    const ro = new ResizeObserver(fit);
+    ro.observe(wrap);
+    const table = wrap.querySelector('table');
+    if (table) ro.observe(table);
+    S.mxScrollObs.push(ro);
+    if (end && typeof IntersectionObserver !== 'undefined') {
+      const io = new IntersectionObserver((entries) => {
+        endSeen = entries[entries.length - 1].isIntersecting;
+        fit();
+      }, { root: inPage() ? null : S.overlay.querySelector('.dci-body') });
+      io.observe(end);
+      S.mxScrollObs.push(io);
+    }
+    fit();
   }
 
   function renderWorksInner() {
@@ -18878,13 +19136,16 @@
       ${addColumnHtml()}
       ${S.searchProgress ? `<p class="dci-sub" data-el="search-progress">${esc(tr('matrix.searchProgress', S.searchProgress))}<button type="button" class="dci-textbtn" data-act="mx-search-cancel">${esc(tr('matrix.searchCancel'))}</button></p>` : ''}
       ${cols.length ? '' : `<p class="dci-sub">${esc(trSrc('matrix.empty'))}</p>`}`}
+      <div class="dci-mx-hs dci-mx-hs-top" data-mxhs="top" aria-hidden="true" hidden><div></div></div>
       <div class="dci-mx-wrap"${skipped ? ' inert' : ''}>
         <table class="dci-table dci-matrix">
           <thead><tr><th scope="col" class="dci-mx-front"><div class="dci-mx-card dci-mx-frontcard"><div class="dci-mx-cardline"><strong>${esc(tr('matrix.work'))}</strong>
             <span class="dci-sub">${esc(`${tr('matrix.countTracks', { n: uniq(mrows.map((m) => m.i)).length })} · ${tr('matrix.colWorks', { n: mrows.filter((m) => m.work).length })}`)}</span></div>${linkAttrsHeadHtml()}</div></th>${cols.map(columnHeadHtml).join('')}</tr></thead>
           <tbody>${mrows.map((m) => `<tr data-work="${m.i}" data-mrow="${esc(m.key)}"><th scope="row" class="dci-mx-front">${workFrontCell(m)}</th>${cols.map((c) => cellHtml(c, m)).join('')}</tr>`).join('')}</tbody>
         </table>
-      </div>`;
+      </div>
+      <div class="dci-mx-hs dci-mx-hs-bottom" data-mxhs="bottom" aria-hidden="true" hidden><div></div></div>
+      <div class="dci-mx-end" aria-hidden="true"></div>`;
   }
 
   /** Kept for the work flows that update one row; the matrix is redrawn as a whole. */
@@ -19510,7 +19771,8 @@
 
   /** Switch: the Discogs tab follows the dashboard on mouse-over or on click. */
   function syncModeHtml() {
-    const btn = (mode) => `<button type="button" data-sync-mode="${mode}" aria-pressed="${S.syncMode === mode}">${esc(tr(`syncMode.${mode}`))}</button>`;
+    // [3.30.1] with a tooltip each (item 89)
+    const btn = (mode) => `<button type="button" data-sync-mode="${mode}" aria-pressed="${S.syncMode === mode}" title="${esc(tr(`syncMode.${mode}Title`))}">${esc(tr(`syncMode.${mode}`))}</button>`;
     return `<span class="dci-syncmode" role="group" aria-label="${esc(tr('nav.label'))}"><strong>${esc(tr('nav.label'))}</strong>
       <span>${esc(tr('syncMode.label'))}</span>
       <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('syncMode.label'))}">${btn('hover')}${btn('click')}</span>
@@ -20589,6 +20851,17 @@
       case 'rules-place':
         if (btn.dataset.place !== S.rulesPlace) setRulesPlace(btn.dataset.place);
         break;
+      // [3.30.5] the message of the dashboard opened for its settings only
+      case 'start-import':
+        initOnce();
+        break;
+      case 'rules-rowplace':
+        if (btn.dataset.place !== S.rulesRowPlace) setRulesRowPlace(btn.dataset.place);
+        break;
+      // [3.30.2] the arrow in the head of an entry (compact view, item 82b)
+      case 'group-openall':
+        if (artist) openAllOfGroup(artist);
+        break;
       case 'rules':
         // [3.30.0] the symbol in the head opens and closes them (item 75); elsewhere (⚙ Settings → Texts) it opens them
         if (btn.closest('.dci-head') && rulesShown()) closeRules();
@@ -20600,8 +20873,8 @@
         break;
       case 'rule-info':
       case 'rule-goto': {
-        // The rules window with this row's Discogs role in the test field (and at the rule clicked)
-        openRules();
+        // The rules window with this row's Discogs role in the test field (and at the rule clicked); [3.30.2] as a window
+        openRules(null, { fromRow: true });
         const t = document.querySelector('#dci-rules [data-rf="test"]');
         if (t && row) {
           t.value = row.raw || row.base || '';
@@ -20869,6 +21142,16 @@
         break;
       }
       // Dates & tracks
+      case 'pool-fold': {
+        const pool = btn.dataset.pool === 'tracks' ? 'tracks' : 'dates';
+        S.poolFold = { ...S.poolFold, [pool]: !S.poolFold[pool] };
+        if (!S.poolFold[pool]) delete S.poolFold[pool];
+        writeJson('localStorage', POOL_FOLD_KEY, Object.keys(S.poolFold).length ? S.poolFold : null);
+        renderDates();
+        const b = S.overlay.querySelector(`[data-act="pool-fold"][data-pool="${pool}"]`);
+        if (b) b.focus({ preventScroll: true });
+        break;
+      }
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
         S.poolForm = null;
@@ -20987,6 +21270,8 @@
         const ids = S.mbTracks.filter((t) => t.medium === Number(btn.dataset.medium)).map((t) => t.idx);
         const allOn = ids.every((i) => S.trackForm.tracks.has(i));
         ids.forEach((i) => (allOn ? S.trackForm.tracks.delete(i) : S.trackForm.tracks.add(i)));
+        S.trackForm.text = trackListLabel(S.trackForm.tracks);
+        S.trackForm.error = '';
         renderDates();
         break;
       }
@@ -21444,6 +21729,7 @@
     if (f === 'tg-track' && S.trackForm) {
       if (el.checked) S.trackForm.tracks.add(Number(el.dataset.i));
       else S.trackForm.tracks.delete(Number(el.dataset.i));
+      syncTrackText();
       return;
     }
     if (f === 'about-off') {
@@ -21740,6 +22026,11 @@
       applyLevelColors();
       return;
     }
+    // [3.30.5] the tracks typed in (item 90)
+    if (f === 'tg-text' && S.trackForm) {
+      applyTrackText(el.value);
+      return;
+    }
     if (f === 'tg-name' && S.trackForm) {
       S.trackForm.name = el.value;
       return;
@@ -21861,6 +22152,9 @@
       'pf-ey': '[data-act="pool-save"]',
       'pf-em': '[data-act="pool-save"]',
       'pf-ed': '[data-act="pool-save"]',
+      // [3.30.5] the form of a track group
+      'tg-name': '[data-act="tg-save"]',
+      'tg-text': '[data-act="tg-save"]',
     };
     if (map[f]) {
       e.preventDefault();
@@ -22120,6 +22414,8 @@
             <span>${esc(tr('toolbar.levelAll'))}</span>
             <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
               ${levelBtn('recording')}${levelBtn('release')}${levelBtn('skip')}
+            </div>
+            <div class="dci-seg dci-onlyworks" role="group">
               <button type="button" data-act="bulk-level" data-level="only-works" title="${esc(tr('toolbar.onlyWorksTitle'))}">${esc(tr('toolbar.onlyWorks'))}</button>
             </div>
             <span data-el="medium-filter"></span>
@@ -22204,6 +22500,18 @@
     // "Add entry manually" above it, always in view)
     const body = overlay.querySelector('[data-el="body"]');
     const stick = overlay.querySelector('[data-el="stick"]');
+    // [3.30.4] the bridges follow the boxes when the body scrolls, and the head when it changes
+    let bridgeFrame = 0;
+    const bridgesLater = () => {
+      if (bridgeFrame) return;
+      bridgeFrame = requestAnimationFrame(() => {
+        bridgeFrame = 0;
+        placeBridges();
+      });
+    };
+    body.addEventListener('scroll', bridgesLater, { passive: true });
+    new ResizeObserver(bridgesLater).observe(overlay.querySelector('.dci-head'));
+    new ResizeObserver(bridgesLater).observe(body);
     new ResizeObserver(() => {
       body.style.scrollPaddingTop = `${stick.offsetHeight + 8}px`;
       updatePageScrollPadding();
@@ -22276,7 +22584,9 @@
       if (bar && bar.nextSibling !== o) bar.after(o);
       else if (!bar && o.parentNode === document.body) (document.getElementById('content') || document.body).prepend(o);
       ['left', 'top', 'width', 'height', 'right', 'bottom'].forEach((k) => { panel.style[k] = ''; });
+      fitInline();
     } else {
+      o.style.removeProperty('--dci-inline-max');
       if (o.parentNode !== document.body) document.body.appendChild(o);
       const saved = readJson('localStorage', GEOM_KEYS.panel, null);
       placeWindow(panel, saved && saved.w >= 160 && saved.h >= 100 ? saved : defaultGeom('panel'), true);
@@ -22287,9 +22597,24 @@
     renderLauncher();
   }
 
+  /**
+   * [3.30.1] In the page: at most as wide as the browser window from where the dashboard starts (item 95; the page of
+   * MusicBrainz around it may be wider, e.g. with a wide relationship editor).
+   */
+  function fitInline() {
+    const o = S.overlay;
+    if (!o || !inPage()) return;
+    o.style.removeProperty('--dci-inline-max');
+    const left = o.getBoundingClientRect().left + window.scrollX;
+    const vw = document.documentElement.clientWidth || window.innerWidth;
+    o.style.setProperty('--dci-inline-max', `${Math.max(320, Math.floor(vw - Math.max(0, left) - 12))}px`);
+  }
+  window.addEventListener('resize', () => fitInline());
+
   /** Shows the dashboard where it is: a window comes into view, in the page it is scrolled to. */
   function revealDashboard() {
     if (!S.overlay || S.overlay.hidden || !inPage()) return;
+    fitInline();
     S.overlay.querySelector('.dci-panel').scrollIntoView({ block: 'start' });
   }
 
@@ -22301,6 +22626,8 @@
     const foot = on && S.overlay.querySelector('.dci-foot');
     html.style.scrollPaddingTop = stick && stick.offsetHeight ? `${stick.offsetHeight + 8}px` : '';
     html.style.scrollPaddingBottom = foot ? `${foot.offsetHeight + 8}px` : '';
+    // [3.30.3] the scroll bar of the works matrix at the bottom stays above the footer
+    if (S.overlay) S.overlay.style.setProperty('--dci-foot-h', foot ? `${foot.offsetHeight}px` : '0px');
   }
 
   function setPlace(place) {
@@ -22356,7 +22683,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -22427,6 +22754,9 @@
         // [3.30.0] where the mapping rules open (item 75)
         row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
           data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
+        // [3.30.2] rule ids and ⓘ at rows (item 75b)
+        row(`${esc(tr('settings.rulesRowPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesRowPlace'))}">${['window', 'symbol'].map((pl) => `<button type="button"
+          data-act="rules-rowplace" data-place="${pl}" aria-pressed="${S.rulesRowPlace === pl}">${esc(tr(`settings.rulesRowPlace.${pl}`))}</button>`).join('')}</span>`),
         row(check('data-set="level-colors"', S.levelColors, tr('settings.levelColors'), tr('settings.levelColorsTitle'))),
         row(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
           value="${S.levelPalette[level]}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColor', { level: tr(`level.${level}`) }))}">
@@ -22523,6 +22853,7 @@
     el.hidden = !S.settingsOpen;
     if (!S.settingsOpen) {
       el.innerHTML = '';
+      placeBridges();
       return;
     }
     const active = document.activeElement;
@@ -22532,6 +22863,7 @@
     el.innerHTML = settingsHtml();
     const again = key && el.querySelector(key);
     if (again) again.focus();
+    placeBridges();
   }
 
   /** The switches elsewhere in the dashboard show what was set in the menu (and the other way round). */
@@ -22642,6 +22974,8 @@
       S.levelPalette = { ...LEVEL_PALETTE_DEFAULT };
       applyLevelColors();
       S.rulesPlace = 'dashboard';
+      S.rulesRowPlace = 'window';
+      S.rulesAsWindow = false;
       placeRules();
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
@@ -22678,7 +23012,7 @@
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
-    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY];
+    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -22698,7 +23032,7 @@
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
-      levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard',
+      levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
     });
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -22730,7 +23064,13 @@
     showMessage('ok', 'reset.done');
   }
 
-  async function openDashboard() {
+  /**
+   * `{ settingsOnly }` ([3.30.5], ⚙ in the bar below "Import credits …", collected item 88; maintainer: "wenn das
+   * einstellungsmenü außerhalb des Dashboards geöffnet wird soll auch wirklich nur das Einstellungsmenü gestartet werden",
+   * "Dashboard ohne import reicht an der Stelle"): the dashboard without starting the import – a message offers it.
+   */
+  async function openDashboard(opts) {
+    const settingsOnly = !!(opts && opts.settingsOnly);
     if (!S.overlay) buildOverlay();
     S.lastFocus = document.activeElement;
     S.overlay.hidden = false;
@@ -22744,7 +23084,23 @@
     toDiscogs({ type: 'ping' });
     clearInterval(S.syncTimer);
     S.syncTimer = setInterval(() => toDiscogs({ type: 'ping' }), 3000);
-    if (!S.initialized) await init();
+    if (S.initialized) return;
+    if (settingsOnly) {
+      if (!S.messages.some((m) => m.key === 'settingsOnly.hint')) showMessage('info', 'settingsOnly.hint', {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
+      return;
+    }
+    await initOnce();
+  }
+
+  /** [3.30.5] The import, started once (also from the message of the dashboard opened for its settings only). */
+  async function initOnce() {
+    if (S.initialized || S.importStarting) return;
+    S.importStarting = true;
+    try {
+      await init();
+    } finally {
+      S.importStarting = false;
+    }
   }
 
   /**
@@ -23021,12 +23377,13 @@
     // [3.17.4] the buttons of the navigation bar (outside the dashboard)
     const barBtn = e.target.closest && e.target.closest('#dci-controls [data-act="sync-open"], #dci-controls [data-act="sync-load"]');
     if (barBtn) syncAction(barBtn.dataset.act);
-    // [3.28.0] ⚙ in the bar: the dashboard with its settings at "Discogs and Bandcamp view" (item 66)
+    // [3.28.0] ⚙ in the bar: the dashboard with its settings at "Discogs and Bandcamp view" (item 66); [3.30.5] the tab is
+    // called "Source pages", and the dashboard opens without starting the import (item 88)
     if (e.target.closest && e.target.closest('#dci-controls [data-nav-settings]')) {
       S.settingsOpen = true;
       S.resetOpen = false;
       S.settingsTab = 'discogs';
-      Promise.resolve(S.overlay && !S.overlay.hidden ? null : openDashboard()).then(() => {
+      Promise.resolve(S.overlay && !S.overlay.hidden ? null : openDashboard({ settingsOnly: true })).then(() => {
         renderSettings();
         const tab = S.overlay && S.overlay.querySelector('.dci-set-tab[data-topic="discogs"]');
         if (tab) {
@@ -23284,6 +23641,15 @@
       .dci-head .dci-ibtn { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 7); }
       /* [3.27.2] a symbol switched on (the compact view) */
       #dci-overlay .dci-head .dci-headbtn[aria-pressed="true"] { background: #ecebf6; border-color: var(--purple); color: var(--purple-d); }
+      /* [3.30.4] ⚙ and "Mapping rules" pressed while open, with a bridge to their box below the head (item 87) */
+      #dci-overlay .dci-head .dci-headbtn[aria-expanded="true"] { background: #ecebf6; border-color: var(--purple); color: var(--purple-d); }
+      #dci-overlay .dci-head .dci-headbtn.dci-bridged { position: relative; }
+      #dci-overlay .dci-head .dci-headbtn.dci-bridged::after { content: ''; position: absolute; left: -1px; right: -1px; top: calc(100% - 1px);
+        height: var(--dci-bridge-down, 0px); background: #ecebf6; border-left: 1px solid var(--purple); border-right: 1px solid var(--purple); z-index: 2; pointer-events: none; }
+      #dci-overlay .dci-settings, #dci-overlay .dci-rules-dock { position: relative; }
+      #dci-overlay .dci-bridged-box::before { content: ''; position: absolute; left: var(--dci-bridge-x, 0px); width: var(--dci-bridge-w, 0px);
+        top: calc(-1 * var(--dci-bridge-h, 0px) - 1px); height: calc(var(--dci-bridge-h, 0px) + 2px); box-sizing: border-box;
+        background: #ecebf6; border-left: 1px solid var(--purple); border-right: 1px solid var(--purple); z-index: 2; pointer-events: none; }
       .dci-ico { width: calc(var(--u, 1px) * 15); height: calc(var(--u, 1px) * 15); flex: none; }
       .dci-hlabel { display: none; }
       @container (min-width: 1600px) { .dci-head .dci-hlabel { display: inline; } }
@@ -23385,6 +23751,8 @@
       .dci-msg-x:hover { background: rgba(38, 36, 48, 0.08); color: var(--ink); }
       .dci-msg-x .dci-ico { width: calc(var(--u, 1px) * 12); height: calc(var(--u, 1px) * 12); }
       .dci-msgs-head { margin: 0 0 calc(var(--u, 1px) * 6); }
+      /* [3.30.1] the bar below ("Add entry manually", pools) reaches 14 u up – the messages make room for it, less room above (item 86) */
+      .dci-msgs:not(:empty) { margin: calc(var(--u, 1px) * -5) 0 calc(var(--u, 1px) * 18); }
       .dci-msgs-fold { font-weight: 600; text-decoration: none; }
       .dci-inline-btn { margin-left: calc(var(--u, 1px) * 8); border: 1px solid var(--ok); background: #fff; color: var(--ok); border-radius: 3px; padding: 1px calc(var(--u, 1px) * 8); }
 
@@ -23421,6 +23789,16 @@
       .dci-table { width: 100%; min-width: calc(var(--u, 1px) * 1180); border-collapse: collapse; }
       /* Works matrix: header row and first column stay in place while scrolling */
       .dci-mx-wrap { overflow: auto; max-height: 75vh; border: 1px solid var(--line); border-radius: 4px; position: relative; z-index: 0; isolation: isolate; }
+      /* [3.30.3] the scroll bars to the right and left (item 94) */
+      .dci-mx-hs { overflow-x: scroll; overflow-y: hidden; min-height: calc(var(--u, 1px) * 14); border: 1px solid var(--line); border-radius: 4px; background: var(--soft); box-sizing: border-box; }
+      .dci-mx-hs[hidden] { display: none; }
+      .dci-mx-hs > div { height: 1px; }
+      .dci-mx-hs-top { margin-bottom: calc(var(--u, 1px) * 3); }
+      .dci-mx-hs-bottom { position: sticky; bottom: 0; z-index: 3; margin-top: calc(var(--u, 1px) * 3); box-shadow: 0 -2px 4px rgba(38, 36, 48, 0.08); }
+      /* [3.30.5] in the window at the very lower edge of the body (its 28 u padding below counts for sticky boxes) */
+      #dci-overlay:not(.dci-inline) .dci-mx-hs-bottom { bottom: calc(var(--u, 1px) * -28); }
+      #dci-overlay.dci-inline .dci-mx-hs-bottom { bottom: var(--dci-foot-h, 0px); }
+      .dci-mx-end { height: 1px; }
       .dci-table.dci-matrix { min-width: 0; width: max-content; border-collapse: separate; border-spacing: 0; }
       .dci-matrix th, .dci-matrix td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: top; }
       .dci-matrix thead th { position: sticky; top: 0; z-index: 2; background: var(--soft); text-align: left; }
@@ -23657,6 +24035,9 @@
       .dci-waiting { margin: calc(var(--u, 1px) * 6) 0 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #fff8db; color: #7a5a00; }
       .dci-series-label { margin: calc(var(--u, 1px) * 4) 0; display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
       .dci-scope { margin-left: calc(var(--u, 1px) * 10); }
+      /* [3.30.1] "only works" apart from the levels (it is no level), "Stage:" on the line of its buttons (item 92) */
+      .dci-onlyworks { margin-left: calc(var(--u, 1px) * -8); }
+      .dci-scope > .dci-sub { align-self: center; padding: 0 calc(var(--u, 1px) * 8); }
       input.dci-from-dg { background: #fff8db; border-color: #e0a800; font-weight: 600; }
       .dci-flash { outline: 3px solid #eb743b !important; outline-offset: 2px; transition: outline-color 0.3s; }
       .dci-matrix tr.dci-mx-hover > th, .dci-matrix tr.dci-mx-hover > td { background-color: #fff3c4 !important; }
@@ -23711,6 +24092,9 @@
       .dci-date-chip .dci-chip-grip + .dci-chip-main { padding-left: calc(var(--u, 1px) * 4); }
       .dci-date-chip .dci-chip-grip[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
       .dci-pool-label { min-width: calc(var(--u, 1px) * 86); font-size: calc(var(--u, 1px) * 12); }
+      button.dci-pool-fold { font: inherit; font-size: calc(var(--u, 1px) * 12); font-weight: 700; text-align: left; border: 0; background: none; padding: 0; cursor: pointer; }
+      button.dci-pool-fold:hover { text-decoration: underline; }
+      .dci-pool-n { font-weight: 400; }
       .dci-pool-dates .dci-pool-label { color: var(--date-d); }
       .dci-tracks-bar .dci-pool-label { color: var(--track-d); }
       .dci-tg-newsel { font-size: calc(var(--u, 1px) * 12); color: var(--track-d); max-width: calc(var(--u, 1px) * 240); }
@@ -23756,7 +24140,7 @@
       .dci-set-tab { font: inherit; text-align: left; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); border: 1px solid transparent; border-radius: 4px 0 0 4px;
         background: transparent; color: var(--purple-d); cursor: pointer; white-space: nowrap; }
       .dci-set-tab:hover { background: #f1f0f8; }
-      .dci-set-tab[aria-selected="true"] { background: #fff; border-color: #c9c4dd; border-right-color: #fff; font-weight: 600; margin-right: -15px; position: relative; z-index: 1; }
+      .dci-set-tab[aria-selected="true"] { background: #fff; border-color: #c9c4dd; border-right-color: #fff; font-weight: 600; margin-right: calc(var(--u, 1px) * -14 - 1px); position: relative; z-index: 1; }
       .dci-set-tab:focus-visible { outline: 2px solid var(--purple); outline-offset: -2px; }
       .dci-set-resetall { align-self: flex-start; }
       .dci-set-pane { flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid #c9c4dd; border-radius: 0 4px 4px 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
@@ -23895,6 +24279,8 @@
       #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline,
       #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay .dci-gcompact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
       .dci-gfold { padding: 0 calc(var(--u, 1px) * 4); color: var(--muted); font-size: calc(var(--u, 1px) * 13); }
+      .dci-gopen { padding: 0 calc(var(--u, 1px) * 4); margin-right: calc(var(--u, 1px) * 6); color: var(--muted); font-size: calc(var(--u, 1px) * 13); }
+      .dci-gopen:hover { color: var(--ink); }
       .dci-gfold:hover { color: var(--ink); }
 
       /* Companies, etc. */
@@ -23910,6 +24296,8 @@
       #dci-overlay.dci-lvlc [data-level="release_group"] { --lvl: var(--dci-lvl-release_group); --lvl-ink: var(--dci-lvl-release_group-ink); }
       #dci-overlay.dci-lvlc [data-level="work"] { --lvl: var(--dci-lvl-work); --lvl-ink: var(--dci-lvl-work-ink); }
       #dci-overlay.dci-lvlc [data-level="skip"] { --lvl: var(--dci-lvl-skip); --lvl-ink: var(--dci-lvl-skip-ink); }
+      /* [3.30.1] "only works" in the colour of works (item 92) */
+      #dci-overlay.dci-lvlc [data-level="only-works"] { --lvl: var(--dci-lvl-work); --lvl-ink: var(--dci-lvl-work-ink); }
       #dci-overlay.dci-lvlc .dci-seg button[aria-pressed="true"][data-level] { background: var(--lvl); color: var(--lvl-ink); }
       #dci-overlay.dci-lvlc .dci-seg button[data-level]:not([aria-pressed="true"]):not(:disabled) { box-shadow: inset 0 calc(var(--u, 1px) * -3) 0 var(--lvl); }
       #dci-overlay.dci-lvlc .dci-cl-level[data-level] { background: var(--lvl); color: var(--lvl-ink); }
@@ -23996,6 +24384,8 @@
 
       /* The dashboard in the page (below the import button) instead of a window */
       #dci-overlay.dci-inline { position: relative; inset: auto; z-index: auto !important; pointer-events: auto; margin: 0 0 calc(var(--u, 1px) * 24); }
+      /* [3.30.1] never wider than the browser window, also when the page around it is wider (item 95) */
+      #dci-overlay.dci-inline { box-sizing: border-box; max-width: var(--dci-inline-max, 100%); min-width: 0; }
       #dci-overlay.dci-inline .dci-panel { position: relative; left: auto; top: auto; width: auto; height: auto; min-height: 0; max-width: none; max-height: none;
         resize: none; overflow: visible; box-shadow: 0 1px 6px rgba(38, 36, 48, 0.14); }
       #dci-overlay.dci-inline .dci-head { cursor: default; }
