@@ -354,6 +354,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2 (3.23.0: the button
                                 #     instead of the tick): a background tab (opened once by Harmony's page), an error, the settings
                                 #   navlink: the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
+                                #   mappingload: 3.33.0: the mapping file from the manager; fetched from GitHub (kept, one reload); missing → the
+                                #     message with "Update script"
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
                                 #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
@@ -372,12 +374,14 @@ python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, cred
                                 #     a row, not the pool), status off/on, Bandcamp credits (a year also in "released …") and "about";
                                 #     two "Vocals [...]" lines of one artist
 
-python3 t_static.py             # Without a browser: the texts of the script, the list of connections
+python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file
                                 #   i18n: the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                                 #     placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                                 #     per language (LIST=1: all keys) – not an error
                                 #   connections: the connections (3.25.0, Node): every address of @match / @connect and of the code belongs to an entry of
                                 #     CONNECTIONS, the ids are unique, every entry has its texts in English (3.27.1; before: four languages)
+                                #   mappingfile: 3.33.0: mb-vibecode-credits-importer-mapping.json – format, version, its lists against `MAP.X` of the
+                                #     script, patterns compile, @resource / @grant / @connect, read in Node
 ```
 
 ### Former test → file and case (3.31.1)

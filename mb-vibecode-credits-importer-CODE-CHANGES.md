@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.32.10, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.33.0, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.33.0 · 2026-10-27 – milestone "Mapping file"
+
+The data of the mapping register in `mb-vibecode-credits-importer-mapping.json` (collected item E7, Block W part 1).
+
+- **New file `mb-vibecode-credits-importer-mapping.json`** (format 1, `version`, `about`): 81 lists, in the order of the script – every `const` of section 2 whose value is pure data (no function, no other constant; except the storage keys, `SPECIAL_RULES` and `DATE_RULES` – notes of rules with code –, `DAYP` and `COPYRIGHT_SIGN` – parts of the date code), plus `ROLE_RULE_DATA` (with `DESIGN_TYPES` written out) and `QUICK_SWITCHES`. Encoded: `{"$re", "$flags"}`, `{"$set"}`, `{"$map"}`. Made with a small Node tool (acorn) from 3.32.10; from now on the file is where these lists are changed.
+- **Section 2:** each of them `const X = MAP.X;` (their comments stay). **New before them:** `MAPPING_FILE`, `MAPPING_FORMAT`, `MAPPING_URL` (GitHub main), `MAPPING_STORE_KEY` (`dci-mapping:<version>` in localStorage), `SCRIPT_DOWNLOAD_URL`, `mappingOk(raw)`, **`mappingNow()`** (Node: the file next to the script; `GM_getResourceText('mapping')`; the kept copy → `{ raw, from }`), **`mappingRevive(v)`**, **`mappingMissing()`** (`GM.getResourceUrl` → fetch; else `GM_xmlhttpRequest` / `GM.xmlHttpRequest` / fetch of `MAPPING_URL?v=`; kept, the page loaded again – once per version and tab, `dci-mapping-reload` in sessionStorage), **`mappingMissingMessage(why)`** (`#dci-mapping-missing`, "Update script" opens `SCRIPT_DOWNLOAD_URL`); `const MAPPING = mappingNow()` – without it the script stops there (Node: an error); `const MAP = mappingRevive(MAPPING.raw)`.
+- **Header:** `@grant GM_getResourceText`, `@grant GM.getResourceUrl`, `@connect raw.githubusercontent.com`, `@resource mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.33.0` (the `?v=` makes the manager load it again with each version); `/* global */` with `GM_getResourceText` (`GM` is known to the lint config; the `no-undef` directives at the new lines are not needed).
+- **Rules window:** `[data-rf=mapping-src]` (where the data comes from); **log** `mappingLoaded`, `mappingVersion` (warn) at the start.
+- **Connections:** X010 perms and text (all four languages: the mapping file).
+- **Milestone** 3.33.0 (`MILESTONES`, `ms.3.33.0`).
+- **Texts:** new `mapping.missing`, `mapping.missingText`, `mapping.update`, `mapping.source`, `mapping.from.manager`, `mapping.from.fetched`, `mapping.from.file`, `log.mappingLoaded`, `log.mappingVersion`, `ms.3.33.0` (English only); `conn.X010` changed in all four languages.
+- **Harness:** `MAPPING_TEXT`, `MAPPING_SHIM_OFF`, **`add_mapping(ctx)`** (`GM_getResourceText` unless off; `new_context` calls it, so do the contexts made by hand: another browser language in `t_ui_head.py` case head, `shot_colors.py`), `RAW_GITHUB`, `RAW_REQUESTS` (route raw.githubusercontent.com).
+- **Tests:** new cases `mappingfile` (`t_static.py`: the file, its lists against the script, the header, Node) and `mappingload` (`t_start.py`: from the manager, fetched from GitHub with one reload, missing with the message); `notice` expects 3.33.0, 3.32.0, 3.31.0. The register and text golden tests are unchanged.
 
 ## Import 3.32.10 · 2026-10-27
 
