@@ -196,6 +196,9 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   poems: 3.31.4: "Poems By" → lyricist (a column of the works matrix, R105), "Poetry [Read By]", "Recitation"
                                 #     → spoken vocals credited "poetry" / "recitation" (R106); "Poems" alone asks lyricist · liner notes · spoken
                                 #     vocals (Q009, R107), each credited "poems"; the same in a pasted text ("Poems: …", "Poetry by …")
+                                #   perftracks: 3.31.8: "Performer" on tracks, instruments for the release (S046): off by default; on → the
+                                #     instruments on the performer tracks, no performer row (someone without an instrument keeps it); off → back;
+                                #     on and loaded again → at the import already
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once

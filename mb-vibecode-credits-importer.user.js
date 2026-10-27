@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.31.7
+// @version      3.31.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.7';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -332,6 +332,8 @@
       "role.tracks": "track {list}",
       "role.wholeRelease": "{src}: whole release",
       "role.splitFrom": "on {src}: “{raw}” (one row per task)",
+      "role.perfTracks": "On the tracks of the “Performer” credits on Discogs: {list} (rule S046)",
+      "log.perfTracks": "{name}: “Performer” on {list} – the instruments for the whole release go onto these tracks (S046)",
       "role.unresolved": "Not matched: {list}",
       "note.uncredited": "According to {src} not named on the release (Uncredited).",
       "note.featuring": "“Featuring” is usually part of the artist credit already. Please check.",
@@ -6168,7 +6170,7 @@
    * [3.31.7] Rules that are off until switched on (D023, and the quick switches that are off by default): their being on is
    * stored as "+<id>" in the same list (collected item 110: "standardeinstellung = aus").
    */
-  const DEFAULT_OFF_RULES = new Set(['D023']);
+  const DEFAULT_OFF_RULES = new Set(['D023', 'S046']);
 
   function ruleOn(id) {
     return DEFAULT_OFF_RULES.has(id) ? rulesOff().has(`+${id}`) : !rulesOff().has(id);
@@ -6277,6 +6279,9 @@
     { id: 'S043', where: 'TEXT.parse (PUBLISHER_HEAD, SOCIETY_AFTER_NAME, SOCIETY_LINE), addNotesCompanies, resolveArtists', note: 'Publishers below a heading ("[Publishers & Rights Societies]", "Publishers:", "Publishing (all BMI):") – one per line with its rights society and tracks ("FlizmoMusic-BMI : tracks 2, 4, 5"; outside a block a line with a society after the name too): publishing on those tracks; the society (T045) is the release\'s rights society, once each, also from "Published by X (BMI)" and a line of societies only ("BIEM/GEMA"). In the Discogs notes the tracks go onto Discogs\'s publisher of that name (also written together or with a number as a word, T046) as suggestions; publishers and societies not found through their link are searched by name (3.31.0)' },
     { id: 'S044', where: 'mergePersonPublishers, computePublisherEvidence, roleCell', note: 'A person as publisher: a publisher with the name of a person of the dashboard ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is no company – its publishing becomes a role of the person (artist–work "publishing", MusicBrainz\'s "published / publisher"), in the person\'s column of the works matrix next to writer or composer; the company entry is left out, the row says that Discogs lists it as a company; without tracks of its own, the works the person writes are suggested (3.31.5; 3.31.0–3.31.4: a part of the person\'s column with a label of its own)' },
     { id: 'S048', where: 'personLikeName, suggestByName, matchHtmlInner, startCompanyCreate', note: 'A publisher with the name of a person and no entry of the dashboard (two to four words with capitals, no word of a company such as "Music", "Publishing", "Songs", no legal form – T044): MusicBrainz\'s artists of that name are offered first and "Create artist …"; when MusicBrainz has an artist of exactly that name, a label of that name only when its type is "Publisher", and no "Create label …" (otherwise both, as the name may be a company\'s: "Pub House") (3.31.5)' },
+    // [3.31.8] collected item 111 (maintainer, Discogs 8613662: "führt unter den tracks die performer aber die instrumente erst in
+    // den relationships. gäbe es eine möglichkeit beides zu verknüpfen? mit quick switch. standardeinstellung = aus")
+    { id: 'S046', where: 'applyPerformerTracks', note: 'Performers on tracks, instruments for the release: a person credited "Performer" on some tracks only and with instruments or voices for the whole release only ("Performer – Barry Guy" on 4-3 and 4-5, "Bass – Barry Guy" for the release) gets the instruments on the tracks of the "Performer" credits, across all media; the "performer" rows go (they would say the same). Someone without an instrument keeps "performer"; instruments without a "Performer" credit stay on all tracks. Who plays which of several instruments where, Discogs does not say: all of them on all of these tracks. Off until switched on (3.31.8)' },
     { id: 'S047', where: 'mapRoleInner', note: 'The kind of engineer said twice: "Engineer [Recording Engineer]" is read as "Engineer [Recording]" – recording without role credit; "[Mix Engineer]" mix, "[Mastering Engineer]" mastering, "[Assistant Engineer]" engineer with "assistant", "[Sound Engineer]" sound engineer (3.31.3)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
@@ -10638,6 +10643,7 @@
     }
     const a = S.artists.get(row.artistKey);
     if (row.pubFromCompany) ids.push('S044');
+    if (row.perfPositions) ids.push('S046');
     if (a && personPublisher(a)) ids.push('S048');
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
     // [3.28.3] no "credited as", because only the case differs (S031)
@@ -10704,6 +10710,8 @@
       if (JSON.stringify([r.types, r.level, r.primaryText, r.roleCredit, r.ruleId]) !== before) n++;
     }
     log('info', 'rulesChanged', { what, n });
+    // [S046] (3.31.8) performers on tracks: at once, both ways
+    if (what === 'S046') applyPerformerTracks();
     // [D023] (3.31.7) dates in the titles: placed when switched on, the suggestions taken back when switched off
     if (what === 'D023' && S.mbTracks.length) {
       if (ruleOn('D023')) placeTitleDates({ force: true });
@@ -13699,6 +13707,8 @@
       }
       // [S044] (3.31.5) a person's publisher: a role of the person, not a company of its own
       mergePersonPublishers();
+      // [S046] (3.31.8) performers on tracks, instruments for the release (off until switched on)
+      applyPerformerTracks();
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
       // [S026] nor entries whose credits were all left out for a medium
@@ -14989,7 +14999,7 @@
   }
 
   /** [3.30.2] The rows of an entry the dashboard shows (work-level roles are in the works matrix only). */
-  const shownRowsOf = (a) => S.rows.filter((r) => r.artistKey === a.key && inEntry(r) && (S.mxSkipRows || !r.mxSkipped));
+  const shownRowsOf = (a) => S.rows.filter((r) => r.artistKey === a.key && inEntry(r) && !r.s046Out && (S.mxSkipRows || !r.mxSkipped));
   /**
    * Work-level rows are shown in the works matrix only; [3.31.5] a publisher's row also in its entry, so that its level can
    * be chosen there – on the works or on the release (collected item 112: "wir haben ja bereits die möglichkeit in der
@@ -15030,7 +15040,7 @@
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
     // skipped with the works matrix only with the setting (on)
-    const rows = allRows.filter((r) => inEntry(r) && (S.mxSkipRows || !r.mxSkipped));
+    const rows = allRows.filter((r) => inEntry(r) && !r.s046Out && (S.mxSkipRows || !r.mxSkipped));
     const mxHidden = allRows.filter((r) => r.mxSkipped && !S.mxSkipRows).length;
     const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
     // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again)
@@ -15106,6 +15116,7 @@
     const roleHtml = esc(row.raw).replace(/\[[^\]]*\]/g, (m) => `<span class="dci-bracket">${m}</span>`);
     return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
+      ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
         ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
@@ -18469,6 +18480,58 @@
       }
       if (!S.rows.some((r) => r.artistKey === c.key)) S.artists.delete(c.key);
       log('info', 'pubOfPerson', { name: c.rawName || c.name, person: p.name });
+      n++;
+    }
+    return n;
+  }
+
+  /**
+   * [S046] (3.31.8) Performers on tracks, instruments for the release (collected item 111; Discogs 8613662: "Performer –
+   * Barry Guy, …" below the tracks, "Bass – Barry Guy" in the release's credits): the instrument and vocal rows of a person
+   * credited for the whole release get the tracks of the person's "Performer" credits; those rows step aside (level "Skip",
+   * not shown – `s046Out`). Switched off: everything as it came (`s046` keeps the tracks before). Returns the number of
+   * persons.
+   */
+  const PERFORMER_WORDS = /^(performer|performers|performed by|musician|musicians|played by)$/;
+  function applyPerformerTracks() {
+    const on = ruleOn('S046');
+    const byArtist = new Map();
+    for (const r of S.rows) {
+      if (r.company || r.manual || r.other || r.supp) continue;
+      if (!byArtist.has(r.artistKey)) byArtist.set(r.artistKey, []);
+      byArtist.get(r.artistKey).push(r);
+    }
+    let n = 0;
+    for (const [key, rows] of byArtist) {
+      const perf = rows.filter((r) => (r.s046Out || (r.ruleId === 'R060' && !r.dAllTracks)) && PERFORMER_WORDS.test(norm(r.dBase || r.base))
+        && !remainingMods(r).length);
+      const inst = rows.filter((r) => r.s046 || (r.dAllTracks && r.level === 'recording' && ['instrument', 'vocal'].includes(norm(rowTypeName(r) || (r.types || [])[0] || ''))));
+      if (!perf.length || !inst.length) continue;
+      if (on) {
+        const tracks = new Set(perf.flatMap((r) => [...(r.s046Out ? r.s046Out.tracks : r.tracks)]));
+        const positions = uniq(perf.flatMap((r) => r.dPositions || []));
+        if (!tracks.size) continue;
+        for (const r of inst) {
+          if (!r.s046) r.s046 = { tracks: new Set(r.tracks), suggested: new Set(r.suggested || []) };
+          Object.assign(r, { tracks: new Set(tracks), suggested: new Set(tracks), perfPositions: positions });
+        }
+        for (const r of perf) {
+          if (!r.s046Out) Object.assign(r, { s046Out: { level: r.level, tracks: new Set(r.tracks) }, level: 'skip' });
+        }
+        log('info', 'perfTracks', { name: (S.artists.get(key) || {}).name || '', list: positions.join(', '), n: inst.length });
+      } else {
+        for (const r of inst) {
+          if (!r.s046) continue;
+          Object.assign(r, { tracks: r.s046.tracks, suggested: r.s046.suggested });
+          delete r.s046;
+          delete r.perfPositions;
+        }
+        for (const r of perf) {
+          if (!r.s046Out) continue;
+          r.level = r.s046Out.level;
+          delete r.s046Out;
+        }
+      }
       n++;
     }
     return n;
