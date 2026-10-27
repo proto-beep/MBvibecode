@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.32.7 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.8 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -86,6 +86,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.8
+
+#### Changed
+
+- **The quick switches in a box of their own, each a button** (collected item 116; maintainer: "die quick switches bitte visuell in einem eigenen fenster (rechteck mit oder ohne runde ecken, deine wahl je nach konsistenz). vielleicht alle visuell mit jeweils eigenem button könnte besser sein … als checkboxen"): a framed box with a head at the top of "Mapping rules", a grid of buttons with a small slider (on: purple), the id attached to each; a click switches.
+
+#### Added
+
+- **"To the date matrix"** in the message of dates placed from the notes (collected item 109b; maintainer: "ja ok"): opens "Dates & tracks", brings the matrix into view and lights it up.
 
 ### Import 3.32.7
 

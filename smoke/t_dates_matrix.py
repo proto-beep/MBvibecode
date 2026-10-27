@@ -1,6 +1,6 @@
 """Dates & tracks: the date matrix, dragging dates and track groups, the pools (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: matrix, dragdates, pools, poolsmx, tracksdrop – each the former smoke/t_<case>.py, unchanged; `python3 t_dates_matrix.py <case> …` runs only those."""
+Cases: matrix, dragdates, pools, poolsmx, tracksdrop, titledates (3.31.7), poolsopen (3.32.1), dmgoto (3.32.8) – each the former smoke/t_<case>.py, unchanged; `python3 t_dates_matrix.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -626,6 +626,38 @@ def case_poolsopen():
         results.append(ok_b and b2[0] == 'false' and b2[2] == ['false', '{"dates":true}'])
         print('Fehler:', errs, errs2, errs3)
         results.append(not errs and not errs2 and not errs3)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dmgoto():
+    """Credits Importer 3.32.8: "To the date matrix" in the message of dates placed (collected item 109b; maintainer: "ja ok").
+    The Discogs notes "Recorded March 1–3, 2001 … Mixed May 2001." place two dates in the matrix: the message "2 dates from the notes were placed …"
+    has the button "To the date matrix". "Dates & tracks" folded by hand, the button opens it again, the matrix is in view and
+    lit up briefly; the folding by hand stays stored as it was."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1000)
+        msg = pg.evaluate("""(() => { const m = [...document.querySelectorAll('.dci-msg')].find(x => /placed in the date matrix/.test(x.textContent));
+          const btn = m && m.querySelector('[data-act=dm-goto]'); return m ? [m.textContent.replace(/\\s+/g, ' ').trim(), btn ? btn.textContent.trim() : ''] : null; })()""")
+        if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') == 'true':
+            pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+        closed = pg.locator('.dci-pools-toggle').get_attribute('aria-expanded')
+        pg.click('.dci-msg [data-act=dm-goto]'); pg.wait_for_timeout(150)
+        after = pg.evaluate("""(() => { const mx = document.querySelector('[data-el=dm]'); const r = mx ? mx.getBoundingClientRect() : null;
+          return [document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded'), !!mx && mx.classList.contains('dci-flash'),
+            !!r && r.bottom > 0 && r.top < (document.querySelector('#dci-overlay') || document.documentElement).getBoundingClientRect().bottom]; })()""")
+        stored = pg.evaluate("localStorage.getItem('dci-pools-open')")
+        print('Meldung:', msg, '| zugeklappt:', closed, '| nach dem Knopf (offen, hervorgehoben, sichtbar):', after, '| gespeichert:', stored)
+        results.append(bool(msg) and msg[1] == 'To the date matrix' and closed == 'false' and after == ['true', True, True] and stored == 'false')
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
