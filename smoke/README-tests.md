@@ -152,6 +152,8 @@ python3 t_notes_dates.py        # Discogs notes: dates and track groups found in
                                 #   trackpool: dates for some tracks: suggestions in the matrix, Apply splits rows, applying again, several days
                                 #   reldate: date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level
                                 #     takes the matching date, a date typed by hand stays, the mark stored with the matrix
+                                #   lcdmenu: 3.32.7: ▾ at the month D022 placed – single days (a cell each; Apply: a row per day), the period
+                                #     (one cell; opening ▾ adds nothing to the pool), the month
 
 python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging dates and track groups, the pools
                                 #   matrix: date matrix by hand: drag & drop, grip + "place here", editor, auto apply, stamp, after reload
@@ -207,6 +209,9 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   perftracks: 3.31.8: "Performer" on tracks, instruments for the release (S046): off by default; on → the
                                 #     instruments on the performer tracks, no performer row (someone without an instrument keeps it); off → back;
                                 #     on and loaded again → at the import already
+                                #   poemlevels: 3.32.7: the type of poems follows the level – works lyricist, recordings spoken vocals, release the
+                                #     question Q010 (lyricist · spoken vocals · liner notes, kept); the compact line goes works → recordings →
+                                #     release → skip; "Poems" alone: Q009, then the level decides
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once

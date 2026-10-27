@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.32.6, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.32.7, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.32.7 · 2026-10-27
+
+Poems: the type follows the level; ▾ at a cell of D022 (collected items 104b, 118).
+
+- **New `POEM_RULES` (R105, R106, R107), `POEM_LEVELS` (work, recording, release), `isPoemRow(row)`, `poemTypeForLevel(row, level)`** (`row.poemLevels`; works: lyricist, recordings: vocal with `primaryText` "spoken vocals", release: `row.poemRelease` or no type; the role credit set once from the role word if empty – `optionCredit`).
+- **New question Q010** (`rules: [R105, R106, R107]`, `flag: 'poemLevels'`, `level: 'release'`; lyricist · vocal spoken vocals · liner notes, all release, credit). **Q009** gets `unless: 'poemLevels'`. **`typeQuestionFor`:** `rules` (several rules), `unless`, `level`.
+- **`setLevel`:** a row of poems takes the type of the level before `resolveRowType`. **`remapRow`:** keeps it (and the release answer). **`pickType`:** Q010 keeps its answer in `row.poemRelease` (an answer without instrument clears `primaryText`). **`rowLevels`:** all levels for a row of poems; **`nextLevel`:** works → recordings → release → skip for them. **`inEntry`:** rows of poems stay in their entry on the works level.
+- **New `singleDaysOf(src, { create })`** (the single days of separate days from the pool – `found` without ":range" – or each day of a period, 2 – 62; pool entries `found` "…:dayN" only with `create`), **`lcdMenuHtml(c)`** (▾ `dm-lcd-menu`, `S.dmLcdMenu`, options `dm-lcd` with `data-pick` single · range · lcd); `matrixCellHtml` shows it for a cell with `lcdOf`. Handlers `dm-lcd-menu`, `dm-lcd` (single: a cell per day as "dm-choose" does; range: the cell takes `lcdOf`, which goes; lcd: `auto` off), log `dmChosen`.
+- **CSS:** `.dci-dm-lcdbtn`, `.dci-dm-lcdmenu`, `.dci-dm-date:has(.dci-dm-lcdmenu)`.
+- **Texts:** new `typeAsk.askPoemsRelease`, `dm.lcdMenu`, `dm.lcdSingle` (English only).
+- **Tests:** new case `poemlevels` in `t_mapping.py`, `poems` adapted (the lyricist row stays in its entry); new case `lcdmenu` in `t_notes_dates.py`; `t_text_places.py` `placedate`: "engineered at" with its own id (694 is "mixed at" in the harness); register golden written anew (Q010, Q009).
 
 ## Import 3.32.6 · 2026-10-27
 
