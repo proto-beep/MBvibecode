@@ -1,6 +1,6 @@
 """Mapping: roles, questions, suggestions, mastering, special artists, fixes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rules, v217, v219, mastering, special, recheck – each the former smoke/t_<case>.py, unchanged; `python3 t_mapping.py <case> …` runs only those."""
+Cases: rules, v217, v219, mastering, special, recheck, engineers – each the former smoke/t_<case>.py, unchanged; `python3 t_mapping.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -115,8 +115,8 @@ def case_v217():
     bass guitar · electric bass guitar · acoustic bass guitar, without a choice it stays bass guitar without credit
     (Q004); "Trombone [Additonal Musicians]" → additional (S002); "All Music By" → composer (R003); "©© Fuzzoramarecords
     2005" in the notes is a copyright date (D015), the label name gives no "recorded" hint; "‹ n rows incomplete ›" goes
-    through the incomplete rows (1/4 … 4/4; [3.30.9] the label of "©©" from the notes, not in MusicBrainz, has two) and
-    marks what is missing; Escape closes "Mapping rules" first, then the
+    through the incomplete rows (1/5 … 5/5; [3.30.9] the label of "©©" from the notes, not in MusicBrainz, has two; [3.31.5]
+    the row of the publisher Ghost Pub, not in MusicBrainz, shows in its entry too – item 112) and marks what is missing; Escape closes "Mapping rules" first, then the
     dashboard; the text size goes down to 50 %."""
     import re
 
@@ -193,9 +193,10 @@ def case_v217():
         pg.click('[data-el=sum] [data-act=inc-prev]'); pg.wait_for_timeout(300)
         back = re.search(r'\d/\d', s()).group(0)
         print('   ‹:', back)
-        # [3.30.9] "©© Fuzzoramarecords 2005" gives the label (℗ and ©, S042) – not in MusicBrainz: two rows more
-        ok3 = '4 rows incomplete' in s() and [x[0] for x in seen] == ['1/4', '2/4', '3/4'] and back == '2/4' \
-            and {tuple(x[1]) for x in seen[:2]} == {('artist', 'row:Vocals'), ('dci-c-type', 'row:Directed By')} and seen[2][1] == ['artist', 'row:Phonographic Copyright (p)']
+        # [3.30.9] "©© Fuzzoramarecords 2005" gives the label (℗ and ©, S042) – not in MusicBrainz: two rows more; [3.31.5] the
+        # publisher Ghost Pub (not in MusicBrainz) has its row in its entry too: one more
+        ok3 = '5 rows incomplete' in s() and [x[0] for x in seen] == ['1/5', '2/5', '3/5'] and back == '2/5' \
+            and {tuple(x[1]) for x in seen[:2]} == {('artist', 'row:Vocals'), ('dci-c-type', 'row:Directed By')} and seen[2][1] == ['artist', 'row:Published By']
         results.append(ok3)
 
         # 4) Escape: "Mapping rules" first, then the dashboard; text size down to 50 %
@@ -565,6 +566,194 @@ see you all next time"""
         results.append(ok_d)
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_engineers():
+    """Credits Importer 3.31.3: the kind of engineer said twice (collected item 101; maintainer: "ich habe einen Fall gefunden
+    wo "Recording Engineer" in der Discogs note zu engineer stand. das muss natürlich einfach nur nach relationship
+    recording engineer und nicht mit der Role Credit "Recording Engineer" die auch noch groß geschrieben ist.").
+    Discogs: "Engineer [Recording Engineer]", "Engineer [Mix Engineer]", "Engineer [Mastering Engineer]", "Engineer
+    [Assistant Engineer]" → recording, mix, mastering and engineer with "assistant" – each without role credit (S047; before:
+    engineer with the role credit "Recording Engineer" …)."""
+    H.lt(140, '5dcc52af-7064-4051-8d62-7d80f4c3c907', 'engineer', 'artist', 'recording', (1, 526))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+    roles = {'Rec Eng': 'Engineer [Recording Engineer]', 'Mix Eng': 'Engineer [Mix Engineer]', 'Mas Eng': 'Engineer [Mastering Engineer]',
+             'Ass Eng': 'Engineer [Assistant Engineer]'}
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': 3300 + k, 'join': ''} for k, (n, r) in enumerate(roles.items())]
+        return d
+
+    H.discogs_release = rel
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const c = tr.querySelector('[data-f=role-credit]');
+        return [t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : null, [...tr.querySelectorAll('[data-f=flag]:checked, input[type=checkbox]:checked')].map(x => x.value || x.dataset.flag || '').filter(Boolean)]; })])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(800)
+        g = pg.evaluate(ROWS)
+        got = {n: g.get(n) for n in roles}
+        print('Zeilen:', got)
+        # (no role credit: its field is empty or not there)
+        results.append([(got[n][0][0], bool(got[n][0][1])) for n in roles] == [('recording', False), ('mix', False), ('mastering', False), ('engineer', False)]
+                       and got['Ass Eng'][0][2] == ['assistant'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_poems():
+    """Credits Importer 3.31.4: poems and poetry (collected item 104; maintainer: "bitte Dichter immer zu lyricist", "ja das
+    nachfragen kann man machen").
+    A) Discogs "Poems By" → lyricist on the works (a column of the works matrix, R105); "Poetry [Read By]" and "Recitation"
+       → vocal spoken vocals with the role credit "poetry" / "recitation" (R106).
+    B) "Poems" alone: no type until chosen, the question (Q009) with lyricist · liner notes · spoken vocals; liner notes →
+       on the release with the role credit "poems"; spoken vocals → vocal spoken vocals, credited "poems"; lyricist → it leaves the entry
+       for a column of the works matrix.
+    C) A pasted text: "Poems: Jane Doe" asks the same; "Poetry by John Roe" → a column of the works matrix."""
+    H.attr(9130, 'spoken vocals', 3, 3)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    for i, n in [(3061, 'Poet A'), (3062, 'Reader B'), (3063, 'Poet C'), (3064, 'Reciter D')]:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3000), n)
+    orig = H.discogs_release
+    roles = [('Poet A', 'Poems By', 3061), ('Reader B', 'Poetry [Read By]', 3062), ('Poet C', 'Poems', 3063), ('Reciter D', 'Recitation', 3064)]
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in roles]
+        return d
+
+    H.discogs_release = rel
+    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  if (!g) return null; const tr = g.querySelector('tr.dci-row'); if (!tr) return { rows: 0 };
+  const t = tr.querySelector('[data-f=type]'); const ask = tr.querySelector('.dci-type-ask'); const p = tr.querySelector('[data-f=primary]'); const c = tr.querySelector('[data-f=role-credit]');
+  const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
+  return { rows: g.querySelectorAll('tr.dci-row').length, id: tr.dataset.row, type: t ? (t.options[t.selectedIndex] || {}).text : '', primary: p ? p.value : '', credit: c ? c.value : '',
+    level: lv ? lv.dataset.level : '', ask: ask ? ask.textContent.replace(/\\s+/g, ' ').trim() : null, opts: ask ? [...ask.querySelectorAll('[data-act=type-pick]')].map(b => b.textContent.trim()) : [],
+    rules: [...tr.querySelectorAll('.dci-ruleid')].map(b => b.textContent.trim()) }; }"""
+    COLS = """[...document.querySelectorAll('.dci-matrix th[data-colhead]')].map(th => (th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent.replace(/^MB/, '').trim())"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        # A)
+        cols = pg.evaluate(COLS)
+        rb, rd = pg.evaluate(ROW, 'Reader B'), pg.evaluate(ROW, 'Reciter D')
+        print('A) Spalten:', cols, '\n   Reader B:', rb, '\n   Reciter D:', rd)
+        results.append('Poet A' in cols and [rb['type'], rb['primary'], rb['credit']] == ['vocal', 'spoken vocals', 'poetry'] and 'R106' in rb['rules']
+                       and [rd['type'], rd['primary'], rd['credit']] == ['vocal', 'spoken vocals', 'recitation'])
+        # B)
+        c0 = pg.evaluate(ROW, 'Poet C')
+        print('B) Poet C:', c0)
+        results.append(c0 and c0['opts'] == ['lyricist (the words of the works)', 'liner notes (poems in the booklet)', 'spoken vocals (read out)']
+                       and 'R107' in c0['rules'] and 'Q009' in c0['rules'] and 'please choose' in c0['ask'] and 'Poet C' not in cols)
+        pg.click(f'tr[data-row="{c0["id"]}"] [data-act=type-pick][data-opt="1"]')
+        pg.wait_for_timeout(400)
+        c1 = pg.evaluate(ROW, 'Poet C')
+        pg.click(f'tr[data-row="{c0["id"]}"] [data-act=type-pick][data-opt="2"]')
+        pg.wait_for_timeout(400)
+        c2 = pg.evaluate(ROW, 'Poet C')
+        pg.click(f'tr[data-row="{c0["id"]}"] [data-act=type-pick][data-opt="0"]')
+        pg.wait_for_timeout(800)
+        c3, cols3 = pg.evaluate(ROW, 'Poet C'), pg.evaluate(COLS)
+        print('   liner notes:', [c1['type'], c1['level'], c1['credit']], '| spoken vocals:', [c2['type'], c2['primary'], c2['credit']], '| lyricist:', c3, cols3)
+        results.append([c1['type'], c1['level'], c1['credit']] == ['liner notes', 'release', 'poems'] and [c2['type'], c2['primary'], c2['credit']] == ['vocal', 'spoken vocals', 'poems']
+                       and (c3 is None or c3['rows'] == 0) and 'Poet C' in cols3)
+        # C) a pasted text
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Poems: Jane Doe\nPoetry by John Roe')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        j, cols4 = pg.evaluate(ROW, 'Jane Doe'), pg.evaluate(COLS)
+        print('C) Jane Doe:', j, '\n   Spalten:', cols4)
+        results.append(j and len(j['opts']) == 3 and 'Q009' in j['rules'] and 'John Roe' in cols4)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_perftracks():
+    """Credits Importer 3.31.8: performers on tracks, instruments for the release (collected item 111; maintainer, Discogs
+    8613662: "führt unter den tracks die performer aber die instrumente erst in den relationships. gäbe es eine möglichkeit
+    beides zu verknüpfen? mit quick switch. standardeinstellung = aus").
+    Bass Man: "Bass" for the release, "Performer" on tracks 3 and 4; Solo Perf: "Performer" on track 2 only; Guitar Guy:
+    "Guitar" for the release, no "Performer".
+    A) S046 is off by default: Bass Man has Bass on all tracks and Performer on 3, 4.
+    B) Switched on ("Mapping rules"): Bass Man's Bass on 3, 4 – the row says so –, no Performer row; Solo Perf keeps
+       Performer on 2; Guitar Guy keeps Guitar on all tracks.
+    C) Off again: as in A. D) On, and the page loaded again: at the import already as in B."""
+    from common_rows import tracks_of_rows
+    orig = H.discogs_release
+    H.ARTISTS[3070] = (H.uid('dddddddd', 70), 'Solo Perf')
+
+    def rel():
+        d = orig()
+        for i in (2, 3):
+            d['tracklist'][i]['extraartists'].append({'name': 'Bass Man', 'anv': '', 'role': 'Performer', 'tracks': '', 'id': 3001, 'join': ''})
+        d['tracklist'][1]['extraartists'].append({'name': 'Solo Perf', 'anv': '', 'role': 'Performer', 'tracks': '', 'id': 3070, 'join': ''})
+        return d
+
+    H.discogs_release = rel
+    ROLES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').textContent.trim(), ((tr.querySelector('.dci-perftracks') || {}).textContent || '').trim()]) : null; }"""
+    state = lambda pg: {n: [pg.evaluate(ROLES, n), tracks_of_rows(pg, n)] for n in ('Bass Man', 'Solo Perf', 'Guitar Guy')}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        a = state(pg)
+        print('A) aus:', a)
+        off = a['Bass Man'] == [[['Bass', ''], ['Performer', '']], [[1, 2, 3, 4], [3, 4]]] and a['Solo Perf'][1] == [[2]] and a['Guitar Guy'][1] == [[1, 2, 3, 4]]
+        results.append(off)
+        pg.click('[data-act=rules]'); pg.wait_for_timeout(300)
+        box = '#dci-rules [data-rf=tables] [data-rule-on=S046]'  # [3.32.0] also a quick switch at the top
+        on0 = pg.locator(box).is_checked()
+        pg.locator(box).scroll_into_view_if_needed()
+        pg.check(box); pg.wait_for_timeout(800)
+        b1 = state(pg)
+        print('B) an (vorher an:', on0, '):', b1)
+        on = lambda x: x['Bass Man'][0] == [['Bass', 'On the tracks of the “Performer” credits on Discogs: 3, 4 (rule S046)']] and x['Bass Man'][1] == [[3, 4]] \
+            and x['Solo Perf'] == [[['Performer', '']], [[2]]] and x['Guitar Guy'][1] == [[1, 2, 3, 4]]
+        results.append(not on0 and on(b1))
+        pg.uncheck(box); pg.wait_for_timeout(800)
+        c1 = state(pg)
+        print('C) wieder aus:', c1)
+        results.append(c1 == a)
+        pg.check(box); pg.wait_for_timeout(500)
+        pg.close()
+        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        d1 = state(pg)
+        logs = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'S046' in x]
+        print('D) neu geladen:', d1, '| Protokoll:', [x[9:140] for x in logs])
+        results.append(on(d1) and any('Bass Man' in x and '“Performer” on 3, 4' in x for x in logs))
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

@@ -20,7 +20,8 @@ def case_compact():
        line (grey), so the level does not move.
     F) "Compact" remembered after reloading; ⚙ Settings → General ([3.29.2] Appearance) has the same switch: "Full" – every row with its fields,
        nothing stored.
-    G) A jump to an incomplete row (› in the summary) opens it."""
+    G) A jump to an incomplete row (› in the summary) opens it ([3.31.5] › until it gets there: the row of the publisher
+       Ghost Pub, not in MusicBrainz, is incomplete too and shows in its entry – item 112)."""
     import re
     from common_rows import drag
 
@@ -132,9 +133,12 @@ def case_compact():
         pg.click(f'tr[data-row="{new_row['id']}"] .dci-cl-close')
         pg.wait_for_timeout(300)
         g0 = [new_row['open'], line('Bass Man')[-1]['open'], line('Bass Man')[-1]['flags'][:1]]
-        pg.click('.dci-incomplete .dci-textbtn[data-act=inc-next]')
-        pg.wait_for_timeout(400)
-        g1 = line('Bass Man')[-1]['open']
+        for _ in range(3):
+            pg.click('.dci-incomplete .dci-textbtn[data-act=inc-next]')
+            pg.wait_for_timeout(400)
+            g1 = line('Bass Man')[-1]['open']
+            if g1:
+                break
         print('G) neue Zeile offen, zu, Markierung:', g0, '| nach ›:', g1)
         results.append(g0[0] and not g0[1] and g0[2] and g0[2][0][0] == 'dci-cl-bad' and g1)
         print('Fehler:', errs)
@@ -297,8 +301,9 @@ def case_levels():
         print('B) Ebenen nacheinander:', levels)
         results.append(levels[:2] == ['recording', 'release'] and levels[-2:] == ['skip', 'recording'] and len(set(levels)) == len(levels) - 1
                        and seq[0][2] == 'Level – a click switches to “Release”' and seq[0][3] == 'rgb(47, 109, 181)' and seq[0][6] == 'BUTTON'
-                       and seq[0][5].endswith('2001-03-01 – 2001-03-03') and seq[1][5].endswith('2001-06-05') and seq[1][3] == 'rgb(46, 139, 87)'
-                       and seq[-1][5].endswith('2001-03-01 – 2001-03-03') and seq[-2][5] == '' and all(x[7] for x in seq[1:]))
+                       # [3.32.0] the March days as their common month (D022)
+                       and seq[0][5].endswith('· 2001-03') and seq[1][5].endswith('2001-06-05') and seq[1][3] == 'rgb(46, 139, 87)'
+                       and seq[-1][5].endswith('· 2001-03') and seq[-2][5] == '' and all(x[7] for x in seq[1:]))
         # C) the tab "Appearance"
         H.open_settings(pg, 'general')
         gen = pg.evaluate("[!!document.querySelector('.dci-set-pane [data-act=zoom-in]'), !!document.querySelector('.dci-set-pane [data-act=view]'), !!document.querySelector('.dci-set-pane [data-f=lang]')]")
