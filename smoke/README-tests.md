@@ -137,7 +137,8 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     (Turtle Tone Studio in Manhattan, similar); "Recorded November 7, 8, 2016, at Loft Köln." – the period
                                 #     2016-11-07 – 08, "Loft" in Cologne (alias Köln) for "Loft Köln", the entry's area "(Köln)"
 
-python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes
+python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
                                 #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
                                 #     the date's sentence, "mixed and mastered" → Mix and Mastering (Node and the date matrix)
                                 #   facets: 3.28.6: "C1 to D" (side D one track) and the other ranges of "Facets" as dated track groups in the matrix,
@@ -208,6 +209,9 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #   rowrules: 3.30.2: a rule id at a row opens the rules as a window (the row stays), the symbol closes it and opens
                                 #     them in the dashboard, "Into the dashboard", the setting "like the symbol"; the arrow in the head of an
                                 #     entry in the compact view opens / closes all its rows
+                                #   quickswitch: 3.32.0 (milestone): the quick switches at the top of "Mapping rules" (order, on/off, the id shows the
+                                #     rule, the same switch as in the list); D022 – the notes' "March 1–3, 2001" under Performance as 2001-03,
+                                #     off → the period again; S045 – "Composed by X (BMI)", "Lyrics by Y / GEMA" → the societies on the release
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in

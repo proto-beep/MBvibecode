@@ -301,8 +301,9 @@ def case_levels():
         print('B) Ebenen nacheinander:', levels)
         results.append(levels[:2] == ['recording', 'release'] and levels[-2:] == ['skip', 'recording'] and len(set(levels)) == len(levels) - 1
                        and seq[0][2] == 'Level – a click switches to “Release”' and seq[0][3] == 'rgb(47, 109, 181)' and seq[0][6] == 'BUTTON'
-                       and seq[0][5].endswith('2001-03-01 – 2001-03-03') and seq[1][5].endswith('2001-06-05') and seq[1][3] == 'rgb(46, 139, 87)'
-                       and seq[-1][5].endswith('2001-03-01 – 2001-03-03') and seq[-2][5] == '' and all(x[7] for x in seq[1:]))
+                       # [3.32.0] the March days as their common month (D022)
+                       and seq[0][5].endswith('· 2001-03') and seq[1][5].endswith('2001-06-05') and seq[1][3] == 'rgb(46, 139, 87)'
+                       and seq[-1][5].endswith('· 2001-03') and seq[-2][5] == '' and all(x[7] for x in seq[1:]))
         # C) the tab "Appearance"
         H.open_settings(pg, 'general')
         gen = pg.evaluate("[!!document.querySelector('.dci-set-pane [data-act=zoom-in]'), !!document.querySelector('.dci-set-pane [data-act=view]'), !!document.querySelector('.dci-set-pane [data-f=lang]')]")

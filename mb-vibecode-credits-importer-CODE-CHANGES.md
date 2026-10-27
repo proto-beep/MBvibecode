@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.31.8, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.32.0, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.32.0 · 2026-10-27 · milestone "Quick switches"
+
+Quick switches, a rights society after a writer's name, Performance on several days as what they have in common (collected item 97d).
+
+- **New `QUICK_SWITCHES`, `quickSwitchesHtml()`:** at the top of the body of "Mapping rules" (new container `data-rf="quick"`, drawn in `renderRulesBody`): a checkbox per rule (`data-rule-on`, the change handler of the window: `setRuleOn`, `applyRulesChange`) and its id (`data-qs-goto` → `focusRule`); CSS `.dci-quick`, `.dci-quick-sw`.
+- **S045** (new special rule): `TEXT.parse` – new `SOC_AFTER`, `stripWriterSocieties(text)` before `readUnit`, for sentences with a word of writers (new `WRITER_WORDS_IN`): the society after a name goes to `addSociety`, the name stays without it.
+- **D022** (new date rule): `placeSeparateDays` (auto, Performance, with a common date of D014): a cell of the common date (new field `lcdOf`) instead of the "choose" cell; `autoPlaceFoundDates`: a period of Performance with a common date – the cell takes the common date (`lcdOf`). New `replaceNotesSuggestions()`: after D022 or D014 was switched, the notes' cells not applied yet (`auto`, not from titles) go and are placed anew (`applyRulesChange`). `autoPlaceFoundDates`: the days and the period of such a cell do not count as "without a group" (`dm.autoPooled`); `usedTextMarks`: the date of the notes is also underlined when the matrix uses its common date (found key `notes:<i>:lcd`).
+- **Milestone:** `MILESTONES` with 3.32.0, text `ms.3.32.0` (English only).
+- **Texts:** new `rules.quick`, `rules.quickTitle`, `quick.S045`, `quick.D022`, `quick.S021`, `quick.S031`, `quick.S007`, `quick.D023`, `quick.S046` (English only).
+- **Tests:** new case `quickswitch` in `t_rules_window.py`; case `notice` (`t_ui_settings.py`): the newest milestones 3.32.0, 3.31.0, 3.29.0; `harness.py`: new `RULES_OFF` (built-in rules switched off before the script starts) – the cases about periods and "choose" run without D022 (`choose`, `trackpool`, `reldate` in `t_notes_dates.py`, `dragdates` in `t_dates_matrix.py`); `datewords`, `discnotes` (`t_notes_companies.py`) and `levels` (`t_ui_view.py`) expect the common month (D022); `titledates` and `perftracks` take the switch of the list (there is one at the top too); `register_golden.json` written anew.
 
 ## Import 3.31.8 · 2026-10-27
 

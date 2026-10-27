@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.31.8 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.0 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -41,6 +41,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-27 | Import 3.32.0 | Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background. |
 | 2026-10-25 | Import 3.31.0 | Text recognition, part 4: publishers below a heading ("[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5") on their tracks, their rights society (BMI, ASCAP, GEMA … – a list of the societies) on the release level, a publisher with the name of a person as a part of that person's column in the works matrix, names written together searched apart too ("Flizmo Music", "Four Word Sea Music"); the members of a band ("Vision Fortune are A, B and C") as performers, "sounds" asks performer or effects; from the Discogs notes dates per disc ("May 26, 2016 (Disc 2)"), places and the label of "© & ℗ TUM Records Oy 2021" (TUM Records offered too). Since 3.29.0 also: the mapping rules in the dashboard or as a window (also from a rule id at a row), colours for the levels, the level of a compact line switched by a click, ⚙ Settings → Appearance, an entry or a group compact at once, each pool folds on its own, scroll bars above and below the works matrix, the settings without an import ("Source pages"), the tracks of a track group typed in. |
 | 2026-10-24 | Import 3.29.0 | Text recognition, part 3: credits in prose ("… by K.M. (sounds, words) & E. (voice)", "Cover artwork channeled by …", "Logo carved by the guided hand of …"), every place of joined verbs ("Mixed and mastered at …") and lists of kinds ("Tenor, alto, soprano saxophones"); dates go to every group of joined words and take their group only from their own sentence, release years are left out, "19 & 20. 01. 2009" and "1973 October 19" are read; "C1 to D" with a side of one track, "in live concert" for the tracks named. Since 3.27.0 also Bandcamp track pages, Norwegian, Swedish and Danish roles, "cover design", "credited as" from texts and none for a case-only spelling, and the companion's underlines of the dates and track groups used. |
 | 2026-10-24 | Import 3.27.0 | A clearer dashboard: the entries compact – one line per role (role → type and instrument, level, tracks, date), a click opens the row to change it; dates and track groups can still be dropped onto the line, what is open is in colour (red missing, yellow a question or suggestion), skipped rows are grey with ✕; "Compact \| Full" is remembered. The head in one line with symbols of its own, "Source ▾" for everything about the source, "+ Supplement" only on request; the settings as tabs (also "Texts" and "ⓘ Connections" – every site, tool and script the script works with), "Reset all settings" in them; after the installation the language is asked once |
@@ -85,6 +86,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.0 – milestone "Quick switches"
+
+#### Added
+
+- **Quick switches** at the top of "Mapping rules" (collected item 97d; maintainer: "im mapping ganz oben evtl. (mit klickbarem verweis dann wo es verwendet wird)"): S045, D022, S021, S031, S007 (on by default), D023 and S046 (off by default), each with its id – a click shows the rule; the same switches as in the lists below.
+- **A rights society after a writer's name** (rule S045; maintainer: "Gesellschaft hinter einem Schreiber: ja ok. bitte lass das aber an- und abstellen."): "Composed by Tomas Fujiwara (BMI)", "Lyrics by Ann Poe / GEMA" – the society is the release's rights society, the name without it.
+
+#### Changed
+
+- **Performance on several days: their common month or year** (rule D022, on by default; maintainer: "auf jeden fall noch die regel, dass performance dates die über mehrere tage hinweg gehen nach meinen regeln auf den kleinsten gemeinsamen nenner gekürzt werden"): dates of the notes over several days ("December 11 & 12, 2015", "Recorded March 1–3, 2001") go under Performance as the common month (2015-12, 2001-03) or year; the period and the single days stay in the pool. Before: the period, or "choose" for single days.
+- **The update notice** names the milestone.
 
 ### Import 3.31.8
 

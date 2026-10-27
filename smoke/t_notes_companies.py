@@ -12,7 +12,7 @@ def case_discnotes():
     2016 (Disc 2) and December 11 & 12, 2015 (Disc 3) / All music mastered ... at Turtle Tone Studio in New York City /
     Including a 52 p. booklet. / © & ℗ TUM Records Oy 2021".
     A) Each of the three dates goes under Performance (D021) with the tracks of its disc ("Medium 2 · CD"); December 11 & 12,
-       2015 is a period; no message about dates without a group (until 3.30.7 only the first date
+       2015 is [3.32.0] their common month, 2015-12 (D022; before: a period); no message about dates without a group (until 3.30.7 only the first date
        had a group, all three the tracks of disc 1).
     B) The places of the notes (S042): Orange Music Sound Studios (recorded at; West Orange, New Jersey) and Turtle Tone Studio
        (mastered at; New York City) – Discogs does not list them.
@@ -66,7 +66,7 @@ Including a 52 p. booklet.
         perf = sorted((day(pool[c['date']]), [(tgs[t]['name'], tgs[t]['tracks']) for t in c['tgs']], len(c.get('alt') or [])) for c in cells if c['col'] == 'performance')
         msgs = pg.locator('.dci-msg').all_inner_texts()
         print('A) Performance:', perf, '| Meldungen:', [m[:70] for m in msgs])
-        results.append([x[:2] for x in perf] == [('2015-12-11/12', [('Medium 3 · CD', [3])]), ('2016-5-26', [('Medium 2 · CD', [2])]), ('2016-5-27', [('Medium 1 · CD', [0, 1])])]
+        results.append([x[:2] for x in perf] == [('2015-12-None', [('Medium 3 · CD', [3])]), ('2016-5-26', [('Medium 2 · CD', [2])]), ('2016-5-27', [('Medium 1 · CD', [0, 1])])]
                        and not any('no word naming' in m for m in msgs))
         g = pg.evaluate(GROUPS)
         places = [x for x in g if x[0] in ('Orange Music Sound Studios', 'Turtle Tone Studio')]
