@@ -13,8 +13,10 @@ server, so the companion shares its values between pages as it does in Tampermon
 MBvibecode/ (this repository)
   mb-vibecode-credits-importer.user.js             main script
   mb-vibecode-credits-importer-companion.user.js   companion
-  tools/i18n_add.py                   adds or replaces texts in the embedded translations (en, de, es, fr)
-  tools/i18n_del.py                   removes texts from the embedded translations (all languages, with plural forms)
+  mb-vibecode-credits-importer-mapping.json     the data of the mapping register (3.33.0, @resource mapping)
+  mb-vibecode-credits-importer-languages.json   German, Spanish, French (3.34.0, @resource languages; English in the script)
+  tools/i18n_add.py                   adds or replaces texts: English in the script, de / es / fr in the languages file (3.34.0)
+  tools/i18n_del.py                   removes texts in all languages (script and languages file, with plural forms)
   smoke/harness.py                    mock MusicBrainz, Discogs and Bandcamp, shared GM storage, helpers
   smoke/zooid.py                      scenario after Discogs release 38282688 (10 tracks, two sessions, two studios)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
@@ -366,6 +368,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #   navlink: the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
                                 #   mappingload: 3.33.0: the mapping file from the manager; fetched from GitHub (kept, one reload); missing → the
                                 #     message with "Update script"
+                                #   languagesload: 3.34.0: the languages file from the manager (German); fetched from GitHub (kept, one reload);
+                                #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
                                 #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
@@ -384,14 +388,17 @@ python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, cred
                                 #     a row, not the pool), status off/on, Bandcamp credits (a year also in "released …") and "about";
                                 #     two "Vocals [...]" lines of one artist
 
-python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file
-                                #   i18n: the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
+python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file, the languages file
+                                #   i18n: the texts (3.27.1; 3.34.0: English from the script, de / es / fr from the languages file): every key
+                                #     the code names in English, no left-over translations, no foreign
                                 #     placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                                 #     per language (LIST=1: all keys) – not an error
                                 #   connections: the connections (3.25.0, Node): every address of @match / @connect and of the code belongs to an entry of
                                 #     CONNECTIONS, the ids are unique, every entry has its texts in English (3.27.1; before: four languages)
                                 #   mappingfile: 3.33.0: mb-vibecode-credits-importer-mapping.json – format, version, its lists against `MAP.X` of the
                                 #     script, patterns compile, @resource / @grant / @connect, read in Node
+                                #   languagesfile: 3.34.0: mb-vibecode-credits-importer-languages.json – format, version, de / es / fr, its layout
+                                #     (that of i18n_add.py), only English in the script, @resource languages, read in Node (German, else English)
 ```
 
 ### Former test → file and case (3.31.1)
@@ -579,3 +586,4 @@ records these lookups). A test can put relationships that are already in MusicBr
 Chromium is started with `harness.LAUNCH_ARGS` (web security off), so the pages may call the local storage server.
 Texts are added with `python3 tools/i18n_add.py <anchor key> <file.json>`; the JSON holds `{lang: {key: text}}` – from 3.27.1
 English alone (`{"en": {…}}`) is enough, the other languages follow in a translation round (the case `i18n` of `t_static.py` lists what is missing).
+From 3.34.0 English goes into the script and German, Spanish and French into `mb-vibecode-credits-importer-languages.json` (one text a line).

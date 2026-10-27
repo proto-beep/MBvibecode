@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-28 | 3.34.0 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -41,6 +42,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-28 | Import 3.34.0 | The languages file: the texts in German, Spanish and French are a file of their own, `mb-vibecode-credits-importer-languages.json`, loaded with the script like the mapping file (English stays in the script, also when the file is missing); every text translated again. Also: ✎ changes built-in rules in “Mapping rules”, your changes exported (a file of their own, or the whole register for a pull request) and imported with a preview. |
 | 2026-10-27 | Import 3.33.0 | The mapping file: the data of the mapping rules – role rules, company roles, questions, tables and word lists, the quick switches – is a file of its own, `mb-vibecode-credits-importer-mapping.json`, which the userscript manager loads with the script (the script fetches it from GitHub itself if not); rules can be kept on GitHub without touching the code. Since 3.32.0 also: places with a date after them, typos in role words, the credits of Bandcamp's “about” text, poems that follow their level, single days instead of a month, the quick switches as buttons, comments of live recordings. |
 | 2026-10-27 | Import 3.32.0 | Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background. |
 | 2026-10-25 | Import 3.31.0 | Text recognition, part 4: publishers below a heading ("[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5") on their tracks, their rights society (BMI, ASCAP, GEMA … – a list of the societies) on the release level, a publisher with the name of a person as a part of that person's column in the works matrix, names written together searched apart too ("Flizmo Music", "Four Word Sea Music"); the members of a band ("Vision Fortune are A, B and C") as performers, "sounds" asks performer or effects; from the Discogs notes dates per disc ("May 26, 2016 (Disc 2)"), places and the label of "© & ℗ TUM Records Oy 2021" (TUM Records offered too). Since 3.29.0 also: the mapping rules in the dashboard or as a window (also from a rule id at a row), colours for the levels, the level of a compact line switched by a click, ⚙ Settings → Appearance, an entry or a group compact at once, each pool folds on its own, scroll bars above and below the works matrix, the settings without an import ("Source pages"), the tracks of a track group typed in. |
@@ -85,6 +87,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-28
+
+### Import 3.34.0 – milestone “Languages file”
+
+#### Changed
+
+- **The languages file** (collected item E6, Block X; maintainer: "Bei E6 sollen alle Sprachen in einem einzelnen add on File sein. Vielleicht kann E6 ganz ans Ende gepaart mit einem Update der übersetzungen", "erst b dann a"): the texts in German, Spanish and French are in `mb-vibecode-credits-importer-languages.json` (one text a line); English – the base of the keys and what shows when a text is missing – stays in the script, which is about 380 KB smaller. The userscript manager loads the file with the script (`@resource languages`); if it did not, the script fetches it from GitHub itself and keeps it for this version (with a language other than English chosen it loads the page once more); failing that, a message "languages file missing" with "Update script", and the dashboard speaks English. The log names the file at each start. Connections X010 names it.
+- **Translation round:** the 238 texts that were English only (from 3.27.1 on: R – W, Y, V and the new texts of 3.33.x) are translated into German, Spanish and French – nothing is missing any more.
+
+#### Developers
+
+- `tools/i18n_add.py` and `tools/i18n_del.py` write English into the script and the other languages into the languages file; `t_static.py` (i18n) reads both.
 
 ## 2026-10-27
 

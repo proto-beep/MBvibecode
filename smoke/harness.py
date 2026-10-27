@@ -20,6 +20,9 @@ VERSION = re.search(r'^// @version\s+(\S+)', MAIN, re.M).group(1)
 # (GM_getResourceText); a test can leave it out (MAPPING_SHIM_OFF) to see the script fetch it or say it is missing
 MAPPING_TEXT = (ROOT / 'mb-vibecode-credits-importer-mapping.json').read_text()
 MAPPING_SHIM_OFF = False
+# [3.34.0] the languages file the same way (German, Spanish, French); LANGUAGES_SHIM_OFF leaves it out
+LANGUAGES_TEXT = (ROOT / 'mb-vibecode-credits-importer-languages.json').read_text()
+LANGUAGES_SHIM_OFF = False
 RAW_GITHUB = {}
 RAW_REQUESTS = []
 SYNC = (ROOT / 'mb-vibecode-credits-importer-companion.user.js').read_text()
@@ -839,10 +842,16 @@ LAUNCH_ARGS = ['--disable-web-security',
 
 def add_mapping(ctx):
     """[3.33.0] The mapping file as the userscript manager gives it (@resource mapping: GM_getResourceText), unless
-    MAPPING_SHIM_OFF; for a context made without new_context (another browser language, a screenshot)."""
+    MAPPING_SHIM_OFF; [3.34.0] the languages file too (@resource languages), unless LANGUAGES_SHIM_OFF. For a context made
+    without new_context (another browser language, a screenshot) as well."""
+    files = {}
     if not MAPPING_SHIM_OFF:
-        ctx.add_init_script(script="if (typeof window.GM_getResourceText !== 'function') window.GM_getResourceText = (name) => (name === 'mapping' ? %s : null);"
-                            % json.dumps(MAPPING_TEXT))
+        files['mapping'] = MAPPING_TEXT
+    if not LANGUAGES_SHIM_OFF:
+        files['languages'] = LANGUAGES_TEXT
+    if files:
+        ctx.add_init_script(script="if (typeof window.GM_getResourceText !== 'function') { const files = %s; window.GM_getResourceText = (name) => (name in files ? files[name] : null); }"
+                            % json.dumps(files))
 
 
 def new_context(browser):

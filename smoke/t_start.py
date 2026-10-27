@@ -509,4 +509,98 @@ def case_mappingload():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_languagesload():
+    """Credits Importer 3.34.0 (milestone "Languages file", item E6; maintainer: "erst b dann a"): where the texts in German,
+    Spanish and French come from.
+    A) Loaded by the userscript manager, German chosen: the dashboard speaks German; the log notes the file (key
+       languagesLoaded, "loaded by the userscript manager", its version the script's).
+    B) The manager did not load it, German chosen: the script fetches it from GitHub (…/main/…-languages.json?v=<version>),
+       keeps it for this version and loads the page once more – German; the next page needs no fetch.
+    C) English chosen and the file missing: no reload and no message; it is fetched and kept, and German chosen in
+       ⚙ Settings shows at once.
+    D) Not on GitHub either, German chosen: the message "languages file missing" with "Update script", the dashboard in
+       English, the log warns (languagesMissing)."""
+    import json
+    results = []
+    LANG_PATH = '/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json'
+    LOG = f"JSON.parse(sessionStorage.getItem('dci-log:{H.REL}') || '[]').filter(e => /^languages/.test(e.key)).map(e => [e.key, e.params])"
+    de = json.loads(H.LANGUAGES_TEXT)['de']
+
+    def lang(ctx, code):
+        ctx.add_init_script("localStorage.setItem('dci-lang', %s);" % json.dumps(json.dumps(code)))
+
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        # A) from the manager
+        ctx = H.new_context(b)
+        lang(ctx, 'de')
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        btn_a = pg.locator('#dci-open').inner_text().strip()
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(500)
+        log_a = pg.evaluate(LOG)
+        print('A)', btn_a, '|', log_a)
+        results += [btn_a == de['launcher.open'] and log_a and log_a[0][0] == 'languagesLoaded' and log_a[0][1]['version'] == H.VERSION
+                    and log_a[0][1]['from'] in (de.get('mapping.from.manager'), 'loaded by the userscript manager'), not errs]
+        ctx.close()
+        # B) fetched from GitHub, German chosen: once more
+        H.LANGUAGES_SHIM_OFF = True
+        H.RAW_GITHUB[LANG_PATH] = H.LANGUAGES_TEXT
+        H.RAW_REQUESTS.clear()
+        ctx = H.new_context(b)
+        lang(ctx, 'de')
+        pg, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{H.REL}/edit-relationships')
+        H.wait_for(pg, "!!document.getElementById('dci-open') && document.getElementById('dci-open').textContent.includes('importieren')", 30)
+        stored = pg.evaluate(f"!!localStorage.getItem('dci-languages:{H.VERSION}')")
+        n1 = len(H.RAW_REQUESTS)
+        pg.reload()
+        pg.wait_for_selector('#dci-open', timeout=30000)
+        btn_b = pg.locator('#dci-open').inner_text().strip()
+        n2 = len(H.RAW_REQUESTS)
+        print('B) geholt:', H.RAW_REQUESTS[:1], '| gespeichert:', stored, '|', btn_b, '| Abrufe:', n1, '→', n2)
+        results += [n1 == 1 and f'languages.json?v={H.VERSION}' in H.RAW_REQUESTS[0] and stored and btn_b == de['launcher.open'] and n2 == n1, not errs]
+        ctx.close()
+        # C) English chosen: fetched in the background, no reload, German at once from ⚙ Settings
+        H.RAW_REQUESTS.clear()
+        ctx = H.new_context(b)
+        lang(ctx, 'en')
+        ctx.add_init_script("window.__loads = (window.__loads || 0) + 1; sessionStorage.setItem('t-loads', String(Number(sessionStorage.getItem('t-loads') || 0) + 1));")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.wait_for(pg, f"!!localStorage.getItem('dci-languages:{H.VERSION}')", 20)
+        pg.wait_for_timeout(500)
+        c1 = [pg.locator('#dci-open').inner_text().strip(), pg.evaluate("sessionStorage.getItem('t-loads')"), pg.locator('#dci-languages-missing').count(), len(H.RAW_REQUESTS)]
+        H.open_dashboard(pg)
+        H.open_settings(pg, 'general')
+        pg.select_option('[data-el=settings] [data-f=lang]', 'de')
+        pg.wait_for_timeout(500)
+        c2 = pg.locator('.dci-head [data-act=settings-open]').get_attribute('aria-label')
+        print('C) Englisch:', c1, '| auf Deutsch:', c2)
+        results += [c1 == ['Import credits …', '1', 0, 1] and c2 == 'Einstellungen', not errs]
+        ctx.close()
+        # D) missing, German chosen
+        H.RAW_GITHUB.clear()
+        ctx = H.new_context(b)
+        lang(ctx, 'de')
+        ctx.add_init_script("window.__opened = []; window.open = (u) => { window.__opened.push(u); return null; };")
+        pg, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{H.REL}/edit-relationships')
+        pg.wait_for_selector('#dci-languages-missing', timeout=20000)
+        msg = pg.evaluate("document.getElementById('dci-languages-missing').textContent")
+        btn_d = pg.locator('#dci-open').inner_text().strip()
+        pg.click('#dci-languages-missing .dci-mapping-update')
+        opened = pg.evaluate('window.__opened')
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(500)
+        log_d = pg.evaluate(LOG)
+        print('D)', msg[:120], '| Knopf:', btn_d, '| geöffnet:', opened, '| Log:', log_d)
+        results += [msg.startswith('MB x Vibecode: Credits Importer – languages file missing') and 'Update script' in msg and btn_d == 'Import credits …'
+                    and opened == ['https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js']
+                    and log_d and log_d[0][0] == 'languagesMissing', not errs]
+        ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
