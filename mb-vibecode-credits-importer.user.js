@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.5
+// @version      3.32.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1084,6 +1084,8 @@
       "settings.afterEditBg": "Imported with Harmony (Bandcamp, Discogs): open it in a background tab, Harmony’s page stays in front",
       "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
       "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
+      "settings.aboutCredits": "Bandcamp: read the credits in the “about” text",
+      "settings.aboutCreditsTitle": "Rule S049: every credit line of Bandcamp's “about” text is read like those of the credits field (“Music and cover art by X”), marked “from the about text” – prose gives nothing. “Leave out the about text” (menu Source ▾) still leaves out all of it for one release. Takes effect at the next import.",
       "settings.typos": "Typos in role words (“Muisc” → “Music”)",
       "settings.typosTitle": "Rule S050: a part of a text (pasted, Bandcamp, Discogs notes) that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word read as that word – only role words, never names; the row says what was written. Takes effect at the next import.",
       "harmony.opened": "– opened in a background tab",
@@ -6311,6 +6313,9 @@
     // den relationships. gäbe es eine möglichkeit beides zu verknüpfen? mit quick switch. standardeinstellung = aus")
     { id: 'S046', where: 'applyPerformerTracks', note: 'Performers on tracks, instruments for the release: a person credited "Performer" on some tracks only and with instruments or voices for the whole release only ("Performer – Barry Guy" on 4-3 and 4-5, "Bass – Barry Guy" for the release) gets the instruments on the tracks of the "Performer" credits, across all media; the "performer" rows go (they would say the same). Someone without an instrument keeps "performer"; instruments without a "Performer" credit stay on all tracks. Who plays which of several instruments where, Discogs does not say: all of them on all of these tracks. Off until switched on (3.31.8)' },
     { id: 'S047', where: 'mapRoleInner', note: 'The kind of engineer said twice: "Engineer [Recording Engineer]" is read as "Engineer [Recording]" – recording without role credit; "[Mix Engineer]" mix, "[Mastering Engineer]" mastering, "[Assistant Engineer]" engineer with "assistant", "[Sound Engineer]" sound engineer (3.31.3)' },
+    // [3.32.6] collected item 115 (maintainer: "hier stehen die credits im "falschen" feld ich möchte ermöglichen dass diese auch
+    // abgerufen werden", "mach immer lesen bitte. an/ausschaltbar in den einstellungen")
+    { id: 'S049', where: 'BANDCAMP.toRelease (aboutRes), linerNotes, artistSignature', note: 'Credits in Bandcamp\'s "about" text: every credit line of it is read like those of the credits field ("Music and cover art by j4vaman" → composer, cover art) – also when the credits field has credits; prose gives nothing, its lines are not listed as not recognized; the rows say "from the about text" and go with "Leave out the about text". Before only its places and areas, the members of the band (S041) and the liner notes. Switch also in ⚙ Settings → Texts' },
     // [3.32.5] collected item 115 (maintainer: "muisc hat einen schreibfehler", "Wir probieren es mal mit Tippefehler allgemein
     // erkennen")
     { id: 'S050', where: 'TEXT.parse (typoMode, readRole), fixRoleTypo, roleVocab, roleCell', note: 'Typos in role words: a part of a text that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word (T048) – a letter swapped, missing, too many or wrong – read as that word, when the role is known then ("Muisc and cover art by X" → Music By, cover art); only role words, never names; the row says "Read as “Music” (written “Muisc”)". All texts (pasted, Bandcamp, Discogs notes); switch also in ⚙ Settings → Texts' },
@@ -7140,6 +7145,25 @@
     const vocab = { set: new Set(list), list };
     if (fromMb) roleVocabCache = vocab;
     return vocab;
+  }
+
+  /**
+   * [3.32.6] Two names the same or at most two letters apart (missing, too many or wrong; case left aside), both
+   * of five letters or more: "j4vavaman" and "j4vaman" (collected item 115b).
+   */
+  function nameClose(a, b) {
+    const x = norm(a);
+    const y = norm(b);
+    if (!x || !y) return false;
+    if (x === y) return true;
+    if (x.length < 5 || y.length < 5 || Math.abs(x.length - y.length) > 2) return false;
+    let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= x.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[y.length] <= 2;
   }
 
   /** [S050] Two words one letter apart: one swapped pair of neighbours, one letter missing, too many or wrong. */
@@ -9121,6 +9145,16 @@
       const ok = words.every((w, i) => (i > 0 && i < words.length - 1 && LINER_PARTICLE.test(w)) || /^\p{Lu}[\p{L}'’.-]*$/u.test(w));
       return ok && !words.some((w) => /^(?:thanks?|notes|credits)$/i.test(w)) ? name : null;
     }
+    /**
+     * [3.32.6] A signature in the spelling of an artist of the release – one word, digits, small letters ("-j4vavaman" for the
+     * artist j4vaman; collected item 115b): after a sign only, the name the same as an artist's or at most two letters off.
+     */
+    function artistSignature(line, artistNames) {
+      const m = String(line || '').match(/^[\s—–―~*•-]+\s*([\p{L}\p{N}][\p{L}\p{N}'’._-]*(?:\s+[\p{L}\p{N}][\p{L}\p{N}'’._-]*){0,3})\s*$/u);
+      if (!m) return null;
+      const name = m[1].replace(/[.]+$/, '');
+      return artistNames.some((a) => nameClose(a, name)) ? name : null;
+    }
     /** Sentences of a text: ended by . ! ? … or a line break, with at least three words. */
     const sentenceCount = (t) => String(t || '').split(/(?<=[.!?…])["”’)]*\s+|\n+/).filter((x) => (x.match(/\p{L}+/gu) || []).length >= 3).length;
     /**
@@ -9129,18 +9163,20 @@
      * ", place, date" allowed after it; the text above it at least five sentences (several paragraphs are fine).
      * Returns { name, line, part, pi, n, at, len } (the line and part as for a credit, at/len: the signature in the text) or null.
      */
-    function linerNotes(about) {
+    function linerNotes(about, { creditLines = new Set(), artistNames = [] } = {}) {
       const text = String(about || '');
       const lines = text.split(/\r?\n/);
       let k = lines.length - 1;
-      while (k >= 0 && !lines[k].trim()) k--;
+      // [3.32.6] credit lines below the signature ("-j4vavaman" / "Music and cover art by j4vaman") are no part of it
+      // (collected item 115b; before, only the last line could be the signature)
+      while (k >= 0 && (!lines[k].trim() || creditLines.has(lines[k].trim()))) k--;
       if (k < 0) return null;
       const line = lines[k].trim();
       let name = null;
       let prose = '';
       let part = line;
       let pi = 0;
-      if (k > 0 && (name = signatureName(line))) {
+      if (k > 0 && (name = signatureName(line) || artistSignature(line, artistNames))) {
         prose = lines.slice(0, k).join('\n');
       } else {
         const m = line.match(/^(.*[.!?…]["”’)]*)\s+[—–―~-]+\s*([^—–―~]+)$/);
@@ -9175,9 +9211,13 @@
       // its dates are found in the notes like those of the credits
       // [3.22.0] and its areas ("recorded in Berlin")
       const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
-      // [3.30.7] the members of the band from the "about" text too (S041)
-      credits.push(...aboutRes.credits.filter((c) => c.members));
-      companies.push(...aboutRes.companies.filter((c) => /\b(?:at|in)$/i.test(c.role))
+      // [3.30.7] the members of the band from the "about" text too (S041); [S049] (3.32.6) every credit of it (collected item 115:
+      // "hier stehen die credits im "falschen" feld ich möchte ermöglichen dass diese auch abgerufen werden", "mach immer lesen
+      // bitte. an/ausschaltbar in den einstellungen") – marked as from there, left out with it; its lines not recognized are not
+      // listed (mostly prose)
+      const aboutAll = ruleOn('S049');
+      credits.push(...aboutRes.credits.filter((c) => aboutAll || c.members).map((c) => (c.members ? c : { ...c, fromAbout: true })));
+      companies.push(...aboutRes.companies.filter((c) => aboutAll || /\b(?:at|in)$/i.test(c.role))
         .map((c) => ({ ...c, fromAbout: true }))); // [3.16.1] can be left out ("Leave out the about text")
       const unrecognized = [...album.unrecognized];
       const ignored = [...(album.ignored || [])];
@@ -9194,7 +9234,8 @@
       });
       // [3.17.2] Liner notes at the end of the "about" text: a credit "Liner Notes" of the name below it – a name like any
       // other (only suggested), from the about text (left out with it)
-      const liner = linerNotes(cur.about || '');
+      const liner = linerNotes(cur.about || '', { creditLines: new Set([...aboutRes.credits, ...aboutRes.companies].map((c) => String(c.line || '').trim()).filter(Boolean)),
+        artistNames: [...(ctx.artistNames || []), bandName].filter(Boolean) });
       if (liner) {
         const p = parseRoleNotation('Liner Notes')[0];
         credits.push({ who: { id: 0, name: liner.name, rawName: liner.name, links: [] }, role: p.raw, base: p.base, details: p.mods, credited: '',
@@ -14256,10 +14297,12 @@
         }
         // [3.22.1] an artist of the release's artist credit with this name: first, marked "release artist" (46)
         if (!a.company) {
-          const rel = (S.releaseCredit || []).filter((p) => p.mbid && (nameFit(p.name, a.name) === 'same' || a.nameHits.some((h) => h.mbid === p.mbid && !h.similar)));
+          // [3.32.6] also one at most two letters off ("j4vavaman" signing for j4vaman, collected item 115b): first, marked similar
+          const close = (p) => nameFit(p.name, a.name) !== 'same' && nameClose(p.name, a.name);
+          const rel = (S.releaseCredit || []).filter((p) => p.mbid && (nameFit(p.name, a.name) === 'same' || close(p) || a.nameHits.some((h) => h.mbid === p.mbid && !h.similar)));
           for (const p of [...rel].reverse()) {
             const had = a.nameHits.find((h) => h.mbid === p.mbid);
-            a.nameHits = [{ ...(had || { mbid: p.mbid, name: p.name, entityType: 'artist', similar: false, disambiguation: '' }), release: true },
+            a.nameHits = [{ ...(had || { mbid: p.mbid, name: p.name, entityType: 'artist', similar: close(p), disambiguation: '' }), release: true },
               ...a.nameHits.filter((h) => h.mbid !== p.mbid)];
           }
         }
@@ -23851,6 +23894,8 @@
         // [3.21.3] web profiles next to names in a text
         row(check('data-set="weblinks-show"', S.webLinksShow, tr('settings.webLinksShow'), tr('settings.webLinksShowTitle'))),
         // [3.32.5] typos in role words (S050, collected item 115: "an/ausschaltbar in den einstellungen") – the rule's switch
+        // [3.32.6] the credits of Bandcamp's "about" text (S049, collected item 115)
+        row(check('data-set="rule-on" data-rule="S049"', ruleOn('S049'), tr('settings.aboutCredits'), tr('settings.aboutCreditsTitle'))),
         row(check('data-set="rule-on" data-rule="S050"', ruleOn('S050'), tr('settings.typos'), tr('settings.typosTitle'))),
         `<p class="dci-sub">${esc(tr('settings.textsHint'))} <button type="button" class="dci-textbtn" data-act="rules">${esc(tr('rules.title'))}</button></p>`,
       ],
@@ -24027,7 +24072,7 @@
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'rule-on') {
-      // [3.32.5] a rule switched here (S050; S049 from 3.32.6) – the same as its switch in "Mapping rules"
+      // [3.32.5] a rule switched here (S050; [3.32.6] S049) – the same as its switch in "Mapping rules"
       setRuleOn(el.dataset.rule, el.checked);
       applyRulesChange(el.dataset.rule);
       renderRulesBody();
@@ -24085,7 +24130,7 @@
       // [3.25.0] the web links next to names moved here from "Sources"
       S.webLinksShow = false;
       // [3.32.5] the rules switched here, on again
-      ['S050'].forEach((id) => setRuleOn(id, true));
+      ['S049', 'S050'].forEach((id) => setRuleOn(id, true));
       saveRules();
       renderRulesBody();
       renderGroups();

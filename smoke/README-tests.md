@@ -297,7 +297,7 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
                                 #     the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
 
-python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages
+python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text
                                 #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and
                                 #     track pages through GM_xmlhttpRequest, band linked by its page, choice kept after a reload, edit note),
                                 #     digital media → Bandcamp first, order changed in the list, the Bandcamp menu (track pages off,
@@ -318,6 +318,9 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #   bctrack: a Bandcamp track page as the release (3.28.1 / companion 1.8.4): loaded from the link, its credits once,
                                 #     the tab "connected" with marks; a track of an album via "Other source", "Load the release there"; Test page;
                                 #     the text "… Bandcamp track pages too", long settings texts wrap
+                                #   aboutcredits: 3.32.6: the credits of the "about" text (S049; j4vaman "Ephemeral"): composer (S050, "Muisc"),
+                                #     cover art and the liner notes "-j4vavaman" above the credit line, all "from the about text"; S049 off
+                                #     → only the liner notes; the release artist j4vaman first suggestion for j4vavaman; ⚙ → Texts switch
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
