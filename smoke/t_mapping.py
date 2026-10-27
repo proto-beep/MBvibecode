@@ -690,4 +690,72 @@ def case_poems():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_perftracks():
+    """Credits Importer 3.31.8: performers on tracks, instruments for the release (collected item 111; maintainer, Discogs
+    8613662: "führt unter den tracks die performer aber die instrumente erst in den relationships. gäbe es eine möglichkeit
+    beides zu verknüpfen? mit quick switch. standardeinstellung = aus").
+    Bass Man: "Bass" for the release, "Performer" on tracks 3 and 4; Solo Perf: "Performer" on track 2 only; Guitar Guy:
+    "Guitar" for the release, no "Performer".
+    A) S046 is off by default: Bass Man has Bass on all tracks and Performer on 3, 4.
+    B) Switched on ("Mapping rules"): Bass Man's Bass on 3, 4 – the row says so –, no Performer row; Solo Perf keeps
+       Performer on 2; Guitar Guy keeps Guitar on all tracks.
+    C) Off again: as in A. D) On, and the page loaded again: at the import already as in B."""
+    from common_rows import tracks_of_rows
+    orig = H.discogs_release
+    H.ARTISTS[3070] = (H.uid('dddddddd', 70), 'Solo Perf')
+
+    def rel():
+        d = orig()
+        for i in (2, 3):
+            d['tracklist'][i]['extraartists'].append({'name': 'Bass Man', 'anv': '', 'role': 'Performer', 'tracks': '', 'id': 3001, 'join': ''})
+        d['tracklist'][1]['extraartists'].append({'name': 'Solo Perf', 'anv': '', 'role': 'Performer', 'tracks': '', 'id': 3070, 'join': ''})
+        return d
+
+    H.discogs_release = rel
+    ROLES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').textContent.trim(), ((tr.querySelector('.dci-perftracks') || {}).textContent || '').trim()]) : null; }"""
+    state = lambda pg: {n: [pg.evaluate(ROLES, n), tracks_of_rows(pg, n)] for n in ('Bass Man', 'Solo Perf', 'Guitar Guy')}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        a = state(pg)
+        print('A) aus:', a)
+        off = a['Bass Man'] == [[['Bass', ''], ['Performer', '']], [[1, 2, 3, 4], [3, 4]]] and a['Solo Perf'][1] == [[2]] and a['Guitar Guy'][1] == [[1, 2, 3, 4]]
+        results.append(off)
+        pg.click('[data-act=rules]'); pg.wait_for_timeout(300)
+        box = '#dci-rules [data-rule-on=S046]'
+        on0 = pg.locator(box).is_checked()
+        pg.locator(box).scroll_into_view_if_needed()
+        pg.check(box); pg.wait_for_timeout(800)
+        b1 = state(pg)
+        print('B) an (vorher an:', on0, '):', b1)
+        on = lambda x: x['Bass Man'][0] == [['Bass', 'On the tracks of the “Performer” credits on Discogs: 3, 4 (rule S046)']] and x['Bass Man'][1] == [[3, 4]] \
+            and x['Solo Perf'] == [[['Performer', '']], [[2]]] and x['Guitar Guy'][1] == [[1, 2, 3, 4]]
+        results.append(not on0 and on(b1))
+        pg.uncheck(box); pg.wait_for_timeout(800)
+        c1 = state(pg)
+        print('C) wieder aus:', c1)
+        results.append(c1 == a)
+        pg.check(box); pg.wait_for_timeout(500)
+        pg.close()
+        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        d1 = state(pg)
+        logs = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'S046' in x]
+        print('D) neu geladen:', d1, '| Protokoll:', [x[9:140] for x in logs])
+        results.append(on(d1) and any('Bass Man' in x and '“Performer” on 3, 4' in x for x in logs))
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

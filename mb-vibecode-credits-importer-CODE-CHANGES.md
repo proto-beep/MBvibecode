@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.31.7, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.31.8, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.31.8 · 2026-10-27
+
+Performers on tracks, instruments for the release (collected item 111).
+
+- **New `applyPerformerTracks()`, `PERFORMER_WORDS`** (S046): per person (no company, no row by hand, no supplement) the rows of R060 "Performer" (also "Musician", "Performed By", "Played By"; without other details) that are not for the whole release, and the instrument and vocal rows on the recording level for the whole release; on: the instrument rows get the performers' tracks (`s046` keeps tracks and suggestions before, new field `perfPositions`), the performer rows go to "Skip" and out of their entry (`s046Out` with level and tracks); off: both back. Called in `runImport` after `mergePersonPublishers` and in `applyRulesChange` when S046 is switched. Log `perfTracks`.
+- **`shownRowsOf`, `groupHtml`:** rows with `s046Out` are not shown. **`roleCell`:** `role.perfTracks` at an instrument row (`.dci-perftracks`); `rulesOfRow` names S046.
+- **Register:** new special rule **S046**; `DEFAULT_OFF_RULES` with S046.
+- **Texts:** new `role.perfTracks`, `log.perfTracks` (English only).
+- **Tests:** new case `perftracks` in `t_mapping.py`; `register_golden.json` written anew (S046 in the window); `t_works_matrix.py` case `mxdrop` waits a moment after a track group was dropped onto a role (under load it read too early now and then).
 
 ## Import 3.31.7 · 2026-10-27
 

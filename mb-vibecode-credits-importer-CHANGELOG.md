@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.31.7 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.31.8 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -85,6 +85,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.31.8
+
+#### Added
+
+- **Performers on tracks, instruments for the release** (collected item 111; maintainer, Discogs 8613662: "gäbe es eine möglichkeit beides zu verknüpfen? mit quick switch. standardeinstellung = aus"): with the new rule S046 switched on ("Mapping rules"; off by default), a person credited "Performer" on some tracks and with instruments or voices for the whole release gets the instruments on the tracks of the "Performer" credits (across all media), and the "performer" rows go; someone without an instrument keeps "performer". Switched off again, everything is as Discogs gives it.
 
 ### Import 3.31.7
 

@@ -104,6 +104,8 @@ def case_mxdrop():
         g13 = pg.evaluate("[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes('Pub Co')).dataset.id")
         lyr = pg.evaluate(f"[...document.querySelectorAll('[data-colhead=\"{wz}\"] [data-tgrole]')].find(r => r.textContent.trim() === 'lyricist').dataset.tgrole")
         drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g13}"] .dci-chip-main', f'[data-colhead="{wz}"] [data-tgrole="{lyr}"]')
+        # [3.31.8] a moment for the drop to be drawn (under load the reading came too early now and then)
+        pg.wait_for_timeout(400)
         roles = pg.evaluate(f"""[1, 2, 3, 4].map(t => [...document.querySelectorAll('.dci-matrix tr[data-work="' + (t - 1) + '"] .dci-mx-cell[data-col="{wz}"] .dci-mxchip')].map(c => c.textContent.trim().split(' ')[0]).sort())""")
         print('B2) „Pub Co · 1, 3“ auf die Rolle lyricist – Rollen je Track:', roles)
         ok_b = ok_b and roles == [['composer', 'lyricist'], ['composer'], ['lyricist'], ['composer']]
