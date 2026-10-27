@@ -14,6 +14,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MAIN = (ROOT / 'mb-vibecode-credits-importer.user.js').read_text()
+# [3.33.1] the script's version (@version), for tests that name it (the files' versions follow it)
+VERSION = re.search(r'^// @version\s+(\S+)', MAIN, re.M).group(1)
 # [3.33.0] the mapping file (@resource mapping): every MusicBrainz page of a context gets it as the userscript manager gives it
 # (GM_getResourceText); a test can leave it out (MAPPING_SHIM_OFF) to see the script fetch it or say it is missing
 MAPPING_TEXT = (ROOT / 'mb-vibecode-credits-importer-mapping.json').read_text()

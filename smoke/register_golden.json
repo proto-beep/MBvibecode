@@ -1578,6 +1578,10 @@
   ]
  },
  "rules": {
+  "changes": [
+   "Your changes of built-in rules",
+   "None yet – ✎ at a rule or list below changes it; the built-in rules stay in the mapping file."
+  ],
   "companies": [
    "Companies, etc. (C001 … · Code: COMPANY_ROLES)",
    "On Rule Role MusicBrainz Level",
@@ -1707,9 +1711,21 @@
    "12-string guitar 12 string guitar / 12-string guitar",
    "twelve-string guitar 12 string guitar / 12-string guitar"
   ],
+  "io": [
+   "Export and import",
+   "Export",
+   "my changes (own rules, switches, changed rules and lists)",
+   "the whole register (with my changes)",
+   "Save as file",
+   "Copy",
+   "mb-vibecode-credits-importer-mapping-changes.json: small, to keep, move to another browser or share; it names the versions it was made on.",
+   "Import file",
+   "or drop a file onto this window – a preview shows what changes before anything is taken over.",
+   "Paste text"
+  ],
   "lists": [
-   "Tables and word lists (read only)",
-   "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; they change with an update of the script.",
+   "Tables and word lists",
+   "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; ✎ changes the entries of T001, T002, T003, T038, T045 and T048 (your changes), the others change with an update of the script.",
    "T003 · Artwork relationship types whose role credits are entirely in lower case (S011) (Code: ART_TYPES)",
    "artwork, art direction, design, design/illustration, graphic design, illustration, photography",
    "T005 · Details that stand for a MusicBrainz checkbox or attribute (\"Additional Musicians\" → additional, \"Remaster\" → re) (S002) (Code: DETAIL_FLAGS)",
@@ -2043,10 +2059,7 @@
    "Instrument",
    "Role credit",
    "Save rule",
-   "new rule",
-   "Export rules",
-   "Import rules:",
-   "A file with your rules and the built-in rules you switched off – to keep, move to another browser or share."
+   "new rule"
   ],
   "questions": [
    "Instrument questions (Q001 … · Code: QUESTION_RULES)",
