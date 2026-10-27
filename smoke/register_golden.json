@@ -1648,7 +1648,8 @@
    "D018 A year of a release or issue is no date of the credits and is left out: \"originally issued on LP in 1974\", \"Released 2003\", \"veröffentlicht 1999\" (3.28.5)",
    "D019 The word naming the group of a date is looked for in its own sentence only (\"Mixed May 2001. Released 2003.\" – 2003 is no mix date); a line ending in \":\" counts as part of the next one (3.28.5)",
    "D021 A list of dates after one word naming their group (\"recorded … on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)\") gives the group to each; a medium in brackets right after a date (\"(Disc 2)\", \"(CD 2)\") is the track group of that date (3.30.8)",
-   "D020 Words naming groups joined by \"and\", \"&\" or commas give the date to each group: \"Mixed and mastered by X in March 2026\" → Mix and Mastering, \"Recorded, mixed and mastered 2001\" → Performance, Mix and Mastering (3.28.5)"
+   "D020 Words naming groups joined by \"and\", \"&\" or commas give the date to each group: \"Mixed and mastered by X in March 2026\" → Mix and Mastering, \"Recorded, mixed and mastered 2001\" → Performance, Mix and Mastering (3.28.5)",
+   "D023 Dates in the titles of the tracks (\"March 23, 2004 (Set 1)\", \"March 23, 2004 (Set 2)\"): each date with a day goes into the date pool, the tracks with that date into the track pool (\"March 23, 2004 · 1–2\") and, as a suggestion, under Performance into the date matrix (\"Apply\" as usual); \"(Set 1)\" is no part of the date. Off until switched on (3.31.7)"
   ],
   "instruments": [
    "Instrument spellings (T001 · Code: INSTRUMENT_ALIASES)",

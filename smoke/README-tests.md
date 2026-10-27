@@ -155,6 +155,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     bars of the works matrix (above it; at the bottom while its lower edge is out of view), moving together
                                 #   tracksdrop: track groups dragged onto rows (Shift adds, release level moves), track pool kept when folded,
                                 #     works matrix cells that cannot take a date, work credits checked on the works (release page)
+                                #   titledates: 3.31.7: dates in the titles of the tracks (D023): off by default; on → pool, track groups, Performance
+                                #     suggestions, stored "+D023"; off → gone; on and "Apply" → the row split by date
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
