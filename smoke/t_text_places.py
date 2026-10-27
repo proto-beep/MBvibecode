@@ -412,7 +412,7 @@ def case_placedate():
        head has the rule id S050 with "Read as “Music” (written “Muisc”)") and "Cover art"; nothing not recognized.
     C) ⚙ Settings → Texts: "Typos in role words" is on; switched off (the rule S050 off, stored) and the text loaded again:
        "Muisc …" gives no "Music By" any more and is listed as not recognized; on again (↺ of the tab) → stored as on."""
-    H.lt(694, H.uid('eeeeeeee', 694), 'engineered at', 'place', 'recording', ())
+    H.lt(695, H.uid('eeeeeeee', 695), 'engineered at', 'place', 'recording', ())
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     TEXT = """All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th 2016.
 Recorded at Studio Sol in Marseille.

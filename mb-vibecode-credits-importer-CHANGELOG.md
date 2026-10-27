@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.32.6 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.7 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -86,6 +86,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.7
+
+#### Added
+
+- **Poems: the type follows the level** (collected item 104b; maintainer: "kannst du bei all den poetry credits auch es ermöglichen durchzuschalten? also works (lyrics) -> recording (vocals) -> release (auswahl lyrics/vocals)?", "ja liner notes ist auch eine möglichkeit"): a row of poems ("Poems By", "Recitation", "Poems" …) is lyricist on the works, spoken vocals on the recordings, and on the release it asks lyricist · spoken vocals · liner notes (the answer kept); its role credit stays. A click on the level in the compact line goes works → recordings → release → skip; the row stays in its entry on the works level too.
+- **▾ at a date of several days in common** (collected item 118; maintainer: "gibt es eigentlich eine möglichkeit auch zwei daten also bspw. 2016-11-07, 2016-11-08 als jeweilige relationships zu führen?", "keine Einstellung nur das ▾ je Zelle"): the month or year D022 puts under Performance has ▾ – instead the single days (one relationship per day), the period, or the month kept.
 
 ### Import 3.32.6
 

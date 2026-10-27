@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.6
+// @version      3.32.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1562,6 +1562,8 @@
       "dm.chooseMonth": "month only: {date}",
       "dm.chooseYear": "year only: {date}",
       "dm.chooseLcdTitle": "Use only what the days have in common (the month, or the year)",
+      "dm.lcdMenu": "Instead: the single days (one relationship each) or the whole period",
+      "dm.lcdSingle": "{n} single days: {list} – one relationship per day",
       "dm.choiceLcd": "common month or year",
       "pools.fold": "fold",
       "pools.keep": "keep the pools in the bar when folded",
@@ -1638,6 +1640,7 @@
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
       "typeAsk.askPoems": "“{role}” alone: the words of the works, poems printed in the booklet or poems read out? – please choose:",
+      "typeAsk.askPoemsRelease": "“{role}” on the release: the words, poems read out or poems printed in the booklet? – please choose:",
       "typeAsk.suggested": "suggested",
       "typeAsk.suggestedTitle": "What it mostly means – a suggestion: the row is added only once you choose",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
@@ -6364,11 +6367,19 @@
         { type: 'instrument', level: 'recording', instrument: 'effects', label: 'effects (credited “sounds”)' },
       ] },
     // [3.31.4] collected item 104 (maintainer: "ja das nachfragen kann man machen"): "Poems" alone is asked like "Text"
-    { id: 'Q009', base: 'poems / poetry / poem', rule: 'R107', ask: 'typeAsk.askPoems', note: '"Poems", "Poetry", "Poem" alone (3.31.4): the words of the works (lyricist), poems printed in the booklet (liner notes) or poems read out (spoken vocals)? Nothing is assumed; each gets the word in lower case as role credit ("poems", "poetry", "poem")',
+    { id: 'Q009', base: 'poems / poetry / poem', rule: 'R107', unless: 'poemLevels', ask: 'typeAsk.askPoems', note: '"Poems", "Poetry", "Poem" alone (3.31.4): the words of the works (lyricist), poems printed in the booklet (liner notes) or poems read out (spoken vocals)? Nothing is assumed; each gets the word in lower case as role credit ("poems", "poetry", "poem")',
       options: [
         { type: 'lyricist', level: 'work', credit: true, label: 'lyricist (the words of the works)' },
         { type: 'liner notes', level: 'release', credit: true, label: 'liner notes (poems in the booklet)' },
         { type: 'vocal', level: 'recording', instrument: 'spoken vocals', credit: true, label: 'spoken vocals (read out)' },
+      ] },
+    // [3.32.7] collected item 104b (maintainer: "kannst du bei all den poetry credits auch es ermöglichen durchzuschalten? also
+    // works (lyrics) -> recording (vocals) -> release (auswahl lyrics/vocals)?", "ja liner notes ist auch eine möglichkeit")
+    { id: 'Q010', base: 'poems by / poetry / recitation …', rules: ['R105', 'R106', 'R107'], flag: 'poemLevels', level: 'release', ask: 'typeAsk.askPoemsRelease', note: 'A credit of poems switched to the release level (3.32.7; R105, R106, R107 – their type follows the level: works lyricist, recordings spoken vocals): the words of the works (lyricist), poems read out (spoken vocals) or poems printed in the booklet (liner notes)? Each keeps the role credit ("poems", "poetry", "recitation" …)',
+      options: [
+        { type: 'lyricist', level: 'release', credit: true, label: 'lyricist (the words)' },
+        { type: 'vocal', level: 'release', instrument: 'spoken vocals', credit: true, label: 'spoken vocals (read out)' },
+        { type: 'liner notes', level: 'release', credit: true, label: 'liner notes (poems in the booklet)' },
       ] },
     { id: 'Q005', base: 'text', rule: 'R100', ask: 'typeAsk.askText', note: '"Text" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German "Text" is the lyrics)? Nothing is assumed',
       options: [
@@ -7509,7 +7520,9 @@
   /** [3.31.4] The role credit an option of a type question gives: the task of "misc", or the role word in lower case (Q009). */
   const optionCredit = (o, row) => o.task || (o.credit === true ? norm(row.translatedBase || row.base).replace(/(\s+written)?\s+by$/, '') : (typeof o.credit === 'string' ? o.credit : ''));
 
-  const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && row.ruleId === q.rule && (!q.flag || row[q.flag])) || null);
+  // [3.32.7] a question may name several rules (`rules`) and be for one level only (`level`: Q010, poems on the release)
+  const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && (q.rules ? q.rules.includes(row.ruleId) : row.ruleId === q.rule)
+    && (!q.flag || row[q.flag]) && (!q.unless || !row[q.unless]) && (!q.level || row.level === q.level)) || null);
 
   /** [3.21.4] A question that only some rows get (Q007): until it is answered the row has no type, on the first option's level. */
   function blankForQuestion(row) {
@@ -10928,6 +10941,12 @@
     if (!row.company && m.base) row.base = m.base;
     row.flags = new Set((m.flags || []).map(norm));
     if (!row.levelTouched) row.level = m.level;
+    // [3.32.7] a row of poems whose level was clicked: the type of its level (item 104b)
+    if (row.poemLevels && isPoemRow(row) && row.level !== 'skip') {
+      const ans = row.typeAnswer;
+      poemTypeForLevel(row, row.level);
+      if (row.level === 'release' && ans != null && row.typeAnswer == null) row.typeAnswer = ans;
+    }
     resolveRowType(row);
     if (!row.primaryTouched) row.primaryText = pickPrimary(row);
     if (m.fallback && !primaryIsValid(row)) makeMiscRow(row, String(row.raw || row.base).replace(/\s*\[.*$/, '').trim());
@@ -15317,7 +15336,8 @@
    * be chosen there – on the works or on the release (collected item 112: "wir haben ja bereits die möglichkeit in der
    * kompakt info das durchzuklicken. so soll das laufen.").
    */
-  const inEntry = (r) => r.level !== 'work' || isPublishingRow(r);
+  // [3.32.7] rows of poems too (their level is clicked through in the entry, item 104b)
+  const inEntry = (r) => r.level !== 'work' || isPublishingRow(r) || isPoemRow(r);
 
   /**
    * [3.30.2] The arrow in the head of an entry in the compact view (item 82b; maintainer: "ja bitte gib mir den Pfeil"):
@@ -15555,6 +15575,8 @@
     const et = row.entityType || 'artist';
     const lt = currentLinkType(row);
     const names = uniq([...(lt ? [lt.name] : []), ...(row.types || [])]);
+    // [3.32.7] rows of poems have every level (their type follows it, item 104b)
+    if (isPoemRow(row)) return { levels: ['recording', 'release', 'work'], names };
     const has = (level) => row.level === level || (names.length
       ? names.some((n) => levelsOfType(n, et).includes(level))
       : (level !== 'release_group' || (row.other && typesFor('release_group', et).length > 0)));
@@ -15569,7 +15591,8 @@
    * "Skip", then from the start again.
    */
   function nextLevel(row) {
-    const list = [...rowLevels(row).levels.filter((l) => !workLevelOff(row, l)), 'skip'];
+    // [3.32.7] rows of poems: works → recordings → release → skip (item 104b)
+    const list = [...(isPoemRow(row) ? POEM_LEVELS : rowLevels(row).levels).filter((l) => !workLevelOff(row, l)), 'skip'];
     const i = list.indexOf(row.level);
     return list[(i + 1) % list.length];
   }
@@ -17117,6 +17140,54 @@
     </div>`;
   }
 
+  /**
+   * [3.32.7] The single days of a period or of separate days (collected item 118: "zwei daten also bspw. 2016-11-07, 2016-11-08 als
+   * jeweilige relationships"): the days the source gives (D013, the pool keeps them), else each day of the period, at most 62 –
+   * pool entries of the same group. [] if there are none.
+   */
+  function singleDaysOf(src, { create = true } = {}) {
+    if (!src) return [];
+    const found = String(src.found || '');
+    const group = DATE_GROUPS.find((g) => String(src.name || '').startsWith(`${g.label} `)) || null;
+    if (found.endsWith(':range')) {
+      const base = found.slice(0, -':range'.length);
+      return S.datePool.filter((d) => d.found === base && d.begin && d.begin.day && formatDate(d.begin) === formatDate(d.end));
+    }
+    const b = src.begin;
+    const e = src.end;
+    if (!b || !e || !b.day || !e.day || !b.month || !e.month) return [];
+    const t0 = Date.UTC(b.year, b.month - 1, b.day);
+    const t1 = Date.UTC(e.year, e.month - 1, e.day);
+    const n = Math.round((t1 - t0) / 86400000) + 1;
+    if (n < 2 || n > 62) return [];
+    return Array.from({ length: n }, (_, k) => {
+      const d = new Date(t0 + k * 86400000);
+      const v = single({ year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() });
+      // (for the menu only the dates: the pool gets them when they are chosen)
+      return create ? poolDateFor(v, group, `${found}:day${k + 1}`) : v;
+    });
+  }
+
+  /**
+   * [3.32.7] The ▾ of a cell that has what several days have in common (D022, collected item 118: "keine Einstellung nur das ▾
+   * je Zelle"): instead the single days (one relationship per day) or the period; the month or year kept.
+   */
+  function lcdMenuHtml(c) {
+    const src = S.datePool.find((d) => d.id === c.lcdOf);
+    if (!src) return '';
+    const open = S.dmLcdMenu === c.id;
+    const btn = `<button type="button" class="dci-iconbtn dci-dm-lcdbtn" data-act="dm-lcd-menu" data-cell="${esc(c.id)}" aria-expanded="${open}" title="${esc(tr('dm.lcdMenu'))}" aria-label="${esc(tr('dm.lcdMenu'))}">▾</button>`;
+    if (!open) return btn;
+    const days = singleDaysOf(src, { create: false });
+    const e = cellEntry(c);
+    return `${btn}<div class="dci-dm-lcdmenu" role="group" aria-label="${esc(tr('dm.lcdMenu'))}">
+      ${days.length > 1 ? `<button type="button" class="dci-dm-opt" data-act="dm-lcd" data-cell="${esc(c.id)}" data-pick="single" title="${esc(tr('dm.chooseSingleTitleAny'))}">
+        ${esc(tr('dm.lcdSingle', { n: days.length, list: days.map((d) => formatDateValue(d)).join(' · ') }))}</button>` : ''}
+      <button type="button" class="dci-dm-opt" data-act="dm-lcd" data-cell="${esc(c.id)}" data-pick="range" title="${esc(tr('dm.chooseRangeTitle'))}">${esc(tr('dm.chooseRange', { date: formatDateValue(src) }))}</button>
+      <button type="button" class="dci-dm-opt" data-act="dm-lcd" data-cell="${esc(c.id)}" data-pick="lcd" title="${esc(tr('dm.chooseLcdTitle'))}">${esc(tr(e && e.begin && e.begin.month ? 'dm.chooseMonth' : 'dm.chooseYear', { date: formatDateValue(e) }))}</button>
+    </div>`;
+  }
+
   function matrixCellHtml(c) {
     if (c.alt) return matrixChooseHtml(c);
     const e = cellEntry(c);
@@ -17125,6 +17196,7 @@
         ${c.auto ? `title="${esc(tr('dm.autoCell'))}"` : ''}>
       <div class="dci-dm-date">
         <button type="button" class="dci-chip-main" data-act="dm-edit" data-cell="${esc(c.id)}" aria-expanded="${editing}" title="${esc(tr('dm.editTitle'))}">${esc(poolLabel(e))}</button>
+        ${c.lcdOf ? lcdMenuHtml(c) : ''}
         <button type="button" class="dci-dm-x" data-act="dm-remove" data-cell="${esc(c.id)}" title="${esc(tr('dm.removeTitle'))}" aria-label="${esc(tr('dm.removeTitle'))}">×</button>
       </div>
       ${cellTracksHtml(c, (DATE_GROUPS.find((g) => g.key === c.col) || {}).releaseOnly ? '' // [3.15.1] mastering: always the release level
@@ -17490,6 +17562,11 @@
     row.typeAnswer = i;
     row.types = [o.type];
     row.creditFromRole = optionCredit(o, row);
+    // [3.32.7] poems on the release: the answer is kept for the next time the row comes to the release (item 104b)
+    if (q.id === 'Q010') {
+      row.poemRelease = o.type;
+      if (!o.instrument) Object.assign(row, { primaryText: '', primaryTouched: false });
+    }
     delete row.scopeLevel;
     delete row.mxSkipped;
     // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
@@ -18956,6 +19033,29 @@
     && S.rows.some((r) => r.artistKey === a.key) && S.rows.filter((r) => r.artistKey === a.key).every((r) => r.ruleId === 'C031');
 
   const isPublishingRow = (row) => norm(rowTypeName(row)) === 'publishing';
+
+  // [3.32.7] Rows of a credit of poems (R105 "Poems By", R106 read out, R107 "Poems" alone; collected item 104b, maintainer:
+  // "works (lyrics) -> recording (vocals) -> release (auswahl lyrics/vocals)", "ja liner notes ist auch eine möglichkeit"): their
+  // type follows the level – works lyricist, recordings spoken vocals, the release asks (Q010: lyricist, spoken vocals, liner
+  // notes) – and a click on the level goes works → recordings → release → skip; they stay in their entry on the works level
+  const POEM_RULES = ['R105', 'R106', 'R107'];
+  const POEM_LEVELS = ['work', 'recording', 'release'];
+  const isPoemRow = (row) => !!row && !row.company && POEM_RULES.includes(row.ruleId);
+
+  /** [3.32.7] The type of a row of poems for a level (its role credit stays; Q010 on the release, its answer kept). */
+  function poemTypeForLevel(row, level) {
+    row.poemLevels = true;
+    if (!row.creditFromRole) row.creditFromRole = optionCredit({ credit: true }, row);
+    const plain = { primaryText: '', primaryTouched: false };
+    if (level === 'work') Object.assign(row, { types: ['lyricist'], typeAnswer: null }, plain);
+    else if (level === 'recording') Object.assign(row, { types: ['vocal'], typeAnswer: null, primaryText: 'spoken vocals', primaryTouched: true });
+    else if (level === 'release') {
+      const q = TYPE_QUESTIONS.find((x) => x.id === 'Q010');
+      const i = q ? q.options.findIndex((o) => o.type === row.poemRelease) : -1;
+      if (i < 0) Object.assign(row, { types: [], typeAnswer: null }, plain);
+      else Object.assign(row, { types: [row.poemRelease], typeAnswer: i }, q.options[i].instrument ? { primaryText: q.options[i].instrument, primaryTouched: true } : plain);
+    }
+  }
   /**
    * Relationships of linked works shown from MusicBrainz: writing and lyrics credits, arrangers and labels
    * (publishers); not dedications and the like. In a column from Discogs or added by hand, an existing
@@ -21260,6 +21360,8 @@
     const toOrFromWork = level === 'work' || row.level === 'work';
     row.level = level;
     row.levelTouched = true;
+    // [3.32.7] a row of poems: the type of this level (item 104b)
+    if (isPoemRow(row) && level !== 'skip') poemTypeForLevel(row, level);
     resolveRowType(row);
     if (!primaryIsValid(row) || !norm(row.primaryText)) row.primaryText = pickPrimary(row);
     refreshRowDetails(row);
@@ -22308,6 +22410,37 @@
           dm().cells.splice(dm().cells.indexOf(c), 1, ...add);
         }
         log('info', 'dmChosen', { date: poolLabel(range), choice: tr({ range: 'dm.choiceRange', lcd: 'dm.choiceLcd' }[btn.dataset.pick] || 'dm.choiceSingle') });
+        dmChanged();
+        break;
+      }
+      // [3.32.7] the ▾ of a cell with what several days have in common (D022, item 118)
+      case 'dm-lcd-menu':
+        S.dmLcdMenu = S.dmLcdMenu === btn.dataset.cell ? null : btn.dataset.cell;
+        renderDates();
+        break;
+      case 'dm-lcd': {
+        const c = dm().cells.find((x) => x.id === btn.dataset.cell);
+        const src = c && S.datePool.find((d) => d.id === c.lcdOf);
+        S.dmLcdMenu = null;
+        if (!c || !src) {
+          renderDates();
+          break;
+        }
+        const was = cellEntry(c);
+        if (btn.dataset.pick === 'range') {
+          c.date = c.lcdOf;
+          delete c.lcdOf;
+          c.auto = false;
+        } else if (btn.dataset.pick === 'single') {
+          // each day a matrix entry of its own, with the same track groups and studios: one relationship per day
+          const add = singleDaysOf(src).filter((d) => !dm().cells.some((x) => x.col === c.col && x.date === d.id))
+            .map((d) => ({ id: newCellId(), col: c.col, date: d.id, tgs: [...c.tgs], studios: [...c.studios], auto: false }));
+          dm().cells.splice(dm().cells.indexOf(c), 1, ...add);
+          savePool();
+        } else {
+          c.auto = false;
+        }
+        log('info', 'dmChosen', { date: poolLabel(was || src), choice: tr({ range: 'dm.choiceRange', lcd: 'dm.choiceLcd' }[btn.dataset.pick] || 'dm.choiceSingle') });
         dmChanged();
         break;
       }
@@ -25361,6 +25494,10 @@
       /* Separate days: choose the single days or the period */
       .dci-dm-cell.dci-dm-choose { border: 2px solid var(--warn); border-left-width: 4px; background: #fffaf0; }
       .dci-dm-choose-q { flex: 1; color: var(--warn); font-size: calc(var(--u, 1px) * 12); text-transform: uppercase; letter-spacing: 0.04em; }
+      /* [3.32.7] the ▾ of a cell with what several days have in common (D022, item 118) */
+      .dci-dm-lcdbtn { margin-left: calc(var(--u, 1px) * 2); }
+      .dci-dm-lcdmenu { flex: 0 0 100%; margin-top: calc(var(--u, 1px) * 2); }
+      .dci-dm-date:has(.dci-dm-lcdmenu) { flex-wrap: wrap; }
       .dci-dm-opt { display: block; width: 100%; margin-top: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 6); border: 1px solid var(--date-line); border-radius: 3px; background: #fff; color: var(--date-d); text-align: left; font-size: calc(var(--u, 1px) * 12); overflow-wrap: anywhere; }
       .dci-dm-opt:hover { background: var(--date-bg); border-color: var(--date); }
       .dci-dm-date { display: flex; align-items: center; gap: calc(var(--u, 1px) * 4); }
