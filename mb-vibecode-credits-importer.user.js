@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.2
+// @version      3.32.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -739,6 +739,7 @@
       "cl.unmapped": "no MusicBrainz type",
       "cl.instrAsk": "{name}: which instrument?",
       "cl.typeAsk": "type to choose",
+      "cl.pickList": "choose …",
       "cl.dateSugg": "date suggested",
       "cl.removeTitle": "Take this row out of the dashboard (the next import brings it back)",
       "cl.noTracks": "no tracks",
@@ -17246,6 +17247,58 @@
       <span class="dci-sub">${esc(row.translated ? tr('instrAsk.otherwiseTr', { credit: q.credit, word: row.translated }) : tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
 
+  /** The instrument chosen in a question (Q001 …); [3.32.3] also from the compact line. Counts as made by hand: it stays when the rules change. */
+  function pickInstrument(row, name) {
+    if (!row || !name) return;
+    const artist = S.artists.get(row.artistKey);
+    row.primaryText = name;
+    row.primaryTouched = true;
+    refreshRowDetails(row);
+    log('info', 'instrPicked', { name: (artist && (artist.mbName || artist.name)) || '', instrument: name, credit: row.roleCredit || '' });
+    rerenderRow(row);
+    refresh();
+  }
+
+  /** [Q003] The type chosen in a type question: its level, and for "misc" the task; [3.32.3] also from the compact line. */
+  function pickType(row, i) {
+    const q = row && typeQuestionFor(row);
+    const o = q && q.options[i];
+    if (!o) return;
+    row.typeAnswer = i;
+    row.types = [o.type];
+    row.creditFromRole = optionCredit(o, row);
+    delete row.scopeLevel;
+    delete row.mxSkipped;
+    // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
+    row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
+    row.levelTouched = true;
+    resolveRowType(row);
+    // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
+    if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
+    refreshRowDetails(row);
+    log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
+    // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
+    if (row.level === 'work') {
+      renderGroups();
+      renderWorks();
+    } else rerenderRow(row);
+    refresh();
+  }
+
+  /**
+   * [3.32.3] A question in the compact line, whole and to click (collected item 102; maintainer: "die Abfragen wie "Bass:
+   * which instrument?" in der kompakt Ansicht sollen komplett dargestellt und klickbar sein", "ok ab 5"): up to four
+   * possibilities as buttons, from five a list; a choice is made as in the full row, the row stays closed.
+   */
+  function clineAskHtml(kind, label, opts) {
+    const act = kind === 'instr' ? 'instr-pick' : 'type-pick';
+    const data = (o) => (kind === 'instr' ? `data-instr="${esc(o.value)}"` : `data-opt="${esc(o.value)}"`);
+    const pick = opts.length >= 5
+      ? `<select data-f="cl-pick" data-kind="${kind}" aria-label="${esc(label)}"><option value="">${esc(tr('cl.pickList'))}</option>${opts.map((o) => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('')}</select>`
+      : opts.map((o) => `<button type="button" class="dci-textbtn dci-cl-pick" data-act="${act}" ${data(o)}>${esc(o.text)}</button>`).join(' · ');
+    return `<span class="dci-cl-flag dci-cl-ask dci-cl-askq">${esc(label)} ${pick}</span>`;
+  }
+
   /** [Q003 …] The type is asked (e.g. "Directed By"): the options, the chosen one pressed; until then "please choose". */
   function typeAskHtml(row) {
     const q = typeQuestionFor(row);
@@ -17337,11 +17390,12 @@
       if (info && info.issues && info.issues.length) flags.push(['bad', info.issues.join(', ')]);
       if (isUnmapped(row)) flags.push(['bad', tr('cl.unmapped')]);
       const q = questionRuleFor(row);
-      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) flags.push(['ask', tr('cl.instrAsk', { name: row.base })]);
       const tq = typeQuestionFor(row);
-      if (tq && row.typeAnswer == null) flags.push(['ask', tr('cl.typeAsk')]);
       if (!hasDateInput(row.date) && linerDateSugg(row)) flags.push(['sugg', tr('cl.dateSugg')]);
       flags.forEach(([kind, text]) => parts.push(open(`dci-cl-flag dci-cl-${kind}`, esc(text), tr('cl.openTitle'))));
+      // [3.32.3] the questions whole and to click (item 102)
+      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
+      if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
     }
@@ -21797,40 +21851,11 @@
       case 'artist-create':
         if (artist) startArtistCreate(artist);
         break;
-      case 'type-pick': {
-        // [Q003] The type chosen in the question: its level, and for "misc" the task
-        const q = typeQuestionFor(row);
-        const o = q && q.options[Number(btn.dataset.opt)];
-        if (!o) break;
-        row.typeAnswer = Number(btn.dataset.opt);
-        row.types = [o.type];
-        row.creditFromRole = optionCredit(o, row);
-        delete row.scopeLevel;
-        delete row.mxSkipped;
-        // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
-        row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
-        row.levelTouched = true;
-        resolveRowType(row);
-        // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
-        if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
-        refreshRowDetails(row);
-        log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
-        // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
-        if (row.level === 'work') {
-          renderGroups();
-          renderWorks();
-        } else rerenderRow(row);
-        refresh();
+      case 'type-pick':
+        pickType(row, Number(btn.dataset.opt));
         break;
-      }
       case 'instr-pick':
-        // A choice in the question counts as made by hand: it stays when the rules change
-        row.primaryText = btn.dataset.instr;
-        row.primaryTouched = true;
-        refreshRowDetails(row);
-        log('info', 'instrPicked', { name: (artist && (artist.mbName || artist.name)) || '', instrument: btn.dataset.instr, credit: row.roleCredit || '' });
-        rerenderRow(row);
-        refresh();
+        pickInstrument(row, btn.dataset.instr);
         break;
       case 'other-create':
         startOtherCreate(artist);
@@ -22608,6 +22633,12 @@
       }
       case 'role-text':
         remapManualRow(row, el.value);
+        break;
+      // [3.32.3] a question of the compact line with five possibilities or more (item 102)
+      case 'cl-pick':
+        if (!el.value) break;
+        if (el.dataset.kind === 'instr') pickInstrument(row, el.value);
+        else pickType(row, Number(el.value));
         break;
       case 'primary':
         row.primaryText = el.value;
@@ -25078,6 +25109,10 @@
       .dci-cl-flag { padding: 0 calc(var(--u, 1px) * 8); border-radius: 3px; font-size: calc(var(--u, 1px) * 12); }
       .dci-cl-bad { border: 1px solid #e6a49e; background: #fbeceb; color: var(--err); }
       .dci-cl-ask, .dci-cl-sugg { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      /* [3.32.3] a question of the compact line with its possibilities to click (item 102) */
+      .dci-cl-askq { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); }
+      .dci-cl-askq .dci-cl-pick { color: var(--sugg-ink); text-decoration: underline; font-weight: 600; }
+      .dci-cl-askq select { font: inherit; font-size: calc(var(--u, 1px) * 12); }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
