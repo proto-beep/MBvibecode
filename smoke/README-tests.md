@@ -250,7 +250,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, s
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
                                 #     a line per row, marks in colour, fields hidden,
-                                #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered, a skipped
+                                #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered ([3.32.3] in the
+                                #     line itself, its possibilities to click), a skipped
                                 #     row grey with ✕ (back after reloading), "Full" remembered and in the settings, the jump to an incomplete row
                                 #   fold: 3.29.3: the arrow next to "Artist credit for all roles" – one entry folded to compact lines in the full
                                 #     view (a line opens its row, ▸ back, full again after the next import), its open rows closed in the
@@ -264,6 +265,7 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   suggstack: suggestions as a block below the red mark (3.15.2, 3.15.3: side by side, wrapping): eight artists of one name, 5 shown + "+ 3 more",
                                 #     explanations as tooltips
                                 #   rows: remove a row (and undo), removal after staging, "only works"
+                                #   clineask: 3.32.3: a type question in the compact line ("Directed By": four buttons), chosen there, the row closed
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
