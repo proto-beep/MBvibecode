@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.32.1 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.2 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -86,6 +86,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.2
+
+#### Changed
+
+- **The spelling of the release in the head of an entry** (collected item 100; maintainer: "Der Künstle wird auf dem Release/bei Discogs Marc D. Rusch genannt. Dann soll das auch so im Dashboard stehen. … wenn ich mit dem Mauszeiger über den Namen gehe im Dashboard soll der Discogs name des entries angezeigt werden. Der Link daneben soll weiter bleiben."): "Marc D. Rusch*" with an asterisk as Discogs writes it, the tooltip "Discogs: Marc Rusch" (other spellings of the release too); the chip "as “Marc D. Rusch”" is gone then; the link stays; "Artist credit for all roles" as before.
 
 ### Import 3.32.1
 

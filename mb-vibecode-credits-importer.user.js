@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.1
+// @version      3.32.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -721,6 +721,8 @@
       "msgs.unfold": "Show the messages",
       "msgs.close": "Close this message (until the next import)",
       "group.creditedAs": "as {name}",
+      "group.discogsName": "Discogs: {name}",
+      "group.otherSpellings": "Also on this release as: {list}",
       "group.creditedAsMore": "as {name} (+{n})",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
       "nav.settings": "⚙",
@@ -15049,8 +15051,38 @@
   function entryCredits(a) {
     return uniq(S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip').map((r) => String(r.credit || '').trim()).filter(Boolean));
   }
+  /**
+   * [3.32.2] The spelling of the release in the head of an entry (collected item 100; maintainer: "Der Künstle wird auf dem
+   * Release/bei Discogs Marc D. Rusch genannt. Dann soll das auch so im Dashboard stehen. Also "Marc D. Rusch" evtl auch mit
+   * Sternchen, so wie discogs das macht und wenn ich mit dem Mauszeiger über den Namen gehe im Dashboard soll der Discogs name
+   * des entries angezeigt werden."): the name variation of its rows (the most frequent one), with "*" as Discogs writes it,
+   * when it differs from the name of the entry; null otherwise.
+   */
+  function releaseSpelling(a) {
+    if (!a || a.company || a.other || !a.dId) return null;
+    const count = new Map();
+    for (const r of S.rows) {
+      if (r.artistKey !== a.key) continue;
+      const v = String(r.anv || '').replace(/\*$/, '').trim();
+      if (v) count.set(v, (count.get(v) || 0) + 1);
+    }
+    const base = String(a.name || '').replace(/\s*\(\d+\)$/, '').trim();
+    const list = [...count.entries()].filter(([v]) => typo(v) !== typo(base)).sort((x, y) => y[1] - x[1]).map(([v]) => v);
+    return list.length ? { shown: list[0], others: list.slice(1), base } : null;
+  }
+
+  /** [3.32.2] The name in the head of an entry: the release's spelling with "*" (the entry's name in the tooltip), or the name. */
+  function entryNameHtml(a) {
+    const sp = releaseSpelling(a);
+    if (!sp) return `<strong>${esc(a.name)}</strong>`;
+    const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : [])].join('\n');
+    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>`;
+  }
+
   function creditChipHtml(a) {
-    const credits = entryCredits(a);
+    // [3.32.2] the spelling already shown in the head (as "Marc D. Rusch*") is not repeated as "as …"
+    const sp = releaseSpelling(a);
+    const credits = entryCredits(a).filter((c) => !sp || typo(c) !== typo(sp.shown));
     if (!credits.length) return '<span class="dci-gcredit" hidden></span>';
     const name = tr('common.quoted', { text: credits[0] });
     const text = credits.length > 1 ? tr('group.creditedAsMore', { name, n: credits.length - 1 }) : tr('group.creditedAs', { name });
@@ -15112,7 +15144,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
