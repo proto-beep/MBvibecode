@@ -729,7 +729,7 @@ def case_perftracks():
         off = a['Bass Man'] == [[['Bass', ''], ['Performer', '']], [[1, 2, 3, 4], [3, 4]]] and a['Solo Perf'][1] == [[2]] and a['Guitar Guy'][1] == [[1, 2, 3, 4]]
         results.append(off)
         pg.click('[data-act=rules]'); pg.wait_for_timeout(300)
-        box = '#dci-rules [data-rule-on=S046]'
+        box = '#dci-rules [data-rf=tables] [data-rule-on=S046]'  # [3.32.0] also a quick switch at the top
         on0 = pg.locator(box).is_checked()
         pg.locator(box).scroll_into_view_if_needed()
         pg.check(box); pg.wait_for_timeout(800)

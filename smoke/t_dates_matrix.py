@@ -106,6 +106,7 @@ def case_dragdates():
     onto the column date and a cell of the works matrix; a date onto another date makes a period (pool and matrix);
     all dates of the Discogs notes go into the pool; cleared pools come back when the release is opened again;
     "load again from Discogs" (with and without the dates made by hand); "Cover Art" keeps "cover art" as wording."""
+    H.RULES_OFF = ['D022']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     import re
     from common_rows import cells, drag, date_field
 
@@ -540,7 +541,7 @@ def case_titledates():
         print('A) aus:', a)
         results.append(a[0] == [[], []] and a[1] == [])
         pg.click('[data-act=rules]'); pg.wait_for_timeout(300)
-        box = '#dci-rules [data-rule-on=D023]'
+        box = '#dci-rules [data-rf=tables] [data-rule-on=D023]'  # [3.32.0] also a quick switch at the top
         on0 = pg.locator(box).is_checked()
         pg.locator(box).scroll_into_view_if_needed()
         pg.check(box); pg.wait_for_timeout(800)

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.31.8
+// @version      3.32.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1286,6 +1286,15 @@
       "rules.test": "Try a Discogs role:",
       "rules.testHint": "Type a Discogs role as on Discogs, e.g. “Bass [Upright]”; several separated by commas.",
       "rules.search": "Search the rules:",
+      "rules.quick": "Quick switches",
+      "rules.quickTitle": "Rules switched on and off often – the same as in the lists below; the id next to each shows the rule, which says where it acts",
+      "quick.S045": "Rights society after a writer’s name → the release’s rights society",
+      "quick.D022": "Performance on several days → their common month or year",
+      "quick.S021": "“live” preselected for live releases",
+      "quick.S031": "Only the case differs → no “credited as”",
+      "quick.S007": "Leave out festivals in “Companies, etc.”",
+      "quick.D023": "Dates in the titles of the tracks",
+      "quick.S046": "“Performer” on tracks → the instruments on those tracks",
       "rules.roles": "Roles",
       "rules.wording": "Role credit wording",
       "rules.specialTitle": "Special handling",
@@ -1379,6 +1388,7 @@
       "ms.3.27.0": "A clearer dashboard: the entries compact – one line per role (role → type and instrument, level, tracks, date), a click opens the row to change it; dates and track groups can still be dropped onto the line, what is open is in colour (red missing, yellow a question or suggestion), skipped rows are grey with ✕; “Compact | Full” is remembered. The head in one line with symbols of its own, “Source ▾” for everything about the source, “+ Supplement” only on request; the settings as tabs (also “Texts” and “ⓘ Connections” – every site, tool and script the script works with), “Reset all settings” in them; after the installation the language is asked once",
       "ms.3.29.0": "Text recognition, part 3: credits in prose (\"… by K.M. (sounds, words) & E. (voice)\", \"Cover artwork channeled by …\", \"Logo carved by the guided hand of …\"), every place of joined verbs (\"Mixed and mastered at …\") and lists of kinds (\"Tenor, alto, soprano saxophones\"); a date goes to every group of joined words and takes its group only from its own sentence, years of a release are left out, \"19 & 20. 01. 2009\" and \"1973 October 19\" are read; \"C1 to D\" with a side of one track, \"in live concert\" only for the tracks named. Since 3.27.0 also: Bandcamp track pages as releases; Norwegian, Swedish and Danish roles, \"Logo Og Kunst\" as design \"logo\" and artwork \"art\", \"cover design\", \"wood flutes\" as flute; no \"credited as\" when only the case differs, the spelling of a text when it differs; the companion underlines the dates and track groups used in the Discogs notes and on Bandcamp.",
       "ms.3.31.0": "Text recognition, part 4: publishers below a heading (\"[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5\") on their tracks, their rights society (BMI, ASCAP, GEMA … – a list of the societies) on the release level, a publisher with the name of a person as a part of that person's column in the works matrix, names written together searched apart too (\"Flizmo Music\", \"Four Word Sea Music\"); the members of a band (\"Vision Fortune are A, B and C\") as performers, \"sounds\" asks performer or effects; from the Discogs notes dates per disc (\"May 26, 2016 (Disc 2)\"), places and the label of \"© & ℗ TUM Records Oy 2021\" (TUM Records offered too). Since 3.29.0 also: the mapping rules in the dashboard or as a window (also from a rule id at a row), colours for the levels, the level of a compact line switched by a click, ⚙ Settings → Appearance, an entry or a group compact at once, each pool folds on its own, scroll bars above and below the works matrix, the settings without an import (\"Source pages\"), the tracks of a track group typed in.",
+      "ms.3.32.0": "Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -6279,6 +6289,9 @@
     { id: 'S043', where: 'TEXT.parse (PUBLISHER_HEAD, SOCIETY_AFTER_NAME, SOCIETY_LINE), addNotesCompanies, resolveArtists', note: 'Publishers below a heading ("[Publishers & Rights Societies]", "Publishers:", "Publishing (all BMI):") – one per line with its rights society and tracks ("FlizmoMusic-BMI : tracks 2, 4, 5"; outside a block a line with a society after the name too): publishing on those tracks; the society (T045) is the release\'s rights society, once each, also from "Published by X (BMI)" and a line of societies only ("BIEM/GEMA"). In the Discogs notes the tracks go onto Discogs\'s publisher of that name (also written together or with a number as a word, T046) as suggestions; publishers and societies not found through their link are searched by name (3.31.0)' },
     { id: 'S044', where: 'mergePersonPublishers, computePublisherEvidence, roleCell', note: 'A person as publisher: a publisher with the name of a person of the dashboard ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is no company – its publishing becomes a role of the person (artist–work "publishing", MusicBrainz\'s "published / publisher"), in the person\'s column of the works matrix next to writer or composer; the company entry is left out, the row says that Discogs lists it as a company; without tracks of its own, the works the person writes are suggested (3.31.5; 3.31.0–3.31.4: a part of the person\'s column with a label of its own)' },
     { id: 'S048', where: 'personLikeName, suggestByName, matchHtmlInner, startCompanyCreate', note: 'A publisher with the name of a person and no entry of the dashboard (two to four words with capitals, no word of a company such as "Music", "Publishing", "Songs", no legal form – T044): MusicBrainz\'s artists of that name are offered first and "Create artist …"; when MusicBrainz has an artist of exactly that name, a label of that name only when its type is "Publisher", and no "Create label …" (otherwise both, as the name may be a company\'s: "Pub House") (3.31.5)' },
+    // [3.32.0] collected item 97 (maintainer: "Gesellschaft hinter einem Schreiber: ja ok. bitte lass das aber an- und abstellen.
+    // im mapping ganz oben evtl. (mit klickbarem verweis dann wo es verwendet wird)")
+    { id: 'S045', where: 'TEXT.parse (WRITER_WORDS_IN, stripWriterSocieties)', note: 'A rights society after the name of a writer ("Composed by Tomas Fujiwara (BMI)", "Music: Jane Doe-ASCAP", "Lyrics by Ann Poe / GEMA" – composer, lyricist, writer, arranger, librettist, translator): the society is the release\'s rights society (once each, T045), the name is taken without it. In pasted texts, Bandcamp credits and the Discogs notes (3.32.0)' },
     // [3.31.8] collected item 111 (maintainer, Discogs 8613662: "führt unter den tracks die performer aber die instrumente erst in
     // den relationships. gäbe es eine möglichkeit beides zu verknüpfen? mit quick switch. standardeinstellung = aus")
     { id: 'S046', where: 'applyPerformerTracks', note: 'Performers on tracks, instruments for the release: a person credited "Performer" on some tracks only and with instruments or voices for the whole release only ("Performer – Barry Guy" on 4-3 and 4-5, "Bass – Barry Guy" for the release) gets the instruments on the tracks of the "Performer" credits, across all media; the "performer" rows go (they would say the same). Someone without an instrument keeps "performer"; instruments without a "Performer" credit stay on all tracks. Who plays which of several instruments where, Discogs does not say: all of them on all of these tracks. Off until switched on (3.31.8)' },
@@ -7167,6 +7180,8 @@
   const SOCIETY_LINE = new RegExp(`^(?:BIEM\\s*[/&,–—-]\\s*)?(?:${SOCIETY_ALT})(?:\\s*[/&,–—-]\\s*(?:${SOCIETY_ALT}|BIEM))*$`, 'u');
   const SOCIETY_WORD = new RegExp(`(?<![\\p{L}\\p{N}])(${SOCIETY_ALT})(?![\\p{L}\\p{N}])`, 'gu');
   /** The society's name as MusicBrainz writes it (the listed form). */
+  // [S045] (3.32.0) a sentence of writers, in which a rights society after a name is the release's
+  const WRITER_WORDS_IN = /\b(?:composed|composer|composition|written|writer|songwriter|music|lyrics|lyricist|words|arranged|arranger|arrangements?|libretto|librettist|translated|translator|songs)\b/i;
   const societyName = (w) => (RIGHTS_SOCIETIES.find(([a]) => societyForms(a).includes(w)) || [w])[0];
   // [S043] (3.31.0) The heading of a block of publishers: "[Publishers & Rights Societies]", "Publishers:", "Publishing:",
   // "Music publishers (all BMI)", "Verlage:", "Éditeurs :" – the lines below it name publishers ("Name-BMI : tracks 1, 6, 8")
@@ -7638,6 +7653,9 @@
     { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
     { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows – (3.31.2) also days with commas only, right before the year ("November 7, 8, 2016", "7, 8, 9 November 2016", "7., 8. November 2016")' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
+    // [3.32.0] collected item 97d (maintainer: "auf jeden fall noch die regel, dass performance dates die über mehrere tage
+    // hinweg gehen nach meinen regeln auf den kleinsten gemeinsamen nenner gekürzt werden")
+    { id: 'D022', note: 'Performance on several days ("December 11 & 12, 2015", "2012-03-01 – 2012-09-30") from the notes: the column Performance of the date matrix gets what they have in common at once (D014) – the month (2015-12) or the year (2012); across years the period stays. The period and the single days stay in the pool, to be used instead (3.32.0)' },
     { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
     { id: 'D016', note: 'A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0)' },
     { id: 'D017', note: 'Year, month name, day: 1973 October 19 · 1973, Oct. 19th (3.28.5)' },
@@ -8676,6 +8694,16 @@
         companies.push({ who: who(name), role: 'Rights Society', catno: '', tracks: null, society: true, ...at() });
         return true;
       };
+      // [S045] (3.32.0) a rights society right after a name in a sentence of writers ("Composed by Tomas Fujiwara (BMI)",
+      // "Lyrics by Ann Poe / GEMA", "Music: Jane Doe-ASCAP"): the release's rights society, the name without it
+      const SOC_AFTER = new RegExp(`(\\p{L}[\\p{L}\\p{N}.'’]*)\\s*(?:\\(\\s*(${SOCIETY_ALT})\\s*\\)|[-–—]\\s*(${SOCIETY_ALT})(?![\\p{L}\\p{N}])|\\s*/\\s*(${SOCIETY_ALT})(?![\\p{L}\\p{N}]))`, 'gu');
+      const stripWriterSocieties = (t) => {
+        if (!ruleOn('S045') || !WRITER_WORDS_IN.test(t)) return t;
+        return t.replace(SOC_AFTER, (all, w, a, b2, c) => {
+          addSociety(societyName(a || b2 || c));
+          return w;
+        });
+      };
       const PUB_TAIL = new RegExp(`^(.*?\\S)\\s*(?::|\\s[–—-]|\\()\\s*(?:${TEXT_TRACK_WORDS}\\.?\\s*)?(${SPEC})\\s*\\)?\\s*\\.?$`, 'i');
       /** A publisher of a line: { name, societies, scope, unresolved } or null ("Name (BMI): 1, 4, 6" – the track words may be missing). */
       const publisherOf = (text0, scope0) => {
@@ -8778,7 +8806,7 @@
           }
           const c0 = credits.length;
           const k0 = companies.length;
-          const r = readUnit(web.text, scope, pi);
+          const r = readUnit(stripWriterSocieties(web.text), scope, pi);
           pi += r.parts;
           found += r.found;
           unknownParts.push(...r.unknown);
@@ -10712,6 +10740,11 @@
     log('info', 'rulesChanged', { what, n });
     // [S046] (3.31.8) performers on tracks: at once, both ways
     if (what === 'S046') applyPerformerTracks();
+    // [D022] (3.32.0) the notes' suggestions not applied yet are placed again (with or without what the days have in common)
+    if ((what === 'D022' || what === 'D014') && S.mbTracks.length) {
+      replaceNotesSuggestions();
+      if (S.overlay) renderDates();
+    }
     // [D023] (3.31.7) dates in the titles: placed when switched on, the suggestions taken back when switched off
     if (what === 'D023' && S.mbTracks.length) {
       if (ruleOn('D023')) placeTitleDates({ force: true });
@@ -11519,10 +11552,25 @@
     renderRulesBody();
   }
 
+  /**
+   * [3.32.0] Quick switches at the top of "Mapping rules" (collected item 97d; maintainer: "im mapping ganz oben evtl. (mit
+   * klickbarem verweis dann wo es verwendet wird)"): rules switched often, each with its id – a click shows the rule, which
+   * says where it acts. The same switches as in the lists below (`dci-rules-off`).
+   */
+  const QUICK_SWITCHES = ['S045', 'D022', 'S021', 'S031', 'S007', 'D023', 'S046'];
+  function quickSwitchesHtml() {
+    const notes = ruleNotes();
+    const one = (id) => `<span class="dci-quick-sw"><label class="dci-check" title="${esc(`${id}: ${notes.get(id) || ''}`)}"><input type="checkbox" data-rule-on="${esc(id)}" ${ruleOn(id) ? 'checked' : ''}>
+      ${esc(tr(`quick.${id}`))}</label> <button type="button" class="dci-textbtn dci-ruleid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
+    return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
+      ${QUICK_SWITCHES.map(one).join('')}</div>`;
+  }
+
   /** Redraws the parts of the rules window that depend on the rules. */
   function renderRulesBody() {
     const el = document.getElementById('dci-rules');
     if (!el) return;
+    el.querySelector('[data-rf="quick"]').innerHTML = quickSwitchesHtml();
     el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
     el.querySelector('[data-rf="tables"]').innerHTML = rulesTables();
     el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(el.querySelector('[data-rf="test"]').value);
@@ -11735,6 +11783,7 @@
       el.innerHTML = `<div class="dci-rules-head"><h2 id="dci-rules-title">${esc(tr('rules.title'))}</h2>
           <span class="dci-rules-tools" data-rf="head-tools">${rulesHeadToolsHtml()}</span></div>
         <div class="dci-rules-body">
+          <div data-rf="quick"></div>
           <label class="dci-rules-test"><span data-rf="test-label">${esc(trRules('rules.test'))}</span> <input type="text" data-rf="test" placeholder="Bass [Upright], Coordinator [Tour]"></label>
           <div data-rf="result">${ruleTestHtml('')}</div>
           <div data-rf="own"></div>
@@ -11768,6 +11817,9 @@
           el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
         }
         if (t.closest('[data-rules-export]')) exportRules();
+        // [3.32.0] the id of a quick switch: the rule in the lists below
+        const qs = t.closest('[data-qs-goto]');
+        if (qs) focusRule(qs.dataset.qsGoto);
       });
       el.addEventListener('change', (e) => {
         const t = e.target;
@@ -16028,6 +16080,13 @@
       related.forEach((c) => Object.assign(c, { col: group.key, auto: false, tgs: uniq([...c.tgs, ...tgs]), studios: uniq([...c.studios, ...studios]) }));
       return 0;
     }
+    // [D022] (3.32.0) Performance on several days found by the script: what they have in common at once (the days and the period
+    // stay in the pool)
+    if (auto && lcd && group.key === 'performance' && ruleOn('D022')) {
+      if (m.cells.some((c) => c.col === group.key && c.date === lcd.id)) return 0;
+      m.cells.push({ id: newCellId(), col: group.key, date: lcd.id, tgs, studios, auto, lcdOf: range.id });
+      return 1;
+    }
     m.cells.push({ id: newCellId(), col: group.key, date: range.id, alt: singles.map((d) => d.id), ...(lcd ? { lcd: lcd.id } : {}), tgs, studios, auto });
     return 1;
   }
@@ -16370,15 +16429,17 @@
         const e = poolDateFor(x.value, group, gkey, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
         // [3.17.6] marked for the liner notes: their row shows it as a suggestion
         if (forLiner) e.liner = liner.name;
-        addCommonDate(e.begin, e.end, group, gkey, e);
+        const common = addCommonDate(e.begin, e.end, group, gkey, e);
         if (!group) return;
-        const here = m.cells.find((c) => c.col === group.key && c.date === e.id);
+        // [D022] (3.32.0) a period of Performance: what its days have in common at once (the period stays in the pool)
+        const cellDate = common && group.key === 'performance' && ruleOn('D022') ? common : e;
+        const here = m.cells.find((c) => c.col === group.key && c.date === cellDate.id);
         if (here) {
           if (here.auto) Object.assign(here, { tgs: uniq([...here.tgs, ...(tg ? [tg.id] : [])]), studios: uniq([...here.studios, ...studios]) });
           return;
         }
-        if (m.cells.some((c) => c.date === e.id)) return;
-        m.cells.push({ id: newCellId(), col: group.key, date: e.id, tgs: tg ? [tg.id] : [], studios, auto: true });
+        if (m.cells.some((c) => c.date === cellDate.id)) return;
+        m.cells.push({ id: newCellId(), col: group.key, date: cellDate.id, tgs: tg ? [tg.id] : [], studios, auto: true, ...(cellDate !== e ? { lcdOf: e.id } : {}) });
         placed++;
       });
     });
@@ -16389,8 +16450,10 @@
       showMessage('info', 'dm.autoPlaced', { n: placed });
     }
     // [3.30.8] the month or year two days share (":lcd", e.g. "December 11 & 12, 2015" → December 2015) is no date without a group
+    // [3.32.0] the days whose common month or year is in the matrix (D022) are placed too
+    const viaLcd = new Set(m.cells.filter((c) => c.lcdOf).map((c) => String((S.datePool.find((d) => d.id === c.date) || {}).found || '').replace(/:lcd$/, '')));
     const unplaced = S.datePool.filter((d) => String(d.found || '').startsWith('notes:') && !m.cells.some((c) => c.date === d.id || (c.alt || []).includes(d.id) || c.lcd === d.id)
-      && !/:(?:range|lcd)$/.test(String(d.found))).length;
+      && !/:(?:range|lcd)$/.test(String(d.found)) && !viaLcd.has(String(d.found))).length;
     if (unplaced && pooled) showMessage('info', 'dm.autoPooled', { n: unplaced });
     if (placed || pooled) log('info', 'dmAuto', { n: placed, pooled });
     saveMatrix();
@@ -16437,6 +16500,17 @@
     }
     saveMatrix();
     return placed;
+  }
+
+  /**
+   * [D022] (3.32.0) The suggestions from the notes not applied or changed yet (`auto`) are placed anew – after a rule that
+   * decides how they are placed was switched.
+   */
+  function replaceNotesSuggestions() {
+    const m = dm();
+    const fromNotes = new Set(S.datePool.filter((d) => /^notes:(?!title:)/.test(String(d.found || ''))).map((d) => d.id));
+    m.cells = m.cells.filter((c) => !(c.auto && !c.title && fromNotes.has(c.date)));
+    autoPlaceFoundDates({ force: true });
   }
 
   /** [D023] Switched off: its suggestions not applied yet go (pool entries no row uses, their track groups). */
@@ -20396,7 +20470,8 @@
     dateFinds().notes.forEach((x, i) => {
       if (S.aboutOff && fromAboutText(x)) return;
       const value = formatDateValue(x.value);
-      const ids = S.datePool.filter((d) => d.found === `notes:${i}` || d.found === `notes:${i}:range`
+      // [3.32.0] also what the days have in common, when the matrix uses that (D022)
+      const ids = S.datePool.filter((d) => d.found === `notes:${i}` || d.found === `notes:${i}:range` || d.found === `notes:${i}:lcd`
         || (String(d.found || '').startsWith('notes:') && formatDateValue(d) === value)).map((d) => d.id);
       if (!ids.length) return;
       const inMatrix = m.cells.some((c) => ids.includes(c.date) || ids.includes(c.lcd) || (c.alt || []).some((a) => ids.includes(a)));
@@ -23827,6 +23902,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.32.0', label: 'Credits Importer 3.32.0' },
     { v: '3.31.0', label: 'Credits Importer 3.31.0' },
     { v: '3.29.0', label: 'Credits Importer 3.29.0 · Companion 1.9.0' },
     { v: '3.27.0', label: 'Credits Importer 3.27.0' },
@@ -24248,6 +24324,13 @@
       #dci-rules .dci-filebtn { display: inline-flex; gap: calc(var(--u, 1px) * 6); align-items: center; margin: 0; }
       #dci-rules .dci-filebtn input { width: auto; }
       #dci-rules td input[type=checkbox] { width: auto; }
+      /* [3.32.0] the quick switches at the top (item 97d) */
+      #dci-rules .dci-quick { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); margin: 0 0 calc(var(--u, 1px) * 8);
+        padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border: 1px solid #dddae8; border-radius: 4px; background: #faf9fd; }
+      #dci-rules .dci-quick > strong { flex: 0 0 100%; font-size: calc(var(--u, 1px) * 12); }
+      #dci-rules .dci-quick-sw { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); }
+      #dci-rules .dci-quick-sw label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); margin: 0; font-weight: normal; }
+      #dci-rules .dci-quick-sw input { width: auto; }
       #dci-rules .dci-rule-result { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #736dab; background: #f4f3fb; }
       #dci-log {
         --u: calc(var(--dci-fs, 13px) / 13);

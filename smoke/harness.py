@@ -816,12 +816,20 @@ def with_companion(pg):
 VIEW_PRESET = "(v) => { if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); if (localStorage.getItem('dci-view') === null) localStorage.setItem('dci-view', JSON.stringify(v)); }"
 
 
+# [3.32.0] built-in rules switched off before the script starts, unless the browser has stored switched rules already
+# (e.g. ['D022'] for the cases about periods and "choose", written before D022 placed what the days have in common)
+RULES_OFF = []
+RULES_PRESET = "(ids) => { if (localStorage.getItem('dci-rules-off') === null) localStorage.setItem('dci-rules-off', JSON.stringify(ids)); }"
+
+
 def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
     pg = ctx.new_page()
     errs = errors_of(pg)
     pg.goto(f'https://musicbrainz.org/release/{REL}/edit-relationships')
     if view:
         pg.evaluate(VIEW_PRESET, view)
+    if RULES_OFF:
+        pg.evaluate(RULES_PRESET, RULES_OFF)
     if companion:
         with_companion(pg)
     if gm_xhr:
