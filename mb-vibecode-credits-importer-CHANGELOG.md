@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.31.3 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.31.4 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -85,6 +85,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.31.4
+
+#### Changed
+
+- **Poets are lyricists** (collected item 104; maintainer: "bitte Dichter immer zu lyricist"): "Poems By", "Poetry By", "Poem By" are lyricist on the works with the word in lower case as role credit ("poems", "poetry", "poem"; rule R105; before: "Poetry By" and "Poem By" writer credited "Poetry By", "Poems By" an unknown instrument). "Author", "Story By", "Script By" stay writer.
+
+#### Added
+
+- **Poems read out are spoken vocals:** "Poetry [Read By]", "Poems [Recited By]", "Poems Read By", "Poetry Reading", "Recitation", "Recited By" – vocal spoken vocals on the recordings, credited "poetry", "poems" or "recitation" (rule R106).
+- **"Poems", "Poetry", "Poem" alone ask** (maintainer: "ja das nachfragen kann man machen"): lyricist (the words of the works) · liner notes (poems in the booklet) · spoken vocals (read out), each credited with the word in lower case (question Q009, rule R107); until you choose, the row is not added. Also in pasted texts and Bandcamp credits ("Poems: Jane Doe").
 
 ### Import 3.31.3
 

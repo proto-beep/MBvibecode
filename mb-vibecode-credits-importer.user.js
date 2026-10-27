@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.31.3
+// @version      3.31.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1602,6 +1602,7 @@
       "typeAsk.askTranslation": "“{role}” in Bandcamp credits: mostly the translation of the liner notes, sometimes of the lyrics – please choose:",
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
+      "typeAsk.askPoems": "“{role}” alone: the words of the works, poems printed in the booklet or poems read out? – please choose:",
       "typeAsk.suggested": "suggested",
       "typeAsk.suggestedTitle": "What it mostly means – a suggestion: the row is added only once you choose",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
@@ -6299,6 +6300,13 @@
         { type: 'performer', level: 'recording', label: 'performer' },
         { type: 'instrument', level: 'recording', instrument: 'effects', label: 'effects (credited “sounds”)' },
       ] },
+    // [3.31.4] collected item 104 (maintainer: "ja das nachfragen kann man machen"): "Poems" alone is asked like "Text"
+    { id: 'Q009', base: 'poems / poetry / poem', rule: 'R107', ask: 'typeAsk.askPoems', note: '"Poems", "Poetry", "Poem" alone (3.31.4): the words of the works (lyricist), poems printed in the booklet (liner notes) or poems read out (spoken vocals)? Nothing is assumed; each gets the word in lower case as role credit ("poems", "poetry", "poem")',
+      options: [
+        { type: 'lyricist', level: 'work', credit: true, label: 'lyricist (the words of the works)' },
+        { type: 'liner notes', level: 'release', credit: true, label: 'liner notes (poems in the booklet)' },
+        { type: 'vocal', level: 'recording', instrument: 'spoken vocals', credit: true, label: 'spoken vocals (read out)' },
+      ] },
     { id: 'Q005', base: 'text', rule: 'R100', ask: 'typeAsk.askText', note: '"Text" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German "Text" is the lyrics)? Nothing is assumed',
       options: [
         { type: 'liner notes', level: 'release' },
@@ -6381,7 +6389,9 @@
     { id: 'R098', kind: 'simple', note: "Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)", re: /^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$/, types: ['writer'], level: 'work', work: true, notes: ['musicLyrics'] },
     { id: 'R003', kind: 'simple', note: "", re: /^(composed by|composer|composition by|music by|music|all music by|all music|score|score by|soundtrack)$/, types: ['composer', 'writer'], level: 'work', work: true },
     { id: 'R004', kind: 'simple', note: "", re: /^(translated by|translation|translator|translations)$/, types: ['translator'], level: 'work', work: true },
-    { id: 'R005', kind: 'simple', note: "", re: /^(author|poetry by|poem by|story by|screenwriter|script by|created by)$/, types: ['writer'], level: 'work', work: true, credit: true },
+    { id: 'R005', kind: 'simple', note: "The poet's words (\"Poems By\", \"Poetry By\", \"Poem By\") are R105 since 3.31.4", re: /^(author|story by|screenwriter|script by|created by)$/, types: ['writer'], level: 'work', work: true, credit: true },
+    // [3.31.4] collected item 104 (maintainer: "bitte Dichter immer zu lyricist"): the poet is the lyricist of the works
+    { id: 'R105', kind: 'special', note: "\"Poems By\", \"Poetry By\", \"Poem By\" (3.31.4): the poet is the lyricist of the works, with the role credit \"poems\", \"poetry\" or \"poem\" (lower case)", re: /^(poems|poetry|poem)( written)? by$/, types: ['lyricist', 'writer'], level: 'work', work: true },
     { id: 'R006', kind: 'simple', note: "", re: /^(lyrics by|lyricist|words by|lyrics)$/, types: ['lyricist', 'writer'], level: 'work', work: true },
     { id: 'R007', kind: 'simple', note: "", re: /^(libretto by|librettist)$/, types: ['librettist', 'lyricist'], level: 'work', work: true },
     { id: 'R008', kind: 'simple', note: "Vocals", re: /^(lead vocals?|lead vocalist)$/, types: ['vocal'], level: 'recording', primaryCands: ['lead vocals'] },
@@ -6392,6 +6402,9 @@
     { id: 'R013', kind: 'simple', note: "", re: /^(backing vocals?|background vocals?|harmony vocals?|chorus|backing vocalist)$/, types: ['vocal'], level: 'recording', primaryCands: ['background vocals'] },
     { id: 'R014', kind: 'simple', note: "", re: /^(choir|choir vocals?)$/, types: ['vocal'], level: 'recording', primaryCands: ['choir vocals'] },
     { id: 'R015', kind: 'simple', note: "", re: /^(voice|narrator|spoken word|speech|spoken vocals?|voice actor)$/, types: ['vocal'], level: 'recording', primaryCands: ['spoken vocals'] },
+    // [3.31.4] collected item 104: poems read out are spoken vocals; "Poems" alone is asked (R107, Q009)
+    { id: 'R106', kind: 'special', note: "Poems read out (3.31.4): \"Recitation\", \"Recited By\", \"Poetry Reading\", \"Poems Read By\", \"Poetry [Read By]\", \"Poems [Recited By]\" → spoken vocals on the recordings, with the role credit \"poetry\", \"poems\", \"poem\" or \"recitation\" (lower case)", re: /^(recitation|recitations|recited by|reciter|poetry reading|poetry readings|(poems|poetry|poem) (read|recited) by)$/, types: ['vocal'], level: 'recording', primaryCands: ['spoken vocals'] },
+    { id: 'R107', kind: 'special', note: "\"Poems\", \"Poetry\", \"Poem\" alone (3.31.4): the words of the works, poems printed in the booklet or poems read out? No type is assumed, the dashboard asks (Q009)", re: /^(poems|poetry|poem)$/, types: [], level: 'release' },
     { id: 'R016', kind: 'simple', note: "", re: /^guest$/, types: ['performer'], level: 'recording', flags: ['guest'] },
     { id: 'R017', kind: 'simple', note: "", re: /^(rap|rapper|mc|rapping)$/, types: ['vocal'], level: 'recording', primaryCands: ['rap', 'spoken vocals'] },
     { id: 'R018', kind: 'special', note: "", re: /^(vocals?|vocalist|singer)$/, types: ['vocal'], level: 'recording' },
@@ -6586,6 +6599,15 @@
       R097: { run: () => out([], { notes: ['askType'] }) },
       R102: { run: () => ({ ...out([], { notes: ['askType'] }), translated: 'alto' }) },
       R100: { run: () => out([], { notes: ['askType'] }) },
+      // [3.31.4] the word of the poet in lower case is the role credit ("Poems By" → "poems")
+      R105: { run: () => out(['lyricist', 'writer'], { level: 'work', work: true, credit: b.replace(/(\s+written)?\s+by$/, '') }) },
+      R106: { test: () => is(/^(recitation|recitations|recited by|reciter|poetry reading|poetry readings|(poems|poetry|poem) (read|recited) by)$/)
+        || (is(/^(poems|poetry|poem)$/) && has('read by', 'reading', 'readings', 'reader', 'recited by', 'recitation', 'recited', 'reciter', 'spoken', 'spoken word', 'narration', 'narrated by')),
+      run: () => {
+        const poem = b.match(/^(poems|poetry|poem)\b/);
+        return out(['vocal'], { primaryCands: ['spoken vocals'], credit: poem ? poem[1] : 'recitation' });
+      } },
+      R107: { run: () => out([], { notes: ['askType'] }) },
       R062: { test: () => /\bdesign(ed|s)?\b/.test(allWords) && !/\bgraphic/.test(allWords), run: () => {
       ms.forEach((x) => consumed.add(x));
       const rest = uniq(allWords.replace(/\b(designed|designs|design|designer|by)\b/g, ' ').split(/[\s,]+/).filter(Boolean));
@@ -7294,6 +7316,9 @@
     const phrases = [[norm(row.base), ...details].join(' '), [...details, norm(row.base)].join(' ')];
     return WORDING_RULES.find((r) => ruleOn(r.id) && r.phrases.some((x) => phrases.includes(x))) || null;
   }
+
+  /** [3.31.4] The role credit an option of a type question gives: the task of "misc", or the role word in lower case (Q009). */
+  const optionCredit = (o, row) => o.task || (o.credit === true ? norm(row.translatedBase || row.base).replace(/(\s+written)?\s+by$/, '') : (typeof o.credit === 'string' ? o.credit : ''));
 
   const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && row.ruleId === q.rule && (!q.flag || row[q.flag])) || null);
 
@@ -10626,7 +10651,7 @@
     const tq = typeQuestionFor(row);
     const o = tq && row.typeAnswer != null ? tq.options[row.typeAnswer] : null;
     if (o) {
-      Object.assign(row, { types: [o.type], creditFromRole: o.task || '' });
+      Object.assign(row, { types: [o.type], creditFromRole: optionCredit(o, row) });
       resolveRowType(row);
       // [Q006] with its instrument or voice
       if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
@@ -21421,7 +21446,7 @@
         if (!o) break;
         row.typeAnswer = Number(btn.dataset.opt);
         row.types = [o.type];
-        row.creditFromRole = o.task || '';
+        row.creditFromRole = optionCredit(o, row);
         delete row.scopeLevel;
         delete row.mxSkipped;
         // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.31.3, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.31.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.31.4 · 2026-10-27
+
+Poems and poetry (collected item 104).
+
+- **Register, role rules:** R005 without "poetry by" and "poem by" (note added); new **R105** (`/^(poems|poetry|poem)( written)? by$/` → lyricist, writer on the works; code: the role credit is the word without "(written) by"), **R106** (recitation, recited by, reciter, poetry reading(s), "poems/poetry/poem read/recited by", and "Poems"/"Poetry"/"Poem" with a bracket "Read By", "Reading", "Recited By", "Recitation", "Spoken" … → vocal, `primaryCands: ['spoken vocals']`, role credit the poem word or "recitation"), **R107** (`/^(poems|poetry|poem)$/` → no type, `notes: ['askType']`, like R100). R106 comes right after R015, R105 right after R005.
+- **Register, type questions:** new **Q009** (rule R107; options lyricist (work), liner notes (release), vocal with the instrument spoken vocals; each `credit: true`).
+- **New `optionCredit(o, row)`:** the role credit an option gives – its `task` (misc, Q003/Q007), with `credit: true` the role word in lower case without "(written) by", or a fixed `credit` text; used by `remapRow` and the click handler `type-pick` (before: `o.task || ''`).
+- **Texts:** new `typeAsk.askPoems` (English only).
+- **Tests:** new case `poems` in `t_mapping.py`; `register_corpus.json` eleven roles more ("Poems By", "Poems", "Poetry", "Poem", "Poetry [Read By]", "Poems [Recited By]", "Recitation", "Recited By", "Poetry Reading", "Poems Read By", "Poetry Written By"), `register_golden.json` written anew (changed: "Poem By", "Poetry By" and their lower-case forms; R005, R105–R107, Q009 in the window); `text_corpus.json` a line more ("Poems: Jane Doe. Poetry by John Roe. Recitation: Ann Poe.").
 
 ## Import 3.31.3 · 2026-10-27
 
