@@ -1,6 +1,8 @@
 import re
 from playwright.sync_api import sync_playwright
 import harness as H
+# [3.31.1] compared with a log of an older version: with the script's own gap between requests to MusicBrainz
+H.MAIN = H.MAIN_SLOW
 
 def check(pg, label, sel, text, scope=None):
     loc = (scope or pg).locator(sel).first

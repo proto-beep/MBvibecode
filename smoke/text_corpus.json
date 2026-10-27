@@ -1,5 +1,5 @@
 {
-  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see t_prose.py for the dashboard).",
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\").",
   "lines": [
     {
       "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
@@ -1216,6 +1216,168 @@
         "unrecognized": [
           "Richard Gilman-Opalsky: Drums, percussion, and wood flutes → ? “percussion”, “wood flutes”"
         ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Sounds: Jane Doe",
+      "expect": {
+        "credits": [
+          [
+            "Jane Doe",
+            "Sounds"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe\nThe band is now a trio.\nVision Fortune is back with a new album.",
+      "artists": [
+        "Vision Fortune"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "AC Williams",
+            "Performer"
+          ],
+          [
+            "Alex Townend",
+            "Performer"
+          ],
+          [
+            "Andres Ayerbe",
+            "Performer"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "The band is now a trio.",
+          "Vision Fortune is back with a new album."
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "℗ 2020 Solo P Records\n© Solo C Records 2019\n© & ℗ TUM Records Oy 2021",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Solo P Records",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "Solo C Records",
+            "Copyright (c)"
+          ],
+          [
+            "TUM Records Oy",
+            "Phonographic Copyright (p)"
+          ],
+          [
+            "TUM Records Oy",
+            "Copyright (c)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "All music recorded ... at Orange Music Sound Studios in West Orange, New Jersey, on May 27, 2016 (Disc 1)\nAll music mastered ... at Turtle Tone Studio in New York City\nIncluding a 52 p. booklet.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Orange Music Sound Studios",
+            "Recorded At",
+            "(West Orange, New Jersey)"
+          ],
+          [
+            "Turtle Tone Studio",
+            "Mastered At",
+            "(New York City)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Including a 52 p. booklet.",
+            "why": "package"
+          }
+        ]
+      }
+    },
+    {
+      "text": "[Publishers & Rights Societies]\n• Tomas Fujiwara-BMI : tracks 1, 3\n• FlizmoMusic-BMI : tracks 2, 4\n• 4WordSeaMusic-BMI : tracks 2, 3\n• ThobulousMusic-BMI : tracks 4",
+      "tracks": 4,
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Tomas Fujiwara",
+            "Published By",
+            "tracks 1, 3"
+          ],
+          [
+            "BMI",
+            "Rights Society"
+          ],
+          [
+            "FlizmoMusic",
+            "Published By",
+            "tracks 2, 4"
+          ],
+          [
+            "BMI",
+            "Rights Society"
+          ],
+          [
+            "4WordSeaMusic",
+            "Published By",
+            "tracks 2, 3"
+          ],
+          [
+            "BMI",
+            "Rights Society"
+          ],
+          [
+            "ThobulousMusic",
+            "Published By",
+            "tracks 4"
+          ],
+          [
+            "BMI",
+            "Rights Society"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Published by Z Songs (ASCAP)\nBIEM/GEMA",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "ASCAP",
+            "Rights Society"
+          ],
+          [
+            "Z Songs",
+            "Published By"
+          ],
+          [
+            "GEMA",
+            "Rights Society"
+          ]
+        ],
+        "unrecognized": [],
         "ignored": []
       }
     }

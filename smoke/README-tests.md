@@ -20,251 +20,416 @@ MBvibecode/ (this repository)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
-  smoke/t_*.py                        tests (each prints OK/FEHLER lines)
+  smoke/caserun.py                    [3.31.1] runs the cases of a topic file: one shared browser, what a case changes in the
+                                      harness set back after it, one result per case and one for the file
+  smoke/t_*.py                        tests: topic files with cases (case_<name>, each the former t_<name>.py), and seven
+                                      files of their own (golden tests, comparisons with older logs); each ends with
+                                      "Ergebnis: OK/FEHLER"
   smoke/register_corpus.json          frozen input of the register's golden test (t_register.py)
   smoke/register_golden.json          its expected results (written with UPDATE=1)
   smoke/text_corpus.json              credits lines from real releases and cases around them, with their stored reading
                                       ('expect', written with UPDATE=1 by t_textcorpus.py; 'later': still read wrong, planned)
 ```
 
+
 ## Running
 
 ```
 pip install playwright && python -m playwright install chromium   # once
-# t_adapter.py also needs Node.js (its part B loads the script in Node)
+# Node.js is needed too: t_register.py, t_textcorpus.py, t_static.py and the case adapter of t_sources.py load the script in Node
 cd smoke
-python3 t_basic.py        # dashboard loads, companion connected, status marks on Discogs
-python3 t_focus.py        # typing in every date field keeps cursor and text
-python3 t_release.py      # MusicBrainz release page checks what arrived (✓ / ✗), marks go when closed
-python3 t_pub.py          # publishers ticked only where a writer has them as personal publisher
-python3 t_ar.py           # A&R with task on the release group
-python3 t_trackpool.py    # dates for some tracks: suggestions in the matrix, Apply splits rows, applying again, several days
-python3 t_media.py        # release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
-python3 t_artwork.py      # cover miniature on the Discogs page: shown when connected, click, fold, drag, place kept
-python3 t_rows.py         # remove a row (and undo), removal after staging, "only works"
-python3 t_matrix.py       # date matrix by hand: drag & drop, grip + "place here", editor, auto apply, stamp, after reload
-python3 t_pools.py        # "Dates & tracks" folds (remembered), clear all track groups / dates (also other releases)
-python3 t_reset.py        # "↺ Reset all settings …" (⚙ Settings, 3.25.0; before "↺ Defaults" in the head): settings, own
-                          # rules, pools of all releases, cover box on Discogs
-python3 t_choose.py       # separate days ("June 16 & 19"): both days and the period in the pool, "Choose" in the matrix
-python3 t_inline.py       # dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
-python3 t_dragdates.py    # pool dates dragged onto rows / works matrix, dates joined into periods, pools loaded again, "Cover Art"
-python3 t_notice.py       # update notice (milestones, closed, language) and the one-time resets of stored data (generations 2 to 4, also companion;
-                          # generation 4 clears the list of created works too)
-python3 t_bar.py          # language before opening (3.27.1: the question after the installation, then the settings), fold at the
-                          # bottom, date pool kept when folded, common month/year, horns, producer
-python3 t_tracksdrop.py   # track groups dragged onto rows (Shift adds, release level moves), track pool kept when folded,
-                          # works matrix cells that cannot take a date, work credits checked on the works (release page)
-python3 t_fill.py         # dates added to MB's dateless relationships from the works matrix (edit, ×, edit note),
-                          # status marks of credits on works that were new in the editor (found through the recording)
-python3 t_rules.py        # Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
-                          # rule ids open "Mapping rules" at the rule, autoscroll while dragging (0.2 s, as in browsers)
-python3 t_matrixcols.py   # "Directed By" asked, works matrix columns taken out / back, column dates for MB's dateless relationships
-python3 t_trackmarks.py   # a status mark on each Discogs track line, checked per track on the release page
-python3 t_v217.py         # "Mixed By [Mixing]" (S019), "Bass Guitar" asked (Q004), "[Additonal Musicians]" (S002), "All Music By",
-                          # "©© Label 2005" (D015), ‹ › through the incomplete rows, Escape closes "Mapping rules" first, text size 50 %
-python3 t_wattrs.py       # works matrix attributes as short forms (ac co de in ka li me pa): "li" preselected only on new links,
-                          # "li?" offered on the existing one, open/closed rows, "Attributes for all", "spell out", staging;
-                          # "Music And Lyrics By" → writer, "Song" preselected (R098, S020)
-python3 t_mxdrop.py       # track lists from the Discogs notes as track groups and suggestions (✓ / ×), generous names;
-                          # track groups dropped onto a column head (Shift adds), a role, an attribute of the works matrix
-python3 t_mediasel.py     # media choice before the import (three media): all = as before, media 2-3 without the release level,
-                          # "Choose media …", remembered choice preselected, unknown media, cancel / Escape
-python3 t_logplace.py     # log next to the edit note: right / left (width and height), above (height kept), too narrow → above,
-                          # edit note drawn anew, remembered after reloading, "↺ Defaults" → window
-python3 t_keepplace.py    # after "Create artist …" the dashboard stays at the entry (window and page, without scroll anchoring)
-python3 t_adapter.py      # source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
-                          # index tracks, "A1 to A3", grouping, S018); through the adapter in the dashboard: aliases, series and
-                          # parent label, forms for artist / label / series / work, edit notes, live from the format, US dates,
-                          # Discogs tab, release picker; update from 2.19.1 without reset (PARTS=C: only the dashboard part)
-python3 t_v219.py         # suggestions yellow and dashed everywhere (date and works matrix, "li?", unused pool entries from the
-                          # notes), "mixed" half filled, "waits" dotted; "Commissioned By" (person, label; without and with tracks),
-                          # "Live Recording By" → recording without credit and "live" only on new links of its tracks; staging
-python3 t_freetext.py     # credits from a pasted text (3.2.0): "Name – roles", "Role: names", two clauses in a line, places
-                          # ("Recorded live at …", "Mastered by A at Studio"), tracks ("Tracks 3–4: …", "(1, 3)"), ℗, lines not
-                          # recognized; works matrix; names only suggested (dashed, yellow), a click assigns; edit note
-python3 t_bandcamp.py     # Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and
-                          # track pages through GM_xmlhttpRequest, band linked by its page, choice kept after a reload, edit note),
-                          # digital media → Bandcamp first, order changed in the list, the Bandcamp menu (track pages off,
-                          # "Test page"), a band not credited so on the release only suggested; the spelling compared
-                          # with the release's artist credit, not with the MB artist's name (rule 4); the spelling check line
-python3 t_supp.py         # a second source supplements the loaded one (3.5.0): only on request, the list "Supplements from …"
-                          # (new role, new entries with suggestions, "differs", not recognized), marks DG BC / BC ≠, take over
-                          # selected, edit note ("Also from", added only, differs); "Delete stored import …"; the old script
-                          # on the page (stays out / warns); G: supplement with a typed Bandcamp URL (3.8.0)
-python3 t_names.py        # texts (3.6.0): "tenor & soprano sax, trumpet and clarinet" (shared instrument word), "bass & electric
-                          # guitar" stays two; a list with an unknown part ("→ ? “sticks-and-stones”"); name suggestions without
-                          # accents ("Agusti" → "Agustí") and "similar name" with a middle name ("Barry Guy" → "Barry John Guy")
-python3 t_about.py        # Bandcamp "about" text (3.7.0): "recorded at Loft in Cologne, june 16/17 2018" → place Loft (Cologne),
-                          # places suggested only in that area, the period in the date pool; "Studio Nord, Bremen" in the credits;
-                          # "mixed at home in Oslo", "at the same time", "at last" give no entry (3.13.1)
-python3 t_reldate.py      # date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level
-                          # takes the matching date, a date typed by hand stays, the mark stored with the matrix
-python3 t_register.py     # the mapping register stays the same (3.11.0, golden test): a frozen corpus (register_corpus.json:
-                          # ~1,200 roles, ~100 company roles, ~50 date phrases, pasted texts) through the register in Node, the
-                          # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
-                          # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
-python3 t_recheck.py      # fixes of 3.12.1: "n lines not recognized" opens in the window; same-named works searched again when
-                          # a text's writer is assigned (found then), not without a change; a new import searches anew
-python3 t_initials.py     # name suggestions for names with an initial (3.13.0): "T. Snekkestad" → Torben Snekkestad, "Barry J. Guy"
-                          # → Barry John Guy, "K. Tanaka" → Kenji (not Hiro) Tanaka, no second search without an initial
-python3 t_rulesname.py    # "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
-python3 t_textrules.py    # rules for free credits texts (3.14.0): "Music played and recorded by X in March and April 2025",
-                          # "Mixed and mastered by X in May 2025", "Photography Sam Lee", "mastering john doe", the label line
-                          # left out, "… created by a human" → the release's artist suggested; the period 2025-03 – 2025-04
-python3 t_jump.py         # ▲ ▼ in the status bar jump to the top and bottom of the dashboard, in the window and in the page (3.14.1)
-python3 t_special.py      # special purpose artists (3.15.1): Various Artists and "[soundtrack]" are not asked for their works,
-                          # logged once; table T026 in "Mapping rules"
-python3 t_mastering.py    # mastering only on the release level (3.15.1): two engineers for CD 1 / CD 2, no "Recording", no
-                          # "Release level" in the column, the track group decides which mastering row takes a date
-python3 t_suggstack.py    # suggestions as a block below the red mark (3.15.2, 3.15.3: side by side, wrapping): eight artists of one name, 5 shown + "+ 3 more",
-                          # explanations as tooltips
-python3 t_aboutoff.py     # "Leave out the about text" (3.16.1): place and dates of the about text out and back, with the changes,
-                          # kept across a reload, reset by "Delete stored import"
-python3 t_srctexts.py     # texts that named Discogs say "the source" with another source (3.16.2)
-python3 t_settings.py     # the menu "Settings" (3.16.0): topics, shared switches both ways, values in steps, a topic's "↺",
-                          # the works of the artists kept across a reload (IndexedDB), clearing them, switched off
-                          # 3.25.0: the topics as tabs, one shown at a time
-python3 t_bcview.py       # the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
-                          # "Load the release there", marks before each part of a line (none in the about text, shortened texts
-                          # opened), mark → row, jumps (part of a line, sentence of the about text, track both ways), track
-                          # pages (link, loaded, own marks), ● after staging and ✓ on the release page, menu, old companion
-python3 t_bcoff.py        # credits switched off on Bandcamp (3.17.1; 3.17.5: a click on the mark, the pointer shows the row): off → "Skip" with a note and greyed, a
-                          # group of marks, on again with its level, kept across a reload, a level chosen, "Delete stored import"
-python3 t_linernotes.py   # liner notes in Bandcamp's about text (3.17.2): the three places of the name, five sentences over several
-                          # paragraphs, cases without (4 sentences, "Special Thanks" …), entry as suggestion, pool name, jump, left out,
-                          # 3.17.6: the date as a suggestion at the row, ✓ takes it
-python3 t_relcheck.py     # the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
-                          # retried, a background page's beat counts 75 s
-python3 t_distrib.py      # "Distribution - !K7" and variants (3.17.3, T028): company "Distributed By", label → release distributed
-python3 t_navlink.py      # the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
-python3 t_keepmarks.py    # a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
-python3 t_worksskip.py    # the works matrix (3.18.0): fold / unfold (not kept), "Skip works matrix" (rows on "Skip", nothing of it planned,
-                          # no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later);
-                          # 3.19.3: the tooltips of what is counted, the setting for the skipped rows
-python3 t_manualtop.py    # "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
-                          # page), an entry added from there is shown
-python3 t_afteredit.py    # start from the release editor (3.19.0; 3.23.0: the button "Enter edit & import credits" instead of the tick): only
-                          # on "Edit note" with a Discogs/Bandcamp link, right after "Enter edit", orange; "Enter edit" stays plain; the
-                          # button and Ctrl+Alt+Enter → relationship editor with the dashboard, an error, "Add release" with a Bandcamp
-                          # link typed in (German, loaded at once), the setting off, other release pages untouched
-python3 t_medium.py       # the medium of the release decides (3.21.4): vinyl mastering, "(vinyl)", lacquer cut on Digital Media left out
-                          # with the reason (and a studio only for it), the digital half kept; "Translated by" on Bandcamp asks
-python3 t_foreign.py      # instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
-                          # "saxo tenor y soprano", "y" between names, "bajo" asks like "Bass", "Alto" asks (viola …), T034 in the window
-python3 t_textcorpus.py   # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
-                          # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
-                          # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
-                          # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
-                          # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
-                          # with a studio's profile
-                          # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
-python3 t_v3222.py        # 3.22.2: "Kontrabass" → double bass (3.22.3: without role credit; text and Discogs), "Contrabass" credited
-                          # "contrabass", "Violoncello" → cello "violoncello";
-                          # produced / remixed / engineered in (areas with the area they are part of); recording without role credit
-                          # (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
-python3 t_entryhead.py    # the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), the chip
-                          # "as “B. Man”" (+1), the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
-python3 t_msgs.py         # messages (3.27.3): ✕ on each, "▾ n messages" folds them, a new error unfolds, a fresh import shows them again
-python3 t_bctrack.py      # a Bandcamp track page as the release (3.28.1 / companion 1.8.4): loaded from the link, its credits once,
-                          # the tab "connected" with marks; a track of an album via "Other source", "Load the release there"; Test page;
-                          # the text "… Bandcamp track pages too", long settings texts wrap
-python3 t_nordic.py       # Norwegian, Swedish and Danish roles (3.28.2): no role credit for a translation in brackets or a text, "Artwork
-                          # [Logo Og Kunst]" → design "logo" + artwork "art" (two marks on Discogs), vocals "screams"/"clean", case-only
-                          # names without "credited as" (typed in: kept), "Wood Flute"/"wood flutes" → flute credited so;
-                          # 3.28.3: the rules named at the rows (S031 – S035, S033 not S018)
-python3 t_textmarks.py    # used dates and track groups underlined at the source (3.28.3 / companion 1.9.0): Discogs notes (matrix,
-                          # a row, not the pool), status off/on, Bandcamp credits (a year also in "released …") and "about";
-                          # two "Vocals [...]" lines of one artist
-python3 t_textcredit.py   # 3.28.4: "Cover/Sleeve/Booklet/Package Design" → design "… design", "Artwork [Design And Layout]" one row
-                          # "design and layout", "Artist credit for all roles" empty for a case-only spelling, a text's name linked:
-                          # credited as written (not when only the case differs)
-python3 t_datewords.py    # 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
-                          # the date's sentence, "mixed and mastered" → Mix and Mastering (Node and the date matrix)
-python3 t_facets.py       # 3.28.6: "C1 to D" (side D one track) and the other ranges of "Facets" as dated track groups in the matrix,
-                          # "in live concert" → "live" for the tracks of that sentence only, no places from the notes
-python3 t_prose.py        # 3.29.0 (milestone): ekstasis' prose credits (K.M. (sounds, words) & E. (voice), "channeled by", "the
-                          # guided hand of"), "Mixed and mastered at TQA.HQ (July 2026)", "Tenor, alto, soprano saxophones",
-                          # "wood flutes", "Mixed and mastered by … in March 2026" – rows, places and the date matrix;
-                          # 3.29.1: "(noises, electronics)" → effects "noises", electronic instruments "electronics", "(field
-                          # recordings)" → field recordist
-python3 t_levels.py       # 3.29.2: the colours of the levels (full rows and compact line), the level of the compact line by a click
-                          # (Recording → Release with the June date of the matrix → Skip → Recording with the March dates), the tab
-                          # "Appearance" (text size, place, view, colours: own colour, off, ↺)
-python3 t_fold.py         # 3.29.3: the arrow next to "Artist credit for all roles" – one entry folded to compact lines in the full
-                          # view (a line opens its row, ▸ back, full again after the next import), its open rows closed in the
-                          # compact view
-python3 t_rulesdock.py    # 3.30.0: "Mapping rules" in the dashboard below its head (default), never together with ⚙ Settings,
-                          # "⧉ As window" (stored, ⚙ beside it), remembered after reloading, "in the dashboard" in Appearance,
-                          # closed by the symbol and Escape, a rule id at a row opens them at that rule
-python3 t_ui301.py        # 3.30.1: the bar below the messages covers nothing, tooltips of "on mouse-over / on click", the level of
-                          # a compact line stays in place on Skip, "only works" apart and in the colour of works, in the page no
-                          # wider than the window (inside a 2400 px page)
-python3 t_rowrules.py     # 3.30.2: a rule id at a row opens the rules as a window (the row stays), the symbol closes it and opens
-                          # them in the dashboard, "Into the dashboard", the setting "like the symbol"; the arrow in the head of an
-                          # entry in the compact view opens / closes all its rows
-python3 t_poolsmx.py      # 3.30.3: date pool and track pool fold on their own (folded bar and open block, remembered); the scroll
-                          # bars of the works matrix (above it; at the bottom while its lower edge is out of view), moving together
-python3 t_bridge.py       # 3.30.4: ⚙ pressed with a bridge to the settings (and the rules symbol to the docked rules), the content of
-                          # every tab at the height of the tab (100 % and 90 %), the bridge scrolled away and closed
-python3 t_ui305.py        # 3.30.5: ⚙ below "Import credits …" before any import – only the settings ("Source pages"), no import, the
-                          # message "Start import" starts it; the field "Tracks:" of a track group (ranges, ticks, unknown tracks,
-                          # Enter saves, editing shows the tracks); German "Quellseiten"
-python3 t_sounds.py       # 3.30.6: "Sounds" (Discogs, text, prose) – performer with the question performer · effects "sounds",
-                          # effects chosen gives the role credit "sounds"
-python3 t_members.py      # 3.30.7: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – three performers (pasted text
-                          # and the "about" text of Bandcamp); "The band is now a trio." and "… is back with a new album." nothing
-python3 t_discnotes.py    # 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
-                          # Performance, the places of the notes (not when "Companies, etc." lists them; another role joins its
-                          # entry), as a text: the place line recognized, "Including a 52 p. booklet." left out
-python3 t_pcline.py       # 3.30.9: "© & ℗ TUM Records Oy 2021" from the Discogs notes – both roles, MusicBrainz's TUM Records Oy and
-                          # TUM Records suggested; Discogs lists © already: only ℗ joins its entry; a text: ℗ alone, © alone, both
-python3 t_publishers.py   # 3.31.0: "[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4 …" in the Discogs notes – the tracks
-                          # onto Discogs's publishers as suggestions (also "4WordSeaMusic" = "Fourwordseamusic"), one not listed an
-                          # entry, BMI once as rights society; the publisher Tomas Fujiwara a part of the person's column; MB
-                          # suggestions written apart ("Four Word Sea Music"), the society first; as a text with "Published by X
-                          # (ASCAP)" and "BIEM/GEMA"
-python3 t_i18n.py         # the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
-                          # placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
-                          # per language (LIST=1: all keys) – not an error
-python3 t_compact.py      # the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
-                          # a line per row, marks in colour, fields hidden,
-                          # open / "▴ compact", a track group and a pool date dropped onto the line, the question answered, a skipped
-                          # row grey with ✕ (back after reloading), "Full" remembered and in the settings, the jump to an incomplete row
-python3 t_head.py         # the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
-                          # the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
-                          # asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
-python3 t_settabs.py      # the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
-                          # Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), the ⓘ in the head
-                          # opens "ⓘ Connections" (ten rows, Harmony with its home page), "↺ Reset all settings …" below the tabs shows
-                          # the question in the settings ("Cancel" back to the tab), no "↺ Defaults" in the head, narrow: tabs in a row
-python3 t_connections.py  # the connections (3.25.0, Node): every address of @match / @connect and of the code belongs to an entry of
-                          # CONNECTIONS, the ids are unique, every entry has its texts in English (3.27.1; before: four languages)
-python3 t_tracksfit.py    # tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
-                          # most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
-                          # the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
-python3 t_links.py        # several linked releases of one source (3.24.0): the dialog counts each (one cannot be read), the one with the
-                          # most data bold and preselected, all in background tabs, "Import" (remembered, loaded at once next time),
-                          # another one by hand without remembering, "Cancel" (the message as before)
-python3 t_labelpage.py    # an album on a label's Bandcamp page (3.22.1): no link for the artist, searched by name (the release's artist
-                          # first, "release artist"), the hint with the page and MB's label ("a label of this release ✓"), the source
-                          # line, the log; the account's name from "data-band" / "og:site_name" (Node); Discogs: a person without MB
-                          # link gets same-named suggestions
-python3 t_areas.py        # text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
-                          # Gijón suggested by its alias "Xixón", no "Create", "recorded in" staged on the recordings); tracks by their
-                          # titles ("Piano in ‘A' and 'B' is a contribution by X", one letter off, "Not matched"); Bandcamp: titles of the
-                          # album, the area of the "about" text
-python3 t_mediaload.py    # the media dialog (3.20.0, 3.21.1): load the chosen media in the editor in the background – MB's editor built
-                          # as MusicBrainz builds it (a.expand-medium#disc<n>, "Expand all mediums", "Load all tracks..."), a medium
-                          # without a tracklist named, the works question there ("Not now", "Skip works matrix"), media 1 and 3 only,
-                          # tracks and relationships the release lookup leaves out read from /ws/js/tracks
-python3 t_harmony.py      # Harmony (3.19.1): a release editor seeded by Harmony (a note, no button, "Enter edit" → Harmony's Release
-                          # Actions), there "Edit relationships with Credits Importer" below "Add cover art", the link opens the dashboard
-                          # and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2 (3.23.0: the button
-                          # instead of the tick): a background tab (opened once by Harmony's page), an error, the settings
-python3 t_artistworks.py  # works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
-                          # writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
-                          # 2,000), no redraw while typing in the works matrix (takes about 3 minutes)
+```
+
+Since 3.31.1 (collected item 103) the tests of a topic are cases of one file: `python3 t_text_languages.py` runs all its
+cases, `python3 t_text_languages.py sounds members` only those. Each case is the former test file, unchanged: it prints its
+own lines and its "Ergebnis: …"; `caserun.py` adds "== name: OK" / "== name: FEHLER" after each case and the result of
+the file at the end ("Ergebnis: OK [n Fälle]", or the names of the cases that failed). One browser serves all cases of a
+file (each opens its own context and pages); what a case changes in the harness – the Discogs data, the search
+results, relationship types, the shared storage – is set back before the next one. The tests ask the mock MusicBrainz
+every 25 ms instead of the script's 1.1 s (`harness.MB_GAP`, environment `DCI_MB_GAP`, 0 = the script's gap): an import
+takes about 1 s. Cases whose checks depend on that time (artistworks, logplace) and the comparisons with
+older logs set `H.MAIN = H.MAIN_SLOW` (the script with its own gap).
+
+```
+python3 t_basic.py              # dashboard loads, companion connected, status marks on Discogs
+python3 t_focus.py              # typing in every date field keeps cursor and text
+python3 t_release.py            # MusicBrainz release page checks what arrived (✓ / ✗), marks go when closed
+python3 t_ar.py                 # A&R with task on the release group
+python3 t_artwork.py            # cover miniature on the Discogs page: shown when connected, click, fold, drag, place kept
+python3 t_register.py           # the mapping register stays the same (3.11.0, golden test): a frozen corpus (register_corpus.json:
+                                # ~1,200 roles, ~100 company roles, ~50 date phrases, pasted texts) through the register in Node, the
+                                # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
+                                # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
+python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
+                                # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
+                                # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
+                                # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
+                                # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
+                                # with a studio's profile
+                                # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
+                                # 3.31.1: the lines of the cases sounds, members, pcline, discnotes and publishers; a line may name the
+                                # release's artists ("artists") and its number of tracks ("tracks")
+
+python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution
+                                #   freetext: credits from a pasted text (3.2.0): "Name – roles", "Role: names", two clauses in a line, places
+                                #     ("Recorded live at …", "Mastered by A at Studio"), tracks ("Tracks 3–4: …", "(1, 3)"), ℗, lines not
+                                #     recognized; works matrix; names only suggested (dashed, yellow), a click assigns; edit note
+                                #   textrules: rules for free credits texts (3.14.0): "Music played and recorded by X in March and April 2025",
+                                #     "Mixed and mastered by X in May 2025", "Photography Sam Lee", "mastering john doe", the label line
+                                #     left out, "… created by a human" → the release's artist suggested; the period 2025-03 – 2025-04
+                                #   names: texts (3.6.0): "tenor & soprano sax, trumpet and clarinet" (shared instrument word), "bass & electric
+                                #     guitar" stays two; a list with an unknown part ("→ ? “sticks-and-stones”"); name suggestions without
+                                #     accents ("Agusti" → "Agustí") and "similar name" with a middle name ("Barry Guy" → "Barry John Guy")
+                                #   textcredit: 3.28.4: "Cover/Sleeve/Booklet/Package Design" → design "… design", "Artwork [Design And Layout]" one row
+                                #     "design and layout", "Artist credit for all roles" empty for a case-only spelling, a text's name linked:
+                                #     credited as written (not when only the case differs)
+                                #   distrib: "Distribution - !K7" and variants (3.17.3, T028): company "Distributed By", label → release distributed
+
+python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
+                                #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
+                                #     "saxo tenor y soprano", "y" between names, "bajo" asks like "Bass", "Alto" asks (viola …), T034 in the window
+                                #   nordic: Norwegian, Swedish and Danish roles (3.28.2): no role credit for a translation in brackets or a text, "Artwork
+                                #     [Logo Og Kunst]" → design "logo" + artwork "art" (two marks on Discogs), vocals "screams"/"clean", case-only
+                                #     names without "credited as" (typed in: kept), "Wood Flute"/"wood flutes" → flute credited so;
+                                #     3.28.3: the rules named at the rows (S031 – S035, S033 not S018)
+                                #   prose: 3.29.0 (milestone): ekstasis' prose credits (K.M. (sounds, words) & E. (voice), "channeled by", "the
+                                #     guided hand of"), "Mixed and mastered at TQA.HQ (July 2026)", "Tenor, alto, soprano saxophones",
+                                #     "wood flutes", "Mixed and mastered by … in March 2026" – rows, places and the date matrix;
+                                #     3.29.1: "(noises, electronics)" → effects "noises", electronic instruments "electronics", "(field
+                                #     recordings)" → field recordist
+                                #   sounds: 3.30.6: "Sounds" (Discogs, text, prose) – performer with the question performer · effects "sounds",
+                                #     effects chosen gives the role credit "sounds"
+                                #   members: 3.30.7: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – three performers (pasted text
+                                #     and the "about" text of Bandcamp); "The band is now a trio." and "… is back with a new album." nothing
+
+python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials
+                                #   areas: text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
+                                #     Gijón suggested by its alias "Xixón", no "Create", "recorded in" staged on the recordings); tracks by their
+                                #     titles ("Piano in ‘A' and 'B' is a contribution by X", one letter off, "Not matched"); Bandcamp: titles of the
+                                #     album, the area of the "about" text
+                                #   v3222: 3.22.2: "Kontrabass" → double bass (3.22.3: without role credit; text and Discogs), "Contrabass" credited
+                                #     "contrabass", "Violoncello" → cello "violoncello";
+                                #     produced / remixed / engineered in (areas with the area they are part of); recording without role credit
+                                #     (also with a task field); the rules window's patterns ("(manufactured | made) (by | at)")
+                                #   medium: the medium of the release decides (3.21.4): vinyl mastering, "(vinyl)", lacquer cut on Digital Media left out
+                                #     with the reason (and a studio only for it), the digital half kept; "Translated by" on Bandcamp asks
+                                #   initials: name suggestions for names with an initial (3.13.0): "T. Snekkestad" → Torben Snekkestad, "Barry J. Guy"
+                                #     → Barry John Guy, "K. Tanaka" → Kenji (not Hiro) Tanaka, no second search without an initial
+
+python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
+                                #   discnotes: 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
+                                #     Performance, the places of the notes (not when "Companies, etc." lists them; another role joins its
+                                #     entry), as a text: the place line recognized, "Including a 52 p. booklet." left out
+                                #   pcline: 3.30.9: "© & ℗ TUM Records Oy 2021" from the Discogs notes – both roles, MusicBrainz's TUM Records Oy and
+                                #     TUM Records suggested; Discogs lists © already: only ℗ joins its entry; a text: ℗ alone, © alone, both
+                                #   publishers: 3.31.0: "[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4 …" in the Discogs notes – the tracks
+                                #     onto Discogs's publishers as suggestions (also "4WordSeaMusic" = "Fourwordseamusic"), one not listed an
+                                #     entry, BMI once as rights society; the publisher Tomas Fujiwara a part of the person's column; MB
+                                #     suggestions written apart ("Four Word Sea Music"), the society first; as a text with "Published by X
+                                #     (ASCAP)" and "BIEM/GEMA"
+
+python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes
+                                #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
+                                #     the date's sentence, "mixed and mastered" → Mix and Mastering (Node and the date matrix)
+                                #   facets: 3.28.6: "C1 to D" (side D one track) and the other ranges of "Facets" as dated track groups in the matrix,
+                                #     "in live concert" → "live" for the tracks of that sentence only, no places from the notes
+                                #   choose: separate days ("June 16 & 19"): both days and the period in the pool, "Choose" in the matrix
+                                #   trackpool: dates for some tracks: suggestions in the matrix, Apply splits rows, applying again, several days
+                                #   reldate: date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level
+                                #     takes the matching date, a date typed by hand stays, the mark stored with the matrix
+
+python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging dates and track groups, the pools
+                                #   matrix: date matrix by hand: drag & drop, grip + "place here", editor, auto apply, stamp, after reload
+                                #   dragdates: pool dates dragged onto rows / works matrix, dates joined into periods, pools loaded again, "Cover Art"
+                                #   pools: "Dates & tracks" folds (remembered), clear all track groups / dates (also other releases)
+                                #   poolsmx: 3.30.3: date pool and track pool fold on their own (folded bar and open block, remembered); the scroll
+                                #     bars of the works matrix (above it; at the bottom while its lower edge is out of view), moving together
+                                #   tracksdrop: track groups dragged onto rows (Shift adds, release level moves), track pool kept when folded,
+                                #     works matrix cells that cannot take a date, work credits checked on the works (release page)
+
+python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
+                                #   mxdrop: track lists from the Discogs notes as track groups and suggestions (✓ / ×), generous names;
+                                #     track groups dropped onto a column head (Shift adds), a role, an attribute of the works matrix
+                                #   matrixcols: "Directed By" asked, works matrix columns taken out / back, column dates for MB's dateless relationships
+                                #   fill: dates added to MB's dateless relationships from the works matrix (edit, ×, edit note),
+                                #     status marks of credits on works that were new in the editor (found through the recording)
+                                #   wattrs: works matrix attributes as short forms (ac co de in ka li me pa): "li" preselected only on new links,
+                                #     "li?" offered on the existing one, open/closed rows, "Attributes for all", "spell out", staging;
+                                #     "Music And Lyrics By" → writer, "Song" preselected (R098, S020)
+                                #   pub: publishers ticked only where a writer has them as personal publisher
+
+python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix
+                                #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
+                                #     writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
+                                #     2,000), no redraw while typing in the works matrix (takes about 3 minutes)
+                                #   worksskip: the works matrix (3.18.0): fold / unfold (not kept), "Skip works matrix" (rows on "Skip", nothing of it planned,
+                                #     no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later);
+                                #     3.19.3: the tooltips of what is counted, the setting for the skipped rows
+
+python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
+                                #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
+                                #     rule ids open "Mapping rules" at the rule, autoscroll while dragging (0.2 s, as in browsers)
+                                #   v217: "Mixed By [Mixing]" (S019), "Bass Guitar" asked (Q004), "[Additonal Musicians]" (S002), "All Music By",
+                                #     "©© Label 2005" (D015), ‹ › through the incomplete rows, Escape closes "Mapping rules" first, text size 50 %
+                                #   v219: suggestions yellow and dashed everywhere (date and works matrix, "li?", unused pool entries from the
+                                #     notes), "mixed" half filled, "waits" dotted; "Commissioned By" (person, label; without and with tracks),
+                                #     "Live Recording By" → recording without credit and "live" only on new links of its tracks; staging
+                                #   mastering: mastering only on the release level (3.15.1): two engineers for CD 1 / CD 2, no "Recording", no
+                                #     "Release level" in the column, the track group decides which mastering row takes a date
+                                #   special: special purpose artists (3.15.1): Various Artists and "[soundtrack]" are not asked for their works,
+                                #     logged once; table T026 in "Mapping rules"
+                                #   recheck: fixes of 3.12.1: "n lines not recognized" opens in the window; same-named works searched again when
+                                #     a text's writer is assigned (found then), not without a change; a new import searches anew
+
+python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows
+                                #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
+                                #   rulesdock: 3.30.0: "Mapping rules" in the dashboard below its head (default), never together with ⚙ Settings,
+                                #     "⧉ As window" (stored, ⚙ beside it), remembered after reloading, "in the dashboard" in Appearance,
+                                #     closed by the symbol and Escape, a rule id at a row opens them at that rule
+                                #   rowrules: 3.30.2: a rule id at a row opens the rules as a window (the row stays), the symbol closes it and opens
+                                #     them in the dashboard, "Into the dashboard", the setting "like the symbol"; the arrow in the head of an
+                                #     entry in the compact view opens / closes all its rows
+
+python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
+                                #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
+                                #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
+                                #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
+                                #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), the chip
+                                #     "as “B. Man”" (+1), the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
+                                #   manualtop: "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
+                                #     page), an entry added from there is shown
+                                #   msgs: messages (3.27.3): ✕ on each, "▾ n messages" folds them, a new error unfolds, a fresh import shows them again
+                                #   bar: language before opening (3.27.1: the question after the installation, then the settings), fold at the
+                                #     bottom, date pool kept when folded, common month/year, horns, producer
+                                #   jump: ▲ ▼ in the status bar jump to the top and bottom of the dashboard, in the window and in the page (3.14.1)
+
+python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice
+                                #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
+                                #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), the ⓘ in the head
+                                #     opens "ⓘ Connections" (ten rows, Harmony with its home page), "↺ Reset all settings …" below the tabs shows
+                                #     the question in the settings ("Cancel" back to the tab), no "↺ Defaults" in the head, narrow: tabs in a row
+                                #   settings: the menu "Settings" (3.16.0): topics, shared switches both ways, values in steps, a topic's "↺",
+                                #     the works of the artists kept across a reload (IndexedDB), clearing them, switched off
+                                #     3.25.0: the topics as tabs, one shown at a time
+                                #   bridge: 3.30.4: ⚙ pressed with a bridge to the settings (and the rules symbol to the docked rules), the content of
+                                #     every tab at the height of the tab (100 % and 90 %), the bridge scrolled away and closed
+                                #   ui305: 3.30.5: ⚙ below "Import credits …" before any import – only the settings ("Source pages"), no import, the
+                                #     message "Start import" starts it; the field "Tracks:" of a track group (ranges, ticks, unknown tracks,
+                                #     Enter saves, editing shows the tracks); German "Quellseiten"
+                                #   reset: "↺ Reset all settings …" (⚙ Settings, 3.25.0; before "↺ Defaults" in the head): settings, own
+                                #     rules, pools of all releases, cover box on Discogs
+                                #   notice: update notice (milestones, closed, language) and the one-time resets of stored data (generations 2 to 4, also companion;
+                                #     generation 4 clears the list of created works too)
+
+python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
+                                #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
+                                #     a line per row, marks in colour, fields hidden,
+                                #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered, a skipped
+                                #     row grey with ✕ (back after reloading), "Full" remembered and in the settings, the jump to an incomplete row
+                                #   fold: 3.29.3: the arrow next to "Artist credit for all roles" – one entry folded to compact lines in the full
+                                #     view (a line opens its row, ▸ back, full again after the next import), its open rows closed in the
+                                #     compact view
+                                #   levels: 3.29.2: the colours of the levels (full rows and compact line), the level of the compact line by a click
+                                #     (Recording → Release with the June date of the matrix → Skip → Recording with the March dates), the tab
+                                #     "Appearance" (text size, place, view, colours: own colour, off, ↺)
+                                #   ui301: 3.30.1: the bar below the messages covers nothing, tooltips of "on mouse-over / on click", the level of
+                                #     a compact line stays in place on Skip, "only works" apart and in the colour of works, in the page no
+                                #     wider than the window (inside a 2400 px page)
+                                #   suggstack: suggestions as a block below the red mark (3.15.2, 3.15.3: side by side, wrapping): eight artists of one name, 5 shown + "+ 3 more",
+                                #     explanations as tooltips
+                                #   rows: remove a row (and undo), removal after staging, "only works"
+
+python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
+                                #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
+                                #   logplace: log next to the edit note: right / left (width and height), above (height kept), too narrow → above,
+                                #     edit note drawn anew, remembered after reloading, "↺ Defaults" → window
+                                #   keepplace: after "Create artist …" the dashboard stays at the entry (window and page, without scroll anchoring)
+                                #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
+
+python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
+                                #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
+                                #     index tracks, "A1 to A3", grouping, S018); through the adapter in the dashboard: aliases, series and
+                                #     parent label, forms for artist / label / series / work, edit notes, live from the format, US dates,
+                                #     Discogs tab, release picker; update from 2.19.1 without reset (PARTS=C: only the dashboard part)
+                                #   links: several linked releases of one source (3.24.0): the dialog counts each (one cannot be read), the one with the
+                                #     most data bold and preselected, all in background tabs, "Import" (remembered, loaded at once next time),
+                                #     another one by hand without remembering, "Cancel" (the message as before)
+                                #   supp: a second source supplements the loaded one (3.5.0): only on request, the list "Supplements from …"
+                                #     (new role, new entries with suggestions, "differs", not recognized), marks DG BC / BC ≠, take over
+                                #     selected, edit note ("Also from", added only, differs); "Delete stored import …"; the old script
+                                #     on the page (stays out / warns); G: supplement with a typed Bandcamp URL (3.8.0)
+                                #   tracksfit: tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
+                                #     most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
+                                #     the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
+
+python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages
+                                #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and
+                                #     track pages through GM_xmlhttpRequest, band linked by its page, choice kept after a reload, edit note),
+                                #     digital media → Bandcamp first, order changed in the list, the Bandcamp menu (track pages off,
+                                #     "Test page"), a band not credited so on the release only suggested; the spelling compared
+                                #     with the release's artist credit, not with the MB artist's name (rule 4); the spelling check line
+                                #   about: Bandcamp "about" text (3.7.0): "recorded at Loft in Cologne, june 16/17 2018" → place Loft (Cologne),
+                                #     places suggested only in that area, the period in the date pool; "Studio Nord, Bremen" in the credits;
+                                #     "mixed at home in Oslo", "at the same time", "at last" give no entry (3.13.1)
+                                #   aboutoff: "Leave out the about text" (3.16.1): place and dates of the about text out and back, with the changes,
+                                #     kept across a reload, reset by "Delete stored import"
+                                #   linernotes: liner notes in Bandcamp's about text (3.17.2): the three places of the name, five sentences over several
+                                #     paragraphs, cases without (4 sentences, "Special Thanks" …), entry as suggestion, pool name, jump, left out,
+                                #     3.17.6: the date as a suggestion at the row, ✓ takes it
+                                #   labelpage: an album on a label's Bandcamp page (3.22.1): no link for the artist, searched by name (the release's artist
+                                #     first, "release artist"), the hint with the page and MB's label ("a label of this release ✓"), the source
+                                #     line, the log; the account's name from "data-band" / "og:site_name" (Node); Discogs: a person without MB
+                                #     link gets same-named suggestions
+                                #   bctrack: a Bandcamp track page as the release (3.28.1 / companion 1.8.4): loaded from the link, its credits once,
+                                #     the tab "connected" with marks; a track of an album via "Other source", "Load the release there"; Test page;
+                                #     the text "… Bandcamp track pages too", long settings texts wrap
+
+python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
+                                #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
+                                #   mediaload: the media dialog (3.20.0, 3.21.1): load the chosen media in the editor in the background – MB's editor built
+                                #     as MusicBrainz builds it (a.expand-medium#disc<n>, "Expand all mediums", "Load all tracks..."), a medium
+                                #     without a tracklist named, the works question there ("Not now", "Skip works matrix"), media 1 and 3 only,
+                                #     tracks and relationships the release lookup leaves out read from /ws/js/tracks
+                                #   mediasel: media choice before the import (three media): all = as before, media 2-3 without the release level,
+                                #     "Choose media …", remembered choice preselected, unknown media, cancel / Escape
+
+python3 t_start.py              # Starting: from the release editor, from Harmony, the source in the navigation
+                                #   afteredit: start from the release editor (3.19.0; 3.23.0: the button "Enter edit & import credits" instead of the tick): only
+                                #     on "Edit note" with a Discogs/Bandcamp link, right after "Enter edit", orange; "Enter edit" stays plain; the
+                                #     button and Ctrl+Alt+Enter → relationship editor with the dashboard, an error, "Add release" with a Bandcamp
+                                #     link typed in (German, loaded at once), the setting off, other release pages untouched
+                                #   harmony: Harmony (3.19.1): a release editor seeded by Harmony (a note, no button, "Enter edit" → Harmony's Release
+                                #     Actions), there "Edit relationships with Credits Importer" below "Add cover art", the link opens the dashboard
+                                #     and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2 (3.23.0: the button
+                                #     instead of the tick): a background tab (opened once by Harmony's page), an error, the settings
+                                #   navlink: the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
+
+python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
+                                #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
+                                #   relcheck: the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
+                                #     retried, a background page's beat counts 75 s
+                                #   trackmarks: a status mark on each Discogs track line, checked per track on the release page
+
+python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
+                                #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
+                                #     "Load the release there", marks before each part of a line (none in the about text, shortened texts
+                                #     opened), mark → row, jumps (part of a line, sentence of the about text, track both ways), track
+                                #     pages (link, loaded, own marks), ● after staging and ✓ on the release page, menu, old companion
+                                #   bcoff: credits switched off on Bandcamp (3.17.1; 3.17.5: a click on the mark, the pointer shows the row): off → "Skip" with a note and greyed, a
+                                #     group of marks, on again with its level, kept across a reload, a level chosen, "Delete stored import"
+                                #   textmarks: used dates and track groups underlined at the source (3.28.3 / companion 1.9.0): Discogs notes (matrix,
+                                #     a row, not the pool), status off/on, Bandcamp credits (a year also in "released …") and "about";
+                                #     two "Vocals [...]" lines of one artist
+
+python3 t_static.py             # Without a browser: the texts of the script, the list of connections
+                                #   i18n: the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
+                                #     placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
+                                #     per language (LIST=1: all keys) – not an error
+                                #   connections: the connections (3.25.0, Node): every address of @match / @connect and of the code belongs to an entry of
+                                #     CONNECTIONS, the ids are unique, every entry has its texts in English (3.27.1; before: four languages)
+```
+
+### Former test → file and case (3.31.1)
+
+| Former test | File | Case |
+|---|---|---|
+| t_about.py | t_sources_bandcamp.py | about |
+| t_aboutoff.py | t_sources_bandcamp.py | aboutoff |
+| t_adapter.py | t_sources.py | adapter |
+| t_afteredit.py | t_start.py | afteredit |
+| t_ar.py | t_ar.py | – (a file of its own) |
+| t_areas.py | t_text_places.py | areas |
+| t_artistworks.py | t_works_more.py | artistworks |
+| t_artwork.py | t_artwork.py | – (a file of its own) |
+| t_bandcamp.py | t_sources_bandcamp.py | bandcamp |
+| t_bar.py | t_ui_head.py | bar |
+| t_basic.py | t_basic.py | – (a file of its own) |
+| t_bcoff.py | t_companion_bandcamp.py | bcoff |
+| t_bctrack.py | t_sources_bandcamp.py | bctrack |
+| t_bcview.py | t_companion_bandcamp.py | bcview |
+| t_bridge.py | t_ui_settings.py | bridge |
+| t_choose.py | t_notes_dates.py | choose |
+| t_compact.py | t_ui_view.py | compact |
+| t_connections.py | t_static.py | connections |
+| t_datewords.py | t_notes_dates.py | datewords |
+| t_discnotes.py | t_notes_companies.py | discnotes |
+| t_distrib.py | t_text_basics.py | distrib |
+| t_dragdates.py | t_dates_matrix.py | dragdates |
+| t_entryhead.py | t_ui_head.py | entryhead |
+| t_facets.py | t_notes_dates.py | facets |
+| t_fill.py | t_works_matrix.py | fill |
+| t_focus.py | t_focus.py | – (a file of its own) |
+| t_fold.py | t_ui_view.py | fold |
+| t_foreign.py | t_text_languages.py | foreign |
+| t_freetext.py | t_text_basics.py | freetext |
+| t_harmony.py | t_start.py | harmony |
+| t_head.py | t_ui_head.py | head |
+| t_i18n.py | t_static.py | i18n |
+| t_initials.py | t_text_places.py | initials |
+| t_inline.py | t_ui_place.py | inline |
+| t_jump.py | t_ui_head.py | jump |
+| t_keepmarks.py | t_companion_discogs.py | keepmarks |
+| t_keepplace.py | t_ui_place.py | keepplace |
+| t_labelpage.py | t_sources_bandcamp.py | labelpage |
+| t_levels.py | t_ui_view.py | levels |
+| t_linernotes.py | t_sources_bandcamp.py | linernotes |
+| t_links.py | t_sources.py | links |
+| t_logplace.py | t_ui_place.py | logplace |
+| t_manualtop.py | t_ui_head.py | manualtop |
+| t_mastering.py | t_mapping.py | mastering |
+| t_matrix.py | t_dates_matrix.py | matrix |
+| t_matrixcols.py | t_works_matrix.py | matrixcols |
+| t_media.py | t_media_choice.py | media |
+| t_mediaload.py | t_media_choice.py | mediaload |
+| t_mediasel.py | t_media_choice.py | mediasel |
+| t_medium.py | t_text_places.py | medium |
+| t_members.py | t_text_languages.py | members |
+| t_msgs.py | t_ui_head.py | msgs |
+| t_mxdrop.py | t_works_matrix.py | mxdrop |
+| t_names.py | t_text_basics.py | names |
+| t_navlink.py | t_start.py | navlink |
+| t_nordic.py | t_text_languages.py | nordic |
+| t_notice.py | t_ui_settings.py | notice |
+| t_pcline.py | t_notes_companies.py | pcline |
+| t_pools.py | t_dates_matrix.py | pools |
+| t_poolsmx.py | t_dates_matrix.py | poolsmx |
+| t_prose.py | t_text_languages.py | prose |
+| t_pub.py | t_works_matrix.py | pub |
+| t_publishers.py | t_notes_companies.py | publishers |
+| t_recheck.py | t_mapping.py | recheck |
+| t_register.py | t_register.py | – (a file of its own) |
+| t_relcheck.py | t_companion_discogs.py | relcheck |
+| t_reldate.py | t_notes_dates.py | reldate |
+| t_release.py | t_release.py | – (a file of its own) |
+| t_reset.py | t_ui_settings.py | reset |
+| t_rowrules.py | t_rules_window.py | rowrules |
+| t_rows.py | t_ui_view.py | rows |
+| t_rules.py | t_mapping.py | rules |
+| t_rulesdock.py | t_rules_window.py | rulesdock |
+| t_rulesname.py | t_rules_window.py | rulesname |
+| t_settabs.py | t_ui_settings.py | settabs |
+| t_settings.py | t_ui_settings.py | settings |
+| t_sounds.py | t_text_languages.py | sounds |
+| t_special.py | t_mapping.py | special |
+| t_srctexts.py | t_ui_place.py | srctexts |
+| t_suggstack.py | t_ui_view.py | suggstack |
+| t_supp.py | t_sources.py | supp |
+| t_textcorpus.py | t_textcorpus.py | – (a file of its own) |
+| t_textcredit.py | t_text_basics.py | textcredit |
+| t_textmarks.py | t_companion_bandcamp.py | textmarks |
+| t_textrules.py | t_text_basics.py | textrules |
+| t_trackmarks.py | t_companion_discogs.py | trackmarks |
+| t_trackpool.py | t_notes_dates.py | trackpool |
+| t_tracksdrop.py | t_dates_matrix.py | tracksdrop |
+| t_tracksfit.py | t_sources.py | tracksfit |
+| t_ui301.py | t_ui_view.py | ui301 |
+| t_ui305.py | t_ui_settings.py | ui305 |
+| t_v217.py | t_mapping.py | v217 |
+| t_v219.py | t_mapping.py | v219 |
+| t_v3222.py | t_text_places.py | v3222 |
+| t_wattrs.py | t_works_matrix.py | wattrs |
+| t_worksskip.py | t_works_more.py | worksskip |
+
 ```
 
 **Text corpus (3.21.0):** `text_corpus.json` collects credits lines as they are written on releases. Each new case of
@@ -321,7 +486,7 @@ The browse requests for the works of an artist (3.15.0) answer from `harness.ART
 `[{'id', 'title', 'type', 'aliases'}]`) and `harness.ARTIST_RECORDINGS` (`recording?artist=…`: artist gid →
 `[{'title', 'work': {'id', 'title'} or None}]`, or a number: that many recordings without works, a large catalogue);
 `harness.BROWSES` records them as `(kind, artist, offset)` – they are not in `WORK_QUERIES`. Every import browses each
-artist with an MB entry twice in the background (one request a second), so a test that counts MusicBrainz requests
+artist with an MB entry twice in the background (one request a second; in the tests every 25 ms, `MB_GAP`), so a test that counts MusicBrainz requests
 should count only its own kind.
 
 With several media (`harness.MEDIA = [2, 1, 1]` …) the dashboard asks for the media before the import:
@@ -334,7 +499,7 @@ another source, a linked source, the order of the sources, Bandcamp, "Leave out 
 `harness.open_settings(pg, tab=None)` opens ⚙ Settings (the language is only there). `harness.nav_switch(pg, attr)` (3.28.0) clicks a switch of the
 navigation (`data-dg-artwork`, `data-click-toggle` …) in ⚙ Settings → Discogs and Bandcamp view – the bar below the button has none any more. `harness.open_mb_edit(ctx, …, view='full')`
 (3.27.0) sets the view of the entries to "Full" (`dci-view`, with the storage generation) before the script starts – the tests were
-written for the full rows; `view=None` keeps the default (compact, `t_compact.py`); `open_mb_any` sets "Full" too. Every test starts as a first installation, so
+written for the full rows; `view=None` keeps the default (compact, the case `compact` of `t_ui_view.py`); `open_mb_any` sets "Full" too. Every test starts as a first installation, so
 the page bar shows the question of the language (`#dci-langask`); it does not stand in the way of the tests.
 
 Relationship types of the mock are made with `harness.lt(id, gid, name, type0, type1, attrs, dates, deprecated)`; as on
@@ -348,4 +513,4 @@ records these lookups). A test can put relationships that are already in MusicBr
 
 Chromium is started with `harness.LAUNCH_ARGS` (web security off), so the pages may call the local storage server.
 Texts are added with `python3 tools/i18n_add.py <anchor key> <file.json>`; the JSON holds `{lang: {key: text}}` – from 3.27.1
-English alone (`{"en": {…}}`) is enough, the other languages follow in a translation round (`t_i18n.py` lists what is missing).
+English alone (`{"en": {…}}`) is enough, the other languages follow in a translation round (the case `i18n` of `t_static.py` lists what is missing).

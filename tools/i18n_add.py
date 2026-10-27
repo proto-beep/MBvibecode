@@ -3,7 +3,7 @@
 Usage: python3 i18n_add.py <anchor key> <json file {lang: {key: text}}>
 New keys go after the anchor key of each language block; existing keys are replaced in place.
 From Credits Importer 3.27.1 a file with English only is enough: the other languages show the English text until the
-next translation round (smoke/t_i18n.py lists what is not translated yet). Watch out: a key that exists is replaced.
+next translation round (the case i18n of smoke/t_static.py lists what is not translated yet). Watch out: a key that exists is replaced.
 """
 import json
 import re
