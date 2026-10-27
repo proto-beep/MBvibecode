@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.31.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.31.5, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.31.5 · 2026-10-27
+
+A person as publisher (collected item 97b), publishers on the works or on the release (collected item 112).
+
+- **New `mergePersonPublishers()`** (S044, called in `runImport` after the companies, before the entries left without rows are removed): the publishing rows (C031) of a company whose name (`entryNames`, `looseName`) is that of a person entry go to the person – `entityType: 'artist'`, `types` from `typeOptions.artist`, new field `pubFromCompany`; the company entry is removed when no row is left; log `pubOfPerson` (text changed). **Removed** `personPublishers()` and the column fields `ofPerson`, `personName`, `hasPub`, the CSS `.dci-mx-subcol`, `.dci-mx-hassub`, `.dci-mx-subcell`, `.dci-mx-pubof`, the texts `matrix.pubOfPerson`, `matrix.pubOfPersonTitle`.
+- **`computePublisherEvidence`:** a column of an artist with a publishing row: evidence = the tracks the person writes (its own work rows of a writer type, or MusicBrainz's writers of the track), `pubEvidence.state` `'self'`; `cellState`: `unclear` only for publishers that are no artist; `cellHtml` title `matrix.reasonSelf`; `columnHeadHtml` status `matrix.pubSelf`.
+- **New `personLikeName(name)`, `NAME_PARTICLES`, `COMPANY_NAME_WORD`, `personPublisher(a)`** (S048): `suggestByName` puts MusicBrainz's artists (`asArtist`, `entityType: 'artist'`) first and sets the new field `personHit` (an artist of exactly that name) – then it drops label hits that are not of the type "Publisher"; `matchHtmlInner`: "Create artist …" (`company-create` with `data-et="artist"`), with `personHit` without "Create label …" and with the search link of the type artist; `startCompanyCreate(company, 'artist')`: the artist form, without the source's label page, texts `artistDlg.title`/`artistDlg.check`. Click handler `name-use`: `renderWorks()` when the company has work rows.
+- **Register:** C031 label types `['publishing', 'published']`; `GROUPING_TYPES` with `publishing` (label–release "publishing" has no description; label–work and artist–work "publishing" keep theirs); S044 note new; new special rule **S048**.
+- **New `inEntry(row)`:** `shownRowsOf`, `groupHtml` show a publishing row of the work level in its entry too (its level buttons; in the compact view `level-next`); `group.workNote` only for other work rows. `rulesOfRow` names S044 (`pubFromCompany`) and S048.
+- **Company rows:** new field `dSpecTracks` – the tracks of a text or the notes shown with `role.source`/`role.tracks`, not as a catalog number (`role.catno`).
+- **Texts:** new `role.pubFromCompany`, `matrix.pubSelf`, `matrix.reasonSelf` (English only); `log.pubOfPerson` changed (English only, as before); removed `matrix.pubOfPerson`, `matrix.pubOfPersonTitle`.
+- **Tests:** `harness.py` with MusicBrainz's artist–work "publishing" (161), label–release "published" (32) and its grouping "publishing" (359, no description); `t_notes_companies.py` case `publishers` changed (one entry and one column for Tomas Fujiwara; in the pasted text the artist as suggestion, "Create artist …"), new case `personpub`; `register_golden.json` written anew (C031, S044, S048; the page rows of "Big Songs").
 
 ## Import 3.31.4 · 2026-10-27
 

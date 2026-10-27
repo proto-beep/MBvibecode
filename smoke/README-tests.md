@@ -124,9 +124,14 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     TUM Records suggested; Discogs lists © already: only ℗ joins its entry; a text: ℗ alone, © alone, both
                                 #   publishers: 3.31.0: "[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4 …" in the Discogs notes – the tracks
                                 #     onto Discogs's publishers as suggestions (also "4WordSeaMusic" = "Fourwordseamusic"), one not listed an
-                                #     entry, BMI once as rights society; the publisher Tomas Fujiwara a part of the person's column; MB
-                                #     suggestions written apart ("Four Word Sea Music"), the society first; as a text with "Published by X
-                                #     (ASCAP)" and "BIEM/GEMA"
+                                #     entry, BMI once as rights society; [3.31.5] the publisher Tomas Fujiwara a role of the person
+                                #     (one entry, one column, S044); MB suggestions written apart ("Four Word Sea Music"), the society
+                                #     first; as a text with "Published by X (ASCAP)" and "BIEM/GEMA" – there Tomas Fujiwara gets the
+                                #     MB artist and "Create artist …" (S048)
+                                #   personpub: 3.31.5: a publisher's row in its entry, on Works; Release → label–release "published", out of
+                                #     the works matrix; compact view Works → Skip → Release → Works; "Published By – Jane Roe": the MB artist
+                                #     first, the label of the type Publisher too, not the other one, only "Create artist …"; chosen → artist column;
+                                #     "Ghost Pub" (no MB artist of that name): "Create artist …" and "Create label …"
                                 #   placesearch: 3.31.2: places from the notes looked up in the first part of their area (West Orange) or by name alone
                                 #     (Turtle Tone Studio in Manhattan, similar); "Recorded November 7, 8, 2016, at Loft Köln." – the period
                                 #     2016-11-07 – 08, "Loft" in Cologne (alias Köln) for "Loft Köln", the entry's area "(Köln)"

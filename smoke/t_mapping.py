@@ -115,8 +115,8 @@ def case_v217():
     bass guitar · electric bass guitar · acoustic bass guitar, without a choice it stays bass guitar without credit
     (Q004); "Trombone [Additonal Musicians]" → additional (S002); "All Music By" → composer (R003); "©© Fuzzoramarecords
     2005" in the notes is a copyright date (D015), the label name gives no "recorded" hint; "‹ n rows incomplete ›" goes
-    through the incomplete rows (1/4 … 4/4; [3.30.9] the label of "©©" from the notes, not in MusicBrainz, has two) and
-    marks what is missing; Escape closes "Mapping rules" first, then the
+    through the incomplete rows (1/5 … 5/5; [3.30.9] the label of "©©" from the notes, not in MusicBrainz, has two; [3.31.5]
+    the row of the publisher Ghost Pub, not in MusicBrainz, shows in its entry too – item 112) and marks what is missing; Escape closes "Mapping rules" first, then the
     dashboard; the text size goes down to 50 %."""
     import re
 
@@ -193,9 +193,10 @@ def case_v217():
         pg.click('[data-el=sum] [data-act=inc-prev]'); pg.wait_for_timeout(300)
         back = re.search(r'\d/\d', s()).group(0)
         print('   ‹:', back)
-        # [3.30.9] "©© Fuzzoramarecords 2005" gives the label (℗ and ©, S042) – not in MusicBrainz: two rows more
-        ok3 = '4 rows incomplete' in s() and [x[0] for x in seen] == ['1/4', '2/4', '3/4'] and back == '2/4' \
-            and {tuple(x[1]) for x in seen[:2]} == {('artist', 'row:Vocals'), ('dci-c-type', 'row:Directed By')} and seen[2][1] == ['artist', 'row:Phonographic Copyright (p)']
+        # [3.30.9] "©© Fuzzoramarecords 2005" gives the label (℗ and ©, S042) – not in MusicBrainz: two rows more; [3.31.5] the
+        # publisher Ghost Pub (not in MusicBrainz) has its row in its entry too: one more
+        ok3 = '5 rows incomplete' in s() and [x[0] for x in seen] == ['1/5', '2/5', '3/5'] and back == '2/5' \
+            and {tuple(x[1]) for x in seen[:2]} == {('artist', 'row:Vocals'), ('dci-c-type', 'row:Directed By')} and seen[2][1] == ['artist', 'row:Published By']
         results.append(ok3)
 
         # 4) Escape: "Mapping rules" first, then the dashboard; text size down to 50 %
