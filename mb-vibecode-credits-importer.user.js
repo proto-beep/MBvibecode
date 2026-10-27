@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.31.1
+// @version      3.31.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -7570,7 +7570,7 @@
     { id: 'D010', note: 'A year alone: 1998' },
     { id: 'D011', note: 'Decades ("late 1970s", "the 70s") cannot be given as a MusicBrainz date and are left out' },
     { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
-    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows' },
+    { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows – (3.31.2) also days with commas only, right before the year ("November 7, 8, 2016", "7, 8, 9 November 2016", "7., 8. November 2016")' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
     { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
     { id: 'D016', note: 'A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0)' },
@@ -7624,11 +7624,13 @@
 
   // [3.7.0] also "June 16/17 2018", "16/17 June 2018" (Bandcamp)
   const DAYLIST = `${DAYP}(?:\\s*,\\s*${DAYP})*\\s*,?\\s*(?:(?:and|&|und|y|et)\\s+|/\\s*)${DAYP}`;
+  // [3.31.2] days with commas only ("November 7, 8, 2016", collected item 114) – only right before the month and year (D013)
+  const DAYLIST_C = `${DAYP}(?:\\s*,\\s*${DAYP})+`;
 
   /** The matchers of the date rules, longest forms first (a period wins over the dates inside it). */
   const DATE_MATCHERS = [
-    { id: 'D013', re: `${P.M}\\s+(${DAYLIST}),?\\s+${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[1]), m[2]) },
-    { id: 'D013', re: `(${DAYLIST})${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[2]), m[1]) },
+    { id: 'D013', re: `${P.M}\\s+(${DAYLIST}|${DAYLIST_C}),?\\s+${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[1]), m[2]) },
+    { id: 'D013', re: `(${DAYLIST}|${DAYLIST_C})${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[2]), m[1]) },
     // [3.28.5] the days of a date in numbers: "19 & 20. 01. 2009", "19./20.01.2009" (collected item 64a)
     { id: 'D013', re: `(?<![\\d.])(${DAYLIST})\\s*(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)`, make: (m) => multiDays(m[3], m[2], m[1]) },
     { id: 'D007', re: `${P.M}\\s+${P.D}${P.TO}${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
@@ -13828,13 +13830,37 @@
       const type = a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
       try {
         const words = luceneWords(a.name);
-        // [3.7.0] A place with the area the source names ("Loft, Cologne"): only places in that area
-        const area = a.company && type === 'place' && a.area ? luceneWords(a.area) : '';
+        // [3.7.0] A place with the area the source names ("Loft, Cologne"): only places in that area; [3.31.2] only its first
+        // part ("West Orange, New Jersey" → West Orange: MusicBrainz's place is in the city, item 98b)
+        const areaParts = a.company && type === 'place' && a.area ? String(a.area).split(/\s*,\s*/).filter(Boolean) : [];
+        const area = areaParts.length ? luceneWords(areaParts[0]) : '';
         // [3.22.0] an area with its other names too ("Xixon" → Gijón, alias "Xixón"; S028)
         const query = area && words ? `place:(${words}) AND area:(${area})`
           : words && (!a.company || type === 'area') ? `${type}:(${words}) OR alias:(${words})` : `${type}:${lucenePhrase(a.name)}`;
         const data = await mbWs(`${type}?query=${encodeURIComponent(query)}&limit=25`);
         const items = (data && data[`${type}s`]) || [];
+        // [3.31.2] a place: without a hit in that area, by its name (and other names) alone – the area of each hit is shown,
+        // those in an area the source names first (item 98b)
+        let placeArea = '';
+        if (type === 'place' && words && area && !items.some((x) => nameFit(x.name, a.name))) {
+          const data6 = await mbWs(`place?query=${encodeURIComponent(`place:(${words}) OR alias:(${words})`)}&limit=25`);
+          for (const x of (data6 && data6.places) || []) if (!items.some((y) => y.id === x.id)) items.push(x);
+        }
+        // [3.31.2] the city at the end of the name ("Loft Köln", collected item 114): with no hit, the rest of the name in
+        // that area (MusicBrainz's place "Loft" in Cologne; the area found by its name or other names)
+        const nameWordsAll = String(a.name || '').trim().split(/\s+/);
+        if (type === 'place' && !area && nameWordsAll.length >= 2 && !items.some((x) => nameFit(x.name, a.name))) {
+          const last = nameWordsAll[nameWordsAll.length - 1];
+          const lw = luceneWords(last);
+          const areas = lw ? (((await mbWs(`area?query=${encodeURIComponent(`area:(${lw}) OR alias:(${lw})`)}&limit=5`)) || {}).areas || [])
+            .filter((x) => [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameKey(n) === nameKey(last))) : [];
+          const rest = luceneWords(nameWordsAll.slice(0, -1).join(' '));
+          if (areas.length && rest) {
+            placeArea = last;
+            const data7 = await mbWs(`place?query=${encodeURIComponent(`place:(${rest}) AND area:(${luceneWords(areas[0].name)})`)}&limit=25`);
+            for (const x of (data7 && data7.places) || []) if (!items.some((y) => y.id === x.id)) items.push({ ...x, viaArea: true });
+          }
+        }
         // [T044] (3.30.9) a company's name with its legal form: searched without it too ("TUM Records Oy" → TUM Records)
         const bare = a.company && type !== 'area' ? withoutCompanyForm(a.name) : '';
         if (bare && bare !== a.name) {
@@ -13865,6 +13891,8 @@
           for (const x of (data2 && data2[`${type}s`]) || []) if (!items.some((y) => y.id === x.id)) items.push(x);
         }
         const fitOf = (x) => {
+          // [3.31.2] "Loft" in Cologne for "Loft Köln": similar
+          if (x.viaArea) return 'similar';
           const fits = [nameFit(x.name, a.name), ...(x.aliases || []).map((al) => nameFit(al.name, a.name))];
           // [T044] the same name without the legal form: offered too, as similar
           if (bare && bare !== a.name && [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(withoutCompanyForm(n), bare) === 'same')) fits.push('similar');
@@ -13873,8 +13901,13 @@
           return fits.includes('same') ? 'same' : fits.includes('similar') ? 'similar' : '';
         };
         const isSociety = (x) => society && norm(x.type || '') === 'rights society';
-        const hits = items.map((x) => ({ x, fit: fitOf(x) })).filter((h) => h.fit)
-          .sort((p, q) => (isSociety(q.x) - isSociety(p.x)) || (p.fit === q.fit ? 0 : p.fit === 'same' ? -1 : 1));
+        // [3.31.2] a place in an area the source names (any part: "West Orange", "New Jersey") first; one elsewhere is similar
+        const inArea = (x) => !areaParts.length || areaParts.some((p) => nameKey(p) === nameKey((x.area || {}).name || ''));
+        const placeFit = (x) => { const f = fitOf(x); return f === 'same' && type === 'place' && areaParts.length && !inArea(x) ? 'similar' : f; };
+        const hits = items.map((x) => ({ x, fit: placeFit(x) })).filter((h) => h.fit)
+          .sort((p, q) => (isSociety(q.x) - isSociety(p.x)) || (type === 'place' ? inArea(q.x) - inArea(p.x) : 0) || (p.fit === q.fit ? 0 : p.fit === 'same' ? -1 : 1));
+        // [3.31.2] the city found at the end of the name is the entry's area ("(Köln)")
+        if (placeArea && !a.area && hits.length) a.area = placeArea;
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
         a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name, ...(type === 'area' ? areaContext(x) : [])].filter(Boolean).join(', ') }));
@@ -13926,7 +13959,8 @@
       a.status = 'missing';
       updateGroupHeader(a);
       // A name from a text has no link: it is looked up by its name below
-      log(source.nameSearch ? 'info' : 'warn', source.nameSearch ? 'nameLookup' : 'artistMissing', { name: a.name });
+      // [3.31.2] an entry from the Discogs notes is looked up by its name too (item 98b; before: "no MB artist with this Discogs link")
+      log(source.nameSearch || a.fromNotes ? 'info' : 'warn', source.nameSearch || a.fromNotes ? 'nameLookup' : 'artistMissing', { name: a.name });
     }
     // Each entry by the URL of its page at the source (people: MB artists; companies: labels, places …)
     const urlOf = (a) => (a.links || [])[0] || '';
