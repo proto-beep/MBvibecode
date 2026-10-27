@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.31.2
+// @version      3.31.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -6254,6 +6254,7 @@
     { id: 'S042', where: 'addNotesCompanies (TEXT.parse of the notes)', note: 'Discogs notes: the places they name ("All music recorded … at Orange Music Sound Studios in West Orange, New Jersey", "mastered … at Turtle Tone Studio in New York City") are added, read like a pasted text – unless Discogs lists the place with that role already; listed with another role, Discogs\'s entry gets it (3.30.8)' },
     { id: 'S043', where: 'TEXT.parse (PUBLISHER_HEAD, SOCIETY_AFTER_NAME, SOCIETY_LINE), addNotesCompanies, resolveArtists', note: 'Publishers below a heading ("[Publishers & Rights Societies]", "Publishers:", "Publishing (all BMI):") – one per line with its rights society and tracks ("FlizmoMusic-BMI : tracks 2, 4, 5"; outside a block a line with a society after the name too): publishing on those tracks; the society (T045) is the release\'s rights society, once each, also from "Published by X (BMI)" and a line of societies only ("BIEM/GEMA"). In the Discogs notes the tracks go onto Discogs\'s publisher of that name (also written together or with a number as a word, T046) as suggestions; publishers and societies not found through their link are searched by name (3.31.0)' },
     { id: 'S044', where: 'matrixColumns (personPublishers), columnHeadHtml, cellHtml', note: 'A person as publisher: a publisher with the name of a person of the works matrix ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is a part of the person\'s column, right after it – with its own label, since MusicBrainz links a publisher to a work as a label (looked for by the name, S043; 3.31.0)' },
+    { id: 'S047', where: 'mapRoleInner', note: 'The kind of engineer said twice: "Engineer [Recording Engineer]" is read as "Engineer [Recording]" – recording without role credit; "[Mix Engineer]" mix, "[Mastering Engineer]" mastering, "[Assistant Engineer]" engineer with "assistant", "[Sound Engineer]" sound engineer (3.31.3)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -7354,8 +7355,19 @@
     return mapRoleInner(baseIn, modsIn);
   }
 
-  function mapRoleInner(baseIn, modsIn) {
+  function mapRoleInner(baseIn, modsIn0) {
     let b = norm(baseIn).replace(/[‐‑–]/g, '-');
+    // [S047] (3.31.3) "Engineer [Recording Engineer]": the word "engineer" again at the end of the bracket is left out – read
+    // as "Engineer [Recording]" (recording, no role credit; mix, mastering, assistant, sound … – collected item 101)
+    const engBase = /^(engineer|engineered by|engineering)$/.test(b);
+    // the bracket as written, for each shortened one (what is used of it is used of the bracket as written too)
+    const stripped = new Map();
+    const modsIn = (modsIn0 || []).map((m) => {
+      if (!engBase || !ruleOn('S047') || !/^\s*\S.*\s+engineer\s*$/i.test(String(m))) return m;
+      const short = String(m).replace(/\s+engineer\s*$/i, '');
+      stripped.set(norm(short), norm(m));
+      return short;
+    });
     const flags = [];
     const ms = [];
     // [S001] "Additional Synths" = synthesizer with MB's "additional" checkbox, not a role named "additional synths".
@@ -7388,7 +7400,7 @@
       res.credit = extra.credit === true ? plainBase : (typeof extra.credit === 'string' ? extra.credit : '');
       res.base = plainBase;
       if (uncredited) res.notes = ['uncredited', ...res.notes];
-      res.consumed = [...consumed];
+      res.consumed = [...consumed, ...[...consumed].map((c) => stripped.get(c)).filter(Boolean)];
       return res;
     };
     const has = (...xs) => {

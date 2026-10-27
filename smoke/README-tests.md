@@ -183,6 +183,8 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     logged once; table T026 in "Mapping rules"
                                 #   recheck: fixes of 3.12.1: "n lines not recognized" opens in the window; same-named works searched again when
                                 #     a text's writer is assigned (found then), not without a change; a new import searches anew
+                                #   engineers: 3.31.3: "Engineer [Recording Engineer]" → recording, "[Mix Engineer]" mix, "[Mastering Engineer]" mastering,
+                                #     "[Assistant Engineer]" engineer with assistant – no role credit (S047)
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once

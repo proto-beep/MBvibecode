@@ -1,6 +1,6 @@
 """Mapping: roles, questions, suggestions, mastering, special artists, fixes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rules, v217, v219, mastering, special, recheck – each the former smoke/t_<case>.py, unchanged; `python3 t_mapping.py <case> …` runs only those."""
+Cases: rules, v217, v219, mastering, special, recheck, engineers – each the former smoke/t_<case>.py, unchanged; `python3 t_mapping.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -563,6 +563,49 @@ see you all next time"""
         print('C) weitere Anfragen nach Ebenen-Wechsel eines Instruments:', len(H.WORK_QUERIES) - n)
         results.append(len(H.WORK_QUERIES) == n)
         results.append(ok_d)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_engineers():
+    """Credits Importer 3.31.3: the kind of engineer said twice (collected item 101; maintainer: "ich habe einen Fall gefunden
+    wo "Recording Engineer" in der Discogs note zu engineer stand. das muss natürlich einfach nur nach relationship
+    recording engineer und nicht mit der Role Credit "Recording Engineer" die auch noch groß geschrieben ist.").
+    Discogs: "Engineer [Recording Engineer]", "Engineer [Mix Engineer]", "Engineer [Mastering Engineer]", "Engineer
+    [Assistant Engineer]" → recording, mix, mastering and engineer with "assistant" – each without role credit (S047; before:
+    engineer with the role credit "Recording Engineer" …)."""
+    H.lt(140, '5dcc52af-7064-4051-8d62-7d80f4c3c907', 'engineer', 'artist', 'recording', (1, 526))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+    roles = {'Rec Eng': 'Engineer [Recording Engineer]', 'Mix Eng': 'Engineer [Mix Engineer]', 'Mas Eng': 'Engineer [Mastering Engineer]',
+             'Ass Eng': 'Engineer [Assistant Engineer]'}
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': 3300 + k, 'join': ''} for k, (n, r) in enumerate(roles.items())]
+        return d
+
+    H.discogs_release = rel
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const c = tr.querySelector('[data-f=role-credit]');
+        return [t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : null, [...tr.querySelectorAll('[data-f=flag]:checked, input[type=checkbox]:checked')].map(x => x.value || x.dataset.flag || '').filter(Boolean)]; })])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(800)
+        g = pg.evaluate(ROWS)
+        got = {n: g.get(n) for n in roles}
+        print('Zeilen:', got)
+        # (no role credit: its field is empty or not there)
+        results.append([(got[n][0][0], bool(got[n][0][1])) for n in roles] == [('recording', False), ('mix', False), ('mastering', False), ('engineer', False)]
+                       and got['Ass Eng'][0][2] == ['assistant'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
