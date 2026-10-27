@@ -28,7 +28,7 @@ Artwork: Max Mustermann
 Published by Pub Co (1, 3)
 ℗ 2019 Sony
 Thanks to everyone who came."""
-    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
     return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '',
       (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim()]; }),
@@ -72,9 +72,9 @@ Thanks to everyone who came."""
         ok_b = cols.get('Writer W') == ['1', '2', '3', '4'] and cols.get('Writer Z') == ['3', '4'] and cols.get('Pub Co') == ['1', '3']
         # C) names: suggestions only; a click assigns
         sugg = {k: v[2] for k, v in groups.items() if v[2]}
-        status = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent === 'Bass Man').map(g => g.className)[0]")
+        status = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(g => (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()) === 'Bass Man').map(g => g.className)[0]")
         look = pg.evaluate("(() => { const b = document.querySelector('[data-act=name-use]'); const s = getComputedStyle(b); return [s.borderTopStyle, s.backgroundColor]; })()")
-        bm = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent === 'Bass Man').dataset.group")
+        bm = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()) === 'Bass Man').dataset.group")
         pg.click(f'section[data-group="{bm}"] [data-act=name-use]'); pg.wait_for_timeout(300)
         after = pg.evaluate(f"document.querySelector('section[data-group=\"{bm}\"]').className")
         link = pg.evaluate(f"(document.querySelector('section[data-group=\"{bm}\"] .dci-mblink') || {{}}).href || ''")
@@ -121,7 +121,7 @@ Music and artwork of this release were entirely created by a (cat assisted) huma
 A Northern Echo release.
 We had a great time together
 Thanks to the cat for keeping us company"""
-    GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+    GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()),
   // 3.15.2: the explanation of the suggestions is the stack's tooltip
   (g.querySelector('.dci-sugg-stack') || {}).title || '',
@@ -190,7 +190,7 @@ Agusti Fernández – piano
 Barry Guy – double bass, sticks-and-stones
 Gene Pick – acoustic & electric guitar
 Bo Strum – bass & electric guitar"""
-    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [[...g.querySelectorAll('tr.dci-row')].map(tr => { const p = tr.querySelector('[data-f=primary]'); return p ? p.value : tr.querySelector('.dci-drole').textContent.trim(); }),
    [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()), g.className.match(/dci-st-(\\w+)/)[1]]])))()"""
     results = []
@@ -265,7 +265,7 @@ def case_textcredit():
     JANE, JOHN = H.uid('dddddddd', 80), H.uid('dddddddd', 81)
     H.MB_SEARCH['artist'] = [{'id': JANE, 'name': 'Jane A. Roe', 'disambiguation': '', 'score': 100, 'aliases': []},
                              {'id': JOHN, 'name': 'John Doe', 'disambiguation': '', 'score': 100, 'aliases': []}]
-    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   { all: (g.querySelector('[data-f=artist-credit-all]') || {}).value, rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]');
     const c = tr.querySelector('[data-f=role-credit]'); const cr = tr.querySelector('[data-f=credit]');
     return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '-', cr ? cr.value : '-',
@@ -305,7 +305,9 @@ def case_textcredit():
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
         pg.wait_for_timeout(1500)
         for name, mbid in [('Jane Roe', JANE), ('JOHN DOE', JOHN)]:
-            sec = f"section.dci-group:has(.dci-gname strong:text-is('{name}'))"
+            # [3.32.2] an entry with a name variation shows it in its head ("VALFAR*"); its name is in data-name
+            key = pg.evaluate("(n) => [...document.querySelectorAll('section.dci-group')].find(s => { const x = s.querySelector('.dci-gname strong'); return (x.dataset.name || x.textContent.trim()) === n; }).dataset.group", name)
+            sec = f'section.dci-group[data-group="{key}"]'
             pg.locator(f'{sec} [data-act=name-use][data-mbid="{mbid}"]').first.click()
             pg.wait_for_timeout(800)
         e = pg.evaluate(ROWS)
@@ -356,7 +358,7 @@ console.log(JSON.stringify(out));
     results.append(len(got) == len(LINES) and all(g[1] == [[w, 'Distributed By']] for g, w in zip(got, want)) and got[-1][1] == [] and got[-1][3] == 1)
 
     LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
-    ENTRY = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === '!K7');
+    ENTRY = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || s.querySelector('.dci-gname strong').textContent.trim()) === '!K7');
   if (!g) return null; const tr = g.querySelector('tr.dci-row'); const sel = tr.querySelector('[data-f=type]'); const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
   return [tr.querySelector('.dci-drole').textContent.trim(), sel ? sel.options[sel.selectedIndex].textContent.trim() : '', lv ? lv.dataset.level : '',
     g.className.match(/dci-st-(\\w+)/)[1], g.querySelectorAll('[data-act=name-use]').length]; })()"""

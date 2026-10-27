@@ -219,8 +219,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
                                 #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
                                 #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
-                                #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), the chip
-                                #     "as “B. Man”" (+1), the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
+                                #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), [3.32.2] the
+                                #     release's spelling "B. Man*" in the head (tooltip "Discogs: Bass Man") instead of the chip "as “B. Man”",
+                                #     a row credited otherwise "as “Bassman”", the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
                                 #   manualtop: "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
                                 #     page), an entry added from there is shown
                                 #   msgs: messages (3.27.3): ✕ on each, "▾ n messages" folds them, a new error unfolds, a fresh import shows them again
