@@ -205,7 +205,8 @@ def case_dragdates():
 def case_pools():
     """Dates & tracks as one block: open when dates were found, folded state remembered; clearing all track
     groups (dates in the matrix become dashed suggestions for all tracks) and all dates (also of other
-    releases), rows keep their dates as their own; the list of created works stays."""
+    releases), rows keep their dates as their own; the list of created works stays. [3.32.1] Loaded again, the notes'
+    dates are placed anew as suggestions waiting for "Apply": the block is open for that import, "folded" stays stored."""
     import re
     import zooid
     from common_rows import lib, cells
@@ -249,7 +250,8 @@ def case_pools():
         pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
         pg.click('#dci-open'); pg.wait_for_selector('.dci-pools-head', timeout=30000); pg.wait_for_timeout(1500)
         print('   nach Neuladen offen?', pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'))
-        ok4 = ok4 and pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') == 'false'
+        # [3.32.1] open for this import (suggestions wait for "Apply", item 109), the folded state stays stored
+        ok4 = ok4 and pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') == 'true' and pg.evaluate("localStorage.getItem('dci-pools-open')") == 'false'
         print('Ergebnis:', 'OK' if all([ok1, ok2, ok3, ok4]) else 'FEHLER', [ok1, ok2, ok3, ok4], '| Fehler:', errs)
         b.close()
 
@@ -285,6 +287,9 @@ def case_poolsmx():
         H.open_dashboard(pg)
         H.wait_for(pg, "document.querySelector('.dci-pools-toggle') && document.querySelector('.dci-mx-wrap')", 60)
         pg.wait_for_timeout(800)
+        # [3.32.1] the suggestions of the notes applied: otherwise each import opens the pools for them (item 109)
+        pg.click('[data-act=dm-apply]')
+        pg.wait_for_timeout(500)
         st = lambda: pg.evaluate(KEPT)
         # A) the folded block with the kept pools
         if pg.evaluate("document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded')") == 'true':
@@ -565,6 +570,62 @@ def case_titledates():
         results.append(sorted(d1) == [([1, 2], '2004-03-23'), ([3, 4], '2004-03-24')])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_poolsopen():
+    """Credits Importer 3.32.1: "Dates & tracks" opens for suggestions that wait for "Apply" (collected item 109; maintainer:
+    "automatisch dashboard aufklappen sofern daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das
+    dashboard muss doch auf sein, damit Dates & Tracks sichtbar ist?"); the track group form with "Tracks:" right of "Name:"
+    (item 90b).
+    A) The notes' dates are placed as suggestions: "Dates & tracks" is open. Folded by hand, and the date pool folded too –
+       remembered.
+    B) Loaded again (a new import, the suggestions still wait): "Dates & tracks" and the date pool are open – for this import;
+       what is remembered stays (closed, folded); the log says so. "Apply" and loaded again: folded and closed as remembered.
+    C) The form of a new track group: "Tracks:" on the line of "Name:" (a wide window)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        st = lambda: [pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'), pg.locator('.dci-pool-dates.dci-pool-folded').count(),
+                      pg.evaluate("[localStorage.getItem('dci-pools-open'), localStorage.getItem('dci-pool-fold')]")]
+        a0 = st()
+        pg.click('[data-act=pool-fold][data-pool=dates]'); pg.wait_for_timeout(200)
+        pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+        a1 = st()
+        print('A) offen:', a0, '| zu, gefaltet:', a1)
+        results.append(a0[0] == 'true' and a1[0] == 'false' and a1[2] == ['false', '{"dates":true}'])
+        pg.close()
+        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        b1 = st()
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'for this import' in x]
+        print('B) neu geladen:', b1, '| Protokoll:', logs)
+        ok_b = b1[0] == 'true' and b1[1] == 0 and b1[2] == ['false', '{"dates":true}'] and logs
+        # C) the form of a new track group
+        pg.click('[data-act=tg-new]'); pg.wait_for_timeout(200)
+        y = pg.evaluate("['tg-name', 'tg-text'].map(f => Math.round(document.querySelector('[data-f=' + f + ']').getBoundingClientRect().top))")
+        print('C) Name / Tracks oben:', y)
+        results.append(abs(y[0] - y[1]) < 4)
+        pg.click('[data-act=tg-cancel]'); pg.wait_for_timeout(200)
+        pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(600)
+        pg.close()
+        pg, errs3 = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        b2 = st()
+        print('   nach „Anwenden“ neu geladen:', b2)
+        results.append(ok_b and b2[0] == 'false' and b2[2] == ['false', '{"dates":true}'])
+        print('Fehler:', errs, errs2, errs3)
+        results.append(not errs and not errs2 and not errs3)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
