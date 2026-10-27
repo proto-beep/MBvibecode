@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.31.3 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -85,6 +85,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.31.3
+
+#### Fixed
+
+- **"Engineer [Recording Engineer]" is recording** (collected item 101; maintainer: "ich habe einen Fall gefunden wo "Recording Engineer" in der Discogs note zu engineer stand. das muss natürlich einfach nur nach relationship recording engineer und nicht mit der Role Credit "Recording Engineer" die auch noch groß geschrieben ist."): the word "Engineer" again in the bracket is left out – recording, mix ("[Mix Engineer]"), mastering ("[Mastering Engineer]"), engineer with "assistant" ("[Assistant Engineer]"), sound engineer ("[Sound Engineer]"), each without role credit (rule S047).
 
 ### COMPANION 1.9.1
 
