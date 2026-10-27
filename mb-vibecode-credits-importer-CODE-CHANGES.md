@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.32.5, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.32.6, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.32.6 · 2026-10-27
+
+The credits of Bandcamp's "about" text, liner notes signed above them (collected items 115a, 115b).
+
+- **`BANDCAMP.toRelease`:** with rule S049 (`ruleOn('S049')`, on by default) all credits and companies of `aboutRes` are taken, marked `fromAbout` (the members of the band, S041, as before unmarked); its `unrecognized` stay out. `linerNotes` gets `creditLines` (the lines of `aboutRes` that gave a credit) and `artistNames` (the context's and the band's name).
+- **`linerNotes(about, { creditLines, artistNames })`:** skips empty lines and credit lines at the end before looking for the signature; new **`artistSignature(line, artistNames)`** – after a sign, one to four words with small letters or digits that are an artist's name or at most two letters off it.
+- **New `nameClose(a, b)`** (before the Node export): the same, or a Levenshtein distance of at most two, both of five letters or more (`norm`).
+- **`resolveArtists` (name search):** a release artist whose name is `nameClose` to the entry's (not the same) is the first suggestion too, `similar: true`, `release: true`.
+- **Rules:** new S049 (special rule). **⚙ Settings → Texts:** `data-set="rule-on" data-rule="S049"` above S050; `resetTopic('texts')` switches both on.
+- **Texts:** new `settings.aboutCredits`, `settings.aboutCreditsTitle` (English only).
+- **Tests:** new case `aboutcredits` in `t_sources_bandcamp.py` (Node: the credits with S049 on and off, the signature; dashboard: the rows from the "about" text, the composer column with S050, the similar release artist first; the switch); register golden written anew (S049).
 
 ## Import 3.32.5 · 2026-10-27
 
