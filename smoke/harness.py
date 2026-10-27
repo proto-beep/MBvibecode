@@ -14,6 +14,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MAIN = (ROOT / 'mb-vibecode-credits-importer.user.js').read_text()
+# [3.33.0] the mapping file (@resource mapping): every MusicBrainz page of a context gets it as the userscript manager gives it
+# (GM_getResourceText); a test can leave it out (MAPPING_SHIM_OFF) to see the script fetch it or say it is missing
+MAPPING_TEXT = (ROOT / 'mb-vibecode-credits-importer-mapping.json').read_text()
+MAPPING_SHIM_OFF = False
+RAW_GITHUB = {}
+RAW_REQUESTS = []
 SYNC = (ROOT / 'mb-vibecode-credits-importer-companion.user.js').read_text()
 # [3.31.1] The script asks MusicBrainz's web service at most once every 1.1 s (MusicBrainz's rate limit). The test server
 # is local, so the tests use a short gap: an import takes about 1 s instead of 11 s. DCI_MB_GAP (milliseconds) sets it;
@@ -799,6 +805,16 @@ def install_routes(ctx):
         return route.fulfill(body=f'<!doctype html><html><head><title>Release Actions – Harmony</title></head><body><main><h2>Release Actions</h2>{acts}</main></body></html>',
                              content_type='text/html')
     ctx.route('https://harmony.pulsewidth.org.uk/**', harmony)
+
+    # [3.33.0] files on GitHub (RAW_GITHUB: path → text; others 404), e.g. the mapping file the script fetches itself
+    def raw_github(route):
+        u = urllib.parse.urlparse(route.request.url)
+        RAW_REQUESTS.append(route.request.url)
+        text = RAW_GITHUB.get(u.path)
+        if text is None:
+            return route.fulfill(status=404, body='404: Not Found', headers={'Access-Control-Allow-Origin': '*'})
+        return route.fulfill(body=text, content_type='text/plain', headers={'Access-Control-Allow-Origin': '*'})
+    ctx.route('https://raw.githubusercontent.com/**', raw_github)
     ctx.route('https://api.discogs.com/**', dg_api)
     ctx.route('https://www.discogs.com/**', dg_web)
 
@@ -819,9 +835,18 @@ LAUNCH_ARGS = ['--disable-web-security',
                '--disable-features=BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessSendPreflights,PrivateNetworkAccessRespectPreflightResults']
 
 
+def add_mapping(ctx):
+    """[3.33.0] The mapping file as the userscript manager gives it (@resource mapping: GM_getResourceText), unless
+    MAPPING_SHIM_OFF; for a context made without new_context (another browser language, a screenshot)."""
+    if not MAPPING_SHIM_OFF:
+        ctx.add_init_script(script="if (typeof window.GM_getResourceText !== 'function') window.GM_getResourceText = (name) => (name === 'mapping' ? %s : null);"
+                            % json.dumps(MAPPING_TEXT))
+
+
 def new_context(browser):
     ctx = browser.new_context(viewport={'width': 1500, 'height': 1000}, accept_downloads=True)
     install_routes(ctx)
+    add_mapping(ctx)
     return ctx
 
 

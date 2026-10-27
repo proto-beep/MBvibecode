@@ -1,6 +1,6 @@
 """Starting: from the release editor, from Harmony, the source in the navigation (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: afteredit, harmony, navlink – each the former smoke/t_<case>.py, unchanged; `python3 t_start.py <case> …` runs only those."""
+Cases: afteredit, harmony, navlink, mappingload (3.33.0) – each the former smoke/t_<case>.py, unchanged; `python3 t_start.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -442,6 +442,70 @@ def case_navlink():
         print('Fehler:', real(errs))
         results.append(not real(errs))
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_mappingload():
+    """Credits Importer 3.33.0 (milestone "Mapping file"): where the mapping file comes from (maintainer: Block W, "erst b dann a").
+    A) Loaded by the userscript manager (GM_getResourceText): the dashboard works; "Mapping rules" says where the data comes from
+       ("version 3.33.0, loaded by the userscript manager"), the log "Mapping file 3.33.0 (loaded by the userscript manager)".
+    B) The manager did not load it: the script fetches it from GitHub (…/main/mb-vibecode-credits-importer-mapping.json?v=…),
+       keeps it for this version and loads the page once more – the dashboard works, "fetched from GitHub by the script"; the
+       next page needs no fetch.
+    C) Not on GitHub either: no dashboard, the message "mapping file missing" with "Update script" – it opens the script's
+       address."""
+    import json
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        # A)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.click('.dci-head [data-act=rules]'); pg.wait_for_timeout(300)
+        src_a = pg.evaluate("document.querySelector('#dci-rules [data-rf=mapping-src]').textContent")
+        log_a = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Mapping file/.test(t))")
+        print('A)', src_a, '|', log_a)
+        ok_a = 'mb-vibecode-credits-importer-mapping.json (version 3.33.0, loaded by the userscript manager)' in src_a \
+            and any('Mapping file 3.33.0 (loaded by the userscript manager)' in t for t in log_a)
+        results += [ok_a, not errs]
+        ctx.close()
+        # B) fetched from GitHub
+        H.MAPPING_SHIM_OFF = True
+        H.RAW_GITHUB['/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json'] = H.MAPPING_TEXT
+        H.RAW_REQUESTS.clear()
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{H.REL}/edit-relationships')
+        pg.wait_for_selector('#dci-open', timeout=30000)
+        stored = pg.evaluate("!!localStorage.getItem('dci-mapping:3.33.0')")
+        H.open_dashboard(pg)
+        pg.click('.dci-head [data-act=rules]'); pg.wait_for_timeout(300)
+        src_b = pg.evaluate("document.querySelector('#dci-rules [data-rf=mapping-src]').textContent")
+        n1 = len(H.RAW_REQUESTS)
+        pg.reload(); pg.wait_for_selector('#dci-open', timeout=30000)
+        n2 = len(H.RAW_REQUESTS)
+        print('B) geholt:', H.RAW_REQUESTS[:1], '| gespeichert:', stored, '|', src_b, '| Abrufe:', n1, '→', n2)
+        ok_b = n1 == 1 and 'mapping.json?v=3.33.0' in H.RAW_REQUESTS[0] and stored and 'fetched from GitHub by the script' in src_b and n2 == n1
+        results += [ok_b, not errs]
+        ctx.close()
+        # C) missing
+        H.RAW_GITHUB.clear()
+        ctx = H.new_context(b)
+        ctx.add_init_script("window.__opened = []; window.open = (u) => { window.__opened.push(u); return null; };")
+        pg, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{H.REL}/edit-relationships')
+        pg.wait_for_selector('#dci-mapping-missing', timeout=20000)
+        msg = pg.evaluate("document.getElementById('dci-mapping-missing').textContent")
+        dash = pg.locator('#dci-open').count()
+        pg.click('#dci-mapping-missing .dci-mapping-update')
+        opened = pg.evaluate('window.__opened')
+        print('C)', msg[:160], '| Dashboard-Knopf:', dash, '| geöffnet:', opened)
+        ok_c = 'mapping file missing' in msg and 'Update script' in msg and dash == 0 \
+            and opened == ['https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js']
+        results += [ok_c]
+        ctx.close()
+        b.close()
+    print('A)', results[0], '| B)', results[2], '| C)', results[4])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

@@ -28,6 +28,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(args=H.LAUNCH_ARGS)
     ctx = b.new_context(viewport={'width': 1300, 'height': 2600}, device_scale_factor=1)
     H.install_routes(ctx)
+    H.add_mapping(ctx)
     pg, errs = H.open_mb_edit(ctx, companion=False)
     pg.wait_for_selector('#dci-open', timeout=20000)
     H.open_dashboard(pg)
