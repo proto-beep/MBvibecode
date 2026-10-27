@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.32.9 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.10 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -86,6 +86,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.10
+
+#### Added
+
+- **Comments of live recordings, entered after "Enter edit"** (collected item 113; maintainer: "es soll mit einem klick auf enter edit aus dem relationship editor erst ausgeführt werden. falls das passiert bitte auch den quellentext des skripts hinzufügen … und das natürlich in den Connections ergänzen", "falls nachträglich im relationship editor das alias verändert wird bitte rote nachricht im log ausgeben", "ja bitte mit Kommentar"): staging keeps the ticked comments; "Enter edit" in the relationship editor arms them; once MusicBrainz has the relationships (the editor's page or the release page next) they are worked out again from MusicBrainz's data and entered as edits "edit recording", with the script's edit note and "MB: QoL: Seed the batch recording comments script v2022.6.13: Seed live comments". A credit of the place changed in the relationship editor: a red message, the comments use the new one. Another comment in MusicBrainz is not overwritten. Connections: the two userscripts of murdos and ROpdebee.
 
 ### Import 3.32.9
 

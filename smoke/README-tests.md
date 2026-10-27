@@ -191,6 +191,9 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off), the list above "Stage …": live
                                 #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),
                                 #     another comment of MB not tickable, changed by hand, unticked
+                                #   livecomrun: 3.32.10: the job at staging (with the seed line in the note), "Enter edit" → once MB has the
+                                #     relationships one POST to /ws/js/edit/create (type 72, the credit changed in the editor: red log, the new
+                                #     credit), done; the release page enters an armed job (hand-made comment, another comment of MB in red)
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
