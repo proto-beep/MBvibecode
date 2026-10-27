@@ -28,7 +28,7 @@ Batterie : Paul Martin
 Coros: Lucía y Marta
 José – bajo
 Alto: Pierre Leroux"""
-    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
     const c = tr.querySelector('[data-f=role-credit]');
     return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '',
@@ -63,7 +63,7 @@ Alto: Pierre Leroux"""
         ok_b = jose[:4] == ['bajo', 'instrument', 'bass', ''] and 'only says “bajo”' in jose[4] and '“bajo” is a translation, so there is no role credit' in jose[4]
         print('B) bajo:', jose, ok_b)
         # C) Alto asks; viola sets the instrument
-        sec = "[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Pierre Leroux')"
+        sec = "[...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || s.querySelector('.dci-gname strong').textContent.trim()) === 'Pierre Leroux')"
         ask = pg.evaluate(f"(() => {{ const s = {sec}; return [...s.querySelectorAll('.dci-type-ask [data-act=type-pick]')].map(b => b.textContent.trim()); }})()")
         before = (g.get('Pierre Leroux') or [['']])[0]
         pg.evaluate(f"{sec}.querySelector('.dci-type-ask [data-act=type-pick][data-opt=\"0\"]').click()")
@@ -145,7 +145,7 @@ def case_nordic():
     TEXT = """Richard Gilman-Opalsky: Drums, percussion, and wood flutes
 Miksa av: Ola Nordmann
 Logo og kunst: Kari Nordmann"""
-    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
     const c = tr.querySelector('[data-f=role-credit]'); const cr = tr.querySelector('[data-f=credit]'); const sp = [...tr.querySelectorAll('.dci-sub')].find(x => /one row per task/.test(x.textContent));
     return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '-', cr ? cr.value : '-',
@@ -165,7 +165,7 @@ Logo og kunst: Kari Nordmann"""
         for k, v in g.items():
             print('   ', k, v)
         row = lambda name, i=0: ((g.get(name) or []) + [['', '', '', '', '', '']] * (i + 1))[i]
-        RULES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+        RULES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || s.querySelector('.dci-gname strong').textContent.trim()) === name);
       return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [...tr.querySelectorAll('.dci-ruleid')].map(b => b.textContent.trim())) : null; }"""
         f1 = {n: pg.evaluate(RULES, n) for n in ('Grafik Mann', 'KUNST MANN', 'Valfar', 'Flute Frau')}
         # A)
@@ -185,7 +185,8 @@ Logo og kunst: Kari Nordmann"""
         # C) case only
         vow = g.get('Voices Of Wonder') or g.get('Voices of Wonder') or []
         c1 = [row('Valfar', 0)[4], row('Valfar', 1)[4], [x[4] for x in k], [x[4] for x in vow], row('Master Mann')[4]]
-        sec = "section.dci-group:has(.dci-gname strong:text-is('Valfar'))"
+        # [3.32.2] the head shows "VALFAR*" (the release's spelling), the name is in data-name
+        sec = "section.dci-group:has(.dci-gname strong[data-name='Valfar'])"
         f = pg.locator(f'{sec} tr.dci-row').nth(0).locator('[data-f=credit]')
         f.fill('VALFAR')
         f.dispatch_event('change')
@@ -253,7 +254,7 @@ Frank Trompeter: Tenor, alto, soprano saxophones
 Richard Gilman-Opalsky: Drums, percussion, and wood flutes
 Mixed and mastered by Brandon Carnes in March 2026.
 Assembled by Kai Lurk (noises, electronics) & Fen Field (field recordings)."""
-    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
     const c = tr.querySelector('[data-f=role-credit]');
     return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '-']; })])))()"""
@@ -332,7 +333,7 @@ def case_sounds():
 
 
     H.discogs_release = rel
-    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || s.querySelector('.dci-gname strong').textContent.trim()) === name);
   if (!g) return null; const tr = [...g.querySelectorAll('tr.dci-row')].find(r => /sounds/i.test(r.querySelector('.dci-drole').textContent)) || g.querySelector('tr.dci-row');
   const t = tr.querySelector('[data-f=type]'); const ask = tr.querySelector('.dci-type-ask'); const p = tr.querySelector('[data-f=primary]'); const c = tr.querySelector('[data-f=role-credit]');
   return { id: tr.dataset.row, role: tr.querySelector('.dci-drole').textContent.trim(), type: t ? (t.options[t.selectedIndex] || {}).text : '', primary: p ? p.value : '', credit: c ? c.value : '',
@@ -383,7 +384,7 @@ def case_members():
        give no entry.
     B) Bandcamp, the sentence in the "about" text (which otherwise gives only places): the three performers again; "Vision
        Fortune is back with a new album." there neither."""
-    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', (tr.querySelector('[data-tcount]') || {}).textContent]; })])))()"""
     MEMBERS = ['AC Williams', 'Alex Townend', 'Andres Ayerbe']
     VF = (H.uid('dddddddd', 60), 'Vision Fortune')

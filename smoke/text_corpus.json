@@ -1394,6 +1394,28 @@
         "unrecognized": [],
         "ignored": []
       }
+    },
+    {
+      "text": "Poems: Jane Doe. Poetry by John Roe. Recitation: Ann Poe.",
+      "expect": {
+        "credits": [
+          [
+            "Jane Doe",
+            "Poems"
+          ],
+          [
+            "John Roe",
+            "Poetry By"
+          ],
+          [
+            "Ann Poe",
+            "Recitation"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
     }
   ]
 }

@@ -106,6 +106,7 @@ def case_dragdates():
     onto the column date and a cell of the works matrix; a date onto another date makes a period (pool and matrix);
     all dates of the Discogs notes go into the pool; cleared pools come back when the release is opened again;
     "load again from Discogs" (with and without the dates made by hand); "Cover Art" keeps "cover art" as wording."""
+    H.RULES_OFF = ['D022']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     import re
     from common_rows import cells, drag, date_field
 
@@ -204,7 +205,8 @@ def case_dragdates():
 def case_pools():
     """Dates & tracks as one block: open when dates were found, folded state remembered; clearing all track
     groups (dates in the matrix become dashed suggestions for all tracks) and all dates (also of other
-    releases), rows keep their dates as their own; the list of created works stays."""
+    releases), rows keep their dates as their own; the list of created works stays. [3.32.1] Loaded again, the notes'
+    dates are placed anew as suggestions waiting for "Apply": the block is open for that import, "folded" stays stored."""
     import re
     import zooid
     from common_rows import lib, cells
@@ -248,7 +250,8 @@ def case_pools():
         pg.reload(); pg.add_script_tag(content=H.MAIN); pg.wait_for_selector('#dci-open', timeout=20000)
         pg.click('#dci-open'); pg.wait_for_selector('.dci-pools-head', timeout=30000); pg.wait_for_timeout(1500)
         print('   nach Neuladen offen?', pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'))
-        ok4 = ok4 and pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') == 'false'
+        # [3.32.1] open for this import (suggestions wait for "Apply", item 109), the folded state stays stored
+        ok4 = ok4 and pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') == 'true' and pg.evaluate("localStorage.getItem('dci-pools-open')") == 'false'
         print('Ergebnis:', 'OK' if all([ok1, ok2, ok3, ok4]) else 'FEHLER', [ok1, ok2, ok3, ok4], '| Fehler:', errs)
         b.close()
 
@@ -284,6 +287,9 @@ def case_poolsmx():
         H.open_dashboard(pg)
         H.wait_for(pg, "document.querySelector('.dci-pools-toggle') && document.querySelector('.dci-mx-wrap')", 60)
         pg.wait_for_timeout(800)
+        # [3.32.1] the suggestions of the notes applied: otherwise each import opens the pools for them (item 109)
+        pg.click('[data-act=dm-apply]')
+        pg.wait_for_timeout(500)
         st = lambda: pg.evaluate(KEPT)
         # A) the folded block with the kept pools
         if pg.evaluate("document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded')") == 'true':
@@ -501,6 +507,127 @@ def case_tracksdrop():
 
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
     PW.stop()
+
+
+def case_titledates():
+    """Credits Importer 3.31.7: dates in the titles of the tracks (collected item 110; maintainer, Bandcamp "At Iridium 2004":
+    "wir brauchen eine option um daten von tracknamen in den datums/trackpool aufzunehmen. die Tracknummern hat man dann ja
+    direkt. diese option soll im mapping ebenfalls an und abstellbar sein (Quick Switches). standardeinstellung = aus").
+    Titles "March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)", "March 24, 2004 (Set 1)", "March 24, 2004 (Set 2)".
+    A) D023 is off by default: no date from the titles.
+    B) Switched on in "Mapping rules": the date pool gets March 23 and 24, 2004, the track pool "March 23, 2004 · 1–2" and
+       "March 24, 2004 · 3–4", the date matrix both as suggestions under Performance, a message says so; stored as "+D023".
+    C) Switched off again: the suggestions go (pool entries, track groups, cells).
+    D) On again and "Apply": Bass Man's row (all tracks) is split – tracks 1–2 on 2004-03-23, 3–4 on 2004-03-24."""
+    from common_rows import lib, cells
+    H.TITLES[:] = ['March 23, 2004 (Set 1)', 'March 23, 2004 (Set 2)', 'March 24, 2004 (Set 1)', 'March 24, 2004 (Set 2)']
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = ''
+        return d
+
+    H.discogs_release = rel
+    POOL = """[[...document.querySelectorAll('.dci-pchip-date .dci-chip-main')].map(c => c.textContent.trim()),
+      [...new Set([...document.querySelectorAll('.dci-pchip-tg .dci-chip-main')].map(c => c.textContent.replace(/\\s+/g, ' ').trim()))]]"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+            pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+        a = [pg.evaluate(POOL), cells(pg).get('performance')]
+        print('A) aus:', a)
+        results.append(a[0] == [[], []] and a[1] == [])
+        pg.click('[data-act=rules]'); pg.wait_for_timeout(300)
+        box = '#dci-rules [data-rf=tables] [data-rule-on=D023]'  # [3.32.0] also a quick switch at the top
+        on0 = pg.locator(box).is_checked()
+        pg.locator(box).scroll_into_view_if_needed()
+        pg.check(box); pg.wait_for_timeout(800)
+        b1 = [pg.evaluate(POOL), cells(pg).get('performance')]
+        msg = pg.evaluate("[...document.querySelectorAll('#dci-msgs li, .dci-msg')].map(x => x.textContent).join(' | ')")
+        stored = pg.evaluate("localStorage.getItem('dci-rules-off')")
+        print('B) an (vorher an:', on0, '):', b1, '\n   Meldung:', msg[:200], '| gespeichert:', stored)
+        results.append(not on0 and [x.split(' 0 rows')[0] for x in b1[0][0]] == ['March 23, 2004 · 2004-03-23', 'March 24, 2004 · 2004-03-24']
+                       and b1[0][1] == ['March 23, 2004 · 1–2 2 tracks', 'March 24, 2004 · 3–4 2 tracks']
+                       and [c[0] for c in b1[1]] == ['March 23, 2004 · 2004-03-23', 'March 24, 2004 · 2004-03-24'] and all(c[2] for c in b1[1])
+                       and [c[1] for c in b1[1]] == [['March 23, 2004 · 1–2'], ['March 24, 2004 · 3–4']]
+                       and 'titles of the tracks' in msg and '+D023' in (stored or ''))
+        pg.uncheck(box); pg.wait_for_timeout(800)
+        c1 = [pg.evaluate(POOL), cells(pg).get('performance')]
+        print('C) wieder aus:', c1)
+        results.append(c1[0] == [[], []] and c1[1] == [])
+        pg.check(box); pg.wait_for_timeout(800)
+        pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(600)
+        d1 = lib(pg, 'Bass Man')
+        print('D) nach „Anwenden“ – Bass Man:', d1)
+        results.append(sorted(d1) == [([1, 2], '2004-03-23'), ([3, 4], '2004-03-24')])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_poolsopen():
+    """Credits Importer 3.32.1: "Dates & tracks" opens for suggestions that wait for "Apply" (collected item 109; maintainer:
+    "automatisch dashboard aufklappen sofern daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das
+    dashboard muss doch auf sein, damit Dates & Tracks sichtbar ist?"); the track group form with "Tracks:" right of "Name:"
+    (item 90b).
+    A) The notes' dates are placed as suggestions: "Dates & tracks" is open. Folded by hand, and the date pool folded too –
+       remembered.
+    B) Loaded again (a new import, the suggestions still wait): "Dates & tracks" and the date pool are open – for this import;
+       what is remembered stays (closed, folded); the log says so. "Apply" and loaded again: folded and closed as remembered.
+    C) The form of a new track group: "Tracks:" on the line of "Name:" (a wide window)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        st = lambda: [pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'), pg.locator('.dci-pool-dates.dci-pool-folded').count(),
+                      pg.evaluate("[localStorage.getItem('dci-pools-open'), localStorage.getItem('dci-pool-fold')]")]
+        a0 = st()
+        pg.click('[data-act=pool-fold][data-pool=dates]'); pg.wait_for_timeout(200)
+        pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+        a1 = st()
+        print('A) offen:', a0, '| zu, gefaltet:', a1)
+        results.append(a0[0] == 'true' and a1[0] == 'false' and a1[2] == ['false', '{"dates":true}'])
+        pg.close()
+        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        b1 = st()
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'for this import' in x]
+        print('B) neu geladen:', b1, '| Protokoll:', logs)
+        ok_b = b1[0] == 'true' and b1[1] == 0 and b1[2] == ['false', '{"dates":true}'] and logs
+        # C) the form of a new track group
+        pg.click('[data-act=tg-new]'); pg.wait_for_timeout(200)
+        y = pg.evaluate("['tg-name', 'tg-text'].map(f => Math.round(document.querySelector('[data-f=' + f + ']').getBoundingClientRect().top))")
+        print('C) Name / Tracks oben:', y)
+        results.append(abs(y[0] - y[1]) < 4)
+        pg.click('[data-act=tg-cancel]'); pg.wait_for_timeout(200)
+        pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(600)
+        pg.close()
+        pg, errs3 = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        b2 = st()
+        print('   nach „Anwenden“ neu geladen:', b2)
+        results.append(ok_b and b2[0] == 'false' and b2[2] == ['false', '{"dates":true}'])
+        print('Fehler:', errs, errs2, errs3)
+        results.append(not errs and not errs2 and not errs3)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 run_cases(globals())

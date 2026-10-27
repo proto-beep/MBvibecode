@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.31.2
+// @version      3.32.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -123,8 +123,8 @@
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "ignored.why.package": "about the package",
       "log.notesCompanies": "From the Discogs notes, not listed by Discogs ({n}): {list}",
-      "log.notesPubTracks": "From the Discogs notes: the tracks of publishers Discogs lists – {list} (suggestions in the works matrix)",
-      "log.pubOfPerson": "{name} as publisher: a part of the column of {person} in the works matrix (MusicBrainz links a publisher to a work as a label)",
+      "log.notesPubTracks": "From the Discogs notes: the tracks of publishers Discogs lists – {list} (set in the works matrix; ⓘ shows the line)",
+      "log.pubOfPerson": "{name} as publisher is the person {person}: publishing is a role of that entry (MusicBrainz: artist–work “published / publisher”), no company of its own",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
       "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album or track URL",
@@ -273,7 +273,7 @@
       "level.recording": "Recording",
       "level.release": "Release",
       "level.onlyHere": "MusicBrainz has this relationship only on this level ({level})",
-      "level.workSkipped": "The works matrix is skipped for this release (“Take works matrix again” in the works section brings the works level back)",
+      "level.workSkipped": "The works matrix is skipped for this release (“Take works again” in the works section brings the works level back)",
       "level.work": "Work",
       "level.skip": "Skip",
       "th.role": "{src} role",
@@ -332,6 +332,8 @@
       "role.tracks": "track {list}",
       "role.wholeRelease": "{src}: whole release",
       "role.splitFrom": "on {src}: “{raw}” (one row per task)",
+      "role.perfTracks": "On the tracks of the “Performer” credits on Discogs: {list} (rule S046)",
+      "log.perfTracks": "{name}: “Performer” on {list} – the instruments for the whole release go onto these tracks (S046)",
       "role.unresolved": "Not matched: {list}",
       "note.uncredited": "According to {src} not named on the release (Uncredited).",
       "note.featuring": "“Featuring” is usually part of the artist credit already. Please check.",
@@ -656,6 +658,14 @@
       "settings.t.general": "General",
       "settings.t.appearance": "Appearance",
       "settings.levelColors": "Colours for the levels",
+      "settings.kindColors": "Colours for the kinds of entries",
+      "settings.kindColorsTitle": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind (artist, label, place, area, other); off: all grey",
+      "settings.kindColor": "Colour for {kind}",
+      "kind.artist": "Artist",
+      "kind.label": "Label",
+      "kind.place": "Place",
+      "kind.area": "Area",
+      "kind.other": "Other",
       "settings.levelColorsTitle": "Recording, release, release group and work each in its own colour – in the rows and in the compact view",
       "settings.levelColor": "Colour of the level “{level}”",
       "settings.rulesPlace": "Mapping rules",
@@ -719,6 +729,8 @@
       "msgs.unfold": "Show the messages",
       "msgs.close": "Close this message (until the next import)",
       "group.creditedAs": "as {name}",
+      "group.discogsName": "Discogs: {name}",
+      "group.otherSpellings": "Also on this release as: {list}",
       "group.creditedAsMore": "as {name} (+{n})",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
       "nav.settings": "⚙",
@@ -735,6 +747,7 @@
       "cl.unmapped": "no MusicBrainz type",
       "cl.instrAsk": "{name}: which instrument?",
       "cl.typeAsk": "type to choose",
+      "cl.pickList": "choose …",
       "cl.dateSugg": "date suggested",
       "cl.removeTitle": "Take this row out of the dashboard (the next import brings it back)",
       "cl.noTracks": "no tracks",
@@ -882,6 +895,8 @@
       "matrix.newWork": "new work",
       "matrix.waiting": "waits for a work",
       "matrix.notesReason": "from the notes: “{text}”",
+      "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
+      "role.notesTracks": "Tracks {list} from the notes",
       "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
       "matrix.suggOk": "Keep the suggestion",
       "matrix.suggNo": "Take the suggestion out",
@@ -936,12 +951,13 @@
       "matrix.pubCount.other": "MusicBrainz: personal publisher of {n} artists – ticked where one of them wrote the work",
       "matrix.pubNone": "MusicBrainz knows no artist with this personal publisher – tick its works by hand",
       "matrix.pubUnmatched": "Publisher not found in MusicBrainz – tick its works by hand",
+      "role.pubFromCompany": "Discogs lists it as a company (“{name}”) – a person as publisher",
+      "matrix.pubSelf": "A person as publisher: suggested on the works {name} writes ({n}) – tick others by hand",
+      "matrix.reasonSelf": "Suggested: {publisher} writes this work",
       "matrix.unclear": "Not ticked: no writer of this work has this publisher as personal publisher in MusicBrainz",
       "matrix.reason": "{publisher} is the personal publisher of {names} according to MusicBrainz",
       "matrix.hint": "Personal publisher relationship outside the release date: {list}",
       "matrix.suggestPub": "MusicBrainz also lists the personal publisher {name}",
-      "matrix.pubOfPerson": "{name} as publisher",
-      "matrix.pubOfPersonTitle": "A part of the column of {name}: MusicBrainz links a publisher to a work as a label – the label of this name, found by its name (or “Create label …” in its entry)",
       "matrix.addColumn": "add as column",
       "matrix.menuTitle": "Roles of this cell",
       "matrix.ownDate": "Date of its own:",
@@ -1134,7 +1150,7 @@
       "media.worksTime": "looking up their works takes about {min} min (longer with large catalogues of the artists)",
       "media.works.yes": "Look up works",
       "media.works.no": "Not now",
-      "media.works.skip": "Skip works matrix",
+      "media.works.skip": "Skip works",
       "media.askHint": "You are asked before every import of this release.",
       "media.savedHint": "Preselected: the choice remembered for this release. You are still asked before every import.",
       "media.sum.one": "{m} of {all} media · {n} track",
@@ -1165,10 +1181,10 @@
       "matrix.searchCancel": "stop",
       "matrix.fold": "Fold the works matrix",
       "matrix.unfold": "Unfold the works matrix",
-      "matrix.skip": "Skip works matrix",
+      "matrix.skip": "Skip works",
       "matrix.skipTitle": "Nothing of the works matrix is created: no works, no links to works, no work relationships (writers, publishers, arrangers …); the work lookups rest. Kept for this release.",
       "matrix.skipped": "skipped",
-      "matrix.unskip": "Take works matrix again",
+      "matrix.unskip": "Take works again",
       "matrix.skippedHint": "Skipped for this release: nothing of the works matrix is staged – no works, no links to works, no work relationships (its rows are on “Skip”); what was staged of it is taken out of the editor. The work lookups rest.",
       "matrix.skippedRows.one": "{n} row on “Skip”",
       "matrix.skippedRows.other": "{n} rows on “Skip”",
@@ -1281,6 +1297,15 @@
       "rules.test": "Try a Discogs role:",
       "rules.testHint": "Type a Discogs role as on Discogs, e.g. “Bass [Upright]”; several separated by commas.",
       "rules.search": "Search the rules:",
+      "rules.quick": "Quick switches",
+      "rules.quickTitle": "Rules switched on and off often – the same as in the lists below; the id next to each shows the rule, which says where it acts",
+      "quick.S045": "Rights society after a writer’s name → the release’s rights society",
+      "quick.D022": "Performance on several days → their common month or year",
+      "quick.S021": "“live” preselected for live releases",
+      "quick.S031": "Only the case differs → no “credited as”",
+      "quick.S007": "Leave out festivals in “Companies, etc.”",
+      "quick.D023": "Dates in the titles of the tracks",
+      "quick.S046": "“Performer” on tracks → the instruments on those tracks",
       "rules.roles": "Roles",
       "rules.wording": "Role credit wording",
       "rules.specialTitle": "Special handling",
@@ -1374,6 +1399,7 @@
       "ms.3.27.0": "A clearer dashboard: the entries compact – one line per role (role → type and instrument, level, tracks, date), a click opens the row to change it; dates and track groups can still be dropped onto the line, what is open is in colour (red missing, yellow a question or suggestion), skipped rows are grey with ✕; “Compact | Full” is remembered. The head in one line with symbols of its own, “Source ▾” for everything about the source, “+ Supplement” only on request; the settings as tabs (also “Texts” and “ⓘ Connections” – every site, tool and script the script works with), “Reset all settings” in them; after the installation the language is asked once",
       "ms.3.29.0": "Text recognition, part 3: credits in prose (\"… by K.M. (sounds, words) & E. (voice)\", \"Cover artwork channeled by …\", \"Logo carved by the guided hand of …\"), every place of joined verbs (\"Mixed and mastered at …\") and lists of kinds (\"Tenor, alto, soprano saxophones\"); a date goes to every group of joined words and takes its group only from its own sentence, years of a release are left out, \"19 & 20. 01. 2009\" and \"1973 October 19\" are read; \"C1 to D\" with a side of one track, \"in live concert\" only for the tracks named. Since 3.27.0 also: Bandcamp track pages as releases; Norwegian, Swedish and Danish roles, \"Logo Og Kunst\" as design \"logo\" and artwork \"art\", \"cover design\", \"wood flutes\" as flute; no \"credited as\" when only the case differs, the spelling of a text when it differs; the companion underlines the dates and track groups used in the Discogs notes and on Bandcamp.",
       "ms.3.31.0": "Text recognition, part 4: publishers below a heading (\"[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5\") on their tracks, their rights society (BMI, ASCAP, GEMA … – a list of the societies) on the release level, a publisher with the name of a person as a part of that person's column in the works matrix, names written together searched apart too (\"Flizmo Music\", \"Four Word Sea Music\"); the members of a band (\"Vision Fortune are A, B and C\") as performers, \"sounds\" asks performer or effects; from the Discogs notes dates per disc (\"May 26, 2016 (Disc 2)\"), places and the label of \"© & ℗ TUM Records Oy 2021\" (TUM Records offered too). Since 3.29.0 also: the mapping rules in the dashboard or as a window (also from a rule id at a row), colours for the levels, the level of a compact line switched by a click, ⚙ Settings → Appearance, an entry or a group compact at once, each pool folds on its own, scroll bars above and below the works matrix, the settings without an import (\"Source pages\"), the tracks of a track group typed in.",
+      "ms.3.32.0": "Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -1456,6 +1482,10 @@
       "dm.studios": "Studios limited to the tracks of their dates: {list}",
       "dm.autoPlaced.one": "{n} date from the notes was placed in the date matrix as a suggestion (dashed, yellow). Check it and click “Apply” to put it on the rows.",
       "dm.autoPlaced.other": "{n} dates from the notes were placed in the date matrix as suggestions (dashed, yellow). Check them and click “Apply” to put them on the rows.",
+      "log.poolsOpened": "Suggestions in the date matrix wait for “Apply”: “Dates & tracks” is open for this import",
+      "dm.titlePlaced.one": "{n} date from the titles of the tracks was placed in the date matrix as a suggestion (Performance, with its tracks). Check it and click “Apply” to put it on the rows (rule D023).",
+      "dm.titlePlaced.other": "{n} dates from the titles of the tracks were placed in the date matrix as suggestions (Performance, with their tracks). Check them and click “Apply” to put them on the rows (rule D023).",
+      "log.titleDates": "Dates in the titles of the tracks (D023): {n} – {list}",
       "dm.pending": "not applied yet",
       "dm.pickDate": "Move “{name}”: drag it into a column of the matrix, or click here and then on “place here”",
       "dm.pickTracks": "Move “{name}”: drag it onto a date in the matrix, or click here and then on “tracks here”",
@@ -1602,6 +1632,7 @@
       "typeAsk.askTranslation": "“{role}” in Bandcamp credits: mostly the translation of the liner notes, sometimes of the lyrics – please choose:",
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
+      "typeAsk.askPoems": "“{role}” alone: the words of the works, poems printed in the booklet or poems read out? – please choose:",
       "typeAsk.suggested": "suggested",
       "typeAsk.suggestedTitle": "What it mostly means – a suggestion: the row is added only once you choose",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
@@ -1785,7 +1816,7 @@
       "level.recording": "Recording",
       "level.release": "Release",
       "level.onlyHere": "MusicBrainz hat diese Beziehung nur auf dieser Ebene ({level})",
-      "level.workSkipped": "Die Werk-Matrix ist für dieses Release übersprungen („Werk-Matrix wieder nehmen“ im Werk-Bereich bringt die Werk-Ebene zurück)",
+      "level.workSkipped": "Die Werk-Matrix ist für dieses Release übersprungen („Werke wieder nehmen“ im Werk-Bereich bringt die Werk-Ebene zurück)",
       "level.work": "Werk",
       "level.skip": "Überspringen",
       "th.role": "{src}-Rolle",
@@ -2609,7 +2640,7 @@
       "media.worksTime": "ihre Werke abzufragen dauert etwa {min} Min. (länger bei großen Katalogen der Artists)",
       "media.works.yes": "Werke abfragen",
       "media.works.no": "Jetzt nicht",
-      "media.works.skip": "Werk-Matrix überspringen",
+      "media.works.skip": "Werke überspringen",
       "media.askHint": "Vor jedem Import dieses Releases wird gefragt.",
       "media.savedHint": "Vorausgewählt: die für dieses Release gemerkte Auswahl. Gefragt wird trotzdem vor jedem Import.",
       "media.sum.one": "{m} von {all} Medien · {n} Track",
@@ -2640,10 +2671,10 @@
       "matrix.searchCancel": "abbrechen",
       "matrix.fold": "Werk-Matrix zuklappen",
       "matrix.unfold": "Werk-Matrix aufklappen",
-      "matrix.skip": "Werk-Matrix überspringen",
+      "matrix.skip": "Werke überspringen",
       "matrix.skipTitle": "Von der Werk-Matrix wird nichts angelegt: keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen (Writer, Verlage, Arrangeure …); die Werk-Abfragen ruhen. Für dieses Release gemerkt.",
       "matrix.skipped": "übersprungen",
-      "matrix.unskip": "Werk-Matrix wieder nehmen",
+      "matrix.unskip": "Werke wieder nehmen",
       "matrix.skippedHint": "Für dieses Release übersprungen: von der Werk-Matrix wird nichts vorgemerkt – keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen (ihre Zeilen stehen auf „Skip“); was davon vorgemerkt war, wird aus dem Editor genommen. Die Werk-Abfragen ruhen.",
       "matrix.skippedRows.one": "{n} Zeile auf „Skip“",
       "matrix.skippedRows.other": "{n} Zeilen auf „Skip“",
@@ -3244,7 +3275,7 @@
       "level.recording": "Grabación",
       "level.release": "Publicación",
       "level.onlyHere": "MusicBrainz tiene esta relación solo en este nivel ({level})",
-      "level.workSkipped": "La matriz de obras está omitida para esta publicación («Volver a tomar la matriz de obras» en la sección de obras devuelve el nivel de obra)",
+      "level.workSkipped": "La matriz de obras está omitida para esta publicación («Volver a tomar las obras» en la sección de obras devuelve el nivel de obra)",
       "level.work": "Obra",
       "level.skip": "Omitir",
       "th.role": "Rol en {src}",
@@ -4068,7 +4099,7 @@
       "media.worksTime": "buscar sus obras tarda unos {min} min (más con catálogos grandes de los artistas)",
       "media.works.yes": "Buscar obras",
       "media.works.no": "Ahora no",
-      "media.works.skip": "Omitir la matriz de obras",
+      "media.works.skip": "Omitir obras",
       "media.askHint": "Se pregunta antes de cada importación de esta publicación.",
       "media.savedHint": "Preseleccionado: la selección recordada para esta publicación. Aun así se pregunta antes de cada importación.",
       "media.sum.one": "{m} de {all} medios · {n} pista",
@@ -4099,10 +4130,10 @@
       "matrix.searchCancel": "detener",
       "matrix.fold": "Plegar la matriz de obras",
       "matrix.unfold": "Desplegar la matriz de obras",
-      "matrix.skip": "Omitir la matriz de obras",
+      "matrix.skip": "Omitir obras",
       "matrix.skipTitle": "No se crea nada de la matriz de obras: ni obras, ni enlaces a obras, ni relaciones de obra (autores, editoriales, arreglistas …); las búsquedas de obras descansan. Se guarda para esta publicación.",
       "matrix.skipped": "omitida",
-      "matrix.unskip": "Volver a tomar la matriz de obras",
+      "matrix.unskip": "Volver a tomar las obras",
       "matrix.skippedHint": "Omitida para esta publicación: no se prepara nada de la matriz de obras – ni obras, ni enlaces a obras, ni relaciones de obra (sus filas están en «Skip»); lo que estaba preparado de ella se quita del editor. Las búsquedas de obras descansan.",
       "matrix.skippedRows.one": "{n} fila en «Skip»",
       "matrix.skippedRows.other": "{n} filas en «Skip»",
@@ -4703,7 +4734,7 @@
       "level.recording": "Enregistrement",
       "level.release": "Parution",
       "level.onlyHere": "MusicBrainz n’a cette relation qu’à ce niveau ({level})",
-      "level.workSkipped": "La matrice des œuvres est ignorée pour cette parution (« Reprendre la matrice des œuvres » dans la section des œuvres rétablit le niveau œuvre)",
+      "level.workSkipped": "La matrice des œuvres est ignorée pour cette parution (« Reprendre les œuvres » dans la section des œuvres rétablit le niveau œuvre)",
       "level.work": "Œuvre",
       "level.skip": "Ignorer",
       "th.role": "Rôle {src}",
@@ -5527,7 +5558,7 @@
       "media.worksTime": "rechercher leurs œuvres prend environ {min} min (plus long avec de grands catalogues des artistes)",
       "media.works.yes": "Rechercher les œuvres",
       "media.works.no": "Pas maintenant",
-      "media.works.skip": "Ignorer la matrice des œuvres",
+      "media.works.skip": "Ignorer les œuvres",
       "media.askHint": "La question est posée avant chaque import de cette parution.",
       "media.savedHint": "Présélectionné : le choix mémorisé pour cette parution. La question est quand même posée avant chaque import.",
       "media.sum.one": "{m} sur {all} supports · {n} piste",
@@ -5558,10 +5589,10 @@
       "matrix.searchCancel": "arrêter",
       "matrix.fold": "Replier la matrice des œuvres",
       "matrix.unfold": "Déplier la matrice des œuvres",
-      "matrix.skip": "Ignorer la matrice des œuvres",
+      "matrix.skip": "Ignorer les œuvres",
       "matrix.skipTitle": "Rien de la matrice des œuvres n’est créé : ni œuvres, ni liens vers des œuvres, ni relations d’œuvre (auteurs, éditeurs, arrangeurs …) ; les recherches d’œuvres sont suspendues. Gardé pour cette parution.",
       "matrix.skipped": "ignorée",
-      "matrix.unskip": "Reprendre la matrice des œuvres",
+      "matrix.unskip": "Reprendre les œuvres",
       "matrix.skippedHint": "Ignorée pour cette parution : rien de la matrice des œuvres n’est préparé – ni œuvres, ni liens vers des œuvres, ni relations d’œuvre (ses lignes sont sur « Skip ») ; ce qui en était préparé est retiré de l’éditeur. Les recherches d’œuvres sont suspendues.",
       "matrix.skippedRows.one": "{n} ligne sur « Skip »",
       "matrix.skippedRows.other": "{n} lignes sur « Skip »",
@@ -6157,8 +6188,23 @@
     }
   }
 
+  /**
+   * [3.31.7] Rules that are off until switched on (D023, and the quick switches that are off by default): their being on is
+   * stored as "+<id>" in the same list (collected item 110: "standardeinstellung = aus").
+   */
+  const DEFAULT_OFF_RULES = new Set(['D023', 'S046']);
+
   function ruleOn(id) {
-    return !rulesOff().has(id);
+    return DEFAULT_OFF_RULES.has(id) ? rulesOff().has(`+${id}`) : !rulesOff().has(id);
+  }
+
+  /** [3.31.7] Switches a built-in rule on or off (stored with the other switched rules). */
+  function setRuleOn(id, on) {
+    if (DEFAULT_OFF_RULES.has(id)) {
+      if (on) rulesOff().add(`+${id}`);
+      else rulesOff().delete(`+${id}`);
+    } else if (on) rulesOff().delete(id);
+    else rulesOff().add(id);
   }
 
   /** Instrument spellings: own ones first, then the built-in table (T001). */
@@ -6253,7 +6299,15 @@
     { id: 'S041', where: 'TEXT.parse (TEXT_MEMBERS, isTheBand; BANDCAMP.toRelease)', note: 'The members of the band: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – the release\'s artist (or "the band", "we") before "are", "is", "consists of" – each name a performer on all tracks, as a suggestion (names with capitals only); also from the "about" text of Bandcamp, which otherwise gives only places (3.30.7, T043)' },
     { id: 'S042', where: 'addNotesCompanies (TEXT.parse of the notes)', note: 'Discogs notes: the places they name ("All music recorded … at Orange Music Sound Studios in West Orange, New Jersey", "mastered … at Turtle Tone Studio in New York City") are added, read like a pasted text – unless Discogs lists the place with that role already; listed with another role, Discogs\'s entry gets it (3.30.8)' },
     { id: 'S043', where: 'TEXT.parse (PUBLISHER_HEAD, SOCIETY_AFTER_NAME, SOCIETY_LINE), addNotesCompanies, resolveArtists', note: 'Publishers below a heading ("[Publishers & Rights Societies]", "Publishers:", "Publishing (all BMI):") – one per line with its rights society and tracks ("FlizmoMusic-BMI : tracks 2, 4, 5"; outside a block a line with a society after the name too): publishing on those tracks; the society (T045) is the release\'s rights society, once each, also from "Published by X (BMI)" and a line of societies only ("BIEM/GEMA"). In the Discogs notes the tracks go onto Discogs\'s publisher of that name (also written together or with a number as a word, T046) as suggestions; publishers and societies not found through their link are searched by name (3.31.0)' },
-    { id: 'S044', where: 'matrixColumns (personPublishers), columnHeadHtml, cellHtml', note: 'A person as publisher: a publisher with the name of a person of the works matrix ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is a part of the person\'s column, right after it – with its own label, since MusicBrainz links a publisher to a work as a label (looked for by the name, S043; 3.31.0)' },
+    { id: 'S044', where: 'mergePersonPublishers, computePublisherEvidence, roleCell', note: 'A person as publisher: a publisher with the name of a person of the dashboard ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is no company – its publishing becomes a role of the person (artist–work "publishing", MusicBrainz\'s "published / publisher"), in the person\'s column of the works matrix next to writer or composer; the company entry is left out, the row says that Discogs lists it as a company; without tracks of its own, the works the person writes are suggested (3.31.5; 3.31.0–3.31.4: a part of the person\'s column with a label of its own)' },
+    { id: 'S048', where: 'personLikeName, suggestByName, matchHtmlInner, startCompanyCreate', note: 'A publisher with the name of a person and no entry of the dashboard (two to four words with capitals, no word of a company such as "Music", "Publishing", "Songs", no legal form – T044): MusicBrainz\'s artists of that name are offered first and "Create artist …"; when MusicBrainz has an artist of exactly that name, a label of that name only when its type is "Publisher", and no "Create label …" (otherwise both, as the name may be a company\'s: "Pub House") (3.31.5)' },
+    // [3.32.0] collected item 97 (maintainer: "Gesellschaft hinter einem Schreiber: ja ok. bitte lass das aber an- und abstellen.
+    // im mapping ganz oben evtl. (mit klickbarem verweis dann wo es verwendet wird)")
+    { id: 'S045', where: 'TEXT.parse (WRITER_WORDS_IN, stripWriterSocieties)', note: 'A rights society after the name of a writer ("Composed by Tomas Fujiwara (BMI)", "Music: Jane Doe-ASCAP", "Lyrics by Ann Poe / GEMA" – composer, lyricist, writer, arranger, librettist, translator): the society is the release\'s rights society (once each, T045), the name is taken without it. In pasted texts, Bandcamp credits and the Discogs notes (3.32.0)' },
+    // [3.31.8] collected item 111 (maintainer, Discogs 8613662: "führt unter den tracks die performer aber die instrumente erst in
+    // den relationships. gäbe es eine möglichkeit beides zu verknüpfen? mit quick switch. standardeinstellung = aus")
+    { id: 'S046', where: 'applyPerformerTracks', note: 'Performers on tracks, instruments for the release: a person credited "Performer" on some tracks only and with instruments or voices for the whole release only ("Performer – Barry Guy" on 4-3 and 4-5, "Bass – Barry Guy" for the release) gets the instruments on the tracks of the "Performer" credits, across all media; the "performer" rows go (they would say the same). Someone without an instrument keeps "performer"; instruments without a "Performer" credit stay on all tracks. Who plays which of several instruments where, Discogs does not say: all of them on all of these tracks. Off until switched on (3.31.8)' },
+    { id: 'S047', where: 'mapRoleInner', note: 'The kind of engineer said twice: "Engineer [Recording Engineer]" is read as "Engineer [Recording]" – recording without role credit; "[Mix Engineer]" mix, "[Mastering Engineer]" mastering, "[Assistant Engineer]" engineer with "assistant", "[Sound Engineer]" sound engineer (3.31.3)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -6297,6 +6351,13 @@
       options: [
         { type: 'performer', level: 'recording', label: 'performer' },
         { type: 'instrument', level: 'recording', instrument: 'effects', label: 'effects (credited “sounds”)' },
+      ] },
+    // [3.31.4] collected item 104 (maintainer: "ja das nachfragen kann man machen"): "Poems" alone is asked like "Text"
+    { id: 'Q009', base: 'poems / poetry / poem', rule: 'R107', ask: 'typeAsk.askPoems', note: '"Poems", "Poetry", "Poem" alone (3.31.4): the words of the works (lyricist), poems printed in the booklet (liner notes) or poems read out (spoken vocals)? Nothing is assumed; each gets the word in lower case as role credit ("poems", "poetry", "poem")',
+      options: [
+        { type: 'lyricist', level: 'work', credit: true, label: 'lyricist (the words of the works)' },
+        { type: 'liner notes', level: 'release', credit: true, label: 'liner notes (poems in the booklet)' },
+        { type: 'vocal', level: 'recording', instrument: 'spoken vocals', credit: true, label: 'spoken vocals (read out)' },
       ] },
     { id: 'Q005', base: 'text', rule: 'R100', ask: 'typeAsk.askText', note: '"Text" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German "Text" is the lyrics)? Nothing is assumed',
       options: [
@@ -6343,7 +6404,9 @@
     [/^edited for/, { id: 'C028', label: ['edited for'], level: 'release' }],
     [/^arranged for/, { id: 'C029', label: ['arranged for'], level: 'release' }],
     [/^transferred at/, { id: 'C030', place: ['transferred at'], level: 'release' }],
-    [/^published by/, { id: 'C031', label: ['publishing'], artist: ['publishing'], level: 'work' }],
+    // [3.31.5] collected item 112 (maintainer: "bei publishing relationships von Labeln muss auch angeboten werden, dass sie auf
+    // release oder work ebene stattfinden können"): on the works by default; on the release a label is "published"
+    [/^published by/, { id: 'C031', label: ['publishing', 'published'], artist: ['publishing'], level: 'work' }],
     [/^commissioned by/, { id: 'C037', label: ['commissioned'], artist: ['commissioned'], level: 'work' }],
     [/^rights society/, { id: 'C032', label: ['rights society'], level: 'release' }],
     [/^designed (by|at)/, { id: 'C033', label: ['design'], artist: ['design'], level: 'release' }],
@@ -6380,7 +6443,9 @@
     { id: 'R098', kind: 'simple', note: "Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)", re: /^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$/, types: ['writer'], level: 'work', work: true, notes: ['musicLyrics'] },
     { id: 'R003', kind: 'simple', note: "", re: /^(composed by|composer|composition by|music by|music|all music by|all music|score|score by|soundtrack)$/, types: ['composer', 'writer'], level: 'work', work: true },
     { id: 'R004', kind: 'simple', note: "", re: /^(translated by|translation|translator|translations)$/, types: ['translator'], level: 'work', work: true },
-    { id: 'R005', kind: 'simple', note: "", re: /^(author|poetry by|poem by|story by|screenwriter|script by|created by)$/, types: ['writer'], level: 'work', work: true, credit: true },
+    { id: 'R005', kind: 'simple', note: "The poet's words (\"Poems By\", \"Poetry By\", \"Poem By\") are R105 since 3.31.4", re: /^(author|story by|screenwriter|script by|created by)$/, types: ['writer'], level: 'work', work: true, credit: true },
+    // [3.31.4] collected item 104 (maintainer: "bitte Dichter immer zu lyricist"): the poet is the lyricist of the works
+    { id: 'R105', kind: 'special', note: "\"Poems By\", \"Poetry By\", \"Poem By\" (3.31.4): the poet is the lyricist of the works, with the role credit \"poems\", \"poetry\" or \"poem\" (lower case)", re: /^(poems|poetry|poem)( written)? by$/, types: ['lyricist', 'writer'], level: 'work', work: true },
     { id: 'R006', kind: 'simple', note: "", re: /^(lyrics by|lyricist|words by|lyrics)$/, types: ['lyricist', 'writer'], level: 'work', work: true },
     { id: 'R007', kind: 'simple', note: "", re: /^(libretto by|librettist)$/, types: ['librettist', 'lyricist'], level: 'work', work: true },
     { id: 'R008', kind: 'simple', note: "Vocals", re: /^(lead vocals?|lead vocalist)$/, types: ['vocal'], level: 'recording', primaryCands: ['lead vocals'] },
@@ -6391,6 +6456,9 @@
     { id: 'R013', kind: 'simple', note: "", re: /^(backing vocals?|background vocals?|harmony vocals?|chorus|backing vocalist)$/, types: ['vocal'], level: 'recording', primaryCands: ['background vocals'] },
     { id: 'R014', kind: 'simple', note: "", re: /^(choir|choir vocals?)$/, types: ['vocal'], level: 'recording', primaryCands: ['choir vocals'] },
     { id: 'R015', kind: 'simple', note: "", re: /^(voice|narrator|spoken word|speech|spoken vocals?|voice actor)$/, types: ['vocal'], level: 'recording', primaryCands: ['spoken vocals'] },
+    // [3.31.4] collected item 104: poems read out are spoken vocals; "Poems" alone is asked (R107, Q009)
+    { id: 'R106', kind: 'special', note: "Poems read out (3.31.4): \"Recitation\", \"Recited By\", \"Poetry Reading\", \"Poems Read By\", \"Poetry [Read By]\", \"Poems [Recited By]\" → spoken vocals on the recordings, with the role credit \"poetry\", \"poems\", \"poem\" or \"recitation\" (lower case)", re: /^(recitation|recitations|recited by|reciter|poetry reading|poetry readings|(poems|poetry|poem) (read|recited) by)$/, types: ['vocal'], level: 'recording', primaryCands: ['spoken vocals'] },
+    { id: 'R107', kind: 'special', note: "\"Poems\", \"Poetry\", \"Poem\" alone (3.31.4): the words of the works, poems printed in the booklet or poems read out? No type is assumed, the dashboard asks (Q009)", re: /^(poems|poetry|poem)$/, types: [], level: 'release' },
     { id: 'R016', kind: 'simple', note: "", re: /^guest$/, types: ['performer'], level: 'recording', flags: ['guest'] },
     { id: 'R017', kind: 'simple', note: "", re: /^(rap|rapper|mc|rapping)$/, types: ['vocal'], level: 'recording', primaryCands: ['rap', 'spoken vocals'] },
     { id: 'R018', kind: 'special', note: "", re: /^(vocals?|vocalist|singer)$/, types: ['vocal'], level: 'recording' },
@@ -6585,6 +6653,15 @@
       R097: { run: () => out([], { notes: ['askType'] }) },
       R102: { run: () => ({ ...out([], { notes: ['askType'] }), translated: 'alto' }) },
       R100: { run: () => out([], { notes: ['askType'] }) },
+      // [3.31.4] the word of the poet in lower case is the role credit ("Poems By" → "poems")
+      R105: { run: () => out(['lyricist', 'writer'], { level: 'work', work: true, credit: b.replace(/(\s+written)?\s+by$/, '') }) },
+      R106: { test: () => is(/^(recitation|recitations|recited by|reciter|poetry reading|poetry readings|(poems|poetry|poem) (read|recited) by)$/)
+        || (is(/^(poems|poetry|poem)$/) && has('read by', 'reading', 'readings', 'reader', 'recited by', 'recitation', 'recited', 'reciter', 'spoken', 'spoken word', 'narration', 'narrated by')),
+      run: () => {
+        const poem = b.match(/^(poems|poetry|poem)\b/);
+        return out(['vocal'], { primaryCands: ['spoken vocals'], credit: poem ? poem[1] : 'recitation' });
+      } },
+      R107: { run: () => out([], { notes: ['askType'] }) },
       R062: { test: () => /\bdesign(ed|s)?\b/.test(allWords) && !/\bgraphic/.test(allWords), run: () => {
       ms.forEach((x) => consumed.add(x));
       const rest = uniq(allWords.replace(/\b(designed|designs|design|designer|by)\b/g, ' ').split(/[\s,]+/).filter(Boolean));
@@ -7115,6 +7192,8 @@
   const SOCIETY_LINE = new RegExp(`^(?:BIEM\\s*[/&,–—-]\\s*)?(?:${SOCIETY_ALT})(?:\\s*[/&,–—-]\\s*(?:${SOCIETY_ALT}|BIEM))*$`, 'u');
   const SOCIETY_WORD = new RegExp(`(?<![\\p{L}\\p{N}])(${SOCIETY_ALT})(?![\\p{L}\\p{N}])`, 'gu');
   /** The society's name as MusicBrainz writes it (the listed form). */
+  // [S045] (3.32.0) a sentence of writers, in which a rights society after a name is the release's
+  const WRITER_WORDS_IN = /\b(?:composed|composer|composition|written|writer|songwriter|music|lyrics|lyricist|words|arranged|arranger|arrangements?|libretto|librettist|translated|translator|songs)\b/i;
   const societyName = (w) => (RIGHTS_SOCIETIES.find(([a]) => societyForms(a).includes(w)) || [w])[0];
   // [S043] (3.31.0) The heading of a block of publishers: "[Publishers & Rights Societies]", "Publishers:", "Publishing:",
   // "Music publishers (all BMI)", "Verlage:", "Éditeurs :" – the lines below it name publishers ("Name-BMI : tracks 1, 6, 8")
@@ -7294,6 +7373,9 @@
     return WORDING_RULES.find((r) => ruleOn(r.id) && r.phrases.some((x) => phrases.includes(x))) || null;
   }
 
+  /** [3.31.4] The role credit an option of a type question gives: the task of "misc", or the role word in lower case (Q009). */
+  const optionCredit = (o, row) => o.task || (o.credit === true ? norm(row.translatedBase || row.base).replace(/(\s+written)?\s+by$/, '') : (typeof o.credit === 'string' ? o.credit : ''));
+
   const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && row.ruleId === q.rule && (!q.flag || row[q.flag])) || null);
 
   /** [3.21.4] A question that only some rows get (Q007): until it is answered the row has no type, on the first option's level. */
@@ -7354,8 +7436,19 @@
     return mapRoleInner(baseIn, modsIn);
   }
 
-  function mapRoleInner(baseIn, modsIn) {
+  function mapRoleInner(baseIn, modsIn0) {
     let b = norm(baseIn).replace(/[‐‑–]/g, '-');
+    // [S047] (3.31.3) "Engineer [Recording Engineer]": the word "engineer" again at the end of the bracket is left out – read
+    // as "Engineer [Recording]" (recording, no role credit; mix, mastering, assistant, sound … – collected item 101)
+    const engBase = /^(engineer|engineered by|engineering)$/.test(b);
+    // the bracket as written, for each shortened one (what is used of it is used of the bracket as written too)
+    const stripped = new Map();
+    const modsIn = (modsIn0 || []).map((m) => {
+      if (!engBase || !ruleOn('S047') || !/^\s*\S.*\s+engineer\s*$/i.test(String(m))) return m;
+      const short = String(m).replace(/\s+engineer\s*$/i, '');
+      stripped.set(norm(short), norm(m));
+      return short;
+    });
     const flags = [];
     const ms = [];
     // [S001] "Additional Synths" = synthesizer with MB's "additional" checkbox, not a role named "additional synths".
@@ -7388,7 +7481,7 @@
       res.credit = extra.credit === true ? plainBase : (typeof extra.credit === 'string' ? extra.credit : '');
       res.base = plainBase;
       if (uncredited) res.notes = ['uncredited', ...res.notes];
-      res.consumed = [...consumed];
+      res.consumed = [...consumed, ...[...consumed].map((c) => stripped.get(c)).filter(Boolean)];
       return res;
     };
     const has = (...xs) => {
@@ -7572,6 +7665,9 @@
     { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
     { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows – (3.31.2) also days with commas only, right before the year ("November 7, 8, 2016", "7, 8, 9 November 2016", "7., 8. November 2016")' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
+    // [3.32.0] collected item 97d (maintainer: "auf jeden fall noch die regel, dass performance dates die über mehrere tage
+    // hinweg gehen nach meinen regeln auf den kleinsten gemeinsamen nenner gekürzt werden")
+    { id: 'D022', note: 'Performance on several days ("December 11 & 12, 2015", "2012-03-01 – 2012-09-30") from the notes: the column Performance of the date matrix gets what they have in common at once (D014) – the month (2015-12) or the year (2012); across years the period stays. The period and the single days stay in the pool, to be used instead (3.32.0)' },
     { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
     { id: 'D016', note: 'A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0)' },
     { id: 'D017', note: 'Year, month name, day: 1973 October 19 · 1973, Oct. 19th (3.28.5)' },
@@ -7579,6 +7675,9 @@
     { id: 'D019', note: 'The word naming the group of a date is looked for in its own sentence only ("Mixed May 2001. Released 2003." – 2003 is no mix date); a line ending in ":" counts as part of the next one (3.28.5)' },
     { id: 'D021', note: 'A list of dates after one word naming their group ("recorded … on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)") gives the group to each; a medium in brackets right after a date ("(Disc 2)", "(CD 2)") is the track group of that date (3.30.8)' },
     { id: 'D020', note: 'Words naming groups joined by "and", "&" or commas give the date to each group: "Mixed and mastered by X in March 2026" → Mix and Mastering, "Recorded, mixed and mastered 2001" → Performance, Mix and Mastering (3.28.5)' },
+    // [3.31.7] collected item 110 (maintainer, Bandcamp "At Iridium 2004": "wir brauchen eine option um daten von tracknamen in den
+    // datums/trackpool aufzunehmen. die Tracknummern hat man dann ja direkt. … standardeinstellung = aus")
+    { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
   ];
 
   const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
@@ -8607,6 +8706,16 @@
         companies.push({ who: who(name), role: 'Rights Society', catno: '', tracks: null, society: true, ...at() });
         return true;
       };
+      // [S045] (3.32.0) a rights society right after a name in a sentence of writers ("Composed by Tomas Fujiwara (BMI)",
+      // "Lyrics by Ann Poe / GEMA", "Music: Jane Doe-ASCAP"): the release's rights society, the name without it
+      const SOC_AFTER = new RegExp(`(\\p{L}[\\p{L}\\p{N}.'’]*)\\s*(?:\\(\\s*(${SOCIETY_ALT})\\s*\\)|[-–—]\\s*(${SOCIETY_ALT})(?![\\p{L}\\p{N}])|\\s*/\\s*(${SOCIETY_ALT})(?![\\p{L}\\p{N}]))`, 'gu');
+      const stripWriterSocieties = (t) => {
+        if (!ruleOn('S045') || !WRITER_WORDS_IN.test(t)) return t;
+        return t.replace(SOC_AFTER, (all, w, a, b2, c) => {
+          addSociety(societyName(a || b2 || c));
+          return w;
+        });
+      };
       const PUB_TAIL = new RegExp(`^(.*?\\S)\\s*(?::|\\s[–—-]|\\()\\s*(?:${TEXT_TRACK_WORDS}\\.?\\s*)?(${SPEC})\\s*\\)?\\s*\\.?$`, 'i');
       /** A publisher of a line: { name, societies, scope, unresolved } or null ("Name (BMI): 1, 4, 6" – the track words may be missing). */
       const publisherOf = (text0, scope0) => {
@@ -8709,7 +8818,7 @@
           }
           const c0 = credits.length;
           const k0 = companies.length;
-          const r = readUnit(web.text, scope, pi);
+          const r = readUnit(stripWriterSocieties(web.text), scope, pi);
           pi += r.parts;
           found += r.found;
           unknownParts.push(...r.unknown);
@@ -9934,7 +10043,9 @@
   // --- Relationship types and attributes from MB.linkedEntities ---------------
 
   let IDX = null;
-  const GROUPING_TYPES = new Set(['performance', 'remixes and compilations', 'production']);
+  // [3.31.5] label–release "publishing" is a grouping too (its child "published" is chosen; label–work "publishing" has a
+  // description and stays)
+  const GROUPING_TYPES = new Set(['performance', 'remixes and compilations', 'production', 'publishing']);
 
   function dedupeById(values) {
     const map = new Map();
@@ -10571,6 +10682,9 @@
       if (row.primaryText && byHeadNoun(row.base, row.primaryText, row.mods)) ids.push('S035');
     }
     const a = S.artists.get(row.artistKey);
+    if (row.pubFromCompany) ids.push('S044');
+    if (row.perfPositions) ids.push('S046');
+    if (a && personPublisher(a)) ids.push('S048');
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
     // [3.28.3] no "credited as", because only the case differs (S031)
     if (a && a.mbid && !norm(row.credit) && !row.creditTouched && !row.manual && caseOnlyName(row, a)) ids.push('S031');
@@ -10614,7 +10728,7 @@
     const tq = typeQuestionFor(row);
     const o = tq && row.typeAnswer != null ? tq.options[row.typeAnswer] : null;
     if (o) {
-      Object.assign(row, { types: [o.type], creditFromRole: o.task || '' });
+      Object.assign(row, { types: [o.type], creditFromRole: optionCredit(o, row) });
       resolveRowType(row);
       // [Q006] with its instrument or voice
       if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
@@ -10636,6 +10750,19 @@
       if (JSON.stringify([r.types, r.level, r.primaryText, r.roleCredit, r.ruleId]) !== before) n++;
     }
     log('info', 'rulesChanged', { what, n });
+    // [S046] (3.31.8) performers on tracks: at once, both ways
+    if (what === 'S046') applyPerformerTracks();
+    // [D022] (3.32.0) the notes' suggestions not applied yet are placed again (with or without what the days have in common)
+    if ((what === 'D022' || what === 'D014') && S.mbTracks.length) {
+      replaceNotesSuggestions();
+      if (S.overlay) renderDates();
+    }
+    // [D023] (3.31.7) dates in the titles: placed when switched on, the suggestions taken back when switched off
+    if (what === 'D023' && S.mbTracks.length) {
+      if (ruleOn('D023')) placeTitleDates({ force: true });
+      else removeTitleDates();
+      if (S.overlay) renderDates();
+    }
     if (S.overlay && S.rows.length) {
       renderGroups();
       renderWorks();
@@ -11437,10 +11564,25 @@
     renderRulesBody();
   }
 
+  /**
+   * [3.32.0] Quick switches at the top of "Mapping rules" (collected item 97d; maintainer: "im mapping ganz oben evtl. (mit
+   * klickbarem verweis dann wo es verwendet wird)"): rules switched often, each with its id – a click shows the rule, which
+   * says where it acts. The same switches as in the lists below (`dci-rules-off`).
+   */
+  const QUICK_SWITCHES = ['S045', 'D022', 'S021', 'S031', 'S007', 'D023', 'S046'];
+  function quickSwitchesHtml() {
+    const notes = ruleNotes();
+    const one = (id) => `<span class="dci-quick-sw"><label class="dci-check" title="${esc(`${id}: ${notes.get(id) || ''}`)}"><input type="checkbox" data-rule-on="${esc(id)}" ${ruleOn(id) ? 'checked' : ''}>
+      ${esc(tr(`quick.${id}`))}</label> <button type="button" class="dci-textbtn dci-ruleid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
+    return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
+      ${QUICK_SWITCHES.map(one).join('')}</div>`;
+  }
+
   /** Redraws the parts of the rules window that depend on the rules. */
   function renderRulesBody() {
     const el = document.getElementById('dci-rules');
     if (!el) return;
+    el.querySelector('[data-rf="quick"]').innerHTML = quickSwitchesHtml();
     el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
     el.querySelector('[data-rf="tables"]').innerHTML = rulesTables();
     el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(el.querySelector('[data-rf="test"]').value);
@@ -11653,6 +11795,7 @@
       el.innerHTML = `<div class="dci-rules-head"><h2 id="dci-rules-title">${esc(tr('rules.title'))}</h2>
           <span class="dci-rules-tools" data-rf="head-tools">${rulesHeadToolsHtml()}</span></div>
         <div class="dci-rules-body">
+          <div data-rf="quick"></div>
           <label class="dci-rules-test"><span data-rf="test-label">${esc(trRules('rules.test'))}</span> <input type="text" data-rf="test" placeholder="Bass [Upright], Coordinator [Tour]"></label>
           <div data-rf="result">${ruleTestHtml('')}</div>
           <div data-rf="own"></div>
@@ -11686,12 +11829,14 @@
           el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
         }
         if (t.closest('[data-rules-export]')) exportRules();
+        // [3.32.0] the id of a quick switch: the rule in the lists below
+        const qs = t.closest('[data-qs-goto]');
+        if (qs) focusRule(qs.dataset.qsGoto);
       });
       el.addEventListener('change', (e) => {
         const t = e.target;
         if (t.dataset.ruleOn) {
-          if (t.checked) rulesOff().delete(t.dataset.ruleOn);
-          else rulesOff().add(t.dataset.ruleOn);
+          setRuleOn(t.dataset.ruleOn, t.checked);
           applyRulesChange(t.dataset.ruleOn);
         } else if (t.dataset.uruleOn) {
           const u = userRules().find((x) => x.id === t.dataset.uruleOn);
@@ -13604,16 +13749,17 @@
           const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
           row.dAllTracks = !some;
           row.tracks = new Set(some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx());
-          if (some && r.tracks.spec) row.dSpec = r.tracks.spec;
+          // [3.31.5] the tracks it names (not a catalog number: "Catalog number on Discogs: 1, 3" before)
+          if (some && r.tracks.spec) Object.assign(row, { dSpec: r.tracks.spec, dSpecTracks: true });
           if (some && !row.tracks.size) continue;
           row.suggested = new Set(row.tracks);
-          // [S043] (3.31.0) a publisher's tracks from the Discogs notes: suggestions (dashed, yellow), the line as the reason
+          // [S043] (3.31.0) a publisher's tracks from the Discogs notes; [3.31.6] set, not suggested – ⓘ shows the line (collected
+          // item 97c; maintainer: "für alles was in texten erkannt wird")
           if (r.notesLine && some) {
             row.notesTracks = new Set(row.tracks);
-            row.suggest = { source: 'notes', tracks: new Set(row.tracks), text: r.notesLine };
-            row.confirmed = new Set();
+            row.notesFrom = r.notesLine;
           }
-          if (r.catno) row.dSpec = r.catno;
+          if (r.catno) Object.assign(row, { dSpec: r.catno, dSpecTracks: false });
           if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
           suggestCommissioned(row);
           S.rows.push(row);
@@ -13623,6 +13769,10 @@
       for (const c of S.artists.values()) {
         if (c.company && c.area && !c.entityType && companyTypes(c).includes('place')) setCompanyEntityType(c, 'place');
       }
+      // [S044] (3.31.5) a person's publisher: a role of the person, not a company of its own
+      mergePersonPublishers();
+      // [S046] (3.31.8) performers on tracks, instruments for the release (off until switched on)
+      applyPerformerTracks();
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
       // [S026] nor entries whose credits were all left out for a medium
@@ -13642,6 +13792,15 @@
       S.dateSuggestions = dateSuggestions(rel);
       // Dates in the notes with a word naming their group: suggestions in the date matrix (once per release)
       autoPlaceFoundDates();
+      // [D023] (3.31.7) dates in the titles of the tracks (off until switched on)
+      placeTitleDates();
+      // [3.32.1] suggestions waiting for "Apply" (collected item 109; maintainer: "automatisch dashboard aufklappen sofern
+      // daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das dashboard muss doch auf sein, damit Dates &
+      // Tracks sichtbar ist?"): the dashboard opens (if it is closed) and "Dates & tracks" with both pools – once for this
+      // import; what is remembered stays and counts again from the next import
+      S.poolsForce = dm().cells.some((c) => c.auto) ? { dates: true, tracks: true } : null;
+      if (S.poolsForce) log('info', 'poolsOpened');
+      if (S.poolsForce && S.overlay && S.overlay.hidden) openDashboard();
       if (source === DISCOGS) log('info', 'discogsLoaded', { id, artists: S.artists.size, n: S.rows.length });
       else log('info', 'sourceLoaded', { source: source.name, artists: S.artists.size, n: S.rows.length, u: (rel.unrecognized || []).length });
 
@@ -13683,8 +13842,6 @@
         // A text's own track lists are read with its credits (not again as notes)
         if (!S.source.readsTrackLists) applyNotesTrackCredits();
         if (S.trackPool.length !== pooled) renderDates();
-        // [S044] (3.31.0) a person's publisher: a part of the person's column in the works matrix
-        matrixColumns().filter((c) => c.ofPerson).forEach((c) => log('info', 'pubOfPerson', { name: c.name, person: c.personName }));
         await computePublisherEvidence();
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
@@ -13901,6 +14058,17 @@
           return fits.includes('same') ? 'same' : fits.includes('similar') ? 'similar' : '';
         };
         const isSociety = (x) => society && norm(x.type || '') === 'rights society';
+        // [S048] (3.31.5) a publisher with a person's name: MusicBrainz's artists of that name first (collected item 97b); when
+        // MusicBrainz has an artist of exactly that name, a label of it only of the type "Publisher" and no "Create label …"
+        const asPerson = type === 'label' && personPublisher(a);
+        if (asPerson) {
+          const pw = luceneWords(a.name);
+          const dataP = pw ? await mbWs(`artist?query=${encodeURIComponent(`artist:(${pw}) OR alias:(${pw})`)}&limit=25`) : null;
+          const people = (dataP && dataP.artists) || [];
+          a.personHit = people.some((x) => [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(n, a.name) === 'same'));
+          if (a.personHit) for (let k = items.length - 1; k >= 0; k--) if (norm(items[k].type || '') !== 'publisher') items.splice(k, 1);
+          [...people].reverse().forEach((x) => items.unshift({ ...x, asArtist: true }));
+        }
         // [3.31.2] a place in an area the source names (any part: "West Orange", "New Jersey") first; one elsewhere is similar
         const inArea = (x) => !areaParts.length || areaParts.some((p) => nameKey(p) === nameKey((x.area || {}).name || ''));
         const placeFit = (x) => { const f = fitOf(x); return f === 'same' && type === 'place' && areaParts.length && !inArea(x) ? 'similar' : f; };
@@ -13909,7 +14077,7 @@
         // [3.31.2] the city found at the end of the name is the entry's area ("(Köln)")
         if (placeArea && !a.area && hits.length) a.area = placeArea;
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
-        a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
+        a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: x.asArtist ? 'artist' : type, similar: fit === 'similar',
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name, ...(type === 'area' ? areaContext(x) : [])].filter(Boolean).join(', ') }));
         // [3.22.2] areas: the area each one shown is part of (48)
         if (type === 'area') {
@@ -14772,11 +14940,14 @@
   }
 
   function matchHtmlInner(a) {
-    const searchType = a.other ? a.entityType : a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
+    const searchType = a.other ? a.entityType : a.company ? (personPublisher(a) && a.personHit ? 'artist' : a.entityType || companyTypes(a)[0] || 'label') : 'artist';
     const searchUrl = `/search?query=${encodeURIComponent(a.name)}&type=${searchType}&method=indexed`;
     const createButtons = a.other ? (CREATABLE.includes(a.entityType) ? `<button type="button" data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
       // [3.22.0] areas are added by MusicBrainz's area editors only: no "Create", a hint (S028)
-      ? companyTypes(a).filter((et) => et !== 'area').map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' ')
+      // [S048] (3.31.5) a publisher with a person's name: "Create artist …" – only that when MusicBrainz has an artist of exactly
+      // that name (no label for a person); otherwise beside "Create label …" (the name may be a company's)
+      ? (personPublisher(a) ? `<button type="button" data-act="company-create" data-et="artist">${esc(tr('match.create'))}</button> ` : '')
+        + (personPublisher(a) && a.personHit ? '' : companyTypes(a).filter((et) => et !== 'area').map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' '))
         + (companyTypes(a).includes('area') ? `<span class="dci-sub">${esc(tr('match.areaNoCreate'))}</span>` : '')
       : `<button type="button" data-act="artist-create">${esc(tr('match.create'))}</button>`;
     const editor = (labelKey) => `
@@ -14889,8 +15060,38 @@
   function entryCredits(a) {
     return uniq(S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip').map((r) => String(r.credit || '').trim()).filter(Boolean));
   }
+  /**
+   * [3.32.2] The spelling of the release in the head of an entry (collected item 100; maintainer: "Der Künstle wird auf dem
+   * Release/bei Discogs Marc D. Rusch genannt. Dann soll das auch so im Dashboard stehen. Also "Marc D. Rusch" evtl auch mit
+   * Sternchen, so wie discogs das macht und wenn ich mit dem Mauszeiger über den Namen gehe im Dashboard soll der Discogs name
+   * des entries angezeigt werden."): the name variation of its rows (the most frequent one), with "*" as Discogs writes it,
+   * when it differs from the name of the entry; null otherwise.
+   */
+  function releaseSpelling(a) {
+    if (!a || a.company || a.other || !a.dId) return null;
+    const count = new Map();
+    for (const r of S.rows) {
+      if (r.artistKey !== a.key) continue;
+      const v = String(r.anv || '').replace(/\*$/, '').trim();
+      if (v) count.set(v, (count.get(v) || 0) + 1);
+    }
+    const base = String(a.name || '').replace(/\s*\(\d+\)$/, '').trim();
+    const list = [...count.entries()].filter(([v]) => typo(v) !== typo(base)).sort((x, y) => y[1] - x[1]).map(([v]) => v);
+    return list.length ? { shown: list[0], others: list.slice(1), base } : null;
+  }
+
+  /** [3.32.2] The name in the head of an entry: the release's spelling with "*" (the entry's name in the tooltip), or the name. */
+  function entryNameHtml(a) {
+    const sp = releaseSpelling(a);
+    if (!sp) return `<strong>${esc(a.name)}</strong>`;
+    const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : [])].join('\n');
+    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>`;
+  }
+
   function creditChipHtml(a) {
-    const credits = entryCredits(a);
+    // [3.32.2] the spelling already shown in the head (as "Marc D. Rusch*") is not repeated as "as …"
+    const sp = releaseSpelling(a);
+    const credits = entryCredits(a).filter((c) => !sp || typo(c) !== typo(sp.shown));
     if (!credits.length) return '<span class="dci-gcredit" hidden></span>';
     const name = tr('common.quoted', { text: credits[0] });
     const text = credits.length > 1 ? tr('group.creditedAsMore', { name, n: credits.length - 1 }) : tr('group.creditedAs', { name });
@@ -14899,7 +15100,13 @@
   }
 
   /** [3.30.2] The rows of an entry the dashboard shows (work-level roles are in the works matrix only). */
-  const shownRowsOf = (a) => S.rows.filter((r) => r.artistKey === a.key && r.level !== 'work' && (S.mxSkipRows || !r.mxSkipped));
+  const shownRowsOf = (a) => S.rows.filter((r) => r.artistKey === a.key && inEntry(r) && !r.s046Out && (S.mxSkipRows || !r.mxSkipped));
+  /**
+   * Work-level rows are shown in the works matrix only; [3.31.5] a publisher's row also in its entry, so that its level can
+   * be chosen there – on the works or on the release (collected item 112: "wir haben ja bereits die möglichkeit in der
+   * kompakt info das durchzuklicken. so soll das laufen.").
+   */
+  const inEntry = (r) => r.level !== 'work' || isPublishingRow(r);
 
   /**
    * [3.30.2] The arrow in the head of an entry in the compact view (item 82b; maintainer: "ja bitte gib mir den Pfeil"):
@@ -14934,7 +15141,7 @@
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
     // skipped with the works matrix only with the setting (on)
-    const rows = allRows.filter((r) => r.level !== 'work' && (S.mxSkipRows || !r.mxSkipped));
+    const rows = allRows.filter((r) => inEntry(r) && !r.s046Out && (S.mxSkipRows || !r.mxSkipped));
     const mxHidden = allRows.filter((r) => r.mxSkipped && !S.mxSkipRows).length;
     const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
     // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again)
@@ -14946,7 +15153,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -14957,7 +15164,7 @@
             <tbody>${rows.map(rowHtml).join('')}</tbody>
           </table>
         </div>
-        ${allRows.some((r) => r.level === 'work') ? `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>` : ''}
+        ${allRows.some((r) => r.level === 'work' && !isPublishingRow(r)) ? `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>` : ''}
         ${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}
         <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>
       </section>`;
@@ -14984,6 +15191,9 @@
     return out.join('');
   }
 
+  /** [3.31.6] Tracks set from the notes: ⓘ with the line they come from (item 97c). */
+  const notesFromHtml = (row) => (row.notesFrom ? `<div class="dci-sub dci-notesfrom"><span class="dci-info" title="${esc(tr('matrix.notesFrom', { text: row.notesFrom }))}">ⓘ</span> ${esc(tr('role.notesTracks', { list: trackListLabel(row.notesTracks || new Set()) }))}</div>` : '');
+
   /** [3.17.1] A credit switched off on Bandcamp says so. */
   const srcOffHtml = (row) => (row.srcOff ? `<div class="dci-note dci-srcoff">${esc(tr('bc.offNote', { site: VIEW_NAMES[viewSite()] }))}</div>` : '');
 
@@ -14997,9 +15207,9 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}
-        <div class="dci-sub">${esc(tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}
+        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
-        ${row.dSpec ? `<div class="dci-sub">${esc(tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
+        ${row.dSpec && !(row.dSpecTracks && row.notesFrom) ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
     const where = [];
     if (row.dSpec) where.push(row.dSpec);
@@ -15007,8 +15217,9 @@
     const roleHtml = esc(row.raw).replace(/\[[^\]]*\]/g, (m) => `<span class="dci-bracket">${m}</span>`);
     return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
+      ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
-        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}
+        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
       <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
       ${notes}`;
@@ -15918,6 +16129,13 @@
       related.forEach((c) => Object.assign(c, { col: group.key, auto: false, tgs: uniq([...c.tgs, ...tgs]), studios: uniq([...c.studios, ...studios]) }));
       return 0;
     }
+    // [D022] (3.32.0) Performance on several days found by the script: what they have in common at once (the days and the period
+    // stay in the pool)
+    if (auto && lcd && group.key === 'performance' && ruleOn('D022')) {
+      if (m.cells.some((c) => c.col === group.key && c.date === lcd.id)) return 0;
+      m.cells.push({ id: newCellId(), col: group.key, date: lcd.id, tgs, studios, auto, lcdOf: range.id });
+      return 1;
+    }
     m.cells.push({ id: newCellId(), col: group.key, date: range.id, alt: singles.map((d) => d.id), ...(lcd ? { lcd: lcd.id } : {}), tgs, studios, auto });
     return 1;
   }
@@ -16088,7 +16306,8 @@
     m.cells.forEach((c) => { if (!c.alt) c.auto = false; });
     m.dirty = false;
     saveMatrix();
-    S.messages = S.messages.filter((x) => !x.dm && x.key !== 'dm.autoPlaced' && x.key !== 'dm.widened');
+    // [3.32.1] also the message about the dates from the titles (D023)
+    S.messages = S.messages.filter((x) => !x.dm && !['dm.autoPlaced', 'dm.widened', 'dm.titlePlaced'].includes(x.key));
     dmMessage('ok', 'dm.applied', { n: report.filled.size, cells: m.cells.length });
     if (report.split.length) dmMessage('info', 'trackpool.split', { list: uniq(report.split.map(rowShort)).join('; ') });
     if (report.limited.length) dmMessage('info', 'dm.studios', { list: uniq(report.limited.map(rowShort)).join('; ') });
@@ -16260,15 +16479,17 @@
         const e = poolDateFor(x.value, group, gkey, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
         // [3.17.6] marked for the liner notes: their row shows it as a suggestion
         if (forLiner) e.liner = liner.name;
-        addCommonDate(e.begin, e.end, group, gkey, e);
+        const common = addCommonDate(e.begin, e.end, group, gkey, e);
         if (!group) return;
-        const here = m.cells.find((c) => c.col === group.key && c.date === e.id);
+        // [D022] (3.32.0) a period of Performance: what its days have in common at once (the period stays in the pool)
+        const cellDate = common && group.key === 'performance' && ruleOn('D022') ? common : e;
+        const here = m.cells.find((c) => c.col === group.key && c.date === cellDate.id);
         if (here) {
           if (here.auto) Object.assign(here, { tgs: uniq([...here.tgs, ...(tg ? [tg.id] : [])]), studios: uniq([...here.studios, ...studios]) });
           return;
         }
-        if (m.cells.some((c) => c.date === e.id)) return;
-        m.cells.push({ id: newCellId(), col: group.key, date: e.id, tgs: tg ? [tg.id] : [], studios, auto: true });
+        if (m.cells.some((c) => c.date === cellDate.id)) return;
+        m.cells.push({ id: newCellId(), col: group.key, date: cellDate.id, tgs: tg ? [tg.id] : [], studios, auto: true, ...(cellDate !== e ? { lcdOf: e.id } : {}) });
         placed++;
       });
     });
@@ -16279,12 +16500,83 @@
       showMessage('info', 'dm.autoPlaced', { n: placed });
     }
     // [3.30.8] the month or year two days share (":lcd", e.g. "December 11 & 12, 2015" → December 2015) is no date without a group
+    // [3.32.0] the days whose common month or year is in the matrix (D022) are placed too
+    const viaLcd = new Set(m.cells.filter((c) => c.lcdOf).map((c) => String((S.datePool.find((d) => d.id === c.date) || {}).found || '').replace(/:lcd$/, '')));
     const unplaced = S.datePool.filter((d) => String(d.found || '').startsWith('notes:') && !m.cells.some((c) => c.date === d.id || (c.alt || []).includes(d.id) || c.lcd === d.id)
-      && !/:(?:range|lcd)$/.test(String(d.found))).length;
+      && !/:(?:range|lcd)$/.test(String(d.found)) && !viaLcd.has(String(d.found))).length;
     if (unplaced && pooled) showMessage('info', 'dm.autoPooled', { n: unplaced });
     if (placed || pooled) log('info', 'dmAuto', { n: placed, pooled });
     saveMatrix();
     return { placed, pooled };
+  }
+
+  /**
+   * [D023] (3.31.7) Dates in the titles of the tracks (collected item 110; Bandcamp "At Iridium 2004": "March 23, 2004 (Set 1)",
+   * "March 23, 2004 (Set 2)" … "March 28, 2004 (Set 2)"): each date with a day into the pool, the tracks with it as a track
+   * group, both as a suggestion under Performance in the date matrix – once per release and titles (force: again, after the
+   * pools were loaded anew). Titles of the source, else MusicBrainz's.
+   */
+  function placeTitleDates({ force = false } = {}) {
+    if (!ruleOn('D023')) return 0;
+    const m = dm();
+    const titles = selTracks().map((t) => ({ i: t.idx, title: String(((S.srcTracks || [])[t.idx] || {}).title || t.title || '') }));
+    const sig = `${srcReleaseId() || ''}|${textSig(titles.map((x) => x.title).join('\n'))}`;
+    if (!force && m.titleFound === sig) return 0;
+    m.titleFound = sig;
+    const byDate = new Map();
+    for (const x of titles) {
+      const f = findDates(x.title, { usOrder: usDateOrder() }).find((d) => d.value && d.value.begin && d.value.begin.day && !d.multi);
+      if (!f) continue;
+      const key = formatDateValue(f.value);
+      if (!byDate.has(key)) byDate.set(key, { value: f.value, text: f.text.trim(), tracks: new Set() });
+      byDate.get(key).tracks.add(x.i);
+    }
+    const group = DATE_GROUPS.find((g) => g.key === 'performance');
+    let placed = 0;
+    for (const [key, d] of byDate) {
+      const e = poolDateFor(d.value, group, `notes:title:${key}`, d.text);
+      const tg = ensureTrackGroup(d.tracks, `${d.text} · ${trackListLabel(d.tracks)}`, { found: true });
+      tg.title = true;
+      if (m.cells.some((c) => c.date === e.id)) continue;
+      m.cells.push({ id: newCellId(), col: group.key, date: e.id, tgs: [tg.id], studios: [], auto: true, title: true });
+      placed++;
+    }
+    savePool();
+    saveTrackPool();
+    if (placed) {
+      m.dirty = true;
+      showMessage('info', 'dm.titlePlaced', { n: placed });
+      log('info', 'titleDates', { n: placed, list: [...byDate.keys()].join(', ') });
+    }
+    saveMatrix();
+    return placed;
+  }
+
+  /**
+   * [D022] (3.32.0) The suggestions from the notes not applied or changed yet (`auto`) are placed anew – after a rule that
+   * decides how they are placed was switched.
+   */
+  function replaceNotesSuggestions() {
+    const m = dm();
+    const fromNotes = new Set(S.datePool.filter((d) => /^notes:(?!title:)/.test(String(d.found || ''))).map((d) => d.id));
+    m.cells = m.cells.filter((c) => !(c.auto && !c.title && fromNotes.has(c.date)));
+    autoPlaceFoundDates({ force: true });
+  }
+
+  /** [D023] Switched off: its suggestions not applied yet go (pool entries no row uses, their track groups). */
+  function removeTitleDates() {
+    const m = dm();
+    const ids = new Set(S.datePool.filter((d) => String(d.found || '').startsWith('notes:title:')).map((d) => d.id));
+    m.cells = m.cells.filter((c) => !(c.title && c.auto && ids.has(c.date)));
+    const used = new Set([...S.rows.map((r) => r.date && r.date.poolId), ...m.cells.map((c) => c.date)].filter(Boolean));
+    S.datePool = S.datePool.filter((d) => !ids.has(d.id) || used.has(d.id));
+    const tgUsed = new Set(m.cells.flatMap((c) => c.tgs || []));
+    S.trackPool = S.trackPool.filter((g) => !g.title || tgUsed.has(g.id));
+    m.titleFound = null;
+    m.dirty = true;
+    savePool();
+    saveTrackPool();
+    saveMatrix();
   }
 
   /**
@@ -16305,8 +16597,9 @@
     S.trackForm = null;
     saveTrackPool();
     savePool();
-    S.messages = S.messages.filter((x) => !['dm.autoPlaced', 'dm.autoPooled', 'dm.widened'].includes(x.key));
+    S.messages = S.messages.filter((x) => !['dm.autoPlaced', 'dm.autoPooled', 'dm.widened', 'dm.titlePlaced'].includes(x.key));
     const res = autoPlaceFoundDates({ force: true });
+    placeTitleDates({ force: true });
     if (!S.source.readsTrackLists) applyNotesTrackCredits({ rows: false });
     dm().dirty = true;
     saveMatrix();
@@ -16385,6 +16678,8 @@
   /** Dates & tracks are open: chosen once (remembered), otherwise open when there are dates; forms open it. */
   function poolsOpen() {
     if (S.poolForm || S.trackForm || S.poolClear) return true;
+    // [3.32.1] suggestions of this import wait for "Apply" (item 109): open, without changing what is remembered
+    if (S.poolsForce) return true;
     if (S.poolsOpen != null) return !!S.poolsOpen;
     return !!(S.datePool.length || dateFinds().notes.length);
   }
@@ -16456,8 +16751,11 @@
    * [3.30.3] The name of a pool, a button that folds it (item 93; maintainer: "bitte mach "Date pool" und "track pool" in
    * der mitscrollenden leiste oben auf und zuklappbar"); folded, only the name and the number of chips stay.
    */
+  /** [3.32.1] A pool folded (remembered), unless this import opened it for its suggestions (item 109). */
+  const poolFolded = (pool) => !!S.poolFold[pool] && !(S.poolsForce && S.poolsForce[pool]);
+
   function poolLabelHtml(pool, n) {
-    const folded = !!S.poolFold[pool];
+    const folded = poolFolded(pool);
     const name = tr(pool === 'dates' ? 'date.title' : 'trackpool.title');
     const t = tr(folded ? 'pools.unfoldOne' : 'pools.foldOne', { name });
     return `<button type="button" class="dci-pool-label dci-pool-fold" data-act="pool-fold" data-pool="${pool}" aria-expanded="${!folded}" title="${esc(t)}">${folded ? '▸' : '▾'} ${esc(name)}${folded ? ` <span class="dci-pool-n">(${n})</span>` : ''}</button>`;
@@ -16478,7 +16776,7 @@
     const suggHtml = suggestions.length ? `<span class="dci-date-sugg"><span class="dci-sub">${esc(tr('date.suggestions'))}</span>
       ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin) }))}</button>`).join(' ')}</span>` : '';
     const hint = S.datePool.length ? `<span class="dci-drag-hint" title="${esc(tr('date.dragHintTitle'))}">⠿ ${esc(tr('date.dragHint'))}</span>` : '';
-    if (S.poolFold.dates) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}</div>`;
+    if (poolFolded('dates')) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}</div>`;
     if (kept) {
       return `<div class="dci-dates-bar dci-pool-dates">${poolLabelHtml('dates', S.datePool.length)}${chips}${hint}</div>`;
     }
@@ -16502,7 +16800,7 @@
       <button type="button" class="dci-chip-main" data-act="tg-edit" data-id="${esc(g.id)}" title="${esc(tr('trackpool.editTitle'))}${trackGroupSuggested(g) ? ` – ${esc(tr('pools.suggested'))}` : ''}">
       ${esc(g.name)} <span class="dci-chip-count">${esc(tr('trackpool.count', { n: g.tracks.length }))}</span></button></span>`).join('');
     const hint = `<span class="dci-drag-hint" title="${esc(tr('trackpool.dragHintTitle'))}">⠿ ${esc(tr('trackpool.dragHint'))}</span>`;
-    if (S.poolFold.tracks) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}</div>`;
+    if (poolFolded('tracks')) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}</div>`;
     if (kept) return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}${hint}</div>`;
     // Several media: a whole medium (or one group per medium) in one step (of the chosen media)
     const media = selMedia();
@@ -16767,9 +17065,11 @@
         <span class="dci-tn">${esc(x.number)}</span> <span class="dci-tt">${esc(x.title)}</span></label>`;
     }).join('');
     return `<div class="dci-date-form dci-track-form" role="group" aria-label="${esc(tr('trackpool.formTitle'))}">
+      <div class="dci-tg-namerow">
       <label class="dci-pool-name">${esc(tr('date.name'))} <input type="text" data-f="tg-name" value="${esc(f.name)}" placeholder="${esc(tr('trackpool.namePlaceholder'))}" size="18"></label>
       <label class="dci-pool-name dci-tg-text">${esc(tr('trackpool.text'))} <input type="text" data-f="tg-text" value="${esc(f.text != null ? f.text : trackListLabel(f.tracks))}"
         placeholder="${esc(tr('trackpool.textPlaceholder'))}" size="22" autocomplete="off"></label>
+      </div>
       <div class="dci-picker"><div class="dci-chips">${chips}</div></div>
       <div class="dci-mbdate-tools">
         <button type="button" class="dci-apply dci-small" data-act="tg-save">${esc(tr('date.save'))}</button>
@@ -16955,6 +17255,58 @@
       <span class="dci-sub">${esc(row.translated ? tr('instrAsk.otherwiseTr', { credit: q.credit, word: row.translated }) : tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
 
+  /** The instrument chosen in a question (Q001 …); [3.32.3] also from the compact line. Counts as made by hand: it stays when the rules change. */
+  function pickInstrument(row, name) {
+    if (!row || !name) return;
+    const artist = S.artists.get(row.artistKey);
+    row.primaryText = name;
+    row.primaryTouched = true;
+    refreshRowDetails(row);
+    log('info', 'instrPicked', { name: (artist && (artist.mbName || artist.name)) || '', instrument: name, credit: row.roleCredit || '' });
+    rerenderRow(row);
+    refresh();
+  }
+
+  /** [Q003] The type chosen in a type question: its level, and for "misc" the task; [3.32.3] also from the compact line. */
+  function pickType(row, i) {
+    const q = row && typeQuestionFor(row);
+    const o = q && q.options[i];
+    if (!o) return;
+    row.typeAnswer = i;
+    row.types = [o.type];
+    row.creditFromRole = optionCredit(o, row);
+    delete row.scopeLevel;
+    delete row.mxSkipped;
+    // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
+    row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
+    row.levelTouched = true;
+    resolveRowType(row);
+    // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
+    if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
+    refreshRowDetails(row);
+    log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
+    // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
+    if (row.level === 'work') {
+      renderGroups();
+      renderWorks();
+    } else rerenderRow(row);
+    refresh();
+  }
+
+  /**
+   * [3.32.3] A question in the compact line, whole and to click (collected item 102; maintainer: "die Abfragen wie "Bass:
+   * which instrument?" in der kompakt Ansicht sollen komplett dargestellt und klickbar sein", "ok ab 5"): up to four
+   * possibilities as buttons, from five a list; a choice is made as in the full row, the row stays closed.
+   */
+  function clineAskHtml(kind, label, opts) {
+    const act = kind === 'instr' ? 'instr-pick' : 'type-pick';
+    const data = (o) => (kind === 'instr' ? `data-instr="${esc(o.value)}"` : `data-opt="${esc(o.value)}"`);
+    const pick = opts.length >= 5
+      ? `<select data-f="cl-pick" data-kind="${kind}" aria-label="${esc(label)}"><option value="">${esc(tr('cl.pickList'))}</option>${opts.map((o) => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('')}</select>`
+      : opts.map((o) => `<button type="button" class="dci-textbtn dci-cl-pick" data-act="${act}" ${data(o)}>${esc(o.text)}</button>`).join(' · ');
+    return `<span class="dci-cl-flag dci-cl-ask dci-cl-askq">${esc(label)} ${pick}</span>`;
+  }
+
   /** [Q003 …] The type is asked (e.g. "Directed By"): the options, the chosen one pressed; until then "please choose". */
   function typeAskHtml(row) {
     const q = typeQuestionFor(row);
@@ -17046,11 +17398,12 @@
       if (info && info.issues && info.issues.length) flags.push(['bad', info.issues.join(', ')]);
       if (isUnmapped(row)) flags.push(['bad', tr('cl.unmapped')]);
       const q = questionRuleFor(row);
-      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) flags.push(['ask', tr('cl.instrAsk', { name: row.base })]);
       const tq = typeQuestionFor(row);
-      if (tq && row.typeAnswer == null) flags.push(['ask', tr('cl.typeAsk')]);
       if (!hasDateInput(row.date) && linerDateSugg(row)) flags.push(['sugg', tr('cl.dateSugg')]);
       flags.forEach(([kind, text]) => parts.push(open(`dci-cl-flag dci-cl-${kind}`, esc(text), tr('cl.openTitle'))));
+      // [3.32.3] the questions whole and to click (item 102)
+      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
+      if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
     }
@@ -17665,24 +18018,26 @@
 
   function startCompanyCreate(company, entityType) {
     const params = [[`edit-${entityType}.name`, company.name]];
-    if (srcUrlOf(company)) {
+    // [S048] (3.31.5) a person as publisher: the artist form, without the source's page of a label
+    const person = entityType === 'artist';
+    if (srcUrlOf(company) && !person) {
       params.push([`edit-${entityType}.url.0.text`, srcUrlOf(company)]);
       params.push([`edit-${entityType}.url.0.link_type_id`, String(sourceUrlLtId(entityType))]);
     }
     // [3.21.3] a name from a text: the web profiles found next to it (T032, 37c)
     const web = company.dId ? [] : (company.links || []).filter((u) => /^https?:\/\//i.test(u));
-    web.forEach((u, i) => params.push([`edit-${entityType}.url.${i + (srcUrlOf(company) ? 1 : 0)}.text`, u]));
+    web.forEach((u, i) => params.push([`edit-${entityType}.url.${i + (srcUrlOf(company) && !person ? 1 : 0)}.text`, u]));
     params.push([`edit-${entityType}.edit_note`, [
       srcUrlOf(company) ? `Source: ${srcUrlOf(company)}` : '',
       prefilledBy(true),
     ].filter(Boolean).join('\n')]);
     // [3.21.3] without a link of the source (a text): the name and the web links found next to it
-    const what = srcUrlOf(company) ? tr('companyDlg.prefilled')
+    const what = srcUrlOf(company) && !person ? tr('companyDlg.prefilled')
       : tr('artistDlg.prefilled', { list: [tr('part.name'), ...(web.length ? [tr('part.webUrls', { n: web.length })] : [])].join(', ') });
-    const info = `<p>${esc(what)}</p><p>${esc(tr(entityType === 'place' ? 'companyDlg.checkPlace' : 'companyDlg.checkLabel'))}</p>`;
+    const info = `<p>${esc(what)}</p><p>${esc(tr(person ? 'artistDlg.check' : entityType === 'place' ? 'companyDlg.checkPlace' : 'companyDlg.checkLabel'))}</p>`;
     log('info', 'companyForm', { name: company.name, type: tr(`entity.${entityType}`) });
     openCreateDialog({
-      title: tr(entityType === 'place' ? 'companyDlg.titlePlace' : 'companyDlg.titleLabel', { name: company.name }),
+      title: tr(person ? 'artistDlg.title' : entityType === 'place' ? 'companyDlg.titlePlace' : 'companyDlg.titleLabel', { name: company.name }),
       url: `/${entityType}/create?${toQuery(params)}`,
       entityType,
       infoHtml: info,
@@ -18277,34 +18632,113 @@
         }
       }
     }
-    return personPublishers([...cols.values()]);
+    return [...cols.values()];
   }
 
   /** [S044] The names of an entry: at the source, in MusicBrainz, credited as, other spellings. */
   const entryNames = (a) => [a.name, a.mbName, a.rawName, ...(a.anvs || []), ...(a.altNames || [])].filter(Boolean);
 
   /**
-   * [S044] (3.31.0) A person as publisher (collected item 97; maintainer: "das soll in der Personen Spalte ergänzt werden.
-   * Eine Label Abfrage mit dem Namen ist nicht schlecht."): a publisher with the name of a person of the works matrix
-   * ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is a part of the person's column, right after
-   * it (`ofPerson`). MusicBrainz links a publisher to a work as a label, so this part keeps its own label – looked for by
-   * the name (S043). Columns taken out stay where they are.
+   * [S044] (3.31.5) A person as publisher (collected item 97b; maintainer: "Doch Person gibt es als Publisher in MB mit dem
+   * artist/work relationship "published / publisher" bitte nicht create label für personen anbieten! in discogs ist die
+   * logik da anders und personen publisher werden als labels geführt."): a company whose publishing rows carry the name of a
+   * person of the dashboard ("Published By – Tomas Fujiwara", the notes' "Tomas Fujiwara-BMI : tracks 1, 6, 8") gives those
+   * rows to the person – artist–work "publishing", in the person's column of the works matrix; the company entry is left
+   * out when nothing else is left of it. (3.31.0–3.31.4: a part of the person's column with a label of its own.)
    */
-  function personPublishers(cols) {
-    if (!ruleOn('S044')) return cols;
-    const persons = cols.filter((c) => c.artist && !c.artist.company && !c.removed);
-    const subs = [];
-    for (const c of cols) {
-      if (!c.artist || !c.artist.company || c.removed || !c.rows.some(isPublishingRow)) continue;
-      const keys = new Set(entryNames(c.artist).map((n) => looseName(n)).filter(Boolean));
-      const p = persons.find((x) => entryNames(x.artist).some((n) => keys.has(looseName(n))));
+  function mergePersonPublishers() {
+    if (!ruleOn('S044')) return 0;
+    const persons = [...S.artists.values()].filter((a) => !a.company && !a.other);
+    let n = 0;
+    for (const c of [...S.artists.values()].filter((x) => x.company && !x.other)) {
+      const pub = S.rows.filter((r) => r.artistKey === c.key && r.company && r.ruleId === 'C031');
+      if (!pub.length) continue;
+      const keys = new Set(entryNames(c).map((x) => looseName(x)).filter(Boolean));
+      const p = persons.find((x) => entryNames(x).some((y) => keys.has(looseName(y))));
       if (!p) continue;
-      Object.assign(c, { ofPerson: p.key, personName: p.name });
-      p.hasPub = true;
-      subs.push(c);
+      for (const r of pub) {
+        Object.assign(r, { artistKey: p.key, entityType: 'artist', types: (r.typeOptions && r.typeOptions.artist) || ['publishing'], linkTypeId: null,
+          pubFromCompany: c.rawName || c.name, credit: '' });
+        if (!r.levelTouched) r.level = r.defaultLevel;
+        resolveRowType(r);
+      }
+      if (!S.rows.some((r) => r.artistKey === c.key)) S.artists.delete(c.key);
+      log('info', 'pubOfPerson', { name: c.rawName || c.name, person: p.name });
+      n++;
     }
-    return subs.length ? cols.filter((c) => !c.ofPerson).flatMap((c) => [c, ...subs.filter((x) => x.ofPerson === c.key)]) : cols;
+    return n;
   }
+
+  /**
+   * [S046] (3.31.8) Performers on tracks, instruments for the release (collected item 111; Discogs 8613662: "Performer –
+   * Barry Guy, …" below the tracks, "Bass – Barry Guy" in the release's credits): the instrument and vocal rows of a person
+   * credited for the whole release get the tracks of the person's "Performer" credits; those rows step aside (level "Skip",
+   * not shown – `s046Out`). Switched off: everything as it came (`s046` keeps the tracks before). Returns the number of
+   * persons.
+   */
+  const PERFORMER_WORDS = /^(performer|performers|performed by|musician|musicians|played by)$/;
+  function applyPerformerTracks() {
+    const on = ruleOn('S046');
+    const byArtist = new Map();
+    for (const r of S.rows) {
+      if (r.company || r.manual || r.other || r.supp) continue;
+      if (!byArtist.has(r.artistKey)) byArtist.set(r.artistKey, []);
+      byArtist.get(r.artistKey).push(r);
+    }
+    let n = 0;
+    for (const [key, rows] of byArtist) {
+      const perf = rows.filter((r) => (r.s046Out || (r.ruleId === 'R060' && !r.dAllTracks)) && PERFORMER_WORDS.test(norm(r.dBase || r.base))
+        && !remainingMods(r).length);
+      const inst = rows.filter((r) => r.s046 || (r.dAllTracks && r.level === 'recording' && ['instrument', 'vocal'].includes(norm(rowTypeName(r) || (r.types || [])[0] || ''))));
+      if (!perf.length || !inst.length) continue;
+      if (on) {
+        const tracks = new Set(perf.flatMap((r) => [...(r.s046Out ? r.s046Out.tracks : r.tracks)]));
+        const positions = uniq(perf.flatMap((r) => r.dPositions || []));
+        if (!tracks.size) continue;
+        for (const r of inst) {
+          if (!r.s046) r.s046 = { tracks: new Set(r.tracks), suggested: new Set(r.suggested || []) };
+          Object.assign(r, { tracks: new Set(tracks), suggested: new Set(tracks), perfPositions: positions });
+        }
+        for (const r of perf) {
+          if (!r.s046Out) Object.assign(r, { s046Out: { level: r.level, tracks: new Set(r.tracks) }, level: 'skip' });
+        }
+        log('info', 'perfTracks', { name: (S.artists.get(key) || {}).name || '', list: positions.join(', '), n: inst.length });
+      } else {
+        for (const r of inst) {
+          if (!r.s046) continue;
+          Object.assign(r, { tracks: r.s046.tracks, suggested: r.s046.suggested });
+          delete r.s046;
+          delete r.perfPositions;
+        }
+        for (const r of perf) {
+          if (!r.s046Out) continue;
+          r.level = r.s046Out.level;
+          delete r.s046Out;
+        }
+      }
+      n++;
+    }
+    return n;
+  }
+
+  /**
+   * [S048] (3.31.5) A name that looks like a person's (collected item 97b): two to four words, each with a capital (an
+   * initial, "van", "de" … between them), no digits, no word of a company and no legal form (T044).
+   */
+  const NAME_PARTICLES = new Set(['van', 'von', 'de', 'der', 'den', 'del', 'della', 'di', 'da', 'du', 'la', 'le', 'y', 'e', 'bin', 'ibn', 'al']);
+  const COMPANY_NAME_WORD = /\b(music|musik|musique|música|musica|publishing|publishers?|publications?|songs|tunes|records|recordings|editions?|verlag|productions?|entertainment|media|group|company|corporation|rights|catalogu?e|works|sounds?|label|international|ventures|holdings|enterprises?|administration|admin|society|studios?|chorus|orchestra|ensemble|quartet|trio|band)\b/i;
+  function personLikeName(name) {
+    const n = String(name || '').trim();
+    if (!n || /\d/.test(n) || COMPANY_NAME_WORD.test(n) || withoutCompanyForm(n) !== n) return false;
+    const words = n.split(/\s+/);
+    if (words.length < 2 || words.length > 4) return false;
+    if (words.some((w) => COMPANY_KIND_END.test(w))) return false;
+    return words.every((w, k) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || (k > 0 && k < words.length - 1 && NAME_PARTICLES.has(w.toLowerCase())));
+  }
+
+  /** [S048] A company entry that only publishes and carries a person's name: offered as an artist. */
+  const personPublisher = (a) => ruleOn('S048') && a.company && !a.other && personLikeName(a.name)
+    && S.rows.some((r) => r.artistKey === a.key) && S.rows.filter((r) => r.artistKey === a.key).every((r) => r.ruleId === 'C031');
 
   const isPublishingRow = (row) => norm(rowTypeName(row)) === 'publishing';
   /**
@@ -18328,7 +18762,7 @@
       active: fresh,
       reason: ev && ev.evidence && ev.evidence.get(mrow.i),
       hint: ev && ev.hints && ev.hints.get(mrow.i),
-      unclear: isPublisherCol(col) && !fresh.length && !existing.length,
+      unclear: isPublisherCol(col) && col.entityType !== 'artist' && !fresh.length && !existing.length,
     };
   }
 
@@ -18582,12 +19016,15 @@
         log('info', 'notesTracksPool', { name: f.name, list: trackListLabel(tracks) });
         continue;
       }
+      // [3.31.6] the tracks of the notes are set, not suggested; ⓘ at the row and in the column shows the line (collected
+      // item 97c; maintainer: "Tracks aus den Discogs Notizen: ja setze sie fest. mache in diesem fall ein kleines info
+      // zeichen woher die tracks stammen.")
       for (const r of open) {
         const own = (r.dPositions || []).length ? new Set(r.tracks) : new Set();
         r.tracks = new Set([...own, ...tracks]);
         r.notesTracks = new Set(tracks);
-        r.suggest = { source: 'notes', tracks: new Set([...tracks].filter((i) => !own.has(i))), text: f.text };
-        r.confirmed = new Set();
+        r.notesFrom = f.text;
+        delete r.suggest;
       }
       n++;
       log('info', 'notesTracks', { name: a.mbName || a.name, role: role || '–', list: trackListLabel(tracks), similar: hit.similar ? tr('matrix.similar') : '' });
@@ -18627,6 +19064,23 @@
     // [S014] switched off: publishers keep the works Discogs gives them (the whole release)
     for (const col of ruleOn('S014') ? cols.filter(isPublisherCol) : []) {
       const a = col.artist;
+      // [S044] (3.31.5) a person's publishing: the works the person writes (in the dashboard or in MusicBrainz) are suggested
+      if (col.entityType === 'artist' && a) {
+        const evidence = new Map();
+        for (const t of S.mbTracks) {
+          const own = S.rows.some((r) => r.artistKey === a.key && r.level === 'work' && r.tracks.has(t.idx) && WRITER_TYPES.includes(norm(rowTypeName(r))));
+          if (own || (col.mbid && writerMbidsOfTrack(t.idx).has(col.mbid))) evidence.set(t.idx, col.name);
+        }
+        for (const row of col.rows) {
+          if (isPublishingRow(row) && !row.pubTouched && !row.notesTracks && row.dAllTracks !== false) {
+            row.tracks = new Set(evidence.keys());
+            row.suggest = { source: 'evidence', tracks: new Set(evidence.keys()) };
+          }
+        }
+        a.pubEvidence = { state: 'self', evidence, hints: new Map(), count: evidence.size };
+        log('info', 'pubEvidence', { name: col.name, n: evidence.size });
+        continue;
+      }
       if (!col.mbid || col.entityType !== 'label') {
         // Not in MusicBrainz (or not a label): no evidence, so no work is ticked by itself
         a.pubEvidence = { state: col.mbid ? 'unsupported' : 'unmatched', evidence: new Map(), hints: new Map() };
@@ -19245,18 +19699,19 @@
       ...st.active.map((r) => {
         const kind = !mrow.work ? 'wait' : sugg.includes(r) ? 'sugg' : 'on';
         const date = r.date && hasDateInput(r.date) ? ` · ${formatDateValue(validateDateFields(r.date).value) || ''}` : '';
-        const why = !sugg.includes(r) ? '' : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
+        const why = !sugg.includes(r) ? (r.notesFrom && r.notesTracks && r.notesTracks.has(mrow.i) ? ` – ${tr('matrix.notesReason', { text: r.notesFrom })}` : '')
+          : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
           : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}` : '';
         return chip(kind, `${esc(roleCode(rowTypeName(r), r.flags.has('sub')))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
           `${rowTypeName(r)}${date}${why}`);
       }),
     ].join('');
-    const title = st.reason ? tr('matrix.reason', { names: st.reason, publisher: col.name })
+    const title = st.reason ? tr(col.entityType === 'artist' ? 'matrix.reasonSelf' : 'matrix.reason', { names: st.reason, publisher: col.name })
       : st.hint ? tr('matrix.hint', { list: st.hint }) : st.unclear ? tr('matrix.unclear') : '';
     const collapsed = S.mxCollapsed.has(col.key) || col.removed;
     const menuOpen = S.mxMenu && S.mxMenu.col === col.key && S.mxMenu.mrow === mrow.key;
     const cls = ['dci-mx-cell', st.existing.length ? 'dci-mx-mb' : '', st.active.length ? 'dci-mx-on' : '', sugg.length ? 'dci-mx-sugg' : '', st.unclear ? 'dci-mx-unclear' : '', col.mbOnly ? 'dci-mx-locked' : '',
-      col.ofPerson ? 'dci-mx-subcell' : '', col.hasPub ? 'dci-mx-hassub' : ''].filter(Boolean).join(' ');
+    ].filter(Boolean).join(' ');
     if (collapsed) return `<td class="${cls} dci-mx-collapsed" title="${esc(title)}">${st.existing.length || st.active.length ? '•' : ''}</td>`;
     // Dates for the relationships already in MusicBrainz (an edit of each), with × to take them back until staged
     const fills = fillsOfCell(col, mrow).map(([key, f]) => {
@@ -19292,6 +19747,13 @@
    * ✕ take out), the roles (each one a place to drop a track group onto, the whole card too), the column date
    * and "credited as". The date fields, the pool and the publisher tools are in the ▾ menu.
    */
+  /** [3.32.4] The kind of a column of the works matrix (its entry, or for one only in MusicBrainz its entity type; item 107). */
+  const columnKind = (col) => (col.artist ? groupKindOf(col.artist).kind : ['artist', 'label', 'place', 'area'].includes(col.entityType) ? col.entityType : 'other');
+  const columnKindTag = (col) => {
+    const text = tr(`entity.${col.artist ? groupKindOf(col.artist).type : col.entityType || 'artist'}`);
+    return `<span class="dci-kind-tag dci-mx-kind">${esc(text.charAt(0).toUpperCase() + text.slice(1))}</span>`;
+  };
+
   function columnHeadHtml(col) {
     const a = col.artist;
     const collapsed = S.mxCollapsed.has(col.key);
@@ -19320,8 +19782,8 @@
       <button type="button" class="dci-textbtn" data-act="mx-colmenu" data-col="${esc(col.key)}">${esc(tr('common.close'))}</button></div>` : '');
     // Only in MusicBrainz: its date goes onto those relationships that have none (an edit of each)
     if (col.mbOnly) {
-      return `<th scope="col" class="dci-mx-col dci-mx-locked" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-        <div class="dci-mx-colname">${name} ${btns}</div>
+      return `<th scope="col" class="dci-mx-col dci-mx-locked dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+        <div class="dci-mx-colname">${columnKindTag(col)}${name} ${btns}</div>
         <div class="dci-mx-roles"><span class="dci-sub">${esc(tr('matrix.mbOnly'))}</span>${dateChip}</div>
         ${menu(`<div title="${esc(tr('matrix.colDateMbTitle'))}">${dateBox}</div>`)}</div></th>`;
     }
@@ -19331,10 +19793,13 @@
     // Suggested cells (publisher evidence, Discogs notes, "Commissioned By" without a track list)
     const nSugg = col.rows.some((r) => r.suggest) ? matrixRows().filter((m) => cellState(col, m).active.some((r) => isSuggestedCell(r, m.i))).length : 0;
     let pub = nSugg ? `<span class="dci-sub dci-mx-suggn">${esc(tr('matrix.suggCount', { n: nSugg }))}</span>` : '';
+    // [3.31.6] tracks from the notes: where they come from (item 97c)
+    const notesFrom = uniq(col.rows.map((r) => r.notesFrom).filter(Boolean));
+    if (notesFrom.length) pub += `<span class="dci-info dci-mx-notesinfo" title="${esc(notesFrom.map((t) => tr('matrix.notesFrom', { text: t })).join('\n'))}">ⓘ</span>`;
     let pubMenu = '';
     if (isPublisherCol(col)) {
       const ev = a.pubEvidence || {};
-      const status = ev.state === 'checked' ? tr('matrix.pubCount', { n: ev.count }) : ev.state === 'none' ? tr('matrix.pubNone')
+      const status = ev.state === 'self' ? tr('matrix.pubSelf', { name: col.name, n: ev.count }) : ev.state === 'checked' ? tr('matrix.pubCount', { n: ev.count }) : ev.state === 'none' ? tr('matrix.pubNone')
         : ev.state === 'unmatched' ? tr('matrix.pubUnmatched') : ev.state === 'unsupported' ? tr('matrix.pubNone') : '';
       pub += status ? `<span class="dci-info" title="${esc(status)}">ⓘ</span>` : '';
       pubMenu = `<div class="dci-sub">${esc(status)}</div>
@@ -19346,10 +19811,8 @@
       <button type="button" class="dci-textbtn" data-act="mx-pub-suggest" data-mbid="${esc(x.mbid)}" data-name="${esc(x.name)}">${esc(tr('matrix.addColumn'))}</button></div>`).join('');
     const r098 = col.rows.some((r) => r.ruleId === 'R098')
       ? `<button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="R098" title="${esc(tr('note.musicLyrics'))}">R098</button>` : '';
-    // [S044] (3.31.0) a person's publisher: part of the person's column, with its own label
-    const pubOf = col.ofPerson ? `<div class="dci-mx-pubof" title="${esc(tr('matrix.pubOfPersonTitle', { name: col.personName }))}">↳ ${esc(tr('matrix.pubOfPerson', { name: col.personName }))}</div>` : '';
-    return `<th scope="col" class="dci-mx-col${col.ofPerson ? ' dci-mx-subcol' : ''}${col.hasPub ? ' dci-mx-hassub' : ''}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-      ${pubOf}<div class="dci-mx-colname">${name} ${btns}</div>
+    return `<th scope="col" class="dci-mx-col dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+      <div class="dci-mx-colname">${columnKindTag(col)}${name} ${btns}</div>
       <div class="dci-mx-roles">${roles}<span class="dci-sub">${esc(tr('matrix.colWorks', { n: nWorks }))}</span>${dateChip}${pub}${r098}${sugg.length
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}</div>
       <label class="dci-mx-credit">${esc(tr('matrix.colCredit'))} <input type="text" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10"></label>
@@ -20124,7 +20587,8 @@
     dateFinds().notes.forEach((x, i) => {
       if (S.aboutOff && fromAboutText(x)) return;
       const value = formatDateValue(x.value);
-      const ids = S.datePool.filter((d) => d.found === `notes:${i}` || d.found === `notes:${i}:range`
+      // [3.32.0] also what the days have in common, when the matrix uses that (D022)
+      const ids = S.datePool.filter((d) => d.found === `notes:${i}` || d.found === `notes:${i}:range` || d.found === `notes:${i}:lcd`
         || (String(d.found || '').startsWith('notes:') && formatDateValue(d) === value)).map((d) => d.id);
       if (!ids.length) return;
       const inMatrix = m.cells.some((c) => ids.includes(c.date) || ids.includes(c.lcd) || (c.alt || []).some((a) => ids.includes(a)));
@@ -21402,40 +21866,11 @@
       case 'artist-create':
         if (artist) startArtistCreate(artist);
         break;
-      case 'type-pick': {
-        // [Q003] The type chosen in the question: its level, and for "misc" the task
-        const q = typeQuestionFor(row);
-        const o = q && q.options[Number(btn.dataset.opt)];
-        if (!o) break;
-        row.typeAnswer = Number(btn.dataset.opt);
-        row.types = [o.type];
-        row.creditFromRole = o.task || '';
-        delete row.scopeLevel;
-        delete row.mxSkipped;
-        // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
-        row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
-        row.levelTouched = true;
-        resolveRowType(row);
-        // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
-        if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
-        refreshRowDetails(row);
-        log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
-        // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
-        if (row.level === 'work') {
-          renderGroups();
-          renderWorks();
-        } else rerenderRow(row);
-        refresh();
+      case 'type-pick':
+        pickType(row, Number(btn.dataset.opt));
         break;
-      }
       case 'instr-pick':
-        // A choice in the question counts as made by hand: it stays when the rules change
-        row.primaryText = btn.dataset.instr;
-        row.primaryTouched = true;
-        refreshRowDetails(row);
-        log('info', 'instrPicked', { name: (artist && (artist.mbName || artist.name)) || '', instrument: btn.dataset.instr, credit: row.roleCredit || '' });
-        rerenderRow(row);
-        refresh();
+        pickInstrument(row, btn.dataset.instr);
         break;
       case 'other-create':
         startOtherCreate(artist);
@@ -21452,6 +21887,8 @@
         if (artist.company) setCompanyEntityType(artist, h.entityType);
         log('ok', 'artistManual', { name: artist.name, mb: h.name });
         if (artist.company) rerenderGroup(artist);
+        // [3.31.5] a publisher matched with an artist (S048): its column in the works matrix follows
+        if (artist.company && S.rows.some((r) => r.artistKey === artist.key && r.level === 'work')) renderWorks();
         else updateGroupHeader(artist);
         refresh();
         break;
@@ -21552,7 +21989,9 @@
       // Dates & tracks
       case 'pool-fold': {
         const pool = btn.dataset.pool === 'tracks' ? 'tracks' : 'dates';
-        S.poolFold = { ...S.poolFold, [pool]: !S.poolFold[pool] };
+        // [3.32.1] opened for this import only: folded again as remembered
+        if (S.poolsForce && S.poolsForce[pool] && S.poolFold[pool]) delete S.poolsForce[pool];
+        else S.poolFold = { ...S.poolFold, [pool]: !S.poolFold[pool] };
         if (!S.poolFold[pool]) delete S.poolFold[pool];
         writeJson('localStorage', POOL_FOLD_KEY, Object.keys(S.poolFold).length ? S.poolFold : null);
         renderDates();
@@ -21562,6 +22001,7 @@
       }
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
+        S.poolsForce = null;
         S.poolForm = null;
         S.trackForm = null;
         S.poolClear = null;
@@ -22209,6 +22649,12 @@
       case 'role-text':
         remapManualRow(row, el.value);
         break;
+      // [3.32.3] a question of the compact line with five possibilities or more (item 102)
+      case 'cl-pick':
+        if (!el.value) break;
+        if (el.dataset.kind === 'instr') pickInstrument(row, el.value);
+        else pickType(row, Number(el.value));
+        break;
       case 'primary':
         row.primaryText = el.value;
         row.primaryTouched = true;
@@ -22432,6 +22878,12 @@
     if (el.dataset && el.dataset.set === 'level-color' && /^#[0-9a-f]{6}$/i.test(el.value) && LEVEL_PALETTE_DEFAULT[el.dataset.level]) {
       S.levelPalette[el.dataset.level] = el.value.toLowerCase();
       applyLevelColors();
+      return;
+    }
+    // [3.32.4] a colour of a kind shown while it is chosen (stored on "change")
+    if (el.dataset && el.dataset.set === 'kind-color' && /^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
+      S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
+      applyKindColors();
       return;
     }
     // [3.30.5] the tracks typed in (item 90)
@@ -22902,6 +23354,7 @@
     applyView();
     applyScale();
     applyLevelColors();
+    applyKindColors();
     makeMovable(overlay.querySelector('.dci-panel'), '.dci-head', 'panel');
     applyPlacement();
     // Rows scrolled into view (keyboard, jumps) must not end up under the sticky date pool ([3.18.0] with the line
@@ -23088,10 +23541,14 @@
   const LEVEL_PALETTE_KEY = 'dci-level-palette';
   const LEVEL_PALETTE_DEFAULT = { recording: '#2f6db5', release: '#2e8b57', release_group: '#b0700c', work: '#8a4f9e' };
   const LEVEL_SKIP_COLOR = '#8b8898';
+  // [3.32.4] the colours of the kinds of entries (items 107, 108): on by default; own colours in ⚙ Settings → Appearance
+  const KIND_COLORS_KEY = 'dci-kind-colors';
+  const KIND_PALETTE_KEY = 'dci-kind-palette';
+  const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -23104,6 +23561,38 @@
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
+  S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
+  S.kindPalette = kindPaletteRead();
+
+  /** [3.32.4] The stored colours of the kinds of entries (each a "#rrggbb"; the others as by default). */
+  function kindPaletteRead() {
+    const stored = readJson('localStorage', KIND_PALETTE_KEY, null) || {};
+    return Object.fromEntries(Object.entries(KIND_PALETTE_DEFAULT).map(([k, d]) => [k, /^#[0-9a-f]{6}$/i.test(stored[k] || '') ? stored[k].toLowerCase() : d]));
+  }
+
+  /** [3.32.4] A colour mixed with white (share 0 … 1 of the colour): the light background of a kind. */
+  function tintOf(hex, share) {
+    return `#${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * share + 255 * (1 - share)).toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  /**
+   * [3.32.4] The colours of the kinds on the dashboard (collected item 108; CSS variables): the bar of an entry and of a
+   * column head of the works matrix, its tag and its light background; off: all grey.
+   */
+  function applyKindColors() {
+    if (!S.overlay) return;
+    S.overlay.classList.toggle('dci-kindc', !!S.kindColors);
+    Object.entries(S.kindPalette).forEach(([kind, c0]) => {
+      const c = S.kindColors ? c0 : KIND_PALETTE_DEFAULT.other;
+      S.overlay.style.setProperty(`--dci-kind-${kind}`, c);
+      S.overlay.style.setProperty(`--dci-kind-${kind}-bg`, tintOf(c, 0.11));
+    });
+  }
+
+  function saveKindPalette() {
+    const own = Object.fromEntries(Object.entries(S.kindPalette).filter(([k, c]) => c !== KIND_PALETTE_DEFAULT[k]));
+    writeJson('localStorage', KIND_PALETTE_KEY, Object.keys(own).length ? own : null);
+  }
 
   /** The stored colours of the levels (each a "#rrggbb"; the others as by default). */
   function levelPaletteRead() {
@@ -23169,6 +23658,11 @@
         row(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
           value="${S.levelPalette[level]}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColor', { level: tr(`level.${level}`) }))}">
           <span class="dci-cl-level" data-level="${level}">${esc(tr(`level.${level}`))}</span></label>`).join('')}</span>`),
+        // [3.32.4] the colours of the kinds of entries (item 108)
+        row(check('data-set="kind-colors"', S.kindColors, tr('settings.kindColors'), tr('settings.kindColorsTitle'))),
+        row(`<span class="dci-lvl-pick dci-kind-pick">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}"><input type="color" data-set="kind-color" data-kind="${kind}"
+          value="${S.kindPalette[kind]}"${S.kindColors ? '' : ' disabled'} aria-label="${esc(tr('settings.kindColor', { kind: tr(`kind.${kind}`) }))}">
+          <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}</span>`),
       ],
       sources: () => [
         row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
@@ -23232,7 +23726,7 @@
   function resetHtml() {
     return `<div class="dci-reset" data-el="reset" role="group" aria-label="${esc(tr('reset.title'))}"><strong>${esc(tr('reset.ask'))}</strong>
       <p class="dci-sub">${esc(tr('reset.what'))}</p>
-      <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, off: rulesOff().size }))}</label>
+      <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, off: [...rulesOff()].filter((id) => !id.startsWith('+')).length }))}</label>
       <label class="dci-check"><input type="checkbox" data-f="reset-pools" ${S.resetPools ? 'checked' : ''}> ${esc(tr('reset.pools'))}</label>
       <p class="dci-sub">${esc(tr('reset.never'))}</p>
       <div class="dci-mbdate-tools">
@@ -23314,6 +23808,20 @@
         applyLevelColors();
       }
     }
+    // [3.32.4] the colours of the kinds of entries
+    else if (k === 'kind-colors') {
+      S.kindColors = el.checked;
+      writeJson('localStorage', KIND_COLORS_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.kindColors'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      applyKindColors();
+    } else if (k === 'kind-color') {
+      if (/^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
+        S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
+        saveKindPalette();
+        log('info', 'settingValue', { what: tr('settings.kindColor', { kind: tr(`kind.${el.dataset.kind}`) }), value: el.value.toLowerCase() });
+        applyKindColors();
+      }
+    }
     else if (k === 'log-place') setLogPlace(el.value);
     else if (k === 'aw-on') {
       S.awOn = el.checked;
@@ -23381,6 +23889,9 @@
       S.levelColors = true;
       S.levelPalette = { ...LEVEL_PALETTE_DEFAULT };
       applyLevelColors();
+      S.kindColors = true;
+      S.kindPalette = { ...KIND_PALETTE_DEFAULT };
+      applyKindColors();
       S.rulesPlace = 'dashboard';
       S.rulesRowPlace = 'window';
       S.rulesAsWindow = false;
@@ -23441,7 +23952,9 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT },
     });
+    applyKindColors();
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
     awClear();
@@ -23553,6 +24066,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.32.0', label: 'Credits Importer 3.32.0' },
     { v: '3.31.0', label: 'Credits Importer 3.31.0' },
     { v: '3.29.0', label: 'Credits Importer 3.29.0 · Companion 1.9.0' },
     { v: '3.27.0', label: 'Credits Importer 3.27.0' },
@@ -23974,6 +24488,13 @@
       #dci-rules .dci-filebtn { display: inline-flex; gap: calc(var(--u, 1px) * 6); align-items: center; margin: 0; }
       #dci-rules .dci-filebtn input { width: auto; }
       #dci-rules td input[type=checkbox] { width: auto; }
+      /* [3.32.0] the quick switches at the top (item 97d) */
+      #dci-rules .dci-quick { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); margin: 0 0 calc(var(--u, 1px) * 8);
+        padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border: 1px solid #dddae8; border-radius: 4px; background: #faf9fd; }
+      #dci-rules .dci-quick > strong { flex: 0 0 100%; font-size: calc(var(--u, 1px) * 12); }
+      #dci-rules .dci-quick-sw { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); }
+      #dci-rules .dci-quick-sw label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); margin: 0; font-weight: normal; }
+      #dci-rules .dci-quick-sw input { width: auto; }
       #dci-rules .dci-rule-result { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #736dab; background: #f4f3fb; }
       #dci-log {
         --u: calc(var(--dci-fs, 13px) / 13);
@@ -24170,12 +24691,19 @@
       .dci-only-missing .dci-group.dci-all-skip { display: none; }
 
       /* Entries as cards: a coloured bar, label and tinted header per kind (artist, label, place, other) */
-      .dci-group { --kind: #8a8799; --kind-bg: #f4f3f7; margin: 0 0 calc(var(--u, 1px) * 28); padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14);
+      .dci-group { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); margin: 0 0 calc(var(--u, 1px) * 28); padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14);
         border-left: 5px solid var(--kind); background: #fff; border-radius: 0 6px 6px 0; box-shadow: 0 1px 4px rgba(38, 36, 48, 0.10); }
-      .dci-kind-artist { --kind: #5b6f8c; --kind-bg: #eef1f6; }
-      .dci-kind-label { --kind: #2a8a8a; --kind-bg: #e8f4f4; }
-      .dci-kind-place { --kind: #4e8a3e; --kind-bg: #edf5e9; }
-      .dci-kind-area { --kind: #8a6a3e; --kind-bg: #f6f0e7; }
+      /* [3.32.4] the colours of the kinds come from ⚙ Settings → Appearance (item 108; these are the defaults) */
+      .dci-kind-artist { --kind: var(--dci-kind-artist, #5b6f8c); --kind-bg: var(--dci-kind-artist-bg, #eef1f6); }
+      .dci-kind-label { --kind: var(--dci-kind-label, #2a8a8a); --kind-bg: var(--dci-kind-label-bg, #e8f4f4); }
+      .dci-kind-place { --kind: var(--dci-kind-place, #4e8a3e); --kind-bg: var(--dci-kind-place-bg, #edf5e9); }
+      .dci-kind-area { --kind: var(--dci-kind-area, #8a6a3e); --kind-bg: var(--dci-kind-area-bg, #f6f0e7); }
+      .dci-kind-other { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); }
+      /* [3.32.4] the heads of the works matrix in the colour of their kind; only in MusicBrainz paler; the cells neutral (item 107) */
+      .dci-matrix th.dci-mx-col[class*="dci-kind-"] .dci-mx-card { border-top: 3px solid var(--kind); background: var(--kind-bg); }
+      .dci-matrix th.dci-mx-col.dci-mx-locked[class*="dci-kind-"] .dci-mx-card { border-top-color: color-mix(in srgb, var(--kind) 40%, #fff); background: color-mix(in srgb, var(--kind-bg) 45%, #fff); }
+      .dci-matrix .dci-mx-kind { font-size: calc(var(--u, 1px) * 10); padding: 0 calc(var(--u, 1px) * 5); margin-right: calc(var(--u, 1px) * 4); }
+      .dci-matrix th.dci-mx-locked .dci-mx-kind { opacity: 0.6; }
       .dci-pageof { margin: 0 0 calc(var(--u, 1px) * 6); }
       .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind); color: #fff;
         font-size: calc(var(--u, 1px) * 11); font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }
@@ -24215,12 +24743,6 @@
       .dci-matrix thead .dci-mx-front { z-index: 3; background: var(--soft); font-weight: 600; }
       .dci-mx-col { min-width: calc(var(--u, 1px) * 170); max-width: calc(var(--u, 1px) * 240); font-weight: normal; }
       .dci-mx-col.dci-mx-collapsed, td.dci-mx-collapsed { min-width: 0; width: calc(var(--u, 1px) * 26); text-align: center; color: var(--muted); }
-      /* [S044] (3.31.0) a person's publisher: a part of the person's column (a dashed line between them, the part tinted) */
-      .dci-matrix th.dci-mx-hassub, .dci-matrix td.dci-mx-hassub { border-right: 1px dashed #cfc7e6; }
-      .dci-matrix th.dci-mx-subcol { min-width: calc(var(--u, 1px) * 130); }
-      .dci-matrix th.dci-mx-subcol .dci-mx-card { border-left: 3px solid #b9a7e6; background: #faf8ff; }
-      .dci-matrix td.dci-mx-subcell { background: #faf8ff; }
-      .dci-mx-pubof { font-size: calc(var(--u, 1px) * 11); color: var(--muted); }
       .dci-mx-colname { display: flex; gap: calc(var(--u, 1px) * 5); align-items: center; }
       .dci-mx-roles { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); }
       .dci-mx-col label { display: block; margin-top: calc(var(--u, 1px) * 2); }
@@ -24624,6 +25146,8 @@
       .dci-date-sugg { display: inline-flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin-left: calc(var(--u, 1px) * 8); }
       .dci-date-form { margin-top: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); background: #fff; border: 1px solid var(--line); border-radius: 3px; max-width: calc(var(--u, 1px) * 520); }
       .dci-date-form .dci-sub, .dci-date-form .dci-err { margin: calc(var(--u, 1px) * 4) 0 0; }
+      /* [3.32.1] "Tracks:" right of "Name:" in the form of a track group, below it in a narrow window (collected item 90b) */
+      .dci-tg-namerow { display: flex; flex-wrap: wrap; align-items: center; column-gap: calc(var(--u, 1px) * 16); }
       .dci-pool-name { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-bottom: calc(var(--u, 1px) * 6); color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
       .dci-apply.dci-small { padding: 3px calc(var(--u, 1px) * 12); }
       .dci-dates > .dci-sub { margin: calc(var(--u, 1px) * 4) 0 0; }
@@ -24674,6 +25198,10 @@
       .dci-cl-flag { padding: 0 calc(var(--u, 1px) * 8); border-radius: 3px; font-size: calc(var(--u, 1px) * 12); }
       .dci-cl-bad { border: 1px solid #e6a49e; background: #fbeceb; color: var(--err); }
       .dci-cl-ask, .dci-cl-sugg { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      /* [3.32.3] a question of the compact line with its possibilities to click (item 102) */
+      .dci-cl-askq { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); }
+      .dci-cl-askq .dci-cl-pick { color: var(--sugg-ink); text-decoration: underline; font-weight: 600; }
+      .dci-cl-askq select { font: inherit; font-size: calc(var(--u, 1px) * 12); }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
