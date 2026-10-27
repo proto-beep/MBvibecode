@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.31.1, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.31.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,24 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Companion 1.9.1 · 2026-10-27
+
+Status marks and cover box no longer go and come (collected item 105).
+
+- **`BEAT_HIDDEN_MS`** 75000 → 600000 (a page in a background tab counts as open for ten minutes); new constant **`BEAT_VISIBLE_MS`** (8000, as before) in `senderAlive`.
+- **`initMusicBrainzSide`:** a `ping` of the dashboard (every 3 s) beats too (`statusBeat`) once a status map came; new `leaving` (set in `pagehide`): no beat while the page goes (a "hidden" beat from `visibilitychange` during closing would count for ten minutes).
+- **`initReleasePage`:** the same `leaving` for its `beat`.
+- **Tests:** `t_companion_discogs.py` case `relcheck` C: a page in the background five minutes ago keeps the marks (before: 30 s ago), one in front 30 s ago does not.
+
+## Import 3.31.2 · 2026-10-27
+
+Places looked up by name, days with commas only (collected items 98b and 114).
+
+- **`suggestByName` (places):** `areaParts` – the area of the source split at commas, the query uses only its first part (`place:(…) AND area:(West AND Orange)`); without a hit of that name, `place:(…) OR alias:(…)` (name only); a name whose last word is an area (MusicBrainz's area search, name or alias equal by `nameKey`) is also looked up as the rest of the name in that area (`viaArea`, always "similar"; `placeArea` becomes the entry's `area` when it found something); `placeFit`: a place of the same name outside the areas the source names is "similar"; hits in such an area first (`inArea`).
+- **`resolveArtists`:** an entry from the Discogs notes (`fromNotes`) logs `nameLookup` instead of `artistMissing`.
+- **Dates:** new `DAYLIST_C` (two or more days with commas only); the first two D013 matchers take `DAYLIST` or `DAYLIST_C` (month name and year right after: "November 7, 8, 2016", "7, 8, 9 November 2016", "7., 8. November 2016"); D013's note says so.
+- **Tests:** new case `placesearch` in `t_notes_companies.py`; `text_corpus.json` one line more ("Recorded November 7, 8, 2016, at Loft Köln."); `register_golden.json` written anew (D013).
 
 ## Import 3.31.1 · 2026-10-25
 

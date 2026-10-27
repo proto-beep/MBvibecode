@@ -1380,6 +1380,20 @@
         "unrecognized": [],
         "ignored": []
       }
+    },
+    {
+      "text": "Recorded November 7, 8, 2016, at Loft Köln.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Loft Köln",
+            "Recorded At"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
     }
   ]
 }

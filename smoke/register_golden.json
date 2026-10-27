@@ -1621,7 +1621,7 @@
    "D010 A year alone: 1998",
    "D011 Decades (\"late 1970s\", \"the 70s\") cannot be given as a MusicBrainz date and are left out",
    "D012 Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03",
-   "D013 Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows",
+   "D013 Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows – (3.31.2) also days with commas only, right before the year (\"November 7, 8, 2016\", \"7, 8, 9 November 2016\", \"7., 8. November 2016\")",
    "D014 Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing",
    "D015 ℗ / © wins: keywords count only as whole words (\"Fuzzoramarecords\", \"… Records\" are names), capitalised keywords after a ℗ / © sign belong to a name (\"℗ Fuzzorama Recordings 2005\"), and \"©©\" (often a typo for ℗ ©) counts as ℗ and ©",
    "D016 A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0)",
