@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.9
+// @version      3.32.10
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.9';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.10';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -412,6 +412,16 @@
       "livecom.same": "MusicBrainz has this comment already",
       "livecom.pending": "looking up the area …",
       "livecom.manual": "changed by you",
+      "log.liveSaved": "Comments of {n} live recordings will be entered after “Enter edit”, once the relationships are saved",
+      "log.liveArmed": "“Enter edit”: the comments of {n} live recordings are entered once MusicBrainz has the relationships",
+      "log.liveNotLive": "Track {pos}: not live in MusicBrainz – no comment",
+      "log.liveConflict": "Track {pos}: {msg} – no comment",
+      "log.liveCreditChanged": "The credit of {place} was changed in the relationship editor: “{old}” → “{new}” – the comments use “{new}” (from track {pos} on)",
+      "log.liveOther": "Track {pos}: MusicBrainz has another comment “{text}” – not overwritten",
+      "log.liveSet": "Comments of {n} live recordings entered: {list}",
+      "log.liveFailed": "The comments of the live recordings could not be entered: {msg}",
+      "log.liveNone": "Comments of live recordings: nothing to enter (they are in MusicBrainz already)",
+      "livecom.noticeTitle": "MB x Vibecode: Credits Importer – comments of live recordings",
       "footer.hint": "Nothing is submitted. You review the changes in the editor and click “Enter edit” yourself.",
       "panic.button.one": "Emergency: link only the new work",
       "panic.button.other": "Emergency: link only the {n} new works",
@@ -716,6 +726,8 @@
       "conn.X009.name": "Web profiles (Instagram, SoundCloud, Spotify …)",
       "conn.X009": "Profiles next to names in a text are kept as links: MusicBrainz is asked for an artist with them, “Create …” fills them in – the profiles themselves are never opened.",
       "conn.X010": "Home page, issues and updates of the script (@updateURL).",
+      "conn.X011": "Its way of setting the comments of recordings – edits “edit recording” (type 72) sent to MusicBrainz's /ws/js/edit/create, with an edit note – is how the script enters the comments of live recordings after “Enter edit” (⚙ Settings → Staging, off by default); the script itself is not needed. MusicBrainz's /ws/js/release tells whether the relationships are saved.",
+      "conn.X012": "The comments of live recordings follow its format – “live, 2004‐03‐23: Iridium, New York, NY, USA”: the place's credit or name with city, US or Canadian state code and country, the date –, and its line “Seed live comments” is added to their edit note; the script itself is not needed.",
       "settings.t.texts": "Texts",
       "settings.t.connections": "ⓘ Connections",
       "settings.textsHint": "Pasted texts and the credits texts of Bandcamp. What the text recognition reads (rules T020 – T038) is listed in",
@@ -9703,6 +9715,11 @@
       hosts: ['instagram.com', 'facebook.com', 'twitter.com', 'x.com', 'soundcloud.com', 'youtube.com', 'tiktok.com', 'bsky.app', 'threads.com', 'threads.net', 'mixcloud.com',
         'vimeo.com', 'myspace.com', 'open.spotify.com', 'music.apple.com', 'deezer.com', 'tidal.com', 'music.youtube.com', 'qobuz.com', 'music.amazon.*', 'linktr.ee'] },
     { id: 'X010', kind: 'site', name: 'GitHub', home: 'https://github.com/proto-beep/MBvibecode', hosts: ['github.com', 'raw.githubusercontent.com'], perms: '@updateURL · @downloadURL', since: '0.9.2' },
+    // [3.32.10] the comments of live recordings (item 113; maintainer: "das natürlich in den Connections ergänzen")
+    { id: 'X011', kind: 'script', name: 'MusicBrainz: Set recording comments for a release', home: 'https://github.com/murdos/musicbrainz-userscripts/blob/master/set-recording-comments.user.js',
+      hosts: ['github.com'], perms: '– (MusicBrainz: /ws/js/release, /ws/js/edit/create)', since: '3.32.10' },
+    { id: 'X012', kind: 'script', name: 'MB: QoL: Seed the batch recording comments script', home: 'https://github.com/ROpdebee/mb-userscripts/blob/main/mb_qol_seed_recording_disambiguation.user.js',
+      hosts: ['github.com'], perms: '–', since: '3.32.9' },
   ];
 
   if (IS_NODE_TEST) {
@@ -9939,6 +9956,8 @@
    */
   function initReleasePageHook() {
     const mbid = (location.pathname.match(MBID_RE) || [])[0];
+    // [3.32.10] comments of live recordings waiting for the relationships of this release (item 113)
+    if (mbid) runLiveJob(mbid, { tries: 5 });
     const go = readJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
     if (!go || !mbid) return;
     writeJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
@@ -9952,6 +9971,247 @@
     if (!fresh || !mine) return;
     writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: Array.isArray(go.links) ? go.links : [], at: Date.now() });
     location.assign(`/release/${mbid}/edit-relationships`);
+  }
+
+  // --- [3.32.10] Comments of live recordings: entered after "Enter edit" (collected item 113) -------------------------
+  // The dashboard keeps the ticked comments of a staging as a job of the release (LIVE_JOB_PREFIX); "Enter edit" in the
+  // relationship editor arms it; once MusicBrainz has the relationships (the editor's page, or the release page it shows
+  // next), the comments are worked out again from MusicBrainz's data – as the seed script of ROpdebee does – and entered as
+  // edits "edit recording" (type 72) through /ws/js/edit/create, as "Set recording comments for a release" (murdos) does.
+
+  const LIVE_JOB_PREFIX = 'dci-live-job:';
+  const LIVE_JOB_MAX_MS = 30 * 60 * 1000;
+  const liveAscii = (x) => String(x || '').replace(/[“”″]/g, '"').replace(/[‘’′]/g, "'").replace(/[‐‒–]/g, '-');
+
+  /** [3.32.10] An entry of the dashboard's log of this release (also from a page without the dashboard: the release page). */
+  function liveLog(mbid, level, key, params = {}, logFn = null) {
+    if (logFn) {
+      logFn(level, key, params);
+      return;
+    }
+    const k = `dci-log:${mbid}`;
+    const list = readJson('sessionStorage', k, []);
+    list.push({ ts: Date.now(), level, key, params });
+    writeJson('sessionStorage', k, list.slice(-400));
+  }
+
+  /** [3.32.10] The area of a place or area as the seed script writes it (MusicBrainz's own data: typeID, containment). */
+  function liveAreaOfMb(area) {
+    if (!area) return '';
+    const list = [area, ...(area.containment || [])];
+    const types = { 1: 'Country', 2: 'Subdivision', 3: 'City', 4: 'Municipality' };
+    return liveAreaFormatMb(list.map((a) => ({ name: a.name, type: types[a.typeID] || '', 'iso-3166-1-codes': [a.country_code || a.primary_code].filter(Boolean),
+      'iso-3166-2-codes': [a.primary_code].filter(Boolean) })));
+  }
+
+  /** [3.32.10] As liveAreaFormat (the dashboard), for the pages without the dashboard. */
+  function liveAreaFormatMb(chain) {
+    let city = null;
+    let state = null;
+    let country = null;
+    for (let k = chain.length - 1; k >= 0; k--) {
+      const t = norm(chain[k].type);
+      if (t === 'country') country = chain[k];
+      else if (t === 'subdivision') state = state || chain[k];
+      else if (t === 'city' || t === 'municipality') city = chain[k];
+    }
+    const cc = country ? String((country['iso-3166-1-codes'] || [])[0] || '') : '';
+    if (!['US', 'CA'].includes(cc)) state = null;
+    const stateCode = state ? String((state['iso-3166-2-codes'] || [])[0] || '').split('-')[1] || '' : '';
+    const countryText = !country ? '' : cc === 'US' ? 'USA' : cc === 'GB' ? 'UK' : country.name;
+    const cityText = city ? city.name : stateCode === 'DC' ? 'Washington' : '';
+    return [cityText, stateCode, countryText].filter(Boolean).join(', ');
+  }
+
+  /**
+   * [3.32.10] The live comment of a recording from MusicBrainz's relationships, as the seed script works it out: the place of
+   * "recorded at" (693; its credit, else its name, with its area), else the area of "recorded in" (698); the date of 698, 693
+   * and "recording of" (278). → { comment, venue: { gid, credit, name } | null } or { conflict: text }.
+   */
+  function liveCommentFromMb(rels) {
+    const one = (set, what) => {
+      if (set.size > 1) throw new Error(`${what}: ${[...set].join(' vs. ')}`);
+      return set.size ? [...set][0] : null;
+    };
+    const dateOf = (r) => {
+      if (!r.begin_date || !r.end_date) return null;
+      const f = (d) => [d.year ? String(d.year).padStart(4, '0') : '????', d.month ? String(d.month).padStart(2, '0') : '??', d.day ? String(d.day).padStart(2, '0') : '??']
+        .join('‐').replace(/(?:‐\?{2}){1,2}$/, '');
+      const b = f(r.begin_date);
+      const e = f(r.end_date);
+      if (b === '????' || e === '????') return null;
+      return b === e ? b : `${b}–${e}`;
+    };
+    try {
+      const at = rels.filter((r) => r.linkTypeID === 693);
+      let place = one(new Set(at.map((r) => `${r.entity0_credit || r.target.name}, ${liveAreaOfMb(r.target.area)}`)), 'recorded at');
+      if (!place) place = one(new Set(rels.filter((r) => r.linkTypeID === 698).map((r) => liveAreaOfMb(r.target))), 'recorded in');
+      const date = one(new Set(rels.filter((r) => [698, 693, 278].includes(r.linkTypeID)).map(dateOf).filter(Boolean)), 'dates');
+      let comment = 'live';
+      if (date) comment += `, ${date}`;
+      if (place) comment += `: ${place}`;
+      const v = at[0];
+      return { comment, venue: v ? { gid: v.target.gid, credit: v.entity0_credit || '', name: v.target.name } : null };
+    } catch (e) {
+      return { conflict: e.message };
+    }
+  }
+
+  /** [3.32.10] A small box on the page with what was done (red: what was left out or went wrong). */
+  function liveNotice(lines) {
+    let box = document.getElementById('dci-livecom-notice');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'dci-livecom-notice';
+      box.setAttribute('role', 'status');
+      box.style.cssText = 'position:fixed;top:12px;right:12px;z-index:100000;max-width:520px;background:#fff;border:1px solid #b9b5cf;border-radius:4px;'
+        + 'box-shadow:0 2px 8px rgba(40,30,80,.2);padding:8px 12px;font:13px/1.4 system-ui,sans-serif;color:#24213a';
+      document.body.appendChild(box);
+    }
+    box.innerHTML = '';
+    const head = document.createElement('div');
+    head.style.cssText = 'display:flex;justify-content:space-between;gap:12px;font-weight:600';
+    head.textContent = tr('livecom.noticeTitle');
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.textContent = '✕';
+    x.setAttribute('aria-label', tr('common.close'));
+    x.style.cssText = 'border:0;background:none;cursor:pointer';
+    x.addEventListener('click', () => box.remove());
+    head.appendChild(x);
+    box.appendChild(head);
+    for (const l of lines) {
+      const d = document.createElement('div');
+      d.className = `dci-livecom-line dci-livecom-${l.level}`;
+      d.textContent = tr(`log.${l.key}`, l.params);
+      if (l.level === 'error' || l.level === 'warn') d.style.color = '#b3261e';
+      box.appendChild(d);
+    }
+  }
+
+  /**
+   * [3.32.10] Enters the comments of an armed job of this release once MusicBrainz has its relationships (tries: how often
+   * to look again, 3 s apart). logFn: the dashboard's log when it is there. Returns true when the job is finished.
+   */
+  async function runLiveJob(mbid, { tries = 1, logFn = null } = {}) {
+    const key = `${LIVE_JOB_PREFIX}${String(mbid).toLowerCase()}`;
+    const job = readJson('localStorage', key, null);
+    const now = Date.now();
+    if (!job || !job.armedAt || job.done || now - job.armedAt > LIVE_JOB_MAX_MS) return false;
+    if (job.running && now - job.running < 60000) return false;
+    for (let t = 0; t < tries; t++) {
+      if (t) await new Promise((r) => setTimeout(r, 3000));
+      let data = null;
+      try {
+        const res = await fetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
+        data = res.ok ? await res.json() : null;
+      } catch (e) {
+        data = null;
+      }
+      if (!data) continue;
+      const recs = new Map();
+      (data.mediums || []).forEach((m) => (m.tracks || []).forEach((tr0) => {
+        if (tr0.recording) recs.set(tr0.recording.gid, { rec: tr0.recording, pos: `${m.position}.${tr0.number}` });
+      }));
+      // the relationships saved: every recording of the job has its place (or area) of the dashboard
+      const saved = job.items.every((it) => {
+        const x = recs.get(it.rec);
+        if (!x) return false;
+        if (!it.place) return true;
+        return (x.rec.relationships || []).some((r) => (r.linkTypeID === 693 || r.linkTypeID === 698) && r.target && r.target.gid === it.place.mbid);
+      });
+      if (!saved) continue;
+      // (once, also when the editor's page and the release page both see it)
+      const again = readJson('localStorage', key, null);
+      if (!again || again.done || (again.running && Date.now() - again.running < 60000)) return false;
+      writeJson('localStorage', key, { ...again, running: Date.now() });
+      const lines = [];
+      const say = (level, k, params) => {
+        lines.push({ level, key: k, params });
+        liveLog(mbid, level, k, params, logFn);
+      };
+      const rgLive = ((data.releaseGroup && data.releaseGroup.secondaryTypeIDs) || []).includes(6);
+      const edits = [];
+      const done = [];
+      const creditSaid = new Set();
+      for (const it of job.items) {
+        const x = recs.get(it.rec);
+        const pos = it.pos || x.pos;
+        const rels = (x.rec.relationships || []);
+        const works = rels.filter((r) => r.linkTypeID === 278);
+        const live = works.length ? works.some((r) => (r.attributes || []).some((a) => a.typeID === 578)) : rgLive;
+        if (!live) {
+          say('warn', 'liveNotLive', { pos });
+          continue;
+        }
+        const mb = liveCommentFromMb(rels);
+        if (mb.conflict) {
+          say('error', 'liveConflict', { pos, msg: mb.conflict });
+          continue;
+        }
+        let comment = it.manual ? it.comment : mb.comment;
+        // the place's credit (alias) changed in the relationship editor (maintainer: "falls nachträglich im relationship editor
+        // das alias verändert wird bitte rote nachricht im log ausgeben", "ja bitte mit Kommentar")
+        if (it.place && mb.venue && mb.venue.gid === it.place.mbid && (it.place.credit || '') !== (mb.venue.credit || '')) {
+          const was = it.place.credit || it.place.name;
+          const now2 = mb.venue.credit || mb.venue.name;
+          if (it.manual && was) comment = comment.split(was).join(now2);
+          // (once per place and credit)
+          if (!creditSaid.has(`${mb.venue.gid}|${now2}`)) say('error', 'liveCreditChanged', { pos, place: mb.venue.name, old: was, new: now2 });
+          creditSaid.add(`${mb.venue.gid}|${now2}`);
+        }
+        const existing = String(x.rec.comment || '').trim();
+        if (liveAscii(existing) === liveAscii(comment)) continue;
+        if (existing && existing !== 'live') {
+          say('error', 'liveOther', { pos, text: existing });
+          continue;
+        }
+        edits.push({ edit_type: 72, to_edit: it.rec, comment });
+        done.push(`${pos} “${comment}”`);
+      }
+      let ok = true;
+      if (edits.length) {
+        try {
+          const res = await fetch(`${location.origin}/ws/js/edit/create`, {
+            method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify({ edits, editNote: job.note || SEED_NOTE_TEXT, makeVotable: false }),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          say('ok', 'liveSet', { n: edits.length, list: done.join('; ') });
+        } catch (e) {
+          ok = false;
+          say('error', 'liveFailed', { msg: e.message });
+        }
+      } else {
+        say('info', 'liveNone', {});
+      }
+      writeJson('localStorage', key, ok ? { ...again, running: 0, done: Date.now() } : { ...again, running: 0, error: Date.now() });
+      if (lines.length) liveNotice(lines);
+      return ok;
+    }
+    return false;
+  }
+  const SEED_NOTE_TEXT = 'MB: QoL: Seed the batch recording comments script v2022.6.13: Seed live comments';
+
+  /**
+   * [3.32.10] "Enter edit" in the relationship editor arms the job of this release (the submission of its form with the edit
+   * note, or a click on its submit button); then the editor's page looks for the saved relationships for a while.
+   */
+  function initLiveJobArm(mbid, logFn = null) {
+    const key = `${LIVE_JOB_PREFIX}${String(mbid).toLowerCase()}`;
+    const arm = (e) => {
+      const t = e.target;
+      const form = t && (t.tagName === 'FORM' ? t : t.closest && t.closest('form'));
+      if (!form || !form.querySelector('#edit-note-text, textarea[name$="edit_note"]')) return;
+      if (e.type === 'click' && !(t.closest('button[type=submit], input[type=submit]'))) return;
+      const job = readJson('localStorage', key, null);
+      if (!job || job.done || (job.armedAt && Date.now() - job.armedAt < 5000)) return;
+      writeJson('localStorage', key, { ...job, armedAt: Date.now() });
+      liveLog(mbid, 'info', 'liveArmed', { n: job.items.length }, logFn);
+      runLiveJob(mbid, { tries: 30, logFn });
+    };
+    document.addEventListener('submit', arm, true);
+    document.addEventListener('click', arm, true);
   }
 
   /** [3.19.1] The address of "Edit relationships" that opens the dashboard by itself, with the sources to load in its #. */
@@ -11389,6 +11649,8 @@
   // --- Log window ----------------------------------------------------------------
 
   S.log = readJson('sessionStorage', LOG_KEY, []);
+  // [3.32.10] "Enter edit" arms the comments of live recordings waiting for this release (item 113)
+  initLiveJobArm(releaseMbid, (level, key, params) => log(level, key, params));
   // [3.19.0] Started from the release editor ([3.23.0] "Enter edit & import credits"): the links of its tab
   // "External links" (also those not in MusicBrainz yet); the dashboard opens by itself. Read once.
   S.autostartFrom = 'editor';
@@ -14933,6 +15195,8 @@
       noteOk = writeEditNote();
       if (noteOk) log('info', 'noteWritten');
     }
+    // [3.32.10] the ticked comments of live recordings, entered after "Enter edit" (item 113)
+    saveLiveJob();
     log('ok', 'stageSummary', { added, updated, removed, changed: changedInMb.length, remove: toRemove.length });
     if (round) {
       S.capRun.done++;
@@ -18894,7 +19158,7 @@
   // Iridium, New York, NY, USA". Here they are proposed from the dashboard's rows; 3.32.10 enters them after "Enter edit".
 
   const LIVE_COM_KEY = 'dci-live-comments';
-  const SEED_NOTE = 'MB: QoL: Seed the batch recording comments script v2022.6.13: Seed live comments';
+  const SEED_NOTE = SEED_NOTE_TEXT;
   // the setting (⚙ Settings → Staging, off by default; maintainer: "standardmäßig aus", "unter staging")
   S.liveCom = readJson('localStorage', LIVE_COM_KEY, false) === true;
 
@@ -19022,6 +19286,27 @@
     const text = c.text != null ? c.text : p.auto;
     // (another comment of MusicBrainz is never overwritten: such a recording cannot be ticked)
     return { on: !p.other && (c.on != null ? c.on : !p.conflict && !p.same), text, manual: c.text != null && c.text !== p.auto };
+  }
+
+  /**
+   * [3.32.10] The ticked comments as the job of this release, entered after "Enter edit" (runLiveJob): at each staging, and when
+   * the list changes while a job waits. The edit note: the script's block (when it writes one) and the line of the seed script
+   * (maintainer: "falls das passiert bitte auch den quellentext des skripts hinzufügen").
+   */
+  function saveLiveJob({ quiet = false } = {}) {
+    const key = `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`;
+    const had = readJson('localStorage', key, null);
+    if (had && had.armedAt && !had.done) return;
+    const items = !S.liveCom ? [] : liveProposals().map((p) => ({ p, c: liveChoice(p) })).filter((x) => x.c.on && x.c.text)
+      .map(({ p, c }) => ({ rec: p.rec, pos: p.pos, comment: c.text, manual: c.manual,
+        place: p.place && p.place.mbid ? { mbid: p.place.mbid, credit: p.place.credit || '', name: p.place.name || '' } : null }));
+    if (!items.length) {
+      if (had) writeJson('localStorage', key, null);
+      return;
+    }
+    const note = [S.editNote ? editNoteBlock() : '', SEED_NOTE].filter(Boolean).join('\n\n');
+    writeJson('localStorage', key, { release: releaseMbid, at: Date.now(), note, items });
+    if (!quiet) log('info', 'liveSaved', { n: items.length });
   }
 
   /** [3.32.9] The list of live recordings with their comments above "Stage …" (setting "Live recordings: add a disambiguation comment"). */
@@ -23341,6 +23626,7 @@
         const c = S.liveComChoice.get(el.dataset.rec) || {};
         S.liveComChoice.set(el.dataset.rec, { ...c, on: el.checked });
         renderLiveComments();
+        if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
         break;
       }
       case 'livecom-text': {
@@ -23348,6 +23634,7 @@
         const c = S.liveComChoice.get(el.dataset.rec) || {};
         S.liveComChoice.set(el.dataset.rec, { ...c, text: el.value.trim() });
         renderLiveComments();
+        if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
         break;
       }
       case 'discogs-pick': {

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.32.9, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.32.10, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.32.10 · 2026-10-27
+
+Comments of live recordings: entered after "Enter edit" (collected item 113, part 2).
+
+- **New (section 3b, before the pages are told apart – also on the release page): `LIVE_JOB_PREFIX` (`dci-live-job:<MBID>` in localStorage), `LIVE_JOB_MAX_MS` (30 min), `SEED_NOTE_TEXT`, `liveAscii`, `liveLog(mbid, level, key, params, logFn)`** (the dashboard's `log`, else an entry in `dci-log:<MBID>` of the tab), **`liveAreaOfMb(area)`, `liveAreaFormatMb(chain)`** (MusicBrainz's own area data: `typeID`, `containment`, `primary_code`, `country_code`), **`liveCommentFromMb(rels)`** (as the seed script: 693 place – credit or name, area; else 698 area; dates of 698, 693, 278; conflicts), **`liveNotice(lines)`** (`#dci-livecom-notice`), **`runLiveJob(mbid, { tries, logFn })`** (an armed job, at most 30 min old: `/ws/js/release/<MBID>?inc=rels recordings` until every recording has its place; `running` against a second page; live per MB – 278 with attribute 578, else the release group's secondary type 6; the comment from MB unless changed by hand; a changed credit of the place → `liveCreditChanged` (error, once per place), a hand-made comment takes the new credit; MB's comment: the same → nothing, "live" or empty → set, another → `liveOther` (error); POST `/ws/js/edit/create` `{ edits: [{ edit_type: 72, to_edit, comment }], editNote, makeVotable: false }`; `done`), **`initLiveJobArm(mbid, logFn)`** (capture listeners `submit` and `click` on the form with the edit note → `armedAt`, `runLiveJob` with 30 tries).
+- **Dashboard:** `SEED_NOTE` = `SEED_NOTE_TEXT`; new **`saveLiveJob({ quiet })`** (the ticked comments with recording, position, `manual`, the place `{ mbid, credit, name }`; the note `editNoteBlock()` when the edit note is written, and the seed line), called after staging and from `livecom-on` / `livecom-text` while a job waits (not once armed); `initLiveJobArm` after the log is read. **`initReleasePageHook`:** `runLiveJob(mbid, { tries: 5 })`.
+- **Connections:** new X011 (murdos, "Set recording comments for a release"), X012 (ROpdebee, the seed script).
+- **Texts:** new `log.liveSaved`, `log.liveArmed`, `log.liveNotLive`, `log.liveConflict`, `log.liveCreditChanged`, `log.liveOther`, `log.liveSet`, `log.liveFailed`, `log.liveNone`, `livecom.noticeTitle`, `conn.X011`, `conn.X012` (English only).
+- **Tests:** new case `livecomrun` in `t_works_more.py` (the job at staging, "Enter edit" on the editor's page with the relationships saved and a changed credit, the POST, the red log, the box; the release page with a hand-made comment and another comment of MB).
 
 ## Import 3.32.9 · 2026-10-27
 
