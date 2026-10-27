@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-27 | 3.31.2 | – |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -82,6 +83,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-27
+
+### Import 3.31.2
+
+#### Fixed
+
+- **Places from the Discogs notes and from texts get MusicBrainz's suggestions** (collected item 98b; maintainer: "die orte kommen als vorschläge in "Companies, etc.". allerdings werden sie wohl nicht mit den places abgeglichen? es sollen auch hier vorschläge angezeigt werden. die places liegen in MB vor."): looked up in the first part of their area ("West Orange, New Jersey" → West Orange), else by name alone – places in an area the source names first, others as similar names; the log no longer says "no MB artist with this Discogs link" for them.
+- **"Recorded November 7, 8, 2016, at Loft Köln."** (collected item 114): days with commas only before the year give their dates (2016-11-07 – 2016-11-08; before: only 2016; also "7, 8, 9 November 2016", "7., 8. November 2016"); "Loft Köln" – a city at the end of the name – gets MusicBrainz's "Loft" in Cologne as a similar name, the entry the area "(Köln)".
 
 ## 2026-10-25
 

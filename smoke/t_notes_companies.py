@@ -1,6 +1,6 @@
 """Discogs notes: places, ℗ / © and publishers named in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: discnotes, pcline, publishers – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
+Cases: discnotes, pcline, publishers, placesearch – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -304,6 +304,73 @@ Barcode: 786497575220"""
                        and all(role2.get(n) == ['Rights Society'] for n in ('BMI', 'ASCAP', 'GEMA')) and 'BIEM' not in role2 and not unrec
                        and cols2.get(('Tomas Fujiwara', '')) == ['1', '3'] and cols2.get(('FlizmoMusic', '')) == ['2', '4']
                        and cols2.get(('4WordSeaMusic', '')) == ['2', '3'] and cols2.get(('ThobulousMusic', '')) == ['4'] and ('Z Songs', '') in cols2)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_placesearch():
+    """Credits Importer 3.31.2: places from the notes and from texts get MusicBrainz's suggestions (collected items 98b and
+    114; maintainer, Discogs 18973900: "die orte kommen als vorschläge in "Companies, etc.". allerdings werden sie wohl
+    nicht mit den places abgeglichen? … die places liegen in MB vor."; "daten wie "Recorded November 7, 8, 2016, at Loft
+    Köln." müssen erkannt werden").
+    A) Discogs notes "… at Orange Music Sound Studios in West Orange, New Jersey …" and "… at Turtle Tone Studio in New York
+       City": MusicBrainz's place in West Orange is suggested (the first part of the area); Turtle Tone Studio, in
+       Manhattan, is found by its name alone and offered as similar; the log says "looking for the same name" (before: "no
+       MB artist with this Discogs link").
+    B) A pasted text "Recorded November 7, 8, 2016, at Loft Köln.": the date pool has 2016-11-07 – 2016-11-08 (D013 with
+       commas only; before: only 2016); the entry "Loft Köln" gets MusicBrainz's "Loft" in Cologne (alias Köln) as similar,
+       its area "(Köln)"."""
+    NOTES = """All music recorded ... at Orange Music Sound Studios in West Orange, New Jersey, on May 27, 2016
+All music mastered ... at Turtle Tone Studio in New York City"""
+    P1, P2, P3, P4, A1 = (H.uid('eeeeeeee', k) for k in (61, 62, 63, 64, 65))
+    H.MB_SEARCH['place'] = [{'id': P1, 'name': 'Orange Music Sound Studios', 'disambiguation': '', 'score': 100, 'area': {'name': 'West Orange'}},
+                            {'id': P2, 'name': 'Turtle Tone Studio', 'disambiguation': '', 'score': 100, 'area': {'name': 'Manhattan'}},
+                            {'id': P3, 'name': 'Loft', 'disambiguation': '', 'score': 100, 'area': {'name': 'Cologne'}},
+                            {'id': P4, 'name': 'Loft', 'disambiguation': '', 'score': 90, 'area': {'name': 'Berlin'}}]
+    H.MB_SEARCH['area'] = [{'id': A1, 'name': 'Cologne', 'disambiguation': '', 'score': 100, 'aliases': [{'name': 'Köln'}]}]
+    H.lt(1206, '1d4c0b5b-0000-4000-8000-000000001206', 'mastered at', 'place', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        return d
+
+    H.discogs_release = rel
+    GROUP = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? { head: g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(),
+        sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => [b.dataset.mbid, !!b.querySelector('.dci-similar')]) } : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(800)
+        o = pg.evaluate(GROUP, 'Orange Music Sound Studios')
+        t = pg.evaluate(GROUP, 'Turtle Tone Studio')
+        logs = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'Studio' in x]
+        print('A) Orange:', o, '| Turtle:', t)
+        print('   Protokoll:', [x[9:] for x in logs])
+        results.append(o and o['sugg'][:1] == [[P1, False]] and t and t['sugg'][:1] == [[P2, True]]
+                       and not any('no MB artist' in x for x in logs) and any('looking for the same name' in x for x in logs))
+        # B) a pasted text
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Recorded November 7, 8, 2016, at Loft Köln.')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1000)
+        pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').filter(d => d.begin.year === 2016).map(d => [d.begin.month, d.begin.day, d.end.day])")
+        loft = pg.evaluate(GROUP, 'Loft Köln')
+        print('B) Pool 2016:', pool, '| Loft Köln:', loft)
+        results.append([11, 7, 8] in pool and loft and loft['sugg'][:1] == [[P3, True]] and P4 not in [x[0] for x in loft['sugg']] and '(Köln)' in loft['head'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

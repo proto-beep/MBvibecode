@@ -127,6 +127,9 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     entry, BMI once as rights society; the publisher Tomas Fujiwara a part of the person's column; MB
                                 #     suggestions written apart ("Four Word Sea Music"), the society first; as a text with "Published by X
                                 #     (ASCAP)" and "BIEM/GEMA"
+                                #   placesearch: 3.31.2: places from the notes looked up in the first part of their area (West Orange) or by name alone
+                                #     (Turtle Tone Studio in Manhattan, similar); "Recorded November 7, 8, 2016, at Loft Köln." – the period
+                                #     2016-11-07 – 08, "Loft" in Cologne (alias Köln) for "Loft Köln", the entry's area "(Köln)"
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes
                                 #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
