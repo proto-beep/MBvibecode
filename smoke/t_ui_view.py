@@ -11,16 +11,20 @@ def case_compact():
     A) Full at first (nothing stored); the symbol in the head (not pressed) switches to compact – pressed, stored "compact"
        (until 3.27.1: compact by default, "Compact | Full" above the entries); one line per row – the role as written
        → type and instrument, level, tracks in short, date (or "no date"), what is open in colour (yellow "Bass: which
-       instrument?"); the fields of the full row and the "credited as" block hidden.
+       instrument? electric bass guitar · double bass · acoustic bass guitar", [3.32.3] the possibilities to click); the
+       fields of the full row and the "credited as" block hidden.
     B) A click on the line opens the full row (its type field focused); "▴ compact" closes it again.
     C) The tracks and the date of the compact line are still drop targets: a track group ("Side A", tracks 1–2) dropped
        onto it gives "tracks 1–2", a date of the pool shows on the line.
-    D) The question answered in the opened row ("double bass"): the line says so, the yellow mark is gone.
+    D) The question answered ("double bass") – [3.32.3] in the compact line itself, the row stays closed (item 102; until
+       3.32.2 the line said "Bass: which instrument?" and the question was in the opened row): the line says so, the yellow
+       mark is gone.
     E) A skipped row: grey, with ✕ – out of the dashboard; the next import brings it back. [3.30.1] Its type stays on the
        line (grey), so the level does not move.
     F) "Compact" remembered after reloading; ⚙ Settings → General ([3.29.2] Appearance) has the same switch: "Full" – every row with its fields,
        nothing stored.
-    G) A jump to an incomplete row (› in the summary) opens it."""
+    G) A jump to an incomplete row (› in the summary) opens it ([3.31.5] › until it gets there: the row of the publisher
+       Ghost Pub, not in MusicBrainz, is incomplete too and shows in its entry – item 112)."""
     import re
     from common_rows import drag
 
@@ -53,7 +57,8 @@ def case_compact():
         bass = line('Bass Man')
         print('A) zuerst voll:', a_full, '| nach dem Symbol:', a0, '\n   Bass Man:', bass)
         results.append(a_full == [False, 'false', 0, True] and a0 == [True, 'true', 0, '"compact"'] and bass and bass[0]['text'].startswith('▸ Bass → instrument · bass Recording all 4 tracks no date')
-                       and bass[0]['flags'] == [['dci-cl-ask', 'Bass: which instrument?']] and not bass[0]['typeVisible'])
+                       # [3.32.3] the question whole, its possibilities to click (item 102)
+                       and bass[0]['flags'] == [['dci-cl-ask dci-cl-askq', 'Bass: which instrument? electric bass guitar · double bass · acoustic bass guitar']] and not bass[0]['typeVisible'])
         # B) open, close
         rid = bass[0]['id']
         pg.click(f'tr[data-row="{rid}"] .dci-cl-role')
@@ -82,16 +87,12 @@ def case_compact():
         c2 = line('Guitar Guy')[0]
         print('C) Trackgruppe:', c1['text'], '| Datum', repr(dlabel[:30]), '→', c2['text'], c2['hasDate'])
         results.append('tracks 1–2' in c1['text'] and c2['hasDate'] and dlabel.split(' · ')[0] in c2['text'] and not c2['open'])
-        # D) the question answered in the opened row
-        pg.click(f'tr[data-row="{rid}"] .dci-cl-flag')
-        pg.wait_for_timeout(200)
-        pg.click(f'tr[data-row="{rid}"] [data-act=instr-pick][data-instr="double bass"]')
+        # D) [3.32.3] the question answered in the compact line itself (until 3.32.2: in the opened row); the row stays closed
+        pg.click(f'tr[data-row="{rid}"] .dci-cl-askq [data-act=instr-pick][data-instr="double bass"]')
         pg.wait_for_timeout(400)
-        pg.click(f'tr[data-row="{rid}"] .dci-cl-close')
-        pg.wait_for_timeout(300)
         d1 = line('Bass Man')[0]
-        print('D) beantwortet:', d1['text'], d1['flags'])
-        results.append('→ instrument · double bass' in d1['text'] and d1['flags'] == [])
+        print('D) beantwortet:', d1['text'], d1['flags'], '| offen:', d1['open'])
+        results.append('→ instrument · double bass' in d1['text'] and d1['flags'] == [] and not d1['open'])
         # E) a skipped row: grey with ✕
         pg.click(f'tr[data-row="{guitar}"] .dci-cl-role')
         pg.click(f'tr[data-row="{guitar}"] [data-act=level][data-level=skip]')
@@ -132,9 +133,12 @@ def case_compact():
         pg.click(f'tr[data-row="{new_row['id']}"] .dci-cl-close')
         pg.wait_for_timeout(300)
         g0 = [new_row['open'], line('Bass Man')[-1]['open'], line('Bass Man')[-1]['flags'][:1]]
-        pg.click('.dci-incomplete .dci-textbtn[data-act=inc-next]')
-        pg.wait_for_timeout(400)
-        g1 = line('Bass Man')[-1]['open']
+        for _ in range(3):
+            pg.click('.dci-incomplete .dci-textbtn[data-act=inc-next]')
+            pg.wait_for_timeout(400)
+            g1 = line('Bass Man')[-1]['open']
+            if g1:
+                break
         print('G) neue Zeile offen, zu, Markierung:', g0, '| nach ›:', g1)
         results.append(g0[0] and not g0[1] and g0[2] and g0[2][0][0] == 'dci-cl-bad' and g1)
         print('Fehler:', errs)
@@ -297,8 +301,9 @@ def case_levels():
         print('B) Ebenen nacheinander:', levels)
         results.append(levels[:2] == ['recording', 'release'] and levels[-2:] == ['skip', 'recording'] and len(set(levels)) == len(levels) - 1
                        and seq[0][2] == 'Level – a click switches to “Release”' and seq[0][3] == 'rgb(47, 109, 181)' and seq[0][6] == 'BUTTON'
-                       and seq[0][5].endswith('2001-03-01 – 2001-03-03') and seq[1][5].endswith('2001-06-05') and seq[1][3] == 'rgb(46, 139, 87)'
-                       and seq[-1][5].endswith('2001-03-01 – 2001-03-03') and seq[-2][5] == '' and all(x[7] for x in seq[1:]))
+                       # [3.32.0] the March days as their common month (D022)
+                       and seq[0][5].endswith('· 2001-03') and seq[1][5].endswith('2001-06-05') and seq[1][3] == 'rgb(46, 139, 87)'
+                       and seq[-1][5].endswith('· 2001-03') and seq[-2][5] == '' and all(x[7] for x in seq[1:]))
         # C) the tab "Appearance"
         H.open_settings(pg, 'general')
         gen = pg.evaluate("[!!document.querySelector('.dci-set-pane [data-act=zoom-in]'), !!document.querySelector('.dci-set-pane [data-act=view]'), !!document.querySelector('.dci-set-pane [data-f=lang]')]")
@@ -550,6 +555,96 @@ def case_rows():
         kinds = pg.evaluate("[...new Set(MB.relationshipEditor.state.added.map(r => r.linkTypeID))].sort((a, b) => a - b)")
         print('   Im Editor (Typ-IDs):', kinds, '| Ergebnis:', 'OK' if kinds and all(k in (165, 167, 168, 208, 278, 297) for k in kinds) else 'FEHLER', '| Fehler:', errs)
         b.close()
+
+
+def case_clineask():
+    """Credits Importer 3.32.3: a type question in the compact line (collected item 102; maintainer: "die Abfragen wie "Bass:
+    which instrument?" in der kompakt Ansicht sollen komplett dargestellt und klickbar sein", "ok ab 5"): "Directed By"
+    (Q003) shows "type to choose" with its four possibilities as buttons; "conductor" clicked → the row is conductor, the
+    question gone, the row still closed."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'].append({'name': 'Drum Guy', 'anv': '', 'role': 'Directed By', 'tracks': '', 'id': 3004, 'join': ''})
+        return d
+
+    H.discogs_release = rel
+    LINE = """() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Drum Guy');
+  const tr = [...g.querySelectorAll('tr.dci-row')].find(r => /Directed By/.test(r.querySelector('.dci-cl-role').textContent));
+  const q = tr.querySelector('.dci-cl-askq');
+  return { id: tr.dataset.row, open: tr.classList.contains('dci-open'), type: (tr.querySelector('.dci-cl-type') || {}).textContent.replace(/\\s+/g, ' ').trim(),
+    ask: q ? [...q.querySelectorAll('[data-act=type-pick]')].map(b => b.textContent.trim()) : null }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, view='compact')
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        a = pg.evaluate(LINE)
+        print('A) Zeile:', a)
+        results.append(a['ask'] == ['conductor', 'chorus master', 'creative direction', 'miscellaneous support (task “director”)'] and not a['open'])
+        pg.click(f'tr[data-row="{a["id"]}"] .dci-cl-askq [data-act=type-pick][data-opt="0"]')
+        pg.wait_for_timeout(400)
+        b1 = pg.evaluate(LINE)
+        print('B) gewählt:', b1)
+        results.append(b1['ask'] is None and 'conductor' in b1['type'] and not b1['open'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_kindcolors():
+    """Credits Importer 3.32.4: the colours of the kinds (collected items 107, 108; maintainer: "die farblogik von artists und
+    labels sollte auch in der work-matrix erhalten bleiben", "ja bitte blasser", a setting for the colours).
+    A) Works matrix: the head of Writer W in the colour of artists, with the tag "Artist"; Pub Co in the colour of labels,
+       "Label"; the cells stay neutral.
+    B) ⚙ Settings → Appearance: "Colours for the kinds of entries" (on) and a colour per kind (artist, label, place, area,
+       other); the artist colour changed to #aa0000 → the bar of Bass Man and the head of Writer W follow, stored as an own
+       colour; off → grey for both; ↺ of the tab → back to the defaults."""
+    HEAD = """(name) => { const th = [...document.querySelectorAll('.dci-matrix th[data-colhead]')].find(t => (t.querySelector('.dci-mblink, strong') || {}).textContent.replace(/^MB/, '').trim() === name);
+  if (!th) return null; const card = th.querySelector('.dci-mx-card'); const tag = th.querySelector('.dci-mx-kind');
+  const cell = document.querySelector(`.dci-mx-cell[data-col="${th.dataset.colhead}"]`);
+  return [[...th.classList].find(c => c.startsWith('dci-kind-')) || '', tag ? tag.textContent.trim() : '', getComputedStyle(card).borderTopColor, cell ? getComputedStyle(cell).backgroundColor : '']; }"""
+    BAR = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? getComputedStyle(g).borderLeftColor : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1500)
+        a = [pg.evaluate(HEAD, 'Writer W'), pg.evaluate(HEAD, 'Pub Co')]
+        print('A) Köpfe:', a)
+        results.append(a[0][:3] == ['dci-kind-artist', 'Artist', 'rgb(91, 111, 140)'] and a[1][:3] == ['dci-kind-label', 'Label', 'rgb(42, 138, 138)']
+                       and a[0][3] in ('rgba(0, 0, 0, 0)', 'rgb(255, 255, 255)'))
+        H.open_settings(pg, 'appearance')
+        app = pg.evaluate("""[document.querySelector('.dci-set-pane [data-set=kind-colors]').checked,
+      [...document.querySelectorAll('.dci-set-pane [data-set=kind-color]')].map(x => [x.dataset.kind, x.value])]""")
+        pg.evaluate("""(() => { const x = document.querySelector('.dci-set-pane [data-set=kind-color][data-kind=artist]'); x.value = '#aa0000';
+      x.dispatchEvent(new Event('input', { bubbles: true })); x.dispatchEvent(new Event('change', { bubbles: true })); })()""")
+        pg.wait_for_timeout(300)
+        b1 = [pg.evaluate(BAR, 'Bass Man'), pg.evaluate(HEAD, 'Writer W')[2], pg.evaluate("localStorage.getItem('dci-kind-palette')")]
+        pg.locator('.dci-set-pane [data-set=kind-colors]').click()
+        pg.wait_for_timeout(300)
+        b2 = [pg.evaluate(BAR, 'Bass Man'), pg.evaluate(HEAD, 'Pub Co')[2], pg.evaluate("localStorage.getItem('dci-kind-colors')")]
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=appearance]')
+        pg.wait_for_timeout(500)
+        b3 = [pg.evaluate(BAR, 'Bass Man'), pg.evaluate("[localStorage.getItem('dci-kind-colors'), localStorage.getItem('dci-kind-palette')]")]
+        print('B) Einstellung:', app, '| eigene Farbe:', b1, '| aus:', b2, '| ↺:', b3)
+        results.append(app == [True, [['artist', '#5b6f8c'], ['label', '#2a8a8a'], ['place', '#4e8a3e'], ['area', '#8a6a3e'], ['other', '#8a8799']]]
+                       and b1 == ['rgb(170, 0, 0)', 'rgb(170, 0, 0)', '{"artist":"#aa0000"}']
+                       and b2 == ['rgb(138, 135, 153)', 'rgb(138, 135, 153)', 'false'] and b3 == ['rgb(91, 111, 140)', [None, None]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 run_cases(globals())

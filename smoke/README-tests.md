@@ -124,14 +124,21 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     TUM Records suggested; Discogs lists © already: only ℗ joins its entry; a text: ℗ alone, © alone, both
                                 #   publishers: 3.31.0: "[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4 …" in the Discogs notes – the tracks
                                 #     onto Discogs's publishers as suggestions (also "4WordSeaMusic" = "Fourwordseamusic"), one not listed an
-                                #     entry, BMI once as rights society; the publisher Tomas Fujiwara a part of the person's column; MB
-                                #     suggestions written apart ("Four Word Sea Music"), the society first; as a text with "Published by X
-                                #     (ASCAP)" and "BIEM/GEMA"
+                                #     entry, BMI once as rights society; [3.31.5] the publisher Tomas Fujiwara a role of the person
+                                #     (one entry, one column, S044); MB suggestions written apart ("Four Word Sea Music"), the society
+                                #     first; as a text with "Published by X (ASCAP)" and "BIEM/GEMA" – there Tomas Fujiwara gets the
+                                #     MB artist and "Create artist …" (S048)
+                                #     [3.31.6] the tracks of the notes set, ⓘ at the row
+                                #   personpub: 3.31.5: a publisher's row in its entry, on Works; Release → label–release "published", out of
+                                #     the works matrix; compact view Works → Skip → Release → Works; "Published By – Jane Roe": the MB artist
+                                #     first, the label of the type Publisher too, not the other one, only "Create artist …"; chosen → artist column;
+                                #     "Ghost Pub" (no MB artist of that name): "Create artist …" and "Create label …"
                                 #   placesearch: 3.31.2: places from the notes looked up in the first part of their area (West Orange) or by name alone
                                 #     (Turtle Tone Studio in Manhattan, similar); "Recorded November 7, 8, 2016, at Loft Köln." – the period
                                 #     2016-11-07 – 08, "Loft" in Cologne (alias Köln) for "Loft Köln", the entry's area "(Köln)"
 
-python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes
+python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
+                                #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
                                 #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
                                 #     the date's sentence, "mixed and mastered" → Mix and Mastering (Node and the date matrix)
                                 #   facets: 3.28.6: "C1 to D" (side D one track) and the other ranges of "Facets" as dated track groups in the matrix,
@@ -149,9 +156,13 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     bars of the works matrix (above it; at the bottom while its lower edge is out of view), moving together
                                 #   tracksdrop: track groups dragged onto rows (Shift adds, release level moves), track pool kept when folded,
                                 #     works matrix cells that cannot take a date, work credits checked on the works (release page)
+                                #   poolsopen: 3.32.1: "Dates & tracks" (and a folded date pool) open after an import whose suggestions wait for
+                                #     "Apply" – for that import, the remembered state stays; "Tracks:" on the line of "Name:" in the form
+                                #   titledates: 3.31.7: dates in the titles of the tracks (D023): off by default; on → pool, track groups, Performance
+                                #     suggestions, stored "+D023"; off → gone; on and "Apply" → the row split by date
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
-                                #   mxdrop: track lists from the Discogs notes as track groups and suggestions (✓ / ×), generous names;
+                                #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
                                 #     track groups dropped onto a column head (Shift adds), a role, an attribute of the works matrix
                                 #   matrixcols: "Directed By" asked, works matrix columns taken out / back, column dates for MB's dateless relationships
                                 #   fill: dates added to MB's dateless relationships from the works matrix (edit, ×, edit note),
@@ -183,6 +194,14 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     logged once; table T026 in "Mapping rules"
                                 #   recheck: fixes of 3.12.1: "n lines not recognized" opens in the window; same-named works searched again when
                                 #     a text's writer is assigned (found then), not without a change; a new import searches anew
+                                #   engineers: 3.31.3: "Engineer [Recording Engineer]" → recording, "[Mix Engineer]" mix, "[Mastering Engineer]" mastering,
+                                #     "[Assistant Engineer]" engineer with assistant – no role credit (S047)
+                                #   poems: 3.31.4: "Poems By" → lyricist (a column of the works matrix, R105), "Poetry [Read By]", "Recitation"
+                                #     → spoken vocals credited "poetry" / "recitation" (R106); "Poems" alone asks lyricist · liner notes · spoken
+                                #     vocals (Q009, R107), each credited "poems"; the same in a pasted text ("Poems: …", "Poetry by …")
+                                #   perftracks: 3.31.8: "Performer" on tracks, instruments for the release (S046): off by default; on → the
+                                #     instruments on the performer tracks, no performer row (someone without an instrument keeps it); off → back;
+                                #     on and loaded again → at the import already
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
@@ -192,13 +211,17 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #   rowrules: 3.30.2: a rule id at a row opens the rules as a window (the row stays), the symbol closes it and opens
                                 #     them in the dashboard, "Into the dashboard", the setting "like the symbol"; the arrow in the head of an
                                 #     entry in the compact view opens / closes all its rows
+                                #   quickswitch: 3.32.0 (milestone): the quick switches at the top of "Mapping rules" (order, on/off, the id shows the
+                                #     rule, the same switch as in the list); D022 – the notes' "March 1–3, 2001" under Performance as 2001-03,
+                                #     off → the period again; S045 – "Composed by X (BMI)", "Lyrics by Y / GEMA" → the societies on the release
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
                                 #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
                                 #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
-                                #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), the chip
-                                #     "as “B. Man”" (+1), the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
+                                #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), [3.32.2] the
+                                #     release's spelling "B. Man*" in the head (tooltip "Discogs: Bass Man") instead of the chip "as “B. Man”",
+                                #     a row credited otherwise "as “Bassman”", the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
                                 #   manualtop: "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
                                 #     page), an entry added from there is shown
                                 #   msgs: messages (3.27.3): ✕ on each, "▾ n messages" folds them, a new error unfolds, a fresh import shows them again
@@ -227,7 +250,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, s
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
                                 #     a line per row, marks in colour, fields hidden,
-                                #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered, a skipped
+                                #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered ([3.32.3] in the
+                                #     line itself, its possibilities to click), a skipped
                                 #     row grey with ✕ (back after reloading), "Full" remembered and in the settings, the jump to an incomplete row
                                 #   fold: 3.29.3: the arrow next to "Artist credit for all roles" – one entry folded to compact lines in the full
                                 #     view (a line opens its row, ▸ back, full again after the next import), its open rows closed in the
@@ -241,6 +265,9 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   suggstack: suggestions as a block below the red mark (3.15.2, 3.15.3: side by side, wrapping): eight artists of one name, 5 shown + "+ 3 more",
                                 #     explanations as tooltips
                                 #   rows: remove a row (and undo), removal after staging, "only works"
+                                #   clineask: 3.32.3: a type question in the compact line ("Directed By": four buttons), chosen there, the row closed
+                                #   kindcolors: 3.32.4: the heads of the works matrix in the colours of their kinds (Writer W artist, Pub Co label,
+                                #     with the tag), ⚙ Settings → Appearance: own artist colour (entry and head follow, stored), off → grey, ↺
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset

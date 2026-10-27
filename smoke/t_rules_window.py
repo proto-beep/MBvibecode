@@ -270,4 +270,71 @@ def case_rowrules():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_quickswitch():
+    """Credits Importer 3.32.0 (milestone "Quick switches"): quick switches at the top of "Mapping rules" (collected item 97d;
+    maintainer: "bitte lass das aber an- und abstellen. im mapping ganz oben evtl. (mit klickbarem verweis dann wo es verwendet
+    wird)", "auf jeden fall noch die regel, dass performance dates die über mehrere tage hinweg gehen nach meinen regeln auf
+    den kleinsten gemeinsamen nenner gekürzt werden").
+    A) Seven switches in this order – S045, D022, S021, S031, S007 on, D023 and S046 off – each with its id.
+    B) A click on an id shows that rule in the list below (highlighted).
+    C) A quick switch and the rule's own switch are the same: S007 off at the top → off in the list and stored; on again.
+    D) D022: "Recorded March 1–3, 2001" in the notes → under Performance the month 2001-03 at once (the period stays in the
+       pool); D022 off → the period again (the suggestions not applied yet are placed anew); on → the month.
+    E) S045: a pasted text "Composed by Tomas Fujiwara (BMI)" and "Lyrics by Ann Poe / GEMA" → Tomas Fujiwara and Ann Poe
+       without the society, BMI and GEMA as the release's rights societies."""
+    from common_rows import cells
+    QS = """[...document.querySelectorAll('#dci-rules [data-rf=quick] .dci-quick-sw')].map(x => [x.querySelector('[data-qs-goto]').textContent.trim(), x.querySelector('input').checked])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+            pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+        perf0 = [c[0] for c in cells(pg).get('performance', [])]
+        pool0 = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date .dci-chip-main')].map(c => c.textContent.trim())")
+        pg.click('.dci-head [data-act=rules]'); pg.wait_for_timeout(300)
+        a = pg.evaluate(QS)
+        print('A) Schalter:', a)
+        results.append(a == [['S045', True], ['D022', True], ['S021', True], ['S031', True], ['S007', True], ['D023', False], ['S046', False]])
+        pg.click('#dci-rules [data-qs-goto=S031]'); pg.wait_for_timeout(300)
+        hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
+        print('B) gezeigt:', hit)
+        results.append(hit == ['S031'])
+        pg.uncheck('#dci-rules [data-rf=quick] [data-rule-on=S007]'); pg.wait_for_timeout(500)
+        c1 = [pg.locator('#dci-rules [data-rf=tables] [data-rule-on=S007]').is_checked(), pg.evaluate("localStorage.getItem('dci-rules-off')")]
+        pg.check('#dci-rules [data-rf=quick] [data-rule-on=S007]'); pg.wait_for_timeout(500)
+        c2 = [pg.locator('#dci-rules [data-rf=tables] [data-rule-on=S007]').is_checked(), pg.evaluate("localStorage.getItem('dci-rules-off')")]
+        print('C) S007 aus:', c1, '| wieder an:', c2)
+        results.append(c1[0] is False and 'S007' in (c1[1] or '') and c2[0] is True and 'S007' not in (c2[1] or ''))
+        pg.uncheck('#dci-rules [data-rf=quick] [data-rule-on=D022]'); pg.wait_for_timeout(600)
+        perf1 = [c[0] for c in cells(pg).get('performance', [])]
+        pg.check('#dci-rules [data-rf=quick] [data-rule-on=D022]'); pg.wait_for_timeout(600)
+        perf2 = [c[0] for c in cells(pg).get('performance', [])]
+        print('D) Performance:', perf0, '| Pool:', pool0, '| D022 aus:', perf1, '| an:', perf2)
+        results.append(perf0 == ['Performance 1 (month) · 2001-03'] and any('2001-03-01 – 2001-03-03' in x for x in pool0)
+                       and perf1 == ['Performance 1 · 2001-03-01 – 2001-03-03'] and perf2 == perf0)
+        # E) a pasted text
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Composed by Tomas Fujiwara (BMI)\nLyrics by Ann Poe / GEMA')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        groups = pg.evaluate("[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim())])")
+        # [3.32.4] the name only (the head has the tag of its kind before it)
+        cols = pg.evaluate("[...document.querySelectorAll('.dci-matrix th[data-colhead] .dci-mx-colname')].map(x => (x.querySelector('.dci-mblink, strong') || x).textContent.replace(/^MB/, '').trim().split(/\\s/).slice(0, 2).join(' '))")
+        print('E) Einträge:', groups, '| Spalten:', cols)
+        names = [g[0] for g in groups]
+        results.append('BMI' in names and 'GEMA' in names and dict(groups).get('BMI') == ['Rights Society'] and dict(groups).get('GEMA') == ['Rights Society']
+                       and 'Tomas Fujiwara' in cols and 'Ann Poe' in cols and not any('BMI' in c or 'GEMA' in c for c in cols))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

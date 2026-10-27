@@ -13,8 +13,9 @@ def case_datewords():
        mastered by Brandon Carnes in March 2026." → Mix and Mastering, "Recorded, mixed and mastered 2001" → all three (D020);
        "Recorded at X:" on the line before "12 June 2001" still names the group.
     B) The dashboard: Discogs notes "Recorded 19 & 20. 01. 2009. Mixed and mastered in March 2010. Originally issued on LP in
-       2011." – the date matrix has 2009-01-19 – 2009-01-20 under Performance and March 2010 under Mix and under Mastering
-       (each its own pool entry, named for its group); 2011 is not in the pool."""
+       2011." – the date matrix has [3.32.0] January 2009 under Performance (what the days have in common, D022; the period
+       2009-01-19 – 2009-01-20 in the pool) and March 2010 under Mix and under Mastering (each its own pool entry, named for
+       its group); 2011 is not in the pool."""
     import json
     import subprocess
 
@@ -66,7 +67,8 @@ console.log(JSON.stringify(T.map((t) => m.findDates(t).map((d) => [d.text, d.rul
         cells = sorted((c['col'], byId[c['date']]['name'], fmt(byId[c['date']])) for c in mx.get('cells', []))
         names = sorted((d['name'], fmt(d)) for d in pool)
         print('B) Matrix:', cells, '| Pool:', names)
-        results.append(cells == [('mastering', 'Mastering 1', '2010-3/2010-3'), ('mix', 'Mix 1', '2010-3/2010-3'), ('performance', 'Performance 1', '2009-1-19/2009-1-20')]
+        results.append(cells == [('mastering', 'Mastering 1', '2010-3/2010-3'), ('mix', 'Mix 1', '2010-3/2010-3'), ('performance', 'Performance 1 (month)', '2009-1/2009-1')]
+                       and ('Performance 1', '2009-1-19/2009-1-20') in names
                        and not any('2011' in n[1] for n in names))
         print('Fehler:', errs)
         results.append(not errs)
@@ -143,7 +145,9 @@ def case_facets():
 def case_choose():
     """Separate days ("Recorded June 16 & 19, 1980 at …"): the pool keeps both days as Discogs gives them and gets
     the period as well; the matrix asks "choose" and applies nothing until then; choosing the period puts it on
-    the rows; a group button moves the entry; without its period the single days stay."""
+    the rows; a group button moves the entry; without its period the single days stay. [3.32.0] Without D022 (with it the
+    matrix gets the common month at once, see t_rules_window.py quickswitch)."""
+    H.RULES_OFF = ['D022']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     import re
     import zooid
     from common_rows import lib, cells
@@ -200,7 +204,9 @@ def case_choose():
 def case_trackpool():
     """Dates for some tracks (Discogs notes of Zooid – Cut You Where You Was): found dates are placed in the date
     matrix as suggestions with their track groups and studios; "Apply" splits the rows; applying again gives the
-    same rows; removing a date and applying again brings the rows back together."""
+    same rows; removing a date and applying again brings the rows back together. [3.32.0] Without D022 (periods and
+    "choose" as before)."""
+    H.RULES_OFF = ['D022']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     import re
     import zooid
     from common_rows import lib, cells, stage
@@ -283,11 +289,12 @@ def case_trackpool():
 def case_reldate():
     """Import 3.10.0: a date of the date matrix only for the release level.
     The Discogs notes give two performance dates (the studio days in March, a release concert in June). In the column
-    "Performance" the June date is marked "Release level".
+    "Performance" the June date is marked "Release level". [3.32.0] Without D022 (the March period as before).
     A) Applied: the rows on recordings take only the March dates (no copy for June), a row on the release level takes June.
     B) A row switched from recording to the release level takes the June date at once; switched back, the March dates.
     C) A date typed into a row by hand stays when the row changes its level.
     D) The mark is stored with the matrix (after loading the dashboard again it is still there)."""
+    H.RULES_OFF = ['D022']  # [3.32.0] about the period and "choose": without D022 (what the days have in common at once)
     from common_rows import rows_of
 
     # instruments on the release level exist in MusicBrainz too

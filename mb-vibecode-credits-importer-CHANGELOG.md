@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.4 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -41,6 +41,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-27 | Import 3.32.0 | Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background. |
 | 2026-10-25 | Import 3.31.0 | Text recognition, part 4: publishers below a heading ("[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5") on their tracks, their rights society (BMI, ASCAP, GEMA … – a list of the societies) on the release level, a publisher with the name of a person as a part of that person's column in the works matrix, names written together searched apart too ("Flizmo Music", "Four Word Sea Music"); the members of a band ("Vision Fortune are A, B and C") as performers, "sounds" asks performer or effects; from the Discogs notes dates per disc ("May 26, 2016 (Disc 2)"), places and the label of "© & ℗ TUM Records Oy 2021" (TUM Records offered too). Since 3.29.0 also: the mapping rules in the dashboard or as a window (also from a rule id at a row), colours for the levels, the level of a compact line switched by a click, ⚙ Settings → Appearance, an entry or a group compact at once, each pool folds on its own, scroll bars above and below the works matrix, the settings without an import ("Source pages"), the tracks of a track group typed in. |
 | 2026-10-24 | Import 3.29.0 | Text recognition, part 3: credits in prose ("… by K.M. (sounds, words) & E. (voice)", "Cover artwork channeled by …", "Logo carved by the guided hand of …"), every place of joined verbs ("Mixed and mastered at …") and lists of kinds ("Tenor, alto, soprano saxophones"); dates go to every group of joined words and take their group only from their own sentence, release years are left out, "19 & 20. 01. 2009" and "1973 October 19" are read; "C1 to D" with a side of one track, "in live concert" for the tracks named. Since 3.27.0 also Bandcamp track pages, Norwegian, Swedish and Danish roles, "cover design", "credited as" from texts and none for a case-only spelling, and the companion's underlines of the dates and track groups used. |
 | 2026-10-24 | Import 3.27.0 | A clearer dashboard: the entries compact – one line per role (role → type and instrument, level, tracks, date), a click opens the row to change it; dates and track groups can still be dropped onto the line, what is open is in colour (red missing, yellow a question or suggestion), skipped rows are grey with ✕; "Compact \| Full" is remembered. The head in one line with symbols of its own, "Source ▾" for everything about the source, "+ Supplement" only on request; the settings as tabs (also "Texts" and "ⓘ Connections" – every site, tool and script the script works with), "Reset all settings" in them; after the installation the language is asked once |
@@ -85,6 +86,103 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.4
+
+#### Added
+
+- **The heads of the works matrix in the colours of their kinds** (collected item 107; maintainer: "die farblogik von artists und labels sollte auch in der work-matrix erhalten bleiben", "ja bitte blasser"): each column head with the bar, tag and light background of its kind (Artist, Label …), paler for a column only in MusicBrainz; the cells stay neutral.
+- **Colours for the kinds of entries** (collected item 108): ⚙ Settings → Appearance – on or off (off: all grey) and a colour for each of Artist, Label, Place, Area and Other, for the entries and the heads of the works matrix; ↺ of the tab sets them back.
+
+### Import 3.32.3
+
+#### Changed
+
+- **Questions in the compact view, whole and to click** (collected item 102; maintainer: "die Abfragen wie "Bass: which instrument?" in der kompakt Ansicht sollen komplett dargestellt und klickbar sein", "ok ab 5"): the line shows the possibilities of an instrument or type question – up to four as buttons, from five a list; a click chooses, the row stays closed (before: only "Bass: which instrument?" or "type to choose", a click opened the row).
+
+### Import 3.32.2
+
+#### Changed
+
+- **The spelling of the release in the head of an entry** (collected item 100; maintainer: "Der Künstle wird auf dem Release/bei Discogs Marc D. Rusch genannt. Dann soll das auch so im Dashboard stehen. … wenn ich mit dem Mauszeiger über den Namen gehe im Dashboard soll der Discogs name des entries angezeigt werden. Der Link daneben soll weiter bleiben."): "Marc D. Rusch*" with an asterisk as Discogs writes it, the tooltip "Discogs: Marc Rusch" (other spellings of the release too); the chip "as “Marc D. Rusch”" is gone then; the link stays; "Artist credit for all roles" as before.
+
+### Import 3.32.1
+
+#### Changed
+
+- **"Skip works"** and **"Take works again"** (collected item 106; before: "Skip works matrix", "Take works matrix again"), in all four languages (Werke überspringen / Werke wieder nehmen, Omitir obras / Volver a tomar las obras, Ignorer les œuvres / Reprendre les œuvres).
+- **The form of a track group:** "Tracks:" right of "Name:" (collected item 90b), below it only in a narrow window.
+
+#### Added
+
+- **Suggestions waiting for "Apply" open "Dates & tracks"** (collected item 109; maintainer: "automatisch dashboard aufklappen sofern daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das dashboard muss doch auf sein, damit Dates & Tracks sichtbar ist?"): after such an import the dashboard opens (if it is closed) and "Dates & tracks" with both pools – once for this import; what is remembered stays.
+
+#### Fixed
+
+- The message about the dates from the titles of the tracks (D023) went away with "Apply" only after the next import.
+
+### Import 3.32.0 – milestone "Quick switches"
+
+#### Added
+
+- **Quick switches** at the top of "Mapping rules" (collected item 97d; maintainer: "im mapping ganz oben evtl. (mit klickbarem verweis dann wo es verwendet wird)"): S045, D022, S021, S031, S007 (on by default), D023 and S046 (off by default), each with its id – a click shows the rule; the same switches as in the lists below.
+- **A rights society after a writer's name** (rule S045; maintainer: "Gesellschaft hinter einem Schreiber: ja ok. bitte lass das aber an- und abstellen."): "Composed by Tomas Fujiwara (BMI)", "Lyrics by Ann Poe / GEMA" – the society is the release's rights society, the name without it.
+
+#### Changed
+
+- **Performance on several days: their common month or year** (rule D022, on by default; maintainer: "auf jeden fall noch die regel, dass performance dates die über mehrere tage hinweg gehen nach meinen regeln auf den kleinsten gemeinsamen nenner gekürzt werden"): dates of the notes over several days ("December 11 & 12, 2015", "Recorded March 1–3, 2001") go under Performance as the common month (2015-12, 2001-03) or year; the period and the single days stay in the pool. Before: the period, or "choose" for single days.
+- **The update notice** names the milestone.
+
+### Import 3.31.8
+
+#### Added
+
+- **Performers on tracks, instruments for the release** (collected item 111; maintainer, Discogs 8613662: "gäbe es eine möglichkeit beides zu verknüpfen? mit quick switch. standardeinstellung = aus"): with the new rule S046 switched on ("Mapping rules"; off by default), a person credited "Performer" on some tracks and with instruments or voices for the whole release gets the instruments on the tracks of the "Performer" credits (across all media), and the "performer" rows go; someone without an instrument keeps "performer". Switched off again, everything is as Discogs gives it.
+
+### Import 3.31.7
+
+#### Added
+
+- **Dates in the titles of the tracks** (collected item 110; maintainer, Bandcamp "At Iridium 2004": "wir brauchen eine option um daten von tracknamen in den datums/trackpool aufzunehmen. die Tracknummern hat man dann ja direkt. … standardeinstellung = aus"): with the new rule D023 switched on ("Mapping rules"; off by default), titles like "March 23, 2004 (Set 1)" give their dates to the date pool, their tracks to the track pool ("March 23, 2004 · 1–2") and both as a suggestion under Performance to the date matrix; "Apply" as usual. Switched off again, the suggestions not applied yet go.
+- **Rules that are off until switched on** – the first is D023.
+
+### Import 3.31.6
+
+#### Changed
+
+- **Tracks from the Discogs notes are set** (collected item 97c; maintainer: "Tracks aus den Discogs Notizen: ja setze sie fest. mache in diesem fall ein kleines info zeichen woher die tracks stammen.", "für alles was in texten erkannt wird"): the track lists of the notes ("XYZ Publishing (1, 4, 6)", "Published by X (tracks 1–3)", "Written by Y (2, 5)", rule S022) and of a block of publishers ("Tomas Fujiwara-BMI : tracks 1, 6, 8", rule S043) give the works their tracks firmly, no longer as yellow suggestions; **ⓘ** in the head of the column, in the title of each cell and at the row names the line they come from. Suggestions stay for the evidence from MusicBrainz (personal publishers), a person's own works (a person as publisher) and "Commissioned By" without a track list.
+
+### Import 3.31.5
+
+#### Changed
+
+- **A person as publisher is a role of the person** (collected item 97b; maintainer: "Doch Person gibt es als Publisher in MB mit dem artist/work relationship "published / publisher" bitte nicht create label für personen anbieten!"): a publisher with the name of a person of the dashboard ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8" in the notes) is no company of its own – MusicBrainz's artist–work "publishing", in the person's column of the works matrix; the row says that Discogs lists it as a company; without tracks of its own, the works the person writes are suggested (rule S044; 3.31.0–3.31.4: a part of the person's column with a label of its own).
+
+#### Added
+
+- **A publisher with a person's name** gets MusicBrainz's artists first and "Create artist …"; when MusicBrainz has an artist of exactly that name, a label of that name only when its type is "Publisher" and no "Create label …" (otherwise both, as the name may be a company's) (rule S048).
+- **Publishers on the works or on the release** (collected item 112; maintainer: "so soll das laufen", "ja bitte. es ist ja einfach ihn nicht zu verwenden"): a publisher's row shows in its entry too, on "Works" by default; its level can be changed there, in the compact view by a click on the level (Works → Skip → Release); on the release a label is "published".
+
+#### Fixed
+
+- The tracks a company has from a text or the notes ("1, 3") were shown as "Catalog number on Discogs: 1, 3"; now "Discogs: track 1, 3".
+
+### Import 3.31.4
+
+#### Changed
+
+- **Poets are lyricists** (collected item 104; maintainer: "bitte Dichter immer zu lyricist"): "Poems By", "Poetry By", "Poem By" are lyricist on the works with the word in lower case as role credit ("poems", "poetry", "poem"; rule R105; before: "Poetry By" and "Poem By" writer credited "Poetry By", "Poems By" an unknown instrument). "Author", "Story By", "Script By" stay writer.
+
+#### Added
+
+- **Poems read out are spoken vocals:** "Poetry [Read By]", "Poems [Recited By]", "Poems Read By", "Poetry Reading", "Recitation", "Recited By" – vocal spoken vocals on the recordings, credited "poetry", "poems" or "recitation" (rule R106).
+- **"Poems", "Poetry", "Poem" alone ask** (maintainer: "ja das nachfragen kann man machen"): lyricist (the words of the works) · liner notes (poems in the booklet) · spoken vocals (read out), each credited with the word in lower case (question Q009, rule R107); until you choose, the row is not added. Also in pasted texts and Bandcamp credits ("Poems: Jane Doe").
+
+### Import 3.31.3
+
+#### Fixed
+
+- **"Engineer [Recording Engineer]" is recording** (collected item 101; maintainer: "ich habe einen Fall gefunden wo "Recording Engineer" in der Discogs note zu engineer stand. das muss natürlich einfach nur nach relationship recording engineer und nicht mit der Role Credit "Recording Engineer" die auch noch groß geschrieben ist."): the word "Engineer" again in the bracket is left out – recording, mix ("[Mix Engineer]"), mastering ("[Mastering Engineer]"), engineer with "assistant" ("[Assistant Engineer]"), sound engineer ("[Sound Engineer]"), each without role credit (rule S047).
 
 ### COMPANION 1.9.1
 

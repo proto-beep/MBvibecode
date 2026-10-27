@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.31.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.32.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,120 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.32.4 · 2026-10-27
+
+The colours of the kinds: the heads of the works matrix, a setting (collected items 107, 108).
+
+- **New `KIND_COLORS_KEY` (`dci-kind-colors`), `KIND_PALETTE_KEY` (`dci-kind-palette`), `KIND_PALETTE_DEFAULT`; `S.kindColors`, `S.kindPalette`; new `kindPaletteRead()`, `tintOf(hex, share)`, `applyKindColors()`** (CSS variables `--dci-kind-<kind>` and `--dci-kind-<kind>-bg` on the dashboard, class `dci-kindc`; off: all as "other"), **`saveKindPalette()`**; both keys in `TOPIC_KEYS.appearance`; `resetTopic('appearance')` and the reset of all settings set them back; `buildOverlay` applies them.
+- **CSS:** `.dci-group` and `.dci-kind-*` take the variables (new `.dci-kind-other`); the heads of the works matrix `th.dci-mx-col.dci-kind-*` with a top bar and light background (paler with `.dci-mx-locked`), `.dci-mx-kind`.
+- **`columnHeadHtml`:** new `columnKind(col)`, `columnKindTag(col)` – the class and the tag of the kind in front of the name (also for columns only in MusicBrainz).
+- **⚙ Settings → Appearance:** `data-set="kind-colors"` and `data-set="kind-color"` (`data-kind`; shown while chosen in `onInput`, stored in `settingsChange`).
+- **Texts:** new `settings.kindColors`, `settings.kindColorsTitle`, `settings.kindColor`, `kind.artist`, `kind.label`, `kind.place`, `kind.area`, `kind.other` (English only).
+- **Tests:** new case `kindcolors` in `t_ui_view.py`.
+
+## Import 3.32.3 · 2026-10-27
+
+Questions in the compact line, whole and to click (collected item 102).
+
+- **New `pickInstrument(row, name)`, `pickType(row, i)`:** what the click handlers `instr-pick` and `type-pick` did (they call them now).
+- **New `clineAskHtml(kind, label, opts)`:** in `clineHtml` the questions are no `row-open` buttons any more but a `.dci-cl-flag.dci-cl-ask.dci-cl-askq` with buttons (`instr-pick` with `data-instr`, `type-pick` with `data-opt`; up to four) or a list (`data-f="cl-pick"`, `data-kind`; from five – handled in `onChange`).
+- **CSS:** `.dci-cl-askq`, `.dci-cl-pick`.
+- **Texts:** new `cl.pickList` (English only).
+- **Tests:** `t_ui_view.py` case `compact` (the question with its possibilities; answered in the line, the row stays closed), new case `clineask` (Q003 "Directed By": four buttons, "conductor" chosen in the line); `t_rules_window.py` case `quickswitch` reads only the names of the column heads (ready for 3.32.4, whose heads have the tag of their kind before the name).
+
+## Import 3.32.2 · 2026-10-27
+
+The spelling of the release in the head of an entry (collected item 100).
+
+- **New `releaseSpelling(a)`:** for an entry from Discogs (no company), the most frequent name variation (`anv`, without "*") of its rows that differs from the entry's name (without "(n)") – `{ shown, others, base }` or null. **New `entryNameHtml(a)`:** the head's name as `<strong class="dci-gname-anv" data-name="…">` with "*" and a tooltip (`group.discogsName`, `group.otherSpellings`); `groupHtml` uses it.
+- **`creditChipHtml`:** leaves out the spelling the head shows.
+- **Texts:** new `group.discogsName`, `group.otherSpellings` (English only).
+- **Tests:** `t_ui_head.py` case `entryhead`: "B. Man*" with the tooltip "Discogs: Bass Man", no chip; a row credited otherwise: "as “Bassman”"; `t_text_basics.py` (`textcredit`) and `t_text_languages.py` (`nordic`) find an entry by its name (`data-name`) – the head shows "VALFAR*", "M. Mann*".
+
+## Import 3.32.1 · 2026-10-27
+
+"Skip works", the track group form, "Dates & tracks" for waiting suggestions (collected items 106, 90b, 109).
+
+- **Texts, all four languages:** `matrix.skip`, `media.works.skip` ("Skip works", "Werke überspringen", "Omitir obras", "Ignorer les œuvres"), `matrix.unskip` ("Take works again", "Werke wieder nehmen", "Volver a tomar las obras", "Reprendre les œuvres"), `level.workSkipped` (names the button). New `log.poolsOpened` (English only).
+- **`trackFormHtml`:** "Name:" and "Tracks:" in a new row `.dci-tg-namerow` (flex, wraps).
+- **New `S.poolsForce`** (`{ dates, tracks }` or null; not stored): set in `runImport` after the dates were placed when a cell of the date matrix is `auto`; then `openDashboard()` if the dashboard is closed. `poolsOpen()` is true with it; new `poolFolded(pool)` (the remembered fold, unless forced open) in `poolLabelHtml`, the date pool and the track pool; `pools-toggle` clears it; `pool-fold` of a pool forced open folds it again as remembered.
+- **`applyMatrix`:** also takes away the message `dm.titlePlaced`.
+- **Tests:** `t_works_more.py` case `worksskip`, `t_media_choice.py` (docstring): the new names; new case `poolsopen` in `t_dates_matrix.py`; there case `pools`: loaded again, the block is open for that import ("folded" stays stored), case `poolsmx` applies the notes' suggestions first.
+
+## Import 3.32.0 · 2026-10-27 · milestone "Quick switches"
+
+Quick switches, a rights society after a writer's name, Performance on several days as what they have in common (collected item 97d).
+
+- **New `QUICK_SWITCHES`, `quickSwitchesHtml()`:** at the top of the body of "Mapping rules" (new container `data-rf="quick"`, drawn in `renderRulesBody`): a checkbox per rule (`data-rule-on`, the change handler of the window: `setRuleOn`, `applyRulesChange`) and its id (`data-qs-goto` → `focusRule`); CSS `.dci-quick`, `.dci-quick-sw`.
+- **S045** (new special rule): `TEXT.parse` – new `SOC_AFTER`, `stripWriterSocieties(text)` before `readUnit`, for sentences with a word of writers (new `WRITER_WORDS_IN`): the society after a name goes to `addSociety`, the name stays without it.
+- **D022** (new date rule): `placeSeparateDays` (auto, Performance, with a common date of D014): a cell of the common date (new field `lcdOf`) instead of the "choose" cell; `autoPlaceFoundDates`: a period of Performance with a common date – the cell takes the common date (`lcdOf`). New `replaceNotesSuggestions()`: after D022 or D014 was switched, the notes' cells not applied yet (`auto`, not from titles) go and are placed anew (`applyRulesChange`). `autoPlaceFoundDates`: the days and the period of such a cell do not count as "without a group" (`dm.autoPooled`); `usedTextMarks`: the date of the notes is also underlined when the matrix uses its common date (found key `notes:<i>:lcd`).
+- **Milestone:** `MILESTONES` with 3.32.0, text `ms.3.32.0` (English only).
+- **Texts:** new `rules.quick`, `rules.quickTitle`, `quick.S045`, `quick.D022`, `quick.S021`, `quick.S031`, `quick.S007`, `quick.D023`, `quick.S046` (English only).
+- **Tests:** new case `quickswitch` in `t_rules_window.py`; case `notice` (`t_ui_settings.py`): the newest milestones 3.32.0, 3.31.0, 3.29.0; `harness.py`: new `RULES_OFF` (built-in rules switched off before the script starts) – the cases about periods and "choose" run without D022 (`choose`, `trackpool`, `reldate` in `t_notes_dates.py`, `dragdates` in `t_dates_matrix.py`); `datewords`, `discnotes` (`t_notes_companies.py`) and `levels` (`t_ui_view.py`) expect the common month (D022); `titledates` and `perftracks` take the switch of the list (there is one at the top too); `register_golden.json` written anew.
+
+## Import 3.31.8 · 2026-10-27
+
+Performers on tracks, instruments for the release (collected item 111).
+
+- **New `applyPerformerTracks()`, `PERFORMER_WORDS`** (S046): per person (no company, no row by hand, no supplement) the rows of R060 "Performer" (also "Musician", "Performed By", "Played By"; without other details) that are not for the whole release, and the instrument and vocal rows on the recording level for the whole release; on: the instrument rows get the performers' tracks (`s046` keeps tracks and suggestions before, new field `perfPositions`), the performer rows go to "Skip" and out of their entry (`s046Out` with level and tracks); off: both back. Called in `runImport` after `mergePersonPublishers` and in `applyRulesChange` when S046 is switched. Log `perfTracks`.
+- **`shownRowsOf`, `groupHtml`:** rows with `s046Out` are not shown. **`roleCell`:** `role.perfTracks` at an instrument row (`.dci-perftracks`); `rulesOfRow` names S046.
+- **Register:** new special rule **S046**; `DEFAULT_OFF_RULES` with S046.
+- **Texts:** new `role.perfTracks`, `log.perfTracks` (English only).
+- **Tests:** new case `perftracks` in `t_mapping.py`; `register_golden.json` written anew (S046 in the window); `t_works_matrix.py` case `mxdrop` waits a moment after a track group was dropped onto a role (under load it read too early now and then).
+
+## Import 3.31.7 · 2026-10-27
+
+Dates in the titles of the tracks (collected item 110).
+
+- **Rules off by default:** new `DEFAULT_OFF_RULES` (`D023`); `ruleOn(id)` is true for them only when the stored list (`dci-rules-off`) holds `+<id>`; new `setRuleOn(id, on)` (the rules window's checkboxes; the quick switches of 3.32.0 will use it too); the reset counts only the rules switched off (`reset.rules`). Export and import keep the list as it is (with `+<id>`).
+- **Register:** new date rule **D023** (DATE_RULES).
+- **New `placeTitleDates({ force })`:** the titles of the source (`S.srcTracks`, else `S.mbTracks`) through `findDates` – the first date with a day of each title; per date a pool entry (`poolDateFor`, found key `notes:title:<date>`, named as written), a track group (`ensureTrackGroup`, `found`, new field `title`) and an `auto` cell under Performance (new field `title`); once per release and titles (`dm().titleFound`); message `dm.titlePlaced`, log `titleDates`. Called in `runImport` after `autoPlaceFoundDates`, in `reloadPools` (force), and in `applyRulesChange` when D023 is switched on.
+- **New `removeTitleDates()`:** D023 switched off – the `auto` cells from titles, their pool entries no row uses, their track groups no cell uses.
+- **Texts:** new `dm.titlePlaced.one`/`.other`, `log.titleDates` (English only).
+- **Tests:** new case `titledates` in `t_dates_matrix.py`; `register_golden.json` written anew (D023 in the window).
+
+## Import 3.31.6 · 2026-10-27
+
+Tracks from the notes set, with ⓘ (collected item 97c).
+
+- **`applyNotesTrackCredits`** (S022): the rows of the named entry get `tracks`, `notesTracks` and the new field `notesFrom` (the line of the notes); no `suggest` (deleted), no `confirmed` any more.
+- **`runImport`, companies** (S043): a publisher's tracks from the notes set `notesTracks` and `notesFrom` instead of `suggest` (source `'notes'`) and `confirmed`.
+- **New `notesFromHtml(row)`:** at the row (`roleCell`, both kinds): ⓘ with `matrix.notesFrom` as its title, `role.notesTracks`; a company row with such tracks does not repeat them as `role.source`.
+- **`columnHeadHtml`:** ⓘ (`.dci-mx-notesinfo`) with the lines of its rows; **`cellHtml`:** a chip of such a track has `matrix.notesReason` in its title.
+- **Texts:** new `matrix.notesFrom`, `role.notesTracks` (English only); `log.notesPubTracks` changed (English only, as before).
+- **Tests:** `t_works_matrix.py` case `mxdrop` (Pub Co 1, 3 set, ⓘ, a click takes track 3 out), `t_notes_companies.py` case `publishers` (the tracks set, ⓘ at the row).
+
+## Import 3.31.5 · 2026-10-27
+
+A person as publisher (collected item 97b), publishers on the works or on the release (collected item 112).
+
+- **New `mergePersonPublishers()`** (S044, called in `runImport` after the companies, before the entries left without rows are removed): the publishing rows (C031) of a company whose name (`entryNames`, `looseName`) is that of a person entry go to the person – `entityType: 'artist'`, `types` from `typeOptions.artist`, new field `pubFromCompany`; the company entry is removed when no row is left; log `pubOfPerson` (text changed). **Removed** `personPublishers()` and the column fields `ofPerson`, `personName`, `hasPub`, the CSS `.dci-mx-subcol`, `.dci-mx-hassub`, `.dci-mx-subcell`, `.dci-mx-pubof`, the texts `matrix.pubOfPerson`, `matrix.pubOfPersonTitle`.
+- **`computePublisherEvidence`:** a column of an artist with a publishing row: evidence = the tracks the person writes (its own work rows of a writer type, or MusicBrainz's writers of the track), `pubEvidence.state` `'self'`; `cellState`: `unclear` only for publishers that are no artist; `cellHtml` title `matrix.reasonSelf`; `columnHeadHtml` status `matrix.pubSelf`.
+- **New `personLikeName(name)`, `NAME_PARTICLES`, `COMPANY_NAME_WORD`, `personPublisher(a)`** (S048): `suggestByName` puts MusicBrainz's artists (`asArtist`, `entityType: 'artist'`) first and sets the new field `personHit` (an artist of exactly that name) – then it drops label hits that are not of the type "Publisher"; `matchHtmlInner`: "Create artist …" (`company-create` with `data-et="artist"`), with `personHit` without "Create label …" and with the search link of the type artist; `startCompanyCreate(company, 'artist')`: the artist form, without the source's label page, texts `artistDlg.title`/`artistDlg.check`. Click handler `name-use`: `renderWorks()` when the company has work rows.
+- **Register:** C031 label types `['publishing', 'published']`; `GROUPING_TYPES` with `publishing` (label–release "publishing" has no description; label–work and artist–work "publishing" keep theirs); S044 note new; new special rule **S048**.
+- **New `inEntry(row)`:** `shownRowsOf`, `groupHtml` show a publishing row of the work level in its entry too (its level buttons; in the compact view `level-next`); `group.workNote` only for other work rows. `rulesOfRow` names S044 (`pubFromCompany`) and S048.
+- **Company rows:** new field `dSpecTracks` – the tracks of a text or the notes shown with `role.source`/`role.tracks`, not as a catalog number (`role.catno`).
+- **Texts:** new `role.pubFromCompany`, `matrix.pubSelf`, `matrix.reasonSelf` (English only); `log.pubOfPerson` changed (English only, as before); removed `matrix.pubOfPerson`, `matrix.pubOfPersonTitle`.
+- **Tests:** `harness.py` with MusicBrainz's artist–work "publishing" (161), label–release "published" (32) and its grouping "publishing" (359, no description); `t_notes_companies.py` case `publishers` changed (one entry and one column for Tomas Fujiwara; in the pasted text the artist as suggestion, "Create artist …"), new case `personpub`; `register_golden.json` written anew (C031, S044, S048; the page rows of "Big Songs").
+
+## Import 3.31.4 · 2026-10-27
+
+Poems and poetry (collected item 104).
+
+- **Register, role rules:** R005 without "poetry by" and "poem by" (note added); new **R105** (`/^(poems|poetry|poem)( written)? by$/` → lyricist, writer on the works; code: the role credit is the word without "(written) by"), **R106** (recitation, recited by, reciter, poetry reading(s), "poems/poetry/poem read/recited by", and "Poems"/"Poetry"/"Poem" with a bracket "Read By", "Reading", "Recited By", "Recitation", "Spoken" … → vocal, `primaryCands: ['spoken vocals']`, role credit the poem word or "recitation"), **R107** (`/^(poems|poetry|poem)$/` → no type, `notes: ['askType']`, like R100). R106 comes right after R015, R105 right after R005.
+- **Register, type questions:** new **Q009** (rule R107; options lyricist (work), liner notes (release), vocal with the instrument spoken vocals; each `credit: true`).
+- **New `optionCredit(o, row)`:** the role credit an option gives – its `task` (misc, Q003/Q007), with `credit: true` the role word in lower case without "(written) by", or a fixed `credit` text; used by `remapRow` and the click handler `type-pick` (before: `o.task || ''`).
+- **Texts:** new `typeAsk.askPoems` (English only).
+- **Tests:** new case `poems` in `t_mapping.py`; `register_corpus.json` eleven roles more ("Poems By", "Poems", "Poetry", "Poem", "Poetry [Read By]", "Poems [Recited By]", "Recitation", "Recited By", "Poetry Reading", "Poems Read By", "Poetry Written By"), `register_golden.json` written anew (changed: "Poem By", "Poetry By" and their lower-case forms; R005, R105–R107, Q009 in the window); `text_corpus.json` a line more ("Poems: Jane Doe. Poetry by John Roe. Recitation: Ann Poe.").
+
+## Import 3.31.3 · 2026-10-27
+
+The kind of engineer said twice (collected item 101). (The fix of item 105 needed only the companion, 1.9.1.)
+
+- **`mapRoleInner(baseIn, modsIn0)`:** for an engineer ("Engineer", "Engineered By", "Engineering") a bracket ending in "engineer" is shortened (`modsIn`, the bracket as written kept in `stripped`): "Recording Engineer" → "Recording"; `out()` lists both as `consumed` (no role credit from the bracket as written).
+- **Register:** new special rule **S047**.
+- **Tests:** new case `engineers` in `t_mapping.py`; `register_corpus.json` five roles more ("Engineer [Recording Engineer]", "[Mix Engineer]", "[Mastering Engineer]", "[Assistant Engineer]", "[Sound Engineer]"); `register_golden.json` written anew.
 
 ## Companion 1.9.1 · 2026-10-27
 
