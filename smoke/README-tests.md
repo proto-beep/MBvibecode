@@ -127,6 +127,9 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     entry, BMI once as rights society; the publisher Tomas Fujiwara a part of the person's column; MB
                                 #     suggestions written apart ("Four Word Sea Music"), the society first; as a text with "Published by X
                                 #     (ASCAP)" and "BIEM/GEMA"
+                                #   placesearch: 3.31.2: places from the notes looked up in the first part of their area (West Orange) or by name alone
+                                #     (Turtle Tone Studio in Manhattan, similar); "Recorded November 7, 8, 2016, at Loft Köln." – the period
+                                #     2016-11-07 – 08, "Loft" in Cologne (alias Köln) for "Loft Köln", the entry's area "(Köln)"
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes
                                 #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
@@ -307,7 +310,7 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
                                 #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
                                 #   relcheck: the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
-                                #     retried, a background page's beat counts 75 s
+                                #     retried, a background page's beat counts 75 s ([Companion 1.9.1] ten minutes: one 5 min old keeps the marks)
                                 #   trackmarks: a status mark on each Discogs track line, checked per track on the release page
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
