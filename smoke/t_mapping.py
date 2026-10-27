@@ -612,4 +612,81 @@ def case_engineers():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_poems():
+    """Credits Importer 3.31.4: poems and poetry (collected item 104; maintainer: "bitte Dichter immer zu lyricist", "ja das
+    nachfragen kann man machen").
+    A) Discogs "Poems By" → lyricist on the works (a column of the works matrix, R105); "Poetry [Read By]" and "Recitation"
+       → vocal spoken vocals with the role credit "poetry" / "recitation" (R106).
+    B) "Poems" alone: no type until chosen, the question (Q009) with lyricist · liner notes · spoken vocals; liner notes →
+       on the release with the role credit "poems"; spoken vocals → vocal spoken vocals, credited "poems"; lyricist → it leaves the entry
+       for a column of the works matrix.
+    C) A pasted text: "Poems: Jane Doe" asks the same; "Poetry by John Roe" → a column of the works matrix."""
+    H.attr(9130, 'spoken vocals', 3, 3)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    for i, n in [(3061, 'Poet A'), (3062, 'Reader B'), (3063, 'Poet C'), (3064, 'Reciter D')]:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3000), n)
+    orig = H.discogs_release
+    roles = [('Poet A', 'Poems By', 3061), ('Reader B', 'Poetry [Read By]', 3062), ('Poet C', 'Poems', 3063), ('Reciter D', 'Recitation', 3064)]
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in roles]
+        return d
+
+    H.discogs_release = rel
+    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  if (!g) return null; const tr = g.querySelector('tr.dci-row'); if (!tr) return { rows: 0 };
+  const t = tr.querySelector('[data-f=type]'); const ask = tr.querySelector('.dci-type-ask'); const p = tr.querySelector('[data-f=primary]'); const c = tr.querySelector('[data-f=role-credit]');
+  const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
+  return { rows: g.querySelectorAll('tr.dci-row').length, id: tr.dataset.row, type: t ? (t.options[t.selectedIndex] || {}).text : '', primary: p ? p.value : '', credit: c ? c.value : '',
+    level: lv ? lv.dataset.level : '', ask: ask ? ask.textContent.replace(/\\s+/g, ' ').trim() : null, opts: ask ? [...ask.querySelectorAll('[data-act=type-pick]')].map(b => b.textContent.trim()) : [],
+    rules: [...tr.querySelectorAll('.dci-ruleid')].map(b => b.textContent.trim()) }; }"""
+    COLS = """[...document.querySelectorAll('.dci-matrix th[data-colhead]')].map(th => (th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent.replace(/^MB/, '').trim())"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        # A)
+        cols = pg.evaluate(COLS)
+        rb, rd = pg.evaluate(ROW, 'Reader B'), pg.evaluate(ROW, 'Reciter D')
+        print('A) Spalten:', cols, '\n   Reader B:', rb, '\n   Reciter D:', rd)
+        results.append('Poet A' in cols and [rb['type'], rb['primary'], rb['credit']] == ['vocal', 'spoken vocals', 'poetry'] and 'R106' in rb['rules']
+                       and [rd['type'], rd['primary'], rd['credit']] == ['vocal', 'spoken vocals', 'recitation'])
+        # B)
+        c0 = pg.evaluate(ROW, 'Poet C')
+        print('B) Poet C:', c0)
+        results.append(c0 and c0['opts'] == ['lyricist (the words of the works)', 'liner notes (poems in the booklet)', 'spoken vocals (read out)']
+                       and 'R107' in c0['rules'] and 'Q009' in c0['rules'] and 'please choose' in c0['ask'] and 'Poet C' not in cols)
+        pg.click(f'tr[data-row="{c0["id"]}"] [data-act=type-pick][data-opt="1"]')
+        pg.wait_for_timeout(400)
+        c1 = pg.evaluate(ROW, 'Poet C')
+        pg.click(f'tr[data-row="{c0["id"]}"] [data-act=type-pick][data-opt="2"]')
+        pg.wait_for_timeout(400)
+        c2 = pg.evaluate(ROW, 'Poet C')
+        pg.click(f'tr[data-row="{c0["id"]}"] [data-act=type-pick][data-opt="0"]')
+        pg.wait_for_timeout(800)
+        c3, cols3 = pg.evaluate(ROW, 'Poet C'), pg.evaluate(COLS)
+        print('   liner notes:', [c1['type'], c1['level'], c1['credit']], '| spoken vocals:', [c2['type'], c2['primary'], c2['credit']], '| lyricist:', c3, cols3)
+        results.append([c1['type'], c1['level'], c1['credit']] == ['liner notes', 'release', 'poems'] and [c2['type'], c2['primary'], c2['credit']] == ['vocal', 'spoken vocals', 'poems']
+                       and (c3 is None or c3['rows'] == 0) and 'Poet C' in cols3)
+        # C) a pasted text
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Poems: Jane Doe\nPoetry by John Roe')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        j, cols4 = pg.evaluate(ROW, 'Jane Doe'), pg.evaluate(COLS)
+        print('C) Jane Doe:', j, '\n   Spalten:', cols4)
+        results.append(j and len(j['opts']) == 3 and 'Q009' in j['rules'] and 'John Roe' in cols4)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

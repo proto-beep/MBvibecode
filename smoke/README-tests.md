@@ -185,6 +185,9 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     a text's writer is assigned (found then), not without a change; a new import searches anew
                                 #   engineers: 3.31.3: "Engineer [Recording Engineer]" → recording, "[Mix Engineer]" mix, "[Mastering Engineer]" mastering,
                                 #     "[Assistant Engineer]" engineer with assistant – no role credit (S047)
+                                #   poems: 3.31.4: "Poems By" → lyricist (a column of the works matrix, R105), "Poetry [Read By]", "Recitation"
+                                #     → spoken vocals credited "poetry" / "recitation" (R106); "Poems" alone asks lyricist · liner notes · spoken
+                                #     vocals (Q009, R107), each credited "poems"; the same in a pasted text ("Poems: …", "Poetry by …")
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
