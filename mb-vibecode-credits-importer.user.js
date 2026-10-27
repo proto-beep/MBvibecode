@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.31.4
+// @version      3.31.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -124,7 +124,7 @@
       "ignored.why.package": "about the package",
       "log.notesCompanies": "From the Discogs notes, not listed by Discogs ({n}): {list}",
       "log.notesPubTracks": "From the Discogs notes: the tracks of publishers Discogs lists – {list} (suggestions in the works matrix)",
-      "log.pubOfPerson": "{name} as publisher: a part of the column of {person} in the works matrix (MusicBrainz links a publisher to a work as a label)",
+      "log.pubOfPerson": "{name} as publisher is the person {person}: publishing is a role of that entry (MusicBrainz: artist–work “published / publisher”), no company of its own",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
       "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album or track URL",
@@ -936,12 +936,13 @@
       "matrix.pubCount.other": "MusicBrainz: personal publisher of {n} artists – ticked where one of them wrote the work",
       "matrix.pubNone": "MusicBrainz knows no artist with this personal publisher – tick its works by hand",
       "matrix.pubUnmatched": "Publisher not found in MusicBrainz – tick its works by hand",
+      "role.pubFromCompany": "Discogs lists it as a company (“{name}”) – a person as publisher",
+      "matrix.pubSelf": "A person as publisher: suggested on the works {name} writes ({n}) – tick others by hand",
+      "matrix.reasonSelf": "Suggested: {publisher} writes this work",
       "matrix.unclear": "Not ticked: no writer of this work has this publisher as personal publisher in MusicBrainz",
       "matrix.reason": "{publisher} is the personal publisher of {names} according to MusicBrainz",
       "matrix.hint": "Personal publisher relationship outside the release date: {list}",
       "matrix.suggestPub": "MusicBrainz also lists the personal publisher {name}",
-      "matrix.pubOfPerson": "{name} as publisher",
-      "matrix.pubOfPersonTitle": "A part of the column of {name}: MusicBrainz links a publisher to a work as a label – the label of this name, found by its name (or “Create label …” in its entry)",
       "matrix.addColumn": "add as column",
       "matrix.menuTitle": "Roles of this cell",
       "matrix.ownDate": "Date of its own:",
@@ -6254,7 +6255,8 @@
     { id: 'S041', where: 'TEXT.parse (TEXT_MEMBERS, isTheBand; BANDCAMP.toRelease)', note: 'The members of the band: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – the release\'s artist (or "the band", "we") before "are", "is", "consists of" – each name a performer on all tracks, as a suggestion (names with capitals only); also from the "about" text of Bandcamp, which otherwise gives only places (3.30.7, T043)' },
     { id: 'S042', where: 'addNotesCompanies (TEXT.parse of the notes)', note: 'Discogs notes: the places they name ("All music recorded … at Orange Music Sound Studios in West Orange, New Jersey", "mastered … at Turtle Tone Studio in New York City") are added, read like a pasted text – unless Discogs lists the place with that role already; listed with another role, Discogs\'s entry gets it (3.30.8)' },
     { id: 'S043', where: 'TEXT.parse (PUBLISHER_HEAD, SOCIETY_AFTER_NAME, SOCIETY_LINE), addNotesCompanies, resolveArtists', note: 'Publishers below a heading ("[Publishers & Rights Societies]", "Publishers:", "Publishing (all BMI):") – one per line with its rights society and tracks ("FlizmoMusic-BMI : tracks 2, 4, 5"; outside a block a line with a society after the name too): publishing on those tracks; the society (T045) is the release\'s rights society, once each, also from "Published by X (BMI)" and a line of societies only ("BIEM/GEMA"). In the Discogs notes the tracks go onto Discogs\'s publisher of that name (also written together or with a number as a word, T046) as suggestions; publishers and societies not found through their link are searched by name (3.31.0)' },
-    { id: 'S044', where: 'matrixColumns (personPublishers), columnHeadHtml, cellHtml', note: 'A person as publisher: a publisher with the name of a person of the works matrix ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is a part of the person\'s column, right after it – with its own label, since MusicBrainz links a publisher to a work as a label (looked for by the name, S043; 3.31.0)' },
+    { id: 'S044', where: 'mergePersonPublishers, computePublisherEvidence, roleCell', note: 'A person as publisher: a publisher with the name of a person of the dashboard ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is no company – its publishing becomes a role of the person (artist–work "publishing", MusicBrainz\'s "published / publisher"), in the person\'s column of the works matrix next to writer or composer; the company entry is left out, the row says that Discogs lists it as a company; without tracks of its own, the works the person writes are suggested (3.31.5; 3.31.0–3.31.4: a part of the person\'s column with a label of its own)' },
+    { id: 'S048', where: 'personLikeName, suggestByName, matchHtmlInner, startCompanyCreate', note: 'A publisher with the name of a person and no entry of the dashboard (two to four words with capitals, no word of a company such as "Music", "Publishing", "Songs", no legal form – T044): MusicBrainz\'s artists of that name are offered first and "Create artist …"; when MusicBrainz has an artist of exactly that name, a label of that name only when its type is "Publisher", and no "Create label …" (otherwise both, as the name may be a company\'s: "Pub House") (3.31.5)' },
     { id: 'S047', where: 'mapRoleInner', note: 'The kind of engineer said twice: "Engineer [Recording Engineer]" is read as "Engineer [Recording]" – recording without role credit; "[Mix Engineer]" mix, "[Mastering Engineer]" mastering, "[Assistant Engineer]" engineer with "assistant", "[Sound Engineer]" sound engineer (3.31.3)' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
@@ -6352,7 +6354,9 @@
     [/^edited for/, { id: 'C028', label: ['edited for'], level: 'release' }],
     [/^arranged for/, { id: 'C029', label: ['arranged for'], level: 'release' }],
     [/^transferred at/, { id: 'C030', place: ['transferred at'], level: 'release' }],
-    [/^published by/, { id: 'C031', label: ['publishing'], artist: ['publishing'], level: 'work' }],
+    // [3.31.5] collected item 112 (maintainer: "bei publishing relationships von Labeln muss auch angeboten werden, dass sie auf
+    // release oder work ebene stattfinden können"): on the works by default; on the release a label is "published"
+    [/^published by/, { id: 'C031', label: ['publishing', 'published'], artist: ['publishing'], level: 'work' }],
     [/^commissioned by/, { id: 'C037', label: ['commissioned'], artist: ['commissioned'], level: 'work' }],
     [/^rights society/, { id: 'C032', label: ['rights society'], level: 'release' }],
     [/^designed (by|at)/, { id: 'C033', label: ['design'], artist: ['design'], level: 'release' }],
@@ -9971,7 +9975,9 @@
   // --- Relationship types and attributes from MB.linkedEntities ---------------
 
   let IDX = null;
-  const GROUPING_TYPES = new Set(['performance', 'remixes and compilations', 'production']);
+  // [3.31.5] label–release "publishing" is a grouping too (its child "published" is chosen; label–work "publishing" has a
+  // description and stays)
+  const GROUPING_TYPES = new Set(['performance', 'remixes and compilations', 'production', 'publishing']);
 
   function dedupeById(values) {
     const map = new Map();
@@ -10608,6 +10614,8 @@
       if (row.primaryText && byHeadNoun(row.base, row.primaryText, row.mods)) ids.push('S035');
     }
     const a = S.artists.get(row.artistKey);
+    if (row.pubFromCompany) ids.push('S044');
+    if (a && personPublisher(a)) ids.push('S048');
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
     // [3.28.3] no "credited as", because only the case differs (S031)
     if (a && a.mbid && !norm(row.credit) && !row.creditTouched && !row.manual && caseOnlyName(row, a)) ids.push('S031');
@@ -13641,7 +13649,8 @@
           const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
           row.dAllTracks = !some;
           row.tracks = new Set(some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx());
-          if (some && r.tracks.spec) row.dSpec = r.tracks.spec;
+          // [3.31.5] the tracks it names (not a catalog number: "Catalog number on Discogs: 1, 3" before)
+          if (some && r.tracks.spec) Object.assign(row, { dSpec: r.tracks.spec, dSpecTracks: true });
           if (some && !row.tracks.size) continue;
           row.suggested = new Set(row.tracks);
           // [S043] (3.31.0) a publisher's tracks from the Discogs notes: suggestions (dashed, yellow), the line as the reason
@@ -13650,7 +13659,7 @@
             row.suggest = { source: 'notes', tracks: new Set(row.tracks), text: r.notesLine };
             row.confirmed = new Set();
           }
-          if (r.catno) row.dSpec = r.catno;
+          if (r.catno) Object.assign(row, { dSpec: r.catno, dSpecTracks: false });
           if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
           suggestCommissioned(row);
           S.rows.push(row);
@@ -13660,6 +13669,8 @@
       for (const c of S.artists.values()) {
         if (c.company && c.area && !c.entityType && companyTypes(c).includes('place')) setCompanyEntityType(c, 'place');
       }
+      // [S044] (3.31.5) a person's publisher: a role of the person, not a company of its own
+      mergePersonPublishers();
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
       // [S026] nor entries whose credits were all left out for a medium
@@ -13720,8 +13731,6 @@
         // A text's own track lists are read with its credits (not again as notes)
         if (!S.source.readsTrackLists) applyNotesTrackCredits();
         if (S.trackPool.length !== pooled) renderDates();
-        // [S044] (3.31.0) a person's publisher: a part of the person's column in the works matrix
-        matrixColumns().filter((c) => c.ofPerson).forEach((c) => log('info', 'pubOfPerson', { name: c.name, person: c.personName }));
         await computePublisherEvidence();
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
@@ -13938,6 +13947,17 @@
           return fits.includes('same') ? 'same' : fits.includes('similar') ? 'similar' : '';
         };
         const isSociety = (x) => society && norm(x.type || '') === 'rights society';
+        // [S048] (3.31.5) a publisher with a person's name: MusicBrainz's artists of that name first (collected item 97b); when
+        // MusicBrainz has an artist of exactly that name, a label of it only of the type "Publisher" and no "Create label …"
+        const asPerson = type === 'label' && personPublisher(a);
+        if (asPerson) {
+          const pw = luceneWords(a.name);
+          const dataP = pw ? await mbWs(`artist?query=${encodeURIComponent(`artist:(${pw}) OR alias:(${pw})`)}&limit=25`) : null;
+          const people = (dataP && dataP.artists) || [];
+          a.personHit = people.some((x) => [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(n, a.name) === 'same'));
+          if (a.personHit) for (let k = items.length - 1; k >= 0; k--) if (norm(items[k].type || '') !== 'publisher') items.splice(k, 1);
+          [...people].reverse().forEach((x) => items.unshift({ ...x, asArtist: true }));
+        }
         // [3.31.2] a place in an area the source names (any part: "West Orange", "New Jersey") first; one elsewhere is similar
         const inArea = (x) => !areaParts.length || areaParts.some((p) => nameKey(p) === nameKey((x.area || {}).name || ''));
         const placeFit = (x) => { const f = fitOf(x); return f === 'same' && type === 'place' && areaParts.length && !inArea(x) ? 'similar' : f; };
@@ -13946,7 +13966,7 @@
         // [3.31.2] the city found at the end of the name is the entry's area ("(Köln)")
         if (placeArea && !a.area && hits.length) a.area = placeArea;
         // [3.15.2] all hits (the stack shows 5 and folds the rest behind "+ n more"; before, only 5 were kept)
-        a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: type, similar: fit === 'similar',
+        a.nameHits = hits.slice(0, 25).map(({ x, fit }) => ({ mbid: x.id, name: x.name, entityType: x.asArtist ? 'artist' : type, similar: fit === 'similar',
           disambiguation: [x.disambiguation, type === 'place' && x.area && x.area.name, ...(type === 'area' ? areaContext(x) : [])].filter(Boolean).join(', ') }));
         // [3.22.2] areas: the area each one shown is part of (48)
         if (type === 'area') {
@@ -14809,11 +14829,14 @@
   }
 
   function matchHtmlInner(a) {
-    const searchType = a.other ? a.entityType : a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
+    const searchType = a.other ? a.entityType : a.company ? (personPublisher(a) && a.personHit ? 'artist' : a.entityType || companyTypes(a)[0] || 'label') : 'artist';
     const searchUrl = `/search?query=${encodeURIComponent(a.name)}&type=${searchType}&method=indexed`;
     const createButtons = a.other ? (CREATABLE.includes(a.entityType) ? `<button type="button" data-act="other-create">${esc(tr('match.createOther', { type: tr(`entity.${a.entityType}`) }))}</button>` : '') : a.company
       // [3.22.0] areas are added by MusicBrainz's area editors only: no "Create", a hint (S028)
-      ? companyTypes(a).filter((et) => et !== 'area').map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' ')
+      // [S048] (3.31.5) a publisher with a person's name: "Create artist …" – only that when MusicBrainz has an artist of exactly
+      // that name (no label for a person); otherwise beside "Create label …" (the name may be a company's)
+      ? (personPublisher(a) ? `<button type="button" data-act="company-create" data-et="artist">${esc(tr('match.create'))}</button> ` : '')
+        + (personPublisher(a) && a.personHit ? '' : companyTypes(a).filter((et) => et !== 'area').map((et) => `<button type="button" data-act="company-create" data-et="${et}">${esc(tr(et === 'place' ? 'match.createPlace' : 'match.createLabel'))}</button>`).join(' '))
         + (companyTypes(a).includes('area') ? `<span class="dci-sub">${esc(tr('match.areaNoCreate'))}</span>` : '')
       : `<button type="button" data-act="artist-create">${esc(tr('match.create'))}</button>`;
     const editor = (labelKey) => `
@@ -14936,7 +14959,13 @@
   }
 
   /** [3.30.2] The rows of an entry the dashboard shows (work-level roles are in the works matrix only). */
-  const shownRowsOf = (a) => S.rows.filter((r) => r.artistKey === a.key && r.level !== 'work' && (S.mxSkipRows || !r.mxSkipped));
+  const shownRowsOf = (a) => S.rows.filter((r) => r.artistKey === a.key && inEntry(r) && (S.mxSkipRows || !r.mxSkipped));
+  /**
+   * Work-level rows are shown in the works matrix only; [3.31.5] a publisher's row also in its entry, so that its level can
+   * be chosen there – on the works or on the release (collected item 112: "wir haben ja bereits die möglichkeit in der
+   * kompakt info das durchzuklicken. so soll das laufen.").
+   */
+  const inEntry = (r) => r.level !== 'work' || isPublishingRow(r);
 
   /**
    * [3.30.2] The arrow in the head of an entry in the compact view (item 82b; maintainer: "ja bitte gib mir den Pfeil"):
@@ -14971,7 +15000,7 @@
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
     // skipped with the works matrix only with the setting (on)
-    const rows = allRows.filter((r) => r.level !== 'work' && (S.mxSkipRows || !r.mxSkipped));
+    const rows = allRows.filter((r) => inEntry(r) && (S.mxSkipRows || !r.mxSkipped));
     const mxHidden = allRows.filter((r) => r.mxSkipped && !S.mxSkipRows).length;
     const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
     // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again)
@@ -14994,7 +15023,7 @@
             <tbody>${rows.map(rowHtml).join('')}</tbody>
           </table>
         </div>
-        ${allRows.some((r) => r.level === 'work') ? `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>` : ''}
+        ${allRows.some((r) => r.level === 'work' && !isPublishingRow(r)) ? `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>` : ''}
         ${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}
         <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>
       </section>`;
@@ -15034,9 +15063,9 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}
-        <div class="dci-sub">${esc(tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}
+        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
-        ${row.dSpec ? `<div class="dci-sub">${esc(tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
+        ${row.dSpec ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
     const where = [];
     if (row.dSpec) where.push(row.dSpec);
@@ -17702,24 +17731,26 @@
 
   function startCompanyCreate(company, entityType) {
     const params = [[`edit-${entityType}.name`, company.name]];
-    if (srcUrlOf(company)) {
+    // [S048] (3.31.5) a person as publisher: the artist form, without the source's page of a label
+    const person = entityType === 'artist';
+    if (srcUrlOf(company) && !person) {
       params.push([`edit-${entityType}.url.0.text`, srcUrlOf(company)]);
       params.push([`edit-${entityType}.url.0.link_type_id`, String(sourceUrlLtId(entityType))]);
     }
     // [3.21.3] a name from a text: the web profiles found next to it (T032, 37c)
     const web = company.dId ? [] : (company.links || []).filter((u) => /^https?:\/\//i.test(u));
-    web.forEach((u, i) => params.push([`edit-${entityType}.url.${i + (srcUrlOf(company) ? 1 : 0)}.text`, u]));
+    web.forEach((u, i) => params.push([`edit-${entityType}.url.${i + (srcUrlOf(company) && !person ? 1 : 0)}.text`, u]));
     params.push([`edit-${entityType}.edit_note`, [
       srcUrlOf(company) ? `Source: ${srcUrlOf(company)}` : '',
       prefilledBy(true),
     ].filter(Boolean).join('\n')]);
     // [3.21.3] without a link of the source (a text): the name and the web links found next to it
-    const what = srcUrlOf(company) ? tr('companyDlg.prefilled')
+    const what = srcUrlOf(company) && !person ? tr('companyDlg.prefilled')
       : tr('artistDlg.prefilled', { list: [tr('part.name'), ...(web.length ? [tr('part.webUrls', { n: web.length })] : [])].join(', ') });
-    const info = `<p>${esc(what)}</p><p>${esc(tr(entityType === 'place' ? 'companyDlg.checkPlace' : 'companyDlg.checkLabel'))}</p>`;
+    const info = `<p>${esc(what)}</p><p>${esc(tr(person ? 'artistDlg.check' : entityType === 'place' ? 'companyDlg.checkPlace' : 'companyDlg.checkLabel'))}</p>`;
     log('info', 'companyForm', { name: company.name, type: tr(`entity.${entityType}`) });
     openCreateDialog({
-      title: tr(entityType === 'place' ? 'companyDlg.titlePlace' : 'companyDlg.titleLabel', { name: company.name }),
+      title: tr(person ? 'artistDlg.title' : entityType === 'place' ? 'companyDlg.titlePlace' : 'companyDlg.titleLabel', { name: company.name }),
       url: `/${entityType}/create?${toQuery(params)}`,
       entityType,
       infoHtml: info,
@@ -18314,34 +18345,61 @@
         }
       }
     }
-    return personPublishers([...cols.values()]);
+    return [...cols.values()];
   }
 
   /** [S044] The names of an entry: at the source, in MusicBrainz, credited as, other spellings. */
   const entryNames = (a) => [a.name, a.mbName, a.rawName, ...(a.anvs || []), ...(a.altNames || [])].filter(Boolean);
 
   /**
-   * [S044] (3.31.0) A person as publisher (collected item 97; maintainer: "das soll in der Personen Spalte ergänzt werden.
-   * Eine Label Abfrage mit dem Namen ist nicht schlecht."): a publisher with the name of a person of the works matrix
-   * ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is a part of the person's column, right after
-   * it (`ofPerson`). MusicBrainz links a publisher to a work as a label, so this part keeps its own label – looked for by
-   * the name (S043). Columns taken out stay where they are.
+   * [S044] (3.31.5) A person as publisher (collected item 97b; maintainer: "Doch Person gibt es als Publisher in MB mit dem
+   * artist/work relationship "published / publisher" bitte nicht create label für personen anbieten! in discogs ist die
+   * logik da anders und personen publisher werden als labels geführt."): a company whose publishing rows carry the name of a
+   * person of the dashboard ("Published By – Tomas Fujiwara", the notes' "Tomas Fujiwara-BMI : tracks 1, 6, 8") gives those
+   * rows to the person – artist–work "publishing", in the person's column of the works matrix; the company entry is left
+   * out when nothing else is left of it. (3.31.0–3.31.4: a part of the person's column with a label of its own.)
    */
-  function personPublishers(cols) {
-    if (!ruleOn('S044')) return cols;
-    const persons = cols.filter((c) => c.artist && !c.artist.company && !c.removed);
-    const subs = [];
-    for (const c of cols) {
-      if (!c.artist || !c.artist.company || c.removed || !c.rows.some(isPublishingRow)) continue;
-      const keys = new Set(entryNames(c.artist).map((n) => looseName(n)).filter(Boolean));
-      const p = persons.find((x) => entryNames(x.artist).some((n) => keys.has(looseName(n))));
+  function mergePersonPublishers() {
+    if (!ruleOn('S044')) return 0;
+    const persons = [...S.artists.values()].filter((a) => !a.company && !a.other);
+    let n = 0;
+    for (const c of [...S.artists.values()].filter((x) => x.company && !x.other)) {
+      const pub = S.rows.filter((r) => r.artistKey === c.key && r.company && r.ruleId === 'C031');
+      if (!pub.length) continue;
+      const keys = new Set(entryNames(c).map((x) => looseName(x)).filter(Boolean));
+      const p = persons.find((x) => entryNames(x).some((y) => keys.has(looseName(y))));
       if (!p) continue;
-      Object.assign(c, { ofPerson: p.key, personName: p.name });
-      p.hasPub = true;
-      subs.push(c);
+      for (const r of pub) {
+        Object.assign(r, { artistKey: p.key, entityType: 'artist', types: (r.typeOptions && r.typeOptions.artist) || ['publishing'], linkTypeId: null,
+          pubFromCompany: c.rawName || c.name, credit: '' });
+        if (!r.levelTouched) r.level = r.defaultLevel;
+        resolveRowType(r);
+      }
+      if (!S.rows.some((r) => r.artistKey === c.key)) S.artists.delete(c.key);
+      log('info', 'pubOfPerson', { name: c.rawName || c.name, person: p.name });
+      n++;
     }
-    return subs.length ? cols.filter((c) => !c.ofPerson).flatMap((c) => [c, ...subs.filter((x) => x.ofPerson === c.key)]) : cols;
+    return n;
   }
+
+  /**
+   * [S048] (3.31.5) A name that looks like a person's (collected item 97b): two to four words, each with a capital (an
+   * initial, "van", "de" … between them), no digits, no word of a company and no legal form (T044).
+   */
+  const NAME_PARTICLES = new Set(['van', 'von', 'de', 'der', 'den', 'del', 'della', 'di', 'da', 'du', 'la', 'le', 'y', 'e', 'bin', 'ibn', 'al']);
+  const COMPANY_NAME_WORD = /\b(music|musik|musique|música|musica|publishing|publishers?|publications?|songs|tunes|records|recordings|editions?|verlag|productions?|entertainment|media|group|company|corporation|rights|catalogu?e|works|sounds?|label|international|ventures|holdings|enterprises?|administration|admin|society|studios?|chorus|orchestra|ensemble|quartet|trio|band)\b/i;
+  function personLikeName(name) {
+    const n = String(name || '').trim();
+    if (!n || /\d/.test(n) || COMPANY_NAME_WORD.test(n) || withoutCompanyForm(n) !== n) return false;
+    const words = n.split(/\s+/);
+    if (words.length < 2 || words.length > 4) return false;
+    if (words.some((w) => COMPANY_KIND_END.test(w))) return false;
+    return words.every((w, k) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || (k > 0 && k < words.length - 1 && NAME_PARTICLES.has(w.toLowerCase())));
+  }
+
+  /** [S048] A company entry that only publishes and carries a person's name: offered as an artist. */
+  const personPublisher = (a) => ruleOn('S048') && a.company && !a.other && personLikeName(a.name)
+    && S.rows.some((r) => r.artistKey === a.key) && S.rows.filter((r) => r.artistKey === a.key).every((r) => r.ruleId === 'C031');
 
   const isPublishingRow = (row) => norm(rowTypeName(row)) === 'publishing';
   /**
@@ -18365,7 +18423,7 @@
       active: fresh,
       reason: ev && ev.evidence && ev.evidence.get(mrow.i),
       hint: ev && ev.hints && ev.hints.get(mrow.i),
-      unclear: isPublisherCol(col) && !fresh.length && !existing.length,
+      unclear: isPublisherCol(col) && col.entityType !== 'artist' && !fresh.length && !existing.length,
     };
   }
 
@@ -18664,6 +18722,23 @@
     // [S014] switched off: publishers keep the works Discogs gives them (the whole release)
     for (const col of ruleOn('S014') ? cols.filter(isPublisherCol) : []) {
       const a = col.artist;
+      // [S044] (3.31.5) a person's publishing: the works the person writes (in the dashboard or in MusicBrainz) are suggested
+      if (col.entityType === 'artist' && a) {
+        const evidence = new Map();
+        for (const t of S.mbTracks) {
+          const own = S.rows.some((r) => r.artistKey === a.key && r.level === 'work' && r.tracks.has(t.idx) && WRITER_TYPES.includes(norm(rowTypeName(r))));
+          if (own || (col.mbid && writerMbidsOfTrack(t.idx).has(col.mbid))) evidence.set(t.idx, col.name);
+        }
+        for (const row of col.rows) {
+          if (isPublishingRow(row) && !row.pubTouched && !row.notesTracks && row.dAllTracks !== false) {
+            row.tracks = new Set(evidence.keys());
+            row.suggest = { source: 'evidence', tracks: new Set(evidence.keys()) };
+          }
+        }
+        a.pubEvidence = { state: 'self', evidence, hints: new Map(), count: evidence.size };
+        log('info', 'pubEvidence', { name: col.name, n: evidence.size });
+        continue;
+      }
       if (!col.mbid || col.entityType !== 'label') {
         // Not in MusicBrainz (or not a label): no evidence, so no work is ticked by itself
         a.pubEvidence = { state: col.mbid ? 'unsupported' : 'unmatched', evidence: new Map(), hints: new Map() };
@@ -19288,12 +19363,12 @@
           `${rowTypeName(r)}${date}${why}`);
       }),
     ].join('');
-    const title = st.reason ? tr('matrix.reason', { names: st.reason, publisher: col.name })
+    const title = st.reason ? tr(col.entityType === 'artist' ? 'matrix.reasonSelf' : 'matrix.reason', { names: st.reason, publisher: col.name })
       : st.hint ? tr('matrix.hint', { list: st.hint }) : st.unclear ? tr('matrix.unclear') : '';
     const collapsed = S.mxCollapsed.has(col.key) || col.removed;
     const menuOpen = S.mxMenu && S.mxMenu.col === col.key && S.mxMenu.mrow === mrow.key;
     const cls = ['dci-mx-cell', st.existing.length ? 'dci-mx-mb' : '', st.active.length ? 'dci-mx-on' : '', sugg.length ? 'dci-mx-sugg' : '', st.unclear ? 'dci-mx-unclear' : '', col.mbOnly ? 'dci-mx-locked' : '',
-      col.ofPerson ? 'dci-mx-subcell' : '', col.hasPub ? 'dci-mx-hassub' : ''].filter(Boolean).join(' ');
+    ].filter(Boolean).join(' ');
     if (collapsed) return `<td class="${cls} dci-mx-collapsed" title="${esc(title)}">${st.existing.length || st.active.length ? '•' : ''}</td>`;
     // Dates for the relationships already in MusicBrainz (an edit of each), with × to take them back until staged
     const fills = fillsOfCell(col, mrow).map(([key, f]) => {
@@ -19371,7 +19446,7 @@
     let pubMenu = '';
     if (isPublisherCol(col)) {
       const ev = a.pubEvidence || {};
-      const status = ev.state === 'checked' ? tr('matrix.pubCount', { n: ev.count }) : ev.state === 'none' ? tr('matrix.pubNone')
+      const status = ev.state === 'self' ? tr('matrix.pubSelf', { name: col.name, n: ev.count }) : ev.state === 'checked' ? tr('matrix.pubCount', { n: ev.count }) : ev.state === 'none' ? tr('matrix.pubNone')
         : ev.state === 'unmatched' ? tr('matrix.pubUnmatched') : ev.state === 'unsupported' ? tr('matrix.pubNone') : '';
       pub += status ? `<span class="dci-info" title="${esc(status)}">ⓘ</span>` : '';
       pubMenu = `<div class="dci-sub">${esc(status)}</div>
@@ -19383,10 +19458,8 @@
       <button type="button" class="dci-textbtn" data-act="mx-pub-suggest" data-mbid="${esc(x.mbid)}" data-name="${esc(x.name)}">${esc(tr('matrix.addColumn'))}</button></div>`).join('');
     const r098 = col.rows.some((r) => r.ruleId === 'R098')
       ? `<button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="R098" title="${esc(tr('note.musicLyrics'))}">R098</button>` : '';
-    // [S044] (3.31.0) a person's publisher: part of the person's column, with its own label
-    const pubOf = col.ofPerson ? `<div class="dci-mx-pubof" title="${esc(tr('matrix.pubOfPersonTitle', { name: col.personName }))}">↳ ${esc(tr('matrix.pubOfPerson', { name: col.personName }))}</div>` : '';
-    return `<th scope="col" class="dci-mx-col${col.ofPerson ? ' dci-mx-subcol' : ''}${col.hasPub ? ' dci-mx-hassub' : ''}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-      ${pubOf}<div class="dci-mx-colname">${name} ${btns}</div>
+    return `<th scope="col" class="dci-mx-col" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+      <div class="dci-mx-colname">${name} ${btns}</div>
       <div class="dci-mx-roles">${roles}<span class="dci-sub">${esc(tr('matrix.colWorks', { n: nWorks }))}</span>${dateChip}${pub}${r098}${sugg.length
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}</div>
       <label class="dci-mx-credit">${esc(tr('matrix.colCredit'))} <input type="text" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10"></label>
@@ -21489,6 +21562,8 @@
         if (artist.company) setCompanyEntityType(artist, h.entityType);
         log('ok', 'artistManual', { name: artist.name, mb: h.name });
         if (artist.company) rerenderGroup(artist);
+        // [3.31.5] a publisher matched with an artist (S048): its column in the works matrix follows
+        if (artist.company && S.rows.some((r) => r.artistKey === artist.key && r.level === 'work')) renderWorks();
         else updateGroupHeader(artist);
         refresh();
         break;
@@ -24252,12 +24327,6 @@
       .dci-matrix thead .dci-mx-front { z-index: 3; background: var(--soft); font-weight: 600; }
       .dci-mx-col { min-width: calc(var(--u, 1px) * 170); max-width: calc(var(--u, 1px) * 240); font-weight: normal; }
       .dci-mx-col.dci-mx-collapsed, td.dci-mx-collapsed { min-width: 0; width: calc(var(--u, 1px) * 26); text-align: center; color: var(--muted); }
-      /* [S044] (3.31.0) a person's publisher: a part of the person's column (a dashed line between them, the part tinted) */
-      .dci-matrix th.dci-mx-hassub, .dci-matrix td.dci-mx-hassub { border-right: 1px dashed #cfc7e6; }
-      .dci-matrix th.dci-mx-subcol { min-width: calc(var(--u, 1px) * 130); }
-      .dci-matrix th.dci-mx-subcol .dci-mx-card { border-left: 3px solid #b9a7e6; background: #faf8ff; }
-      .dci-matrix td.dci-mx-subcell { background: #faf8ff; }
-      .dci-mx-pubof { font-size: calc(var(--u, 1px) * 11); color: var(--muted); }
       .dci-mx-colname { display: flex; gap: calc(var(--u, 1px) * 5); align-items: center; }
       .dci-mx-roles { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); }
       .dci-mx-col label { display: block; margin-top: calc(var(--u, 1px) * 2); }

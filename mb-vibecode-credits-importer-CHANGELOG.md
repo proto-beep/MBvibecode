@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.31.4 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.31.5 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -85,6 +85,21 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.31.5
+
+#### Changed
+
+- **A person as publisher is a role of the person** (collected item 97b; maintainer: "Doch Person gibt es als Publisher in MB mit dem artist/work relationship "published / publisher" bitte nicht create label für personen anbieten!"): a publisher with the name of a person of the dashboard ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8" in the notes) is no company of its own – MusicBrainz's artist–work "publishing", in the person's column of the works matrix; the row says that Discogs lists it as a company; without tracks of its own, the works the person writes are suggested (rule S044; 3.31.0–3.31.4: a part of the person's column with a label of its own).
+
+#### Added
+
+- **A publisher with a person's name** gets MusicBrainz's artists first and "Create artist …"; when MusicBrainz has an artist of exactly that name, a label of that name only when its type is "Publisher" and no "Create label …" (otherwise both, as the name may be a company's) (rule S048).
+- **Publishers on the works or on the release** (collected item 112; maintainer: "so soll das laufen", "ja bitte. es ist ja einfach ihn nicht zu verwenden"): a publisher's row shows in its entry too, on "Works" by default; its level can be changed there, in the compact view by a click on the level (Works → Skip → Release); on the release a label is "published".
+
+#### Fixed
+
+- The tracks a company has from a text or the notes ("1, 3") were shown as "Catalog number on Discogs: 1, 3"; now "Discogs: track 1, 3".
 
 ### Import 3.31.4
 

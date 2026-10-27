@@ -104,6 +104,12 @@ lt(165, '3e48faba-ec01-47fd-8e89-30e81161661c', 'lyricist', 'artist', 'work', (1
 lt(167, 'a255bca1-b157-4518-9108-7b147dc3fc68', 'writer', 'artist', 'work', (1,))
 lt(297, 'd3fd781c-5894-47e2-8c12-86cc0e2c8d08', 'arranger', 'artist', 'work', (1,))
 lt(208, 'c2b5f9b1-9b8b-4c45-8a2e-6b9c5f6a1b01', 'publishing', 'label', 'work', ())
+# [3.31.5] as on MusicBrainz: a person's publishing of a work (artist–work "publishing", "published / publisher"); on the
+# release a label is "published" – its parent "publishing" there is a grouping without a description
+lt(161, 'a442b140-830b-30b0-a4aa-2e36f098b6aa', 'publishing', 'artist', 'work', ())
+lt(32, '25858332-bf31-4ad6-85b6-6a3bccebf02e', 'published', 'label', 'release', ())
+lt(359, 'cee6eeeb-14f5-4079-9789-632b46acfd33', 'publishing', 'label', 'release', ())
+LTS[359]['description'] = ''
 lt(711, '7387c5a2-9abe-4515-b667-9eb5ed4dd4ce', 'phonographic copyright', 'label', 'release', ())
 lt(708, '2ed5b5e5-1a2b-4c8b-9b5b-1c2d3e4f5a6b', 'copyright', 'label', 'release', ())
 lt(693, 'ad462279-14b0-4180-9b58-571d0eef7c51', 'recorded at', 'place', 'recording', ())
