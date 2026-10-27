@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.31.0, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.31.1, Companion 1.6.0 – 1.9.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.31.1 · 2026-10-25
+
+The smoke tests merged (collected item 103, block R). The script changes only its version (`@version`, `VERSION`).
+
+- **New `smoke/caserun.py`:** `run_cases(globals())` runs the functions `case_<name>()` of a test file in order (or those named on the command line); a stand-in `sync_playwright` gives every case the one browser of the file (`launch()` returns a proxy whose `close()` closes only the case's contexts; `PW = sync_playwright().start()` … `PW.stop()` works the same); what a case changes in `harness` (module values, dicts, lists, sets, reassigned functions such as `discogs_release`) and the shared storage `STORE` are set back after it; each case gets "== name: OK/FEHLER (n s)" from the line "Ergebnis: …" it printed (an exception: its traceback, the case failed); the file ends with "Ergebnis: OK [n Fälle]" or the names of the failed cases.
+- **Topic files** (21): `t_text_basics`, `t_text_languages`, `t_text_places`, `t_notes_companies`, `t_notes_dates`, `t_dates_matrix`, `t_works_matrix`, `t_works_more`, `t_mapping`, `t_rules_window`, `t_ui_head`, `t_ui_settings`, `t_ui_view`, `t_ui_place`, `t_sources`, `t_sources_bandcamp`, `t_media_choice`, `t_start`, `t_companion_discogs`, `t_companion_bandcamp`, `t_static` – each case the former `t_<name>.py`, its code unchanged (indented; its docstring as the case's), the imports of `sync_playwright` and `harness` once per file. Kept as files of their own: `t_register.py`, `t_textcorpus.py` (golden tests) and `t_ar`, `t_artwork`, `t_basic`, `t_focus`, `t_release` (compared with logs of an older version). The 89 former files are removed.
+- **`harness.py`:** `MB_GAP` (environment `DCI_MB_GAP`, default 25 ms; 0 = the script's own 1100 ms): the copy of the script the tests load (`MAIN`) asks the mock MusicBrainz with that gap – an import takes ~1 s instead of ~11 s; `MAIN_SLOW` is the script unchanged. With the script's gap: the cases `artistworks` (a message after 10 s, no redraw while typing) and `logplace` (the last line of the log), and the five comparisons with older logs.
+- **`t_textcorpus.py` / `text_corpus.json`:** a line may name the release's artists (`artists`, S041) and its number of tracks (`tracks`: "1, 3" are tracks then; the companies show their tracks); the company roles of the test also know "rights society"; six lines more (Sounds, band members, ℗ / ©, places from the notes with "Including a 52 p. booklet.", the publishers block, "Published by Z Songs (ASCAP)" and "BIEM/GEMA").
+- **`README-tests.md`** written anew: the files with their cases (the former descriptions), running single cases, the gap, a table "former test → file and case".
 
 ## Import 3.31.0 · 2026-10-25
 
