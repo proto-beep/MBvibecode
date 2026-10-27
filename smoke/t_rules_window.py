@@ -325,7 +325,8 @@ def case_quickswitch():
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
         pg.wait_for_timeout(1200)
         groups = pg.evaluate("[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim())])")
-        cols = pg.evaluate("[...document.querySelectorAll('.dci-matrix th[data-colhead] .dci-mx-colname')].map(x => x.textContent.replace(/^MB/, '').trim().split(/\\s/).slice(0, 2).join(' '))")
+        # [3.32.4] the name only (the head has the tag of its kind before it)
+        cols = pg.evaluate("[...document.querySelectorAll('.dci-matrix th[data-colhead] .dci-mx-colname')].map(x => (x.querySelector('.dci-mblink, strong') || x).textContent.replace(/^MB/, '').trim().split(/\\s/).slice(0, 2).join(' '))")
         print('E) Einträge:', groups, '| Spalten:', cols)
         names = [g[0] for g in groups]
         results.append('BMI' in names and 'GEMA' in names and dict(groups).get('BMI') == ['Rights Society'] and dict(groups).get('GEMA') == ['Rights Society']

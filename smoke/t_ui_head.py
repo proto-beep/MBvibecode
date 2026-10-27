@@ -152,9 +152,10 @@ def case_head():
 def case_entryhead():
     """Credits Importer 3.28.0: the head of an entry and the bar below "Import credits …" (collected items 61, 66).
     A) Only the tag of the source links to it (with ↗; its tooltip names the source's name) – the name is not repeated.
-    B) How the dashboard credits the entry: "as “B. Man”" (Discogs credits Bass Man as "B. Man" on this release), the
-       tooltip lists the credits; the MusicBrainz name (no "credited as") – no chip. A row credited otherwise: "as “B. Man”
-       (+1)" at the head, the compact line of each row names its own credit.
+    B) How the dashboard credits the entry: [3.32.2] the head shows the release's spelling "B. Man*" (Discogs credits Bass
+       Man as "B. Man" on this release; collected item 100), its tooltip "Discogs: Bass Man", no chip "as “B. Man”" (until
+       3.32.1: the name "Bass Man" and the chip); the MusicBrainz name (no "credited as") – no chip. A row credited otherwise:
+       "as “Bassman”" at the head (the spelling of the head not again), the compact line of each row names its own credit.
     C) The bar below "Import credits …" (with the companion): the status as a badge (source link, "open in background")
        and ⚙ – no switches of the navigation any more; ⚙ opens the settings of the dashboard at "Discogs and Bandcamp view" ([3.30.5] "Source pages")."""
     orig = H.discogs_release
@@ -170,9 +171,11 @@ def case_entryhead():
 
 
     H.discogs_release = rel
-    HEAD = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
-  if (!g) return null; const a = g.querySelector('.dci-dglink'); const c = g.querySelector('.dci-gcredit');
-  return { link: a ? [a.textContent, a.getAttribute('href'), a.title] : null, chip: c && !c.hidden ? [c.textContent.trim(), c.title] : null }; }"""
+    HEAD = """(name) => { const nm = (s) => { const x = s.querySelector('.dci-gname strong'); return x.dataset.name || x.textContent.trim(); };
+  const g = [...document.querySelectorAll('section.dci-group')].find(s => nm(s) === name);
+  if (!g) return null; const a = g.querySelector('.dci-dglink'); const c = g.querySelector('.dci-gcredit'); const st = g.querySelector('.dci-gname strong');
+  return { link: a ? [a.textContent, a.getAttribute('href'), a.title] : null, chip: c && !c.hidden ? [c.textContent.trim(), c.title] : null,
+    shown: [st.textContent.trim(), st.title || ''] }; }"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -190,7 +193,7 @@ def case_entryhead():
         results.append(a1['link'] == ['Discogs↗', 'https://www.discogs.com/artist/3002', 'Open on Discogs: Guitar Guy'] and a1['chip'] is None)
         # B)
         b1 = head('Bass Man')
-        sec = "section.dci-group:has(.dci-gname strong:text-is('Bass Man'))"
+        sec = "section.dci-group:has(.dci-gname strong[data-name='Bass Man'])"
         rows = pg.locator(f'{sec} tr.dci-row')
         print('B) Bass Man:', b1, '| Zeilen:', rows.count())
         first = rows.nth(0).locator('[data-f=credit]')
@@ -200,12 +203,11 @@ def case_entryhead():
         b2 = head('Bass Man')
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(400)
-        lines = pg.evaluate(f"[...document.querySelectorAll(\"section.dci-group\")].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man')"
-                            ".querySelectorAll('.dci-cl-as').length")
+        lines = pg.evaluate(f"document.querySelector(\"{sec}\").querySelectorAll('.dci-cl-as').length")
         pg.click('.dci-head [data-act=view-toggle]')
         print('   anders credited:', b2, '| Zeilen mit eigenem Credit (kompakt):', lines)
-        results.append(b1['chip'] and b1['chip'][0] == 'as “B. Man”' and '“B. Man”' in b1['chip'][1]
-                       and b2['chip'] and b2['chip'][0] in ('as “Bassman” (+1)', 'as “B. Man” (+1)') and lines == 2)
+        results.append(b1['shown'] == ['B. Man*', 'Discogs: Bass Man'] and b1['chip'] is None
+                       and b2['chip'] and b2['chip'][0] == 'as “Bassman”' and lines == 2)
         # C) the bar below "Import credits …"
         pg.click('.dci-head [data-act=close]')
         pg.wait_for_timeout(300)
