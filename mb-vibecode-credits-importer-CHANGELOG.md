@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.31.5 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.31.6 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -85,6 +85,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.31.6
+
+#### Changed
+
+- **Tracks from the Discogs notes are set** (collected item 97c; maintainer: "Tracks aus den Discogs Notizen: ja setze sie fest. mache in diesem fall ein kleines info zeichen woher die tracks stammen.", "für alles was in texten erkannt wird"): the track lists of the notes ("XYZ Publishing (1, 4, 6)", "Published by X (tracks 1–3)", "Written by Y (2, 5)", rule S022) and of a block of publishers ("Tomas Fujiwara-BMI : tracks 1, 6, 8", rule S043) give the works their tracks firmly, no longer as yellow suggestions; **ⓘ** in the head of the column, in the title of each cell and at the row names the line they come from. Suggestions stay for the evidence from MusicBrainz (personal publishers), a person's own works (a person as publisher) and "Commissioned By" without a track list.
 
 ### Import 3.31.5
 

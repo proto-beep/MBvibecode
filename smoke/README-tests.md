@@ -128,6 +128,7 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     (one entry, one column, S044); MB suggestions written apart ("Four Word Sea Music"), the society
                                 #     first; as a text with "Published by X (ASCAP)" and "BIEM/GEMA" – there Tomas Fujiwara gets the
                                 #     MB artist and "Create artist …" (S048)
+                                #     [3.31.6] the tracks of the notes set, ⓘ at the row
                                 #   personpub: 3.31.5: a publisher's row in its entry, on Works; Release → label–release "published", out of
                                 #     the works matrix; compact view Works → Skip → Release → Works; "Published By – Jane Roe": the MB artist
                                 #     first, the label of the type Publisher too, not the other one, only "Create artist …"; chosen → artist column;
@@ -156,7 +157,7 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     works matrix cells that cannot take a date, work credits checked on the works (release page)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
-                                #   mxdrop: track lists from the Discogs notes as track groups and suggestions (✓ / ×), generous names;
+                                #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
                                 #     track groups dropped onto a column head (Shift adds), a role, an attribute of the works matrix
                                 #   matrixcols: "Directed By" asked, works matrix columns taken out / back, column dates for MB's dateless relationships
                                 #   fill: dates added to MB's dateless relationships from the works matrix (edit, ×, edit note),
