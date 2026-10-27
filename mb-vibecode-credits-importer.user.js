@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.0
+// @version      3.32.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -273,7 +273,7 @@
       "level.recording": "Recording",
       "level.release": "Release",
       "level.onlyHere": "MusicBrainz has this relationship only on this level ({level})",
-      "level.workSkipped": "The works matrix is skipped for this release (“Take works matrix again” in the works section brings the works level back)",
+      "level.workSkipped": "The works matrix is skipped for this release (“Take works again” in the works section brings the works level back)",
       "level.work": "Work",
       "level.skip": "Skip",
       "th.role": "{src} role",
@@ -1139,7 +1139,7 @@
       "media.worksTime": "looking up their works takes about {min} min (longer with large catalogues of the artists)",
       "media.works.yes": "Look up works",
       "media.works.no": "Not now",
-      "media.works.skip": "Skip works matrix",
+      "media.works.skip": "Skip works",
       "media.askHint": "You are asked before every import of this release.",
       "media.savedHint": "Preselected: the choice remembered for this release. You are still asked before every import.",
       "media.sum.one": "{m} of {all} media · {n} track",
@@ -1170,10 +1170,10 @@
       "matrix.searchCancel": "stop",
       "matrix.fold": "Fold the works matrix",
       "matrix.unfold": "Unfold the works matrix",
-      "matrix.skip": "Skip works matrix",
+      "matrix.skip": "Skip works",
       "matrix.skipTitle": "Nothing of the works matrix is created: no works, no links to works, no work relationships (writers, publishers, arrangers …); the work lookups rest. Kept for this release.",
       "matrix.skipped": "skipped",
-      "matrix.unskip": "Take works matrix again",
+      "matrix.unskip": "Take works again",
       "matrix.skippedHint": "Skipped for this release: nothing of the works matrix is staged – no works, no links to works, no work relationships (its rows are on “Skip”); what was staged of it is taken out of the editor. The work lookups rest.",
       "matrix.skippedRows.one": "{n} row on “Skip”",
       "matrix.skippedRows.other": "{n} rows on “Skip”",
@@ -1471,6 +1471,7 @@
       "dm.studios": "Studios limited to the tracks of their dates: {list}",
       "dm.autoPlaced.one": "{n} date from the notes was placed in the date matrix as a suggestion (dashed, yellow). Check it and click “Apply” to put it on the rows.",
       "dm.autoPlaced.other": "{n} dates from the notes were placed in the date matrix as suggestions (dashed, yellow). Check them and click “Apply” to put them on the rows.",
+      "log.poolsOpened": "Suggestions in the date matrix wait for “Apply”: “Dates & tracks” is open for this import",
       "dm.titlePlaced.one": "{n} date from the titles of the tracks was placed in the date matrix as a suggestion (Performance, with its tracks). Check it and click “Apply” to put it on the rows (rule D023).",
       "dm.titlePlaced.other": "{n} dates from the titles of the tracks were placed in the date matrix as suggestions (Performance, with their tracks). Check them and click “Apply” to put them on the rows (rule D023).",
       "log.titleDates": "Dates in the titles of the tracks (D023): {n} – {list}",
@@ -1804,7 +1805,7 @@
       "level.recording": "Recording",
       "level.release": "Release",
       "level.onlyHere": "MusicBrainz hat diese Beziehung nur auf dieser Ebene ({level})",
-      "level.workSkipped": "Die Werk-Matrix ist für dieses Release übersprungen („Werk-Matrix wieder nehmen“ im Werk-Bereich bringt die Werk-Ebene zurück)",
+      "level.workSkipped": "Die Werk-Matrix ist für dieses Release übersprungen („Werke wieder nehmen“ im Werk-Bereich bringt die Werk-Ebene zurück)",
       "level.work": "Werk",
       "level.skip": "Überspringen",
       "th.role": "{src}-Rolle",
@@ -2628,7 +2629,7 @@
       "media.worksTime": "ihre Werke abzufragen dauert etwa {min} Min. (länger bei großen Katalogen der Artists)",
       "media.works.yes": "Werke abfragen",
       "media.works.no": "Jetzt nicht",
-      "media.works.skip": "Werk-Matrix überspringen",
+      "media.works.skip": "Werke überspringen",
       "media.askHint": "Vor jedem Import dieses Releases wird gefragt.",
       "media.savedHint": "Vorausgewählt: die für dieses Release gemerkte Auswahl. Gefragt wird trotzdem vor jedem Import.",
       "media.sum.one": "{m} von {all} Medien · {n} Track",
@@ -2659,10 +2660,10 @@
       "matrix.searchCancel": "abbrechen",
       "matrix.fold": "Werk-Matrix zuklappen",
       "matrix.unfold": "Werk-Matrix aufklappen",
-      "matrix.skip": "Werk-Matrix überspringen",
+      "matrix.skip": "Werke überspringen",
       "matrix.skipTitle": "Von der Werk-Matrix wird nichts angelegt: keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen (Writer, Verlage, Arrangeure …); die Werk-Abfragen ruhen. Für dieses Release gemerkt.",
       "matrix.skipped": "übersprungen",
-      "matrix.unskip": "Werk-Matrix wieder nehmen",
+      "matrix.unskip": "Werke wieder nehmen",
       "matrix.skippedHint": "Für dieses Release übersprungen: von der Werk-Matrix wird nichts vorgemerkt – keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen (ihre Zeilen stehen auf „Skip“); was davon vorgemerkt war, wird aus dem Editor genommen. Die Werk-Abfragen ruhen.",
       "matrix.skippedRows.one": "{n} Zeile auf „Skip“",
       "matrix.skippedRows.other": "{n} Zeilen auf „Skip“",
@@ -3263,7 +3264,7 @@
       "level.recording": "Grabación",
       "level.release": "Publicación",
       "level.onlyHere": "MusicBrainz tiene esta relación solo en este nivel ({level})",
-      "level.workSkipped": "La matriz de obras está omitida para esta publicación («Volver a tomar la matriz de obras» en la sección de obras devuelve el nivel de obra)",
+      "level.workSkipped": "La matriz de obras está omitida para esta publicación («Volver a tomar las obras» en la sección de obras devuelve el nivel de obra)",
       "level.work": "Obra",
       "level.skip": "Omitir",
       "th.role": "Rol en {src}",
@@ -4087,7 +4088,7 @@
       "media.worksTime": "buscar sus obras tarda unos {min} min (más con catálogos grandes de los artistas)",
       "media.works.yes": "Buscar obras",
       "media.works.no": "Ahora no",
-      "media.works.skip": "Omitir la matriz de obras",
+      "media.works.skip": "Omitir obras",
       "media.askHint": "Se pregunta antes de cada importación de esta publicación.",
       "media.savedHint": "Preseleccionado: la selección recordada para esta publicación. Aun así se pregunta antes de cada importación.",
       "media.sum.one": "{m} de {all} medios · {n} pista",
@@ -4118,10 +4119,10 @@
       "matrix.searchCancel": "detener",
       "matrix.fold": "Plegar la matriz de obras",
       "matrix.unfold": "Desplegar la matriz de obras",
-      "matrix.skip": "Omitir la matriz de obras",
+      "matrix.skip": "Omitir obras",
       "matrix.skipTitle": "No se crea nada de la matriz de obras: ni obras, ni enlaces a obras, ni relaciones de obra (autores, editoriales, arreglistas …); las búsquedas de obras descansan. Se guarda para esta publicación.",
       "matrix.skipped": "omitida",
-      "matrix.unskip": "Volver a tomar la matriz de obras",
+      "matrix.unskip": "Volver a tomar las obras",
       "matrix.skippedHint": "Omitida para esta publicación: no se prepara nada de la matriz de obras – ni obras, ni enlaces a obras, ni relaciones de obra (sus filas están en «Skip»); lo que estaba preparado de ella se quita del editor. Las búsquedas de obras descansan.",
       "matrix.skippedRows.one": "{n} fila en «Skip»",
       "matrix.skippedRows.other": "{n} filas en «Skip»",
@@ -4722,7 +4723,7 @@
       "level.recording": "Enregistrement",
       "level.release": "Parution",
       "level.onlyHere": "MusicBrainz n’a cette relation qu’à ce niveau ({level})",
-      "level.workSkipped": "La matrice des œuvres est ignorée pour cette parution (« Reprendre la matrice des œuvres » dans la section des œuvres rétablit le niveau œuvre)",
+      "level.workSkipped": "La matrice des œuvres est ignorée pour cette parution (« Reprendre les œuvres » dans la section des œuvres rétablit le niveau œuvre)",
       "level.work": "Œuvre",
       "level.skip": "Ignorer",
       "th.role": "Rôle {src}",
@@ -5546,7 +5547,7 @@
       "media.worksTime": "rechercher leurs œuvres prend environ {min} min (plus long avec de grands catalogues des artistes)",
       "media.works.yes": "Rechercher les œuvres",
       "media.works.no": "Pas maintenant",
-      "media.works.skip": "Ignorer la matrice des œuvres",
+      "media.works.skip": "Ignorer les œuvres",
       "media.askHint": "La question est posée avant chaque import de cette parution.",
       "media.savedHint": "Présélectionné : le choix mémorisé pour cette parution. La question est quand même posée avant chaque import.",
       "media.sum.one": "{m} sur {all} supports · {n} piste",
@@ -5577,10 +5578,10 @@
       "matrix.searchCancel": "arrêter",
       "matrix.fold": "Replier la matrice des œuvres",
       "matrix.unfold": "Déplier la matrice des œuvres",
-      "matrix.skip": "Ignorer la matrice des œuvres",
+      "matrix.skip": "Ignorer les œuvres",
       "matrix.skipTitle": "Rien de la matrice des œuvres n’est créé : ni œuvres, ni liens vers des œuvres, ni relations d’œuvre (auteurs, éditeurs, arrangeurs …) ; les recherches d’œuvres sont suspendues. Gardé pour cette parution.",
       "matrix.skipped": "ignorée",
-      "matrix.unskip": "Reprendre la matrice des œuvres",
+      "matrix.unskip": "Reprendre les œuvres",
       "matrix.skippedHint": "Ignorée pour cette parution : rien de la matrice des œuvres n’est préparé – ni œuvres, ni liens vers des œuvres, ni relations d’œuvre (ses lignes sont sur « Skip ») ; ce qui en était préparé est retiré de l’éditeur. Les recherches d’œuvres sont suspendues.",
       "matrix.skippedRows.one": "{n} ligne sur « Skip »",
       "matrix.skippedRows.other": "{n} lignes sur « Skip »",
@@ -13782,6 +13783,13 @@
       autoPlaceFoundDates();
       // [D023] (3.31.7) dates in the titles of the tracks (off until switched on)
       placeTitleDates();
+      // [3.32.1] suggestions waiting for "Apply" (collected item 109; maintainer: "automatisch dashboard aufklappen sofern
+      // daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das dashboard muss doch auf sein, damit Dates &
+      // Tracks sichtbar ist?"): the dashboard opens (if it is closed) and "Dates & tracks" with both pools – once for this
+      // import; what is remembered stays and counts again from the next import
+      S.poolsForce = dm().cells.some((c) => c.auto) ? { dates: true, tracks: true } : null;
+      if (S.poolsForce) log('info', 'poolsOpened');
+      if (S.poolsForce && S.overlay && S.overlay.hidden) openDashboard();
       if (source === DISCOGS) log('info', 'discogsLoaded', { id, artists: S.artists.size, n: S.rows.length });
       else log('info', 'sourceLoaded', { source: source.name, artists: S.artists.size, n: S.rows.length, u: (rel.unrecognized || []).length });
 
@@ -16257,7 +16265,8 @@
     m.cells.forEach((c) => { if (!c.alt) c.auto = false; });
     m.dirty = false;
     saveMatrix();
-    S.messages = S.messages.filter((x) => !x.dm && x.key !== 'dm.autoPlaced' && x.key !== 'dm.widened');
+    // [3.32.1] also the message about the dates from the titles (D023)
+    S.messages = S.messages.filter((x) => !x.dm && !['dm.autoPlaced', 'dm.widened', 'dm.titlePlaced'].includes(x.key));
     dmMessage('ok', 'dm.applied', { n: report.filled.size, cells: m.cells.length });
     if (report.split.length) dmMessage('info', 'trackpool.split', { list: uniq(report.split.map(rowShort)).join('; ') });
     if (report.limited.length) dmMessage('info', 'dm.studios', { list: uniq(report.limited.map(rowShort)).join('; ') });
@@ -16628,6 +16637,8 @@
   /** Dates & tracks are open: chosen once (remembered), otherwise open when there are dates; forms open it. */
   function poolsOpen() {
     if (S.poolForm || S.trackForm || S.poolClear) return true;
+    // [3.32.1] suggestions of this import wait for "Apply" (item 109): open, without changing what is remembered
+    if (S.poolsForce) return true;
     if (S.poolsOpen != null) return !!S.poolsOpen;
     return !!(S.datePool.length || dateFinds().notes.length);
   }
@@ -16699,8 +16710,11 @@
    * [3.30.3] The name of a pool, a button that folds it (item 93; maintainer: "bitte mach "Date pool" und "track pool" in
    * der mitscrollenden leiste oben auf und zuklappbar"); folded, only the name and the number of chips stay.
    */
+  /** [3.32.1] A pool folded (remembered), unless this import opened it for its suggestions (item 109). */
+  const poolFolded = (pool) => !!S.poolFold[pool] && !(S.poolsForce && S.poolsForce[pool]);
+
   function poolLabelHtml(pool, n) {
-    const folded = !!S.poolFold[pool];
+    const folded = poolFolded(pool);
     const name = tr(pool === 'dates' ? 'date.title' : 'trackpool.title');
     const t = tr(folded ? 'pools.unfoldOne' : 'pools.foldOne', { name });
     return `<button type="button" class="dci-pool-label dci-pool-fold" data-act="pool-fold" data-pool="${pool}" aria-expanded="${!folded}" title="${esc(t)}">${folded ? '▸' : '▾'} ${esc(name)}${folded ? ` <span class="dci-pool-n">(${n})</span>` : ''}</button>`;
@@ -16721,7 +16735,7 @@
     const suggHtml = suggestions.length ? `<span class="dci-date-sugg"><span class="dci-sub">${esc(tr('date.suggestions'))}</span>
       ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin) }))}</button>`).join(' ')}</span>` : '';
     const hint = S.datePool.length ? `<span class="dci-drag-hint" title="${esc(tr('date.dragHintTitle'))}">⠿ ${esc(tr('date.dragHint'))}</span>` : '';
-    if (S.poolFold.dates) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}</div>`;
+    if (poolFolded('dates')) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}</div>`;
     if (kept) {
       return `<div class="dci-dates-bar dci-pool-dates">${poolLabelHtml('dates', S.datePool.length)}${chips}${hint}</div>`;
     }
@@ -16745,7 +16759,7 @@
       <button type="button" class="dci-chip-main" data-act="tg-edit" data-id="${esc(g.id)}" title="${esc(tr('trackpool.editTitle'))}${trackGroupSuggested(g) ? ` – ${esc(tr('pools.suggested'))}` : ''}">
       ${esc(g.name)} <span class="dci-chip-count">${esc(tr('trackpool.count', { n: g.tracks.length }))}</span></button></span>`).join('');
     const hint = `<span class="dci-drag-hint" title="${esc(tr('trackpool.dragHintTitle'))}">⠿ ${esc(tr('trackpool.dragHint'))}</span>`;
-    if (S.poolFold.tracks) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}</div>`;
+    if (poolFolded('tracks')) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}</div>`;
     if (kept) return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}${hint}</div>`;
     // Several media: a whole medium (or one group per medium) in one step (of the chosen media)
     const media = selMedia();
@@ -17010,9 +17024,11 @@
         <span class="dci-tn">${esc(x.number)}</span> <span class="dci-tt">${esc(x.title)}</span></label>`;
     }).join('');
     return `<div class="dci-date-form dci-track-form" role="group" aria-label="${esc(tr('trackpool.formTitle'))}">
+      <div class="dci-tg-namerow">
       <label class="dci-pool-name">${esc(tr('date.name'))} <input type="text" data-f="tg-name" value="${esc(f.name)}" placeholder="${esc(tr('trackpool.namePlaceholder'))}" size="18"></label>
       <label class="dci-pool-name dci-tg-text">${esc(tr('trackpool.text'))} <input type="text" data-f="tg-text" value="${esc(f.text != null ? f.text : trackListLabel(f.tracks))}"
         placeholder="${esc(tr('trackpool.textPlaceholder'))}" size="22" autocomplete="off"></label>
+      </div>
       <div class="dci-picker"><div class="dci-chips">${chips}</div></div>
       <div class="dci-mbdate-tools">
         <button type="button" class="dci-apply dci-small" data-act="tg-save">${esc(tr('date.save'))}</button>
@@ -21901,7 +21917,9 @@
       // Dates & tracks
       case 'pool-fold': {
         const pool = btn.dataset.pool === 'tracks' ? 'tracks' : 'dates';
-        S.poolFold = { ...S.poolFold, [pool]: !S.poolFold[pool] };
+        // [3.32.1] opened for this import only: folded again as remembered
+        if (S.poolsForce && S.poolsForce[pool] && S.poolFold[pool]) delete S.poolsForce[pool];
+        else S.poolFold = { ...S.poolFold, [pool]: !S.poolFold[pool] };
         if (!S.poolFold[pool]) delete S.poolFold[pool];
         writeJson('localStorage', POOL_FOLD_KEY, Object.keys(S.poolFold).length ? S.poolFold : null);
         renderDates();
@@ -21911,6 +21929,7 @@
       }
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
+        S.poolsForce = null;
         S.poolForm = null;
         S.trackForm = null;
         S.poolClear = null;
@@ -24975,6 +24994,8 @@
       .dci-date-sugg { display: inline-flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin-left: calc(var(--u, 1px) * 8); }
       .dci-date-form { margin-top: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); background: #fff; border: 1px solid var(--line); border-radius: 3px; max-width: calc(var(--u, 1px) * 520); }
       .dci-date-form .dci-sub, .dci-date-form .dci-err { margin: calc(var(--u, 1px) * 4) 0 0; }
+      /* [3.32.1] "Tracks:" right of "Name:" in the form of a track group, below it in a narrow window (collected item 90b) */
+      .dci-tg-namerow { display: flex; flex-wrap: wrap; align-items: center; column-gap: calc(var(--u, 1px) * 16); }
       .dci-pool-name { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-bottom: calc(var(--u, 1px) * 6); color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
       .dci-apply.dci-small { padding: 3px calc(var(--u, 1px) * 12); }
       .dci-dates > .dci-sub { margin: calc(var(--u, 1px) * 4) 0 0; }

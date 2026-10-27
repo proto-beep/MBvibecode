@@ -156,6 +156,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     bars of the works matrix (above it; at the bottom while its lower edge is out of view), moving together
                                 #   tracksdrop: track groups dragged onto rows (Shift adds, release level moves), track pool kept when folded,
                                 #     works matrix cells that cannot take a date, work credits checked on the works (release page)
+                                #   poolsopen: 3.32.1: "Dates & tracks" (and a folded date pool) open after an import whose suggestions wait for
+                                #     "Apply" – for that import, the remembered state stays; "Tracks:" on the line of "Name:" in the form
                                 #   titledates: 3.31.7: dates in the titles of the tracks (D023): off by default; on → pool, track groups, Performance
                                 #     suggestions, stored "+D023"; off → gone; on and "Apply" → the row split by date
 

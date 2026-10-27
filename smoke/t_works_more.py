@@ -166,12 +166,12 @@ def case_worksskip():
     works section asks before the work lookups.
     A) The head of the works matrix folds and unfolds it ("▾ Works matrix"): folded, only its head and what it holds are
        shown; the fold is not stored (after a reload the matrix is unfolded again).
-    B) "Skip works matrix": the matrix folds, says "skipped", its rows (writers, publishers) go to "Skip", nothing of it is
+    B) "Skip works" ([3.32.1] until then "Skip works matrix", item 106): the matrix folds, says "skipped", its rows (writers, publishers) go to "Skip", nothing of it is
        staged (no links to works – also not of works marked as new – and no work relationships); the work lookups stop.
        Stored for this release: after a reload it is still skipped, its rows on "Skip" at once and no work is looked up.
        Meanwhile a row has no works level (the button says why). Before and after, the work rows are in the matrix
        ([3.31.5] a publisher's row also in its entry, on "Works" – item 112).
-    C) "Take works matrix again": the rows come back to the works level, the matrix unfolds, the lookups run.
+    C) "Take works again" (until 3.32.0 "Take works matrix again"): the rows come back to the works level, the matrix unfolds, the lookups run.
     D) From so many tracks without a work (setting "Ask before the work lookups from …", 100; here 3) the works section
        asks first, with about how long it takes; nothing is looked up until then. "Not now" leaves out only the lookups
        (the matrix stays); "Look up now" starts them later. The setting is in the menu, topic Works (100 by default).
@@ -233,7 +233,7 @@ def case_worksskip():
         print('A) offen:', a0)
         print('   zu:', a1)
         print('   wieder auf:', a2['fold'], a2['table'])
-        results.append(a0['fold'] == ['▾ Works matrix', 'true'] and a0['table'] and a0['skip'] == ['Skip works matrix', '1']
+        results.append(a0['fold'] == ['▾ Works matrix', 'true'] and a0['table'] and a0['skip'] == ['Skip works', '1']
                        and a1['fold'] == ['▸ Works matrix', 'false'] and not a1['table'] and '4 tracks' in a1['folded'] and 'column' in a1['folded']
                        and a2['fold'][1] == 'true' and a2['table'])
         # B) skip: mark new works first (links planned), then skip
@@ -253,7 +253,7 @@ def case_worksskip():
         print('   Plan danach: Werk-Links', plan1.count('Link work'), '| Writer W', plan1.count('Writer W'), '| Pub Co', plan1.count('Pub Co'))
         print('   Protokoll:', logs(pg, 'Works matrix'))
         # [3.31.5] a publisher's row shows in its entry too, with its level (item 112)
-        ok_b = (lv0 == [None, 'work'] and 'Link work' in plan0 and 'Writer W' in plan0 and b1['badge'] == 'skipped' and b1['skip'] == ['Take works matrix again', '0']
+        ok_b = (lv0 == [None, 'work'] and 'Link work' in plan0 and 'Writer W' in plan0 and b1['badge'] == 'skipped' and b1['skip'] == ['Take works again', '0']
                 and not b1['table'] and b1['off'] and lv1 == ['skip', 'skip'] and stored == 'true'
                 and 'Link work' not in plan1 and 'Writer W' not in plan1 and 'Pub Co' not in plan1)
         # no works level for a row while the matrix is skipped
