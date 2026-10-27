@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.3
+// @version      3.32.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -658,6 +658,14 @@
       "settings.t.general": "General",
       "settings.t.appearance": "Appearance",
       "settings.levelColors": "Colours for the levels",
+      "settings.kindColors": "Colours for the kinds of entries",
+      "settings.kindColorsTitle": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind (artist, label, place, area, other); off: all grey",
+      "settings.kindColor": "Colour for {kind}",
+      "kind.artist": "Artist",
+      "kind.label": "Label",
+      "kind.place": "Place",
+      "kind.area": "Area",
+      "kind.other": "Other",
       "settings.levelColorsTitle": "Recording, release, release group and work each in its own colour – in the rows and in the compact view",
       "settings.levelColor": "Colour of the level “{level}”",
       "settings.rulesPlace": "Mapping rules",
@@ -19739,6 +19747,13 @@
    * ✕ take out), the roles (each one a place to drop a track group onto, the whole card too), the column date
    * and "credited as". The date fields, the pool and the publisher tools are in the ▾ menu.
    */
+  /** [3.32.4] The kind of a column of the works matrix (its entry, or for one only in MusicBrainz its entity type; item 107). */
+  const columnKind = (col) => (col.artist ? groupKindOf(col.artist).kind : ['artist', 'label', 'place', 'area'].includes(col.entityType) ? col.entityType : 'other');
+  const columnKindTag = (col) => {
+    const text = tr(`entity.${col.artist ? groupKindOf(col.artist).type : col.entityType || 'artist'}`);
+    return `<span class="dci-kind-tag dci-mx-kind">${esc(text.charAt(0).toUpperCase() + text.slice(1))}</span>`;
+  };
+
   function columnHeadHtml(col) {
     const a = col.artist;
     const collapsed = S.mxCollapsed.has(col.key);
@@ -19767,8 +19782,8 @@
       <button type="button" class="dci-textbtn" data-act="mx-colmenu" data-col="${esc(col.key)}">${esc(tr('common.close'))}</button></div>` : '');
     // Only in MusicBrainz: its date goes onto those relationships that have none (an edit of each)
     if (col.mbOnly) {
-      return `<th scope="col" class="dci-mx-col dci-mx-locked" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-        <div class="dci-mx-colname">${name} ${btns}</div>
+      return `<th scope="col" class="dci-mx-col dci-mx-locked dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+        <div class="dci-mx-colname">${columnKindTag(col)}${name} ${btns}</div>
         <div class="dci-mx-roles"><span class="dci-sub">${esc(tr('matrix.mbOnly'))}</span>${dateChip}</div>
         ${menu(`<div title="${esc(tr('matrix.colDateMbTitle'))}">${dateBox}</div>`)}</div></th>`;
     }
@@ -19796,8 +19811,8 @@
       <button type="button" class="dci-textbtn" data-act="mx-pub-suggest" data-mbid="${esc(x.mbid)}" data-name="${esc(x.name)}">${esc(tr('matrix.addColumn'))}</button></div>`).join('');
     const r098 = col.rows.some((r) => r.ruleId === 'R098')
       ? `<button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="R098" title="${esc(tr('note.musicLyrics'))}">R098</button>` : '';
-    return `<th scope="col" class="dci-mx-col" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-      <div class="dci-mx-colname">${name} ${btns}</div>
+    return `<th scope="col" class="dci-mx-col dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+      <div class="dci-mx-colname">${columnKindTag(col)}${name} ${btns}</div>
       <div class="dci-mx-roles">${roles}<span class="dci-sub">${esc(tr('matrix.colWorks', { n: nWorks }))}</span>${dateChip}${pub}${r098}${sugg.length
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}</div>
       <label class="dci-mx-credit">${esc(tr('matrix.colCredit'))} <input type="text" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10"></label>
@@ -22865,6 +22880,12 @@
       applyLevelColors();
       return;
     }
+    // [3.32.4] a colour of a kind shown while it is chosen (stored on "change")
+    if (el.dataset && el.dataset.set === 'kind-color' && /^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
+      S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
+      applyKindColors();
+      return;
+    }
     // [3.30.5] the tracks typed in (item 90)
     if (f === 'tg-text' && S.trackForm) {
       applyTrackText(el.value);
@@ -23333,6 +23354,7 @@
     applyView();
     applyScale();
     applyLevelColors();
+    applyKindColors();
     makeMovable(overlay.querySelector('.dci-panel'), '.dci-head', 'panel');
     applyPlacement();
     // Rows scrolled into view (keyboard, jumps) must not end up under the sticky date pool ([3.18.0] with the line
@@ -23519,10 +23541,14 @@
   const LEVEL_PALETTE_KEY = 'dci-level-palette';
   const LEVEL_PALETTE_DEFAULT = { recording: '#2f6db5', release: '#2e8b57', release_group: '#b0700c', work: '#8a4f9e' };
   const LEVEL_SKIP_COLOR = '#8b8898';
+  // [3.32.4] the colours of the kinds of entries (items 107, 108): on by default; own colours in ⚙ Settings → Appearance
+  const KIND_COLORS_KEY = 'dci-kind-colors';
+  const KIND_PALETTE_KEY = 'dci-kind-palette';
+  const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -23535,6 +23561,38 @@
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
+  S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
+  S.kindPalette = kindPaletteRead();
+
+  /** [3.32.4] The stored colours of the kinds of entries (each a "#rrggbb"; the others as by default). */
+  function kindPaletteRead() {
+    const stored = readJson('localStorage', KIND_PALETTE_KEY, null) || {};
+    return Object.fromEntries(Object.entries(KIND_PALETTE_DEFAULT).map(([k, d]) => [k, /^#[0-9a-f]{6}$/i.test(stored[k] || '') ? stored[k].toLowerCase() : d]));
+  }
+
+  /** [3.32.4] A colour mixed with white (share 0 … 1 of the colour): the light background of a kind. */
+  function tintOf(hex, share) {
+    return `#${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * share + 255 * (1 - share)).toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  /**
+   * [3.32.4] The colours of the kinds on the dashboard (collected item 108; CSS variables): the bar of an entry and of a
+   * column head of the works matrix, its tag and its light background; off: all grey.
+   */
+  function applyKindColors() {
+    if (!S.overlay) return;
+    S.overlay.classList.toggle('dci-kindc', !!S.kindColors);
+    Object.entries(S.kindPalette).forEach(([kind, c0]) => {
+      const c = S.kindColors ? c0 : KIND_PALETTE_DEFAULT.other;
+      S.overlay.style.setProperty(`--dci-kind-${kind}`, c);
+      S.overlay.style.setProperty(`--dci-kind-${kind}-bg`, tintOf(c, 0.11));
+    });
+  }
+
+  function saveKindPalette() {
+    const own = Object.fromEntries(Object.entries(S.kindPalette).filter(([k, c]) => c !== KIND_PALETTE_DEFAULT[k]));
+    writeJson('localStorage', KIND_PALETTE_KEY, Object.keys(own).length ? own : null);
+  }
 
   /** The stored colours of the levels (each a "#rrggbb"; the others as by default). */
   function levelPaletteRead() {
@@ -23600,6 +23658,11 @@
         row(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
           value="${S.levelPalette[level]}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColor', { level: tr(`level.${level}`) }))}">
           <span class="dci-cl-level" data-level="${level}">${esc(tr(`level.${level}`))}</span></label>`).join('')}</span>`),
+        // [3.32.4] the colours of the kinds of entries (item 108)
+        row(check('data-set="kind-colors"', S.kindColors, tr('settings.kindColors'), tr('settings.kindColorsTitle'))),
+        row(`<span class="dci-lvl-pick dci-kind-pick">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}"><input type="color" data-set="kind-color" data-kind="${kind}"
+          value="${S.kindPalette[kind]}"${S.kindColors ? '' : ' disabled'} aria-label="${esc(tr('settings.kindColor', { kind: tr(`kind.${kind}`) }))}">
+          <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}</span>`),
       ],
       sources: () => [
         row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
@@ -23745,6 +23808,20 @@
         applyLevelColors();
       }
     }
+    // [3.32.4] the colours of the kinds of entries
+    else if (k === 'kind-colors') {
+      S.kindColors = el.checked;
+      writeJson('localStorage', KIND_COLORS_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.kindColors'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      applyKindColors();
+    } else if (k === 'kind-color') {
+      if (/^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
+        S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
+        saveKindPalette();
+        log('info', 'settingValue', { what: tr('settings.kindColor', { kind: tr(`kind.${el.dataset.kind}`) }), value: el.value.toLowerCase() });
+        applyKindColors();
+      }
+    }
     else if (k === 'log-place') setLogPlace(el.value);
     else if (k === 'aw-on') {
       S.awOn = el.checked;
@@ -23812,6 +23889,9 @@
       S.levelColors = true;
       S.levelPalette = { ...LEVEL_PALETTE_DEFAULT };
       applyLevelColors();
+      S.kindColors = true;
+      S.kindPalette = { ...KIND_PALETTE_DEFAULT };
+      applyKindColors();
       S.rulesPlace = 'dashboard';
       S.rulesRowPlace = 'window';
       S.rulesAsWindow = false;
@@ -23872,7 +23952,9 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT },
     });
+    applyKindColors();
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
     awClear();
@@ -24609,12 +24691,19 @@
       .dci-only-missing .dci-group.dci-all-skip { display: none; }
 
       /* Entries as cards: a coloured bar, label and tinted header per kind (artist, label, place, other) */
-      .dci-group { --kind: #8a8799; --kind-bg: #f4f3f7; margin: 0 0 calc(var(--u, 1px) * 28); padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14);
+      .dci-group { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); margin: 0 0 calc(var(--u, 1px) * 28); padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14);
         border-left: 5px solid var(--kind); background: #fff; border-radius: 0 6px 6px 0; box-shadow: 0 1px 4px rgba(38, 36, 48, 0.10); }
-      .dci-kind-artist { --kind: #5b6f8c; --kind-bg: #eef1f6; }
-      .dci-kind-label { --kind: #2a8a8a; --kind-bg: #e8f4f4; }
-      .dci-kind-place { --kind: #4e8a3e; --kind-bg: #edf5e9; }
-      .dci-kind-area { --kind: #8a6a3e; --kind-bg: #f6f0e7; }
+      /* [3.32.4] the colours of the kinds come from ⚙ Settings → Appearance (item 108; these are the defaults) */
+      .dci-kind-artist { --kind: var(--dci-kind-artist, #5b6f8c); --kind-bg: var(--dci-kind-artist-bg, #eef1f6); }
+      .dci-kind-label { --kind: var(--dci-kind-label, #2a8a8a); --kind-bg: var(--dci-kind-label-bg, #e8f4f4); }
+      .dci-kind-place { --kind: var(--dci-kind-place, #4e8a3e); --kind-bg: var(--dci-kind-place-bg, #edf5e9); }
+      .dci-kind-area { --kind: var(--dci-kind-area, #8a6a3e); --kind-bg: var(--dci-kind-area-bg, #f6f0e7); }
+      .dci-kind-other { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); }
+      /* [3.32.4] the heads of the works matrix in the colour of their kind; only in MusicBrainz paler; the cells neutral (item 107) */
+      .dci-matrix th.dci-mx-col[class*="dci-kind-"] .dci-mx-card { border-top: 3px solid var(--kind); background: var(--kind-bg); }
+      .dci-matrix th.dci-mx-col.dci-mx-locked[class*="dci-kind-"] .dci-mx-card { border-top-color: color-mix(in srgb, var(--kind) 40%, #fff); background: color-mix(in srgb, var(--kind-bg) 45%, #fff); }
+      .dci-matrix .dci-mx-kind { font-size: calc(var(--u, 1px) * 10); padding: 0 calc(var(--u, 1px) * 5); margin-right: calc(var(--u, 1px) * 4); }
+      .dci-matrix th.dci-mx-locked .dci-mx-kind { opacity: 0.6; }
       .dci-pageof { margin: 0 0 calc(var(--u, 1px) * 6); }
       .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind); color: #fff;
         font-size: calc(var(--u, 1px) * 11); font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }

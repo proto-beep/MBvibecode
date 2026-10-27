@@ -597,4 +597,54 @@ def case_clineask():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_kindcolors():
+    """Credits Importer 3.32.4: the colours of the kinds (collected items 107, 108; maintainer: "die farblogik von artists und
+    labels sollte auch in der work-matrix erhalten bleiben", "ja bitte blasser", a setting for the colours).
+    A) Works matrix: the head of Writer W in the colour of artists, with the tag "Artist"; Pub Co in the colour of labels,
+       "Label"; the cells stay neutral.
+    B) ⚙ Settings → Appearance: "Colours for the kinds of entries" (on) and a colour per kind (artist, label, place, area,
+       other); the artist colour changed to #aa0000 → the bar of Bass Man and the head of Writer W follow, stored as an own
+       colour; off → grey for both; ↺ of the tab → back to the defaults."""
+    HEAD = """(name) => { const th = [...document.querySelectorAll('.dci-matrix th[data-colhead]')].find(t => (t.querySelector('.dci-mblink, strong') || {}).textContent.replace(/^MB/, '').trim() === name);
+  if (!th) return null; const card = th.querySelector('.dci-mx-card'); const tag = th.querySelector('.dci-mx-kind');
+  const cell = document.querySelector(`.dci-mx-cell[data-col="${th.dataset.colhead}"]`);
+  return [[...th.classList].find(c => c.startsWith('dci-kind-')) || '', tag ? tag.textContent.trim() : '', getComputedStyle(card).borderTopColor, cell ? getComputedStyle(cell).backgroundColor : '']; }"""
+    BAR = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? getComputedStyle(g).borderLeftColor : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1500)
+        a = [pg.evaluate(HEAD, 'Writer W'), pg.evaluate(HEAD, 'Pub Co')]
+        print('A) Köpfe:', a)
+        results.append(a[0][:3] == ['dci-kind-artist', 'Artist', 'rgb(91, 111, 140)'] and a[1][:3] == ['dci-kind-label', 'Label', 'rgb(42, 138, 138)']
+                       and a[0][3] in ('rgba(0, 0, 0, 0)', 'rgb(255, 255, 255)'))
+        H.open_settings(pg, 'appearance')
+        app = pg.evaluate("""[document.querySelector('.dci-set-pane [data-set=kind-colors]').checked,
+      [...document.querySelectorAll('.dci-set-pane [data-set=kind-color]')].map(x => [x.dataset.kind, x.value])]""")
+        pg.evaluate("""(() => { const x = document.querySelector('.dci-set-pane [data-set=kind-color][data-kind=artist]'); x.value = '#aa0000';
+      x.dispatchEvent(new Event('input', { bubbles: true })); x.dispatchEvent(new Event('change', { bubbles: true })); })()""")
+        pg.wait_for_timeout(300)
+        b1 = [pg.evaluate(BAR, 'Bass Man'), pg.evaluate(HEAD, 'Writer W')[2], pg.evaluate("localStorage.getItem('dci-kind-palette')")]
+        pg.locator('.dci-set-pane [data-set=kind-colors]').click()
+        pg.wait_for_timeout(300)
+        b2 = [pg.evaluate(BAR, 'Bass Man'), pg.evaluate(HEAD, 'Pub Co')[2], pg.evaluate("localStorage.getItem('dci-kind-colors')")]
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=appearance]')
+        pg.wait_for_timeout(500)
+        b3 = [pg.evaluate(BAR, 'Bass Man'), pg.evaluate("[localStorage.getItem('dci-kind-colors'), localStorage.getItem('dci-kind-palette')]")]
+        print('B) Einstellung:', app, '| eigene Farbe:', b1, '| aus:', b2, '| ↺:', b3)
+        results.append(app == [True, [['artist', '#5b6f8c'], ['label', '#2a8a8a'], ['place', '#4e8a3e'], ['area', '#8a6a3e'], ['other', '#8a8799']]]
+                       and b1 == ['rgb(170, 0, 0)', 'rgb(170, 0, 0)', '{"artist":"#aa0000"}']
+                       and b2 == ['rgb(138, 135, 153)', 'rgb(138, 135, 153)', 'false'] and b3 == ['rgb(91, 111, 140)', [None, None]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.32.3 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.4 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -86,6 +86,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.4
+
+#### Added
+
+- **The heads of the works matrix in the colours of their kinds** (collected item 107; maintainer: "die farblogik von artists und labels sollte auch in der work-matrix erhalten bleiben", "ja bitte blasser"): each column head with the bar, tag and light background of its kind (Artist, Label …), paler for a column only in MusicBrainz; the cells stay neutral.
+- **Colours for the kinds of entries** (collected item 108): ⚙ Settings → Appearance – on or off (off: all grey) and a colour for each of Artist, Label, Place, Area and Other, for the entries and the heads of the works matrix; ↺ of the tab sets them back.
 
 ### Import 3.32.3
 

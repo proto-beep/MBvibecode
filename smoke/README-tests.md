@@ -266,6 +266,8 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #     explanations as tooltips
                                 #   rows: remove a row (and undo), removal after staging, "only works"
                                 #   clineask: 3.32.3: a type question in the compact line ("Directed By": four buttons), chosen there, the row closed
+                                #   kindcolors: 3.32.4: the heads of the works matrix in the colours of their kinds (Writer W artist, Pub Co label,
+                                #     with the tag), ⚙ Settings → Appearance: own artist colour (entry and head follow, stored), off → grey, ↺
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
