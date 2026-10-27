@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.8
+// @version      3.32.9
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.9';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -401,6 +401,17 @@
       "footer.bottom": "To the bottom of the dashboard",
       "footer.editNote": "Write source and summary to the edit note",
       "footer.apply": "Stage in the relationship editor",
+      "livecom.title": "Disambiguation comments of live recordings: {n} of {m} ticked",
+      "livecom.hint": "Entered as edits of the recordings after “Enter edit” in the relationship editor, once the relationships are saved (⚙ Settings → Staging). Tick, or change a comment; a comment MusicBrainz has already is not overwritten.",
+      "livecom.onAria": "Comment for track {pos}",
+      "livecom.textAria": "The comment of track {pos}",
+      "livecom.unassigned": "{name} is not assigned yet – no place in the comment",
+      "livecom.places": "Different places: {list} – none in the comment",
+      "livecom.dates": "Different dates: {list} – none in the comment",
+      "livecom.existing": "MusicBrainz has another comment: “{text}” – it is not overwritten",
+      "livecom.same": "MusicBrainz has this comment already",
+      "livecom.pending": "looking up the area …",
+      "livecom.manual": "changed by you",
       "footer.hint": "Nothing is submitted. You review the changes in the editor and click “Enter edit” yourself.",
       "panic.button.one": "Emergency: link only the new work",
       "panic.button.other": "Emergency: link only the {n} new works",
@@ -780,6 +791,8 @@
       "settings.wattrLong": "Spell out the attributes of the works matrix (live, cover …)",
       "settings.capOn": "Stage in rounds",
       "settings.capLimit": "Relationships per round",
+      "settings.liveComments": "Live recordings: add a disambiguation comment",
+      "settings.liveCommentsTitle": "Proposes a comment for each live recording, as “MB: QoL: Seed the batch recording comments script” does (“live, 2004‐03‐23: Iridium, New York, NY, USA”: the date and the place – its “credited as” or its name, with its area – of the rows “recorded at” or “recorded in”). The list is shown above “Stage …”: tick, change. The comments are entered after “Enter edit” in the relationship editor, once the relationships are saved. Only live recordings; another comment in MusicBrainz is not overwritten.",
       "settings.aria.awMax": "At most works and recordings per artist",
       "settings.aria.awSlowSec": "Seconds before a large catalogue is named",
       "settings.aria.awSlowN": "Entries to read before a large catalogue is named",
@@ -12775,7 +12788,7 @@
         const { tracks, linked } = await fetchMediumTracks(p.id);
         m.tracks = tracks.filter((t) => t && t.recording && !t.isDataTrack).sort((a, b) => a.position - b.position).map((t) => ({
           position: t.position, number: t.number || String(t.position), title: t.name,
-          recording: { id: t.recording.gid, title: t.recording.name, relations: (t.recording.relationships || []).map((r) => wsRelOf(r, linked)) },
+          recording: { id: t.recording.gid, title: t.recording.name, disambiguation: t.recording.comment || '', relations: (t.recording.relationships || []).map((r) => wsRelOf(r, linked)) },
         }));
         log('info', 'mbMediumRead', { m: m.position, n: m.tracks.length });
       } catch (e) {
@@ -12811,6 +12824,8 @@
           number: track.number || String(track.position),
           title: track.title,
           recordingGid: track.recording && track.recording.id,
+          // [3.32.9] its disambiguation comment (live comments, item 113)
+          recordingComment: (track.recording && track.recording.disambiguation) || '',
           works: rels.filter((r) => r['target-type'] === 'work' && r.work).map((r) => ({
             gid: r.work.id,
             title: r.work.title,
@@ -17932,6 +17947,8 @@
       const done = S.capRun ? S.capRun.done : 0;
       roundsEl.textContent = tr('msg.roundsHint', { n: items.length, cap: S.capLimit, x: done + Math.max(1, Math.ceil(items.length / S.capLimit)), k: done + 1 });
     }
+    // [3.32.9] the disambiguation comments of live recordings (item 113)
+    renderLiveComments();
     const waitEl = $('waiting');
     waitEl.hidden = !waiting.size;
     waitEl.textContent = waiting.size ? tr('msg.waitingHint', { n: waiting.size }) : '';
@@ -18867,6 +18884,174 @@
       }
     }
     return out;
+  }
+
+  // --- [3.32.9] Disambiguation comments of live recordings (collected item 113) ----------------------------------------
+  // Maintainer: "kannst du das feature bei live recordings als abfrage das disambiguation comment zu ergänzen in die optionen
+  // mit einbinden? standardmäßig aus. die infos kommen aus dem im dashboard eingegebenen alias des recording places und des
+  // datums." – "ja bitte mit Kommentar. unter staging. nur "live"". The comments are those of "MB: QoL: Seed the batch
+  // recording comments script" (ROpdebee, v2022.6.13) for "Set recording comments for a release" (murdos): "live, 2004‐03‐23:
+  // Iridium, New York, NY, USA". Here they are proposed from the dashboard's rows; 3.32.10 enters them after "Enter edit".
+
+  const LIVE_COM_KEY = 'dci-live-comments';
+  const SEED_NOTE = 'MB: QoL: Seed the batch recording comments script v2022.6.13: Seed live comments';
+  // the setting (⚙ Settings → Staging, off by default; maintainer: "standardmäßig aus", "unter staging")
+  S.liveCom = readJson('localStorage', LIVE_COM_KEY, false) === true;
+
+  /** [3.32.9] A date as the seed script writes it: "2004‐03‐23" (U+2010), a period "2004‐03‐23–2004‐03‐28"; '' without a year. */
+  function liveDateText(v) {
+    if (!v || !v.begin || !v.begin.year) return '';
+    const one = (d) => [String(d.year).padStart(4, '0'), d.month ? String(d.month).padStart(2, '0') : '', d.month && d.day ? String(d.day).padStart(2, '0') : '']
+      .filter(Boolean).join('‐');
+    const b = one(v.begin);
+    const e = v.end && v.end.year ? one(v.end) : b;
+    return b === e ? b : `${b}–${e}`;
+  }
+
+  /**
+   * [3.32.9] An area as the seed script writes it, from the area and the larger ones it is part of (most specific first;
+   * `type` as MusicBrainz names it, the ISO codes): the most specific city or municipality, for the USA and Canada the
+   * outermost subdivision as its code ("NY"), and the country – "USA", "UK", else its name ("New York, NY, USA").
+   */
+  function liveAreaFormat(chain) {
+    let city = null;
+    let state = null;
+    let country = null;
+    for (let k = chain.length - 1; k >= 0; k--) {
+      const t = norm(chain[k].type);
+      if (t === 'country') country = chain[k];
+      else if (t === 'subdivision') state = state || chain[k];
+      else if (t === 'city' || t === 'municipality') city = chain[k];
+    }
+    const cc = country ? String((country['iso-3166-1-codes'] || [])[0] || '') : '';
+    if (!['US', 'CA'].includes(cc)) state = null;
+    const stateCode = state ? String((state['iso-3166-2-codes'] || [])[0] || '').split('-')[1] || '' : '';
+    const countryText = !country ? '' : cc === 'US' ? 'USA' : cc === 'GB' ? 'UK' : country.name;
+    const cityText = city ? city.name : stateCode === 'DC' ? 'Washington' : '';
+    return [cityText, stateCode, countryText].filter(Boolean).join(', ');
+  }
+
+  /** [3.32.9] The area text of a place or an area of MusicBrainz (looked up once, in the background; '' while it is not known). */
+  function liveAreaText(kind, mbid) {
+    if (!S.liveAreas) S.liveAreas = new Map();
+    const key = `${kind}:${mbid}`;
+    const had = S.liveAreas.get(key);
+    if (had) return had;
+    const entry = { text: '', pending: true };
+    S.liveAreas.set(key, entry);
+    (async () => {
+      try {
+        let areaId = mbid;
+        if (kind === 'place') {
+          const pl = await mbWs(`place/${mbid}`);
+          areaId = pl && pl.area && pl.area.id;
+        }
+        const chain = [];
+        for (let k = 0; k < 7 && areaId; k++) {
+          const a = await mbWs(`area/${areaId}?inc=area-rels`);
+          if (!a) break;
+          chain.push(a);
+          if (norm(a.type) === 'country') break;
+          const up = (a.relations || []).find((x) => x.type === 'part of' && x.direction === 'backward' && x.area);
+          areaId = up ? up.area.id : null;
+        }
+        entry.text = liveAreaFormat(chain);
+      } catch (e) {
+        console.warn('[Credits-Importer] live area', key, e);
+      }
+      entry.pending = false;
+      if (S.overlay && S.liveCom) renderLiveComments();
+    })();
+    return entry;
+  }
+
+  /**
+   * [3.32.9] The live recordings of the release (the chosen media) and the comment proposed for each: live when the link to
+   * its work has "live" (in MusicBrainz, set, or preselected – S021), without a link to a work when the release group is
+   * Live; the place from the row "recorded at" of its tracks – its "credited as" (the alias) or its name, with its area –,
+   * else the area of "recorded in"; the date of those rows. → [{ i, rec, pos, title, auto, existing, warn: [], ok }]
+   */
+  function liveProposals() {
+    const rgLive = ((S.releaseGroup && (S.releaseGroup['secondary-types'] || S.releaseGroup.secondaryTypes)) || []).map(norm).includes('live');
+    const out = [];
+    for (const t of S.mbTracks) {
+      const i = t.idx;
+      if (!t.recordingGid || !inSelection(i)) continue;
+      const works = matrixTrack(t) ? worksForTrack(i) : (t.works || []);
+      const live = works.length ? works.some((w) => linkAttrsOf(i, w).has('live') || (w.linkAttrs || []).includes('live')) : rgLive;
+      if (!live) continue;
+      const warn = [];
+      const rowsOf = (type, kind) => S.rows.filter((r) => r.level === 'recording' && r.tracks && r.tracks.has(i) && norm(rowTypeName(r)) === type
+        && (S.artists.get(r.artistKey) || {}).entityType === kind);
+      const placeText = (r, kind) => {
+        const a = S.artists.get(r.artistKey) || {};
+        if (!a.mbid) return { text: '', unassigned: a.name || '' };
+        const area = liveAreaText(kind, a.mbid);
+        const head = kind === 'place' ? String(r.credit || '').trim() || a.mbName || a.name : '';
+        return { text: [head, area.text].filter(Boolean).join(', '), pending: area.pending, credit: kind === 'place' ? String(r.credit || '').trim() : '', mbid: a.mbid, name: a.mbName || a.name };
+      };
+      let src = rowsOf('recorded at', 'place');
+      let kind = 'place';
+      if (!src.length) {
+        src = rowsOf('recorded in', 'area');
+        kind = 'area';
+      }
+      const places = src.map((r) => placeText(r, kind));
+      const texts = uniq(places.map((x) => x.text).filter(Boolean));
+      places.filter((x) => x.unassigned).forEach((x) => warn.push(tr('livecom.unassigned', { name: x.unassigned })));
+      if (texts.length > 1) warn.push(tr('livecom.places', { list: texts.join(' · ') }));
+      const dates = uniq(src.map((r) => liveDateText(rowDateInfo(r, currentLinkType(r)).value)).filter(Boolean));
+      if (dates.length > 1) warn.push(tr('livecom.dates', { list: dates.join(' · ') }));
+      const place = texts.length === 1 ? texts[0] : '';
+      const auto = `live${dates.length === 1 ? `, ${dates[0]}` : ''}${place ? `: ${place}` : ''}`;
+      const existing = String(t.recordingComment || '').trim();
+      const ascii = (x) => String(x || '').replace(/[“”″]/g, '"').replace(/[‘’′]/g, "'").replace(/[‐‒–]/g, '-');
+      const other = !!existing && existing !== 'live' && ascii(existing) !== ascii(auto);
+      if (other) warn.push(tr('livecom.existing', { text: existing }));
+      out.push({ i, rec: t.recordingGid, pos: multiMedium() ? `${t.medium}.${t.number}` : String(t.number), title: t.title, auto, existing,
+        same: !!existing && ascii(existing) === ascii(auto), pending: places.some((x) => x.pending), conflict: texts.length > 1 || dates.length > 1, other, warn,
+        place: places.length === 1 ? places[0] : null, kind });
+    }
+    return out;
+  }
+
+  /** [3.32.9] A proposal with what was chosen for it in the dashboard: { on, text, manual }. */
+  function liveChoice(p) {
+    if (!S.liveComChoice) S.liveComChoice = new Map();
+    const c = S.liveComChoice.get(p.rec) || {};
+    const text = c.text != null ? c.text : p.auto;
+    // (another comment of MusicBrainz is never overwritten: such a recording cannot be ticked)
+    return { on: !p.other && (c.on != null ? c.on : !p.conflict && !p.same), text, manual: c.text != null && c.text !== p.auto };
+  }
+
+  /** [3.32.9] The list of live recordings with their comments above "Stage …" (setting "Live recordings: add a disambiguation comment"). */
+  function renderLiveComments() {
+    const el = S.overlay && $('livecom');
+    if (!el) return;
+    const list = S.liveCom && S.rows.length ? liveProposals() : [];
+    el.hidden = !list.length;
+    if (!list.length) {
+      el.innerHTML = '';
+      el.dataset.html = '';
+      return;
+    }
+    // (not while a comment is being typed in it)
+    if (el.contains(document.activeElement) && document.activeElement.dataset.f === 'livecom-text') return;
+    const n = list.filter((p) => liveChoice(p).on).length;
+    const rows = list.map((p) => {
+      const c = liveChoice(p);
+      const notes = [...p.warn, ...(p.same ? [tr('livecom.same')] : []), ...(p.pending ? [tr('livecom.pending')] : []), ...(c.manual ? [tr('livecom.manual')] : [])];
+      return `<tr data-livecom="${esc(p.rec)}"><td><input type="checkbox" data-f="livecom-on" data-rec="${esc(p.rec)}" ${c.on ? 'checked' : ''} ${p.other ? 'disabled' : ''} aria-label="${esc(tr('livecom.onAria', { pos: p.pos }))}"></td>
+        <td class="dci-livecom-pos">${esc(p.pos)}</td><td class="dci-livecom-title">${esc(p.title)}</td>
+        <td><input type="text" data-f="livecom-text" data-rec="${esc(p.rec)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.textAria', { pos: p.pos }))}"></td>
+        <td>${notes.map((x) => `<div class="dci-sub${p.warn.includes(x) ? ' dci-livecom-warn' : ''}">${esc(x)}</div>`).join('')}</td></tr>`;
+    }).join('');
+    const html = `<details class="dci-livecom-box" ${S.liveComOpen === false ? '' : 'open'}><summary>${esc(tr('livecom.title', { n, m: list.length }))}</summary>
+      <p class="dci-sub">${esc(tr('livecom.hint'))}</p>
+      <div class="dci-tablewrap"><table class="dci-livecom-table"><tbody>${rows}</tbody></table></div></details>`;
+    if (el.dataset.html === html) return;
+    el.innerHTML = html;
+    el.dataset.html = html;
   }
 
   function applyLiveDefault() {
@@ -23150,6 +23335,21 @@
         S.editNote = el.checked;
         S.rows.forEach(updateHint);
         break;
+      // [3.32.9] a live recording ticked or not for its comment (item 113)
+      case 'livecom-on': {
+        if (!S.liveComChoice) S.liveComChoice = new Map();
+        const c = S.liveComChoice.get(el.dataset.rec) || {};
+        S.liveComChoice.set(el.dataset.rec, { ...c, on: el.checked });
+        renderLiveComments();
+        break;
+      }
+      case 'livecom-text': {
+        if (!S.liveComChoice) S.liveComChoice = new Map();
+        const c = S.liveComChoice.get(el.dataset.rec) || {};
+        S.liveComChoice.set(el.dataset.rec, { ...c, text: el.value.trim() });
+        renderLiveComments();
+        break;
+      }
       case 'discogs-pick': {
         // "source|id" of a linked source; remembered for this release
         const k = el.value.indexOf('|');
@@ -23252,6 +23452,12 @@
   let manualTypeTimer = null;
   document.addEventListener('toggle', (e) => {
     if (e.target && e.target.dataset && e.target.dataset.el === 'datefind') S.dateFindOpen = e.target.open;
+    // [3.32.9] the list of live comments folded or not (while the dashboard is open)
+    if (e.target && e.target.classList && e.target.classList.contains('dci-livecom-box')) {
+      S.liveComOpen = e.target.open;
+      const box = S.overlay && $('livecom');
+      if (box) box.dataset.html = '';
+    }
   }, true);
 
   function onInput(e) {
@@ -23692,6 +23898,7 @@
             <button type="button" class="dci-iconbtn" data-act="jump-bottom" title="${esc(tr('footer.bottom'))}" aria-label="${esc(tr('footer.bottom'))}">▼</button>
           </span>
           <div class="dci-sum" data-el="sum"></div>
+          <div class="dci-livecom" data-el="livecom" hidden></div>
           <div class="dci-foot-actions">
             <button type="button" class="dci-panic" data-act="panic" hidden title="${esc(tr('panic.title'))}"></button>
             <button type="button" class="dci-textbtn" data-act="preview" aria-expanded="${S.previewOpen}">${esc(tr('footer.preview'))}</button>
@@ -23937,7 +24144,7 @@
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap'],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
@@ -24083,6 +24290,8 @@
         row(check('data-f="fill-credits"', S.fillCredits, tr('footer.fill'), tr('footer.fillTitle'))),
         row(check('data-f="stage-cap"', S.capOn, tr('settings.capOn'), tr('footer.capTitle'))),
         row(`<label>${esc(tr('settings.capLimit'))} <input type="number" data-set="cap-limit" min="50" max="2000" step="50" value="${S.capLimit}"></label>`),
+        // [3.32.9] disambiguation comments of live recordings (item 113)
+        row(check('data-set="live-comments"', S.liveCom, tr('settings.liveComments'), tr('settings.liveCommentsTitle'))),
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
@@ -24236,6 +24445,12 @@
       if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_BTN_KEY, el.checked ? null : false);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'live-comments') {
+      // [3.32.9] the comments of live recordings (item 113)
+      S.liveCom = el.checked;
+      writeJson('localStorage', LIVE_COM_KEY, el.checked || null);
+      log('info', 'settingValue', { what: tr('settings.liveComments'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      refresh();
     } else if (k === 'rule-on') {
       // [3.32.5] a rule switched here (S050; [3.32.6] S049) – the same as its switch in "Mapping rules"
       setRuleOn(el.dataset.rule, el.checked);
@@ -24312,7 +24527,7 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false });
       refresh();
     } else if (t === 'dates') {
       Object.assign(S, { dmAuto: false, poolsKeep: true });
@@ -24327,7 +24542,9 @@
     'dci-dg-hover', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto',
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-source-order', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
-    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY];
+    SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
+    // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
+    KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -24348,7 +24565,7 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
-      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT },
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false,
     });
     applyKindColors();
     // [3.16.0] the works settings and the stored works of the artists too
@@ -25347,6 +25564,14 @@
       .dci-datefind-list { list-style: none; margin: 0; padding: 0; }
       .dci-datefind-list li { padding: calc(var(--u, 1px) * 4) 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
       .dci-ruleinfo { color: var(--muted); font-size: calc(var(--u, 1px) * 11); }
+      /* [3.32.9] the comments of live recordings above "Stage …" (item 113) */
+      .dci-livecom { margin: calc(var(--u, 1px) * 6) 0; }
+      .dci-livecom-box { border: 1px solid #c8c5d6; border-radius: 4px; background: #fff; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
+      .dci-livecom-box > summary { cursor: pointer; font-weight: 600; }
+      .dci-livecom-table td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4); vertical-align: top; }
+      .dci-livecom-table input[type=text] { width: 100%; min-width: calc(var(--u, 1px) * 240); }
+      .dci-livecom-pos { white-space: nowrap; color: var(--muted); }
+      .dci-livecom-warn { color: #b3261e; }
       /* [3.32.5] a role read with a typo corrected (S050) */
       .dci-typo { color: #8a5a00; }
       .dci-type-ask [aria-pressed="true"] { font-weight: 700; text-decoration: none; }

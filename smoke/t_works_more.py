@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip – each the former smoke/t_<case>.py, unchanged; `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9) – each the former smoke/t_<case>.py, unchanged; `python3 t_works_more.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -336,6 +336,90 @@ def case_worksskip():
                        and g3[0][0] == g1[0] and g3[1] is None)
         print('Fehler:', errs, errs2, errs3)
         results.append(not errs and not errs2 and not errs3)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_livecom():
+    """Credits Importer 3.32.9: disambiguation comments of live recordings – the proposals (collected item 113; maintainer: "kannst
+    du das feature bei live recordings als abfrage das disambiguation comment zu ergänzen in die optionen mit einbinden?
+    standardmäßig aus. die infos kommen aus dem im dashboard eingegebenen alias des recording places und des datums.", "ja bitte
+    mit Kommentar. unter staging. nur "live"").
+    A) ⚙ Settings → Staging: "Live recordings: add a disambiguation comment" is off – no list above "Stage …"; switched on (stored).
+    B) The release group is Live: tracks 2–4 (planned links with "live" preselected, S021) are listed – track 1 (a link in
+       MusicBrainz without "live") is not; "live: Abbey Road Studios, New York, NY, USA" (the place of "recorded at", its area
+       from MusicBrainz: city, US state code, "USA"); track 3 has "live" in MusicBrainz (ticked), track 4 another comment (not
+       tickable, red note).
+    C) The place credited as "Iridium" and the matrix applied (the date 2001-03 on the place): "live, 2001‐03: Iridium, New
+       York, NY, USA"; a comment changed by hand stays and says so; unticked stays unticked."""
+    PLACE = H.COMPANIES[1002][1]
+    NYC, NYS, US = H.uid('abababab', 1), H.uid('abababab', 2), H.uid('abababab', 3)
+    H.PLACE_AREAS[PLACE] = NYC
+    H.AREA_INFO.update({NYC: {'name': 'New York', 'type': 'City', 'parent': NYS}, NYS: {'name': 'New York', 'type': 'Subdivision', 'iso2': ['US-NY'], 'parent': US},
+                        US: {'name': 'United States', 'type': 'Country', 'iso1': ['US']}})
+    orig = H.ws_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['release-group']['secondary-types'] = ['Live']
+        for m in d['media']:
+            for t in m['tracks']:
+                if t['position'] == 3:
+                    t['recording']['disambiguation'] = 'live'
+                if t['position'] == 4:
+                    t['recording']['disambiguation'] = 'demo version'
+        return d
+
+    H.ws_release = ws
+    LIST = """(() => { const el = document.querySelector('[data-el=livecom]'); if (!el || el.hidden) return null;
+      return [...el.querySelectorAll('tr[data-livecom]')].map(tr => [tr.querySelector('.dci-livecom-pos').textContent.trim(), tr.querySelector('[data-f=livecom-text]').value,
+        tr.querySelector('[data-f=livecom-on]').checked, tr.querySelector('[data-f=livecom-on]').disabled, tr.lastElementChild.textContent.replace(/\\s+/g, ' ').trim()]); })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1000)
+        a0 = pg.evaluate(LIST)
+        H.open_settings(pg, 'staging')
+        sw = pg.locator('[data-el=settings] [data-set=live-comments]')
+        off0 = sw.is_checked()
+        sw.check()
+        pg.wait_for_timeout(2500)
+        stored = pg.evaluate("localStorage.getItem('dci-live-comments')")
+        b1 = pg.evaluate(LIST)
+        print('A) vorher:', a0, '| Schalter an?', off0, '| gespeichert:', stored)
+        print('B)', b1)
+        ok_a = a0 is None and off0 is False and stored == 'true'
+        base = 'live: Abbey Road Studios, New York, NY, USA'
+        ok_b = b1 is not None and [x[0] for x in b1] == ['2', '3', '4'] and all(x[1] == base for x in b1) \
+            and [x[2] for x in b1] == [True, True, False] and [x[3] for x in b1] == [False, False, True] and 'demo version' in b1[2][4]
+        # C)
+        rid = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => /Abbey Road Studios/.test(s.querySelector('.dci-gname').textContent));
+          return g ? g.querySelector('tr.dci-row').dataset.row : null; })()""")
+        pg.fill(f'tr[data-row="{rid}"] [data-f=credit]', 'Iridium')
+        pg.locator(f'tr[data-row="{rid}"] [data-f=credit]').dispatch_event('change')
+        pg.wait_for_timeout(300)
+        if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+            pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+        pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(600)
+        c1 = pg.evaluate(LIST)
+        pg.fill('tr[data-livecom] [data-f=livecom-text] >> nth=0', 'live, 2001: Iridium (by hand)')
+        pg.locator('tr[data-livecom] [data-f=livecom-text] >> nth=0').dispatch_event('change')
+        pg.locator('tr[data-livecom] [data-f=livecom-on] >> nth=1').uncheck()
+        pg.wait_for_timeout(300)
+        c2 = pg.evaluate(LIST)
+        print('C)', c1, '\n  ', c2)
+        want = 'live, 2001‐03: Iridium, New York, NY, USA'
+        ok_c = c1 and [x[1] for x in c1[:2]] == [want, want] and c2[0][1] == 'live, 2001: Iridium (by hand)' and 'changed by you' in c2[0][4] \
+            and c2[1][2] is False and c2[0][2] is True
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
+        results += [ok_a, ok_b, ok_c]
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
