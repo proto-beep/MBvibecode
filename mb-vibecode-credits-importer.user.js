@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.7
+// @version      3.32.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.7';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1304,6 +1304,7 @@
       "rules.search": "Search the rules:",
       "rules.quick": "Quick switches",
       "rules.quickTitle": "Rules switched on and off often – the same as in the lists below; the id next to each shows the rule, which says where it acts",
+      "rules.quickHint": "the rules switched most often – a click switches; the id shows the rule in the lists below",
       "quick.S045": "Rights society after a writer’s name → the release’s rights society",
       "quick.D022": "Performance on several days → their common month or year",
       "quick.S021": "“live” preselected for live releases",
@@ -1564,6 +1565,7 @@
       "dm.chooseLcdTitle": "Use only what the days have in common (the month, or the year)",
       "dm.lcdMenu": "Instead: the single days (one relationship each) or the whole period",
       "dm.lcdSingle": "{n} single days: {list} – one relationship per day",
+      "dm.goto": "To the date matrix",
       "dm.choiceLcd": "common month or year",
       "pools.fold": "fold",
       "pools.keep": "keep the pools in the bar when folded",
@@ -11798,10 +11800,16 @@
   const QUICK_SWITCHES = ['S045', 'D022', 'S021', 'S031', 'S007', 'D023', 'S046'];
   function quickSwitchesHtml() {
     const notes = ruleNotes();
-    const one = (id) => `<span class="dci-quick-sw"><label class="dci-check" title="${esc(`${id}: ${notes.get(id) || ''}`)}"><input type="checkbox" data-rule-on="${esc(id)}" ${ruleOn(id) ? 'checked' : ''}>
-      ${esc(tr(`quick.${id}`))}</label> <button type="button" class="dci-textbtn dci-ruleid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
-    return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
-      ${QUICK_SWITCHES.map(one).join('')}</div>`;
+    // [3.32.8] a box of its own, each switch a button with its state (collected item 116; maintainer: "die quick switches bitte
+    // visuell in einem eigenen fenster (rechteck mit oder ohne runde ecken, deine wahl je nach konsistenz). vielleicht alle visuell
+    // mit jeweils eigenem button könnte besser sein … als checkboxen") – before, a line of checkboxes
+    const one = (id) => {
+      const on = ruleOn(id);
+      return `<span class="dci-qbtn-wrap"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}" title="${esc(`${id}: ${notes.get(id) || ''}`)}">
+        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel">${esc(tr(`quick.${id}`))}</span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span></button><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
+    };
+    return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><div class="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
+      <span class="dci-sub">${esc(tr('rules.quickHint'))}</span></div><div class="dci-quick-grid">${QUICK_SWITCHES.map(one).join('')}</div></div>`;
   }
 
   /** Redraws the parts of the rules window that depend on the rules. */
@@ -12058,6 +12066,15 @@
         // [3.32.0] the id of a quick switch: the rule in the lists below
         const qs = t.closest('[data-qs-goto]');
         if (qs) focusRule(qs.dataset.qsGoto);
+        // [3.32.8] a quick switch is a button (item 116): on ↔ off, the same as the rule's switch in the lists
+        const qt = t.closest('[data-qs-toggle]');
+        if (qt) {
+          const id = qt.dataset.qsToggle;
+          setRuleOn(id, !ruleOn(id));
+          applyRulesChange(id);
+          const again = el.querySelector(`[data-qs-toggle="${id}"]`);
+          if (again) again.focus({ preventScroll: true });
+        }
       });
       el.addEventListener('change', (e) => {
         const t = e.target;
@@ -16735,7 +16752,8 @@
     savePool();
     if (placed) {
       m.dirty = true;
-      showMessage('info', 'dm.autoPlaced', { n: placed });
+      // [3.32.8] with a button to the matrix (collected item 109b)
+      showMessage('info', 'dm.autoPlaced', { n: placed }, { action: { act: 'dm-goto', label: 'dm.goto' } });
     }
     // [3.30.8] the month or year two days share (":lcd", e.g. "December 11 & 12, 2015" → December 2015) is no date without a group
     // [3.32.0] the days whose common month or year is in the matrix (D022) are placed too
@@ -22319,6 +22337,20 @@
         if (b) b.focus({ preventScroll: true });
         break;
       }
+      // [3.32.8] "To the date matrix" in the message of dates placed (collected item 109b): "Dates & tracks" open (once, as for
+      // waiting suggestions), the matrix in view and lit up briefly
+      case 'dm-goto': {
+        if (S.overlay && S.overlay.hidden) openDashboard();
+        if (!poolsOpen()) S.poolsForce = { dates: true, tracks: true };
+        renderDates();
+        const mx = S.overlay && S.overlay.querySelector('[data-el=dm]');
+        if (mx) {
+          mx.scrollIntoView({ block: 'center' });
+          mx.classList.add('dci-flash');
+          setTimeout(() => mx.classList.remove('dci-flash'), 2500);
+        }
+        break;
+      }
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
         S.poolsForce = null;
@@ -24852,13 +24884,29 @@
       #dci-rules .dci-filebtn { display: inline-flex; gap: calc(var(--u, 1px) * 6); align-items: center; margin: 0; }
       #dci-rules .dci-filebtn input { width: auto; }
       #dci-rules td input[type=checkbox] { width: auto; }
-      /* [3.32.0] the quick switches at the top (item 97d) */
-      #dci-rules .dci-quick { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); margin: 0 0 calc(var(--u, 1px) * 8);
-        padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border: 1px solid #dddae8; border-radius: 4px; background: #faf9fd; }
-      #dci-rules .dci-quick > strong { flex: 0 0 100%; font-size: calc(var(--u, 1px) * 12); }
-      #dci-rules .dci-quick-sw { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); }
-      #dci-rules .dci-quick-sw label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); margin: 0; font-weight: normal; }
-      #dci-rules .dci-quick-sw input { width: auto; }
+      /* [3.32.0] the quick switches at the top (item 97d); [3.32.8] a box of their own, each a button (item 116) */
+      #dci-rules .dci-quick { margin: 0 0 calc(var(--u, 1px) * 10); border: 1px solid #b9b5cf; border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(40, 30, 80, 0.08); }
+      #dci-rules .dci-quick-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
+        background: #f1effa; border-bottom: 1px solid #dddae8; border-radius: 4px 4px 0 0; }
+      #dci-rules .dci-quick-h strong { font-size: calc(var(--u, 1px) * 13); }
+      #dci-rules .dci-quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 280), 1fr)); gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
+        padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 10); }
+      #dci-rules .dci-qbtn-wrap { display: flex; align-items: stretch; min-width: 0; }
+      #dci-rules .dci-qbtn { position: relative; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: calc(var(--u, 1px) * 8); margin: 0; padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 9);
+        border: 1px solid #c8c5d6; border-right: 0; border-radius: 4px 0 0 4px; background: #fff; color: #55526a; font: inherit; text-align: left; cursor: pointer; }
+      #dci-rules .dci-qbtn:hover { border-color: #8e88c2; }
+      #dci-rules .dci-qbtn:focus-visible { outline: 2px solid #5b55a0; outline-offset: 1px; }
+      #dci-rules .dci-qled { flex: 0 0 auto; position: relative; width: calc(var(--u, 1px) * 30); height: calc(var(--u, 1px) * 16); border-radius: 999px; background: #d6d3e2; transition: background 0.15s; }
+      #dci-rules .dci-qled::after { content: ''; position: absolute; top: calc(var(--u, 1px) * 2); left: calc(var(--u, 1px) * 2); width: calc(var(--u, 1px) * 12); height: calc(var(--u, 1px) * 12);
+        border-radius: 50%; background: #fff; transition: left 0.15s; }
+      #dci-rules .dci-qlabel { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+      #dci-rules .dci-qstate { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      #dci-rules .dci-qbtn[aria-pressed=true] { background: #f4f3fb; color: #24213a; border-color: #8e88c2; }
+      #dci-rules .dci-qbtn[aria-pressed=true] .dci-qled { background: #5b55a0; }
+      #dci-rules .dci-qbtn[aria-pressed=true] .dci-qled::after { left: calc(var(--u, 1px) * 16); }
+      #dci-rules .dci-qid { flex: 0 0 auto; display: flex; align-items: center; margin: 0; padding: 0 calc(var(--u, 1px) * 8); border: 1px solid #c8c5d6; border-radius: 0 4px 4px 0; background: #faf9fd;
+        font-size: calc(var(--u, 1px) * 11.5); }
+      #dci-rules .dci-qbtn[aria-pressed=true] + .dci-qid { border-color: #8e88c2; }
       #dci-rules .dci-rule-result { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #736dab; background: #f4f3fb; }
       #dci-log {
         --u: calc(var(--dci-fs, 13px) / 13);

@@ -167,6 +167,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     "Apply" – for that import, the remembered state stays; "Tracks:" on the line of "Name:" in the form
                                 #   titledates: 3.31.7: dates in the titles of the tracks (D023): off by default; on → pool, track groups, Performance
                                 #     suggestions, stored "+D023"; off → gone; on and "Apply" → the row split by date
+                                #   dmgoto: 3.32.8: "To the date matrix" in the message of dates placed – "Dates & tracks" folded by hand opens,
+                                #     the matrix in view and lit up, the folding stays stored
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -221,7 +223,7 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #   rowrules: 3.30.2: a rule id at a row opens the rules as a window (the row stays), the symbol closes it and opens
                                 #     them in the dashboard, "Into the dashboard", the setting "like the symbol"; the arrow in the head of an
                                 #     entry in the compact view opens / closes all its rows
-                                #   quickswitch: 3.32.0 (milestone): the quick switches at the top of "Mapping rules" (order, on/off, the id shows the
+                                #   quickswitch: 3.32.0 (milestone): the quick switches at the top of "Mapping rules" ([3.32.8] buttons in a box; order, on/off, the id shows the
                                 #     rule, the same switch as in the list); D022 – the notes' "March 1–3, 2001" under Performance as 2001-03,
                                 #     off → the period again; S045 – "Composed by X (BMI)", "Lyrics by Y / GEMA" → the societies on the release
 
