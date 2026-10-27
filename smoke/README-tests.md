@@ -156,6 +156,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     bars of the works matrix (above it; at the bottom while its lower edge is out of view), moving together
                                 #   tracksdrop: track groups dragged onto rows (Shift adds, release level moves), track pool kept when folded,
                                 #     works matrix cells that cannot take a date, work credits checked on the works (release page)
+                                #   poolsopen: 3.32.1: "Dates & tracks" (and a folded date pool) open after an import whose suggestions wait for
+                                #     "Apply" – for that import, the remembered state stays; "Tracks:" on the line of "Name:" in the form
                                 #   titledates: 3.31.7: dates in the titles of the tracks (D023): off by default; on → pool, track groups, Performance
                                 #     suggestions, stored "+D023"; off → gone; on and "Apply" → the row split by date
 
@@ -217,8 +219,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
                                 #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
                                 #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
-                                #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), the chip
-                                #     "as “B. Man”" (+1), the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
+                                #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), [3.32.2] the
+                                #     release's spelling "B. Man*" in the head (tooltip "Discogs: Bass Man") instead of the chip "as “B. Man”",
+                                #     a row credited otherwise "as “Bassman”", the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
                                 #   manualtop: "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
                                 #     page), an entry added from there is shown
                                 #   msgs: messages (3.27.3): ✕ on each, "▾ n messages" folds them, a new error unfolds, a fresh import shows them again
@@ -247,7 +250,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, s
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
                                 #     a line per row, marks in colour, fields hidden,
-                                #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered, a skipped
+                                #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered ([3.32.3] in the
+                                #     line itself, its possibilities to click), a skipped
                                 #     row grey with ✕ (back after reloading), "Full" remembered and in the settings, the jump to an incomplete row
                                 #   fold: 3.29.3: the arrow next to "Artist credit for all roles" – one entry folded to compact lines in the full
                                 #     view (a line opens its row, ▸ back, full again after the next import), its open rows closed in the
@@ -261,6 +265,9 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   suggstack: suggestions as a block below the red mark (3.15.2, 3.15.3: side by side, wrapping): eight artists of one name, 5 shown + "+ 3 more",
                                 #     explanations as tooltips
                                 #   rows: remove a row (and undo), removal after staging, "only works"
+                                #   clineask: 3.32.3: a type question in the compact line ("Directed By": four buttons), chosen there, the row closed
+                                #   kindcolors: 3.32.4: the heads of the works matrix in the colours of their kinds (Writer W artist, Pub Co label,
+                                #     with the tag), ⚙ Settings → Appearance: own artist colour (entry and head follow, stored), off → grey, ↺
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset

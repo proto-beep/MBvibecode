@@ -72,7 +72,7 @@ def case_mediaload():
     B) Ticked, "Not now", Import: all media chosen → MB's "Expand all mediums"; medium 2's "Load all tracks..." clicked; the
        loading starts before the source is read (log before "Media chosen"); log, message, the tick is remembered; no work
        lookups.
-    C) "Skip works matrix" in the dialog: the matrix is skipped for this release (its rows on "Skip"), not asked again.
+    C) "Skip works" ([3.32.1] until then "Skip works matrix") in the dialog: the matrix is skipped for this release (its rows on "Skip"), not asked again.
     D) Media 1 and 3 only: their own toggles (#disc3), no "Expand all mediums".
     E) The web service leaves out the tracks of medium 2 and the relationships of medium 1's recordings (as MusicBrainz does
        with very many recordings): both are read from MB's own pages of tracks (/ws/js/tracks/<medium id>) – the dialog

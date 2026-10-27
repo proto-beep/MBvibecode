@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.0
+// @version      3.32.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -273,7 +273,7 @@
       "level.recording": "Recording",
       "level.release": "Release",
       "level.onlyHere": "MusicBrainz has this relationship only on this level ({level})",
-      "level.workSkipped": "The works matrix is skipped for this release (“Take works matrix again” in the works section brings the works level back)",
+      "level.workSkipped": "The works matrix is skipped for this release (“Take works again” in the works section brings the works level back)",
       "level.work": "Work",
       "level.skip": "Skip",
       "th.role": "{src} role",
@@ -658,6 +658,14 @@
       "settings.t.general": "General",
       "settings.t.appearance": "Appearance",
       "settings.levelColors": "Colours for the levels",
+      "settings.kindColors": "Colours for the kinds of entries",
+      "settings.kindColorsTitle": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind (artist, label, place, area, other); off: all grey",
+      "settings.kindColor": "Colour for {kind}",
+      "kind.artist": "Artist",
+      "kind.label": "Label",
+      "kind.place": "Place",
+      "kind.area": "Area",
+      "kind.other": "Other",
       "settings.levelColorsTitle": "Recording, release, release group and work each in its own colour – in the rows and in the compact view",
       "settings.levelColor": "Colour of the level “{level}”",
       "settings.rulesPlace": "Mapping rules",
@@ -721,6 +729,8 @@
       "msgs.unfold": "Show the messages",
       "msgs.close": "Close this message (until the next import)",
       "group.creditedAs": "as {name}",
+      "group.discogsName": "Discogs: {name}",
+      "group.otherSpellings": "Also on this release as: {list}",
       "group.creditedAsMore": "as {name} (+{n})",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
       "nav.settings": "⚙",
@@ -737,6 +747,7 @@
       "cl.unmapped": "no MusicBrainz type",
       "cl.instrAsk": "{name}: which instrument?",
       "cl.typeAsk": "type to choose",
+      "cl.pickList": "choose …",
       "cl.dateSugg": "date suggested",
       "cl.removeTitle": "Take this row out of the dashboard (the next import brings it back)",
       "cl.noTracks": "no tracks",
@@ -1139,7 +1150,7 @@
       "media.worksTime": "looking up their works takes about {min} min (longer with large catalogues of the artists)",
       "media.works.yes": "Look up works",
       "media.works.no": "Not now",
-      "media.works.skip": "Skip works matrix",
+      "media.works.skip": "Skip works",
       "media.askHint": "You are asked before every import of this release.",
       "media.savedHint": "Preselected: the choice remembered for this release. You are still asked before every import.",
       "media.sum.one": "{m} of {all} media · {n} track",
@@ -1170,10 +1181,10 @@
       "matrix.searchCancel": "stop",
       "matrix.fold": "Fold the works matrix",
       "matrix.unfold": "Unfold the works matrix",
-      "matrix.skip": "Skip works matrix",
+      "matrix.skip": "Skip works",
       "matrix.skipTitle": "Nothing of the works matrix is created: no works, no links to works, no work relationships (writers, publishers, arrangers …); the work lookups rest. Kept for this release.",
       "matrix.skipped": "skipped",
-      "matrix.unskip": "Take works matrix again",
+      "matrix.unskip": "Take works again",
       "matrix.skippedHint": "Skipped for this release: nothing of the works matrix is staged – no works, no links to works, no work relationships (its rows are on “Skip”); what was staged of it is taken out of the editor. The work lookups rest.",
       "matrix.skippedRows.one": "{n} row on “Skip”",
       "matrix.skippedRows.other": "{n} rows on “Skip”",
@@ -1471,6 +1482,7 @@
       "dm.studios": "Studios limited to the tracks of their dates: {list}",
       "dm.autoPlaced.one": "{n} date from the notes was placed in the date matrix as a suggestion (dashed, yellow). Check it and click “Apply” to put it on the rows.",
       "dm.autoPlaced.other": "{n} dates from the notes were placed in the date matrix as suggestions (dashed, yellow). Check them and click “Apply” to put them on the rows.",
+      "log.poolsOpened": "Suggestions in the date matrix wait for “Apply”: “Dates & tracks” is open for this import",
       "dm.titlePlaced.one": "{n} date from the titles of the tracks was placed in the date matrix as a suggestion (Performance, with its tracks). Check it and click “Apply” to put it on the rows (rule D023).",
       "dm.titlePlaced.other": "{n} dates from the titles of the tracks were placed in the date matrix as suggestions (Performance, with their tracks). Check them and click “Apply” to put them on the rows (rule D023).",
       "log.titleDates": "Dates in the titles of the tracks (D023): {n} – {list}",
@@ -1804,7 +1816,7 @@
       "level.recording": "Recording",
       "level.release": "Release",
       "level.onlyHere": "MusicBrainz hat diese Beziehung nur auf dieser Ebene ({level})",
-      "level.workSkipped": "Die Werk-Matrix ist für dieses Release übersprungen („Werk-Matrix wieder nehmen“ im Werk-Bereich bringt die Werk-Ebene zurück)",
+      "level.workSkipped": "Die Werk-Matrix ist für dieses Release übersprungen („Werke wieder nehmen“ im Werk-Bereich bringt die Werk-Ebene zurück)",
       "level.work": "Werk",
       "level.skip": "Überspringen",
       "th.role": "{src}-Rolle",
@@ -2628,7 +2640,7 @@
       "media.worksTime": "ihre Werke abzufragen dauert etwa {min} Min. (länger bei großen Katalogen der Artists)",
       "media.works.yes": "Werke abfragen",
       "media.works.no": "Jetzt nicht",
-      "media.works.skip": "Werk-Matrix überspringen",
+      "media.works.skip": "Werke überspringen",
       "media.askHint": "Vor jedem Import dieses Releases wird gefragt.",
       "media.savedHint": "Vorausgewählt: die für dieses Release gemerkte Auswahl. Gefragt wird trotzdem vor jedem Import.",
       "media.sum.one": "{m} von {all} Medien · {n} Track",
@@ -2659,10 +2671,10 @@
       "matrix.searchCancel": "abbrechen",
       "matrix.fold": "Werk-Matrix zuklappen",
       "matrix.unfold": "Werk-Matrix aufklappen",
-      "matrix.skip": "Werk-Matrix überspringen",
+      "matrix.skip": "Werke überspringen",
       "matrix.skipTitle": "Von der Werk-Matrix wird nichts angelegt: keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen (Writer, Verlage, Arrangeure …); die Werk-Abfragen ruhen. Für dieses Release gemerkt.",
       "matrix.skipped": "übersprungen",
-      "matrix.unskip": "Werk-Matrix wieder nehmen",
+      "matrix.unskip": "Werke wieder nehmen",
       "matrix.skippedHint": "Für dieses Release übersprungen: von der Werk-Matrix wird nichts vorgemerkt – keine Werke, keine Verknüpfungen zu Werken, keine Werk-Beziehungen (ihre Zeilen stehen auf „Skip“); was davon vorgemerkt war, wird aus dem Editor genommen. Die Werk-Abfragen ruhen.",
       "matrix.skippedRows.one": "{n} Zeile auf „Skip“",
       "matrix.skippedRows.other": "{n} Zeilen auf „Skip“",
@@ -3263,7 +3275,7 @@
       "level.recording": "Grabación",
       "level.release": "Publicación",
       "level.onlyHere": "MusicBrainz tiene esta relación solo en este nivel ({level})",
-      "level.workSkipped": "La matriz de obras está omitida para esta publicación («Volver a tomar la matriz de obras» en la sección de obras devuelve el nivel de obra)",
+      "level.workSkipped": "La matriz de obras está omitida para esta publicación («Volver a tomar las obras» en la sección de obras devuelve el nivel de obra)",
       "level.work": "Obra",
       "level.skip": "Omitir",
       "th.role": "Rol en {src}",
@@ -4087,7 +4099,7 @@
       "media.worksTime": "buscar sus obras tarda unos {min} min (más con catálogos grandes de los artistas)",
       "media.works.yes": "Buscar obras",
       "media.works.no": "Ahora no",
-      "media.works.skip": "Omitir la matriz de obras",
+      "media.works.skip": "Omitir obras",
       "media.askHint": "Se pregunta antes de cada importación de esta publicación.",
       "media.savedHint": "Preseleccionado: la selección recordada para esta publicación. Aun así se pregunta antes de cada importación.",
       "media.sum.one": "{m} de {all} medios · {n} pista",
@@ -4118,10 +4130,10 @@
       "matrix.searchCancel": "detener",
       "matrix.fold": "Plegar la matriz de obras",
       "matrix.unfold": "Desplegar la matriz de obras",
-      "matrix.skip": "Omitir la matriz de obras",
+      "matrix.skip": "Omitir obras",
       "matrix.skipTitle": "No se crea nada de la matriz de obras: ni obras, ni enlaces a obras, ni relaciones de obra (autores, editoriales, arreglistas …); las búsquedas de obras descansan. Se guarda para esta publicación.",
       "matrix.skipped": "omitida",
-      "matrix.unskip": "Volver a tomar la matriz de obras",
+      "matrix.unskip": "Volver a tomar las obras",
       "matrix.skippedHint": "Omitida para esta publicación: no se prepara nada de la matriz de obras – ni obras, ni enlaces a obras, ni relaciones de obra (sus filas están en «Skip»); lo que estaba preparado de ella se quita del editor. Las búsquedas de obras descansan.",
       "matrix.skippedRows.one": "{n} fila en «Skip»",
       "matrix.skippedRows.other": "{n} filas en «Skip»",
@@ -4722,7 +4734,7 @@
       "level.recording": "Enregistrement",
       "level.release": "Parution",
       "level.onlyHere": "MusicBrainz n’a cette relation qu’à ce niveau ({level})",
-      "level.workSkipped": "La matrice des œuvres est ignorée pour cette parution (« Reprendre la matrice des œuvres » dans la section des œuvres rétablit le niveau œuvre)",
+      "level.workSkipped": "La matrice des œuvres est ignorée pour cette parution (« Reprendre les œuvres » dans la section des œuvres rétablit le niveau œuvre)",
       "level.work": "Œuvre",
       "level.skip": "Ignorer",
       "th.role": "Rôle {src}",
@@ -5546,7 +5558,7 @@
       "media.worksTime": "rechercher leurs œuvres prend environ {min} min (plus long avec de grands catalogues des artistes)",
       "media.works.yes": "Rechercher les œuvres",
       "media.works.no": "Pas maintenant",
-      "media.works.skip": "Ignorer la matrice des œuvres",
+      "media.works.skip": "Ignorer les œuvres",
       "media.askHint": "La question est posée avant chaque import de cette parution.",
       "media.savedHint": "Présélectionné : le choix mémorisé pour cette parution. La question est quand même posée avant chaque import.",
       "media.sum.one": "{m} sur {all} supports · {n} piste",
@@ -5577,10 +5589,10 @@
       "matrix.searchCancel": "arrêter",
       "matrix.fold": "Replier la matrice des œuvres",
       "matrix.unfold": "Déplier la matrice des œuvres",
-      "matrix.skip": "Ignorer la matrice des œuvres",
+      "matrix.skip": "Ignorer les œuvres",
       "matrix.skipTitle": "Rien de la matrice des œuvres n’est créé : ni œuvres, ni liens vers des œuvres, ni relations d’œuvre (auteurs, éditeurs, arrangeurs …) ; les recherches d’œuvres sont suspendues. Gardé pour cette parution.",
       "matrix.skipped": "ignorée",
-      "matrix.unskip": "Reprendre la matrice des œuvres",
+      "matrix.unskip": "Reprendre les œuvres",
       "matrix.skippedHint": "Ignorée pour cette parution : rien de la matrice des œuvres n’est préparé – ni œuvres, ni liens vers des œuvres, ni relations d’œuvre (ses lignes sont sur « Skip ») ; ce qui en était préparé est retiré de l’éditeur. Les recherches d’œuvres sont suspendues.",
       "matrix.skippedRows.one": "{n} ligne sur « Skip »",
       "matrix.skippedRows.other": "{n} lignes sur « Skip »",
@@ -13782,6 +13794,13 @@
       autoPlaceFoundDates();
       // [D023] (3.31.7) dates in the titles of the tracks (off until switched on)
       placeTitleDates();
+      // [3.32.1] suggestions waiting for "Apply" (collected item 109; maintainer: "automatisch dashboard aufklappen sofern
+      // daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das dashboard muss doch auf sein, damit Dates &
+      // Tracks sichtbar ist?"): the dashboard opens (if it is closed) and "Dates & tracks" with both pools – once for this
+      // import; what is remembered stays and counts again from the next import
+      S.poolsForce = dm().cells.some((c) => c.auto) ? { dates: true, tracks: true } : null;
+      if (S.poolsForce) log('info', 'poolsOpened');
+      if (S.poolsForce && S.overlay && S.overlay.hidden) openDashboard();
       if (source === DISCOGS) log('info', 'discogsLoaded', { id, artists: S.artists.size, n: S.rows.length });
       else log('info', 'sourceLoaded', { source: source.name, artists: S.artists.size, n: S.rows.length, u: (rel.unrecognized || []).length });
 
@@ -15041,8 +15060,38 @@
   function entryCredits(a) {
     return uniq(S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip').map((r) => String(r.credit || '').trim()).filter(Boolean));
   }
+  /**
+   * [3.32.2] The spelling of the release in the head of an entry (collected item 100; maintainer: "Der Künstle wird auf dem
+   * Release/bei Discogs Marc D. Rusch genannt. Dann soll das auch so im Dashboard stehen. Also "Marc D. Rusch" evtl auch mit
+   * Sternchen, so wie discogs das macht und wenn ich mit dem Mauszeiger über den Namen gehe im Dashboard soll der Discogs name
+   * des entries angezeigt werden."): the name variation of its rows (the most frequent one), with "*" as Discogs writes it,
+   * when it differs from the name of the entry; null otherwise.
+   */
+  function releaseSpelling(a) {
+    if (!a || a.company || a.other || !a.dId) return null;
+    const count = new Map();
+    for (const r of S.rows) {
+      if (r.artistKey !== a.key) continue;
+      const v = String(r.anv || '').replace(/\*$/, '').trim();
+      if (v) count.set(v, (count.get(v) || 0) + 1);
+    }
+    const base = String(a.name || '').replace(/\s*\(\d+\)$/, '').trim();
+    const list = [...count.entries()].filter(([v]) => typo(v) !== typo(base)).sort((x, y) => y[1] - x[1]).map(([v]) => v);
+    return list.length ? { shown: list[0], others: list.slice(1), base } : null;
+  }
+
+  /** [3.32.2] The name in the head of an entry: the release's spelling with "*" (the entry's name in the tooltip), or the name. */
+  function entryNameHtml(a) {
+    const sp = releaseSpelling(a);
+    if (!sp) return `<strong>${esc(a.name)}</strong>`;
+    const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : [])].join('\n');
+    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>`;
+  }
+
   function creditChipHtml(a) {
-    const credits = entryCredits(a);
+    // [3.32.2] the spelling already shown in the head (as "Marc D. Rusch*") is not repeated as "as …"
+    const sp = releaseSpelling(a);
+    const credits = entryCredits(a).filter((c) => !sp || typo(c) !== typo(sp.shown));
     if (!credits.length) return '<span class="dci-gcredit" hidden></span>';
     const name = tr('common.quoted', { text: credits[0] });
     const text = credits.length > 1 ? tr('group.creditedAsMore', { name, n: credits.length - 1 }) : tr('group.creditedAs', { name });
@@ -15104,7 +15153,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}<strong>${esc(a.name)}</strong>${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -16257,7 +16306,8 @@
     m.cells.forEach((c) => { if (!c.alt) c.auto = false; });
     m.dirty = false;
     saveMatrix();
-    S.messages = S.messages.filter((x) => !x.dm && x.key !== 'dm.autoPlaced' && x.key !== 'dm.widened');
+    // [3.32.1] also the message about the dates from the titles (D023)
+    S.messages = S.messages.filter((x) => !x.dm && !['dm.autoPlaced', 'dm.widened', 'dm.titlePlaced'].includes(x.key));
     dmMessage('ok', 'dm.applied', { n: report.filled.size, cells: m.cells.length });
     if (report.split.length) dmMessage('info', 'trackpool.split', { list: uniq(report.split.map(rowShort)).join('; ') });
     if (report.limited.length) dmMessage('info', 'dm.studios', { list: uniq(report.limited.map(rowShort)).join('; ') });
@@ -16628,6 +16678,8 @@
   /** Dates & tracks are open: chosen once (remembered), otherwise open when there are dates; forms open it. */
   function poolsOpen() {
     if (S.poolForm || S.trackForm || S.poolClear) return true;
+    // [3.32.1] suggestions of this import wait for "Apply" (item 109): open, without changing what is remembered
+    if (S.poolsForce) return true;
     if (S.poolsOpen != null) return !!S.poolsOpen;
     return !!(S.datePool.length || dateFinds().notes.length);
   }
@@ -16699,8 +16751,11 @@
    * [3.30.3] The name of a pool, a button that folds it (item 93; maintainer: "bitte mach "Date pool" und "track pool" in
    * der mitscrollenden leiste oben auf und zuklappbar"); folded, only the name and the number of chips stay.
    */
+  /** [3.32.1] A pool folded (remembered), unless this import opened it for its suggestions (item 109). */
+  const poolFolded = (pool) => !!S.poolFold[pool] && !(S.poolsForce && S.poolsForce[pool]);
+
   function poolLabelHtml(pool, n) {
-    const folded = !!S.poolFold[pool];
+    const folded = poolFolded(pool);
     const name = tr(pool === 'dates' ? 'date.title' : 'trackpool.title');
     const t = tr(folded ? 'pools.unfoldOne' : 'pools.foldOne', { name });
     return `<button type="button" class="dci-pool-label dci-pool-fold" data-act="pool-fold" data-pool="${pool}" aria-expanded="${!folded}" title="${esc(t)}">${folded ? '▸' : '▾'} ${esc(name)}${folded ? ` <span class="dci-pool-n">(${n})</span>` : ''}</button>`;
@@ -16721,7 +16776,7 @@
     const suggHtml = suggestions.length ? `<span class="dci-date-sugg"><span class="dci-sub">${esc(tr('date.suggestions'))}</span>
       ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin) }))}</button>`).join(' ')}</span>` : '';
     const hint = S.datePool.length ? `<span class="dci-drag-hint" title="${esc(tr('date.dragHintTitle'))}">⠿ ${esc(tr('date.dragHint'))}</span>` : '';
-    if (S.poolFold.dates) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}</div>`;
+    if (poolFolded('dates')) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}</div>`;
     if (kept) {
       return `<div class="dci-dates-bar dci-pool-dates">${poolLabelHtml('dates', S.datePool.length)}${chips}${hint}</div>`;
     }
@@ -16745,7 +16800,7 @@
       <button type="button" class="dci-chip-main" data-act="tg-edit" data-id="${esc(g.id)}" title="${esc(tr('trackpool.editTitle'))}${trackGroupSuggested(g) ? ` – ${esc(tr('pools.suggested'))}` : ''}">
       ${esc(g.name)} <span class="dci-chip-count">${esc(tr('trackpool.count', { n: g.tracks.length }))}</span></button></span>`).join('');
     const hint = `<span class="dci-drag-hint" title="${esc(tr('trackpool.dragHintTitle'))}">⠿ ${esc(tr('trackpool.dragHint'))}</span>`;
-    if (S.poolFold.tracks) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}</div>`;
+    if (poolFolded('tracks')) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}</div>`;
     if (kept) return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}${hint}</div>`;
     // Several media: a whole medium (or one group per medium) in one step (of the chosen media)
     const media = selMedia();
@@ -17010,9 +17065,11 @@
         <span class="dci-tn">${esc(x.number)}</span> <span class="dci-tt">${esc(x.title)}</span></label>`;
     }).join('');
     return `<div class="dci-date-form dci-track-form" role="group" aria-label="${esc(tr('trackpool.formTitle'))}">
+      <div class="dci-tg-namerow">
       <label class="dci-pool-name">${esc(tr('date.name'))} <input type="text" data-f="tg-name" value="${esc(f.name)}" placeholder="${esc(tr('trackpool.namePlaceholder'))}" size="18"></label>
       <label class="dci-pool-name dci-tg-text">${esc(tr('trackpool.text'))} <input type="text" data-f="tg-text" value="${esc(f.text != null ? f.text : trackListLabel(f.tracks))}"
         placeholder="${esc(tr('trackpool.textPlaceholder'))}" size="22" autocomplete="off"></label>
+      </div>
       <div class="dci-picker"><div class="dci-chips">${chips}</div></div>
       <div class="dci-mbdate-tools">
         <button type="button" class="dci-apply dci-small" data-act="tg-save">${esc(tr('date.save'))}</button>
@@ -17198,6 +17255,58 @@
       <span class="dci-sub">${esc(row.translated ? tr('instrAsk.otherwiseTr', { credit: q.credit, word: row.translated }) : tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
 
+  /** The instrument chosen in a question (Q001 …); [3.32.3] also from the compact line. Counts as made by hand: it stays when the rules change. */
+  function pickInstrument(row, name) {
+    if (!row || !name) return;
+    const artist = S.artists.get(row.artistKey);
+    row.primaryText = name;
+    row.primaryTouched = true;
+    refreshRowDetails(row);
+    log('info', 'instrPicked', { name: (artist && (artist.mbName || artist.name)) || '', instrument: name, credit: row.roleCredit || '' });
+    rerenderRow(row);
+    refresh();
+  }
+
+  /** [Q003] The type chosen in a type question: its level, and for "misc" the task; [3.32.3] also from the compact line. */
+  function pickType(row, i) {
+    const q = row && typeQuestionFor(row);
+    const o = q && q.options[i];
+    if (!o) return;
+    row.typeAnswer = i;
+    row.types = [o.type];
+    row.creditFromRole = optionCredit(o, row);
+    delete row.scopeLevel;
+    delete row.mxSkipped;
+    // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
+    row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
+    row.levelTouched = true;
+    resolveRowType(row);
+    // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
+    if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
+    refreshRowDetails(row);
+    log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
+    // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
+    if (row.level === 'work') {
+      renderGroups();
+      renderWorks();
+    } else rerenderRow(row);
+    refresh();
+  }
+
+  /**
+   * [3.32.3] A question in the compact line, whole and to click (collected item 102; maintainer: "die Abfragen wie "Bass:
+   * which instrument?" in der kompakt Ansicht sollen komplett dargestellt und klickbar sein", "ok ab 5"): up to four
+   * possibilities as buttons, from five a list; a choice is made as in the full row, the row stays closed.
+   */
+  function clineAskHtml(kind, label, opts) {
+    const act = kind === 'instr' ? 'instr-pick' : 'type-pick';
+    const data = (o) => (kind === 'instr' ? `data-instr="${esc(o.value)}"` : `data-opt="${esc(o.value)}"`);
+    const pick = opts.length >= 5
+      ? `<select data-f="cl-pick" data-kind="${kind}" aria-label="${esc(label)}"><option value="">${esc(tr('cl.pickList'))}</option>${opts.map((o) => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('')}</select>`
+      : opts.map((o) => `<button type="button" class="dci-textbtn dci-cl-pick" data-act="${act}" ${data(o)}>${esc(o.text)}</button>`).join(' · ');
+    return `<span class="dci-cl-flag dci-cl-ask dci-cl-askq">${esc(label)} ${pick}</span>`;
+  }
+
   /** [Q003 …] The type is asked (e.g. "Directed By"): the options, the chosen one pressed; until then "please choose". */
   function typeAskHtml(row) {
     const q = typeQuestionFor(row);
@@ -17289,11 +17398,12 @@
       if (info && info.issues && info.issues.length) flags.push(['bad', info.issues.join(', ')]);
       if (isUnmapped(row)) flags.push(['bad', tr('cl.unmapped')]);
       const q = questionRuleFor(row);
-      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) flags.push(['ask', tr('cl.instrAsk', { name: row.base })]);
       const tq = typeQuestionFor(row);
-      if (tq && row.typeAnswer == null) flags.push(['ask', tr('cl.typeAsk')]);
       if (!hasDateInput(row.date) && linerDateSugg(row)) flags.push(['sugg', tr('cl.dateSugg')]);
       flags.forEach(([kind, text]) => parts.push(open(`dci-cl-flag dci-cl-${kind}`, esc(text), tr('cl.openTitle'))));
+      // [3.32.3] the questions whole and to click (item 102)
+      if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
+      if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
     }
@@ -19637,6 +19747,13 @@
    * ✕ take out), the roles (each one a place to drop a track group onto, the whole card too), the column date
    * and "credited as". The date fields, the pool and the publisher tools are in the ▾ menu.
    */
+  /** [3.32.4] The kind of a column of the works matrix (its entry, or for one only in MusicBrainz its entity type; item 107). */
+  const columnKind = (col) => (col.artist ? groupKindOf(col.artist).kind : ['artist', 'label', 'place', 'area'].includes(col.entityType) ? col.entityType : 'other');
+  const columnKindTag = (col) => {
+    const text = tr(`entity.${col.artist ? groupKindOf(col.artist).type : col.entityType || 'artist'}`);
+    return `<span class="dci-kind-tag dci-mx-kind">${esc(text.charAt(0).toUpperCase() + text.slice(1))}</span>`;
+  };
+
   function columnHeadHtml(col) {
     const a = col.artist;
     const collapsed = S.mxCollapsed.has(col.key);
@@ -19665,8 +19782,8 @@
       <button type="button" class="dci-textbtn" data-act="mx-colmenu" data-col="${esc(col.key)}">${esc(tr('common.close'))}</button></div>` : '');
     // Only in MusicBrainz: its date goes onto those relationships that have none (an edit of each)
     if (col.mbOnly) {
-      return `<th scope="col" class="dci-mx-col dci-mx-locked" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-        <div class="dci-mx-colname">${name} ${btns}</div>
+      return `<th scope="col" class="dci-mx-col dci-mx-locked dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+        <div class="dci-mx-colname">${columnKindTag(col)}${name} ${btns}</div>
         <div class="dci-mx-roles"><span class="dci-sub">${esc(tr('matrix.mbOnly'))}</span>${dateChip}</div>
         ${menu(`<div title="${esc(tr('matrix.colDateMbTitle'))}">${dateBox}</div>`)}</div></th>`;
     }
@@ -19694,8 +19811,8 @@
       <button type="button" class="dci-textbtn" data-act="mx-pub-suggest" data-mbid="${esc(x.mbid)}" data-name="${esc(x.name)}">${esc(tr('matrix.addColumn'))}</button></div>`).join('');
     const r098 = col.rows.some((r) => r.ruleId === 'R098')
       ? `<button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="R098" title="${esc(tr('note.musicLyrics'))}">R098</button>` : '';
-    return `<th scope="col" class="dci-mx-col" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
-      <div class="dci-mx-colname">${name} ${btns}</div>
+    return `<th scope="col" class="dci-mx-col dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
+      <div class="dci-mx-colname">${columnKindTag(col)}${name} ${btns}</div>
       <div class="dci-mx-roles">${roles}<span class="dci-sub">${esc(tr('matrix.colWorks', { n: nWorks }))}</span>${dateChip}${pub}${r098}${sugg.length
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}</div>
       <label class="dci-mx-credit">${esc(tr('matrix.colCredit'))} <input type="text" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10"></label>
@@ -21749,40 +21866,11 @@
       case 'artist-create':
         if (artist) startArtistCreate(artist);
         break;
-      case 'type-pick': {
-        // [Q003] The type chosen in the question: its level, and for "misc" the task
-        const q = typeQuestionFor(row);
-        const o = q && q.options[Number(btn.dataset.opt)];
-        if (!o) break;
-        row.typeAnswer = Number(btn.dataset.opt);
-        row.types = [o.type];
-        row.creditFromRole = optionCredit(o, row);
-        delete row.scopeLevel;
-        delete row.mxSkipped;
-        // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
-        row.level = o.level === 'work' && S.worksSkip ? 'skip' : o.level;
-        row.levelTouched = true;
-        resolveRowType(row);
-        // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
-        if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
-        refreshRowDetails(row);
-        log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
-        // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
-        if (row.level === 'work') {
-          renderGroups();
-          renderWorks();
-        } else rerenderRow(row);
-        refresh();
+      case 'type-pick':
+        pickType(row, Number(btn.dataset.opt));
         break;
-      }
       case 'instr-pick':
-        // A choice in the question counts as made by hand: it stays when the rules change
-        row.primaryText = btn.dataset.instr;
-        row.primaryTouched = true;
-        refreshRowDetails(row);
-        log('info', 'instrPicked', { name: (artist && (artist.mbName || artist.name)) || '', instrument: btn.dataset.instr, credit: row.roleCredit || '' });
-        rerenderRow(row);
-        refresh();
+        pickInstrument(row, btn.dataset.instr);
         break;
       case 'other-create':
         startOtherCreate(artist);
@@ -21901,7 +21989,9 @@
       // Dates & tracks
       case 'pool-fold': {
         const pool = btn.dataset.pool === 'tracks' ? 'tracks' : 'dates';
-        S.poolFold = { ...S.poolFold, [pool]: !S.poolFold[pool] };
+        // [3.32.1] opened for this import only: folded again as remembered
+        if (S.poolsForce && S.poolsForce[pool] && S.poolFold[pool]) delete S.poolsForce[pool];
+        else S.poolFold = { ...S.poolFold, [pool]: !S.poolFold[pool] };
         if (!S.poolFold[pool]) delete S.poolFold[pool];
         writeJson('localStorage', POOL_FOLD_KEY, Object.keys(S.poolFold).length ? S.poolFold : null);
         renderDates();
@@ -21911,6 +22001,7 @@
       }
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
+        S.poolsForce = null;
         S.poolForm = null;
         S.trackForm = null;
         S.poolClear = null;
@@ -22558,6 +22649,12 @@
       case 'role-text':
         remapManualRow(row, el.value);
         break;
+      // [3.32.3] a question of the compact line with five possibilities or more (item 102)
+      case 'cl-pick':
+        if (!el.value) break;
+        if (el.dataset.kind === 'instr') pickInstrument(row, el.value);
+        else pickType(row, Number(el.value));
+        break;
       case 'primary':
         row.primaryText = el.value;
         row.primaryTouched = true;
@@ -22781,6 +22878,12 @@
     if (el.dataset && el.dataset.set === 'level-color' && /^#[0-9a-f]{6}$/i.test(el.value) && LEVEL_PALETTE_DEFAULT[el.dataset.level]) {
       S.levelPalette[el.dataset.level] = el.value.toLowerCase();
       applyLevelColors();
+      return;
+    }
+    // [3.32.4] a colour of a kind shown while it is chosen (stored on "change")
+    if (el.dataset && el.dataset.set === 'kind-color' && /^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
+      S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
+      applyKindColors();
       return;
     }
     // [3.30.5] the tracks typed in (item 90)
@@ -23251,6 +23354,7 @@
     applyView();
     applyScale();
     applyLevelColors();
+    applyKindColors();
     makeMovable(overlay.querySelector('.dci-panel'), '.dci-head', 'panel');
     applyPlacement();
     // Rows scrolled into view (keyboard, jumps) must not end up under the sticky date pool ([3.18.0] with the line
@@ -23437,10 +23541,14 @@
   const LEVEL_PALETTE_KEY = 'dci-level-palette';
   const LEVEL_PALETTE_DEFAULT = { recording: '#2f6db5', release: '#2e8b57', release_group: '#b0700c', work: '#8a4f9e' };
   const LEVEL_SKIP_COLOR = '#8b8898';
+  // [3.32.4] the colours of the kinds of entries (items 107, 108): on by default; own colours in ⚙ Settings → Appearance
+  const KIND_COLORS_KEY = 'dci-kind-colors';
+  const KIND_PALETTE_KEY = 'dci-kind-palette';
+  const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -23453,6 +23561,38 @@
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
+  S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
+  S.kindPalette = kindPaletteRead();
+
+  /** [3.32.4] The stored colours of the kinds of entries (each a "#rrggbb"; the others as by default). */
+  function kindPaletteRead() {
+    const stored = readJson('localStorage', KIND_PALETTE_KEY, null) || {};
+    return Object.fromEntries(Object.entries(KIND_PALETTE_DEFAULT).map(([k, d]) => [k, /^#[0-9a-f]{6}$/i.test(stored[k] || '') ? stored[k].toLowerCase() : d]));
+  }
+
+  /** [3.32.4] A colour mixed with white (share 0 … 1 of the colour): the light background of a kind. */
+  function tintOf(hex, share) {
+    return `#${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * share + 255 * (1 - share)).toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  /**
+   * [3.32.4] The colours of the kinds on the dashboard (collected item 108; CSS variables): the bar of an entry and of a
+   * column head of the works matrix, its tag and its light background; off: all grey.
+   */
+  function applyKindColors() {
+    if (!S.overlay) return;
+    S.overlay.classList.toggle('dci-kindc', !!S.kindColors);
+    Object.entries(S.kindPalette).forEach(([kind, c0]) => {
+      const c = S.kindColors ? c0 : KIND_PALETTE_DEFAULT.other;
+      S.overlay.style.setProperty(`--dci-kind-${kind}`, c);
+      S.overlay.style.setProperty(`--dci-kind-${kind}-bg`, tintOf(c, 0.11));
+    });
+  }
+
+  function saveKindPalette() {
+    const own = Object.fromEntries(Object.entries(S.kindPalette).filter(([k, c]) => c !== KIND_PALETTE_DEFAULT[k]));
+    writeJson('localStorage', KIND_PALETTE_KEY, Object.keys(own).length ? own : null);
+  }
 
   /** The stored colours of the levels (each a "#rrggbb"; the others as by default). */
   function levelPaletteRead() {
@@ -23518,6 +23658,11 @@
         row(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
           value="${S.levelPalette[level]}"${S.levelColors ? '' : ' disabled'} aria-label="${esc(tr('settings.levelColor', { level: tr(`level.${level}`) }))}">
           <span class="dci-cl-level" data-level="${level}">${esc(tr(`level.${level}`))}</span></label>`).join('')}</span>`),
+        // [3.32.4] the colours of the kinds of entries (item 108)
+        row(check('data-set="kind-colors"', S.kindColors, tr('settings.kindColors'), tr('settings.kindColorsTitle'))),
+        row(`<span class="dci-lvl-pick dci-kind-pick">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}"><input type="color" data-set="kind-color" data-kind="${kind}"
+          value="${S.kindPalette[kind]}"${S.kindColors ? '' : ' disabled'} aria-label="${esc(tr('settings.kindColor', { kind: tr(`kind.${kind}`) }))}">
+          <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}</span>`),
       ],
       sources: () => [
         row(`<strong>${esc(tr('srcorder.toggle'))}</strong>`), sourceOrderHtml(),
@@ -23663,6 +23808,20 @@
         applyLevelColors();
       }
     }
+    // [3.32.4] the colours of the kinds of entries
+    else if (k === 'kind-colors') {
+      S.kindColors = el.checked;
+      writeJson('localStorage', KIND_COLORS_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.kindColors'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      applyKindColors();
+    } else if (k === 'kind-color') {
+      if (/^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
+        S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
+        saveKindPalette();
+        log('info', 'settingValue', { what: tr('settings.kindColor', { kind: tr(`kind.${el.dataset.kind}`) }), value: el.value.toLowerCase() });
+        applyKindColors();
+      }
+    }
     else if (k === 'log-place') setLogPlace(el.value);
     else if (k === 'aw-on') {
       S.awOn = el.checked;
@@ -23730,6 +23889,9 @@
       S.levelColors = true;
       S.levelPalette = { ...LEVEL_PALETTE_DEFAULT };
       applyLevelColors();
+      S.kindColors = true;
+      S.kindPalette = { ...KIND_PALETTE_DEFAULT };
+      applyKindColors();
       S.rulesPlace = 'dashboard';
       S.rulesRowPlace = 'window';
       S.rulesAsWindow = false;
@@ -23790,7 +23952,9 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT },
     });
+    applyKindColors();
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
     awClear();
@@ -24527,12 +24691,19 @@
       .dci-only-missing .dci-group.dci-all-skip { display: none; }
 
       /* Entries as cards: a coloured bar, label and tinted header per kind (artist, label, place, other) */
-      .dci-group { --kind: #8a8799; --kind-bg: #f4f3f7; margin: 0 0 calc(var(--u, 1px) * 28); padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14);
+      .dci-group { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); margin: 0 0 calc(var(--u, 1px) * 28); padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14);
         border-left: 5px solid var(--kind); background: #fff; border-radius: 0 6px 6px 0; box-shadow: 0 1px 4px rgba(38, 36, 48, 0.10); }
-      .dci-kind-artist { --kind: #5b6f8c; --kind-bg: #eef1f6; }
-      .dci-kind-label { --kind: #2a8a8a; --kind-bg: #e8f4f4; }
-      .dci-kind-place { --kind: #4e8a3e; --kind-bg: #edf5e9; }
-      .dci-kind-area { --kind: #8a6a3e; --kind-bg: #f6f0e7; }
+      /* [3.32.4] the colours of the kinds come from ⚙ Settings → Appearance (item 108; these are the defaults) */
+      .dci-kind-artist { --kind: var(--dci-kind-artist, #5b6f8c); --kind-bg: var(--dci-kind-artist-bg, #eef1f6); }
+      .dci-kind-label { --kind: var(--dci-kind-label, #2a8a8a); --kind-bg: var(--dci-kind-label-bg, #e8f4f4); }
+      .dci-kind-place { --kind: var(--dci-kind-place, #4e8a3e); --kind-bg: var(--dci-kind-place-bg, #edf5e9); }
+      .dci-kind-area { --kind: var(--dci-kind-area, #8a6a3e); --kind-bg: var(--dci-kind-area-bg, #f6f0e7); }
+      .dci-kind-other { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); }
+      /* [3.32.4] the heads of the works matrix in the colour of their kind; only in MusicBrainz paler; the cells neutral (item 107) */
+      .dci-matrix th.dci-mx-col[class*="dci-kind-"] .dci-mx-card { border-top: 3px solid var(--kind); background: var(--kind-bg); }
+      .dci-matrix th.dci-mx-col.dci-mx-locked[class*="dci-kind-"] .dci-mx-card { border-top-color: color-mix(in srgb, var(--kind) 40%, #fff); background: color-mix(in srgb, var(--kind-bg) 45%, #fff); }
+      .dci-matrix .dci-mx-kind { font-size: calc(var(--u, 1px) * 10); padding: 0 calc(var(--u, 1px) * 5); margin-right: calc(var(--u, 1px) * 4); }
+      .dci-matrix th.dci-mx-locked .dci-mx-kind { opacity: 0.6; }
       .dci-pageof { margin: 0 0 calc(var(--u, 1px) * 6); }
       .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind); color: #fff;
         font-size: calc(var(--u, 1px) * 11); font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }
@@ -24975,6 +25146,8 @@
       .dci-date-sugg { display: inline-flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin-left: calc(var(--u, 1px) * 8); }
       .dci-date-form { margin-top: calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); background: #fff; border: 1px solid var(--line); border-radius: 3px; max-width: calc(var(--u, 1px) * 520); }
       .dci-date-form .dci-sub, .dci-date-form .dci-err { margin: calc(var(--u, 1px) * 4) 0 0; }
+      /* [3.32.1] "Tracks:" right of "Name:" in the form of a track group, below it in a narrow window (collected item 90b) */
+      .dci-tg-namerow { display: flex; flex-wrap: wrap; align-items: center; column-gap: calc(var(--u, 1px) * 16); }
       .dci-pool-name { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-bottom: calc(var(--u, 1px) * 6); color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
       .dci-apply.dci-small { padding: 3px calc(var(--u, 1px) * 12); }
       .dci-dates > .dci-sub { margin: calc(var(--u, 1px) * 4) 0 0; }
@@ -25025,6 +25198,10 @@
       .dci-cl-flag { padding: 0 calc(var(--u, 1px) * 8); border-radius: 3px; font-size: calc(var(--u, 1px) * 12); }
       .dci-cl-bad { border: 1px solid #e6a49e; background: #fbeceb; color: var(--err); }
       .dci-cl-ask, .dci-cl-sugg { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      /* [3.32.3] a question of the compact line with its possibilities to click (item 102) */
+      .dci-cl-askq { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); }
+      .dci-cl-askq .dci-cl-pick { color: var(--sugg-ink); text-decoration: underline; font-weight: 600; }
+      .dci-cl-askq select { font: inherit; font-size: calc(var(--u, 1px) * 12); }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
