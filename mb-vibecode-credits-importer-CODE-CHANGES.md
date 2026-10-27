@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.32.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.32.5, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,21 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.32.5 · 2026-10-27
+
+A place with a date after it, typos in role words (collected items 117, 115c).
+
+- **New `PLACE_DATE_TAIL` (T047):** a preposition followed at once by a date (a digit, a month word, a season) up to the end; `placeOf` cuts it off before splitting at commas (before, the part with the date – and the place in it – was dropped for its digits).
+- **`TEXT_MONTHS`:** only month words (whole, or three/four letters, `sept`) – "Marseille", "Augsburg" are no months any more (`noDates` took them out of an area).
+- **New `ROLE_WORDS` (T048), `roleVocab()`** (ROLE_WORDS plus the words of MB's link types and attributes from `idx()`, cached once MB data is there; in Node only ROLE_WORDS), **`oneEditApart(a, b)`** (Damerau: one swap of neighbours, one letter missing, extra or wrong), **`fixRoleTypo(phrase, check)`** (each unknown word of five letters or more with words one edit apart, tried in combinations of at most 24 – a word may stay – until `check` knows the phrase → `{ phrase, typos: [{ written, read }] }`). Defined before the Node export (used by the text adapter).
+- **`TEXT.parse`:** parameters renamed `isRoleKnown`, `isCompanyRoleKnown`; new `typoMode`, `typoCache`, `typoFix(phrase, kind)`, wrappers `isRole`, `isCompanyRole` (typo-tolerant only in typo mode), `readRole(role)`; `addCredit`, `addPlaceholder`, `place`, `inArea` push the role as read and `typos`. In `readUnit` the clause loop body is now `readClause(clause, ci)` (`continue` → `return`): a clause that gave nothing is read again in typo mode (rule S050; its unknown parts of the first reading are dropped); the "role then name" fallback (`roleThenName`) likewise.
+- **`groupCredits` / `groupCompanies`:** carry `typos` (per role, once per written word); rows get `row.typos`. **New `typoHtml(row)`** in `roleCell` (`.dci-typo`, `role.typoRead`, rule id S050); `columnHeadHtml`: an **S050** id with the text as title when a row of the column has typos.
+- **Rules:** new S050 (special rule), T047, T048 (tables).
+- **⚙ Settings → Texts:** `data-set="rule-on" data-rule="S050"` (the rule's own switch: `setRuleOn`, `applyRulesChange`, `renderRulesBody`); `resetTopic('texts')` switches S050 on again.
+- **CSS:** `.dci-typo`.
+- **Texts:** new `role.typoRead`, `settings.typos`, `settings.typosTitle` (English only).
+- **Tests:** text corpus + 5 lines (El Studio, Studio Sol in Marseille, "Muisc and cover art by j4vaman", "Gutiar – Ann Lee", "Recordd at Studio X."; the corpus prints "written …" for a typo, knows "engineered at"); new case `placedate` in `t_text_places.py`; register golden written anew (S050, T047, T048).
 
 ## Import 3.32.4 · 2026-10-27
 

@@ -1416,6 +1416,90 @@
         "unrecognized": [],
         "ignored": []
       }
+    },
+    {
+      "text": "All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th 2016.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "El Studio",
+            "Recorded At",
+            "(San Francisco)"
+          ],
+          [
+            "El Studio",
+            "Engineered At",
+            "(San Francisco)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio Sol in Marseille in March 2019.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio Sol",
+            "Recorded At",
+            "(Marseille)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Muisc and cover art by j4vaman",
+      "expect": {
+        "credits": [
+          [
+            "j4vaman",
+            "Music By",
+            "written Muisc"
+          ],
+          [
+            "j4vaman",
+            "Cover art"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Gutiar – Ann Lee",
+      "expect": {
+        "credits": [
+          [
+            "Ann Lee",
+            "Guitar",
+            "written Gutiar"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recordd at Studio X.",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio X",
+            "Recorded At",
+            "written Recordd"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
     }
   ]
 }

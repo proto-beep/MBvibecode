@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.32.4 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.5 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -86,6 +86,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.5
+
+#### Fixed
+
+- **A place with a date right after it** (collected item 117; maintainer: "ich habe einen Text hineinkopiert der nicht funktioniert hat aber beim import direct von discogs wurde er erkannt. ("All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th 2016.")"): the place is found with its area – El Studio (San Francisco) with recorded at and engineered at – and the date goes into the pool as before; before, a date in the same part as the place took the place with it (pasted texts, Bandcamp, Discogs notes – all read texts the same way; on Discogs the studio had come from "Companies, etc.").
+- **An area that begins like a month** ("Marseille", "Augsburg", "Decatur") is no month any more: before, it was left out of a place's area.
+
+#### Added
+
+- **Typos in role words** (collected item 115, rule S050; maintainer: "muisc hat einen schreibfehler", "Wir probieren es mal mit Tippefehler allgemein erkennen", "an/ausschaltbar in den einstellungen"): a part of a text that gives nothing is read once more with each unknown word one letter off a role word read as that word – "Muisc and cover art by j4vaman" gives Music By and cover art; only role words, never names; the row (or the column head of the works matrix) says "Read as “Music” (written “Muisc”)". On by default; ⚙ Settings → Texts or Mapping rules switch it off.
 
 ### Import 3.32.4
 

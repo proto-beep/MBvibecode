@@ -1,6 +1,6 @@
 """Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: areas, v3222, medium, initials – each the former smoke/t_<case>.py, unchanged; `python3 t_text_places.py <case> …` runs only those."""
+Cases: areas, v3222, medium, initials, placedate (3.32.5) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_places.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -395,6 +395,84 @@ Agusti Fernández – piano"""
         ag = [q for q in queries if 'Fern' in q or 'fern' in q]
         print('A)', ok_a, '| B)', ok_b, '| Anfragen für Agusti:', len(ag))
         ok_c = all(v[1] == 'missing' for v in g.values()) and len(ag) == 1 and g['Agusti Fernández'][0] == ['Agustí Fernández (pianist)']
+        results += [ok_a, ok_b, ok_c]
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_placedate():
+    """Credits Importer 3.32.5: a place with a date after it, typos in role words (collected items 117, 115c; S050, T047, T048).
+    A) A pasted text "All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th 2016." gives the
+       place El Studio with its area "(San Francisco)" – "recorded at" and "engineered at" (before: nothing, the date took the
+       place with it); the date pool has the days (Performance). "Recorded at Studio Sol in Marseille." keeps its area
+       (before, "Marseille" was taken for a month and left out).
+    B) "Muisc and cover art by Jo Vaman": Jo Vaman with "Music By" (read as Music: composer, a column of the works matrix whose
+       head has the rule id S050 with "Read as “Music” (written “Muisc”)") and "Cover art"; nothing not recognized.
+    C) ⚙ Settings → Texts: "Typos in role words" is on; switched off (the rule S050 off, stored) and the text loaded again:
+       "Muisc …" gives no "Music By" any more and is listed as not recognized; on again (↺ of the tab) → stored as on."""
+    H.lt(694, H.uid('eeeeeeee', 694), 'engineered at', 'place', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th 2016.
+Recorded at Studio Sol in Marseille.
+Muisc and cover art by Jo Vaman"""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+  head: g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(), kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1],
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]');
+    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', (tr.querySelector('.dci-typo') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim()]; }) }])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+
+        def load():
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            n = pg.evaluate("[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length")
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length > {n}", 90)
+            pg.wait_for_timeout(1200)
+            return pg.evaluate(GROUPS)
+
+        g = load()
+        for k, v in g.items():
+            print('   ', k, v['kind'], v['head'], v['rows'])
+        el = g.get('El Studio') or {'rows': [], 'head': '', 'kind': ''}
+        sol = g.get('Studio Sol') or {'rows': [], 'head': '', 'kind': ''}
+        pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => d.name + ' ' + JSON.stringify(d.begin) + JSON.stringify(d.end))")
+        print('A) El Studio:', el['kind'], el['head'], el['rows'], '| Studio Sol:', sol['head'], '| Pool:', pool)
+        ok_a = el['kind'] == 'place' and '(San Francisco)' in el['head'] and sorted(r[1] for r in el['rows']) == ['engineered at', 'recorded at'] \
+            and '(Marseille)' in sol['head'] and any('"year":2016,"month":9,"day":3' in x and '"day":4' in x for x in pool)
+        jo = (g.get('Jo Vaman') or {'rows': []})['rows']
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+        # "Music By" is a role of the works (composer): its rows are in the works matrix – the column head says it
+        head = pg.evaluate("""(() => { const th = [...document.querySelectorAll('th.dci-mx-col')].find(t => /Jo Vaman/.test(t.textContent));
+          const b = th && th.querySelector('[data-rule=S050]'); return th ? [th.querySelector('.dci-mx-roles').textContent.replace(/\\s+/g, ' ').trim(), b ? b.title : ''] : null; })()""")
+        print('B) Jo Vaman:', jo, '| Werk-Matrix:', head, '| nicht erkannt:', unrec)
+        ok_b = bool(head) and head[1] == 'Read as “Music” (written “Muisc”)' and head[0].startswith('composer') \
+            and any(r[0] == 'Cover art' for r in jo) and not any('Muisc' in u for u in unrec)
+        # C) ⚙ Settings → Texts
+        H.open_settings(pg, 'texts')
+        sw = pg.locator('[data-el=settings] [data-set=rule-on][data-rule=S050]')
+        on0 = sw.is_checked()
+        sw.uncheck()
+        pg.wait_for_timeout(300)
+        off = pg.evaluate("JSON.parse(localStorage.getItem('dci-rules-off') || '[]')")
+        g2 = load()
+        jo2 = (g2.get('Jo Vaman') or {'rows': []})['rows']
+        unrec2 = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+        H.open_settings(pg, 'texts')
+        pg.click('[data-el=settings] [data-act=settings-reset]') if pg.locator('[data-el=settings] [data-act=settings-reset]').count() else None
+        pg.wait_for_timeout(300)
+        off2 = pg.evaluate("JSON.parse(localStorage.getItem('dci-rules-off') || '[]')")
+        print('C) Schalter an:', on0, '| aus gespeichert:', off, '| danach Jo Vaman:', jo2, '| nicht erkannt:', unrec2, '| nach ↺:', off2)
+        ok_c = on0 and 'S050' in off and not any(r[0] == 'Music By' for r in jo2) and any('Muisc' in u for u in unrec2) and 'S050' not in off2
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
         results += [ok_a, ok_b, ok_c]
         print('Fehler:', errs)
         results.append(not errs)

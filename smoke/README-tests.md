@@ -102,7 +102,7 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #   members: 3.30.7: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – three performers (pasted text
                                 #     and the "about" text of Bandcamp); "The band is now a trio." and "… is back with a new album." nothing
 
-python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials
+python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
                                 #   areas: text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
                                 #     Gijón suggested by its alias "Xixón", no "Create", "recorded in" staged on the recordings); tracks by their
                                 #     titles ("Piano in ‘A' and 'B' is a contribution by X", one letter off, "Not matched"); Bandcamp: titles of the
@@ -115,6 +115,11 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     with the reason (and a studio only for it), the digital half kept; "Translated by" on Bandcamp asks
                                 #   initials: name suggestions for names with an initial (3.13.0): "T. Snekkestad" → Torben Snekkestad, "Barry J. Guy"
                                 #     → Barry John Guy, "K. Tanaka" → Kenji (not Hiro) Tanaka, no second search without an initial
+                                #   placedate: 3.32.5: "All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th
+                                #     2016." – El Studio (San Francisco) recorded at + engineered at, the days in the pool; "Studio Sol in
+                                #     Marseille" keeps its area; "Muisc and cover art by Jo Vaman" – Music By (S050, the column head of the
+                                #     works matrix says "Read as “Music” (written “Muisc”)"); ⚙ Settings → Texts switches S050 off (stored),
+                                #     the line is not recognized then; ↺ of the tab switches it on
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
                                 #   discnotes: 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
