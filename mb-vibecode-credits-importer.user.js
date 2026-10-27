@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.31.5
+// @version      3.31.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -123,7 +123,7 @@
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "ignored.why.package": "about the package",
       "log.notesCompanies": "From the Discogs notes, not listed by Discogs ({n}): {list}",
-      "log.notesPubTracks": "From the Discogs notes: the tracks of publishers Discogs lists – {list} (suggestions in the works matrix)",
+      "log.notesPubTracks": "From the Discogs notes: the tracks of publishers Discogs lists – {list} (set in the works matrix; ⓘ shows the line)",
       "log.pubOfPerson": "{name} as publisher is the person {person}: publishing is a role of that entry (MusicBrainz: artist–work “published / publisher”), no company of its own",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
@@ -882,6 +882,8 @@
       "matrix.newWork": "new work",
       "matrix.waiting": "waits for a work",
       "matrix.notesReason": "from the notes: “{text}”",
+      "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
+      "role.notesTracks": "Tracks {list} from the notes",
       "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
       "matrix.suggOk": "Keep the suggestion",
       "matrix.suggNo": "Take the suggestion out",
@@ -13653,11 +13655,11 @@
           if (some && r.tracks.spec) Object.assign(row, { dSpec: r.tracks.spec, dSpecTracks: true });
           if (some && !row.tracks.size) continue;
           row.suggested = new Set(row.tracks);
-          // [S043] (3.31.0) a publisher's tracks from the Discogs notes: suggestions (dashed, yellow), the line as the reason
+          // [S043] (3.31.0) a publisher's tracks from the Discogs notes; [3.31.6] set, not suggested – ⓘ shows the line (collected
+          // item 97c; maintainer: "für alles was in texten erkannt wird")
           if (r.notesLine && some) {
             row.notesTracks = new Set(row.tracks);
-            row.suggest = { source: 'notes', tracks: new Set(row.tracks), text: r.notesLine };
-            row.confirmed = new Set();
+            row.notesFrom = r.notesLine;
           }
           if (r.catno) Object.assign(row, { dSpec: r.catno, dSpecTracks: false });
           if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
@@ -15050,6 +15052,9 @@
     return out.join('');
   }
 
+  /** [3.31.6] Tracks set from the notes: ⓘ with the line they come from (item 97c). */
+  const notesFromHtml = (row) => (row.notesFrom ? `<div class="dci-sub dci-notesfrom"><span class="dci-info" title="${esc(tr('matrix.notesFrom', { text: row.notesFrom }))}">ⓘ</span> ${esc(tr('role.notesTracks', { list: trackListLabel(row.notesTracks || new Set()) }))}</div>` : '');
+
   /** [3.17.1] A credit switched off on Bandcamp says so. */
   const srcOffHtml = (row) => (row.srcOff ? `<div class="dci-note dci-srcoff">${esc(tr('bc.offNote', { site: VIEW_NAMES[viewSite()] }))}</div>` : '');
 
@@ -15063,9 +15068,9 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}
-        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}
+        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
-        ${row.dSpec ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
+        ${row.dSpec && !(row.dSpecTracks && row.notesFrom) ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
     const where = [];
     if (row.dSpec) where.push(row.dSpec);
@@ -15074,7 +15079,7 @@
     return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
-        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}
+        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
       <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
       ${notes}`;
@@ -18677,12 +18682,15 @@
         log('info', 'notesTracksPool', { name: f.name, list: trackListLabel(tracks) });
         continue;
       }
+      // [3.31.6] the tracks of the notes are set, not suggested; ⓘ at the row and in the column shows the line (collected
+      // item 97c; maintainer: "Tracks aus den Discogs Notizen: ja setze sie fest. mache in diesem fall ein kleines info
+      // zeichen woher die tracks stammen.")
       for (const r of open) {
         const own = (r.dPositions || []).length ? new Set(r.tracks) : new Set();
         r.tracks = new Set([...own, ...tracks]);
         r.notesTracks = new Set(tracks);
-        r.suggest = { source: 'notes', tracks: new Set([...tracks].filter((i) => !own.has(i))), text: f.text };
-        r.confirmed = new Set();
+        r.notesFrom = f.text;
+        delete r.suggest;
       }
       n++;
       log('info', 'notesTracks', { name: a.mbName || a.name, role: role || '–', list: trackListLabel(tracks), similar: hit.similar ? tr('matrix.similar') : '' });
@@ -19357,7 +19365,8 @@
       ...st.active.map((r) => {
         const kind = !mrow.work ? 'wait' : sugg.includes(r) ? 'sugg' : 'on';
         const date = r.date && hasDateInput(r.date) ? ` · ${formatDateValue(validateDateFields(r.date).value) || ''}` : '';
-        const why = !sugg.includes(r) ? '' : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
+        const why = !sugg.includes(r) ? (r.notesFrom && r.notesTracks && r.notesTracks.has(mrow.i) ? ` – ${tr('matrix.notesReason', { text: r.notesFrom })}` : '')
+          : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
           : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}` : '';
         return chip(kind, `${esc(roleCode(rowTypeName(r), r.flags.has('sub')))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
           `${rowTypeName(r)}${date}${why}`);
@@ -19443,6 +19452,9 @@
     // Suggested cells (publisher evidence, Discogs notes, "Commissioned By" without a track list)
     const nSugg = col.rows.some((r) => r.suggest) ? matrixRows().filter((m) => cellState(col, m).active.some((r) => isSuggestedCell(r, m.i))).length : 0;
     let pub = nSugg ? `<span class="dci-sub dci-mx-suggn">${esc(tr('matrix.suggCount', { n: nSugg }))}</span>` : '';
+    // [3.31.6] tracks from the notes: where they come from (item 97c)
+    const notesFrom = uniq(col.rows.map((r) => r.notesFrom).filter(Boolean));
+    if (notesFrom.length) pub += `<span class="dci-info dci-mx-notesinfo" title="${esc(notesFrom.map((t) => tr('matrix.notesFrom', { text: t })).join('\n'))}">ⓘ</span>`;
     let pubMenu = '';
     if (isPublisherCol(col)) {
       const ev = a.pubEvidence || {};

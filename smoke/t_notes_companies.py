@@ -199,9 +199,10 @@ def case_publishers():
        ThobulousMusic an entry from the notes; BMI once, rights society (release level, T045). [3.31.5] The publisher Tomas
        Fujiwara is the person Tomas Fujiwara (S044): one entry with Drums and Published By (the row says that Discogs lists it
        as a company), no company entry. (From 3.31.5 a publisher's row shows in its entry too, for its level – item 112.)
-    B) Works matrix: the tracks of the notes as suggestions in each publisher's column (dashed, yellow) – Flizmo Music 2, 4;
-       Fourwordseamusic 2, 3; ThobulousMusic 4; [3.31.5] Tomas Fujiwara one column: writer on 1, publishing suggested on 1 and
-       3 (artist–work "publishing"); the log names it (before 3.31.5: a part of the person's column with a label of its own).
+    B) Works matrix: the tracks of the notes in each publisher's column – [3.31.6] set, not suggested, ⓘ at the row names the
+       line (item 97c) – Flizmo Music 2, 4; Fourwordseamusic 2, 3; ThobulousMusic 4; [3.31.5] Tomas Fujiwara one column:
+       writer on 1, publishing on 1 and 3 (artist–work "publishing"); the log names it (before 3.31.5: a part of the person's
+       column with a label of its own).
     C) MusicBrainz's suggestions by name (the publishers have no MB link): "Flizmo Music", "Four Word Sea Music" (similar, for
        Fourwordseamusic – the notes' "4WordSeaMusic" written apart), "Thobulous Music" (for ThobulousMusic); for BMI the
        rights society first (before "BMI Records" with its alias BMI); "Word Sea Records" not.
@@ -279,8 +280,11 @@ Barcode: 786497575220"""
         order = [(c[0], c[1]) for c in cols]
         logs = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'as publisher' in x or 'tracks of publishers' in x]
         print('   Protokoll:', [x[9:160] for x in logs])
-        results.append(by.get(('Flizmo Music', '')) == ['2s', '4s'] and by.get(('Fourwordseamusic', '')) == ['2s', '3s'] and by.get(('ThobulousMusic', '')) == ['4s']
-                       and order.count(('Tomas Fujiwara', '')) == 1 and by.get(('Tomas Fujiwara', '')) == ['1s', '3s'] and not any(c[1] for c in cols)
+        fl = [x[4] for x in g if x[0] == 'Flizmo Music']
+        print('   Flizmo Music:', fl)
+        results.append(by.get(('Flizmo Music', '')) == ['2', '4'] and by.get(('Fourwordseamusic', '')) == ['2', '3'] and by.get(('ThobulousMusic', '')) == ['4']
+                       and order.count(('Tomas Fujiwara', '')) == 1 and by.get(('Tomas Fujiwara', '')) == ['1', '3'] and not any(c[1] for c in cols)
+                       and 'Tracks 2, 4 from the notes' in fl[0]
                        and any('Tomas Fujiwara as publisher is the person Tomas Fujiwara' in x for x in logs)
                        and any('Flizmo Music' in x and 'Fourwordseamusic' in x for x in logs))
         sugg = {x[0]: x[2] for x in g}

@@ -7,9 +7,10 @@ from caserun import run_cases, sync_playwright  # noqa: F401 – the shared brow
 
 def case_mxdrop():
     """Works matrix and track groups. From the Discogs notes (S022): "Published by Pub Co (1, 3)" → track group and
-    suggestions in the column of Pub Co (ahead of the personal publisher evidence, which gives 1, 2); "Ghostpub (4)"
-    matches "Ghost Pub" (spaces); "Written by Writer W (1, 2)" is in the Discogs track credits already (no change);
-    "Strings arranged by Nobody Here (4)" is no entry (only the track group). ✓ keeps a suggestion, × takes it out.
+    the tracks in the column of Pub Co (ahead of the personal publisher evidence, which gives 1, 2; [3.31.6] set, not
+    suggested – ⓘ in the head and in the cells' titles names the line, item 97c); "Ghostpub (4)" matches "Ghost Pub"
+    (spaces); "Written by Writer W (1, 2)" is in the Discogs track credits already (no change); "Strings arranged by
+    Nobody Here (4)" is no entry (only the track group). A click on a cell takes a track out.
     Dropped (S023): onto a column head – all its roles only for the group's tracks; Shift adds; onto a role – only
     that role; onto an attribute in the head of the track column – the links of the group's tracks (MB's own stay)."""
     import re
@@ -58,13 +59,16 @@ def case_mxdrop():
         print('A1) Track-Pool:', pool())
         print('    Spalten (s = Vorschlag):', c0)
         print('    Protokoll:', logs)
-        ok_a = c0.get('Pub Co') == ['1s', '3s'] and c0.get('Ghost Pub') == ['4s'] and c0.get('Writer W') == ['1', '2'] \
+        info = pg.evaluate(f"(document.querySelector('[data-colhead=\"{colkey('Pub Co')}\"] .dci-mx-notesinfo') || {{}}).title || ''")
+        ctitle = pg.evaluate(f"document.querySelector('{cell('Pub Co', 1)} .dci-mxchip').title")
+        print('    ⓘ Pub Co:', info, '| Zelle 1:', ctitle)
+        ok_a = c0.get('Pub Co') == ['1', '3'] and c0.get('Ghost Pub') == ['4'] and c0.get('Writer W') == ['1', '2'] \
+            and info == 'Tracks from the Discogs notes: “Published by Pub Co (1, 3)”' and 'from the notes: “Published by Pub Co (1, 3)”' in ctitle \
             and any('Pub Co · 1, 3' in x for x in pool()) and any('Ghostpub · 4' in x for x in pool()) and any('Nobody Here · 2, 4' in x for x in pool()) \
             and any('Nobody Here' in x and 'only a track group' in x for x in logs) and any('Writer W' in x and 'only a track group' in x for x in logs)
-        pg.click(f'{cell("Pub Co", 1)} [data-act=mx-sugg-ok]'); pg.wait_for_timeout(200)
-        pg.click(f'{cell("Pub Co", 3)} [data-act=mx-sugg-no]'); pg.wait_for_timeout(200)
+        pg.click(f'{cell("Pub Co", 3)} [data-act=mx-cell]'); pg.wait_for_timeout(200)
         c1 = cols()
-        print('A2) ✓ Track 1, × Track 3:', c1.get('Pub Co'))
+        print('A2) Track 3 weggeklickt:', c1.get('Pub Co'))
         ok_a = ok_a and c1.get('Pub Co') == ['1']
         results.append(ok_a)
 
