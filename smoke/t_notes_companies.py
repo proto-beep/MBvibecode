@@ -12,7 +12,7 @@ def case_discnotes():
     2016 (Disc 2) and December 11 & 12, 2015 (Disc 3) / All music mastered ... at Turtle Tone Studio in New York City /
     Including a 52 p. booklet. / © & ℗ TUM Records Oy 2021".
     A) Each of the three dates goes under Performance (D021) with the tracks of its disc ("Medium 2 · CD"); December 11 & 12,
-       2015 is a period; no message about dates without a group (until 3.30.7 only the first date
+       2015 is [3.32.0] their common month, 2015-12 (D022; before: a period); no message about dates without a group (until 3.30.7 only the first date
        had a group, all three the tracks of disc 1).
     B) The places of the notes (S042): Orange Music Sound Studios (recorded at; West Orange, New Jersey) and Turtle Tone Studio
        (mastered at; New York City) – Discogs does not list them.
@@ -66,7 +66,7 @@ Including a 52 p. booklet.
         perf = sorted((day(pool[c['date']]), [(tgs[t]['name'], tgs[t]['tracks']) for t in c['tgs']], len(c.get('alt') or [])) for c in cells if c['col'] == 'performance')
         msgs = pg.locator('.dci-msg').all_inner_texts()
         print('A) Performance:', perf, '| Meldungen:', [m[:70] for m in msgs])
-        results.append([x[:2] for x in perf] == [('2015-12-11/12', [('Medium 3 · CD', [3])]), ('2016-5-26', [('Medium 2 · CD', [2])]), ('2016-5-27', [('Medium 1 · CD', [0, 1])])]
+        results.append([x[:2] for x in perf] == [('2015-12-None', [('Medium 3 · CD', [3])]), ('2016-5-26', [('Medium 2 · CD', [2])]), ('2016-5-27', [('Medium 1 · CD', [0, 1])])]
                        and not any('no word naming' in m for m in msgs))
         g = pg.evaluate(GROUPS)
         places = [x for x in g if x[0] in ('Orange Music Sound Studios', 'Turtle Tone Studio')]
@@ -196,17 +196,20 @@ def case_publishers():
     Fujiwara", "Flizmo Music", "Fourwordseamusic", "Thobulous Music"; answers of 2026-10-25 08:44 and 08:55).
     A) Discogs notes with such a block (here on 4 tracks), Discogs lists Tomas Fujiwara, Flizmo Music and Fourwordseamusic, not
        Thobulous Music: no second entry for "FlizmoMusic" or "4WordSeaMusic" (S043, T046: written together, a number as a word);
-       ThobulousMusic an entry from the notes; BMI once, rights society (release level, T045).
-    B) Works matrix: the tracks of the notes as suggestions in each publisher's column (dashed, yellow) – Flizmo Music 2, 4;
-       Fourwordseamusic 2, 3; ThobulousMusic 4; the publisher Tomas Fujiwara 1, 3 as a part of the column of the person Tomas
-       Fujiwara (right after it, S044); the log names both.
+       ThobulousMusic an entry from the notes; BMI once, rights society (release level, T045). [3.31.5] The publisher Tomas
+       Fujiwara is the person Tomas Fujiwara (S044): one entry with Drums and Published By (the row says that Discogs lists it
+       as a company), no company entry. (From 3.31.5 a publisher's row shows in its entry too, for its level – item 112.)
+    B) Works matrix: the tracks of the notes in each publisher's column – [3.31.6] set, not suggested, ⓘ at the row names the
+       line (item 97c) – Flizmo Music 2, 4; Fourwordseamusic 2, 3; ThobulousMusic 4; [3.31.5] Tomas Fujiwara one column:
+       writer on 1, publishing on 1 and 3 (artist–work "publishing"); the log names it (before 3.31.5: a part of the person's
+       column with a label of its own).
     C) MusicBrainz's suggestions by name (the publishers have no MB link): "Flizmo Music", "Four Word Sea Music" (similar, for
-       Fourwordseamusic – the notes' "4WordSeaMusic" written apart), "Thobulous Music" (for ThobulousMusic), the label "Tomas
-       Fujiwara" for the publisher; for BMI the rights society first (before "BMI Records" with its alias BMI); "Word Sea
-       Records" not.
+       Fourwordseamusic – the notes' "4WordSeaMusic" written apart), "Thobulous Music" (for ThobulousMusic); for BMI the
+       rights society first (before "BMI Records" with its alias BMI); "Word Sea Records" not.
     D) Pasted as a text: the same publishers (their tracks set, not suggested), BMI; "Published by Z Songs (ASCAP)" → Z Songs
-       and ASCAP; "BIEM/GEMA" → GEMA; nothing listed as not recognized. (The publishers' rows are on the work level: they show
-       in the works matrix, not as rows of the entries.)"""
+       and ASCAP; "BIEM/GEMA" → GEMA; nothing listed as not recognized. [3.31.5] Tomas Fujiwara has no person entry here: the
+       publisher with a person's name gets MusicBrainz's artist Tomas Fujiwara as suggestion, not the label of that name
+       (no type "Publisher"), and "Create artist …" (S048)."""
     NOTES = """[Publishers & Rights Societies]
 • Tomas Fujiwara-BMI : tracks 1, 3
 • FlizmoMusic-BMI : tracks 2, 4
@@ -242,7 +245,8 @@ Barcode: 786497575220"""
 
     H.discogs_release = rel
     GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
-  [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()), [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid)]))()"""
+  [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()), [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid),
+  [...g.querySelectorAll('[data-act=company-create]')].map(b => b.dataset.et), [...g.querySelectorAll('tr.dci-row .dci-sub')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).join(' | ')]))()"""
     COLS = """(() => [...document.querySelectorAll('.dci-matrix th[data-colhead]')].map((th) => {
   const name = ((th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent || '').replace(/^MB/, '').trim();
   const cells = [...document.querySelectorAll(`.dci-mx-cell[data-col="${th.dataset.colhead}"]`)].filter(c => c.classList.contains('dci-mx-on'))
@@ -264,26 +268,29 @@ Barcode: 786497575220"""
         role = {x[0]: x[1] for x in g}
         print('A) Einträge:', names)
         print('   Rollen:', {n: role[n] for n in names if n in ('Flizmo Music', 'Fourwordseamusic', 'ThobulousMusic', 'BMI', 'Tomas Fujiwara')})
+        tfrow = [x[4] for x in g if x[0] == 'Tomas Fujiwara']
+        print('   Tomas Fujiwara:', tfrow)
         results.append(not any(n in names for n in ('FlizmoMusic', '4WordSeaMusic', 'Thobulous Music')) and names.count('BMI') == 1
-                       and role.get('BMI') == ['Rights Society'] and names.count('Tomas Fujiwara') == 2
+                       and role.get('BMI') == ['Rights Society'] and names.count('Tomas Fujiwara') == 1 and role.get('Tomas Fujiwara') == ['Drums', 'Published By']
+                       and 'Discogs lists it as a company' in tfrow[0] and 'S044' in tfrow[0]
                        and all(n in names for n in ('ThobulousMusic', 'Flizmo Music', 'Fourwordseamusic')))
         cols = pg.evaluate(COLS)
         print('B) Spalten:', cols)
         by = {(c[0], c[1]): c[2] for c in cols}
         order = [(c[0], c[1]) for c in cols]
-        k = order.index(('Tomas Fujiwara', 'person')) if ('Tomas Fujiwara', 'person') in order else -1
         logs = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'as publisher' in x or 'tracks of publishers' in x]
         print('   Protokoll:', [x[9:160] for x in logs])
-        results.append(by.get(('Flizmo Music', '')) == ['2s', '4s'] and by.get(('Fourwordseamusic', '')) == ['2s', '3s'] and by.get(('ThobulousMusic', '')) == ['4s']
-                       and k >= 0 and order[k + 1] == ('Tomas Fujiwara', 'sub') and by.get(('Tomas Fujiwara', 'sub')) == ['1s', '3s']
-                       and by.get(('Tomas Fujiwara', 'person')) == ['1'] and 'Tomas Fujiwara as publisher' in cols[k + 1][3]
-                       and any('Tomas Fujiwara as publisher' in x and 'column of Tomas Fujiwara' in x for x in logs)
+        fl = [x[4] for x in g if x[0] == 'Flizmo Music']
+        print('   Flizmo Music:', fl)
+        results.append(by.get(('Flizmo Music', '')) == ['2', '4'] and by.get(('Fourwordseamusic', '')) == ['2', '3'] and by.get(('ThobulousMusic', '')) == ['4']
+                       and order.count(('Tomas Fujiwara', '')) == 1 and by.get(('Tomas Fujiwara', '')) == ['1', '3'] and not any(c[1] for c in cols)
+                       and 'Tracks 2, 4 from the notes' in fl[0]
+                       and any('Tomas Fujiwara as publisher is the person Tomas Fujiwara' in x for x in logs)
                        and any('Flizmo Music' in x and 'Fourwordseamusic' in x for x in logs))
         sugg = {x[0]: x[2] for x in g}
-        tfc = [x for x in g if x[0] == 'Tomas Fujiwara'][1:]
-        print('C) Vorschläge:', {n: [m[-2:] for m in sugg[n]] for n in ('Flizmo Music', 'Fourwordseamusic', 'ThobulousMusic', 'BMI')}, '| Verlag T. F.:', [m[-2:] for m in (tfc[0][2] if tfc else [])])
+        print('C) Vorschläge:', {n: [m[-2:] for m in sugg[n]] for n in ('Flizmo Music', 'Fourwordseamusic', 'ThobulousMusic', 'BMI')})
         results.append(sugg['Flizmo Music'][:1] == [FLIZ] and FOUR in sugg['Fourwordseamusic'] and OTHER not in sugg['Fourwordseamusic']
-                       and sugg['ThobulousMusic'][:1] == [THOB] and sugg['BMI'][:1] == [BMI] and bool(tfc) and TFL in tfc[0][2])
+                       and sugg['ThobulousMusic'][:1] == [THOB] and sugg['BMI'][:1] == [BMI])
         print('Fehler:', errs)
         results.append(not errs)
 
@@ -298,12 +305,108 @@ Barcode: 786497575220"""
         role2 = {x[0]: x[1] for x in g2}
         unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
         cols2 = {(c[0], c[1]): c[2] for c in pg.evaluate(COLS)}
-        print('D) Text:', role2, '| nicht erkannt:', unrec)
+        tf2 = [x for x in g2 if x[0] == 'Tomas Fujiwara']
+        print('D) Text:', role2, '| nicht erkannt:', unrec, '| Tomas Fujiwara:', tf2)
         print('   Spalten:', cols2)
         results.append(all(n in role2 for n in ('Tomas Fujiwara', 'FlizmoMusic', '4WordSeaMusic', 'ThobulousMusic', 'Z Songs'))
                        and all(role2.get(n) == ['Rights Society'] for n in ('BMI', 'ASCAP', 'GEMA')) and 'BIEM' not in role2 and not unrec
                        and cols2.get(('Tomas Fujiwara', '')) == ['1', '3'] and cols2.get(('FlizmoMusic', '')) == ['2', '4']
-                       and cols2.get(('4WordSeaMusic', '')) == ['2', '3'] and cols2.get(('ThobulousMusic', '')) == ['4'] and ('Z Songs', '') in cols2)
+                       and cols2.get(('4WordSeaMusic', '')) == ['2', '3'] and cols2.get(('ThobulousMusic', '')) == ['4'] and ('Z Songs', '') in cols2
+                       and len(tf2) == 1 and tf2[0][2] == [TF] and tf2[0][3] == ['artist'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_personpub():
+    """Credits Importer 3.31.5: a publisher's level, a publisher with a person's name (collected items 112 and 97b; maintainer:
+    "bei publishing relationships von Labeln muss auch angeboten werden, dass sie auf release oder work ebene stattfinden
+    können. wir haben ja bereits die möglichkeit in der kompakt info das durchzuklicken. so soll das laufen.", "ja bitte. es
+    ist ja einfach ihn nicht zu verwenden"; "bitte nicht create label für personen anbieten!").
+    A) Full view: the label Pub Co ("Published By") shows its row in its entry too, on "Works" (default); its level buttons
+       offer the release; "Release" → the label–release "published", the column of Pub Co leaves the works matrix; "Works"
+       again → back.
+    B) Compact view: a click on the level of the row's line goes on to the next level (Works → Skip → Release → Works).
+    C) "Published By – Jane Roe" (no entry of the dashboard, no MusicBrainz link; S048): MusicBrainz's artist Jane Roe first,
+       the label "Jane Roe" of the type Publisher too, the label "Jane Roe" without that type not; "Create artist …", no
+       "Create label …" (MusicBrainz has an artist of exactly that name); the artist chosen → the column of Jane Roe links an
+       artist, its role publishing (artist–work). "Ghost Pub" (a name like a person's, but no artist of that name in
+       MusicBrainz): "Create artist …" and "Create label …"."""
+    JR, JRP, JRL = H.uid('dddddddd', 81), H.uid('eeeeeeee', 81), H.uid('eeeeeeee', 82)
+    H.ARTISTS[3181] = (JR, 'Jane Roe')
+    H.MB_SEARCH['label'] = [{'id': JRP, 'name': 'Jane Roe', 'disambiguation': 'publisher', 'type': 'Publisher', 'score': 100},
+                            {'id': JRL, 'name': 'Jane Roe', 'disambiguation': 'a shop', 'score': 100}]
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['companies'].append({'name': 'Jane Roe', 'entity_type_name': 'Published By', 'id': 1181, 'catno': ''})
+        return d
+
+    H.discogs_release = rel
+    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  if (!g) return null; const tr = g.querySelector('tr.dci-row'); if (!tr) return { rows: 0 };
+  const t = tr.querySelector('[data-f=type]'); const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
+  return { rows: g.querySelectorAll('tr.dci-row').length, id: tr.dataset.row, type: t ? (t.options[t.selectedIndex] || {}).text : '',
+    level: lv ? lv.dataset.level : '', levels: [...tr.querySelectorAll('[data-act=level]')].map(b => b.dataset.level),
+    cl: ((tr.querySelector('.dci-cl-level') || {}).dataset || {}).level || '',
+    sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid), create: [...g.querySelectorAll('[data-act=company-create]')].map(b => b.dataset.et) }; }"""
+    COLS = """(() => Object.fromEntries([...document.querySelectorAll('.dci-matrix th[data-colhead]')].map(th => {
+  const a = th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong');
+  return [a.textContent.replace(/^MB/, '').trim(), [a.getAttribute('href') || '', [...th.querySelectorAll('.dci-mx-role')].map(x => x.textContent.trim())]]; })))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1200)
+        # A)
+        a0, c0 = pg.evaluate(ROW, 'Pub Co'), pg.evaluate(COLS)
+        pg.click(f'tr[data-row="{a0["id"]}"] [data-act=level][data-level=release]')
+        pg.wait_for_timeout(500)
+        a1, c1 = pg.evaluate(ROW, 'Pub Co'), pg.evaluate(COLS)
+        pg.click(f'tr[data-row="{a0["id"]}"] [data-act=level][data-level=work]')
+        pg.wait_for_timeout(500)
+        a2, c2 = pg.evaluate(ROW, 'Pub Co'), pg.evaluate(COLS)
+        print('A) Pub Co:', a0, '| Spalte:', 'Pub Co' in c0, '\n   Release:', [a1['type'], a1['level']], 'Pub Co' in c1, '| Works:', [a2['type'], a2['level']], 'Pub Co' in c2)
+        results.append(a0['rows'] == 1 and a0['level'] == 'work' and a0['levels'] == ['release', 'work', 'skip'] and 'Pub Co' in c0
+                       and [a1['type'], a1['level']] == ['published', 'release'] and 'Pub Co' not in c1
+                       and [a2['type'], a2['level']] == ['publishing', 'work'] and 'Pub Co' in c2)
+        # C)
+        j0, g0 = pg.evaluate(ROW, 'Jane Roe'), pg.evaluate(ROW, 'Ghost Pub')
+        print('C) Jane Roe:', j0['sugg'], j0['create'], '| Ghost Pub:', g0['create'])
+        results.append(j0['sugg'] == [JR, JRP] and j0['create'] == ['artist'] and g0['create'] == ['artist', 'label'])
+        pg.click(f'section.dci-group:has(.dci-gname strong:text-is("Jane Roe")) [data-act=name-use][data-mbid="{JR}"]')
+        pg.wait_for_timeout(800)
+        c3, j1 = pg.evaluate(COLS), pg.evaluate(ROW, 'Jane Roe')
+        print('   gewählt:', c3.get('Jane Roe'), j1['type'])
+        results.append(c3.get('Jane Roe', ['', []])[0] == f'/artist/{JR}' and j1['type'] == 'publishing' and c3['Jane Roe'][1] == ['publishing'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    # B) the compact view
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, view='compact')
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1200)
+        seq = []
+        for _ in range(4):
+            r = pg.evaluate(ROW, 'Pub Co')
+            seq.append(r['cl'])
+            if len(seq) < 4:
+                pg.click(f'tr[data-row="{r["id"]}"] [data-act=level-next]')
+                pg.wait_for_timeout(400)
+        print('B) kompakt:', seq)
+        results.append(seq == ['work', 'skip', 'release', 'work'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
