@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.31.6 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.31.7 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -85,6 +85,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.31.7
+
+#### Added
+
+- **Dates in the titles of the tracks** (collected item 110; maintainer, Bandcamp "At Iridium 2004": "wir brauchen eine option um daten von tracknamen in den datums/trackpool aufzunehmen. die Tracknummern hat man dann ja direkt. … standardeinstellung = aus"): with the new rule D023 switched on ("Mapping rules"; off by default), titles like "March 23, 2004 (Set 1)" give their dates to the date pool, their tracks to the track pool ("March 23, 2004 · 1–2") and both as a suggestion under Performance to the date matrix; "Apply" as usual. Switched off again, the suggestions not applied yet go.
+- **Rules that are off until switched on** – the first is D023.
 
 ### Import 3.31.6
 

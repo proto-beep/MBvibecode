@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.31.6
+// @version      3.31.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.31.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1459,6 +1459,9 @@
       "dm.studios": "Studios limited to the tracks of their dates: {list}",
       "dm.autoPlaced.one": "{n} date from the notes was placed in the date matrix as a suggestion (dashed, yellow). Check it and click “Apply” to put it on the rows.",
       "dm.autoPlaced.other": "{n} dates from the notes were placed in the date matrix as suggestions (dashed, yellow). Check them and click “Apply” to put them on the rows.",
+      "dm.titlePlaced.one": "{n} date from the titles of the tracks was placed in the date matrix as a suggestion (Performance, with its tracks). Check it and click “Apply” to put it on the rows (rule D023).",
+      "dm.titlePlaced.other": "{n} dates from the titles of the tracks were placed in the date matrix as suggestions (Performance, with their tracks). Check them and click “Apply” to put them on the rows (rule D023).",
+      "log.titleDates": "Dates in the titles of the tracks (D023): {n} – {list}",
       "dm.pending": "not applied yet",
       "dm.pickDate": "Move “{name}”: drag it into a column of the matrix, or click here and then on “place here”",
       "dm.pickTracks": "Move “{name}”: drag it onto a date in the matrix, or click here and then on “tracks here”",
@@ -6161,8 +6164,23 @@
     }
   }
 
+  /**
+   * [3.31.7] Rules that are off until switched on (D023, and the quick switches that are off by default): their being on is
+   * stored as "+<id>" in the same list (collected item 110: "standardeinstellung = aus").
+   */
+  const DEFAULT_OFF_RULES = new Set(['D023']);
+
   function ruleOn(id) {
-    return !rulesOff().has(id);
+    return DEFAULT_OFF_RULES.has(id) ? rulesOff().has(`+${id}`) : !rulesOff().has(id);
+  }
+
+  /** [3.31.7] Switches a built-in rule on or off (stored with the other switched rules). */
+  function setRuleOn(id, on) {
+    if (DEFAULT_OFF_RULES.has(id)) {
+      if (on) rulesOff().add(`+${id}`);
+      else rulesOff().delete(`+${id}`);
+    } else if (on) rulesOff().delete(id);
+    else rulesOff().add(id);
   }
 
   /** Instrument spellings: own ones first, then the built-in table (T001). */
@@ -7622,6 +7640,9 @@
     { id: 'D019', note: 'The word naming the group of a date is looked for in its own sentence only ("Mixed May 2001. Released 2003." – 2003 is no mix date); a line ending in ":" counts as part of the next one (3.28.5)' },
     { id: 'D021', note: 'A list of dates after one word naming their group ("recorded … on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)") gives the group to each; a medium in brackets right after a date ("(Disc 2)", "(CD 2)") is the track group of that date (3.30.8)' },
     { id: 'D020', note: 'Words naming groups joined by "and", "&" or commas give the date to each group: "Mixed and mastered by X in March 2026" → Mix and Mastering, "Recorded, mixed and mastered 2001" → Performance, Mix and Mastering (3.28.5)' },
+    // [3.31.7] collected item 110 (maintainer, Bandcamp "At Iridium 2004": "wir brauchen eine option um daten von tracknamen in den
+    // datums/trackpool aufzunehmen. die Tracknummern hat man dann ja direkt. … standardeinstellung = aus")
+    { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
   ];
 
   const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
@@ -10683,6 +10704,12 @@
       if (JSON.stringify([r.types, r.level, r.primaryText, r.roleCredit, r.ruleId]) !== before) n++;
     }
     log('info', 'rulesChanged', { what, n });
+    // [D023] (3.31.7) dates in the titles: placed when switched on, the suggestions taken back when switched off
+    if (what === 'D023' && S.mbTracks.length) {
+      if (ruleOn('D023')) placeTitleDates({ force: true });
+      else removeTitleDates();
+      if (S.overlay) renderDates();
+    }
     if (S.overlay && S.rows.length) {
       renderGroups();
       renderWorks();
@@ -11737,8 +11764,7 @@
       el.addEventListener('change', (e) => {
         const t = e.target;
         if (t.dataset.ruleOn) {
-          if (t.checked) rulesOff().delete(t.dataset.ruleOn);
-          else rulesOff().add(t.dataset.ruleOn);
+          setRuleOn(t.dataset.ruleOn, t.checked);
           applyRulesChange(t.dataset.ruleOn);
         } else if (t.dataset.uruleOn) {
           const u = userRules().find((x) => x.id === t.dataset.uruleOn);
@@ -13692,6 +13718,8 @@
       S.dateSuggestions = dateSuggestions(rel);
       // Dates in the notes with a word naming their group: suggestions in the date matrix (once per release)
       autoPlaceFoundDates();
+      // [D023] (3.31.7) dates in the titles of the tracks (off until switched on)
+      placeTitleDates();
       if (source === DISCOGS) log('info', 'discogsLoaded', { id, artists: S.artists.size, n: S.rows.length });
       else log('info', 'sourceLoaded', { source: source.name, artists: S.artists.size, n: S.rows.length, u: (rel.unrecognized || []).length });
 
@@ -16359,6 +16387,64 @@
   }
 
   /**
+   * [D023] (3.31.7) Dates in the titles of the tracks (collected item 110; Bandcamp "At Iridium 2004": "March 23, 2004 (Set 1)",
+   * "March 23, 2004 (Set 2)" … "March 28, 2004 (Set 2)"): each date with a day into the pool, the tracks with it as a track
+   * group, both as a suggestion under Performance in the date matrix – once per release and titles (force: again, after the
+   * pools were loaded anew). Titles of the source, else MusicBrainz's.
+   */
+  function placeTitleDates({ force = false } = {}) {
+    if (!ruleOn('D023')) return 0;
+    const m = dm();
+    const titles = selTracks().map((t) => ({ i: t.idx, title: String(((S.srcTracks || [])[t.idx] || {}).title || t.title || '') }));
+    const sig = `${srcReleaseId() || ''}|${textSig(titles.map((x) => x.title).join('\n'))}`;
+    if (!force && m.titleFound === sig) return 0;
+    m.titleFound = sig;
+    const byDate = new Map();
+    for (const x of titles) {
+      const f = findDates(x.title, { usOrder: usDateOrder() }).find((d) => d.value && d.value.begin && d.value.begin.day && !d.multi);
+      if (!f) continue;
+      const key = formatDateValue(f.value);
+      if (!byDate.has(key)) byDate.set(key, { value: f.value, text: f.text.trim(), tracks: new Set() });
+      byDate.get(key).tracks.add(x.i);
+    }
+    const group = DATE_GROUPS.find((g) => g.key === 'performance');
+    let placed = 0;
+    for (const [key, d] of byDate) {
+      const e = poolDateFor(d.value, group, `notes:title:${key}`, d.text);
+      const tg = ensureTrackGroup(d.tracks, `${d.text} · ${trackListLabel(d.tracks)}`, { found: true });
+      tg.title = true;
+      if (m.cells.some((c) => c.date === e.id)) continue;
+      m.cells.push({ id: newCellId(), col: group.key, date: e.id, tgs: [tg.id], studios: [], auto: true, title: true });
+      placed++;
+    }
+    savePool();
+    saveTrackPool();
+    if (placed) {
+      m.dirty = true;
+      showMessage('info', 'dm.titlePlaced', { n: placed });
+      log('info', 'titleDates', { n: placed, list: [...byDate.keys()].join(', ') });
+    }
+    saveMatrix();
+    return placed;
+  }
+
+  /** [D023] Switched off: its suggestions not applied yet go (pool entries no row uses, their track groups). */
+  function removeTitleDates() {
+    const m = dm();
+    const ids = new Set(S.datePool.filter((d) => String(d.found || '').startsWith('notes:title:')).map((d) => d.id));
+    m.cells = m.cells.filter((c) => !(c.title && c.auto && ids.has(c.date)));
+    const used = new Set([...S.rows.map((r) => r.date && r.date.poolId), ...m.cells.map((c) => c.date)].filter(Boolean));
+    S.datePool = S.datePool.filter((d) => !ids.has(d.id) || used.has(d.id));
+    const tgUsed = new Set(m.cells.flatMap((c) => c.tgs || []));
+    S.trackPool = S.trackPool.filter((g) => !g.title || tgUsed.has(g.id));
+    m.titleFound = null;
+    m.dirty = true;
+    savePool();
+    saveTrackPool();
+    saveMatrix();
+  }
+
+  /**
    * "Load again from Discogs": the dates and track groups that came from the Discogs notes are made anew, as at
    * the first import (with "all": also the ones made by hand go). Rows keep their dates until "Apply".
    */
@@ -16376,8 +16462,9 @@
     S.trackForm = null;
     saveTrackPool();
     savePool();
-    S.messages = S.messages.filter((x) => !['dm.autoPlaced', 'dm.autoPooled', 'dm.widened'].includes(x.key));
+    S.messages = S.messages.filter((x) => !['dm.autoPlaced', 'dm.autoPooled', 'dm.widened', 'dm.titlePlaced'].includes(x.key));
     const res = autoPlaceFoundDates({ force: true });
+    placeTitleDates({ force: true });
     if (!S.source.readsTrackLists) applyNotesTrackCredits({ rows: false });
     dm().dirty = true;
     saveMatrix();
@@ -23356,7 +23443,7 @@
   function resetHtml() {
     return `<div class="dci-reset" data-el="reset" role="group" aria-label="${esc(tr('reset.title'))}"><strong>${esc(tr('reset.ask'))}</strong>
       <p class="dci-sub">${esc(tr('reset.what'))}</p>
-      <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, off: rulesOff().size }))}</label>
+      <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, off: [...rulesOff()].filter((id) => !id.startsWith('+')).length }))}</label>
       <label class="dci-check"><input type="checkbox" data-f="reset-pools" ${S.resetPools ? 'checked' : ''}> ${esc(tr('reset.pools'))}</label>
       <p class="dci-sub">${esc(tr('reset.never'))}</p>
       <div class="dci-mbdate-tools">
