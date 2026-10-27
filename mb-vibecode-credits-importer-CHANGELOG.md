@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 | – |
+| 2026-10-27 | 3.31.2 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -85,6 +85,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### COMPANION 1.9.1
+
+#### Fixed
+
+- **Status marks and cover box no longer go and come** (collected item 105; maintainer, Discogs 18973900 with three CDs: "Probleme, weil der Companion sich an und ausschaltet" – "die statusmarken sowie das cover kästchen"): an editor or release page in a background tab counts as open for ten minutes without a new sign of life (before: 75 seconds; the browser slows a busy page in the background down much more than to once a minute); every request of the dashboard counts as a sign of life too; a page that is closed or left takes the marks away at once and sends no further sign of life while it goes.
 
 ### Import 3.31.2
 

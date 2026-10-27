@@ -110,7 +110,8 @@ def case_relcheck():
     B) Its next check (after 20 s) cannot read MusicBrainz (503): the marks stay ✓ – before, the unchecked marks (●) came
        back; it is tried again after 15 s and then reads MusicBrainz again (the check is newer).
     C) A page in a background tab beats only about once a minute: its status counts as alive for 75 s ("hidden"), the
-       status of a visible page for 8 s as before."""
+       status of a visible page for 8 s as before. [Companion 1.9.1] ten minutes in the background (collected item 105): a
+       page in the background 5 minutes ago keeps the marks, one in front 30 seconds ago does not."""
     import time
 
     MARKS = "[...document.querySelectorAll('.dci-dg-mark')].map(m => m.textContent)"
@@ -162,16 +163,16 @@ def case_relcheck():
         b2 = dg.evaluate(MARKS)
         print('   erneut versucht:', b2)
         results.append(H.WS_FAIL.get('release') == 0 and b1 == a and b2 == a)
-        # C) a page in the background: its last beat counts for 75 s
+        # C) a page in the background: its last beat counts for 75 s; [Companion 1.9.1] ten minutes (collected item 105)
         pg.close()
         poll(dg, f"{MARKS}.length === 0", 15)
         now = int(time.time() * 1000)
-        H.STORE.set('statusBeat', {'pageId': f'release-{H.REL}', 'release': H.REL, 'ts': now - 30000, 'hidden': True})
+        H.STORE.set('statusBeat', {'pageId': f'release-{H.REL}', 'release': H.REL, 'ts': now - 300000, 'hidden': True})
         poll(dg, f"{MARKS}.length > 0", 10)
         c1 = len(dg.evaluate(MARKS))
         H.STORE.set('statusBeat', {'pageId': f'release-{H.REL}', 'release': H.REL, 'ts': now - 30000, 'hidden': False})
         poll(dg, f"{MARKS}.length === 0", 10)
-        print('C) Hintergrund-Seite vor 30 s:', c1, 'Marken | sichtbare Seite vor 30 s: keine')
+        print('C) Hintergrund-Seite vor 5 min:', c1, 'Marken | sichtbare Seite vor 30 s: keine')
         results.append(c1 == len(a))
         print('Fehler:', real(errs), real(dgerr))
         results.append(not real(errs) and not real(dgerr))

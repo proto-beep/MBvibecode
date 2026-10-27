@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.9.0
+// @version      1.9.1
 // @date         2026-10-24
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -45,8 +45,13 @@
 
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
-  // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat
-  const BEAT_HIDDEN_MS = 75000;
+  // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
+  // [1.9.1] ten minutes (before: 75 s) – a browser slows the timers of a busy page in the background down much more than
+  // to once a minute (Firefox, Discogs 18973900 with three CDs and large catalogues of its artists: marks and cover box
+  // went and came, collected item 105); a page that is closed or left says so at once ("pagehide", beat with ts 0)
+  const BEAT_HIDDEN_MS = 600000;
+  // a page in front beats every 2 s; its status counts for 8 s
+  const BEAT_VISIBLE_MS = 8000;
   // [1.8.2] a check of the release page that could not read MusicBrainz is tried again after this long (at most 8 times)
   const RECHECK_MS = 15000;
   // [1.8.3] how long the pointer rests on a mark before the dashboard shows its row
@@ -98,9 +103,12 @@
     let beatTimer = null;
     const mbRelease = (location.pathname.match(/[0-9a-f-]{36}/) || [])[0] || '';
     // [1.8.2] "hidden": a page in the background beats more slowly (the browser slows its timers down to once a minute)
-    const statusBeat = () => GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden' });
+    // [1.9.1] once the page is left, no beat any more: "hidden" while it closes would keep the marks for ten minutes
+    let leaving = false;
+    const statusBeat = () => { if (!leaving) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden' }); };
     document.addEventListener('visibilitychange', () => { if (beatTimer) statusBeat(); });
     window.addEventListener('pagehide', () => {
+      leaving = true;
       // With "status on the release page" the release page (where "Enter edit" leads) keeps the marks;
       // otherwise they go now. Either way they disappear once no page of the release reports any more.
       const map = GM_getValue('statusMap');
@@ -163,6 +171,8 @@
       }
       if (msg.type === 'ping') {
         status();
+        // [1.9.1] every message of the dashboard is a sign of life too (the dashboard asks every 3 s)
+        if (beatTimer) statusBeat();
       } else if (msg.type === 'open') {
         if (!mayOpen(msg.url)) return;
         GM_openInTab(msg.url, { active: false, insert: true });
@@ -284,7 +294,7 @@
       const beat = GM_getValue('statusBeat');
       const same = beat && (beat.release && map && map.mbRelease ? beat.release === map.mbRelease : beat.pageId === (map && map.pageId));
       // [1.8.2] a page in the background may beat only once a minute
-      return !!(map && same && Date.now() - beat.ts < (beat.hidden ? BEAT_HIDDEN_MS : 8000));
+      return !!(map && same && Date.now() - beat.ts < (beat.hidden ? BEAT_HIDDEN_MS : BEAT_VISIBLE_MS));
     };
     // A status map of this site and of the release this page shows
     const forHere = (map) => !!(map && siteOf(map) === side.id && releaseIds().includes(String(map.releaseId)));
@@ -1182,8 +1192,10 @@
       const map = own || (current && current.mbRelease === mbRelease ? current : null);
       return map && map.enabled && map.keepOnRelease ? map : null;
     };
+    // [1.9.1] once the page is left, no beat any more (see the edit page)
+    let leaving = false;
     const beat = () => {
-      if (stored()) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden' });
+      if (!leaving && stored()) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden' });
     };
     /**
      * "target|entry|type" of relationships; "seen" holds every entity the lookups returned, "works" the works
@@ -1330,6 +1342,7 @@
     setTimeout(check, 60000);
     // Closed: the marks on Discogs go at once (unless the edit page of this release is still open)
     window.addEventListener('pagehide', () => {
+      leaving = true;
       const b = GM_getValue('statusBeat');
       if (b && b.pageId === pageId) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: 0 });
     });
