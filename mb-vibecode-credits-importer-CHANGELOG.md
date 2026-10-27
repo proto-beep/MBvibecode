@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.32.8 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.9 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -86,6 +86,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.9
+
+#### Added
+
+- **Comments of live recordings, the proposals** (collected item 113; maintainer: "kannst du das feature bei live recordings als abfrage das disambiguation comment zu ergänzen in die optionen mit einbinden? standardmäßig aus. die infos kommen aus dem im dashboard eingegebenen alias des recording places und des datums.", "ja bitte mit Kommentar. unter staging. nur "live""): ⚙ Settings → Staging "Live recordings: add a disambiguation comment" (off) shows above "Stage …" each live recording with the comment the seed script of ROpdebee would give – "live, 2004‐03‐23: Iridium, New York, NY, USA": the place's "credited as" or name with its area, the date of the rows "recorded at" / "recorded in" –, to tick and to change. Another comment in MusicBrainz is never overwritten. (Entered after "Enter edit" from 3.32.10.)
+
+#### Fixed
+
+- **"Reset all settings"** also forgets the colours of the kinds (3.32.4): before, they came back when the page was loaded again.
 
 ### Import 3.32.8
 

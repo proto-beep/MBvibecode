@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.32.8, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.32.9, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.32.9 · 2026-10-27
+
+Comments of live recordings: the proposals (collected item 113, part 1).
+
+- **New `LIVE_COM_KEY` (`dci-live-comments`), `SEED_NOTE`, `S.liveCom`** (setting, off; in `TOPIC_KEYS.staging`, `SETTINGS_KEYS`, reset of the tab and of all settings), `S.liveComChoice` (recording gid → `{ on, text }`), `S.liveComOpen`, `S.liveAreas`.
+- **New `liveDateText(v)`** (as the seed script: U+2010, "begin–end"), **`liveAreaFormat(chain)`** (city/municipality, the outermost subdivision as its code for US/CA, country "USA"/"UK"/name), **`liveAreaText(kind, mbid)`** (in the background: `place/<mbid>`, then `area/<id>?inc=area-rels` up to the country, cached; draws the list again), **`liveProposals()`** (live: "live" on a link to a work – `linkAttrsOf`, MB's `linkAttrs` – else the release group's secondary type Live; the rows "recorded at" (place) or "recorded in" (area) of the track – credit or name, area, the dates of the rows; conflicts, MB's comment via `recordingComment`), **`liveChoice(p)`**, **`renderLiveComments()`** (in `refresh`; `[data-el=livecom]` above the footer actions, `<details class="dci-livecom-box">`; not while a comment is typed in).
+- **`init`:** `S.mbTracks[].recordingComment` (MB's disambiguation; also when tracks are read from the relationship editor's data, `completeMedia`).
+- **Handlers:** `onChange` `livecom-on`, `livecom-text`; the toggle listener remembers the folding; `settingsChange` `live-comments`.
+- **Fixed:** `SETTINGS_KEYS` lacked `KIND_COLORS_KEY`, `KIND_PALETTE_KEY` (3.32.4) – "Reset all settings" now forgets them.
+- **CSS:** `.dci-livecom`, `.dci-livecom-box`, `.dci-livecom-table`, `.dci-livecom-pos`, `.dci-livecom-warn`.
+- **Texts:** new `settings.liveComments`, `settings.liveCommentsTitle`, `livecom.title`, `livecom.hint`, `livecom.onAria`, `livecom.textAria`, `livecom.unassigned`, `livecom.places`, `livecom.dates`, `livecom.existing`, `livecom.same`, `livecom.pending`, `livecom.manual` (English only).
+- **Harness:** `PLACE_AREAS`, `AREA_INFO` (routes `/ws/2/place/<gid>` and a richer `/ws/2/area/<gid>`), `WS_JS_RELEASE`, `EDITS_POSTED` (routes `/ws/js/release/<REL>` and POST `/ws/js/edit/create`, used from 3.32.10).
+- **Tests:** new case `livecom` in `t_works_more.py`.
 
 ## Import 3.32.8 · 2026-10-27
 

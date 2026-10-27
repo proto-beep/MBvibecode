@@ -342,6 +342,13 @@ def ws_browse(kind, query):
 PLACE_AREAS = {'Abbey Road Studios': 'London'}
 # [3.22.2] areas: the area each one is part of (gid → name)
 AREA_PARENTS = {}
+# [3.32.9] places and areas with what they are part of (live comments, item 113): PLACE_AREAS place gid → area gid; AREA_INFO
+# area gid → {'name', 'type', 'iso1': [...], 'iso2': [...], 'parent': gid}
+PLACE_AREAS = {}
+AREA_INFO = {}
+# [3.32.10] MusicBrainz's /ws/js/release/<gid>?inc=rels recordings (a test sets the answer) and the edits sent to /ws/js/edit/create
+WS_JS_RELEASE = {}
+EDITS_POSTED = []
 
 
 def fold(x):
@@ -719,6 +726,24 @@ def install_routes(ctx):
             ids = set(re.findall(r'arid:([0-9a-f-]{36})', q))
             return json_route(route, {'works': [dict(w, score=100) for w in WORK_SEARCH
                                                 if any(r.get('artist', {}).get('id') in ids for r in w.get('relations', []))]})
+        # [3.32.9] a place with its area; an area with its type, ISO codes and the area it is part of (AREA_INFO)
+        m = re.match(r'/ws/2/place/([0-9a-f-]{36})$', p)
+        if m and m.group(1) in PLACE_AREAS:
+            a = AREA_INFO.get(PLACE_AREAS[m.group(1)], {})
+            return json_route(route, {'id': m.group(1), 'area': {'id': PLACE_AREAS[m.group(1)], 'name': a.get('name', '')}})
+        m = re.match(r'/ws/2/area/([0-9a-f-]{36})$', p)
+        if m and m.group(1) in AREA_INFO:
+            a = AREA_INFO[m.group(1)]
+            par = a.get('parent')
+            return json_route(route, {'id': m.group(1), 'name': a['name'], 'type': a.get('type', ''), 'iso-3166-1-codes': a.get('iso1', []), 'iso-3166-2-codes': a.get('iso2', []),
+                                      'relations': [{'type': 'part of', 'direction': 'backward', 'target-type': 'area',
+                                                     'area': {'id': par, 'name': AREA_INFO.get(par, {}).get('name', '')}}] if par else []})
+        # [3.32.10] the release with the relationships of its recordings, as MusicBrainz's own pages read it
+        if p == f'/ws/js/release/{REL}' and WS_JS_RELEASE:
+            return json_route(route, WS_JS_RELEASE)
+        if p == '/ws/js/edit/create' and route.request.method == 'POST':
+            EDITS_POSTED.append(json.loads(route.request.post_data or '{}'))
+            return json_route(route, {'edits': [{'edit_type': 72, 'response': 1, 'edit_id': 9000 + len(EDITS_POSTED)}]})
         # [3.22.2] an area with the area it is part of (AREA_PARENTS: gid → name)
         m = re.match(r'/ws/2/area/([0-9a-f-]{36})$', p)
         if m:
