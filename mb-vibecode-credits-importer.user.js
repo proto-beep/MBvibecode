@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.33.0
+// @version      3.33.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -23,7 +23,7 @@
 // @grant        unsafeWindow
 // @connect      bandcamp.com
 // @connect      raw.githubusercontent.com
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.33.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.33.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -36,7 +36,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.33.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.33.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1343,6 +1343,105 @@
       "mapping.from.file": "the file next to the script",
       "log.mappingLoaded": "Mapping file {version} ({from})",
       "log.mappingVersion": "The mapping file is of version {version}, the script of {script} – please update the script",
+      "mapping.changesN.one": "your changes: {n}",
+      "mapping.changesN.other": "your changes: {n}",
+      "mapping.badPattern": "The pattern cannot be used: {why}",
+      "mapping.empty": "it is empty",
+      "mapping.tooLong": "longer than {n} characters",
+      "mapping.badValue": "{id}: the field “{field}” has a value of the wrong kind",
+      "mapping.badField": "{id}: the field “{field}” cannot be changed (only data: pattern, types, level, role credit, instrument)",
+      "mapping.tooMany": "More than {n} entries",
+      "mapping.badLine": "This line cannot be read: {line}",
+      "mapping.credit.none": "none",
+      "mapping.credit.role": "as written",
+      "mapping.credit.text": "this text",
+      "mapping.field.re": "Pattern",
+      "mapping.field.types": "MusicBrainz types",
+      "mapping.field.level": "Level",
+      "mapping.field.credit": "Role credit",
+      "mapping.field.primaryCands": "Instrument or vocal",
+      "mapping.field.label": "Types for labels",
+      "mapping.field.place": "Types for places",
+      "mapping.field.area": "Types for areas",
+      "mapping.field.artist": "Types for artists",
+      "mapping.editTitle": "✎ Change rule {id} (your change, stored in this browser)",
+      "mapping.editRuleTitle": "Change rule {id}",
+      "mapping.editListTitle": "Change the entries of {id}",
+      "mapping.editList": "✎ Entries of {id} (your change, stored in this browser)",
+      "mapping.patternMode": "The pattern as",
+      "mapping.pmode.words": "role words (separated by |)",
+      "mapping.pmode.re": "regular expression",
+      "mapping.builtinIs": "Built in: {what}",
+      "mapping.namesHint": "several names separated by commas, tried in this order",
+      "mapping.toBuiltin": "back to the built-in rule",
+      "mapping.linesWords": "One word per line.",
+      "mapping.linesPairs": "One entry per line: abbreviation = what it stands for.",
+      "mapping.linesMap": "One spelling per line: spelling = MusicBrainz instrument (several separated by /).",
+      "mapping.reloadHint": "takes full effect after loading the page again",
+      "mapping.codeTag": "code",
+      "mapping.codeOnly": "This rule has code in the script: it can only be switched on or off here.",
+      "mapping.changedTag": "changed",
+      "mapping.changedTitle": "Changed by you (your changes of built-in rules)",
+      "mapping.conflictTag": "changed · ⚠",
+      "mapping.changes": "Your changes of built-in rules",
+      "mapping.changesEmpty": "None yet – ✎ at a rule or list below changes it; the built-in rules stay in the mapping file.",
+      "mapping.changesHint": "Stored in this browser, on top of the mapping file; they stay with an update of the script. ↺ takes a change back.",
+      "mapping.gone": "This rule is no longer in the mapping file.",
+      "mapping.conflict": "The built-in rule changed since your change: {fields}",
+      "mapping.keepMine": "Keep mine",
+      "mapping.discard": "Discard",
+      "mapping.resetAll": "Reset all changes of built-in rules",
+      "mapping.resetAsk": "Really take back your change of {id} (the built-in rule applies again)?",
+      "mapping.resetAllAsk": "Really reset all your changes of built-in rules? Your own rules and the switches stay.",
+      "mapping.resetAllWhat": "all changes of built-in rules reset",
+      "mapping.io": "Export and import",
+      "mapping.export": "Export",
+      "mapping.exportChanges": "my changes (own rules, switches, changed rules and lists)",
+      "mapping.exportRegister": "the whole register (with my changes)",
+      "mapping.exportChangesHint": "{file}: small, to keep, move to another browser or share; it names the versions it was made on.",
+      "mapping.exportRegisterHint": "{file}: the effective register in the layout of the mapping file – for a pull request in the repository (own rules and switches are not in it).",
+      "mapping.saveFile": "Save as file",
+      "mapping.copy": "Copy",
+      "mapping.saved": "Saved as {file}",
+      "mapping.copied": "Copied to the clipboard",
+      "mapping.copyFailed": "The browser did not allow copying – save it as a file instead",
+      "mapping.clipboard": "clipboard",
+      "mapping.importFile": "Import file",
+      "mapping.importHint": "or drop a file onto this window – a preview shows what changes before anything is taken over.",
+      "mapping.paste": "Paste text",
+      "mapping.read": "Read",
+      "mapping.pasted": "pasted text",
+      "mapping.notJson": "This is no JSON text.",
+      "mapping.newerFile": "This file is of a newer format ({version}) – please update the script.",
+      "mapping.tooBig": "This is too big for a file of rules.",
+      "mapping.skipUnknown": "not in the mapping file of this version",
+      "mapping.skipCode": "a rule with code: only on/off",
+      "mapping.skipList": "this list cannot be changed here",
+      "mapping.preview": "Preview of the import: {name}",
+      "mapping.kind.v1": "A rules file of an older version (own rules and switches).",
+      "mapping.kind.changes": "Changes made with script {script} on mapping file {mapping}.",
+      "mapping.kind.register": "A whole register (mapping file {mapping}): what differs from the file of this version.",
+      "mapping.merge": "Merge with my changes",
+      "mapping.replace": "Replace my changes",
+      "mapping.replaceData": "Replace my changes of built-in rules",
+      "mapping.prev.new": "new",
+      "mapping.prev.changed": "changed",
+      "mapping.prev.removed": "removed",
+      "mapping.prev.on": "switched on",
+      "mapping.prev.off": "switched off",
+      "mapping.prev.skipped": "skipped",
+      "mapping.prevConflict": "The built-in rule changed since the export: {fields}",
+      "mapping.prevNothing": "Nothing would change.",
+      "mapping.apply": "Take over",
+      "mapping.imported.one": "{n} change imported ({name})",
+      "mapping.imported.other": "{n} changes imported ({name})",
+      "mapping.importWhat": "import {name}",
+      "log.mappingExported": "Mapping exported: {what} → {file}",
+      "log.mappingImported.one": "Mapping imported: {n} change from {name} ({mode})",
+      "log.mappingImported.other": "Mapping imported: {n} changes from {name} ({mode})",
+      "log.mappingChangesOn.one": "{n} change of built-in rules is in effect (Mapping rules → your changes)",
+      "log.mappingChangesOn.other": "{n} changes of built-in rules are in effect (Mapping rules → your changes)",
+      "log.mappingConflicts": "Built-in rules that changed since your change ({n}): {ids} – see Mapping rules → your changes",
       "quick.S045": "Rights society after a writer’s name → the release’s rights society",
       "quick.D022": "Performance on several days → their common month or year",
       "quick.S021": "“live” preselected for live releases",
@@ -1368,8 +1467,8 @@
       "rules.applied": "Rules applied",
       "rules.code": "Code",
       "rules.tables": "Tables of the register",
-      "rules.lists": "Tables and word lists (read only)",
-      "rules.listsHint": "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; they change with an update of the script.",
+      "rules.lists": "Tables and word lists",
+      "rules.listsHint": "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; ✎ changes the entries of T001, T002, T003, T038, T045 and T048 (your changes), the others change with an update of the script.",
       "instrAsk.ask": "Discogs only says “{name}”. Do you know which one it is?",
       "src.textLabel": "pasted text",
       "instrAsk.askAny": "The source ({src}) only says “{name}”. Do you know which one it is?",
@@ -1472,9 +1571,6 @@
       "rules.creditPh": "empty: as the rules make it",
       "rules.save": "Save rule",
       "rules.new": "new rule",
-      "rules.export": "Export rules",
-      "rules.import": "Import rules:",
-      "rules.ioHint": "A file with your rules and the built-in rules you switched off – to keep, move to another browser or share.",
       "rules.formIncomplete": "Please give the Discogs role and the MusicBrainz type (or the instrument).",
       "rules.testAny": "Try a role:",
       "rules.testHintAny": "Type a role as the source writes it, e.g. “Bass [Upright]” or “tenor sax”; several separated by commas.",
@@ -1485,10 +1581,8 @@
       "rules.fSpellingAny": "Spelling",
       "rules.formIncompleteAny": "Please give the role and the MusicBrainz type (or the instrument).",
       "rules.importBad": "This is not a rules file of this script.",
-      "rules.imported": "{n} rules imported",
       "msg.rulesApplied": "{what}: rules applied, {n} rows mapped again.",
       "log.rulesChanged": "Rules changed ({what}): {n} rows mapped again",
-      "log.rulesExported": "{n} own rules exported",
       "datefind.title": "Find dates in free text",
       "datefind.inNotes.one": "{n} date found in the notes",
       "datefind.inNotes.other": "{n} dates found in the notes",
@@ -1649,7 +1743,7 @@
       "reset.title": "Reset all settings to their defaults",
       "reset.ask": "Reset all settings to their defaults?",
       "reset.what": "Language (English), text size, the dashboard as a window, positions and sizes of the windows, the switches of the navigation (Discogs status, MB release page, cover, hover, click/hover), the options of the footer, “apply automatically”, the folding of “Dates & tracks”, role codes, the log window – and, with the companion, place and folding of the cover on Discogs.",
-      "reset.rules": "also delete own mapping rules ({n}) and switch all rules on again ({off} switched off)",
+      "reset.rules": "also delete own mapping rules ({n}) and your changes of built-in rules ({c}), and switch all rules on again ({off} switched off)",
       "reset.pools": "also delete the stored date pools, track pools and matrices of all releases",
       "reset.never": "The safety list of works created by the script is never deleted.",
       "reset.do": "Reset",
@@ -2850,8 +2944,8 @@
       "rules.applied": "Angewandte Regeln",
       "rules.code": "Code",
       "rules.tables": "Tabellen des Registers",
-      "rules.lists": "Tabellen und Wortlisten (nur lesen)",
-      "rules.listsHint": "Womit das Register außer den Regeln liest: Details, Wörter in Texten, Daten, Datumsgruppen, „live“ in Titeln, Rollen in den Notizen. Sie lassen sich nicht abschalten; sie ändern sich mit einem Update des Skripts.",
+      "rules.lists": "Tabellen und Wortlisten",
+      "rules.listsHint": "Womit das Register außer den Regeln liest: Details, Wörter in Texten, Daten, Datumsgruppen, „live“ in Titeln, Rollen in den Notizen. Sie lassen sich nicht abschalten; ✎ ändert die Einträge von T001, T002, T003, T038, T045 und T048 (deine Änderungen), die anderen ändern sich mit einem Update des Skripts.",
       "instrAsk.ask": "Discogs sagt nur „{name}“. Weißt du, welches Instrument es ist?",
       "src.textLabel": "eingefügter Text",
       "instrAsk.askAny": "Die Quelle ({src}) sagt nur „{name}“. Weißt du, welches Instrument es ist?",
@@ -2947,9 +3041,6 @@
       "rules.creditPh": "leer: wie die Regeln es ergeben",
       "rules.save": "Regel speichern",
       "rules.new": "neue Regel",
-      "rules.export": "Regeln exportieren",
-      "rules.import": "Regeln importieren:",
-      "rules.ioHint": "Eine Datei mit deinen Regeln und den eingebauten Regeln, die du abgeschaltet hast – zum Sichern, Übertragen oder Teilen.",
       "rules.formIncomplete": "Bitte Discogs-Rolle und MusicBrainz-Typ (bzw. das Instrument) angeben.",
       "rules.testAny": "Rolle ausprobieren:",
       "rules.testHintAny": "Eine Rolle so eingeben, wie die Quelle sie schreibt, z. B. „Bass [Upright]“ oder „tenor sax“; mehrere durch Komma getrennt.",
@@ -2960,10 +3051,8 @@
       "rules.fSpellingAny": "Schreibweise",
       "rules.formIncompleteAny": "Bitte Rolle und MusicBrainz-Typ (bzw. das Instrument) angeben.",
       "rules.importBad": "Das ist keine Regeldatei dieses Scripts.",
-      "rules.imported": "{n} Regeln importiert",
       "msg.rulesApplied": "{what}: Regeln angewendet, {n} Zeilen neu zugeordnet.",
       "log.rulesChanged": "Regeln geändert ({what}): {n} Zeilen neu zugeordnet",
-      "log.rulesExported": "{n} eigene Regeln exportiert",
       "datefind.title": "Daten in Fließtext finden",
       "datefind.inNotes.one": "{n} Datum in den Notizen gefunden",
       "datefind.inNotes.other": "{n} Daten in den Notizen gefunden",
@@ -3112,7 +3201,7 @@
       "reset.title": "Alle Einstellungen auf Standard zurücksetzen",
       "reset.ask": "Alle Einstellungen auf Standard zurücksetzen?",
       "reset.what": "Sprache (Englisch), Textgröße, das Dashboard als Fenster, Position und Größe der Fenster, die Schalter der Navigation (Discogs-Status, MB-Release-Seite, Cover, Hover, Klick/Hover), die Optionen der Fußzeile, „automatisch anwenden“, das Einklappen von „Daten & Tracks“, Rollen-Codes, das Protokollfenster – und mit dem Companion Position und Einklappen des Covers auf Discogs.",
-      "reset.rules": "auch eigene Mapping-Regeln löschen ({n}) und alle Regeln wieder einschalten ({off} abgeschaltet)",
+      "reset.rules": "auch eigene Mapping-Regeln ({n}) und deine Änderungen eingebauter Regeln ({c}) löschen und alle Regeln wieder einschalten ({off} abgeschaltet)",
       "reset.pools": "auch die gespeicherten Datums-Pools, Track-Pools und Matrizen aller Releases löschen",
       "reset.never": "Die Sicherheitsliste der vom Skript angelegten Werke wird nie gelöscht.",
       "reset.do": "Zurücksetzen",
@@ -4309,8 +4398,8 @@
       "rules.applied": "Reglas aplicadas",
       "rules.code": "Código",
       "rules.tables": "Tablas del registro",
-      "rules.lists": "Tablas y listas de palabras (solo lectura)",
-      "rules.listsHint": "Lo que el registro usa además de las reglas: detalles, palabras de los textos, fechas, grupos de fechas, «live» en los títulos, roles en las notas. No se pueden desactivar; cambian con una actualización del script.",
+      "rules.lists": "Tablas y listas de palabras",
+      "rules.listsHint": "Lo que el registro usa además de las reglas: detalles, palabras de los textos, fechas, grupos de fechas, «live» en los títulos, roles en las notas. No se pueden desactivar; ✎ cambia las entradas de T001, T002, T003, T038, T045 y T048 (tus cambios), las demás cambian con una actualización del script.",
       "instrAsk.ask": "Discogs solo dice «{name}». ¿Sabes qué instrumento es?",
       "src.textLabel": "texto pegado",
       "instrAsk.askAny": "La fuente ({src}) solo dice «{name}». ¿Sabes qué instrumento es?",
@@ -4406,9 +4495,6 @@
       "rules.creditPh": "vacío: como resulten las reglas",
       "rules.save": "Guardar regla",
       "rules.new": "nueva regla",
-      "rules.export": "Exportar reglas",
-      "rules.import": "Importar reglas:",
-      "rules.ioHint": "Un archivo con tus reglas y las integradas que desactivaste – para guardarlas, llevarlas a otro navegador o compartirlas.",
       "rules.formIncomplete": "Indica el rol de Discogs y el tipo de MusicBrainz (o el instrumento).",
       "rules.testAny": "Probar un rol:",
       "rules.testHintAny": "Escribe un rol como lo escribe la fuente, p. ej. «Bass [Upright]» o «tenor sax»; varios separados por comas.",
@@ -4419,10 +4505,8 @@
       "rules.fSpellingAny": "Grafía",
       "rules.formIncompleteAny": "Indica el rol y el tipo de MusicBrainz (o el instrumento).",
       "rules.importBad": "Esto no es un archivo de reglas de este script.",
-      "rules.imported": "{n} reglas importadas",
       "msg.rulesApplied": "{what}: reglas aplicadas, {n} filas asignadas de nuevo.",
       "log.rulesChanged": "Reglas cambiadas ({what}): {n} filas asignadas de nuevo",
-      "log.rulesExported": "{n} reglas propias exportadas",
       "datefind.title": "Buscar fechas en texto libre",
       "datefind.inNotes.one": "{n} fecha encontrada en las notas",
       "datefind.inNotes.other": "{n} fechas encontradas en las notas",
@@ -4571,7 +4655,7 @@
       "reset.title": "Restablecer todos los ajustes a sus valores por defecto",
       "reset.ask": "¿Restablecer todos los ajustes a sus valores por defecto?",
       "reset.what": "Idioma (inglés), tamaño del texto, el panel como ventana, posición y tamaño de las ventanas, los interruptores de la navegación (estado en Discogs, página de la publicación en MB, portada, hover, clic/hover), las opciones del pie, «aplicar automáticamente», el plegado de «Fechas y pistas», códigos de función, la ventana del registro – y, con el complemento, posición y plegado de la portada en Discogs.",
-      "reset.rules": "borrar también las reglas propias ({n}) y volver a activar todas las reglas ({off} desactivadas)",
+      "reset.rules": "borrar también las reglas propias ({n}) y tus cambios de reglas integradas ({c}) y volver a activar todas las reglas ({off} desactivadas)",
       "reset.pools": "borrar también las fechas guardadas, los pools de pistas y las matrices de todas las publicaciones",
       "reset.never": "La lista de seguridad de obras creadas por el script nunca se borra.",
       "reset.do": "Restablecer",
@@ -5768,8 +5852,8 @@
       "rules.applied": "Règles appliquées",
       "rules.code": "Code",
       "rules.tables": "Tables du registre",
-      "rules.lists": "Tables et listes de mots (lecture seule)",
-      "rules.listsHint": "Ce que le registre utilise en plus des règles : détails, mots des textes, dates, groupes de dates, « live » dans les titres, rôles dans les notes. Elles ne peuvent pas être désactivées ; elles changent avec une mise à jour du script.",
+      "rules.lists": "Tables et listes de mots",
+      "rules.listsHint": "Ce que le registre utilise en plus des règles : détails, mots des textes, dates, groupes de dates, « live » dans les titres, rôles dans les notes. Elles ne peuvent pas être désactivées ; ✎ modifie les entrées de T001, T002, T003, T038, T045 et T048 (vos modifications), les autres changent avec une mise à jour du script.",
       "instrAsk.ask": "Discogs dit seulement « {name} ». Savez-vous de quel instrument il s’agit ?",
       "src.textLabel": "texte collé",
       "instrAsk.askAny": "La source ({src}) dit seulement « {name} ». Savez-vous de quel instrument il s’agit ?",
@@ -5865,9 +5949,6 @@
       "rules.creditPh": "vide : comme le donnent les règles",
       "rules.save": "Enregistrer la règle",
       "rules.new": "nouvelle règle",
-      "rules.export": "Exporter les règles",
-      "rules.import": "Importer des règles :",
-      "rules.ioHint": "Un fichier avec vos règles et les règles intégrées désactivées – pour les garder, les transférer vers un autre navigateur ou les partager.",
       "rules.formIncomplete": "Indiquez le rôle Discogs et le type MusicBrainz (ou l’instrument).",
       "rules.testAny": "Essayer un rôle :",
       "rules.testHintAny": "Saisissez un rôle tel que la source l’écrit, p. ex. « Bass [Upright] » ou « tenor sax » ; plusieurs séparés par des virgules.",
@@ -5878,10 +5959,8 @@
       "rules.fSpellingAny": "Graphie",
       "rules.formIncompleteAny": "Indiquez le rôle et le type MusicBrainz (ou l’instrument).",
       "rules.importBad": "Ce n’est pas un fichier de règles de ce script.",
-      "rules.imported": "{n} règles importées",
       "msg.rulesApplied": "{what} : règles appliquées, {n} lignes attribuées de nouveau.",
       "log.rulesChanged": "Règles modifiées ({what}) : {n} lignes attribuées de nouveau",
-      "log.rulesExported": "{n} règles propres exportées",
       "datefind.title": "Trouver des dates dans un texte libre",
       "datefind.inNotes.one": "{n} date trouvée dans les notes",
       "datefind.inNotes.other": "{n} dates trouvées dans les notes",
@@ -6030,7 +6109,7 @@
       "reset.title": "Remettre tous les réglages par défaut",
       "reset.ask": "Remettre tous les réglages par défaut ?",
       "reset.what": "Langue (anglais), taille du texte, le tableau en fenêtre, position et taille des fenêtres, les interrupteurs de la navigation (statut Discogs, page de la parution MB, pochette, survol, clic/survol), les options du pied de page, « appliquer automatiquement », le repli de « Dates et plages », codes de rôle, la fenêtre du journal – et, avec le complément, position et repli de la pochette sur Discogs.",
-      "reset.rules": "supprimer aussi les règles personnelles ({n}) et réactiver toutes les règles ({off} désactivées)",
+      "reset.rules": "supprimer aussi les règles personnelles ({n}) et vos modifications des règles intégrées ({c}) et réactiver toutes les règles ({off} désactivées)",
       "reset.pools": "supprimer aussi les dates enregistrées, pools de plages et matrices de toutes les parutions",
       "reset.never": "La liste de sécurité des œuvres créées par le script n’est jamais supprimée.",
       "reset.do": "Réinitialiser",
@@ -6239,6 +6318,141 @@
     return;
   }
   const MAP = mappingRevive(MAPPING.raw);
+
+  // --- 2·. [3.33.1] Your changes of the register: three layers -------------------------------------------------------
+  // (collected item E7; maintainer: "auch direkt an der Regel") built in – the mapping file, read only (MAPPING.raw) ·
+  // your changes – per rule id in this browser (dci-mapping-changes; with your own rules U… and the switches) · effective –
+  // MAP: the file with your changes, which every rule below uses. Only data changes, never code: of a role rule its
+  // pattern, types, level, role credit, instrument; of a company rule its pattern, its types and level; of a word list
+  // or table its entries. Rules with code are only switched on or off.
+
+  const MAPPING_CHANGES_KEY = 'dci-mapping-changes';
+  const CHANGES_FORMAT = 'mb-vibecode-credits-importer-mapping-changes';
+  const CHANGES_VERSION = 2;
+  const CHANGES_FILE = `${CHANGES_FORMAT}.json`;
+  const RULE_LEVELS = ['recording', 'release', 'release_group', 'work'];
+  const ROLE_RULE_FIELDS = ['re', 'types', 'level', 'credit', 'primaryCands'];
+  const COMPANY_RULE_FIELDS = ['re', 'label', 'place', 'area', 'artist', 'level'];
+  /** The word lists and tables whose entries may be changed (words; pairs and spellings: "key = value"). */
+  const EDITABLE_LISTS = {
+    T001: { key: 'INSTRUMENT_ALIASES', shape: 'map' },
+    T002: { key: 'GENERIC_WORDS', shape: 'set' },
+    T003: { key: 'ART_TYPES', shape: 'words' },
+    T038: { key: 'TITLE_SMALL_WORDS', shape: 'set' },
+    T045: { key: 'RIGHTS_SOCIETIES', shape: 'pairs', reload: true },
+    T048: { key: 'ROLE_WORDS', shape: 'words' },
+  };
+  const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8 };
+
+  /** { rules: { id: { set: { field: value as in the file }, was: { field: built-in value then } } }, lists: { T…: { add, remove } }, base }. */
+  function readMappingChanges() {
+    try {
+      const c = JSON.parse(localStorage.getItem(MAPPING_CHANGES_KEY));
+      if (c && typeof c === 'object') return { rules: c.rules || {}, lists: c.lists || {}, base: c.base || '' };
+    } catch (e) { /* none, or storage blocked */ }
+    return { rules: {}, lists: {}, base: '' };
+  }
+  let mappingChanges = readMappingChanges();
+
+  function saveMappingChanges() {
+    try {
+      const empty = !Object.keys(mappingChanges.rules).length && !Object.keys(mappingChanges.lists).length;
+      if (empty) localStorage.removeItem(MAPPING_CHANGES_KEY);
+      else localStorage.setItem(MAPPING_CHANGES_KEY, JSON.stringify({ ...mappingChanges, base: MAPPING.raw.version || '' }));
+    } catch (e) {
+      console.warn('[Discogs-Credits] mapping changes not saved', e);
+    }
+  }
+
+  const rawRoleRule = (raw, id) => raw.ROLE_RULE_DATA.find((x) => x.id === id) || null;
+  const rawCompanyRule = (raw, id) => raw.COMPANY_ROLES.find(([, o]) => o && o.id === id) || null;
+  /** A field of a built-in rule as in the file (undefined: the rule has none). */
+  function builtinField(id, field) {
+    const r = rawRoleRule(MAPPING.raw, id);
+    if (r) return r[field];
+    const c = rawCompanyRule(MAPPING.raw, id);
+    if (!c) return undefined;
+    return field === 're' ? c[0] : c[1][field];
+  }
+  const listKey = (shape, item) => norm(shape === 'pairs' || shape === 'map' ? item[0] : item);
+  /** The entries of a list as in the file: words, or [key, value] ([key, [names]] for spellings). */
+  function rawListItems(raw, tid) {
+    const L = EDITABLE_LISTS[tid];
+    const v = raw[L.key];
+    if (L.shape === 'set') return [...v.$set];
+    if (L.shape === 'map') return Object.entries(v);
+    return [...v];
+  }
+
+  /** Your changes applied to a copy of the file's data (as in the file) → the effective register. */
+  function effectiveRaw(changes = mappingChanges) {
+    const raw = JSON.parse(JSON.stringify(MAPPING.raw));
+    for (const [id, c] of Object.entries(changes.rules || {})) {
+      const set = (c && c.set) || {};
+      const r = rawRoleRule(raw, id);
+      if (r) {
+        ROLE_RULE_FIELDS.filter((f) => f in set).forEach((f) => { if (set[f] == null) delete r[f]; else r[f] = set[f]; });
+        if ('level' in set) {
+          if (r.level === 'work') r.work = true;
+          else delete r.work;
+        }
+        continue;
+      }
+      const e = rawCompanyRule(raw, id);
+      if (e) COMPANY_RULE_FIELDS.filter((f) => f in set).forEach((f) => {
+        if (f === 're') e[0] = set.re;
+        else if (set[f] == null) delete e[1][f];
+        else e[1][f] = set[f];
+      });
+    }
+    for (const [tid, c] of Object.entries(changes.lists || {})) {
+      const L = EDITABLE_LISTS[tid];
+      if (!L || !c) continue;
+      const out = new Set((c.remove || []).map((x) => listKey(L.shape === 'pairs' || L.shape === 'map' ? 'words' : L.shape, x)));
+      let items = rawListItems(raw, tid).filter((x) => !out.has(listKey(L.shape, x)));
+      for (const a of c.add || []) {
+        const k = listKey(L.shape, a);
+        items = items.filter((x) => listKey(L.shape, x) !== k);
+        items.push(a);
+      }
+      if (L.shape === 'set') raw[L.key] = { $set: items };
+      else if (L.shape === 'map') raw[L.key] = Object.fromEntries(items);
+      else raw[L.key] = items;
+    }
+    return raw;
+  }
+
+  /**
+   * The effective register into MAP, in place (the code holds MAP's objects): role rules and company rules field by field,
+   * the lists entry by entry. At the start, and after every change (T045 builds a pattern at the start: after a reload).
+   */
+  function applyMappingChanges() {
+    const eff = mappingRevive(effectiveRaw());
+    const refill = (obj, from) => {
+      Object.keys(obj).forEach((k) => { delete obj[k]; });
+      Object.assign(obj, from);
+    };
+    MAP.ROLE_RULE_DATA.forEach((r) => {
+      const e = eff.ROLE_RULE_DATA.find((x) => x.id === r.id);
+      if (e) refill(r, e);
+    });
+    MAP.COMPANY_ROLES.forEach((pair) => {
+      const e = eff.COMPANY_ROLES.find(([, o]) => o.id === pair[1].id);
+      if (!e) return;
+      pair[0] = e[0];
+      refill(pair[1], e[1]);
+    });
+    for (const L of Object.values(EDITABLE_LISTS)) {
+      const now = MAP[L.key];
+      const to = eff[L.key];
+      if (now instanceof Set) {
+        now.clear();
+        to.forEach((x) => now.add(x));
+      } else if (Array.isArray(now)) now.splice(0, now.length, ...to);
+      else refill(now, to);
+    }
+  }
+  if (Object.keys(mappingChanges.rules).length || Object.keys(mappingChanges.lists).length) applyMappingChanges();
 
 
   // --- 2a. Role notation -----------------------------------------------------------------------------------------------
@@ -6670,7 +6884,8 @@
     };
     return ROLE_RULE_DATA.map((r) => {
       const k = code[r.id] || {};
-      return { ...r, test: k.test || (() => is(r.re)), run: k.run || (() => out(r.types, extraOf(r))) };
+      // [3.33.1] hasCode: only on/off in "Mapping rules" (no ✎)
+      return { ...r, hasCode: !!code[r.id] || r.kind === 'special', test: k.test || (() => is(r.re)), run: k.run || (() => out(r.types, extraOf(r))) };
     });
   }
 
@@ -11603,34 +11818,739 @@
     const onCell = (id) => `<td><input type="checkbox" data-rule-on="${esc(id)}" ${ruleOn(id) ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id }))}"></td>`;
     const row = (id, cells) => `<tr data-rid="${esc(id || '')}">${id ? onCell(id) : '<td></td>'}${cells.map(cell).join('')}</tr>`;
     const head = (cells, toggle = true) => `<thead><tr>${toggle ? `<th>${esc(tr('rules.on'))}</th>` : ''}${cells.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead>`;
-    const roles = roleRules({ b: '', ms: [], flags: [], consumed: new Set(), has: () => false, is: () => false, out: () => null, plainBase: '', modsIn: [], baseIn: '' });
-    const sect = (id, title, html) => `<section data-rsect="${id}"><h3>${esc(title)}</h3><div class="dci-rules-wrap">${html}</div></section>`;
+    const roles = roleRules(RULE_PROBE);
+    // [3.33.1] ✎ at the data rules (item E7): a cell at the end, the form in a row below
+    const editRow = (id, cells, code, span) => `<tr data-rid="${esc(id)}"${mappingChanges.rules[id] ? ' class="dci-rchanged"' : ''}>${onCell(id)}${cells.map(cell).join('')}<td class="dci-redit-cell">${editToolsHtml(id, { code })}</td></tr>${
+      S.ruleEdit && S.ruleEdit.id === id ? `<tr class="dci-redit-row"><td colspan="${span}">${ruleEditHtml(id)}</td></tr>` : ''}`;
+    const listTools = (tid) => (EDITABLE_LISTS[tid] ? ` ${editToolsHtml(tid, { list: true })}` : '');
+    const listForm = (tid) => (S.listEdit && S.listEdit.tid === tid ? listEditHtml(tid) : '');
+    const sect = (id, title, html, tid = '') => `<section data-rsect="${id}"${tid ? ` data-ledit-anchor="${tid}"` : ''}><h3>${esc(title)}${tid ? listTools(tid) : ''}</h3>${tid ? listForm(tid) : ''}<div class="dci-rules-wrap">${html}</div></section>`;
     const where = (w) => `${tr('rules.code')}: ${w}`;
     return [
-      sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note')])}<tbody>
-        ${roles.map((r) => row(r.id, [r.id, r.re ? patternText(r.re) : tr('rules.special'), (r.types || []).join(', '), r.level || '', r.note || ''])).join('')}</tbody></table>`),
+      sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note'), ''])}<tbody>
+        ${roles.map((r) => editRow(r.id, [r.id, r.re ? patternText(r.re) : tr('rules.special'), (r.types || []).join(', '), r.level || '', r.note || ''], r.hasCode, 7)).join('')}</tbody></table>`),
       sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code')])}<tbody>
         ${WORDING_RULES.map((r) => row(r.id, [r.id, r.phrases.join(' | '), r.credit, r.note, r.where || ''])).join('')}</tbody></table>`),
       sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note')])}<tbody>
         ${QUESTION_RULES.map((q) => row(q.id, [q.id, q.base, q.options.join(' · '), q.credit, q.note])).join('')}
         ${TYPE_QUESTIONS.map((q) => row(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note])).join('')}</tbody></table>`),
       sect('special', `${tr('rules.specialTitle')} (S001 … · ${where('SPECIAL_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')])}<tbody>${SPECIAL_RULES.map((r) => row(r.id, [r.id, r.note, r.where || ''])).join('')}</tbody></table>`),
-      sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level')])}<tbody>
-        ${COMPANY_ROLES.map(([re, o]) => row(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.area || []), ...(o.artist || [])]).join(', '), o.level || ''])).join('')}</tbody></table>`),
+      sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), ''])}<tbody>
+        ${COMPANY_ROLES.map(([re, o]) => editRow(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.area || []), ...(o.artist || [])]).join(', '), o.level || ''], false, 6)).join('')}</tbody></table>`),
       sect('instruments', `${tr('rules.instruments')} (T001 · ${where('INSTRUMENT_ALIASES')})`, `<table>${head([trRules('rules.discogs'), tr('rules.mb')], false)}<tbody>
-        ${Object.entries(INSTRUMENT_ALIASES).map(([k, v]) => `<tr>${cell(k)}${cell(v.join(' / '))}</tr>`).join('')}</tbody></table>`),
-      sect('words', `${tr('rules.words')} (T002 · ${where('GENERIC_WORDS')})`, `<p>${esc([...GENERIC_WORDS].sort().join(', '))}</p>`),
+        ${Object.entries(INSTRUMENT_ALIASES).map(([k, v]) => `<tr>${cell(k)}${cell(v.join(' / '))}</tr>`).join('')}</tbody></table>`, 'T001'),
+      sect('words', `${tr('rules.words')} (T002 · ${where('GENERIC_WORDS')})`, `<p>${esc([...GENERIC_WORDS].sort().join(', '))}</p>`, 'T002'),
       sect('dates', `${tr('rules.dates')} (D001 … · ${where('DATE_RULES, DATE_MATCHERS')})`, `<table>${head([tr('rules.id'), tr('rules.note')])}<tbody>
         ${DATE_RULES.map((r) => row(r.id, [r.id, r.note])).join('')}</tbody></table>`),
-      sect('lists', tr('rules.lists'), `<p class="dci-sub">${esc(tr('rules.listsHint'))}</p>${TABLES.filter((t) => t.show).map((t) => `<div class="dci-rules-list" data-table="${esc(t.id)}">
-        <h4>${esc(t.id)} · ${esc(t.note)} <span class="dci-sub">(${esc(where(t.where))})</span></h4>${tableShowHtml(t)}</div>`).join('')}`),
+      sect('lists', tr('rules.lists'), `<p class="dci-sub">${esc(tr('rules.listsHint'))}</p>${TABLES.filter((t) => t.show).map((t) => `<div class="dci-rules-list" data-table="${esc(t.id)}"${EDITABLE_LISTS[t.id] ? ` data-ledit-anchor="${t.id}"` : ''}>
+        <h4>${esc(t.id)} · ${esc(t.note)} <span class="dci-sub">(${esc(where(t.where))})</span>${listTools(t.id)}</h4>${listForm(t.id)}${tableShowHtml(t)}</div>`).join('')}`),
       sect('tables', tr('rules.tables'), `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')], false)}<tbody>${TABLES.map((t) => `<tr>${cell(t.id)}${cell(t.note)}${cell(t.where)}</tr>`).join('')}</tbody></table>`),
     ].join('');
   }
 
+  // --- [3.33.1] ✎ built-in data rules, your changes, export and import (collected item E7) ---------------------------------
+  // (maintainer: "auch direkt an der Regel") ✎ at every role rule without code, every company rule and the lists T001, T002,
+  // T003, T038, T045, T048 opens a form below it; what is saved goes into your changes (section 2·, ↺ back to the built-in
+  // rule). Export: your changes (mb-vibecode-credits-importer-mapping-changes.json: own rules, switches, changed rules and
+  // lists, with the versions they were made on) or the whole effective register (the layout of the mapping file, for a pull
+  // request), as a file or to the clipboard. Import: a file – chosen or dropped onto the window – or pasted text; checked
+  // (only data, known ids, allowed fields, patterns compiled in try/catch), then a preview, merged or replacing your changes.
+
+  const RULE_PROBE = { b: '', ms: [], flags: [], consumed: new Set(), has: () => false, is: () => false, out: () => null, plainBase: '', modsIn: [], baseIn: '' };
+  const isRoleRuleId = (id) => !!rawRoleRule(MAPPING.raw, id);
+  /** A rule of the file that ✎ may change: a role rule without code, or a company rule. */
+  function ruleEditable(id) {
+    if (rawCompanyRule(MAPPING.raw, id)) return true;
+    const r = roleRules(RULE_PROBE).find((x) => x.id === id);
+    return !!r && !r.hasCode;
+  }
+  const encJson = (v) => JSON.stringify(v === undefined ? null : v);
+  /** The value of a field of a rule with the given changes (as in the file). */
+  function fieldWith(changes, id, field) {
+    const c = changes.rules[id];
+    return c && c.set && field in c.set ? c.set[field] : builtinField(id, field);
+  }
+  const ruleFieldsOf = (id) => (isRoleRuleId(id) ? ROLE_RULE_FIELDS : COMPANY_RULE_FIELDS);
+  const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const wordsSource = (words) => (words.length === 1 ? `^${escRe(words[0])}$` : `^(${words.map(escRe).join('|')})$`);
+  const showItem = (x) => (Array.isArray(x) ? `${x[0]} = ${[].concat(x[1]).join(' / ')}` : String(x));
+
+  /** A pattern for the form: role words ("a | b") where it is a plain list of words, else the regular expression. */
+  function patternForm(v) {
+    if (!v || typeof v.$re !== 'string') return { pmode: 're', pattern: '' };
+    const words = patternWords(v.$re);
+    if (words && !v.$flags && wordsSource(words) === v.$re) return { pmode: 'words', pattern: words.join(' | ') };
+    return { pmode: 're', pattern: v.$re };
+  }
+
+  /** A pattern checked: {"$re", "$flags"} (or its source as text), not empty, not too long, compiled in try/catch. */
+  function checkPattern(v) {
+    const src = typeof v === 'string' ? v : v && typeof v.$re === 'string' ? v.$re : null;
+    const flags = v && typeof v === 'object' && typeof v.$flags === 'string' ? v.$flags : '';
+    if (!src || !src.trim()) return { error: tr('mapping.badPattern', { why: tr('mapping.empty') }) };
+    if (src.length > LIMITS.re) return { error: tr('mapping.badPattern', { why: tr('mapping.tooLong', { n: LIMITS.re }) }) };
+    if (!/^[imsu]*$/.test(flags)) return { error: tr('mapping.badPattern', { why: flags }) };
+    try {
+      new RegExp(src, flags);
+    } catch (e) {
+      return { error: tr('mapping.badPattern', { why: e.message }) };
+    }
+    return { value: { $re: src, $flags: flags } };
+  }
+
+  /** The fields of a change of a rule checked: only those of its kind, each of the right kind → { set } or { error }. */
+  function checkRuleSet(id, set) {
+    if (!set || typeof set !== 'object' || Array.isArray(set)) return { error: tr('mapping.badValue', { id, field: '–' }) };
+    const fields = ruleFieldsOf(id);
+    const out = {};
+    for (const [f, v] of Object.entries(set)) {
+      const bad = { error: tr('mapping.badValue', { id, field: f }) };
+      if (!fields.includes(f)) return { error: tr('mapping.badField', { id, field: f }) };
+      if (f === 're') {
+        const p = checkPattern(v);
+        if (p.error) return p;
+        out.re = p.value;
+      } else if (f === 'level') {
+        if (!RULE_LEVELS.includes(v)) return bad;
+        out.level = v;
+      } else if (f === 'credit') {
+        if (v === null || v === true || (typeof v === 'string' && v.trim() && v.length <= LIMITS.text)) out.credit = typeof v === 'string' ? v.trim() : v;
+        else return bad;
+      } else if (v === null && f !== 'types') {
+        out[f] = null;
+      } else {
+        if (!Array.isArray(v) || !v.length || v.length > LIMITS.names || v.some((x) => typeof x !== 'string' || !x.trim() || x.length > LIMITS.text)) return bad;
+        out[f] = v.map((x) => x.trim());
+      }
+    }
+    return { set: out };
+  }
+
+  /**
+   * A change of a rule into `changes`: fields equal to the built-in rule are left out (none left: the change goes). `was`:
+   * the built-in value each field had when it was changed (kept from before, or from an imported file) – after an update
+   * that changed the built-in rule the change is marked.
+   */
+  function putRuleChange(changes, id, set, wasOld = {}) {
+    const keep = {};
+    const was = {};
+    for (const [f, v] of Object.entries(set)) {
+      const b = builtinField(id, f);
+      if (encJson(v) === encJson(b)) continue;
+      keep[f] = v;
+      was[f] = f in wasOld ? wasOld[f] : (b === undefined ? null : b);
+    }
+    if (Object.keys(keep).length) changes.rules[id] = { set: keep, was };
+    else delete changes.rules[id];
+  }
+
+  /** The changes of a list into `changes`, from all its entries (what the built-in list lacks or has more). */
+  function putListChange(changes, tid, items) {
+    const L = EDITABLE_LISTS[tid];
+    const key = (x) => listKey(L.shape, x);
+    const built = new Map(rawListItems(MAPPING.raw, tid).map((x) => [key(x), x]));
+    const now = new Map(items.map((x) => [key(x), x]));
+    const remove = [...built.entries()].filter(([k]) => !now.has(k)).map(([, x]) => (Array.isArray(x) ? x[0] : x));
+    const add = [...now.entries()].filter(([k, x]) => !built.has(k) || encJson(built.get(k)) !== encJson(x)).map(([, x]) => x);
+    if (add.length || remove.length) changes.lists[tid] = { add, remove };
+    else delete changes.lists[tid];
+  }
+
+  /** The entries of a list with the given changes (as in the file). */
+  const listWith = (changes, tid) => rawListItems(effectiveRaw(changes), tid);
+
+  /** A change of a list from a file checked: add (words, or [key, value]; spellings [key, [names]]), remove (keys). */
+  function checkListChange(tid, c) {
+    const L = EDITABLE_LISTS[tid];
+    const bad = { error: tr('mapping.badValue', { id: tid, field: 'add/remove' }) };
+    if (!c || typeof c !== 'object') return bad;
+    const add = Array.isArray(c.add) ? c.add : [];
+    const remove = Array.isArray(c.remove) ? c.remove : [];
+    const str = (x, n = LIMITS.text) => typeof x === 'string' && !!x.trim() && x.length <= n;
+    if (add.length + remove.length > LIMITS.items || remove.some((x) => !str(x))) return bad;
+    for (const a of add) {
+      if (L.shape === 'words' || L.shape === 'set') {
+        if (!str(a)) return bad;
+      } else if (L.shape === 'pairs') {
+        if (!Array.isArray(a) || a.length !== 2 || !str(a[0]) || !str(a[1], LIMITS.value)) return bad;
+      } else if (!Array.isArray(a) || a.length !== 2 || !str(a[0]) || !Array.isArray(a[1]) || !a[1].length || a[1].some((x) => !str(x))) return bad;
+    }
+    return { change: { add, remove } };
+  }
+
+  /** The entries of a list as lines of the form: a word each, or "key = value" (spellings "spelling = name / name"). */
+  const listLines = (items) => items.map(showItem).join('\n');
+
+  /** Lines of the form back into entries, checked → { items } or { error }. */
+  function listFromLines(tid, text) {
+    const L = EDITABLE_LISTS[tid];
+    const lines = String(text || '').split('\n').map((x) => x.trim()).filter(Boolean);
+    if (lines.length > LIMITS.items) return { error: tr('mapping.tooMany', { n: LIMITS.items }) };
+    const items = new Map();
+    for (const line of lines) {
+      let item;
+      if (L.shape === 'words' || L.shape === 'set') {
+        if (line.length > LIMITS.text) return { error: tr('mapping.badLine', { line }) };
+        item = L.shape === 'set' || L.key === 'ART_TYPES' ? norm(line) : line;
+      } else {
+        const m = line.match(/^(.+?)\s*=\s*(.+)$/);
+        if (!m || m[1].length > LIMITS.text || m[2].length > LIMITS.value) return { error: tr('mapping.badLine', { line }) };
+        item = L.shape === 'map' ? [norm(m[1]), m[2].split(/\s*\/\s*/).filter(Boolean)] : [m[1].trim(), m[2].trim()];
+      }
+      items.set(listKey(L.shape, item), item);
+    }
+    return { items: [...items.values()] };
+  }
+
+  /** A field's value as text: a pattern as the register shows it, names with commas, "as written" for the role credit. */
+  function fieldText(f, v) {
+    if (v == null || (Array.isArray(v) && !v.length)) return '–';
+    if (f === 're') {
+      try {
+        return patternText(new RegExp(v.$re, v.$flags || ''));
+      } catch (e) {
+        return String(v.$re);
+      }
+    }
+    if (f === 'level') return tr(`level.${v}`);
+    if (f === 'credit') return v === true ? tr('mapping.credit.role') : `“${v}”`;
+    return [].concat(v).join(', ');
+  }
+  /** A changed field as HTML: of a pattern of role words the words added and taken away, else before → after. */
+  function fieldChangeHtml(f, a, b) {
+    const wa = f === 're' && a && typeof a.$re === 'string' && patternWords(a.$re);
+    const wb = f === 're' && b && typeof b.$re === 'string' && patternWords(b.$re);
+    if (wa && wb) {
+      const add = wb.filter((w) => !wa.includes(w));
+      const rem = wa.filter((w) => !wb.includes(w));
+      const html = [add.length ? `<span class="dci-mchg-add">+ ${esc(add.join(' | '))}</span>` : '', rem.length ? `<span class="dci-mchg-rem">− ${esc(rem.join(' | '))}</span>` : ''].filter(Boolean).join(' ');
+      if (html) return html;
+    }
+    return `${esc(fieldText(f, a))} → <strong>${esc(fieldText(f, b))}</strong>`;
+  }
+  const ruleFieldsText = (id, changes) => ruleFieldsOf(id).map((f) => `${tr(`mapping.field.${f}`)}: ${fieldText(f, changes ? fieldWith(changes, id, f) : builtinField(id, f))}`).join(' · ');
+
+  /** The fields of a change whose built-in value is no longer what it was when changed (['gone']: the rule is gone). */
+  function ruleConflicts(id) {
+    const c = mappingChanges.rules[id];
+    if (!c) return [];
+    if (!rawRoleRule(MAPPING.raw, id) && !rawCompanyRule(MAPPING.raw, id)) return ['gone'];
+    return Object.keys(c.set || {}).filter((f) => c.was && f in c.was && encJson(c.was[f]) !== encJson(builtinField(id, f)));
+  }
+
+  /** After a change of the register: stored, into MAP, the caches of what is built from it emptied, the rows mapped again. */
+  function mappingChanged(what) {
+    saveMappingChanges();
+    applyMappingChanges();
+    roleVocabCache = null;
+    ruleNotesCache = null;
+    applyRulesChange(what);
+  }
+
+  /** The mapping with other changes for a moment (the preview of an import: before → after). */
+  function mappedWith(changes, fn) {
+    const keep = mappingChanges;
+    mappingChanges = { ...keep, rules: changes.rules, lists: changes.lists };
+    applyMappingChanges();
+    try {
+      return fn();
+    } finally {
+      mappingChanges = keep;
+      applyMappingChanges();
+    }
+  }
+
+  // ✎ a rule: S.ruleEdit = { id, draft, error }; ✎ a list: S.listEdit = { tid, text, error }
+  S.ruleEdit = null;
+  S.listEdit = null;
+
+  /** ✎ at a rule: the form starts with the rule as it is now (with your changes). */
+  function openRuleEdit(id) {
+    const v = (f) => fieldWith(mappingChanges, id, f);
+    const names = (x) => (Array.isArray(x) ? x.join(', ') : '');
+    const draft = { ...patternForm(v('re')), level: v('level') || 'recording' };
+    if (isRoleRuleId(id)) {
+      const credit = v('credit');
+      Object.assign(draft, { types: names(v('types')), creditMode: credit === true ? 'role' : typeof credit === 'string' && credit ? 'text' : 'none',
+        credit: typeof credit === 'string' ? credit : '', instr: names(v('primaryCands')) });
+    } else {
+      ['label', 'place', 'area', 'artist'].forEach((f) => { draft[f] = names(v(f)); });
+    }
+    S.ruleEdit = { id, draft, error: '' };
+    S.listEdit = null;
+  }
+
+  /** The pattern field from words to a regular expression and back, when its kind is switched. */
+  function switchPatternMode(d, to) {
+    if (to === d.pmode) return;
+    if (to === 're') {
+      const words = String(d.pattern || '').split('|').map(norm).filter(Boolean);
+      if (words.length) d.pattern = wordsSource(words);
+    } else {
+      const words = patternWords(String(d.pattern || ''));
+      if (words) d.pattern = words.join(' | ');
+    }
+    d.pmode = to;
+  }
+
+  /** ✎ saved: the form as a change of the rule (checked; fields equal to the built-in rule are none). */
+  function saveRuleEdit() {
+    const { id, draft: d } = S.ruleEdit;
+    const names = (t) => String(t || '').split(',').map((x) => x.trim()).filter(Boolean);
+    const words = String(d.pattern || '').split('|').map(norm).filter(Boolean);
+    const src = d.pmode === 'words' ? (words.length ? wordsSource(words) : '') : String(d.pattern || '').trim();
+    const built = builtinField(id, 're');
+    const set = { re: { $re: src, $flags: (built && built.$flags) || '' }, level: d.level };
+    if (isRoleRuleId(id)) {
+      Object.assign(set, { types: names(d.types), credit: d.creditMode === 'role' ? true : d.creditMode === 'text' && String(d.credit || '').trim() ? String(d.credit).trim() : null,
+        primaryCands: names(d.instr).length ? names(d.instr) : null });
+    } else {
+      ['label', 'place', 'area', 'artist'].forEach((f) => { set[f] = names(d[f]).length ? names(d[f]) : null; });
+    }
+    const ok = checkRuleSet(id, set);
+    if (ok.error) {
+      S.ruleEdit.error = ok.error;
+      renderRulesBody();
+      return;
+    }
+    const old = mappingChanges.rules[id];
+    putRuleChange(mappingChanges, id, ok.set, (old && old.was) || {});
+    S.ruleEdit = null;
+    mappingChanged(id);
+  }
+
+  function ruleEditHtml(id) {
+    const { draft: d, error } = S.ruleEdit;
+    const role = isRoleRuleId(id);
+    const inp = (k, ph = '', list = '') => `<input type="text" data-redit-f="${k}" value="${esc(d[k] || '')}" placeholder="${esc(ph)}"${list ? ` list="${list}"` : ''}>`;
+    const sel = (k, values, label) => `<select data-redit-f="${k}">${values.map((v) => `<option value="${v}" ${d[k] === v ? 'selected' : ''}>${esc(label(v))}</option>`).join('')}</select>`;
+    return `<fieldset class="dci-redit" data-redit="${esc(id)}"><legend>${esc(tr('mapping.editTitle', { id }))}</legend>
+      <label>${esc(tr('mapping.patternMode'))} ${sel('pmode', ['words', 're'], (v) => tr(`mapping.pmode.${v}`))}</label>
+      <label class="dci-redit-wide">${esc(tr('mapping.field.re'))} ${inp('pattern', d.pmode === 'words' ? 'produced by | producer' : '^(produced by|producer)$')}</label>
+      ${role ? `<label>${esc(tr('mapping.field.types'))} ${inp('types', 'producer', 'dci-dl-ltnames')}</label>`
+        : ['label', 'place', 'area', 'artist'].map((f) => `<label>${esc(tr(`mapping.field.${f}`))} ${inp(f)}</label>`).join('')}
+      <label>${esc(tr('mapping.field.level'))} ${sel('level', RULE_LEVELS, (v) => tr(`level.${v}`))}</label>
+      ${role ? `<label>${esc(tr('mapping.field.credit'))} ${sel('creditMode', ['none', 'role', 'text'], (v) => tr(`mapping.credit.${v}`))}
+        ${d.creditMode === 'text' ? inp('credit', tr('rules.creditPh')) : ''}</label>
+        <label>${esc(tr('mapping.field.primaryCands'))} ${inp('instr', 'electric guitar', 'dci-dl-instrnames')}</label>` : ''}
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))} · ${esc(tr('mapping.namesHint'))}</p>
+      ${error ? `<p class="dci-redit-err dci-redit-wide" role="alert">${esc(error)}</p>` : ''}
+      <div class="dci-urule-actions"><button type="button" data-redit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-redit-cancel>${esc(tr('common.cancel'))}</button>
+        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div></fieldset>`;
+  }
+
+  /** ✎ at a list: all its entries, a line each. */
+  function openListEdit(tid) {
+    S.listEdit = { tid, text: listLines(listWith(mappingChanges, tid)), error: '' };
+    S.ruleEdit = null;
+  }
+
+  function saveListEdit() {
+    const { tid, text } = S.listEdit;
+    const got = listFromLines(tid, text);
+    if (got.error) {
+      S.listEdit.error = got.error;
+      renderRulesBody();
+      return;
+    }
+    putListChange(mappingChanges, tid, got.items);
+    S.listEdit = null;
+    mappingChanged(tid);
+  }
+
+  function listEditHtml(tid) {
+    const L = EDITABLE_LISTS[tid];
+    const e = S.listEdit;
+    return `<fieldset class="dci-redit dci-redit-list" data-ledit="${tid}"><legend>${esc(tr('mapping.editList', { id: tid }))}</legend>
+      <textarea data-ledit-text rows="8" spellcheck="false">${esc(e.text)}</textarea>
+      <p class="dci-sub">${esc(tr(L.shape === 'map' ? 'mapping.linesMap' : L.shape === 'pairs' ? 'mapping.linesPairs' : 'mapping.linesWords'))}${L.reload ? ` · ${esc(tr('mapping.reloadHint'))}` : ''}</p>
+      ${e.error ? `<p class="dci-redit-err" role="alert">${esc(e.error)}</p>` : ''}
+      <div class="dci-urule-actions"><button type="button" data-ledit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-ledit-cancel>${esc(tr('common.cancel'))}</button>
+        ${mappingChanges.lists[tid] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${tid}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div></fieldset>`;
+  }
+
+  /** ✎ (and "changed" / "conflict") at a rule or a list of the register; rules with code: "code" (only on/off). */
+  function editToolsHtml(id, { list = false, code = false } = {}) {
+    if (code) return `<span class="dci-sub dci-codetag" title="${esc(tr('mapping.codeOnly'))}">${esc(tr('mapping.codeTag'))}</span>`;
+    const changed = list ? !!mappingChanges.lists[id] : !!mappingChanges.rules[id];
+    const conflict = !list && ruleConflicts(id).length > 0;
+    const t = tr(list ? 'mapping.editListTitle' : 'mapping.editRuleTitle', { id });
+    return `<span class="dci-redit-tools">${changed ? `<span class="dci-changed${conflict ? ' dci-conflict' : ''}" title="${esc(list ? tr('mapping.changedTitle') : tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}">${esc(tr(conflict ? 'mapping.conflictTag' : 'mapping.changedTag'))}</span>` : ''}<button type="button" class="dci-textbtn dci-redit-btn" data-${list ? 'ledit' : 'redit'}-open="${esc(id)}" title="${esc(t)}" aria-label="${esc(t)}">✎</button></span>`;
+  }
+
+  /** "Your changes of built-in rules": each change with before → after, ↺; conflicts after an update; ↺ all. */
+  function changesHtml() {
+    const ids = Object.keys(mappingChanges.rules).sort();
+    const tids = Object.keys(mappingChanges.lists).sort();
+    const head = `<h3>${esc(tr('mapping.changes'))}</h3>`;
+    if (!ids.length && !tids.length) return `<section data-rsect="changes">${head}<p class="dci-sub">${esc(tr('mapping.changesEmpty'))}</p></section>`;
+    const ruleLi = (id) => {
+      const c = mappingChanges.rules[id];
+      const conf = ruleConflicts(id);
+      const gone = conf[0] === 'gone';
+      const fields = gone ? '' : Object.keys(c.set).map((f) => `<span class="dci-mchg-f">${esc(tr(`mapping.field.${f}`))}: ${fieldChangeHtml(f, builtinField(id, f), c.set[f])}</span>`).join(' · ');
+      const confHtml = gone ? `<span class="dci-mchg-conf">⚠ ${esc(tr('mapping.gone'))}</span>`
+        : conf.length ? `<span class="dci-mchg-conf">⚠ ${esc(tr('mapping.conflict', { fields: conf.map((f) => `${tr(`mapping.field.${f}`)} ${fieldText(f, c.was[f])} → ${fieldText(f, builtinField(id, f))}`).join(', ') }))}</span>
+          <button type="button" class="dci-textbtn" data-mchg-keep="${esc(id)}">${esc(tr('mapping.keepMine'))}</button>` : '';
+      return `<li data-mchg="${esc(id)}"${conf.length ? ' class="dci-mchg-conflict"' : ''}><button type="button" class="dci-textbtn dci-ruleid" data-mchg-goto="${esc(id)}">${esc(id)}</button> ${fields} ${confHtml}
+        <button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr(conf.length ? 'mapping.discard' : 'mapping.toBuiltin'))}</button></li>`;
+    };
+    const listLi = (tid) => {
+      const c = mappingChanges.lists[tid];
+      return `<li data-mchg="${tid}"><button type="button" class="dci-textbtn dci-ruleid" data-mchg-goto="${tid}">${tid}</button>
+        ${c.add.length ? `<span class="dci-mchg-add">+ ${esc(c.add.map(showItem).join(', '))}</span>` : ''} ${c.remove.length ? `<span class="dci-mchg-rem">− ${esc(c.remove.join(', '))}</span>` : ''}
+        ${EDITABLE_LISTS[tid] && EDITABLE_LISTS[tid].reload ? `<span class="dci-sub">${esc(tr('mapping.reloadHint'))}</span>` : ''}
+        <button type="button" class="dci-textbtn" data-mchg-reset="${tid}">↺ ${esc(tr('mapping.toBuiltin'))}</button></li>`;
+    };
+    return `<section data-rsect="changes">${head}<p class="dci-sub">${esc(tr('mapping.changesHint'))}</p><ul class="dci-mchg">${ids.map(ruleLi).join('')}${tids.map(listLi).join('')}</ul>
+      <button type="button" class="dci-textbtn" data-mchg-resetall>↺ ${esc(tr('mapping.resetAll'))}</button></section>`;
+  }
+
+  /** ↺ a change (asked first – maintainer: "frag mich in zukunft ob ich wirklich einen reset machen möchte"). */
+  function resetMappingChange(id) {
+    if (!confirm(tr('mapping.resetAsk', { id }))) return;
+    delete mappingChanges.rules[id];
+    delete mappingChanges.lists[id];
+    if (S.ruleEdit && S.ruleEdit.id === id) S.ruleEdit = null;
+    if (S.listEdit && S.listEdit.tid === id) S.listEdit = null;
+    mappingChanged(id);
+  }
+
+  /** "Keep mine" at a conflict: the change stays, the built-in values it is compared with are those of now. */
+  function keepMappingChange(id) {
+    const c = mappingChanges.rules[id];
+    if (!c) return;
+    Object.keys(c.set).forEach((f) => { c.was[f] = builtinField(id, f) === undefined ? null : builtinField(id, f); });
+    saveMappingChanges();
+    renderRulesBody();
+  }
+
+  // Export and import
+  S.mioWhat = 'changes';
+  S.mImport = null;
+  S.mPaste = '';
+  S.mPasteOpen = false;
+  S.mioStatus = '';
+
+  /** The whole register in the layout of the mapping file (a line per entry), so that a pull request shows only what changed. */
+  function registerFileText(raw) {
+    const one = (v) => JSON.stringify(v);
+    const keys = Object.keys(raw).filter((k) => !['format', 'version', 'about'].includes(k));
+    const lines = ['{', `  "format": ${one(raw.format)},`, `  "version": ${one(raw.version)},`, `  "about": ${one(raw.about)},`];
+    keys.forEach((name, k) => {
+      const v = raw[name];
+      let body;
+      if (Array.isArray(v)) body = v.length ? `[\n${v.map((x) => `    ${one(x)}`).join(',\n')}\n  ]` : '[]';
+      else if (v && typeof v === 'object' && !('$re' in v) && !('$set' in v) && !('$map' in v)) {
+        const e = Object.entries(v);
+        body = e.length ? `{\n${e.map(([a, x]) => `    ${one(a)}: ${one(x)}`).join(',\n')}\n  }` : '{}';
+      } else body = one(v);
+      lines.push(`  ${one(name)}: ${body}${k === keys.length - 1 ? '' : ','}`);
+    });
+    lines.push('}');
+    return `${lines.join('\n')}\n`;
+  }
+
+  /** What is exported: your changes (with the versions they were made on), or the whole effective register. */
+  function mappingExportText(what) {
+    if (what === 'register') return registerFileText(effectiveRaw());
+    return `${JSON.stringify({ format: CHANGES_FORMAT, version: CHANGES_VERSION, script: VERSION, mapping: MAPPING.raw.version || '', exported: new Date().toISOString(),
+      own: userRules(), off: [...rulesOff()], rules: mappingChanges.rules, lists: mappingChanges.lists }, null, 2)}\n`;
+  }
+
+  const exportWhatText = (what) => tr(what === 'register' ? 'mapping.exportRegister' : 'mapping.exportChanges');
+
+  function saveMappingExport() {
+    const file = S.mioWhat === 'register' ? MAPPING_FILE : CHANGES_FILE;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([mappingExportText(S.mioWhat)], { type: 'application/json' }));
+    a.download = file;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    log('info', 'mappingExported', { what: exportWhatText(S.mioWhat), file });
+    S.mioStatus = tr('mapping.saved', { file });
+    renderMappingIo();
+  }
+
+  function copyMappingExport() {
+    const done = (ok) => {
+      S.mioStatus = tr(ok ? 'mapping.copied' : 'mapping.copyFailed');
+      if (ok) log('info', 'mappingExported', { what: exportWhatText(S.mioWhat), file: tr('mapping.clipboard') });
+      renderMappingIo();
+    };
+    try {
+      navigator.clipboard.writeText(mappingExportText(S.mioWhat)).then(() => done(true), () => done(false));
+    } catch (e) {
+      done(false);
+    }
+  }
+
+  /**
+   * A file or pasted text read and checked → { from: v1 | changes | register, rules, lists, own, off, skipped, mapping } or
+   * { error }. A whole register (e.g. from a pull request) gives what differs from the mapping file of this version.
+   */
+  function readMappingImport(text) {
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      return { error: tr('mapping.notJson') };
+    }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return { error: tr('rules.importBad') };
+    const out = { from: '', rules: {}, lists: {}, own: [], off: [], skipped: [], mapping: '', script: '' };
+    const skip = (id, why) => out.skipped.push({ id: String(id), why });
+    const takeRule = (id, set, was) => {
+      if (!rawRoleRule(MAPPING.raw, id) && !rawCompanyRule(MAPPING.raw, id)) return skip(id, tr('mapping.skipUnknown'));
+      if (!ruleEditable(id)) return skip(id, tr('mapping.skipCode'));
+      const ok = checkRuleSet(id, set);
+      if (ok.error) return skip(id, ok.error);
+      out.rules[id] = { set: ok.set, was: was && typeof was === 'object' && !Array.isArray(was) ? was : {} };
+      return null;
+    };
+    if (data.format === 'mb-x-vibecode-rules' && Array.isArray(data.rules)) {
+      out.from = 'v1';
+      out.own = data.rules;
+      out.off = Array.isArray(data.off) ? data.off : [];
+    } else if (data.format === CHANGES_FORMAT) {
+      if (!(Number(data.version) <= CHANGES_VERSION)) return { error: tr('mapping.newerFile', { version: String(data.version) }) };
+      Object.assign(out, { from: 'changes', mapping: String(data.mapping || ''), script: String(data.script || '') });
+      out.own = Array.isArray(data.own) ? data.own : [];
+      out.off = Array.isArray(data.off) ? data.off : [];
+      Object.entries(data.rules && typeof data.rules === 'object' ? data.rules : {}).forEach(([id, c]) => takeRule(id, c && c.set, c && c.was));
+      Object.entries(data.lists && typeof data.lists === 'object' ? data.lists : {}).forEach(([tid, c]) => {
+        if (!EDITABLE_LISTS[tid]) return skip(tid, tr('mapping.skipList'));
+        const ok = checkListChange(tid, c);
+        if (ok.error) return skip(tid, ok.error);
+        out.lists[tid] = ok.change;
+        return null;
+      });
+    } else if (data.format === MAPPING_FORMAT && Array.isArray(data.ROLE_RULE_DATA) && Array.isArray(data.COMPANY_ROLES)) {
+      Object.assign(out, { from: 'register', mapping: String(data.version || '') });
+      for (const r of data.ROLE_RULE_DATA) {
+        if (!r || typeof r.id !== 'string') continue;
+        const b = rawRoleRule(MAPPING.raw, r.id);
+        if (!b) {
+          skip(r.id, tr('mapping.skipUnknown'));
+          continue;
+        }
+        const set = {};
+        ROLE_RULE_FIELDS.forEach((f) => { if (encJson(r[f]) !== encJson(b[f])) set[f] = r[f] === undefined ? null : r[f]; });
+        if (Object.keys(set).length) takeRule(r.id, set, null);
+      }
+      for (const e of data.COMPANY_ROLES) {
+        const o = Array.isArray(e) && e[1];
+        if (!o || typeof o.id !== 'string') continue;
+        const b = rawCompanyRule(MAPPING.raw, o.id);
+        if (!b) {
+          skip(o.id, tr('mapping.skipUnknown'));
+          continue;
+        }
+        const set = {};
+        if (encJson(e[0]) !== encJson(b[0])) set.re = e[0];
+        COMPANY_RULE_FIELDS.filter((f) => f !== 're').forEach((f) => { if (encJson(o[f]) !== encJson(b[1][f])) set[f] = o[f] === undefined ? null : o[f]; });
+        if (Object.keys(set).length) takeRule(o.id, set, null);
+      }
+      for (const [tid, L] of Object.entries(EDITABLE_LISTS)) {
+        if (!(L.key in data)) continue;
+        let items;
+        try {
+          items = rawListItems(data, tid);
+        } catch (e) {
+          skip(tid, tr('mapping.skipList'));
+          continue;
+        }
+        const ok = checkListChange(tid, { add: items, remove: [] });
+        if (ok.error) {
+          skip(tid, ok.error);
+          continue;
+        }
+        const tmp = { rules: {}, lists: {} };
+        putListChange(tmp, tid, items);
+        if (tmp.lists[tid]) out.lists[tid] = { ...tmp.lists[tid], full: true };
+      }
+      // the other lists cannot be changed here
+      const editable = new Set(Object.values(EDITABLE_LISTS).map((L) => L.key));
+      Object.keys(MAPPING.raw).filter((k) => !['format', 'version', 'about', 'ROLE_RULE_DATA', 'COMPANY_ROLES'].includes(k) && !editable.has(k))
+        .forEach((k) => { if (k in data && encJson(data[k]) !== encJson(MAPPING.raw[k])) skip(k, tr('mapping.skipList')); });
+    } else return { error: tr('rules.importBad') };
+    const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit'];
+    out.own = out.own.filter((r) => r && typeof r === 'object' && ['role', 'instrument'].includes(r.kind) && typeof r.discogs === 'string' && r.discogs.trim()
+      && OWN_FIELDS.every((k) => r[k] == null || (['string', 'boolean'].includes(typeof r[k]) && String(r[k]).length <= LIMITS.value)))
+      .map((r) => Object.fromEntries(OWN_FIELDS.filter((k) => r[k] != null).map((k) => [k, r[k]])));
+    out.off = out.off.filter((id) => typeof id === 'string' && /^\+?[A-Z]\d{3}$/.test(id));
+    return out;
+  }
+
+  /** What an import would give: { changes, own, off } – merged with your changes, or replacing them. */
+  function planImport(imp, mode) {
+    const replace = mode === 'replace';
+    const changes = replace ? { rules: {}, lists: {} } : JSON.parse(JSON.stringify({ rules: mappingChanges.rules, lists: mappingChanges.lists }));
+    for (const [id, c] of Object.entries(imp.rules)) {
+      const mine = changes.rules[id];
+      putRuleChange(changes, id, { ...(mine ? mine.set : {}), ...c.set }, { ...(mine ? mine.was : {}), ...c.was });
+    }
+    for (const [tid, c] of Object.entries(imp.lists)) {
+      const L = EDITABLE_LISTS[tid];
+      const key = (x) => listKey(L.shape, x);
+      const out = new Set(c.remove.map(norm));
+      let items = (c.full || replace ? rawListItems(MAPPING.raw, tid) : listWith(changes, tid)).filter((x) => !out.has(key(x)));
+      c.add.forEach((a) => {
+        items = items.filter((x) => key(x) !== key(a));
+        items.push(a);
+      });
+      putListChange(changes, tid, items);
+    }
+    // a whole register has no own rules and switches: those stay as they are
+    if (imp.from === 'register') return { changes, own: userRules().map((u) => ({ ...u })), off: new Set(rulesOff()) };
+    const own = replace ? [] : userRules().map((u) => ({ ...u }));
+    const nextId = () => `U${String(1 + Math.max(0, ...own.map((u) => Number(String(u.id).slice(1)) || 0))).padStart(3, '0')}`;
+    for (const r of imp.own) {
+      // the same role (and details) replaces the rule you have; anything else is added
+      const same = own.findIndex((x) => x.kind === r.kind && norm(x.discogs) === norm(r.discogs)
+        && norm(x.details || '') === norm(r.details || '') && (x.detailsMode || 'any') === (r.detailsMode || 'any'));
+      if (same >= 0) own[same] = { ...r, id: own[same].id };
+      else own.push({ ...r, id: replace && /^U\d{3}$/.test(r.id || '') && !own.some((x) => x.id === r.id) ? r.id : nextId() });
+    }
+    const off = new Set(replace ? [] : rulesOff());
+    imp.off.forEach((id) => off.add(id));
+    return { changes, own, off };
+  }
+
+  /** The preview of an import: new, changed, removed; skipped ids; conflicts; the roles of changed rules before → after. */
+  function importPreviewHtml() {
+    const { imp, mode, name } = S.mImport;
+    const plan = planImport(imp, mode);
+    const items = [];
+    const li = (kind, id, html) => items.push(`<li class="dci-mprev-${kind}" data-mprev="${esc(id)}"><strong>${esc(id)}</strong> ${esc(tr(`mapping.prev.${kind}`))}${html ? `: ${html}` : ''}</li>`);
+    // roles of the changed rules (up to three words of their patterns): mapped now, and with the import (all at once)
+    const samples = new Map();
+    const ids = uniq([...Object.keys(mappingChanges.rules), ...Object.keys(plan.changes.rules)]).sort()
+      .filter((id) => encJson(mappingChanges.rules[id]) !== encJson(plan.changes.rules[id]));
+    ids.forEach((id) => samples.set(id, uniq([fieldWith(mappingChanges, id, 're'), fieldWith(plan.changes, id, 're')]
+      .flatMap((v) => (v && typeof v.$re === 'string' && patternWords(v.$re)) || [])).slice(0, 3)));
+    const mapSample = (id, w) => {
+      if (isRoleRuleId(id)) {
+        const r = mapRole(w, []);
+        return `${(r.types || []).join(' / ') || '–'} · ${tr(`level.${r.level}`)}${r.credit ? ` · “${r.credit === true ? w : r.credit}”` : ''} (${r.rule || '–'})`;
+      }
+      const c = mapCompanyRole(w);
+      return `${Object.entries(c.typeOptions).filter(([, v]) => v && v.length).map(([k, v]) => `${k}: ${v.join(' / ')}`).join('; ')} · ${tr(`level.${c.level}`)} (${c.rule || '–'})`;
+    };
+    const showAll = () => new Map(ids.map((id) => [id, samples.get(id).map((w) => mapSample(id, w))]));
+    const before = showAll();
+    const after = mappedWith(plan.changes, showAll);
+    for (const id of ids) {
+      const a = mappingChanges.rules[id];
+      const b = plan.changes.rules[id];
+      const kind = !a ? 'new' : !b ? 'removed' : 'changed';
+      const fields = ruleFieldsOf(id).filter((f) => encJson(fieldWith(mappingChanges, id, f)) !== encJson(fieldWith(plan.changes, id, f)));
+      const inc = imp.rules[id];
+      const conflict = inc && imp.from === 'changes' ? Object.keys(inc.set).filter((f) => f in inc.was && encJson(inc.was[f]) !== encJson(builtinField(id, f))) : [];
+      li(kind, id, `${fields.map((f) => `${esc(tr(`mapping.field.${f}`))} ${fieldChangeHtml(f, fieldWith(mappingChanges, id, f), fieldWith(plan.changes, id, f))}`).join(' · ')}
+        ${conflict.length ? `<div class="dci-mchg-conf">⚠ ${esc(tr('mapping.prevConflict', { fields: conflict.map((f) => `${tr(`mapping.field.${f}`)} ${fieldText(f, inc.was[f])} → ${fieldText(f, builtinField(id, f))}`).join(', ') }))}</div>` : ''}
+        ${samples.get(id).length ? `<div class="dci-mprev-samples">${samples.get(id).map((w, k) => `<div><code>${esc(w)}</code>: ${esc(before.get(id)[k])} → <strong>${esc(after.get(id)[k])}</strong></div>`).join('')}</div>` : ''}`);
+    }
+    for (const tid of uniq([...Object.keys(mappingChanges.lists), ...Object.keys(plan.changes.lists)]).sort()) {
+      const L = EDITABLE_LISTS[tid];
+      const key = (x) => listKey(L.shape, x);
+      const was = new Map(listWith(mappingChanges, tid).map((x) => [key(x), x]));
+      const will = listWith(plan.changes, tid);
+      const now = new Set(will.map(key));
+      const added = will.filter((x) => !was.has(key(x)) || encJson(was.get(key(x))) !== encJson(x));
+      const removed = [...was.values()].filter((x) => !now.has(key(x)));
+      if (!added.length && !removed.length) continue;
+      li('changed', tid, `${added.length ? `+ ${esc(added.map(showItem).join(', '))}` : ''} ${removed.length ? `− ${esc(removed.map(showItem).join(', '))}` : ''}${L.reload ? ` <span class="dci-sub">${esc(tr('mapping.reloadHint'))}</span>` : ''}`);
+    }
+    const ownNow = new Map(userRules().map((u) => [u.id, u]));
+    const ownText = (u) => esc(`${u.discogs}${u.details ? ` [${u.details}]` : ''} → ${u.kind === 'role' ? `${u.type || ''} · ${u.level || ''}` : u.instrument || ''}`);
+    plan.own.forEach((u) => {
+      const w = ownNow.get(u.id);
+      if (!w || encJson(w) !== encJson(u)) li(w ? 'changed' : 'new', u.id, ownText(u));
+    });
+    userRules().filter((u) => !plan.own.some((x) => x.id === u.id)).forEach((u) => li('removed', u.id, ownText(u)));
+    const offNow = rulesOff();
+    const sw = (x, on) => li(on ? 'on' : 'off', x.replace(/^\+/, ''), '');
+    [...plan.off].filter((x) => !offNow.has(x)).forEach((x) => sw(x, x.startsWith('+')));
+    [...offNow].filter((x) => !plan.off.has(x)).forEach((x) => sw(x, !x.startsWith('+')));
+    const real = items.length;
+    imp.skipped.forEach((s) => li('skipped', s.id, esc(s.why)));
+    return `<div class="dci-mprev" data-rf="preview"><strong>${esc(tr('mapping.preview', { name }))}</strong>
+      <p class="dci-sub">${esc(tr(`mapping.kind.${imp.from}`, { mapping: imp.mapping || '?', script: imp.script || '?' }))}</p>
+      <div class="dci-mprev-mode" role="radiogroup" aria-label="${esc(tr('mapping.preview', { name }))}">
+        <label><input type="radio" name="dci-mmode" value="merge" ${mode === 'merge' ? 'checked' : ''} data-mimport-mode> ${esc(tr('mapping.merge'))}</label>
+        <label><input type="radio" name="dci-mmode" value="replace" ${mode === 'replace' ? 'checked' : ''} data-mimport-mode> ${esc(tr(imp.from === 'register' ? 'mapping.replaceData' : 'mapping.replace'))}</label></div>
+      <ul>${items.join('') || `<li>${esc(tr('mapping.prevNothing'))}</li>`}</ul>
+      <button type="button" data-mimport-apply ${real ? '' : 'disabled'}>${esc(tr('mapping.apply'))}</button> <button type="button" class="dci-textbtn" data-mimport-cancel>${esc(tr('common.cancel'))}</button></div>`;
+  }
+
+  function startMappingImport(text, name) {
+    if (String(text || '').length > 2e6) {
+      Object.assign(S, { mioStatus: tr('mapping.tooBig'), mImport: null });
+      renderMappingIo();
+      return;
+    }
+    const imp = readMappingImport(text);
+    S.mioStatus = imp.error || '';
+    S.mImport = imp.error ? null : { imp, mode: 'merge', name };
+    renderMappingIo();
+    const p = S.mImport && document.querySelector('#dci-rules [data-rf="preview"]');
+    if (p) p.scrollIntoView({ block: 'nearest' });
+  }
+
+  /** A file chosen or dropped onto the window: its text into the preview. */
+  function importRules(file) {
+    if (file.size > 2e6) {
+      startMappingImport('x'.repeat(2e6 + 1), file.name);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => startMappingImport(String(reader.result || ''), file.name);
+    reader.readAsText(file);
+  }
+
+  function applyMappingImport() {
+    const { imp, mode, name } = S.mImport;
+    const plan = planImport(imp, mode);
+    mappingChanges = { ...mappingChanges, rules: plan.changes.rules, lists: plan.changes.lists };
+    if (imp.from !== 'register') {
+      userRulesCache = plan.own;
+      rulesOffCache = plan.off;
+    }
+    const n = Object.keys(imp.rules).length + Object.keys(imp.lists).length + imp.own.length + imp.off.length;
+    S.mImport = null;
+    S.mioStatus = tr('mapping.imported', { n, name });
+    log('info', 'mappingImported', { n, name, mode: tr(mode === 'replace' ? 'mapping.replace' : 'mapping.merge') });
+    mappingChanged(tr('mapping.importWhat', { name }));
+  }
+
+  /** Export and import of the register (below your rules and your changes). */
+  function mappingIoHtml() {
+    const what = S.mioWhat;
+    return `<section data-rsect="io"><h3>${esc(tr('mapping.io'))}</h3>
+      <div class="dci-mio-row"><label class="dci-mio-inline">${esc(tr('mapping.export'))} <select data-mio="what">
+        <option value="changes" ${what === 'changes' ? 'selected' : ''}>${esc(tr('mapping.exportChanges'))}</option>
+        <option value="register" ${what === 'register' ? 'selected' : ''}>${esc(tr('mapping.exportRegister'))}</option></select></label>
+        <button type="button" data-mio-save>${esc(tr('mapping.saveFile'))}</button> <button type="button" data-mio-copy>${esc(tr('mapping.copy'))}</button></div>
+      <p class="dci-sub">${esc(tr(what === 'register' ? 'mapping.exportRegisterHint' : 'mapping.exportChangesHint', { file: what === 'register' ? MAPPING_FILE : CHANGES_FILE }))}</p>
+      <div class="dci-mio-row"><label class="dci-filebtn">${esc(tr('mapping.importFile'))} <input type="file" accept=".json,application/json" data-rules-import></label>
+        <span class="dci-sub">${esc(tr('mapping.importHint'))}</span></div>
+      <details class="dci-mio-paste"${S.mPasteOpen ? ' open' : ''}><summary>${esc(tr('mapping.paste'))}</summary>
+        <textarea data-mio="paste" rows="4" spellcheck="false">${esc(S.mPaste)}</textarea>
+        <button type="button" data-mio-read>${esc(tr('mapping.read'))}</button></details>
+      <p class="dci-sub" data-rf="mio-status" role="status">${esc(S.mioStatus)}</p>
+      ${S.mImport ? importPreviewHtml() : ''}</section>`;
+  }
+
+  function renderMappingIo() {
+    const el = document.querySelector('#dci-rules [data-rf="io"]');
+    if (el) el.innerHTML = mappingIoHtml();
+  }
+
   const nextUserRuleId = () => `U${String(1 + Math.max(0, ...userRules().map((u) => Number(String(u.id).slice(1)) || 0))).padStart(3, '0')}`;
 
-  /** "Your rules": own rules (U001 …) with on/off, edit and delete, a form, export and import. */
+  /** "Your rules": own rules (U001 …) with on/off, edit and delete, a form ([3.33.1] export and import: mappingIoHtml). */
   function ownRulesHtml() {
     const le = (getMB() && getMB().linkedEntities) || {};
     const ltNames = uniq(Object.values(le.link_type || {}).filter((l) => l && (l.type0 === 'artist' || l.type1 === 'artist')).map((l) => l.name)).sort();
@@ -11659,9 +12579,7 @@
         <datalist id="dci-dl-ltnames">${ltNames.map((n) => `<option value="${esc(n)}"></option>`).join('')}</datalist>
         <datalist id="dci-dl-instrnames">${instrNames.map((n) => `<option value="${esc(n)}"></option>`).join('')}</datalist>
       </fieldset>
-      <div class="dci-urule-io"><button type="button" data-rules-export>${esc(tr('rules.export'))}</button>
-        <label class="dci-filebtn">${esc(tr('rules.import'))} <input type="file" accept=".json,application/json" data-rules-import></label>
-        <span class="dci-sub">${esc(tr('rules.ioHint'))}</span></div></section>`;
+      </section>`;
   }
 
   function setRulesStatus(text) {
@@ -11687,44 +12605,6 @@
     else list.push(rule);
     S.ruleForm = null;
     applyRulesChange(rule.id);
-  }
-
-  function exportRules() {
-    const data = { format: 'mb-x-vibecode-rules', version: 1, exported: new Date().toISOString(), rules: userRules(), off: [...rulesOff()] };
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-    a.download = 'mb-x-vibecode-rules.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    log('info', 'rulesExported', { n: data.rules.length });
-  }
-
-  function importRules(file) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-        if (!data || data.format !== 'mb-x-vibecode-rules' || !Array.isArray(data.rules)) throw new Error(tr('rules.importBad'));
-        const list = userRules();
-        let n = 0;
-        for (const r of data.rules) {
-          if (!r || !r.discogs || !['role', 'instrument'].includes(r.kind)) continue;
-          // The same Discogs role (and details) replaces the rule you have; anything else is added
-          const same = list.findIndex((x) => x.kind === r.kind && norm(x.discogs) === norm(r.discogs)
-            && norm(x.details || '') === norm(r.details || '') && (x.detailsMode || 'any') === (r.detailsMode || 'any'));
-          const rule = { ...r, id: same >= 0 ? list[same].id : nextUserRuleId() };
-          if (same >= 0) list[same] = rule;
-          else list.push(rule);
-          n++;
-        }
-        (data.off || []).forEach((id) => rulesOff().add(id));
-        applyRulesChange(tr('rules.imported', { n }));
-      } catch (e) {
-        setRulesStatus(e.message);
-      }
-    };
-    reader.readAsText(file);
   }
 
   /**
@@ -11780,10 +12660,20 @@
     if (!el) return;
     el.querySelector('[data-rf="quick"]').innerHTML = quickSwitchesHtml();
     el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
+    el.querySelector('[data-rf="changes"]').innerHTML = changesHtml();
+    el.querySelector('[data-rf="io"]').innerHTML = mappingIoHtml();
     el.querySelector('[data-rf="tables"]').innerHTML = rulesTables();
     el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(el.querySelector('[data-rf="test"]').value);
+    el.querySelector('[data-rf="mapping-src"]').textContent = mappingSourceText();
     const q = norm(el.querySelector('[data-rf="search"]').value);
-    if (q) el.querySelectorAll('[data-rf="tables"] tbody tr').forEach((tr1) => { tr1.hidden = !norm(tr1.textContent).includes(q); });
+    if (q) el.querySelectorAll('[data-rf="tables"] tbody tr:not(.dci-redit-row)').forEach((tr1) => { tr1.hidden = !norm(tr1.textContent).includes(q); });
+  }
+
+  /** [3.33.0] The mapping file, its version and where it came from; [3.33.1] with the number of your changes. */
+  function mappingSourceText() {
+    const n = Object.keys(mappingChanges.rules).length + Object.keys(mappingChanges.lists).length;
+    const src = tr('mapping.source', { file: MAPPING_FILE, version: MAPPING.raw.version || '?', from: tr(`mapping.from.${MAPPING.from}`) });
+    return n ? `${src} · ${tr('mapping.changesN', { n })}` : src;
   }
 
   /** What the script makes of a Discogs role (several separated by commas, as on Discogs). */
@@ -11991,11 +12881,13 @@
       el.innerHTML = `<div class="dci-rules-head"><h2 id="dci-rules-title">${esc(tr('rules.title'))}</h2>
           <span class="dci-rules-tools" data-rf="head-tools">${rulesHeadToolsHtml()}</span></div>
         <div class="dci-rules-body">
-          <p class="dci-sub dci-mapping-src" data-rf="mapping-src">${esc(tr('mapping.source', { file: MAPPING_FILE, version: MAPPING.raw.version || '?', from: tr(`mapping.from.${MAPPING.from}`) }))}</p>
+          <p class="dci-sub dci-mapping-src" data-rf="mapping-src">${esc(mappingSourceText())}</p>
           <div data-rf="quick"></div>
           <label class="dci-rules-test"><span data-rf="test-label">${esc(trRules('rules.test'))}</span> <input type="text" data-rf="test" placeholder="Bass [Upright], Coordinator [Tour]"></label>
           <div data-rf="result">${ruleTestHtml('')}</div>
           <div data-rf="own"></div>
+          <div data-rf="changes"></div>
+          <div data-rf="io"></div>
           <label class="dci-rules-search">${esc(tr('rules.search'))} <input type="search" data-rf="search"></label>
           <div data-rf="tables"></div>
         </div>`;
@@ -12025,7 +12917,52 @@
           S.ruleForm = null;
           el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
         }
-        if (t.closest('[data-rules-export]')) exportRules();
+        // [3.33.1] ✎ at built-in rules and lists, your changes, export and import (item E7)
+        const ro = t.closest('[data-redit-open]');
+        if (ro) {
+          if (S.ruleEdit && S.ruleEdit.id === ro.dataset.reditOpen) S.ruleEdit = null;
+          else openRuleEdit(ro.dataset.reditOpen);
+          renderRulesBody();
+          const f = el.querySelector('[data-redit] [data-redit-f="pattern"]');
+          if (f) f.focus({ preventScroll: true });
+        }
+        const lo = t.closest('[data-ledit-open]');
+        if (lo) {
+          if (S.listEdit && S.listEdit.tid === lo.dataset.leditOpen) S.listEdit = null;
+          else openListEdit(lo.dataset.leditOpen);
+          renderRulesBody();
+          const f = el.querySelector('[data-ledit-text]');
+          if (f) f.focus({ preventScroll: true });
+        }
+        if (t.closest('[data-redit-save]')) saveRuleEdit();
+        if (t.closest('[data-ledit-save]')) saveListEdit();
+        if (t.closest('[data-redit-cancel], [data-ledit-cancel]')) {
+          S.ruleEdit = null;
+          S.listEdit = null;
+          renderRulesBody();
+        }
+        const mr = t.closest('[data-mchg-reset]');
+        if (mr) resetMappingChange(mr.dataset.mchgReset);
+        const mk = t.closest('[data-mchg-keep]');
+        if (mk) keepMappingChange(mk.dataset.mchgKeep);
+        if (t.closest('[data-mchg-resetall]') && confirm(tr('mapping.resetAllAsk'))) {
+          mappingChanges = { ...mappingChanges, rules: {}, lists: {} };
+          S.ruleEdit = null;
+          S.listEdit = null;
+          mappingChanged(tr('mapping.resetAllWhat'));
+        }
+        const mg = t.closest('[data-mchg-goto]');
+        if (mg) focusRule(mg.dataset.mchgGoto);
+        if (t.closest('[data-mio-save]')) saveMappingExport();
+        if (t.closest('[data-mio-copy]')) copyMappingExport();
+        if (t.closest('[data-mio-read]')) startMappingImport(S.mPaste, tr('mapping.pasted'));
+        if (t.closest('[data-mimport-apply]')) applyMappingImport();
+        if (t.closest('[data-mimport-cancel]')) {
+          S.mImport = null;
+          renderMappingIo();
+        }
+        const sum = t.closest('.dci-mio-paste > summary');
+        if (sum) S.mPasteOpen = !sum.parentNode.open;
         // [3.32.0] the id of a quick switch: the rule in the lists below
         const qs = t.closest('[data-qs-goto]');
         if (qs) focusRule(qs.dataset.qsGoto);
@@ -12051,17 +12988,49 @@
         } else if (t.dataset.uf) {
           S.ruleForm = { ...(S.ruleForm || { kind: 'role', detailsMode: 'any', level: 'recording' }), [t.dataset.uf]: t.value };
           if (t.dataset.uf === 'kind') el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
+        } else if (t.dataset.reditF && S.ruleEdit) {
+          if (t.dataset.reditF === 'pmode') switchPatternMode(S.ruleEdit.draft, t.value);
+          else S.ruleEdit.draft[t.dataset.reditF] = t.value;
+          if (['pmode', 'creditMode'].includes(t.dataset.reditF)) renderRulesBody();
+        } else if (t.dataset.mio === 'what') {
+          S.mioWhat = t.value === 'register' ? 'register' : 'changes';
+          renderMappingIo();
+        } else if (t.dataset.mimportMode != null && S.mImport) {
+          S.mImport.mode = t.value === 'replace' ? 'replace' : 'merge';
+          renderMappingIo();
         } else if (t.dataset.rulesImport != null && t.files && t.files[0]) {
           importRules(t.files[0]);
         }
       });
+      // [3.33.1] a file dropped onto the window is imported (with a preview first)
+      const hasFiles = (e) => [...((e.dataTransfer && e.dataTransfer.types) || [])].includes('Files');
+      el.addEventListener('dragover', (e) => {
+        if (!hasFiles(e)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        el.classList.add('dci-rules-drop');
+      });
+      el.addEventListener('dragleave', (e) => {
+        if (!el.contains(e.relatedTarget)) el.classList.remove('dci-rules-drop');
+      });
+      el.addEventListener('drop', (e) => {
+        el.classList.remove('dci-rules-drop');
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!f) return;
+        e.preventDefault();
+        e.stopPropagation();
+        importRules(f);
+      });
       el.addEventListener('input', (e) => {
         const f = e.target.dataset.rf;
         if (e.target.dataset.uf) S.ruleForm = { ...(S.ruleForm || { kind: 'role', detailsMode: 'any', level: 'recording' }), [e.target.dataset.uf]: e.target.value };
+        if (e.target.dataset.reditF && S.ruleEdit && e.target.dataset.reditF !== 'pmode') S.ruleEdit.draft[e.target.dataset.reditF] = e.target.value;
+        if (e.target.dataset.leditText != null && S.listEdit) S.listEdit.text = e.target.value;
+        if (e.target.dataset.mio === 'paste') S.mPaste = e.target.value;
         if (f === 'test') el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(e.target.value);
         if (f === 'search') {
           const q = norm(e.target.value);
-          el.querySelectorAll('[data-rf="tables"] tbody tr').forEach((tr1) => { tr1.hidden = !!q && !norm(tr1.textContent).includes(q); });
+          el.querySelectorAll('[data-rf="tables"] tbody tr:not(.dci-redit-row)').forEach((tr1) => { tr1.hidden = !!q && !norm(tr1.textContent).includes(q); });
         }
       });
     }
@@ -12107,7 +13076,8 @@
     if (!el) return;
     // A search that hides it is cleared first
     const search = el.querySelector('[data-rf="search"]');
-    const r = el.querySelector(`[data-rf="own"] tr[data-rid="${id}"]`) || el.querySelector(`[data-rf="tables"] tr[data-rid="${id}"]`);
+    const r = el.querySelector(`[data-rf="own"] tr[data-rid="${id}"]`) || el.querySelector(`[data-rf="tables"] tr[data-rid="${id}"]`)
+      || el.querySelector(`[data-rf="tables"] [data-ledit-anchor="${id}"]`);
     if (!r) return;
     if (r.hidden && search) {
       search.value = '';
@@ -12757,6 +13727,11 @@
       // [3.33.0] the mapping file: where it comes from, and a version other than the script's
       log('info', 'mappingLoaded', { version: MAPPING.raw.version || '?', from: tr(`mapping.from.${MAPPING.from}`) });
       if (MAPPING.raw.version !== VERSION) log('warn', 'mappingVersion', { version: MAPPING.raw.version || '?', script: VERSION });
+      // [3.33.1] your changes of the register, and those whose built-in rule changed with an update (item E7)
+      const nChanges = Object.keys(mappingChanges.rules).length + Object.keys(mappingChanges.lists).length;
+      if (nChanges) log('info', 'mappingChangesOn', { n: nChanges });
+      const conflicts = Object.keys(mappingChanges.rules).filter((id) => ruleConflicts(id).length);
+      if (conflicts.length) log('warn', 'mappingConflicts', { n: conflicts.length, ids: conflicts.join(', ') });
       if (S.autostart && S.editorLinks) log('info', S.autostartFrom === 'link' ? 'fromLink' : 'fromEditor', { links: S.editorLinks.map(afterEditLinkLabel).join(', ') || '–' });
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
         + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits+labels');
@@ -24300,7 +25275,7 @@
   function resetHtml() {
     return `<div class="dci-reset" data-el="reset" role="group" aria-label="${esc(tr('reset.title'))}"><strong>${esc(tr('reset.ask'))}</strong>
       <p class="dci-sub">${esc(tr('reset.what'))}</p>
-      <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, off: [...rulesOff()].filter((id) => !id.startsWith('+')).length }))}</label>
+      <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, c: Object.keys(mappingChanges.rules).length + Object.keys(mappingChanges.lists).length, off: [...rulesOff()].filter((id) => !id.startsWith('+')).length }))}</label>
       <label class="dci-check"><input type="checkbox" data-f="reset-pools" ${S.resetPools ? 'checked' : ''}> ${esc(tr('reset.pools'))}</label>
       <p class="dci-sub">${esc(tr('reset.never'))}</p>
       <div class="dci-mbdate-tools">
@@ -24554,6 +25529,12 @@
     if (rules) {
       userRulesCache = [];
       rulesOffCache = new Set();
+      // [3.33.1] your changes of built-in rules too
+      mappingChanges = { ...mappingChanges, rules: {}, lists: {} };
+      saveMappingChanges();
+      applyMappingChanges();
+      roleVocabCache = null;
+      ruleNotesCache = null;
       applyRulesChange(tr('reset.title'));
       writeJson('localStorage', USER_RULES_KEY, null);
       writeJson('localStorage', RULES_OFF_KEY, null);
@@ -25104,6 +26085,46 @@
         font-size: calc(var(--u, 1px) * 11.5); }
       #dci-rules .dci-qbtn[aria-pressed=true] + .dci-qid { border-color: #8e88c2; }
       #dci-rules .dci-rule-result { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #736dab; background: #f4f3fb; }
+      /* [3.33.1] ✎ at built-in rules and lists, your changes, export and import (item E7) */
+      #dci-rules .dci-redit-cell { white-space: nowrap; text-align: right; }
+      #dci-rules .dci-redit-tools { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-left: calc(var(--u, 1px) * 6); font-weight: 400; }
+      #dci-rules .dci-redit-btn { border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; padding: 0 calc(var(--u, 1px) * 6); color: #4b4585; cursor: pointer; font: inherit; line-height: 1.5; text-decoration: none; }
+      #dci-rules .dci-redit-btn:hover { border-color: #8e88c2; background: #f4f3fb; }
+      #dci-rules .dci-changed { padding: 0 calc(var(--u, 1px) * 6); border-radius: 999px; background: #e6e3f5; color: #3e3873; font-size: calc(var(--u, 1px) * 11); white-space: nowrap; }
+      #dci-rules .dci-changed.dci-conflict { background: #fdecd2; color: #7a4a00; }
+      #dci-rules .dci-codetag { font-size: calc(var(--u, 1px) * 11); }
+      #dci-rules tr.dci-rchanged > td { background: #f7f5fd; }
+      #dci-rules tr.dci-redit-row > td { background: #faf9fd; }
+      #dci-rules .dci-redit { margin: calc(var(--u, 1px) * 6) 0; border: 1px solid #b9b5cf; border-left: 3px solid #736dab; border-radius: 4px; background: #fff;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 220), 1fr)); gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); }
+      #dci-rules .dci-redit legend { font-weight: 600; }
+      #dci-rules .dci-redit label { margin: 0; font-weight: 600; }
+      #dci-rules .dci-redit .dci-redit-wide, #dci-rules .dci-redit-list textarea, #dci-rules .dci-redit-list p { grid-column: 1 / -1; }
+      #dci-rules .dci-redit p { margin: 0; }
+      #dci-rules .dci-redit-err { color: #b3261e; font-weight: 600; }
+      #dci-rules textarea { width: 100%; box-sizing: border-box; padding: calc(var(--u, 1px) * 4); font: calc(var(--u, 1px) * 12) / 1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      #dci-rules .dci-mchg { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 18); }
+      #dci-rules .dci-mchg li { margin: calc(var(--u, 1px) * 3) 0; }
+      #dci-rules .dci-mchg-add { color: #1e6b35; }
+      #dci-rules .dci-mchg-rem { color: #9a2a22; }
+      #dci-rules .dci-mchg-conf { color: #7a4a00; font-weight: 600; }
+      #dci-rules li.dci-mchg-conflict { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 6); border-left: 3px solid #e0a040; background: #fff8ec; }
+      #dci-rules .dci-mio-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 6) 0 0; }
+      #dci-rules .dci-mio-row label.dci-mio-inline { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin: 0; }
+      #dci-rules .dci-mio-paste { margin: calc(var(--u, 1px) * 6) 0; }
+      #dci-rules .dci-mio-paste summary { cursor: pointer; color: #4b4585; }
+      #dci-rules .dci-mprev { margin: calc(var(--u, 1px) * 8) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid #b9b5cf; border-left: 3px solid #736dab; border-radius: 4px; background: #fff; }
+      #dci-rules .dci-mprev p { margin: calc(var(--u, 1px) * 2) 0 calc(var(--u, 1px) * 6); }
+      #dci-rules .dci-mprev-mode { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 16); }
+      #dci-rules .dci-mprev-mode label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); margin: 0; font-weight: 400; }
+      #dci-rules .dci-mprev-mode input { width: auto; }
+      #dci-rules .dci-mprev ul { margin: calc(var(--u, 1px) * 6) 0; padding-left: calc(var(--u, 1px) * 18); }
+      #dci-rules .dci-mprev li { margin: calc(var(--u, 1px) * 3) 0; }
+      #dci-rules .dci-mprev-new strong:first-child { color: #1e6b35; }
+      #dci-rules .dci-mprev-removed strong:first-child { color: #9a2a22; }
+      #dci-rules .dci-mprev-skipped { color: #6c6880; }
+      #dci-rules .dci-mprev-samples { margin: calc(var(--u, 1px) * 2) 0 0; font-size: calc(var(--u, 1px) * 11.5); color: #55526a; }
+      #dci-rules.dci-rules-drop { outline: 3px dashed #736dab; outline-offset: -3px; }
       #dci-log {
         --u: calc(var(--dci-fs, 13px) / 13);
         box-sizing: border-box; position: fixed; left: calc(var(--u, 1px) * 16); bottom: calc(var(--u, 1px) * 16); z-index: 10002; display: flex; flex-direction: column;

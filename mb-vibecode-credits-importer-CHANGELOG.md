@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.33.0 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -87,6 +87,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.33.1
+
+#### Added
+
+- **✎ Changing built-in rules** (collected item E7, Block W; maintainer: "auch direkt an der Regel"): in "Mapping rules" ✎ at every role rule without code, every company rule and the lists T001, T002, T003, T038, T045, T048 opens a form below it – of a role rule its pattern (as role words separated by "|", or as a regular expression), MusicBrainz types, level, role credit (none, as written, a text) and instrument; of a company rule its pattern, types for labels, places, areas, artists and level; of a list all its entries, one a line. Saved, it is your change, stored in this browser on top of the mapping file and in effect at once; the rule is marked "changed". Rules with code are marked "code" and can only be switched on and off. A wrong pattern is not saved.
+- **Your changes of built-in rules:** a list below your rules – each change with the words added and taken away of a pattern ("+ pictures by") or before → after, **↺ back to the built-in rule**, **↺ Reset all changes of built-in rules** (both asked first). They stay with an update; a built-in rule changed by an update is marked "changed · ⚠" (the log warns at the start), with **Keep mine** and **Discard**.
+- **Export and import of the register:** export **my changes** (own rules, switches, changed rules and lists, with the versions they were made on) as `mb-vibecode-credits-importer-mapping-changes.json`, or **the whole register** with your changes as `mb-vibecode-credits-importer-mapping.json` in the layout of the repository's file (without changes byte for byte the same – a pull request shows only the changed lines); as a file or to the clipboard. Import a file (chosen or dropped onto the window) or pasted text – a changes file, an old rules file (`mb-x-vibecode-rules`, still read) or a whole register –, checked (only data, known ids, allowed fields, patterns compiled safely), with a **preview** first: new, changed and removed rules with before → after and up to three roles mapped before → after, lists, own rules, switches, skipped ids with the reason, conflicts with a built-in rule changed since the export; **Merge with my changes** or **Replace my changes**, then **Take over**.
+
+#### Changed
+
+- "Tables and word lists" are no longer "read only" (their hint names the lists ✎ changes); ⚙ Settings → reset with own mapping rules ticked resets your changes of built-in rules too (its text counts them). The former "Export rules" / "Import rules" of "Your rules" are part of "Export and import".
 
 ### Import 3.33.0 – milestone “Mapping file”
 

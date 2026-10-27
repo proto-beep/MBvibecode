@@ -448,7 +448,7 @@ def case_navlink():
 def case_mappingload():
     """Credits Importer 3.33.0 (milestone "Mapping file"): where the mapping file comes from (maintainer: Block W, "erst b dann a").
     A) Loaded by the userscript manager (GM_getResourceText): the dashboard works; "Mapping rules" says where the data comes from
-       ("version 3.33.0, loaded by the userscript manager"), the log "Mapping file 3.33.0 (loaded by the userscript manager)".
+       ("version <the script's>, loaded by the userscript manager"), the log "Mapping file <version> (loaded by the userscript manager)".
     B) The manager did not load it: the script fetches it from GitHub (…/main/mb-vibecode-credits-importer-mapping.json?v=…),
        keeps it for this version and loads the page once more – the dashboard works, "fetched from GitHub by the script"; the
        next page needs no fetch.
@@ -467,8 +467,8 @@ def case_mappingload():
         src_a = pg.evaluate("document.querySelector('#dci-rules [data-rf=mapping-src]').textContent")
         log_a = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Mapping file/.test(t))")
         print('A)', src_a, '|', log_a)
-        ok_a = 'mb-vibecode-credits-importer-mapping.json (version 3.33.0, loaded by the userscript manager)' in src_a \
-            and any('Mapping file 3.33.0 (loaded by the userscript manager)' in t for t in log_a)
+        ok_a = f'mb-vibecode-credits-importer-mapping.json (version {H.VERSION}, loaded by the userscript manager)' in src_a \
+            and any(f'Mapping file {H.VERSION} (loaded by the userscript manager)' in t for t in log_a)
         results += [ok_a, not errs]
         ctx.close()
         # B) fetched from GitHub
@@ -478,7 +478,7 @@ def case_mappingload():
         ctx = H.new_context(b)
         pg, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{H.REL}/edit-relationships')
         pg.wait_for_selector('#dci-open', timeout=30000)
-        stored = pg.evaluate("!!localStorage.getItem('dci-mapping:3.33.0')")
+        stored = pg.evaluate(f"!!localStorage.getItem('dci-mapping:{H.VERSION}')")
         H.open_dashboard(pg)
         pg.click('.dci-head [data-act=rules]'); pg.wait_for_timeout(300)
         src_b = pg.evaluate("document.querySelector('#dci-rules [data-rf=mapping-src]').textContent")
@@ -486,7 +486,7 @@ def case_mappingload():
         pg.reload(); pg.wait_for_selector('#dci-open', timeout=30000)
         n2 = len(H.RAW_REQUESTS)
         print('B) geholt:', H.RAW_REQUESTS[:1], '| gespeichert:', stored, '|', src_b, '| Abrufe:', n1, '→', n2)
-        ok_b = n1 == 1 and 'mapping.json?v=3.33.0' in H.RAW_REQUESTS[0] and stored and 'fetched from GitHub by the script' in src_b and n2 == n1
+        ok_b = n1 == 1 and f'mapping.json?v={H.VERSION}' in H.RAW_REQUESTS[0] and stored and 'fetched from GitHub by the script' in src_b and n2 == n1
         results += [ok_b, not errs]
         ctx.close()
         # C) missing
