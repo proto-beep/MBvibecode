@@ -23,21 +23,20 @@ def case_i18n():
     from pathlib import Path
 
     SCRIPT = Path(__file__).resolve().parent.parent / 'mb-vibecode-credits-importer.user.js'
+    # [3.34.0] German, Spanish and French in the languages file, English in the script
+    LANGUAGES = Path(__file__).resolve().parent.parent / 'mb-vibecode-credits-importer-languages.json'
     LANGS = ['en', 'de', 'es', 'fr']
     src = SCRIPT.read_text(encoding='utf-8')
     start = src.index('  const I18N = {')
-    blocks = {}
-    pos = start
-    for lang in LANGS:
-        m = re.compile(r'\n    ' + lang + r': \{\n').search(src, pos)
-        end = src.index('\n    },', m.end())
-        texts = {}
-        for line in src[m.end():end].split('\n'):
-            mm = re.match(r'      ("(?:[^"\\]|\\.)*"): (".*"),$', line)
-            if mm:
-                texts[json.loads(mm.group(1))] = json.loads(mm.group(2))
-        blocks[lang] = texts
-        pos = end
+    m = re.compile(r'\n    en: \{\n').search(src, start)
+    end = src.index('\n    },', m.end())
+    texts = {}
+    for line in src[m.end():end].split('\n'):
+        mm = re.match(r'      ("(?:[^"\\]|\\.)*"): (".*"),$', line)
+        if mm:
+            texts[json.loads(mm.group(1))] = json.loads(mm.group(2))
+    blocks = {'en': texts}
+    blocks.update({lang: v for lang, v in json.loads(LANGUAGES.read_text(encoding='utf-8')).items() if lang in LANGS})
     i18n_end = src.index('\n  };', start)
     code = src[:start] + src[i18n_end:]
     en = blocks['en']
@@ -205,6 +204,57 @@ def case_mappingfile():
     print('C) Node:', node.stdout.strip(), node.stderr[-200:])
     ok_c = node.stdout.strip() == 'R033'
     print('Ergebnis:', 'OK' if ok_a and ok_b and ok_c else 'FEHLER', [ok_a, ok_b, ok_c])
+
+
+
+def case_languagesfile():
+    """Credits Importer 3.34.0 (milestone "Languages file", item E6): German, Spanish and French in
+    mb-vibecode-credits-importer-languages.json, English in the script.
+    A) The file: format 1, its version the script's, an object of texts for de, es and fr (nothing else besides format,
+       version, about); one text a line (the layout of tools/i18n_add.py – a pull request shows only what changed).
+    B) The script keeps only English (no block de / es / fr in `const I18N`), every key of the file is in English.
+    C) The header: @resource languages at …/main/mb-vibecode-credits-importer-languages.json?v=<version>.
+    D) In Node the script reads the file next to it: German texts, and English where German has none."""
+    import json
+    import os
+    import re
+    import subprocess
+    import sys
+
+    HERE = os.path.dirname(os.path.abspath(__file__))
+    SCRIPT = os.path.join(HERE, '..', 'mb-vibecode-credits-importer.user.js')
+    FILE = os.path.join(HERE, '..', 'mb-vibecode-credits-importer-languages.json')
+    src = open(SCRIPT, encoding='utf-8').read()
+    text = open(FILE, encoding='utf-8').read()
+    data = json.loads(text)
+    version = re.search(r'^// @version\s+(\S+)', src, re.M).group(1)
+    sys.path.insert(0, os.path.join(HERE, '..', 'tools'))
+    import i18n_add
+    layout = []
+    i18n_add.LANGUAGES = type('W', (), {'write_text': lambda self, t, encoding=None: layout.append(t)})()
+    i18n_add.write_languages(data)
+    print('A) Format:', data.get('format'), '| Version:', data.get('version'), 'Skript:', version, '| Teile:', sorted(data), '| Texte:', {k: len(data[k]) for k in ('de', 'es', 'fr') if k in data},
+          '| Aufbau wie i18n_add:', layout[0] == text)
+    ok_a = data.get('format') == 1 and data.get('version') == version and sorted(data) == ['about', 'de', 'es', 'format', 'fr', 'version'] \
+        and all(isinstance(data[k], dict) and len(data[k]) > 1000 for k in ('de', 'es', 'fr')) and layout[0] == text
+    start = src.index('  const I18N = {')
+    i18n = src[start:src.index('\n  };', start)]
+    blocks = re.findall(r'^    (\w+): \{$', i18n, re.M)
+    en = set(json.loads(m) for m in re.findall(r'^      ("(?:[^"\\]|\\.)*"): ', i18n, re.M))
+    extra = {k: [x for x in data[k] if x not in en][:5] for k in ('de', 'es', 'fr')}
+    print('B) Blöcke im Skript:', blocks, '| Englisch:', len(en), '| ohne Englisch:', extra)
+    ok_b = blocks == ['en'] and not any(extra.values())
+    head = src[:src.index('// ==/UserScript==')]
+    res = re.search(r'^// @resource\s+languages\s+(\S+)$', head, re.M)
+    print('C) @resource:', res and res.group(1))
+    ok_c = bool(res) and res.group(1) == f'https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v={version}'
+    node = subprocess.run(['node', '-e', "global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 }; const m = require(process.argv[1]); m.setLang('de'); "
+                           "delete m.I18N.de['common.on']; console.log(JSON.stringify([m.tr('source.load'), m.tr('common.on'), Object.keys(m.I18N).sort()]))",
+                           SCRIPT], capture_output=True, text=True)
+    print('D) Node:', node.stdout.strip(), node.stderr[-200:])
+    d = json.loads(node.stdout or 'null')
+    ok_d = bool(d) and d[0] == data['de']['source.load'] and d[0] != 'Load' and d[1] == 'on' and d[2] == ['de', 'en', 'es', 'fr']
+    print('Ergebnis:', 'OK' if ok_a and ok_b and ok_c and ok_d else 'FEHLER', [ok_a, ok_b, ok_c, ok_d])
 
 
 run_cases(globals())
