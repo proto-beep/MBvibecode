@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.11 | – |
+| 2026-10-28 | 3.34.0 – 3.34.12 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.12
+
+#### Added
+
+- **Text from cover art (beta): where a line or a word is in the image** (collected item 130b; maintainer: "klingt gut, bitte einbauen"): a click (or the caret) in a line of a part's text marks that line in the image beside it, brought into sight when zoomed; a word read with little certainty, clicked, is selected in the text, marked in the image and zoomed in on (clicked again: its next place). The places come from the text recognition, for a PDF page with its own text from the PDF.
 
 ### Import 3.34.11
 

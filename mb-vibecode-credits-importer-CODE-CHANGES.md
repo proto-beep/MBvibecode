@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.11, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.12, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.12 · 2026-10-28
+
+Text from cover art (beta): where a line or a word is in the image (collected item 130b).
+
+- **Places read:** new `tessLayout(data)` – Tesseract's lines and words (`data.lines` / `data.words` of 5.x; else from `data.blocks`). `ocrRun` keeps for each part its `lines` ([{ text, box }], the text corrected like the part's text with `ocrClean`) and `unsureAt` (the words read uncertainly with their places); a place in a piece goes back to the canvas by the piece's box and `ocrPieceScale`. Each part has a `mark` (none at first).
+- **PDF:** new `pdfBox(pts)` (pieces of text: from 0.9 of their size above the baseline to 0.25 below); `pdfLines` gives { text, box } a line; `ocrPdfText` gives { text, lines } a frame (or for the whole page, its lines as the PDF ends them).
+- **New:** `ocrLikeness(a, b)` (the pairs of letters shared, 0 … 1), `ocrLineFor(lines, text, n)` (the line read most like it, its n-th line +0.15, at least 0.45), `ocrZoomShow(key, box)` (a zoomed view moved so the place is in sight), `ocrZoomTo(key, box)` (zoomed in on a place: half the view's width, a third of its height, at most `OCR_ZOOM_MAX`), **`ocrLocateLine(ta)`** (the caret's line marked), **`ocrLocateWord(btn)`** (a word read uncertainly: its next place selected and marked; `data-ocr-n` counts).
+- **`ocrZoomDraw`:** draws the mark (a line in the frames' violet, a word in the yellow of its button); the canvas tells `data-mark`, `data-mark-kind`, `data-view` and `data-box` (places on the image's canvas).
+- **Events:** `ocrClick` – a word read uncertainly goes to `ocrLocateWord`, a click into a part's text to `ocrLocateLine`; `keyup` in a part's text – `ocrLocateLine`.
+- **Texts (English, OCR only):** `ocr.resultHint` and `ocr.unsure` name the marks.
+- **Header / files:** `@version 3.34.12`, `?v=3.34.12`, both files' `version`.
+- **Tests:** `harness.py` – the stand-in Tesseract also gives `lines`; `t_coverart.py` – new case `ocrlocate`.
 
 ## Import 3.34.11 · 2026-10-28
 

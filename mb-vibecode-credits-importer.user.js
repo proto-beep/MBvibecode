@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.11
+// @version      3.34.12
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.11
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.11
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.12
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.12
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.11';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.12';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1413,10 +1413,10 @@
       "ocr.state.load": "loading the image",
       "ocr.state.read": "reading",
       "ocr.state.done": "done",
-      "ocr.resultHint": "Correct what was read wrongly – the text then goes to the same reader as a pasted text.",
+      "ocr.resultHint": "Correct what was read wrongly – the text then goes to the same reader as a pasted text. A line clicked in the text is marked in the image beside it.",
       "ocr.small": "Only {w} × {h} px – read enlarged; names can come out wrong.",
       "ocr.textOf": "Text of {what}",
-      "ocr.unsure": "Read with little certainty (a click selects it):",
+      "ocr.unsure": "Read with little certainty (a click selects it and shows it in the image):",
       "ocr.fixed": "Corrected after reading:",
       "ocr.fixPc": "℗ read as © ({n})",
       "ocr.fixDash": "dash between a name and a role ({n})",
@@ -9647,7 +9647,20 @@
     }
   }
 
-  /** [3.34.6] Lines of text pieces by their place: those on one height in a line, left to right, a space where there is a gap. */
+  /** [3.34.12] The place of text pieces on the canvas: from above their largest letters to below their line. */
+  function pdfBox(pts) {
+    if (!pts.length) return null;
+    const x = Math.min(...pts.map((p) => p.x));
+    const y = Math.min(...pts.map((p) => p.y - p.size * 0.9));
+    const right = Math.max(...pts.map((p) => p.x + p.w));
+    const bottom = Math.max(...pts.map((p) => p.y + p.size * 0.25));
+    return { x, y, w: Math.max(1, right - x), h: Math.max(1, bottom - y) };
+  }
+
+  /**
+   * [3.34.6] Lines of text pieces by their place: those on one height in a line, left to right, a space where there is a gap.
+   * [3.34.12] Each line with its place ({ text, box }).
+   */
   function pdfLines(pts) {
     const lines = [];
     [...pts].sort((a, b) => a.y - b.y || a.x - b.x).forEach((p) => {
@@ -9663,8 +9676,8 @@
         text += it.str;
         end = it.x + it.w;
       });
-      return text.replace(/\s+/g, ' ').trim();
-    }).filter(Boolean);
+      return { text: text.replace(/\s+/g, ' ').trim(), box: pdfBox(l.items) };
+    }).filter((l) => l.text);
   }
 
   /**
@@ -9674,27 +9687,34 @@
   async function ocrPdfText(img) {
     const tc = await img.pdfPage.getTextContent();
     const items = tc.items.filter((it) => typeof it.str === 'string');
-    // [3.34.11] a text for each frame (so each stands beside its part of the page)
+    // [3.34.12] each piece's place on the canvas (the page drawn at pdfScale), so a line can be shown in the image
+    const k = img.pdfScale || 1;
+    const vp = img.pdfPage.getViewport({ scale: k });
+    const place = (it) => {
+      const [x, y] = vp.convertToViewportPoint(it.transform[4], it.transform[5]);
+      return { x, y, size: (Math.hypot(it.transform[2], it.transform[3]) || 10) * k, w: (it.width || 0) * k, str: it.str };
+    };
+    // [3.34.11] a text for each frame (so each stands beside its part of the page); [3.34.12] with its lines ({ text, lines })
     if (!(img.mode === 'frames' && img.frames.length)) {
       const out = [];
-      let line = '';
+      let line = { text: '', pts: [] };
       items.forEach((it) => {
-        line += it.str;
+        line.text += it.str;
+        if (it.str.trim()) line.pts.push(place(it));
         if (it.hasEOL) {
           out.push(line);
-          line = '';
+          line = { text: '', pts: [] };
         }
       });
       out.push(line);
-      return [out.map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n')];
+      const lines = out.map((l) => ({ text: l.text.replace(/\s+/g, ' ').trim(), box: pdfBox(l.pts) })).filter((l) => l.text);
+      return [{ text: lines.map((l) => l.text).join('\n'), lines }];
     }
-    const k = img.pdfScale;
-    const vp = img.pdfPage.getViewport({ scale: k });
-    const pts = items.filter((it) => it.str.trim()).map((it) => {
-      const [x, y] = vp.convertToViewportPoint(it.transform[4], it.transform[5]);
-      return { x, y, size: (Math.hypot(it.transform[2], it.transform[3]) || 10) * k, w: (it.width || 0) * k, str: it.str };
+    const pts = items.filter((it) => it.str.trim()).map(place);
+    return img.frames.map((b) => {
+      const lines = pdfLines(pts.filter((p) => p.x >= b.x - 2 && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h + p.size * 0.3));
+      return { text: lines.map((l) => l.text).join('\n'), lines };
     });
-    return img.frames.map((b) => pdfLines(pts.filter((p) => p.x >= b.x - 2 && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h + p.size * 0.3)).join('\n'));
   }
 
   /** [3.34.6] A PDF page read from its own text (not turned): no text recognition needed. */
@@ -9848,12 +9868,12 @@
     if (img.loadPromise && img.ahead && img.ctl && img.ctl.abort) img.ctl.abort();
   }
 
-  /** What is read of an image: its frames (on the canvas), else the whole image; a small image enlarged ×3. */
   /** [3.34.11] What is read of an image, box by box (on its canvas): its frames, else the whole image. */
   const ocrBoxes = (img) => (img.mode === 'frames' && img.frames.length ? img.frames.map((b) => ({ ...b })) : [{ x: 0, y: 0, w: img.canvas.width, h: img.canvas.height }]);
   /** How much larger a piece is read: a small image ×3. */
   const ocrPieceScale = (img) => (img.w < OCR_SMALL ? 3 : 1);
 
+  /** What is read of an image: its frames (on the canvas), else the whole image; a small image enlarged ×3. */
   function ocrPieces(img) {
     const src = img.canvas;
     const k = ocrPieceScale(img);
@@ -9883,6 +9903,15 @@
         return `${a} – `;
       }));
     return { text: lines.join('\n'), fixes };
+  }
+
+  /** [3.34.12] Tesseract's lines and words with their places (5.x: data.lines and data.words; later versions only in data.blocks). */
+  function tessLayout(data) {
+    const d = data || {};
+    const lines = Array.isArray(d.lines) && d.lines.length ? d.lines
+      : (d.blocks || []).flatMap((b) => (b.paragraphs || []).flatMap((pa) => pa.lines || []));
+    const words = Array.isArray(d.words) && d.words.length ? d.words : lines.flatMap((l) => l.words || []);
+    return { lines, words };
   }
 
   const ocrTypes = (img) => (img.name || (img.types.length ? img.types.join(', ') : tr('ocr.noType')));
@@ -10129,25 +10158,42 @@
         renderOcr();
         // [3.34.11] a part for each frame (else the whole image): its box on the canvas, its text, its words read uncertainly
         const boxes = ocrBoxes(res.img);
-        const parts = boxes.map((box) => ({ box, text: '', unsure: [], fixes: { pc: 0, dash: 0 }, view: null }));
+        // [3.34.12] also its lines and the words read uncertainly with their places on the canvas ({ text, box }), and a mark
+        const parts = boxes.map((box) => ({ box, text: '', unsure: [], unsureAt: [], lines: [], fixes: { pc: 0, dash: 0 }, view: null, mark: null }));
         if (direct) {
-          (await ocrPdfText(res.img)).forEach((t, j) => { if (parts[j]) parts[j].raw = t; });
+          (await ocrPdfText(res.img)).forEach((t, j) => {
+            if (parts[j]) Object.assign(parts[j], { raw: t.text, rawLines: t.lines });
+          });
           res.direct = true;
         } else {
           const tess = await recognizer();
           const pieces = ocrPieces(res.img);
+          const k = ocrPieceScale(res.img);
           for (let j = 0; j < pieces.length; j++) {
             const { data } = await tess.recognize(pieces[j]);
-            parts[j].raw = String((data && data.text) || '');
-            parts[j].unsure = uniq(((data && data.words) || []).filter((w) => w && w.confidence < OCR_UNSURE && /[\p{L}\d]/u.test(String(w.text || ''))).map((w) => String(w.text).trim()));
+            const { box } = parts[j];
+            // a place in the piece read (its pixels, enlarged k times) on the image's canvas
+            const at = (bb) => (bb && [bb.x0, bb.y0, bb.x1, bb.y1].every(Number.isFinite)
+              ? { x: box.x + bb.x0 / k, y: box.y + bb.y0 / k, w: Math.max(1, (bb.x1 - bb.x0) / k), h: Math.max(1, (bb.y1 - bb.y0) / k) } : null);
+            const { lines, words } = tessLayout(data);
+            const shaky = words.filter((w) => w && w.confidence < OCR_UNSURE && /[\p{L}\d]/u.test(String(w.text || '')));
+            Object.assign(parts[j], {
+              raw: String((data && data.text) || ''),
+              rawLines: lines.map((l) => ({ text: String(l.text || ''), box: at(l.bbox) })),
+              unsure: uniq(shaky.map((w) => String(w.text).trim())),
+              unsureAt: shaky.map((w) => ({ text: String(w.text).trim(), box: at(w.bbox) })).filter((w) => w.box),
+            });
             if (!alive()) return;
           }
         }
         if (!alive()) return;
         parts.forEach((pt) => {
           const clean = ocrClean(pt.raw || '');
-          Object.assign(pt, { text: clean.text, fixes: clean.fixes });
+          // [3.34.12] the lines as in the text (corrected the same way), each with its place
+          const lines = (pt.rawLines || []).map((l) => ({ text: ocrClean(l.text).text, box: l.box })).filter((l) => l.text && l.box);
+          Object.assign(pt, { text: clean.text, fixes: clean.fixes, lines });
           delete pt.raw;
+          delete pt.rawLines;
         });
         const fixes = { pc: parts.reduce((a, pt) => a + pt.fixes.pc, 0), dash: parts.reduce((a, pt) => a + pt.fixes.dash, 0) };
         Object.assign(res, { parts, fixes, unsure: uniq(parts.flatMap((pt) => pt.unsure)), status: 'done', progress: 1 });
@@ -10468,7 +10514,29 @@
     g.clip();
     g.drawImage(r.img.canvas, v.x, v.y, W / v.k, H / v.k, 0, 0, W, H);
     g.restore();
+    // [3.34.12] the line of the text at the caret, or a word read uncertainly: marked where it is
+    const m = pt.mark && pt.mark.box;
+    if (m) {
+      const word = pt.mark.kind === 'word';
+      const pad = 3;
+      const [x, y, w, h] = [(m.x - v.x) * v.k - pad, (m.y - v.y) * v.k - pad, m.w * v.k + 2 * pad, m.h * v.k + 2 * pad];
+      g.save();
+      g.fillStyle = word ? 'rgba(255, 205, 80, 0.38)' : 'rgba(91, 85, 160, 0.22)';
+      g.fillRect(x, y, w, h);
+      g.lineWidth = 2;
+      g.strokeStyle = word ? '#d08a10' : '#5b55a0';
+      g.strokeRect(x, y, w, h);
+      g.restore();
+      c.dataset.mark = [m.x, m.y, m.w, m.h].map(Math.round).join(',');
+      c.dataset.markKind = pt.mark.kind;
+    } else {
+      delete c.dataset.mark;
+      delete c.dataset.markKind;
+    }
     c.dataset.k = String(v.k);
+    // where the view and the part are on the image's canvas (x, y, width, height)
+    c.dataset.view = [v.x, v.y, W / v.k, H / v.k].map(Math.round).join(',');
+    c.dataset.box = [pt.box.x, pt.box.y, pt.box.w, pt.box.h].map(Math.round).join(',');
   }
 
   /** Zoomed by f at a place of the view (px from its upper left corner; none: its middle). */
@@ -10489,6 +10557,105 @@
 
   function ocrZoomAll() {
     document.querySelectorAll('#dci-ocr [data-ocr-zoom]').forEach((c) => ocrZoomDraw(c.dataset.ocrZoom));
+  }
+
+  // --- [3.34.12] Where a line or a word is in the image (collected item 130b; maintainer: "klingt gut, bitte einbauen"): the
+  // caret (or a click) in a line of a part's text marks the line read most like it in the part beside it – moved there when
+  // it is zoomed and the line is out of sight –; a word read uncertainly, clicked, is selected in the text, marked in the
+  // image and zoomed in on (clicked again: its next place). Tesseract gives the places of its lines and words, a PDF of its
+  // pieces of text.
+
+  /** How alike two lines are (0 … 1): the pairs of letters they share, without case and spaces. */
+  function ocrLikeness(a, b) {
+    const norm = (x) => String(x || '').toLowerCase().replace(/\s+/g, '');
+    const [x, y] = [norm(a), norm(b)];
+    if (!x || !y) return 0;
+    if (x === y) return 1;
+    if (x.length < 2 || y.length < 2) return 0;
+    const pairs = new Map();
+    for (let i = 0; i < x.length - 1; i++) pairs.set(x.slice(i, i + 2), (pairs.get(x.slice(i, i + 2)) || 0) + 1);
+    let common = 0;
+    for (let i = 0; i < y.length - 1; i++) {
+      const pr = y.slice(i, i + 2);
+      if (pairs.get(pr) > 0) {
+        common++;
+        pairs.set(pr, pairs.get(pr) - 1);
+      }
+    }
+    return (2 * common) / (x.length + y.length - 2);
+  }
+
+  /** The line read most like a line of the text (its n-th line counts a bit more); none if no line is like it. */
+  function ocrLineFor(lines, text, n) {
+    if (!String(text || '').trim()) return null;
+    let best = null;
+    let score = 0;
+    lines.forEach((l, i) => {
+      const q = ocrLikeness(text, l.text) + (i === n ? 0.15 : 0);
+      if (q > score) [best, score] = [l, q];
+    });
+    return score >= 0.45 ? best : null;
+  }
+
+  /** A place brought into sight in a zoomed part (centred on it); a part fitted shows it anyway. */
+  function ocrZoomShow(key, box) {
+    const c = document.querySelector(`#dci-ocr [data-ocr-zoom="${key}"]`);
+    const { pt } = ocrPartOf(key);
+    if (!c || !pt || !pt.view || pt.view.fit) return;
+    const v = pt.view;
+    const vw = c.clientWidth / v.k;
+    const vh = c.clientHeight / v.k;
+    if (box.x >= v.x && box.y >= v.y && box.x + box.w <= v.x + vw && box.y + box.h <= v.y + vh) return;
+    pt.view = { ...v, x: box.w <= vw ? box.x + box.w / 2 - vw / 2 : box.x - vw * 0.05, y: box.h <= vh ? box.y + box.h / 2 - vh / 2 : box.y - vh * 0.05 };
+  }
+
+  /** Zoomed in on a place: about half as wide as the view, a third as high (between fitted and OCR_ZOOM_MAX), in its middle. */
+  function ocrZoomTo(key, box) {
+    const c = document.querySelector(`#dci-ocr [data-ocr-zoom="${key}"]`);
+    const { pt } = ocrPartOf(key);
+    if (!c || !pt) return;
+    const W = c.clientWidth;
+    const H = c.clientHeight;
+    const fit = ocrZoomFit(pt, W, H).k;
+    const k = Math.max(fit, Math.min(OCR_ZOOM_MAX, (W * 0.5) / box.w, (H * 0.34) / box.h));
+    pt.view = { k, x: box.x + box.w / 2 - W / k / 2, y: box.y + box.h / 2 - H / k / 2, fit: k <= fit + 1e-9 };
+  }
+
+  /** The caret in a part's text: its line marked in the image (or no mark: an empty line, a line not read). */
+  function ocrLocateLine(ta) {
+    const key = ta.dataset.ocrText;
+    const { pt } = ocrPartOf(key);
+    if (!pt || !pt.lines || !pt.lines.length) return;
+    const n = ta.value.slice(0, ta.selectionStart || 0).split('\n').length - 1;
+    const hit = ocrLineFor(pt.lines, ta.value.split('\n')[n], n);
+    if (pt.mark && pt.mark.kind === 'line' && pt.mark.line === hit) return;
+    pt.mark = hit ? { kind: 'line', box: hit.box, line: hit } : null;
+    if (hit) ocrZoomShow(key, hit.box);
+    ocrZoomDraw(key);
+  }
+
+  /** A word read uncertainly, clicked: its next place selected in the text and marked (zoomed in on) in the image. */
+  function ocrLocateWord(btn) {
+    const key = btn.dataset.ocrIn;
+    const w = btn.dataset.ocrWord;
+    const n = Number(btn.dataset.ocrN || 0);
+    btn.dataset.ocrN = String(n + 1);
+    const ta = document.querySelector(`#dci-ocr [data-ocr-text="${key}"]`);
+    if (ta) {
+      const found = [];
+      for (let at = ta.value.indexOf(w); at >= 0; at = ta.value.indexOf(w, at + 1)) found.push(at);
+      if (found.length) {
+        const at = found[n % found.length];
+        ta.focus();
+        ta.setSelectionRange(at, at + w.length);
+      }
+    }
+    const { pt } = ocrPartOf(key);
+    const places = pt ? pt.unsureAt.filter((x) => x.text === w) : [];
+    if (!places.length) return;
+    pt.mark = { kind: 'word', box: places[n % places.length].box };
+    ocrZoomTo(key, pt.mark.box);
+    ocrZoomDraw(key);
   }
 
   /** Dragging a zoomed part moves it. */
@@ -10557,6 +10724,10 @@
         const { pt } = key != null ? ocrPartOf(key) : {};
         if (pt) pt.text = e.target.value;
         if (e.target.dataset.ocrUrl != null && S.ocr) S.ocr.urlDraft = e.target.value;
+      });
+      // [3.34.12] the caret moved in a part's text (arrows, Home, typing …): the place of its line
+      el.addEventListener('keyup', (e) => {
+        if (e.target.dataset && e.target.dataset.ocrText != null && S.ocr) ocrLocateLine(e.target);
       });
       // [3.34.5] an address: Enter adds it
       el.addEventListener('keydown', (e) => {
@@ -10651,13 +10822,13 @@
     const b = t.closest('[data-ocr]');
     const word = t.closest('[data-ocr-word]');
     if (word && S.ocr) {
-      // a word read with little certainty: selected in its text, to correct
-      const ta = document.querySelector(`#dci-ocr [data-ocr-text="${word.dataset.ocrIn}"]`);
-      const at = ta ? ta.value.indexOf(word.dataset.ocrWord) : -1;
-      if (ta && at >= 0) {
-        ta.focus();
-        ta.setSelectionRange(at, at + word.dataset.ocrWord.length);
-      }
+      // a word read with little certainty: selected in its text, to correct; [3.34.12] marked in the image, its next place each time
+      ocrLocateWord(word);
+      return;
+    }
+    if (t.matches && t.matches('textarea[data-ocr-text]') && S.ocr) {
+      // [3.34.12] a line of the text clicked: its place in the image
+      ocrLocateLine(t);
       return;
     }
     const zb = t.closest('[data-ocr-z]');
