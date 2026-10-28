@@ -401,6 +401,16 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     600 px, not another release's; a Discogs address typed (twice refused); read ×3, the source
                                 #   ocrstart: 3.34.8: "… from cover art" only with the beta, joined to "Import credits …"; the dashboard without the
                                 #     import (nothing of Discogs), the message, the window; the read text the source; beta off: gone
+                                #   ocrpeek: 3.34.9: tiles alike with the whole image; the larger view after a pause (1200 px image, its
+                                #     proportions, 480 px), gone on leaving; an own narrow file larger; in the frames step too
+                                #   ocrload: 3.34.10: previews counted; the ticked images loaded ahead two at a time (held requests), the third
+                                #     waiting; unticked: out of the queue, one loading ahead stopped; "loaded"; loading ahead off (stored):
+                                #     nothing ahead, the frames step shows its own loading
+                                #   ocrlocate: 3.34.12: an uncertain word clicked – selected, marked, zoomed in on (again: its next place);
+                                #     the caret in a line marks it (brought into sight), ⤢ keeps the mark, a line replaced: none; a Tray read
+                                #     ×3 – its place on the canvas; a PDF page's own text – the place of its line on the page drawn
+                                #   ocrzoom: 3.34.11: two frames on the Back, the Booklet whole – wider window, a part per frame beside its text
+                                #     (the image there); +, −, Ctrl + wheel, double click, drag, ⤢; a part's text changed and imported
                                 #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
