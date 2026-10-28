@@ -31,6 +31,11 @@ COVER_ART = []
 CAA_REQUESTS = []
 TESSERACT_FAKE = True
 TESSERACT_REQUESTS = []
+# [3.34.6] pdf.js for booklets as PDF: jsDelivr serves the real pdfjs-dist from a local copy (npm), whatever version the script
+# names; PDFJS_REQUESTS records what was asked for. Without a local copy jsDelivr answers 404 for it.
+PDFJS_DIR = next((d for d in (Path('/opt/npm-tools/node_modules/pdfjs-dist'), Path.home() / '.npm-global/lib/node_modules/pdfjs-dist',
+                              ROOT / 'node_modules' / 'pdfjs-dist') if (d / 'package.json').exists()), None)
+PDFJS_REQUESTS = []
 FAKE_TESSERACT = """window.__ocr = window.__ocr || { calls: [], langs: null, created: 0, terminated: 0 };
 window.Tesseract = { createWorker: async (langs, oem, opts) => { const o = window.__ocr; o.langs = langs; o.created++;
   return { recognize: async (img) => { const k = o.calls.length; o.calls.push([img.width, img.height]);
@@ -52,6 +57,34 @@ def png_of(w, h, rgb=(240, 236, 228)):
         _PNGS[(w, h)] = (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0))
                          + chunk(b'IDAT', zlib.compress(raw, 6)) + chunk(b'IEND', b''))
     return _PNGS[(w, h)]
+
+
+def pdf_of(pages, w=420, h=420):
+    """[3.34.6] A small PDF: per page a list of lines (x, y, size, text) – a text of its own, in Helvetica – or None (only a
+    drawing, like a scanned page: no text)."""
+    body = {1: b'<< /Type /Catalog /Pages 2 0 R >>',
+            2: ('<< /Type /Pages /Kids [%s] /Count %d >>' % (' '.join(f'{4 + 2 * i} 0 R' for i in range(len(pages))), len(pages))).encode(),
+            3: b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'}
+    esc = lambda t: t.replace('\\', '\\\\').replace('(', '\\(').replace(')', '\\)')
+    for i, lines in enumerate(pages):
+        if lines is None:
+            stream = b'0.85 0.85 0.85 rg 20 20 %d %d re f' % (w - 40, h - 40)
+        else:
+            stream = ('BT ' + ' '.join(f'/F1 {s} Tf 1 0 0 1 {x} {y} Tm ({esc(t)}) Tj' for x, y, s, t in lines) + ' ET').encode('cp1252')
+        body[4 + 2 * i] = f'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {w} {h}] /Resources << /Font << /F1 3 0 R >> >> /Contents {5 + 2 * i} 0 R >>'.encode()
+        body[5 + 2 * i] = b'<< /Length %d >>\nstream\n' % len(stream) + stream + b'\nendstream'
+    out = b'%PDF-1.4\n'
+    offsets = {}
+    for k in sorted(body):
+        offsets[k] = len(out)
+        out += f'{k} 0 obj\n'.encode() + body[k] + b'\nendobj\n'
+    xref = len(out)
+    n = max(body) + 1
+    out += f'xref\n0 {n}\n0000000000 65535 f \n'.encode() + b''.join(f'{offsets[k]:010d} 00000 n \n'.encode() for k in range(1, n))
+    out += f'trailer\n<< /Size {n} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n'.encode()
+    return out
+
+
 RAW_REQUESTS = []
 SYNC = (ROOT / 'mb-vibecode-credits-importer-companion.user.js').read_text()
 # [3.31.1] The script asks MusicBrainz's web service at most once every 1.1 s (MusicBrainz's rate limit). The test server
@@ -877,6 +910,14 @@ def install_routes(ctx):
     ctx.route('https://coverartarchive.org/**', caa)
 
     def jsdelivr(route):
+        m = re.match(r'^https://cdn\.jsdelivr\.net/npm/pdfjs-dist@[^/]+/(.+)$', route.request.url)
+        if m:
+            PDFJS_REQUESTS.append(route.request.url)
+            f = PDFJS_DIR / m.group(1) if PDFJS_DIR else None
+            if f and f.is_file():
+                return route.fulfill(body=f.read_bytes(), content_type='text/javascript' if f.suffix in ('.mjs', '.js') else 'application/octet-stream',
+                                     headers={'Access-Control-Allow-Origin': '*'})
+            return route.fulfill(status=404, body='', headers={'Access-Control-Allow-Origin': '*'})
         TESSERACT_REQUESTS.append(route.request.url)
         if TESSERACT_FAKE and '/tesseract.js@' in route.request.url and route.request.url.endswith('/tesseract.min.js'):
             return route.fulfill(body=FAKE_TESSERACT, content_type='application/javascript', headers={'Access-Control-Allow-Origin': '*'})

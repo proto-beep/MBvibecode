@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.5
+// @version      3.34.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.6
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.6
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1431,25 +1431,35 @@
       "log.ocrOwnAdded.other": "Text from cover art: {n} own images added ({what})",
       "ocr.all": "All images ({n})",
       "ocr.own": "Your own images",
-      "ocr.chooseFiles": "Choose image files …",
+      "ocr.chooseFiles": "Choose images or PDFs …",
       "ocr.dropHint": "or drop them onto this window, or paste one with Ctrl+V",
       "ocr.urlLabel": "Address of an image",
       "ocr.addUrl": "Add",
-      "ocr.ownHint": "Booklet scans, photos, screenshots – read like the release's images, in this browser; nothing is uploaded or added to the Cover Art Archive. For an image on another site the userscript manager may ask once whether the script may read from it.",
+      "ocr.ownHint": "Booklet scans, photos, screenshots, a booklet as PDF – read like the release's images, in this browser; nothing is uploaded or added to the Cover Art Archive. A page of a PDF with a text of its own is read from that text, exactly and without recognition. For an image on another site the userscript manager may ask once whether the script may read from it.",
       "ocr.ownFile": "your file",
       "ocr.ownUrl": "by its address",
       "ocr.remove": "remove",
       "ocr.removeImage": "Remove {what}",
       "ocr.pastedImage": "pasted image {n}",
-      "ocr.notImage": "Not an image, left out: {names}",
+      "ocr.notImage": "Not an image or a PDF, left out: {names}",
       "ocr.badUrl": "Not the address of an image: {url} – it starts with https://",
       "ocr.urlTwice": "This address is in the list already.",
       "ocr.errUrl": "The image at {url} could not be read – the site does not let the script read it. Save the image and choose it as a file.",
+      "ocr.pdfPage": "{name} · p. {n}",
+      "ocr.pdfLoading": "Opening the PDF …",
+      "ocr.pdfText": "PDF page with its own text",
+      "ocr.pdfScan": "PDF page (an image)",
+      "ocr.pdfLong": "{name}: only the first {n} of {of} pages",
+      "ocr.errPdf": "{name} could not be opened as a PDF: {why}",
+      "ocr.errNoPdf": "The PDF reader could not be loaded ({url}) – the page or the browser may not allow it.",
+      "ocr.fromPdf": "Read from the PDF's own text – no text recognition needed.",
+      "log.ocrPdfAdded": "Text from cover art: {name} – {n} pages, {text} with a text of their own",
       "conn.kind.library": "Library",
       "conn.X013": "Text from cover art (beta, ⚙ Settings → Beta): the list of the release's images and the images themselves (coverartarchive.org, which sends them from archive.org).",
       "conn.X014": "Text from cover art (beta): the text recognition that reads the images in this browser, with its language data – loaded from cdn.jsdelivr.net the first time it is used.",
       "conn.X015.name": "Images by their address",
       "conn.X015": "Text from cover art (beta): an image whose address you enter is read from its site – the userscript manager (@connect *) lets the script fetch it; Tampermonkey asks once for each new site. Only the addresses you enter.",
+      "conn.X016": "Text from cover art (beta): opens a booklet as PDF in this browser – a page with a text of its own is read from it, a scanned page with the text recognition; loaded from cdn.jsdelivr.net the first time a PDF is added.",
       "mapping.changesN.one": "your changes: {n}",
       "mapping.changesN.other": "your changes: {n}",
       "mapping.badPattern": "The pattern cannot be used: {why}",
@@ -5490,6 +5500,9 @@
       perms: '– (loaded into the page from cdn.jsdelivr.net, only with the beta switched on)', since: '3.34.1' },
     // [3.34.5] images by their address in the text from cover art (collected item 123): any site you enter
     { id: 'X015', kind: 'site', name: '', home: '', hosts: ['*'], perms: '@connect * · GM_xmlhttpRequest (only the addresses you enter)', since: '3.34.5' },
+    // [3.34.6] booklets as PDF
+    { id: 'X016', kind: 'library', name: 'pdf.js', home: 'https://github.com/mozilla/pdf.js', hosts: ['cdn.jsdelivr.net'],
+      perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF in the beta)', since: '3.34.6' },
   ];
 
   if (IS_NODE_TEST) {
@@ -9191,6 +9204,17 @@
   const CAA_URL = 'https://coverartarchive.org/release/';
   const TESSERACT_VERSION = '5.1.1';
   const TESSERACT_URL = `https://cdn.jsdelivr.net/npm/tesseract.js@${TESSERACT_VERSION}/dist/tesseract.min.js`;
+  // [3.34.6] booklets as PDF (collected item 123; maintainer: "und auch pdf booklets!"): pdf.js (its legacy build, also for
+  // older browsers), loaded from jsDelivr at the first PDF; a page with a text of its own is read from it, exactly and at once,
+  // a scanned page with the text recognition
+  const PDFJS_VERSION = '6.2.108';
+  const PDFJS_ROOT = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/`;
+  const PDFJS_URL = `${PDFJS_ROOT}legacy/build/pdf.min.mjs`;
+  const PDFJS_WORKER_URL = `${PDFJS_ROOT}legacy/build/pdf.worker.min.mjs`;
+  // a page is read at this size (its longer side), at most OCR_PDF_PAGES pages of a PDF, its own text when it has this many letters
+  const OCR_PDF_PX = 2400;
+  const OCR_PDF_PAGES = 60;
+  const OCR_PDF_TEXT = 20;
   // the types of images that mostly carry credits: ticked at first ("die Vorauswahl klingt gut")
   const OCR_CREDIT_TYPES = ['Back', 'Booklet', 'Liner', 'Tray'];
   const OCR_LANGS = { en: 'eng', de: 'deu', es: 'spa', fr: 'fra' };
@@ -9235,6 +9259,37 @@
       });
     }
     return tesseractLoading;
+  }
+
+  let pdfjsLoading = null;
+
+  /**
+   * [3.34.6] pdf.js, loaded once from jsDelivr (a module: the page imports it and names it window.pdfjsLib; its worker comes
+   * from jsDelivr too, through a small local wrapper pdf.js makes itself).
+   */
+  function loadPdfJs() {
+    const w = pageWindow;
+    if (w.pdfjsLib && typeof w.pdfjsLib.getDocument === 'function') return Promise.resolve(w.pdfjsLib);
+    if (!pdfjsLoading) {
+      pdfjsLoading = new Promise((resolve, reject) => {
+        const fail = () => reject(new Error(tr('ocr.errNoPdf', { url: PDFJS_URL })));
+        const timer = setTimeout(fail, 60000);
+        document.addEventListener('dci-pdfjs', () => {
+          clearTimeout(timer);
+          if (w.pdfjsLib && typeof w.pdfjsLib.getDocument === 'function') resolve(w.pdfjsLib);
+          else fail();
+        }, { once: true });
+        const s = document.createElement('script');
+        s.textContent = `import(${JSON.stringify(PDFJS_URL)}).then((m) => { m.GlobalWorkerOptions.workerSrc = ${JSON.stringify(PDFJS_WORKER_URL)}; window.pdfjsLib = m; }, () => {})`
+          + ".finally(() => document.dispatchEvent(new Event('dci-pdfjs')));";
+        (document.head || document.documentElement).appendChild(s);
+        s.remove();
+      }).catch((e) => {
+        pdfjsLoading = null;
+        throw e;
+      });
+    }
+    return pdfjsLoading;
   }
 
   /** The images of the release on the Cover Art Archive (none: []); the types that mostly carry credits ticked. */
@@ -9287,14 +9342,18 @@
   }
 
   /** Files added (chosen, dropped, pasted): the images among them; others named in a message. */
+  const isPdfFile = (f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '');
+
   function ocrAddFiles(files, pasted = false) {
     const o = S.ocr;
     if (!o || o.step === 'run') return;
     const list = [...(files || [])];
     const images = list.filter((f) => OCR_IMAGE_FILE.test(f.type || '')).map((f) => ocrOwnImage('file', f, pasted));
     o.images.push(...images);
-    const other = list.filter((f) => !OCR_IMAGE_FILE.test(f.type || '')).map((f) => f.name || f.type || '?');
+    const other = list.filter((f) => !OCR_IMAGE_FILE.test(f.type || '') && !isPdfFile(f)).map((f) => f.name || f.type || '?');
     o.error = other.length ? tr('ocr.notImage', { names: other.join(', ') }) : '';
+    // [3.34.6] a PDF: its pages
+    list.filter((f) => !OCR_IMAGE_FILE.test(f.type || '') && isPdfFile(f)).forEach((f) => ocrAddPdf(f, f.name || 'PDF'));
     if (images.length) log('info', 'ocrOwnAdded', { n: images.length, what: images.map((im) => im.name).join(', ') });
     if (o.step !== 'list') o.step = 'pick';
     renderOcr();
@@ -9307,8 +9366,25 @@
     const u = String(text || '').trim();
     if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(u)) {
       o.error = tr('ocr.badUrl', { url: u || '–' });
-    } else if (o.images.some((im) => im.url === u)) {
+    } else if (o.images.some((im) => im.url === u || (im.from && im.from === u))) {
       o.error = tr('ocr.urlTwice');
+    } else if (/\.pdf(?:[?#]|$)/i.test(u)) {
+      // [3.34.6] a PDF by its address: fetched, then its pages
+      o.urlDraft = '';
+      o.error = '';
+      o.pdfLoading = (o.pdfLoading || 0) + 1;
+      httpFetch(u, { blob: true }).then((r) => {
+        if (r.status < 200 || r.status >= 300 || !r.body) throw new Error(tr('err.pageHttp', { status: r.status, url: u }));
+        return ocrAddPdf(r.body, ocrUrlName(u), u);
+      }, () => { throw new Error(tr('ocr.errUrl', { url: u })); }).catch((e) => {
+        if (S.ocr !== o) return;
+        o.error = (e && e.message) || String(e);
+        renderOcr();
+      }).finally(() => {
+        if (S.ocr !== o) return;
+        o.pdfLoading--;
+        renderOcr();
+      });
     } else {
       o.images.push(ocrOwnImage('url', u));
       o.urlDraft = '';
@@ -9338,6 +9414,122 @@
     }
   }
 
+  /** [3.34.6] A page of a PDF as a canvas, its longer side px (white below, as on paper); its scale kept on it. */
+  async function ocrPdfRender(page, px) {
+    const vp1 = page.getViewport({ scale: 1 });
+    const scale = px / Math.max(vp1.width, vp1.height);
+    const vp = page.getViewport({ scale });
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(vp.width));
+    c.height = Math.max(1, Math.round(vp.height));
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvas: c, viewport: vp }).promise;
+    c.dciScale = scale;
+    return c;
+  }
+
+  /**
+   * [3.34.6] A PDF added: each page (at most OCR_PDF_PAGES) a card of its own, ticked – one with a text of its own is read from
+   * that text, a scanned one with the text recognition. `from`: its address, when it came by one.
+   */
+  async function ocrAddPdf(blob, name, from = '') {
+    const o = S.ocr;
+    if (!o) return;
+    o.pdfLoading = (o.pdfLoading || 0) + 1;
+    renderOcr();
+    const local = URL.createObjectURL(blob);
+    let kept = false;
+    try {
+      const lib = await loadPdfJs();
+      const doc = await lib.getDocument({ url: local, cMapUrl: `${PDFJS_ROOT}cmaps/`, cMapPacked: true, standardFontDataUrl: `${PDFJS_ROOT}standard_fonts/`,
+        wasmUrl: `${PDFJS_ROOT}wasm/` }).promise;
+      if (S.ocr !== o) {
+        doc.destroy();
+        return;
+      }
+      (o.pdfDocs = o.pdfDocs || []).push({ doc, local });
+      kept = true;
+      const n = Math.min(doc.numPages, OCR_PDF_PAGES);
+      let withText = 0;
+      for (let p = 1; p <= n; p++) {
+        const page = await doc.getPage(p);
+        const tc = await page.getTextContent();
+        const letters = tc.items.reduce((a, it) => a + String(it.str || '').replace(/\s+/g, '').length, 0);
+        const thumb = (await ocrPdfRender(page, 300)).toDataURL('image/jpeg', 0.85);
+        if (S.ocr !== o) return;
+        if (letters >= OCR_PDF_TEXT) withText++;
+        o.images.push({ id: `own${++ocrOwnN}`, src: 'pdf', name: tr('ocr.pdfPage', { name, n: p }), file: name, from, page: p, pdfPage: page, textLayer: letters >= OCR_PDF_TEXT,
+          types: [], comment: '', sel: true, mode: 'frames', frames: [], canvas: null, thumb });
+        renderOcr();
+      }
+      if (doc.numPages > n) o.error = tr('ocr.pdfLong', { name, n, of: doc.numPages });
+      log('info', 'ocrPdfAdded', { name, n, text: withText });
+    } catch (e) {
+      if (S.ocr === o) o.error = tr('ocr.errPdf', { name, why: (e && e.message) || String(e) });
+    } finally {
+      if (!kept) URL.revokeObjectURL(local);
+      if (S.ocr === o) {
+        o.pdfLoading--;
+        if (o.step !== 'list' && o.step !== 'run') o.step = 'pick';
+        renderOcr();
+      }
+    }
+  }
+
+  /** [3.34.6] Lines of text pieces by their place: those on one height in a line, left to right, a space where there is a gap. */
+  function pdfLines(pts) {
+    const lines = [];
+    [...pts].sort((a, b) => a.y - b.y || a.x - b.x).forEach((p) => {
+      const line = lines.find((l) => Math.abs(l.y - p.y) < Math.max(2, Math.min(l.size, p.size) * 0.5));
+      if (line) line.items.push(p);
+      else lines.push({ y: p.y, size: p.size, items: [p] });
+    });
+    return lines.sort((a, b) => a.y - b.y).map((l) => {
+      let text = '';
+      let end = null;
+      l.items.sort((a, b) => a.x - b.x).forEach((it) => {
+        if (end != null && it.x - end > it.size * 0.2 && !/\s$/.test(text) && !/^\s/.test(it.str)) text += ' ';
+        text += it.str;
+        end = it.x + it.w;
+      });
+      return text.replace(/\s+/g, ' ').trim();
+    }).filter(Boolean);
+  }
+
+  /**
+   * [3.34.6] The text of a PDF page of its own: in its order (lines as the PDF ends them); with frames, frame by frame, the pieces
+   * whose start is inside it, in lines by their place.
+   */
+  async function ocrPdfText(img) {
+    const tc = await img.pdfPage.getTextContent();
+    const items = tc.items.filter((it) => typeof it.str === 'string');
+    if (!(img.mode === 'frames' && img.frames.length)) {
+      const out = [];
+      let line = '';
+      items.forEach((it) => {
+        line += it.str;
+        if (it.hasEOL) {
+          out.push(line);
+          line = '';
+        }
+      });
+      out.push(line);
+      return out.map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+    }
+    const k = img.pdfScale;
+    const vp = img.pdfPage.getViewport({ scale: k });
+    const pts = items.filter((it) => it.str.trim()).map((it) => {
+      const [x, y] = vp.convertToViewportPoint(it.transform[4], it.transform[5]);
+      return { x, y, size: (Math.hypot(it.transform[2], it.transform[3]) || 10) * k, w: (it.width || 0) * k, str: it.str };
+    });
+    return img.frames.flatMap((b) => pdfLines(pts.filter((p) => p.x >= b.x - 2 && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h + p.size * 0.3))).join('\n');
+  }
+
+  /** [3.34.6] A PDF page read from its own text (not turned): no text recognition needed. */
+  const ocrDirect = (img) => img.src === 'pdf' && img.textLayer && !img.turn;
+
   /** The file of an image: an own file as it is, else from its address (the release's at the size chosen). */
   async function ocrBlob(img) {
     if (img.blob) return img.blob;
@@ -9356,6 +9548,12 @@
   /** An image as a canvas (its longer side at most OCR_MAX), loaded once ([3.34.5] the release's once per size); w, h: its own size. */
   async function ocrCanvas(img) {
     if (img.canvas && (!ocrIsCaa(img) || img.canvasSize === S.ocr.size)) return img.canvas;
+    // [3.34.6] a page of a PDF: drawn by pdf.js
+    if (img.src === 'pdf') {
+      const c = await ocrPdfRender(img.pdfPage, OCR_PDF_PX);
+      Object.assign(img, { canvas: c, pdfScale: c.dciScale, w: c.width, h: c.height, frames: [], turn: 0 });
+      return c;
+    }
     const blob = await ocrBlob(img);
     let src;
     if (typeof window.createImageBitmap === 'function') {
@@ -9547,7 +9745,7 @@
     g.translate(c.width / 2, c.height / 2);
     g.rotate((dir * Math.PI) / 2);
     g.drawImage(src, -src.width / 2, -src.height / 2);
-    Object.assign(img, { canvas: c, w: img.h, h: img.w, frames: [] });
+    Object.assign(img, { canvas: c, w: img.h, h: img.w, frames: [], turn: ((img.turn || 0) + dir + 4) % 4 });
   }
 
   function ocrFramesHtml() {
@@ -9602,8 +9800,14 @@
   function closeOcr() {
     if (S.ocr) {
       S.ocr.run++;
-      // [3.34.5] the local addresses of own files
+      // [3.34.5] the local addresses of own files; [3.34.6] the PDFs opened
       S.ocr.images.forEach((im) => { if (im.local) URL.revokeObjectURL(im.local); });
+      (S.ocr.pdfDocs || []).forEach(({ doc, local }) => {
+        try {
+          doc.destroy();
+        } catch (e) { /* gone already */ }
+        URL.revokeObjectURL(local);
+      });
     }
     S.ocr = null;
     document.removeEventListener('paste', ocrPaste);
@@ -9622,33 +9826,47 @@
     let worker = null;
     let current = null;
     const alive = () => S.ocr === o && o.run === run;
+    // [3.34.6] the text recognition only when an image needs it (PDF pages with a text of their own do not)
+    const recognizer = async () => {
+      if (!worker) {
+        const T = await loadTesseract();
+        worker = await T.createWorker(langs.length ? langs : ['eng'], 1, {
+          logger: (m) => {
+            if (current && m && /recogni/.test(String(m.status)) && typeof m.progress === 'number') {
+              current.progress = m.progress;
+              renderOcrProgress();
+            }
+          },
+        });
+      }
+      return worker;
+    };
     try {
-      const T = await loadTesseract();
-      worker = await T.createWorker(langs.length ? langs : ['eng'], 1, {
-        logger: (m) => {
-          if (current && m && /recogni/.test(String(m.status)) && typeof m.progress === 'number') {
-            current.progress = m.progress;
-            renderOcrProgress();
-          }
-        },
-      });
       for (const res of o.results) {
         if (!alive()) return;
         current = res;
         res.status = 'load';
         renderOcr();
-        await ocrCanvas(res.img);
-        res.small = res.img.w < OCR_SMALL;
+        const direct = ocrDirect(res.img);
+        if (!direct || res.img.frames.length) await ocrCanvas(res.img);
+        res.small = !direct && res.img.w < OCR_SMALL;
         res.status = 'read';
         renderOcr();
         const texts = [];
         const unsure = [];
-        for (const piece of ocrPieces(res.img)) {
-          const { data } = await worker.recognize(piece);
-          texts.push(String((data && data.text) || ''));
-          ((data && data.words) || []).forEach((w) => { if (w && w.confidence < OCR_UNSURE && /[\p{L}\d]/u.test(String(w.text || ''))) unsure.push(String(w.text).trim()); });
-          if (!alive()) return;
+        if (direct) {
+          texts.push(await ocrPdfText(res.img));
+          res.direct = true;
+        } else {
+          const tess = await recognizer();
+          for (const piece of ocrPieces(res.img)) {
+            const { data } = await tess.recognize(piece);
+            texts.push(String((data && data.text) || ''));
+            ((data && data.words) || []).forEach((w) => { if (w && w.confidence < OCR_UNSURE && /[\p{L}\d]/u.test(String(w.text || ''))) unsure.push(String(w.text).trim()); });
+            if (!alive()) return;
+          }
         }
+        if (!alive()) return;
         const clean = ocrClean(texts.join('\n'));
         Object.assign(res, { text: clean.text, fixes: clean.fixes, unsure: uniq(unsure), status: 'done', progress: 1 });
       }
@@ -9674,8 +9892,15 @@
     const caa = done.filter((r) => ocrIsCaa(r.img));
     const files = uniq(done.filter((r) => r.img.src === 'file').map((r) => r.img.name));
     const urls = uniq(done.filter((r) => r.img.src === 'url').map((r) => r.img.url));
+    // [3.34.6] PDFs with their pages read
+    const pdfs = new Map();
+    done.filter((r) => r.img.src === 'pdf').forEach((r) => {
+      const key = r.img.from || r.img.file;
+      pdfs.set(key, [...(pdfs.get(key) || []), r.img.page]);
+    });
     const parts = [caa.length ? `Cover Art Archive images (${uniq(caa.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')})` : '',
-      files.length ? `own image files (${files.join(', ')})` : '', urls.length ? `images from ${urls.join(', ')}` : ''].filter(Boolean);
+      files.length ? `own image files (${files.join(', ')})` : '', urls.length ? `images from ${urls.join(', ')}` : '',
+      ...[...pdfs].map(([key, pages]) => `PDF ${key} (p. ${uniq(pages).join(', ')})`)].filter(Boolean);
     const origin = `${parts.join('; ')}, read with text recognition`;
     return { text, origin };
   }
@@ -9710,7 +9935,8 @@
     const o = S.ocr;
     return `<fieldset class="dci-ocr-own"><legend>${esc(tr('ocr.own'))}</legend>
         <div class="dci-ocr-ownrow"><button type="button" class="dci-small" data-ocr="files">${esc(tr('ocr.chooseFiles'))}</button>
-          <input type="file" data-ocr-files multiple accept="image/*" hidden><span class="dci-sub">${esc(tr('ocr.dropHint'))}</span></div>
+          <input type="file" data-ocr-files multiple accept="image/*,application/pdf,.pdf" hidden><span class="dci-sub">${esc(tr('ocr.dropHint'))}</span></div>
+        ${o.pdfLoading ? `<p class="dci-sub" role="status">${esc(tr('ocr.pdfLoading'))}</p>` : ''}
         <div class="dci-ocr-ownrow"><input type="url" data-ocr-url value="${esc(o.urlDraft || '')}" placeholder="https://…/back.jpg" aria-label="${esc(tr('ocr.urlLabel'))}" spellcheck="false">
           <button type="button" class="dci-small" data-ocr="url">${esc(tr('ocr.addUrl'))}</button></div>
         <p class="dci-sub">${esc(tr('ocr.ownHint'))}</p></fieldset>`;
@@ -9727,7 +9953,7 @@
         <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> <span>${esc(ocrTypes(im))}</span></span>
         ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
         ${ocrIsCaa(im) ? (im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`)
-          : `<span class="dci-sub">${esc(tr(im.src === 'file' ? 'ocr.ownFile' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
+          : `<span class="dci-sub">${esc(tr(im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
     // [3.34.5] "All images" (collected item 125; maintainer: "wir brauchen einen knopf im bilderkennungsmenü, der alles abwählt
     // oder alles anwählt. viele bookletseiten haben nur bilder oder songtexte"): on – all, off – none, half – some
     const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
@@ -9773,6 +9999,7 @@
       return `<section class="dci-ocr-res" data-ocr-res="${i}">
         <h3>${esc(ocrTypes(r.img))}${r.img.comment ? ` <span class="dci-sub">“${esc(r.img.comment)}”</span>` : ''}</h3>
         ${r.small ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: r.img.w, h: r.img.h }))}</p>` : ''}
+        ${r.direct ? `<p class="dci-sub">${esc(tr('ocr.fromPdf'))}</p>` : ''}
         <textarea data-ocr-text="${i}" rows="${Math.min(14, Math.max(4, r.text.split('\n').length + 1))}" spellcheck="false" aria-label="${esc(tr('ocr.textOf', { what: ocrTypes(r.img) }))}">${esc(r.text)}</textarea>
         ${r.unsure.length ? `<p class="dci-ocr-unsure"><span class="dci-sub">${esc(tr('ocr.unsure'))}</span> ${r.unsure.map((w) => `<button type="button" class="dci-ocr-word" data-ocr-word="${esc(w)}" data-ocr-in="${i}">${esc(w)}</button>`).join(' ')}</p>` : ''}
         ${fixes.length ? `<p class="dci-sub">${esc(tr('ocr.fixed'))} ${esc(fixes.join(' · '))}</p>` : ''}</section>`;
