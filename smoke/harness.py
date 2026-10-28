@@ -24,6 +24,34 @@ MAPPING_SHIM_OFF = False
 LANGUAGES_TEXT = (ROOT / 'mb-vibecode-credits-importer-languages.json').read_text()
 LANGUAGES_SHIM_OFF = False
 RAW_GITHUB = {}
+# [3.34.1] the Cover Art Archive (text from cover art, beta): the release's images [(id, types, comment, width, height)] –
+# their files are PNGs of that size; CAA_REQUESTS records what was asked for. TESSERACT_FAKE: jsDelivr serves a stand-in of
+# Tesseract.js (window.__ocrTexts: [{text, words}] per piece read, in order; window.__ocr records the calls)
+COVER_ART = []
+CAA_REQUESTS = []
+TESSERACT_FAKE = True
+TESSERACT_REQUESTS = []
+FAKE_TESSERACT = """window.__ocr = window.__ocr || { calls: [], langs: null, created: 0, terminated: 0 };
+window.Tesseract = { createWorker: async (langs, oem, opts) => { const o = window.__ocr; o.langs = langs; o.created++;
+  return { recognize: async (img) => { const k = o.calls.length; o.calls.push([img.width, img.height]);
+      if (opts && opts.logger) { opts.logger({ status: 'recognizing text', progress: 0.5 }); opts.logger({ status: 'recognizing text', progress: 1 }); }
+      await new Promise((r) => setTimeout(r, 30));
+      const texts = window.__ocrTexts || []; const t = texts[k] || texts[texts.length - 1] || { text: '' };
+      return { data: { text: t.text, words: t.words || [] } }; },
+    terminate: async () => { o.terminated++; } }; } };"""
+_PNGS = {}
+
+
+def png_of(w, h, rgb=(240, 236, 228)):
+    """A PNG of one colour (the images of the Cover Art Archive in the tests)."""
+    import struct
+    import zlib
+    if (w, h) not in _PNGS:
+        raw = b''.join(b'\x00' + bytes(rgb) * w for _ in range(h))
+        chunk = lambda t, d: struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
+        _PNGS[(w, h)] = (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0))
+                         + chunk(b'IDAT', zlib.compress(raw, 6)) + chunk(b'IEND', b''))
+    return _PNGS[(w, h)]
 RAW_REQUESTS = []
 SYNC = (ROOT / 'mb-vibecode-credits-importer-companion.user.js').read_text()
 # [3.31.1] The script asks MusicBrainz's web service at most once every 1.1 s (MusicBrainz's rate limit). The test server
@@ -241,7 +269,8 @@ def bc_html(data, url, about_cut=None, credits_cut=None, released='January 1, 20
 # GM_xmlhttpRequest as a userscript manager gives it (with fetch); the calls are recorded in window.__gmXhr
 GM_XHR_SHIM = """window.__gmXhr = [];
 window.GM_xmlhttpRequest = (d) => { window.__gmXhr.push(d.url);
-  fetch(d.url).then((r) => r.text().then((t) => d.onload({ status: r.status, responseText: t }))).catch(() => d.onerror && d.onerror()); };"""
+  fetch(d.url).then((r) => (d.responseType === 'blob' ? r.blob().then((b) => d.onload({ status: r.status, response: b }))
+    : r.text().then((t) => d.onload({ status: r.status, responseText: t })))).catch(() => d.onerror && d.onerror()); };"""
 
 
 def split_media(tracks, title_key):
@@ -820,6 +849,39 @@ def install_routes(ctx):
             return route.fulfill(status=404, body='404: Not Found', headers={'Access-Control-Allow-Origin': '*'})
         return route.fulfill(body=text, content_type='text/plain', headers={'Access-Control-Allow-Origin': '*'})
     ctx.route('https://raw.githubusercontent.com/**', raw_github)
+
+    # [3.34.1] the Cover Art Archive: /release/<mbid> (the list, 404 without images) and the files (<id>.jpg, <id>-250.jpg, -1200.jpg)
+    def caa(route):
+        u = urllib.parse.urlparse(route.request.url)
+        CAA_REQUESTS.append(u.path)
+        cors = {'Access-Control-Allow-Origin': '*'}
+        m = re.match(r'^/release/([0-9a-f-]{36})/?$', u.path)
+        if m:
+            if not COVER_ART or m.group(1) != REL:
+                return route.fulfill(status=404, body='Not Found', headers=cors)
+            base = f'http://coverartarchive.org/release/{REL}'
+            images = [{'id': i, 'types': types, 'front': 'Front' in types, 'back': 'Back' in types, 'comment': comment, 'approved': True, 'edit': 1,
+                       'image': f'{base}/{i}.jpg', 'thumbnails': {'250': f'{base}/{i}-250.jpg', '500': f'{base}/{i}-500.jpg', '1200': f'{base}/{i}-1200.jpg',
+                                                                  'small': f'{base}/{i}-250.jpg', 'large': f'{base}/{i}-500.jpg'}}
+                      for i, types, comment, w, h in COVER_ART]
+            return route.fulfill(body=json.dumps({'images': images, 'release': f'https://musicbrainz.org/release/{REL}'}), content_type='application/json', headers=cors)
+        m = re.match(r'^/release/[0-9a-f-]{36}/(\d+)(?:-(\d+))?\.jpg$', u.path)
+        hit = m and next((x for x in COVER_ART if str(x[0]) == m.group(1)), None)
+        if not hit:
+            return route.fulfill(status=404, body='Not Found', headers=cors)
+        w, h = hit[3], hit[4]
+        if m.group(2):
+            k = min(1, int(m.group(2)) / max(w, h))
+            w, h = max(1, round(w * k)), max(1, round(h * k))
+        return route.fulfill(body=png_of(w, h), content_type='image/png', headers=cors)
+    ctx.route('https://coverartarchive.org/**', caa)
+
+    def jsdelivr(route):
+        TESSERACT_REQUESTS.append(route.request.url)
+        if TESSERACT_FAKE and '/tesseract.js@' in route.request.url and route.request.url.endswith('/tesseract.min.js'):
+            return route.fulfill(body=FAKE_TESSERACT, content_type='application/javascript', headers={'Access-Control-Allow-Origin': '*'})
+        return route.fulfill(status=404, body='', headers={'Access-Control-Allow-Origin': '*'})
+    ctx.route('https://cdn.jsdelivr.net/**', jsdelivr)
     ctx.route('https://api.discogs.com/**', dg_api)
     ctx.route('https://www.discogs.com/**', dg_web)
 
