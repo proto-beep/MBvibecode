@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore, [3.34.17] ocrremember; `python3 t_coverart.py <case> …` runs only those."""
 import json
 import re
 
@@ -26,8 +26,26 @@ DIALOG = """(() => { const el = document.getElementById('dci-ocr'); if (!el) ret
     run: (el.querySelector('[data-ocr=run], [data-ocr=frames]') || {}).textContent, body: el.querySelector('.dci-ocr-body').innerText.replace(/\\s+/g, ' ').trim() }; })()"""
 
 
-def beta_on(ctx):
-    ctx.add_init_script("localStorage.setItem('dci-beta-ocr', 'true');")
+def beta_on(ctx, auto=True):
+    """The beta on; [3.34.15] with "Auto-select" on (no image is ticked otherwise) unless auto=False."""
+    ctx.add_init_script("localStorage.setItem('dci-beta-ocr', 'true');" + ("localStorage.setItem('dci-ocr-auto', 'true');" if auto else ''))
+
+
+def drag_img(pg, x0, y0, x1, y1):
+    """[3.34.14] A drag on the frames view, in the pixels of the image's canvas – the view's size follows the window."""
+    pg.wait_for_function("(() => { const v = document.querySelector('#dci-ocr [data-ocr-view]'); return !!(v && v.dataset.k); })()")
+    box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
+    k, w = pg.evaluate("(() => { const v = document.querySelector('#dci-ocr [data-ocr-view]'); return [Number(v.dataset.k), v.width]; })()")
+    f = k * box['width'] / w
+
+    def at(x, y):
+        return box['x'] + x * f, box['y'] + y * f
+    pg.mouse.move(*at(x0, y0))
+    pg.mouse.down()
+    for i in range(1, 6):
+        pg.mouse.move(*at(x0 + (x1 - x0) * i / 5, y0 + (y1 - y0) * i / 5))
+    pg.mouse.up()
+    pg.wait_for_timeout(150)
 
 
 def case_ocrsetting():
@@ -223,24 +241,14 @@ def case_ocrframes():
         pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
         a1 = pg.evaluate(STATE)
 
-        def drag(x0, y0, x1, y1):
-            box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
-            w = pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
-            f = box['width'] / w
-            pg.mouse.move(box['x'] + x0 * f, box['y'] + y0 * f)
-            pg.mouse.down()
-            for k in range(1, 6):
-                pg.mouse.move(box['x'] + (x0 + (x1 - x0) * k / 5) * f, box['y'] + (y0 + (y1 - y0) * k / 5) * f)
-            pg.mouse.up()
-            pg.wait_for_timeout(150)
-        drag(56, 336, 504, 448)
-        drag(504, 448, 504, 476)
-        drag(56, 56, 280, 140)
-        drag(150, 100, 178, 100)
+        drag_img(pg, 150, 900, 1350, 1200)
+        drag_img(pg, 1350, 1200, 1350, 1275)
+        drag_img(pg, 150, 150, 750, 375)
+        drag_img(pg, 400, 270, 475, 270)
         b1 = pg.evaluate(STATE)
         print('A) vorher:', a0, '| Rückseite:', a1)
         print('B) zwei Rahmen:', b1)
-        results.append(a0 == [True, 'Next: frames for 3 images →'] and a1['view'] == [560, 560] and a1['head'] == 'frames · image 1 of 3 · Back'
+        results.append(a0 == [True, 'Next: frames for 3 images →'] and a1['view'][0] == a1['view'][1] > 560 and a1['head'] == 'frames · image 1 of 3 · Back'
                        and a1['mode'] == 'frames' and b1['thumbs'][0] == 'Back 2 frames' and b1['mode'] == 'frames')
         pg.click('#dci-ocr [data-ocr=next]')
         pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
@@ -257,7 +265,7 @@ def case_ocrframes():
         pg.wait_for_timeout(150)
         c2 = pg.evaluate(STATE)
         print('C) Booklet:', c0['view'], '→ gedreht:', c1['view'], c1['thumbs'], '| Tray:', c2['thumbs'][2], c2['run'])
-        results.append(c0['view'] == [473, 620] and c1['view'] == [560, 427] and c1['thumbs'][1] == 'Booklet the whole image'
+        results.append(abs(c0['view'][0] / c0['view'][1] - 1246 / 1634) < 0.01 and c0['view'][1] > 620 and abs(c1['view'][0] / c1['view'][1] - 1634 / 1246) < 0.01 and c1['thumbs'][1] == 'Booklet the whole image'
                        and c2['thumbs'][2] == 'Tray left out' and c2['run'] == 'Recognize text in 2 images')
         pg.click('#dci-ocr [data-ocr=run]')
         pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
@@ -444,8 +452,10 @@ def case_ocrpdf():
         H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3 && !document.querySelector('#dci-ocr [data-ocr-pdfstatus]')", 30)
         a = [pg.evaluate(CARDS), sorted({u.split('/legacy/build/')[-1] for u in H.PDFJS_REQUESTS if '/legacy/build/' in u})]
         print('A) Seiten:', a)
-        results.append(a[0] == [['booklet.pdf · p. 1', True, 'PDF page with its own text'], ['booklet.pdf · p. 2', True, 'PDF page (an image)'],
+        # [3.34.15] "Auto-select" (on in the tests): the pages whose own text has credits; the drawing ticked by hand
+        results.append(a[0] == [['booklet.pdf · p. 1', True, 'PDF page with its own text'], ['booklet.pdf · p. 2', False, 'PDF page (an image)'],
                                 ['booklet.pdf · p. 3', True, 'PDF page with its own text']] and a[1] == ['pdf.min.mjs', 'pdf.worker.min.mjs'])
+        pg.check('#dci-ocr [data-ocr-sel="1"]')
         pg.click('#dci-ocr [data-ocr=frames]')
         pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=20000)
         pg.click('#dci-ocr [data-ocr=next]')
@@ -453,19 +463,11 @@ def case_ocrpdf():
         pg.click('#dci-ocr [data-ocr=next]')
         pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=20000)
         pg.wait_for_timeout(300)
-        box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
         vw = pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
-        f = box['width'] / vw
-        x0, y0, x1, y1 = 23, 140, 280, 198
-        pg.mouse.move(box['x'] + x0 * f, box['y'] + y0 * f)
-        pg.mouse.down()
-        for k in range(1, 6):
-            pg.mouse.move(box['x'] + (x0 + (x1 - x0) * k / 5) * f, box['y'] + (y0 + (y1 - y0) * k / 5) * f)
-        pg.mouse.up()
-        pg.wait_for_timeout(200)
+        drag_img(pg, 100, 600, 1200, 850)
         b1 = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-thumb')].map(t => t.innerText.replace(/\\s+/g, ' ').trim())")
         print('B) Rahmen:', b1, '| Ansicht:', vw)
-        results.append(vw == 560 and b1[2].endswith('1 frame'))
+        results.append(vw > 560 and b1[2].endswith('1 frame'))
         pg.click('#dci-ocr [data-ocr=run]')
         pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=30000)
         c = pg.evaluate("""(() => { const el = document.getElementById('dci-ocr');
@@ -552,7 +554,8 @@ def case_ocrdiscogs():
         b1 = [pg.evaluate(CARDS), pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard img')].map(i => i.getAttribute('src').match(/h:(\\d+)/)[1])"),
               pg.evaluate("document.querySelector('#dci-ocr [data-ocr-discogs]').disabled"), list(pages)]
         print('B) Discogs:', b1)
-        results.append(b1[0] == [[f'Discogs r{rel} · 1', True, 'from Discogs'], [f'Discogs r{rel} · 2', True, 'from Discogs']] and b1[1] == ['600', '600'] and b1[2]
+        # [3.34.15] not ticked (no choice beforehand)
+        results.append(b1[0] == [[f'Discogs r{rel} · 1', False, 'from Discogs'], [f'Discogs r{rel} · 2', False, 'from Discogs']] and b1[1] == ['600', '600'] and b1[2]
                        and b1[3] == [f'https://www.discogs.com/release/{rel}'])
         pg.fill('#dci-ocr [data-ocr-url]', 'https://www.discogs.com/de/release/4242-Other-Band-Other-Album')
         pg.press('#dci-ocr [data-ocr-url]', 'Enter')
@@ -562,7 +565,7 @@ def case_ocrdiscogs():
         pg.wait_for_timeout(300)
         c1 = [pg.evaluate(CARDS)[-1], pg.evaluate("(document.querySelector('#dci-ocr .dci-ocr-err[role=alert]') || {}).textContent || ''")]
         print('C) andere Adresse:', c1)
-        results.append(c1 == [['Discogs r4242 · 1', True, 'from Discogs'], 'This address is in the list already.'])
+        results.append(c1 == [['Discogs r4242 · 1', False, 'from Discogs'], 'This address is in the list already.'])
         # D) read the release's two Discogs images
         pg.uncheck('#dci-ocr [data-ocr-framefirst]')
         if pg.evaluate("document.querySelector('#dci-ocr [data-ocr-all]').checked"):
@@ -721,8 +724,9 @@ def case_ocrload():
     A) The window opened: the previews counted ("Previews: 0 of 5 loaded") until they are there; the three images ticked are
        loaded ahead, two at a time – Back and Booklet "loading …", Tray "waiting to load"; Front and Medium nothing.
     B) Tray unticked: out of the queue, never asked for; Booklet unticked while it loads ahead: it stops; Back comes: "loaded".
-    C) ⚙ Settings → Beta "Load the images ticked ahead" off (stored): opened again, nothing is loaded ahead; the frames step
-       loads the image itself and shows it loading in the view, then draws it."""
+    C) ⚙ Settings → Beta "Load the images ticked ahead" off ([3.34.15] the default – on for A and B): opened again, nothing is
+       loaded ahead; the frames step loads the image itself and shows it loading in the view, then draws it; [3.34.15] after
+       "Next" the others ticked come too, two at a time, the one shown first (Back, Booklet loading, the Tray waiting)."""
     results = []
     held = []
     CARD = "(() => Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), (c.querySelector('.dci-ocr-load:not([hidden]) .dci-ocr-loadtext') || {}).textContent || ''])))()"
@@ -731,6 +735,8 @@ def case_ocrload():
         H.COVER_ART = list(ART)
         ctx = H.new_context(b)
         beta_on(ctx)
+        # [3.34.15] loading ahead is off by default: on for A and B
+        ctx.add_init_script("if (!sessionStorage.getItem('t-preload')) { localStorage.setItem('dci-ocr-preload', 'true'); sessionStorage.setItem('t-preload', '1'); }")
         ctx.route(re.compile(r'https://coverartarchive\.org/release/[^/]+/\d+(-250)?\.jpg$'), lambda r: held.append(r))
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.on('dialog', lambda d: d.accept())
@@ -770,13 +776,17 @@ def case_ocrload():
         c1 = [orig(), pg.evaluate(CARD)]
         pg.click('#dci-ocr [data-ocr=frames]')
         pg.wait_for_selector('#dci-ocr .dci-ocr-viewwait .dci-ocr-load:not([hidden])', timeout=10000)
-        c2 = [pg.evaluate("document.querySelector('#dci-ocr .dci-ocr-viewwait').innerText.replace(/\\s+/g, ' ').trim()"), orig()]
+        pg.wait_for_timeout(300)
+        THUMBS = "Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-thumb')].map(t => [t.querySelector('strong').textContent, (t.querySelector('.dci-ocr-load:not([hidden]) .dci-ocr-loadtext') || {}).textContent || '']))"
+        c2 = [pg.evaluate("document.querySelector('#dci-ocr .dci-ocr-viewwait').innerText.replace(/\\s+/g, ' ').trim()"), orig(), pg.evaluate(THUMBS)]
         for r in list(held):
             r.fallback()
         pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
         print('C) Schalter:', c0, stored, '| geöffnet:', c1, '| Rahmen-Schritt:', c2)
-        results.append(c0 == [True, True] and stored == 'false' and c1[0] == [] and set(c1[1].values()) == {''}
-                       and c2[0] == 'Loading the image … loading …' and c2[1] == ['12.jpg'])
+        # [3.34.15] after "Next" all images ticked are loaded, two at a time, the one shown first (the Tray waits)
+        results.append(c0 == [True, True] and stored is None and c1[0] == [] and set(c1[1].values()) == {''}
+                       and c2[0] == 'Loading the image … loading …' and c2[1] == ['12.jpg', '13.jpg']
+                       and c2[2] == {'Back': 'loading …', 'Booklet': 'loading …', 'Tray': 'waiting to load'})
         print('Fehler:', errs)
         results.append(not errs)
         for r in held:
@@ -822,14 +832,7 @@ def case_ocrthumbs():
         a0 = pg.evaluate(HEAD)
         pg.click('#dci-ocr [data-ocr-cur="2"]')
         a1 = shown('Tray')
-        box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
-        f = box['width'] / pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
-        pg.mouse.move(box['x'] + 50 * f, box['y'] + 50 * f)
-        pg.mouse.down()
-        for k in range(1, 6):
-            pg.mouse.move(box['x'] + (50 + 400 * k / 5) * f, box['y'] + (50 + 100 * k / 5) * f)
-        pg.mouse.up()
-        pg.wait_for_timeout(150)
+        drag_img(pg, 50, 50, 450, 150)
         a2 = pg.evaluate(HEAD)
         print('A) zuerst:', a0, '| Tray angeklickt:', a1, '| Rahmen:', a2[1][2])
         results.append(a0[0] == 'frames · image 1 of 3 · Back' and a1[0] == 'frames · image 3 of 3 · Tray'
@@ -851,10 +854,405 @@ def case_ocrthumbs():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_ocrwindow():
+    """[3.34.14] The window "Text from cover art" (collected item 134; maintainer: "die untere navigationsleiste soll immer
+    angezeigt werden und damit statisch sein", "ich meinte alle cover art importfenster", "je nachdem wie groß man den cover
+    art import dialog gestellt hat").
+    A) The same size in every step: the bar at its foot at the same place while choosing, beside the frames of the Back, the
+       Booklet, the Tray (there "Next image →" is greyed out, not gone) and while checking the text.
+    B) The image of the frames step takes the room there (the Back larger than the 560 px before, square); the window made
+       smaller at its lower right corner: the image smaller, the size remembered.
+    C) Moved by its head; closed and opened again: at the same place, of the same size."""
+    results = []
+    FOOT = "(() => { const w = document.getElementById('dci-ocr'); const f = w.querySelector('.dci-ocr-foot').getBoundingClientRect(); const r = w.getBoundingClientRect(); return [Math.round(f.top), Math.round(f.bottom), [r.left, r.top, r.width, r.height].map(Math.round)]; })()"
+    VIEW = "(() => { const v = document.querySelector('#dci-ocr [data-ocr-view]'); return v ? [v.width, v.height] : null; })()"
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.wait_for_timeout(300)
+        feet = [('pick', pg.evaluate(FOOT))]
+        pg.click('#dci-ocr [data-ocr=frames]')
+        views = []
+        for i, what in enumerate(['Back', 'Booklet', 'Tray']):
+            H.wait_for(pg, "(() => { const h = document.querySelector('#dci-ocr .dci-ocr-head .dci-sub'); return h && h.textContent.includes(%s) && !!document.querySelector('#dci-ocr [data-ocr-view]'); })()" % json.dumps(what), 15)
+            pg.wait_for_timeout(250)
+            feet.append((what, pg.evaluate(FOOT)))
+            views.append(pg.evaluate(VIEW))
+            if i < 2:
+                pg.click('#dci-ocr [data-ocr=next]')
+        last_next = pg.evaluate("(() => { const n = document.querySelector('#dci-ocr [data-ocr=next]'); return n ? n.disabled : null; })()")
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        pg.wait_for_timeout(300)
+        feet.append(('result', pg.evaluate(FOOT)))
+        print('A) Fußleiste:', feet, '| „Next image" am Ende gesperrt:', last_next)
+        results.append(len({tuple(f[1][:2]) for f in feet}) == 1 and len({tuple(f[1][2]) for f in feet}) == 1 and last_next is True
+                       and feet[0][1][1] <= 1000)
+        print('   Ansichten:', views)
+        results.append(views[0][0] == views[0][1] > 600 and abs(views[1][0] / views[1][1] - 1246 / 1634) < 0.01 and views[2] == [500, 500])
+        # B) smaller at the lower right corner (the image of the Back again)
+        pg.click('#dci-ocr [data-ocr=back]')
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        pg.wait_for_timeout(300)
+        r0 = pg.evaluate(FOOT)[2]
+        v0 = pg.evaluate(VIEW)
+        pg.mouse.move(r0[0] + r0[2] - 3, r0[1] + r0[3] - 3)
+        pg.mouse.down()
+        pg.mouse.move(r0[0] + r0[2] - 303, r0[1] + r0[3] - 253, steps=6)
+        pg.mouse.up()
+        pg.wait_for_timeout(700)
+        r1 = pg.evaluate(FOOT)[2]
+        v1 = pg.evaluate(VIEW)
+        g1 = pg.evaluate("JSON.parse(localStorage.getItem('dci-geom:ocr') || 'null')")
+        print('B) Fenster', r0, '→', r1, '| Bild', v0, '→', v1, '| gemerkt', g1)
+        results.append(r1[2] < r0[2] - 200 and r1[3] < r0[3] - 150 and v1[0] < v0[0] and v1[0] == v1[1] and g1 and abs(g1['w'] - r1[2]) <= 1 and abs(g1['h'] - r1[3]) <= 1)
+        # C) moved by its head, closed and opened again
+        hb = pg.locator('#dci-ocr .dci-ocr-head h2').bounding_box()
+        pg.mouse.move(hb['x'] + 20, hb['y'] + 8)
+        pg.mouse.down()
+        pg.mouse.move(hb['x'] + 140, hb['y'] + 68, steps=6)
+        pg.mouse.up()
+        pg.wait_for_timeout(200)
+        r2 = pg.evaluate(FOOT)[2]
+        pg.click('#dci-ocr [data-ocr=back]')
+        pg.click('#dci-ocr [data-ocr=close]')
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.wait_for_timeout(300)
+        r3 = pg.evaluate(FOOT)[2]
+        print('C) verschoben', r2, '| wieder geöffnet', r3)
+        results.append(abs(r2[0] - r1[0] - 120) <= 2 and abs(r2[1] - r1[1] - 60) <= 2 and r3 == r2)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrtextfit():
+    """[3.34.14] A) The hint "Reads best: text on a plain, even background …" while choosing and beside the frames (collected
+    item 135). B) Each text field as high as its text (collected item 130; maintainer: "es soll sich nach dem text richten"):
+    one line – a low field (two lines high, lower than its image); six lines typed – it grows, no scroll bar. C) Many words read uncertainly on the Back (5 of
+    7): a yellow box names it ("Many words were read uncertainly in: Back") with the hint, the part is marked and says "5 of 7
+    words"; the Booklet (1 of 6) not."""
+    results = []
+    texts = [{'text': 'Muzic bv Ann Lea\nMasterd bv Bob\n', 'words': [{'text': w, 'confidence': c} for w, c in
+             [('Muzic', 30), ('bv', 20), ('Ann', 90), ('Lea', 40), ('Masterd', 35), ('bv', 25), ('Bob', 92)]]},
+             {'text': 'Drums - Drum Guy\n', 'words': [{'text': w, 'confidence': c} for w, c in
+              [('Drums', 95), ('Drum', 96), ('Guy', 40), ('Bass', 90), ('Man', 91), ('Keys', 93)]]}]
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(texts))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        PLAIN = "(document.querySelector('#dci-ocr [data-ocr-plain]') || {}).textContent || ''"
+        a0 = pg.evaluate(PLAIN)
+        pg.uncheck('#dci-ocr [data-ocr-sel="3"]')
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        a1 = pg.evaluate(PLAIN)
+        print('A) Hinweis:', a0, '|', a1 == a0)
+        results.append(a0.startswith('Reads best: text on a plain, even background') and a1 == a0)
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text="1:0"]', timeout=20000)
+        pg.wait_for_timeout(300)
+        H_ = "(() => { const t = document.querySelector('#dci-ocr [data-ocr-text=\"1:0\"]'); const c = document.querySelector('#dci-ocr [data-ocr-zoom=\"1:0\"]'); return [Math.round(t.getBoundingClientRect().height), Math.round(c.getBoundingClientRect().height), t.scrollHeight <= t.clientHeight + 1]; })()"
+        b0 = pg.evaluate(H_)
+        pg.click('#dci-ocr [data-ocr-text="1:0"]')
+        pg.keyboard.press('Control+End')
+        for line in ['Bass – Bass Man', 'Keys – Keys Guy', 'Organ – Org Guy', 'Piano – Piano Man', 'Guitar – Guitar Guy', 'Violin – Violin Guy']:
+            pg.keyboard.press('Enter')
+            pg.keyboard.type(line)
+        b1 = pg.evaluate(H_)
+        print('B) Textfeld (Höhe, Bild, ohne Rollbalken): eine Zeile', b0, '| sieben Zeilen', b1)
+        results.append(b0[0] < 80 and b0[0] < b0[1] and b0[2] and b1[0] > b0[0] + 80 and b1[2])
+        c = pg.evaluate("""(() => { const el = document.getElementById('dci-ocr'); const box = el.querySelector('[data-ocr-busy]');
+          return { box: box ? box.innerText.replace(/\\s+/g, ' ').trim() : null, parts: [...el.querySelectorAll('[data-ocr-part]')].map(p => [p.dataset.ocrPart, p.classList.contains('dci-ocr-busypart'), (p.querySelector('.dci-ocr-busyline') || {}).textContent || '']) }; })()""")
+        print('C) gelb:', c)
+        results.append(c['box'] and c['box'].startswith('Many words were read uncertainly in: Back Text on a plain, even background reads best')
+                       and c['parts'] == [['0:0', True, '5 of 7 words read uncertainly here – see the hint above'], ['1:0', False, '']])
+        pg.click('#dci-ocr [data-ocr-goto="0:0"]')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_ocrauto():
+    """[3.34.15] No image ticked at first; "Auto-select" (collected item 136; maintainer: "komplett auf die vorauswahl verzichten
+    … einen auto-auswahl knopf einführen und die auto-auswahl auch triggerbar sein", "zusätzliche einstellung die das gleiche
+    zeigt wie der knopf … wenn man den status der einstellung ändert, dass dann auch die auto-auswahl ausgeführt wird", "a, gehen
+    wieder weg"); loading ahead at most 24 (collected item 128b).
+    A) Opened: nothing ticked ("0 of 5 images"), "Next" greyed out, "Auto-select" not pressed.
+    B) "Auto-select": pressed, Back, Booklet, Tray ticked (Front and Medium not), stored.
+    C) The Booklet unticked and the Front ticked by hand; "Auto-select" off: the Back and the Tray untick again – the Booklet stays
+       unticked, the Front ticked.
+    D) ⚙ Settings → Beta "Auto-select the images with credits" switched on while the window is open: the window's switch is
+       pressed and the images are ticked at once; closed and opened again: ticked from the start.
+    E) 30 booklet pages, loading ahead on: two load, 22 more wait, the last 6 are not loaded ahead."""
+    results = []
+    TICKS = "Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked]))"
+    AUTO = "(() => { const b = document.querySelector('#dci-ocr [data-ocr=auto]'); return b ? b.getAttribute('aria-pressed') : null; })()"
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx, auto=False)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        foot = "document.querySelector('#dci-ocr .dci-ocr-foot').innerText.replace(/\\s+/g, ' ').trim()"
+        a = [pg.evaluate(TICKS), pg.evaluate(AUTO), pg.evaluate(foot), pg.evaluate("document.querySelector('#dci-ocr [data-ocr=frames]').disabled")]
+        print('A) geöffnet:', a)
+        results.append(set(a[0].values()) == {False} and a[1] == 'false' and a[2].startswith('0 of 5 images') and a[3] is True)
+        pg.click('#dci-ocr [data-ocr=auto]')
+        bb = [pg.evaluate(TICKS), pg.evaluate(AUTO), pg.evaluate("localStorage.getItem('dci-ocr-auto')")]
+        print('B) Auto-select:', bb)
+        results.append(bb[0] == {'Front': False, 'Back': True, 'Booklet': True, 'Tray': True, 'Medium': False} and bb[1] == 'true' and bb[2] == 'true')
+        pg.uncheck('#dci-ocr [data-ocr-sel="2"]')
+        pg.check('#dci-ocr [data-ocr-sel="0"]')
+        pg.click('#dci-ocr [data-ocr=auto]')
+        c = [pg.evaluate(TICKS), pg.evaluate(AUTO), pg.evaluate("localStorage.getItem('dci-ocr-auto')")]
+        print('C) aus:', c)
+        results.append(c[0] == {'Front': True, 'Back': False, 'Booklet': False, 'Tray': False, 'Medium': False} and c[1] == 'false' and c[2] is None)
+        pg.click('#dci-ocr [data-ocr=close]')
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        # the settings below the window: clicked there directly
+        H.open_settings(pg)
+        pg.locator('[data-el=settings] .dci-set-tab[data-topic=beta]').evaluate('b => b.click()')
+        pg.wait_for_timeout(150)
+        pg.locator('[data-el=settings] [data-set=ocr-auto]').evaluate('x => x.click()')
+        pg.wait_for_timeout(200)
+        d1 = [pg.evaluate(TICKS), pg.evaluate(AUTO)]
+        # opened again (the dashboard is in front now: from its menu)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        d2 = pg.evaluate(TICKS)
+        print('D) Einstellung an:', d1, '| wieder geöffnet:', d2)
+        want = {'Front': False, 'Back': True, 'Booklet': True, 'Tray': True, 'Medium': False}
+        results.append(d1 == [want, 'true'] and d2 == want)
+        print('Fehler:', errs)
+        results.append(not errs)
+        pg.close()
+        # E) 30 booklet pages, loading ahead on
+        held = []
+        ctx2 = H.new_context(b)
+        beta_on(ctx2)
+        ctx2.add_init_script("localStorage.setItem('dci-ocr-preload', 'true');")
+        H.COVER_ART = [(100 + i, ['Booklet'], f'p. {i + 1}', 1200, 1200) for i in range(30)]
+        ctx2.route(re.compile(r'https://coverartarchive\.org/release/[^/]+/\d+\.jpg$'), lambda r: held.append(r))
+        pg, errs = H.open_mb_edit(ctx2, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.wait_for_timeout(800)
+        loads = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => (c.querySelector('.dci-ocr-load:not([hidden]) .dci-ocr-loadtext') || {}).textContent || '')")
+        print('E) Kacheln:', {x: loads.count(x) for x in set(loads)}, '| angefragt:', len(held), '| die letzten sechs:', loads[24:])
+        results.append(loads[:2] == ['loading …'] * 2 and loads[2:24] == ['waiting to load'] * 22 and loads[24:] == [''] * 6 and len(held) == 2)
+        print('Fehler:', errs)
+        results.append(not errs)
+        for r in held:
+            try:
+                r.abort()
+            except Exception:
+                pass
+        ctx2.unroute_all(behavior='ignoreErrors')
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_ocrmore():
+    """[3.34.16] Large collections a part at a time (collected item 131; maintainer: "bei großen cover art collections müssten
+    sie evtl auf mehreren seiten angezeigt werden. zumindest als angebot", "weitere laden", "12 bilder pro seite", "ja passt",
+    "ja" (beside the frames, PDF pages)).
+    A) 30 images, nothing ticked: 12 shown, only their previews asked for, "Load 12 more (18 not shown yet)"; "All shown (12)"
+       beside "All images (30)".
+    B) Load more: 24 shown (24 previews); "All shown (24)" ticks those 24 – "24 of 30 images"; Load more: 30, the button and
+       "All shown" gone.
+    C) Beside the frames: 12 small images and "Load 12 more"; clicked: 24.
+    D) "Auto-select" on with 30 booklet pages: all ticked, so all shown.
+    E) A PDF of 15 pages, each "Mastered by …": with Auto-select all ticked and shown; without, 12 of its pages shown, "Load 3
+       more (3 not shown yet)"."""
+    results = []
+    thumbs = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = [(200 + i, ['Booklet' if i % 3 else 'Back'], f'p. {i + 1}', 1200, 1200) for i in range(30)]
+        ctx = H.new_context(b)
+        beta_on(ctx, auto=False)
+        ctx.on('request', lambda r: thumbs.append(r.url) if re.search(r'coverartarchive\.org/release/[^/]+/\d+-250\.jpg$', r.url) else None)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.wait_for_timeout(500)
+        ST = """(() => { const el = document.getElementById('dci-ocr'); const m = el.querySelector('[data-ocr=more]'); const lab = (sel) => { const x = el.querySelector(sel); return x ? x.closest('label').textContent.trim() : null; };
+          return { cards: el.querySelectorAll('.dci-ocr-card').length, more: m ? m.textContent.trim() : null, all: lab('[data-ocr-all]'), shown: lab('[data-ocr-shown]'),
+            foot: el.querySelector('.dci-ocr-foot .dci-sub').textContent.trim() }; })()"""
+        a = [pg.evaluate(ST), len(set(thumbs))]
+        print('A) geöffnet:', a)
+        results.append(a[0] == {'cards': 12, 'more': 'Load 12 more (18 not shown yet)', 'all': 'All images (30)', 'shown': 'All shown (12)', 'foot': '0 of 30 images'} and a[1] == 12)
+        pg.click('#dci-ocr [data-ocr=more]')
+        pg.wait_for_timeout(400)
+        b1 = [pg.evaluate(ST), len(set(thumbs))]
+        pg.check('#dci-ocr [data-ocr-shown]')
+        b2 = pg.evaluate(ST)
+        pg.click('#dci-ocr [data-ocr=more]')
+        pg.wait_for_timeout(300)
+        b3 = pg.evaluate(ST)
+        print('B) mehr:', b1, '| alle gezeigten:', b2, '| alle:', b3)
+        results.append(b1[0]['cards'] == 24 and b1[0]['more'] == 'Load 6 more (6 not shown yet)' and b1[1] == 24 and b1[0]['shown'] == 'All shown (24)'
+                       and b2['foot'] == '24 of 30 images' and b3['cards'] == 30 and b3['more'] is None and b3['shown'] is None)
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-thumb', timeout=10000)
+        TH = "[document.querySelectorAll('#dci-ocr .dci-ocr-thumb').length, (document.querySelector('#dci-ocr [data-ocr=morethumbs]') || {}).textContent || null]"
+        c1 = pg.evaluate(TH)
+        pg.click('#dci-ocr [data-ocr=morethumbs]')
+        c2 = pg.evaluate(TH)
+        print('C) Rahmen-Leiste:', c1, '→', c2)
+        results.append(c1 == [12, 'Load 12 more (12 not shown yet)'] and c2 == [24, None])
+        pg.click('#dci-ocr [data-ocr=back]')
+        pg.click('#dci-ocr [data-ocr=close]')
+        # D) Auto-select with 30 booklet pages
+        H.COVER_ART = [(300 + i, ['Booklet'], f'p. {i + 1}', 1200, 1200) for i in range(30)]
+        pg.evaluate("localStorage.setItem('dci-ocr-auto', 'true')")
+        print('Fehler:', errs)
+        results.append(not errs)
+        pg.close()
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        d = pg.evaluate(ST)
+        print('D) Auto-select:', d)
+        results.append(d['cards'] == 30 and d['more'] is None and d['foot'] == '30 of 30 images')
+        pg.evaluate("localStorage.removeItem('dci-ocr-auto')")
+        pg.click('#dci-ocr [data-ocr=close]')
+        # E) a PDF of 15 pages
+        H.COVER_ART = []
+        pdf = H.pdf_of([[(40, 380, 14, f'Page {i + 1}'), (40, 350, 12, 'Mastered by Bob Producer')] for i in range(15)])
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-files]', state='attached', timeout=10000)
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'long.pdf', 'mimeType': 'application/pdf', 'buffer': pdf}])
+        H.wait_for(pg, "!document.querySelector('#dci-ocr [data-ocr-pdfstatus]') && document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length >= 15", 40)
+        e1 = pg.evaluate("[document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length, document.querySelectorAll('#dci-ocr .dci-ocr-owncard input:checked').length]")
+        # Auto-select off: its ticks go, the pages shown stay
+        pg.click('#dci-ocr [data-ocr=auto]')
+        pg.click('#dci-ocr [data-ocr=close]')
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-files]', state='attached', timeout=10000)
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'long.pdf', 'mimeType': 'application/pdf', 'buffer': pdf}])
+        H.wait_for(pg, "!document.querySelector('#dci-ocr [data-ocr-pdfstatus]') && !!document.querySelector('#dci-ocr [data-ocr=more]')", 40)
+        e2 = pg.evaluate("[document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length, document.querySelector('#dci-ocr [data-ocr=more]').textContent.trim()]")
+        print('E) PDF, Auto-select an (gezeigt, angehakt):', e1, '| aus:', e2)
+        results.append(e1 == [15, 15] and e2 == [12, 'Load 3 more (3 not shown yet)'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_ocrremember():
+    """[3.34.17] The frames remembered for each release and image (collected item 133; maintainer: "(B)", "ja ok").
+    A) Two frames on the Back, the Booklet turned right and read whole; the window closed: both stored for the release.
+    B) Opened again: beside the frames "Back 2 frames", "Booklet the whole image" (before it is loaded); read: the Back's two
+       frames as drawn, the Booklet whole and turned.
+    C) The 1200 px copy chosen: the frames fit it (×0.8), the Booklet still turned.
+    D) "Delete stored import …" forgets them; ⚙ Settings → Beta → Reset forgets all."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-sel="3"]')
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        drag_img(pg, 150, 900, 1350, 1200)
+        drag_img(pg, 150, 150, 750, 375)
+        pg.click('#dci-ocr [data-ocr=next]')
+        H.wait_for(pg, "(document.querySelector('#dci-ocr .dci-ocr-head .dci-sub') || {}).textContent.includes('Booklet') && !!document.querySelector('#dci-ocr [data-ocr-view]')", 15)
+        pg.click('#dci-ocr [data-ocr=rotr]')
+        pg.check('#dci-ocr [data-ocr-mode=whole]')
+        pg.click('#dci-ocr [data-ocr=close]')
+        STORE = "JSON.parse(localStorage.getItem('dci-ocr-frames') || 'null')"
+        a = pg.evaluate(STORE)
+        rel = a and a.get(H.REL)
+        print('A) gespeichert:', rel and rel['imgs'])
+        results.append(rel and rel['imgs'] == {'caa:12': {'f': [[0.1, 0.6, 0.8, 0.2], [0.1, 0.1, 0.4, 0.15]], 'turn': 0, 'mode': 'frames'},
+                                                'caa:13': {'f': [], 'turn': 1, 'mode': 'whole'}})
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-sel="3"]')
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-thumb', timeout=10000)
+        b1 = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-thumb')].map(t => t.querySelector('strong').textContent + ' ' + t.querySelector('span').textContent)")
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        b2 = pg.evaluate('window.__ocr.calls')
+        print('B) wieder geöffnet:', b1, '| gelesen:', b2)
+        results.append(b1 == ['Back 2 frames', 'Booklet the whole image'] and b2 == [[1200, 300], [600, 225], [1634, 1246]])
+        pg.click('#dci-ocr [data-ocr=back]')
+        pg.check('#dci-ocr [data-ocr-size="1200"]')
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        pg.wait_for_timeout(200)
+        pg.click('#dci-ocr [data-ocr=run]')
+        H.wait_for(pg, "window.__ocr.calls.length >= 6", 20)
+        c = pg.evaluate('window.__ocr.calls.slice(3)')
+        print('C) 1200 px:', c)
+        results.append(c == [[960, 240], [480, 180], [1200, 915]])
+        pg.click('#dci-ocr [data-ocr=close]')
+        H.src_menu(pg, 'forget-open')
+        pg.click('[data-act=forget-do]')
+        pg.wait_for_timeout(1500)
+        d1 = pg.evaluate(STORE)
+        pg.evaluate("localStorage.setItem('dci-ocr-frames', JSON.stringify({ 'x': { t: 1, imgs: { 'caa:1': { f: [], turn: 1, mode: 'frames' } } } }))")
+        H.open_settings(pg, 'beta')
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=beta]')
+        pg.wait_for_timeout(300)
+        d2 = pg.evaluate(STORE)
+        print('D) vergessen:', d1, '| Beta zurückgesetzt:', d2)
+        results.append(d1 is None and d2 is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_ocrzoom():
     """[3.34.11] Each part read beside its text, with zoom (collected item 130; maintainer: "kann der vergrößerte Bildbereich
     nach der Auswahl neben dem erkannten text dargestellt werden? mit zoom in funktion?", "je Rahmen").
-    A) The Back with two frames, the Booklet whole: in "check the text" the window is wider; the Back has two parts ("Frame 1",
+    A) The Back with two frames, the Booklet whole: in "check the text" (the window wide: 3.34.14, the same in every step) the Back has two parts ("Frame 1",
        "Frame 2"), each its part of the image (fitted, the image there) beside its own text; the Booklet one part.
     B) + zooms in (×1.5), − back, Ctrl + wheel and a double click zoom in at the mouse, ⤢ fits again.
     C) A part's text changed: imported with the others in their order."""
@@ -876,29 +1274,19 @@ def case_ocrzoom():
         pg.click('#dci-ocr [data-ocr=frames]')
         pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
 
-        def drag(x0, y0, x1, y1):
-            box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
-            w = pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
-            f = box['width'] / w
-            pg.mouse.move(box['x'] + x0 * f, box['y'] + y0 * f)
-            pg.mouse.down()
-            for k in range(1, 6):
-                pg.mouse.move(box['x'] + (x0 + (x1 - x0) * k / 5) * f, box['y'] + (y0 + (y1 - y0) * k / 5) * f)
-            pg.mouse.up()
-            pg.wait_for_timeout(150)
-        drag(56, 56, 504, 168)
-        drag(56, 336, 280, 448)
+        drag_img(pg, 150, 150, 1350, 450)
+        drag_img(pg, 150, 900, 750, 1200)
         pg.click('#dci-ocr [data-ocr=run]')
         pg.wait_for_selector('#dci-ocr [data-ocr-zoom]', timeout=20000)
         pg.wait_for_timeout(300)
         A = """(() => { const el = document.getElementById('dci-ocr'); const parts = [...el.querySelectorAll('[data-ocr-part]')];
-          return { wide: el.classList.contains('dci-ocr-wide'), width: Math.round(el.getBoundingClientRect().width),
+          return { width: Math.round(el.getBoundingClientRect().width),
             parts: parts.map(p => { const c = p.querySelector('canvas'); const t = p.querySelector('textarea'); const g = c.getContext('2d');
               const d = g.getImageData(Math.round(c.width / 2), Math.round(c.height / 2), 1, 1).data; const cr = c.getBoundingClientRect(), tr = t.getBoundingClientRect();
               return [p.dataset.ocrPart, (p.querySelector('.dci-ocr-parttext strong') || {}).textContent || '', t.value, [d[0], d[1], d[2]], Math.round(cr.right) <= Math.round(tr.left), Number(c.dataset.k).toFixed(3)]; }) }; })()"""
         a = pg.evaluate(A)
-        print('A) breit:', a['wide'], a['width'], '| Teile:', a['parts'])
-        results.append(a['wide'] and a['width'] > 1100 and [x[:3] for x in a['parts']] == [['0:0', 'Frame 1', 'Music by Ann Lee'], ['0:1', 'Frame 2', 'Drums – Drum Guy'], ['1:0', '', 'Mastered by Bob Producer']]
+        print('A) Breite:', a['width'], '| Teile:', a['parts'])
+        results.append(a['width'] > 1100 and [x[:3] for x in a['parts']] == [['0:0', 'Frame 1', 'Music by Ann Lee'], ['0:1', 'Frame 2', 'Drums – Drum Guy'], ['1:0', '', 'Mastered by Bob Producer']]
                        and all(x[3] == [240, 236, 228] and x[4] for x in a['parts']))
         K = "Number(document.querySelector('#dci-ocr [data-ocr-zoom=\"1:0\"]').dataset.k)"
         k0 = pg.evaluate(K)
@@ -943,8 +1331,8 @@ def case_ocrlocate():
     A) The Back with a frame (on its canvas at 150, 150; read as it is), the Tray whole (500 px: read ×3). "Bob", read
        uncertainly twice, clicked: its first place selected in the text, marked in the image and zoomed in on; clicked again:
        its second place.
-    B) The caret in the Back's text: Ctrl + Home – the first line marked where Tesseract read it (moved into sight in the zoomed
-       view), ↓ – the second (wider than the view: its start in sight); ⤢: fitted, the mark still drawn there; a letter taken away: still the line; the line replaced by
+    B) The caret in the Back's text: Ctrl + Home – the first line marked where Tesseract read it and ([3.34.15] "auch heranzoomen")
+       zoomed in on, ↓ – the second, zoomed in on as a whole; ⤢: fitted, the mark still drawn there; a letter taken away: still the line; the line replaced by
        other words: no mark.
     C) A click into the Tray's text: its line marked, its place read ×3 brought back to the canvas; the dash corrected in the
        text ("Drums – Drum Guy") and the line still found.
@@ -959,8 +1347,6 @@ def case_ocrlocate():
         out.px = [px[0], px[1], px[2]]; }
       return out; })"""
     inside = lambda z: z['mark'] and z['view'] and z['mark'][0] >= z['view'][0] - 1 and z['mark'][1] >= z['view'][1] - 1 and z['mark'][0] + z['mark'][2] <= z['view'][0] + z['view'][2] + 1 and z['mark'][1] + z['mark'][3] <= z['view'][1] + z['view'][3] + 1
-    # a line wider than the view: its start in sight
-    start = lambda z: z['mark'] and z['view'] and z['view'][0] - 1 <= z['mark'][0] < z['view'][0] + z['view'][2] and z['mark'][1] >= z['view'][1] - 1 and z['mark'][1] + z['mark'][3] <= z['view'][1] + z['view'][3] + 1
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         H.COVER_ART = list(ART)
@@ -983,14 +1369,7 @@ def case_ocrlocate():
         pg.uncheck('#dci-ocr [data-ocr-sel="2"]')
         pg.click('#dci-ocr [data-ocr=frames]')
         pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
-        box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
-        f = box['width'] / pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
-        pg.mouse.move(box['x'] + 56 * f, box['y'] + 56 * f)
-        pg.mouse.down()
-        for k in range(1, 6):
-            pg.mouse.move(box['x'] + (56 + 448 * k / 5) * f, box['y'] + (56 + 112 * k / 5) * f)
-        pg.mouse.up()
-        pg.wait_for_timeout(150)
+        drag_img(pg, 150, 150, 1350, 450)
         pg.click('#dci-ocr [data-ocr=run]')
         pg.wait_for_selector('#dci-ocr [data-ocr-zoom="1:0"]', timeout=20000)
         pg.wait_for_timeout(300)
@@ -1019,9 +1398,9 @@ def case_ocrlocate():
         pg.keyboard.press('Shift+Home')
         pg.keyboard.type('Liner notes by somebody else')
         b5 = pg.evaluate(ZQ, '0:0')
-        print('B) Zeile 1:', b1['kind'], b1['mark'], inside(b1), '| Zeile 2:', b2['mark'], b2['view'], start(b2), '| ⤢:', round(b3['k'], 3), b3['mark'], b3['px'],
+        print('B) Zeile 1:', b1['kind'], b1['mark'], inside(b1), '| Zeile 2:', b2['mark'], b2['view'], inside(b2), round(b2['k'], 3), '| ⤢:', round(b3['k'], 3), b3['mark'], b3['px'],
               '| ohne r:', b4['mark'], '| andere Wörter:', b5['mark'])
-        results.append(b1['kind'] == 'line' and b1['mark'] == [170, 180, 580, 50] and inside(b1) and b2['mark'] == [170, 300, 880, 50] and not inside(b2) and start(b2)
+        results.append(b1['kind'] == 'line' and b1['mark'] == [170, 180, 580, 50] and inside(b1) and b1['k'] > z0['k'] and b2['mark'] == [170, 300, 880, 50] and inside(b2) and b2['k'] > z0['k']
                        and abs(b3['k'] - z0['k']) < 1e-6 and b3['mark'] == [170, 300, 880, 50] and b3['px'] != [240, 236, 228]
                        and b4['mark'] == [170, 300, 880, 50] and b5['mark'] is None)
         pg.click('#dci-ocr [data-ocr-text="1:0"]', position={'x': 12, 'y': 8})
