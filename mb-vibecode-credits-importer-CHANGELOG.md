@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.2 | – |
+| 2026-10-28 | 3.34.0 – 3.34.3 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.3
+
+#### Fixed
+
+- **Scrolling up with ⚙ Settings → ⓘ Connections open** (collected item 122; maintainer: "ich habe das I Fenster in den Einstellungen offen und kann nicht mehr hochscrollen wenn der Dates & Tracks Pool aufgeklappt ist. Der Scrollbalken zappelt und wird sozusagen zurückgehalten."): the dashboard scrolls up smoothly again. Every scroll event took the space above the settings' content away and set it again; the browser held its place by scrolling back – at ⓘ Connections 278 px, again and again (since 3.30.4; worse from 3.34.1, when ⓘ Connections became the tenth tab).
+- **⚙ and its bridge in line** (collected item 126; maintainer: "das rädchen ist noch nicht perfekt in line mit den einstellungen"): the strip from ⚙ to the settings (and from "Mapping rules" to the rules) sits exactly below the symbol also with a larger text or a scaled screen – it was rounded to whole pixels and up to a pixel beside it – and the line below the head no longer runs across it.
+
+#### Changed
+
+- **The settings' content as high as it can be** (collected item 127; maintainer: "die rot markierte fläche soll auch genutzt werden … dies soll aber nur der fall sein, sofern die visuelle markierung nicht mehr aligned ist. es kann aber auch mittig visuell markiert sein. gerade im reiter connections wird viel platz verschwendet", "das passt so!"): the chosen tab joins the side of the content where it is – at the top, in the middle or near its foot –; the content stands lower only when it is too short for that (before, from 3.30.4, it always started at the height of the tab, with empty space above it – 278 px at ⓘ Connections).
+- **Words in German, Spanish and French** (collected items 119, 120): "Quick switches" stays English in every language (maintainer: "Quick Switches bitte nicht übersetzen."; before: Schnellschalter, Interruptores rápidos, Interrupteurs rapides); a rights society is "entidad de gestión colectiva" in Spanish and "société de gestion des droits d’auteur" in French (maintainer: "Rights Society: DE: Verwertungsgesellschaft, ES: Entidad de gestión colectiva, FR: Société de gestion des droits d'auteur"; German unchanged).
 
 ### Import 3.34.2
 

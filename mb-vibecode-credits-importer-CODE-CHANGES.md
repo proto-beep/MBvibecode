@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.3, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.3 · 2026-10-28
+
+Settings: scrolling with ⓘ Connections (collected item 122), the bridge from ⚙ in line (126), the content as high as it can be (127), words in the languages file (119, 120).
+
+- **`alignSettingsPane()`** works the margin of `.dci-set-pane` out without taking it away first (the tab's place does not depend on it) and writes it only when it changes; it is now the smallest margin with which the chosen tab still lies within the pane's side, with the pane's lower corner radius + 2px below it – `max(0, min(tabTop, tabBottom + below − paneHeight))` – instead of the tab's top; the class `dci-set-joined-top` when the tab joins at the top (only with the tabs in a column). Until 3.34.2 `pane.style.marginTop = ''` and the new value on every call – every scroll event, through `placeBridges` – made the browser's scroll anchoring scroll back by the margin (278px at ⓘ Connections, reproduced with "Dates & tracks" open).
+- **`placeBridges()`:** `--dci-bridge-x`, `-w`, `-h` and `--dci-bridge-down` in fractions of a pixel (`px()`, three decimals; until 3.34.2 `Math.round`), x from the box's computed `border-left-width` instead of `clientLeft` (rounded), `--dci-bridge-down` = head bottom − button bottom + 3 (the `::after` starts 2px above the button's lower edge – `top: 100% − 1px` of its padding box – and ends 1px below the head, over its `border-bottom`; before + 1, rounded, it ended 1px short). New **`setVar(el, name, value)`**: a custom property only set when it changes.
+- **`buildOverlay`:** a `ResizeObserver` on `[data-el="settings"]` calls `bridgesLater` (the content's place follows its height).
+- **CSS:** `.dci-set-pane` `border-radius: 4px` (was `0 4px 4px 4px`), `.dci-set-pane.dci-set-joined-top { border-top-left-radius: 0 }`.
+- **Languages file:** de/es/fr `rules.quick` "Quick switches"; `ms.3.32.0`, `ms.3.33.0` the same word; es `quick.S045`, `ms.3.31.0`, `ms.3.32.0` "entidad de gestión colectiva" ("una lista de las entidades"); fr `quick.S045`, `ms.3.31.0`, `ms.3.32.0` "société de gestion des droits d’auteur" (13 texts).
+- **Header / files:** `@version 3.34.3`, `?v=3.34.3`, both files' `version`.
+- **Tests:** `t_ui_settings.py` – `bridge` (A, C exact to 0.01px, the part at the symbol 1px below the head; B the new place of the content: Connections from the top with its tab in the middle, General joined at the top, a short one just low enough, the corner), new case `settingsscroll` (Connections and "Dates & tracks" open, scrolled up in 15px steps: never back down, up to 0; no change of the content's style while scrolling).
 
 ## Import 3.34.2 · 2026-10-28
 

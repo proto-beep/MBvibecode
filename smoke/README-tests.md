@@ -268,7 +268,11 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, s
                                 #     the works of the artists kept across a reload (IndexedDB), clearing them, switched off
                                 #     3.25.0: the topics as tabs, one shown at a time
                                 #   bridge: 3.30.4: ⚙ pressed with a bridge to the settings (and the rules symbol to the docked rules), the content of
-                                #     every tab at the height of the tab (100 % and 90 %), the bridge scrolled away and closed
+                                #     every tab joined by the tab (100 % and 90 %), the bridge scrolled away and closed; 3.34.3: the bridge exact in
+                                #     fractions of a pixel, over the head's lower line; the content as high as it can be (ⓘ Connections at the top, its
+                                #     tab in the middle; a short one just low enough), its corner square only where the tab joins at the top
+                                #   settingsscroll: 3.34.3: ⓘ Connections and "Dates & tracks" open, scrolled down and up in small steps – never back
+                                #     down, up to the top; scrolling does not touch the content's margin (until 3.34.2 it jumped back 278px)
                                 #   ui305: 3.30.5: ⚙ below "Import credits …" before any import – only the settings ("Source pages"), no import, the
                                 #     message "Start import" starts it; the field "Tracks:" of a track group (ranges, ticks, unknown tracks,
                                 #     Enter saves, editing shows the tracks); German "Quellseiten"
