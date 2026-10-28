@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.8
+// @version      3.34.9
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.8
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.8
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.9
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.9
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.9';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -9862,7 +9862,7 @@
         <div class="dci-ocr-stage">${view}</div>
         <div class="dci-ocr-side">
           <div class="dci-ocr-thumbs">${chosen.map((im, i) => `<button type="button" class="dci-ocr-thumb${i === o.cur ? ' dci-on' : ''}" data-ocr-cur="${i}" aria-current="${i === o.cur}">
-            <img src="${esc(im.thumb)}" alt=""><strong>${esc(ocrTypes(im))}</strong><span>${esc(state(im))}</span></button>`).join('')}</div>
+            <img src="${esc(im.thumb)}" alt="" data-ocr-peek="${esc(im.id)}"><strong>${esc(ocrTypes(im))}</strong><span>${esc(state(im))}</span></button>`).join('')}</div>
           ${img.canvas && img.w < OCR_SMALL ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: img.w, h: img.h }))}</p>` : ''}
           <fieldset><legend>${esc(tr('ocr.mode'))}</legend>
             ${mode('frames', tr('ocr.modeFrames', { n: img.frames.length }))}${mode('whole', tr('ocr.modeWhole'))}${mode('skip', tr('ocr.modeSkip'))}</fieldset>
@@ -9910,6 +9910,7 @@
     }
     S.ocr = null;
     document.removeEventListener('paste', ocrPaste);
+    ocrPeekHide();
     const el = document.getElementById('dci-ocr');
     if (el) el.remove();
   }
@@ -10060,7 +10061,7 @@
     o.images.forEach((im) => { if (im.mode === 'skip') im.mode = 'frames'; });
     const caa = o.images.filter(ocrIsCaa).length;
     const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}${ocrIsCaa(im) ? '' : ' dci-ocr-owncard'}" data-ocr-card="${i}">
-        <img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" loading="lazy">
+        <img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" loading="lazy" data-ocr-peek="${esc(im.id)}">
         <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> <span>${esc(ocrTypes(im))}</span></span>
         ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
         ${ocrIsCaa(im) ? (im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`)
@@ -10096,7 +10097,7 @@
     const o = S.ocr;
     const state = (r) => tr(`ocr.state.${r.status}`);
     return `<div class="dci-ocr-body"><p class="dci-sub">${esc(tr('ocr.runHint'))}</p><ol class="dci-ocr-runs">
-        ${o.results.map((r, i) => `<li><img src="${esc(r.img.thumb)}" alt=""><span><strong>${esc(ocrTypes(r.img))}</strong> · ${esc(state(r))}
+        ${o.results.map((r, i) => `<li><img src="${esc(r.img.thumb)}" alt="" data-ocr-peek="${esc(r.img.id)}"><span><strong>${esc(ocrTypes(r.img))}</strong> · ${esc(state(r))}
           <span class="dci-ocr-barbox"><span class="dci-ocr-bar" data-ocr-bar="${i}" style="width:${Math.round((r.progress || 0) * 100)}%"></span></span></span></li>`).join('')}</ol></div>
       <div class="dci-ocr-foot"><span></span><button type="button" class="dci-textbtn" data-ocr="close">${esc(tr('common.cancel'))}</button></div>`;
   }
@@ -10124,6 +10125,89 @@
         <button type="button" class="dci-apply dci-small" data-ocr="import">${esc(tr('ocr.import'))}</button></div>`;
   }
 
+  // --- [3.34.9] A larger view of an image when the mouse rests on its small one (collected item 129; maintainer: "nicht alle
+  // Bilder sind quadratisch! alle Bildverhältnisse müssen angezeigt werden. und bei Mouseover etwas größere darstellung.",
+  // "gleich hohe / breite kacheln"): the tiles stay alike, each image whole in them; after a short pause its larger view
+  // (at most OCR_PEEK px, its own proportions) beside it – the 1200 px image of the Cover Art Archive, an own file as it is,
+  // a page of a PDF drawn at that size.
+
+  const OCR_PEEK = 480;
+  let ocrPeekTimer = 0;
+
+  const ocrImageById = (id) => (S.ocr ? S.ocr.images.find((im) => String(im.id) === String(id)) : null) || null;
+
+  /** The address of an image's larger view (a PDF page: drawn once at OCR_PEEK). */
+  async function ocrPeekSrc(img) {
+    if (img.src === 'pdf') {
+      if (!img.peek) img.peek = (await ocrPdfRender(img.pdfPage, OCR_PEEK * 1.5)).toDataURL('image/jpeg', 0.9);
+      return img.peek;
+    }
+    return img.big || img.orig || img.thumb;
+  }
+
+  function ocrPeekHide() {
+    clearTimeout(ocrPeekTimer);
+    ocrPeekTimer = 0;
+    const el = document.getElementById('dci-ocr-peek');
+    if (el) el.hidden = true;
+  }
+
+  /** The larger view beside a small image: right of it if there is room, else left; within the window of the browser. */
+  function ocrPeekShow(thumb) {
+    const img = ocrImageById(thumb.dataset.ocrPeek);
+    if (!img) return;
+    let el = document.getElementById('dci-ocr-peek');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'dci-ocr-peek';
+      el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = '<img alt=""><span></span>';
+      document.body.appendChild(el);
+    }
+    const pic = el.querySelector('img');
+    el.querySelector('span').textContent = ocrTypes(img);
+    el.dataset.for = String(img.id);
+    // the small one at once, then the larger one when it is there
+    if (pic.dataset.for !== String(img.id)) {
+      pic.src = img.thumb;
+      pic.dataset.for = String(img.id);
+    }
+    ocrPeekSrc(img).then((src) => {
+      if (el.dataset.for === String(img.id) && pic.getAttribute('src') !== src) pic.src = src;
+    }, () => {});
+    el.style.zIndex = String(topZ + 1);
+    el.hidden = false;
+    const place = () => {
+      // its own proportions, its longer side OCR_PEEK (also a smaller image), within the window of the browser
+      if (pic.naturalWidth && pic.naturalHeight) {
+        const k = Math.min(OCR_PEEK / Math.max(pic.naturalWidth, pic.naturalHeight), (window.innerWidth * 0.44) / pic.naturalWidth, (window.innerHeight * 0.8) / pic.naturalHeight);
+        pic.style.width = `${Math.round(pic.naturalWidth * k)}px`;
+        pic.style.height = `${Math.round(pic.naturalHeight * k)}px`;
+      }
+      const r = thumb.getBoundingClientRect();
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      const left = r.right + 12 + w <= window.innerWidth - 8 ? r.right + 12 : Math.max(8, r.left - 12 - w);
+      const top = Math.max(8, Math.min(r.top, window.innerHeight - 8 - h));
+      el.style.left = `${Math.round(left)}px`;
+      el.style.top = `${Math.round(top)}px`;
+    };
+    place();
+    pic.onload = place;
+  }
+
+  function ocrPeekOver(e) {
+    const thumb = e.target.closest && e.target.closest('[data-ocr-peek]');
+    if (!thumb) return;
+    clearTimeout(ocrPeekTimer);
+    ocrPeekTimer = setTimeout(() => ocrPeekShow(thumb), 300);
+  }
+
+  function ocrPeekOut(e) {
+    const thumb = e.target.closest && e.target.closest('[data-ocr-peek]');
+    if (thumb && !(e.relatedTarget && thumb.contains(e.relatedTarget))) ocrPeekHide();
+  }
+
   /** The window "Text from cover art" (drawn anew for each step). */
   function renderOcr() {
     const o = S.ocr;
@@ -10139,6 +10223,10 @@
       el.addEventListener('click', ocrClick);
       el.addEventListener('change', ocrChange);
       el.addEventListener('pointerdown', ocrPointerDown);
+      // [3.34.9] the larger view of a small image
+      el.addEventListener('mouseover', ocrPeekOver);
+      el.addEventListener('mouseout', ocrPeekOut);
+      el.addEventListener('scroll', ocrPeekHide, true);
       el.addEventListener('input', (e) => {
         const i = e.target.dataset.ocrText;
         if (i != null && S.ocr && S.ocr.results[i]) S.ocr.results[i].text = e.target.value;
@@ -10175,6 +10263,10 @@
       document.addEventListener('paste', ocrPaste);
     }
     el.style.zIndex = String(++topZ);
+    // [3.34.9] a larger view open: kept at its image when the window is drawn anew (an image loaded …), else gone
+    const peek = document.getElementById('dci-ocr-peek');
+    const peekFor = peek && !peek.hidden ? peek.dataset.for : null;
+    ocrPeekHide();
     const body = o.step === 'list' ? `<div class="dci-ocr-body"><p>${esc(tr('ocr.loading'))}</p></div>`
       : o.step === 'run' ? ocrRunHtml() : o.step === 'result' ? ocrResultHtml() : o.step === 'frames' ? ocrFramesHtml() : ocrPickHtml();
     const cur = o.step === 'frames' ? ocrCurrent().img : null;
@@ -10182,6 +10274,10 @@
         <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.step === 'frames' ? ocrChosen().length : o.images.filter(ocrIsCaa).length, i: o.cur + 1, what: cur ? ocrTypes(cur) : '' }))}</span>
         <a href="https://musicbrainz.org/release/${esc(releaseMbid)}/cover-art" target="_blank" rel="noopener">${esc(tr('ocr.caaLink'))}</a>
         <button type="button" class="dci-iconbtn" data-ocr="close" aria-label="${esc(tr('common.close'))}" title="${esc(tr('common.close'))}">✕</button></div>${body}`;
+    if (peekFor != null) {
+      const again = el.querySelector(`[data-ocr-peek="${CSS.escape(peekFor)}"]`);
+      if (again) ocrPeekShow(again);
+    }
     // [3.34.5] "All images" half ticked while only some are
     const all = el.querySelector('[data-ocr-all]');
     if (all) {
@@ -23368,7 +23464,8 @@
       #dci-ocr .dci-ocr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 160), 1fr)); gap: calc(var(--u, 1px) * 10); }
       #dci-ocr .dci-ocr-card { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8); border: 1px solid #dddae8; border-radius: 6px; cursor: pointer; }
       #dci-ocr .dci-ocr-card.dci-on { border: 2px solid #5b55a0; padding: calc(var(--u, 1px) * 7); background: #f7f6fd; }
-      #dci-ocr .dci-ocr-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 3px; background: #eceaf3; }
+      /* [3.34.9] tiles alike, each image whole in them (collected item 129) */
+      #dci-ocr .dci-ocr-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; border-radius: 3px; background: #eceaf3; }
       #dci-ocr .dci-ocr-type { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); font-weight: 600; min-width: 0; }
       #dci-ocr .dci-ocr-type > span { overflow-wrap: anywhere; }
       /* [3.34.5] own images: a dashed card, the box to add them, the window while something is dragged onto it */
@@ -23394,7 +23491,7 @@
       #dci-ocr .dci-ocr-warn { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border-radius: 4px; background: #fff3dc; color: #6b4100; }
       #dci-ocr .dci-ocr-runs { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 8); }
       #dci-ocr .dci-ocr-runs li { display: flex; gap: calc(var(--u, 1px) * 10); align-items: center; }
-      #dci-ocr .dci-ocr-runs img { width: calc(var(--u, 1px) * 48); height: calc(var(--u, 1px) * 48); object-fit: cover; border-radius: 3px; }
+      #dci-ocr .dci-ocr-runs img { width: calc(var(--u, 1px) * 48); height: calc(var(--u, 1px) * 48); object-fit: contain; border-radius: 3px; background: #eceaf3; }
       #dci-ocr .dci-ocr-runs li > span { flex: 1; display: flex; flex-direction: column; gap: 4px; }
       #dci-ocr .dci-ocr-barbox { display: block; height: 6px; border-radius: 3px; background: #eceaf3; overflow: hidden; }
       #dci-ocr .dci-ocr-bar { display: block; height: 100%; background: #736dab; transition: width 0.2s; }
@@ -23412,7 +23509,12 @@
       #dci-ocr .dci-ocr-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 96), 1fr)); gap: calc(var(--u, 1px) * 8); }
       #dci-ocr .dci-ocr-thumb { display: flex; flex-direction: column; gap: 3px; padding: 6px; border: 1px solid #dddae8; border-radius: 6px; background: #fff; text-align: left; color: #262430; font-size: calc(var(--u, 1px) * 12); }
       #dci-ocr .dci-ocr-thumb.dci-on { border: 2px solid #5b55a0; padding: 5px; background: #f7f6fd; }
-      #dci-ocr .dci-ocr-thumb img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 3px; }
+      #dci-ocr .dci-ocr-thumb img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; border-radius: 3px; background: #eceaf3; }
+      /* [3.34.9] the larger view beside a small image */
+      #dci-ocr-peek { position: fixed; display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid #b9b5d6; border-radius: 6px; background: #fff;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); pointer-events: none; font: 12px / 1.4 system-ui, sans-serif; color: #5d5a6e; }
+      #dci-ocr-peek[hidden] { display: none; }
+      #dci-ocr-peek img { display: block; max-width: min(480px, 44vw); max-height: min(480px, 80vh); object-fit: contain; background: #eceaf3; }
       #dci-ocr .dci-ocr-thumb span { color: #5d5a6e; }
       #dci-ocr .dci-ocr-tools { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); }
       #dci-ocr .dci-small:disabled { color: #9b98a8; cursor: default; }

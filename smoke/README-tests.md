@@ -401,6 +401,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     600 px, not another release's; a Discogs address typed (twice refused); read ×3, the source
                                 #   ocrstart: 3.34.8: "… from cover art" only with the beta, joined to "Import credits …"; the dashboard without the
                                 #     import (nothing of Discogs), the message, the window; the read text the source; beta off: gone
+                                #   ocrpeek: 3.34.9: tiles alike with the whole image; the larger view after a pause (1200 px image, its
+                                #     proportions, 480 px), gone on leaving; an own narrow file larger; in the frames step too
                                 #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
