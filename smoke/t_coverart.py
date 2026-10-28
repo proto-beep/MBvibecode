@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore; `python3 t_coverart.py <case> …` runs only those."""
 import json
 import re
 
@@ -1077,6 +1077,100 @@ def case_ocrauto():
             except Exception:
                 pass
         ctx2.unroute_all(behavior='ignoreErrors')
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_ocrmore():
+    """[3.34.16] Large collections a part at a time (collected item 131; maintainer: "bei großen cover art collections müssten
+    sie evtl auf mehreren seiten angezeigt werden. zumindest als angebot", "weitere laden", "12 bilder pro seite", "ja passt",
+    "ja" (beside the frames, PDF pages)).
+    A) 30 images, nothing ticked: 12 shown, only their previews asked for, "Load 12 more (18 not shown yet)"; "All shown (12)"
+       beside "All images (30)".
+    B) Load more: 24 shown (24 previews); "All shown (24)" ticks those 24 – "24 of 30 images"; Load more: 30, the button and
+       "All shown" gone.
+    C) Beside the frames: 12 small images and "Load 12 more"; clicked: 24.
+    D) "Auto-select" on with 30 booklet pages: all ticked, so all shown.
+    E) A PDF of 15 pages, each "Mastered by …": with Auto-select all ticked and shown; without, 12 of its pages shown, "Load 3
+       more (3 not shown yet)"."""
+    results = []
+    thumbs = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = [(200 + i, ['Booklet' if i % 3 else 'Back'], f'p. {i + 1}', 1200, 1200) for i in range(30)]
+        ctx = H.new_context(b)
+        beta_on(ctx, auto=False)
+        ctx.on('request', lambda r: thumbs.append(r.url) if re.search(r'coverartarchive\.org/release/[^/]+/\d+-250\.jpg$', r.url) else None)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.wait_for_timeout(500)
+        ST = """(() => { const el = document.getElementById('dci-ocr'); const m = el.querySelector('[data-ocr=more]'); const lab = (sel) => { const x = el.querySelector(sel); return x ? x.closest('label').textContent.trim() : null; };
+          return { cards: el.querySelectorAll('.dci-ocr-card').length, more: m ? m.textContent.trim() : null, all: lab('[data-ocr-all]'), shown: lab('[data-ocr-shown]'),
+            foot: el.querySelector('.dci-ocr-foot .dci-sub').textContent.trim() }; })()"""
+        a = [pg.evaluate(ST), len(set(thumbs))]
+        print('A) geöffnet:', a)
+        results.append(a[0] == {'cards': 12, 'more': 'Load 12 more (18 not shown yet)', 'all': 'All images (30)', 'shown': 'All shown (12)', 'foot': '0 of 30 images'} and a[1] == 12)
+        pg.click('#dci-ocr [data-ocr=more]')
+        pg.wait_for_timeout(400)
+        b1 = [pg.evaluate(ST), len(set(thumbs))]
+        pg.check('#dci-ocr [data-ocr-shown]')
+        b2 = pg.evaluate(ST)
+        pg.click('#dci-ocr [data-ocr=more]')
+        pg.wait_for_timeout(300)
+        b3 = pg.evaluate(ST)
+        print('B) mehr:', b1, '| alle gezeigten:', b2, '| alle:', b3)
+        results.append(b1[0]['cards'] == 24 and b1[0]['more'] == 'Load 6 more (6 not shown yet)' and b1[1] == 24 and b1[0]['shown'] == 'All shown (24)'
+                       and b2['foot'] == '24 of 30 images' and b3['cards'] == 30 and b3['more'] is None and b3['shown'] is None)
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-thumb', timeout=10000)
+        TH = "[document.querySelectorAll('#dci-ocr .dci-ocr-thumb').length, (document.querySelector('#dci-ocr [data-ocr=morethumbs]') || {}).textContent || null]"
+        c1 = pg.evaluate(TH)
+        pg.click('#dci-ocr [data-ocr=morethumbs]')
+        c2 = pg.evaluate(TH)
+        print('C) Rahmen-Leiste:', c1, '→', c2)
+        results.append(c1 == [12, 'Load 12 more (12 not shown yet)'] and c2 == [24, None])
+        pg.click('#dci-ocr [data-ocr=back]')
+        pg.click('#dci-ocr [data-ocr=close]')
+        # D) Auto-select with 30 booklet pages
+        H.COVER_ART = [(300 + i, ['Booklet'], f'p. {i + 1}', 1200, 1200) for i in range(30)]
+        pg.evaluate("localStorage.setItem('dci-ocr-auto', 'true')")
+        print('Fehler:', errs)
+        results.append(not errs)
+        pg.close()
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        d = pg.evaluate(ST)
+        print('D) Auto-select:', d)
+        results.append(d['cards'] == 30 and d['more'] is None and d['foot'] == '30 of 30 images')
+        pg.evaluate("localStorage.removeItem('dci-ocr-auto')")
+        pg.click('#dci-ocr [data-ocr=close]')
+        # E) a PDF of 15 pages
+        H.COVER_ART = []
+        pdf = H.pdf_of([[(40, 380, 14, f'Page {i + 1}'), (40, 350, 12, 'Mastered by Bob Producer')] for i in range(15)])
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-files]', state='attached', timeout=10000)
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'long.pdf', 'mimeType': 'application/pdf', 'buffer': pdf}])
+        H.wait_for(pg, "!document.querySelector('#dci-ocr [data-ocr-pdfstatus]') && document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length >= 15", 40)
+        e1 = pg.evaluate("[document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length, document.querySelectorAll('#dci-ocr .dci-ocr-owncard input:checked').length]")
+        # Auto-select off: its ticks go, the pages shown stay
+        pg.click('#dci-ocr [data-ocr=auto]')
+        pg.click('#dci-ocr [data-ocr=close]')
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-files]', state='attached', timeout=10000)
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'long.pdf', 'mimeType': 'application/pdf', 'buffer': pdf}])
+        H.wait_for(pg, "!document.querySelector('#dci-ocr [data-ocr-pdfstatus]') && !!document.querySelector('#dci-ocr [data-ocr=more]')", 40)
+        e2 = pg.evaluate("[document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length, document.querySelector('#dci-ocr [data-ocr=more]').textContent.trim()]")
+        print('E) PDF, Auto-select an (gezeigt, angehakt):', e1, '| aus:', e2)
+        results.append(e1 == [15, 15] and e2 == [12, 'Load 3 more (3 not shown yet)'])
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

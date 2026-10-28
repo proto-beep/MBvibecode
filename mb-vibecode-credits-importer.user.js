@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.15
+// @version      3.34.16
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.15
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.15
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.16
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.16
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.15';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.16';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1439,6 +1439,8 @@
       "log.ocrOwnAdded.one": "Text from cover art: {n} own image added ({what})",
       "log.ocrOwnAdded.other": "Text from cover art: {n} own images added ({what})",
       "ocr.all": "All images ({n})",
+      "ocr.allShown": "All shown ({n})",
+      "ocr.more": "Load {n} more ({left} not shown yet)",
       "ocr.auto": "Auto-select",
       "ocr.autoTitle": "Ticks the images that mostly have credits: back cover, booklet, liner and tray, and PDF pages with credits in their own text. On, it does so each time the window opens (the same as in ⚙ Settings → Beta); off, its ticks go again.",
       "settings.ocrAuto": "Auto-select the images with credits",
@@ -9462,6 +9464,8 @@
     if (!o || o.step === 'run') return;
     const list = [...(files || [])];
     const images = list.filter((f) => OCR_IMAGE_FILE.test(f.type || '')).map((f) => ocrOwnImage('file', f, pasted));
+    // [3.34.16] the first OCR_BATCH of them shown
+    images.forEach((im, i) => { im.shown = i < OCR_BATCH; });
     o.images.push(...images);
     const other = list.filter((f) => !OCR_IMAGE_FILE.test(f.type || '') && !isPdfFile(f)).map((f) => f.name || f.type || '?');
     o.error = other.length ? tr('ocr.notImage', { names: other.join(', ') }) : '';
@@ -9507,7 +9511,7 @@
         renderOcr();
       });
     } else {
-      o.images.push(ocrOwnImage('url', u));
+      o.images.push({ ...ocrOwnImage('url', u), shown: true });
       o.urlDraft = '';
       o.error = '';
       log('info', 'ocrOwnAdded', { n: 1, what: u });
@@ -9542,7 +9546,7 @@
       if (S.ocr !== o) return;
       if (!urls.length) throw new Error(tr('ocr.discogsNone', { id }));
       // [3.34.15] not ticked (no choice made beforehand – collected item 136): tick the ones with credits
-      urls.forEach((u, k) => o.images.push({ ...ocrOwnImage('url', u), src: 'discogs', discogs: id, name: tr('ocr.discogsImage', { id, n: k + 1 }), sel: false }));
+      urls.forEach((u, k) => o.images.push({ ...ocrOwnImage('url', u), src: 'discogs', discogs: id, name: tr('ocr.discogsImage', { id, n: k + 1 }), sel: false, shown: k < OCR_BATCH }));
       log('info', 'ocrOwnAdded', { n: urls.length, what: `Discogs r${id}` });
     } catch (e) {
       if (S.ocr === o) o.error = (e && e.message) || String(e);
@@ -9644,7 +9648,7 @@
         if (S.ocr !== o) return;
         if (letters >= OCR_PDF_TEXT) withText++;
         const pg = { id: `own${++ocrOwnN}`, src: 'pdf', name: tr('ocr.pdfPage', { name, n: p }), file: name, from, page: p, pdfPage: page, textLayer: letters >= OCR_PDF_TEXT,
-          pdfText, types: [], comment: '', sel: false, mode: 'frames', frames: [], canvas: null, thumb };
+          pdfText, types: [], comment: '', sel: false, mode: 'frames', frames: [], canvas: null, thumb, shown: p <= OCR_BATCH };
         if (S.ocrAuto) ocrAutoApply([pg]);
         o.images.push(pg);
         renderOcr();
@@ -9978,8 +9982,9 @@
       if (l.length < 4 || l.length > 200) return false;
       const dash = l.match(/^(.{2,60}?)\s*(?:[–—:]|\s-)\s+(.{2,80})$/);
       if (dash && (known(dash[1]) || known(dash[2]))) return true;
+      // "Mastered by X": the register knows "Mastered By"
       const by = l.match(/^(.{2,40}?)\s+by\s+\S/i);
-      return !!by && known(by[1]);
+      return !!by && (known(`${by[1]} By`) || known(by[1]));
     });
   }
 
@@ -10222,6 +10227,8 @@
     const { img, k } = ocrCurrent();
     if (!img) return ocrPickHtml();
     const n = ocrToRead().length;
+    // [3.34.16] the small images in batches too (the one shown always)
+    const thumbsLeft = chosen.filter((im, i) => !(i < (o.thumbsShown || OCR_BATCH) || i === o.cur)).length;
     const state = (im) => (im.mode === 'skip' ? tr('ocr.leftOut') : im.mode === 'whole' ? tr('ocr.wholeImage') : im.frames.length ? tr('ocr.nFrames', { n: im.frames.length }) : tr('ocr.noFrame'));
     const view = img.canvas
       ? `<canvas class="dci-ocr-view" data-ocr-view width="${Math.round(img.canvas.width * k)}" height="${Math.round(img.canvas.height * k)}" role="img" aria-label="${esc(tr('ocr.viewLabel', { what: ocrTypes(img) }))}"></canvas>`
@@ -10230,8 +10237,9 @@
     return `<div class="dci-ocr-body dci-ocr-frames">
         <div class="dci-ocr-stage">${view}</div>
         <div class="dci-ocr-side">
-          <div class="dci-ocr-thumbs">${chosen.map((im, i) => `<button type="button" class="dci-ocr-thumb${i === o.cur ? ' dci-on' : ''}" data-ocr-cur="${i}" aria-current="${i === o.cur}">
-            <img src="${esc(im.thumb)}" alt="" data-ocr-peek="${esc(im.id)}"><strong>${esc(ocrTypes(im))}</strong><span>${esc(state(im))}</span>${ocrLoadHtml(im)}</button>`).join('')}</div>
+          <div class="dci-ocr-thumbs">${chosen.map((im, i) => (i < (o.thumbsShown || OCR_BATCH) || i === o.cur ? `<button type="button" class="dci-ocr-thumb${i === o.cur ? ' dci-on' : ''}" data-ocr-cur="${i}" aria-current="${i === o.cur}">
+            <img src="${esc(im.thumb)}" alt="" data-ocr-peek="${esc(im.id)}"><strong>${esc(ocrTypes(im))}</strong><span>${esc(state(im))}</span>${ocrLoadHtml(im)}</button>` : '')).join('')}</div>
+          ${thumbsLeft > 0 ? `<button type="button" class="dci-small" data-ocr="morethumbs">${esc(tr('ocr.more', { n: Math.min(OCR_BATCH, thumbsLeft), left: thumbsLeft }))}</button>` : ''}
           ${img.canvas && img.w < OCR_SMALL ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: img.w, h: img.h }))}</p>` : ''}
           <fieldset><legend>${esc(tr('ocr.mode'))}</legend>
             ${mode('frames', tr('ocr.modeFrames', { n: img.frames.length }))}${mode('whole', tr('ocr.modeWhole'))}${mode('skip', tr('ocr.modeSkip'))}</fieldset>
@@ -10258,6 +10266,8 @@
       if (!S.ocr) return;
       // [3.34.5] own images added while the list was loading stay, after the release's; [3.34.15] ticked by "Auto-select" if on
       if (S.ocrAuto) ocrAutoApply(images);
+      // [3.34.16] the first OCR_BATCH shown
+      images.forEach((im, i) => { im.shown = i < OCR_BATCH; });
       Object.assign(S.ocr, { images: [...images, ...S.ocr.images.filter((im) => !ocrIsCaa(im))], step: 'pick' });
       renderOcr();
     }, (e) => {
@@ -10464,9 +10474,19 @@
         <p class="dci-sub">${esc(tr('ocr.ownHint'))}</p></fieldset>`;
   }
 
+  // --- [3.34.16] Large collections a part at a time (collected item 131; maintainer: "bei großen cover art collections müssten
+  // sie evtl auf mehreren seiten angezeigt werden. zumindest als angebot", "weitere laden", "wollen wir erst einmal 12 bilder pro
+  // seite sagen", "ja passt" (All shown), "ja" (also beside the frames and for PDF pages)): OCR_BATCH images shown at first –
+  // with them only their previews loaded –, "Load 12 more" shows the next ones; images ticked are always shown.
+  const OCR_BATCH = 12;
+
   function ocrPickHtml() {
     const o = S.ocr;
     const n = o.images.filter((im) => im.sel).length;
+    // [3.34.16] an image ticked stays shown; the others in batches
+    o.images.forEach((im) => { if (im.sel) im.shown = true; });
+    const shown = o.images.filter((im) => im.shown);
+    const left = o.images.length - shown.length;
     // [3.34.2] back from the frames: an image left out there is read again when ticked here
     o.images.forEach((im) => { if (im.mode === 'skip') im.mode = 'frames'; });
     const caa = o.images.filter(ocrIsCaa).length;
@@ -10482,12 +10502,15 @@
     const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
     // [3.34.15] "Auto-select": a switch (the same as in ⚙ Settings → Beta)
     const auto = o.images.length ? `<button type="button" class="dci-small dci-ocr-auto" data-ocr="auto" aria-pressed="${S.ocrAuto}" title="${esc(tr('ocr.autoTitle'))}">${esc(tr('ocr.auto'))}</button>` : '';
+    // [3.34.16] "All shown" while some are not shown
+    const allShown = left && shown.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-shown ${shown.every((im) => im.sel) ? 'checked' : ''}> ${esc(tr('ocr.allShown', { n: shown.length }))}</label>` : '';
+    const more = left ? `<div class="dci-ocr-more"><button type="button" class="dci-small" data-ocr="more">${esc(tr('ocr.more', { n: Math.min(OCR_BATCH, left), left }))}</button></div>` : '';
     return `<div class="dci-ocr-body">
         ${o.error ? `<p class="dci-ocr-err" role="alert">${esc(o.error)}</p>` : ''}
         ${o.listError ? `<p class="dci-ocr-err">${esc(tr('ocr.listFailed', { why: o.listError }))}</p>` : !caa ? `<p>${esc(tr('ocr.none'))}</p>` : `<p class="dci-sub">${esc(tr('ocr.pickHint'))}</p>`}
         <p class="dci-sub" data-ocr-plain>${esc(tr('ocr.plainHint'))}</p>
-        <div class="dci-ocr-pickhead">${auto}${all}<span class="dci-sub" data-ocr-previews role="status" hidden></span></div>
-        ${o.images.length ? `<div class="dci-ocr-grid">${o.images.map(card).join('')}</div>` : ''}
+        <div class="dci-ocr-pickhead">${auto}${all}${allShown}<span class="dci-sub" data-ocr-previews role="status" hidden></span></div>
+        ${o.images.length ? `<div class="dci-ocr-grid">${o.images.map((im, i) => (im.shown ? card(im, i) : '')).join('')}</div>${more}` : ''}
         ${ocrOwnHtml()}
         <div class="dci-ocr-opts">
           <fieldset><legend>${esc(tr('ocr.langs'))}</legend>
@@ -10994,6 +11017,13 @@
       const n = o.images.filter((im) => im.sel).length;
       all.indeterminate = n > 0 && n < o.images.length;
     }
+    // [3.34.16] "All shown" half ticked too
+    const allShown = el.querySelector('[data-ocr-shown]');
+    if (allShown) {
+      const sh = o.images.filter((im) => im.shown);
+      const n = sh.filter((im) => im.sel).length;
+      allShown.indeterminate = n > 0 && n < sh.length;
+    }
     // [3.34.2] the frames step: the image loaded first, then drawn
     if (o.step === 'frames') {
       const { img } = ocrCurrent();
@@ -11102,6 +11132,17 @@
       ocrSetAuto(!S.ocrAuto);
       return;
     }
+    if (act === 'more') {
+      // [3.34.16] the next images shown (their previews load then)
+      S.ocr.images.filter((im) => !im.shown).slice(0, OCR_BATCH).forEach((im) => { im.shown = true; });
+      renderOcr();
+      return;
+    }
+    if (act === 'morethumbs') {
+      S.ocr.thumbsShown = (S.ocr.thumbsShown || OCR_BATCH) + OCR_BATCH;
+      renderOcr();
+      return;
+    }
     if (act === 'close') closeOcr();
     else if (act === 'run') ocrRun();
     else if (act === 'frames') {
@@ -11142,6 +11183,12 @@
       im.autoSel = false;
       // [3.34.10] unticked: out of the queue of loading ahead
       if (!im.sel) ocrPreloadDrop(im);
+    } else if (t.dataset.ocrShown != null) {
+      // [3.34.16] the images shown
+      o.images.filter((im) => im.shown).forEach((im) => {
+        Object.assign(im, { sel: t.checked, autoSel: false });
+        if (!im.sel) ocrPreloadDrop(im);
+      });
     } else if (t.dataset.ocrAll != null) {
       o.images.forEach((im) => {
         Object.assign(im, { sel: t.checked, autoSel: false });
@@ -24287,6 +24334,7 @@
       #dci-ocr .dci-ocr-viewwait p { margin: 0; }
       #dci-ocr .dci-ocr-viewwait .dci-ocr-load { min-width: calc(var(--u, 1px) * 240); font-size: calc(var(--u, 1px) * 12); color: inherit; }
       #dci-ocr .dci-ocr-viewwait .dci-ocr-loadbar { background: rgba(255, 255, 255, 0.25); }
+      #dci-ocr .dci-ocr-more { display: flex; justify-content: center; }
       #dci-ocr .dci-ocr-auto[aria-pressed="true"] { background: #736dab; border-color: #4b4585; color: #fff; }
       #dci-ocr .dci-ocr-pickhead { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 16); }
       #dci-ocr .dci-ocr-all { font-weight: 600; }
