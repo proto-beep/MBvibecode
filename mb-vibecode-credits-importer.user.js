@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.10
+// @version      3.34.11
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.10
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.10
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.11
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.11
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.10';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.11';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1471,6 +1471,13 @@
       "ocr.pdfPages": "{name}: page {n} of {of} …",
       "ocr.pdfFetching": "Loading {name} … {got} MB",
       "ocr.pdfFetchingOf": "Loading {name} … {got} / {of} MB",
+      "ocr.part": "Frame {n}",
+      "ocr.partOf": "{what}, frame {n}",
+      "ocr.zoomLabel": "{what}: the part read – drag to move it",
+      "ocr.zoomIn": "Zoom in",
+      "ocr.zoomOut": "Zoom out",
+      "ocr.zoomFit": "Fit",
+      "ocr.zoomHint": "Ctrl + wheel or a double click zooms at a place; drag to move",
       "ocr.discogsNone": "No images of Discogs release r{id} were found on its page.",
       "ocr.discogsImage": "Discogs r{id} · {n}",
       "ocr.ownDiscogs": "from Discogs",
@@ -9667,6 +9674,7 @@
   async function ocrPdfText(img) {
     const tc = await img.pdfPage.getTextContent();
     const items = tc.items.filter((it) => typeof it.str === 'string');
+    // [3.34.11] a text for each frame (so each stands beside its part of the page)
     if (!(img.mode === 'frames' && img.frames.length)) {
       const out = [];
       let line = '';
@@ -9678,7 +9686,7 @@
         }
       });
       out.push(line);
-      return out.map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+      return [out.map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n')];
     }
     const k = img.pdfScale;
     const vp = img.pdfPage.getViewport({ scale: k });
@@ -9686,7 +9694,7 @@
       const [x, y] = vp.convertToViewportPoint(it.transform[4], it.transform[5]);
       return { x, y, size: (Math.hypot(it.transform[2], it.transform[3]) || 10) * k, w: (it.width || 0) * k, str: it.str };
     });
-    return img.frames.flatMap((b) => pdfLines(pts.filter((p) => p.x >= b.x - 2 && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h + p.size * 0.3))).join('\n');
+    return img.frames.map((b) => pdfLines(pts.filter((p) => p.x >= b.x - 2 && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h + p.size * 0.3)).join('\n'));
   }
 
   /** [3.34.6] A PDF page read from its own text (not turned): no text recognition needed. */
@@ -9841,11 +9849,15 @@
   }
 
   /** What is read of an image: its frames (on the canvas), else the whole image; a small image enlarged ×3. */
+  /** [3.34.11] What is read of an image, box by box (on its canvas): its frames, else the whole image. */
+  const ocrBoxes = (img) => (img.mode === 'frames' && img.frames.length ? img.frames.map((b) => ({ ...b })) : [{ x: 0, y: 0, w: img.canvas.width, h: img.canvas.height }]);
+  /** How much larger a piece is read: a small image ×3. */
+  const ocrPieceScale = (img) => (img.w < OCR_SMALL ? 3 : 1);
+
   function ocrPieces(img) {
     const src = img.canvas;
-    const k = img.w < OCR_SMALL ? 3 : 1;
-    const boxes = img.mode === 'frames' && img.frames.length ? img.frames : [{ x: 0, y: 0, w: src.width, h: src.height }];
-    return boxes.map((b) => {
+    const k = ocrPieceScale(img);
+    return ocrBoxes(img).map((b) => {
       const c = document.createElement('canvas');
       c.width = Math.max(1, Math.round(b.w * k));
       c.height = Math.max(1, Math.round(b.h * k));
@@ -10110,27 +10122,35 @@
         res.status = 'load';
         renderOcr();
         const direct = ocrDirect(res.img);
-        if (!direct || res.img.frames.length) await ocrCanvas(res.img);
+        // [3.34.11] the canvas also for a page read from its own text: it stands beside the text
+        await ocrCanvas(res.img);
         res.small = !direct && res.img.w < OCR_SMALL;
         res.status = 'read';
         renderOcr();
-        const texts = [];
-        const unsure = [];
+        // [3.34.11] a part for each frame (else the whole image): its box on the canvas, its text, its words read uncertainly
+        const boxes = ocrBoxes(res.img);
+        const parts = boxes.map((box) => ({ box, text: '', unsure: [], fixes: { pc: 0, dash: 0 }, view: null }));
         if (direct) {
-          texts.push(await ocrPdfText(res.img));
+          (await ocrPdfText(res.img)).forEach((t, j) => { if (parts[j]) parts[j].raw = t; });
           res.direct = true;
         } else {
           const tess = await recognizer();
-          for (const piece of ocrPieces(res.img)) {
-            const { data } = await tess.recognize(piece);
-            texts.push(String((data && data.text) || ''));
-            ((data && data.words) || []).forEach((w) => { if (w && w.confidence < OCR_UNSURE && /[\p{L}\d]/u.test(String(w.text || ''))) unsure.push(String(w.text).trim()); });
+          const pieces = ocrPieces(res.img);
+          for (let j = 0; j < pieces.length; j++) {
+            const { data } = await tess.recognize(pieces[j]);
+            parts[j].raw = String((data && data.text) || '');
+            parts[j].unsure = uniq(((data && data.words) || []).filter((w) => w && w.confidence < OCR_UNSURE && /[\p{L}\d]/u.test(String(w.text || ''))).map((w) => String(w.text).trim()));
             if (!alive()) return;
           }
         }
         if (!alive()) return;
-        const clean = ocrClean(texts.join('\n'));
-        Object.assign(res, { text: clean.text, fixes: clean.fixes, unsure: uniq(unsure), status: 'done', progress: 1 });
+        parts.forEach((pt) => {
+          const clean = ocrClean(pt.raw || '');
+          Object.assign(pt, { text: clean.text, fixes: clean.fixes });
+          delete pt.raw;
+        });
+        const fixes = { pc: parts.reduce((a, pt) => a + pt.fixes.pc, 0), dash: parts.reduce((a, pt) => a + pt.fixes.dash, 0) };
+        Object.assign(res, { parts, fixes, unsure: uniq(parts.flatMap((pt) => pt.unsure)), status: 'done', progress: 1 });
       }
       o.step = 'result';
       log('info', 'ocrDone', { n: o.results.length, langs: (langs.length ? langs : ['eng']).join('+') });
@@ -10148,8 +10168,10 @@
   /** The text of all images (as checked in the window) and where it is from (the edit note names it). */
   function ocrText() {
     const o = S.ocr;
-    const done = o.results.filter((r) => r.status === 'done' && r.text.trim());
-    const text = done.map((r) => r.text.trim()).join('\n\n');
+    // [3.34.11] the text of each part (frame) as checked
+    const textOf = (r) => (r.parts || []).map((pt) => pt.text.trim()).filter(Boolean).join('\n');
+    const done = o.results.filter((r) => r.status === 'done' && textOf(r));
+    const text = done.map(textOf).join('\n\n');
     // [3.34.5] with own images: their files and addresses
     const caa = done.filter((r) => ocrIsCaa(r.img));
     const files = uniq(done.filter((r) => r.img.src === 'file').map((r) => r.img.name));
@@ -10276,8 +10298,7 @@
         <h3>${esc(ocrTypes(r.img))}${r.img.comment ? ` <span class="dci-sub">“${esc(r.img.comment)}”</span>` : ''}</h3>
         ${r.small ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: r.img.w, h: r.img.h }))}</p>` : ''}
         ${r.direct ? `<p class="dci-sub">${esc(tr('ocr.fromPdf'))}</p>` : ''}
-        <textarea data-ocr-text="${i}" rows="${Math.min(14, Math.max(4, r.text.split('\n').length + 1))}" spellcheck="false" aria-label="${esc(tr('ocr.textOf', { what: ocrTypes(r.img) }))}">${esc(r.text)}</textarea>
-        ${r.unsure.length ? `<p class="dci-ocr-unsure"><span class="dci-sub">${esc(tr('ocr.unsure'))}</span> ${r.unsure.map((w) => `<button type="button" class="dci-ocr-word" data-ocr-word="${esc(w)}" data-ocr-in="${i}">${esc(w)}</button>`).join(' ')}</p>` : ''}
+        ${r.parts.map((pt, j) => ocrPartHtml(r, i, pt, j)).join('')}
         ${fixes.length ? `<p class="dci-sub">${esc(tr('ocr.fixed'))} ${esc(fixes.join(' · '))}</p>` : ''}</section>`;
     };
     return `<div class="dci-ocr-body">
@@ -10372,6 +10393,125 @@
     if (thumb && !(e.relatedTarget && thumb.contains(e.relatedTarget))) ocrPeekHide();
   }
 
+  // --- [3.34.11] Each part read beside its text (collected item 130; maintainer: "kann der vergrößerte Bildbereich nach der
+  // Auswahl neben dem erkannten text dargestellt werden? mit zoom in funktion?", "je Rahmen"): for each frame (else the whole
+  // image) its part of the image, fitted, beside its own text; + and − (or Ctrl + wheel, a double click at a place) zoom in
+  // and out, dragging moves it, ⤢ fits it again. The window is wider in this step.
+
+  const OCR_ZOOM_H = 300;
+  const OCR_ZOOM_MAX = 8;
+  window.addEventListener('resize', () => { if (S.ocr && S.ocr.step === 'result') ocrZoomAll(); });
+
+  function ocrPartHtml(r, i, pt, j) {
+    const key = `${i}:${j}`;
+    const what = r.parts.length > 1 ? tr('ocr.partOf', { what: ocrTypes(r.img), n: j + 1 }) : ocrTypes(r.img);
+    const btn = (z, sign, title) => `<button type="button" class="dci-small" data-ocr-z="${z}" data-ocr-zfor="${key}" title="${esc(tr(title))}" aria-label="${esc(tr(title))}">${sign}</button>`;
+    return `<div class="dci-ocr-part" data-ocr-part="${key}">
+        <div class="dci-ocr-zoom"><canvas data-ocr-zoom="${key}" role="img" aria-label="${esc(tr('ocr.zoomLabel', { what }))}"></canvas>
+          <div class="dci-ocr-zoomtools">${btn('in', '+', 'ocr.zoomIn')}${btn('out', '−', 'ocr.zoomOut')}${btn('fit', '⤢', 'ocr.zoomFit')}
+            <span class="dci-sub">${esc(tr('ocr.zoomHint'))}</span></div></div>
+        <div class="dci-ocr-parttext">${r.parts.length > 1 ? `<strong class="dci-sub">${esc(tr('ocr.part', { n: j + 1 }))}</strong>` : ''}
+          <textarea data-ocr-text="${key}" rows="${Math.min(14, Math.max(4, pt.text.split('\n').length + 1))}" spellcheck="false" aria-label="${esc(tr('ocr.textOf', { what }))}">${esc(pt.text)}</textarea>
+          ${pt.unsure.length ? `<p class="dci-ocr-unsure"><span class="dci-sub">${esc(tr('ocr.unsure'))}</span> ${pt.unsure.map((w) => `<button type="button" class="dci-ocr-word" data-ocr-word="${esc(w)}" data-ocr-in="${key}">${esc(w)}</button>`).join(' ')}</p>` : ''}</div></div>`;
+  }
+
+  const ocrPartOf = (key) => {
+    const [i, j] = String(key).split(':').map(Number);
+    const r = S.ocr && S.ocr.results[i];
+    return r && r.parts ? { r, pt: r.parts[j] } : {};
+  };
+
+  /** A part's view: its scale (canvas pixels to view pixels) and the place of its upper left corner on the image's canvas. */
+  function ocrZoomFit(pt, W, H) {
+    const k = Math.min(W / pt.box.w, H / pt.box.h);
+    return { k, x: pt.box.x - (W / k - pt.box.w) / 2, y: pt.box.y - (H / k - pt.box.h) / 2, fit: true };
+  }
+
+  /** Kept within its part (when larger than the view), centred on it when smaller. */
+  function ocrZoomClamp(pt, v, W, H) {
+    const vw = W / v.k;
+    const vh = H / v.k;
+    const x = vw >= pt.box.w ? pt.box.x - (vw - pt.box.w) / 2 : Math.max(pt.box.x, Math.min(pt.box.x + pt.box.w - vw, v.x));
+    const y = vh >= pt.box.h ? pt.box.y - (vh - pt.box.h) / 2 : Math.max(pt.box.y, Math.min(pt.box.y + pt.box.h - vh, v.y));
+    return { ...v, x, y };
+  }
+
+  /** A part drawn in its view (its size: the width of its column, OCR_ZOOM_H high at most – less for a wide part). */
+  function ocrZoomDraw(key) {
+    const c = document.querySelector(`#dci-ocr [data-ocr-zoom="${key}"]`);
+    const { r, pt } = ocrPartOf(key);
+    if (!c || !pt || !r.img.canvas) return;
+    const W = Math.max(120, c.parentElement.clientWidth);
+    const H = Math.round(Math.max(90, Math.min(OCR_ZOOM_H * (S.scale || 1), (W * pt.box.h) / pt.box.w)));
+    const dpr = window.devicePixelRatio || 1;
+    if (c.width !== Math.round(W * dpr) || c.height !== Math.round(H * dpr)) {
+      c.width = Math.round(W * dpr);
+      c.height = Math.round(H * dpr);
+      c.style.width = `${W}px`;
+      c.style.height = `${H}px`;
+    }
+    // the text beside it as high as the part
+    const ta = c.closest('.dci-ocr-part') && c.closest('.dci-ocr-part').querySelector('textarea');
+    if (ta) ta.style.minHeight = `${Math.max(90, H)}px`;
+    if (!pt.view || pt.view.fit) pt.view = ocrZoomFit(pt, W, H);
+    pt.view = ocrZoomClamp(pt, pt.view, W, H);
+    const v = pt.view;
+    const g = c.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = '#3b3530';
+    g.fillRect(0, 0, W, H);
+    g.imageSmoothingQuality = 'high';
+    g.save();
+    // only the part: what lies outside it stays dark
+    g.beginPath();
+    g.rect((pt.box.x - v.x) * v.k, (pt.box.y - v.y) * v.k, pt.box.w * v.k, pt.box.h * v.k);
+    g.clip();
+    g.drawImage(r.img.canvas, v.x, v.y, W / v.k, H / v.k, 0, 0, W, H);
+    g.restore();
+    c.dataset.k = String(v.k);
+  }
+
+  /** Zoomed by f at a place of the view (px from its upper left corner; none: its middle). */
+  function ocrZoomBy(key, f, at) {
+    const c = document.querySelector(`#dci-ocr [data-ocr-zoom="${key}"]`);
+    const { pt } = ocrPartOf(key);
+    if (!c || !pt || !pt.view) return;
+    const W = c.clientWidth;
+    const H = c.clientHeight;
+    const p = at || { x: W / 2, y: H / 2 };
+    const fit = ocrZoomFit(pt, W, H).k;
+    const k = Math.max(fit, Math.min(OCR_ZOOM_MAX, pt.view.k * f));
+    const ix = pt.view.x + p.x / pt.view.k;
+    const iy = pt.view.y + p.y / pt.view.k;
+    pt.view = { k, x: ix - p.x / k, y: iy - p.y / k, fit: k <= fit + 1e-9 };
+    ocrZoomDraw(key);
+  }
+
+  function ocrZoomAll() {
+    document.querySelectorAll('#dci-ocr [data-ocr-zoom]').forEach((c) => ocrZoomDraw(c.dataset.ocrZoom));
+  }
+
+  /** Dragging a zoomed part moves it. */
+  function ocrZoomDrag(e) {
+    const c = e.target.closest && e.target.closest('[data-ocr-zoom]');
+    if (!c || e.button !== 0) return false;
+    const { pt } = ocrPartOf(c.dataset.ocrZoom);
+    if (!pt || !pt.view) return false;
+    e.preventDefault();
+    const from = { x: e.clientX, y: e.clientY, vx: pt.view.x, vy: pt.view.y };
+    const move = (ev) => {
+      pt.view = { ...pt.view, x: from.vx - (ev.clientX - from.x) / pt.view.k, y: from.vy - (ev.clientY - from.y) / pt.view.k };
+      ocrZoomDraw(c.dataset.ocrZoom);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    return true;
+  }
+
   /** The window "Text from cover art" (drawn anew for each step). */
   function renderOcr() {
     const o = S.ocr;
@@ -10386,7 +10526,24 @@
       document.body.appendChild(el);
       el.addEventListener('click', ocrClick);
       el.addEventListener('change', ocrChange);
-      el.addEventListener('pointerdown', ocrPointerDown);
+      el.addEventListener('pointerdown', (e) => {
+        // [3.34.11] a zoomed part moved, else the frames
+        if (!ocrZoomDrag(e)) ocrPointerDown(e);
+      });
+      // [3.34.11] Ctrl + wheel zooms a part at the place of the mouse; a double click zooms in there
+      el.addEventListener('wheel', (e) => {
+        const c = e.ctrlKey && e.target.closest && e.target.closest('[data-ocr-zoom]');
+        if (!c) return;
+        e.preventDefault();
+        const r = c.getBoundingClientRect();
+        ocrZoomBy(c.dataset.ocrZoom, e.deltaY < 0 ? 1.25 : 0.8, { x: e.clientX - r.left, y: e.clientY - r.top });
+      }, { passive: false });
+      el.addEventListener('dblclick', (e) => {
+        const c = e.target.closest && e.target.closest('[data-ocr-zoom]');
+        if (!c) return;
+        const r = c.getBoundingClientRect();
+        ocrZoomBy(c.dataset.ocrZoom, 2, { x: e.clientX - r.left, y: e.clientY - r.top });
+      });
       // [3.34.9] the larger view of a small image
       el.addEventListener('mouseover', ocrPeekOver);
       el.addEventListener('mouseout', ocrPeekOut);
@@ -10395,8 +10552,10 @@
       el.addEventListener('load', (e) => { if (e.target.matches && e.target.matches('img[data-ocr-preview]')) ocrPreviewsCount(); }, true);
       el.addEventListener('error', (e) => { if (e.target.matches && e.target.matches('img[data-ocr-preview]')) ocrPreviewsCount(); }, true);
       el.addEventListener('input', (e) => {
-        const i = e.target.dataset.ocrText;
-        if (i != null && S.ocr && S.ocr.results[i]) S.ocr.results[i].text = e.target.value;
+        // [3.34.11] the text of a part
+        const key = e.target.dataset.ocrText;
+        const { pt } = key != null ? ocrPartOf(key) : {};
+        if (pt) pt.text = e.target.value;
         if (e.target.dataset.ocrUrl != null && S.ocr) S.ocr.urlDraft = e.target.value;
       });
       // [3.34.5] an address: Enter adds it
@@ -10445,6 +10604,9 @@
       const again = el.querySelector(`[data-ocr-peek="${CSS.escape(peekFor)}"]`);
       if (again) ocrPeekShow(again);
     }
+    // [3.34.11] wider while checking the text, each part drawn beside it
+    el.classList.toggle('dci-ocr-wide', o.step === 'result');
+    if (o.step === 'result') ocrZoomAll();
     // [3.34.5] "All images" half ticked while only some are
     const all = el.querySelector('[data-ocr-all]');
     if (all) {
@@ -10496,6 +10658,16 @@
         ta.focus();
         ta.setSelectionRange(at, at + word.dataset.ocrWord.length);
       }
+      return;
+    }
+    const zb = t.closest('[data-ocr-z]');
+    if (zb && S.ocr) {
+      // [3.34.11] + / − / fit
+      const { pt } = ocrPartOf(zb.dataset.ocrZfor);
+      if (zb.dataset.ocrZ === 'fit' && pt) {
+        pt.view = null;
+        ocrZoomDraw(zb.dataset.ocrZfor);
+      } else ocrZoomBy(zb.dataset.ocrZfor, zb.dataset.ocrZ === 'in' ? 1.5 : 1 / 1.5);
       return;
     }
     const dg = t.closest('[data-ocr-discogs]');
@@ -23676,6 +23848,16 @@
       #dci-ocr .dci-ocr-type > span { overflow-wrap: anywhere; }
       /* [3.34.5] own images: a dashed card, the box to add them, the window while something is dragged onto it */
       #dci-ocr .dci-ocr-owncard { border-style: dashed; }
+      /* [3.34.11] each part beside its text, wider while checking */
+      #dci-ocr.dci-ocr-wide { width: min(calc(var(--u, 1px) * 1400), 98vw); }
+      #dci-ocr .dci-ocr-part { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: calc(var(--u, 1px) * 12); align-items: start; }
+      @media (max-width: 760px) { #dci-ocr .dci-ocr-part { grid-template-columns: minmax(0, 1fr); } }
+      #dci-ocr .dci-ocr-zoom { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+      #dci-ocr .dci-ocr-zoom canvas { display: block; border-radius: 4px; background: #3b3530; cursor: grab; touch-action: none; }
+      #dci-ocr .dci-ocr-zoom canvas:active { cursor: grabbing; }
+      #dci-ocr .dci-ocr-zoomtools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+      #dci-ocr .dci-ocr-zoomtools .dci-small { padding: 0 calc(var(--u, 1px) * 8); min-width: calc(var(--u, 1px) * 28); }
+      #dci-ocr .dci-ocr-parttext { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
       /* [3.34.10] how much of an image has come */
       #dci-ocr .dci-ocr-load { display: flex; flex-direction: column; gap: 2px; font-size: calc(var(--u, 1px) * 11); color: #5d5a6e; font-weight: 400; }
       #dci-ocr .dci-ocr-load[hidden] { display: none; }
