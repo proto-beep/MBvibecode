@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.3
+// @version      3.34.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -25,8 +25,8 @@
 // @connect      raw.githubusercontent.com
 // @connect      coverartarchive.org
 // @connect      archive.org
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -39,7 +39,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1435,7 +1435,7 @@
       "mapping.empty": "it is empty",
       "mapping.tooLong": "longer than {n} characters",
       "mapping.badValue": "{id}: the field “{field}” has a value of the wrong kind",
-      "mapping.badField": "{id}: the field “{field}” cannot be changed (only data: pattern, types, level, role credit, instrument)",
+      "mapping.badField": "{id}: the field “{field}” cannot be changed (only data: pattern, types, level, role credit, instrument; the words and choices of wording rules and questions)",
       "mapping.tooMany": "More than {n} entries",
       "mapping.badLine": "This line cannot be read: {line}",
       "mapping.credit.none": "none",
@@ -1450,6 +1450,23 @@
       "mapping.field.place": "Types for places",
       "mapping.field.area": "Types for areas",
       "mapping.field.artist": "Types for artists",
+      "mapping.field.phrases": "Words",
+      "mapping.field.base": "Word",
+      "mapping.field.options": "Choices",
+      "mapping.phrasesHint": "One a line: the role with its details, in small letters, in either order (“upright bass”, “bass upright”); the instrument comes from the words.",
+      "mapping.optionsHint": "The plain word the question is for, the role credit it keeps, and the instruments to choose – one a line, in this order, as MusicBrainz names them.",
+      "mapping.choicesHint": "The choices in their order, each a type and a level; an instrument for instrument and vocal, a task for “miscellaneous support”, the label as the button shows it. What asks the question stays.",
+      "mapping.choice.type": "Type",
+      "mapping.choice.level": "Level",
+      "mapping.choice.instrument": "Instrument",
+      "mapping.choice.task": "Task",
+      "mapping.choice.label": "Label",
+      "mapping.choice.credit": "Role credit",
+      "mapping.choice.suggested": "Suggested",
+      "mapping.choiceUp": "Up",
+      "mapping.choiceDown": "Down",
+      "mapping.choiceDel": "Remove this choice",
+      "mapping.choiceAdd": "Add a choice",
       "mapping.editTitle": "✎ Change rule {id} (your change, stored in this browser)",
       "mapping.editRuleTitle": "Change rule {id}",
       "mapping.editListTitle": "Change the entries of {id}",
@@ -2121,6 +2138,15 @@
   const RULE_LEVELS = ['recording', 'release', 'release_group', 'work'];
   const ROLE_RULE_FIELDS = ['re', 'types', 'level', 'credit', 'primaryCands'];
   const COMPANY_RULE_FIELDS = ['re', 'label', 'place', 'area', 'artist', 'level'];
+  // [3.34.4] ✎ also at the wording rules and the questions (collected item 121; maintainer: "bitte gib W und Q auch eine edit
+  // funktion", "passt so"): of a wording rule (W) its phrases and role credit; of an instrument question (Q001 …) its word,
+  // role credit and the instruments to choose; of a type question (Q003 …) its choices – type, level, instrument, task, label,
+  // role credit, suggested. What asks a type question (its rule, flag, the question's text) stays, code depends on it.
+  const WORDING_RULE_FIELDS = ['phrases', 'credit'];
+  const QUESTION_RULE_FIELDS = ['base', 'credit', 'options'];
+  const TYPE_QUESTION_FIELDS = ['options'];
+  /** The fields of a choice of a type question, in the order a changed choice is written. */
+  const OPTION_FIELDS = ['type', 'level', 'instrument', 'task', 'label', 'credit', 'suggested'];
   /** The word lists and tables whose entries may be changed (words; pairs and spellings: "key = value"). */
   const EDITABLE_LISTS = {
     T001: { key: 'INSTRUMENT_ALIASES', shape: 'map' },
@@ -2130,7 +2156,7 @@
     T045: { key: 'RIGHTS_SOCIETIES', shape: 'pairs', reload: true },
     T048: { key: 'ROLE_WORDS', shape: 'words' },
   };
-  const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8 };
+  const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
   /** { rules: { id: { set: { field: value as in the file }, was: { field: built-in value then } } }, lists: { T…: { add, remove } }, base }. */
   function readMappingChanges() {
@@ -2154,13 +2180,28 @@
 
   const rawRoleRule = (raw, id) => raw.ROLE_RULE_DATA.find((x) => x.id === id) || null;
   const rawCompanyRule = (raw, id) => raw.COMPANY_ROLES.find(([, o]) => o && o.id === id) || null;
+  // [3.34.4] wording rules, instrument questions, type questions
+  const rawWordingRule = (raw, id) => (raw.WORDING_RULES || []).find((x) => x.id === id) || null;
+  const rawQuestionRule = (raw, id) => (raw.QUESTION_RULES || []).find((x) => x.id === id) || null;
+  const rawTypeQuestion = (raw, id) => (raw.TYPE_QUESTIONS || []).find((x) => x.id === id) || null;
+  const rawDataRule = (raw, id) => rawWordingRule(raw, id) || rawQuestionRule(raw, id) || rawTypeQuestion(raw, id);
+  /** [3.34.4] The kind of a rule of the file: role, company, wording, question (which instrument), typeq (which type) – or ''. */
+  function ruleKindOf(id, raw = MAPPING.raw) {
+    if (rawRoleRule(raw, id)) return 'role';
+    if (rawCompanyRule(raw, id)) return 'company';
+    if (rawWordingRule(raw, id)) return 'wording';
+    if (rawQuestionRule(raw, id)) return 'question';
+    return rawTypeQuestion(raw, id) ? 'typeq' : '';
+  }
+  const RULE_FIELDS = { role: ROLE_RULE_FIELDS, company: COMPANY_RULE_FIELDS, wording: WORDING_RULE_FIELDS, question: QUESTION_RULE_FIELDS, typeq: TYPE_QUESTION_FIELDS };
   /** A field of a built-in rule as in the file (undefined: the rule has none). */
   function builtinField(id, field) {
     const r = rawRoleRule(MAPPING.raw, id);
     if (r) return r[field];
     const c = rawCompanyRule(MAPPING.raw, id);
-    if (!c) return undefined;
-    return field === 're' ? c[0] : c[1][field];
+    if (c) return field === 're' ? c[0] : c[1][field];
+    const d = rawDataRule(MAPPING.raw, id);
+    return d ? d[field] : undefined;
   }
   const listKey = (shape, item) => norm(shape === 'pairs' || shape === 'map' ? item[0] : item);
   /** The entries of a list as in the file: words, or [key, value] ([key, [names]] for spellings). */
@@ -2187,11 +2228,17 @@
         continue;
       }
       const e = rawCompanyRule(raw, id);
-      if (e) COMPANY_RULE_FIELDS.filter((f) => f in set).forEach((f) => {
-        if (f === 're') e[0] = set.re;
-        else if (set[f] == null) delete e[1][f];
-        else e[1][f] = set[f];
-      });
+      if (e) {
+        COMPANY_RULE_FIELDS.filter((f) => f in set).forEach((f) => {
+          if (f === 're') e[0] = set.re;
+          else if (set[f] == null) delete e[1][f];
+          else e[1][f] = set[f];
+        });
+        continue;
+      }
+      // [3.34.4] a wording rule or a question: its fields as they are (checked when saved or imported)
+      const d = rawDataRule(raw, id);
+      if (d) RULE_FIELDS[ruleKindOf(id, raw)].filter((f) => f in set && set[f] != null).forEach((f) => { d[f] = JSON.parse(JSON.stringify(set[f])); });
     }
     for (const [tid, c] of Object.entries(changes.lists || {})) {
       const L = EDITABLE_LISTS[tid];
@@ -2230,6 +2277,11 @@
       pair[0] = e[0];
       refill(pair[1], e[1]);
     });
+    // [3.34.4] the wording rules and the questions, rule by rule
+    ['WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].forEach((key) => MAP[key].forEach((r) => {
+      const e = eff[key].find((x) => x.id === r.id);
+      if (e) refill(r, e);
+    }));
     for (const L of Object.values(EDITABLE_LISTS)) {
       const now = MAP[L.key];
       const to = eff[L.key];
@@ -7622,11 +7674,12 @@
     return [
       sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note'), ''])}<tbody>
         ${roles.map((r) => editRow(r.id, [r.id, r.re ? patternText(r.re) : tr('rules.special'), (r.types || []).join(', '), r.level || '', r.note || ''], r.hasCode, 7)).join('')}</tbody></table>`),
-      sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code')])}<tbody>
-        ${WORDING_RULES.map((r) => row(r.id, [r.id, r.phrases.join(' | '), r.credit, r.note, r.where || ''])).join('')}</tbody></table>`),
-      sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note')])}<tbody>
-        ${QUESTION_RULES.map((q) => row(q.id, [q.id, q.base, q.options.join(' · '), q.credit, q.note])).join('')}
-        ${TYPE_QUESTIONS.map((q) => row(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note])).join('')}</tbody></table>`),
+      // [3.34.4] ✎ at the wording rules and the questions too (collected item 121)
+      sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code'), ''])}<tbody>
+        ${WORDING_RULES.map((r) => editRow(r.id, [r.id, r.phrases.join(' | '), r.credit, r.note, r.where || ''], false, 7)).join('')}</tbody></table>`),
+      sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note'), ''])}<tbody>
+        ${QUESTION_RULES.map((q) => editRow(q.id, [q.id, q.base, q.options.join(' · '), q.credit, q.note], false, 7)).join('')}
+        ${TYPE_QUESTIONS.map((q) => editRow(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note], false, 7)).join('')}</tbody></table>`),
       sect('special', `${tr('rules.specialTitle')} (S001 … · ${where('SPECIAL_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')])}<tbody>${SPECIAL_RULES.map((r) => row(r.id, [r.id, r.note, r.where || ''])).join('')}</tbody></table>`),
       sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), ''])}<tbody>
         ${COMPANY_ROLES.map(([re, o]) => editRow(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.area || []), ...(o.artist || [])]).join(', '), o.level || ''], false, 6)).join('')}</tbody></table>`),
@@ -7651,19 +7704,21 @@
 
   const RULE_PROBE = { b: '', ms: [], flags: [], consumed: new Set(), has: () => false, is: () => false, out: () => null, plainBase: '', modsIn: [], baseIn: '' };
   const isRoleRuleId = (id) => !!rawRoleRule(MAPPING.raw, id);
-  /** A rule of the file that ✎ may change: a role rule without code, or a company rule. */
+  /** A rule of the file that ✎ may change: a role rule without code, a company rule, ([3.34.4]) a wording rule or a question. */
   function ruleEditable(id) {
-    if (rawCompanyRule(MAPPING.raw, id)) return true;
+    if (rawCompanyRule(MAPPING.raw, id) || rawDataRule(MAPPING.raw, id)) return true;
     const r = roleRules(RULE_PROBE).find((x) => x.id === id);
     return !!r && !r.hasCode;
   }
-  const encJson = (v) => JSON.stringify(v === undefined ? null : v);
+  /** A value as JSON to compare: [3.34.4] with the keys of objects in order (a choice saved by ✎ equals the file's in any order). */
+  const sortedKeys = (v) => (Array.isArray(v) ? v.map(sortedKeys) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortedKeys(v[k])])) : v);
+  const encJson = (v) => JSON.stringify(v === undefined ? null : sortedKeys(v));
   /** The value of a field of a rule with the given changes (as in the file). */
   function fieldWith(changes, id, field) {
     const c = changes.rules[id];
     return c && c.set && field in c.set ? c.set[field] : builtinField(id, field);
   }
-  const ruleFieldsOf = (id) => (isRoleRuleId(id) ? ROLE_RULE_FIELDS : COMPANY_RULE_FIELDS);
+  const ruleFieldsOf = (id) => RULE_FIELDS[ruleKindOf(id)] || [];
   const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const wordsSource = (words) => (words.length === 1 ? `^${escRe(words[0])}$` : `^(${words.map(escRe).join('|')})$`);
   const showItem = (x) => (Array.isArray(x) ? `${x[0]} = ${[].concat(x[1]).join(' / ')}` : String(x));
@@ -7691,15 +7746,53 @@
     return { value: { $re: src, $flags: flags } };
   }
 
+  const okText = (x, n = LIMITS.text) => typeof x === 'string' && !!x.trim() && x.trim().length <= n;
+
+  /**
+   * [3.34.4] A field of a wording rule or a question checked → { value } (as written into the file) or {} (not usable): phrases
+   * (words in lower case, 1 – 40), a role credit (a text, empty: none), the word of a question, its instruments (1 – 8), the
+   * choices of a type question (1 – 8: type and level, instrument, task, label, role credit – true: the role word –, suggested).
+   */
+  function checkDataField(kind, f, v) {
+    if (f === 'phrases') return Array.isArray(v) && v.length && v.length <= LIMITS.phrases && v.every((x) => okText(x)) ? { value: uniq(v.map(norm)) } : {};
+    if (f === 'credit') return typeof v === 'string' && v.trim().length <= LIMITS.text ? { value: v.trim() } : {};
+    if (f === 'base') return okText(v) ? { value: norm(v) } : {};
+    if (f !== 'options' || !Array.isArray(v) || !v.length || v.length > LIMITS.names) return {};
+    if (kind === 'question') return v.every((x) => okText(x)) ? { value: uniq(v.map((x) => x.trim())) } : {};
+    const out = [];
+    for (const o of v) {
+      if (!o || typeof o !== 'object' || Array.isArray(o) || Object.keys(o).some((k) => !OPTION_FIELDS.includes(k))) return {};
+      if (!okText(o.type) || !RULE_LEVELS.includes(o.level)) return {};
+      const one = { type: o.type.trim(), level: o.level };
+      for (const k of ['instrument', 'task', 'label']) {
+        if (o[k] == null || o[k] === '') continue;
+        if (!okText(o[k], k === 'label' ? LIMITS.value : LIMITS.text)) return {};
+        one[k] = o[k].trim();
+      }
+      if (o.credit === true) one.credit = true;
+      else if (okText(o.credit)) one.credit = o.credit.trim();
+      else if (o.credit != null && o.credit !== false && o.credit !== '') return {};
+      if (o.suggested === true) one.suggested = true;
+      else if (o.suggested != null && o.suggested !== false) return {};
+      out.push(one);
+    }
+    return { value: out };
+  }
+
   /** The fields of a change of a rule checked: only those of its kind, each of the right kind → { set } or { error }. */
   function checkRuleSet(id, set) {
     if (!set || typeof set !== 'object' || Array.isArray(set)) return { error: tr('mapping.badValue', { id, field: '–' }) };
+    const kind = ruleKindOf(id);
     const fields = ruleFieldsOf(id);
     const out = {};
     for (const [f, v] of Object.entries(set)) {
       const bad = { error: tr('mapping.badValue', { id, field: f }) };
       if (!fields.includes(f)) return { error: tr('mapping.badField', { id, field: f }) };
-      if (f === 're') {
+      if (['wording', 'question', 'typeq'].includes(kind)) {
+        const got = checkDataField(kind, f, v);
+        if (!('value' in got)) return bad;
+        out[f] = got.value;
+      } else if (f === 're') {
         const p = checkPattern(v);
         if (p.error) return p;
         out.re = p.value;
@@ -7797,7 +7890,10 @@
 
   /** A field's value as text: a pattern as the register shows it, names with commas, "as written" for the role credit. */
   function fieldText(f, v) {
-    if (v == null || (Array.isArray(v) && !v.length)) return '–';
+    if (v == null || v === '' || (Array.isArray(v) && !v.length)) return '–';
+    // [3.34.4] the phrases of a wording rule, the choices of a question
+    if (f === 'phrases') return v.join(' | ');
+    if (f === 'options') return v.map((o) => (typeof o === 'string' ? o : optionText(o))).join(' · ');
     if (f === 're') {
       try {
         return patternText(new RegExp(v.$re, v.$flags || ''));
@@ -7809,10 +7905,15 @@
     if (f === 'credit') return v === true ? tr('mapping.credit.role') : `“${v}”`;
     return [].concat(v).join(', ');
   }
-  /** A changed field as HTML: of a pattern of role words the words added and taken away, else before → after. */
+  /** [3.34.4] A choice of a type question as text: its label (or type) and level. */
+  const optionText = (o) => `${o.label || o.type} (${tr(`level.${o.level}`)})`;
+  const plainWords = (v) => (Array.isArray(v) && v.every((x) => typeof x === 'string') ? v : null);
+
+  /** A changed field as HTML: of a pattern of role words ([3.34.4] or of a list of words) the words added and taken away, else before → after. */
   function fieldChangeHtml(f, a, b) {
-    const wa = f === 're' && a && typeof a.$re === 'string' && patternWords(a.$re);
-    const wb = f === 're' && b && typeof b.$re === 'string' && patternWords(b.$re);
+    const words = (v) => (f === 're' ? v && typeof v.$re === 'string' && patternWords(v.$re) : ['phrases', 'options'].includes(f) && plainWords(v));
+    const wa = words(a);
+    const wb = words(b);
     if (wa && wb) {
       const add = wb.filter((w) => !wa.includes(w));
       const rem = wa.filter((w) => !wb.includes(w));
@@ -7827,14 +7928,28 @@
   function ruleConflicts(id) {
     const c = mappingChanges.rules[id];
     if (!c) return [];
-    if (!rawRoleRule(MAPPING.raw, id) && !rawCompanyRule(MAPPING.raw, id)) return ['gone'];
+    if (!ruleKindOf(id)) return ['gone'];
     return Object.keys(c.set || {}).filter((f) => c.was && f in c.was && encJson(c.was[f]) !== encJson(builtinField(id, f)));
   }
 
   /** After a change of the register: stored, into MAP, the caches of what is built from it emptied, the rows mapped again. */
   function mappingChanged(what) {
+    // [3.34.4] a row's answer to a type question is the place of a choice: kept by the choice itself (type, level, instrument),
+    // asked anew when that choice is gone
+    const choiceKey = (o) => [o.type, o.level, o.instrument || ''].join('|');
+    const answered = S.rows.map((r) => {
+      const q = r.typeAnswer != null && typeQuestionFor(r);
+      const o = q && q.options[r.typeAnswer];
+      return o ? [r, q.id, choiceKey(o)] : null;
+    }).filter(Boolean);
     saveMappingChanges();
     applyMappingChanges();
+    answered.forEach(([r, qid, key]) => {
+      const q = TYPE_QUESTIONS.find((x) => x.id === qid);
+      const i = q ? q.options.findIndex((o) => choiceKey(o) === key) : -1;
+      if (i < 0) delete r.typeAnswer;
+      else r.typeAnswer = i;
+    });
     roleVocabCache = null;
     ruleNotesCache = null;
     applyRulesChange(what);
@@ -7857,9 +7972,44 @@
   S.ruleEdit = null;
   S.listEdit = null;
 
+  /** [3.34.4] A choice of a type question in the form. */
+  const choiceDraft = (o = {}) => ({ type: o.type || '', level: o.level || 'recording', instrument: o.instrument || '', task: o.task || '', label: o.label || '',
+    creditMode: o.credit === true ? 'role' : typeof o.credit === 'string' && o.credit ? 'text' : 'none', credit: typeof o.credit === 'string' ? o.credit : '', suggested: !!o.suggested });
+
+  /** [3.34.4] The form of a wording rule (phrases a line each, role credit), a question (word, role credit, instruments a line each) or a type question (its choices). */
+  function dataRuleDraft(kind, v) {
+    if (kind === 'wording') return { phrases: (v('phrases') || []).join('\n'), creditMode: v('credit') ? 'text' : 'none', credit: v('credit') || '' };
+    if (kind === 'question') return { base: v('base') || '', credit: v('credit') || '', options: (v('options') || []).join('\n') };
+    return { options: (v('options') || []).map(choiceDraft) };
+  }
+
+  /** [3.34.4] The form of a wording rule or a question back into the fields of the file (checked by checkRuleSet). */
+  function dataRuleSet(kind, d) {
+    const lines = (t) => String(t || '').split('\n').map((x) => x.trim()).filter(Boolean);
+    if (kind === 'wording') return { phrases: lines(d.phrases), credit: d.creditMode === 'text' ? String(d.credit || '').trim() : '' };
+    if (kind === 'question') return { base: String(d.base || ''), credit: String(d.credit || ''), options: lines(d.options) };
+    return {
+      options: d.options.map((o) => {
+        const one = { type: String(o.type || ''), level: o.level };
+        ['instrument', 'task', 'label'].forEach((k) => { if (String(o[k] || '').trim()) one[k] = String(o[k]).trim(); });
+        if (o.creditMode === 'role') one.credit = true;
+        else if (o.creditMode === 'text' && String(o.credit || '').trim()) one.credit = String(o.credit).trim();
+        if (o.suggested) one.suggested = true;
+        return one;
+      }),
+    };
+  }
+  const isDataKind = (kind) => kind === 'wording' || kind === 'question' || kind === 'typeq';
+
   /** ✎ at a rule: the form starts with the rule as it is now (with your changes). */
   function openRuleEdit(id) {
     const v = (f) => fieldWith(mappingChanges, id, f);
+    const kind = ruleKindOf(id);
+    if (isDataKind(kind)) {
+      S.ruleEdit = { id, draft: dataRuleDraft(kind, v), error: '' };
+      S.listEdit = null;
+      return;
+    }
     const names = (x) => (Array.isArray(x) ? x.join(', ') : '');
     const draft = { ...patternForm(v('re')), level: v('level') || 'recording' };
     if (isRoleRuleId(id)) {
@@ -7887,8 +8037,8 @@
   }
 
   /** ✎ saved: the form as a change of the rule (checked; fields equal to the built-in rule are none). */
-  function saveRuleEdit() {
-    const { id, draft: d } = S.ruleEdit;
+  /** The form of a role or company rule back into the fields of the file. */
+  function patternRuleSet(id, d) {
     const names = (t) => String(t || '').split(',').map((x) => x.trim()).filter(Boolean);
     const words = String(d.pattern || '').split('|').map(norm).filter(Boolean);
     const src = d.pmode === 'words' ? (words.length ? wordsSource(words) : '') : String(d.pattern || '').trim();
@@ -7900,7 +8050,13 @@
     } else {
       ['label', 'place', 'area', 'artist'].forEach((f) => { set[f] = names(d[f]).length ? names(d[f]) : null; });
     }
-    const ok = checkRuleSet(id, set);
+    return set;
+  }
+
+  function saveRuleEdit() {
+    const { id, draft: d } = S.ruleEdit;
+    const kind = ruleKindOf(id);
+    const ok = checkRuleSet(id, isDataKind(kind) ? dataRuleSet(kind, d) : patternRuleSet(id, d));
     if (ok.error) {
       S.ruleEdit.error = ok.error;
       renderRulesBody();
@@ -7912,7 +8068,53 @@
     mappingChanged(id);
   }
 
+  /** The buttons below a form of ✎: save, cancel, back to the built-in rule. */
+  const ruleEditActions = (id) => `<div class="dci-urule-actions"><button type="button" data-redit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-redit-cancel>${esc(tr('common.cancel'))}</button>
+        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div>`;
+
+  /** [3.34.4] ✎ at a wording rule, an instrument question or a type question. */
+  function dataRuleEditHtml(id, kind) {
+    const { draft: d, error } = S.ruleEdit;
+    const inp = (k, ph = '') => `<input type="text" data-redit-f="${k}" value="${esc(d[k] || '')}" placeholder="${esc(ph)}">`;
+    const area = (k) => `<textarea data-redit-f="${k}" rows="${Math.min(10, Math.max(3, String(d[k] || '').split('\n').length + 1))}" spellcheck="false">${esc(d[k] || '')}</textarea>`;
+    const creditSel = (attrs, mode, modes) => `<select ${attrs}>${modes.map((v) => `<option value="${v}" ${mode === v ? 'selected' : ''}>${esc(tr(`mapping.credit.${v}`))}</option>`).join('')}</select>`;
+    let body;
+    if (kind === 'wording') {
+      body = `<label class="dci-redit-wide">${esc(tr('mapping.field.phrases'))} ${area('phrases')}</label>
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.phrasesHint'))}</p>
+      <label>${esc(tr('mapping.field.credit'))} ${creditSel('data-redit-f="creditMode"', d.creditMode, ['none', 'text'])} ${d.creditMode === 'text' ? inp('credit', 'upright bass') : ''}</label>`;
+    } else if (kind === 'question') {
+      body = `<label>${esc(tr('mapping.field.base'))} ${inp('base', 'bass')}</label>
+      <label>${esc(tr('mapping.field.credit'))} ${inp('credit', 'bass')}</label>
+      <label class="dci-redit-wide">${esc(tr('mapping.field.options'))} ${area('options')}</label>
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.optionsHint'))}</p>`;
+    } else {
+      const n = d.options.length;
+      const head = ['type', 'level', 'instrument', 'task', 'label', 'credit', 'suggested'].map((k) => `<th>${esc(tr(`mapping.choice.${k}`))}</th>`).join('');
+      const choice = (o, i) => {
+        const at = (k) => `data-redit-o="${i}" data-redit-of="${k}" aria-label="${esc(`${i + 1} · ${tr(`mapping.choice.${k === 'creditMode' ? 'credit' : k}`)}`)}"`;
+        const f = (k, ph = '', list = '') => `<input type="text" ${at(k)} value="${esc(o[k] || '')}" placeholder="${esc(ph)}"${list ? ` list="${list}"` : ''}>`;
+        const btn = (attr, sign, title, off) => `<button type="button" class="dci-textbtn" ${attr} title="${esc(tr(title))}" aria-label="${esc(`${tr(title)} (${i + 1})`)}"${off ? ' disabled' : ''}>${sign}</button>`;
+        return `<tr data-redit-choice="${i}"><td>${i + 1}</td><td>${f('type', 'conductor', 'dci-dl-ltnames')}</td>
+          <td><select ${at('level')}>${RULE_LEVELS.map((v) => `<option value="${v}" ${o.level === v ? 'selected' : ''}>${esc(tr(`level.${v}`))}</option>`).join('')}</select></td>
+          <td>${f('instrument', '', 'dci-dl-instrnames')}</td><td>${f('task')}</td><td>${f('label')}</td>
+          <td>${creditSel(at('creditMode'), o.creditMode, ['none', 'role', 'text'])}${o.creditMode === 'text' ? ` ${f('credit')}` : ''}</td>
+          <td><input type="checkbox" ${at('suggested')} ${o.suggested ? 'checked' : ''}></td>
+          <td class="dci-redit-omove">${btn(`data-redit-omove="${i}" data-dir="-1"`, '↑', 'mapping.choiceUp', !i)}${btn(`data-redit-omove="${i}" data-dir="1"`, '↓', 'mapping.choiceDown', i === n - 1)}${btn(`data-redit-odel="${i}"`, '✕', 'mapping.choiceDel', n < 2)}</td></tr>`;
+      };
+      body = `<div class="dci-redit-wide dci-redit-choices"><table><thead><tr><th>#</th>${head}<th></th></tr></thead><tbody>${d.options.map(choice).join('')}</tbody></table>
+        <button type="button" class="dci-textbtn" data-redit-oadd${n < LIMITS.names ? '' : ' disabled'}>＋ ${esc(tr('mapping.choiceAdd'))}</button></div>
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.choicesHint'))}</p>`;
+    }
+    return `<fieldset class="dci-redit dci-redit-${kind}" data-redit="${esc(id)}"><legend>${esc(tr('mapping.editTitle', { id }))}</legend>${body}
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}</p>
+      ${error ? `<p class="dci-redit-err dci-redit-wide" role="alert">${esc(error)}</p>` : ''}
+      ${ruleEditActions(id)}</fieldset>`;
+  }
+
   function ruleEditHtml(id) {
+    const kind = ruleKindOf(id);
+    if (isDataKind(kind)) return dataRuleEditHtml(id, kind);
     const { draft: d, error } = S.ruleEdit;
     const role = isRoleRuleId(id);
     const inp = (k, ph = '', list = '') => `<input type="text" data-redit-f="${k}" value="${esc(d[k] || '')}" placeholder="${esc(ph)}"${list ? ` list="${list}"` : ''}>`;
@@ -7928,8 +8130,7 @@
         <label>${esc(tr('mapping.field.primaryCands'))} ${inp('instr', 'electric guitar', 'dci-dl-instrnames')}</label>` : ''}
       <p class="dci-sub dci-redit-wide">${esc(tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))} · ${esc(tr('mapping.namesHint'))}</p>
       ${error ? `<p class="dci-redit-err dci-redit-wide" role="alert">${esc(error)}</p>` : ''}
-      <div class="dci-urule-actions"><button type="button" data-redit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-redit-cancel>${esc(tr('common.cancel'))}</button>
-        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div></fieldset>`;
+      ${ruleEditActions(id)}</fieldset>`;
   }
 
   /** ✎ at a list: all its entries, a line each. */
@@ -8095,7 +8296,7 @@
     const out = { from: '', rules: {}, lists: {}, own: [], off: [], skipped: [], mapping: '', script: '' };
     const skip = (id, why) => out.skipped.push({ id: String(id), why });
     const takeRule = (id, set, was) => {
-      if (!rawRoleRule(MAPPING.raw, id) && !rawCompanyRule(MAPPING.raw, id)) return skip(id, tr('mapping.skipUnknown'));
+      if (!ruleKindOf(id)) return skip(id, tr('mapping.skipUnknown'));
       if (!ruleEditable(id)) return skip(id, tr('mapping.skipCode'));
       const ok = checkRuleSet(id, set);
       if (ok.error) return skip(id, ok.error);
@@ -8145,6 +8346,20 @@
         COMPANY_RULE_FIELDS.filter((f) => f !== 're').forEach((f) => { if (encJson(o[f]) !== encJson(b[1][f])) set[f] = o[f] === undefined ? null : o[f]; });
         if (Object.keys(set).length) takeRule(o.id, set, null);
       }
+      // [3.34.4] the wording rules and the questions
+      for (const [key, find] of [['WORDING_RULES', rawWordingRule], ['QUESTION_RULES', rawQuestionRule], ['TYPE_QUESTIONS', rawTypeQuestion]]) {
+        for (const r of Array.isArray(data[key]) ? data[key] : []) {
+          if (!r || typeof r.id !== 'string') continue;
+          const b = find(MAPPING.raw, r.id);
+          if (!b) {
+            skip(r.id, tr('mapping.skipUnknown'));
+            continue;
+          }
+          const set = {};
+          RULE_FIELDS[ruleKindOf(r.id)].forEach((f) => { if (encJson(r[f]) !== encJson(b[f])) set[f] = r[f]; });
+          if (Object.keys(set).length) takeRule(r.id, set, null);
+        }
+      }
       for (const [tid, L] of Object.entries(EDITABLE_LISTS)) {
         if (!(L.key in data)) continue;
         let items;
@@ -8165,7 +8380,7 @@
       }
       // the other lists cannot be changed here
       const editable = new Set(Object.values(EDITABLE_LISTS).map((L) => L.key));
-      Object.keys(MAPPING.raw).filter((k) => !['format', 'version', 'about', 'ROLE_RULE_DATA', 'COMPANY_ROLES'].includes(k) && !editable.has(k))
+      Object.keys(MAPPING.raw).filter((k) => !['format', 'version', 'about', 'ROLE_RULE_DATA', 'COMPANY_ROLES', 'WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].includes(k) && !editable.has(k))
         .forEach((k) => { if (k in data && encJson(data[k]) !== encJson(MAPPING.raw[k])) skip(k, tr('mapping.skipList')); });
     } else return { error: tr('rules.importBad') };
     const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit'];
@@ -8744,7 +8959,7 @@
           if (S.ruleEdit && S.ruleEdit.id === ro.dataset.reditOpen) S.ruleEdit = null;
           else openRuleEdit(ro.dataset.reditOpen);
           renderRulesBody();
-          const f = el.querySelector('[data-redit] [data-redit-f="pattern"]');
+          const f = el.querySelector('[data-redit] [data-redit-f="pattern"]') || el.querySelector('[data-redit] textarea, [data-redit] input[type=text]');
           if (f) f.focus({ preventScroll: true });
         }
         const lo = t.closest('[data-ledit-open]');
@@ -8756,6 +8971,26 @@
           if (f) f.focus({ preventScroll: true });
         }
         if (t.closest('[data-redit-save]')) saveRuleEdit();
+        // [3.34.4] the choices of a type question: up, down, removed, added
+        const choices = S.ruleEdit && Array.isArray(S.ruleEdit.draft.options) ? S.ruleEdit.draft.options : null;
+        const om = t.closest('[data-redit-omove]');
+        if (om && choices) {
+          const i = Number(om.dataset.reditOmove);
+          const j = i + Number(om.dataset.dir);
+          if (choices[i] && choices[j]) [choices[i], choices[j]] = [choices[j], choices[i]];
+          renderRulesBody();
+        }
+        const od = t.closest('[data-redit-odel]');
+        if (od && choices && choices.length > 1) {
+          choices.splice(Number(od.dataset.reditOdel), 1);
+          renderRulesBody();
+        }
+        if (t.closest('[data-redit-oadd]') && choices && choices.length < LIMITS.names) {
+          choices.push(choiceDraft());
+          renderRulesBody();
+          const last = el.querySelector(`[data-redit-choice="${choices.length - 1}"] [data-redit-of="type"]`);
+          if (last) last.focus({ preventScroll: true });
+        }
         if (t.closest('[data-ledit-save]')) saveListEdit();
         if (t.closest('[data-redit-cancel], [data-ledit-cancel]')) {
           S.ruleEdit = null;
@@ -8813,6 +9048,11 @@
           if (t.dataset.reditF === 'pmode') switchPatternMode(S.ruleEdit.draft, t.value);
           else S.ruleEdit.draft[t.dataset.reditF] = t.value;
           if (['pmode', 'creditMode'].includes(t.dataset.reditF)) renderRulesBody();
+        } else if (t.dataset.reditOf && S.ruleEdit && Array.isArray(S.ruleEdit.draft.options)) {
+          // [3.34.4] a choice of a type question
+          const o = S.ruleEdit.draft.options[Number(t.dataset.reditO)];
+          if (o) o[t.dataset.reditOf] = t.type === 'checkbox' ? t.checked : t.value;
+          if (t.dataset.reditOf === 'creditMode') renderRulesBody();
         } else if (t.dataset.mio === 'what') {
           S.mioWhat = t.value === 'register' ? 'register' : 'changes';
           renderMappingIo();
@@ -8846,6 +9086,10 @@
         const f = e.target.dataset.rf;
         if (e.target.dataset.uf) S.ruleForm = { ...(S.ruleForm || { kind: 'role', detailsMode: 'any', level: 'recording' }), [e.target.dataset.uf]: e.target.value };
         if (e.target.dataset.reditF && S.ruleEdit && e.target.dataset.reditF !== 'pmode') S.ruleEdit.draft[e.target.dataset.reditF] = e.target.value;
+        if (e.target.dataset.reditOf && e.target.type === 'text' && S.ruleEdit && Array.isArray(S.ruleEdit.draft.options)) {
+          const o = S.ruleEdit.draft.options[Number(e.target.dataset.reditO)];
+          if (o) o[e.target.dataset.reditOf] = e.target.value;
+        }
         if (e.target.dataset.leditText != null && S.listEdit) S.listEdit.text = e.target.value;
         if (e.target.dataset.mio === 'paste') S.mPaste = e.target.value;
         if (f === 'test') el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(e.target.value);
@@ -22623,6 +22867,17 @@
       #dci-rules .dci-redit .dci-redit-wide, #dci-rules .dci-redit-list textarea, #dci-rules .dci-redit-list p { grid-column: 1 / -1; }
       #dci-rules .dci-redit p { margin: 0; }
       #dci-rules .dci-redit-err { color: #b3261e; font-weight: 600; }
+      /* [3.34.4] ✎ at wording rules and questions: their words a line each, the choices of a type question as a table */
+      #dci-rules .dci-redit label > textarea { display: block; margin-top: calc(var(--u, 1px) * 2); font-weight: 400; }
+      #dci-rules .dci-redit-choices { overflow-x: auto; }
+      #dci-rules .dci-redit-choices table { border-collapse: collapse; width: 100%; }
+      #dci-rules .dci-redit-choices th { font-weight: 600; text-align: left; font-size: calc(var(--u, 1px) * 11); color: var(--muted); padding: 0 calc(var(--u, 1px) * 4); }
+      #dci-rules .dci-redit-choices td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4); vertical-align: middle; }
+      #dci-rules .dci-redit-choices input[type="text"] { width: 100%; min-width: calc(var(--u, 1px) * 90); box-sizing: border-box; }
+      #dci-rules .dci-redit-choices select + input[type="text"] { margin-top: calc(var(--u, 1px) * 2); }
+      #dci-rules .dci-redit-omove { white-space: nowrap; }
+      #dci-rules .dci-redit-omove .dci-textbtn { padding: 0 calc(var(--u, 1px) * 3); }
+      #dci-rules .dci-redit-omove .dci-textbtn:disabled { opacity: 0.35; cursor: default; }
       #dci-rules textarea { width: 100%; box-sizing: border-box; padding: calc(var(--u, 1px) * 4); font: calc(var(--u, 1px) * 12) / 1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
       #dci-rules .dci-mchg { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 18); }
       #dci-rules .dci-mchg li { margin: calc(var(--u, 1px) * 3) 0; }
