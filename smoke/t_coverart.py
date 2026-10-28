@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore, [3.34.17] ocrremember; `python3 t_coverart.py <case> …` runs only those."""
 import json
 import re
 
@@ -1169,6 +1169,81 @@ def case_ocrmore():
         e2 = pg.evaluate("[document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length, document.querySelector('#dci-ocr [data-ocr=more]').textContent.trim()]")
         print('E) PDF, Auto-select an (gezeigt, angehakt):', e1, '| aus:', e2)
         results.append(e1 == [15, 15] and e2 == [12, 'Load 3 more (3 not shown yet)'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_ocrremember():
+    """[3.34.17] The frames remembered for each release and image (collected item 133; maintainer: "(B)", "ja ok").
+    A) Two frames on the Back, the Booklet turned right and read whole; the window closed: both stored for the release.
+    B) Opened again: beside the frames "Back 2 frames", "Booklet the whole image" (before it is loaded); read: the Back's two
+       frames as drawn, the Booklet whole and turned.
+    C) The 1200 px copy chosen: the frames fit it (×0.8), the Booklet still turned.
+    D) "Delete stored import …" forgets them; ⚙ Settings → Beta → Reset forgets all."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-sel="3"]')
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        drag_img(pg, 150, 900, 1350, 1200)
+        drag_img(pg, 150, 150, 750, 375)
+        pg.click('#dci-ocr [data-ocr=next]')
+        H.wait_for(pg, "(document.querySelector('#dci-ocr .dci-ocr-head .dci-sub') || {}).textContent.includes('Booklet') && !!document.querySelector('#dci-ocr [data-ocr-view]')", 15)
+        pg.click('#dci-ocr [data-ocr=rotr]')
+        pg.check('#dci-ocr [data-ocr-mode=whole]')
+        pg.click('#dci-ocr [data-ocr=close]')
+        STORE = "JSON.parse(localStorage.getItem('dci-ocr-frames') || 'null')"
+        a = pg.evaluate(STORE)
+        rel = a and a.get(H.REL)
+        print('A) gespeichert:', rel and rel['imgs'])
+        results.append(rel and rel['imgs'] == {'caa:12': {'f': [[0.1, 0.6, 0.8, 0.2], [0.1, 0.1, 0.4, 0.15]], 'turn': 0, 'mode': 'frames'},
+                                                'caa:13': {'f': [], 'turn': 1, 'mode': 'whole'}})
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-sel="3"]')
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-thumb', timeout=10000)
+        b1 = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-thumb')].map(t => t.querySelector('strong').textContent + ' ' + t.querySelector('span').textContent)")
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        b2 = pg.evaluate('window.__ocr.calls')
+        print('B) wieder geöffnet:', b1, '| gelesen:', b2)
+        results.append(b1 == ['Back 2 frames', 'Booklet the whole image'] and b2 == [[1200, 300], [600, 225], [1634, 1246]])
+        pg.click('#dci-ocr [data-ocr=back]')
+        pg.check('#dci-ocr [data-ocr-size="1200"]')
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        pg.wait_for_timeout(200)
+        pg.click('#dci-ocr [data-ocr=run]')
+        H.wait_for(pg, "window.__ocr.calls.length >= 6", 20)
+        c = pg.evaluate('window.__ocr.calls.slice(3)')
+        print('C) 1200 px:', c)
+        results.append(c == [[960, 240], [480, 180], [1200, 915]])
+        pg.click('#dci-ocr [data-ocr=close]')
+        H.src_menu(pg, 'forget-open')
+        pg.click('[data-act=forget-do]')
+        pg.wait_for_timeout(1500)
+        d1 = pg.evaluate(STORE)
+        pg.evaluate("localStorage.setItem('dci-ocr-frames', JSON.stringify({ 'x': { t: 1, imgs: { 'caa:1': { f: [], turn: 1, mode: 'frames' } } } }))")
+        H.open_settings(pg, 'beta')
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=beta]')
+        pg.wait_for_timeout(300)
+        d2 = pg.evaluate(STORE)
+        print('D) vergessen:', d1, '| Beta zurückgesetzt:', d2)
+        results.append(d1 is None and d2 is None)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

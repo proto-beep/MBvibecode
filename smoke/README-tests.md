@@ -411,6 +411,9 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     ×3 – its place on the canvas; a PDF page's own text – the place of its line on the page drawn
                                 #   ocrzoom: 3.34.11: two frames on the Back, the Booklet whole – wider window, a part per frame beside its text
                                 #     (the image there); +, −, Ctrl + wheel, double click, drag, ⤢; a part's text changed and imported
+                                #   ocrremember: 3.34.17: two frames on the Back, the Booklet turned and whole – stored; opened again:
+                                #     "Back 2 frames", read as left; the 1200 px copy: the frames fit (×0.8); forgotten with "Delete stored
+                                #     import …" and the reset of Beta
                                 #   ocrmore: 3.34.16: 30 images – 12 shown (12 previews), "Load 12 more", "All shown (24)"; 12 small images
                                 #     beside the frames, then 24; Auto-select with 30 booklet pages – all shown; a PDF of 15 pages – 12
                                 #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,

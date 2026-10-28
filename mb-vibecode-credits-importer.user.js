@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.16
+// @version      3.34.17
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.16
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.16
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.17
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.17
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.16';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.17';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -9464,8 +9464,9 @@
     if (!o || o.step === 'run') return;
     const list = [...(files || [])];
     const images = list.filter((f) => OCR_IMAGE_FILE.test(f.type || '')).map((f) => ocrOwnImage('file', f, pasted));
-    // [3.34.16] the first OCR_BATCH of them shown
+    // [3.34.16] the first OCR_BATCH of them shown; [3.34.17] what was stored for them
     images.forEach((im, i) => { im.shown = i < OCR_BATCH; });
+    ocrTakeSaved(images);
     o.images.push(...images);
     const other = list.filter((f) => !OCR_IMAGE_FILE.test(f.type || '') && !isPdfFile(f)).map((f) => f.name || f.type || '?');
     o.error = other.length ? tr('ocr.notImage', { names: other.join(', ') }) : '';
@@ -9511,7 +9512,9 @@
         renderOcr();
       });
     } else {
-      o.images.push({ ...ocrOwnImage('url', u), shown: true });
+      const im = { ...ocrOwnImage('url', u), shown: true };
+      ocrTakeSaved([im]);
+      o.images.push(im);
       o.urlDraft = '';
       o.error = '';
       log('info', 'ocrOwnAdded', { n: 1, what: u });
@@ -9546,7 +9549,9 @@
       if (S.ocr !== o) return;
       if (!urls.length) throw new Error(tr('ocr.discogsNone', { id }));
       // [3.34.15] not ticked (no choice made beforehand – collected item 136): tick the ones with credits
-      urls.forEach((u, k) => o.images.push({ ...ocrOwnImage('url', u), src: 'discogs', discogs: id, name: tr('ocr.discogsImage', { id, n: k + 1 }), sel: false, shown: k < OCR_BATCH }));
+      const dg = urls.map((u, k) => ({ ...ocrOwnImage('url', u), src: 'discogs', discogs: id, name: tr('ocr.discogsImage', { id, n: k + 1 }), sel: false, shown: k < OCR_BATCH }));
+      ocrTakeSaved(dg);
+      o.images.push(...dg);
       log('info', 'ocrOwnAdded', { n: urls.length, what: `Discogs r${id}` });
     } catch (e) {
       if (S.ocr === o) o.error = (e && e.message) || String(e);
@@ -9650,6 +9655,7 @@
         const pg = { id: `own${++ocrOwnN}`, src: 'pdf', name: tr('ocr.pdfPage', { name, n: p }), file: name, from, page: p, pdfPage: page, textLayer: letters >= OCR_PDF_TEXT,
           pdfText, types: [], comment: '', sel: false, mode: 'frames', frames: [], canvas: null, thumb, shown: p <= OCR_BATCH };
         if (S.ocrAuto) ocrAutoApply([pg]);
+        ocrTakeSaved([pg]);
         o.images.push(pg);
         renderOcr();
       }
@@ -9836,7 +9842,9 @@
     if (img.src === 'pdf') {
       const c = await ocrPdfRender(img.pdfPage, OCR_PDF_PX);
       Object.assign(img, { canvas: c, pdfScale: c.dciScale, w: c.width, h: c.height, frames: [], turn: 0 });
-      return c;
+      // [3.34.17] as left last time
+      ocrRestoreFrames(img);
+      return img.canvas;
     }
     const size = S.ocr.size;
     const blob = await ocrFile(img, { ahead: img.ahead });
@@ -9863,8 +9871,10 @@
     c.width = Math.round(w * k);
     c.height = Math.round(h * k);
     c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
-    Object.assign(img, { canvas: c, canvasSize: size, w, h, frames: [] });
-    return c;
+    Object.assign(img, { canvas: c, canvasSize: size, w, h, frames: [], turn: 0 });
+    // [3.34.17] as left last time
+    ocrRestoreFrames(img);
+    return img.canvas;
   }
 
   // --- [3.34.10] Loading the images: how far, and ahead in the background (collected item 128; maintainer: "Wir brauchen eine
@@ -10201,6 +10211,7 @@
       if (drag.kind === 'new' && big) img.frames.push(box);
       else if (drag.kind !== 'new' && big) img.frames[drag.i] = box;
       S.ocr.drag = null;
+      ocrSaveFrames(img);
       renderOcr();
     };
     window.addEventListener('pointermove', move);
@@ -10221,6 +10232,72 @@
     Object.assign(img, { canvas: c, w: img.h, h: img.w, frames: [], turn: ((img.turn || 0) + dir + 4) % 4 });
   }
 
+  // --- [3.34.17] The frames remembered (collected item 133; maintainer: "(B)", "ja ok"): for each release and image its frames
+  // (as parts of the image, 0 … 1 – they fit the 1200 px copy and the original alike, and another size no longer drops
+  // them), how it is turned and "the whole image"; the images themselves are loaded anew. The last OCR_FRAMES_MAX releases;
+  // "Delete stored import …" forgets those of its release, ⚙ Settings → Beta → Reset (and resetting all settings) all of them.
+
+  const OCR_FRAMES_KEY = 'dci-ocr-frames';
+  const OCR_FRAMES_MAX = 50;
+
+  /** An image's name in the store: the release's by their id, own files by name and size, addresses, PDF pages by file and page. */
+  function ocrFrameKey(img) {
+    if (ocrIsCaa(img)) return `caa:${img.id}`;
+    if (img.src === 'pdf') return `pdf:${img.from || img.file}:${img.page}`;
+    if (img.src === 'file') return `file:${img.name}:${(img.blob && img.blob.size) || 0}`;
+    return `url:${img.url || img.orig}`;
+  }
+
+  /** What is stored for an image of this release ({ f: [[x, y, w, h] …], turn, mode }), or null. */
+  function ocrSavedFor(img) {
+    const all = readJson('localStorage', OCR_FRAMES_KEY, {}) || {};
+    const rel = all[releaseMbid];
+    return (rel && rel.imgs && rel.imgs[ocrFrameKey(img)]) || null;
+  }
+
+  /** An image's frames, turn and choice stored (nothing to store: its entry goes); the oldest releases beyond the last 50 go. */
+  function ocrSaveFrames(img) {
+    if (!img || !img.canvas || !releaseMbid) return;
+    const all = readJson('localStorage', OCR_FRAMES_KEY, {}) || {};
+    const rel = all[releaseMbid] || { t: 0, imgs: {} };
+    const cw = img.canvas.width;
+    const ch = img.canvas.height;
+    const r4 = (x) => Math.round(x * 10000) / 10000;
+    const entry = { f: img.frames.map((b) => [r4(b.x / cw), r4(b.y / ch), r4(b.w / cw), r4(b.h / ch)]), turn: img.turn || 0, mode: img.mode === 'whole' ? 'whole' : 'frames' };
+    const key = ocrFrameKey(img);
+    if (!entry.f.length && !entry.turn && entry.mode === 'frames') delete rel.imgs[key];
+    else rel.imgs[key] = entry;
+    img.saved = rel.imgs[key] || null;
+    if (Object.keys(rel.imgs).length) {
+      rel.t = Date.now();
+      all[releaseMbid] = rel;
+    } else delete all[releaseMbid];
+    Object.entries(all).sort((a, b) => (b[1].t || 0) - (a[1].t || 0)).slice(OCR_FRAMES_MAX).forEach(([id]) => delete all[id]);
+    writeJson('localStorage', OCR_FRAMES_KEY, Object.keys(all).length ? all : null);
+  }
+
+  /** The stored choice taken over when an image comes into the window (its frames: once its canvas is there). */
+  function ocrTakeSaved(images) {
+    (images || []).forEach((im) => {
+      im.saved = ocrSavedFor(im);
+      if (im.saved && im.saved.mode === 'whole') im.mode = 'whole';
+    });
+  }
+
+  /** A canvas just made: turned as stored, its frames put back. */
+  function ocrRestoreFrames(img) {
+    const sv = img.saved;
+    if (!sv || !img.canvas) return;
+    const turn = Number(sv.turn) || 0;
+    if (turn === 3) ocrRotate(img, -1);
+    else for (let i = 0; i < turn; i++) ocrRotate(img, 1);
+    const cw = img.canvas.width;
+    const ch = img.canvas.height;
+    img.frames = (sv.f || []).filter((f) => Array.isArray(f) && f.length === 4 && f.every(Number.isFinite))
+      .map(([x, y, w, h]) => ({ x: Math.round(x * cw), y: Math.round(y * ch), w: Math.round(w * cw), h: Math.round(h * ch) }));
+    if (sv.mode === 'whole') img.mode = 'whole';
+  }
+
   function ocrFramesHtml() {
     const o = S.ocr;
     const chosen = ocrChosen();
@@ -10229,7 +10306,9 @@
     const n = ocrToRead().length;
     // [3.34.16] the small images in batches too (the one shown always)
     const thumbsLeft = chosen.filter((im, i) => !(i < (o.thumbsShown || OCR_BATCH) || i === o.cur)).length;
-    const state = (im) => (im.mode === 'skip' ? tr('ocr.leftOut') : im.mode === 'whole' ? tr('ocr.wholeImage') : im.frames.length ? tr('ocr.nFrames', { n: im.frames.length }) : tr('ocr.noFrame'));
+    // [3.34.17] frames stored for an image not loaded yet counted too
+    const nFrames = (im) => (im.canvas ? im.frames.length : ((im.saved && im.saved.f) || []).length);
+    const state = (im) => (im.mode === 'skip' ? tr('ocr.leftOut') : im.mode === 'whole' ? tr('ocr.wholeImage') : nFrames(im) ? tr('ocr.nFrames', { n: nFrames(im) }) : tr('ocr.noFrame'));
     const view = img.canvas
       ? `<canvas class="dci-ocr-view" data-ocr-view width="${Math.round(img.canvas.width * k)}" height="${Math.round(img.canvas.height * k)}" role="img" aria-label="${esc(tr('ocr.viewLabel', { what: ocrTypes(img) }))}"></canvas>`
       : `<div class="dci-ocr-viewwait"><p>${esc(o.error ? o.error : tr('ocr.loadingImage'))}</p>${o.error ? '' : ocrLoadHtml(img)}</div>`;
@@ -10266,8 +10345,9 @@
       if (!S.ocr) return;
       // [3.34.5] own images added while the list was loading stay, after the release's; [3.34.15] ticked by "Auto-select" if on
       if (S.ocrAuto) ocrAutoApply(images);
-      // [3.34.16] the first OCR_BATCH shown
+      // [3.34.16] the first OCR_BATCH shown; [3.34.17] what was stored for them
       images.forEach((im, i) => { im.shown = i < OCR_BATCH; });
+      ocrTakeSaved(images);
       Object.assign(S.ocr, { images: [...images, ...S.ocr.images.filter((im) => !ocrIsCaa(im))], step: 'pick' });
       renderOcr();
     }, (e) => {
@@ -11155,9 +11235,11 @@
       renderOcr();
     } else if (act === 'clear' && img) {
       img.frames = [];
+      ocrSaveFrames(img);
       renderOcr();
     } else if ((act === 'rotl' || act === 'rotr') && img) {
       ocrRotate(img, act === 'rotl' ? -1 : 1);
+      ocrSaveFrames(img);
       renderOcr();
     } else if (act === 'back') {
       S.ocr.step = 'pick';
@@ -11206,7 +11288,8 @@
       else o.langs.delete(t.dataset.ocrLang);
     } else if (t.dataset.ocrSize) {
       o.size = t.dataset.ocrSize === '1200' ? '1200' : 'orig';
-      // [3.34.2] another size: the images are loaded anew, their frames go ([3.34.5] the release's images; own ones keep theirs)
+      // [3.34.2] another size: the images are loaded anew ([3.34.5] the release's images; own ones keep theirs); [3.34.17] their
+      // frames come back from the store
       o.images.filter(ocrIsCaa).forEach((im) => {
         if (im.ctl && im.ctl.abort) im.ctl.abort();
         Object.assign(im, { canvas: null, frames: [], load: null, loadError: '', fileBlob: null });
@@ -11214,7 +11297,11 @@
     } else if (t.dataset.ocrFramefirst != null) o.frameFirst = t.checked;
     else if (t.dataset.ocrMode) {
       const { img } = ocrCurrent();
-      if (img) img.mode = ['frames', 'whole', 'skip'].includes(t.dataset.ocrMode) ? t.dataset.ocrMode : 'frames';
+      if (img) {
+        img.mode = ['frames', 'whole', 'skip'].includes(t.dataset.ocrMode) ? t.dataset.ocrMode : 'frames';
+        // [3.34.17] "the whole image" remembered ("nothing" is a choice for this time only)
+        if (img.mode !== 'skip') ocrSaveFrames(img);
+      }
     } else return;
     renderOcr();
   }
@@ -12135,6 +12222,8 @@
     };
     dropEntry(SOURCE_PICK_KEY);
     dropEntry(MEDIA_SEL_KEY);
+    // [3.34.17] the frames drawn on its images
+    dropEntry(OCR_FRAMES_KEY);
     S.datePool = [];
     S.trackPool = [];
     S.poolForm = null;
@@ -23257,7 +23346,7 @@
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
-    beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY],
+    beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -23696,7 +23785,7 @@
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
-    BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY];
+    BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {

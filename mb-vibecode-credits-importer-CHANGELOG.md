@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.16 | – |
+| 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.17
+
+#### Added
+
+- **Text from cover art (beta): frames remembered** (collected item 133; maintainer: "(B)", "ja ok"): for each release and image the frames, how it is turned and "the whole image" are kept (the last 50 releases); opened again, the images come back as you left them. Kept as parts of the image, they fit the 1200 px copy and the original alike – another image size no longer drops them. "Delete stored import …" forgets those of its release, ⚙ Settings → Beta → Reset all.
 
 ### Import 3.34.16
 
