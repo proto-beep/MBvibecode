@@ -2,8 +2,9 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload; `python3 t_coverart.py <case> …` runs only those."""
 import json
+import re
 
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -440,7 +441,7 @@ def case_ocrpdf():
         H.src_menu(pg, 'ocr-open')
         pg.wait_for_selector('#dci-ocr [data-ocr-files]', state='attached', timeout=10000)
         pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'booklet.pdf', 'mimeType': 'application/pdf', 'buffer': pdf}])
-        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3 && !document.querySelector('#dci-ocr [role=status]')", 30)
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3 && !document.querySelector('#dci-ocr [data-ocr-pdfstatus]')", 30)
         a = [pg.evaluate(CARDS), sorted({u.split('/legacy/build/')[-1] for u in H.PDFJS_REQUESTS if '/legacy/build/' in u})]
         print('A) Seiten:', a)
         results.append(a[0] == [['booklet.pdf · p. 1', True, 'PDF page with its own text'], ['booklet.pdf · p. 2', True, 'PDF page (an image)'],
@@ -485,7 +486,7 @@ def case_ocrpdf():
         pg.wait_for_selector('#dci-ocr [data-ocr-url]', timeout=10000)
         pg.fill('#dci-ocr [data-ocr-url]', 'https://images.example.org/scans/booklet.pdf')
         pg.press('#dci-ocr [data-ocr-url]', 'Enter')
-        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3 && !document.querySelector('#dci-ocr [role=status]')", 30)
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3 && !document.querySelector('#dci-ocr [data-ocr-pdfstatus]')", 30)
         e1 = pg.evaluate(CARDS)
         pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'bad.pdf', 'mimeType': 'application/pdf', 'buffer': b'no pdf at all'}])
         H.wait_for(pg, "!!document.querySelector('#dci-ocr .dci-ocr-err[role=alert]')", 30)
@@ -655,7 +656,7 @@ def case_ocrpeek():
     quadratisch! alle Bildverhältnisse müssen angezeigt werden. und bei Mouseover etwas größere darstellung.", "gleich hohe /
     breite kacheln").
     A) The tiles of the images are alike (square), each image whole in its tile (contain, nothing cut off).
-    B) The mouse rests on the Booklet (1246 × 1634): after a short pause its larger view beside the tile – the 1200 px image of
+    B) The mouse rests on the Booklet (1246 × 1634): after a short pause (300 ms) its larger view beside the tile – the 1200 px image of
        the Cover Art Archive, in its proportions, its longer side 480 px; the mouse leaves: gone.
     C) In the frames step the small images beside the view are whole too and show the larger view; an own file (300 × 800)
        is shown larger (480 px high)."""
@@ -688,7 +689,8 @@ def case_ocrpeek():
         pg.wait_for_timeout(200)
         b2 = pg.evaluate(PEEK)
         print('B) sofort:', b0, '| nach der Pause:', b1, '| Kachel rechts:', round(cr['x'] + cr['width']), '| weg:', b2)
-        results.append(b0 is None and b1 and b1['src'].endswith('/13-1200.jpg') and b1['h'] == 480 and abs(b1['w'] - round(480 * 1246 / 1634)) <= 2
+        # (b0: right after the mouse came – not checked, a slow machine may need longer than the pause to get there)
+        results.append(b1 and b1['src'].endswith('/13-1200.jpg') and b1['h'] == 480 and abs(b1['w'] - round(480 * 1246 / 1634)) <= 2
                        and (b1['left'] >= cr['x'] + cr['width'] or b1['right'] <= cr['x']) and b1['label'] == 'Booklet' and b2 is None)
         # C) an own file and the frames step
         pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'narrow.png', 'mimeType': 'image/png', 'buffer': H.png_of(300, 800)}])
@@ -708,6 +710,82 @@ def case_ocrpeek():
         results.append(c1 and c1['src'].startswith('blob:') and c1['h'] == 480 and c1['w'] == 180 and c2 and c2['src'].endswith('-1200.jpg') and c3 == 'contain')
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrload():
+    """[3.34.10] Loading the images: how far, and ahead (collected item 128; maintainer: "Fortschrittsanzeige beim Laden der
+    Bilder", "überall", "ja, aber wenn etwas abgehakt wird und noch nicht geladen wird soll das natürlich aus der queue raus",
+    "das vorladen soll ein und ausstellbar sein in den einstellungen").
+    A) The window opened: the previews counted ("Previews: 0 of 5 loaded") until they are there; the three images ticked are
+       loaded ahead, two at a time – Back and Booklet "loading …", Tray "waiting to load"; Front and Medium nothing.
+    B) Tray unticked: out of the queue, never asked for; Booklet unticked while it loads ahead: it stops; Back comes: "loaded".
+    C) ⚙ Settings → Beta "Load the images ticked ahead" off (stored): opened again, nothing is loaded ahead; the frames step
+       loads the image itself and shows it loading in the view, then draws it."""
+    results = []
+    held = []
+    CARD = "(() => Object.fromEntries([...document.querySelectorAll('#dci-ocr .dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), (c.querySelector('.dci-ocr-load:not([hidden]) .dci-ocr-loadtext') || {}).textContent || ''])))()"
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.route(re.compile(r'https://coverartarchive\.org/release/[^/]+/\d+(-250)?\.jpg$'), lambda r: held.append(r))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.wait_for_timeout(600)
+        orig = lambda: sorted(r.request.url.rsplit('/', 1)[1] for r in held if not r.request.url.endswith('-250.jpg'))
+        a = [pg.evaluate("(document.querySelector('#dci-ocr [data-ocr-previews]:not([hidden])') || {}).textContent || ''"), pg.evaluate(CARD), orig()]
+        print('A) Vorschau:', a[0], '| Kacheln:', a[1], '| Originale angefragt:', a[2])
+        results.append(a[0] == 'Previews: 0 of 5 loaded' and a[1] == {'Front': '', 'Back': 'loading …', 'Booklet': 'loading …', 'Tray': 'waiting to load', 'Medium': ''}
+                       and a[2] == ['12.jpg', '13.jpg'])
+        pg.uncheck('#dci-ocr [data-ocr-sel="3"]')
+        pg.wait_for_timeout(200)
+        pg.uncheck('#dci-ocr [data-ocr-sel="2"]')
+        pg.wait_for_timeout(300)
+        b1 = pg.evaluate(CARD)
+        for r in [r for r in held if r.request.url.endswith('/12.jpg') or r.request.url.endswith('-250.jpg')]:
+            r.fallback()
+        pg.wait_for_timeout(800)
+        b2 = [pg.evaluate(CARD), orig(), pg.evaluate("(document.querySelector('#dci-ocr [data-ocr-previews]:not([hidden])') || {}).textContent || ''")]
+        print('B) abgehakt:', b1, '| Back da:', b2)
+        results.append(b1 == {'Front': '', 'Back': 'loading …', 'Booklet': '', 'Tray': '', 'Medium': ''} and b2[0]['Back'] == 'loaded' and b2[0]['Booklet'] == ''
+                       and b2[1] == ['12.jpg', '13.jpg'] and b2[2] == '')
+        pg.click('#dci-ocr [data-ocr=close]')
+        # C) loading ahead off
+        held.clear()
+        H.open_settings(pg, 'beta')
+        c0 = pg.evaluate("[!!document.querySelector('[data-el=settings] [data-set=ocr-preload]'), document.querySelector('[data-el=settings] [data-set=ocr-preload]').checked]")
+        pg.uncheck('[data-el=settings] [data-set=ocr-preload]')
+        pg.wait_for_timeout(200)
+        stored = pg.evaluate("localStorage.getItem('dci-ocr-preload')")
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.wait_for_timeout(600)
+        c1 = [orig(), pg.evaluate(CARD)]
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-viewwait .dci-ocr-load:not([hidden])', timeout=10000)
+        c2 = [pg.evaluate("document.querySelector('#dci-ocr .dci-ocr-viewwait').innerText.replace(/\\s+/g, ' ').trim()"), orig()]
+        for r in list(held):
+            r.fallback()
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        print('C) Schalter:', c0, stored, '| geöffnet:', c1, '| Rahmen-Schritt:', c2)
+        results.append(c0 == [True, True] and stored == 'false' and c1[0] == [] and set(c1[1].values()) == {''}
+                       and c2[0] == 'Loading the image … loading …' and c2[1] == ['12.jpg'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        for r in held:
+            try:
+                r.abort()
+            except Exception:
+                pass
+        # requests the page gave up while held: no handler left waiting for them
+        ctx.unroute_all(behavior='ignoreErrors')
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.9, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.10, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.10 · 2026-10-28
+
+Text from cover art (beta): how far the images have come, and loading them ahead (collected item 128).
+
+- **`httpFetch(url, { blob, progress, ctl })`:** `progress(loaded, total)` – GM: `onprogress`; fetch: the body read piece by piece (`content-length` as total) –, `ctl.abort()` (GM: the request's `abort`, fetch: an `AbortController`; the promise fails with `aborted`); blobs wait 180 s (was 60).
+- **`ocrCanvas(img, { ahead })`** is no longer `async`: one load per image (`img.loadPromise`, shared by the frames, the reading and the loading ahead; a caller that is not ahead clears `img.ahead`), `img.ctl`, `img.load` ({ state: load | ready | error, loaded, total }), `img.loadError`; the work itself is `ocrCanvasLoad(img)` (the size kept as asked when it started); `ocrBlob` passes the progress and `ctl` (an abort is passed on, not turned into a message).
+- **New:** `OCR_PRELOAD_KEY` (`dci-ocr-preload`, `S.ocrPreload`, on by default), `OCR_PRELOAD_AT_ONCE` 2, `mb(n)`, `ocrLoadText(img)` ("waiting to load", "loading …", "45 % · 2.1 / 4.7 MB", "2.1 MB", "loaded", "could not be loaded"), `ocrLoadPct`, `ocrLoadShown(img, ready)` ("loaded" only on the tiles), **`ocrLoadHtml(img, ready)`** (`[data-ocr-load]` with a bar and its text, the reason of a failure as its title), **`ocrLoadState(img, load)`** (painted in place – the window is not drawn anew for each piece), **`ocrPreloadPump()`** (the images ticked not loaded yet, two at a time; not while listing, reading or checking), **`ocrPreloadDrop(img)`** (one being loaded ahead stops), `ocrPreviewsCount()` (`[data-ocr-previews]`, the previews' `load`/`error` caught on the window), `ocrPdfStatus(text)` (`[data-ocr-pdfstatus]`: "page n of m", the MB of a PDF by its address).
+- **Changed:** the tiles (`loading="lazy"` gone: the previews are counted), the small images beside the frames, the view while it loads (`.dci-ocr-viewwait` with the bar; `img.viewWait` instead of `img.loading`), the list while reading (status `load`) show `ocrLoadHtml`; `ocrChange` drops images unticked (one or "All images") and on another size stops the release's loads; `closeOcr` stops all loads; `renderOcr` counts the previews and pumps the queue; `.dci-ocr-pickhead`.
+- **Settings:** ⚙ Settings → Beta – "Load the images ticked ahead" (`data-set="ocr-preload"`, shown while the beta is on; off stops the loads ahead), `TOPIC_KEYS.beta`, `resetTopic('beta')`, `resetSettings`, `SETTINGS_KEYS` + `OCR_PRELOAD_KEY`; switching the beta draws the settings anew.
+- **CSS:** `.dci-ocr-load`, `.dci-ocr-loadbar` (green when loaded, none on an error), the view's wait in a column.
+- **Texts:** new (English) `ocr.loadQueued`, `ocr.loadReady`, `ocr.loadFailed`, `ocr.loadPart`, `ocr.loadSome`, `ocr.loadStart`, `ocr.previews`, `ocr.pdfPages`, `ocr.pdfFetching`, `ocr.pdfFetchingOf`, `settings.ocrPreload`, `settings.ocrPreloadTitle`.
+- **Header / files:** `@version 3.34.10`, `?v=3.34.10`, both files' `version`.
+- **Tests:** `t_coverart.py` – new case `ocrload` (requests held and let go); `ocrpdf` waits for `[data-ocr-pdfstatus]`.
 
 ## Import 3.34.9 · 2026-10-28
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.9
+// @version      3.34.10
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.9
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.9
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.10
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.10
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.9';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.10';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1360,6 +1360,8 @@
       "settings.betaOcr": "Text from cover art (beta)",
       "settings.betaOcrTitle": "“Source ▾” gets “Text from cover art …”: the credits printed on the images of the release are read with text recognition",
       "settings.betaOcrWhat": "Reads the images of the release on the Cover Art Archive in this browser with {lib}, which is loaded from {cdn} the first time it is used (with 2–4 MB of language data for each language, then kept by the browser). Nothing is uploaded.",
+      "settings.ocrPreload": "Load the images ticked ahead",
+      "settings.ocrPreloadTitle": "Text from cover art (beta): the images ticked are loaded in the background while you choose, two at a time – the frames and the reading then start at once. An image unticked leaves the queue.",
       "ocr.menu": "Text from cover art …",
       "ocr.menuTitle": "Read the credits printed on the back cover or in the booklet (the images of this release on the Cover Art Archive)",
       "ocr.title": "Text from cover art",
@@ -1459,6 +1461,16 @@
       "ocr.discogsLoad": "Load Discogs images (r{id})",
       "ocr.discogsHint": "of the Discogs release linked to this one – small images (at most 600 px), read enlarged",
       "ocr.discogsLoading": "Loading the images from Discogs …",
+      "ocr.loadQueued": "waiting to load",
+      "ocr.loadReady": "loaded",
+      "ocr.loadFailed": "could not be loaded",
+      "ocr.loadPart": "{pct} % · {got} / {of} MB",
+      "ocr.loadSome": "{got} MB",
+      "ocr.loadStart": "loading …",
+      "ocr.previews": "Previews: {n} of {of} loaded",
+      "ocr.pdfPages": "{name}: page {n} of {of} …",
+      "ocr.pdfFetching": "Loading {name} … {got} MB",
+      "ocr.pdfFetchingOf": "Loading {name} … {got} / {of} MB",
       "ocr.discogsNone": "No images of Discogs release r{id} were found on its page.",
       "ocr.discogsImage": "Discogs r{id} · {n}",
       "ocr.ownDiscogs": "from Discogs",
@@ -9269,17 +9281,55 @@
   const OCR_MAX = 3000;
   const OCR_UNSURE = 60;
 
-  /** A file of another site with its status: { status, body } (text, or a Blob) – the manager's request, else fetch. */
-  function httpFetch(url, { blob = false } = {}) {
+  /**
+   * A file of another site with its status: { status, body } (text, or a Blob) – the manager's request, else fetch.
+   * [3.34.10] `progress(loaded, total)` while it comes (total 0: unknown); `ctl.abort()` stops it (the promise then fails
+   * with `aborted` set).
+   */
+  function httpFetch(url, { blob = false, progress = null, ctl = null } = {}) {
     return new Promise((resolve, reject) => {
+      const stopped = () => Object.assign(new Error('aborted'), { aborted: true });
       const xhr = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : (typeof GM !== 'undefined' && GM.xmlHttpRequest) || null;
       if (xhr) {
-        xhr({ method: 'GET', url, timeout: 60000, responseType: blob ? 'blob' : 'text',
+        const h = xhr({ method: 'GET', url, timeout: blob ? 180000 : 60000, responseType: blob ? 'blob' : 'text',
+          onprogress: (r) => { if (progress && r) progress(r.loaded || 0, r.lengthComputable ? r.total || 0 : 0); },
           onload: (r) => resolve({ status: r.status, body: blob ? r.response : r.responseText }),
-          onerror: () => reject(new Error(tr('err.pageNet', { url }))), ontimeout: () => reject(new Error(tr('err.pageNet', { url }))) });
-      } else {
-        fetch(url).then((r) => (blob ? r.blob() : r.text()).then((body) => resolve({ status: r.status, body })), () => reject(new Error(tr('err.pageNet', { url }))));
+          onerror: () => reject(new Error(tr('err.pageNet', { url }))), ontimeout: () => reject(new Error(tr('err.pageNet', { url }))),
+          onabort: () => reject(stopped()) });
+        if (ctl) {
+          ctl.abort = () => {
+            try {
+              if (h && typeof h.abort === 'function') h.abort();
+            } catch (e) { /* gone already */ }
+            reject(stopped());
+          };
+        }
+        return;
       }
+      const ac = typeof AbortController === 'function' ? new AbortController() : null;
+      if (ctl) {
+        ctl.abort = () => {
+          if (ac) ac.abort();
+          reject(stopped());
+        };
+      }
+      fetch(url, ac ? { signal: ac.signal } : {}).then(async (r) => {
+        if (!blob) return resolve({ status: r.status, body: await r.text() });
+        // [3.34.10] read piece by piece to show how much has come
+        const total = Number(r.headers.get('content-length')) || 0;
+        if (!progress || !r.body || typeof r.body.getReader !== 'function') return resolve({ status: r.status, body: await r.blob() });
+        const reader = r.body.getReader();
+        const parts = [];
+        let loaded = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          parts.push(value);
+          loaded += value.length;
+          progress(loaded, total);
+        }
+        return resolve({ status: r.status, body: new Blob(parts, { type: r.headers.get('content-type') || '' }) });
+      }).catch((e) => reject(ac && ac.signal.aborted ? stopped() : new Error(tr('err.pageNet', { url }))));
     });
   }
 
@@ -9423,7 +9473,10 @@
       o.urlDraft = '';
       o.error = '';
       o.pdfLoading = (o.pdfLoading || 0) + 1;
-      httpFetch(u, { blob: true }).then((r) => {
+      // [3.34.10] how much of it has come
+      const name = ocrUrlName(u);
+      ocrPdfStatus(tr('ocr.pdfFetching', { name, got: '0.0' }));
+      httpFetch(u, { blob: true, progress: (loaded, total) => ocrPdfStatus(total ? tr('ocr.pdfFetchingOf', { name, got: mb(loaded), of: mb(total) }) : tr('ocr.pdfFetching', { name, got: mb(loaded) })) }).then((r) => {
         if (r.status < 200 || r.status >= 300 || !r.body) throw new Error(tr('err.pageHttp', { status: r.status, url: u }));
         return ocrAddPdf(r.body, ocrUrlName(u), u);
       }, () => { throw new Error(tr('ocr.errUrl', { url: u })); }).catch((e) => {
@@ -9513,6 +9566,14 @@
     }
   }
 
+  /** [3.34.10] What a PDF being opened is at ("booklet.pdf: page 3 of 12"), painted in place. */
+  function ocrPdfStatus(text) {
+    if (!S.ocr) return;
+    S.ocr.pdfStatus = text;
+    const el = document.querySelector('#dci-ocr [data-ocr-pdfstatus]');
+    if (el) el.textContent = text;
+  }
+
   /** [3.34.6] A page of a PDF as a canvas, its longer side px (white below, as on paper); its scale kept on it. */
   async function ocrPdfRender(page, px) {
     const vp1 = page.getViewport({ scale: 1 });
@@ -9553,6 +9614,8 @@
       const n = Math.min(doc.numPages, OCR_PDF_PAGES);
       let withText = 0;
       for (let p = 1; p <= n; p++) {
+        // [3.34.10] page by page
+        ocrPdfStatus(tr('ocr.pdfPages', { name, n: p, of: n }));
         const page = await doc.getPage(p);
         const tc = await page.getTextContent();
         const letters = tc.items.reduce((a, it) => a + String(it.str || '').replace(/\s+/g, '').length, 0);
@@ -9635,8 +9698,10 @@
     const url = ocrIsCaa(img) && S.ocr.size === '1200' ? img.big : img.orig;
     let r;
     try {
-      r = await httpFetch(url, { blob: true });
+      // [3.34.10] how much of it has come, shown where the image is
+      r = await httpFetch(url, { blob: true, ctl: img.ctl, progress: (loaded, total) => ocrLoadState(img, { state: 'load', loaded, total }) });
     } catch (e) {
+      if (e && e.aborted) throw e;
       // [3.34.5] a site that does not let the script read it: save the image and choose it as a file
       throw new Error(ocrIsCaa(img) ? e.message : tr('ocr.errUrl', { url }));
     }
@@ -9644,15 +9709,47 @@
     return r.body;
   }
 
-  /** An image as a canvas (its longer side at most OCR_MAX), loaded once ([3.34.5] the release's once per size); w, h: its own size. */
-  async function ocrCanvas(img) {
-    if (img.canvas && (!ocrIsCaa(img) || img.canvasSize === S.ocr.size)) return img.canvas;
+  /**
+   * An image as a canvas (its longer side at most OCR_MAX), loaded once ([3.34.5] the release's once per size); w, h: its own
+   * size. [3.34.10] One load at a time per image (the frames, the reading and the loading ahead share it), its state shown.
+   */
+  function ocrCanvas(img, { ahead = false } = {}) {
+    if (img.canvas && (!ocrIsCaa(img) || img.canvasSize === S.ocr.size)) return Promise.resolve(img.canvas);
+    if (img.loadPromise) {
+      if (!ahead) img.ahead = false;
+      return img.loadPromise;
+    }
+    const o = S.ocr;
+    img.ctl = {};
+    img.ahead = ahead;
+    img.loadError = '';
+    ocrLoadState(img, { state: 'load', loaded: 0, total: 0 });
+    img.loadPromise = ocrCanvasLoad(img).then((c) => {
+      ocrLoadState(img, { state: 'ready' });
+      return c;
+    }, (e) => {
+      if (e && e.aborted) ocrLoadState(img, null);
+      else {
+        img.loadError = (e && e.message) || String(e);
+        ocrLoadState(img, { state: 'error' });
+      }
+      throw e;
+    }).finally(() => {
+      img.loadPromise = null;
+      img.ctl = null;
+      if (S.ocr === o) ocrPreloadPump();
+    });
+    return img.loadPromise;
+  }
+
+  async function ocrCanvasLoad(img) {
     // [3.34.6] a page of a PDF: drawn by pdf.js
     if (img.src === 'pdf') {
       const c = await ocrPdfRender(img.pdfPage, OCR_PDF_PX);
       Object.assign(img, { canvas: c, pdfScale: c.dciScale, w: c.width, h: c.height, frames: [], turn: 0 });
       return c;
     }
+    const size = S.ocr.size;
     const blob = await ocrBlob(img);
     let src;
     if (typeof window.createImageBitmap === 'function') {
@@ -9677,8 +9774,70 @@
     c.width = Math.round(w * k);
     c.height = Math.round(h * k);
     c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
-    Object.assign(img, { canvas: c, canvasSize: S.ocr.size, w, h, frames: [] });
+    Object.assign(img, { canvas: c, canvasSize: size, w, h, frames: [] });
     return c;
+  }
+
+  // --- [3.34.10] Loading the images: how far, and ahead in the background (collected item 128; maintainer: "Wir brauchen eine
+  // Fortschrittsanzeige beim Laden der Bilder beim Bild-Import", "überall", "ja, aber wenn etwas abgehakt wird und noch nicht
+  // geladen wird soll das natürlich aus der queue raus. -> das vorladen soll ein und ausstellbar sein in den einstellungen"):
+  // each image shows how much of it has come (%, MB) on its tile, beside the frames and in the list while reading; the images
+  // ticked are loaded ahead, two at a time (⚙ Settings → Beta, on by default); one unticked leaves the queue, and one being
+  // loaded ahead stops.
+
+  const OCR_PRELOAD_KEY = 'dci-ocr-preload';
+  const OCR_PRELOAD_AT_ONCE = 2;
+  S.ocrPreload = readJson('localStorage', OCR_PRELOAD_KEY, true) !== false;
+
+  const mb = (n) => (n / 1048576).toFixed(n < 10485760 ? 1 : 0);
+  /** The state of an image's loading as a short text: "45 % · 2.1 / 4.7 MB", "loaded", "waiting to load" … */
+  function ocrLoadText(img) {
+    const l = img.load;
+    if (!l) return S.ocrPreload && img.sel && !img.canvas && S.ocr && S.ocr.step === 'pick' ? tr('ocr.loadQueued') : '';
+    if (l.state === 'ready') return tr('ocr.loadReady');
+    if (l.state === 'error') return tr('ocr.loadFailed');
+    if (l.total) return tr('ocr.loadPart', { pct: Math.min(100, Math.round((l.loaded / l.total) * 100)), got: mb(l.loaded), of: mb(l.total) });
+    return l.loaded ? tr('ocr.loadSome', { got: mb(l.loaded) }) : tr('ocr.loadStart');
+  }
+  const ocrLoadPct = (img) => {
+    const l = img.load;
+    if (!l) return 0;
+    if (l.state === 'ready') return 100;
+    return l.total ? Math.min(100, Math.round((l.loaded / l.total) * 100)) : 0;
+  };
+  /** Whether an element of loading is shown: with a text, and "loaded" only where it is asked for (the tiles of the choice). */
+  const ocrLoadShown = (img, ready) => !!ocrLoadText(img) && (ready || !(img.load && img.load.state === 'ready'));
+  /** The bar and text of an image's loading (painted in place: the window is not drawn anew for each piece). */
+  const ocrLoadHtml = (img, ready = false) => `<span class="dci-ocr-load" data-ocr-load="${esc(img.id)}" data-ready="${ready ? 1 : 0}" data-state="${esc((img.load && img.load.state) || '')}" title="${esc(img.loadError || '')}"${ocrLoadShown(img, ready) ? '' : ' hidden'}>
+      <span class="dci-ocr-loadbar"><span style="width:${ocrLoadPct(img)}%"></span></span><span class="dci-ocr-loadtext">${esc(ocrLoadText(img))}</span></span>`;
+
+  function ocrLoadState(img, load) {
+    img.load = load;
+    const el = document.getElementById('dci-ocr');
+    if (!el) return;
+    el.querySelectorAll(`[data-ocr-load="${CSS.escape(String(img.id))}"]`).forEach((x) => {
+      const text = ocrLoadText(img);
+      x.hidden = !ocrLoadShown(img, x.dataset.ready === '1');
+      x.dataset.state = (load && load.state) || '';
+      x.title = img.loadError || '';
+      x.querySelector('.dci-ocr-loadbar > span').style.width = `${ocrLoadPct(img)}%`;
+      x.querySelector('.dci-ocr-loadtext').textContent = text;
+    });
+  }
+
+  /** The images ticked loaded ahead, OCR_PRELOAD_AT_ONCE at a time (not while reading). */
+  function ocrPreloadPump() {
+    const o = S.ocr;
+    if (!o || !S.ocrPreload || o.step === 'run' || o.step === 'result' || o.step === 'list') return;
+    const busy = o.images.filter((im) => im.loadPromise).length;
+    const next = o.images.filter((im) => im.sel && !im.loadPromise && !im.loadError && !(im.canvas && (!ocrIsCaa(im) || im.canvasSize === o.size)))
+      .slice(0, Math.max(0, OCR_PRELOAD_AT_ONCE - busy));
+    next.forEach((im) => ocrCanvas(im, { ahead: true }).catch(() => {}));
+  }
+
+  /** An image unticked: out of the queue; one being loaded ahead stops (one the frames or the reading wait for goes on). */
+  function ocrPreloadDrop(img) {
+    if (img.loadPromise && img.ahead && img.ctl && img.ctl.abort) img.ctl.abort();
   }
 
   /** What is read of an image: its frames (on the canvas), else the whole image; a small image enlarged ×3. */
@@ -9856,13 +10015,13 @@
     const state = (im) => (im.mode === 'skip' ? tr('ocr.leftOut') : im.mode === 'whole' ? tr('ocr.wholeImage') : im.frames.length ? tr('ocr.nFrames', { n: im.frames.length }) : tr('ocr.noFrame'));
     const view = img.canvas
       ? `<canvas class="dci-ocr-view" data-ocr-view width="${Math.round(img.canvas.width * k)}" height="${Math.round(img.canvas.height * k)}" role="img" aria-label="${esc(tr('ocr.viewLabel', { what: ocrTypes(img) }))}"></canvas>`
-      : `<p class="dci-ocr-viewwait">${esc(o.error ? o.error : tr('ocr.loadingImage'))}</p>`;
+      : `<div class="dci-ocr-viewwait"><p>${esc(o.error ? o.error : tr('ocr.loadingImage'))}</p>${o.error ? '' : ocrLoadHtml(img)}</div>`;
     const mode = (m, label) => `<label class="dci-check"><input type="radio" name="dci-ocr-mode" data-ocr-mode="${m}" ${img.mode === m ? 'checked' : ''}> ${esc(label)}</label>`;
     return `<div class="dci-ocr-body dci-ocr-frames">
         <div class="dci-ocr-stage">${view}</div>
         <div class="dci-ocr-side">
           <div class="dci-ocr-thumbs">${chosen.map((im, i) => `<button type="button" class="dci-ocr-thumb${i === o.cur ? ' dci-on' : ''}" data-ocr-cur="${i}" aria-current="${i === o.cur}">
-            <img src="${esc(im.thumb)}" alt="" data-ocr-peek="${esc(im.id)}"><strong>${esc(ocrTypes(im))}</strong><span>${esc(state(im))}</span></button>`).join('')}</div>
+            <img src="${esc(im.thumb)}" alt="" data-ocr-peek="${esc(im.id)}"><strong>${esc(ocrTypes(im))}</strong><span>${esc(state(im))}</span>${ocrLoadHtml(im)}</button>`).join('')}</div>
           ${img.canvas && img.w < OCR_SMALL ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: img.w, h: img.h }))}</p>` : ''}
           <fieldset><legend>${esc(tr('ocr.mode'))}</legend>
             ${mode('frames', tr('ocr.modeFrames', { n: img.frames.length }))}${mode('whole', tr('ocr.modeWhole'))}${mode('skip', tr('ocr.modeSkip'))}</fieldset>
@@ -9899,8 +10058,11 @@
   function closeOcr() {
     if (S.ocr) {
       S.ocr.run++;
-      // [3.34.5] the local addresses of own files; [3.34.6] the PDFs opened
-      S.ocr.images.forEach((im) => { if (im.local) URL.revokeObjectURL(im.local); });
+      // [3.34.5] the local addresses of own files; [3.34.6] the PDFs opened; [3.34.10] images still loading stop
+      S.ocr.images.forEach((im) => {
+        if (im.local) URL.revokeObjectURL(im.local);
+        if (im.ctl && im.ctl.abort) im.ctl.abort();
+      });
       (S.ocr.pdfDocs || []).forEach(({ doc, local }) => {
         try {
           doc.destroy();
@@ -10044,7 +10206,7 @@
     return `<fieldset class="dci-ocr-own"><legend>${esc(tr('ocr.own'))}</legend>
         <div class="dci-ocr-ownrow"><button type="button" class="dci-small" data-ocr="files">${esc(tr('ocr.chooseFiles'))}</button>
           <input type="file" data-ocr-files multiple accept="image/*,application/pdf,.pdf" hidden><span class="dci-sub">${esc(tr('ocr.dropHint'))}</span></div>
-        ${o.pdfLoading ? `<p class="dci-sub" role="status">${esc(tr('ocr.pdfLoading'))}</p>` : ''}
+        ${o.pdfLoading ? `<p class="dci-sub" role="status" data-ocr-pdfstatus>${esc(o.pdfStatus || tr('ocr.pdfLoading'))}</p>` : ''}
         ${ocrDiscogsLinks().length ? `<div class="dci-ocr-ownrow">${ocrDiscogsLinks().map((l) => `<button type="button" class="dci-small" data-ocr-discogs="${esc(l.id)}"
           ${(o.discogsLoading || []).includes(l.id) || o.images.some((im) => im.discogs === l.id) ? 'disabled' : ''}>${esc(tr('ocr.discogsLoad', { id: l.id }))}</button>`).join('')}
           <span class="dci-sub">${esc(tr('ocr.discogsHint'))}</span></div>` : ''}
@@ -10061,8 +10223,9 @@
     o.images.forEach((im) => { if (im.mode === 'skip') im.mode = 'frames'; });
     const caa = o.images.filter(ocrIsCaa).length;
     const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}${ocrIsCaa(im) ? '' : ' dci-ocr-owncard'}" data-ocr-card="${i}">
-        <img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" loading="lazy" data-ocr-peek="${esc(im.id)}">
+        <img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" data-ocr-peek="${esc(im.id)}" data-ocr-preview>
         <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> <span>${esc(ocrTypes(im))}</span></span>
+        ${ocrLoadHtml(im, true)}
         ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
         ${ocrIsCaa(im) ? (im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`)
           : `<span class="dci-sub">${esc(tr(im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : im.src === 'discogs' ? 'ocr.ownDiscogs' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
@@ -10072,7 +10235,7 @@
     return `<div class="dci-ocr-body">
         ${o.error ? `<p class="dci-ocr-err" role="alert">${esc(o.error)}</p>` : ''}
         ${o.listError ? `<p class="dci-ocr-err">${esc(tr('ocr.listFailed', { why: o.listError }))}</p>` : !caa ? `<p>${esc(tr('ocr.none'))}</p>` : `<p class="dci-sub">${esc(tr('ocr.pickHint'))}</p>`}
-        ${all}
+        <div class="dci-ocr-pickhead">${all}<span class="dci-sub" data-ocr-previews role="status" hidden></span></div>
         ${o.images.length ? `<div class="dci-ocr-grid">${o.images.map(card).join('')}</div>` : ''}
         ${ocrOwnHtml()}
         <div class="dci-ocr-opts">
@@ -10098,6 +10261,7 @@
     const state = (r) => tr(`ocr.state.${r.status}`);
     return `<div class="dci-ocr-body"><p class="dci-sub">${esc(tr('ocr.runHint'))}</p><ol class="dci-ocr-runs">
         ${o.results.map((r, i) => `<li><img src="${esc(r.img.thumb)}" alt="" data-ocr-peek="${esc(r.img.id)}"><span><strong>${esc(ocrTypes(r.img))}</strong> · ${esc(state(r))}
+          ${r.status === 'load' ? ocrLoadHtml(r.img) : ''}
           <span class="dci-ocr-barbox"><span class="dci-ocr-bar" data-ocr-bar="${i}" style="width:${Math.round((r.progress || 0) * 100)}%"></span></span></span></li>`).join('')}</ol></div>
       <div class="dci-ocr-foot"><span></span><button type="button" class="dci-textbtn" data-ocr="close">${esc(tr('common.cancel'))}</button></div>`;
   }
@@ -10227,6 +10391,9 @@
       el.addEventListener('mouseover', ocrPeekOver);
       el.addEventListener('mouseout', ocrPeekOut);
       el.addEventListener('scroll', ocrPeekHide, true);
+      // [3.34.10] a preview there (or failed)
+      el.addEventListener('load', (e) => { if (e.target.matches && e.target.matches('img[data-ocr-preview]')) ocrPreviewsCount(); }, true);
+      el.addEventListener('error', (e) => { if (e.target.matches && e.target.matches('img[data-ocr-preview]')) ocrPreviewsCount(); }, true);
       el.addEventListener('input', (e) => {
         const i = e.target.dataset.ocrText;
         if (i != null && S.ocr && S.ocr.results[i]) S.ocr.results[i].text = e.target.value;
@@ -10287,20 +10454,34 @@
     // [3.34.2] the frames step: the image loaded first, then drawn
     if (o.step === 'frames') {
       const { img } = ocrCurrent();
-      if (img && !img.canvas && !img.loading) {
-        img.loading = true;
+      if (img && !img.canvas && !img.viewWait) {
+        img.viewWait = true;
         ocrCanvas(img).then(() => {
-          img.loading = false;
+          img.viewWait = false;
           if (S.ocr === o) renderOcr();
         }, (e) => {
-          img.loading = false;
-          if (S.ocr !== o) return;
+          img.viewWait = false;
+          if (S.ocr !== o || (e && e.aborted)) return;
           o.error = (e && e.message) || String(e);
           renderOcr();
         });
       }
       ocrDraw();
     }
+    // [3.34.10] the previews counted while they come; the images ticked loaded ahead
+    ocrPreviewsCount();
+    ocrPreloadPump();
+  }
+
+  /** [3.34.10] "Previews: 12 of 20 loaded" until all are there. */
+  function ocrPreviewsCount() {
+    const el = document.getElementById('dci-ocr');
+    const out = el && el.querySelector('[data-ocr-previews]');
+    if (!out) return;
+    const imgs = [...el.querySelectorAll('img[data-ocr-preview]')];
+    const done = imgs.filter((i) => i.complete).length;
+    out.hidden = !imgs.length || done >= imgs.length;
+    out.textContent = tr('ocr.previews', { n: done, of: imgs.length });
   }
 
   function ocrClick(e) {
@@ -10387,8 +10568,17 @@
     const t = e.target;
     const o = S.ocr;
     if (!o) return;
-    if (t.dataset.ocrSel != null && o.images[t.dataset.ocrSel]) o.images[t.dataset.ocrSel].sel = t.checked;
-    else if (t.dataset.ocrAll != null) o.images.forEach((im) => { im.sel = t.checked; });
+    if (t.dataset.ocrSel != null && o.images[t.dataset.ocrSel]) {
+      const im = o.images[t.dataset.ocrSel];
+      im.sel = t.checked;
+      // [3.34.10] unticked: out of the queue of loading ahead
+      if (!im.sel) ocrPreloadDrop(im);
+    } else if (t.dataset.ocrAll != null) {
+      o.images.forEach((im) => {
+        im.sel = t.checked;
+        if (!im.sel) ocrPreloadDrop(im);
+      });
+    }
     else if (t.dataset.ocrFiles != null) {
       const files = [...(t.files || [])];
       t.value = '';
@@ -10401,7 +10591,10 @@
     } else if (t.dataset.ocrSize) {
       o.size = t.dataset.ocrSize === '1200' ? '1200' : 'orig';
       // [3.34.2] another size: the images are loaded anew, their frames go ([3.34.5] the release's images; own ones keep theirs)
-      o.images.filter(ocrIsCaa).forEach((im) => Object.assign(im, { canvas: null, frames: [] }));
+      o.images.filter(ocrIsCaa).forEach((im) => {
+        if (im.ctl && im.ctl.abort) im.ctl.abort();
+        Object.assign(im, { canvas: null, frames: [], load: null, loadError: '' });
+      });
     } else if (t.dataset.ocrFramefirst != null) o.frameFirst = t.checked;
     else if (t.dataset.ocrMode) {
       const { img } = ocrCurrent();
@@ -22442,7 +22635,7 @@
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
-    beta: [BETA_OCR_KEY],
+    beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -22599,6 +22792,8 @@
         `<p class="dci-sub">${esc(tr('settings.betaHint'))}</p>`,
         row(check('data-set="beta-ocr"', S.betaOcr, tr('settings.betaOcr'), tr('settings.betaOcrTitle'))),
         `<p class="dci-sub">${esc(tr('settings.betaOcrWhat', { lib: 'Tesseract.js', cdn: 'cdn.jsdelivr.net' }))}</p>`,
+        // [3.34.10] loading the images ticked ahead (collected item 128), while the beta is on
+        S.betaOcr ? row(check('data-set="ocr-preload"', S.ocrPreload, tr('settings.ocrPreload'), tr('settings.ocrPreloadTitle'))) : '',
       ],
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
@@ -22762,6 +22957,16 @@
       if (!el.checked) closeOcr();
       renderSource();
       renderLauncher();
+      renderSettings();
+    } else if (k === 'ocr-preload') {
+      // [3.34.10] loading the images ticked ahead: off – those being loaded ahead stop
+      S.ocrPreload = el.checked;
+      writeJson('localStorage', OCR_PRELOAD_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.ocrPreload'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      if (S.ocr) {
+        if (!el.checked) S.ocr.images.forEach(ocrPreloadDrop);
+        renderOcr();
+      }
     } else if (k === 'rule-on') {
       // [3.32.5] a rule switched here (S050; [3.32.6] S049) – the same as its switch in "Mapping rules"
       setRuleOn(el.dataset.rule, el.checked);
@@ -22845,6 +23050,7 @@
       renderDates();
     } else if (t === 'beta') {
       S.betaOcr = false;
+      S.ocrPreload = true;
       closeOcr();
       renderSource();
       renderLauncher();
@@ -22861,8 +23067,8 @@
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
-    // [3.34.1] the beta of the text from cover art
-    BETA_OCR_KEY];
+    // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead
+    BETA_OCR_KEY, OCR_PRELOAD_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -22883,7 +23089,7 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
-      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false,
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: true,
     });
     closeOcr();
     renderLauncher();
@@ -23470,6 +23676,19 @@
       #dci-ocr .dci-ocr-type > span { overflow-wrap: anywhere; }
       /* [3.34.5] own images: a dashed card, the box to add them, the window while something is dragged onto it */
       #dci-ocr .dci-ocr-owncard { border-style: dashed; }
+      /* [3.34.10] how much of an image has come */
+      #dci-ocr .dci-ocr-load { display: flex; flex-direction: column; gap: 2px; font-size: calc(var(--u, 1px) * 11); color: #5d5a6e; font-weight: 400; }
+      #dci-ocr .dci-ocr-load[hidden] { display: none; }
+      #dci-ocr .dci-ocr-loadbar { display: block; height: 4px; border-radius: 2px; background: #eceaf3; overflow: hidden; }
+      #dci-ocr .dci-ocr-loadbar > span { display: block; height: 100%; background: #736dab; transition: width 0.15s; }
+      #dci-ocr .dci-ocr-load[data-state="ready"] .dci-ocr-loadbar > span { background: #3f8f5a; }
+      #dci-ocr .dci-ocr-load[data-state="error"] { color: #9a2a22; }
+      #dci-ocr .dci-ocr-load[data-state="error"] .dci-ocr-loadbar { display: none; }
+      #dci-ocr .dci-ocr-viewwait { display: flex; flex-direction: column; align-items: center; gap: calc(var(--u, 1px) * 8); }
+      #dci-ocr .dci-ocr-viewwait p { margin: 0; }
+      #dci-ocr .dci-ocr-viewwait .dci-ocr-load { min-width: calc(var(--u, 1px) * 240); font-size: calc(var(--u, 1px) * 12); color: inherit; }
+      #dci-ocr .dci-ocr-viewwait .dci-ocr-loadbar { background: rgba(255, 255, 255, 0.25); }
+      #dci-ocr .dci-ocr-pickhead { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 16); }
       #dci-ocr .dci-ocr-all { font-weight: 600; }
       #dci-ocr .dci-ocr-own { border-style: dashed; }
       #dci-ocr .dci-ocr-ownrow { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }

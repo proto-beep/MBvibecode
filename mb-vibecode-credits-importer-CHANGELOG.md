@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.9 | – |
+| 2026-10-28 | 3.34.0 – 3.34.10 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.10
+
+#### Added
+
+- **Text from cover art (beta): how far the images have come** (collected item 128; maintainer: "Wir brauchen eine Fortschrittsanzeige beim Laden der Bilder beim Bild-Import", "überall"): a bar with % and MB for each image – on its tile, beside the frames, in the view while it loads, in the list while reading –, the previews counted until all are there, a PDF page by page.
+- **Loading the images ahead** (maintainer: "ja, aber wenn etwas abgehakt wird und noch nicht geladen wird soll das natürlich aus der queue raus. -> das vorladen soll ein und ausstellbar sein in den einstellungen"): the images ticked are loaded in the background, two at a time; unticked, an image leaves the queue (one being loaded ahead stops). ⚙ Settings → Beta "Load the images ticked ahead" (on by default).
 
 ### Import 3.34.9
 
