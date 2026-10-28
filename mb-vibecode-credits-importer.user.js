@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.0
+// @version      3.34.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -23,8 +23,10 @@
 // @grant        unsafeWindow
 // @connect      bandcamp.com
 // @connect      raw.githubusercontent.com
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.0
+// @connect      coverartarchive.org
+// @connect      archive.org
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -37,7 +39,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1349,6 +1351,62 @@
       "log.languagesLoaded": "Languages file {version} ({from})",
       "log.languagesVersion": "The languages file is of version {version}, the script of {script} – please update the script",
       "log.languagesMissing": "The languages file ({file}) is missing – the dashboard speaks English",
+      "settings.t.beta": "Beta",
+      "settings.betaHint": "Functions to try out before they become a regular part of the script: off until switched on here, and they may still change.",
+      "settings.betaOcr": "Text from cover art (beta)",
+      "settings.betaOcrTitle": "“Source ▾” gets “Text from cover art …”: the credits printed on the images of the release are read with text recognition",
+      "settings.betaOcrWhat": "Reads the images of the release on the Cover Art Archive in this browser with {lib}, which is loaded from {cdn} the first time it is used (with 2–4 MB of language data for each language, then kept by the browser). Nothing is uploaded.",
+      "ocr.menu": "Text from cover art …",
+      "ocr.menuTitle": "Read the credits printed on the back cover or in the booklet (the images of this release on the Cover Art Archive)",
+      "ocr.title": "Text from cover art",
+      "ocr.step.list": "loading the images of this release …",
+      "ocr.step.pick.one": "{n} image on the Cover Art Archive",
+      "ocr.step.pick.other": "{n} images on the Cover Art Archive",
+      "ocr.step.run": "reading …",
+      "ocr.step.result": "check the text",
+      "ocr.caaLink": "Cover art of this release ↗",
+      "ocr.loading": "Loading the images of this release from the Cover Art Archive …",
+      "ocr.none": "This release has no images on the Cover Art Archive.",
+      "ocr.listFailed": "The images of the Cover Art Archive could not be loaded: {why}",
+      "ocr.pickHint": "Choose the images with credits: the back cover, booklet, liner and tray are ticked – fronts and discs rarely have any. They are read in this browser; nothing is uploaded.",
+      "ocr.rarely": "rarely has credits",
+      "ocr.noType": "no type",
+      "ocr.langs": "Languages of the text",
+      "ocr.langsHint": "Each is loaded once (2–4 MB) and kept by the browser.",
+      "ocr.size": "Image size",
+      "ocr.sizeOrig": "the original (best for small print)",
+      "ocr.size1200": "1200 px (faster)",
+      "ocr.sizeHint": "Images under {px} px are read enlarged ×3.",
+      "ocr.chosen": "{n} of {of} images",
+      "ocr.run.one": "Recognize text in {n} image",
+      "ocr.run.other": "Recognize text in {n} images",
+      "ocr.runHint": "The first time, the text recognition and its language data are loaded – this takes a moment.",
+      "ocr.state.wait": "waiting",
+      "ocr.state.load": "loading the image",
+      "ocr.state.read": "reading",
+      "ocr.state.done": "done",
+      "ocr.resultHint": "Correct what was read wrongly – the text then goes to the same reader as a pasted text.",
+      "ocr.small": "Only {w} × {h} px – read enlarged; names can come out wrong.",
+      "ocr.textOf": "Text of {what}",
+      "ocr.unsure": "Read with little certainty (a click selects it):",
+      "ocr.fixed": "Corrected after reading:",
+      "ocr.fixPc": "℗ read as © ({n})",
+      "ocr.fixDash": "dash between a name and a role ({n})",
+      "ocr.back": "← Images",
+      "ocr.copy": "Copy text",
+      "ocr.copied": "The text is in the clipboard",
+      "ocr.supp": "＋ Supplement the import with it",
+      "ocr.import": "Import this text",
+      "ocr.errNoLib": "The text recognition could not be loaded ({url}) – the page or the browser may not allow it.",
+      "ocr.errImage": "The image could not be read.",
+      "log.ocrOpen": "Text from cover art: the images of release {mbid}",
+      "log.ocrDone.one": "Text from cover art: {n} image read ({langs})",
+      "log.ocrDone.other": "Text from cover art: {n} images read ({langs})",
+      "log.ocrFailed": "Text from cover art: {why}",
+      "log.ocrImported": "Text from cover art: {how} – {origin}",
+      "conn.kind.library": "Library",
+      "conn.X013": "Text from cover art (beta, ⚙ Settings → Beta): the list of the release's images and the images themselves (coverartarchive.org, which sends them from archive.org).",
+      "conn.X014": "Text from cover art (beta): the text recognition that reads the images in this browser, with its language data – loaded from cdn.jsdelivr.net the first time it is used.",
       "mapping.changesN.one": "your changes: {n}",
       "mapping.changesN.other": "your changes: {n}",
       "mapping.badPattern": "The pattern cannot be used: {why}",
@@ -5330,6 +5388,11 @@
       hosts: ['github.com'], perms: '– (MusicBrainz: /ws/js/release, /ws/js/edit/create)', since: '3.32.10' },
     { id: 'X012', kind: 'script', name: 'MB: QoL: Seed the batch recording comments script', home: 'https://github.com/ROpdebee/mb-userscripts/blob/main/mb_qol_seed_recording_disambiguation.user.js',
       hosts: ['github.com'], perms: '–', since: '3.32.9' },
+    // [3.34.1] text from cover art (beta, item E3): the images of the release, and the library that reads them
+    { id: 'X013', kind: 'site', name: 'Cover Art Archive', home: 'https://coverartarchive.org/', hosts: ['coverartarchive.org', 'archive.org'],
+      perms: '@connect coverartarchive.org · @connect archive.org · GM_xmlhttpRequest', since: '3.34.1' },
+    { id: 'X014', kind: 'library', name: 'Tesseract.js', home: 'https://github.com/naptha/tesseract.js', hosts: ['cdn.jsdelivr.net'],
+      perms: '– (loaded into the page from cdn.jsdelivr.net, only with the beta switched on)', since: '3.34.1' },
   ];
 
   if (IS_NODE_TEST) {
@@ -8797,6 +8860,388 @@
     setTimeout(() => r.classList.remove('dci-flash'), 2500);
   }
 
+  // --- [3.34.1] Text from cover art (beta; collected item E3) -------------------------------------------------------------
+  // (maintainer: "kannst Du die Bilderkennung mal als Beta Funktion einbauen? Die Beta Funktion muss im Einstellungsmenü
+  // aktiviert werden", "die Vorauswahl klingt gut") ⚙ Settings → Beta switches it on; then "Source ▾" has "Text from cover
+  // art …": the images of the release on the Cover Art Archive (Back, Booklet, Liner and Tray ticked), read in this browser
+  // with Tesseract.js (loaded from jsDelivr at the first use, the language data then kept by the browser), the text
+  // corrected (℗ read as ©, dashes, empty lines – the test of 2026-10-28) and checked, then imported like a pasted text or
+  // as a supplement. Nothing is uploaded.
+
+  const BETA_OCR_KEY = 'dci-beta-ocr';
+  S.betaOcr = readJson('localStorage', BETA_OCR_KEY, false) === true;
+  S.ocr = null;
+  const CAA_URL = 'https://coverartarchive.org/release/';
+  const TESSERACT_VERSION = '5.1.1';
+  const TESSERACT_URL = `https://cdn.jsdelivr.net/npm/tesseract.js@${TESSERACT_VERSION}/dist/tesseract.min.js`;
+  // the types of images that mostly carry credits: ticked at first ("die Vorauswahl klingt gut")
+  const OCR_CREDIT_TYPES = ['Back', 'Booklet', 'Liner', 'Tray'];
+  const OCR_LANGS = { en: 'eng', de: 'deu', es: 'spa', fr: 'fra' };
+  // images narrower than this are read enlarged ×3 (500 px gave nothing, enlarged 83 % of the words); longer sides are
+  // scaled down to OCR_MAX; words read with less confidence than OCR_UNSURE are listed to check
+  const OCR_SMALL = 1000;
+  const OCR_MAX = 3000;
+  const OCR_UNSURE = 60;
+
+  /** A file of another site with its status: { status, body } (text, or a Blob) – the manager's request, else fetch. */
+  function httpFetch(url, { blob = false } = {}) {
+    return new Promise((resolve, reject) => {
+      const xhr = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : (typeof GM !== 'undefined' && GM.xmlHttpRequest) || null;
+      if (xhr) {
+        xhr({ method: 'GET', url, timeout: 60000, responseType: blob ? 'blob' : 'text',
+          onload: (r) => resolve({ status: r.status, body: blob ? r.response : r.responseText }),
+          onerror: () => reject(new Error(tr('err.pageNet', { url }))), ontimeout: () => reject(new Error(tr('err.pageNet', { url }))) });
+      } else {
+        fetch(url).then((r) => (blob ? r.blob() : r.text()).then((body) => resolve({ status: r.status, body })), () => reject(new Error(tr('err.pageNet', { url }))));
+      }
+    });
+  }
+
+  let tesseractLoading = null;
+
+  /** Tesseract.js, loaded once from jsDelivr (only now: nothing is loaded while the beta is off or unused). */
+  function loadTesseract() {
+    // (into the page: pageWindow, as MB's own objects)
+    const w = pageWindow;
+    if (w.Tesseract && typeof w.Tesseract.createWorker === 'function') return Promise.resolve(w.Tesseract);
+    if (!tesseractLoading) {
+      tesseractLoading = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = TESSERACT_URL;
+        s.async = true;
+        s.onload = () => (w.Tesseract && typeof w.Tesseract.createWorker === 'function' ? resolve(w.Tesseract) : reject(new Error(tr('ocr.errNoLib', { url: TESSERACT_URL }))));
+        s.onerror = () => reject(new Error(tr('ocr.errNoLib', { url: TESSERACT_URL })));
+        (document.head || document.documentElement).appendChild(s);
+      }).catch((e) => {
+        tesseractLoading = null;
+        throw e;
+      });
+    }
+    return tesseractLoading;
+  }
+
+  /** The images of the release on the Cover Art Archive (none: []); the types that mostly carry credits ticked. */
+  async function ocrList() {
+    const r = await httpFetch(`${CAA_URL}${releaseMbid}`);
+    if (r.status === 404) return [];
+    if (r.status < 200 || r.status >= 300) throw new Error(tr('err.pageHttp', { status: r.status, url: `${CAA_URL}${releaseMbid}` }));
+    const data = JSON.parse(r.body);
+    const https = (u) => String(u || '').replace(/^http:\/\//, 'https://');
+    return (data.images || []).map((im, k) => {
+      const th = im.thumbnails || {};
+      const types = (im.types || []).map(String);
+      return { id: String(im.id || k), types, comment: String(im.comment || ''), thumb: https(th['250'] || th.small || im.image), big: https(th['1200'] || th.large || im.image),
+        orig: https(im.image), sel: types.some((t) => OCR_CREDIT_TYPES.includes(t)), mode: 'frames', frames: [], canvas: null };
+    });
+  }
+
+  /** An image as a canvas (its longer side at most OCR_MAX), loaded once per size; w, h: its own size. */
+  async function ocrCanvas(img) {
+    if (img.canvas && img.canvasSize === S.ocr.size) return img.canvas;
+    const r = await httpFetch(S.ocr.size === '1200' ? img.big : img.orig, { blob: true });
+    if (r.status < 200 || r.status >= 300 || !r.body) throw new Error(tr('err.pageHttp', { status: r.status, url: img.orig }));
+    let src;
+    if (typeof window.createImageBitmap === 'function') src = await window.createImageBitmap(r.body);
+    else {
+      const url = URL.createObjectURL(r.body);
+      src = await new Promise((res, rej) => {
+        const el = new Image();
+        el.onload = () => res(el);
+        el.onerror = () => rej(new Error(tr('ocr.errImage')));
+        el.src = url;
+      }).finally(() => URL.revokeObjectURL(url));
+    }
+    const w = src.naturalWidth || src.width;
+    const h = src.naturalHeight || src.height;
+    const k = Math.min(1, OCR_MAX / Math.max(w, h));
+    const c = document.createElement('canvas');
+    c.width = Math.round(w * k);
+    c.height = Math.round(h * k);
+    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+    Object.assign(img, { canvas: c, canvasSize: S.ocr.size, w, h, frames: [] });
+    return c;
+  }
+
+  /** What is read of an image: its frames (on the canvas), else the whole image; a small image enlarged ×3. */
+  function ocrPieces(img) {
+    const src = img.canvas;
+    const k = img.w < OCR_SMALL ? 3 : 1;
+    const boxes = img.mode === 'frames' && img.frames.length ? img.frames : [{ x: 0, y: 0, w: src.width, h: src.height }];
+    return boxes.map((b) => {
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(b.w * k));
+      c.height = Math.max(1, Math.round(b.h * k));
+      const g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(src, b.x, b.y, b.w, b.h, 0, 0, c.width, c.height);
+      return c;
+    });
+  }
+
+  /**
+   * The text as read, corrected (the test of 2026-10-28): "© & ©" at the start of a line is "℗ & ©" (℗ is read as ©), a "-"
+   * or "—" between words with spaces is "–" (the reader of texts needs it between a name and a role), empty lines go.
+   */
+  function ocrClean(text) {
+    const fixes = { pc: 0, dash: 0 };
+    const lines = String(text || '').replace(/\r/g, '').split('\n').map((l) => l.replace(/\s+$/, '')).filter((l) => l.trim())
+      .map((l) => l.replace(/^(\s*)©\s*[&+]\s*©/, (m, sp) => {
+        fixes.pc++;
+        return `${sp}℗ & ©`;
+      }).replace(/(\S) [-—] (?=\S)/g, (m, a) => {
+        fixes.dash++;
+        return `${a} – `;
+      }));
+    return { text: lines.join('\n'), fixes };
+  }
+
+  const ocrTypes = (img) => (img.types.length ? img.types.join(', ') : tr('ocr.noType'));
+
+  /** "Source ▾ → Text from cover art …": the window, and the images of the release. */
+  function openOcr() {
+    S.ocr = { step: 'list', images: [], langs: new Set(['en', ...(LANG !== 'en' && OCR_LANGS[LANG] ? [LANG] : [])]), size: 'orig', error: '', results: [], run: 0 };
+    renderOcr();
+    log('info', 'ocrOpen', { mbid: releaseMbid });
+    ocrList().then((images) => {
+      if (!S.ocr) return;
+      Object.assign(S.ocr, { images, step: 'pick' });
+      renderOcr();
+    }, (e) => {
+      if (!S.ocr) return;
+      Object.assign(S.ocr, { step: 'pick', error: e.message || String(e) });
+      renderOcr();
+    });
+  }
+
+  function closeOcr() {
+    if (S.ocr) S.ocr.run++;
+    S.ocr = null;
+    const el = document.getElementById('dci-ocr');
+    if (el) el.remove();
+  }
+
+  /** The images read one after the other with one Tesseract worker (the languages chosen); the text of each corrected. */
+  async function ocrRun() {
+    const o = S.ocr;
+    const run = ++o.run;
+    const chosen = o.images.filter((im) => im.sel && im.mode !== 'skip');
+    Object.assign(o, { step: 'run', error: '', results: chosen.map((img) => ({ img, status: 'wait', progress: 0, text: '', unsure: [], fixes: { pc: 0, dash: 0 } })) });
+    renderOcr();
+    const langs = [...o.langs].map((c) => OCR_LANGS[c]).filter(Boolean);
+    let worker = null;
+    let current = null;
+    const alive = () => S.ocr === o && o.run === run;
+    try {
+      const T = await loadTesseract();
+      worker = await T.createWorker(langs.length ? langs : ['eng'], 1, {
+        logger: (m) => {
+          if (current && m && /recogni/.test(String(m.status)) && typeof m.progress === 'number') {
+            current.progress = m.progress;
+            renderOcrProgress();
+          }
+        },
+      });
+      for (const res of o.results) {
+        if (!alive()) return;
+        current = res;
+        res.status = 'load';
+        renderOcr();
+        if (!res.img.canvas || res.img.canvasSize !== o.size) await ocrCanvas(res.img);
+        res.small = res.img.w < OCR_SMALL;
+        res.status = 'read';
+        renderOcr();
+        const texts = [];
+        const unsure = [];
+        for (const piece of ocrPieces(res.img)) {
+          const { data } = await worker.recognize(piece);
+          texts.push(String((data && data.text) || ''));
+          ((data && data.words) || []).forEach((w) => { if (w && w.confidence < OCR_UNSURE && /[\p{L}\d]/u.test(String(w.text || ''))) unsure.push(String(w.text).trim()); });
+          if (!alive()) return;
+        }
+        const clean = ocrClean(texts.join('\n'));
+        Object.assign(res, { text: clean.text, fixes: clean.fixes, unsure: uniq(unsure), status: 'done', progress: 1 });
+      }
+      o.step = 'result';
+      log('info', 'ocrDone', { n: o.results.length, langs: (langs.length ? langs : ['eng']).join('+') });
+    } catch (e) {
+      if (!alive()) return;
+      o.error = (e && e.message) || String(e);
+      o.step = o.results.some((r) => r.status === 'done') ? 'result' : 'pick';
+      log('error', 'ocrFailed', { why: o.error });
+    } finally {
+      if (worker) Promise.resolve().then(() => worker.terminate()).catch(() => {});
+    }
+    if (alive()) renderOcr();
+  }
+
+  /** The text of all images (as checked in the window) and where it is from (the edit note names it). */
+  function ocrText() {
+    const o = S.ocr;
+    const done = o.results.filter((r) => r.status === 'done' && r.text.trim());
+    const text = done.map((r) => r.text.trim()).join('\n\n');
+    const origin = `Cover Art Archive images (${uniq(done.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')}), read with text recognition`;
+    return { text, origin };
+  }
+
+  function ocrImport(supp) {
+    const { text, origin } = ocrText();
+    if (!text.trim()) {
+      showMessage('error', 'msg.textEmpty');
+      return;
+    }
+    log('info', 'ocrImported', { origin, how: tr(supp ? 'ocr.supp' : 'ocr.import') });
+    closeOcr();
+    if (supp) loadSupplement(TEXT, textSig(text), { text, origin });
+    else {
+      S.textInput = { text, origin };
+      loadRelease(textSig(text), { source: TEXT });
+    }
+  }
+
+  /** The progress bars only (while reading, without drawing the window anew). */
+  function renderOcrProgress() {
+    const el = document.getElementById('dci-ocr');
+    if (!el || !S.ocr) return;
+    S.ocr.results.forEach((r, i) => {
+      const bar = el.querySelector(`[data-ocr-bar="${i}"]`);
+      if (bar) bar.style.width = `${Math.round((r.progress || 0) * 100)}%`;
+    });
+  }
+
+  function ocrPickHtml() {
+    const o = S.ocr;
+    const n = o.images.filter((im) => im.sel).length;
+    if (!o.images.length) {
+      return `<div class="dci-ocr-body"><p>${esc(o.error ? tr('ocr.listFailed', { why: o.error }) : tr('ocr.none'))}</p></div>
+        <div class="dci-ocr-foot"><span></span><button type="button" class="dci-small" data-ocr="close">${esc(tr('common.close'))}</button></div>`;
+    }
+    const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}">
+        <img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" loading="lazy">
+        <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> ${esc(ocrTypes(im))}</span>
+        ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
+        ${im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`}</label>`;
+    return `<div class="dci-ocr-body">
+        ${o.error ? `<p class="dci-ocr-err" role="alert">${esc(o.error)}</p>` : ''}
+        <p class="dci-sub">${esc(tr('ocr.pickHint'))}</p>
+        <div class="dci-ocr-grid">${o.images.map(card).join('')}</div>
+        <div class="dci-ocr-opts">
+          <fieldset><legend>${esc(tr('ocr.langs'))}</legend>
+            ${Object.keys(OCR_LANGS).map((c) => `<label class="dci-check"><input type="checkbox" data-ocr-lang="${c}" ${o.langs.has(c) ? 'checked' : ''}> ${esc(LANGS[c])}</label>`).join('')}
+            <p class="dci-sub">${esc(tr('ocr.langsHint'))}</p></fieldset>
+          <fieldset><legend>${esc(tr('ocr.size'))}</legend>
+            <label class="dci-check"><input type="radio" name="dci-ocr-size" data-ocr-size="orig" ${o.size === 'orig' ? 'checked' : ''}> ${esc(tr('ocr.sizeOrig'))}</label>
+            <label class="dci-check"><input type="radio" name="dci-ocr-size" data-ocr-size="1200" ${o.size === '1200' ? 'checked' : ''}> ${esc(tr('ocr.size1200'))}</label>
+            <p class="dci-sub">${esc(tr('ocr.sizeHint', { px: OCR_SMALL }))}</p></fieldset>
+        </div></div>
+      <div class="dci-ocr-foot"><span class="dci-sub">${esc(tr('ocr.chosen', { n, of: o.images.length }))}</span>
+        <button type="button" class="dci-textbtn" data-ocr="close">${esc(tr('common.cancel'))}</button>
+        <button type="button" class="dci-apply dci-small" data-ocr="run" ${n ? '' : 'disabled'}>${esc(tr('ocr.run', { n }))}</button></div>`;
+  }
+
+  function ocrRunHtml() {
+    const o = S.ocr;
+    const state = (r) => tr(`ocr.state.${r.status}`);
+    return `<div class="dci-ocr-body"><p class="dci-sub">${esc(tr('ocr.runHint'))}</p><ol class="dci-ocr-runs">
+        ${o.results.map((r, i) => `<li><img src="${esc(r.img.thumb)}" alt=""><span><strong>${esc(ocrTypes(r.img))}</strong> · ${esc(state(r))}
+          <span class="dci-ocr-barbox"><span class="dci-ocr-bar" data-ocr-bar="${i}" style="width:${Math.round((r.progress || 0) * 100)}%"></span></span></span></li>`).join('')}</ol></div>
+      <div class="dci-ocr-foot"><span></span><button type="button" class="dci-textbtn" data-ocr="close">${esc(tr('common.cancel'))}</button></div>`;
+  }
+
+  function ocrResultHtml() {
+    const o = S.ocr;
+    const canSupp = !!(S.release && S.rows.length);
+    const sect = (r, i) => {
+      if (r.status !== 'done') return `<section class="dci-ocr-res"><h3>${esc(ocrTypes(r.img))}</h3><p class="dci-sub">${esc(tr(`ocr.state.${r.status}`))}</p></section>`;
+      const fixes = [r.fixes.pc ? tr('ocr.fixPc', { n: r.fixes.pc }) : '', r.fixes.dash ? tr('ocr.fixDash', { n: r.fixes.dash }) : ''].filter(Boolean);
+      return `<section class="dci-ocr-res" data-ocr-res="${i}">
+        <h3>${esc(ocrTypes(r.img))}${r.img.comment ? ` <span class="dci-sub">“${esc(r.img.comment)}”</span>` : ''}</h3>
+        ${r.small ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: r.img.w, h: r.img.h }))}</p>` : ''}
+        <textarea data-ocr-text="${i}" rows="${Math.min(14, Math.max(4, r.text.split('\n').length + 1))}" spellcheck="false" aria-label="${esc(tr('ocr.textOf', { what: ocrTypes(r.img) }))}">${esc(r.text)}</textarea>
+        ${r.unsure.length ? `<p class="dci-ocr-unsure"><span class="dci-sub">${esc(tr('ocr.unsure'))}</span> ${r.unsure.map((w) => `<button type="button" class="dci-ocr-word" data-ocr-word="${esc(w)}" data-ocr-in="${i}">${esc(w)}</button>`).join(' ')}</p>` : ''}
+        ${fixes.length ? `<p class="dci-sub">${esc(tr('ocr.fixed'))} ${esc(fixes.join(' · '))}</p>` : ''}</section>`;
+    };
+    return `<div class="dci-ocr-body">
+        ${o.error ? `<p class="dci-ocr-err" role="alert">${esc(o.error)}</p>` : ''}
+        <p class="dci-sub">${esc(tr('ocr.resultHint'))}</p>${o.results.map(sect).join('')}</div>
+      <div class="dci-ocr-foot"><button type="button" class="dci-textbtn" data-ocr="back">${esc(tr('ocr.back'))}</button>
+        <button type="button" class="dci-textbtn" data-ocr="copy">${esc(tr('ocr.copy'))}</button><span></span>
+        ${canSupp ? `<button type="button" class="dci-small" data-ocr="supp">${esc(tr('ocr.supp'))}</button>` : ''}
+        <button type="button" class="dci-apply dci-small" data-ocr="import">${esc(tr('ocr.import'))}</button></div>`;
+  }
+
+  /** The window "Text from cover art" (drawn anew for each step). */
+  function renderOcr() {
+    const o = S.ocr;
+    if (!o) return;
+    let el = document.getElementById('dci-ocr');
+    if (!el) {
+      el = document.createElement('section');
+      el.id = 'dci-ocr';
+      el.setAttribute('role', 'dialog');
+      el.setAttribute('aria-labelledby', 'dci-ocr-title');
+      el.style.setProperty('--dci-fs', `${Math.round(13 * (S.scale || 1))}px`);
+      document.body.appendChild(el);
+      el.addEventListener('click', ocrClick);
+      el.addEventListener('change', ocrChange);
+      el.addEventListener('input', (e) => {
+        const i = e.target.dataset.ocrText;
+        if (i != null && S.ocr && S.ocr.results[i]) S.ocr.results[i].text = e.target.value;
+      });
+    }
+    el.style.zIndex = String(++topZ);
+    const body = o.step === 'list' ? `<div class="dci-ocr-body"><p>${esc(tr('ocr.loading'))}</p></div>`
+      : o.step === 'run' ? ocrRunHtml() : o.step === 'result' ? ocrResultHtml() : ocrPickHtml();
+    el.innerHTML = `<div class="dci-ocr-head"><h2 id="dci-ocr-title">${esc(tr('ocr.title'))} <span class="dci-beta-tag">beta</span></h2>
+        <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.images.length }))}</span>
+        <a href="https://musicbrainz.org/release/${esc(releaseMbid)}/cover-art" target="_blank" rel="noopener">${esc(tr('ocr.caaLink'))}</a>
+        <button type="button" class="dci-iconbtn" data-ocr="close" aria-label="${esc(tr('common.close'))}" title="${esc(tr('common.close'))}">✕</button></div>${body}`;
+  }
+
+  function ocrClick(e) {
+    const t = e.target;
+    const b = t.closest('[data-ocr]');
+    const word = t.closest('[data-ocr-word]');
+    if (word && S.ocr) {
+      // a word read with little certainty: selected in its text, to correct
+      const ta = document.querySelector(`#dci-ocr [data-ocr-text="${word.dataset.ocrIn}"]`);
+      const at = ta ? ta.value.indexOf(word.dataset.ocrWord) : -1;
+      if (ta && at >= 0) {
+        ta.focus();
+        ta.setSelectionRange(at, at + word.dataset.ocrWord.length);
+      }
+      return;
+    }
+    if (!b || !S.ocr) return;
+    const act = b.dataset.ocr;
+    if (act === 'close') closeOcr();
+    else if (act === 'run') ocrRun();
+    else if (act === 'back') {
+      S.ocr.step = 'pick';
+      S.ocr.error = '';
+      renderOcr();
+    } else if (act === 'copy') {
+      const { text } = ocrText();
+      try {
+        navigator.clipboard.writeText(text).then(() => showMessage('info', 'ocr.copied'), () => showMessage('error', 'mapping.copyFailed'));
+      } catch (err) {
+        showMessage('error', 'mapping.copyFailed');
+      }
+    } else if (act === 'import' || act === 'supp') ocrImport(act === 'supp');
+  }
+
+  function ocrChange(e) {
+    const t = e.target;
+    const o = S.ocr;
+    if (!o) return;
+    if (t.dataset.ocrSel != null && o.images[t.dataset.ocrSel]) o.images[t.dataset.ocrSel].sel = t.checked;
+    else if (t.dataset.ocrLang) {
+      if (t.checked) o.langs.add(t.dataset.ocrLang);
+      else o.langs.delete(t.dataset.ocrLang);
+    } else if (t.dataset.ocrSize) o.size = t.dataset.ocrSize === '1200' ? '1200' : 'orig';
+    else return;
+    renderOcr();
+  }
+
   function buildLogWindow() {
     const el = document.createElement('section');
     el.id = 'dci-log';
@@ -11684,6 +12129,7 @@
           <button type="button" data-act="discogs-load">${esc(tr('source.load'))}</button>
         </div>
         ${item('text-open', esc(tr('source.text')), `aria-expanded="${!!f && !f.supp}"`, tr('source.textTitle'))}
+        ${S.betaOcr ? item('ocr-open', `${esc(tr('ocr.menu'))}<span class="dci-beta-tag">beta</span>`, '', tr('ocr.menuTitle')) : ''}
         ${item('srcorder-toggle', `${S.srcOrderOpen ? '▾' : '▸'} ${esc(tr('srcorder.toggle'))}`, `aria-expanded="${S.srcOrderOpen}"`)}
         ${item('bc-toggle', `${S.bcOpen ? '▾' : '▸'} Bandcamp`, `aria-expanded="${S.bcOpen}"`)}
         ${rel && rel.aboutAt != null ? `<label class="dci-check dci-menuitem" title="${esc(tr('about.offTitle'))}"><input type="checkbox" data-f="about-off" ${S.aboutOff ? 'checked' : ''}> ${esc(tr('about.off'))}</label>` : ''}
@@ -19667,6 +20113,10 @@
         S.textForm = null;
         renderSource();
         break;
+      // [3.34.1] text from cover art (beta, item E3)
+      case 'ocr-open':
+        openOcr();
+        break;
       case 'text-load': {
         const text = S.overlay.querySelector('[data-f="text-src"]').value;
         const origin = S.overlay.querySelector('[data-f="text-origin"]').value.trim();
@@ -20788,7 +21238,8 @@
   // --- [3.16.0] The menu "Settings": all settings in one place, by topic (the switches stay where they are too) ----------
   // [3.25.0] tabs (collected item 42): "Texts" and "ⓘ Connections" (item 40) new
   // [3.29.2] "Appearance" new (item 79): text size, the place of the dashboard, the view and the colours of the levels
-  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'connections'];
+  // [3.34.1] "Beta" new (item E3): functions to try out, off until switched on
+  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
@@ -20812,6 +21263,7 @@
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
+    beta: [BETA_OCR_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -20962,6 +21414,12 @@
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
         row(check('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'))),
+      ],
+      // [3.34.1] functions to try out (maintainer: "Die Beta Funktion muss im Einstellungsmenü aktiviert werden")
+      beta: () => [
+        `<p class="dci-sub">${esc(tr('settings.betaHint'))}</p>`,
+        row(check('data-set="beta-ocr"', S.betaOcr, tr('settings.betaOcr'), tr('settings.betaOcrTitle'))),
+        `<p class="dci-sub">${esc(tr('settings.betaOcrWhat', { lib: 'Tesseract.js', cdn: 'cdn.jsdelivr.net' }))}</p>`,
       ],
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
@@ -21117,6 +21575,13 @@
       writeJson('localStorage', LIVE_COM_KEY, el.checked || null);
       log('info', 'settingValue', { what: tr('settings.liveComments'), value: tr(el.checked ? 'common.on' : 'common.off') });
       refresh();
+    } else if (k === 'beta-ocr') {
+      // [3.34.1] text from cover art (beta, item E3): the item in "Source ▾"
+      S.betaOcr = el.checked;
+      writeJson('localStorage', BETA_OCR_KEY, el.checked || null);
+      log('info', 'settingValue', { what: tr('settings.betaOcr'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      if (!el.checked) closeOcr();
+      renderSource();
     } else if (k === 'rule-on') {
       // [3.32.5] a rule switched here (S050; [3.32.6] S049) – the same as its switch in "Mapping rules"
       setRuleOn(el.dataset.rule, el.checked);
@@ -21198,6 +21663,10 @@
     } else if (t === 'dates') {
       Object.assign(S, { dmAuto: false, poolsKeep: true });
       renderDates();
+    } else if (t === 'beta') {
+      S.betaOcr = false;
+      closeOcr();
+      renderSource();
     }
     syncSharedSwitches();
     renderSettings();
@@ -21210,7 +21679,9 @@
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
-    KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY];
+    KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
+    // [3.34.1] the beta of the text from cover art
+    BETA_OCR_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -21231,8 +21702,9 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
-      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false,
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false,
     });
+    closeOcr();
     applyKindColors();
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -21667,6 +22139,12 @@
       return;
     }
     if (e.key !== 'Escape') return;
+    // [3.34.1] the window "Text from cover art" first
+    if (S.ocr && document.getElementById('dci-ocr')) {
+      e.preventDefault();
+      closeOcr();
+      return;
+    }
     // The small "Mapping rules" window goes first; the dashboard stays open
     const rules = document.getElementById('dci-rules');
     if (rules && rulesShown()) {
@@ -21751,6 +22229,52 @@
         font: calc(var(--u, 1px) * 13) / 1.4 system-ui, sans-serif;
       }
       #dci-rules[hidden] { display: none; }
+      /* [3.34.1] "Text from cover art" (beta, item E3): a window of its own above the dashboard */
+      .dci-beta-tag { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: #736dab; color: #fff; font-size: 0.78em; font-weight: 600; line-height: 1.5; vertical-align: 1px; }
+      #dci-ocr {
+        --u: calc(var(--dci-fs, 13px) / 13);
+        box-sizing: border-box; position: fixed; left: 50%; top: 4vh; transform: translateX(-50%); z-index: 10004;
+        width: min(calc(var(--u, 1px) * 1060), 96vw); max-height: 92vh; display: flex; flex-direction: column;
+        background: #fff; color: #262430; border: 1px solid #b9b5d6; border-radius: 6px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+        font: calc(var(--u, 1px) * 13) / 1.45 system-ui, sans-serif;
+      }
+      #dci-ocr .dci-ocr-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); padding: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 14);
+        background: #f7f6fb; border-bottom: 1px solid #dddae8; border-radius: 6px 6px 0 0; }
+      #dci-ocr h2 { margin: 0; font-size: calc(var(--u, 1px) * 16); }
+      #dci-ocr h3 { margin: 0 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 14); }
+      #dci-ocr .dci-ocr-head .dci-iconbtn { margin-left: auto; border: 1px solid #c8c5d6; border-radius: 4px; background: #fff; color: #4b4585; padding: 0 calc(var(--u, 1px) * 8); cursor: pointer; font: inherit; }
+      #dci-ocr .dci-ocr-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 14); display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 12); }
+      #dci-ocr .dci-ocr-body p { margin: 0; }
+      #dci-ocr .dci-sub { color: #5d5a6e; font-size: calc(var(--u, 1px) * 12); }
+      #dci-ocr .dci-ocr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 160), 1fr)); gap: calc(var(--u, 1px) * 10); }
+      #dci-ocr .dci-ocr-card { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8); border: 1px solid #dddae8; border-radius: 6px; cursor: pointer; }
+      #dci-ocr .dci-ocr-card.dci-on { border: 2px solid #5b55a0; padding: calc(var(--u, 1px) * 7); background: #f7f6fd; }
+      #dci-ocr .dci-ocr-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 3px; background: #eceaf3; }
+      #dci-ocr .dci-ocr-type { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); font-weight: 600; }
+      #dci-ocr .dci-ocr-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--u, 1px) * 260), 1fr)); gap: calc(var(--u, 1px) * 10); }
+      #dci-ocr fieldset { margin: 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid #dddae8; border-radius: 6px; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 4); }
+      #dci-ocr legend { font-weight: 600; padding: 0 4px; }
+      #dci-ocr .dci-check { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); }
+      #dci-ocr .dci-ocr-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 14);
+        border-top: 1px solid #dddae8; background: #faf9fd; border-radius: 0 0 6px 6px; }
+      #dci-ocr .dci-ocr-foot > span:first-of-type { flex: 1 1 auto; }
+      #dci-ocr button { font: inherit; cursor: pointer; }
+      #dci-ocr .dci-textbtn { border: 0; background: none; color: #4b4585; padding: 2px 0; text-decoration: underline; }
+      #dci-ocr .dci-small { border: 1px solid #c8c5d6; border-radius: 4px; background: #fff; color: #262430; padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 12); font-weight: 600; }
+      #dci-ocr .dci-apply { border: 0; border-radius: 4px; background: #eb743b; color: #fff; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); font-weight: 600; }
+      #dci-ocr .dci-apply:disabled { background: #c9c6d3; cursor: default; }
+      #dci-ocr .dci-ocr-err { padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #b3261e; background: #fdecea; color: #7f1d17; }
+      #dci-ocr .dci-ocr-warn { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border-radius: 4px; background: #fff3dc; color: #6b4100; }
+      #dci-ocr .dci-ocr-runs { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 8); }
+      #dci-ocr .dci-ocr-runs li { display: flex; gap: calc(var(--u, 1px) * 10); align-items: center; }
+      #dci-ocr .dci-ocr-runs img { width: calc(var(--u, 1px) * 48); height: calc(var(--u, 1px) * 48); object-fit: cover; border-radius: 3px; }
+      #dci-ocr .dci-ocr-runs li > span { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+      #dci-ocr .dci-ocr-barbox { display: block; height: 6px; border-radius: 3px; background: #eceaf3; overflow: hidden; }
+      #dci-ocr .dci-ocr-bar { display: block; height: 100%; background: #736dab; transition: width 0.2s; }
+      #dci-ocr .dci-ocr-res { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); padding-bottom: calc(var(--u, 1px) * 10); border-bottom: 1px solid #eeecf4; }
+      #dci-ocr textarea { width: 100%; box-sizing: border-box; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid #c8c5d6; border-radius: 4px;
+        font: calc(var(--u, 1px) * 12.5) / 1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      #dci-ocr .dci-ocr-word { margin: 0 2px 2px 0; padding: 0 6px; border: 1px solid #e3b65a; border-radius: 3px; background: #ffe7a8; color: #262430; }
       /* [3.30.0] in the dashboard below its head, like ⚙ Settings (item 75) */
       .dci-rules-dock[hidden] { display: none; }
       #dci-rules.dci-rules-docked { position: static; width: auto; height: auto; max-height: 72vh; min-width: 0; min-height: calc(var(--u, 1px) * 160); resize: vertical;
