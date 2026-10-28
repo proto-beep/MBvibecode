@@ -876,4 +876,129 @@ def case_ocrzoom():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_ocrlocate():
+    """[3.34.12] Where a line or a word is in the image (collected item 130b; maintainer: "klingt gut, bitte einbauen").
+    A) The Back with a frame (on its canvas at 150, 150; read as it is), the Tray whole (500 px: read ×3). "Bob", read
+       uncertainly twice, clicked: its first place selected in the text, marked in the image and zoomed in on; clicked again:
+       its second place.
+    B) The caret in the Back's text: Ctrl + Home – the first line marked where Tesseract read it (moved into sight in the zoomed
+       view), ↓ – the second (wider than the view: its start in sight); ⤢: fitted, the mark still drawn there; a letter taken away: still the line; the line replaced by
+       other words: no mark.
+    C) A click into the Tray's text: its line marked, its place read ×3 brought back to the canvas; the dash corrected in the
+       text ("Drums – Drum Guy") and the line still found.
+    D) A PDF page read from its own text: the caret in its third line marks that line's place on the page drawn."""
+    results = []
+    ZQ = """((key) => { const c = document.querySelector(`#dci-ocr [data-ocr-zoom="${key}"]`); const ta = document.querySelector(`#dci-ocr [data-ocr-text="${key}"]`);
+      const n = (x) => (x || '').split(',').map(Number);
+      const out = { mark: c.dataset.mark ? n(c.dataset.mark) : null, kind: c.dataset.markKind || '', k: Number(c.dataset.k), view: n(c.dataset.view), box: n(c.dataset.box),
+        sel: [ta.selectionStart, ta.selectionEnd], active: document.activeElement === ta };
+      if (out.mark) { const [mx, my, mw, mh] = out.mark; const [vx, vy] = out.view; const dpr = c.width / c.clientWidth;
+        const px = c.getContext('2d').getImageData(Math.round((mx + mw / 2 - vx) * out.k * dpr), Math.round((my + mh / 2 - vy) * out.k * dpr), 1, 1).data;
+        out.px = [px[0], px[1], px[2]]; }
+      return out; })"""
+    inside = lambda z: z['mark'] and z['view'] and z['mark'][0] >= z['view'][0] - 1 and z['mark'][1] >= z['view'][1] - 1 and z['mark'][0] + z['mark'][2] <= z['view'][0] + z['view'][2] + 1 and z['mark'][1] + z['mark'][3] <= z['view'][1] + z['view'][3] + 1
+    # a line wider than the view: its start in sight
+    start = lambda z: z['mark'] and z['view'] and z['view'][0] - 1 <= z['mark'][0] < z['view'][0] + z['view'][2] and z['mark'][1] >= z['view'][1] - 1 and z['mark'][1] + z['mark'][3] <= z['view'][1] + z['view'][3] + 1
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        texts = [{'text': 'Music by Bob Lee\nMastered by Bob Producer\n',
+                  'lines': [{'text': 'Music by Bob Lee\n', 'bbox': {'x0': 20, 'y0': 30, 'x1': 600, 'y1': 80}},
+                            {'text': 'Mastered by Bob Producer\n', 'bbox': {'x0': 20, 'y0': 150, 'x1': 900, 'y1': 200}}],
+                  'words': [{'text': 'Music', 'confidence': 95, 'bbox': {'x0': 20, 'y0': 30, 'x1': 200, 'y1': 80}},
+                            {'text': 'Bob', 'confidence': 40, 'bbox': {'x0': 300, 'y0': 30, 'x1': 380, 'y1': 80}},
+                            {'text': 'Bob', 'confidence': 45, 'bbox': {'x0': 400, 'y0': 150, 'x1': 480, 'y1': 200}}]},
+                 {'text': 'Drums - Drum Guy\n', 'lines': [{'text': 'Drums - Drum Guy\n', 'bbox': {'x0': 300, 'y0': 600, 'x1': 900, 'y1': 690}}], 'words': []}]
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(texts))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-sel="2"]')
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
+        f = box['width'] / pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
+        pg.mouse.move(box['x'] + 56 * f, box['y'] + 56 * f)
+        pg.mouse.down()
+        for k in range(1, 6):
+            pg.mouse.move(box['x'] + (56 + 448 * k / 5) * f, box['y'] + (56 + 112 * k / 5) * f)
+        pg.mouse.up()
+        pg.wait_for_timeout(150)
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-zoom="1:0"]', timeout=20000)
+        pg.wait_for_timeout(300)
+        z0 = pg.evaluate(ZQ, '0:0')
+        pg.click('#dci-ocr [data-ocr-word="Bob"][data-ocr-in="0:0"]')
+        z1 = pg.evaluate(ZQ, '0:0')
+        pg.click('#dci-ocr [data-ocr-word="Bob"][data-ocr-in="0:0"]')
+        z2 = pg.evaluate(ZQ, '0:0')
+        print('A) Teil', z0['box'], 'Einpassen', round(z0['k'], 3), '| Bob 1:', z1['sel'], z1['kind'], z1['mark'], round(z1['k'], 3), inside(z1), z1['px'],
+              '| Bob 2:', z2['sel'], z2['mark'], inside(z2))
+        results.append(z0['box'] == [150, 150, 1200, 300] and z0['mark'] is None
+                       and z1['active'] and z1['sel'] == [9, 12] and z1['kind'] == 'word' and z1['mark'] == [450, 180, 80, 50] and z1['k'] > z0['k'] * 1.5 and inside(z1)
+                       and z1['px'] != [240, 236, 228] and z2['sel'] == [29, 32] and z2['mark'] == [550, 300, 80, 50] and inside(z2))
+        ta = '#dci-ocr [data-ocr-text="0:0"]'
+        pg.focus(ta)
+        pg.keyboard.press('Control+Home')
+        b1 = pg.evaluate(ZQ, '0:0')
+        pg.keyboard.press('ArrowDown')
+        b2 = pg.evaluate(ZQ, '0:0')
+        pg.click('#dci-ocr [data-ocr-z=fit][data-ocr-zfor="0:0"]')
+        b3 = pg.evaluate(ZQ, '0:0')
+        pg.focus(ta)
+        pg.keyboard.press('Control+End')
+        pg.keyboard.press('Backspace')
+        b4 = pg.evaluate(ZQ, '0:0')
+        pg.keyboard.press('Shift+Home')
+        pg.keyboard.type('Liner notes by somebody else')
+        b5 = pg.evaluate(ZQ, '0:0')
+        print('B) Zeile 1:', b1['kind'], b1['mark'], inside(b1), '| Zeile 2:', b2['mark'], b2['view'], start(b2), '| ⤢:', round(b3['k'], 3), b3['mark'], b3['px'],
+              '| ohne r:', b4['mark'], '| andere Wörter:', b5['mark'])
+        results.append(b1['kind'] == 'line' and b1['mark'] == [170, 180, 580, 50] and inside(b1) and b2['mark'] == [170, 300, 880, 50] and not inside(b2) and start(b2)
+                       and abs(b3['k'] - z0['k']) < 1e-6 and b3['mark'] == [170, 300, 880, 50] and b3['px'] != [240, 236, 228]
+                       and b4['mark'] == [170, 300, 880, 50] and b5['mark'] is None)
+        pg.click('#dci-ocr [data-ocr-text="1:0"]', position={'x': 12, 'y': 8})
+        c1 = pg.evaluate(ZQ, '1:0')
+        tv = pg.input_value('#dci-ocr [data-ocr-text="1:0"]')
+        print('C) Tray:', repr(tv), c1['kind'], c1['mark'], c1['box'])
+        results.append(tv == 'Drums – Drum Guy' and c1['kind'] == 'line' and c1['mark'] == [100, 200, 200, 30] and c1['box'] == [0, 0, 500, 500])
+        print('Fehler:', errs)
+        results.append(not errs)
+        pg.close()
+        # D) a PDF page with its own text
+        pdf = H.pdf_of([[(40, 380, 14, 'Booklet'), (40, 350, 12, 'Credits'), (60, 330, 12, 'Marc D. Rusch - double bass')]])
+        H.COVER_ART = []
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-files]', state='attached', timeout=10000)
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'credits.pdf', 'mimeType': 'application/pdf', 'buffer': pdf}])
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 1 && !document.querySelector('#dci-ocr [data-ocr-pdfstatus]')", 30)
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=20000)
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-zoom="0:0"]', timeout=20000)
+        pg.wait_for_timeout(300)
+        pg.focus('#dci-ocr [data-ocr-text="0:0"]')
+        pg.keyboard.press('Control+End')
+        d1 = pg.evaluate(ZQ, '0:0')
+        tv = pg.input_value('#dci-ocr [data-ocr-text="0:0"]')
+        k = d1['box'][2] / 420
+        m = d1['mark'] or [0, 0, 0, 0]
+        print('D) PDF:', repr(tv), '| Seite', d1['box'], 'Maßstab', round(k, 3), '| Zeile 3:', d1['kind'], m, '| erwartet x', round(60 * k), 'Grundlinie', round(90 * k))
+        results.append(tv == 'Booklet\nCredits\nMarc D. Rusch – double bass' and d1['kind'] == 'line' and abs(m[0] - 60 * k) < 2 * k and m[1] < 90 * k < m[1] + m[3]
+                       and 10 * k < m[3] < 16 * k and m[2] > 100 * k)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())
