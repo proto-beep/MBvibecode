@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek; `python3 t_coverart.py <case> …` runs only those."""
 import json
 
 import harness as H  # noqa: F401 – used by the cases
@@ -646,6 +646,68 @@ def case_ocrstart():
         results.append(d1)
         print('Fehler:', errs0, errs)
         results.append(not errs0 and not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrpeek():
+    """[3.34.9] Images in their proportions, larger on mouse-over (collected item 129; maintainer: "nicht alle Bilder sind
+    quadratisch! alle Bildverhältnisse müssen angezeigt werden. und bei Mouseover etwas größere darstellung.", "gleich hohe /
+    breite kacheln").
+    A) The tiles of the images are alike (square), each image whole in its tile (contain, nothing cut off).
+    B) The mouse rests on the Booklet (1246 × 1634): after a short pause its larger view beside the tile – the 1200 px image of
+       the Cover Art Archive, in its proportions, its longer side 480 px; the mouse leaves: gone.
+    C) In the frames step the small images beside the view are whole too and show the larger view; an own file (300 × 800)
+       is shown larger (480 px high)."""
+    results = []
+    PEEK = """(() => { const el = document.getElementById('dci-ocr-peek'); if (!el || el.hidden) return null; const i = el.querySelector('img'); const r = el.getBoundingClientRect();
+      return { src: i.getAttribute('src'), w: Math.round(i.getBoundingClientRect().width), h: Math.round(i.getBoundingClientRect().height), left: Math.round(r.left), right: Math.round(r.right),
+        label: el.querySelector('span').textContent }; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card img', timeout=10000)
+        pg.wait_for_timeout(500)
+        a = pg.evaluate("""[...document.querySelectorAll('#dci-ocr .dci-ocr-card img')].map(i => { const r = i.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), getComputedStyle(i).objectFit]; })""")
+        print('A) Kacheln:', a)
+        results.append(len(a) == 5 and len({(w, h) for w, h, _ in a}) == 1 and a[0][0] == a[0][1] and all(f == 'contain' for _, _, f in a))
+        card = pg.locator('#dci-ocr .dci-ocr-card img').nth(2)
+        card.hover()
+        pg.wait_for_timeout(100)
+        b0 = pg.evaluate(PEEK)
+        pg.wait_for_timeout(700)
+        b1 = pg.evaluate(PEEK)
+        cr = card.bounding_box()
+        pg.mouse.move(5, 5)
+        pg.wait_for_timeout(200)
+        b2 = pg.evaluate(PEEK)
+        print('B) sofort:', b0, '| nach der Pause:', b1, '| Kachel rechts:', round(cr['x'] + cr['width']), '| weg:', b2)
+        results.append(b0 is None and b1 and b1['src'].endswith('/13-1200.jpg') and b1['h'] == 480 and abs(b1['w'] - round(480 * 1246 / 1634)) <= 2
+                       and (b1['left'] >= cr['x'] + cr['width'] or b1['right'] <= cr['x']) and b1['label'] == 'Booklet' and b2 is None)
+        # C) an own file and the frames step
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'narrow.png', 'mimeType': 'image/png', 'buffer': H.png_of(300, 800)}])
+        pg.wait_for_timeout(300)
+        pg.locator('#dci-ocr .dci-ocr-owncard img').hover()
+        pg.wait_for_timeout(800)
+        c1 = pg.evaluate(PEEK)
+        pg.mouse.move(5, 5)
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        th = pg.locator('#dci-ocr .dci-ocr-thumb img').nth(1)
+        th.hover()
+        pg.wait_for_timeout(800)
+        c2 = pg.evaluate(PEEK)
+        c3 = pg.evaluate("getComputedStyle(document.querySelector('#dci-ocr .dci-ocr-thumb img')).objectFit")
+        print('C) eigene Datei:', c1, '| Rahmen-Schritt:', c2, c3)
+        results.append(c1 and c1['src'].startswith('blob:') and c1['h'] == 480 and c1['w'] == 180 and c2 and c2['src'].endswith('-1200.jpg') and c3 == 'contain')
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
