@@ -403,6 +403,9 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): â
                                 #     import (nothing of Discogs), the message, the window; the read text the source; beta off: gone
                                 #   ocrpeek: 3.34.9: tiles alike with the whole image; the larger view after a pause (1200 px image, its
                                 #     proportions, 480 px), gone on leaving; an own narrow file larger; in the frames step too
+                                #   ocrload: 3.34.10: previews counted; the ticked images loaded ahead two at a time (held requests), the third
+                                #     waiting; unticked: out of the queue, one loading ahead stopped; "loaded"; loading ahead off (stored):
+                                #     nothing ahead, the frames step shows its own loading
                                 #   ocrframes: 3.34.2: frames by default â€“ two drawn, one changed at a corner, one moved; an image turned and read
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
