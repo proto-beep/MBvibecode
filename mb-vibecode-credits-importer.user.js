@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.7
+// @version      3.34.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.7
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.7
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.8
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.8
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.7';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1070,6 +1070,9 @@
       "log.stagedUpdated": "Updated in the editor: {text}",
       "log.stagedChangedInMb": "Changed in the editor itself, left alone: {text}",
       "launcher.shortcut": "Open or close the dashboard: Alt+Shift+D (Mac: Option+Shift+D); close it with Esc as well",
+      "launcher.ocr": "… from cover art",
+      "launcher.ocrTitle": "Import the credits from the cover art (beta): the release's images, your own files or addresses are read first – their text is then the source; Discogs or Bandcamp can supplement it",
+      "ocrStart.hint": "The import of this release has not started – the text read from the cover art will be its source.",
       "ms.2.16.0": "Status marks on every Discogs track line, each with the status of its track; “Directed By” is asked instead of assumed; columns can be taken out of the works matrix; column dates also go onto relationships MusicBrainz has without a date",
       "ms.2.17.0": "Choose the media before importing a release with several media; attributes (live, cover …) of the recording–work links in the works matrix, “live” preselected on live releases; “Music and lyrics by” → writer with “Song” preselected; the log can sit next to the edit note",
       "ms.2.18.0": "Works matrix in the look of the date matrix and more compact: column heads as cards, roles as chips, attributes (live, cover …) as short forms below each work; track groups can be dropped onto column heads, roles and attributes; track lists from the Discogs notes (“XYZ Publishing (1, 4, 6)”) as suggestions; “live” preselected only on new links",
@@ -10011,6 +10014,12 @@
     }
     log('info', 'ocrImported', { origin, how: tr(supp ? 'ocr.supp' : 'ocr.import') });
     closeOcr();
+    // [3.34.8] opened with "… from cover art" (nothing imported yet): the release is loaded now, with this text as its source
+    if (!S.initialized) {
+      S.startText = { text, origin };
+      initOnce();
+      return;
+    }
     if (supp) loadSupplement(TEXT, textSig(text), { text, origin });
     else {
       S.textInput = { text, origin };
@@ -11179,6 +11188,15 @@
 
   /** Imports the source chosen for this release, else the first linked one of the preference list. */
   async function startImport() {
+    // [3.34.8] started with "… from cover art": the text read from the images is the source (Discogs or Bandcamp only through
+    // "＋ Supplement" – maintainer: "A")
+    if (S.startText) {
+      const { text, origin } = S.startText;
+      S.startText = null;
+      S.textInput = { text, origin };
+      await loadRelease(textSig(text), { source: TEXT });
+      return;
+    }
     const start = startSource();
     if (start.link) {
       if (start.kept) log('info', 'sourceKept', { src: SOURCES[start.link.source].name });
@@ -22647,6 +22665,7 @@
       log('info', 'settingValue', { what: tr('settings.betaOcr'), value: tr(el.checked ? 'common.on' : 'common.off') });
       if (!el.checked) closeOcr();
       renderSource();
+      renderLauncher();
     } else if (k === 'rule-on') {
       // [3.32.5] a rule switched here (S050; [3.32.6] S049) – the same as its switch in "Mapping rules"
       setRuleOn(el.dataset.rule, el.checked);
@@ -22732,6 +22751,7 @@
       S.betaOcr = false;
       closeOcr();
       renderSource();
+      renderLauncher();
     }
     syncSharedSwitches();
     renderSettings();
@@ -22770,6 +22790,7 @@
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false,
     });
     closeOcr();
+    renderLauncher();
     applyKindColors();
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -22814,6 +22835,8 @@
    */
   async function openDashboard(opts) {
     const settingsOnly = !!(opts && opts.settingsOnly);
+    // [3.34.8] "… from cover art": the dashboard without the import, the text recognition first
+    const ocrFirst = !!(opts && opts.ocrFirst);
     if (!S.overlay) buildOverlay();
     S.lastFocus = document.activeElement;
     S.overlay.hidden = false;
@@ -22828,11 +22851,29 @@
     clearInterval(S.syncTimer);
     S.syncTimer = setInterval(() => toDiscogs({ type: 'ping' }), 3000);
     if (S.initialized) return;
+    if (ocrFirst) {
+      if (!S.messages.some((m) => m.key === 'ocrStart.hint')) showMessage('info', 'ocrStart.hint', {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
+      return;
+    }
     if (settingsOnly) {
       if (!S.messages.some((m) => m.key === 'settingsOnly.hint')) showMessage('info', 'settingsOnly.hint', {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
       return;
     }
     await initOnce();
+  }
+
+  /**
+   * [3.34.8] "… from cover art" beside "Import credits …" (collected item 124; maintainer: "neben dem initialen "Import credits …"
+   * Button soll ein Button "… from cover art" erscheinen, der dann die Bilderkennung triggert bevor bspw. von discogs importiert
+   * wird", "nur wenn beta an ist", "also eigentlich kann das immer da sein sobald man in der beta es anklickt", "A"): the
+   * dashboard without the import and the window of the text recognition; its text then is the source. Already imported: only
+   * the window (its text replaces the source or supplements it).
+   */
+  async function openFromCoverArt() {
+    if (!S.betaOcr) return;
+    await openDashboard({ ocrFirst: true });
+    if (!S.ocr) openOcr();
+    else renderOcr();
   }
 
   /** [3.30.5] The import, started once (also from the message of the dashboard opened for its settings only). */
@@ -23065,6 +23106,12 @@
     if (!bar) return;
     bar.querySelector('#dci-open').textContent = tr('launcher.open');
     bar.querySelector('#dci-open').title = tr('launcher.shortcut');
+    const ocrBtn = bar.querySelector('#dci-open-ocr');
+    if (ocrBtn) {
+      ocrBtn.hidden = !S.betaOcr;
+      ocrBtn.innerHTML = `${esc(tr('launcher.ocr'))}<span class="dci-beta-tag">beta</span>`;
+      ocrBtn.title = tr('launcher.ocrTitle');
+    }
     bar.querySelector('#dci-log-open').textContent = tr('log.title');
     bar.querySelector('#dci-launch-status').textContent = S.launchStatus ? tr(S.launchStatus.key, S.launchStatus.params) : '';
     renderNotice();
@@ -23087,7 +23134,8 @@
     const bar = document.createElement('div');
     bar.id = 'dci-launcher';
     // [3.27.1] no language list here any more (collected item 67): the question after the installation, then ⚙ Settings → General
-    bar.innerHTML = `<button type="button" id="dci-open"></button>
+    // [3.34.8] "… from cover art" beside it while the beta is on (collected item 124)
+    bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button>
       <span class="dci-seg dci-place-seg" role="group">
         <button type="button" data-place="window"></button><button type="button" data-place="page"></button></span>
       <button type="button" id="dci-log-open" class="dci-textbtn"></button>
@@ -23101,6 +23149,7 @@
     if (anchor) anchor.after(block);
     else (document.getElementById('content') || document.body).prepend(block);
     bar.querySelector('#dci-open').addEventListener('click', openDashboard);
+    bar.querySelector('#dci-open-ocr').addEventListener('click', openFromCoverArt);
     bar.querySelector('#dci-log-open').addEventListener('click', () => setLogVisible(!S.logEl || S.logEl.hidden));
     renderLauncher();
     renderControls();
@@ -23244,6 +23293,11 @@
       #dci-launcher { display: flex; align-items: center; gap: 12px; margin: 0 0 6px; }
       #dci-open { font: inherit; padding: 4px 12px; border: 1px solid #736dab; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
       #dci-open:hover { background: #f1f0f8; }
+      /* [3.34.8] "… from cover art" joined to it (collected item 124) */
+      #dci-open-ocr { font: inherit; margin-left: -13px; padding: 4px 10px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; }
+      #dci-open-ocr:hover { background: #ecebf6; }
+      #dci-open:has(+ #dci-open-ocr:not([hidden])) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+      #dci-open-ocr .dci-beta-tag { margin-left: 6px; }
       #dci-launch-status { color: #4b4585; }
       #dci-launcher .dci-textbtn { border: 0; background: none; color: #4b4585; text-decoration: underline; cursor: pointer; font: inherit; }
       #dci-notice { position: relative; max-width: 80ch; margin: 0 0 12px; padding: 10px 36px 10px 14px; border: 1px solid #c8c5d6; border-left: 4px solid #736dab;

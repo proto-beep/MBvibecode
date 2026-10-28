@@ -6,6 +6,10 @@ and “… COMPANION”), run with Playwright (Python) and Chromium. MusicBrainz
 MusicBrainz web service (lookups and the search), the MusicBrainz release page, the Discogs API, a Discogs release page
 and Bandcamp album and track pages. The userscript manager's shared storage (`GM_setValue` …) is replaced by a small local HTTP
 server, so the companion shares its values between pages as it does in Tampermonkey.
+For the text from cover art (beta) it serves the Cover Art Archive (PNGs of the sizes given), a stand-in of Tesseract.js as
+from jsDelivr and – from 3.34.6 – the real pdf.js as from jsDelivr, taken from a local copy of the npm package `pdfjs-dist`
+(`PDFJS_DIR`: `/opt/npm-tools/node_modules`, `~/.npm-global/lib/node_modules` or `node_modules` next to the scripts; without
+it the case `ocrpdf` fails); `pdf_of()` writes small PDFs.
 
 ## Layout
 
@@ -395,6 +399,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     source; a PDF by its address; a broken one named
                                 #   ocrdiscogs: 3.34.7: "Load Discogs images" (nothing fetched before), the release's page: its images once at
                                 #     600 px, not another release's; a Discogs address typed (twice refused); read ×3, the source
+                                #   ocrstart: 3.34.8: "… from cover art" only with the beta, joined to "Import credits …"; the dashboard without the
+                                #     import (nothing of Discogs), the message, the window; the read text the source; beta off: gone
                                 #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
