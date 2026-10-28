@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 | – |
+| 2026-10-28 | 3.34.0 – 3.34.1 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.1
+
+#### Added
+
+- **Text from cover art (beta)** (collected item E3; maintainer: "kannst Du die Bilderkennung mal als Beta Funktion einbauen? Die Beta Funktion muss im Einstellungsmenü aktiviert werden", "die Vorauswahl klingt gut"): a new tab **⚙ Settings → Beta** switches it on (off by default); then **Source ▾** has **Text from cover art …**. A window lists the release's images on the Cover Art Archive with their types – Back, Booklet, Liner and Tray ticked, Front and Medium not –, the languages (English, and German, Spanish or French with that dashboard language) and the image size (original or 1200 px). **Recognize text** loads Tesseract.js 5.1.1 from cdn.jsdelivr.net at the first use and reads the images in the browser, one after the other with a progress bar; images under 1,000 px are read enlarged ×3 with a warning. The text is corrected after reading ("© & ©" → "℗ & ©", "-"/"—" between a name and a role → "–", no empty lines), shown per image to correct, with the words read with little certainty listed (a click selects them); **Import this text** reads it like a pasted text (its origin goes into the edit note), **＋ Supplement the import with it** compares it with the rows. If the library cannot be loaded, the window says so.
+- Connections X013 (Cover Art Archive; new permissions `@connect coverartarchive.org`, `@connect archive.org`) and X014 (Tesseract.js).
 
 ### Import 3.34.0 – milestone “Languages file”
 
