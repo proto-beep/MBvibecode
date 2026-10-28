@@ -406,6 +406,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrload: 3.34.10: previews counted; the ticked images loaded ahead two at a time (held requests), the third
                                 #     waiting; unticked: out of the queue, one loading ahead stopped; "loaded"; loading ahead off (stored):
                                 #     nothing ahead, the frames step shows its own loading
+                                #   ocrzoom: 3.34.11: two frames on the Back, the Booklet whole – wider window, a part per frame beside its text
+                                #     (the image there); +, −, Ctrl + wheel, double click, drag, ⤢; a part's text changed and imported
                                 #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 

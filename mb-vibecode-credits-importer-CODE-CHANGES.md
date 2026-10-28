@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.10, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.11, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.11 · 2026-10-28
+
+Text from cover art (beta): each part beside its text, with zoom (collected item 130).
+
+- **Reading in parts:** new `ocrBoxes(img)` (the frames, else the whole canvas), `ocrPieceScale(img)`; `ocrPieces` uses them. `ocrRun` loads the canvas also for a PDF page read from its own text (it stands beside the text) and gives each result `parts` – [{ box, text, unsure, fixes, view }], a part per frame –, cleaned part by part; the result's `fixes` and `unsure` sum them up (`res.text` is gone). `ocrPdfText` returns a text per frame (one for the whole page). `ocrText` joins the parts' texts.
+- **New:** `OCR_ZOOM_H` 300, `OCR_ZOOM_MAX` 8, **`ocrPartHtml(r, i, pt, j)`** (`[data-ocr-part="i:j"]`: a canvas `[data-ocr-zoom]` with + / − / ⤢ `[data-ocr-z][data-ocr-zfor]` and a hint, beside the text `[data-ocr-text="i:j"]` and its words read uncertainly), `ocrPartOf(key)`, `ocrZoomFit`, `ocrZoomClamp` (within the part when larger than the view, centred when smaller), **`ocrZoomDraw(key)`** (the width of its column, at most `OCR_ZOOM_H` high, sharp with `devicePixelRatio`; only the part, the rest dark; the text field as high), **`ocrZoomBy(key, f, at)`** (at a place of the view; between fitted and 8×), `ocrZoomAll` (also on `resize`), **`ocrZoomDrag(e)`**.
+- **Window:** the class `dci-ocr-wide` in the step `result` (`min(1400px, 98vw)`); `pointerdown` – a zoomed part first, else the frames; `wheel` with Ctrl, `dblclick`; the text of a part is kept in `pt.text`; `ocrClick` – the zoom buttons.
+- **CSS:** `#dci-ocr.dci-ocr-wide`, `.dci-ocr-part` (two columns, one below 760 px), `.dci-ocr-zoom`, `.dci-ocr-zoomtools`, `.dci-ocr-parttext`.
+- **Texts:** new (English) `ocr.part`, `ocr.partOf`, `ocr.zoomLabel`, `ocr.zoomIn`, `ocr.zoomOut`, `ocr.zoomFit`, `ocr.zoomHint`.
+- **Header / files:** `@version 3.34.11`, `?v=3.34.11`, both files' `version`.
+- **Tests:** `t_coverart.py` – new case `ocrzoom`; `ocrrun` edits the part `2:0`; `ocrload` lets go of the requests it held (`unroute_all`).
 
 ## Import 3.34.10 · 2026-10-28
 

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.10 | – |
+| 2026-10-28 | 3.34.0 – 3.34.11 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.11
+
+#### Added
+
+- **Text from cover art (beta): each part beside its text, with zoom** (collected item 130; maintainer: "kann der vergrößerte Bildbereich nach der Auswahl neben dem erkannten text dargestellt werden? mit zoom in funktion?", "je Rahmen"): when checking the text, each frame (else the whole image) shows its part of the image beside its own text field – zoomed with + / −, Ctrl + wheel or a double click, moved by dragging, fitted again with ⤢; the window is wider in this step.
 
 ### Import 3.34.10
 
