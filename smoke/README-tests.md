@@ -181,13 +181,19 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     "Music And Lyrics By" → writer, "Song" preselected (R098, S020)
                                 #   pub: publishers ticked only where a writer has them as personal publisher
 
-python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix
+python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, comments of live recordings
                                 #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                                 #     writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                                 #     2,000), no redraw while typing in the works matrix (takes about 3 minutes)
                                 #   worksskip: the works matrix (3.18.0): fold / unfold (not kept), "Skip works matrix" (rows on "Skip", nothing of it planned,
                                 #     no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later);
                                 #     3.19.3: the tooltips of what is counted, the setting for the skipped rows
+                                #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off), the list above "Stage …": live
+                                #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),
+                                #     another comment of MB not tickable, changed by hand, unticked
+                                #   livecomrun: 3.32.10: the job at staging (with the seed line in the note), "Enter edit" → once MB has the
+                                #     relationships one POST to /ws/js/edit/create (type 72, the credit changed in the editor: red log, the new
+                                #     credit), done; the release page enters an armed job (hand-made comment, another comment of MB in red)
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
