@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.2
+// @version      3.34.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -25,8 +25,8 @@
 // @connect      raw.githubusercontent.com
 // @connect      coverartarchive.org
 // @connect      archive.org
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -39,7 +39,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -8585,6 +8585,11 @@
    * the symbol pressed, a strip below it to the lower edge of the head (`--dci-bridge-down`) and one from there to the box
    * (`--dci-bridge-x`, `-w`, `-h`), drawn by CSS; the box scrolled away: only the part at the symbol.
    */
+  /** [3.34.3] A custom property set only when it changes (no new style for every scroll event). */
+  function setVar(el, name, value) {
+    if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value);
+  }
+
   function placeBridges() {
     if (!S.overlay || S.overlay.hidden) return;
     const head = S.overlay.querySelector('.dci-head');
@@ -8606,17 +8611,31 @@
       }
       const b = btn.getBoundingClientRect();
       const p = box.getBoundingClientRect();
-      btn.style.setProperty('--dci-bridge-down', `${Math.max(0, Math.round(hb - b.bottom + 1))}px`);
+      // [3.34.3] in fractions of a pixel, as the browser lays them out (collected item 126; maintainer: "das rädchen ist noch nicht
+      // perfekt in line mit den einstellungen"): rounded, the lower part sat up to a pixel beside the button with a larger text
+      // or a scaled screen; the upper part starts 2px above the button's lower edge (its border, `top: 100% - 1px` of the padding
+      // box) and now ends 1px below the head, over its lower line, which ran across the bridge before
+      const px = (v) => `${Math.round(v * 1000) / 1000}px`;
+      const borderLeft = parseFloat(getComputedStyle(box).borderLeftWidth) || 0;
+      setVar(btn, '--dci-bridge-down', px(Math.max(0, hb - b.bottom + 3)));
       box.classList.toggle('dci-bridged-box', p.top >= hb - 1);
-      box.style.setProperty('--dci-bridge-x', `${Math.round(b.left - p.left - box.clientLeft)}px`);
-      box.style.setProperty('--dci-bridge-w', `${Math.round(b.width)}px`);
-      box.style.setProperty('--dci-bridge-h', `${Math.max(0, Math.round(p.top - hb))}px`);
+      setVar(box, '--dci-bridge-x', px(b.left - p.left - borderLeft));
+      setVar(box, '--dci-bridge-w', px(b.width));
+      setVar(box, '--dci-bridge-h', px(Math.max(0, p.top - hb)));
     }
   }
 
   /**
-   * [3.30.4] The content of the settings starts at the height of the chosen tab (item 87; maintainer: "vielleicht könnte man
-   * den menüinhalt immer auf höhe der punkte starten lassen"), so every tab joins it; tabs in a row (narrow): at the top.
+   * [3.30.4] The content of the settings joins the chosen tab (item 87; maintainer: "vielleicht könnte man den menüinhalt immer
+   * auf höhe der punkte starten lassen"); tabs in a row (narrow): at the top.
+   * [3.34.3] As high as it can be while the tab still joins its side – at the top, in the middle or near its foot; lower only
+   * when it is too short for that (collected item 127; maintainer: "die rot markierte fläche soll auch genutzt werden … dies soll
+   * aber nur der fall sein, sofern die visuelle markierung nicht mehr aligned ist. es kann aber auch mittig visuell markiert
+   * sein. gerade im reiter connections wird viel platz verschwendet"); its upper left corner round unless the tab joins there.
+   * Worked out without taking the margin away first, and written only when it changes (collected item 122; maintainer: "ich habe
+   * das I Fenster in den Einstellungen offen und kann nicht mehr hochscrollen wenn der Dates & Tracks Pool aufgeklappt ist. Der
+   * Scrollbalken zappelt"): until 3.34.2 every scroll event took it away and set it again, and the browser's scroll anchoring
+   * answered the short shift by scrolling back (278px at ⓘ Connections).
    */
   function alignSettingsPane() {
     const el = S.overlay && $('settings');
@@ -8626,10 +8645,19 @@
     const tabs = el.querySelector('.dci-set-tabs');
     const sel = el.querySelector('.dci-set-tab[aria-selected="true"]');
     if (!pane || !wrap) return;
-    pane.style.marginTop = '';
-    if (!sel || !tabs || getComputedStyle(tabs).flexDirection !== 'column') return;
-    const dy = Math.round(sel.getBoundingClientRect().top - wrap.getBoundingClientRect().top);
-    if (dy > 0) pane.style.marginTop = `${dy}px`;
+    let margin = 0;
+    let atTop = false;
+    if (sel && tabs && getComputedStyle(tabs).flexDirection === 'column') {
+      const top = wrap.getBoundingClientRect().top;
+      const r = sel.getBoundingClientRect();
+      // below the tab the side goes on a little, so the corner does not cut into the join
+      const below = parseFloat(getComputedStyle(pane).borderBottomLeftRadius) + 2 || 6;
+      margin = Math.max(0, Math.min(r.top - top, r.bottom - top + below - pane.offsetHeight));
+      atTop = margin >= r.top - top - 0.5;
+    }
+    const want = margin > 0.5 ? `${Math.round(margin * 1000) / 1000}px` : '';
+    if (pane.style.marginTop !== want) pane.style.marginTop = want;
+    if (pane.classList.contains('dci-set-joined-top') !== atTop) pane.classList.toggle('dci-set-joined-top', atTop);
   }
 
   function closeRules() {
@@ -21318,6 +21346,8 @@
     body.addEventListener('scroll', bridgesLater, { passive: true });
     new ResizeObserver(bridgesLater).observe(overlay.querySelector('.dci-head'));
     new ResizeObserver(bridgesLater).observe(body);
+    // [3.34.3] and the settings when their content grows or shrinks (the place of their content follows it, collected item 127)
+    new ResizeObserver(bridgesLater).observe(overlay.querySelector('[data-el="settings"]'));
     new ResizeObserver(() => {
       body.style.scrollPaddingTop = `${stick.offsetHeight + 8}px`;
       updatePageScrollPadding();
@@ -23210,7 +23240,9 @@
       .dci-set-tab[aria-selected="true"] { background: #fff; border-color: #c9c4dd; border-right-color: #fff; font-weight: 600; margin-right: calc(var(--u, 1px) * -14 - 1px); position: relative; z-index: 1; }
       .dci-set-tab:focus-visible { outline: 2px solid var(--purple); outline-offset: -2px; }
       .dci-set-resetall { align-self: flex-start; }
-      .dci-set-pane { flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid #c9c4dd; border-radius: 0 4px 4px 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
+      .dci-set-pane { flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid #c9c4dd; border-radius: 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
+      /* [3.34.3] the corner where the tab joins at the top stays square (collected item 127) */
+      .dci-set-pane.dci-set-joined-top { border-top-left-radius: 0; }
       .dci-set-pane .dci-reset { margin: 0; }
       /* [3.28.1] long texts of a switch wrap with the width of the settings (collected item 74); the box stays at the first line */
       .dci-set-pane .dci-check { white-space: normal; align-items: baseline; max-width: 100%; }

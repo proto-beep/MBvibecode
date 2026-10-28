@@ -252,9 +252,14 @@ def case_bridge():
     """Credits Importer 3.30.4: the settings join their tabs, a bridge from ⚙ and "Mapping rules" to what they opened
     (collected item 87; the maintainer's screenshots of 2026-10-25 01:59).
     A) ⚙ Settings open: ⚙ pressed (tinted), a bridge from it to the box of the settings – below the symbol down to the head's
-       lower edge, from there to the box, as wide as the symbol.
-    B) Every tab: the content starts at the height of the chosen tab and the tab reaches into its frame – at 100 % and at
-       90 % text size (until 3.30.3 the tabs below the content had nothing to join, at 90 % the tab stood out).
+       lower edge, from there to the box, as wide as the symbol. [3.34.3] (collected item 126) exactly, in fractions of a pixel
+       (until 3.34.2 rounded: up to a pixel beside the symbol with a larger text or a scaled screen), and the part at the symbol
+       ends 1px below the head, over its lower line.
+    B) Every tab: the tab joins the side of the content and reaches into its frame – at 100 % and at 90 % text size (until
+       3.30.3 the tabs below the content had nothing to join, at 90 % the tab stood out). [3.34.3] (collected item 127) the
+       content as high as it can be: at the top of the tabs, or (too short for that) just low enough that the tab joins it with
+       a little side below it; its upper left corner square only where the tab joins at the top (until 3.34.2 the content always
+       started at the height of the tab – at ⓘ Connections 278px of empty space above the long list).
     C) "Mapping rules" in the dashboard: their symbol has the bridge, ⚙ not.
     D) The box scrolled away: only the part at the symbol stays; back: the whole bridge.
     E) Both closed: no bridge, nothing pressed."""
@@ -262,12 +267,18 @@ def case_bridge():
   const head = document.querySelector('.dci-head').getBoundingClientRect(); const b = btn.getBoundingClientRect(); const p = box.getBoundingClientRect(); const cs = getComputedStyle(box);
   const v = (k) => parseFloat(cs.getPropertyValue(k)) || 0;
   return { expanded: btn.getAttribute('aria-expanded'), bg: getComputedStyle(btn).backgroundColor, btnBridge: btn.classList.contains('dci-bridged'),
-    down: parseFloat(getComputedStyle(btn).getPropertyValue('--dci-bridge-down')) || 0, downOk: Math.abs(b.bottom - 1 + (parseFloat(getComputedStyle(btn).getPropertyValue('--dci-bridge-down')) || 0) - head.bottom) <= 2,
-    boxBridge: box.classList.contains('dci-bridged-box'), xOk: Math.abs(p.left + box.clientLeft + v('--dci-bridge-x') - b.left) <= 1, wOk: Math.abs(v('--dci-bridge-w') - b.width) <= 1,
-    hOk: Math.abs(p.top - v('--dci-bridge-h') - head.bottom) <= 1 }; }"""
-    TABS = """(() => { const el = document.querySelector('[data-el=settings]'); const pane = el.querySelector('.dci-set-pane').getBoundingClientRect();
-  const sel = el.querySelector('.dci-set-tab[aria-selected=true]').getBoundingClientRect();
-  return [Math.round(pane.top - sel.top), Math.round(sel.right - pane.left)]; })()"""
+    down: parseFloat(getComputedStyle(btn).getPropertyValue('--dci-bridge-down')) || 0, downOk: Math.abs(b.bottom - 2 + (parseFloat(getComputedStyle(btn).getPropertyValue('--dci-bridge-down')) || 0) - head.bottom - 1) <= 0.01,
+    boxBridge: box.classList.contains('dci-bridged-box'), xOk: Math.abs(p.left + parseFloat(cs.borderLeftWidth) + v('--dci-bridge-x') - b.left) <= 0.01, wOk: Math.abs(v('--dci-bridge-w') - b.width) <= 0.01,
+    hOk: Math.abs(p.top - v('--dci-bridge-h') - head.bottom) <= 0.01, frac: [b.left % 1, b.width % 1, head.bottom % 1].some((x) => x > 0.001) }; }"""
+    TABS = """(() => { const el = document.querySelector('[data-el=settings]'); const paneEl = el.querySelector('.dci-set-pane'); const pane = paneEl.getBoundingClientRect();
+  const sel = el.querySelector('.dci-set-tab[aria-selected=true]').getBoundingClientRect(); const first = el.querySelector('.dci-set-tab').getBoundingClientRect();
+  return { above: Math.round((pane.top - sel.top) * 10) / 10, below: Math.round((pane.bottom - sel.bottom) * 10) / 10, into: Math.round(sel.right - pane.left),
+    margin: parseFloat(paneEl.style.marginTop) || 0, atTabsTop: Math.abs(pane.top - first.top) <= 1, joinedTop: paneEl.classList.contains('dci-set-joined-top'),
+    corner: getComputedStyle(paneEl).borderTopLeftRadius }; })()"""
+    def tab_ok(t):
+        # the tab within the side of the content, a little side below it; as high as can be; the corner square only at a join at the top
+        return (t['above'] <= 1 and t['below'] >= 4.5 and 0 <= t['into'] <= 3 and (t['atTabsTop'] or abs(t['below'] - 6) <= 1)
+                and t['joinedTop'] == (abs(t['above']) <= 1) and (t['corner'] == '0px') == t['joinedTop'])
     TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'connections']
     results = []
     with sync_playwright() as p:
@@ -303,8 +314,11 @@ def case_bridge():
         a2 = pg.evaluate(BR, 'settings-open')
         pg.click('[data-act=zoom-in]')
         pg.wait_for_timeout(300)
-        print('B) Inhalt − Reiter oben, Überlappung (100 %):', b1, '\n   90 %:', b2, '| Brücke 90 %:', [a2['xOk'], a2['hOk'], a2['downOk']])
-        results.append(all(abs(d) <= 1 and 0 <= o <= 3 for d, o in list(b1.values()) + list(b2.values())) and a2['xOk'] and a2['hOk'] and a2['downOk'])
+        print('B) Inhalt und Reiter (100 %):', b1, '\n   90 %:', b2, '| Brücke 90 %:', [a2['xOk'], a2['wOk'], a2['hOk'], a2['downOk'], a2['frac']])
+        results.append(all(tab_ok(t) for t in list(b1.values()) + list(b2.values())) and a2['xOk'] and a2['wOk'] and a2['hOk'] and a2['downOk'] and a2['frac']
+                       # the list of the connections from the top, its tab in the middle; the first tab joins at the top; a short one lower
+                       and b1['connections']['margin'] == 0 and b1['connections']['above'] < -100 and b1['connections']['below'] > 100
+                       and b1['general']['joinedTop'] and b1['discogs']['margin'] > 0 and not b1['discogs']['joinedTop'])
         # C)
         pg.click('.dci-head [data-act=rules]')
         pg.wait_for_timeout(400)
@@ -326,6 +340,57 @@ def case_bridge():
         e1, e2 = pg.evaluate(BR, 'rules'), pg.evaluate(BR, 'settings-open')
         print('E) zu:', [e1['expanded'], e1['btnBridge'], e2['expanded'], e2['btnBridge'], e1['bg']])
         results.append(e1['expanded'] == 'false' and not e1['btnBridge'] and not e2['btnBridge'] and e1['bg'] == 'rgb(255, 255, 255)')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_settingsscroll():
+    """Credits Importer 3.34.3: scrolling up in the dashboard with ⚙ Settings → ⓘ Connections open and "Dates & tracks"
+    expanded (collected item 122; maintainer: "ich habe das I Fenster in den Einstellungen offen und kann nicht mehr hochscrollen
+    wenn der Dates & Tracks Pool aufgeklappt ist. Der Scrollbalken zappelt und wird sozusagen zurückgehalten.").
+    A) Scrolled down, then up in small steps with the wheel: never back down, up to the top (until 3.34.2 every scroll event took
+       the margin of the settings' content away and set it again; the browser's scroll anchoring answered by scrolling back,
+       278px, again and again).
+    B) Scrolling does not touch the margin of the content (no new value while nothing changes)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(800)
+        if pg.evaluate("document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded')") != 'true':
+            pg.click('.dci-pools-toggle')
+            pg.wait_for_timeout(300)
+        H.open_settings(pg, 'connections')
+        pg.wait_for_timeout(500)
+        pg.evaluate("""(() => { window.__tr = []; window.__styles = 0; const body = document.querySelector('#dci-overlay [data-el=body]');
+      body.addEventListener('scroll', () => window.__tr.push(Math.round(body.scrollTop)), { passive: true });
+      new MutationObserver((ms) => { window.__styles += ms.length; }).observe(document.querySelector('.dci-set-pane'), { attributes: true, attributeFilter: ['style', 'class'] }); })()""")
+        box = pg.locator('[data-el=settings] .dci-set-pane').bounding_box()
+        pg.mouse.move(box['x'] + 50, box['y'] + 50)
+        for _ in range(12):
+            pg.mouse.wheel(0, 300)
+            pg.wait_for_timeout(50)
+        pg.wait_for_timeout(400)
+        down = pg.evaluate("document.querySelector('#dci-overlay [data-el=body]').scrollTop")
+        pg.evaluate("window.__tr = []")
+        for _ in range(int(down / 15) + 20):
+            pg.mouse.wheel(0, -15)
+            pg.wait_for_timeout(30)
+        pg.wait_for_timeout(500)
+        tr = pg.evaluate("window.__tr")
+        top = pg.evaluate("document.querySelector('#dci-overlay [data-el=body]').scrollTop")
+        back = [(tr[i - 1], tr[i]) for i in range(1, len(tr)) if tr[i] > tr[i - 1]]
+        print('A) unten:', down, '| zurück nach unten gesprungen:', back[:5], '| oben:', top)
+        results.append(down > 1500 and not back and top == 0)
+        styles = pg.evaluate("window.__styles")
+        print('B) Änderungen am Inhalt beim Scrollen:', styles)
+        results.append(styles == 0)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
