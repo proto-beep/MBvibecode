@@ -1,6 +1,6 @@
 """Without a browser: the texts of the script, the list of connections (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: i18n, connections – each the former smoke/t_<case>.py, unchanged; `python3 t_static.py <case> …` runs only those."""
+Cases: i18n, connections, mappingfile (3.33.0) – each the former smoke/t_<case>.py, unchanged; `python3 t_static.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -151,6 +151,60 @@ console.log(JSON.stringify({ conns: m.CONNECTIONS, texts }));
     print('B) Verbindungen:', ids, '| fehlende Texte (nur Englisch zählt):', {k: v for k, v in gaps.items() if v})
     results.append(len(ids) == len(set(ids)) and len(ids) >= 10 and not gaps['en'])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_mappingfile():
+    """Credits Importer 3.33.0 (milestone "Mapping file", item E7): the data of the register in mb-vibecode-credits-importer-mapping.json.
+    A) The file: format 1, its version the script's (@version), each of its lists used in the script (`const X = MAP.X`) and
+       each `MAP.X` of the script in the file; regular expressions as {"$re", "$flags"} that compile, sets as {"$set"}.
+    B) The header: @resource mapping at …/main/mb-vibecode-credits-importer-mapping.json?v=<version>, @grant GM_getResourceText
+       and GM.getResourceUrl, @connect raw.githubusercontent.com.
+    C) In Node the script reads the file next to it (the register's golden test needs nothing else)."""
+    import json
+    import os
+    import re
+    import subprocess
+
+    HERE = os.path.dirname(os.path.abspath(__file__))
+    SCRIPT = os.path.join(HERE, '..', 'mb-vibecode-credits-importer.user.js')
+    FILE = os.path.join(HERE, '..', 'mb-vibecode-credits-importer-mapping.json')
+    src = open(SCRIPT, encoding='utf-8').read()
+    data = json.load(open(FILE, encoding='utf-8'))
+    version = re.search(r'^// @version\s+(\S+)', src, re.M).group(1)
+    keys = [k for k in data if k not in ('format', 'version', 'about')]
+    used = set(re.findall(r'\bconst (\w+) = MAP\.(\w+);', src))
+    used_names = {b for a, b in used}
+    bad_pairs = [(a, b) for a, b in used if a != b]
+    regs = []
+
+    def walk(v):
+        if isinstance(v, dict):
+            if '$re' in v:
+                regs.append((v['$re'], v.get('$flags', '')))
+                return
+            for x in v.values():
+                walk(x)
+        elif isinstance(v, list):
+            for x in v:
+                walk(x)
+
+    walk(data)
+    js = subprocess.run(['node', '-e', "const r = JSON.parse(process.argv[1]); let bad = []; for (const [s, f] of r) { try { new RegExp(s, f); } catch (e) { bad.push(s.slice(0, 40)); } } console.log(JSON.stringify(bad));",
+                         json.dumps(regs)], capture_output=True, text=True, check=True)
+    bad_re = json.loads(js.stdout)
+    print('A) Format:', data.get('format'), '| Version:', data.get('version'), 'Skript:', version, '| Listen:', len(keys), '| im Skript:', len(used_names),
+          '| nicht benutzt:', sorted(set(keys) - used_names), '| fehlen:', sorted(used_names - set(keys)), '| Muster:', len(regs), 'kaputt:', bad_re, bad_pairs)
+    ok_a = data.get('format') == 1 and data.get('version') == version and set(keys) == used_names and not bad_pairs and len(regs) > 50 and not bad_re
+    head = src[:src.index('// ==/UserScript==')]
+    res = re.search(r'^// @resource\s+mapping\s+(\S+)$', head, re.M)
+    print('B) @resource:', res and res.group(1))
+    ok_b = bool(res) and res.group(1) == f'https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v={version}' \
+        and '// @grant        GM_getResourceText' in head and '// @grant        GM.getResourceUrl' in head and '// @connect      raw.githubusercontent.com' in head
+    node = subprocess.run(['node', '-e', "global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 }; const m = require(process.argv[1]); console.log(m.mapRole('Mixed By', []).rule)",
+                           SCRIPT], capture_output=True, text=True)
+    print('C) Node:', node.stdout.strip(), node.stderr[-200:])
+    ok_c = node.stdout.strip() == 'R033'
+    print('Ergebnis:', 'OK' if ok_a and ok_b and ok_c else 'FEHLER', [ok_a, ok_b, ok_c])
 
 
 run_cases(globals())

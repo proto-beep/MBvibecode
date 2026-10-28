@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.32.10 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -41,6 +41,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-27 | Import 3.33.0 | The mapping file: the data of the mapping rules – role rules, company roles, questions, tables and word lists, the quick switches – is a file of its own, `mb-vibecode-credits-importer-mapping.json`, which the userscript manager loads with the script (the script fetches it from GitHub itself if not); rules can be kept on GitHub without touching the code. Since 3.32.0 also: places with a date after them, typos in role words, the credits of Bandcamp's “about” text, poems that follow their level, single days instead of a month, the quick switches as buttons, comments of live recordings. |
 | 2026-10-27 | Import 3.32.0 | Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background. |
 | 2026-10-25 | Import 3.31.0 | Text recognition, part 4: publishers below a heading ("[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5") on their tracks, their rights society (BMI, ASCAP, GEMA … – a list of the societies) on the release level, a publisher with the name of a person as a part of that person's column in the works matrix, names written together searched apart too ("Flizmo Music", "Four Word Sea Music"); the members of a band ("Vision Fortune are A, B and C") as performers, "sounds" asks performer or effects; from the Discogs notes dates per disc ("May 26, 2016 (Disc 2)"), places and the label of "© & ℗ TUM Records Oy 2021" (TUM Records offered too). Since 3.29.0 also: the mapping rules in the dashboard or as a window (also from a rule id at a row), colours for the levels, the level of a compact line switched by a click, ⚙ Settings → Appearance, an entry or a group compact at once, each pool folds on its own, scroll bars above and below the works matrix, the settings without an import ("Source pages"), the tracks of a track group typed in. |
 | 2026-10-24 | Import 3.29.0 | Text recognition, part 3: credits in prose ("… by K.M. (sounds, words) & E. (voice)", "Cover artwork channeled by …", "Logo carved by the guided hand of …"), every place of joined verbs ("Mixed and mastered at …") and lists of kinds ("Tenor, alto, soprano saxophones"); dates go to every group of joined words and take their group only from their own sentence, release years are left out, "19 & 20. 01. 2009" and "1973 October 19" are read; "C1 to D" with a side of one track, "in live concert" for the tracks named. Since 3.27.0 also Bandcamp track pages, Norwegian, Swedish and Danish roles, "cover design", "credited as" from texts and none for a case-only spelling, and the companion's underlines of the dates and track groups used. |
@@ -86,6 +87,24 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.33.1
+
+#### Added
+
+- **✎ Changing built-in rules** (collected item E7, Block W; maintainer: "auch direkt an der Regel"): in "Mapping rules" ✎ at every role rule without code, every company rule and the lists T001, T002, T003, T038, T045, T048 opens a form below it – of a role rule its pattern (as role words separated by "|", or as a regular expression), MusicBrainz types, level, role credit (none, as written, a text) and instrument; of a company rule its pattern, types for labels, places, areas, artists and level; of a list all its entries, one a line. Saved, it is your change, stored in this browser on top of the mapping file and in effect at once; the rule is marked "changed". Rules with code are marked "code" and can only be switched on and off. A wrong pattern is not saved.
+- **Your changes of built-in rules:** a list below your rules – each change with the words added and taken away of a pattern ("+ pictures by") or before → after, **↺ back to the built-in rule**, **↺ Reset all changes of built-in rules** (both asked first). They stay with an update; a built-in rule changed by an update is marked "changed · ⚠" (the log warns at the start), with **Keep mine** and **Discard**.
+- **Export and import of the register:** export **my changes** (own rules, switches, changed rules and lists, with the versions they were made on) as `mb-vibecode-credits-importer-mapping-changes.json`, or **the whole register** with your changes as `mb-vibecode-credits-importer-mapping.json` in the layout of the repository's file (without changes byte for byte the same – a pull request shows only the changed lines); as a file or to the clipboard. Import a file (chosen or dropped onto the window) or pasted text – a changes file, an old rules file (`mb-x-vibecode-rules`, still read) or a whole register –, checked (only data, known ids, allowed fields, patterns compiled safely), with a **preview** first: new, changed and removed rules with before → after and up to three roles mapped before → after, lists, own rules, switches, skipped ids with the reason, conflicts with a built-in rule changed since the export; **Merge with my changes** or **Replace my changes**, then **Take over**.
+
+#### Changed
+
+- "Tables and word lists" are no longer "read only" (their hint names the lists ✎ changes); ⚙ Settings → reset with own mapping rules ticked resets your changes of built-in rules too (its text counts them). The former "Export rules" / "Import rules" of "Your rules" are part of "Export and import".
+
+### Import 3.33.0 – milestone “Mapping file”
+
+#### Changed
+
+- **The mapping file** (collected item E7, Block W; maintainer: "nimm E7 auf", "erst b dann a", "ich benutze Firefox und Violentmonkey. Aber es soll für alle Kombinationen möglich sein"): the data of the mapping register – role rules (with the patterns of those that need code), wordings, questions, company roles, tables and word lists, the quick switches – is in `mb-vibecode-credits-importer-mapping.json` next to the script. The userscript manager loads it with the script (`@resource`, again with each update); if not, the script fetches it from GitHub itself and keeps it until the next update; only if that fails, "Mapping file missing" with "Update script". The rules map exactly as before (the golden tests are unchanged); the script is about 60 KB smaller. "Mapping rules" says where the data comes from. New permissions: `GM_getResourceText`, `GM.getResourceUrl`, `@connect raw.githubusercontent.com`.
 
 ### Import 3.32.10
 

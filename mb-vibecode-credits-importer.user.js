@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.10
+// @version      3.33.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -18,13 +18,17 @@
 // @match        https://harmony.pulsewidth.org.uk/release/actions*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_openInTab
+// @grant        GM_getResourceText
+// @grant        GM.getResourceUrl
 // @grant        unsafeWindow
 // @connect      bandcamp.com
+// @connect      raw.githubusercontent.com
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.33.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
 
-/* global GM_info, unsafeWindow, module, GM_xmlhttpRequest, GM_openInTab */
+/* global GM_info, unsafeWindow, module, GM_xmlhttpRequest, GM_openInTab, GM_getResourceText */
 (function () {
   'use strict';
 
@@ -32,7 +36,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.10';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.33.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -725,7 +729,7 @@
       "conn.X008": "Run the script; their functions read Bandcamp pages (GM_xmlhttpRequest) and open background tabs (GM_openInTab).",
       "conn.X009.name": "Web profiles (Instagram, SoundCloud, Spotify …)",
       "conn.X009": "Profiles next to names in a text are kept as links: MusicBrainz is asked for an artist with them, “Create …” fills them in – the profiles themselves are never opened.",
-      "conn.X010": "Home page, issues and updates of the script (@updateURL).",
+      "conn.X010": "Home page, issues and updates of the script (@updateURL); from 3.33.0 also its mapping file, which the userscript manager loads with the script (@resource) – or the script itself, when the manager did not (raw.githubusercontent.com).",
       "conn.X011": "Its way of setting the comments of recordings – edits “edit recording” (type 72) sent to MusicBrainz's /ws/js/edit/create, with an edit note – is how the script enters the comments of live recordings after “Enter edit” (⚙ Settings → Staging, off by default); the script itself is not needed. MusicBrainz's /ws/js/release tells whether the relationships are saved.",
       "conn.X012": "The comments of live recordings follow its format – “live, 2004‐03‐23: Iridium, New York, NY, USA”: the place's credit or name with city, US or Canadian state code and country, the date –, and its line “Seed live comments” is added to their edit note; the script itself is not needed.",
       "settings.t.texts": "Texts",
@@ -1330,6 +1334,114 @@
       "rules.quick": "Quick switches",
       "rules.quickTitle": "Rules switched on and off often – the same as in the lists below; the id next to each shows the rule, which says where it acts",
       "rules.quickHint": "the rules switched most often – a click switches; the id shows the rule in the lists below",
+      "mapping.missing": "MB x Vibecode: Credits Importer – mapping file missing",
+      "mapping.missingText": "The script needs its mapping file ({file}) to read credits. The userscript manager did not load it, and fetching it from GitHub did not work either ({why}). “Update script” opens the script's address: install it again, the manager then loads the file with it.",
+      "mapping.update": "Update script",
+      "mapping.source": "The data of these rules comes from {file} (version {version}, {from}); the rules with code are in the script.",
+      "mapping.from.manager": "loaded by the userscript manager",
+      "mapping.from.fetched": "fetched from GitHub by the script",
+      "mapping.from.file": "the file next to the script",
+      "log.mappingLoaded": "Mapping file {version} ({from})",
+      "log.mappingVersion": "The mapping file is of version {version}, the script of {script} – please update the script",
+      "mapping.changesN.one": "your changes: {n}",
+      "mapping.changesN.other": "your changes: {n}",
+      "mapping.badPattern": "The pattern cannot be used: {why}",
+      "mapping.empty": "it is empty",
+      "mapping.tooLong": "longer than {n} characters",
+      "mapping.badValue": "{id}: the field “{field}” has a value of the wrong kind",
+      "mapping.badField": "{id}: the field “{field}” cannot be changed (only data: pattern, types, level, role credit, instrument)",
+      "mapping.tooMany": "More than {n} entries",
+      "mapping.badLine": "This line cannot be read: {line}",
+      "mapping.credit.none": "none",
+      "mapping.credit.role": "as written",
+      "mapping.credit.text": "this text",
+      "mapping.field.re": "Pattern",
+      "mapping.field.types": "MusicBrainz types",
+      "mapping.field.level": "Level",
+      "mapping.field.credit": "Role credit",
+      "mapping.field.primaryCands": "Instrument or vocal",
+      "mapping.field.label": "Types for labels",
+      "mapping.field.place": "Types for places",
+      "mapping.field.area": "Types for areas",
+      "mapping.field.artist": "Types for artists",
+      "mapping.editTitle": "✎ Change rule {id} (your change, stored in this browser)",
+      "mapping.editRuleTitle": "Change rule {id}",
+      "mapping.editListTitle": "Change the entries of {id}",
+      "mapping.editList": "✎ Entries of {id} (your change, stored in this browser)",
+      "mapping.patternMode": "The pattern as",
+      "mapping.pmode.words": "role words (separated by |)",
+      "mapping.pmode.re": "regular expression",
+      "mapping.builtinIs": "Built in: {what}",
+      "mapping.namesHint": "several names separated by commas, tried in this order",
+      "mapping.toBuiltin": "back to the built-in rule",
+      "mapping.linesWords": "One word per line.",
+      "mapping.linesPairs": "One entry per line: abbreviation = what it stands for.",
+      "mapping.linesMap": "One spelling per line: spelling = MusicBrainz instrument (several separated by /).",
+      "mapping.reloadHint": "takes full effect after loading the page again",
+      "mapping.codeTag": "code",
+      "mapping.codeOnly": "This rule has code in the script: it can only be switched on or off here.",
+      "mapping.changedTag": "changed",
+      "mapping.changedTitle": "Changed by you (your changes of built-in rules)",
+      "mapping.conflictTag": "changed · ⚠",
+      "mapping.changes": "Your changes of built-in rules",
+      "mapping.changesEmpty": "None yet – ✎ at a rule or list below changes it; the built-in rules stay in the mapping file.",
+      "mapping.changesHint": "Stored in this browser, on top of the mapping file; they stay with an update of the script. ↺ takes a change back.",
+      "mapping.gone": "This rule is no longer in the mapping file.",
+      "mapping.conflict": "The built-in rule changed since your change: {fields}",
+      "mapping.keepMine": "Keep mine",
+      "mapping.discard": "Discard",
+      "mapping.resetAll": "Reset all changes of built-in rules",
+      "mapping.resetAsk": "Really take back your change of {id} (the built-in rule applies again)?",
+      "mapping.resetAllAsk": "Really reset all your changes of built-in rules? Your own rules and the switches stay.",
+      "mapping.resetAllWhat": "all changes of built-in rules reset",
+      "mapping.io": "Export and import",
+      "mapping.export": "Export",
+      "mapping.exportChanges": "my changes (own rules, switches, changed rules and lists)",
+      "mapping.exportRegister": "the whole register (with my changes)",
+      "mapping.exportChangesHint": "{file}: small, to keep, move to another browser or share; it names the versions it was made on.",
+      "mapping.exportRegisterHint": "{file}: the effective register in the layout of the mapping file – for a pull request in the repository (own rules and switches are not in it).",
+      "mapping.saveFile": "Save as file",
+      "mapping.copy": "Copy",
+      "mapping.saved": "Saved as {file}",
+      "mapping.copied": "Copied to the clipboard",
+      "mapping.copyFailed": "The browser did not allow copying – save it as a file instead",
+      "mapping.clipboard": "clipboard",
+      "mapping.importFile": "Import file",
+      "mapping.importHint": "or drop a file onto this window – a preview shows what changes before anything is taken over.",
+      "mapping.paste": "Paste text",
+      "mapping.read": "Read",
+      "mapping.pasted": "pasted text",
+      "mapping.notJson": "This is no JSON text.",
+      "mapping.newerFile": "This file is of a newer format ({version}) – please update the script.",
+      "mapping.tooBig": "This is too big for a file of rules.",
+      "mapping.skipUnknown": "not in the mapping file of this version",
+      "mapping.skipCode": "a rule with code: only on/off",
+      "mapping.skipList": "this list cannot be changed here",
+      "mapping.preview": "Preview of the import: {name}",
+      "mapping.kind.v1": "A rules file of an older version (own rules and switches).",
+      "mapping.kind.changes": "Changes made with script {script} on mapping file {mapping}.",
+      "mapping.kind.register": "A whole register (mapping file {mapping}): what differs from the file of this version.",
+      "mapping.merge": "Merge with my changes",
+      "mapping.replace": "Replace my changes",
+      "mapping.replaceData": "Replace my changes of built-in rules",
+      "mapping.prev.new": "new",
+      "mapping.prev.changed": "changed",
+      "mapping.prev.removed": "removed",
+      "mapping.prev.on": "switched on",
+      "mapping.prev.off": "switched off",
+      "mapping.prev.skipped": "skipped",
+      "mapping.prevConflict": "The built-in rule changed since the export: {fields}",
+      "mapping.prevNothing": "Nothing would change.",
+      "mapping.apply": "Take over",
+      "mapping.imported.one": "{n} change imported ({name})",
+      "mapping.imported.other": "{n} changes imported ({name})",
+      "mapping.importWhat": "import {name}",
+      "log.mappingExported": "Mapping exported: {what} → {file}",
+      "log.mappingImported.one": "Mapping imported: {n} change from {name} ({mode})",
+      "log.mappingImported.other": "Mapping imported: {n} changes from {name} ({mode})",
+      "log.mappingChangesOn.one": "{n} change of built-in rules is in effect (Mapping rules → your changes)",
+      "log.mappingChangesOn.other": "{n} changes of built-in rules are in effect (Mapping rules → your changes)",
+      "log.mappingConflicts": "Built-in rules that changed since your change ({n}): {ids} – see Mapping rules → your changes",
       "quick.S045": "Rights society after a writer’s name → the release’s rights society",
       "quick.D022": "Performance on several days → their common month or year",
       "quick.S021": "“live” preselected for live releases",
@@ -1355,8 +1467,8 @@
       "rules.applied": "Rules applied",
       "rules.code": "Code",
       "rules.tables": "Tables of the register",
-      "rules.lists": "Tables and word lists (read only)",
-      "rules.listsHint": "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; they change with an update of the script.",
+      "rules.lists": "Tables and word lists",
+      "rules.listsHint": "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; ✎ changes the entries of T001, T002, T003, T038, T045 and T048 (your changes), the others change with an update of the script.",
       "instrAsk.ask": "Discogs only says “{name}”. Do you know which one it is?",
       "src.textLabel": "pasted text",
       "instrAsk.askAny": "The source ({src}) only says “{name}”. Do you know which one it is?",
@@ -1431,6 +1543,7 @@
       "ms.3.29.0": "Text recognition, part 3: credits in prose (\"… by K.M. (sounds, words) & E. (voice)\", \"Cover artwork channeled by …\", \"Logo carved by the guided hand of …\"), every place of joined verbs (\"Mixed and mastered at …\") and lists of kinds (\"Tenor, alto, soprano saxophones\"); a date goes to every group of joined words and takes its group only from its own sentence, years of a release are left out, \"19 & 20. 01. 2009\" and \"1973 October 19\" are read; \"C1 to D\" with a side of one track, \"in live concert\" only for the tracks named. Since 3.27.0 also: Bandcamp track pages as releases; Norwegian, Swedish and Danish roles, \"Logo Og Kunst\" as design \"logo\" and artwork \"art\", \"cover design\", \"wood flutes\" as flute; no \"credited as\" when only the case differs, the spelling of a text when it differs; the companion underlines the dates and track groups used in the Discogs notes and on Bandcamp.",
       "ms.3.31.0": "Text recognition, part 4: publishers below a heading (\"[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5\") on their tracks, their rights society (BMI, ASCAP, GEMA … – a list of the societies) on the release level, a publisher with the name of a person as a part of that person's column in the works matrix, names written together searched apart too (\"Flizmo Music\", \"Four Word Sea Music\"); the members of a band (\"Vision Fortune are A, B and C\") as performers, \"sounds\" asks performer or effects; from the Discogs notes dates per disc (\"May 26, 2016 (Disc 2)\"), places and the label of \"© & ℗ TUM Records Oy 2021\" (TUM Records offered too). Since 3.29.0 also: the mapping rules in the dashboard or as a window (also from a rule id at a row), colours for the levels, the level of a compact line switched by a click, ⚙ Settings → Appearance, an entry or a group compact at once, each pool folds on its own, scroll bars above and below the works matrix, the settings without an import (\"Source pages\"), the tracks of a track group typed in.",
       "ms.3.32.0": "Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background.",
+      "ms.3.33.0": "The mapping file: the data of the mapping rules – role rules, company roles, questions, tables and word lists, the quick switches – is a file of its own, mb-vibecode-credits-importer-mapping.json, which the userscript manager loads with the script (and the script fetches from GitHub itself if not); rules can be kept on GitHub without touching the code. Also: places with a date after them, typos in role words, the credits of Bandcamp's “about” text, poems that follow their level, single days instead of a month, the quick switches as buttons, comments of live recordings.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -1458,9 +1571,6 @@
       "rules.creditPh": "empty: as the rules make it",
       "rules.save": "Save rule",
       "rules.new": "new rule",
-      "rules.export": "Export rules",
-      "rules.import": "Import rules:",
-      "rules.ioHint": "A file with your rules and the built-in rules you switched off – to keep, move to another browser or share.",
       "rules.formIncomplete": "Please give the Discogs role and the MusicBrainz type (or the instrument).",
       "rules.testAny": "Try a role:",
       "rules.testHintAny": "Type a role as the source writes it, e.g. “Bass [Upright]” or “tenor sax”; several separated by commas.",
@@ -1471,10 +1581,8 @@
       "rules.fSpellingAny": "Spelling",
       "rules.formIncompleteAny": "Please give the role and the MusicBrainz type (or the instrument).",
       "rules.importBad": "This is not a rules file of this script.",
-      "rules.imported": "{n} rules imported",
       "msg.rulesApplied": "{what}: rules applied, {n} rows mapped again.",
       "log.rulesChanged": "Rules changed ({what}): {n} rows mapped again",
-      "log.rulesExported": "{n} own rules exported",
       "datefind.title": "Find dates in free text",
       "datefind.inNotes.one": "{n} date found in the notes",
       "datefind.inNotes.other": "{n} dates found in the notes",
@@ -1635,7 +1743,7 @@
       "reset.title": "Reset all settings to their defaults",
       "reset.ask": "Reset all settings to their defaults?",
       "reset.what": "Language (English), text size, the dashboard as a window, positions and sizes of the windows, the switches of the navigation (Discogs status, MB release page, cover, hover, click/hover), the options of the footer, “apply automatically”, the folding of “Dates & tracks”, role codes, the log window – and, with the companion, place and folding of the cover on Discogs.",
-      "reset.rules": "also delete own mapping rules ({n}) and switch all rules on again ({off} switched off)",
+      "reset.rules": "also delete own mapping rules ({n}) and your changes of built-in rules ({c}), and switch all rules on again ({off} switched off)",
       "reset.pools": "also delete the stored date pools, track pools and matrices of all releases",
       "reset.never": "The safety list of works created by the script is never deleted.",
       "reset.do": "Reset",
@@ -2252,7 +2360,7 @@
       "conn.X008": "Führen das Skript aus; ihre Funktionen lesen Bandcamp-Seiten (GM_xmlhttpRequest) und öffnen Hintergrund-Tabs (GM_openInTab).",
       "conn.X009.name": "Web-Profile (Instagram, SoundCloud, Spotify …)",
       "conn.X009": "Profile hinter Namen in einem Text bleiben als Links: MusicBrainz wird nach einem Artist damit gefragt, „… anlegen“ trägt sie ein – die Profile selbst werden nie geöffnet.",
-      "conn.X010": "Homepage, Fehlermeldungen und Updates des Skripts (@updateURL).",
+      "conn.X010": "Homepage, Fehlermeldungen und Updates des Skripts (@updateURL); ab 3.33.0 auch seine Mapping-Datei, die der Skript-Manager mit dem Skript lädt (@resource) – oder das Skript selbst, wenn der Manager es nicht getan hat (raw.githubusercontent.com).",
       "settings.t.texts": "Texte",
       "settings.t.connections": "ⓘ Verbindungen",
       "settings.textsHint": "Eingefügte Texte und die Credits-Texte von Bandcamp. Was die Texterkennung liest (Regeln T020 – T038), steht in",
@@ -2836,8 +2944,8 @@
       "rules.applied": "Angewandte Regeln",
       "rules.code": "Code",
       "rules.tables": "Tabellen des Registers",
-      "rules.lists": "Tabellen und Wortlisten (nur lesen)",
-      "rules.listsHint": "Womit das Register außer den Regeln liest: Details, Wörter in Texten, Daten, Datumsgruppen, „live“ in Titeln, Rollen in den Notizen. Sie lassen sich nicht abschalten; sie ändern sich mit einem Update des Skripts.",
+      "rules.lists": "Tabellen und Wortlisten",
+      "rules.listsHint": "Womit das Register außer den Regeln liest: Details, Wörter in Texten, Daten, Datumsgruppen, „live“ in Titeln, Rollen in den Notizen. Sie lassen sich nicht abschalten; ✎ ändert die Einträge von T001, T002, T003, T038, T045 und T048 (deine Änderungen), die anderen ändern sich mit einem Update des Skripts.",
       "instrAsk.ask": "Discogs sagt nur „{name}“. Weißt du, welches Instrument es ist?",
       "src.textLabel": "eingefügter Text",
       "instrAsk.askAny": "Die Quelle ({src}) sagt nur „{name}“. Weißt du, welches Instrument es ist?",
@@ -2933,9 +3041,6 @@
       "rules.creditPh": "leer: wie die Regeln es ergeben",
       "rules.save": "Regel speichern",
       "rules.new": "neue Regel",
-      "rules.export": "Regeln exportieren",
-      "rules.import": "Regeln importieren:",
-      "rules.ioHint": "Eine Datei mit deinen Regeln und den eingebauten Regeln, die du abgeschaltet hast – zum Sichern, Übertragen oder Teilen.",
       "rules.formIncomplete": "Bitte Discogs-Rolle und MusicBrainz-Typ (bzw. das Instrument) angeben.",
       "rules.testAny": "Rolle ausprobieren:",
       "rules.testHintAny": "Eine Rolle so eingeben, wie die Quelle sie schreibt, z. B. „Bass [Upright]“ oder „tenor sax“; mehrere durch Komma getrennt.",
@@ -2946,10 +3051,8 @@
       "rules.fSpellingAny": "Schreibweise",
       "rules.formIncompleteAny": "Bitte Rolle und MusicBrainz-Typ (bzw. das Instrument) angeben.",
       "rules.importBad": "Das ist keine Regeldatei dieses Scripts.",
-      "rules.imported": "{n} Regeln importiert",
       "msg.rulesApplied": "{what}: Regeln angewendet, {n} Zeilen neu zugeordnet.",
       "log.rulesChanged": "Regeln geändert ({what}): {n} Zeilen neu zugeordnet",
-      "log.rulesExported": "{n} eigene Regeln exportiert",
       "datefind.title": "Daten in Fließtext finden",
       "datefind.inNotes.one": "{n} Datum in den Notizen gefunden",
       "datefind.inNotes.other": "{n} Daten in den Notizen gefunden",
@@ -3098,7 +3201,7 @@
       "reset.title": "Alle Einstellungen auf Standard zurücksetzen",
       "reset.ask": "Alle Einstellungen auf Standard zurücksetzen?",
       "reset.what": "Sprache (Englisch), Textgröße, das Dashboard als Fenster, Position und Größe der Fenster, die Schalter der Navigation (Discogs-Status, MB-Release-Seite, Cover, Hover, Klick/Hover), die Optionen der Fußzeile, „automatisch anwenden“, das Einklappen von „Daten & Tracks“, Rollen-Codes, das Protokollfenster – und mit dem Companion Position und Einklappen des Covers auf Discogs.",
-      "reset.rules": "auch eigene Mapping-Regeln löschen ({n}) und alle Regeln wieder einschalten ({off} abgeschaltet)",
+      "reset.rules": "auch eigene Mapping-Regeln ({n}) und deine Änderungen eingebauter Regeln ({c}) löschen und alle Regeln wieder einschalten ({off} abgeschaltet)",
       "reset.pools": "auch die gespeicherten Datums-Pools, Track-Pools und Matrizen aller Releases löschen",
       "reset.never": "Die Sicherheitsliste der vom Skript angelegten Werke wird nie gelöscht.",
       "reset.do": "Zurücksetzen",
@@ -3711,7 +3814,7 @@
       "conn.X008": "Ejecutan el script; sus funciones leen páginas de Bandcamp (GM_xmlhttpRequest) y abren pestañas en segundo plano (GM_openInTab).",
       "conn.X009.name": "Perfiles web (Instagram, SoundCloud, Spotify…)",
       "conn.X009": "Los perfiles tras nombres en un texto se guardan como enlaces: se pregunta a MusicBrainz por un artista con ellos y «Crear…» los rellena; los perfiles nunca se abren.",
-      "conn.X010": "Página de inicio, incidencias y actualizaciones del script (@updateURL).",
+      "conn.X010": "Página de inicio, incidencias y actualizaciones del script (@updateURL); desde la 3.33.0 también su archivo de mapeo, que el gestor de userscripts carga con el script (@resource) – o el propio script, si el gestor no lo hizo (raw.githubusercontent.com).",
       "settings.t.texts": "Textos",
       "settings.t.connections": "ⓘ Conexiones",
       "settings.textsHint": "Textos pegados y los textos de créditos de Bandcamp. Lo que lee el reconocimiento de texto (reglas T020 – T038) está en",
@@ -4295,8 +4398,8 @@
       "rules.applied": "Reglas aplicadas",
       "rules.code": "Código",
       "rules.tables": "Tablas del registro",
-      "rules.lists": "Tablas y listas de palabras (solo lectura)",
-      "rules.listsHint": "Lo que el registro usa además de las reglas: detalles, palabras de los textos, fechas, grupos de fechas, «live» en los títulos, roles en las notas. No se pueden desactivar; cambian con una actualización del script.",
+      "rules.lists": "Tablas y listas de palabras",
+      "rules.listsHint": "Lo que el registro usa además de las reglas: detalles, palabras de los textos, fechas, grupos de fechas, «live» en los títulos, roles en las notas. No se pueden desactivar; ✎ cambia las entradas de T001, T002, T003, T038, T045 y T048 (tus cambios), las demás cambian con una actualización del script.",
       "instrAsk.ask": "Discogs solo dice «{name}». ¿Sabes qué instrumento es?",
       "src.textLabel": "texto pegado",
       "instrAsk.askAny": "La fuente ({src}) solo dice «{name}». ¿Sabes qué instrumento es?",
@@ -4392,9 +4495,6 @@
       "rules.creditPh": "vacío: como resulten las reglas",
       "rules.save": "Guardar regla",
       "rules.new": "nueva regla",
-      "rules.export": "Exportar reglas",
-      "rules.import": "Importar reglas:",
-      "rules.ioHint": "Un archivo con tus reglas y las integradas que desactivaste – para guardarlas, llevarlas a otro navegador o compartirlas.",
       "rules.formIncomplete": "Indica el rol de Discogs y el tipo de MusicBrainz (o el instrumento).",
       "rules.testAny": "Probar un rol:",
       "rules.testHintAny": "Escribe un rol como lo escribe la fuente, p. ej. «Bass [Upright]» o «tenor sax»; varios separados por comas.",
@@ -4405,10 +4505,8 @@
       "rules.fSpellingAny": "Grafía",
       "rules.formIncompleteAny": "Indica el rol y el tipo de MusicBrainz (o el instrumento).",
       "rules.importBad": "Esto no es un archivo de reglas de este script.",
-      "rules.imported": "{n} reglas importadas",
       "msg.rulesApplied": "{what}: reglas aplicadas, {n} filas asignadas de nuevo.",
       "log.rulesChanged": "Reglas cambiadas ({what}): {n} filas asignadas de nuevo",
-      "log.rulesExported": "{n} reglas propias exportadas",
       "datefind.title": "Buscar fechas en texto libre",
       "datefind.inNotes.one": "{n} fecha encontrada en las notas",
       "datefind.inNotes.other": "{n} fechas encontradas en las notas",
@@ -4557,7 +4655,7 @@
       "reset.title": "Restablecer todos los ajustes a sus valores por defecto",
       "reset.ask": "¿Restablecer todos los ajustes a sus valores por defecto?",
       "reset.what": "Idioma (inglés), tamaño del texto, el panel como ventana, posición y tamaño de las ventanas, los interruptores de la navegación (estado en Discogs, página de la publicación en MB, portada, hover, clic/hover), las opciones del pie, «aplicar automáticamente», el plegado de «Fechas y pistas», códigos de función, la ventana del registro – y, con el complemento, posición y plegado de la portada en Discogs.",
-      "reset.rules": "borrar también las reglas propias ({n}) y volver a activar todas las reglas ({off} desactivadas)",
+      "reset.rules": "borrar también las reglas propias ({n}) y tus cambios de reglas integradas ({c}) y volver a activar todas las reglas ({off} desactivadas)",
       "reset.pools": "borrar también las fechas guardadas, los pools de pistas y las matrices de todas las publicaciones",
       "reset.never": "La lista de seguridad de obras creadas por el script nunca se borra.",
       "reset.do": "Restablecer",
@@ -5170,7 +5268,7 @@
       "conn.X008": "Exécutent le script ; leurs fonctions lisent les pages Bandcamp (GM_xmlhttpRequest) et ouvrent des onglets en arrière-plan (GM_openInTab).",
       "conn.X009.name": "Profils web (Instagram, SoundCloud, Spotify…)",
       "conn.X009": "Les profils après des noms dans un texte sont gardés comme liens : MusicBrainz est interrogé pour un artiste qui les a, « Créer… » les remplit – les profils eux-mêmes ne sont jamais ouverts.",
-      "conn.X010": "Page d’accueil, signalements et mises à jour du script (@updateURL).",
+      "conn.X010": "Page d’accueil, signalements et mises à jour du script (@updateURL) ; depuis la 3.33.0 aussi son fichier de correspondances, que le gestionnaire de userscripts charge avec le script (@resource) – ou le script lui-même, si le gestionnaire ne l’a pas fait (raw.githubusercontent.com).",
       "settings.t.texts": "Textes",
       "settings.t.connections": "ⓘ Connexions",
       "settings.textsHint": "Textes collés et textes de crédits de Bandcamp. Ce que lit la reconnaissance du texte (règles T020 – T038) figure dans",
@@ -5754,8 +5852,8 @@
       "rules.applied": "Règles appliquées",
       "rules.code": "Code",
       "rules.tables": "Tables du registre",
-      "rules.lists": "Tables et listes de mots (lecture seule)",
-      "rules.listsHint": "Ce que le registre utilise en plus des règles : détails, mots des textes, dates, groupes de dates, « live » dans les titres, rôles dans les notes. Elles ne peuvent pas être désactivées ; elles changent avec une mise à jour du script.",
+      "rules.lists": "Tables et listes de mots",
+      "rules.listsHint": "Ce que le registre utilise en plus des règles : détails, mots des textes, dates, groupes de dates, « live » dans les titres, rôles dans les notes. Elles ne peuvent pas être désactivées ; ✎ modifie les entrées de T001, T002, T003, T038, T045 et T048 (vos modifications), les autres changent avec une mise à jour du script.",
       "instrAsk.ask": "Discogs dit seulement « {name} ». Savez-vous de quel instrument il s’agit ?",
       "src.textLabel": "texte collé",
       "instrAsk.askAny": "La source ({src}) dit seulement « {name} ». Savez-vous de quel instrument il s’agit ?",
@@ -5851,9 +5949,6 @@
       "rules.creditPh": "vide : comme le donnent les règles",
       "rules.save": "Enregistrer la règle",
       "rules.new": "nouvelle règle",
-      "rules.export": "Exporter les règles",
-      "rules.import": "Importer des règles :",
-      "rules.ioHint": "Un fichier avec vos règles et les règles intégrées désactivées – pour les garder, les transférer vers un autre navigateur ou les partager.",
       "rules.formIncomplete": "Indiquez le rôle Discogs et le type MusicBrainz (ou l’instrument).",
       "rules.testAny": "Essayer un rôle :",
       "rules.testHintAny": "Saisissez un rôle tel que la source l’écrit, p. ex. « Bass [Upright] » ou « tenor sax » ; plusieurs séparés par des virgules.",
@@ -5864,10 +5959,8 @@
       "rules.fSpellingAny": "Graphie",
       "rules.formIncompleteAny": "Indiquez le rôle et le type MusicBrainz (ou l’instrument).",
       "rules.importBad": "Ce n’est pas un fichier de règles de ce script.",
-      "rules.imported": "{n} règles importées",
       "msg.rulesApplied": "{what} : règles appliquées, {n} lignes attribuées de nouveau.",
       "log.rulesChanged": "Règles modifiées ({what}) : {n} lignes attribuées de nouveau",
-      "log.rulesExported": "{n} règles propres exportées",
       "datefind.title": "Trouver des dates dans un texte libre",
       "datefind.inNotes.one": "{n} date trouvée dans les notes",
       "datefind.inNotes.other": "{n} dates trouvées dans les notes",
@@ -6016,7 +6109,7 @@
       "reset.title": "Remettre tous les réglages par défaut",
       "reset.ask": "Remettre tous les réglages par défaut ?",
       "reset.what": "Langue (anglais), taille du texte, le tableau en fenêtre, position et taille des fenêtres, les interrupteurs de la navigation (statut Discogs, page de la parution MB, pochette, survol, clic/survol), les options du pied de page, « appliquer automatiquement », le repli de « Dates et plages », codes de rôle, la fenêtre du journal – et, avec le complément, position et repli de la pochette sur Discogs.",
-      "reset.rules": "supprimer aussi les règles personnelles ({n}) et réactiver toutes les règles ({off} désactivées)",
+      "reset.rules": "supprimer aussi les règles personnelles ({n}) et vos modifications des règles intégrées ({c}) et réactiver toutes les règles ({off} désactivées)",
       "reset.pools": "supprimer aussi les dates enregistrées, pools de plages et matrices de toutes les parutions",
       "reset.never": "La liste de sécurité des œuvres créées par le script n’est jamais supprimée.",
       "reset.do": "Réinitialiser",
@@ -6099,6 +6192,267 @@
   // The rules S… act where their feature is (the index in 2c names the place). Ids never change: own rules and
   // switched-off rules are stored by id. The adapters (section 3) read the word lists of 2d directly; whether a
   // phrase is a role or a company is asked through their context (isRole, isCompanyRole), as that needs MusicBrainz.
+  //
+  // [3.33.0] The data of the register – the role rules (also the patterns of those with code), the company roles, the
+  // questions, the tables and word lists, the quick switches – is in mb-vibecode-credits-importer-mapping.json (milestone
+  // "Mapping file", collected item E7). The code below takes each from MAP (`const X = MAP.X`); what needs code stays here.
+
+  // --- 2·. [3.33.0] The mapping file --------------------------------------------------------------------------------
+
+  const MAPPING_FILE = 'mb-vibecode-credits-importer-mapping.json';
+  const MAPPING_FORMAT = 1;
+  // the copy on GitHub (main), for when the userscript manager did not load it (@resource): fetched by the script itself
+  const MAPPING_URL = `https://raw.githubusercontent.com/proto-beep/MBvibecode/main/${MAPPING_FILE}`;
+  const MAPPING_STORE_KEY = `dci-mapping:${VERSION}`;
+  const SCRIPT_DOWNLOAD_URL = 'https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js';
+
+  /** [3.33.0] The mapping file as text is usable: its format, and the register's lists in it. */
+  function mappingOk(raw) {
+    return !!raw && raw.format === MAPPING_FORMAT && Array.isArray(raw.ROLE_RULE_DATA) && Array.isArray(raw.COMPANY_ROLES) && Array.isArray(raw.QUICK_SWITCHES);
+  }
+
+  /**
+   * [3.33.0] The mapping file at once, if it is there: in a test in Node the file next to the script; the one the userscript
+   * manager loaded with the script (@resource mapping: GM_getResourceText – Tampermonkey, Violentmonkey); else the copy the
+   * script fetched itself and kept until the next update. → { raw, from } or null.
+   */
+  function mappingNow() {
+    const parse = (text, from) => {
+      try {
+        const raw = JSON.parse(text);
+        return mappingOk(raw) ? { raw, from } : null;
+      } catch (e) {
+        return null;
+      }
+    };
+    if (IS_NODE_TEST) {
+      // eslint-disable-next-line no-undef
+      const fs = require('fs');
+      // eslint-disable-next-line no-undef
+      const file = require('path').join(__dirname, MAPPING_FILE);
+      return fs.existsSync(file) ? parse(fs.readFileSync(file, 'utf8'), 'file') : null;
+    }
+    try {
+      const text = typeof GM_getResourceText === 'function' ? GM_getResourceText('mapping') : '';
+      const got = text && parse(text, 'manager');
+      if (got) return got;
+    } catch (e) { /* no resource */ }
+    try {
+      const text = localStorage.getItem(MAPPING_STORE_KEY);
+      const got = text && parse(text, 'fetched');
+      if (got) return got;
+    } catch (e) { /* storage blocked */ }
+    return null;
+  }
+
+  /** [3.33.0] Regular expressions, sets and maps of the file back into their own kind ({"$re"}, {"$set"}, {"$map"}). */
+  function mappingRevive(v) {
+    if (Array.isArray(v)) return v.map(mappingRevive);
+    if (v && typeof v === 'object') {
+      if (typeof v.$re === 'string') return new RegExp(v.$re, v.$flags || '');
+      if (Array.isArray(v.$set)) return new Set(v.$set.map(mappingRevive));
+      if (Array.isArray(v.$map)) return new Map(v.$map.map(([k, x]) => [mappingRevive(k), mappingRevive(x)]));
+      return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, mappingRevive(x)]));
+    }
+    return v;
+  }
+
+  /**
+   * [3.33.0] Without the mapping file the script cannot read any credits (maintainer: "erst b dann a"): (b) it fetches the file
+   * itself – through the manager (Greasemonkey: GM.getResourceUrl; GM_xmlhttpRequest / GM.xmlHttpRequest from GitHub,
+   * @connect raw.githubusercontent.com), else the browser's fetch –, keeps it for this version and loads the page again; (a)
+   * if that fails, a message "Mapping file missing" with "Update script" (opens the script's address: the manager offers it
+   * again, with the file).
+   */
+  function mappingMissing() {
+    const viaManager = () => new Promise((resolve, reject) => {
+      const gm = typeof GM !== 'undefined' ? GM : null;
+      if (gm && typeof gm.getResourceUrl === 'function') {
+        gm.getResourceUrl('mapping').then((u) => fetch(u)).then((r) => r.text()).then(resolve, reject);
+      } else reject(new Error('no resource'));
+    });
+    const viaGithub = () => new Promise((resolve, reject) => {
+      const xhr = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : (typeof GM !== 'undefined' && GM.xmlHttpRequest) || null;
+      const url = `${MAPPING_URL}?v=${encodeURIComponent(VERSION)}`;
+      if (xhr) {
+        xhr({ method: 'GET', url, onload: (r) => (r.status === 200 ? resolve(r.responseText) : reject(new Error(`HTTP ${r.status}`))), onerror: () => reject(new Error('network')) });
+      } else fetch(url).then((r) => (r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`)))).then(resolve, reject);
+    });
+    const keep = (text) => {
+      const raw = JSON.parse(text);
+      if (!mappingOk(raw)) throw new Error('format');
+      localStorage.setItem(MAPPING_STORE_KEY, text);
+      // (once: should it be missing again after loading, the message instead of loading again and again)
+      if (sessionStorage.getItem('dci-mapping-reload') === VERSION) throw new Error('kept, but not read');
+      sessionStorage.setItem('dci-mapping-reload', VERSION);
+      location.reload();
+    };
+    viaManager().catch(() => viaGithub()).then(keep).catch((e) => mappingMissingMessage(e && e.message));
+  }
+
+  /** [3.33.0] The message (a) on the page: the file is missing, "Update script". */
+  function mappingMissingMessage(why) {
+    if (!document.body || document.getElementById('dci-mapping-missing')) return;
+    const box = document.createElement('div');
+    box.id = 'dci-mapping-missing';
+    box.setAttribute('role', 'alert');
+    box.style.cssText = 'position:fixed;top:12px;right:12px;z-index:100000;max-width:460px;background:#fff;border:1px solid #b3261e;border-radius:4px;'
+      + 'box-shadow:0 2px 8px rgba(40,30,80,.2);padding:8px 12px;font:13px/1.4 system-ui,sans-serif;color:#24213a';
+    const head = document.createElement('strong');
+    head.textContent = tr('mapping.missing');
+    const text = document.createElement('div');
+    text.textContent = tr('mapping.missingText', { file: MAPPING_FILE, why: why || '–' });
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dci-mapping-update';
+    btn.textContent = tr('mapping.update');
+    btn.addEventListener('click', () => window.open(SCRIPT_DOWNLOAD_URL, '_blank'));
+    box.append(head, text, btn);
+    document.body.appendChild(box);
+  }
+
+  const MAPPING = mappingNow();
+  if (!MAPPING) {
+    if (IS_NODE_TEST) throw new Error(`${MAPPING_FILE} missing`);
+    mappingMissing();
+    return;
+  }
+  const MAP = mappingRevive(MAPPING.raw);
+
+  // --- 2·. [3.33.1] Your changes of the register: three layers -------------------------------------------------------
+  // (collected item E7; maintainer: "auch direkt an der Regel") built in – the mapping file, read only (MAPPING.raw) ·
+  // your changes – per rule id in this browser (dci-mapping-changes; with your own rules U… and the switches) · effective –
+  // MAP: the file with your changes, which every rule below uses. Only data changes, never code: of a role rule its
+  // pattern, types, level, role credit, instrument; of a company rule its pattern, its types and level; of a word list
+  // or table its entries. Rules with code are only switched on or off.
+
+  const MAPPING_CHANGES_KEY = 'dci-mapping-changes';
+  const CHANGES_FORMAT = 'mb-vibecode-credits-importer-mapping-changes';
+  const CHANGES_VERSION = 2;
+  const CHANGES_FILE = `${CHANGES_FORMAT}.json`;
+  const RULE_LEVELS = ['recording', 'release', 'release_group', 'work'];
+  const ROLE_RULE_FIELDS = ['re', 'types', 'level', 'credit', 'primaryCands'];
+  const COMPANY_RULE_FIELDS = ['re', 'label', 'place', 'area', 'artist', 'level'];
+  /** The word lists and tables whose entries may be changed (words; pairs and spellings: "key = value"). */
+  const EDITABLE_LISTS = {
+    T001: { key: 'INSTRUMENT_ALIASES', shape: 'map' },
+    T002: { key: 'GENERIC_WORDS', shape: 'set' },
+    T003: { key: 'ART_TYPES', shape: 'words' },
+    T038: { key: 'TITLE_SMALL_WORDS', shape: 'set' },
+    T045: { key: 'RIGHTS_SOCIETIES', shape: 'pairs', reload: true },
+    T048: { key: 'ROLE_WORDS', shape: 'words' },
+  };
+  const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8 };
+
+  /** { rules: { id: { set: { field: value as in the file }, was: { field: built-in value then } } }, lists: { T…: { add, remove } }, base }. */
+  function readMappingChanges() {
+    try {
+      const c = JSON.parse(localStorage.getItem(MAPPING_CHANGES_KEY));
+      if (c && typeof c === 'object') return { rules: c.rules || {}, lists: c.lists || {}, base: c.base || '' };
+    } catch (e) { /* none, or storage blocked */ }
+    return { rules: {}, lists: {}, base: '' };
+  }
+  let mappingChanges = readMappingChanges();
+
+  function saveMappingChanges() {
+    try {
+      const empty = !Object.keys(mappingChanges.rules).length && !Object.keys(mappingChanges.lists).length;
+      if (empty) localStorage.removeItem(MAPPING_CHANGES_KEY);
+      else localStorage.setItem(MAPPING_CHANGES_KEY, JSON.stringify({ ...mappingChanges, base: MAPPING.raw.version || '' }));
+    } catch (e) {
+      console.warn('[Discogs-Credits] mapping changes not saved', e);
+    }
+  }
+
+  const rawRoleRule = (raw, id) => raw.ROLE_RULE_DATA.find((x) => x.id === id) || null;
+  const rawCompanyRule = (raw, id) => raw.COMPANY_ROLES.find(([, o]) => o && o.id === id) || null;
+  /** A field of a built-in rule as in the file (undefined: the rule has none). */
+  function builtinField(id, field) {
+    const r = rawRoleRule(MAPPING.raw, id);
+    if (r) return r[field];
+    const c = rawCompanyRule(MAPPING.raw, id);
+    if (!c) return undefined;
+    return field === 're' ? c[0] : c[1][field];
+  }
+  const listKey = (shape, item) => norm(shape === 'pairs' || shape === 'map' ? item[0] : item);
+  /** The entries of a list as in the file: words, or [key, value] ([key, [names]] for spellings). */
+  function rawListItems(raw, tid) {
+    const L = EDITABLE_LISTS[tid];
+    const v = raw[L.key];
+    if (L.shape === 'set') return [...v.$set];
+    if (L.shape === 'map') return Object.entries(v);
+    return [...v];
+  }
+
+  /** Your changes applied to a copy of the file's data (as in the file) → the effective register. */
+  function effectiveRaw(changes = mappingChanges) {
+    const raw = JSON.parse(JSON.stringify(MAPPING.raw));
+    for (const [id, c] of Object.entries(changes.rules || {})) {
+      const set = (c && c.set) || {};
+      const r = rawRoleRule(raw, id);
+      if (r) {
+        ROLE_RULE_FIELDS.filter((f) => f in set).forEach((f) => { if (set[f] == null) delete r[f]; else r[f] = set[f]; });
+        if ('level' in set) {
+          if (r.level === 'work') r.work = true;
+          else delete r.work;
+        }
+        continue;
+      }
+      const e = rawCompanyRule(raw, id);
+      if (e) COMPANY_RULE_FIELDS.filter((f) => f in set).forEach((f) => {
+        if (f === 're') e[0] = set.re;
+        else if (set[f] == null) delete e[1][f];
+        else e[1][f] = set[f];
+      });
+    }
+    for (const [tid, c] of Object.entries(changes.lists || {})) {
+      const L = EDITABLE_LISTS[tid];
+      if (!L || !c) continue;
+      const out = new Set((c.remove || []).map((x) => listKey(L.shape === 'pairs' || L.shape === 'map' ? 'words' : L.shape, x)));
+      let items = rawListItems(raw, tid).filter((x) => !out.has(listKey(L.shape, x)));
+      for (const a of c.add || []) {
+        const k = listKey(L.shape, a);
+        items = items.filter((x) => listKey(L.shape, x) !== k);
+        items.push(a);
+      }
+      if (L.shape === 'set') raw[L.key] = { $set: items };
+      else if (L.shape === 'map') raw[L.key] = Object.fromEntries(items);
+      else raw[L.key] = items;
+    }
+    return raw;
+  }
+
+  /**
+   * The effective register into MAP, in place (the code holds MAP's objects): role rules and company rules field by field,
+   * the lists entry by entry. At the start, and after every change (T045 builds a pattern at the start: after a reload).
+   */
+  function applyMappingChanges() {
+    const eff = mappingRevive(effectiveRaw());
+    const refill = (obj, from) => {
+      Object.keys(obj).forEach((k) => { delete obj[k]; });
+      Object.assign(obj, from);
+    };
+    MAP.ROLE_RULE_DATA.forEach((r) => {
+      const e = eff.ROLE_RULE_DATA.find((x) => x.id === r.id);
+      if (e) refill(r, e);
+    });
+    MAP.COMPANY_ROLES.forEach((pair) => {
+      const e = eff.COMPANY_ROLES.find(([, o]) => o.id === pair[1].id);
+      if (!e) return;
+      pair[0] = e[0];
+      refill(pair[1], e[1]);
+    });
+    for (const L of Object.values(EDITABLE_LISTS)) {
+      const now = MAP[L.key];
+      const to = eff[L.key];
+      if (now instanceof Set) {
+        now.clear();
+        to.forEach((x) => now.add(x));
+      } else if (Array.isArray(now)) now.splice(0, now.length, ...to);
+      else refill(now, to);
+    }
+  }
+  if (Object.keys(mappingChanges.rules).length || Object.keys(mappingChanges.lists).length) applyMappingChanges();
 
 
   // --- 2a. Role notation -----------------------------------------------------------------------------------------------
@@ -6227,7 +6581,7 @@
    * [3.31.7] Rules that are off until switched on (D023, and the quick switches that are off by default): their being on is
    * stored as "+<id>" in the same list (collected item 110: "standardeinstellung = aus").
    */
-  const DEFAULT_OFF_RULES = new Set(['D023', 'S046']);
+  const DEFAULT_OFF_RULES = MAP.DEFAULT_OFF_RULES;
 
   function ruleOn(id) {
     return DEFAULT_OFF_RULES.has(id) ? rulesOff().has(`+${id}`) : !rulesOff().has(id);
@@ -6248,7 +6602,7 @@
     return [...own, ...(INSTRUMENT_ALIASES[key] || [])];
   }
 
-  const CHECKBOX_DETAILS = ['additional', 'guest', 'solo', 'uncredited'];
+  const CHECKBOX_DETAILS = MAP.CHECKBOX_DETAILS;
 
   /** The first own role rule that fits the Discogs role (b) and its details (ms). */
   function ownRuleResult(b, ms, consumed, out) {
@@ -6277,16 +6631,7 @@
    * Wording rules: the role credit for a Discogs role (with its details, in either order), where the
    * general rules would not find it. The phrase is the role and its details in lower case.
    */
-  const WORDING_RULES = [
-    { id: 'W001', where: 'wordingRuleFor, roleCreditFor', note: 'Upright bass is a double bass; the Discogs word stays as role credit', phrases: ['upright bass', 'bass upright'], credit: 'upright bass' },
-    { id: 'W002', where: 'wordingRuleFor, roleCreditFor', note: 'Contrabass is a double bass; the Discogs word stays as role credit', phrases: ['contrabass', 'bass contrabass', 'contrabass bass'], credit: 'contrabass' },
-    { id: 'W003', where: 'wordingRuleFor, roleCreditFor', note: 'Kontrabass (German) is always a double bass – a translation, MusicBrainz\'s own name, no role credit (3.22.3; 3.22.2: "contrabass", before: "Kontrabass"). The English "Contrabass" keeps "contrabass" (W002)', phrases: ['kontrabass', 'bass kontrabass', 'kontrabass bass'], credit: '' },
-    { id: 'W008', where: 'wordingRuleFor, roleCreditFor', note: 'Violoncello is a cello; the word stays as role credit "violoncello" (3.22.2; a fixed pair like W002, W003 – no rule for other words)', phrases: ['violoncello', 'violoncelli', 'cello violoncello', 'violoncello cello'], credit: 'violoncello' },
-    { id: 'W004', where: 'wordingRuleFor, roleCreditFor', note: '"Horn [French]" and "French Horn" are the MusicBrainz instrument French horn, without role credit', phrases: ['horn french', 'french horn'], credit: '' },
-    { id: 'W005', where: 'wordingRuleFor, roleCreditFor', note: '"Flugel Horn" (also Flügelhorn) is the MusicBrainz instrument flugelhorn, without role credit', phrases: ['flugel horn', 'flugelhorn', 'flügelhorn', 'flugel-horn'], credit: '' },
-    { id: 'W006', where: 'wordingRuleFor, roleCreditFor', note: '"Mix", "Mixed By", "Engineer [Mix]" … are the MusicBrainz relationship mix, without role credit', phrases: ['mix', 'mixing', 'mixed by', 'mixed-by', 'mix engineer', 'mixing engineer', 'engineer mix', 'engineer mixing', 'engineered by mix', 'mixdown', 'engineer mixdown'], credit: '' },
-    { id: 'W007', where: 'wordingRuleFor, roleCreditFor', note: '"Recording", "Recorded By", "Engineer [Recording]", "Live Recording By" … are the MusicBrainz relationship recording (recording engineer), without role credit', phrases: ['recording', 'recorded by', 'recorded-by', 'recording engineer', 'engineer recording', 'engineered by recording', 'recording by', 'tracking', 'tracked by', 'engineer tracking', 'live recording by', 'live recording', 'live recorded by', 'recorded live by', 'live recording engineer'], credit: '' },
-  ];
+  const WORDING_RULES = MAP.WORDING_RULES;
 
   /**
    * Rules with their own handling elsewhere in the script, listed here so that every rule can be found
@@ -6357,125 +6702,26 @@
    * Instrument questions (Q001 …): Discogs names only the instrument family. The row keeps that word as
    * role credit and asks which instrument it is; one click sets it (the role credit stays).
    */
-  const QUESTION_RULES = [
-    { id: 'Q001', base: 'bass', credit: 'bass', options: ['electric bass guitar', 'double bass', 'acoustic bass guitar'], note: 'Plain "Bass": which bass?' },
-    { id: 'Q002', base: 'guitar', credit: 'guitar', options: ['electric guitar', 'acoustic guitar'], note: 'Plain "Guitar": which guitar?' },
-    { id: 'Q004', base: 'bass guitar', credit: 'bass guitar', options: ['bass guitar', 'electric bass guitar', 'acoustic bass guitar'], note: 'Plain "Bass Guitar": which bass guitar? Without a choice it stays bass guitar' },
-  ];
+  const QUESTION_RULES = MAP.QUESTION_RULES;
 
   /**
    * Questions for the relationship type: the row has none until one is chosen ("please choose"), so nothing is
    * staged by assumption. Each option is a type with its level and, for "misc", the task.
    */
-  const TYPE_QUESTIONS = [
-    { id: 'Q003', base: 'directed by', rule: 'R097', note: '"Directed By": conductor, chorus master, creative direction or miscellaneous support (task "director")? Nothing is assumed',
-      options: [
-        { type: 'conductor', level: 'recording' },
-        { type: 'chorus master', level: 'recording' },
-        { type: 'creative direction', level: 'release' },
-        { type: 'misc', level: 'recording', task: 'director', label: 'miscellaneous support (task “director”)' },
-      ] },
-    { id: 'Q006', base: 'alto', rule: 'R102', ask: 'typeAsk.askAlto', note: '"Alto" alone (3.21.2): the viola (Spanish, French), an alto saxophone or an alto voice? Nothing is assumed, no role credit',
-      options: [
-        { type: 'instrument', level: 'recording', instrument: 'viola', label: 'viola' },
-        { type: 'instrument', level: 'recording', instrument: 'alto saxophone', label: 'alto saxophone' },
-        { type: 'vocal', level: 'recording', instrument: 'alto vocals', label: 'alto vocals' },
-      ] },
-    { id: 'Q007', base: 'translated by', rule: 'R004', flag: 'askTranslation', ask: 'typeAsk.askTranslation', note: '"Translated By", "Translation", "Translator" in Bandcamp credits (3.21.4): mostly the liner notes (suggested), sometimes the lyrics – nothing is assumed; elsewhere it stays translator (R004)',
-      options: [
-        { type: 'liner notes', level: 'release', label: 'liner notes', suggested: true, task: 'translation' },
-        { type: 'translator', level: 'work', label: 'translator (lyrics)' },
-      ] },
-    // [3.30.6] collected item 85 (maintainer: "bitte mit notizabfrage ob performer oder effects mit role "sounds" wie bei anderen
-    // instrumenten wie bass schon üblich", "die zwei reichen erst einmal"): unlike the others the row has a type before the answer
-    { id: 'Q008', base: 'sounds', rule: 'R104', ask: 'typeAsk.askSounds', pending: 'typeAsk.pendingSounds', note: '"Sounds" (3.30.6): performer (without role credit) or the instrument effects credited "sounds"? Until answered it stays performer',
-      options: [
-        { type: 'performer', level: 'recording', label: 'performer' },
-        { type: 'instrument', level: 'recording', instrument: 'effects', label: 'effects (credited “sounds”)' },
-      ] },
-    // [3.31.4] collected item 104 (maintainer: "ja das nachfragen kann man machen"): "Poems" alone is asked like "Text"
-    { id: 'Q009', base: 'poems / poetry / poem', rule: 'R107', unless: 'poemLevels', ask: 'typeAsk.askPoems', note: '"Poems", "Poetry", "Poem" alone (3.31.4): the words of the works (lyricist), poems printed in the booklet (liner notes) or poems read out (spoken vocals)? Nothing is assumed; each gets the word in lower case as role credit ("poems", "poetry", "poem")',
-      options: [
-        { type: 'lyricist', level: 'work', credit: true, label: 'lyricist (the words of the works)' },
-        { type: 'liner notes', level: 'release', credit: true, label: 'liner notes (poems in the booklet)' },
-        { type: 'vocal', level: 'recording', instrument: 'spoken vocals', credit: true, label: 'spoken vocals (read out)' },
-      ] },
-    // [3.32.7] collected item 104b (maintainer: "kannst du bei all den poetry credits auch es ermöglichen durchzuschalten? also
-    // works (lyrics) -> recording (vocals) -> release (auswahl lyrics/vocals)?", "ja liner notes ist auch eine möglichkeit")
-    { id: 'Q010', base: 'poems by / poetry / recitation …', rules: ['R105', 'R106', 'R107'], flag: 'poemLevels', level: 'release', ask: 'typeAsk.askPoemsRelease', note: 'A credit of poems switched to the release level (3.32.7; R105, R106, R107 – their type follows the level: works lyricist, recordings spoken vocals): the words of the works (lyricist), poems read out (spoken vocals) or poems printed in the booklet (liner notes)? Each keeps the role credit ("poems", "poetry", "recitation" …)',
-      options: [
-        { type: 'lyricist', level: 'release', credit: true, label: 'lyricist (the words)' },
-        { type: 'vocal', level: 'release', instrument: 'spoken vocals', credit: true, label: 'spoken vocals (read out)' },
-        { type: 'liner notes', level: 'release', credit: true, label: 'liner notes (poems in the booklet)' },
-      ] },
-    { id: 'Q005', base: 'text', rule: 'R100', ask: 'typeAsk.askText', note: '"Text" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German "Text" is the lyrics)? Nothing is assumed',
-      options: [
-        { type: 'liner notes', level: 'release' },
-        { type: 'lyricist', level: 'work' },
-      ] },
-  ];
+  const TYPE_QUESTIONS = MAP.TYPE_QUESTIONS;
 
   /**
    * Discogs company roles → MB relationship types, per MB entity type. Discogs lists studios,
    * pressing plants and rights holders all as "labels"; in MB they are labels or places.
    */
   // [T004] "Companies, etc." from Discogs (rules C001 …)
-  const COMPANY_ROLES = [
-    [/^phonographic copyright/, { id: 'C001', label: ['phonographic copyright'], artist: ['phonographic copyright'], level: 'recording' }],
-    [/^copyright/, { id: 'C002', label: ['copyright'], artist: ['copyright'], level: 'release' }],
-    [/^licensed from/, { id: 'C003', label: ['licensor'], artist: ['licensor'], level: 'release' }],
-    [/^licensed (to|through)/, { id: 'C004', label: ['licensee'], artist: ['licensee'], level: 'release' }],
-    [/^marketed by/, { id: 'C005', label: ['marketed'], level: 'release' }],
-    [/^distributed (by|through)/, { id: 'C006', label: ['distributed'], level: 'release' }],
-    [/^exported by/, { id: 'C007', label: ['exported'], level: 'release' }],
-    [/^promoted by/, { id: 'C008', label: ['promoted'], level: 'release' }],
-    [/^manufactured for/, { id: 'C009', label: ['manufactured for'], level: 'release' }],
-    [/^(manufactured|made) (by|at)/, { id: 'C010', label: ['manufactured'], place: ['manufactured at'], level: 'release' }],
-    [/^printed by/, { id: 'C011', label: ['printed'], level: 'release' }],
-    [/^pressed (by|at)/, { id: 'C012', label: ['pressed'], place: ['pressed at'], level: 'release' }],
-    [/^glass mastered (by|at)/, { id: 'C013', label: ['glass mastered'], place: ['glass mastered at'], level: 'release' }],
-    [/^lacquer cut (by|at)/, { id: 'C014', place: ['lacquer cut at'], artist: ['lacquer cut'], level: 'release' }],
-    [/^mastered (by|at)/, { id: 'C015', label: ['mastering'], place: ['mastered at'], artist: ['mastering'], level: 'release' }],
-    [/^remastered (by|at)/, { id: 'C016', label: ['mastering'], place: ['mastered at'], artist: ['mastering'], level: 'release', flags: ['re'] }],
-    [/^mastered for/, { id: 'C017', label: ['mastered for'], level: 'release' }],
-    [/^remixed at/, { id: 'C018', place: ['remixed at'], level: 'recording' }],
-    [/^mixed at/, { id: 'C019', place: ['mixed at'], level: 'recording' }],
-    [/^mixed by/, { id: 'C020', label: ['mix'], artist: ['mix'], level: 'release' }],
-    [/^recorded by/, { id: 'C021', artist: ['recording'], level: 'recording' }],
-    [/^mixed for/, { id: 'C022', label: ['mixed for'], level: 'release' }],
-    [/^(recorded|overdubbed) at/, { id: 'C023', place: ['recorded at'], level: 'recording' }],
-    [/^engineered at/, { id: 'C024', place: ['engineered at'], level: 'recording' }],
-    [/^produced at/, { id: 'C025', place: ['produced at'], level: 'recording' }],
-    [/^produced for/, { id: 'C026', label: ['produced for'], level: 'release' }],
-    // A person credited as producer in "Companies, etc." (labels have no producer relationship in MusicBrainz)
-    [/^(produced by|producer)$/, { id: 'C036', artist: ['producer'], label: ['misc'], level: 'recording', prefer: 'artist' }],
-    [/^edited at/, { id: 'C027', place: ['edited at'], level: 'recording' }],
-    [/^edited for/, { id: 'C028', label: ['edited for'], level: 'release' }],
-    [/^arranged for/, { id: 'C029', label: ['arranged for'], level: 'release' }],
-    [/^transferred at/, { id: 'C030', place: ['transferred at'], level: 'release' }],
-    // [3.31.5] collected item 112 (maintainer: "bei publishing relationships von Labeln muss auch angeboten werden, dass sie auf
-    // release oder work ebene stattfinden können"): on the works by default; on the release a label is "published"
-    [/^published by/, { id: 'C031', label: ['publishing', 'published'], artist: ['publishing'], level: 'work' }],
-    [/^commissioned by/, { id: 'C037', label: ['commissioned'], artist: ['commissioned'], level: 'work' }],
-    [/^rights society/, { id: 'C032', label: ['rights society'], level: 'release' }],
-    [/^designed (by|at)/, { id: 'C033', label: ['design'], artist: ['design'], level: 'release' }],
-    [/^artwork by/, { id: 'C034', label: ['artwork'], artist: ['artwork'], level: 'release' }],
-    [/^photography by/, { id: 'C035', label: ['photography'], artist: ['photography'], level: 'release' }],
-    // [3.22.0] The area where it was done ("Recorded in Xixon, Asturies, Spain", "Recorded by X in Berlin"; T037, S028)
-    [/^(recorded|overdubbed) in/, { id: 'C038', area: ['recorded in'], level: 'recording' }],
-    [/^mixed in/, { id: 'C039', area: ['mixed in'], level: 'recording' }],
-    [/^mastered in/, { id: 'C040', area: ['mastered in'], level: 'release' }],
-    // [3.22.2] more areas (collected item 48)
-    [/^produced in/, { id: 'C041', area: ['produced in'], level: 'recording' }],
-    [/^remixed in/, { id: 'C042', area: ['remixed in'], level: 'recording' }],
-    [/^engineered in/, { id: 'C043', area: ['engineered in'], level: 'recording' }],
-  ];
+  const COMPANY_ROLES = MAP.COMPANY_ROLES;
 
   // [S037] (3.28.4) parts of the package whose design keeps its whole name as role credit ("cover design")
-  const DESIGN_PARTS = ['cover', 'sleeve', 'booklet', 'package', 'packaging', 'digipak', 'digipack', 'inlay', 'insert'];
+  const DESIGN_PARTS = MAP.DESIGN_PARTS;
 
   /** The MusicBrainz types of the design rules (R062, R064–R067). */
-  const DESIGN_TYPES = ['design', 'design/illustration', 'graphic design'];
+  const DESIGN_TYPES = MAP.DESIGN_TYPES;
 
   /**
    * [R001 …] Role rules, tried in this order; the first one whose test passes and that returns a result wins.
@@ -6486,118 +6732,7 @@
    * primaryCands (the instrument or vocal), notes. Special rules, and a few simple ones, need code: it is in
    * roleRules, under their id. A rule without code is tested with its pattern and gives its types and level.
    */
-  const ROLE_RULE_DATA = [
-    { id: 'R001', kind: 'special', note: "", re: null, types: [], level: 'recording' },
-    { id: 'R002', kind: 'simple', note: "", re: /^(written-by|written by|writer|songwriter|songwriters)$/, types: ['writer', 'composer'], level: 'work', work: true },
-    { id: 'R098', kind: 'simple', note: "Music and lyrics (words) in one credit, or \"All Songs By\": writer; new works of these tracks get the work type \"Song\" (S020)", re: /^(music and lyrics by|music & lyrics by|music and lyrics|music & lyrics|lyrics and music by|lyrics & music by|lyrics and music|lyrics & music|words and music by|words & music by|words and music|words & music|music and words by|music & words by|all songs by|songs by|all songs written by|songs written by)$/, types: ['writer'], level: 'work', work: true, notes: ['musicLyrics'] },
-    { id: 'R003', kind: 'simple', note: "", re: /^(composed by|composer|composition by|music by|music|all music by|all music|score|score by|soundtrack)$/, types: ['composer', 'writer'], level: 'work', work: true },
-    { id: 'R004', kind: 'simple', note: "", re: /^(translated by|translation|translator|translations)$/, types: ['translator'], level: 'work', work: true },
-    { id: 'R005', kind: 'simple', note: "The poet's words (\"Poems By\", \"Poetry By\", \"Poem By\") are R105 since 3.31.4", re: /^(author|story by|screenwriter|script by|created by)$/, types: ['writer'], level: 'work', work: true, credit: true },
-    // [3.31.4] collected item 104 (maintainer: "bitte Dichter immer zu lyricist"): the poet is the lyricist of the works
-    { id: 'R105', kind: 'special', note: "\"Poems By\", \"Poetry By\", \"Poem By\" (3.31.4): the poet is the lyricist of the works, with the role credit \"poems\", \"poetry\" or \"poem\" (lower case)", re: /^(poems|poetry|poem)( written)? by$/, types: ['lyricist', 'writer'], level: 'work', work: true },
-    { id: 'R006', kind: 'simple', note: "", re: /^(lyrics by|lyricist|words by|lyrics)$/, types: ['lyricist', 'writer'], level: 'work', work: true },
-    { id: 'R007', kind: 'simple', note: "", re: /^(libretto by|librettist)$/, types: ['librettist', 'lyricist'], level: 'work', work: true },
-    { id: 'R008', kind: 'simple', note: "Vocals", re: /^(lead vocals?|lead vocalist)$/, types: ['vocal'], level: 'recording', primaryCands: ['lead vocals'] },
-    { id: 'R009', kind: 'special', note: "", re: null, types: ['vocal'], level: 'recording' },
-    { id: 'R010', kind: 'simple', note: "", re: /^solo vocals?$/, types: ['vocal'], level: 'recording', flags: ['solo'] },
-    { id: 'R011', kind: 'special', note: "", re: /^(scat|yodeling|yodelling|humming|whistling|human beatbox|beatbox|vocal percussion|vocalese|toasting|overtone voice|joik|eefing|kakegoe|satsuma|caller|cantor|coro)$/, types: ['vocal'], level: 'recording' },
-    { id: 'R012', kind: 'special', note: "", re: /^(announcer|commentator|interviewee|interviewer|dialog|dialogue|read by|presenter|hosted by|host|compere|compère)$/, types: ['vocal'], level: 'recording' },
-    { id: 'R013', kind: 'simple', note: "", re: /^(backing vocals?|background vocals?|harmony vocals?|chorus|backing vocalist)$/, types: ['vocal'], level: 'recording', primaryCands: ['background vocals'] },
-    { id: 'R014', kind: 'simple', note: "", re: /^(choir|choir vocals?)$/, types: ['vocal'], level: 'recording', primaryCands: ['choir vocals'] },
-    { id: 'R015', kind: 'simple', note: "", re: /^(voice|narrator|spoken word|speech|spoken vocals?|voice actor)$/, types: ['vocal'], level: 'recording', primaryCands: ['spoken vocals'] },
-    // [3.31.4] collected item 104: poems read out are spoken vocals; "Poems" alone is asked (R107, Q009)
-    { id: 'R106', kind: 'special', note: "Poems read out (3.31.4): \"Recitation\", \"Recited By\", \"Poetry Reading\", \"Poems Read By\", \"Poetry [Read By]\", \"Poems [Recited By]\" → spoken vocals on the recordings, with the role credit \"poetry\", \"poems\", \"poem\" or \"recitation\" (lower case)", re: /^(recitation|recitations|recited by|reciter|poetry reading|poetry readings|(poems|poetry|poem) (read|recited) by)$/, types: ['vocal'], level: 'recording', primaryCands: ['spoken vocals'] },
-    { id: 'R107', kind: 'special', note: "\"Poems\", \"Poetry\", \"Poem\" alone (3.31.4): the words of the works, poems printed in the booklet or poems read out? No type is assumed, the dashboard asks (Q009)", re: /^(poems|poetry|poem)$/, types: [], level: 'release' },
-    { id: 'R016', kind: 'simple', note: "", re: /^guest$/, types: ['performer'], level: 'recording', flags: ['guest'] },
-    { id: 'R017', kind: 'simple', note: "", re: /^(rap|rapper|mc|rapping)$/, types: ['vocal'], level: 'recording', primaryCands: ['rap', 'spoken vocals'] },
-    { id: 'R018', kind: 'special', note: "", re: /^(vocals?|vocalist|singer)$/, types: ['vocal'], level: 'recording' },
-    { id: 'R019', kind: 'special', note: "", re: /^featuring$/, types: ['performer', 'vocal'], level: 'recording' },
-    { id: 'R020', kind: 'simple', note: "Production", re: /^(co-producer|co-produced by|coproducer|coproduced by|co-produced)$/, types: ['producer'], level: 'recording', flags: ['co'] },
-    { id: 'R021', kind: 'simple', note: "Only producer and co-producer belong on recordings by default; the other producer roles on the release.", re: /^(executive-producer|executive producer|executive-produced by|executive produced by)$/, types: ['producer'], level: 'release', flags: ['executive'] },
-    { id: 'R022', kind: 'simple', note: "", re: /^associate[- ]producer$/, types: ['producer'], level: 'release', flags: ['associate'] },
-    { id: 'R023', kind: 'simple', note: "", re: /^assistant[- ]producer$/, types: ['producer'], level: 'release', flags: ['assistant'] },
-    { id: 'R024', kind: 'simple', note: "", re: /^(additional[- ]producer|additional production)$/, types: ['producer'], level: 'release', flags: ['additional'] },
-    { id: 'R025', kind: 'special', note: "", re: /^(compilation producer|reissue producer|recording supervisor|supervised by|supervisor|post production|post-production)$/, types: ['producer'], level: 'recording' },
-    { id: 'R026', kind: 'special', note: "\"Produced By\" (also \"Produced-By\", \"Produced\") is always producer", re: /^(producer|produced by|produced-by|produced|record producer)$/, types: ['producer'], level: 'recording' },
-    { id: 'R027', kind: 'simple', note: "", re: /^(overdubbed by|overdubs by)$/, types: ['recording', 'engineer'], level: 'recording', eng: true, credit: true },
-    { id: 'R028', kind: 'simple', note: "", re: /^(tape op|tape operator|restoration|restored by|daw|technical assistance)$/, types: ['engineer'], level: 'recording', eng: true, credit: true },
-    { id: 'R029', kind: 'simple', note: "", re: /^(transferred by|transfer|audio transfer|cd transfer|digital transfer)$/, types: ['transfer', 'engineer'], level: 'release', eng: true },
-    { id: 'R030', kind: 'simple', note: "", re: /^(direct metal mastering by|dmm cut by|dmm)$/, types: ['mastering'], level: 'release', eng: true, credit: true },
-    { id: 'R031', kind: 'special', note: "\"Live Recording By\" (also \"Live Recording\", \"Recorded Live By\" …) is recording too, without role credit; it is a hint for \"live\" (S021)", re: /^(recorded by|recording|recording engineer|tracking|tracked by|tracking by|live recording by|live recording|live recorded by|recorded live by|live recording engineer)$/, types: ['recording', 'engineer'], level: 'recording' },
-    { id: 'R032', kind: 'simple', note: "", re: /^(dj mix|dj-mix|dj)$/, types: ['mix-dj'], level: 'release' },
-    { id: 'R033', kind: 'special', note: "", re: /^(mixed by|mixing|mix engineer|mixing engineer|mix)$/, types: ['mix'], level: 'recording' },
-    { id: 'R034', kind: 'special', note: "", re: /^(mastered by|mastering|mastering engineer)$/, types: ['mastering'], level: 'release' },
-    { id: 'R035', kind: 'simple', note: "", re: /^(pre-?mastered by|pre-?mastering|pre-?master)$/, types: ['mastering'], level: 'release', flags: ['pre'] },
-    { id: 'R036', kind: 'special', note: "", re: /^(remastered by|remastering|remaster)$/, types: ['mastering'], level: 'release' },
-    { id: 'R037', kind: 'simple', note: "", re: /^(lathe cut by|lathe cut)$/, types: ['lacquer cut'], level: 'release', credit: true },
-    { id: 'R038', kind: 'special', note: "", re: /^(lacquer cut by|lacquer cut|cut by|cutting engineer|lacquer cutting)$/, types: ['lacquer cut'], level: 'release' },
-    { id: 'R039', kind: 'special', note: "", re: /^(sound engineer|sound)$/, types: ['sound', 'engineer'], level: 'recording' },
-    { id: 'R040', kind: 'simple', note: "", re: /^(sound designer|sound design|sound effects|sfx)$/, types: ['sound effects', 'engineer'], level: 'release' },
-    { id: 'R041', kind: 'special', note: "", re: /^balance engineer$/, types: ['balance', 'engineer'], level: 'recording' },
-    { id: 'R042', kind: 'special', note: "", re: /^audio engineer$/, types: ['audio', 'engineer'], level: 'recording' },
-    { id: 'R043', kind: 'special', note: "", re: null, types: ['engineer'], level: 'recording' },
-    { id: 'R044', kind: 'simple', note: "", re: /^(remix|remixed by|remixer|remix by)$/, types: ['remixer'], level: 'recording' },
-    { id: 'R045', kind: 'simple', note: "", re: /^(programmed by|programming|programmer|drum programming|programmed|sequenced by)$/, types: ['programming'], level: 'recording' },
-    { id: 'R046', kind: 'special', note: "", re: /^(editor|edited by|editing|edited)$/, types: ['miscellaneous support'], level: 'release' },
-    { id: 'R047', kind: 'simple', note: "", re: /^(edited by|editing|edited)$/, types: ['editor'], level: 'recording' },
-    { id: 'R048', kind: 'simple', note: "", re: /^(compiled by|compiler|compilation by|selected by)$/, types: ['compiler'], level: 'release' },
-    { id: 'R049', kind: 'simple', note: "", re: /^(collected by|curated by)$/, types: ['compiler'], level: 'release', credit: true },
-    { id: 'R050', kind: 'simple', note: "", re: /^beats$/, types: ['programming', 'producer'], level: 'recording', credit: true },
-    { id: 'R051', kind: 'special', note: "Arrangement, conducting, ensembles", re: /^(arranged by|arranger|arrangement|arrangements|arrangements by)$/, types: ['vocal arranger'], level: 'recording' },
-    { id: 'R052', kind: 'simple', note: "", re: /^(adapted by|transcription by|transcribed by)$/, types: ['arranger'], level: 'recording', credit: true },
-    { id: 'R053', kind: 'simple', note: "", re: /^(instrumentation by)$/, types: ['orchestrator', 'arranger'], level: 'recording', credit: true },
-    { id: 'R054', kind: 'simple', note: "", re: /^(orchestrated by|orchestration|orchestrator)$/, types: ['orchestrator'], level: 'recording' },
-    { id: 'R055', kind: 'simple', note: "", re: /^(conductor|conducted by)$/, types: ['conductor'], level: 'recording' },
-    { id: 'R056', kind: 'simple', note: "", re: /^(music director|musical director)$/, types: ['conductor'], level: 'recording', credit: true },
-    { id: 'R097', kind: 'special', note: "\"Directed By\" is not always conducting: no type is assumed, the dashboard asks (Q003)", re: /^directed by$/, types: [], level: 'recording' },
-    { id: 'R102', kind: 'special', note: "\"Alto\" alone: in Spanish and French the viola, in English an alto saxophone or an alto voice – nothing is assumed, the dashboard asks (Q006); no role credit (3.21.2)", re: /^alto$/, types: [], level: 'recording' },
-    { id: 'R100', kind: 'special', note: "\"Text\" alone: liner notes (an essay in the booklet) or the lyrics (German \"Text\")? No type is assumed, the dashboard asks (Q005, 3.21.0)", re: /^text$/, types: [], level: 'release' },
-    { id: 'R057', kind: 'simple', note: "", re: /^(chorus master|choirmaster|choir master|chorus director|choir director)$/, types: ['chorus master'], level: 'recording' },
-    { id: 'R058', kind: 'simple', note: "", re: /^(concertmaster|concertmistress)$/, types: ['concertmaster'], level: 'recording' },
-    { id: 'R059', kind: 'simple', note: "", re: /^(orchestra|performing orchestra)$/, types: ['performing orchestra', 'orchestra'], level: 'recording' },
-    { id: 'R060', kind: 'simple', note: "", re: /^(performer|musician|performed by|played by|band|ensemble|accompanied by|backing band)$/, types: ['performer'], level: 'recording' },
-    { id: 'R061', kind: 'simple', note: "", re: /^(instruments|multi-instrumentalist|all instruments|instrumentation)$/, types: ['instrument'], level: 'recording' },
-    // [S004] design rule
-    { id: 'R062', special: 'S004', kind: 'special', note: "", re: null, types: ['design', 'design/illustration', 'graphic design'], level: 'release' },
-    { id: 'R063', kind: 'special', note: "", re: /^(cover|cover by)$/, types: ['photography'], level: 'release' },
-    { id: 'R064', kind: 'simple', note: "", re: /^sleeve$/, types: DESIGN_TYPES, level: 'release', credit: 'sleeve' },
-    { id: 'R065', kind: 'simple', note: "", re: /^(lithography|lithography by|litho|litho by|lithographer)$/, types: DESIGN_TYPES, level: 'release' },
-    { id: 'R066', kind: 'simple', note: "", re: /^cover concept$/, types: DESIGN_TYPES, level: 'release', credit: 'cover concept' },
-    { id: 'R067', kind: 'simple', note: "", re: /^cover design$/, types: DESIGN_TYPES, level: 'release', credit: 'cover design' },
-    { id: 'R068', kind: 'simple', note: "", re: /^cover photo(s|graphy)?$/, types: ['photography'], level: 'release', credit: 'cover photo' },
-    { id: 'R069', kind: 'simple', note: "", re: /^cover (painting|illustration|drawing)$/, types: ['illustration', 'design/illustration'], level: 'release' },
-    { id: 'R070', kind: 'simple', note: "", re: /^cover art$/, types: ['artwork', 'design/illustration'], level: 'release', credit: 'cover art' },
-    { id: 'R103', kind: 'simple', note: "\"Cover Artwork\" (3.29.0)", re: /^cover artwork( by)?$/, types: ['artwork', 'design/illustration'], level: 'release', credit: 'cover artwork' },
-    { id: 'R104', kind: 'simple', note: "\"Sounds\" (3.30.6): performer – or the instrument effects credited \"sounds\"; the dashboard asks (Q008), performer until then", re: /^sounds$/, types: ['performer'], level: 'recording' },
-    { id: 'R071', kind: 'simple', note: "", re: /^(photography by|photography|photographer|photos by|photo|photos|photograph by|photographed by|photographs by)$/, types: ['photography'], level: 'release' },
-    { id: 'R072', kind: 'simple', note: "", re: /^(graphic design|graphics|graphic designer)$/, types: ['graphic design', 'design'], level: 'release' },
-    { id: 'R101', kind: 'simple', note: "\"Logo\", \"Logo by\": design with the credit \"logo\" (3.21.0)", re: /^(logo|logo by|logo design|logo designed by)$/, types: ['design', 'graphic design'], level: 'release', credit: 'logo' },
-    { id: 'R073', kind: 'simple', note: "", re: /^(typography|lettering|calligraphy|desk-top publishing|desktop publishing|realization|realisation)$/, types: ['graphic design', 'design'], level: 'release', credit: true },
-    { id: 'R074', kind: 'simple', note: "", re: /^(design concept)$/, types: ['design'], level: 'release', credit: true },
-    { id: 'R075', kind: 'simple', note: "", re: /^(drawing|drawings by)$/, types: ['illustration'], level: 'release', credit: true },
-    { id: 'R076', kind: 'simple', note: "", re: /^(film director|video director|director)$/, types: ['video director'], level: 'release' },
-    { id: 'R077', kind: 'simple', note: "", re: /^(design|designed by|design by|layout|cover design|sleeve design|package design|packaging)$/, types: ['design', 'design/illustration', 'graphic design'], level: 'release' },
-    { id: 'R078', kind: 'simple', note: "", re: /^(illustration|illustrated by|illustrations|drawings|painting|paintings|cover illustration)$/, types: ['illustration', 'design/illustration'], level: 'release' },
-    { id: 'R079', kind: 'simple', note: "", re: /^(artwork|artwork by|art)$/, types: ['artwork', 'design/illustration'], level: 'release' },
-    { id: 'R080', kind: 'simple', note: "", re: /^(art direction|art director|art directed by)$/, types: ['art direction'], level: 'release' },
-    { id: 'R081', kind: 'simple', note: "", re: /^(creative direction|creative director)$/, types: ['creative direction', 'art direction'], level: 'release', credit: true },
-    { id: 'R082', kind: 'simple', note: "", re: /^(liner notes|sleeve notes|notes|linernotes|text by)$/, types: ['liner notes'], level: 'release' },
-    { id: 'R083', kind: 'simple', note: "", re: /^(booklet editor|booklet)$/, types: ['booklet editor'], level: 'release' },
-    { id: 'R084', kind: 'simple', note: "", re: /^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\s+(.+))?$/, types: ['artists and repertoire', 'misc'], level: 'release_group' },
-    { id: 'R085', kind: 'simple', note: "Miscellaneous", re: /^(field recording|field recordings|field recordist|field recordings by|field recorded by)$/, types: ['field recordist'], level: 'recording' },
-    { id: 'R086', kind: 'special', note: "", re: /^(technician|instrument technician|guitar technician|piano technician|drum technician|keyboard technician|tech|tuner|piano tuner)$/, types: ['instrument technician'], level: 'recording' },
-    { id: 'R087', kind: 'simple', note: "", re: /^booking$/, types: ['booking'], level: 'release' },
-    { id: 'R088', kind: 'simple', note: "", re: /^(legal|lawyer|legal representation)$/, types: ['legal representation'], level: 'release' },
-    { id: 'R089', kind: 'simple', note: "", re: /^(coordinator|co-ordinator|coordination|co-ordination|production coordinator|project coordinator)$/, types: ['production coordinator'], level: 'release' },
-    { id: 'R090', kind: 'simple', note: "", re: /^(copyright|copyright \(c\))$/, types: ['copyright'], level: 'release' },
-    { id: 'R091', kind: 'simple', note: "", re: /^(phonographic copyright|phonographic copyright \(p\))$/, types: ['phonographic copyright'], level: 'release' },
-    { id: 'R092', kind: 'simple', note: "", re: /^(published by|publisher|publishing)$/, types: ['publishing'], level: 'release' },
-    { id: 'R093', kind: 'simple', note: "", re: /^(licensed from|licensor)$/, types: ['licensor'], level: 'release' },
-    { id: 'R094', kind: 'simple', note: "", re: /^audio director$/, types: ['audio director'], level: 'release' },
-    { id: 'R099', kind: 'simple', note: "\"Commissioned By\": the work was commissioned by them (a work-level role); without a track list a suggestion on all works (S024)", re: /^(commissioned by|commissioned)$/, types: ['commissioned'], level: 'work', work: true },
-    { id: 'R095', kind: 'special', note: "Roles without an MB relationship type: added as \"misc\" with the Discogs role as task", re: /^(management|management by|manager|other|crew|road crew|stage crew|tour manager|product manager|project manager|promotion|marketing|merchandising|public relations|administrator|advisor|consultant|music consultant|vocal coach|concept|concept by|research|editor|contractor|copyist|cadenza|musical assistance|leader|band leader|repetiteur|répétiteur|score editor|authoring|equipment|instrument builder|luthier|lathe designer|plated by|abridged by|adapted by \(text\)|choreography|dramaturge|music librarian|proofreader|animation|assemblage|camera operator|cameraman|cgi artist|cinematographer|costume designer|director of photography|film editor|film producer|film technician|filmed by|footage by|gaffer|grip|hair|image editor|lighting|lighting director|lithography|make-up|makeup|model|production manager|scenographer|screen printing|set designer|stage manager|stylist|video editor|video producer|video technician|videography|vj)$/, types: ['misc'], level: 'release' },
-    { id: 'R096', note: "Everything else is treated as an instrument; if MB has no such instrument, the row becomes \"misc\" (see makeRow)", types: ['instrument'], level: 'recording' },
-  ];
+  const ROLE_RULE_DATA = MAP.ROLE_RULE_DATA;
 
   /**
    * The role rules for one role: ROLE_RULE_DATA with test() and run(). The context c describes the role being mapped:
@@ -6749,7 +6884,8 @@
     };
     return ROLE_RULE_DATA.map((r) => {
       const k = code[r.id] || {};
-      return { ...r, test: k.test || (() => is(r.re)), run: k.run || (() => out(r.types, extraOf(r))) };
+      // [3.33.1] hasCode: only on/off in "Mapping rules" (no ✎)
+      return { ...r, hasCode: !!code[r.id] || r.kind === 'special', test: k.test || (() => is(r.re)), run: k.run || (() => out(r.types, extraOf(r))) };
     });
   }
 
@@ -6854,88 +6990,19 @@
 
   /** Discogs spelling → possible MB instrument names (tried in this order). */
   // [T001] instrument spellings
-  const INSTRUMENT_ALIASES = {
-    'bass': ['bass'],
-    'electric bass': ['electric bass guitar', 'bass guitar'],
-    'acoustic bass': ['acoustic bass guitar', 'double bass'],
-    'upright bass': ['double bass'],
-    'contrabass': ['double bass'],
-    'kontrabass': ['double bass'],
-    'bass upright': ['double bass'],
-    'bass contrabass': ['double bass'],
-    'bass kontrabass': ['double bass'],
-    'drums': ['drums (drum set)', 'drum set', 'drums'],
-    'drum': ['drums (drum set)', 'drum set', 'drums'],
-    'keyboards': ['keyboard'],
-    'synth': ['synthesizer'],
-    'synthesizers': ['synthesizer'],
-    'rhodes': ['rhodes piano', 'fender rhodes', 'electric piano'],
-    'fender rhodes': ['rhodes piano', 'fender rhodes', 'electric piano'],
-    'rhodes electric piano': ['rhodes piano', 'electric piano'],
-    'wurlitzer': ['wurlitzer electric piano', 'electric piano'],
-    'wurlitzer electric piano': ['wurlitzer electric piano', 'electric piano'],
-    'hammond organ': ['hammond organ', 'organ'],
-    'congas': ['conga', 'congas'],
-    'bongos': ['bongos', 'bongo'],
-    'turntables': ['turntable(s)', 'turntables', 'turntable'],
-    'scratches': ['turntable(s)', 'turntables', 'turntable'],
-    'horns': ['brass'],
-    'french horn': ['french horn', 'horn'],
-    'horn french': ['french horn', 'horn'],
-    'flugel horn': ['flugelhorn'],
-    'flügelhorn': ['flugelhorn'],
-    'flugel-horn': ['flugelhorn'],
-    'sax': ['saxophone'],
-    'tenor sax': ['tenor saxophone'],
-    // [3.29.1] (maintainer: "noises -> effects mit role credit "noises". electronics -> electronic instruments mit role credit "electronics"")
-    'noise': ['effects'], 'noises': ['effects'], 'electronic': ['electronic instruments'],
-    // [3.28.2] not a drum set: with S035 "Steel Drums" would otherwise be found by its last word
-    'steel drum': ['steelpan'], 'steel drums': ['steelpan'], 'steel pan': ['steelpan'], 'steel pans': ['steelpan'],
-    'alto sax': ['alto saxophone'],
-    'baritone sax': ['baritone saxophone'],
-    'soprano sax': ['soprano saxophone'],
-    'pedal steel': ['pedal steel guitar'],
-    'steel guitar': ['steel guitar', 'pedal steel guitar'],
-    'vibes': ['vibraphone'],
-    'claps': ['handclaps'],
-    'hand claps': ['handclaps'],
-    'electronics': ['electronic instruments', 'electronics'],
-    'fiddle': ['fiddle', 'violin'],
-    '12-string guitar': ['12 string guitar', '12-string guitar'],
-    'twelve-string guitar': ['12 string guitar', '12-string guitar'],
-  };
+  const INSTRUMENT_ALIASES = MAP.INSTRUMENT_ALIASES;
 
   // [T002] (S011)
-  const GENERIC_WORDS = new Set(['brushes', 'mallets', 'sticks', 'bow', 'bowed', 'plucked', 'muted', 'effects', 'fx', 'loops', 'samples', 'noise', 'noises', 'electronics', 'sounds',
-    'sampler', 'programming', 'overdubs', 'synth', 'synths', 'keys', 'keyboard', 'keyboards', 'vox', 'sax', 'perc', 'gtr', 'lead', 'rhythm',
-    'backing', 'solo', 'additional', 'tour', 'live', 'intro', 'outro', 'harmony', 'harmonies', 'chorus', 'choir', 'strings', 'horns', 'brass',
-    'woodwinds', 'tenor', 'alto', 'soprano', 'baritone', 'bass', 'acoustic', 'electric', 'fretless', 'slide', 'steel', 'pedal', 'lap',
-    '12-string', '6-string', '7-string', '5-string', '4-string', 'upright', 'double', 'grand', 'prepared', 'toy', 'analog', 'digital',
-    'modular', 'drum', 'drums', 'machine', 'kit', 'snare', 'kick', 'cymbals', 'hi-hat', 'tambourine', 'shaker', 'claps', 'handclaps',
-    'whistle', 'whistling', 'voice', 'vocals', 'spoken', 'word', 'guitar', 'guitars', 'piano', 'organ', 'synthesizer', 'synthesizers',
-    'sax', 'saxes', 'bari', 'tpt', 'tbn', 'flgh', 'vibes', 'gtrs', 'bs', 'dr', 'kbd', 'kbds', 'clar', 'fl', 'horn', 'reeds', 'winds']);
+  const GENERIC_WORDS = MAP.GENERIC_WORDS;
 
   // [T003] Artwork relationships: their role credits are written entirely in lower case (S011)
-  const ART_TYPES = ['artwork', 'art direction', 'design', 'design/illustration', 'graphic design', 'illustration', 'photography'];
+  const ART_TYPES = MAP.ART_TYPES;
 
   /**
    * [T005] Discogs details (bracket parts) that stand for an MB yes/no attribute,
    * e.g. "Mastered By [Remaster]" → "re". MB's own attribute names are the targets.
    */
-  const DETAIL_FLAGS = [
-    // [S002] also "Additional Musicians" / "Additional Personnel" and common misspellings ("Additonal")
-    [/^(additional(ly)?|additonal|addtional|additinal|aditional|additionnal|additionel|addditional)( musicians?| personnel| players?| performers?)?$/, 'additional'],
-    [/^guest$/, 'guest'],
-    [/^solo(ist)?$/, 'solo'],
-    [/^(assistant|assisted by|asst\.?)$/, 'assistant'],
-    [/^associate$/, 'associate'],
-    [/^co-?$/, 'co'],
-    [/^executive$/, 'executive'],
-    [/^re-?master(ed|ing)?$/, 're'],
-    [/^pre-?master(ed|ing)?$/, 'pre'],
-    [/^sub-?publish(er|ing|ed)?$/, 'sub'],
-    [/^(translation|translated( by)?|translator)$/, 'translator'],
-  ];
+  const DETAIL_FLAGS = MAP.DETAIL_FLAGS;
 
   /**
    * Discogs wording, in lower case, for instruments and roles that MusicBrainz names differently:
@@ -6945,136 +7012,46 @@
    * For relationship types without an instrument, grammatical variants are not credited
    * ("Mixed By" = mix, "Remastered By" = mastering, "Music By" = composer). [T006]
    */
-  const WORDING_SYNONYMS = {
-    composer: ['music'], lyricist: ['words', 'text'], 'artists and repertoire': ['a&r'],
-    // "Engineer [Mix]": the word engineer only names the kind of relationship
-    mix: ['engineer', 'engineered'], recording: ['engineer', 'engineered'], mastering: ['engineer', 'engineered'],
-  };
+  const WORDING_SYNONYMS = MAP.WORDING_SYNONYMS;
 
   /**
    * Fixed role credits: MB names some instruments differently from how they are credited.
    * Used only when Discogs gives no detail in brackets: "Drums" → MB "drums (drum set)" credited as "drums",
    * while "Drums [Brushes]" keeps "Brushes". [T007]
    */
-  const FIXED_ROLE_CREDITS = [
-    { base: 'drums', instrument: 'drums (drum set)', credit: 'drums' },
-  ];
+  const FIXED_ROLE_CREDITS = MAP.FIXED_ROLE_CREDITS;
 
   // [T008] (S018) Engineer tasks: "Engineer [Mix, Recording]" is one role per task
-  const ENGINEER_TASK_RE = /^(mix|mixing|mixed|mixdown|recording|recorded|tracking|mastering|mastered|overdubs?|overdubbing)$/i;
+  const ENGINEER_TASK_RE = MAP.ENGINEER_TASK_RE;
 
   // [T009] Texts: names in a list ("A, B & C", "A and B", "A / B"), roles in a list ("guitar, vocals", "mixed and
   // mastered"), and the separators after which a shared instrument word goes to the word before ("tenor & soprano sax")
-  const TEXT_NAME_SEP = /\s*(?:,|&|\+|\/|;|\band\b|\bund\b|\bet\b)\s*/i;
+  const TEXT_NAME_SEP = MAP.TEXT_NAME_SEP;
   // [T043] Texts (3.30.7): the members of a band – "<the release's artist> are A, B and C"; the band named by itself
-  const TEXT_MEMBERS = /^(.+?)\s+(?:are|is|consists? of|comprises?|features|were|was|sind|ist|besteht aus|son|es|sont|est)\s*:?\s+(.+)$/i;
-  const TEXT_BAND_SELF = /^(?:the\s+)?(?:band|group|trio|quartet|quintet|duo|line-?up)$|^(?:we|this band|die band|wir)$/i;
+  const TEXT_MEMBERS = MAP.TEXT_MEMBERS;
+  const TEXT_BAND_SELF = MAP.TEXT_BAND_SELF;
   // [3.21.2] Spanish "y" between names only in small letters ("Kevin Y Lee" keeps its initial)
-  const TEXT_NAME_SEP_Y = /\s+y\s+/;
-  const TEXT_ROLE_SEP = /\s*(?:,|&|\+|\/|\band\b|\bund\b|\bet\b)\s*|\s+y\s+/i;
-  const TEXT_AND_SEP = /^(&|\+|\/|and|und|et|y)$/;
+  const TEXT_NAME_SEP_Y = MAP.TEXT_NAME_SEP_Y;
+  const TEXT_ROLE_SEP = MAP.TEXT_ROLE_SEP;
+  const TEXT_AND_SEP = MAP.TEXT_AND_SEP;
 
   // [T010] Texts: words for tracks ("Tracks 3–5:", "(tracks 1, 4)", "on track 2"; German, Spanish, French)
-  const TEXT_TRACK_WORDS = '(?:tracks?|titles?|songs?|stücke?|pistas?|plages?|morceaux)';
+  const TEXT_TRACK_WORDS = MAP.TEXT_TRACK_WORDS;
 
   // [T034] Texts (3.21.2): instruments and voices in German, Spanish and French. Each spelling carries its language
   // (word@de, word@es,fr), several in a cell; the English term is what the register maps (as Discogs writes it). A
   // translation gets no role credit – MusicBrainz's own names are used (S025). Spellings are compared without accents
   // and with ß as ss ("electrica" = "eléctrica"). Words that differ by language ("alto": viola in Spanish and French)
   // are asked (R102, Q006); "Bass", "bajo", "basse" ask like "Bass" (Q001).
-  const FOREIGN_TERMS = [
-    ['Vocals', 'Gesang@de; Stimme@de; Gesang und Stimme@de; voz@es; voces@es; canto@es; chant@fr; voix@fr'],
-    ['Lead Vocals', 'Leadgesang@de; Hauptgesang@de; Lead-Gesang@de; voz principal@es; voz solista@es; chant principal@fr; voix principale@fr; voix lead@fr'],
-    ['Backing Vocals', 'Hintergrundgesang@de; Backgroundgesang@de; Begleitgesang@de; Background-Gesang@de; coros@es; voces de fondo@es; chœurs@fr; choeurs@fr'],
-    ['Choir', 'Chor@de; coro@es; chœur@fr; choeur@fr'],
-    ['Voice', 'Sprecher@de; Sprecherin@de; Erzähler@de; Erzählerin@de; narrador@es; narradora@es; voz hablada@es; récitant@fr; récitante@fr; narrateur@fr; narratrice@fr'],
-    ['Drums', 'Schlagzeug@de; batería@es; batterie@fr'],
-    ['Percussion', 'Perkussion@de; Schlagwerk@de; percusión@es; percusiones@es; percussions@fr'],
-    ['Grand Piano', 'Flügel@de; Konzertflügel@de; piano de cola@es; piano à queue@fr'],
-    ['Piano', 'Klavier@de'],
-    ['Electric Piano', 'E-Piano@de; Elektrisches Klavier@de; piano eléctrico@es; piano électrique@fr'],
-    ['Keyboards', 'teclado@es; teclados@es; clavier@fr; claviers@fr'],
-    ['Organ', 'Orgel@de; órgano@es; orgue@fr'],
-    ['Hammond Organ', 'Hammondorgel@de; Hammond-Orgel@de; órgano Hammond@es; orgue Hammond@fr'],
-    ['Harpsichord', 'Cembalo@de; clavecín@es; clavecin@fr'],
-    ['Synthesizer', 'sintetizador@es; sintetizadores@es; synthétiseur@fr; synthétiseurs@fr; synthé@fr'],
-    ['Accordion', 'Akkordeon@de; Ziehharmonika@de; acordeón@es; accordéon@fr'],
-    ['Bandoneon', 'bandoneón@es; bandonéon@fr'],
-    ['Harmonica', 'Mundharmonika@de; armónica@es'],
-    ['Guitar', 'Gitarre@de; Gitarren@de; guitarra@es; guitarras@es; guitare@fr; guitares@fr'],
-    ['Acoustic Guitar', 'Akustikgitarre@de; Akustische Gitarre@de; Westerngitarre@de; guitarra acústica@es; guitare acoustique@fr'],
-    ['Electric Guitar', 'E-Gitarre@de; Elektrische Gitarre@de; Elektrogitarre@de; guitarra eléctrica@es; guitare électrique@fr'],
-    ['Classical Guitar', 'Konzertgitarre@de; Klassische Gitarre@de; guitarra clásica@es; guitarra española@es; guitare classique@fr'],
-    ['Bass', 'bajo@es; basse@fr'],
-    ['Electric Bass', 'E-Bass@de; bajo eléctrico@es; basse électrique@fr'],
-    ['Double Bass', 'Kontrabass@de; contrabajo@es; contrebasse@fr'],
-    ['Violin', 'Violine@de; Geige@de; violín@es; violon@fr'],
-    ['Viola', 'Bratsche@de'],
-    ['Cello', 'Violoncello@de; violonchelo@es; chelo@es; violoncelle@fr'],
-    ['Harp', 'Harfe@de; arpa@es; harpe@fr'],
-    ['Flute', 'Flöte@de; Querflöte@de; flauta@es; flauta travesera@es; flûte@fr; flûte traversière@fr'],
-    ['Piccolo Flute', 'Piccoloflöte@de; Pikkoloflöte@de; flautín@es'],
-    ['Recorder', 'Blockflöte@de; flauta dulce@es; flûte à bec@fr'],
-    ['Oboe', 'hautbois@fr'],
-    ['Clarinet', 'Klarinette@de; clarinete@es; clarinette@fr'],
-    ['Bass Clarinet', 'Bassklarinette@de; clarinete bajo@es; clarinette basse@fr'],
-    ['Bassoon', 'Fagott@de; fagot@es; basson@fr'],
-    ['Saxophone', 'Saxophon@de; Saxofon@de; saxofón@es; saxo@es'],
-    ['Soprano Saxophone', 'Sopransaxophon@de; Sopransaxofon@de; saxo soprano@es; saxofón soprano@es; saxophone soprano@fr'],
-    ['Alto Saxophone', 'Altsaxophon@de; Altsaxofon@de; saxo alto@es; saxofón alto@es; saxophone alto@fr'],
-    ['Tenor Saxophone', 'Tenorsaxophon@de; Tenorsaxofon@de; saxo tenor@es; saxofón tenor@es; saxophone ténor@fr'],
-    ['Baritone Saxophone', 'Baritonsaxophon@de; Baritonsaxofon@de; saxo barítono@es; saxofón barítono@es; saxophone baryton@fr'],
-    ['Trumpet', 'Trompete@de; trompeta@es; trompette@fr'],
-    ['Flugelhorn', 'fliscorno@es; bugle@fr'],
-    ['Cornet', 'Kornett@de; corneta@es; cornet à pistons@fr'],
-    ['Trombone', 'Posaune@de; trombón@es'],
-    ['French Horn', 'Waldhorn@de; trompa@es; cor@fr; cor d’harmonie@fr'],
-    ['Vibraphone', 'Vibraphon@de; vibráfono@es'],
-    ['Xylophone', 'Xylophon@de; xilófono@es'],
-    ['Cymbal', 'Becken@de; platillos@es; cymbales@fr'],
-    ['Snare Drum', 'Kleine Trommel@de; caja@es; caisse claire@fr'],
-    ['Bass Drum', 'Große Trommel@de; bombo@es; grosse caisse@fr'],
-    ['Tambourine', 'Tamburin@de; Schellenkranz@de; pandereta@es'],
-    ['Congas', 'tumbadoras@es'],
-    ['Handclaps', 'Klatschen@de; palmas@es'],
-    ['Mandolin', 'Mandoline@de; mandolina@es; mandoline@fr'],
-    ['Lute', 'Laute@de; laúd@es; luth@fr'],
-    ['Zither', 'cítara@es; cithare@fr'],
-    ['Bagpipes', 'Dudelsack@de; gaita@es; cornemuse@fr'],
-    ['Melodica', 'Melodika@de; melódica@es; mélodica@fr'],
-    ['Strings', 'Streicher@de; cuerdas@es; cordes@fr'],
-    ['Electronics', 'Elektronik@de; electrónica@es; électronique@fr'],
-  ];
+  const FOREIGN_TERMS = MAP.FOREIGN_TERMS;
   // [T039] All sources (3.28.2): roles in Norwegian, Swedish and Danish (word@no, word@sv, word@da) – in the brackets of
   // Discogs ("Mixed By [Miksa Av]", "Graphics [Grafisk Utforming]") and as the role of a text ("Miksa av: X"). The English
   // term is what the register maps; a translation names the role itself and gets no role credit (S032). Words that are
   // also English (Design, Illustration, Logo …) are not here.
-  const ROLE_TERMS = [
-    ['Mixed By', 'Miksa av@no; Mikset av@no; Miksing@no; Miksing av@no; Mixad av@sv; Mixning@sv; Mixning av@sv; Mixet af@da; Mixning af@da'],
-    ['Mastered By', 'Mastering av@no,sv; Mastra av@no; Mastret av@no; Mastrad av@sv; Mastring@sv; Mastering af@da; Mastereret af@da'],
-    ['Producer', 'Produsert av@no; Produsent@no; Produksjon@no; Producerad av@sv; Producent@sv,da; Produktion@sv,da; Produceret af@da'],
-    ['Recorded By', 'Innspilt av@no; Innspelt av@no; Spilt inn av@no; Inspelad av@sv; Inspelning@sv; Indspillet af@da; Indspilning@da'],
-    ['Engineer', 'Lydtekniker@no,da; Tekniker@no,sv,da; Ljudtekniker@sv'],
-    ['Graphic Design', 'Grafisk utforming@no; Grafisk design@no,sv,da; Grafisk formgivning@no,sv; Grafisk tilrettelæggelse@da; Grafikk@no'],
-    ['Design', 'Utforming@no; Formgivning@no,sv'],
-    ['Photography By', 'Foto@no,sv,da; Fotografi@no,sv,da; Fotografert av@no; Fotograferad av@sv; Fotograferet af@da'],
-    ['Artwork', 'Kunst@no,da; Konst@sv; Omslagskunst@no; Omslag@no,sv'],
-    ['Music By', 'Musikk av@no; Musikk@no; Musik av@sv; Musik af@da'],
-    ['Lyrics By', 'Tekst av@no; Tekster av@no; Text av@sv; Texter av@sv; Tekst af@da; Tekster af@da'],
-    ['Arranged By', 'Arrangert av@no; Arrangerad av@sv; Arrangeret af@da'],
-    ['Vocals', 'Vokal@no,sv,da; Sang@no,da; Sång@sv'],
-  ];
+  const ROLE_TERMS = MAP.ROLE_TERMS;
   // [T040] All sources (3.28.2): the tasks of an artwork credit joined by "and" ("Artwork [Logo Og Kunst]" – Norwegian for
   // logo and art): each becomes its own role, as Discogs writes it in English (S033); the words in their languages
-  const ART_TASKS = [
-    ['Design [Logo]', 'logo@en,no,sv,da; logos@en; logoer@no,da; logotyp@sv; logotype@en'],
-    ['Artwork [Art]', 'art@en; kunst@no,da; konst@sv'],
-    ['Artwork', 'artwork@en'],
-    ['Design', 'design@en,no,sv,da'],
-    ['Photography By', 'photography@en; photos@en; foto@no,sv,da; fotografi@no,sv,da'],
-    ['Illustration', 'illustration@en,sv,da; illustrations@en; illustrasjon@no; illustrasjoner@no; illustrationer@sv,da'],
-    ['Layout', 'layout@en,no,sv,da'],
-  ];
+  const ART_TASKS = MAP.ART_TASKS;
   /** [T034] A spelling as compared: lower case, without accents, ß as ss, ’ as '. */
   const foldWord = (t) => norm(t).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss').replace(/[’`]/g, "'");
   const FOREIGN_INDEX = (() => {
@@ -7103,41 +7080,41 @@
 
   // [T011] Texts (3.6.0): words that name a kind of an instrument and share its noun; not "bass" ("bass & electric
   // guitar" are two)
-  const INSTRUMENT_MODIFIER = /^(sopranino|soprano|alto|tenor|baritone|bari|contrabass|acoustic|electric|classical|slide|fretless|upright|prepared|toy|grand|12-string|twelve-string|nylon-string|steel-string)$/i;
+  const INSTRUMENT_MODIFIER = MAP.INSTRUMENT_MODIFIER;
   // [3.21.2] Spanish and French put the kind after the instrument and share the instrument before it ("saxo tenor y
   // soprano" → saxo tenor, saxo soprano)
-  const INSTRUMENT_MODIFIER_AFTER = /^(sopranino|soprano|alto|tenor|ténor|barítono|baritono|baryton|bajo|basse|eléctrica|electrica|eléctrico|electrico|électrique|electrique|acústica|acustica|acústico|acustico|acoustique|clásica|clasica|classique)$/i;
+  const INSTRUMENT_MODIFIER_AFTER = MAP.INSTRUMENT_MODIFIER_AFTER;
 
   // [T012] Texts (3.7.0): "home", "home during lockdown", "my place", "their own living room" – a private place, not
   // one of MusicBrainz
-  const PRIVATE_PLACE = /^(?:home\b|(?:my|his|her|their|our)\s+(?:own\s+)?(?:home|house|flat|apartment|bedroom|living\s?room|kitchen|garage|basement|attic|cellar|place|studio)\b)/i;
+  const PRIVATE_PLACE = MAP.PRIVATE_PLACE;
 
   // [T019] Texts (3.13.1): what follows "at" without being a place – "recorded at the same time as …", "mixed at last",
   // "at night", "at the end of the session", "at first". "first" and "last" only alone or before a word of time, so
   // "First Avenue" stays a place; small letters are no sign (place names may be written so too)
-  const NOT_A_PLACE = /^(?:(?:the\s+)?same\s+time\b|the\s+time\b|(?:that|this|the)\s+(?:point|stage|moment)\b|(?:the\s+)?(?:end|beginning|start)(?:$|\s+of\b)|(?:once|night|dawn|dusk|midnight|noon|least|all|times|first|last)$|(?:first|last)\s+(?:week|weekend|days?|nights?|time|month|year|sessions?|takes?)\b)/i;
+  const NOT_A_PLACE = MAP.NOT_A_PLACE;
 
   // [T020] Texts (3.14.0): a time after a name – "… by X in October 2026", "… by X during the summer of 1980" – is cut
   // off the name (the date itself goes into the date pool)
-  const TEXT_TIME_AFTER_NAME = /\s+(?:in|on|during|between|from|since|throughout|around)\s+(?=[^,]*(?:\b\d{4}\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b|\b(?:spring|summer|autumn|fall|winter)\b)).*$/i;
+  const TEXT_TIME_AFTER_NAME = MAP.TEXT_TIME_AFTER_NAME;
 
   // [T047] Texts (3.32.5): a date right after a place – "El Studio in San Francisco on September 3rd and 4th 2016", "… in
   // September 2016", "… on 2016-09-03" – is cut off before the place is read (collected item 117; before, the place was
   // left out with the date, because it had digits); the area before it stays ("in San Francisco"). Only a preposition
   // followed at once by a date: a day, a month (whole, or its first three letters), a season.
-  const PLACE_DATE_TAIL = /\s+(?:on|in|during|between|from|since|throughout|around|over)\s+(?:the\s+)?(?:(?:early|late|mid)[\s-]+)?(?=\d|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b|(?:spring|summer|autumn|fall|winter)\b).*$/i;
+  const PLACE_DATE_TAIL = MAP.PLACE_DATE_TAIL;
 
   // [T021] Texts (3.14.0): words before a verb that only say what was done – "Music played and recorded by X" is
   // played by and recorded by X
-  const TEXT_WHAT_WORDS = /^(?:the\s+)?(?:music|songs?|album|tracks?|record|recordings?|everything|all)\s+(?=\p{L}+ed$)/iu;
+  const TEXT_WHAT_WORDS = MAP.TEXT_WHAT_WORDS;
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
-  const TEXT_WHAT_PREFIX = /^(?:all\s+)?(?:the\s+)?(?:music|songs?|album|tracks?|record|recordings?|material|pieces?|compositions?|everything|all)\s+(?:(?:was|were|is|are)\s+)?(?=\p{L}+ed\b)/iu;
+  const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
-  const TEXT_PACKAGE = /^(?:including|includes|incl\.?|comes\s+with|with)\s+(?:an?\s+|the\s+)?(?:\d+[\s-]*(?:p\.?|pp\.?|pages?|seiten|s\.)\s+)?(?:(?:full[\s-]colou?r|colou?r|printed|illustrated|extensive|deluxe|\d+[\s-]?panel)\s+)*(?:booklet|poster|insert|inlay|obi|sticker|postcard|print|download\s+(?:code|card)|liner\s+notes)\b/i;
+  const TEXT_PACKAGE = MAP.TEXT_PACKAGE;
 
   // [T022] Texts (3.14.0): roles named before a verb of making – "Music and artwork of this release were entirely
   // created by …": the roles are the words before "of this …" and the verb
-  const TEXT_MADE_BY = /^(.+?)\s+(?:(?:of|on|for)\s+(?:this|the)\s+(?:release|album|record|ep|single|recording)\s+)?(?:(?:was|were|is|are|has\s+been|have\s+been)\s+)?(?:(?:entirely|all|completely|fully|solely|exclusively)\s+)?(?:created|made|written|composed|produced|done|performed|designed)$/i;
+  const TEXT_MADE_BY = MAP.TEXT_MADE_BY;
 
   // [T023] Texts (3.14.0): a person without a name after "by" ("a (cat assisted) human", "the band", "himself") – the
   // release's artists are offered for it, only as a suggestion
@@ -7145,21 +7122,10 @@
   // are no roles of the register themselves – the role each stands for
   // [3.29.1] noises → effects ("noises"), electronics → electronic instruments ("electronics"), field recordings → field recordist
   // [3.30.6] "sounds" → "Sounds" (R104: performer, the dashboard asks for effects – Q008)
-  const PROSE_ROLE_WORDS = { sounds: 'Sounds', noises: 'Noises', noise: 'Noises', electronics: 'Electronics', 'field recordings': 'Field Recordings',
-    'field recording': 'Field Recording', words: 'Lyrics By', lyrics: 'Lyrics By', texts: 'Lyrics By', voice: 'Vocals', voices: 'Vocals', vocals: 'Vocals', music: 'Music By' };
+  const PROSE_ROLE_WORDS = MAP.PROSE_ROLE_WORDS;
   // [T048] Texts (3.32.5): the words of roles a typo is read as (S050, collected item 115: "Muisc" → "Music") – these, and on
   // MusicBrainz also the words of its relationship types and attributes (instruments, voices)
-  const ROLE_WORDS = ('music lyrics words text texts vocals vocal voice voices singer singing chorus choir backing lead guitar guitars bass drums '
-    + 'percussion piano keyboards synthesizer synth organ saxophone trumpet trombone violin viola cello flute clarinet harmonica accordion '
-    + 'banjo mandolin ukulele harp strings horns brass electric acoustic double upright alto tenor soprano baritone recorded recording '
-    + 'recordings mixed mixing mastered mastering remastered remastering produced producer producers production engineered engineer '
-    + 'engineering arranged arranger arrangement arrangements composed composer composition compositions written writer writers lyricist '
-    + 'conducted conductor performed performer performers played programmed programming edited editing remixed remix design designed '
-    + 'designer layout artwork cover illustration illustrations illustrated photography photographs photos photo photographer painting '
-    + 'liner notes sleeve booklet graphic graphics typography logo executive assistant additional cutting lacquer transfer restoration '
-    + 'sound sounds effects electronics samples sampling field turntables scratches beats orchestra orchestration orchestrated ensemble '
-    + 'direction director directed translation translated narrator narration spoken recitation poems poetry featuring studio publisher '
-    + 'published publishing copyright distributed manufactured pressed licensed').split(' ');
+  const ROLE_WORDS = MAP.ROLE_WORDS;
 
   /**
    * [S050] (3.32.5) The words a typo in a role is read as (T048): ROLE_WORDS and, on MusicBrainz, the words of its
@@ -7259,31 +7225,26 @@
   }
   // [T042] Texts (3.29.0): words of prose around a credit that say nothing about the role – a verb before "by" ("Cover artwork
   // channeled by X", "Logo carved by …") and words before the name ("… by the guided hand of BMS Illustration")
-  const PROSE_FILLER_VERB = /\s+(?:lovingly\s+|carefully\s+|dutifully\s+)?(?:channell?ed|carved|crafted|conjured|forged|summoned|woven|wrought|unearthed|captured|rendered|realized|realised|executed|handled|delivered|shaped|sculpted|etched|hewn|brought\s+to\s+life|put\s+together|taken\s+care\s+of)$/i;
-  const PROSE_FILLER_BEFORE_NAME = /^(?:the\s+)?(?:(?:guided|skilled|steady|capable|able|talented|trusted)\s+)?(?:hands?|mind|talents?|skills?|craft|eyes?|ears?)\s+of\s+/i;
+  const PROSE_FILLER_VERB = MAP.PROSE_FILLER_VERB;
+  const PROSE_FILLER_BEFORE_NAME = MAP.PROSE_FILLER_BEFORE_NAME;
 
-  const PLACEHOLDER_WHO = /^(?:an?\s+)?(?:human(?:\s+being)?|me|myself|us|ourselves|the\s+artists?|the\s+band|the\s+musicians?|himself|herself|themselves)$/i;
+  const PLACEHOLDER_WHO = MAP.PLACEHOLDER_WHO;
 
   // [T028] Texts (3.17.3): words for the distribution of a release – "Distribution - !K7", "Distribution: X", "Distribution by
   // X", "Distributor: X", "Vertrieb: X" … are read as "Distributed By" (C006: label → distributed)
-  const TEXT_DISTRIBUTION = /^(?:distribution|distributions|distributor|distributors|distributed|vertrieb|vertrieben|distribución|distribuidora|distribuido|distribuidor|distribution exclusive|distribué|distribuée|distribuzione|distribuito|distributie)$/i;
+  const TEXT_DISTRIBUTION = MAP.TEXT_DISTRIBUTION;
 
   // [T029] Texts (3.21.0): a period after these words ends no sentence ("Vol. 2", "feat. X", "St. Louis")
-  const TEXT_ABBREV = /^(?:vol|vols|no|nos|nr|st|ste|dr|mr|mrs|ms|mme|mlle|prof|feat|ft|op|opp|vs|jr|sr|inc|ltd|co|corp|bros|mt|ca|approx|incl|arr|orch|dept|nb|cf|pp|bzw|bspw|ggf|usw|etc)$/i;
+  const TEXT_ABBREV = MAP.TEXT_ABBREV;
 
   // [T030] Texts (3.21.0): lines left out on purpose – thanks, endorsements, "appears courtesy of"
   // [3.21.4] which kind of line was left out on purpose: thanks, a note of courtesy, else a maker's (endorsement) note
-  const TEXT_THANKS = /^(?:(?:very\s+|extra\s+|a\s+)?special\s+thanks?|many\s+thanks|big\s+thanks|huge\s+thanks|thanks?\b|thank\s+you\b|dank(?:e|en)?\b|vielen\s+dank|besonderer\s+dank|gracias\b|agradecimientos|merci\b|remerciements|grazie\b|ringraziamenti|tack\b|bedankt\b|kiitos\b)/i;
-  const TEXT_COURTESY_LINE = /\b(?:appears?|appearing)\s+(?:by\s+)?(?:kind\s+)?(?:courtesy|permission)\s+of\b/i;
+  const TEXT_THANKS = MAP.TEXT_THANKS;
+  const TEXT_COURTESY_LINE = MAP.TEXT_COURTESY_LINE;
 
   // [T035] Texts and all sources (3.21.4): words for a medium in a role ("Vinyl LP mastering", "Mastered for vinyl",
   // "Mastering [Vinyl]", "(CD)"); a credit for a medium the MusicBrainz release does not have is left out (S026)
-  const MEDIUM_WORDS = {
-    vinyl: /^(?:vinyl|vinyls|lp|lps|lacquer|lacquers|lack|acetate|dmm|12"|7"|10"|schallplatte|platte|vinilo|vinyle)$/i,
-    cd: /^(?:cd|cds|compact|sacd|hdcd)$/i,
-    cassette: /^(?:cassette|cassettes|tape|tapes|mc|kassette|casete|cassete)$/i,
-    digital: /^(?:digital|streaming|download|downloads|hi-res|hires|high-res|mp3|flac|online)$/i,
-  };
+  const MEDIUM_WORDS = MAP.MEDIUM_WORDS;
   /** [T035] The kind of medium a word or a few words name ('vinyl', 'cd', 'cassette', 'digital'), '' if not all are such words. */
   const mediumKindOf = (text) => {
     const words = String(text || '').trim().split(/\s+/).filter(Boolean);
@@ -7294,64 +7255,48 @@
   const formatKind = (f) => (/digital media/i.test(f) ? 'digital' : /vinyl|"|\blp\b|shellac|acetate|flexi/i.test(f) ? 'vinyl'
     : /\bcd\b|sacd|hdcd|compact disc|dualdisc|blu-spec|shm/i.test(f) ? 'cd' : /cassette|tape|dcc/i.test(f) ? 'cassette' : 'other');
 
-  const TEXT_IGNORE_LINE = /^(?:(?:very\s+|extra\s+|a\s+)?special\s+thanks?|many\s+thanks|big\s+thanks|huge\s+thanks|thanks?\b|thank\s+you\b|dank(?:e|en)?\b|vielen\s+dank|besonderer\s+dank|gracias\b|agradecimientos|merci\b|remerciements|grazie\b|ringraziamenti|tack\b|bedankt\b|kiitos\b)|\b(?:plays?|uses?|endorses?)\s+(?:exclusively|only)\s|\b(?:plays?|uses?)\s+(?:on\s+|with\s+)?(?:\S+\s+){1,3}(?:strings|cymbals|reeds|sticks|mallets|drumheads|heads|pickups|amps?|amplifiers|mouthpieces?|ligatures?|picks)\b|\b(?:appears?|appearing)\s+(?:by\s+)?(?:kind\s+)?(?:courtesy|permission)\s+of\b|\bendorse[sd]?\b/i;
+  const TEXT_IGNORE_LINE = MAP.TEXT_IGNORE_LINE;
 
   // [T031] Texts (3.21.0): "courtesy of …" after a name, and a title in quotation marks with its year before "by"
-  const TEXT_COURTESY = /(?:^|[\s,;(])(?:(?:by|with|appears?)\s+)?(?:kind\s+)?(?:courtesy|permission)\s+(?:of|from)\b|used\s+(?:with|by)\s+permission|mit\s+freundlicher\s+genehmigung|cortes[ií]a\s+de|avec\s+l[’']aimable\s+autorisation/i;
-  const TEXT_QUOTED_TITLE = /(?:[“„«‘"][^“”„«»‘’"']{1,80}[”“»’"']|(?<!\p{L})'[^'\n]{1,80}'(?!\p{L}))(?:\s*,?\s*\(?(?:1[89]|20)\d{2}\)?)?/gu;
+  const TEXT_COURTESY = MAP.TEXT_COURTESY;
+  const TEXT_QUOTED_TITLE = MAP.TEXT_QUOTED_TITLE;
 
   // [T038] Track titles compared with MusicBrainz's (3.24.1): small words of several languages do not count ("The Song
   // of the Sea" = "Song of Sea", "La canción del mar" = "Canción mar"), nor a note in brackets ("(Remastered)", "[Live]")
-  const TITLE_SMALL_WORDS = new Set(('a an the of at in on to and or for with from by as '
-    + 'der die das den dem des ein eine einen einer eines und oder im in am an auf von vom zu zum zur mit fur '
-    + 'el la lo los las un una unos unas de del y o en con por para al '
-    + 'le la les l un une des de du d et ou en au aux a sur pour avec '
-    + 'il lo gli i di da e nel nella della dei '
-    + 'o os as um uma do da dos das em no na '
-    + 'het een van en op met').split(' '));
-  const TITLE_NOTE = /[([][^)\]]*\b(?:remaster(?:ed)?|live|mono|stereo|version|edit|mix|remix|demo|single|instrumental|bonus|acoustic|radio|album|explicit|clean|feat\.?|ft\.?|with)\b[^)\]]*[)\]]/gi;
+  const TITLE_SMALL_WORDS = MAP.TITLE_SMALL_WORDS;
+  const TITLE_NOTE = MAP.TITLE_NOTE;
 
   // [T036] Texts (3.22.0): tracks named by their titles after a role ("Piano in ‘A' and 'B'", "Guitar on “Song”"; the
   // quotation marks may be mixed), and "is a contribution", "was played" before "by"
-  const TEXT_TITLE_Q = '(?:[“„«‘"][^“”„«»‘’"\']{1,80}[”“»’"\']|(?<!\\p{L})\'[^\'\\n]{1,80}\'(?!\\p{L}))';
+  const TEXT_TITLE_Q = MAP.TEXT_TITLE_Q;
   const TEXT_TITLE_SCOPE = new RegExp(`^(.*?\\S)\\s+(?:in|on|auf|bei|en|sur|dans)\\s+(?:(?:the\\s+)?(?:songs?|tracks?|pieces?|titles?)\\s+)?(${TEXT_TITLE_Q}(?:\\s*(?:,|&|\\band\\b|\\bund\\b|\\by\\b|\\bet\\b)\\s*${TEXT_TITLE_Q})*)$`, 'iu');
-  const TEXT_CONTRIBUTION = /\s+(?:is|are|was|were)\s+(?:(?:a|an)\s+)?(?:(?:kind|generous|special|guest)\s+)?(?:contributions?|played|performed)$/i;
+  const TEXT_CONTRIBUTION = MAP.TEXT_CONTRIBUTION;
 
   // [T037] Texts (3.22.0): an area after a name or a verb ("Recorded by X in Xixon, Asturies, Spain", "Recorded in
   // Berlin"): words with capitals (particles between them), no number, month or season – and none of these words first
-  const TEXT_AREA_PARTICLE = /^(?:de|del|de la|la|le|les|el|am|an|im|upon|on|sur|sous|di|da|do|dos|das|e|y|of)$/i;
-  const TEXT_NOT_AREA = /^(?:the|a|an|my|our|his|her|their|this|that|dolby|atmos|stereo|mono|surround|spatial|binaural|analog(?:ue)?|digital|hi-?res|one|real|collaboration|cooperation|association|memory|loving|honou?r|spring|summer|autumn|fall|winter|early|late|mid|session|sessions|studio|studios|house|home)\b/i;
+  const TEXT_AREA_PARTICLE = MAP.TEXT_AREA_PARTICLE;
+  const TEXT_NOT_AREA = MAP.TEXT_NOT_AREA;
 
   // [T032] Texts (3.21.0): web addresses (never part of a name) and the sites whose profiles become links of an entry
-  const WEB_ADDRESS = /(?:https?:\/\/)?(?:www\.)?(?:[a-z0-9-]+\.)+(?:com|net|org|info|biz|io|me|fm|tv|co|app|ee|be|de|at|ch|fr|es|it|nl|uk|us|ca|au|jp|se|no|dk|fi|pl|pt|ie|ru|br|mx|ar|cl|nz|online|site|store|music|band|art|studio|world|live|xyz|link|page|social)(?![a-z0-9-])(?:\/[^\s,;()<>“”"'\]]*)?/gi;
-  const WEB_LABEL = /^(?:contact|kontakt|contacto|e-?mail|mail|correo|web|website|webseite|homepage|home page|site|site web|sitio web|info|infos|booking|follow(?:\s+(?:us|me))?|more|more info|links?|shop|store|orders?|bestellungen|pedidos)\b[\s:.\-–—]*(?:on|at|unter|en|sur)?[\s:]*$/i;
-  const SOCIAL_HOSTS = /^(?:instagram\.com|facebook\.com|fb\.com|twitter\.com|x\.com|soundcloud\.com|youtube\.com|tiktok\.com|bsky\.app|threads\.net|mixcloud\.com|vimeo\.com|myspace\.com|[a-z0-9-]+\.bandcamp\.com|open\.spotify\.com|music\.apple\.com|deezer\.com|tidal\.com|music\.youtube\.com|qobuz\.com|music\.amazon\.[a-z.]+)$/i;
+  const WEB_ADDRESS = MAP.WEB_ADDRESS;
+  const WEB_LABEL = MAP.WEB_LABEL;
+  const SOCIAL_HOSTS = MAP.SOCIAL_HOSTS;
   // [3.21.3] artist pages of streaming services: kept only for "Create artist …" (not looked up in MusicBrainz, 37b)
-  const STREAM_URL = /^https:\/\/(?:open\.spotify\.com|music\.apple\.com|www\.deezer\.com|tidal\.com|music\.youtube\.com|www\.qobuz\.com|music\.amazon\.[a-z.]+)\//i;
+  const STREAM_URL = MAP.STREAM_URL;
 
   // [T033] Texts (3.21.0): ℗ and © at the start of a line (also both: "P + ©", "℗ & ©", "(P) & (C)"), and what is left out
   // after the name: a code of how it was recorded ("DDD"), a catalogue number after "·" or "|", "All rights reserved"
-  const TEXT_PC_SIGNS = /^(©\s*©|(?:℗|Ⓟ|\(p\)|p)\s*(?:\+|&|\/|,|and|und|et|y)?\s*(?:©|\(c\))|(?:©|\(c\))\s*(?:\+|&|\/|,|and|und|et|y)?\s*(?:℗|Ⓟ|\(p\))|℗|Ⓟ|\(p\)|©|\(c\))\s*(?:(?:19|20)\d{2}(?:\s*[-–/,&]\s*(?:19|20)?\d{2,4})*\s*)?(.+)$/i;
-  const TEXT_PC_STRIP = /\s+[·|•]\s+.*$|\s+[–—]\s+[A-Z]{2,}[\s-]?\d+.*$|\s+(?:AAD|ADD|DDD|DAD)\b|[,.]?\s*(?:[Aa]ll\s+[Rr]ights\s+[Rr]eserved|ALL\s+RIGHTS\s+RESERVED).*$|[,\s]+(?:19|20)\d{2}(?:\s*[-–/&,]\s*(?:19|20)?\d{2,4})*\s*\.?$/g;
+  const TEXT_PC_SIGNS = MAP.TEXT_PC_SIGNS;
+  const TEXT_PC_STRIP = MAP.TEXT_PC_STRIP;
   // [T044] (3.30.9) the legal form at the end of a company's name – searched without it too ("TUM Records Oy" → "TUM Records")
-  const COMPANY_FORM = /[\s,]+(?:oyj?|ab|asa?|a\/s|aps|ltd\.?|limited|gmbh|kg|ohg|ag|inc\.?|incorporated|llc|l\.l\.c\.|corp\.?|corporation|co\.?|plc|pty\.?|s\.?a\.?|s\.?l\.?|s\.?r\.?l\.?|b\.?v\.?|n\.?v\.?|sas|sarl|e\.\s?k\.?|s\.?p\.?a\.?|k\.?k\.?|sp\.?\s?z\s?o\.?\s?o\.?)$/i;
+  const COMPANY_FORM = MAP.COMPANY_FORM;
 
   // [T045] (3.31.0) Rights societies: the organisations that collect the royalties of authors and publishers. MusicBrainz
   // keeps them as labels (type "Rights Society") under these short names and links one to a release ("rights society",
   // release level; C032). After a publisher's name one of them names its society ("FlizmoMusic-BMI", "X Music (ASCAP)",
   // collected item 97); a line of societies only ("BIEM/GEMA") names the release's. BIEM itself is the bureau of the
   // mechanical rights societies – no society of its own.
-  const RIGHTS_SOCIETIES = [
-    ['BMI', 'Broadcast Music, Inc. – USA'], ['ASCAP', 'American Society of Composers, Authors and Publishers – USA'], ['SESAC', 'USA'], ['GMR', 'Global Music Rights – USA'],
-    ['HFA', 'Harry Fox Agency – USA, mechanical rights'], ['SOCAN', 'Canada'], ['CMRRA', 'Canada, mechanical rights'], ['SODRAC', 'Canada'], ['PRS', 'PRS for Music – UK'],
-    ['MCPS', 'UK, mechanical rights'], ['IMRO', 'Ireland'], ['GEMA', 'Germany'], ['AKM', 'Austria'], ['SUISA', 'Switzerland'], ['SACEM', 'France'], ['SDRM', 'France, mechanical rights'],
-    ['SABAM', 'Belgium'], ['BUMA', 'Netherlands'], ['STEMRA', 'Netherlands, mechanical rights'], ['SIAE', 'Italy'], ['SGAE', 'Spain'], ['SPA', 'Portugal'], ['STIM', 'Sweden'],
-    ['TONO', 'Norway'], ['KODA', 'Denmark'], ['NCB', 'Nordic countries, mechanical rights'], ['TEOSTO', 'Finland'], ['STEF', 'Iceland'], ['ZAiKS', 'Poland'], ['OSA', 'Czech Republic'],
-    ['SOZA', 'Slovakia'], ['ARTISJUS', 'Hungary'], ['UCMR-ADA', 'Romania'], ['MUSICAUTOR', 'Bulgaria'], ['AEPI', 'Greece'], ['MESAM', 'Turkey'], ['RAO', 'Russia'], ['ACUM', 'Israel'],
-    ['JASRAC', 'Japan'], ['KOMCA', 'South Korea'], ['CASH', 'Hong Kong'], ['MÜST', 'Taiwan'], ['MCSC', 'China'], ['COMPASS', 'Singapore'], ['MACP', 'Malaysia'], ['IPRS', 'India'],
-    ['APRA', 'Australia, New Zealand'], ['AMCOS', 'Australia, New Zealand, mechanical rights'], ['SAMRO', 'South Africa'], ['SADAIC', 'Argentina'], ['ECAD', 'Brazil'], ['UBC', 'Brazil'],
-    ['ABRAMUS', 'Brazil'], ['SACM', 'Mexico'], ['SAYCO', 'Colombia'], ['APDAYC', 'Peru'], ['SCD', 'Chile'], ['AGADU', 'Uruguay'],
-  ];
+  const RIGHTS_SOCIETIES = MAP.RIGHTS_SOCIETIES;
   /** The spellings of a society: as listed, in capitals, and (five letters or more) with a capital only ("Teosto"). */
   const societyForms = (a) => uniq([a, a.toUpperCase(), ...(a.length >= 5 && /^\p{L}+$/u.test(a) ? [a[0].toUpperCase() + a.slice(1).toLowerCase()] : []), a.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()]);
   const SOCIETY_ALT = uniq(RIGHTS_SOCIETIES.flatMap(([a]) => societyForms(a))).sort((x, y) => y.length - x.length).join('|');
@@ -7362,70 +7307,44 @@
   const SOCIETY_WORD = new RegExp(`(?<![\\p{L}\\p{N}])(${SOCIETY_ALT})(?![\\p{L}\\p{N}])`, 'gu');
   /** The society's name as MusicBrainz writes it (the listed form). */
   // [S045] (3.32.0) a sentence of writers, in which a rights society after a name is the release's
-  const WRITER_WORDS_IN = /\b(?:composed|composer|composition|written|writer|songwriter|music|lyrics|lyricist|words|arranged|arranger|arrangements?|libretto|librettist|translated|translator|songs)\b/i;
+  const WRITER_WORDS_IN = MAP.WRITER_WORDS_IN;
   const societyName = (w) => (RIGHTS_SOCIETIES.find(([a]) => societyForms(a).includes(w)) || [w])[0];
   // [S043] (3.31.0) The heading of a block of publishers: "[Publishers & Rights Societies]", "Publishers:", "Publishing:",
   // "Music publishers (all BMI)", "Verlage:", "Éditeurs :" – the lines below it name publishers ("Name-BMI : tracks 1, 6, 8")
-  const PUBLISHER_HEAD = /^\[?\s*(?:music\s+)?(?:publishers?|publishing|published\s+by|(?:musik)?verlage?|éditeurs?|éditions\s+musicales|editoras?|editoriales?|edizioni\s+musicali)(?:\s*(?:&|and|und|et|y|,|\/)\s*(?:rights?\s+societ(?:y|ies)|collecting\s+societ(?:y|ies)|PROs?|verwertungsgesellschaften?|sociétés?\s+de\s+gestion))?\s*(?:\(\s*all\s+[^)]{2,20}\))?\s*\]?\s*:?\s*$/i;
+  const PUBLISHER_HEAD = MAP.PUBLISHER_HEAD;
   // [T046] (3.31.0) A name written together ("FlizmoMusic", "4WordSeaMusic", "Fourwordseamusic", collected item 97:
   // "es ist auffällig, dass häufiger Leerzeichen fehlen. das soll berücksichtigt werden bei der abfrage."): MusicBrainz's
   // search is also asked for it written apart, a number as a word too ("4 Word Sea Music", "Four Word Sea Music")
-  const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-  const COMPANY_KIND_END = /^(.*?\p{L}{3})(music|musik|musique|publishing|songs|records|recordings|editions?|verlag)$/iu;
+  const NUMBER_WORDS = MAP.NUMBER_WORDS;
+  const COMPANY_KIND_END = MAP.COMPANY_KIND_END;
 
   // [T024] Texts (3.14.0): a line that only names the label of the release ("An Echo Elberfeld release.", "Released on
   // X Records") is left out – the label is set in the release editor; ℗ / © lines are credits
-  const TEXT_LABEL_LINE = /^(?:(?:an?|the)\s+.+?\s+release|released\s+(?:on|by|via|through)\s+.+)$/i;
+  const TEXT_LABEL_LINE = MAP.TEXT_LABEL_LINE;
 
   // [T025] Texts (3.14.0): words that are no part of a name after a role at the start of a line – "Photography Tom
   // Barrett" is a credit, "Music and artwork of this release …" is not
-  const TEXT_NOT_NAME = /\b(?:the|a|an|and|or|of|to|for|with|by|at|in|on|from|this|that|these|those|is|are|was|were|be|been|all|our|my|his|her|their|its|no|not|thanks|release|album|record)\b/i;
+  const TEXT_NOT_NAME = MAP.TEXT_NOT_NAME;
 
   // [T027] (3.17.2) Liner notes in Bandcamp's "about" text: a first word that makes the line below the text no name
   // ("Special Thanks", "Listen loud") – and the particles a name may have inside ("Jan van Roe")
-  const LINER_NOT_NAME = /^(?:special|thanks?|thankyou|love|enjoy|credits?|notes?|liner|about|all|rights|recorded|mixed|mastered|produced|written|music|lyrics|artwork|photography|photos?|design|cover|layout|listen|download|stream|available|out|now|released?|album|ep|lp|single|tracks?|bonus|the|a|an|and|for|with|from|by|to|in|on|at|of|our|my|your|this|that)$/i;
-  const LINER_PARTICLE = /^(?:van|von|der|den|de|del|della|di|da|du|la|le|dos|das|af|av|bin|ibn|y|zu|ten|ter)$/i;
+  const LINER_NOT_NAME = MAP.LINER_NOT_NAME;
+  const LINER_PARTICLE = MAP.LINER_PARTICLE;
 
   // [T026] (3.15.1) MusicBrainz's special purpose artists (https://musicbrainz.org/doc/Style/Unknown_and_untitled/Special_purpose_artist,
   // checked 2026-10-17): their catalogues are huge and say nothing about a release – the works comparison leaves them out.
   // Besides these, any MB name entirely in square brackets ("[soundtrack]", "[classical music]") counts as one.
-  const SPECIAL_ARTISTS = [
-    ['89ad4ac3-39f7-470e-963a-56509c546377', 'Various Artists'],
-    ['125ec42a-7229-4250-afc5-e057484327fe', '[unknown]'],
-    ['f731ccc4-e22a-43af-a747-64213329e088', '[anonymous]'],
-    ['9be7f096-97ec-4615-8957-8d40b5dcbc41', '[traditional]'],
-    ['eec63d3c-3b81-4ad4-b1e4-7c147d4d2b61', '[no artist]'],
-    ['33cf029c-63b0-41a0-9855-be2a3665fb3b', '[data]'],
-    ['314e1c25-dde7-4e4d-b2f4-0a7b9f7c56dc', '[dialogue]'],
-    ['66ea0139-149f-4a0c-8fbf-5ea9ec4a6e49', '[Disney]'],
-    ['a0ef7e1d-44ff-4039-9435-7d5fefdeecc9', '[theatre]'],
-    ['90068d37-bae7-4292-be4a-704c145bd616', '[church chimes]'],
-    ['80a8851f-444c-4539-892b-ad2a49292aa9', '[language instruction]'],
-    ['7e84f845-ac16-41fe-9ff8-df12eb32af55', 'MusicBrainz Test Artist'],
-  ];
-  const SPECIAL_ARTIST_NAME = /^\[[^\]]+\]$/;
+  const SPECIAL_ARTISTS = MAP.SPECIAL_ARTISTS;
+  const SPECIAL_ARTIST_NAME = MAP.SPECIAL_ARTIST_NAME;
   /** A special purpose artist: one of SPECIAL_ARTISTS, or a name entirely in square brackets. */
   const isSpecialArtist = (mbid, ...names) => SPECIAL_ARTISTS.some(([id]) => id === mbid)
     || names.some((n) => SPECIAL_ARTIST_NAME.test(String(n || '').trim()));
 
   // [T013] Texts (E1): roles that name a company (publisher, studio, ℗/©) – other "… by" are people
-  const TEXT_COMPANY_RE = /^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered) in|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright|rights society)/;
+  const TEXT_COMPANY_RE = MAP.TEXT_COMPANY_RE;
 
   // [T014] Dates: month names (English, German, Spanish, French; D004)
-  const MONTH_NAMES = {
-    1: ['january', 'jan', 'januar', 'jänner', 'jän', 'enero', 'ene', 'janvier', 'janv'],
-    2: ['february', 'feb', 'februar', 'febrero', 'février', 'fevrier', 'févr', 'fevr', 'fév'],
-    3: ['march', 'mar', 'märz', 'maerz', 'marzo', 'mars'],
-    4: ['april', 'apr', 'abril', 'abr', 'avril', 'avr'],
-    5: ['may', 'mai', 'mayo'],
-    6: ['june', 'jun', 'juni', 'junio', 'juin'],
-    7: ['july', 'jul', 'juli', 'julio', 'juillet', 'juil'],
-    8: ['august', 'aug', 'agosto', 'ago', 'août', 'aout'],
-    9: ['september', 'sept', 'sep', 'septiembre', 'septembre'],
-    10: ['october', 'oct', 'oktober', 'okt', 'octubre', 'octobre'],
-    11: ['november', 'nov', 'noviembre', 'novembre'],
-    12: ['december', 'dec', 'dezember', 'dez', 'diciembre', 'dic', 'décembre', 'decembre', 'déc'],
-  };
+  const MONTH_NAMES = MAP.MONTH_NAMES;
 
   // [T014] Dates: ordinal words ("November the first"; D005)
   const ORDINALS = new Map(['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth',
@@ -7439,22 +7358,12 @@
   ORDINALS.set('thirty first', 31);
 
   /** [T015] Keywords near a date that suggest its group (shown highlighted; the choice stays with the person). */
-  const DATE_HINTS = [
-    ['remastering', /remaster/i],
-    ['mastering', /master(ed|ing)?\b|gemastert/i],
-    ['mix', /\bmix(ed|ing)?\b|abgemischt|mezcl|mixag/i],
-    ['copyright', /℗|©|\(p\)|\(c\)|copyright|phonographic/i],
-    // [D015] whole words only: "Fuzzoramarecords" or "… Records" is a label name, not "recorded"
-    ['performance', /\brecord(ed|ing|ings)?\b|\brec\.|\blive at\b|\bsessions?\b|aufgenommen|aufnahme|grabad|enregistr|\bconcert|\bkonzert/i],
-    // [D018] (3.28.5) a year of a release or issue ("originally issued on LP in 1974", "Released 2003") is no date of the
-    // credits: left out
-    ['issue', /\b(?:re-?)?(?:issued|released)\b|\bfirst (?:issued|released|published)\b|veröffentlicht|erschienen|\bpublicad[oa]\b|\beditad[oa]\b|\bpublié|\bsorti\b/i],
-  ];
+  const DATE_HINTS = MAP.DATE_HINTS;
 
   // [T014] Texts: month names, only to take dates out of a role phrase ("Recorded 12 May 2019" → "Recorded")
   // [3.32.5] only month words (whole, or the first three or four letters): before, any word that began so was taken
   // out – "Marseille", "Augsburg", "Decatur" lost the area of a place (collected item 117)
-  const TEXT_MONTHS = /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?(?=\s|$)/gi;
+  const TEXT_MONTHS = MAP.TEXT_MONTHS;
 
   /**
    * Date groups: a date on one row of a group goes into the pool ("Performance 1" …) and onto every
@@ -7476,20 +7385,13 @@
 
   // [3.28.6] (S021) Notes that say live: "recorded live", "live recording", [3.28.6] "in live concert", "live in concert",
   // "recorded in concert", "at a live performance"
-  const LIVE_NOTES = /\b(?:recorded|performed)\s+live\b|\blive\s+recording\b|\b(?:in|at|during)\s+(?:a\s+)?live\s+(?:concert|performance)\b|\blive\s+in\s+concert\b|\brecorded\s+in\s+concert\b/i;
+  const LIVE_NOTES = MAP.LIVE_NOTES;
 
   // [T017] (S021) Track titles that say "live": "(Live)", "(Live at …)", "[Live]", "– Live"
-  const LIVE_TITLE = /\((?:live|live at [^)]*|live in [^)]*|live version)\)|\[(?:live|live at [^\]]*)\]|\s[-–—]\s*live\b/i;
+  const LIVE_TITLE = MAP.LIVE_TITLE;
 
   // [T018] (S022) Roles named with a track list in the notes ("XYZ Publishing (1, 4, 6)", "Written by Y (2, 5)")
-  const NOTE_ROLES = [
-    [/\b(published|publishing|publisher|verlag|verlegt|sub-?published)\b/i, 'publishing'],
-    [/\bcommissioned\b/i, 'commissioned'],
-    [/\b(written|words and music|words & music|music and lyrics|music & lyrics|lyrics and music|lyrics & music|songs)\s+by\b/i, 'writer'],
-    [/\b(music|composed|composition|compositions)\s+by\b|\bcomposers?\b/i, 'composer'],
-    [/\b(lyrics|words|text|texte)\s+by\b|\blyricists?\b/i, 'lyricist'],
-    [/\b(arranged|arrangements?|orchestrated|orchestrations?)\s+by\b|\barrangers?\b/i, 'arranger'],
-  ];
+  const NOTE_ROLES = MAP.NOTE_ROLES;
 
   // --- 2e. Applying the rules ------------------------------------------------------------------------------------------
 
@@ -9714,7 +9616,7 @@
     { id: 'X009', kind: 'links', name: '', home: '', perms: '–', since: '3.21.0',
       hosts: ['instagram.com', 'facebook.com', 'twitter.com', 'x.com', 'soundcloud.com', 'youtube.com', 'tiktok.com', 'bsky.app', 'threads.com', 'threads.net', 'mixcloud.com',
         'vimeo.com', 'myspace.com', 'open.spotify.com', 'music.apple.com', 'deezer.com', 'tidal.com', 'music.youtube.com', 'qobuz.com', 'music.amazon.*', 'linktr.ee'] },
-    { id: 'X010', kind: 'site', name: 'GitHub', home: 'https://github.com/proto-beep/MBvibecode', hosts: ['github.com', 'raw.githubusercontent.com'], perms: '@updateURL · @downloadURL', since: '0.9.2' },
+    { id: 'X010', kind: 'site', name: 'GitHub', home: 'https://github.com/proto-beep/MBvibecode', hosts: ['github.com', 'raw.githubusercontent.com'], perms: '@updateURL · @downloadURL · @resource mapping · @connect raw.githubusercontent.com · GM_getResourceText', since: '0.9.2' },
     // [3.32.10] the comments of live recordings (item 113; maintainer: "das natürlich in den Connections ergänzen")
     { id: 'X011', kind: 'script', name: 'MusicBrainz: Set recording comments for a release', home: 'https://github.com/murdos/musicbrainz-userscripts/blob/master/set-recording-comments.user.js',
       hosts: ['github.com'], perms: '– (MusicBrainz: /ws/js/release, /ws/js/edit/create)', since: '3.32.10' },
@@ -11916,34 +11818,739 @@
     const onCell = (id) => `<td><input type="checkbox" data-rule-on="${esc(id)}" ${ruleOn(id) ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id }))}"></td>`;
     const row = (id, cells) => `<tr data-rid="${esc(id || '')}">${id ? onCell(id) : '<td></td>'}${cells.map(cell).join('')}</tr>`;
     const head = (cells, toggle = true) => `<thead><tr>${toggle ? `<th>${esc(tr('rules.on'))}</th>` : ''}${cells.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead>`;
-    const roles = roleRules({ b: '', ms: [], flags: [], consumed: new Set(), has: () => false, is: () => false, out: () => null, plainBase: '', modsIn: [], baseIn: '' });
-    const sect = (id, title, html) => `<section data-rsect="${id}"><h3>${esc(title)}</h3><div class="dci-rules-wrap">${html}</div></section>`;
+    const roles = roleRules(RULE_PROBE);
+    // [3.33.1] ✎ at the data rules (item E7): a cell at the end, the form in a row below
+    const editRow = (id, cells, code, span) => `<tr data-rid="${esc(id)}"${mappingChanges.rules[id] ? ' class="dci-rchanged"' : ''}>${onCell(id)}${cells.map(cell).join('')}<td class="dci-redit-cell">${editToolsHtml(id, { code })}</td></tr>${
+      S.ruleEdit && S.ruleEdit.id === id ? `<tr class="dci-redit-row"><td colspan="${span}">${ruleEditHtml(id)}</td></tr>` : ''}`;
+    const listTools = (tid) => (EDITABLE_LISTS[tid] ? ` ${editToolsHtml(tid, { list: true })}` : '');
+    const listForm = (tid) => (S.listEdit && S.listEdit.tid === tid ? listEditHtml(tid) : '');
+    const sect = (id, title, html, tid = '') => `<section data-rsect="${id}"${tid ? ` data-ledit-anchor="${tid}"` : ''}><h3>${esc(title)}${tid ? listTools(tid) : ''}</h3>${tid ? listForm(tid) : ''}<div class="dci-rules-wrap">${html}</div></section>`;
     const where = (w) => `${tr('rules.code')}: ${w}`;
     return [
-      sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note')])}<tbody>
-        ${roles.map((r) => row(r.id, [r.id, r.re ? patternText(r.re) : tr('rules.special'), (r.types || []).join(', '), r.level || '', r.note || ''])).join('')}</tbody></table>`),
+      sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note'), ''])}<tbody>
+        ${roles.map((r) => editRow(r.id, [r.id, r.re ? patternText(r.re) : tr('rules.special'), (r.types || []).join(', '), r.level || '', r.note || ''], r.hasCode, 7)).join('')}</tbody></table>`),
       sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code')])}<tbody>
         ${WORDING_RULES.map((r) => row(r.id, [r.id, r.phrases.join(' | '), r.credit, r.note, r.where || ''])).join('')}</tbody></table>`),
       sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note')])}<tbody>
         ${QUESTION_RULES.map((q) => row(q.id, [q.id, q.base, q.options.join(' · '), q.credit, q.note])).join('')}
         ${TYPE_QUESTIONS.map((q) => row(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note])).join('')}</tbody></table>`),
       sect('special', `${tr('rules.specialTitle')} (S001 … · ${where('SPECIAL_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')])}<tbody>${SPECIAL_RULES.map((r) => row(r.id, [r.id, r.note, r.where || ''])).join('')}</tbody></table>`),
-      sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level')])}<tbody>
-        ${COMPANY_ROLES.map(([re, o]) => row(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.area || []), ...(o.artist || [])]).join(', '), o.level || ''])).join('')}</tbody></table>`),
+      sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), ''])}<tbody>
+        ${COMPANY_ROLES.map(([re, o]) => editRow(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.area || []), ...(o.artist || [])]).join(', '), o.level || ''], false, 6)).join('')}</tbody></table>`),
       sect('instruments', `${tr('rules.instruments')} (T001 · ${where('INSTRUMENT_ALIASES')})`, `<table>${head([trRules('rules.discogs'), tr('rules.mb')], false)}<tbody>
-        ${Object.entries(INSTRUMENT_ALIASES).map(([k, v]) => `<tr>${cell(k)}${cell(v.join(' / '))}</tr>`).join('')}</tbody></table>`),
-      sect('words', `${tr('rules.words')} (T002 · ${where('GENERIC_WORDS')})`, `<p>${esc([...GENERIC_WORDS].sort().join(', '))}</p>`),
+        ${Object.entries(INSTRUMENT_ALIASES).map(([k, v]) => `<tr>${cell(k)}${cell(v.join(' / '))}</tr>`).join('')}</tbody></table>`, 'T001'),
+      sect('words', `${tr('rules.words')} (T002 · ${where('GENERIC_WORDS')})`, `<p>${esc([...GENERIC_WORDS].sort().join(', '))}</p>`, 'T002'),
       sect('dates', `${tr('rules.dates')} (D001 … · ${where('DATE_RULES, DATE_MATCHERS')})`, `<table>${head([tr('rules.id'), tr('rules.note')])}<tbody>
         ${DATE_RULES.map((r) => row(r.id, [r.id, r.note])).join('')}</tbody></table>`),
-      sect('lists', tr('rules.lists'), `<p class="dci-sub">${esc(tr('rules.listsHint'))}</p>${TABLES.filter((t) => t.show).map((t) => `<div class="dci-rules-list" data-table="${esc(t.id)}">
-        <h4>${esc(t.id)} · ${esc(t.note)} <span class="dci-sub">(${esc(where(t.where))})</span></h4>${tableShowHtml(t)}</div>`).join('')}`),
+      sect('lists', tr('rules.lists'), `<p class="dci-sub">${esc(tr('rules.listsHint'))}</p>${TABLES.filter((t) => t.show).map((t) => `<div class="dci-rules-list" data-table="${esc(t.id)}"${EDITABLE_LISTS[t.id] ? ` data-ledit-anchor="${t.id}"` : ''}>
+        <h4>${esc(t.id)} · ${esc(t.note)} <span class="dci-sub">(${esc(where(t.where))})</span>${listTools(t.id)}</h4>${listForm(t.id)}${tableShowHtml(t)}</div>`).join('')}`),
       sect('tables', tr('rules.tables'), `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')], false)}<tbody>${TABLES.map((t) => `<tr>${cell(t.id)}${cell(t.note)}${cell(t.where)}</tr>`).join('')}</tbody></table>`),
     ].join('');
   }
 
+  // --- [3.33.1] ✎ built-in data rules, your changes, export and import (collected item E7) ---------------------------------
+  // (maintainer: "auch direkt an der Regel") ✎ at every role rule without code, every company rule and the lists T001, T002,
+  // T003, T038, T045, T048 opens a form below it; what is saved goes into your changes (section 2·, ↺ back to the built-in
+  // rule). Export: your changes (mb-vibecode-credits-importer-mapping-changes.json: own rules, switches, changed rules and
+  // lists, with the versions they were made on) or the whole effective register (the layout of the mapping file, for a pull
+  // request), as a file or to the clipboard. Import: a file – chosen or dropped onto the window – or pasted text; checked
+  // (only data, known ids, allowed fields, patterns compiled in try/catch), then a preview, merged or replacing your changes.
+
+  const RULE_PROBE = { b: '', ms: [], flags: [], consumed: new Set(), has: () => false, is: () => false, out: () => null, plainBase: '', modsIn: [], baseIn: '' };
+  const isRoleRuleId = (id) => !!rawRoleRule(MAPPING.raw, id);
+  /** A rule of the file that ✎ may change: a role rule without code, or a company rule. */
+  function ruleEditable(id) {
+    if (rawCompanyRule(MAPPING.raw, id)) return true;
+    const r = roleRules(RULE_PROBE).find((x) => x.id === id);
+    return !!r && !r.hasCode;
+  }
+  const encJson = (v) => JSON.stringify(v === undefined ? null : v);
+  /** The value of a field of a rule with the given changes (as in the file). */
+  function fieldWith(changes, id, field) {
+    const c = changes.rules[id];
+    return c && c.set && field in c.set ? c.set[field] : builtinField(id, field);
+  }
+  const ruleFieldsOf = (id) => (isRoleRuleId(id) ? ROLE_RULE_FIELDS : COMPANY_RULE_FIELDS);
+  const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const wordsSource = (words) => (words.length === 1 ? `^${escRe(words[0])}$` : `^(${words.map(escRe).join('|')})$`);
+  const showItem = (x) => (Array.isArray(x) ? `${x[0]} = ${[].concat(x[1]).join(' / ')}` : String(x));
+
+  /** A pattern for the form: role words ("a | b") where it is a plain list of words, else the regular expression. */
+  function patternForm(v) {
+    if (!v || typeof v.$re !== 'string') return { pmode: 're', pattern: '' };
+    const words = patternWords(v.$re);
+    if (words && !v.$flags && wordsSource(words) === v.$re) return { pmode: 'words', pattern: words.join(' | ') };
+    return { pmode: 're', pattern: v.$re };
+  }
+
+  /** A pattern checked: {"$re", "$flags"} (or its source as text), not empty, not too long, compiled in try/catch. */
+  function checkPattern(v) {
+    const src = typeof v === 'string' ? v : v && typeof v.$re === 'string' ? v.$re : null;
+    const flags = v && typeof v === 'object' && typeof v.$flags === 'string' ? v.$flags : '';
+    if (!src || !src.trim()) return { error: tr('mapping.badPattern', { why: tr('mapping.empty') }) };
+    if (src.length > LIMITS.re) return { error: tr('mapping.badPattern', { why: tr('mapping.tooLong', { n: LIMITS.re }) }) };
+    if (!/^[imsu]*$/.test(flags)) return { error: tr('mapping.badPattern', { why: flags }) };
+    try {
+      new RegExp(src, flags);
+    } catch (e) {
+      return { error: tr('mapping.badPattern', { why: e.message }) };
+    }
+    return { value: { $re: src, $flags: flags } };
+  }
+
+  /** The fields of a change of a rule checked: only those of its kind, each of the right kind → { set } or { error }. */
+  function checkRuleSet(id, set) {
+    if (!set || typeof set !== 'object' || Array.isArray(set)) return { error: tr('mapping.badValue', { id, field: '–' }) };
+    const fields = ruleFieldsOf(id);
+    const out = {};
+    for (const [f, v] of Object.entries(set)) {
+      const bad = { error: tr('mapping.badValue', { id, field: f }) };
+      if (!fields.includes(f)) return { error: tr('mapping.badField', { id, field: f }) };
+      if (f === 're') {
+        const p = checkPattern(v);
+        if (p.error) return p;
+        out.re = p.value;
+      } else if (f === 'level') {
+        if (!RULE_LEVELS.includes(v)) return bad;
+        out.level = v;
+      } else if (f === 'credit') {
+        if (v === null || v === true || (typeof v === 'string' && v.trim() && v.length <= LIMITS.text)) out.credit = typeof v === 'string' ? v.trim() : v;
+        else return bad;
+      } else if (v === null && f !== 'types') {
+        out[f] = null;
+      } else {
+        if (!Array.isArray(v) || !v.length || v.length > LIMITS.names || v.some((x) => typeof x !== 'string' || !x.trim() || x.length > LIMITS.text)) return bad;
+        out[f] = v.map((x) => x.trim());
+      }
+    }
+    return { set: out };
+  }
+
+  /**
+   * A change of a rule into `changes`: fields equal to the built-in rule are left out (none left: the change goes). `was`:
+   * the built-in value each field had when it was changed (kept from before, or from an imported file) – after an update
+   * that changed the built-in rule the change is marked.
+   */
+  function putRuleChange(changes, id, set, wasOld = {}) {
+    const keep = {};
+    const was = {};
+    for (const [f, v] of Object.entries(set)) {
+      const b = builtinField(id, f);
+      if (encJson(v) === encJson(b)) continue;
+      keep[f] = v;
+      was[f] = f in wasOld ? wasOld[f] : (b === undefined ? null : b);
+    }
+    if (Object.keys(keep).length) changes.rules[id] = { set: keep, was };
+    else delete changes.rules[id];
+  }
+
+  /** The changes of a list into `changes`, from all its entries (what the built-in list lacks or has more). */
+  function putListChange(changes, tid, items) {
+    const L = EDITABLE_LISTS[tid];
+    const key = (x) => listKey(L.shape, x);
+    const built = new Map(rawListItems(MAPPING.raw, tid).map((x) => [key(x), x]));
+    const now = new Map(items.map((x) => [key(x), x]));
+    const remove = [...built.entries()].filter(([k]) => !now.has(k)).map(([, x]) => (Array.isArray(x) ? x[0] : x));
+    const add = [...now.entries()].filter(([k, x]) => !built.has(k) || encJson(built.get(k)) !== encJson(x)).map(([, x]) => x);
+    if (add.length || remove.length) changes.lists[tid] = { add, remove };
+    else delete changes.lists[tid];
+  }
+
+  /** The entries of a list with the given changes (as in the file). */
+  const listWith = (changes, tid) => rawListItems(effectiveRaw(changes), tid);
+
+  /** A change of a list from a file checked: add (words, or [key, value]; spellings [key, [names]]), remove (keys). */
+  function checkListChange(tid, c) {
+    const L = EDITABLE_LISTS[tid];
+    const bad = { error: tr('mapping.badValue', { id: tid, field: 'add/remove' }) };
+    if (!c || typeof c !== 'object') return bad;
+    const add = Array.isArray(c.add) ? c.add : [];
+    const remove = Array.isArray(c.remove) ? c.remove : [];
+    const str = (x, n = LIMITS.text) => typeof x === 'string' && !!x.trim() && x.length <= n;
+    if (add.length + remove.length > LIMITS.items || remove.some((x) => !str(x))) return bad;
+    for (const a of add) {
+      if (L.shape === 'words' || L.shape === 'set') {
+        if (!str(a)) return bad;
+      } else if (L.shape === 'pairs') {
+        if (!Array.isArray(a) || a.length !== 2 || !str(a[0]) || !str(a[1], LIMITS.value)) return bad;
+      } else if (!Array.isArray(a) || a.length !== 2 || !str(a[0]) || !Array.isArray(a[1]) || !a[1].length || a[1].some((x) => !str(x))) return bad;
+    }
+    return { change: { add, remove } };
+  }
+
+  /** The entries of a list as lines of the form: a word each, or "key = value" (spellings "spelling = name / name"). */
+  const listLines = (items) => items.map(showItem).join('\n');
+
+  /** Lines of the form back into entries, checked → { items } or { error }. */
+  function listFromLines(tid, text) {
+    const L = EDITABLE_LISTS[tid];
+    const lines = String(text || '').split('\n').map((x) => x.trim()).filter(Boolean);
+    if (lines.length > LIMITS.items) return { error: tr('mapping.tooMany', { n: LIMITS.items }) };
+    const items = new Map();
+    for (const line of lines) {
+      let item;
+      if (L.shape === 'words' || L.shape === 'set') {
+        if (line.length > LIMITS.text) return { error: tr('mapping.badLine', { line }) };
+        item = L.shape === 'set' || L.key === 'ART_TYPES' ? norm(line) : line;
+      } else {
+        const m = line.match(/^(.+?)\s*=\s*(.+)$/);
+        if (!m || m[1].length > LIMITS.text || m[2].length > LIMITS.value) return { error: tr('mapping.badLine', { line }) };
+        item = L.shape === 'map' ? [norm(m[1]), m[2].split(/\s*\/\s*/).filter(Boolean)] : [m[1].trim(), m[2].trim()];
+      }
+      items.set(listKey(L.shape, item), item);
+    }
+    return { items: [...items.values()] };
+  }
+
+  /** A field's value as text: a pattern as the register shows it, names with commas, "as written" for the role credit. */
+  function fieldText(f, v) {
+    if (v == null || (Array.isArray(v) && !v.length)) return '–';
+    if (f === 're') {
+      try {
+        return patternText(new RegExp(v.$re, v.$flags || ''));
+      } catch (e) {
+        return String(v.$re);
+      }
+    }
+    if (f === 'level') return tr(`level.${v}`);
+    if (f === 'credit') return v === true ? tr('mapping.credit.role') : `“${v}”`;
+    return [].concat(v).join(', ');
+  }
+  /** A changed field as HTML: of a pattern of role words the words added and taken away, else before → after. */
+  function fieldChangeHtml(f, a, b) {
+    const wa = f === 're' && a && typeof a.$re === 'string' && patternWords(a.$re);
+    const wb = f === 're' && b && typeof b.$re === 'string' && patternWords(b.$re);
+    if (wa && wb) {
+      const add = wb.filter((w) => !wa.includes(w));
+      const rem = wa.filter((w) => !wb.includes(w));
+      const html = [add.length ? `<span class="dci-mchg-add">+ ${esc(add.join(' | '))}</span>` : '', rem.length ? `<span class="dci-mchg-rem">− ${esc(rem.join(' | '))}</span>` : ''].filter(Boolean).join(' ');
+      if (html) return html;
+    }
+    return `${esc(fieldText(f, a))} → <strong>${esc(fieldText(f, b))}</strong>`;
+  }
+  const ruleFieldsText = (id, changes) => ruleFieldsOf(id).map((f) => `${tr(`mapping.field.${f}`)}: ${fieldText(f, changes ? fieldWith(changes, id, f) : builtinField(id, f))}`).join(' · ');
+
+  /** The fields of a change whose built-in value is no longer what it was when changed (['gone']: the rule is gone). */
+  function ruleConflicts(id) {
+    const c = mappingChanges.rules[id];
+    if (!c) return [];
+    if (!rawRoleRule(MAPPING.raw, id) && !rawCompanyRule(MAPPING.raw, id)) return ['gone'];
+    return Object.keys(c.set || {}).filter((f) => c.was && f in c.was && encJson(c.was[f]) !== encJson(builtinField(id, f)));
+  }
+
+  /** After a change of the register: stored, into MAP, the caches of what is built from it emptied, the rows mapped again. */
+  function mappingChanged(what) {
+    saveMappingChanges();
+    applyMappingChanges();
+    roleVocabCache = null;
+    ruleNotesCache = null;
+    applyRulesChange(what);
+  }
+
+  /** The mapping with other changes for a moment (the preview of an import: before → after). */
+  function mappedWith(changes, fn) {
+    const keep = mappingChanges;
+    mappingChanges = { ...keep, rules: changes.rules, lists: changes.lists };
+    applyMappingChanges();
+    try {
+      return fn();
+    } finally {
+      mappingChanges = keep;
+      applyMappingChanges();
+    }
+  }
+
+  // ✎ a rule: S.ruleEdit = { id, draft, error }; ✎ a list: S.listEdit = { tid, text, error }
+  S.ruleEdit = null;
+  S.listEdit = null;
+
+  /** ✎ at a rule: the form starts with the rule as it is now (with your changes). */
+  function openRuleEdit(id) {
+    const v = (f) => fieldWith(mappingChanges, id, f);
+    const names = (x) => (Array.isArray(x) ? x.join(', ') : '');
+    const draft = { ...patternForm(v('re')), level: v('level') || 'recording' };
+    if (isRoleRuleId(id)) {
+      const credit = v('credit');
+      Object.assign(draft, { types: names(v('types')), creditMode: credit === true ? 'role' : typeof credit === 'string' && credit ? 'text' : 'none',
+        credit: typeof credit === 'string' ? credit : '', instr: names(v('primaryCands')) });
+    } else {
+      ['label', 'place', 'area', 'artist'].forEach((f) => { draft[f] = names(v(f)); });
+    }
+    S.ruleEdit = { id, draft, error: '' };
+    S.listEdit = null;
+  }
+
+  /** The pattern field from words to a regular expression and back, when its kind is switched. */
+  function switchPatternMode(d, to) {
+    if (to === d.pmode) return;
+    if (to === 're') {
+      const words = String(d.pattern || '').split('|').map(norm).filter(Boolean);
+      if (words.length) d.pattern = wordsSource(words);
+    } else {
+      const words = patternWords(String(d.pattern || ''));
+      if (words) d.pattern = words.join(' | ');
+    }
+    d.pmode = to;
+  }
+
+  /** ✎ saved: the form as a change of the rule (checked; fields equal to the built-in rule are none). */
+  function saveRuleEdit() {
+    const { id, draft: d } = S.ruleEdit;
+    const names = (t) => String(t || '').split(',').map((x) => x.trim()).filter(Boolean);
+    const words = String(d.pattern || '').split('|').map(norm).filter(Boolean);
+    const src = d.pmode === 'words' ? (words.length ? wordsSource(words) : '') : String(d.pattern || '').trim();
+    const built = builtinField(id, 're');
+    const set = { re: { $re: src, $flags: (built && built.$flags) || '' }, level: d.level };
+    if (isRoleRuleId(id)) {
+      Object.assign(set, { types: names(d.types), credit: d.creditMode === 'role' ? true : d.creditMode === 'text' && String(d.credit || '').trim() ? String(d.credit).trim() : null,
+        primaryCands: names(d.instr).length ? names(d.instr) : null });
+    } else {
+      ['label', 'place', 'area', 'artist'].forEach((f) => { set[f] = names(d[f]).length ? names(d[f]) : null; });
+    }
+    const ok = checkRuleSet(id, set);
+    if (ok.error) {
+      S.ruleEdit.error = ok.error;
+      renderRulesBody();
+      return;
+    }
+    const old = mappingChanges.rules[id];
+    putRuleChange(mappingChanges, id, ok.set, (old && old.was) || {});
+    S.ruleEdit = null;
+    mappingChanged(id);
+  }
+
+  function ruleEditHtml(id) {
+    const { draft: d, error } = S.ruleEdit;
+    const role = isRoleRuleId(id);
+    const inp = (k, ph = '', list = '') => `<input type="text" data-redit-f="${k}" value="${esc(d[k] || '')}" placeholder="${esc(ph)}"${list ? ` list="${list}"` : ''}>`;
+    const sel = (k, values, label) => `<select data-redit-f="${k}">${values.map((v) => `<option value="${v}" ${d[k] === v ? 'selected' : ''}>${esc(label(v))}</option>`).join('')}</select>`;
+    return `<fieldset class="dci-redit" data-redit="${esc(id)}"><legend>${esc(tr('mapping.editTitle', { id }))}</legend>
+      <label>${esc(tr('mapping.patternMode'))} ${sel('pmode', ['words', 're'], (v) => tr(`mapping.pmode.${v}`))}</label>
+      <label class="dci-redit-wide">${esc(tr('mapping.field.re'))} ${inp('pattern', d.pmode === 'words' ? 'produced by | producer' : '^(produced by|producer)$')}</label>
+      ${role ? `<label>${esc(tr('mapping.field.types'))} ${inp('types', 'producer', 'dci-dl-ltnames')}</label>`
+        : ['label', 'place', 'area', 'artist'].map((f) => `<label>${esc(tr(`mapping.field.${f}`))} ${inp(f)}</label>`).join('')}
+      <label>${esc(tr('mapping.field.level'))} ${sel('level', RULE_LEVELS, (v) => tr(`level.${v}`))}</label>
+      ${role ? `<label>${esc(tr('mapping.field.credit'))} ${sel('creditMode', ['none', 'role', 'text'], (v) => tr(`mapping.credit.${v}`))}
+        ${d.creditMode === 'text' ? inp('credit', tr('rules.creditPh')) : ''}</label>
+        <label>${esc(tr('mapping.field.primaryCands'))} ${inp('instr', 'electric guitar', 'dci-dl-instrnames')}</label>` : ''}
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))} · ${esc(tr('mapping.namesHint'))}</p>
+      ${error ? `<p class="dci-redit-err dci-redit-wide" role="alert">${esc(error)}</p>` : ''}
+      <div class="dci-urule-actions"><button type="button" data-redit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-redit-cancel>${esc(tr('common.cancel'))}</button>
+        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div></fieldset>`;
+  }
+
+  /** ✎ at a list: all its entries, a line each. */
+  function openListEdit(tid) {
+    S.listEdit = { tid, text: listLines(listWith(mappingChanges, tid)), error: '' };
+    S.ruleEdit = null;
+  }
+
+  function saveListEdit() {
+    const { tid, text } = S.listEdit;
+    const got = listFromLines(tid, text);
+    if (got.error) {
+      S.listEdit.error = got.error;
+      renderRulesBody();
+      return;
+    }
+    putListChange(mappingChanges, tid, got.items);
+    S.listEdit = null;
+    mappingChanged(tid);
+  }
+
+  function listEditHtml(tid) {
+    const L = EDITABLE_LISTS[tid];
+    const e = S.listEdit;
+    return `<fieldset class="dci-redit dci-redit-list" data-ledit="${tid}"><legend>${esc(tr('mapping.editList', { id: tid }))}</legend>
+      <textarea data-ledit-text rows="8" spellcheck="false">${esc(e.text)}</textarea>
+      <p class="dci-sub">${esc(tr(L.shape === 'map' ? 'mapping.linesMap' : L.shape === 'pairs' ? 'mapping.linesPairs' : 'mapping.linesWords'))}${L.reload ? ` · ${esc(tr('mapping.reloadHint'))}` : ''}</p>
+      ${e.error ? `<p class="dci-redit-err" role="alert">${esc(e.error)}</p>` : ''}
+      <div class="dci-urule-actions"><button type="button" data-ledit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-ledit-cancel>${esc(tr('common.cancel'))}</button>
+        ${mappingChanges.lists[tid] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${tid}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div></fieldset>`;
+  }
+
+  /** ✎ (and "changed" / "conflict") at a rule or a list of the register; rules with code: "code" (only on/off). */
+  function editToolsHtml(id, { list = false, code = false } = {}) {
+    if (code) return `<span class="dci-sub dci-codetag" title="${esc(tr('mapping.codeOnly'))}">${esc(tr('mapping.codeTag'))}</span>`;
+    const changed = list ? !!mappingChanges.lists[id] : !!mappingChanges.rules[id];
+    const conflict = !list && ruleConflicts(id).length > 0;
+    const t = tr(list ? 'mapping.editListTitle' : 'mapping.editRuleTitle', { id });
+    return `<span class="dci-redit-tools">${changed ? `<span class="dci-changed${conflict ? ' dci-conflict' : ''}" title="${esc(list ? tr('mapping.changedTitle') : tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}">${esc(tr(conflict ? 'mapping.conflictTag' : 'mapping.changedTag'))}</span>` : ''}<button type="button" class="dci-textbtn dci-redit-btn" data-${list ? 'ledit' : 'redit'}-open="${esc(id)}" title="${esc(t)}" aria-label="${esc(t)}">✎</button></span>`;
+  }
+
+  /** "Your changes of built-in rules": each change with before → after, ↺; conflicts after an update; ↺ all. */
+  function changesHtml() {
+    const ids = Object.keys(mappingChanges.rules).sort();
+    const tids = Object.keys(mappingChanges.lists).sort();
+    const head = `<h3>${esc(tr('mapping.changes'))}</h3>`;
+    if (!ids.length && !tids.length) return `<section data-rsect="changes">${head}<p class="dci-sub">${esc(tr('mapping.changesEmpty'))}</p></section>`;
+    const ruleLi = (id) => {
+      const c = mappingChanges.rules[id];
+      const conf = ruleConflicts(id);
+      const gone = conf[0] === 'gone';
+      const fields = gone ? '' : Object.keys(c.set).map((f) => `<span class="dci-mchg-f">${esc(tr(`mapping.field.${f}`))}: ${fieldChangeHtml(f, builtinField(id, f), c.set[f])}</span>`).join(' · ');
+      const confHtml = gone ? `<span class="dci-mchg-conf">⚠ ${esc(tr('mapping.gone'))}</span>`
+        : conf.length ? `<span class="dci-mchg-conf">⚠ ${esc(tr('mapping.conflict', { fields: conf.map((f) => `${tr(`mapping.field.${f}`)} ${fieldText(f, c.was[f])} → ${fieldText(f, builtinField(id, f))}`).join(', ') }))}</span>
+          <button type="button" class="dci-textbtn" data-mchg-keep="${esc(id)}">${esc(tr('mapping.keepMine'))}</button>` : '';
+      return `<li data-mchg="${esc(id)}"${conf.length ? ' class="dci-mchg-conflict"' : ''}><button type="button" class="dci-textbtn dci-ruleid" data-mchg-goto="${esc(id)}">${esc(id)}</button> ${fields} ${confHtml}
+        <button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr(conf.length ? 'mapping.discard' : 'mapping.toBuiltin'))}</button></li>`;
+    };
+    const listLi = (tid) => {
+      const c = mappingChanges.lists[tid];
+      return `<li data-mchg="${tid}"><button type="button" class="dci-textbtn dci-ruleid" data-mchg-goto="${tid}">${tid}</button>
+        ${c.add.length ? `<span class="dci-mchg-add">+ ${esc(c.add.map(showItem).join(', '))}</span>` : ''} ${c.remove.length ? `<span class="dci-mchg-rem">− ${esc(c.remove.join(', '))}</span>` : ''}
+        ${EDITABLE_LISTS[tid] && EDITABLE_LISTS[tid].reload ? `<span class="dci-sub">${esc(tr('mapping.reloadHint'))}</span>` : ''}
+        <button type="button" class="dci-textbtn" data-mchg-reset="${tid}">↺ ${esc(tr('mapping.toBuiltin'))}</button></li>`;
+    };
+    return `<section data-rsect="changes">${head}<p class="dci-sub">${esc(tr('mapping.changesHint'))}</p><ul class="dci-mchg">${ids.map(ruleLi).join('')}${tids.map(listLi).join('')}</ul>
+      <button type="button" class="dci-textbtn" data-mchg-resetall>↺ ${esc(tr('mapping.resetAll'))}</button></section>`;
+  }
+
+  /** ↺ a change (asked first – maintainer: "frag mich in zukunft ob ich wirklich einen reset machen möchte"). */
+  function resetMappingChange(id) {
+    if (!confirm(tr('mapping.resetAsk', { id }))) return;
+    delete mappingChanges.rules[id];
+    delete mappingChanges.lists[id];
+    if (S.ruleEdit && S.ruleEdit.id === id) S.ruleEdit = null;
+    if (S.listEdit && S.listEdit.tid === id) S.listEdit = null;
+    mappingChanged(id);
+  }
+
+  /** "Keep mine" at a conflict: the change stays, the built-in values it is compared with are those of now. */
+  function keepMappingChange(id) {
+    const c = mappingChanges.rules[id];
+    if (!c) return;
+    Object.keys(c.set).forEach((f) => { c.was[f] = builtinField(id, f) === undefined ? null : builtinField(id, f); });
+    saveMappingChanges();
+    renderRulesBody();
+  }
+
+  // Export and import
+  S.mioWhat = 'changes';
+  S.mImport = null;
+  S.mPaste = '';
+  S.mPasteOpen = false;
+  S.mioStatus = '';
+
+  /** The whole register in the layout of the mapping file (a line per entry), so that a pull request shows only what changed. */
+  function registerFileText(raw) {
+    const one = (v) => JSON.stringify(v);
+    const keys = Object.keys(raw).filter((k) => !['format', 'version', 'about'].includes(k));
+    const lines = ['{', `  "format": ${one(raw.format)},`, `  "version": ${one(raw.version)},`, `  "about": ${one(raw.about)},`];
+    keys.forEach((name, k) => {
+      const v = raw[name];
+      let body;
+      if (Array.isArray(v)) body = v.length ? `[\n${v.map((x) => `    ${one(x)}`).join(',\n')}\n  ]` : '[]';
+      else if (v && typeof v === 'object' && !('$re' in v) && !('$set' in v) && !('$map' in v)) {
+        const e = Object.entries(v);
+        body = e.length ? `{\n${e.map(([a, x]) => `    ${one(a)}: ${one(x)}`).join(',\n')}\n  }` : '{}';
+      } else body = one(v);
+      lines.push(`  ${one(name)}: ${body}${k === keys.length - 1 ? '' : ','}`);
+    });
+    lines.push('}');
+    return `${lines.join('\n')}\n`;
+  }
+
+  /** What is exported: your changes (with the versions they were made on), or the whole effective register. */
+  function mappingExportText(what) {
+    if (what === 'register') return registerFileText(effectiveRaw());
+    return `${JSON.stringify({ format: CHANGES_FORMAT, version: CHANGES_VERSION, script: VERSION, mapping: MAPPING.raw.version || '', exported: new Date().toISOString(),
+      own: userRules(), off: [...rulesOff()], rules: mappingChanges.rules, lists: mappingChanges.lists }, null, 2)}\n`;
+  }
+
+  const exportWhatText = (what) => tr(what === 'register' ? 'mapping.exportRegister' : 'mapping.exportChanges');
+
+  function saveMappingExport() {
+    const file = S.mioWhat === 'register' ? MAPPING_FILE : CHANGES_FILE;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([mappingExportText(S.mioWhat)], { type: 'application/json' }));
+    a.download = file;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    log('info', 'mappingExported', { what: exportWhatText(S.mioWhat), file });
+    S.mioStatus = tr('mapping.saved', { file });
+    renderMappingIo();
+  }
+
+  function copyMappingExport() {
+    const done = (ok) => {
+      S.mioStatus = tr(ok ? 'mapping.copied' : 'mapping.copyFailed');
+      if (ok) log('info', 'mappingExported', { what: exportWhatText(S.mioWhat), file: tr('mapping.clipboard') });
+      renderMappingIo();
+    };
+    try {
+      navigator.clipboard.writeText(mappingExportText(S.mioWhat)).then(() => done(true), () => done(false));
+    } catch (e) {
+      done(false);
+    }
+  }
+
+  /**
+   * A file or pasted text read and checked → { from: v1 | changes | register, rules, lists, own, off, skipped, mapping } or
+   * { error }. A whole register (e.g. from a pull request) gives what differs from the mapping file of this version.
+   */
+  function readMappingImport(text) {
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      return { error: tr('mapping.notJson') };
+    }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return { error: tr('rules.importBad') };
+    const out = { from: '', rules: {}, lists: {}, own: [], off: [], skipped: [], mapping: '', script: '' };
+    const skip = (id, why) => out.skipped.push({ id: String(id), why });
+    const takeRule = (id, set, was) => {
+      if (!rawRoleRule(MAPPING.raw, id) && !rawCompanyRule(MAPPING.raw, id)) return skip(id, tr('mapping.skipUnknown'));
+      if (!ruleEditable(id)) return skip(id, tr('mapping.skipCode'));
+      const ok = checkRuleSet(id, set);
+      if (ok.error) return skip(id, ok.error);
+      out.rules[id] = { set: ok.set, was: was && typeof was === 'object' && !Array.isArray(was) ? was : {} };
+      return null;
+    };
+    if (data.format === 'mb-x-vibecode-rules' && Array.isArray(data.rules)) {
+      out.from = 'v1';
+      out.own = data.rules;
+      out.off = Array.isArray(data.off) ? data.off : [];
+    } else if (data.format === CHANGES_FORMAT) {
+      if (!(Number(data.version) <= CHANGES_VERSION)) return { error: tr('mapping.newerFile', { version: String(data.version) }) };
+      Object.assign(out, { from: 'changes', mapping: String(data.mapping || ''), script: String(data.script || '') });
+      out.own = Array.isArray(data.own) ? data.own : [];
+      out.off = Array.isArray(data.off) ? data.off : [];
+      Object.entries(data.rules && typeof data.rules === 'object' ? data.rules : {}).forEach(([id, c]) => takeRule(id, c && c.set, c && c.was));
+      Object.entries(data.lists && typeof data.lists === 'object' ? data.lists : {}).forEach(([tid, c]) => {
+        if (!EDITABLE_LISTS[tid]) return skip(tid, tr('mapping.skipList'));
+        const ok = checkListChange(tid, c);
+        if (ok.error) return skip(tid, ok.error);
+        out.lists[tid] = ok.change;
+        return null;
+      });
+    } else if (data.format === MAPPING_FORMAT && Array.isArray(data.ROLE_RULE_DATA) && Array.isArray(data.COMPANY_ROLES)) {
+      Object.assign(out, { from: 'register', mapping: String(data.version || '') });
+      for (const r of data.ROLE_RULE_DATA) {
+        if (!r || typeof r.id !== 'string') continue;
+        const b = rawRoleRule(MAPPING.raw, r.id);
+        if (!b) {
+          skip(r.id, tr('mapping.skipUnknown'));
+          continue;
+        }
+        const set = {};
+        ROLE_RULE_FIELDS.forEach((f) => { if (encJson(r[f]) !== encJson(b[f])) set[f] = r[f] === undefined ? null : r[f]; });
+        if (Object.keys(set).length) takeRule(r.id, set, null);
+      }
+      for (const e of data.COMPANY_ROLES) {
+        const o = Array.isArray(e) && e[1];
+        if (!o || typeof o.id !== 'string') continue;
+        const b = rawCompanyRule(MAPPING.raw, o.id);
+        if (!b) {
+          skip(o.id, tr('mapping.skipUnknown'));
+          continue;
+        }
+        const set = {};
+        if (encJson(e[0]) !== encJson(b[0])) set.re = e[0];
+        COMPANY_RULE_FIELDS.filter((f) => f !== 're').forEach((f) => { if (encJson(o[f]) !== encJson(b[1][f])) set[f] = o[f] === undefined ? null : o[f]; });
+        if (Object.keys(set).length) takeRule(o.id, set, null);
+      }
+      for (const [tid, L] of Object.entries(EDITABLE_LISTS)) {
+        if (!(L.key in data)) continue;
+        let items;
+        try {
+          items = rawListItems(data, tid);
+        } catch (e) {
+          skip(tid, tr('mapping.skipList'));
+          continue;
+        }
+        const ok = checkListChange(tid, { add: items, remove: [] });
+        if (ok.error) {
+          skip(tid, ok.error);
+          continue;
+        }
+        const tmp = { rules: {}, lists: {} };
+        putListChange(tmp, tid, items);
+        if (tmp.lists[tid]) out.lists[tid] = { ...tmp.lists[tid], full: true };
+      }
+      // the other lists cannot be changed here
+      const editable = new Set(Object.values(EDITABLE_LISTS).map((L) => L.key));
+      Object.keys(MAPPING.raw).filter((k) => !['format', 'version', 'about', 'ROLE_RULE_DATA', 'COMPANY_ROLES'].includes(k) && !editable.has(k))
+        .forEach((k) => { if (k in data && encJson(data[k]) !== encJson(MAPPING.raw[k])) skip(k, tr('mapping.skipList')); });
+    } else return { error: tr('rules.importBad') };
+    const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit'];
+    out.own = out.own.filter((r) => r && typeof r === 'object' && ['role', 'instrument'].includes(r.kind) && typeof r.discogs === 'string' && r.discogs.trim()
+      && OWN_FIELDS.every((k) => r[k] == null || (['string', 'boolean'].includes(typeof r[k]) && String(r[k]).length <= LIMITS.value)))
+      .map((r) => Object.fromEntries(OWN_FIELDS.filter((k) => r[k] != null).map((k) => [k, r[k]])));
+    out.off = out.off.filter((id) => typeof id === 'string' && /^\+?[A-Z]\d{3}$/.test(id));
+    return out;
+  }
+
+  /** What an import would give: { changes, own, off } – merged with your changes, or replacing them. */
+  function planImport(imp, mode) {
+    const replace = mode === 'replace';
+    const changes = replace ? { rules: {}, lists: {} } : JSON.parse(JSON.stringify({ rules: mappingChanges.rules, lists: mappingChanges.lists }));
+    for (const [id, c] of Object.entries(imp.rules)) {
+      const mine = changes.rules[id];
+      putRuleChange(changes, id, { ...(mine ? mine.set : {}), ...c.set }, { ...(mine ? mine.was : {}), ...c.was });
+    }
+    for (const [tid, c] of Object.entries(imp.lists)) {
+      const L = EDITABLE_LISTS[tid];
+      const key = (x) => listKey(L.shape, x);
+      const out = new Set(c.remove.map(norm));
+      let items = (c.full || replace ? rawListItems(MAPPING.raw, tid) : listWith(changes, tid)).filter((x) => !out.has(key(x)));
+      c.add.forEach((a) => {
+        items = items.filter((x) => key(x) !== key(a));
+        items.push(a);
+      });
+      putListChange(changes, tid, items);
+    }
+    // a whole register has no own rules and switches: those stay as they are
+    if (imp.from === 'register') return { changes, own: userRules().map((u) => ({ ...u })), off: new Set(rulesOff()) };
+    const own = replace ? [] : userRules().map((u) => ({ ...u }));
+    const nextId = () => `U${String(1 + Math.max(0, ...own.map((u) => Number(String(u.id).slice(1)) || 0))).padStart(3, '0')}`;
+    for (const r of imp.own) {
+      // the same role (and details) replaces the rule you have; anything else is added
+      const same = own.findIndex((x) => x.kind === r.kind && norm(x.discogs) === norm(r.discogs)
+        && norm(x.details || '') === norm(r.details || '') && (x.detailsMode || 'any') === (r.detailsMode || 'any'));
+      if (same >= 0) own[same] = { ...r, id: own[same].id };
+      else own.push({ ...r, id: replace && /^U\d{3}$/.test(r.id || '') && !own.some((x) => x.id === r.id) ? r.id : nextId() });
+    }
+    const off = new Set(replace ? [] : rulesOff());
+    imp.off.forEach((id) => off.add(id));
+    return { changes, own, off };
+  }
+
+  /** The preview of an import: new, changed, removed; skipped ids; conflicts; the roles of changed rules before → after. */
+  function importPreviewHtml() {
+    const { imp, mode, name } = S.mImport;
+    const plan = planImport(imp, mode);
+    const items = [];
+    const li = (kind, id, html) => items.push(`<li class="dci-mprev-${kind}" data-mprev="${esc(id)}"><strong>${esc(id)}</strong> ${esc(tr(`mapping.prev.${kind}`))}${html ? `: ${html}` : ''}</li>`);
+    // roles of the changed rules (up to three words of their patterns): mapped now, and with the import (all at once)
+    const samples = new Map();
+    const ids = uniq([...Object.keys(mappingChanges.rules), ...Object.keys(plan.changes.rules)]).sort()
+      .filter((id) => encJson(mappingChanges.rules[id]) !== encJson(plan.changes.rules[id]));
+    ids.forEach((id) => samples.set(id, uniq([fieldWith(mappingChanges, id, 're'), fieldWith(plan.changes, id, 're')]
+      .flatMap((v) => (v && typeof v.$re === 'string' && patternWords(v.$re)) || [])).slice(0, 3)));
+    const mapSample = (id, w) => {
+      if (isRoleRuleId(id)) {
+        const r = mapRole(w, []);
+        return `${(r.types || []).join(' / ') || '–'} · ${tr(`level.${r.level}`)}${r.credit ? ` · “${r.credit === true ? w : r.credit}”` : ''} (${r.rule || '–'})`;
+      }
+      const c = mapCompanyRole(w);
+      return `${Object.entries(c.typeOptions).filter(([, v]) => v && v.length).map(([k, v]) => `${k}: ${v.join(' / ')}`).join('; ')} · ${tr(`level.${c.level}`)} (${c.rule || '–'})`;
+    };
+    const showAll = () => new Map(ids.map((id) => [id, samples.get(id).map((w) => mapSample(id, w))]));
+    const before = showAll();
+    const after = mappedWith(plan.changes, showAll);
+    for (const id of ids) {
+      const a = mappingChanges.rules[id];
+      const b = plan.changes.rules[id];
+      const kind = !a ? 'new' : !b ? 'removed' : 'changed';
+      const fields = ruleFieldsOf(id).filter((f) => encJson(fieldWith(mappingChanges, id, f)) !== encJson(fieldWith(plan.changes, id, f)));
+      const inc = imp.rules[id];
+      const conflict = inc && imp.from === 'changes' ? Object.keys(inc.set).filter((f) => f in inc.was && encJson(inc.was[f]) !== encJson(builtinField(id, f))) : [];
+      li(kind, id, `${fields.map((f) => `${esc(tr(`mapping.field.${f}`))} ${fieldChangeHtml(f, fieldWith(mappingChanges, id, f), fieldWith(plan.changes, id, f))}`).join(' · ')}
+        ${conflict.length ? `<div class="dci-mchg-conf">⚠ ${esc(tr('mapping.prevConflict', { fields: conflict.map((f) => `${tr(`mapping.field.${f}`)} ${fieldText(f, inc.was[f])} → ${fieldText(f, builtinField(id, f))}`).join(', ') }))}</div>` : ''}
+        ${samples.get(id).length ? `<div class="dci-mprev-samples">${samples.get(id).map((w, k) => `<div><code>${esc(w)}</code>: ${esc(before.get(id)[k])} → <strong>${esc(after.get(id)[k])}</strong></div>`).join('')}</div>` : ''}`);
+    }
+    for (const tid of uniq([...Object.keys(mappingChanges.lists), ...Object.keys(plan.changes.lists)]).sort()) {
+      const L = EDITABLE_LISTS[tid];
+      const key = (x) => listKey(L.shape, x);
+      const was = new Map(listWith(mappingChanges, tid).map((x) => [key(x), x]));
+      const will = listWith(plan.changes, tid);
+      const now = new Set(will.map(key));
+      const added = will.filter((x) => !was.has(key(x)) || encJson(was.get(key(x))) !== encJson(x));
+      const removed = [...was.values()].filter((x) => !now.has(key(x)));
+      if (!added.length && !removed.length) continue;
+      li('changed', tid, `${added.length ? `+ ${esc(added.map(showItem).join(', '))}` : ''} ${removed.length ? `− ${esc(removed.map(showItem).join(', '))}` : ''}${L.reload ? ` <span class="dci-sub">${esc(tr('mapping.reloadHint'))}</span>` : ''}`);
+    }
+    const ownNow = new Map(userRules().map((u) => [u.id, u]));
+    const ownText = (u) => esc(`${u.discogs}${u.details ? ` [${u.details}]` : ''} → ${u.kind === 'role' ? `${u.type || ''} · ${u.level || ''}` : u.instrument || ''}`);
+    plan.own.forEach((u) => {
+      const w = ownNow.get(u.id);
+      if (!w || encJson(w) !== encJson(u)) li(w ? 'changed' : 'new', u.id, ownText(u));
+    });
+    userRules().filter((u) => !plan.own.some((x) => x.id === u.id)).forEach((u) => li('removed', u.id, ownText(u)));
+    const offNow = rulesOff();
+    const sw = (x, on) => li(on ? 'on' : 'off', x.replace(/^\+/, ''), '');
+    [...plan.off].filter((x) => !offNow.has(x)).forEach((x) => sw(x, x.startsWith('+')));
+    [...offNow].filter((x) => !plan.off.has(x)).forEach((x) => sw(x, !x.startsWith('+')));
+    const real = items.length;
+    imp.skipped.forEach((s) => li('skipped', s.id, esc(s.why)));
+    return `<div class="dci-mprev" data-rf="preview"><strong>${esc(tr('mapping.preview', { name }))}</strong>
+      <p class="dci-sub">${esc(tr(`mapping.kind.${imp.from}`, { mapping: imp.mapping || '?', script: imp.script || '?' }))}</p>
+      <div class="dci-mprev-mode" role="radiogroup" aria-label="${esc(tr('mapping.preview', { name }))}">
+        <label><input type="radio" name="dci-mmode" value="merge" ${mode === 'merge' ? 'checked' : ''} data-mimport-mode> ${esc(tr('mapping.merge'))}</label>
+        <label><input type="radio" name="dci-mmode" value="replace" ${mode === 'replace' ? 'checked' : ''} data-mimport-mode> ${esc(tr(imp.from === 'register' ? 'mapping.replaceData' : 'mapping.replace'))}</label></div>
+      <ul>${items.join('') || `<li>${esc(tr('mapping.prevNothing'))}</li>`}</ul>
+      <button type="button" data-mimport-apply ${real ? '' : 'disabled'}>${esc(tr('mapping.apply'))}</button> <button type="button" class="dci-textbtn" data-mimport-cancel>${esc(tr('common.cancel'))}</button></div>`;
+  }
+
+  function startMappingImport(text, name) {
+    if (String(text || '').length > 2e6) {
+      Object.assign(S, { mioStatus: tr('mapping.tooBig'), mImport: null });
+      renderMappingIo();
+      return;
+    }
+    const imp = readMappingImport(text);
+    S.mioStatus = imp.error || '';
+    S.mImport = imp.error ? null : { imp, mode: 'merge', name };
+    renderMappingIo();
+    const p = S.mImport && document.querySelector('#dci-rules [data-rf="preview"]');
+    if (p) p.scrollIntoView({ block: 'nearest' });
+  }
+
+  /** A file chosen or dropped onto the window: its text into the preview. */
+  function importRules(file) {
+    if (file.size > 2e6) {
+      startMappingImport('x'.repeat(2e6 + 1), file.name);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => startMappingImport(String(reader.result || ''), file.name);
+    reader.readAsText(file);
+  }
+
+  function applyMappingImport() {
+    const { imp, mode, name } = S.mImport;
+    const plan = planImport(imp, mode);
+    mappingChanges = { ...mappingChanges, rules: plan.changes.rules, lists: plan.changes.lists };
+    if (imp.from !== 'register') {
+      userRulesCache = plan.own;
+      rulesOffCache = plan.off;
+    }
+    const n = Object.keys(imp.rules).length + Object.keys(imp.lists).length + imp.own.length + imp.off.length;
+    S.mImport = null;
+    S.mioStatus = tr('mapping.imported', { n, name });
+    log('info', 'mappingImported', { n, name, mode: tr(mode === 'replace' ? 'mapping.replace' : 'mapping.merge') });
+    mappingChanged(tr('mapping.importWhat', { name }));
+  }
+
+  /** Export and import of the register (below your rules and your changes). */
+  function mappingIoHtml() {
+    const what = S.mioWhat;
+    return `<section data-rsect="io"><h3>${esc(tr('mapping.io'))}</h3>
+      <div class="dci-mio-row"><label class="dci-mio-inline">${esc(tr('mapping.export'))} <select data-mio="what">
+        <option value="changes" ${what === 'changes' ? 'selected' : ''}>${esc(tr('mapping.exportChanges'))}</option>
+        <option value="register" ${what === 'register' ? 'selected' : ''}>${esc(tr('mapping.exportRegister'))}</option></select></label>
+        <button type="button" data-mio-save>${esc(tr('mapping.saveFile'))}</button> <button type="button" data-mio-copy>${esc(tr('mapping.copy'))}</button></div>
+      <p class="dci-sub">${esc(tr(what === 'register' ? 'mapping.exportRegisterHint' : 'mapping.exportChangesHint', { file: what === 'register' ? MAPPING_FILE : CHANGES_FILE }))}</p>
+      <div class="dci-mio-row"><label class="dci-filebtn">${esc(tr('mapping.importFile'))} <input type="file" accept=".json,application/json" data-rules-import></label>
+        <span class="dci-sub">${esc(tr('mapping.importHint'))}</span></div>
+      <details class="dci-mio-paste"${S.mPasteOpen ? ' open' : ''}><summary>${esc(tr('mapping.paste'))}</summary>
+        <textarea data-mio="paste" rows="4" spellcheck="false">${esc(S.mPaste)}</textarea>
+        <button type="button" data-mio-read>${esc(tr('mapping.read'))}</button></details>
+      <p class="dci-sub" data-rf="mio-status" role="status">${esc(S.mioStatus)}</p>
+      ${S.mImport ? importPreviewHtml() : ''}</section>`;
+  }
+
+  function renderMappingIo() {
+    const el = document.querySelector('#dci-rules [data-rf="io"]');
+    if (el) el.innerHTML = mappingIoHtml();
+  }
+
   const nextUserRuleId = () => `U${String(1 + Math.max(0, ...userRules().map((u) => Number(String(u.id).slice(1)) || 0))).padStart(3, '0')}`;
 
-  /** "Your rules": own rules (U001 …) with on/off, edit and delete, a form, export and import. */
+  /** "Your rules": own rules (U001 …) with on/off, edit and delete, a form ([3.33.1] export and import: mappingIoHtml). */
   function ownRulesHtml() {
     const le = (getMB() && getMB().linkedEntities) || {};
     const ltNames = uniq(Object.values(le.link_type || {}).filter((l) => l && (l.type0 === 'artist' || l.type1 === 'artist')).map((l) => l.name)).sort();
@@ -11972,9 +12579,7 @@
         <datalist id="dci-dl-ltnames">${ltNames.map((n) => `<option value="${esc(n)}"></option>`).join('')}</datalist>
         <datalist id="dci-dl-instrnames">${instrNames.map((n) => `<option value="${esc(n)}"></option>`).join('')}</datalist>
       </fieldset>
-      <div class="dci-urule-io"><button type="button" data-rules-export>${esc(tr('rules.export'))}</button>
-        <label class="dci-filebtn">${esc(tr('rules.import'))} <input type="file" accept=".json,application/json" data-rules-import></label>
-        <span class="dci-sub">${esc(tr('rules.ioHint'))}</span></div></section>`;
+      </section>`;
   }
 
   function setRulesStatus(text) {
@@ -12000,44 +12605,6 @@
     else list.push(rule);
     S.ruleForm = null;
     applyRulesChange(rule.id);
-  }
-
-  function exportRules() {
-    const data = { format: 'mb-x-vibecode-rules', version: 1, exported: new Date().toISOString(), rules: userRules(), off: [...rulesOff()] };
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-    a.download = 'mb-x-vibecode-rules.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    log('info', 'rulesExported', { n: data.rules.length });
-  }
-
-  function importRules(file) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-        if (!data || data.format !== 'mb-x-vibecode-rules' || !Array.isArray(data.rules)) throw new Error(tr('rules.importBad'));
-        const list = userRules();
-        let n = 0;
-        for (const r of data.rules) {
-          if (!r || !r.discogs || !['role', 'instrument'].includes(r.kind)) continue;
-          // The same Discogs role (and details) replaces the rule you have; anything else is added
-          const same = list.findIndex((x) => x.kind === r.kind && norm(x.discogs) === norm(r.discogs)
-            && norm(x.details || '') === norm(r.details || '') && (x.detailsMode || 'any') === (r.detailsMode || 'any'));
-          const rule = { ...r, id: same >= 0 ? list[same].id : nextUserRuleId() };
-          if (same >= 0) list[same] = rule;
-          else list.push(rule);
-          n++;
-        }
-        (data.off || []).forEach((id) => rulesOff().add(id));
-        applyRulesChange(tr('rules.imported', { n }));
-      } catch (e) {
-        setRulesStatus(e.message);
-      }
-    };
-    reader.readAsText(file);
   }
 
   /**
@@ -12072,7 +12639,7 @@
    * klickbarem verweis dann wo es verwendet wird)"): rules switched often, each with its id – a click shows the rule, which
    * says where it acts. The same switches as in the lists below (`dci-rules-off`).
    */
-  const QUICK_SWITCHES = ['S045', 'D022', 'S021', 'S031', 'S007', 'D023', 'S046'];
+  const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
   function quickSwitchesHtml() {
     const notes = ruleNotes();
     // [3.32.8] a box of its own, each switch a button with its state (collected item 116; maintainer: "die quick switches bitte
@@ -12093,10 +12660,20 @@
     if (!el) return;
     el.querySelector('[data-rf="quick"]').innerHTML = quickSwitchesHtml();
     el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
+    el.querySelector('[data-rf="changes"]').innerHTML = changesHtml();
+    el.querySelector('[data-rf="io"]').innerHTML = mappingIoHtml();
     el.querySelector('[data-rf="tables"]').innerHTML = rulesTables();
     el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(el.querySelector('[data-rf="test"]').value);
+    el.querySelector('[data-rf="mapping-src"]').textContent = mappingSourceText();
     const q = norm(el.querySelector('[data-rf="search"]').value);
-    if (q) el.querySelectorAll('[data-rf="tables"] tbody tr').forEach((tr1) => { tr1.hidden = !norm(tr1.textContent).includes(q); });
+    if (q) el.querySelectorAll('[data-rf="tables"] tbody tr:not(.dci-redit-row)').forEach((tr1) => { tr1.hidden = !norm(tr1.textContent).includes(q); });
+  }
+
+  /** [3.33.0] The mapping file, its version and where it came from; [3.33.1] with the number of your changes. */
+  function mappingSourceText() {
+    const n = Object.keys(mappingChanges.rules).length + Object.keys(mappingChanges.lists).length;
+    const src = tr('mapping.source', { file: MAPPING_FILE, version: MAPPING.raw.version || '?', from: tr(`mapping.from.${MAPPING.from}`) });
+    return n ? `${src} · ${tr('mapping.changesN', { n })}` : src;
   }
 
   /** What the script makes of a Discogs role (several separated by commas, as on Discogs). */
@@ -12304,10 +12881,13 @@
       el.innerHTML = `<div class="dci-rules-head"><h2 id="dci-rules-title">${esc(tr('rules.title'))}</h2>
           <span class="dci-rules-tools" data-rf="head-tools">${rulesHeadToolsHtml()}</span></div>
         <div class="dci-rules-body">
+          <p class="dci-sub dci-mapping-src" data-rf="mapping-src">${esc(mappingSourceText())}</p>
           <div data-rf="quick"></div>
           <label class="dci-rules-test"><span data-rf="test-label">${esc(trRules('rules.test'))}</span> <input type="text" data-rf="test" placeholder="Bass [Upright], Coordinator [Tour]"></label>
           <div data-rf="result">${ruleTestHtml('')}</div>
           <div data-rf="own"></div>
+          <div data-rf="changes"></div>
+          <div data-rf="io"></div>
           <label class="dci-rules-search">${esc(tr('rules.search'))} <input type="search" data-rf="search"></label>
           <div data-rf="tables"></div>
         </div>`;
@@ -12337,7 +12917,52 @@
           S.ruleForm = null;
           el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
         }
-        if (t.closest('[data-rules-export]')) exportRules();
+        // [3.33.1] ✎ at built-in rules and lists, your changes, export and import (item E7)
+        const ro = t.closest('[data-redit-open]');
+        if (ro) {
+          if (S.ruleEdit && S.ruleEdit.id === ro.dataset.reditOpen) S.ruleEdit = null;
+          else openRuleEdit(ro.dataset.reditOpen);
+          renderRulesBody();
+          const f = el.querySelector('[data-redit] [data-redit-f="pattern"]');
+          if (f) f.focus({ preventScroll: true });
+        }
+        const lo = t.closest('[data-ledit-open]');
+        if (lo) {
+          if (S.listEdit && S.listEdit.tid === lo.dataset.leditOpen) S.listEdit = null;
+          else openListEdit(lo.dataset.leditOpen);
+          renderRulesBody();
+          const f = el.querySelector('[data-ledit-text]');
+          if (f) f.focus({ preventScroll: true });
+        }
+        if (t.closest('[data-redit-save]')) saveRuleEdit();
+        if (t.closest('[data-ledit-save]')) saveListEdit();
+        if (t.closest('[data-redit-cancel], [data-ledit-cancel]')) {
+          S.ruleEdit = null;
+          S.listEdit = null;
+          renderRulesBody();
+        }
+        const mr = t.closest('[data-mchg-reset]');
+        if (mr) resetMappingChange(mr.dataset.mchgReset);
+        const mk = t.closest('[data-mchg-keep]');
+        if (mk) keepMappingChange(mk.dataset.mchgKeep);
+        if (t.closest('[data-mchg-resetall]') && confirm(tr('mapping.resetAllAsk'))) {
+          mappingChanges = { ...mappingChanges, rules: {}, lists: {} };
+          S.ruleEdit = null;
+          S.listEdit = null;
+          mappingChanged(tr('mapping.resetAllWhat'));
+        }
+        const mg = t.closest('[data-mchg-goto]');
+        if (mg) focusRule(mg.dataset.mchgGoto);
+        if (t.closest('[data-mio-save]')) saveMappingExport();
+        if (t.closest('[data-mio-copy]')) copyMappingExport();
+        if (t.closest('[data-mio-read]')) startMappingImport(S.mPaste, tr('mapping.pasted'));
+        if (t.closest('[data-mimport-apply]')) applyMappingImport();
+        if (t.closest('[data-mimport-cancel]')) {
+          S.mImport = null;
+          renderMappingIo();
+        }
+        const sum = t.closest('.dci-mio-paste > summary');
+        if (sum) S.mPasteOpen = !sum.parentNode.open;
         // [3.32.0] the id of a quick switch: the rule in the lists below
         const qs = t.closest('[data-qs-goto]');
         if (qs) focusRule(qs.dataset.qsGoto);
@@ -12363,17 +12988,49 @@
         } else if (t.dataset.uf) {
           S.ruleForm = { ...(S.ruleForm || { kind: 'role', detailsMode: 'any', level: 'recording' }), [t.dataset.uf]: t.value };
           if (t.dataset.uf === 'kind') el.querySelector('[data-rf="own"]').innerHTML = ownRulesHtml();
+        } else if (t.dataset.reditF && S.ruleEdit) {
+          if (t.dataset.reditF === 'pmode') switchPatternMode(S.ruleEdit.draft, t.value);
+          else S.ruleEdit.draft[t.dataset.reditF] = t.value;
+          if (['pmode', 'creditMode'].includes(t.dataset.reditF)) renderRulesBody();
+        } else if (t.dataset.mio === 'what') {
+          S.mioWhat = t.value === 'register' ? 'register' : 'changes';
+          renderMappingIo();
+        } else if (t.dataset.mimportMode != null && S.mImport) {
+          S.mImport.mode = t.value === 'replace' ? 'replace' : 'merge';
+          renderMappingIo();
         } else if (t.dataset.rulesImport != null && t.files && t.files[0]) {
           importRules(t.files[0]);
         }
       });
+      // [3.33.1] a file dropped onto the window is imported (with a preview first)
+      const hasFiles = (e) => [...((e.dataTransfer && e.dataTransfer.types) || [])].includes('Files');
+      el.addEventListener('dragover', (e) => {
+        if (!hasFiles(e)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        el.classList.add('dci-rules-drop');
+      });
+      el.addEventListener('dragleave', (e) => {
+        if (!el.contains(e.relatedTarget)) el.classList.remove('dci-rules-drop');
+      });
+      el.addEventListener('drop', (e) => {
+        el.classList.remove('dci-rules-drop');
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!f) return;
+        e.preventDefault();
+        e.stopPropagation();
+        importRules(f);
+      });
       el.addEventListener('input', (e) => {
         const f = e.target.dataset.rf;
         if (e.target.dataset.uf) S.ruleForm = { ...(S.ruleForm || { kind: 'role', detailsMode: 'any', level: 'recording' }), [e.target.dataset.uf]: e.target.value };
+        if (e.target.dataset.reditF && S.ruleEdit && e.target.dataset.reditF !== 'pmode') S.ruleEdit.draft[e.target.dataset.reditF] = e.target.value;
+        if (e.target.dataset.leditText != null && S.listEdit) S.listEdit.text = e.target.value;
+        if (e.target.dataset.mio === 'paste') S.mPaste = e.target.value;
         if (f === 'test') el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(e.target.value);
         if (f === 'search') {
           const q = norm(e.target.value);
-          el.querySelectorAll('[data-rf="tables"] tbody tr').forEach((tr1) => { tr1.hidden = !!q && !norm(tr1.textContent).includes(q); });
+          el.querySelectorAll('[data-rf="tables"] tbody tr:not(.dci-redit-row)').forEach((tr1) => { tr1.hidden = !!q && !norm(tr1.textContent).includes(q); });
         }
       });
     }
@@ -12419,7 +13076,8 @@
     if (!el) return;
     // A search that hides it is cleared first
     const search = el.querySelector('[data-rf="search"]');
-    const r = el.querySelector(`[data-rf="own"] tr[data-rid="${id}"]`) || el.querySelector(`[data-rf="tables"] tr[data-rid="${id}"]`);
+    const r = el.querySelector(`[data-rf="own"] tr[data-rid="${id}"]`) || el.querySelector(`[data-rf="tables"] tr[data-rid="${id}"]`)
+      || el.querySelector(`[data-rf="tables"] [data-ledit-anchor="${id}"]`);
     if (!r) return;
     if (r.hidden && search) {
       search.value = '';
@@ -13066,6 +13724,14 @@
       renderDatalists();
       setBusy('busy.mb');
       log('info', 'start', { mbid: releaseMbid });
+      // [3.33.0] the mapping file: where it comes from, and a version other than the script's
+      log('info', 'mappingLoaded', { version: MAPPING.raw.version || '?', from: tr(`mapping.from.${MAPPING.from}`) });
+      if (MAPPING.raw.version !== VERSION) log('warn', 'mappingVersion', { version: MAPPING.raw.version || '?', script: VERSION });
+      // [3.33.1] your changes of the register, and those whose built-in rule changed with an update (item E7)
+      const nChanges = Object.keys(mappingChanges.rules).length + Object.keys(mappingChanges.lists).length;
+      if (nChanges) log('info', 'mappingChangesOn', { n: nChanges });
+      const conflicts = Object.keys(mappingChanges.rules).filter((id) => ruleConflicts(id).length);
+      if (conflicts.length) log('warn', 'mappingConflicts', { n: conflicts.length, ids: conflicts.join(', ') });
       if (S.autostart && S.editorLinks) log('info', S.autostartFrom === 'link' ? 'fromLink' : 'fromEditor', { links: S.editorLinks.map(afterEditLinkLabel).join(', ') || '–' });
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
         + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits+labels');
@@ -24609,7 +25275,7 @@
   function resetHtml() {
     return `<div class="dci-reset" data-el="reset" role="group" aria-label="${esc(tr('reset.title'))}"><strong>${esc(tr('reset.ask'))}</strong>
       <p class="dci-sub">${esc(tr('reset.what'))}</p>
-      <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, off: [...rulesOff()].filter((id) => !id.startsWith('+')).length }))}</label>
+      <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, c: Object.keys(mappingChanges.rules).length + Object.keys(mappingChanges.lists).length, off: [...rulesOff()].filter((id) => !id.startsWith('+')).length }))}</label>
       <label class="dci-check"><input type="checkbox" data-f="reset-pools" ${S.resetPools ? 'checked' : ''}> ${esc(tr('reset.pools'))}</label>
       <p class="dci-sub">${esc(tr('reset.never'))}</p>
       <div class="dci-mbdate-tools">
@@ -24863,6 +25529,12 @@
     if (rules) {
       userRulesCache = [];
       rulesOffCache = new Set();
+      // [3.33.1] your changes of built-in rules too
+      mappingChanges = { ...mappingChanges, rules: {}, lists: {} };
+      saveMappingChanges();
+      applyMappingChanges();
+      roleVocabCache = null;
+      ruleNotesCache = null;
       applyRulesChange(tr('reset.title'));
       writeJson('localStorage', USER_RULES_KEY, null);
       writeJson('localStorage', RULES_OFF_KEY, null);
@@ -24966,6 +25638,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.33.0', label: 'Credits Importer 3.33.0' },
     { v: '3.32.0', label: 'Credits Importer 3.32.0' },
     { v: '3.31.0', label: 'Credits Importer 3.31.0' },
     { v: '3.29.0', label: 'Credits Importer 3.29.0 · Companion 1.9.0' },
@@ -25412,6 +26085,46 @@
         font-size: calc(var(--u, 1px) * 11.5); }
       #dci-rules .dci-qbtn[aria-pressed=true] + .dci-qid { border-color: #8e88c2; }
       #dci-rules .dci-rule-result { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #736dab; background: #f4f3fb; }
+      /* [3.33.1] ✎ at built-in rules and lists, your changes, export and import (item E7) */
+      #dci-rules .dci-redit-cell { white-space: nowrap; text-align: right; }
+      #dci-rules .dci-redit-tools { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-left: calc(var(--u, 1px) * 6); font-weight: 400; }
+      #dci-rules .dci-redit-btn { border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; padding: 0 calc(var(--u, 1px) * 6); color: #4b4585; cursor: pointer; font: inherit; line-height: 1.5; text-decoration: none; }
+      #dci-rules .dci-redit-btn:hover { border-color: #8e88c2; background: #f4f3fb; }
+      #dci-rules .dci-changed { padding: 0 calc(var(--u, 1px) * 6); border-radius: 999px; background: #e6e3f5; color: #3e3873; font-size: calc(var(--u, 1px) * 11); white-space: nowrap; }
+      #dci-rules .dci-changed.dci-conflict { background: #fdecd2; color: #7a4a00; }
+      #dci-rules .dci-codetag { font-size: calc(var(--u, 1px) * 11); }
+      #dci-rules tr.dci-rchanged > td { background: #f7f5fd; }
+      #dci-rules tr.dci-redit-row > td { background: #faf9fd; }
+      #dci-rules .dci-redit { margin: calc(var(--u, 1px) * 6) 0; border: 1px solid #b9b5cf; border-left: 3px solid #736dab; border-radius: 4px; background: #fff;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 220), 1fr)); gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); }
+      #dci-rules .dci-redit legend { font-weight: 600; }
+      #dci-rules .dci-redit label { margin: 0; font-weight: 600; }
+      #dci-rules .dci-redit .dci-redit-wide, #dci-rules .dci-redit-list textarea, #dci-rules .dci-redit-list p { grid-column: 1 / -1; }
+      #dci-rules .dci-redit p { margin: 0; }
+      #dci-rules .dci-redit-err { color: #b3261e; font-weight: 600; }
+      #dci-rules textarea { width: 100%; box-sizing: border-box; padding: calc(var(--u, 1px) * 4); font: calc(var(--u, 1px) * 12) / 1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      #dci-rules .dci-mchg { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 18); }
+      #dci-rules .dci-mchg li { margin: calc(var(--u, 1px) * 3) 0; }
+      #dci-rules .dci-mchg-add { color: #1e6b35; }
+      #dci-rules .dci-mchg-rem { color: #9a2a22; }
+      #dci-rules .dci-mchg-conf { color: #7a4a00; font-weight: 600; }
+      #dci-rules li.dci-mchg-conflict { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 6); border-left: 3px solid #e0a040; background: #fff8ec; }
+      #dci-rules .dci-mio-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 6) 0 0; }
+      #dci-rules .dci-mio-row label.dci-mio-inline { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin: 0; }
+      #dci-rules .dci-mio-paste { margin: calc(var(--u, 1px) * 6) 0; }
+      #dci-rules .dci-mio-paste summary { cursor: pointer; color: #4b4585; }
+      #dci-rules .dci-mprev { margin: calc(var(--u, 1px) * 8) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid #b9b5cf; border-left: 3px solid #736dab; border-radius: 4px; background: #fff; }
+      #dci-rules .dci-mprev p { margin: calc(var(--u, 1px) * 2) 0 calc(var(--u, 1px) * 6); }
+      #dci-rules .dci-mprev-mode { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 16); }
+      #dci-rules .dci-mprev-mode label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); margin: 0; font-weight: 400; }
+      #dci-rules .dci-mprev-mode input { width: auto; }
+      #dci-rules .dci-mprev ul { margin: calc(var(--u, 1px) * 6) 0; padding-left: calc(var(--u, 1px) * 18); }
+      #dci-rules .dci-mprev li { margin: calc(var(--u, 1px) * 3) 0; }
+      #dci-rules .dci-mprev-new strong:first-child { color: #1e6b35; }
+      #dci-rules .dci-mprev-removed strong:first-child { color: #9a2a22; }
+      #dci-rules .dci-mprev-skipped { color: #6c6880; }
+      #dci-rules .dci-mprev-samples { margin: calc(var(--u, 1px) * 2) 0 0; font-size: calc(var(--u, 1px) * 11.5); color: #55526a; }
+      #dci-rules.dci-rules-drop { outline: 3px dashed #736dab; outline-offset: -3px; }
       #dci-log {
         --u: calc(var(--dci-fs, 13px) / 13);
         box-sizing: border-box; position: fixed; left: calc(var(--u, 1px) * 16); bottom: calc(var(--u, 1px) * 16); z-index: 10002; display: flex; flex-direction: column;
