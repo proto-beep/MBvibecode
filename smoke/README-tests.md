@@ -393,6 +393,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrpdf: 3.34.6: a PDF with the real pdf.js (a local copy, PDFJS_DIR): pages as cards (own text / an image),
                                 #     a frame around one column, read – own text in order and by frame, a scanned page recognized –, the
                                 #     source; a PDF by its address; a broken one named
+                                #   ocrdiscogs: 3.34.7: "Load Discogs images" (nothing fetched before), the release's page: its images once at
+                                #     600 px, not another release's; a Discogs address typed (twice refused); read ×3, the source
                                 #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 

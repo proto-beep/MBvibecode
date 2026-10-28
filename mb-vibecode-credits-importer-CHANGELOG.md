@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.6 | – |
+| 2026-10-28 | 3.34.0 – 3.34.7 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.7
+
+#### Added
+
+- **Text from cover art (beta): Discogs images, only on request** (collected item 123; maintainer: "nur wenn eingegeben. nicht automatisch. evtl einen button mit "load discogs artworks" oder ähnlich"): "Load Discogs images (r…)" for a Discogs release linked to this one, or the address of a Discogs release typed in – its images from its page on discogs.com, each once at its largest size (at most 600 px, read enlarged ×3). Nothing of Discogs is fetched before you ask.
 
 ### Import 3.34.6
 

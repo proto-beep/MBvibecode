@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.6
+// @version      3.34.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.6
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.6
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.7
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.7
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1435,7 +1435,7 @@
       "ocr.dropHint": "or drop them onto this window, or paste one with Ctrl+V",
       "ocr.urlLabel": "Address of an image",
       "ocr.addUrl": "Add",
-      "ocr.ownHint": "Booklet scans, photos, screenshots, a booklet as PDF – read like the release's images, in this browser; nothing is uploaded or added to the Cover Art Archive. A page of a PDF with a text of its own is read from that text, exactly and without recognition. For an image on another site the userscript manager may ask once whether the script may read from it.",
+      "ocr.ownHint": "Booklet scans, photos, screenshots, a booklet as PDF – read like the release's images, in this browser; nothing is uploaded or added to the Cover Art Archive. A page of a PDF with a text of its own is read from that text, exactly and without recognition. The address of a Discogs release gives its images (small: at most 600 px). For an image on another site the userscript manager may ask once whether the script may read from it.",
       "ocr.ownFile": "your file",
       "ocr.ownUrl": "by its address",
       "ocr.remove": "remove",
@@ -1453,6 +1453,12 @@
       "ocr.errPdf": "{name} could not be opened as a PDF: {why}",
       "ocr.errNoPdf": "The PDF reader could not be loaded ({url}) – the page or the browser may not allow it.",
       "ocr.fromPdf": "Read from the PDF's own text – no text recognition needed.",
+      "ocr.discogsLoad": "Load Discogs images (r{id})",
+      "ocr.discogsHint": "of the Discogs release linked to this one – small images (at most 600 px), read enlarged",
+      "ocr.discogsLoading": "Loading the images from Discogs …",
+      "ocr.discogsNone": "No images of Discogs release r{id} were found on its page.",
+      "ocr.discogsImage": "Discogs r{id} · {n}",
+      "ocr.ownDiscogs": "from Discogs",
       "log.ocrPdfAdded": "Text from cover art: {name} – {n} pages, {text} with a text of their own",
       "conn.kind.library": "Library",
       "conn.X013": "Text from cover art (beta, ⚙ Settings → Beta): the list of the release's images and the images themselves (coverartarchive.org, which sends them from archive.org).",
@@ -4043,6 +4049,42 @@
         const res = await fetch(`${API}/artists/${id}`);
         const data = res.ok ? await res.json() : null;
         return ((data && data.aliases) || []).filter((x) => x && x.id).map((x) => ({ id: x.id, name: x.name, links: [artistUrl(x.id)] }));
+      },
+      // [3.34.7] Discogs images for the text from cover art (beta), only on request: the API gives their addresses only to a
+      // signed-in app, so they come from the release's page on discogs.com
+      /** A Discogs release in an address ('' if none). */
+      releaseIdInUrl: (u) => (String(u || '').match(/^https?:\/\/(?:www\.)?discogs\.com\/(?:[a-z]{2}\/)?release\/(\d+)/i) || [])[1] || '',
+      /** The images of a release from its page: those of this release only ("R-<id>-…"), each once, at its largest size. */
+      async pageImages(id) {
+        const url = `${WEB}/release/${id}`;
+        let r;
+        try {
+          r = await httpFetch(url);
+        } catch (e) {
+          throw new Error(tr('ocr.errUrl', { url }));
+        }
+        if (r.status < 200 || r.status >= 300) throw new Error(tr('err.pageHttp', { status: r.status, url }));
+        // the file an address of i.discogs.com stands for (its last parts, base64): the same for every size of an image
+        const fileOf = (u) => {
+          try {
+            const parts = new URL(u).pathname.split('/').filter(Boolean);
+            const at = parts.map((x) => /^[a-z]+:/.test(x)).lastIndexOf(true);
+            const b64 = parts.slice(at + 1).join('').replace(/\.[a-z]+$/i, '').replace(/-/g, '+').replace(/_/g, '/');
+            return window.atob(b64 + '==='.slice((b64.length + 3) % 4));
+          } catch (e) {
+            return '';
+          }
+        };
+        const found = new Map();
+        for (const m of String(r.body || '').matchAll(/https:\/\/i\.discogs\.com\/[^"'\s<>)\\]+/g)) {
+          const u = m[0].replace(/&amp;/g, '&');
+          const file = fileOf(u);
+          if (!new RegExp(`(^|/)R-${id}-`).test(file)) continue;
+          const size = Math.max(0, ...[...u.matchAll(/\/[wh]:(\d+)/g)].map((x) => Number(x[1])));
+          const had = found.get(file);
+          if (!had || size > had.size) found.set(file, { url: u, size });
+        }
+        return [...found.values()].map((x) => x.url);
       },
       /** The label a series belongs to ("Parent Label"), as "who"; null if none. */
       async seriesParent(id) {
@@ -9368,6 +9410,11 @@
       o.error = tr('ocr.badUrl', { url: u || '–' });
     } else if (o.images.some((im) => im.url === u || (im.from && im.from === u))) {
       o.error = tr('ocr.urlTwice');
+    } else if (DISCOGS.releaseIdInUrl(u)) {
+      // [3.34.7] a Discogs release: its images
+      o.urlDraft = '';
+      ocrAddDiscogs(DISCOGS.releaseIdInUrl(u));
+      return;
     } else if (/\.pdf(?:[?#]|$)/i.test(u)) {
       // [3.34.6] a PDF by its address: fetched, then its pages
       o.urlDraft = '';
@@ -9395,6 +9442,55 @@
     renderOcr();
     const f = document.querySelector('#dci-ocr [data-ocr-url]');
     if (f && o.error) f.focus();
+  }
+
+  // --- [3.34.7] Discogs images on request (collected item 123; maintainer: "Discogs könnte schon angeboten werden", "nur wenn
+  // eingegeben. nicht automatisch. evtl einen button mit "load discogs artworks" oder ähnlich. da die discogs auflösung gering ist,
+  // wird das ohnehin nicht wirklich funktionieren"): the address of a Discogs release, or "Load Discogs images" for a release
+  // linked to this one – its images from its page on discogs.com (the API gives their addresses only to a signed-in app), at most
+  // 600 px, so read enlarged ×3 with the warning.
+
+  /** "Load Discogs images" or a Discogs address: the release's images, each a card of its own (ticked). */
+  async function ocrAddDiscogs(id) {
+    const o = S.ocr;
+    if (!o || o.step === 'run') return;
+    if (o.images.some((im) => im.discogs === id) || (o.discogsLoading || []).includes(id)) {
+      o.error = tr('ocr.urlTwice');
+      renderOcr();
+      return;
+    }
+    o.discogsLoading = [...(o.discogsLoading || []), id];
+    o.error = '';
+    if (o.step !== 'list') o.step = 'pick';
+    renderOcr();
+    try {
+      const urls = await DISCOGS.pageImages(id);
+      if (S.ocr !== o) return;
+      if (!urls.length) throw new Error(tr('ocr.discogsNone', { id }));
+      urls.forEach((u, k) => o.images.push({ ...ocrOwnImage('url', u), src: 'discogs', discogs: id, name: tr('ocr.discogsImage', { id, n: k + 1 }) }));
+      log('info', 'ocrOwnAdded', { n: urls.length, what: `Discogs r${id}` });
+    } catch (e) {
+      if (S.ocr === o) o.error = (e && e.message) || String(e);
+    } finally {
+      if (S.ocr === o) {
+        o.discogsLoading = o.discogsLoading.filter((x) => x !== id);
+        renderOcr();
+      }
+    }
+  }
+
+  /** The Discogs releases linked to this release (from the import, else asked of MusicBrainz once). */
+  function ocrDiscogsLinks() {
+    const o = S.ocr;
+    const known = (S.sourceLinks || []).filter((l) => l.source === 'discogs');
+    if (known.length || o.discogsAsked) return known.length ? known : (o.discogsLinks || []);
+    o.discogsAsked = true;
+    mbWs(`release/${releaseMbid}?inc=url-rels`, { background: true }).then((ws) => {
+      if (S.ocr !== o || !ws) return;
+      o.discogsLinks = DISCOGS.releaseLinks(ws.relations || []);
+      if (o.discogsLinks.length) renderOcr();
+    }, () => {});
+    return [];
   }
 
   /** Ctrl+V while the window is open: an image (a screenshot …) or an address; not while typing in a field. */
@@ -9892,6 +9988,7 @@
     const caa = done.filter((r) => ocrIsCaa(r.img));
     const files = uniq(done.filter((r) => r.img.src === 'file').map((r) => r.img.name));
     const urls = uniq(done.filter((r) => r.img.src === 'url').map((r) => r.img.url));
+    const discogs = uniq(done.filter((r) => r.img.src === 'discogs').map((r) => r.img.discogs));
     // [3.34.6] PDFs with their pages read
     const pdfs = new Map();
     done.filter((r) => r.img.src === 'pdf').forEach((r) => {
@@ -9900,6 +9997,7 @@
     });
     const parts = [caa.length ? `Cover Art Archive images (${uniq(caa.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')})` : '',
       files.length ? `own image files (${files.join(', ')})` : '', urls.length ? `images from ${urls.join(', ')}` : '',
+      ...discogs.map((id) => `images of Discogs release ${DISCOGS.releaseUrl(id)}`),
       ...[...pdfs].map(([key, pages]) => `PDF ${key} (p. ${uniq(pages).join(', ')})`)].filter(Boolean);
     const origin = `${parts.join('; ')}, read with text recognition`;
     return { text, origin };
@@ -9937,6 +10035,10 @@
         <div class="dci-ocr-ownrow"><button type="button" class="dci-small" data-ocr="files">${esc(tr('ocr.chooseFiles'))}</button>
           <input type="file" data-ocr-files multiple accept="image/*,application/pdf,.pdf" hidden><span class="dci-sub">${esc(tr('ocr.dropHint'))}</span></div>
         ${o.pdfLoading ? `<p class="dci-sub" role="status">${esc(tr('ocr.pdfLoading'))}</p>` : ''}
+        ${ocrDiscogsLinks().length ? `<div class="dci-ocr-ownrow">${ocrDiscogsLinks().map((l) => `<button type="button" class="dci-small" data-ocr-discogs="${esc(l.id)}"
+          ${(o.discogsLoading || []).includes(l.id) || o.images.some((im) => im.discogs === l.id) ? 'disabled' : ''}>${esc(tr('ocr.discogsLoad', { id: l.id }))}</button>`).join('')}
+          <span class="dci-sub">${esc(tr('ocr.discogsHint'))}</span></div>` : ''}
+        ${(o.discogsLoading || []).length ? `<p class="dci-sub" role="status">${esc(tr('ocr.discogsLoading'))}</p>` : ''}
         <div class="dci-ocr-ownrow"><input type="url" data-ocr-url value="${esc(o.urlDraft || '')}" placeholder="https://…/back.jpg" aria-label="${esc(tr('ocr.urlLabel'))}" spellcheck="false">
           <button type="button" class="dci-small" data-ocr="url">${esc(tr('ocr.addUrl'))}</button></div>
         <p class="dci-sub">${esc(tr('ocr.ownHint'))}</p></fieldset>`;
@@ -9953,7 +10055,7 @@
         <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> <span>${esc(ocrTypes(im))}</span></span>
         ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
         ${ocrIsCaa(im) ? (im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`)
-          : `<span class="dci-sub">${esc(tr(im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
+          : `<span class="dci-sub">${esc(tr(im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : im.src === 'discogs' ? 'ocr.ownDiscogs' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
     // [3.34.5] "All images" (collected item 125; maintainer: "wir brauchen einen knopf im bilderkennungsmenü, der alles abwählt
     // oder alles anwählt. viele bookletseiten haben nur bilder oder songtexte"): on – all, off – none, half – some
     const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
@@ -10108,6 +10210,11 @@
         ta.focus();
         ta.setSelectionRange(at, at + word.dataset.ocrWord.length);
       }
+      return;
+    }
+    const dg = t.closest('[data-ocr-discogs]');
+    if (dg && S.ocr) {
+      ocrAddDiscogs(dg.dataset.ocrDiscogs);
       return;
     }
     const rm = t.closest('[data-ocr-remove]');
