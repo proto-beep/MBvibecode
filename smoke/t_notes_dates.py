@@ -1,6 +1,6 @@
 """Discogs notes: dates and track groups found in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: datewords, facets, choose, trackpool, reldate – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
+Cases: datewords, facets, choose, lcdmenu (3.32.7), trackpool, reldate – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -199,6 +199,63 @@ def case_choose():
         ok5 = [c[0] for c in cells(pg)['performance']] == ['Performance 1 · 1980-06-16', 'Performance 2 · 1980-06-19']
         print('Ergebnis:', 'OK' if all([ok1, ok2, ok3, ok4, ok5]) else 'FEHLER', [ok1, ok2, ok3, ok4, ok5], '| Fehler:', errs)
         b.close()
+
+
+def case_lcdmenu():
+    """Credits Importer 3.32.7: the ▾ of a cell with what several days have in common (D022; collected item 118, maintainer:
+    "gibt es eigentlich eine möglichkeit auch zwei daten also bspw. 2016-11-07, 2016-11-08 als jeweilige relationships zu
+    führen?", "keine Einstellung nur das ▾ je Zelle").
+    A) "Recorded June 16 & 19, 1980 at …": Performance has the month 1980-06 (D022) with ▾; it offers "2 single days: 1980-06-16
+       · 1980-06-19 – one relationship per day", the period and the month. Single days → two cells (the days of the pool); Apply →
+       each row twice, one with each day.
+    B) "Recorded November 7–8, 2016 at …" (a period): ▾ → "2 single days: 2016-11-07 · 2016-11-08" (the pool gets them only when
+       they are chosen – opening ▾ adds nothing); the period chosen instead → one cell with the period, the pool as before."""
+    import re
+    import zooid
+    from common_rows import lib, cells
+
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for part, notes in (('A', 'Recorded June 16 & 19, 1980 at Scholes Street Studio, Brooklyn, New York.'),
+                            ('B', 'Recorded November 7–8, 2016 at Scholes Street Studio, Brooklyn, New York.')):
+            zooid.setup(notes)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+                pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+            c0 = cells(pg)['performance']
+            pg.click('.dci-dm-col[data-dmcol=performance] [data-act=dm-lcd-menu]'); pg.wait_for_timeout(200)
+            opts = [re.sub(r'\s+', ' ', x).strip() for x in pg.locator('.dci-dm-lcdmenu .dci-dm-opt').all_inner_texts()]
+            print(f'{part}) Matrix:', c0, '| ▾:', opts)
+            if part == 'A':
+                pg.click('.dci-dm-lcdmenu [data-pick=single]'); pg.wait_for_timeout(300)
+                c1 = cells(pg)['performance']
+                pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(500)
+                rows = lib(pg)
+                print('   einzelne Tage:', c1, '| Liberty:', rows)
+                ok = len(c0) == 1 and c0[0][0].endswith('· 1980-06') and opts == ['2 single days: 1980-06-16 · 1980-06-19 – one relationship per day',
+                                                                                   'period: 1980-06-16 – 1980-06-19', 'month only: 1980-06'] \
+                    and [c[0] for c in c1] == ['Performance 1 · 1980-06-16', 'Performance 2 · 1980-06-19'] \
+                    and sorted(r[1] for r in rows) == ['1980-06-16', '1980-06-19'] and all(r[0] == list(range(1, 11)) for r in rows)
+            else:
+                pool0 = pg.locator('.dci-pchip-date').count()
+                pg.click('.dci-dm-lcdmenu [data-pick=range]'); pg.wait_for_timeout(300)
+                c1 = cells(pg)['performance']
+                pool1 = pg.locator('.dci-pchip-date').count()
+                print('   Zeitraum:', c1, '| Pool vorher/nachher:', pool0, pool1)
+                ok = len(c0) == 1 and c0[0][0].endswith('· 2016-11') and opts[0] == '2 single days: 2016-11-07 · 2016-11-08 – one relationship per day' \
+                    and opts[1:] == ['period: 2016-11-07 – 2016-11-08', 'month only: 2016-11'] and len(c1) == 1 and c1[0][0].endswith('2016-11-07 – 2016-11-08') \
+                    and pg.locator('.dci-dm-col[data-dmcol=performance] [data-act=dm-lcd-menu]').count() == 0 and pool0 == pool1 == 2
+            print(f'{part})', ok, '| Fehler:', errs)
+            results += [ok, not errs]
+            pg.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 def case_trackpool():

@@ -102,7 +102,7 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #   members: 3.30.7: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – three performers (pasted text
                                 #     and the "about" text of Bandcamp); "The band is now a trio." and "… is back with a new album." nothing
 
-python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials
+python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
                                 #   areas: text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
                                 #     Gijón suggested by its alias "Xixón", no "Create", "recorded in" staged on the recordings); tracks by their
                                 #     titles ("Piano in ‘A' and 'B' is a contribution by X", one letter off, "Not matched"); Bandcamp: titles of the
@@ -115,6 +115,11 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     with the reason (and a studio only for it), the digital half kept; "Translated by" on Bandcamp asks
                                 #   initials: name suggestions for names with an initial (3.13.0): "T. Snekkestad" → Torben Snekkestad, "Barry J. Guy"
                                 #     → Barry John Guy, "K. Tanaka" → Kenji (not Hiro) Tanaka, no second search without an initial
+                                #   placedate: 3.32.5: "All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th
+                                #     2016." – El Studio (San Francisco) recorded at + engineered at, the days in the pool; "Studio Sol in
+                                #     Marseille" keeps its area; "Muisc and cover art by Jo Vaman" – Music By (S050, the column head of the
+                                #     works matrix says "Read as “Music” (written “Muisc”)"); ⚙ Settings → Texts switches S050 off (stored),
+                                #     the line is not recognized then; ↺ of the tab switches it on
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
                                 #   discnotes: 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
@@ -147,6 +152,8 @@ python3 t_notes_dates.py        # Discogs notes: dates and track groups found in
                                 #   trackpool: dates for some tracks: suggestions in the matrix, Apply splits rows, applying again, several days
                                 #   reldate: date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level
                                 #     takes the matching date, a date typed by hand stays, the mark stored with the matrix
+                                #   lcdmenu: 3.32.7: ▾ at the month D022 placed – single days (a cell each; Apply: a row per day), the period
+                                #     (one cell; opening ▾ adds nothing to the pool), the month
 
 python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging dates and track groups, the pools
                                 #   matrix: date matrix by hand: drag & drop, grip + "place here", editor, auto apply, stamp, after reload
@@ -160,6 +167,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     "Apply" – for that import, the remembered state stays; "Tracks:" on the line of "Name:" in the form
                                 #   titledates: 3.31.7: dates in the titles of the tracks (D023): off by default; on → pool, track groups, Performance
                                 #     suggestions, stored "+D023"; off → gone; on and "Apply" → the row split by date
+                                #   dmgoto: 3.32.8: "To the date matrix" in the message of dates placed – "Dates & tracks" folded by hand opens,
+                                #     the matrix in view and lit up, the folding stays stored
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -202,6 +211,9 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   perftracks: 3.31.8: "Performer" on tracks, instruments for the release (S046): off by default; on → the
                                 #     instruments on the performer tracks, no performer row (someone without an instrument keeps it); off → back;
                                 #     on and loaded again → at the import already
+                                #   poemlevels: 3.32.7: the type of poems follows the level – works lyricist, recordings spoken vocals, release the
+                                #     question Q010 (lyricist · spoken vocals · liner notes, kept); the compact line goes works → recordings →
+                                #     release → skip; "Poems" alone: Q009, then the level decides
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
@@ -211,7 +223,7 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #   rowrules: 3.30.2: a rule id at a row opens the rules as a window (the row stays), the symbol closes it and opens
                                 #     them in the dashboard, "Into the dashboard", the setting "like the symbol"; the arrow in the head of an
                                 #     entry in the compact view opens / closes all its rows
-                                #   quickswitch: 3.32.0 (milestone): the quick switches at the top of "Mapping rules" (order, on/off, the id shows the
+                                #   quickswitch: 3.32.0 (milestone): the quick switches at the top of "Mapping rules" ([3.32.8] buttons in a box; order, on/off, the id shows the
                                 #     rule, the same switch as in the list); D022 – the notes' "March 1–3, 2001" under Performance as 2001-03,
                                 #     off → the period again; S045 – "Composed by X (BMI)", "Lyrics by Y / GEMA" → the societies on the release
 
@@ -292,7 +304,7 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #     most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
                                 #     the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
 
-python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages
+python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text
                                 #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and
                                 #     track pages through GM_xmlhttpRequest, band linked by its page, choice kept after a reload, edit note),
                                 #     digital media → Bandcamp first, order changed in the list, the Bandcamp menu (track pages off,
@@ -313,6 +325,9 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #   bctrack: a Bandcamp track page as the release (3.28.1 / companion 1.8.4): loaded from the link, its credits once,
                                 #     the tab "connected" with marks; a track of an album via "Other source", "Load the release there"; Test page;
                                 #     the text "… Bandcamp track pages too", long settings texts wrap
+                                #   aboutcredits: 3.32.6: the credits of the "about" text (S049; j4vaman "Ephemeral"): composer (S050, "Muisc"),
+                                #     cover art and the liner notes "-j4vavaman" above the credit line, all "from the about text"; S049 off
+                                #     → only the liner notes; the release artist j4vaman first suggestion for j4vavaman; ⚙ → Texts switch
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
