@@ -371,6 +371,17 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #   languagesload: 3.34.0: the languages file from the manager (German); fetched from GitHub (kept, one reload);
                                 #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
 
+python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): ⚙ Settings → Beta, the Cover Art Archive, Tesseract.js (stand-in)
+                                #   ocrsetting: the tab "Beta" before "ⓘ Connections", the switch off by default, "Source ▾" gets the item only
+                                #     while it is on (stored); the connections X013, X014
+                                #   ocrpick: the images of the release – Back, Booklet, Tray ticked, Front and Medium not ("rarely has credits"),
+                                #     English (German too with a German dashboard), the count on the button, Escape; a release without images
+                                #   ocrrun: Tesseract.js loaded once, one worker; the 500 px image read ×3 with a warning; ℗, dashes and empty lines
+                                #     corrected and named; a word read with little certainty selects itself; edited and imported as a text
+                                #   ocrerror: the library cannot be loaded – the message in the window, the log
+                                #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
+                                #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
+
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
                                 #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
                                 #   relcheck: the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is

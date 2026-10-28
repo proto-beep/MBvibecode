@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.0, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,32 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.2 · 2026-10-28
+
+Text from cover art (beta): frames around the credits (collected item E3).
+
+- **New in the block of the text from cover art:** `ocrChosen()`, `ocrToRead()` (without those left out), `OCR_VIEW` (560 × 620), `ocrCurrent()` (the image shown and the scale of its view), **`ocrDraw()`** (the view: the image, outside the frames darkened – `fill('evenodd')` –, each frame dashed with its corners and "n · w × h px" in the image's pixels), **`ocrPointerDown(e)`** (pointer events: a corner → its size, inside → moved, else a new frame; under 8 px of the view nothing; `pointermove`/`pointerup` on the window), `ocrRotate(img, dir)` (a canvas turned by 90°, the frames go), **`ocrFramesHtml()`** (the view `[data-ocr-view]`, the images `[data-ocr-cur]` with their state, what is read `[data-ocr-mode]` frames | whole | skip, Remove the frames, ↺ ↻, Next image →, Recognize text).
+- **State:** `S.ocr.frameFirst` (true), `cur`, `drag`; an image's `mode`, `frames` (on its canvas), `loading`.
+- **Changed:** `ocrPickHtml` (the box "Before reading" `[data-ocr-framefirst]`, the button `data-ocr="frames"` "Next: frames for n images →" while ticked; images left out read again once ticked here), `renderOcr` (the step `frames`: the image loaded first, then `ocrDraw`; `pointerdown` on the window; the head names image i of n), `ocrClick` (frames, next, an image, clear, rotl/rotr), `ocrChange` (`data-ocr-framefirst`, `data-ocr-mode`; another image size: the canvases and frames go), `ocrRun` (`ocrToRead()`).
+- **Header / files:** `@version 3.34.2`, `?v=3.34.2`, both files' `version`.
+- **CSS:** `.dci-ocr-frames`, `-stage`, `-view` (crosshair, `touch-action: none`), `-viewwait`, `-side`, `-thumbs`, `-thumb`, `-tools`, `.dci-small:disabled`.
+- **Texts:** new (English) `ocr.before`, `ocr.frameFirst`, `ocr.frameFirstHint`, `ocr.toFrames.one/.other`, `ocr.step.frames`, `ocr.loadingImage`, `ocr.viewLabel`, `ocr.mode`, `ocr.modeFrames`, `ocr.modeWhole`, `ocr.modeSkip`, `ocr.clear`, `ocr.rotl`, `ocr.rotr`, `ocr.framesHint`, `ocr.nFrames.one/.other`, `ocr.noFrame`, `ocr.wholeImage`, `ocr.leftOut`, `ocr.nextImage`.
+- **Tests:** `t_coverart.py` – new case `ocrframes` (two frames drawn, one changed at a corner, one moved; turned and read whole; left out; the sizes read; back to the images); `ocrrun`, `ocrerror` untick the frames (the whole images); `ocrpick` expects "Next: frames for n images →".
+
+## Import 3.34.1 · 2026-10-28
+
+Text from cover art as a beta (collected item E3).
+
+- **New block "Text from cover art (beta)"** (before `buildLogWindow`): `BETA_OCR_KEY` (`dci-beta-ocr`), `S.betaOcr`, `S.ocr` (the window's state: `step` list | pick | run | result, `images` [{ id, types, comment, thumb, big, orig, sel, mode, frames, canvas, w, h }], `langs`, `size` orig | 1200, `results`, `error`, `run`), `CAA_URL`, `TESSERACT_VERSION` 5.1.1, `TESSERACT_URL` (jsDelivr), `OCR_CREDIT_TYPES` (Back, Booklet, Liner, Tray: ticked), `OCR_LANGS` (en eng, de deu, es spa, fr fra), `OCR_SMALL` 1000 (×3 below), `OCR_MAX` 3000, `OCR_UNSURE` 60; **`httpFetch(url, { blob })`** (`GM_xmlhttpRequest` / `GM.xmlHttpRequest` with `responseType`, else fetch → { status, body }), **`loadTesseract()`** (once: a script element into the page, `pageWindow.Tesseract`), **`ocrList()`** (`/release/<mbid>` of the Cover Art Archive, http → https, 404: none), **`ocrCanvas(img)`** (the image as a canvas, `createImageBitmap` else an `Image`, at most `OCR_MAX`), **`ocrPieces(img)`** (frames or the whole image, ×3 when small), **`ocrClean(text)`** (℗, dashes, empty lines → { text, fixes }), `ocrTypes`, `openOcr()`, `closeOcr()`, **`ocrRun()`** (one worker for the languages, `recognize` per piece, words under `OCR_UNSURE`, `terminate`; errors into the window and the log), `ocrText()` (the texts and their origin "Cover Art Archive images (…), read with text recognition"), `ocrImport(supp)` (`loadRelease(…, { source: TEXT })` or `loadSupplement(TEXT, …)`), `renderOcrProgress()`, `ocrPickHtml()`, `ocrRunHtml()`, `ocrResultHtml()`, **`renderOcr()`** (`#dci-ocr`, a window above the dashboard), `ocrClick`, `ocrChange`.
+- **"Source ▾":** the item `ocr-open` (with `.dci-beta-tag`) while the beta is on; the click opens the window. **Escape** closes it first.
+- **⚙ Settings:** `SETTING_TOPICS` + `beta` (before connections), `TOPIC_KEYS.beta`, the body (`settings.betaHint`, the switch `data-set="beta-ocr"`, `settings.betaOcrWhat`), `settingsChange` (stored, the menu drawn anew, the window closed when off), `resetTopic('beta')`, `resetSettings` (`betaOcr: false`, the window closed), `SETTINGS_KEYS` + `BETA_OCR_KEY`.
+- **Header:** `@connect coverartarchive.org`, `@connect archive.org`; `@version 3.34.1`, the `?v=` of both files, their `version` 3.34.1.
+- **Connections:** X013 Cover Art Archive (site), X014 Tesseract.js (kind `library`, new text `conn.kind.library`).
+- **CSS:** `.dci-beta-tag`, `#dci-ocr` and its parts (`.dci-ocr-head`, `-body`, `-grid`, `-card`, `-type`, `-opts`, `-foot`, `-err`, `-warn`, `-runs`, `-barbox`, `-bar`, `-res`, `-word`, its buttons and fields).
+- **Texts:** new (English) `settings.t.beta`, `settings.betaHint`, `settings.betaOcr`, `settings.betaOcrTitle`, `settings.betaOcrWhat`, `ocr.*` (menu, menuTitle, title, step.list, step.pick.one/.other, step.run, step.result, caaLink, loading, none, listFailed, pickHint, rarely, noType, langs, langsHint, size, sizeOrig, size1200, sizeHint, chosen, run.one/.other, runHint, state.wait/.load/.read/.done, resultHint, small, textOf, unsure, fixed, fixPc, fixDash, back, copy, copied, supp, import, errNoLib, errImage), `log.ocrOpen`, `log.ocrDone.one/.other`, `log.ocrFailed`, `log.ocrImported`, `conn.kind.library`, `conn.X013`, `conn.X014`.
+- **Harness:** `COVER_ART` (the release's images: id, types, comment, size), `CAA_REQUESTS`, route `coverartarchive.org` (the list, 404 without images; PNGs of the size, `png_of(w, h)`), `TESSERACT_FAKE` / `FAKE_TESSERACT` (a stand-in of Tesseract.js served as from jsDelivr: `window.__ocrTexts` per piece, `window.__ocr` records languages, sizes read, workers), `TESSERACT_REQUESTS`; `GM_XHR_SHIM` answers `responseType: 'blob'`.
+- **Tests:** new file `t_coverart.py` – cases `ocrsetting`, `ocrpick`, `ocrrun`, `ocrerror`; `t_ui_settings.py`: the tab `beta`, 14 connections.
 
 ## Import 3.34.0 · 2026-10-28 – milestone "Languages file"
 
