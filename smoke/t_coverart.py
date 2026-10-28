@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs; `python3 t_coverart.py <case> …` runs only those."""
 import json
 
 import harness as H  # noqa: F401 – used by the cases
@@ -493,6 +493,93 @@ def case_ocrpdf():
         print('E) Adresse:', e1, '| kaputt:', e2)
         results.append([x[0] for x in e1] == ['images.example.org/…/booklet.pdf · p. 1', 'images.example.org/…/booklet.pdf · p. 2', 'images.example.org/…/booklet.pdf · p. 3']
                        and e2.startswith('bad.pdf could not be opened as a PDF:'))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def discogs_image(rel, n, size):
+    """[3.34.7] An address of i.discogs.com as Discogs writes them: options, then the file "R-<release>-…" in base64, in parts."""
+    import base64
+    b64 = base64.urlsafe_b64encode(f'discogs-database-images/R-{rel}-1600000000-{1000 + n}.jpeg'.encode()).decode().rstrip('=')
+    parts = '/'.join(b64[i:i + 16] for i in range(0, len(b64), 16))
+    return f'https://i.discogs.com/sig{n}{size}/rs:fit/g:sm/q:90/h:{size}/w:{size}/{parts}.jpeg'
+
+
+def case_ocrdiscogs():
+    """[3.34.7] Discogs images only on request (collected item 123; maintainer: "nur wenn eingegeben. nicht automatisch. evtl einen
+    button mit "load discogs artworks" oder ähnlich").
+    A) Opened: nothing of Discogs is fetched; "Load Discogs images (r<id>)" for the release linked to this one.
+    B) A click: the release's page on discogs.com is read – its two images, each once at its largest size (600 px, not the 150 px
+       thumbnails), not the image of another release on the page; cards "Discogs r<id> · 1" "from Discogs", ticked; the button off.
+    C) The address of another Discogs release typed: its image; the same again refused.
+    D) Read: the 600 px images enlarged ×3 (1800 × 1800) with the warning; imported, the source names
+       "images of Discogs release https://www.discogs.com/release/<id>"."""
+    results = []
+    rel = H.DISCOGS_ID
+    page = ('<html><body><img src="%s"><img src="%s"><img src="%s"><img src="%s"><a><img src="%s"></a></body></html>'
+            % (discogs_image(rel, 1, 150), discogs_image(rel, 1, 600), discogs_image(rel, 2, 600), discogs_image(rel, 2, 150), discogs_image(999, 1, 600)))
+    other = '<html><body><img src="%s"></body></html>' % discogs_image(4242, 1, 600)
+    pages = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps([{'text': 'Credits by Discogs\n', 'words': []}] * 3))
+
+        def dg_page(route):
+            pages.append(route.request.url)
+            body = page if route.request.url.endswith(f'/release/{rel}') else other
+            return route.fulfill(body=body, content_type='text/html', headers={'Access-Control-Allow-Origin': '*'})
+        ctx.route('https://www.discogs.com/release/**', dg_page)
+        ctx.route('https://i.discogs.com/**', lambda r: r.fulfill(body=H.png_of(600, 600), content_type='image/png', headers={'Access-Control-Allow-Origin': '*'}))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        a = [pg.evaluate("[...document.querySelectorAll('#dci-ocr [data-ocr-discogs]')].map(x => x.textContent.trim())"), list(pages)]
+        print('A) Knopf:', a)
+        results.append(a == [[f'Load Discogs images (r{rel})'], []])
+        CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(' remove', '').trim()])"
+        pg.click('#dci-ocr [data-ocr-discogs]')
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 2", 20)
+        b1 = [pg.evaluate(CARDS), pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard img')].map(i => i.getAttribute('src').match(/h:(\\d+)/)[1])"),
+              pg.evaluate("document.querySelector('#dci-ocr [data-ocr-discogs]').disabled"), list(pages)]
+        print('B) Discogs:', b1)
+        results.append(b1[0] == [[f'Discogs r{rel} · 1', True, 'from Discogs'], [f'Discogs r{rel} · 2', True, 'from Discogs']] and b1[1] == ['600', '600'] and b1[2]
+                       and b1[3] == [f'https://www.discogs.com/release/{rel}'])
+        pg.fill('#dci-ocr [data-ocr-url]', 'https://www.discogs.com/de/release/4242-Other-Band-Other-Album')
+        pg.press('#dci-ocr [data-ocr-url]', 'Enter')
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3", 20)
+        pg.fill('#dci-ocr [data-ocr-url]', 'https://www.discogs.com/release/4242')
+        pg.press('#dci-ocr [data-ocr-url]', 'Enter')
+        pg.wait_for_timeout(300)
+        c1 = [pg.evaluate(CARDS)[-1], pg.evaluate("(document.querySelector('#dci-ocr .dci-ocr-err[role=alert]') || {}).textContent || ''")]
+        print('C) andere Adresse:', c1)
+        results.append(c1 == [['Discogs r4242 · 1', True, 'from Discogs'], 'This address is in the list already.'])
+        # D) read the release's two Discogs images
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        if pg.evaluate("document.querySelector('#dci-ocr [data-ocr-all]').checked"):
+            pg.click('#dci-ocr [data-ocr-all]')
+        else:
+            pg.click('#dci-ocr [data-ocr-all]')
+            pg.click('#dci-ocr [data-ocr-all]')
+        for k in range(2):
+            pg.check(f'#dci-ocr .dci-ocr-owncard >> nth={k} >> input')
+            pg.wait_for_timeout(100)
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        d1 = pg.evaluate("[window.__ocr.calls, document.querySelectorAll('#dci-ocr .dci-ocr-warn').length]")
+        pg.click('#dci-ocr [data-ocr=supp]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Text from cover art: .*images of Discogs release/.test(li.textContent))", 30)
+        d2 = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Text from cover art: .*images of Discogs release/.test(t))")
+        print('D) gelesen:', d1, '| Log:', d2)
+        results.append(d1 == [[[1800, 1800], [1800, 1800]], 2] and any(f'images of Discogs release https://www.discogs.com/release/{rel}, read with text recognition' in t for t in d2))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
