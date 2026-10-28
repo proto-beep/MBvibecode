@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.14, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.15, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.15 · 2026-10-28
+
+Text from cover art (beta): no image ticked at first, "Auto-select"; loading off by default, at most 24 ahead, after "Next"; a line zoomed in on (collected items 136, 128b, 130b).
+
+- **Auto-select:** `OCR_AUTO_KEY` (`dci-ocr-auto`), `S.ocrAuto` (off by default); new **`ocrCreditText(text)`** (℗/©, or a line "Role – Name", "Name – role", "Role: Name", "Role by Name" whose role `isKnownRole` knows), **`ocrAutoPick(im)`** (the release's images of `OCR_CREDIT_TYPES`, PDF pages with their own text that has credits), **`ocrAutoApply(images)`** (ticks them, `autoSel`), **`ocrSetAuto(on)`** (stores it; on – applied at once; off – the images with `autoSel` unticked; the settings' checkbox follows). `ocrList` ticks nothing (`sel: false`) and applies Auto-select when it is on; PDF pages keep their own text (`pdfText`, at most 20,000 letters), are not ticked, Auto-select applied; Discogs images `sel: false`. A tick changed by hand (one image, "All images") clears `autoSel`. The switch: `[data-ocr=auto]` (`aria-pressed`) in the head of the choice; ⚙ Settings → Beta `data-set="ocr-auto"` (while the beta is on), in `TOPIC_KEYS.beta`, `SETTINGS_KEYS`, the defaults and `resetTopic('beta')`.
+- **Loading:** new **`ocrFile(img, { ahead })`** (the file loaded once and kept as `fileBlob` with `fileSize`; its state shown; `filePromise` shared), `ocrHasFile`, `ocrHasCanvas`; `ocrCanvas` makes the canvas from `ocrFile` (`ocrCanvasLoad`). `OCR_PRELOAD_MAX` 24; `S.ocrPreload` off by default (stored `true` when on); new **`ocrLoadQueue()`** (choosing: the first 24 ticked if loading ahead is on; frames: all to be read, the one shown first; reading: those still to come) and `ocrToLoad(im)` (not a PDF page, nothing there or on its way); `ocrPreloadPump` loads the files of the queue, two at a time (in every step but the result); `ocrPreloadDrop` also stops a file loaded ahead; "waiting to load" for the images in the queue; another image size drops the release's files.
+- **Line zoomed in on:** `ocrZoomTo(key, box, fw, fh)` (a word 0.5 / 0.34 of the view, a line 0.95 / 0.5); `ocrLocateLine` zooms in on the line; `ocrZoomShow` is gone.
+- **Texts (English, OCR):** new `ocr.auto`, `ocr.autoTitle`, `settings.ocrAuto`, `settings.ocrAutoTitle`; changed (English only) `ocr.pickHint`, `settings.ocrPreloadTitle`.
+- **CSS:** `.dci-ocr-auto[aria-pressed="true"]`.
+- **Header / files:** `@version 3.34.15`, `?v=3.34.15`, both files' `version`.
+- **Tests:** `t_coverart.py` – new case `ocrauto`; `beta_on` switches Auto-select on (unless `auto=False`); `ocrpdf` (the drawn page ticked by hand), `ocrdiscogs` (not ticked), `ocrload` (loading ahead switched on for A and B; after "Next" the others too), `ocrlocate` (lines zoomed in on).
 
 ## Import 3.34.14 · 2026-10-28
 
