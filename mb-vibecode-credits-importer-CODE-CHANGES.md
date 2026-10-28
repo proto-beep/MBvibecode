@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.8, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,83 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.8 · 2026-10-28
+
+"… from cover art" beside "Import credits …" (collected item 124).
+
+- **Page bar:** `insertLauncher` – a button `#dci-open-ocr` (hidden) after `#dci-open`, its click `openFromCoverArt`; `renderLauncher` shows it while `S.betaOcr` (its text and a "beta" tag, its title); CSS `#dci-open-ocr` (joined: `margin-left: -13px`, `#dci-open:has(+ #dci-open-ocr:not([hidden]))` square on the right).
+- **New `openFromCoverArt()`:** `openDashboard({ ocrFirst: true })`, then `openOcr()` (or the open window to the front). `openDashboard`: `ocrFirst` – no `initOnce`, the message `ocrStart.hint` with "Start import" (`start-import`).
+- **`ocrImport`:** before the import (`!S.initialized`) the text goes to `S.startText` and `initOnce()` runs; **`startImport`** loads `S.startText` as the source (TEXT, `S.textInput`) before any linked source.
+- **The beta switched (⚙ Settings → Beta, its ↺, "Reset all settings"):** `renderLauncher()`.
+- **Header / files:** `@version 3.34.8`, `?v=3.34.8`, both files' `version`.
+- **Texts:** new (English) `launcher.ocr`, `launcher.ocrTitle`, `ocrStart.hint`.
+- **Tests:** `t_coverart.py` – new case `ocrstart`.
+
+## Import 3.34.7 · 2026-10-28
+
+Text from cover art (beta): Discogs images on request (collected item 123).
+
+- **Discogs adapter (`DISCOGS`):** `releaseIdInUrl(u)` (www.discogs.com/[xx/]release/<id>), **`pageImages(id)`** (the release's page through `httpFetch`; the addresses of i.discogs.com whose file – the base64 parts after the options, decoded – is "R-<id>-…", each file once at its largest `w:`/`h:`) – the Discogs knowledge stays in the adapter (`t_sources.py` adapter).
+- **New in the block of the text from cover art:** **`ocrAddDiscogs(id)`** (cards `src: 'discogs'`, `discogs: id`, "Discogs r<id> · n", ticked; not twice, also not while loading – `o.discogsLoading`; `ocr.discogsNone`; log `ocrOwnAdded`), **`ocrDiscogsLinks()`** (the linked Discogs releases from `S.sourceLinks`; without an import asked of MusicBrainz once – `release/<mbid>?inc=url-rels` in the background – `o.discogsAsked`, `o.discogsLinks`).
+- **Changed:** `ocrAddUrl` sends a Discogs release address to `ocrAddDiscogs`; `ocrOwnHtml` a button `[data-ocr-discogs]` per linked release (off while loading or loaded) and "Loading the images from Discogs …"; `ocrClick`; the card says "from Discogs"; `ocrText` origin "images of Discogs release https://www.discogs.com/release/<id>".
+- **Header / files:** `@version 3.34.7`, `?v=3.34.7`, both files' `version` (no new permission: discogs.com is read through `@connect *`, X015).
+- **Texts:** new (English) `ocr.discogsLoad`, `ocr.discogsHint`, `ocr.discogsLoading`, `ocr.discogsNone`, `ocr.discogsImage`, `ocr.ownDiscogs`; changed (English only so far) `ocr.ownHint`.
+- **Tests:** `t_coverart.py` – new case `ocrdiscogs` (with `discogs_image(rel, n, size)`: addresses as Discogs writes them).
+
+## Import 3.34.6 · 2026-10-28
+
+Text from cover art (beta): booklets as PDF (collected item 123).
+
+- **New constants:** `PDFJS_VERSION` 6.2.108, `PDFJS_ROOT`, `PDFJS_URL` (`legacy/build/pdf.min.mjs`), `PDFJS_WORKER_URL`, `OCR_PDF_PX` 2400, `OCR_PDF_PAGES` 60, `OCR_PDF_TEXT` 20.
+- **New:** **`loadPdfJs()`** (once: an inline script in the page `import()`s the module, sets `GlobalWorkerOptions.workerSrc` – pdf.js wraps the cross-origin worker itself – and names it `window.pdfjsLib`, then the event `dci-pdfjs` on `document`; 60 s at most; `ocr.errNoPdf`), `isPdfFile`, **`ocrPdfRender(page, px)`** (a white canvas, the page drawn with `render({ canvas, viewport })`, `dciScale`), **`ocrAddPdf(blob, name, from)`** (`getDocument({ url: object URL, cMapUrl, standardFontDataUrl, wasmUrl })`, each page a card `src: 'pdf'` with `file`, `from`, `page`, `pdfPage`, `textLayer` (≥ 20 letters of its own text), a 300 px thumbnail; `o.pdfDocs`, `o.pdfLoading`; `ocr.pdfLong`, `ocr.errPdf`; log `ocrPdfAdded`), **`pdfLines(pts)`** (pieces in lines by their height, left to right, a space at a gap), **`ocrPdfText(img)`** (no frames: the text in its order, lines as the PDF ends them – `hasEOL`; frames: per frame the pieces starting inside it, in lines by their place), `ocrDirect(img)` (a PDF page with its own text, not turned).
+- **Changed:** `ocrAddFiles` opens PDFs (other files still named), `ocrAddUrl` fetches an address ending in .pdf and opens it (not twice: `from`); `ocrCanvas` renders a PDF page at `OCR_PDF_PX` (`pdfScale`, `turn` 0); `ocrRotate` counts `turn`; `ocrRun` starts the text recognition only for the first image that needs it (`recognizer()`), reads a direct page with `ocrPdfText` (its canvas only when it has frames), `res.direct`; `ocrText` origin "PDF name (p. …)" by file or address; `closeOcr` destroys the PDFs and revokes their object URLs; the cards say "PDF page with its own text" / "PDF page (an image)"; the result of a direct page says so (`ocr.fromPdf`); `accept` with PDFs; "Opening the PDF …" while one opens.
+- **Connections:** X016 pdf.js (kind `library`, cdn.jsdelivr.net).
+- **Header / files:** `@version 3.34.6`, `?v=3.34.6`, both files' `version`.
+- **Texts:** new (English) `ocr.pdfPage`, `ocr.pdfLoading`, `ocr.pdfText`, `ocr.pdfScan`, `ocr.pdfLong`, `ocr.errPdf`, `ocr.errNoPdf`, `ocr.fromPdf`, `log.ocrPdfAdded`, `conn.X016`; changed (English only so far) `ocr.chooseFiles`, `ocr.notImage`, `ocr.ownHint`.
+- **Harness:** `PDFJS_DIR` (a local pdfjs-dist from npm), the jsDelivr route serves its files for `pdfjs-dist@…` (`PDFJS_REQUESTS`); **`pdf_of(pages)`** writes a small PDF (lines in Helvetica, or a page with only a drawing).
+- **Tests:** `t_coverart.py` – new case `ocrpdf` (with the real pdf.js); `t_ui_settings.py` (settabs) 16 connections.
+
+## Import 3.34.5 · 2026-10-28
+
+Text from cover art (beta): "All images" (collected item 125), own images – files and addresses (collected item 123).
+
+- **Header:** `@connect *` (after the known sites, which keep Tampermonkey from asking for them); `@version 3.34.5`, `?v=3.34.5`, both files' `version`.
+- **Connections:** X015 (kind `site`, no name of its own – `conn.X015.name` –, hosts `['*']`, `@connect *`).
+- **New in the block of the text from cover art:** `OCR_IMAGE_FILE`, `ocrIsCaa(img)` (an image of the release: `src` 'caa' or none), `ocrUrlName(u)` ("site/…/file"), **`ocrOwnImage(src, value, pasted)`** (`src` 'file': `name`, `blob`, `local` object URL as thumb/big/orig; 'url': `name`, `url`), **`ocrAddFiles(files, pasted)`** (images only, others named in `o.error` – `ocr.notImage`; log `ocrOwnAdded`; to the step `pick`), **`ocrAddUrl(text)`** (http/https, not twice), **`ocrPaste(e)`** (on `document` while the window is open: image files; an address when not typing in a field), **`ocrBlob(img)`** (an own file as it is; an address through `httpFetch`, a failure → `ocr.errUrl`).
+- **Changed:** `ocrList` images get `src: 'caa'`; `ocrCanvas` keeps an own image's canvas whatever the size chosen, a blob that is no image → `ocr.errImage`; `ocrRun` always calls `ocrCanvas` (it keeps what is loaded); `ocrText` origin: "Cover Art Archive images (…)", "own image files (…)", "images from …" joined with "; " (only the release's: as before); `openOcr` keeps own images added while the list loads, a failed list is `o.listError`; `closeOcr` revokes the object URLs, removes the paste listener; `ocrTypes` the name of an own image.
+- **`ocrPickHtml`:** "All images (n)" `[data-ocr-all]` (indeterminate set in `renderOcr`), cards `data-ocr-card` – own ones `.dci-ocr-owncard` with "your file" / "by its address" and `[data-ocr-remove]` –, new **`ocrOwnHtml()`** (`[data-ocr=files]` + hidden `input[type=file][data-ocr-files]` multiple `accept="image/*"`, `[data-ocr-url]` + `[data-ocr=url]`), the image size only with images of the release, no CAA images: `ocr.none` above the own images (before: only a "Close").
+- **Handlers:** `ocrChange` (`ocrAll`, `ocrFiles`), `ocrClick` (`files`, `url`, `[data-ocr-remove]`), `renderOcr` (Enter in the address field, `dragover`/`drop` of files or `text/uri-list`, the class `dci-ocr-drop`, the paste listener), the head counts the release's images.
+- **CSS:** `.dci-ocr-owncard`, `.dci-ocr-all`, `.dci-ocr-own`, `.dci-ocr-ownrow`, `#dci-ocr.dci-ocr-drop`.
+- **Texts:** new (English) `log.ocrOwnAdded.one/.other`, `ocr.all`, `ocr.own`, `ocr.chooseFiles`, `ocr.dropHint`, `ocr.urlLabel`, `ocr.addUrl`, `ocr.ownHint`, `ocr.ownFile`, `ocr.ownUrl`, `ocr.remove`, `ocr.removeImage`, `ocr.pastedImage`, `ocr.notImage`, `ocr.badUrl`, `ocr.urlTwice`, `ocr.errUrl`, `conn.X015.name`, `conn.X015`.
+- **Tests:** `t_coverart.py` – new case `ocrown`; `t_ui_settings.py` (settabs) 15 connections.
+
+## Import 3.34.4 · 2026-10-28
+
+✎ at the wording rules and the questions (collected item 121).
+
+- **Section 2· (your changes):** new `WORDING_RULE_FIELDS` (phrases, credit), `QUESTION_RULE_FIELDS` (base, credit, options), `TYPE_QUESTION_FIELDS` (options), `OPTION_FIELDS` (type, level, instrument, task, label, credit, suggested – the order a changed choice is written in), `LIMITS.phrases` 40; `rawWordingRule`, `rawQuestionRule`, `rawTypeQuestion`, `rawDataRule`, **`ruleKindOf(id, raw)`** (role | company | wording | question | typeq | ''), `RULE_FIELDS` by kind. `builtinField` reads those rules too; `effectiveRaw` sets their changed fields (a copy); `applyMappingChanges` refills `WORDING_RULES`, `QUESTION_RULES`, `TYPE_QUESTIONS` rule by rule in place.
+- **Rules window:** `ruleEditable` (+ W and Q), `ruleFieldsOf` by kind, `encJson` compares with the keys of objects in order (`sortedKeys`: a choice saved by ✎ equals the file's whatever the order of its keys); new **`checkDataField(kind, f, v)`** (phrases in lower case, 1 – 40; a role credit, empty = none; the word of a question; its instruments 1 – 8; the choices of a type question 1 – 8, each type + level, instrument/task/label, credit true or a text, suggested), used by `checkRuleSet` for those kinds; `fieldText` (phrases " | ", choices with `optionText`), `fieldChangeHtml` (words added and taken away also for phrases and the instruments of a question), `ruleConflicts` ('gone' by `ruleKindOf`).
+- **Form:** `choiceDraft`, `dataRuleDraft(kind, v)`, `dataRuleSet(kind, d)`, `isDataKind`; `openRuleEdit` and `saveRuleEdit` branch (the old body is `patternRuleSet(id, d)`); new **`dataRuleEditHtml(id, kind)`** (W: textarea `phrases`, `creditMode` none/text + `credit`; Q: `base`, `credit`, textarea `options`; type question: a table of choices `[data-redit-o][data-redit-of]` with ↑ ↓ ✕ `[data-redit-omove][data-dir]`, `[data-redit-odel]`, `＋ [data-redit-oadd]`), `ruleEditActions(id)` shared. Handlers: `change` and `input` of `data-redit-of`, clicks of omove/odel/oadd; ✎ focuses the pattern, else the first field.
+- **`rulesTables`:** wording and question rows with `editRow` (✎ cell; one more column).
+- **`mappingChanged`:** a row's answer to a type question (the index of a choice) is kept by its choice (type, level, instrument) across the change, removed when that choice is gone.
+- **Import (`readMappingImport`):** unknown ids by `ruleKindOf`; a whole register compares `WORDING_RULES`, `QUESTION_RULES`, `TYPE_QUESTIONS` field by field (other fields such as notes are not taken over); those keys no longer count as lists that cannot be changed. The changes format stays version 2 (an older script skips W/Q ids as unknown).
+- **CSS:** textarea in a label, `.dci-redit-choices` (table, fields), `.dci-redit-omove`.
+- **Texts:** new (English) `mapping.field.phrases`, `.base`, `.options`, `mapping.phrasesHint`, `mapping.optionsHint`, `mapping.choicesHint`, `mapping.choice.type/.level/.instrument/.task/.label/.credit/.suggested`, `mapping.choiceUp`, `.choiceDown`, `.choiceDel`, `.choiceAdd`; changed in all four languages `mapping.badField` (names the words and choices of W and Q).
+- **Header / files:** `@version 3.34.4`, `?v=3.34.4`, both files' `version`.
+- **Tests:** `t_rules_window.py` – new case `wqedit`.
+
+## Import 3.34.3 · 2026-10-28
+
+Settings: scrolling with ⓘ Connections (collected item 122), the bridge from ⚙ in line (126), the content as high as it can be (127), words in the languages file (119, 120).
+
+- **`alignSettingsPane()`** works the margin of `.dci-set-pane` out without taking it away first (the tab's place does not depend on it) and writes it only when it changes; it is now the smallest margin with which the chosen tab still lies within the pane's side, with the pane's lower corner radius + 2px below it – `max(0, min(tabTop, tabBottom + below − paneHeight))` – instead of the tab's top; the class `dci-set-joined-top` when the tab joins at the top (only with the tabs in a column). Until 3.34.2 `pane.style.marginTop = ''` and the new value on every call – every scroll event, through `placeBridges` – made the browser's scroll anchoring scroll back by the margin (278px at ⓘ Connections, reproduced with "Dates & tracks" open).
+- **`placeBridges()`:** `--dci-bridge-x`, `-w`, `-h` and `--dci-bridge-down` in fractions of a pixel (`px()`, three decimals; until 3.34.2 `Math.round`), x from the box's computed `border-left-width` instead of `clientLeft` (rounded), `--dci-bridge-down` = head bottom − button bottom + 3 (the `::after` starts 2px above the button's lower edge – `top: 100% − 1px` of its padding box – and ends 1px below the head, over its `border-bottom`; before + 1, rounded, it ended 1px short). New **`setVar(el, name, value)`**: a custom property only set when it changes.
+- **`buildOverlay`:** a `ResizeObserver` on `[data-el="settings"]` calls `bridgesLater` (the content's place follows its height).
+- **CSS:** `.dci-set-pane` `border-radius: 4px` (was `0 4px 4px 4px`), `.dci-set-pane.dci-set-joined-top { border-top-left-radius: 0 }`.
+- **Languages file:** de/es/fr `rules.quick` "Quick switches"; `ms.3.32.0`, `ms.3.33.0` the same word; es `quick.S045`, `ms.3.31.0`, `ms.3.32.0` "entidad de gestión colectiva" ("una lista de las entidades"); fr `quick.S045`, `ms.3.31.0`, `ms.3.32.0` "société de gestion des droits d’auteur" (13 texts).
+- **Header / files:** `@version 3.34.3`, `?v=3.34.3`, both files' `version`.
+- **Tests:** `t_ui_settings.py` – `bridge` (A, C exact to 0.01px, the part at the symbol 1px below the head; B the new place of the content: Connections from the top with its tab in the middle, General joined at the top, a short one just low enough, the corner), new case `settingsscroll` (Connections and "Dates & tracks" open, scrolled up in 15px steps: never back down, up to 0; no change of the content's style while scrolling).
 
 ## Import 3.34.2 · 2026-10-28
 
