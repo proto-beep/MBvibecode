@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.14 | – |
+| 2026-10-28 | 3.34.0 – 3.34.15 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.15
+
+#### Changed
+
+- **Text from cover art (beta): no image ticked at first – "Auto-select"** (collected item 136; maintainer: "komplett auf die vorauswahl verzichten. lass doch einfach einen auto-auswahl knopf einführen und die auto-auswahl auch triggerbar sein", "zusätzliche einstellung die das gleiche zeigt wie der knopf", "a, gehen wieder weg"): the release's images, PDF pages and Discogs images are not ticked any more; **Auto-select** in the window – the same switch as ⚙ Settings → Beta "Auto-select the images with credits" (off by default) – ticks Back, Booklet, Liner and Tray and the PDF pages whose own text has credits, at once and each time the window opens; switched off, its ticks go again (those changed by hand stay). Your own files and addresses are still ticked when added.
+- **Loading the images** (collected item 128b; maintainer: "in der beta standardmäßig aus", "nur 24 maximal auch vorladen", "ja zwei zugleich und das gezeigte zuerst"): loading ahead is off by default and takes at most the first 24 images ticked; without it, the images ticked are loaded after "Next" – beside the frames and while reading –, two at a time, the one shown first. Only an image's file is kept until it is shown or read.
+- **A line of the text clicked zooms in on it** (collected item 130b; maintainer: "auch heranzoomen"), as wide as the view.
 
 ### Import 3.34.14
 

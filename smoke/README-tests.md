@@ -411,6 +411,10 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     ×3 – its place on the canvas; a PDF page's own text – the place of its line on the page drawn
                                 #   ocrzoom: 3.34.11: two frames on the Back, the Booklet whole – wider window, a part per frame beside its text
                                 #     (the image there); +, −, Ctrl + wheel, double click, drag, ⤢; a part's text changed and imported
+                                #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,
+                                #     those set by hand stay; switched on in ⚙ Settings with the window open – ticked at once, and when
+                                #     opened again; 30 booklet pages, loading ahead on: 2 load, 22 wait, 6 not ahead
+                                #   (from 3.34.15 beta_on also switches "Auto-select" on – as before, the images with credits are ticked)
                                 #   ocrwindow: 3.34.14: the window the same size in every step (its foot bar in place, "Next image →" greyed
                                 #     out at the end); the image beside the frames takes the room; smaller at its corner (remembered);
                                 #     moved by its head, opened again at the same place
