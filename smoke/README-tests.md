@@ -411,6 +411,21 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     ×3 – its place on the canvas; a PDF page's own text – the place of its line on the page drawn
                                 #   ocrzoom: 3.34.11: two frames on the Back, the Booklet whole – wider window, a part per frame beside its text
                                 #     (the image there); +, −, Ctrl + wheel, double click, drag, ⤢; a part's text changed and imported
+                                #   ocrremember: 3.34.17: two frames on the Back, the Booklet turned and whole – stored; opened again:
+                                #     "Back 2 frames", read as left; the 1200 px copy: the frames fit (×0.8); forgotten with "Delete stored
+                                #     import …" and the reset of Beta
+                                #   ocrmore: 3.34.16: 30 images – 12 shown (12 previews), "Load 12 more", "All shown (24)"; 12 small images
+                                #     beside the frames, then 24; Auto-select with 30 booklet pages – all shown; a PDF of 15 pages – 12
+                                #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,
+                                #     those set by hand stay; switched on in ⚙ Settings with the window open – ticked at once, and when
+                                #     opened again; 30 booklet pages, loading ahead on: 2 load, 22 wait, 6 not ahead
+                                #   (from 3.34.15 beta_on also switches "Auto-select" on – as before, the images with credits are ticked)
+                                #   ocrwindow: 3.34.14: the window the same size in every step (its foot bar in place, "Next image →" greyed
+                                #     out at the end); the image beside the frames takes the room; smaller at its corner (remembered);
+                                #     moved by its head, opened again at the same place
+                                #   ocrtextfit: 3.34.14: "Reads best: text on a plain, even background …" while choosing and beside the
+                                #     frames; a text field as high as its text, growing; many uncertain words – a yellow box names the part
+                                #   (from 3.34.14 the cases drag frames in the pixels of the image: drag_img – the view follows the window)
                                 #   ocrthumbs: 3.34.13: the small images beside the frames clicked (and Enter) – each shown, a frame drawn
                                 #     on the Tray kept; read: Back and Booklet whole, the Tray's frame ×3
                                 #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.13, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.17, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,50 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.17 · 2026-10-28
+
+Text from cover art (beta): frames remembered for each release and image (collected item 133).
+
+- **New:** `OCR_FRAMES_KEY` (`dci-ocr-frames`: { release MBID: { t, imgs: { key: { f: [[x, y, w, h] as parts 0 … 1], turn, mode } } } }), `OCR_FRAMES_MAX` 50; **`ocrFrameKey(img)`** (`caa:<id>`, `file:<name>:<size>`, `url:<address>`, `pdf:<address or file>:<page>`), `ocrSavedFor(img)`, **`ocrSaveFrames(img)`** (after a frame drawn, changed or removed, a turn, "whole"/"frames"; nothing left: the entry goes; the oldest releases beyond 50 go), `ocrTakeSaved(images)` (when images come into the window: `img.saved`, "whole" at once), **`ocrRestoreFrames(img)`** (when a canvas is made: turned as stored, frames from their parts).
+- **Changed:** `ocrCanvasLoad` sets `turn: 0` for every new canvas and restores (also after another image size: the frames come back); the small images beside the frames count the stored frames of an image not loaded yet; `forgetImport` drops the release's entry; `OCR_FRAMES_KEY` in `TOPIC_KEYS.beta` and `SETTINGS_KEYS`.
+- **Header / files:** `@version 3.34.17`, `?v=3.34.17`, both files' `version`.
+- **Tests:** `t_coverart.py` – new case `ocrremember`.
+
+## Import 3.34.16 · 2026-10-28
+
+Text from cover art (beta): large collections 12 at a time (collected item 131).
+
+- **New:** `OCR_BATCH` 12; each image has `shown` – the release's first 12 (`openOcr` after `ocrList`), of each batch of own files, Discogs images and PDF pages the first 12, an address added at once; `ocrPickHtml` marks every image ticked as shown and draws only those shown, with **"Load n more (m not shown yet)"** `[data-ocr=more]` (the next 12 shown) and **"All shown (n)"** `[data-ocr-shown]` (while some are not shown; half ticked like "All images"; `ocrChange` ticks or unticks those shown).
+- **Frames step:** the small images 12 at a time (`S.ocr.thumbsShown`; the one shown always), `[data-ocr=morethumbs]` shows 12 more.
+- **`ocrCreditText`:** "Role by Name" is also looked up as "Role By" ("Mastered By" in the register) – a PDF page with "Mastered by Bob Producer" was not picked by Auto-select (3.34.15).
+- **Texts (English, OCR):** new `ocr.allShown`, `ocr.more`. **CSS:** `.dci-ocr-more`.
+- **Header / files:** `@version 3.34.16`, `?v=3.34.16`, both files' `version`.
+- **Tests:** `t_coverart.py` – new case `ocrmore`.
+
+## Import 3.34.15 · 2026-10-28
+
+Text from cover art (beta): no image ticked at first, "Auto-select"; loading off by default, at most 24 ahead, after "Next"; a line zoomed in on (collected items 136, 128b, 130b).
+
+- **Auto-select:** `OCR_AUTO_KEY` (`dci-ocr-auto`), `S.ocrAuto` (off by default); new **`ocrCreditText(text)`** (℗/©, or a line "Role – Name", "Name – role", "Role: Name", "Role by Name" whose role `isKnownRole` knows), **`ocrAutoPick(im)`** (the release's images of `OCR_CREDIT_TYPES`, PDF pages with their own text that has credits), **`ocrAutoApply(images)`** (ticks them, `autoSel`), **`ocrSetAuto(on)`** (stores it; on – applied at once; off – the images with `autoSel` unticked; the settings' checkbox follows). `ocrList` ticks nothing (`sel: false`) and applies Auto-select when it is on; PDF pages keep their own text (`pdfText`, at most 20,000 letters), are not ticked, Auto-select applied; Discogs images `sel: false`. A tick changed by hand (one image, "All images") clears `autoSel`. The switch: `[data-ocr=auto]` (`aria-pressed`) in the head of the choice; ⚙ Settings → Beta `data-set="ocr-auto"` (while the beta is on), in `TOPIC_KEYS.beta`, `SETTINGS_KEYS`, the defaults and `resetTopic('beta')`.
+- **Loading:** new **`ocrFile(img, { ahead })`** (the file loaded once and kept as `fileBlob` with `fileSize`; its state shown; `filePromise` shared), `ocrHasFile`, `ocrHasCanvas`; `ocrCanvas` makes the canvas from `ocrFile` (`ocrCanvasLoad`). `OCR_PRELOAD_MAX` 24; `S.ocrPreload` off by default (stored `true` when on); new **`ocrLoadQueue()`** (choosing: the first 24 ticked if loading ahead is on; frames: all to be read, the one shown first; reading: those still to come) and `ocrToLoad(im)` (not a PDF page, nothing there or on its way); `ocrPreloadPump` loads the files of the queue, two at a time (in every step but the result); `ocrPreloadDrop` also stops a file loaded ahead; "waiting to load" for the images in the queue; another image size drops the release's files.
+- **Line zoomed in on:** `ocrZoomTo(key, box, fw, fh)` (a word 0.5 / 0.34 of the view, a line 0.95 / 0.5); `ocrLocateLine` zooms in on the line; `ocrZoomShow` is gone.
+- **Texts (English, OCR):** new `ocr.auto`, `ocr.autoTitle`, `settings.ocrAuto`, `settings.ocrAutoTitle`; changed (English only) `ocr.pickHint`, `settings.ocrPreloadTitle`.
+- **CSS:** `.dci-ocr-auto[aria-pressed="true"]`.
+- **Header / files:** `@version 3.34.15`, `?v=3.34.15`, both files' `version`.
+- **Tests:** `t_coverart.py` – new case `ocrauto`; `beta_on` switches Auto-select on (unless `auto=False`); `ocrpdf` (the drawn page ticked by hand), `ocrdiscogs` (not ticked), `ocrload` (loading ahead switched on for A and B; after "Next" the others too), `ocrlocate` (lines zoomed in on).
+
+## Import 3.34.14 · 2026-10-28
+
+Text from cover art (beta): the window keeps its size, is moved and resized; text fields by their text; a plain background (collected items 134, 130, 135).
+
+- **Window:** `GEOM_KEYS.ocr` (`dci-geom:ocr`), `defaultGeom('ocr')` (1400 px × its unit at most, 92 % high, 4 % from the top, centred), `bringToFront('ocr')`; `renderOcr` calls `makeMovable(el, '.dci-ocr-head', 'ocr')` when it makes the window (placed, moved by the head, size remembered, put back by ⤢ `window-reset` and the reset of all settings) and watches its size (`ocrResize`, a ResizeObserver: the frames view or the parts fitted again; disconnected in `closeOcr`). The class `dci-ocr-wide` and its rule are gone. CSS: `#dci-ocr` without `left: 50%`/`transform`, `height: 92vh`, `resize: both; overflow: hidden`, minimum 420 × 320 px; its head `cursor: move`.
+- **Frames step:** `ocrCurrent` scales to `S.ocr.viewBox` (measured) instead of `OCR_VIEW` (only until then); new **`ocrFitView()`** (the room in `.dci-ocr-stage` measured, the view canvas sized to it, drawn); `ocrDraw` sets `data-k` on the view (its scale – the tests drag in the image's pixels). CSS: the frames body in one row, the stage `flex: 1 1 0`, the side 300 px and scrolling on its own; below 700 px one above the other. "Next image →" stays, disabled on the last image.
+- **Text fields:** `OCR_TEXT_LINES` 20, new **`ocrFitText(ta)`** (as high as its text, scrolls beyond); called by `ocrZoomAll` and on input; `rows` from the text (2 – 20); the `minHeight` of 3.34.11 in `ocrZoomDraw` is gone.
+- **Plain background:** `OCR_BUSY_SHARE` 0.25, `OCR_BUSY_MIN` 4; `ocrRun` gives each part read by Tesseract `wordsN`, `shakyN`, `busy`; `ocrResultHtml` – the yellow box `[data-ocr-busy]` with a button `[data-ocr-goto="i:j"]` for each part (`ocrClick` scrolls to it); `ocrPartHtml` – class `dci-ocr-busypart` and the line `.dci-ocr-busyline`; the hint `[data-ocr-plain]` in the steps "pick" and "frames". CSS `.dci-ocr-busy`, `.dci-ocr-busypart`, `.dci-ocr-busyline`.
+- **Texts (English, OCR):** new `ocr.plainHint`, `ocr.busyTitle`, `ocr.busyHint`, `ocr.busyPart`.
+- **Header / files:** `@version 3.34.14`, `?v=3.34.14`, both files' `version`.
+- **Tests:** `t_coverart.py` – new cases `ocrwindow`, `ocrtextfit`; new helper `drag_img` (frames dragged in the image's pixels); `ocrframes`, `ocrpdf` check the view's proportions instead of 560 px; `ocrzoom` without the class `dci-ocr-wide`.
 
 ## Import 3.34.13 · 2026-10-28
 

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.13 | – |
+| 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,41 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.17
+
+#### Added
+
+- **Text from cover art (beta): frames remembered** (collected item 133; maintainer: "(B)", "ja ok"): for each release and image the frames, how it is turned and "the whole image" are kept (the last 50 releases); opened again, the images come back as you left them. Kept as parts of the image, they fit the 1200 px copy and the original alike – another image size no longer drops them. "Delete stored import …" forgets those of its release, ⚙ Settings → Beta → Reset all.
+
+### Import 3.34.16
+
+#### Added
+
+- **Text from cover art (beta): large collections 12 at a time** (collected item 131; maintainer: "bei großen cover art collections müssten sie evtl auf mehreren seiten angezeigt werden. zumindest als angebot", "weitere laden", "12 bilder pro seite", "ja passt", "ja"): 12 images shown at first, only their previews loaded; "Load 12 more" shows the next ones; images ticked are always shown; "All shown (n)" beside "All images" ticks only those shown. Also the small images beside the frames and the pages of a PDF.
+
+#### Fixed
+
+- **Auto-select and "Mastered by …"** (3.34.15): a PDF page whose credits are written "Role by Name" ("Mastered by Bob Producer") is ticked too.
+
+### Import 3.34.15
+
+#### Changed
+
+- **Text from cover art (beta): no image ticked at first – "Auto-select"** (collected item 136; maintainer: "komplett auf die vorauswahl verzichten. lass doch einfach einen auto-auswahl knopf einführen und die auto-auswahl auch triggerbar sein", "zusätzliche einstellung die das gleiche zeigt wie der knopf", "a, gehen wieder weg"): the release's images, PDF pages and Discogs images are not ticked any more; **Auto-select** in the window – the same switch as ⚙ Settings → Beta "Auto-select the images with credits" (off by default) – ticks Back, Booklet, Liner and Tray and the PDF pages whose own text has credits, at once and each time the window opens; switched off, its ticks go again (those changed by hand stay). Your own files and addresses are still ticked when added.
+- **Loading the images** (collected item 128b; maintainer: "in der beta standardmäßig aus", "nur 24 maximal auch vorladen", "ja zwei zugleich und das gezeigte zuerst"): loading ahead is off by default and takes at most the first 24 images ticked; without it, the images ticked are loaded after "Next" – beside the frames and while reading –, two at a time, the one shown first. Only an image's file is kept until it is shown or read.
+- **A line of the text clicked zooms in on it** (collected item 130b; maintainer: "auch heranzoomen"), as wide as the view.
+
+### Import 3.34.14
+
+#### Changed
+
+- **Text from cover art (beta): the window keeps its size** (collected item 134; maintainer: "die untere navigationsleiste soll immer angezeigt werden und damit statisch sein", "ich meinte alle cover art importfenster"): the same size in every step, so the bar at its foot stays where it is (before, it moved with each image beside the frames – in a window 1000 px high its top was at 788, 683, 743, 623, 310 and 907 px); "Next image →" is greyed out on the last image. Moved by its head and resized at its lower right corner like the dashboard, both remembered. Beside the frames the image takes the room the window leaves it ("je nachdem wie groß man den cover art import dialog gestellt hat"; before at most 560 × 620 px).
+- **Each text field as high as its text** (collected item 130; maintainer: "es soll sich nach dem text richten"): it grows while you type and scrolls from 20 lines on (from 3.34.11 it was as high as its part of the image).
+
+#### Added
+
+- **A plain background reads best** (collected item 135; maintainer: "irgendwo könnte der hinweis erscheinen, dass das am besten mit gleichfarbigen hintergründen funktioniert", "evtl irgendwie gelb markiert mit hinweis der betroffenen bilder"): a hint while choosing and beside the frames; after reading, a yellow box names the parts with many words read uncertainly (more than a quarter, at least 4), and those parts are framed yellow.
 
 ### Import 3.34.13
 
