@@ -105,6 +105,8 @@ def page_part():
         pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.name, d.begin, d.end])")
         pg.locator('[data-act=rules]').first.click()
         pg.wait_for_selector('#dci-rules [data-rsect]', timeout=10000)
+        # [3.33.1] the register only: ✎, "code" and the forms at the rules are tools of the window, not part of it
+        pg.add_style_tag(content='#dci-rules .dci-redit-tools, #dci-rules .dci-codetag, #dci-rules .dci-redit-row { display: none !important; }')
         sects = pg.evaluate("Object.fromEntries([...document.querySelectorAll('#dci-rules [data-rsect]')].map(s => [s.dataset.rsect, s.innerText.split('\\n').map(x => x.replace(/\\s+/g, ' ').trim()).filter(Boolean)]))")
         b.close()
     return {'rows': rows, 'unrec': unrec, 'pool': pool}, sects, errs

@@ -60,6 +60,7 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # ~1,200 roles, ~100 company roles, ~50 date phrases, pasted texts) through the register in Node, the
                                 # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
                                 # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
+                                # (3.33.1: ✎, "code" and the forms of the window are hidden before its sections are read)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                                 # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
@@ -221,7 +222,7 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     question Q010 (lyricist · spoken vocals · liner notes, kept); the compact line goes works → recordings →
                                 #     release → skip; "Poems" alone: Q009, then the level decides
 
-python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows
+python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎, export and import
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
                                 #   rulesdock: 3.30.0: "Mapping rules" in the dashboard below its head (default), never together with ⚙ Settings,
                                 #     "⧉ As window" (stored, ⚙ beside it), remembered after reloading, "in the dashboard" in Appearance,
@@ -232,6 +233,15 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #   quickswitch: 3.32.0 (milestone): the quick switches at the top of "Mapping rules" ([3.32.8] buttons in a box; order, on/off, the id shows the
                                 #     rule, the same switch as in the list); D022 – the notes' "March 1–3, 2001" under Performance as 2001-03,
                                 #     off → the period again; S045 – "Composed by X (BMI)", "Lyrics by Y / GEMA" → the societies on the release
+                                #   ruleedit: 3.33.1: ✎ at role rules without code, company rules and T001/T002/T003/T038/T045/T048 ("code" at
+                                #     the others); ✎ R071 – one more word and the credit "photos": test field, the row, "changed", your changes,
+                                #     stored; a wrong pattern not saved; kept after reloading; ✎ T002 + "zither"; ↺ and ↺ all (asked first)
+                                #   mappingio: 3.33.1: export of the whole register = the mapping file byte for byte (with a change: one line
+                                #     differs), export of my changes (format, versions) and the clipboard; pasted import with a preview (new,
+                                #     list, own rule, switch, skipped: unknown / code / wrong pattern / list, a conflict), "Take over", "Keep
+                                #     mine"; an old rules file chosen and dropped onto the window; a whole register replacing my changes
+                                #   mappingconflict: 3.33.1: a stored change whose built-in value changed with an update – the log warns, "changed
+                                #     · ⚠", built-in value then and now, Keep mine / Discard; a rule no longer in the file; reset with own rules
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
@@ -354,6 +364,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     and loads the Bandcamp album; no release, "discogs=", another tool's redirect; 3.19.2 (3.23.0: the button
                                 #     instead of the tick): a background tab (opened once by Harmony's page), an error, the settings
                                 #   navlink: the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
+                                #   mappingload: 3.33.0: the mapping file from the manager; fetched from GitHub (kept, one reload); missing → the
+                                #     message with "Update script"
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
                                 #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
@@ -372,12 +384,14 @@ python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, cred
                                 #     a row, not the pool), status off/on, Bandcamp credits (a year also in "released …") and "about";
                                 #     two "Vocals [...]" lines of one artist
 
-python3 t_static.py             # Without a browser: the texts of the script, the list of connections
+python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file
                                 #   i18n: the texts (3.27.1): every key the code names in English, no left-over translations, no foreign
                                 #     placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
                                 #     per language (LIST=1: all keys) – not an error
                                 #   connections: the connections (3.25.0, Node): every address of @match / @connect and of the code belongs to an entry of
                                 #     CONNECTIONS, the ids are unique, every entry has its texts in English (3.27.1; before: four languages)
+                                #   mappingfile: 3.33.0: mb-vibecode-credits-importer-mapping.json – format, version, its lists against `MAP.X` of the
+                                #     script, patterns compile, @resource / @grant / @connect, read in Node
 ```
 
 ### Former test → file and case (3.31.1)

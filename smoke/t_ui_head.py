@@ -134,6 +134,7 @@ def case_head():
         # D2) another browser language; D3) an update does not ask
         ctx2 = b.new_context(viewport={'width': 1500, 'height': 1000}, locale='fr-FR')
         H.install_routes(ctx2)
+        H.add_mapping(ctx2)
         pg2, errs2 = H.open_mb_edit(ctx2, companion=False)
         pg2.wait_for_selector('#dci-open', timeout=20000)
         f1 = pg2.evaluate("(() => { const q = document.getElementById('dci-langask'); return q ? [q.querySelector('input:checked').value, q.querySelector('.dci-langask-hint').textContent.slice(0, 30)] : null; })()")
