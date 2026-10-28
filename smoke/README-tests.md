@@ -411,6 +411,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     ×3 – its place on the canvas; a PDF page's own text – the place of its line on the page drawn
                                 #   ocrzoom: 3.34.11: two frames on the Back, the Booklet whole – wider window, a part per frame beside its text
                                 #     (the image there); +, −, Ctrl + wheel, double click, drag, ⤢; a part's text changed and imported
+                                #   ocrthumbs: 3.34.13: the small images beside the frames clicked (and Enter) – each shown, a frame drawn
+                                #     on the Tray kept; read: Back and Booklet whole, the Tray's frame ×3
                                 #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 

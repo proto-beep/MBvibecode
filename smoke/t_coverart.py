@@ -790,6 +790,67 @@ def case_ocrload():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_ocrthumbs():
+    """[3.34.13] The images beside the frames clicked (collected item 132; maintainer: "im draw a frame screen möchte ich die
+    bilder oben durch anklicken anwählen zum frame drawen können"; before, a click on them went nowhere).
+    A) Frames for the Back, Booklet, Tray: a click on the Tray shows it ("image 3 of 3 · Tray", marked as current); a frame drawn
+       on it.
+    B) The Booklet chosen with the keyboard (Enter on its small image), then the Back by a click: each shown; the Tray keeps its
+       frame.
+    C) Read: the Back and the Booklet whole, of the Tray only its frame (×3: a small image)."""
+    results = []
+    HEAD = "[document.querySelector('#dci-ocr .dci-ocr-head .dci-sub').textContent.trim(), [...document.querySelectorAll('#dci-ocr .dci-ocr-thumb')].map(t => [t.getAttribute('aria-current'), t.innerText.replace(/\\s+/g, ' ').trim()])]"
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+
+        def shown(what):
+            H.wait_for(pg, "(() => { const h = document.querySelector('#dci-ocr .dci-ocr-head .dci-sub'); return h && h.textContent.includes(%s) && !!document.querySelector('#dci-ocr [data-ocr-view]'); })()" % json.dumps(what), 15)
+            pg.wait_for_timeout(150)
+            return pg.evaluate(HEAD)
+        a0 = pg.evaluate(HEAD)
+        pg.click('#dci-ocr [data-ocr-cur="2"]')
+        a1 = shown('Tray')
+        box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
+        f = box['width'] / pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
+        pg.mouse.move(box['x'] + 50 * f, box['y'] + 50 * f)
+        pg.mouse.down()
+        for k in range(1, 6):
+            pg.mouse.move(box['x'] + (50 + 400 * k / 5) * f, box['y'] + (50 + 100 * k / 5) * f)
+        pg.mouse.up()
+        pg.wait_for_timeout(150)
+        a2 = pg.evaluate(HEAD)
+        print('A) zuerst:', a0, '| Tray angeklickt:', a1, '| Rahmen:', a2[1][2])
+        results.append(a0[0] == 'frames · image 1 of 3 · Back' and a1[0] == 'frames · image 3 of 3 · Tray'
+                       and [x[0] for x in a1[1]] == ['false', 'false', 'true'] and a2[1][2][1] == 'Tray 1 frame')
+        pg.focus('#dci-ocr [data-ocr-cur="1"]')
+        pg.keyboard.press('Enter')
+        b1 = shown('Booklet')
+        pg.click('#dci-ocr [data-ocr-cur="0"]')
+        b2 = shown('Back')
+        print('B) Tastatur:', b1[0], '| Klick:', b2[0], '| Tray:', b2[1][2])
+        results.append(b1[0] == 'frames · image 2 of 3 · Booklet' and b2[0] == 'frames · image 1 of 3 · Back' and b2[1][2][1] == 'Tray 1 frame')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        c = pg.evaluate('window.__ocr.calls')
+        print('C) gelesen:', c)
+        results.append(c == [[1500, 1500], [1246, 1634], [1200, 300]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_ocrzoom():
     """[3.34.11] Each part read beside its text, with zoom (collected item 130; maintainer: "kann der vergrößerte Bildbereich
     nach der Auswahl neben dem erkannten text dargestellt werden? mit zoom in funktion?", "je Rahmen").
