@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.3 | – |
+| 2026-10-28 | 3.34.0 – 3.34.4 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.4
+
+#### Added
+
+- **✎ at the wording rules and the questions** (collected item 121; maintainer: "bitte gib W und Q auch eine edit funktion", "passt so"): in "Mapping rules" every wording rule (W…) – its words, one a line, and its role credit –, every instrument question (Q001, Q002, Q004) – its word, the role credit it keeps and the instruments to choose, in their order – and every type question (Q003, Q005 …) – its choices: type, level, instrument, task, label, role credit and "suggested", ordered with ↑ ↓, removed with ✕, added with "＋ Add a choice" – can be changed like the role and company rules: your change on top of the mapping file, in effect at once, in "Your changes" (words added and taken away), exported and imported (also from a whole register). What asks a type question stays. A row keeps its answer to a changed type question while that choice is still there.
 
 ### Import 3.34.3
 

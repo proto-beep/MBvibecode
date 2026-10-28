@@ -238,6 +238,10 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #   ruleedit: 3.33.1: ✎ at role rules without code, company rules and T001/T002/T003/T038/T045/T048 ("code" at
                                 #     the others); ✎ R071 – one more word and the credit "photos": test field, the row, "changed", your changes,
                                 #     stored; a wrong pattern not saved; kept after reloading; ✎ T002 + "zither"; ↺ and ↺ all (asked first)
+                                #   wqedit: 3.34.4: ✎ at every W and Q rule; W001 words and role credit (test field, your changes, stored);
+                                #     Q002 + "resonator guitar" in the row's question at once, an empty word refused; Q003's choices removed,
+                                #     moved, added (table, stored), a choice without a type refused; export; import skips a field that cannot
+                                #     be changed and a wrong choice, a whole register takes over Q005 turned round; ↺ all
                                 #   mappingio: 3.33.1: export of the whole register = the mapping file byte for byte (with a change: one line
                                 #     differs), export of my changes (format, versions) and the clipboard; pasted import with a preview (new,
                                 #     list, own rule, switch, skipped: unknown / code / wrong pattern / list, a conflict), "Take over", "Keep
