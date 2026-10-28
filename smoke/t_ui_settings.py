@@ -11,7 +11,7 @@ def case_settabs():
     B) Keys: ↓ the next tab ("Appearance"; chosen, focused), End the last, Home the first.
     C) The tab is remembered (here "Texts", with "Show the web links …" and a button to "Mapping rules"); after reloading
        the settings open on it.
-    D) The ⓘ in the head opens the settings at "ⓘ Connections": a table of the connections ([3.32.10] twelve) (Harmony with its home page,
+    D) The ⓘ in the head opens the settings at "ⓘ Connections": a table of the connections ([3.32.10] twelve, [3.34.5] fifteen) (Harmony with its home page,
        kind, what the script does, permissions, since).
     E) "↺ Reset all settings …" below the tabs shows the question in the settings (no tab chosen); "Cancel" goes back to
        the tab. The head has no "↺ Defaults" any more.
@@ -77,7 +77,7 @@ def case_settabs():
       return [rows.length, h ? [...h.cells].map(c => c.textContent.trim().slice(0, 40)) : null, h ? h.querySelector('a').href : '',
         [...{SET}.querySelectorAll('.dci-set-tab')].filter(b => b.getAttribute('aria-selected') === 'true').map(b => b.dataset.topic)]; }})()""")
         print('D) Verbindungen:', d1)
-        results.append(d1[0] == 14 and d1[1][0] == 'Harmony' and d1[1][1] == 'Tool' and d1[1][2].startswith('Adds “Edit relationships with Credits')
+        results.append(d1[0] == 15 and d1[1][0] == 'Harmony' and d1[1][1] == 'Tool' and d1[1][2].startswith('Adds “Edit relationships with Credits')
                        and d1[1][3].startswith('@match harmony.pulsewidth.org.uk') and d1[1][4] == '3.19.1' and d1[2] == 'https://harmony.pulsewidth.org.uk/'
                        and d1[3] == ['connections'])
         # E) reset all, in the settings

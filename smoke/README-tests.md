@@ -387,6 +387,9 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrrun: Tesseract.js loaded once, one worker; the 500 px image read ×3 with a warning; ℗, dashes and empty lines
                                 #     corrected and named; a word read with little certainty selects itself; edited and imported as a text
                                 #   ocrerror: the library cannot be loaded – the message in the window, the log
+                                #   ocrown: 3.34.5: "All images" (half, all, none); own images – files chosen (a text file left out), pasted,
+                                #     dropped, removed; an address (Enter; wrong and twice refused); a site that refuses named; the own images
+                                #     read (a small one enlarged) and imported with their names in the source; no CAA images: only own ones
                                 #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.4
+// @version      3.34.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -25,8 +25,9 @@
 // @connect      raw.githubusercontent.com
 // @connect      coverartarchive.org
 // @connect      archive.org
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.4
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.4
+// @connect      *
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.5
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.5
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -39,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1426,9 +1427,29 @@
       "log.ocrDone.other": "Text from cover art: {n} images read ({langs})",
       "log.ocrFailed": "Text from cover art: {why}",
       "log.ocrImported": "Text from cover art: {how} – {origin}",
+      "log.ocrOwnAdded.one": "Text from cover art: {n} own image added ({what})",
+      "log.ocrOwnAdded.other": "Text from cover art: {n} own images added ({what})",
+      "ocr.all": "All images ({n})",
+      "ocr.own": "Your own images",
+      "ocr.chooseFiles": "Choose image files …",
+      "ocr.dropHint": "or drop them onto this window, or paste one with Ctrl+V",
+      "ocr.urlLabel": "Address of an image",
+      "ocr.addUrl": "Add",
+      "ocr.ownHint": "Booklet scans, photos, screenshots – read like the release's images, in this browser; nothing is uploaded or added to the Cover Art Archive. For an image on another site the userscript manager may ask once whether the script may read from it.",
+      "ocr.ownFile": "your file",
+      "ocr.ownUrl": "by its address",
+      "ocr.remove": "remove",
+      "ocr.removeImage": "Remove {what}",
+      "ocr.pastedImage": "pasted image {n}",
+      "ocr.notImage": "Not an image, left out: {names}",
+      "ocr.badUrl": "Not the address of an image: {url} – it starts with https://",
+      "ocr.urlTwice": "This address is in the list already.",
+      "ocr.errUrl": "The image at {url} could not be read – the site does not let the script read it. Save the image and choose it as a file.",
       "conn.kind.library": "Library",
       "conn.X013": "Text from cover art (beta, ⚙ Settings → Beta): the list of the release's images and the images themselves (coverartarchive.org, which sends them from archive.org).",
       "conn.X014": "Text from cover art (beta): the text recognition that reads the images in this browser, with its language data – loaded from cdn.jsdelivr.net the first time it is used.",
+      "conn.X015.name": "Images by their address",
+      "conn.X015": "Text from cover art (beta): an image whose address you enter is read from its site – the userscript manager (@connect *) lets the script fetch it; Tampermonkey asks once for each new site. Only the addresses you enter.",
       "mapping.changesN.one": "your changes: {n}",
       "mapping.changesN.other": "your changes: {n}",
       "mapping.badPattern": "The pattern cannot be used: {why}",
@@ -5467,6 +5488,8 @@
       perms: '@connect coverartarchive.org · @connect archive.org · GM_xmlhttpRequest', since: '3.34.1' },
     { id: 'X014', kind: 'library', name: 'Tesseract.js', home: 'https://github.com/naptha/tesseract.js', hosts: ['cdn.jsdelivr.net'],
       perms: '– (loaded into the page from cdn.jsdelivr.net, only with the beta switched on)', since: '3.34.1' },
+    // [3.34.5] images by their address in the text from cover art (collected item 123): any site you enter
+    { id: 'X015', kind: 'site', name: '', home: '', hosts: ['*'], perms: '@connect * · GM_xmlhttpRequest (only the addresses you enter)', since: '3.34.5' },
   ];
 
   if (IS_NODE_TEST) {
@@ -9224,20 +9247,125 @@
     return (data.images || []).map((im, k) => {
       const th = im.thumbnails || {};
       const types = (im.types || []).map(String);
-      return { id: String(im.id || k), types, comment: String(im.comment || ''), thumb: https(th['250'] || th.small || im.image), big: https(th['1200'] || th.large || im.image),
+      return { id: String(im.id || k), src: 'caa', types, comment: String(im.comment || ''), thumb: https(th['250'] || th.small || im.image), big: https(th['1200'] || th.large || im.image),
         orig: https(im.image), sel: types.some((t) => OCR_CREDIT_TYPES.includes(t)), mode: 'frames', frames: [], canvas: null };
     });
   }
 
-  /** An image as a canvas (its longer side at most OCR_MAX), loaded once per size; w, h: its own size. */
+  // --- [3.34.5] Own images (collected item 123; maintainer: "bei der Bilderkennung soll auch die Möglichkeit bestehen eigene
+  // Files oder Bilder per URL zu analysieren", "ja alle drei möglichkeiten"): files chosen, dropped onto the window or pasted
+  // (Ctrl+V), and images by their address (@connect *: Tampermonkey asks once for each new site). Read like the release's
+  // images; they stay in this browser – nothing is uploaded, nothing goes to the Cover Art Archive.
+
+  const OCR_IMAGE_FILE = /^image\//;
+  let ocrOwnN = 0;
+  const ocrIsCaa = (img) => !img.src || img.src === 'caa';
+  /** An address as a short name: its site and the last part of its path ("example.org/…/back.jpg"). */
+  function ocrUrlName(u) {
+    try {
+      const x = new URL(u);
+      const last = x.pathname.split('/').filter(Boolean).pop() || '';
+      let name = last;
+      try {
+        name = decodeURIComponent(last);
+      } catch (e) { /* as written */ }
+      return `${x.hostname.replace(/^www\./, '')}${name ? `/…/${name.length > 40 ? `${name.slice(0, 39)}…` : name}` : ''}`;
+    } catch (e) {
+      return u;
+    }
+  }
+
+  let ocrPastedN = 0;
+  /** An own image: a file (its name – pasted: "pasted image n" –; a local address for its thumbnail) or an address. Ticked. */
+  function ocrOwnImage(src, value, pasted = false) {
+    const base = { id: `own${++ocrOwnN}`, src, types: [], comment: '', sel: true, mode: 'frames', frames: [], canvas: null };
+    if (src === 'file') {
+      const u = URL.createObjectURL(value);
+      return { ...base, name: pasted || !value.name ? tr('ocr.pastedImage', { n: ++ocrPastedN }) : value.name, blob: value, local: u, thumb: u, big: u, orig: u };
+    }
+    return { ...base, name: ocrUrlName(value), url: value, thumb: value, big: value, orig: value };
+  }
+
+  /** Files added (chosen, dropped, pasted): the images among them; others named in a message. */
+  function ocrAddFiles(files, pasted = false) {
+    const o = S.ocr;
+    if (!o || o.step === 'run') return;
+    const list = [...(files || [])];
+    const images = list.filter((f) => OCR_IMAGE_FILE.test(f.type || '')).map((f) => ocrOwnImage('file', f, pasted));
+    o.images.push(...images);
+    const other = list.filter((f) => !OCR_IMAGE_FILE.test(f.type || '')).map((f) => f.name || f.type || '?');
+    o.error = other.length ? tr('ocr.notImage', { names: other.join(', ') }) : '';
+    if (images.length) log('info', 'ocrOwnAdded', { n: images.length, what: images.map((im) => im.name).join(', ') });
+    if (o.step !== 'list') o.step = 'pick';
+    renderOcr();
+  }
+
+  /** An image by its address (http or https). */
+  function ocrAddUrl(text) {
+    const o = S.ocr;
+    if (!o || o.step === 'run') return;
+    const u = String(text || '').trim();
+    if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(u)) {
+      o.error = tr('ocr.badUrl', { url: u || '–' });
+    } else if (o.images.some((im) => im.url === u)) {
+      o.error = tr('ocr.urlTwice');
+    } else {
+      o.images.push(ocrOwnImage('url', u));
+      o.urlDraft = '';
+      o.error = '';
+      log('info', 'ocrOwnAdded', { n: 1, what: u });
+    }
+    if (o.step !== 'list') o.step = 'pick';
+    renderOcr();
+    const f = document.querySelector('#dci-ocr [data-ocr-url]');
+    if (f && o.error) f.focus();
+  }
+
+  /** Ctrl+V while the window is open: an image (a screenshot …) or an address; not while typing in a field. */
+  function ocrPaste(e) {
+    if (!S.ocr || S.ocr.step === 'run' || !e.clipboardData) return;
+    const files = [...(e.clipboardData.files || [])].filter((f) => OCR_IMAGE_FILE.test(f.type || ''));
+    if (files.length) {
+      e.preventDefault();
+      ocrAddFiles(files, true);
+      return;
+    }
+    if (e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    const text = e.clipboardData.getData('text/plain').trim();
+    if (/^https?:\/\/\S+$/i.test(text)) {
+      e.preventDefault();
+      ocrAddUrl(text);
+    }
+  }
+
+  /** The file of an image: an own file as it is, else from its address (the release's at the size chosen). */
+  async function ocrBlob(img) {
+    if (img.blob) return img.blob;
+    const url = ocrIsCaa(img) && S.ocr.size === '1200' ? img.big : img.orig;
+    let r;
+    try {
+      r = await httpFetch(url, { blob: true });
+    } catch (e) {
+      // [3.34.5] a site that does not let the script read it: save the image and choose it as a file
+      throw new Error(ocrIsCaa(img) ? e.message : tr('ocr.errUrl', { url }));
+    }
+    if (r.status < 200 || r.status >= 300 || !r.body) throw new Error(tr('err.pageHttp', { status: r.status, url }));
+    return r.body;
+  }
+
+  /** An image as a canvas (its longer side at most OCR_MAX), loaded once ([3.34.5] the release's once per size); w, h: its own size. */
   async function ocrCanvas(img) {
-    if (img.canvas && img.canvasSize === S.ocr.size) return img.canvas;
-    const r = await httpFetch(S.ocr.size === '1200' ? img.big : img.orig, { blob: true });
-    if (r.status < 200 || r.status >= 300 || !r.body) throw new Error(tr('err.pageHttp', { status: r.status, url: img.orig }));
+    if (img.canvas && (!ocrIsCaa(img) || img.canvasSize === S.ocr.size)) return img.canvas;
+    const blob = await ocrBlob(img);
     let src;
-    if (typeof window.createImageBitmap === 'function') src = await window.createImageBitmap(r.body);
-    else {
-      const url = URL.createObjectURL(r.body);
+    if (typeof window.createImageBitmap === 'function') {
+      try {
+        src = await window.createImageBitmap(blob);
+      } catch (e) {
+        throw new Error(tr('ocr.errImage'));
+      }
+    } else {
+      const url = URL.createObjectURL(blob);
       src = await new Promise((res, rej) => {
         const el = new Image();
         el.onload = () => res(el);
@@ -9289,7 +9417,7 @@
     return { text: lines.join('\n'), fixes };
   }
 
-  const ocrTypes = (img) => (img.types.length ? img.types.join(', ') : tr('ocr.noType'));
+  const ocrTypes = (img) => (img.name || (img.types.length ? img.types.join(', ') : tr('ocr.noType')));
   /** [3.34.2] The images ticked (also those left out in the frames step) and those that are read. */
   const ocrChosen = () => S.ocr.images.filter((im) => im.sel);
   const ocrToRead = () => ocrChosen().filter((im) => im.mode !== 'skip');
@@ -9461,18 +9589,24 @@
     log('info', 'ocrOpen', { mbid: releaseMbid });
     ocrList().then((images) => {
       if (!S.ocr) return;
-      Object.assign(S.ocr, { images, step: 'pick' });
+      // [3.34.5] own images added while the list was loading stay, after the release's
+      Object.assign(S.ocr, { images: [...images, ...S.ocr.images.filter((im) => !ocrIsCaa(im))], step: 'pick' });
       renderOcr();
     }, (e) => {
       if (!S.ocr) return;
-      Object.assign(S.ocr, { step: 'pick', error: e.message || String(e) });
+      Object.assign(S.ocr, { step: 'pick', listError: e.message || String(e) });
       renderOcr();
     });
   }
 
   function closeOcr() {
-    if (S.ocr) S.ocr.run++;
+    if (S.ocr) {
+      S.ocr.run++;
+      // [3.34.5] the local addresses of own files
+      S.ocr.images.forEach((im) => { if (im.local) URL.revokeObjectURL(im.local); });
+    }
     S.ocr = null;
+    document.removeEventListener('paste', ocrPaste);
     const el = document.getElementById('dci-ocr');
     if (el) el.remove();
   }
@@ -9503,7 +9637,7 @@
         current = res;
         res.status = 'load';
         renderOcr();
-        if (!res.img.canvas || res.img.canvasSize !== o.size) await ocrCanvas(res.img);
+        await ocrCanvas(res.img);
         res.small = res.img.w < OCR_SMALL;
         res.status = 'read';
         renderOcr();
@@ -9536,7 +9670,13 @@
     const o = S.ocr;
     const done = o.results.filter((r) => r.status === 'done' && r.text.trim());
     const text = done.map((r) => r.text.trim()).join('\n\n');
-    const origin = `Cover Art Archive images (${uniq(done.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')}), read with text recognition`;
+    // [3.34.5] with own images: their files and addresses
+    const caa = done.filter((r) => ocrIsCaa(r.img));
+    const files = uniq(done.filter((r) => r.img.src === 'file').map((r) => r.img.name));
+    const urls = uniq(done.filter((r) => r.img.src === 'url').map((r) => r.img.url));
+    const parts = [caa.length ? `Cover Art Archive images (${uniq(caa.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')})` : '',
+      files.length ? `own image files (${files.join(', ')})` : '', urls.length ? `images from ${urls.join(', ')}` : ''].filter(Boolean);
+    const origin = `${parts.join('; ')}, read with text recognition`;
     return { text, origin };
   }
 
@@ -9565,32 +9705,46 @@
     });
   }
 
+  /** [3.34.5] Own images: files (chosen, dropped, pasted) and addresses. */
+  function ocrOwnHtml() {
+    const o = S.ocr;
+    return `<fieldset class="dci-ocr-own"><legend>${esc(tr('ocr.own'))}</legend>
+        <div class="dci-ocr-ownrow"><button type="button" class="dci-small" data-ocr="files">${esc(tr('ocr.chooseFiles'))}</button>
+          <input type="file" data-ocr-files multiple accept="image/*" hidden><span class="dci-sub">${esc(tr('ocr.dropHint'))}</span></div>
+        <div class="dci-ocr-ownrow"><input type="url" data-ocr-url value="${esc(o.urlDraft || '')}" placeholder="https://…/back.jpg" aria-label="${esc(tr('ocr.urlLabel'))}" spellcheck="false">
+          <button type="button" class="dci-small" data-ocr="url">${esc(tr('ocr.addUrl'))}</button></div>
+        <p class="dci-sub">${esc(tr('ocr.ownHint'))}</p></fieldset>`;
+  }
+
   function ocrPickHtml() {
     const o = S.ocr;
     const n = o.images.filter((im) => im.sel).length;
     // [3.34.2] back from the frames: an image left out there is read again when ticked here
     o.images.forEach((im) => { if (im.mode === 'skip') im.mode = 'frames'; });
-    if (!o.images.length) {
-      return `<div class="dci-ocr-body"><p>${esc(o.error ? tr('ocr.listFailed', { why: o.error }) : tr('ocr.none'))}</p></div>
-        <div class="dci-ocr-foot"><span></span><button type="button" class="dci-small" data-ocr="close">${esc(tr('common.close'))}</button></div>`;
-    }
-    const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}">
+    const caa = o.images.filter(ocrIsCaa).length;
+    const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}${ocrIsCaa(im) ? '' : ' dci-ocr-owncard'}" data-ocr-card="${i}">
         <img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" loading="lazy">
-        <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> ${esc(ocrTypes(im))}</span>
+        <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> <span>${esc(ocrTypes(im))}</span></span>
         ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
-        ${im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`}</label>`;
+        ${ocrIsCaa(im) ? (im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`)
+          : `<span class="dci-sub">${esc(tr(im.src === 'file' ? 'ocr.ownFile' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
+    // [3.34.5] "All images" (collected item 125; maintainer: "wir brauchen einen knopf im bilderkennungsmenü, der alles abwählt
+    // oder alles anwählt. viele bookletseiten haben nur bilder oder songtexte"): on – all, off – none, half – some
+    const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
     return `<div class="dci-ocr-body">
         ${o.error ? `<p class="dci-ocr-err" role="alert">${esc(o.error)}</p>` : ''}
-        <p class="dci-sub">${esc(tr('ocr.pickHint'))}</p>
-        <div class="dci-ocr-grid">${o.images.map(card).join('')}</div>
+        ${o.listError ? `<p class="dci-ocr-err">${esc(tr('ocr.listFailed', { why: o.listError }))}</p>` : !caa ? `<p>${esc(tr('ocr.none'))}</p>` : `<p class="dci-sub">${esc(tr('ocr.pickHint'))}</p>`}
+        ${all}
+        ${o.images.length ? `<div class="dci-ocr-grid">${o.images.map(card).join('')}</div>` : ''}
+        ${ocrOwnHtml()}
         <div class="dci-ocr-opts">
           <fieldset><legend>${esc(tr('ocr.langs'))}</legend>
             ${Object.keys(OCR_LANGS).map((c) => `<label class="dci-check"><input type="checkbox" data-ocr-lang="${c}" ${o.langs.has(c) ? 'checked' : ''}> ${esc(LANGS[c])}</label>`).join('')}
             <p class="dci-sub">${esc(tr('ocr.langsHint'))}</p></fieldset>
-          <fieldset><legend>${esc(tr('ocr.size'))}</legend>
+          ${caa ? `<fieldset><legend>${esc(tr('ocr.size'))}</legend>
             <label class="dci-check"><input type="radio" name="dci-ocr-size" data-ocr-size="orig" ${o.size === 'orig' ? 'checked' : ''}> ${esc(tr('ocr.sizeOrig'))}</label>
             <label class="dci-check"><input type="radio" name="dci-ocr-size" data-ocr-size="1200" ${o.size === '1200' ? 'checked' : ''}> ${esc(tr('ocr.size1200'))}</label>
-            <p class="dci-sub">${esc(tr('ocr.sizeHint', { px: OCR_SMALL }))}</p></fieldset>
+            <p class="dci-sub">${esc(tr('ocr.sizeHint', { px: OCR_SMALL }))}</p></fieldset>` : ''}
           <fieldset><legend>${esc(tr('ocr.before'))}</legend>
             <label class="dci-check"><input type="checkbox" data-ocr-framefirst ${o.frameFirst ? 'checked' : ''}> ${esc(tr('ocr.frameFirst'))}</label>
             <p class="dci-sub">${esc(tr('ocr.frameFirstHint'))}</p></fieldset>
@@ -9650,16 +9804,52 @@
       el.addEventListener('input', (e) => {
         const i = e.target.dataset.ocrText;
         if (i != null && S.ocr && S.ocr.results[i]) S.ocr.results[i].text = e.target.value;
+        if (e.target.dataset.ocrUrl != null && S.ocr) S.ocr.urlDraft = e.target.value;
       });
+      // [3.34.5] an address: Enter adds it
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.dataset && e.target.dataset.ocrUrl != null) {
+          e.preventDefault();
+          ocrAddUrl(e.target.value);
+        }
+      });
+      // [3.34.5] files (or an image's address) dropped onto the window; never opened by the browser instead
+      const dragged = (e) => [...((e.dataTransfer && e.dataTransfer.types) || [])].some((t) => t === 'Files' || t === 'text/uri-list');
+      el.addEventListener('dragover', (e) => {
+        if (!dragged(e)) return;
+        e.preventDefault();
+        el.classList.add('dci-ocr-drop');
+      });
+      el.addEventListener('dragleave', (e) => {
+        if (!el.contains(e.relatedTarget)) el.classList.remove('dci-ocr-drop');
+      });
+      el.addEventListener('drop', (e) => {
+        el.classList.remove('dci-ocr-drop');
+        if (!dragged(e)) return;
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (files && files.length) ocrAddFiles(files);
+        else {
+          const uri = (e.dataTransfer.getData('text/uri-list') || '').split('\n').map((x) => x.trim()).find((x) => x && !x.startsWith('#'));
+          if (uri) ocrAddUrl(uri);
+        }
+      });
+      document.addEventListener('paste', ocrPaste);
     }
     el.style.zIndex = String(++topZ);
     const body = o.step === 'list' ? `<div class="dci-ocr-body"><p>${esc(tr('ocr.loading'))}</p></div>`
       : o.step === 'run' ? ocrRunHtml() : o.step === 'result' ? ocrResultHtml() : o.step === 'frames' ? ocrFramesHtml() : ocrPickHtml();
     const cur = o.step === 'frames' ? ocrCurrent().img : null;
     el.innerHTML = `<div class="dci-ocr-head"><h2 id="dci-ocr-title">${esc(tr('ocr.title'))} <span class="dci-beta-tag">beta</span></h2>
-        <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.step === 'frames' ? ocrChosen().length : o.images.length, i: o.cur + 1, what: cur ? ocrTypes(cur) : '' }))}</span>
+        <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.step === 'frames' ? ocrChosen().length : o.images.filter(ocrIsCaa).length, i: o.cur + 1, what: cur ? ocrTypes(cur) : '' }))}</span>
         <a href="https://musicbrainz.org/release/${esc(releaseMbid)}/cover-art" target="_blank" rel="noopener">${esc(tr('ocr.caaLink'))}</a>
         <button type="button" class="dci-iconbtn" data-ocr="close" aria-label="${esc(tr('common.close'))}" title="${esc(tr('common.close'))}">✕</button></div>${body}`;
+    // [3.34.5] "All images" half ticked while only some are
+    const all = el.querySelector('[data-ocr-all]');
+    if (all) {
+      const n = o.images.filter((im) => im.sel).length;
+      all.indeterminate = n > 0 && n < o.images.length;
+    }
     // [3.34.2] the frames step: the image loaded first, then drawn
     if (o.step === 'frames') {
       const { img } = ocrCurrent();
@@ -9693,6 +9883,16 @@
       }
       return;
     }
+    const rm = t.closest('[data-ocr-remove]');
+    if (rm && S.ocr) {
+      // [3.34.5] an own image taken out again (the click does not tick its card)
+      e.preventDefault();
+      const [im] = S.ocr.images.splice(Number(rm.dataset.ocrRemove), 1);
+      if (im && im.local) URL.revokeObjectURL(im.local);
+      S.ocr.error = '';
+      renderOcr();
+      return;
+    }
     if (!b || !S.ocr) return;
     const act = b.dataset.ocr;
     const thumb = t.closest('[data-ocr-cur]');
@@ -9703,6 +9903,17 @@
       return;
     }
     const { img } = S.ocr.step === 'frames' ? ocrCurrent() : {};
+    // [3.34.5] own images
+    if (act === 'files') {
+      const f = document.querySelector('#dci-ocr [data-ocr-files]');
+      if (f) f.click();
+      return;
+    }
+    if (act === 'url') {
+      const f = document.querySelector('#dci-ocr [data-ocr-url]');
+      ocrAddUrl(f ? f.value : '');
+      return;
+    }
     if (act === 'close') closeOcr();
     else if (act === 'run') ocrRun();
     else if (act === 'frames') {
@@ -9738,13 +9949,20 @@
     const o = S.ocr;
     if (!o) return;
     if (t.dataset.ocrSel != null && o.images[t.dataset.ocrSel]) o.images[t.dataset.ocrSel].sel = t.checked;
+    else if (t.dataset.ocrAll != null) o.images.forEach((im) => { im.sel = t.checked; });
+    else if (t.dataset.ocrFiles != null) {
+      const files = [...(t.files || [])];
+      t.value = '';
+      ocrAddFiles(files);
+      return;
+    } else if (t.dataset.ocrUrl != null) return;
     else if (t.dataset.ocrLang) {
       if (t.checked) o.langs.add(t.dataset.ocrLang);
       else o.langs.delete(t.dataset.ocrLang);
     } else if (t.dataset.ocrSize) {
       o.size = t.dataset.ocrSize === '1200' ? '1200' : 'orig';
-      // [3.34.2] another size: the images are loaded anew, their frames go
-      o.images.forEach((im) => Object.assign(im, { canvas: null, frames: [] }));
+      // [3.34.2] another size: the images are loaded anew, their frames go ([3.34.5] the release's images; own ones keep theirs)
+      o.images.filter(ocrIsCaa).forEach((im) => Object.assign(im, { canvas: null, frames: [] }));
     } else if (t.dataset.ocrFramefirst != null) o.frameFirst = t.checked;
     else if (t.dataset.ocrMode) {
       const { img } = ocrCurrent();
@@ -22763,7 +22981,15 @@
       #dci-ocr .dci-ocr-card { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8); border: 1px solid #dddae8; border-radius: 6px; cursor: pointer; }
       #dci-ocr .dci-ocr-card.dci-on { border: 2px solid #5b55a0; padding: calc(var(--u, 1px) * 7); background: #f7f6fd; }
       #dci-ocr .dci-ocr-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 3px; background: #eceaf3; }
-      #dci-ocr .dci-ocr-type { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); font-weight: 600; }
+      #dci-ocr .dci-ocr-type { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); font-weight: 600; min-width: 0; }
+      #dci-ocr .dci-ocr-type > span { overflow-wrap: anywhere; }
+      /* [3.34.5] own images: a dashed card, the box to add them, the window while something is dragged onto it */
+      #dci-ocr .dci-ocr-owncard { border-style: dashed; }
+      #dci-ocr .dci-ocr-all { font-weight: 600; }
+      #dci-ocr .dci-ocr-own { border-style: dashed; }
+      #dci-ocr .dci-ocr-ownrow { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
+      #dci-ocr .dci-ocr-ownrow input[type="url"] { flex: 1 1 calc(var(--u, 1px) * 260); min-width: 0; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 4px; font: inherit; }
+      #dci-ocr.dci-ocr-drop { outline: 3px dashed #736dab; outline-offset: -6px; }
       #dci-ocr .dci-ocr-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--u, 1px) * 260), 1fr)); gap: calc(var(--u, 1px) * 10); }
       #dci-ocr fieldset { margin: 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid #dddae8; border-radius: 6px; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 4); }
       #dci-ocr legend { font-weight: 600; padding: 0 4px; }

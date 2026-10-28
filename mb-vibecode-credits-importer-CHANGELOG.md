@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.4 | – |
+| 2026-10-28 | 3.34.0 – 3.34.5 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.5
+
+#### Added
+
+- **Text from cover art (beta): "All images"** (collected item 125; maintainer: "wir brauchen einen knopf im bilderkennungsmenü, der alles abwählt oder alles anwählt. viele bookletseiten haben nur bilder oder songtexte"): a box above the images ticks all or none (half ticked while only some are).
+- **Text from cover art (beta): your own images** (collected item 123; maintainer: "bei der Bilderkennung soll auch die Möglichkeit bestehen eigene Files oder Bilder per URL zu analysieren", "ja alle drei möglichkeiten"): image files chosen, dropped onto the window or pasted (Ctrl+V), and images by their address – read like the release's images, nothing uploaded; also for releases without images on the Cover Art Archive. The source of the text names them. New permission `@connect *` (connection X015; Tampermonkey asks once for each new site) – only for the addresses you enter.
 
 ### Import 3.34.4
 
