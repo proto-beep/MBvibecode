@@ -42,7 +42,7 @@ window.Tesseract = { createWorker: async (langs, oem, opts) => { const o = windo
       if (opts && opts.logger) { opts.logger({ status: 'recognizing text', progress: 0.5 }); opts.logger({ status: 'recognizing text', progress: 1 }); }
       await new Promise((r) => setTimeout(r, 30));
       const texts = window.__ocrTexts || []; const t = texts[k] || texts[texts.length - 1] || { text: '' };
-      return { data: { text: t.text, words: t.words || [] } }; },
+      return { data: { text: t.text, words: t.words || [], lines: t.lines || [] } }; },
     terminate: async () => { o.terminated++; } }; } };"""
 _PNGS = {}
 
