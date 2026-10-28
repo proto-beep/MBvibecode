@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.5, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.5 · 2026-10-28
+
+Text from cover art (beta): "All images" (collected item 125), own images – files and addresses (collected item 123).
+
+- **Header:** `@connect *` (after the known sites, which keep Tampermonkey from asking for them); `@version 3.34.5`, `?v=3.34.5`, both files' `version`.
+- **Connections:** X015 (kind `site`, no name of its own – `conn.X015.name` –, hosts `['*']`, `@connect *`).
+- **New in the block of the text from cover art:** `OCR_IMAGE_FILE`, `ocrIsCaa(img)` (an image of the release: `src` 'caa' or none), `ocrUrlName(u)` ("site/…/file"), **`ocrOwnImage(src, value, pasted)`** (`src` 'file': `name`, `blob`, `local` object URL as thumb/big/orig; 'url': `name`, `url`), **`ocrAddFiles(files, pasted)`** (images only, others named in `o.error` – `ocr.notImage`; log `ocrOwnAdded`; to the step `pick`), **`ocrAddUrl(text)`** (http/https, not twice), **`ocrPaste(e)`** (on `document` while the window is open: image files; an address when not typing in a field), **`ocrBlob(img)`** (an own file as it is; an address through `httpFetch`, a failure → `ocr.errUrl`).
+- **Changed:** `ocrList` images get `src: 'caa'`; `ocrCanvas` keeps an own image's canvas whatever the size chosen, a blob that is no image → `ocr.errImage`; `ocrRun` always calls `ocrCanvas` (it keeps what is loaded); `ocrText` origin: "Cover Art Archive images (…)", "own image files (…)", "images from …" joined with "; " (only the release's: as before); `openOcr` keeps own images added while the list loads, a failed list is `o.listError`; `closeOcr` revokes the object URLs, removes the paste listener; `ocrTypes` the name of an own image.
+- **`ocrPickHtml`:** "All images (n)" `[data-ocr-all]` (indeterminate set in `renderOcr`), cards `data-ocr-card` – own ones `.dci-ocr-owncard` with "your file" / "by its address" and `[data-ocr-remove]` –, new **`ocrOwnHtml()`** (`[data-ocr=files]` + hidden `input[type=file][data-ocr-files]` multiple `accept="image/*"`, `[data-ocr-url]` + `[data-ocr=url]`), the image size only with images of the release, no CAA images: `ocr.none` above the own images (before: only a "Close").
+- **Handlers:** `ocrChange` (`ocrAll`, `ocrFiles`), `ocrClick` (`files`, `url`, `[data-ocr-remove]`), `renderOcr` (Enter in the address field, `dragover`/`drop` of files or `text/uri-list`, the class `dci-ocr-drop`, the paste listener), the head counts the release's images.
+- **CSS:** `.dci-ocr-owncard`, `.dci-ocr-all`, `.dci-ocr-own`, `.dci-ocr-ownrow`, `#dci-ocr.dci-ocr-drop`.
+- **Texts:** new (English) `log.ocrOwnAdded.one/.other`, `ocr.all`, `ocr.own`, `ocr.chooseFiles`, `ocr.dropHint`, `ocr.urlLabel`, `ocr.addUrl`, `ocr.ownHint`, `ocr.ownFile`, `ocr.ownUrl`, `ocr.remove`, `ocr.removeImage`, `ocr.pastedImage`, `ocr.notImage`, `ocr.badUrl`, `ocr.urlTwice`, `ocr.errUrl`, `conn.X015.name`, `conn.X015`.
+- **Tests:** `t_coverart.py` – new case `ocrown`; `t_ui_settings.py` (settabs) 15 connections.
 
 ## Import 3.34.4 · 2026-10-28
 
