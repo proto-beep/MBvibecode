@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.32.4
+// @version      3.32.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -32,7 +32,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.32.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -897,6 +897,7 @@
       "matrix.notesReason": "from the notes: “{text}”",
       "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
       "role.notesTracks": "Tracks {list} from the notes",
+      "role.typoRead": "Read as “{read}” (written “{written}”)",
       "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
       "matrix.suggOk": "Keep the suggestion",
       "matrix.suggNo": "Take the suggestion out",
@@ -1083,6 +1084,10 @@
       "settings.afterEditBg": "Imported with Harmony (Bandcamp, Discogs): open it in a background tab, Harmony’s page stays in front",
       "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
       "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
+      "settings.aboutCredits": "Bandcamp: read the credits in the “about” text",
+      "settings.aboutCreditsTitle": "Rule S049: every credit line of Bandcamp's “about” text is read like those of the credits field (“Music and cover art by X”), marked “from the about text” – prose gives nothing. “Leave out the about text” (menu Source ▾) still leaves out all of it for one release. Takes effect at the next import.",
+      "settings.typos": "Typos in role words (“Muisc” → “Music”)",
+      "settings.typosTitle": "Rule S050: a part of a text (pasted, Bandcamp, Discogs notes) that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word read as that word – only role words, never names; the row says what was written. Takes effect at the next import.",
       "harmony.opened": "– opened in a background tab",
       "harmony.link": "Edit relationships with Credits Importer",
       "harmony.title": "Opens “Edit relationships” of this release on MusicBrainz in a new tab; the import dashboard starts by itself and loads {links}",
@@ -1299,6 +1304,7 @@
       "rules.search": "Search the rules:",
       "rules.quick": "Quick switches",
       "rules.quickTitle": "Rules switched on and off often – the same as in the lists below; the id next to each shows the rule, which says where it acts",
+      "rules.quickHint": "the rules switched most often – a click switches; the id shows the rule in the lists below",
       "quick.S045": "Rights society after a writer’s name → the release’s rights society",
       "quick.D022": "Performance on several days → their common month or year",
       "quick.S021": "“live” preselected for live releases",
@@ -1557,6 +1563,9 @@
       "dm.chooseMonth": "month only: {date}",
       "dm.chooseYear": "year only: {date}",
       "dm.chooseLcdTitle": "Use only what the days have in common (the month, or the year)",
+      "dm.lcdMenu": "Instead: the single days (one relationship each) or the whole period",
+      "dm.lcdSingle": "{n} single days: {list} – one relationship per day",
+      "dm.goto": "To the date matrix",
       "dm.choiceLcd": "common month or year",
       "pools.fold": "fold",
       "pools.keep": "keep the pools in the bar when folded",
@@ -1633,6 +1642,7 @@
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
       "typeAsk.askPoems": "“{role}” alone: the words of the works, poems printed in the booklet or poems read out? – please choose:",
+      "typeAsk.askPoemsRelease": "“{role}” on the release: the words, poems read out or poems printed in the booklet? – please choose:",
       "typeAsk.suggested": "suggested",
       "typeAsk.suggestedTitle": "What it mostly means – a suggestion: the row is added only once you choose",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
@@ -6308,6 +6318,12 @@
     // den relationships. gäbe es eine möglichkeit beides zu verknüpfen? mit quick switch. standardeinstellung = aus")
     { id: 'S046', where: 'applyPerformerTracks', note: 'Performers on tracks, instruments for the release: a person credited "Performer" on some tracks only and with instruments or voices for the whole release only ("Performer – Barry Guy" on 4-3 and 4-5, "Bass – Barry Guy" for the release) gets the instruments on the tracks of the "Performer" credits, across all media; the "performer" rows go (they would say the same). Someone without an instrument keeps "performer"; instruments without a "Performer" credit stay on all tracks. Who plays which of several instruments where, Discogs does not say: all of them on all of these tracks. Off until switched on (3.31.8)' },
     { id: 'S047', where: 'mapRoleInner', note: 'The kind of engineer said twice: "Engineer [Recording Engineer]" is read as "Engineer [Recording]" – recording without role credit; "[Mix Engineer]" mix, "[Mastering Engineer]" mastering, "[Assistant Engineer]" engineer with "assistant", "[Sound Engineer]" sound engineer (3.31.3)' },
+    // [3.32.6] collected item 115 (maintainer: "hier stehen die credits im "falschen" feld ich möchte ermöglichen dass diese auch
+    // abgerufen werden", "mach immer lesen bitte. an/ausschaltbar in den einstellungen")
+    { id: 'S049', where: 'BANDCAMP.toRelease (aboutRes), linerNotes, artistSignature', note: 'Credits in Bandcamp\'s "about" text: every credit line of it is read like those of the credits field ("Music and cover art by j4vaman" → composer, cover art) – also when the credits field has credits; prose gives nothing, its lines are not listed as not recognized; the rows say "from the about text" and go with "Leave out the about text". Before only its places and areas, the members of the band (S041) and the liner notes. Switch also in ⚙ Settings → Texts' },
+    // [3.32.5] collected item 115 (maintainer: "muisc hat einen schreibfehler", "Wir probieren es mal mit Tippefehler allgemein
+    // erkennen")
+    { id: 'S050', where: 'TEXT.parse (typoMode, readRole), fixRoleTypo, roleVocab, roleCell', note: 'Typos in role words: a part of a text that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word (T048) – a letter swapped, missing, too many or wrong – read as that word, when the role is known then ("Muisc and cover art by X" → Music By, cover art); only role words, never names; the row says "Read as “Music” (written “Muisc”)". All texts (pasted, Bandcamp, Discogs notes); switch also in ⚙ Settings → Texts' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -6353,11 +6369,19 @@
         { type: 'instrument', level: 'recording', instrument: 'effects', label: 'effects (credited “sounds”)' },
       ] },
     // [3.31.4] collected item 104 (maintainer: "ja das nachfragen kann man machen"): "Poems" alone is asked like "Text"
-    { id: 'Q009', base: 'poems / poetry / poem', rule: 'R107', ask: 'typeAsk.askPoems', note: '"Poems", "Poetry", "Poem" alone (3.31.4): the words of the works (lyricist), poems printed in the booklet (liner notes) or poems read out (spoken vocals)? Nothing is assumed; each gets the word in lower case as role credit ("poems", "poetry", "poem")',
+    { id: 'Q009', base: 'poems / poetry / poem', rule: 'R107', unless: 'poemLevels', ask: 'typeAsk.askPoems', note: '"Poems", "Poetry", "Poem" alone (3.31.4): the words of the works (lyricist), poems printed in the booklet (liner notes) or poems read out (spoken vocals)? Nothing is assumed; each gets the word in lower case as role credit ("poems", "poetry", "poem")',
       options: [
         { type: 'lyricist', level: 'work', credit: true, label: 'lyricist (the words of the works)' },
         { type: 'liner notes', level: 'release', credit: true, label: 'liner notes (poems in the booklet)' },
         { type: 'vocal', level: 'recording', instrument: 'spoken vocals', credit: true, label: 'spoken vocals (read out)' },
+      ] },
+    // [3.32.7] collected item 104b (maintainer: "kannst du bei all den poetry credits auch es ermöglichen durchzuschalten? also
+    // works (lyrics) -> recording (vocals) -> release (auswahl lyrics/vocals)?", "ja liner notes ist auch eine möglichkeit")
+    { id: 'Q010', base: 'poems by / poetry / recitation …', rules: ['R105', 'R106', 'R107'], flag: 'poemLevels', level: 'release', ask: 'typeAsk.askPoemsRelease', note: 'A credit of poems switched to the release level (3.32.7; R105, R106, R107 – their type follows the level: works lyricist, recordings spoken vocals): the words of the works (lyricist), poems read out (spoken vocals) or poems printed in the booklet (liner notes)? Each keeps the role credit ("poems", "poetry", "recitation" …)',
+      options: [
+        { type: 'lyricist', level: 'release', credit: true, label: 'lyricist (the words)' },
+        { type: 'vocal', level: 'release', instrument: 'spoken vocals', credit: true, label: 'spoken vocals (read out)' },
+        { type: 'liner notes', level: 'release', credit: true, label: 'liner notes (poems in the booklet)' },
       ] },
     { id: 'Q005', base: 'text', rule: 'R100', ask: 'typeAsk.askText', note: '"Text" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German "Text" is the lyrics)? Nothing is assumed',
       options: [
@@ -6795,6 +6819,10 @@
       show: () => ({ pairs: [['heading of a block of publishers', PUBLISHER_HEAD], ...RIGHTS_SOCIETIES.map(([a, what]) => [a, what])] }) },
     { id: 'T046', where: 'apartNames, digitWords, sameCompanyName, suggestByName', note: 'All sources (3.31.0): a company\'s name written together ("FlizmoMusic", "4WordSeaMusic", "Fourwordseamusic") – searched in MusicBrainz written apart too and with a number as a word ("Flizmo Music", "4 Word Sea Music", "Four Word Sea Music", "Fourwordsea Music"); compared so too (S043), offered as similar',
       show: () => ({ pairs: [['numbers as words', NUMBER_WORDS.map((w, k) => `${k} ${w}`).join(' · ')], ['the kind of company at the end', COMPANY_KIND_END]] }) },
+    { id: 'T047', where: 'PLACE_DATE_TAIL, placeOf', note: 'Texts (3.32.5): a date right after a place ("El Studio in San Francisco on September 3rd and 4th 2016", "… in September 2016", "… on 2016-09-03") is cut off before the place is read; the area before it stays',
+      show: () => ({ pattern: PLACE_DATE_TAIL }) },
+    { id: 'T048', where: 'ROLE_WORDS, roleVocab, fixRoleTypo', note: 'Texts (3.32.5): the words of roles a typo is read as (S050: "Muisc" → "Music"); on MusicBrainz also the words of its relationship types and attributes',
+      show: () => ({ pairs: [['words', ROLE_WORDS.join(' · ')]] }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both, one sign only that one; after the name a code such as "DDD", a catalogue number after "·", "All rights reserved" and (3.30.9) a year ("© & ℗ TUM Records Oy 2021") are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
@@ -7068,6 +7096,12 @@
   // off the name (the date itself goes into the date pool)
   const TEXT_TIME_AFTER_NAME = /\s+(?:in|on|during|between|from|since|throughout|around)\s+(?=[^,]*(?:\b\d{4}\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b|\b(?:spring|summer|autumn|fall|winter)\b)).*$/i;
 
+  // [T047] Texts (3.32.5): a date right after a place – "El Studio in San Francisco on September 3rd and 4th 2016", "… in
+  // September 2016", "… on 2016-09-03" – is cut off before the place is read (collected item 117; before, the place was
+  // left out with the date, because it had digits); the area before it stays ("in San Francisco"). Only a preposition
+  // followed at once by a date: a day, a month (whole, or its first three letters), a season.
+  const PLACE_DATE_TAIL = /\s+(?:on|in|during|between|from|since|throughout|around|over)\s+(?:the\s+)?(?:(?:early|late|mid)[\s-]+)?(?=\d|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b|(?:spring|summer|autumn|fall|winter)\b).*$/i;
+
   // [T021] Texts (3.14.0): words before a verb that only say what was done – "Music played and recorded by X" is
   // played by and recorded by X
   const TEXT_WHAT_WORDS = /^(?:the\s+)?(?:music|songs?|album|tracks?|record|recordings?|everything|all)\s+(?=\p{L}+ed$)/iu;
@@ -7088,6 +7122,116 @@
   // [3.30.6] "sounds" → "Sounds" (R104: performer, the dashboard asks for effects – Q008)
   const PROSE_ROLE_WORDS = { sounds: 'Sounds', noises: 'Noises', noise: 'Noises', electronics: 'Electronics', 'field recordings': 'Field Recordings',
     'field recording': 'Field Recording', words: 'Lyrics By', lyrics: 'Lyrics By', texts: 'Lyrics By', voice: 'Vocals', voices: 'Vocals', vocals: 'Vocals', music: 'Music By' };
+  // [T048] Texts (3.32.5): the words of roles a typo is read as (S050, collected item 115: "Muisc" → "Music") – these, and on
+  // MusicBrainz also the words of its relationship types and attributes (instruments, voices)
+  const ROLE_WORDS = ('music lyrics words text texts vocals vocal voice voices singer singing chorus choir backing lead guitar guitars bass drums '
+    + 'percussion piano keyboards synthesizer synth organ saxophone trumpet trombone violin viola cello flute clarinet harmonica accordion '
+    + 'banjo mandolin ukulele harp strings horns brass electric acoustic double upright alto tenor soprano baritone recorded recording '
+    + 'recordings mixed mixing mastered mastering remastered remastering produced producer producers production engineered engineer '
+    + 'engineering arranged arranger arrangement arrangements composed composer composition compositions written writer writers lyricist '
+    + 'conducted conductor performed performer performers played programmed programming edited editing remixed remix design designed '
+    + 'designer layout artwork cover illustration illustrations illustrated photography photographs photos photo photographer painting '
+    + 'liner notes sleeve booklet graphic graphics typography logo executive assistant additional cutting lacquer transfer restoration '
+    + 'sound sounds effects electronics samples sampling field turntables scratches beats orchestra orchestration orchestrated ensemble '
+    + 'direction director directed translation translated narrator narration spoken recitation poems poetry featuring studio publisher '
+    + 'published publishing copyright distributed manufactured pressed licensed').split(' ');
+
+  /**
+   * [S050] (3.32.5) The words a typo in a role is read as (T048): ROLE_WORDS and, on MusicBrainz, the words of its
+   * relationship types and attributes (instruments, voices) – four letters or more, lower case. Built once.
+   */
+  let roleVocabCache = null;
+  function roleVocab() {
+    if (roleVocabCache) return roleVocabCache;
+    const words = new Set(ROLE_WORDS);
+    let fromMb = false;
+    try {
+      const i = idx();
+      for (const x of [...i.ltById.values(), ...i.atById.values()]) {
+        for (const w of String((x && x.name) || '').toLowerCase().split(/[^\p{L}]+/u)) if (w.length >= 4) words.add(w);
+      }
+      fromMb = i.ltById.size > 0;
+    } catch (e) {
+      // no MusicBrainz data here (a test in Node): the register's words only
+    }
+    const list = [...words].filter((w) => w.length >= 4);
+    const vocab = { set: new Set(list), list };
+    if (fromMb) roleVocabCache = vocab;
+    return vocab;
+  }
+
+  /**
+   * [3.32.6] Two names the same or at most two letters apart (missing, too many or wrong; case left aside), both
+   * of five letters or more: "j4vavaman" and "j4vaman" (collected item 115b).
+   */
+  function nameClose(a, b) {
+    const x = norm(a);
+    const y = norm(b);
+    if (!x || !y) return false;
+    if (x === y) return true;
+    if (x.length < 5 || y.length < 5 || Math.abs(x.length - y.length) > 2) return false;
+    let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= x.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[y.length] <= 2;
+  }
+
+  /** [S050] Two words one letter apart: one swapped pair of neighbours, one letter missing, too many or wrong. */
+  function oneEditApart(a, b) {
+    if (a === b || Math.abs(a.length - b.length) > 1) return false;
+    if (a.length === b.length) {
+      const diff = [];
+      for (let i = 0; i < a.length && diff.length < 3; i++) if (a[i] !== b[i]) diff.push(i);
+      return diff.length === 1 || (diff.length === 2 && diff[1] === diff[0] + 1 && a[diff[0]] === b[diff[1]] && a[diff[1]] === b[diff[0]]);
+    }
+    const [s, l] = a.length < b.length ? [a, b] : [b, a];
+    let i = 0;
+    while (i < s.length && s[i] === l[i]) i++;
+    return s.slice(i) === l.slice(i + 1);
+  }
+
+  /**
+   * [S050] (3.32.5) A role with typos in its words (collected item 115: "Muisc By"): each unknown word of five letters or
+   * more that is one letter off words of T048 is tried as each of them (written as the typo was: "Muisc" → "Music"), until
+   * `check` knows the role → { phrase, typos: [{ written, read }] }, null if none does (or the role is known as it is).
+   */
+  function fixRoleTypo(phrase, check) {
+    const text = String(phrase || '');
+    if (!text || check(text)) return null;
+    const vocab = roleVocab();
+    const slots = [];
+    for (const m of text.matchAll(/\p{L}+/gu)) {
+      const low = m[0].toLowerCase();
+      if (low.length < 5 || vocab.set.has(low)) continue;
+      const cands = vocab.list.filter((v) => oneEditApart(low, v));
+      // (null: the word stays as it is – another unknown word of the role may be the typo)
+      if (cands.length) slots.push({ w: m[0], at: m.index, cands: [null, ...cands] });
+    }
+    if (!slots.length) return null;
+    let combos = [[]];
+    for (const s of slots) {
+      combos = combos.flatMap((c) => s.cands.map((v) => [...c, v]));
+      if (combos.length > 24) return null;
+    }
+    const asWritten = (w, v) => (w === w.toUpperCase() ? v.toUpperCase() : /^\p{Lu}/u.test(w) ? v.charAt(0).toUpperCase() + v.slice(1) : v);
+    for (const combo of combos) {
+      let out = text;
+      let shift = 0;
+      const typos = [];
+      slots.forEach((s, k) => {
+        if (!combo[k]) return;
+        const read = asWritten(s.w, combo[k]);
+        out = out.slice(0, s.at + shift) + read + out.slice(s.at + shift + s.w.length);
+        shift += read.length - s.w.length;
+        typos.push({ written: s.w, read });
+      });
+      if (typos.length && check(out)) return { phrase: out, typos };
+    }
+    return null;
+  }
   // [T042] Texts (3.29.0): words of prose around a credit that say nothing about the role – a verb before "by" ("Cover artwork
   // channeled by X", "Logo carved by …") and words before the name ("… by the guided hand of BMS Illustration")
   const PROSE_FILLER_VERB = /\s+(?:lovingly\s+|carefully\s+|dutifully\s+)?(?:channell?ed|carved|crafted|conjured|forged|summoned|woven|wrought|unearthed|captured|rendered|realized|realised|executed|handled|delivered|shaped|sculpted|etched|hewn|brought\s+to\s+life|put\s+together|taken\s+care\s+of)$/i;
@@ -7283,7 +7427,9 @@
   ];
 
   // [T014] Texts: month names, only to take dates out of a role phrase ("Recorded 12 May 2019" → "Recorded")
-  const TEXT_MONTHS = /\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?(?=\s|$)/gi;
+  // [3.32.5] only month words (whole, or the first three or four letters): before, any word that began so was taken
+  // out – "Marseille", "Augsburg", "Decatur" lost the area of a place (collected item 117)
+  const TEXT_MONTHS = /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?(?=\s|$)/gi;
 
   /**
    * Date groups: a date on one row of a group goes into the pool ("Performance 1" …) and onto every
@@ -7376,7 +7522,9 @@
   /** [3.31.4] The role credit an option of a type question gives: the task of "misc", or the role word in lower case (Q009). */
   const optionCredit = (o, row) => o.task || (o.credit === true ? norm(row.translatedBase || row.base).replace(/(\s+written)?\s+by$/, '') : (typeof o.credit === 'string' ? o.credit : ''));
 
-  const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && row.ruleId === q.rule && (!q.flag || row[q.flag])) || null);
+  // [3.32.7] a question may name several rules (`rules`) and be for one level only (`level`: Q010, poems on the release)
+  const typeQuestionFor = (row) => (row.company ? null : TYPE_QUESTIONS.find((q) => ruleOn(q.id) && (q.rules ? q.rules.includes(row.ruleId) : row.ruleId === q.rule)
+    && (!q.flag || row[q.flag]) && (!q.unless || !row[q.unless]) && (!q.level || row.level === q.level)) || null);
 
   /** [3.21.4] A question that only some rows get (Q007): until it is answered the row has no type, on the first option's level. */
   function blankForQuestion(row) {
@@ -8129,8 +8277,9 @@
      * area: 'Cologne' } (dates and other parts with digits are left out).
      */
     function placeOf(text) {
-      // [S039] (3.29.0) a date in brackets after the place ("TQA.HQ (July 2026)") is no part of it
-      const parts = String(text || '').replace(/\s*\([^)]*\d[^)]*\)/g, '').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
+      // [S039] (3.29.0) a date in brackets after the place ("TQA.HQ (July 2026)") is no part of it; [T047] (3.32.5) nor a
+      // date right after it ("El Studio in San Francisco on September 3rd and 4th 2016": before, the whole part was left out)
+      const parts = String(text || '').replace(PLACE_DATE_TAIL, '').replace(/\s*\([^)]*\d[^)]*\)/g, '').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
       if (!parts.length) return null;
       let name = parts[0];
       let area = parts[1] || '';
@@ -8286,10 +8435,31 @@
       return { text: clean(text), links, cut: true };
     }
 
-    function parse(text, { isRole, isCompanyRole, resolveTracks, resolveTitles, artistNames = [] }) {
+    function parse(text, { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames = [] }) {
       const credits = [];
       const companies = [];
       const unrecognized = [];
+      // [S050] (3.32.5) Typos in role words (collected item 115: "Muisc and cover art by j4vaman"): a part of a sentence that
+      // gives nothing is read once more with `typoMode` on – then an unknown word one letter off a role word counts as that
+      // word (fixRoleTypo), and the credit carries what was written (`typos`)
+      let typoMode = false;
+      const typoCache = new Map();
+      const typoFix = (phrase, kind) => {
+        const key = `${kind}\u0000${phrase}`;
+        if (!typoCache.has(key)) {
+          const check = kind === 'c' ? isCompanyRoleKnown : kind === 'r' ? isRoleKnown : (r) => isRoleKnown(r) || isCompanyRoleKnown(r);
+          typoCache.set(key, fixRoleTypo(phrase, check));
+        }
+        return typoCache.get(key);
+      };
+      const isRole = (r) => isRoleKnown(r) || (typoMode && !!typoFix(r, 'r'));
+      const isCompanyRole = (r) => isCompanyRoleKnown(r) || (typoMode && !!typoFix(r, 'c'));
+      /** [S050] A role as it is read: with its typos corrected in typo mode → { role, typos } (typos: [{ written, read }] or none). */
+      const readRole = (role) => {
+        if (!typoMode || isRoleKnown(role) || isCompanyRoleKnown(role)) return { role, typos: null };
+        const x = typoFix(role, 'any');
+        return x ? { role: x.phrase, typos: x.typos } : { role, typos: null };
+      };
       // [3.21.0] lines (or sentences of a line) left out on purpose: thanks, endorsements, only web addresses (T030, T032)
       const ignored = [];
       const who = (name) => ({ id: 0, name, rawName: name, links: [] });
@@ -8315,10 +8485,13 @@
       let n0 = 0;
       const lineCount = new Map();
       const at = () => ({ line: line0, part: part0, pi: pi0, n: n0 });
-      const addCredit = (name, role, scope, extra = {}) => {
+      const addCredit = (name, role0, scope, extra0 = {}) => {
+        // [S050] (3.32.5) in typo mode the role as it is read, with what was written
+        const { role, typos } = readRole(role0);
+        const extra = typos ? { ...extra0, typos } : extra0;
         const p = parseRoleNotation(role)[0];
         if (!p || !looksLikeName(name)) return false;
-        if (isCompanyRole(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra });
+        if (isCompanyRoleKnown(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra });
         else credits.push({ who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
         return true;
       };
@@ -8326,11 +8499,12 @@
       const bandNames = new Set(artistNames.map((n) => norm(n)).filter(Boolean));
       const isTheBand = (subject) => bandNames.has(norm(subject)) || TEXT_BAND_SELF.test(clean(subject));
       // [3.14.0] A credit without a name ("… created by a human"): the core offers the release's artists for it
-      const addPlaceholder = (said, role, scope) => {
+      const addPlaceholder = (said, role0, scope) => {
+        const { role, typos } = readRole(role0);
         const p = parseRoleNotation(role)[0];
-        if (!p || isCompanyRole(p.raw)) return false;
+        if (!p || isCompanyRoleKnown(p.raw)) return false;
         credits.push({ who: { id: 0, name: '', rawName: said, links: [], placeholder: said }, role: p.raw, base: p.base, details: p.mods, credited: '',
-          tracks: tracksOf(scope), ...at() });
+          tracks: tracksOf(scope), ...at(), ...(typos ? { typos } : {}) });
         return true;
       };
       // [3.14.0] A role with "By" ("Mixed By"), else without ("Layout", "Photography", "Artwork")
@@ -8487,7 +8661,8 @@
           }
         }
         const parts = found ? [] : clauses(line);
-        for (const [ci, clause] of parts.entries()) {
+        // [S050] (3.32.5) one clause; read again in typo mode when it gave nothing (see typoMode)
+        const readClause = (clause, ci) => {
           part0 = clause;
           pi0 = pi + ci;
           // [3.22.0] the tracks of this clause: those of the line, or those its titles name (T036)
@@ -8495,7 +8670,7 @@
           // [3.17.3] "Distribué par X", "Distribuido por X", "Vertrieben durch X", "Distributed through X" (T028)
           if ((m = clause.match(/^(\S+(?:\s+\S+)?)\s+(?:par|por|da|durch|via|through)\s+(.+)$/i)) && distribution(m[1])) {
             for (const n of names(m[2])) if (addCredit(n, 'Distributed By', cScope)) found++;
-            continue;
+            return;
           }
           // [S041] (3.30.7) the members of the band: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – the
           // release's artist (or "the band", "we") before "are", "is", "consists of": each name a performer (T043; also in
@@ -8506,15 +8681,16 @@
               && n.split(' ').every((w) => /^\p{Lu}/u.test(w) || /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|bin|al|el|y|zu)$/i.test(w));
             if (list.length && list.every(person)) {
               list.forEach((n) => { if (addCredit(n, 'Performer', cScope, { members: true })) found++; });
-              continue;
+              return;
             }
           }
           // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
           const place = (verb, where) => {
-            const role = `${cap(verb)} At`;
             const n = where && clean(where.name);
-            if (!looksLikeName(n) || !isCompanyRole(role)) return;
-            companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at() });
+            if (!looksLikeName(n) || !isCompanyRole(`${cap(verb)} At`)) return;
+            // [S050] (3.32.5) "Recordd at X": the verb as it is read
+            const { role, typos } = readRole(`${cap(verb)} At`);
+            companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}) });
             found++;
           };
           // [3.22.0] "Recorded by X in Xixon, Asturies, Spain", "Recorded in Berlin": the area (T037; C038 …)
@@ -8526,7 +8702,8 @@
               unknownParts.push(`in ${[where.name, where.area].filter(Boolean).join(', ')}`);
               return true;
             }
-            companies.push({ who: { ...who(where.name), area: where.area || '' }, role: areaRole(verb), catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at() });
+            const { role, typos } = readRole(areaRole(verb));
+            companies.push({ who: { ...who(where.name), area: where.area || '' }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}) });
             found++;
             return true;
           };
@@ -8586,7 +8763,7 @@
               const withRoles = namesWithRoles(firstSentence(right));
               if (withRoles.length) {
                 withRoles.forEach((x) => x.roles.forEach((r) => { if (addCredit(x.name, r, cScope)) found++; }));
-                continue;
+                return;
               }
             }
             // [3.14.0] the first sentence only, and a time after the name cut off (T020): "X in October 2026" → X
@@ -8598,7 +8775,7 @@
             const nobody = clean(right.replace(/\s*\([^)]*\)/g, ''));
             if (roles.length && PLACEHOLDER_WHO.test(nobody)) {
               roles.forEach((r) => { if (addPlaceholder(nobody, r, cScope)) found++; });
-              continue;
+              return;
             }
             // [3.21.4] "Mastered by X (vinyl)": the medium belongs to the role (T035)
             const tailMedium = right.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
@@ -8616,7 +8793,7 @@
             const meds = rolesM.map((r) => (r.match(/\[([^\]]+)\]$/) || [])[1] || '').filter((x) => mediumKindOf(x));
             if (rolesM.length && meds.length === rolesM.length && new Set(meds.map(mediumKindOf)).size === 1) companies.slice(kc0).forEach((c) => { c.medium = meds[0]; });
             for (const n of rolesM.length ? names(right) : []) rolesM.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
-            continue;
+            return;
           }
           // "Recorded 12–14 May 2019 at Studio X, Berlin" (a place without a person); [S039] (3.29.0) verbs joined before it
           // each give the place ("Mixed and mastered at TQA.HQ (July 2026)")
@@ -8626,17 +8803,17 @@
             const where = placeOf(m[2]);
             const verbs = ruleOn('S039') ? m[1].split(/\s*(?:,|\band\b|&|\+)\s*/i).filter(Boolean) : [m[1].split(/[\s,&+]/)[0]];
             verbs.filter((v, k) => k === 0 || isCompanyRole(`${cap(v)} At`)).forEach((v) => place(v, where));
-            continue;
+            return;
           }
           // [3.22.0] "Recorded in Xixon, Asturies, Spain in 2017", "Mixed live in Berlin" (an area without a person, T037)
           if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+(\p{Lu}.*)$/u))
-            && inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, '')))) continue;
+            && inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, '')))) return;
           // "Name – roles", "Name: roles", "Role: names", "Role – names", "Name (roles)"
           let left = null;
           let right = null;
           if ((m = clause.match(/^(.+?)\s+[–—-]\s+(.+)$/)) || (m = clause.match(/^(.+?)\s*:\s+(.+)$/))) [, left, right] = m;
           else if ((m = clause.match(/^(.+?)\s*\(([^)]+)\)$/))) [, left, right] = m;
-          if (!left) continue;
+          if (!left) return;
           left = clean(left);
           right = clean(right);
           // [3.22.0] tracks by their titles on either side ("Piano on ‘Song’: X", "X – piano on ‘Song’", T036)
@@ -8661,12 +8838,24 @@
               if (found) unknownParts.push(...rp.unknown);
             }
           }
+        };
+        for (const [ci, clause] of parts.entries()) {
+          const f0 = found;
+          const u0 = unknownParts.length;
+          readClause(clause, ci);
+          if (found === f0 && !typoMode && ruleOn('S050')) {
+            unknownParts.length = u0;
+            typoMode = true;
+            try {
+              readClause(clause, ci);
+            } finally {
+              typoMode = false;
+            }
+          }
         }
         // [3.14.0] "Photography Tom Barrett", "mastering john doe": a known role at the start, then a name of two to four
         // words (small letters too) that has no word of a sentence in it (T025) and is no list of roles
-        if (!found) {
-          part0 = line;
-          pi0 = pi;
+        const roleThenName = () => {
           const words = line.split(' ');
           for (let k = Math.min(3, words.length - 2); k >= 1 && !found; k--) {
             const role = words.slice(0, k).join(' ');
@@ -8675,6 +8864,20 @@
             if (n.length > 4 || TEXT_NOT_NAME.test(name) || n.every((w) => isRole(cap(w)))) continue;
             if (!isRole(cap(role)) && !isRole(`${cap(role)} By`)) continue;
             if (addCredit(name, roleOf(role), scope)) found++;
+          }
+        };
+        if (!found) {
+          part0 = line;
+          pi0 = pi;
+          roleThenName();
+          // [S050] (3.32.5) "Mastring John Doe"
+          if (!found && ruleOn('S050')) {
+            typoMode = true;
+            try {
+              roleThenName();
+            } finally {
+              typoMode = false;
+            }
           }
         }
         return { found, unknown: unknownParts, parts: Math.max(1, parts.length) };
@@ -8957,6 +9160,16 @@
       const ok = words.every((w, i) => (i > 0 && i < words.length - 1 && LINER_PARTICLE.test(w)) || /^\p{Lu}[\p{L}'’.-]*$/u.test(w));
       return ok && !words.some((w) => /^(?:thanks?|notes|credits)$/i.test(w)) ? name : null;
     }
+    /**
+     * [3.32.6] A signature in the spelling of an artist of the release – one word, digits, small letters ("-j4vavaman" for the
+     * artist j4vaman; collected item 115b): after a sign only, the name the same as an artist's or at most two letters off.
+     */
+    function artistSignature(line, artistNames) {
+      const m = String(line || '').match(/^[\s—–―~*•-]+\s*([\p{L}\p{N}][\p{L}\p{N}'’._-]*(?:\s+[\p{L}\p{N}][\p{L}\p{N}'’._-]*){0,3})\s*$/u);
+      if (!m) return null;
+      const name = m[1].replace(/[.]+$/, '');
+      return artistNames.some((a) => nameClose(a, name)) ? name : null;
+    }
     /** Sentences of a text: ended by . ! ? … or a line break, with at least three words. */
     const sentenceCount = (t) => String(t || '').split(/(?<=[.!?…])["”’)]*\s+|\n+/).filter((x) => (x.match(/\p{L}+/gu) || []).length >= 3).length;
     /**
@@ -8965,18 +9178,20 @@
      * ", place, date" allowed after it; the text above it at least five sentences (several paragraphs are fine).
      * Returns { name, line, part, pi, n, at, len } (the line and part as for a credit, at/len: the signature in the text) or null.
      */
-    function linerNotes(about) {
+    function linerNotes(about, { creditLines = new Set(), artistNames = [] } = {}) {
       const text = String(about || '');
       const lines = text.split(/\r?\n/);
       let k = lines.length - 1;
-      while (k >= 0 && !lines[k].trim()) k--;
+      // [3.32.6] credit lines below the signature ("-j4vavaman" / "Music and cover art by j4vaman") are no part of it
+      // (collected item 115b; before, only the last line could be the signature)
+      while (k >= 0 && (!lines[k].trim() || creditLines.has(lines[k].trim()))) k--;
       if (k < 0) return null;
       const line = lines[k].trim();
       let name = null;
       let prose = '';
       let part = line;
       let pi = 0;
-      if (k > 0 && (name = signatureName(line))) {
+      if (k > 0 && (name = signatureName(line) || artistSignature(line, artistNames))) {
         prose = lines.slice(0, k).join('\n');
       } else {
         const m = line.match(/^(.*[.!?…]["”’)]*)\s+[—–―~-]+\s*([^—–―~]+)$/);
@@ -9011,9 +9226,13 @@
       // its dates are found in the notes like those of the credits
       // [3.22.0] and its areas ("recorded in Berlin")
       const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
-      // [3.30.7] the members of the band from the "about" text too (S041)
-      credits.push(...aboutRes.credits.filter((c) => c.members));
-      companies.push(...aboutRes.companies.filter((c) => /\b(?:at|in)$/i.test(c.role))
+      // [3.30.7] the members of the band from the "about" text too (S041); [S049] (3.32.6) every credit of it (collected item 115:
+      // "hier stehen die credits im "falschen" feld ich möchte ermöglichen dass diese auch abgerufen werden", "mach immer lesen
+      // bitte. an/ausschaltbar in den einstellungen") – marked as from there, left out with it; its lines not recognized are not
+      // listed (mostly prose)
+      const aboutAll = ruleOn('S049');
+      credits.push(...aboutRes.credits.filter((c) => aboutAll || c.members).map((c) => (c.members ? c : { ...c, fromAbout: true })));
+      companies.push(...aboutRes.companies.filter((c) => aboutAll || /\b(?:at|in)$/i.test(c.role))
         .map((c) => ({ ...c, fromAbout: true }))); // [3.16.1] can be left out ("Leave out the about text")
       const unrecognized = [...album.unrecognized];
       const ignored = [...(album.ignored || [])];
@@ -9030,7 +9249,8 @@
       });
       // [3.17.2] Liner notes at the end of the "about" text: a credit "Liner Notes" of the name below it – a name like any
       // other (only suggested), from the about text (left out with it)
-      const liner = linerNotes(cur.about || '');
+      const liner = linerNotes(cur.about || '', { creditLines: new Set([...aboutRes.credits, ...aboutRes.companies].map((c) => String(c.line || '').trim()).filter(Boolean)),
+        artistNames: [...(ctx.artistNames || []), bandName].filter(Boolean) });
       if (liner) {
         const p = parseRoleNotation('Liner Notes')[0];
         credits.push({ who: { id: 0, name: liner.name, rawName: liner.name, links: [] }, role: p.raw, base: p.base, details: p.mods, credited: '',
@@ -9165,6 +9385,8 @@
             fromAbout: !!c.fromAbout });
         }
         const entry = group.roles.get(rKey);
+        // [S050] (3.32.5) typos read as role words: what was written
+        (c.typos || []).forEach((t) => { entry.typos = entry.typos || []; if (!entry.typos.some((x) => x.written === t.written)) entry.typos.push(t); });
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
@@ -9195,7 +9417,7 @@
       if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
       if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.medium ? { medium: c.medium } : {}),
-        ...(c.notesLine ? { notesLine: c.notesLine } : {}), refs: [] });
+        ...(c.notesLine ? { notesLine: c.notesLine } : {}), ...(c.typos ? { typos: c.typos } : {}), refs: [] });
       addSrcRef((same || g.roles[g.roles.length - 1]).refs, c);
       if (!same) continue;
       if (c.notesLine) same.notesLine = c.notesLine;
@@ -10721,6 +10943,12 @@
     if (!row.company && m.base) row.base = m.base;
     row.flags = new Set((m.flags || []).map(norm));
     if (!row.levelTouched) row.level = m.level;
+    // [3.32.7] a row of poems whose level was clicked: the type of its level (item 104b)
+    if (row.poemLevels && isPoemRow(row) && row.level !== 'skip') {
+      const ans = row.typeAnswer;
+      poemTypeForLevel(row, row.level);
+      if (row.level === 'release' && ans != null && row.typeAnswer == null) row.typeAnswer = ans;
+    }
     resolveRowType(row);
     if (!row.primaryTouched) row.primaryText = pickPrimary(row);
     if (m.fallback && !primaryIsValid(row)) makeMiscRow(row, String(row.raw || row.base).replace(/\s*\[.*$/, '').trim());
@@ -11572,10 +11800,16 @@
   const QUICK_SWITCHES = ['S045', 'D022', 'S021', 'S031', 'S007', 'D023', 'S046'];
   function quickSwitchesHtml() {
     const notes = ruleNotes();
-    const one = (id) => `<span class="dci-quick-sw"><label class="dci-check" title="${esc(`${id}: ${notes.get(id) || ''}`)}"><input type="checkbox" data-rule-on="${esc(id)}" ${ruleOn(id) ? 'checked' : ''}>
-      ${esc(tr(`quick.${id}`))}</label> <button type="button" class="dci-textbtn dci-ruleid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
-    return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
-      ${QUICK_SWITCHES.map(one).join('')}</div>`;
+    // [3.32.8] a box of its own, each switch a button with its state (collected item 116; maintainer: "die quick switches bitte
+    // visuell in einem eigenen fenster (rechteck mit oder ohne runde ecken, deine wahl je nach konsistenz). vielleicht alle visuell
+    // mit jeweils eigenem button könnte besser sein … als checkboxen") – before, a line of checkboxes
+    const one = (id) => {
+      const on = ruleOn(id);
+      return `<span class="dci-qbtn-wrap"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}" title="${esc(`${id}: ${notes.get(id) || ''}`)}">
+        <span class="dci-qled" aria-hidden="true"></span><span class="dci-qlabel">${esc(tr(`quick.${id}`))}</span><span class="dci-qstate">${esc(tr(on ? 'common.on' : 'common.off'))}</span></button><button type="button" class="dci-textbtn dci-ruleid dci-qid" data-qs-goto="${esc(id)}" title="${esc(`${id}: ${notes.get(id) || ''}\n${tr('rules.gotoTitle')}`)}">${esc(id)}</button></span>`;
+    };
+    return `<div class="dci-quick" role="group" aria-labelledby="dci-quick-h"><div class="dci-quick-h"><strong id="dci-quick-h" title="${esc(tr('rules.quickTitle'))}">${esc(tr('rules.quick'))}</strong>
+      <span class="dci-sub">${esc(tr('rules.quickHint'))}</span></div><div class="dci-quick-grid">${QUICK_SWITCHES.map(one).join('')}</div></div>`;
   }
 
   /** Redraws the parts of the rules window that depend on the rules. */
@@ -11832,6 +12066,15 @@
         // [3.32.0] the id of a quick switch: the rule in the lists below
         const qs = t.closest('[data-qs-goto]');
         if (qs) focusRule(qs.dataset.qsGoto);
+        // [3.32.8] a quick switch is a button (item 116): on ↔ off, the same as the rule's switch in the lists
+        const qt = t.closest('[data-qs-toggle]');
+        if (qt) {
+          const id = qt.dataset.qsToggle;
+          setRuleOn(id, !ruleOn(id));
+          applyRulesChange(id);
+          const again = el.querySelector(`[data-qs-toggle="${id}"]`);
+          if (again) again.focus({ preventScroll: true });
+        }
       });
       el.addEventListener('change', (e) => {
         const t = e.target;
@@ -13701,6 +13944,7 @@
             continue;
           }
           if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
+          if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
           row.dSpec = c.specs.join(', ');
           row.dPositions = c.positions;
           row.unresolved = c.unresolved;
@@ -13739,6 +13983,7 @@
         for (const r of g.roles) {
           const row = makeRow(company.key, { raw: r.role, company });
           if (r.fromAbout) row.fromAbout = true;
+          if (r.typos) row.typos = r.typos; // [S050] (3.32.5)
           row.srcRefs = r.refs || []; // [3.17.0]
           // [S026] a place or company for a medium the release does not have ("Lacquer Cut At", the studio of a vinyl mastering)
           if (companyLeftOutForMedium(row, r, rel, r.line || `${g.name} – ${r.role}`)) {
@@ -14088,10 +14333,12 @@
         }
         // [3.22.1] an artist of the release's artist credit with this name: first, marked "release artist" (46)
         if (!a.company) {
-          const rel = (S.releaseCredit || []).filter((p) => p.mbid && (nameFit(p.name, a.name) === 'same' || a.nameHits.some((h) => h.mbid === p.mbid && !h.similar)));
+          // [3.32.6] also one at most two letters off ("j4vavaman" signing for j4vaman, collected item 115b): first, marked similar
+          const close = (p) => nameFit(p.name, a.name) !== 'same' && nameClose(p.name, a.name);
+          const rel = (S.releaseCredit || []).filter((p) => p.mbid && (nameFit(p.name, a.name) === 'same' || close(p) || a.nameHits.some((h) => h.mbid === p.mbid && !h.similar)));
           for (const p of [...rel].reverse()) {
             const had = a.nameHits.find((h) => h.mbid === p.mbid);
-            a.nameHits = [{ ...(had || { mbid: p.mbid, name: p.name, entityType: 'artist', similar: false, disambiguation: '' }), release: true },
+            a.nameHits = [{ ...(had || { mbid: p.mbid, name: p.name, entityType: 'artist', similar: close(p), disambiguation: '' }), release: true },
               ...a.nameHits.filter((h) => h.mbid !== p.mbid)];
           }
         }
@@ -15106,7 +15353,8 @@
    * be chosen there – on the works or on the release (collected item 112: "wir haben ja bereits die möglichkeit in der
    * kompakt info das durchzuklicken. so soll das laufen.").
    */
-  const inEntry = (r) => r.level !== 'work' || isPublishingRow(r);
+  // [3.32.7] rows of poems too (their level is clicked through in the entry, item 104b)
+  const inEntry = (r) => r.level !== 'work' || isPublishingRow(r) || isPoemRow(r);
 
   /**
    * [3.30.2] The arrow in the head of an entry in the compact view (item 82b; maintainer: "ja bitte gib mir den Pfeil"):
@@ -15194,6 +15442,10 @@
   /** [3.31.6] Tracks set from the notes: ⓘ with the line they come from (item 97c). */
   const notesFromHtml = (row) => (row.notesFrom ? `<div class="dci-sub dci-notesfrom"><span class="dci-info" title="${esc(tr('matrix.notesFrom', { text: row.notesFrom }))}">ⓘ</span> ${esc(tr('role.notesTracks', { list: trackListLabel(row.notesTracks || new Set()) }))}</div>` : '');
 
+  /** [S050] (3.32.5) A role read with its typos corrected: what was written (collected item 115). */
+  const typoHtml = (row) => ((row.typos || []).length ? `<div class="dci-sub dci-typo">${esc(row.typos.map((t) => tr('role.typoRead', { read: t.read, written: t.written })).join(' · '))}
+    <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S050" title="${esc(tr('rules.gotoTitle'))}">S050</button></div>` : '');
+
   /** [3.17.1] A credit switched off on Bandcamp says so. */
   const srcOffHtml = (row) => (row.srcOff ? `<div class="dci-note dci-srcoff">${esc(tr('bc.offNote', { site: VIEW_NAMES[viewSite()] }))}</div>` : '');
 
@@ -15206,7 +15458,7 @@
         <button type="button" class="dci-textbtn" data-act="remove-row">${esc(tr('role.remove'))}</button>${asType}${notes}`;
     }
     if (row.company) {
-      return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}
+      return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}${typoHtml(row)}
         <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec && !(row.dSpecTracks && row.notesFrom) ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
@@ -15215,7 +15467,7 @@
     if (row.dSpec) where.push(row.dSpec);
     if (row.dPositions.length) where.push(tr('role.tracks', { list: row.dPositions.join(', ') }));
     const roleHtml = esc(row.raw).replace(/\[[^\]]*\]/g, (m) => `<span class="dci-bracket">${m}</span>`);
-    return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}
+    return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}${typoHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
@@ -15340,6 +15592,8 @@
     const et = row.entityType || 'artist';
     const lt = currentLinkType(row);
     const names = uniq([...(lt ? [lt.name] : []), ...(row.types || [])]);
+    // [3.32.7] rows of poems have every level (their type follows it, item 104b)
+    if (isPoemRow(row)) return { levels: ['recording', 'release', 'work'], names };
     const has = (level) => row.level === level || (names.length
       ? names.some((n) => levelsOfType(n, et).includes(level))
       : (level !== 'release_group' || (row.other && typesFor('release_group', et).length > 0)));
@@ -15354,7 +15608,8 @@
    * "Skip", then from the start again.
    */
   function nextLevel(row) {
-    const list = [...rowLevels(row).levels.filter((l) => !workLevelOff(row, l)), 'skip'];
+    // [3.32.7] rows of poems: works → recordings → release → skip (item 104b)
+    const list = [...(isPoemRow(row) ? POEM_LEVELS : rowLevels(row).levels).filter((l) => !workLevelOff(row, l)), 'skip'];
     const i = list.indexOf(row.level);
     return list[(i + 1) % list.length];
   }
@@ -16497,7 +16752,8 @@
     savePool();
     if (placed) {
       m.dirty = true;
-      showMessage('info', 'dm.autoPlaced', { n: placed });
+      // [3.32.8] with a button to the matrix (collected item 109b)
+      showMessage('info', 'dm.autoPlaced', { n: placed }, { action: { act: 'dm-goto', label: 'dm.goto' } });
     }
     // [3.30.8] the month or year two days share (":lcd", e.g. "December 11 & 12, 2015" → December 2015) is no date without a group
     // [3.32.0] the days whose common month or year is in the matrix (D022) are placed too
@@ -16902,6 +17158,54 @@
     </div>`;
   }
 
+  /**
+   * [3.32.7] The single days of a period or of separate days (collected item 118: "zwei daten also bspw. 2016-11-07, 2016-11-08 als
+   * jeweilige relationships"): the days the source gives (D013, the pool keeps them), else each day of the period, at most 62 –
+   * pool entries of the same group. [] if there are none.
+   */
+  function singleDaysOf(src, { create = true } = {}) {
+    if (!src) return [];
+    const found = String(src.found || '');
+    const group = DATE_GROUPS.find((g) => String(src.name || '').startsWith(`${g.label} `)) || null;
+    if (found.endsWith(':range')) {
+      const base = found.slice(0, -':range'.length);
+      return S.datePool.filter((d) => d.found === base && d.begin && d.begin.day && formatDate(d.begin) === formatDate(d.end));
+    }
+    const b = src.begin;
+    const e = src.end;
+    if (!b || !e || !b.day || !e.day || !b.month || !e.month) return [];
+    const t0 = Date.UTC(b.year, b.month - 1, b.day);
+    const t1 = Date.UTC(e.year, e.month - 1, e.day);
+    const n = Math.round((t1 - t0) / 86400000) + 1;
+    if (n < 2 || n > 62) return [];
+    return Array.from({ length: n }, (_, k) => {
+      const d = new Date(t0 + k * 86400000);
+      const v = single({ year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() });
+      // (for the menu only the dates: the pool gets them when they are chosen)
+      return create ? poolDateFor(v, group, `${found}:day${k + 1}`) : v;
+    });
+  }
+
+  /**
+   * [3.32.7] The ▾ of a cell that has what several days have in common (D022, collected item 118: "keine Einstellung nur das ▾
+   * je Zelle"): instead the single days (one relationship per day) or the period; the month or year kept.
+   */
+  function lcdMenuHtml(c) {
+    const src = S.datePool.find((d) => d.id === c.lcdOf);
+    if (!src) return '';
+    const open = S.dmLcdMenu === c.id;
+    const btn = `<button type="button" class="dci-iconbtn dci-dm-lcdbtn" data-act="dm-lcd-menu" data-cell="${esc(c.id)}" aria-expanded="${open}" title="${esc(tr('dm.lcdMenu'))}" aria-label="${esc(tr('dm.lcdMenu'))}">▾</button>`;
+    if (!open) return btn;
+    const days = singleDaysOf(src, { create: false });
+    const e = cellEntry(c);
+    return `${btn}<div class="dci-dm-lcdmenu" role="group" aria-label="${esc(tr('dm.lcdMenu'))}">
+      ${days.length > 1 ? `<button type="button" class="dci-dm-opt" data-act="dm-lcd" data-cell="${esc(c.id)}" data-pick="single" title="${esc(tr('dm.chooseSingleTitleAny'))}">
+        ${esc(tr('dm.lcdSingle', { n: days.length, list: days.map((d) => formatDateValue(d)).join(' · ') }))}</button>` : ''}
+      <button type="button" class="dci-dm-opt" data-act="dm-lcd" data-cell="${esc(c.id)}" data-pick="range" title="${esc(tr('dm.chooseRangeTitle'))}">${esc(tr('dm.chooseRange', { date: formatDateValue(src) }))}</button>
+      <button type="button" class="dci-dm-opt" data-act="dm-lcd" data-cell="${esc(c.id)}" data-pick="lcd" title="${esc(tr('dm.chooseLcdTitle'))}">${esc(tr(e && e.begin && e.begin.month ? 'dm.chooseMonth' : 'dm.chooseYear', { date: formatDateValue(e) }))}</button>
+    </div>`;
+  }
+
   function matrixCellHtml(c) {
     if (c.alt) return matrixChooseHtml(c);
     const e = cellEntry(c);
@@ -16910,6 +17214,7 @@
         ${c.auto ? `title="${esc(tr('dm.autoCell'))}"` : ''}>
       <div class="dci-dm-date">
         <button type="button" class="dci-chip-main" data-act="dm-edit" data-cell="${esc(c.id)}" aria-expanded="${editing}" title="${esc(tr('dm.editTitle'))}">${esc(poolLabel(e))}</button>
+        ${c.lcdOf ? lcdMenuHtml(c) : ''}
         <button type="button" class="dci-dm-x" data-act="dm-remove" data-cell="${esc(c.id)}" title="${esc(tr('dm.removeTitle'))}" aria-label="${esc(tr('dm.removeTitle'))}">×</button>
       </div>
       ${cellTracksHtml(c, (DATE_GROUPS.find((g) => g.key === c.col) || {}).releaseOnly ? '' // [3.15.1] mastering: always the release level
@@ -17275,6 +17580,11 @@
     row.typeAnswer = i;
     row.types = [o.type];
     row.creditFromRole = optionCredit(o, row);
+    // [3.32.7] poems on the release: the answer is kept for the next time the row comes to the release (item 104b)
+    if (q.id === 'Q010') {
+      row.poemRelease = o.type;
+      if (!o.instrument) Object.assign(row, { primaryText: '', primaryTouched: false });
+    }
     delete row.scopeLevel;
     delete row.mxSkipped;
     // [3.21.0] a work level ("Text" → lyricist, Q005) while the works matrix is skipped: skipped too
@@ -18741,6 +19051,29 @@
     && S.rows.some((r) => r.artistKey === a.key) && S.rows.filter((r) => r.artistKey === a.key).every((r) => r.ruleId === 'C031');
 
   const isPublishingRow = (row) => norm(rowTypeName(row)) === 'publishing';
+
+  // [3.32.7] Rows of a credit of poems (R105 "Poems By", R106 read out, R107 "Poems" alone; collected item 104b, maintainer:
+  // "works (lyrics) -> recording (vocals) -> release (auswahl lyrics/vocals)", "ja liner notes ist auch eine möglichkeit"): their
+  // type follows the level – works lyricist, recordings spoken vocals, the release asks (Q010: lyricist, spoken vocals, liner
+  // notes) – and a click on the level goes works → recordings → release → skip; they stay in their entry on the works level
+  const POEM_RULES = ['R105', 'R106', 'R107'];
+  const POEM_LEVELS = ['work', 'recording', 'release'];
+  const isPoemRow = (row) => !!row && !row.company && POEM_RULES.includes(row.ruleId);
+
+  /** [3.32.7] The type of a row of poems for a level (its role credit stays; Q010 on the release, its answer kept). */
+  function poemTypeForLevel(row, level) {
+    row.poemLevels = true;
+    if (!row.creditFromRole) row.creditFromRole = optionCredit({ credit: true }, row);
+    const plain = { primaryText: '', primaryTouched: false };
+    if (level === 'work') Object.assign(row, { types: ['lyricist'], typeAnswer: null }, plain);
+    else if (level === 'recording') Object.assign(row, { types: ['vocal'], typeAnswer: null, primaryText: 'spoken vocals', primaryTouched: true });
+    else if (level === 'release') {
+      const q = TYPE_QUESTIONS.find((x) => x.id === 'Q010');
+      const i = q ? q.options.findIndex((o) => o.type === row.poemRelease) : -1;
+      if (i < 0) Object.assign(row, { types: [], typeAnswer: null }, plain);
+      else Object.assign(row, { types: [row.poemRelease], typeAnswer: i }, q.options[i].instrument ? { primaryText: q.options[i].instrument, primaryTouched: true } : plain);
+    }
+  }
   /**
    * Relationships of linked works shown from MusicBrainz: writing and lyrics credits, arrangers and labels
    * (publishers); not dedications and the like. In a column from Discogs or added by hand, an existing
@@ -19811,9 +20144,12 @@
       <button type="button" class="dci-textbtn" data-act="mx-pub-suggest" data-mbid="${esc(x.mbid)}" data-name="${esc(x.name)}">${esc(tr('matrix.addColumn'))}</button></div>`).join('');
     const r098 = col.rows.some((r) => r.ruleId === 'R098')
       ? `<button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="R098" title="${esc(tr('note.musicLyrics'))}">R098</button>` : '';
+    // [S050] (3.32.5) a role of the column read with a typo corrected (its rows are not in the entry)
+    const typoText = uniq(col.rows.flatMap((r) => (r.typos || []).map((t) => tr('role.typoRead', { read: t.read, written: t.written })))).join(' · ');
+    const s050 = typoText ? `<button type="button" class="dci-textbtn dci-ruleid dci-typo" data-act="rule-goto" data-rule="S050" title="${esc(typoText)}">S050</button>` : '';
     return `<th scope="col" class="dci-mx-col dci-kind-${columnKind(col)}" data-colhead="${esc(col.key)}"><div class="dci-mx-card">
       <div class="dci-mx-colname">${columnKindTag(col)}${name} ${btns}</div>
-      <div class="dci-mx-roles">${roles}<span class="dci-sub">${esc(tr('matrix.colWorks', { n: nWorks }))}</span>${dateChip}${pub}${r098}${sugg.length
+      <div class="dci-mx-roles">${roles}<span class="dci-sub">${esc(tr('matrix.colWorks', { n: nWorks }))}</span>${dateChip}${pub}${r098}${s050}${sugg.length
         ? `<button type="button" class="dci-textbtn dci-sub" data-act="mx-colmenu" data-col="${esc(col.key)}" title="${esc(sugg.map((x) => tr('matrix.suggestPub', { name: x.name })).join(' · '))}">＋${sugg.length}</button>` : ''}</div>
       <label class="dci-mx-credit">${esc(tr('matrix.colCredit'))} <input type="text" data-f="mx-credit" data-col="${esc(col.key)}" value="${esc((col.rows[0] || {}).credit || '')}" size="10"></label>
       ${menu(`${dateBox}
@@ -21042,6 +21378,8 @@
     const toOrFromWork = level === 'work' || row.level === 'work';
     row.level = level;
     row.levelTouched = true;
+    // [3.32.7] a row of poems: the type of this level (item 104b)
+    if (isPoemRow(row) && level !== 'skip') poemTypeForLevel(row, level);
     resolveRowType(row);
     if (!primaryIsValid(row) || !norm(row.primaryText)) row.primaryText = pickPrimary(row);
     refreshRowDetails(row);
@@ -21999,6 +22337,20 @@
         if (b) b.focus({ preventScroll: true });
         break;
       }
+      // [3.32.8] "To the date matrix" in the message of dates placed (collected item 109b): "Dates & tracks" open (once, as for
+      // waiting suggestions), the matrix in view and lit up briefly
+      case 'dm-goto': {
+        if (S.overlay && S.overlay.hidden) openDashboard();
+        if (!poolsOpen()) S.poolsForce = { dates: true, tracks: true };
+        renderDates();
+        const mx = S.overlay && S.overlay.querySelector('[data-el=dm]');
+        if (mx) {
+          mx.scrollIntoView({ block: 'center' });
+          mx.classList.add('dci-flash');
+          setTimeout(() => mx.classList.remove('dci-flash'), 2500);
+        }
+        break;
+      }
       case 'pools-toggle':
         S.poolsOpen = !poolsOpen();
         S.poolsForce = null;
@@ -22090,6 +22442,37 @@
           dm().cells.splice(dm().cells.indexOf(c), 1, ...add);
         }
         log('info', 'dmChosen', { date: poolLabel(range), choice: tr({ range: 'dm.choiceRange', lcd: 'dm.choiceLcd' }[btn.dataset.pick] || 'dm.choiceSingle') });
+        dmChanged();
+        break;
+      }
+      // [3.32.7] the ▾ of a cell with what several days have in common (D022, item 118)
+      case 'dm-lcd-menu':
+        S.dmLcdMenu = S.dmLcdMenu === btn.dataset.cell ? null : btn.dataset.cell;
+        renderDates();
+        break;
+      case 'dm-lcd': {
+        const c = dm().cells.find((x) => x.id === btn.dataset.cell);
+        const src = c && S.datePool.find((d) => d.id === c.lcdOf);
+        S.dmLcdMenu = null;
+        if (!c || !src) {
+          renderDates();
+          break;
+        }
+        const was = cellEntry(c);
+        if (btn.dataset.pick === 'range') {
+          c.date = c.lcdOf;
+          delete c.lcdOf;
+          c.auto = false;
+        } else if (btn.dataset.pick === 'single') {
+          // each day a matrix entry of its own, with the same track groups and studios: one relationship per day
+          const add = singleDaysOf(src).filter((d) => !dm().cells.some((x) => x.col === c.col && x.date === d.id))
+            .map((d) => ({ id: newCellId(), col: c.col, date: d.id, tgs: [...c.tgs], studios: [...c.studios], auto: false }));
+          dm().cells.splice(dm().cells.indexOf(c), 1, ...add);
+          savePool();
+        } else {
+          c.auto = false;
+        }
+        log('info', 'dmChosen', { date: poolLabel(was || src), choice: tr({ range: 'dm.choiceRange', lcd: 'dm.choiceLcd' }[btn.dataset.pick] || 'dm.choiceSingle') });
         dmChanged();
         break;
       }
@@ -23675,6 +24058,10 @@
       texts: () => [
         // [3.21.3] web profiles next to names in a text
         row(check('data-set="weblinks-show"', S.webLinksShow, tr('settings.webLinksShow'), tr('settings.webLinksShowTitle'))),
+        // [3.32.5] typos in role words (S050, collected item 115: "an/ausschaltbar in den einstellungen") – the rule's switch
+        // [3.32.6] the credits of Bandcamp's "about" text (S049, collected item 115)
+        row(check('data-set="rule-on" data-rule="S049"', ruleOn('S049'), tr('settings.aboutCredits'), tr('settings.aboutCreditsTitle'))),
+        row(check('data-set="rule-on" data-rule="S050"', ruleOn('S050'), tr('settings.typos'), tr('settings.typosTitle'))),
         `<p class="dci-sub">${esc(tr('settings.textsHint'))} <button type="button" class="dci-textbtn" data-act="rules">${esc(tr('rules.title'))}</button></p>`,
       ],
       // [3.25.0] where the script connects to other sites, tools and scripts (item 40)
@@ -23849,6 +24236,11 @@
       if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_BTN_KEY, el.checked ? null : false);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'rule-on') {
+      // [3.32.5] a rule switched here (S050; [3.32.6] S049) – the same as its switch in "Mapping rules"
+      setRuleOn(el.dataset.rule, el.checked);
+      applyRulesChange(el.dataset.rule);
+      renderRulesBody();
     } else if (k === 'weblinks-show') {
       S.webLinksShow = el.checked;
       writeJson('localStorage', 'dci-weblinks-show', el.checked || null);
@@ -23902,6 +24294,10 @@
     } else if (t === 'texts') {
       // [3.25.0] the web links next to names moved here from "Sources"
       S.webLinksShow = false;
+      // [3.32.5] the rules switched here, on again
+      ['S049', 'S050'].forEach((id) => setRuleOn(id, true));
+      saveRules();
+      renderRulesBody();
       renderGroups();
     } else if (t === 'discogs') {
       Object.assign(S, { syncMode: 'click', dgStatus: true, dgHover: true, dgRelease: true, dgArtwork: true, clickToggle: true, keepMarks: false });
@@ -24488,13 +24884,29 @@
       #dci-rules .dci-filebtn { display: inline-flex; gap: calc(var(--u, 1px) * 6); align-items: center; margin: 0; }
       #dci-rules .dci-filebtn input { width: auto; }
       #dci-rules td input[type=checkbox] { width: auto; }
-      /* [3.32.0] the quick switches at the top (item 97d) */
-      #dci-rules .dci-quick { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); margin: 0 0 calc(var(--u, 1px) * 8);
-        padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border: 1px solid #dddae8; border-radius: 4px; background: #faf9fd; }
-      #dci-rules .dci-quick > strong { flex: 0 0 100%; font-size: calc(var(--u, 1px) * 12); }
-      #dci-rules .dci-quick-sw { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); }
-      #dci-rules .dci-quick-sw label { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); margin: 0; font-weight: normal; }
-      #dci-rules .dci-quick-sw input { width: auto; }
+      /* [3.32.0] the quick switches at the top (item 97d); [3.32.8] a box of their own, each a button (item 116) */
+      #dci-rules .dci-quick { margin: 0 0 calc(var(--u, 1px) * 10); border: 1px solid #b9b5cf; border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(40, 30, 80, 0.08); }
+      #dci-rules .dci-quick-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
+        background: #f1effa; border-bottom: 1px solid #dddae8; border-radius: 4px 4px 0 0; }
+      #dci-rules .dci-quick-h strong { font-size: calc(var(--u, 1px) * 13); }
+      #dci-rules .dci-quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 280), 1fr)); gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
+        padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 10); }
+      #dci-rules .dci-qbtn-wrap { display: flex; align-items: stretch; min-width: 0; }
+      #dci-rules .dci-qbtn { position: relative; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: calc(var(--u, 1px) * 8); margin: 0; padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 9);
+        border: 1px solid #c8c5d6; border-right: 0; border-radius: 4px 0 0 4px; background: #fff; color: #55526a; font: inherit; text-align: left; cursor: pointer; }
+      #dci-rules .dci-qbtn:hover { border-color: #8e88c2; }
+      #dci-rules .dci-qbtn:focus-visible { outline: 2px solid #5b55a0; outline-offset: 1px; }
+      #dci-rules .dci-qled { flex: 0 0 auto; position: relative; width: calc(var(--u, 1px) * 30); height: calc(var(--u, 1px) * 16); border-radius: 999px; background: #d6d3e2; transition: background 0.15s; }
+      #dci-rules .dci-qled::after { content: ''; position: absolute; top: calc(var(--u, 1px) * 2); left: calc(var(--u, 1px) * 2); width: calc(var(--u, 1px) * 12); height: calc(var(--u, 1px) * 12);
+        border-radius: 50%; background: #fff; transition: left 0.15s; }
+      #dci-rules .dci-qlabel { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+      #dci-rules .dci-qstate { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      #dci-rules .dci-qbtn[aria-pressed=true] { background: #f4f3fb; color: #24213a; border-color: #8e88c2; }
+      #dci-rules .dci-qbtn[aria-pressed=true] .dci-qled { background: #5b55a0; }
+      #dci-rules .dci-qbtn[aria-pressed=true] .dci-qled::after { left: calc(var(--u, 1px) * 16); }
+      #dci-rules .dci-qid { flex: 0 0 auto; display: flex; align-items: center; margin: 0; padding: 0 calc(var(--u, 1px) * 8); border: 1px solid #c8c5d6; border-radius: 0 4px 4px 0; background: #faf9fd;
+        font-size: calc(var(--u, 1px) * 11.5); }
+      #dci-rules .dci-qbtn[aria-pressed=true] + .dci-qid { border-color: #8e88c2; }
       #dci-rules .dci-rule-result { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-left: 3px solid #736dab; background: #f4f3fb; }
       #dci-log {
         --u: calc(var(--dci-fs, 13px) / 13);
@@ -24935,6 +25347,8 @@
       .dci-datefind-list { list-style: none; margin: 0; padding: 0; }
       .dci-datefind-list li { padding: calc(var(--u, 1px) * 4) 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
       .dci-ruleinfo { color: var(--muted); font-size: calc(var(--u, 1px) * 11); }
+      /* [3.32.5] a role read with a typo corrected (S050) */
+      .dci-typo { color: #8a5a00; }
       .dci-type-ask [aria-pressed="true"] { font-weight: 700; text-decoration: none; }
       .dci-incomplete { white-space: nowrap; }
       .dci-incomplete .dci-textbtn { color: inherit; font-weight: 600; }
@@ -25128,6 +25542,10 @@
       /* Separate days: choose the single days or the period */
       .dci-dm-cell.dci-dm-choose { border: 2px solid var(--warn); border-left-width: 4px; background: #fffaf0; }
       .dci-dm-choose-q { flex: 1; color: var(--warn); font-size: calc(var(--u, 1px) * 12); text-transform: uppercase; letter-spacing: 0.04em; }
+      /* [3.32.7] the ▾ of a cell with what several days have in common (D022, item 118) */
+      .dci-dm-lcdbtn { margin-left: calc(var(--u, 1px) * 2); }
+      .dci-dm-lcdmenu { flex: 0 0 100%; margin-top: calc(var(--u, 1px) * 2); }
+      .dci-dm-date:has(.dci-dm-lcdmenu) { flex-wrap: wrap; }
       .dci-dm-opt { display: block; width: 100%; margin-top: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 6); border: 1px solid var(--date-line); border-radius: 3px; background: #fff; color: var(--date-d); text-align: left; font-size: calc(var(--u, 1px) * 12); overflow-wrap: anywhere; }
       .dci-dm-opt:hover { background: var(--date-bg); border-color: var(--date); }
       .dci-dm-date { display: flex; align-items: center; gap: calc(var(--u, 1px) * 4); }

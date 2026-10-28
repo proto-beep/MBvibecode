@@ -1,6 +1,6 @@
 """Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack – each the former smoke/t_<case>.py, unchanged; `python3 t_sources_bandcamp.py <case> …` runs only those."""
+Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources_bandcamp.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -806,6 +806,110 @@ def case_bctrack():
         bcerr = [e for e in bcerr if 'page dismissal' not in e]
         print('Fehler:', errs, bcerr)
         results.append(not errs and not bcerr)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_aboutcredits():
+    """Credits Importer 3.32.6: the credits of Bandcamp's "about" text (collected item 115, rule S049; Vivarium Recordings,
+    j4vaman – "Ephemeral": the credits field empty, all in the "about" text).
+    A) In Node: the "about" text gives j4vaman with "Music By" (written "Muisc", S050) and "Cover art", both from the "about"
+       text, and "Liner Notes" for "j4vavaman" – the signature "-j4vavaman" (one word, small letters, a digit; two letters off
+       the album's artist) above the credit line; nothing listed as not recognized from it. With S049 off: only the liner notes.
+       linerNotes without the credit lines and the artist's name gives nothing (as before).
+    B) The dashboard: j4vaman (the album is on the label's page) with "Cover art" from the "about" text; the works matrix has
+       his column (composer, S050); j4vavaman with "Liner Notes", the release's artist j4vaman as the first suggestion
+       (release artist, similar name) – nothing assigned; "Bandcamp has no credits" does not come.
+    C) ⚙ Settings → Texts: "Bandcamp: read the credits in the “about” text" is on; off → stored (S049)."""
+    import json
+    import subprocess
+
+    ABOUT = ('VR_266\n\nj4vaman - Ephemeral\n\nRuntime: 28:31\n\n"Ephemeral is my fifth solo album.\n\nThis album is a follow up to my previous '
+             'one, "Never Ending Void" and is mostly based on the concept of afterlife and memories.\n\nIt\'s also my first proper ambient/dark '
+             'ambient record, without much experimentation that would shift it into different genres. But as usual with my work, there are '
+             'various samples from old public service advertisements, archival films and radio programs here and there."\n\n-j4vavaman\n\n'
+             'Muisc and cover art by j4vaman')
+    NODE = r"""
+const off = process.argv[3];
+global.localStorage = { getItem: (k) => (k === 'dci-rules-off' && off ? off : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const bc = m.SOURCES.bandcamp;
+const about = process.argv[2];
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false;
+  const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback); };
+const ctx = { isRole, isCompanyRole: () => false, resolveTracks: () => null, sig: () => 'x', artistNames: ['j4vaman'] };
+const r = bc.toRelease({ artist: 'j4vaman', current: { credits: '', about }, trackinfo: [{ track_num: 1, title: 'A Familiar Stranger' }] },
+  'https://vivariumrecordings.bandcamp.com/album/ephemeral', [], ctx, { pageName: 'Vivarium Recordings' });
+const plain = bc.linerNotes(about);
+console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role, !!c.fromAbout, (c.typos || []).map((t) => t.written).join()]),
+  unrec: r.unrecognized, plain: plain && plain.name }));
+"""
+    results = []
+    run = lambda off: json.loads(subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), ABOUT, off], capture_output=True, text=True, check=True).stdout)
+    a = run('')
+    a_off = run('["S049"]')
+    print('A)', a, '\n   S049 aus:', a_off)
+    ok_a = sorted(a['credits']) == sorted([['j4vaman', 'Music By', True, 'Muisc'], ['j4vaman', 'Cover art', True, ''], ['j4vavaman', 'Liner Notes', True, '']]) \
+        and not a['unrec'] and a['plain'] is None and a_off['credits'] == [['j4vavaman', 'Liner Notes', True, '']]
+    results.append(ok_a)
+
+    PAGE = 'https://vivariumrecordings.bandcamp.com/'
+    ALBUM = PAGE + 'album/ephemeral'
+    J4 = H.uid('dddddddd', 115)
+    H.RELEASE_AC[:] = [(J4, 'j4vaman', 'j4vaman', '')]
+    H.MB_SEARCH['artist'] = [{'id': J4, 'name': 'j4vaman', 'disambiguation': '', 'score': 100}]
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'j4vaman', 'current': {'title': 'Ephemeral', 'credits': '', 'about': ABOUT, 'release_date': '23 Oct 2026 00:00:00 GMT'},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, t in enumerate(H.TITLES)]},
+                                  band='Vivarium Recordings')
+    for i, t in enumerate(H.TITLES):
+        H.BC_PAGES[f'{PAGE}track/song-{i + 1}'] = H.bc_page({'current': {'title': t, 'credits': ''}}, band='Vivarium Recordings')
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+
+    H.ws_release = ws
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+  sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()), cls: g.className,
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-drole').parentElement.textContent.replace(/\\s+/g, ' ').trim()) }])))()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1500)
+        g = pg.evaluate(GROUPS)
+        for k, v in g.items():
+            print('   ', k, v)
+        j4 = g.get('j4vaman') or {'rows': [], 'sugg': []}
+        jv = g.get('j4vavaman') or {'rows': [], 'sugg': []}
+        col = pg.evaluate("""(() => { const th = [...document.querySelectorAll('th.dci-mx-col')].find(t => /j4vaman/.test(t.querySelector('.dci-mx-colname').textContent));
+          return th ? [th.querySelector('.dci-mx-roles').textContent.replace(/\\s+/g, ' ').trim(), (th.querySelector('[data-rule=S050]') || { title: '' }).title] : null; })()""")
+        msgs = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(e => e.textContent.replace(/\\s+/g, ' ').trim())")
+        print('B) j4vaman:', j4['rows'], '| Spalte:', col, '| j4vavaman:', jv['rows'], jv['sugg'], '| Meldungen:', msgs)
+        ok_b = any('Cover art' in r and 'From the “about” text' in r for r in j4['rows']) and col and col[0].startswith('composer') \
+            and col[1] == 'Read as “Music” (written “Muisc”)' and any('Liner Notes' in r for r in jv['rows']) \
+            and jv['sugg'][:1] and jv['sugg'][0].startswith('j4vaman') and 'release artist' in jv['sugg'][0] and 'similar' in jv['sugg'][0] \
+            and 'dci-st-missing' in jv['cls'] and not any('has no credits' in x for x in msgs)
+        H.open_settings(pg, 'texts')
+        sw = pg.locator('[data-el=settings] [data-set=rule-on][data-rule=S049]')
+        on0 = sw.is_checked()
+        sw.uncheck()
+        pg.wait_for_timeout(300)
+        off = pg.evaluate("JSON.parse(localStorage.getItem('dci-rules-off') || '[]')")
+        print('C) an:', on0, '| aus gespeichert:', off)
+        ok_c = on0 and 'S049' in off
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
+        results += [ok_b, ok_c]
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

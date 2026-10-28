@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-27 | 3.31.2 – 3.32.4 | 1.9.1 |
+| 2026-10-27 | 3.31.2 – 3.32.8 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
 | 2026-10-23 | 3.21.1 – 3.22.0 | – |
@@ -86,6 +86,41 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-27
+
+### Import 3.32.8
+
+#### Changed
+
+- **The quick switches in a box of their own, each a button** (collected item 116; maintainer: "die quick switches bitte visuell in einem eigenen fenster (rechteck mit oder ohne runde ecken, deine wahl je nach konsistenz). vielleicht alle visuell mit jeweils eigenem button könnte besser sein … als checkboxen"): a framed box with a head at the top of "Mapping rules", a grid of buttons with a small slider (on: purple), the id attached to each; a click switches.
+
+#### Added
+
+- **"To the date matrix"** in the message of dates placed from the notes (collected item 109b; maintainer: "ja ok"): opens "Dates & tracks", brings the matrix into view and lights it up.
+
+### Import 3.32.7
+
+#### Added
+
+- **Poems: the type follows the level** (collected item 104b; maintainer: "kannst du bei all den poetry credits auch es ermöglichen durchzuschalten? also works (lyrics) -> recording (vocals) -> release (auswahl lyrics/vocals)?", "ja liner notes ist auch eine möglichkeit"): a row of poems ("Poems By", "Recitation", "Poems" …) is lyricist on the works, spoken vocals on the recordings, and on the release it asks lyricist · spoken vocals · liner notes (the answer kept); its role credit stays. A click on the level in the compact line goes works → recordings → release → skip; the row stays in its entry on the works level too.
+- **▾ at a date of several days in common** (collected item 118; maintainer: "gibt es eigentlich eine möglichkeit auch zwei daten also bspw. 2016-11-07, 2016-11-08 als jeweilige relationships zu führen?", "keine Einstellung nur das ▾ je Zelle"): the month or year D022 puts under Performance has ▾ – instead the single days (one relationship per day), the period, or the month kept.
+
+### Import 3.32.6
+
+#### Added
+
+- **Credits in Bandcamp's “about” text** (collected item 115, rule S049; Vivarium Recordings, j4vaman "Ephemeral" – maintainer: "hier stehen die credits im "falschen" feld ich möchte ermöglichen dass diese auch abgerufen werden", "mach immer lesen bitte. an/ausschaltbar in den einstellungen"): every credit line of the "about" text is read like the credits field ("Muisc and cover art by j4vaman" → composer and cover art), marked "From the “about” text" and left out with it; prose gives nothing. On by default; ⚙ Settings → Texts or Mapping rules switch it off.
+- **Liner notes signed above credit lines** (collected item 115b): the signature ("-j4vavaman") may stand above credit lines, and one word with small letters or digits counts when it is the album artist's name or at most two letters off it. Such a name gets the release's artist as its first suggestion ("similar name", "release artist") – nothing assigned.
+
+### Import 3.32.5
+
+#### Fixed
+
+- **A place with a date right after it** (collected item 117; maintainer: "ich habe einen Text hineinkopiert der nicht funktioniert hat aber beim import direct von discogs wurde er erkannt. ("All songs recorded and engineered at El Studio in San Francisco on September 3rd and 4th 2016.")"): the place is found with its area – El Studio (San Francisco) with recorded at and engineered at – and the date goes into the pool as before; before, a date in the same part as the place took the place with it (pasted texts, Bandcamp, Discogs notes – all read texts the same way; on Discogs the studio had come from "Companies, etc.").
+- **An area that begins like a month** ("Marseille", "Augsburg", "Decatur") is no month any more: before, it was left out of a place's area.
+
+#### Added
+
+- **Typos in role words** (collected item 115, rule S050; maintainer: "muisc hat einen schreibfehler", "Wir probieren es mal mit Tippefehler allgemein erkennen", "an/ausschaltbar in den einstellungen"): a part of a text that gives nothing is read once more with each unknown word one letter off a role word read as that word – "Muisc and cover art by j4vaman" gives Music By and cover art; only role words, never names; the row (or the column head of the works matrix) says "Read as “Music” (written “Muisc”)". On by default; ⚙ Settings → Texts or Mapping rules switch it off.
 
 ### Import 3.32.4
 

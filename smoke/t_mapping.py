@@ -1,6 +1,6 @@
 """Mapping: roles, questions, suggestions, mastering, special artists, fixes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rules, v217, v219, mastering, special, recheck, engineers – each the former smoke/t_<case>.py, unchanged; `python3 t_mapping.py <case> …` runs only those."""
+Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -619,8 +619,8 @@ def case_poems():
     A) Discogs "Poems By" → lyricist on the works (a column of the works matrix, R105); "Poetry [Read By]" and "Recitation"
        → vocal spoken vocals with the role credit "poetry" / "recitation" (R106).
     B) "Poems" alone: no type until chosen, the question (Q009) with lyricist · liner notes · spoken vocals; liner notes →
-       on the release with the role credit "poems"; spoken vocals → vocal spoken vocals, credited "poems"; lyricist → it leaves the entry
-       for a column of the works matrix.
+       on the release with the role credit "poems"; spoken vocals → vocal spoken vocals, credited "poems"; lyricist → a column of the
+       works matrix ([3.32.7] the row stays in the entry: its level is clicked through there, item 104b).
     C) A pasted text: "Poems: Jane Doe" asks the same; "Poetry by John Roe" → a column of the works matrix."""
     H.attr(9130, 'spoken vocals', 3, 3)
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
@@ -674,7 +674,7 @@ def case_poems():
         c3, cols3 = pg.evaluate(ROW, 'Poet C'), pg.evaluate(COLS)
         print('   liner notes:', [c1['type'], c1['level'], c1['credit']], '| spoken vocals:', [c2['type'], c2['primary'], c2['credit']], '| lyricist:', c3, cols3)
         results.append([c1['type'], c1['level'], c1['credit']] == ['liner notes', 'release', 'poems'] and [c2['type'], c2['primary'], c2['credit']] == ['vocal', 'spoken vocals', 'poems']
-                       and (c3 is None or c3['rows'] == 0) and 'Poet C' in cols3)
+                       and c3 and [c3['type'], c3['level']] == ['lyricist', 'work'] and 'Poet C' in cols3)
         # C) a pasted text
         H.src_menu(pg, 'text-open')
         pg.fill('[data-f=text-src]', 'Poems: Jane Doe\nPoetry by John Roe')
@@ -684,6 +684,116 @@ def case_poems():
         j, cols4 = pg.evaluate(ROW, 'Jane Doe'), pg.evaluate(COLS)
         print('C) Jane Doe:', j, '\n   Spalten:', cols4)
         results.append(j and len(j['opts']) == 3 and 'Q009' in j['rules'] and 'John Roe' in cols4)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_poemlevels():
+    """Credits Importer 3.32.7: the type of a credit of poems follows its level (collected item 104b; maintainer: "kannst du bei
+    all den poetry credits auch es ermöglichen durchzuschalten? also works (lyrics) -> recording (vocals) -> release (auswahl
+    lyrics/vocals)?", "ja liner notes ist auch eine möglichkeit").
+    A) "Poems By" (R105): lyricist on the works – the row stays in its entry (and in the works matrix), with all levels; the
+       click on the level in the compact line goes works → recordings → release → skip → works.
+    B) Recordings: vocal with spoken vocals, the role credit "poems" kept; release: no type, the question Q010 with lyricist ·
+       spoken vocals · liner notes; liner notes chosen → liner notes on the release, credited "poems".
+    C) Works again → lyricist; release again → liner notes again (the answer kept, no question open).
+    D) "Poems" alone (R107): the question Q009 first; the level switched to recordings → spoken vocals, no question any more.
+    E) "Recitation" (R106) on the release → the question Q010; spoken vocals chosen → vocal spoken vocals on the release."""
+    H.attr(9130, 'spoken vocals', 3, 3)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.lt(9056, H.uid('ffffffff', 9056), 'lyricist', 'artist', 'release', (1,))
+    H.lt(9057, H.uid('ffffffff', 9057), 'vocal', 'artist', 'release', (3, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    for i, n in [(3061, 'Poet A'), (3063, 'Poet C'), (3064, 'Reciter D')]:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3000), n)
+    orig = H.discogs_release
+    roles = [('Poet A', 'Poems By', 3061), ('Poet C', 'Poems', 3063), ('Reciter D', 'Recitation', 3064)]
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in roles]
+        return d
+
+    H.discogs_release = rel
+    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
+  if (!g) return null; const tr = g.querySelector('tr.dci-row'); if (!tr) return { rows: 0 };
+  const t = tr.querySelector('[data-f=type]'); const ask = tr.querySelector('.dci-type-ask'); const p = tr.querySelector('[data-f=primary]'); const c = tr.querySelector('[data-f=role-credit]');
+  const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); const nx = tr.querySelector('[data-act=level-next]');
+  return { rows: g.querySelectorAll('tr.dci-row').length, id: tr.dataset.row, type: t ? (t.options[t.selectedIndex] || {}).text : '', primary: p ? p.value : '', credit: c ? c.value : '',
+    level: lv ? lv.dataset.level : '', next: nx ? nx.dataset.next : '', ask: ask ? ask.dataset.question : null,
+    opts: ask ? [...ask.querySelectorAll('[data-act=type-pick]')].map(b => b.textContent.trim()) : [],
+    pressed: ask ? [...ask.querySelectorAll('[data-act=type-pick][aria-pressed=true]')].map(b => b.textContent.trim()) : [],
+    levels: [...tr.querySelectorAll('[data-act=level]')].map(b => b.dataset.level) }; }"""
+    COLS = """[...document.querySelectorAll('.dci-matrix th[data-colhead]')].map(th => (th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent.replace(/^MB/, '').trim())"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        level = lambda name, lv: (pg.click(f'tr[data-row="{pg.evaluate(ROW, name)["id"]}"] [data-act=level][data-level={lv}]'), pg.wait_for_timeout(500))
+        pick = lambda name, i: (pg.click(f'tr[data-row="{pg.evaluate(ROW, name)["id"]}"] [data-act=type-pick][data-opt="{i}"]'), pg.wait_for_timeout(500))
+        # A) (the order of the clicks: below, in the compact view)
+        a0, cols = pg.evaluate(ROW, 'Poet A'), pg.evaluate(COLS)
+        print('A) Poet A:', a0, '| Spalten:', cols)
+        ok_a = [a0['type'], a0['level']] == ['lyricist', 'work'] and 'Poet A' in cols and a0['levels'] == ['recording', 'release', 'work', 'skip']
+        # B) (on the release now)
+        level('Poet A', 'recording')
+        a1 = pg.evaluate(ROW, 'Poet A')
+        level('Poet A', 'release')
+        a2 = pg.evaluate(ROW, 'Poet A')
+        pick('Poet A', 2)
+        a3 = pg.evaluate(ROW, 'Poet A')
+        print('B) Aufnahme:', [a1['type'], a1['primary'], a1['credit']], '| Release:', [a2['type'], a2['ask'], a2['opts']], '| liner notes:', [a3['type'], a3['level'], a3['credit'], a3['pressed']])
+        ok_b = [a1['type'], a1['primary'], a1['credit']] == ['vocal', 'spoken vocals', 'poems'] and a2['ask'] == 'Q010' \
+            and a2['opts'] == ['lyricist (the words)', 'spoken vocals (read out)', 'liner notes (poems in the booklet)'] and a2['type'] in ('', 'Choose type …') \
+            and [a3['type'], a3['level'], a3['credit']] == ['liner notes', 'release', 'poems']
+        # C)
+        level('Poet A', 'work')
+        a4, cols4 = pg.evaluate(ROW, 'Poet A'), pg.evaluate(COLS)
+        level('Poet A', 'release')
+        a5 = pg.evaluate(ROW, 'Poet A')
+        print('C) Werk:', [a4['type'], a4['level']], cols4, '| Release wieder:', [a5['type'], a5['pressed']])
+        ok_c = [a4['type'], a4['level']] == ['lyricist', 'work'] and 'Poet A' in cols4 and a5['type'] == 'liner notes' and a5['pressed'] == ['liner notes (poems in the booklet)']
+        # D)
+        c0 = pg.evaluate(ROW, 'Poet C')
+        level('Poet C', 'recording')
+        c1 = pg.evaluate(ROW, 'Poet C')
+        print('D) Poet C:', [c0['ask'], c0['level']], '→', [c1['type'], c1['primary'], c1['credit'], c1['ask']])
+        ok_d = c0['ask'] == 'Q009' and [c1['type'], c1['primary'], c1['credit'], c1['ask']] == ['vocal', 'spoken vocals', 'poems', None]
+        # E)
+        level('Reciter D', 'release')
+        d1 = pg.evaluate(ROW, 'Reciter D')
+        pick('Reciter D', 1)
+        d2 = pg.evaluate(ROW, 'Reciter D')
+        print('E) Reciter D:', [d1['ask'], d1['type']], '→', [d2['type'], d2['primary'], d2['level'], d2['credit']])
+        ok_e = d1['ask'] == 'Q010' and [d2['type'], d2['primary'], d2['level'], d2['credit']] == ['vocal', 'spoken vocals', 'release', 'recitation']
+        print('Fehler:', errs)
+        results.append(not errs)
+        pg.close()
+        # A) the click on the level in the compact line: works → recordings → release → skip → works
+        ctx2 = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx2, companion=False, view='compact')
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        seq = []
+        for _ in range(5):
+            r = pg.evaluate(ROW, 'Poet A')
+            btn = pg.locator(f'tr[data-row="{r["id"]}"] .dci-cl-level')
+            seq.append(btn.get_attribute('data-level'))
+            btn.click()
+            pg.wait_for_timeout(400)
+        print('A) Klicks in der kompakten Zeile:', seq)
+        ok_a = ok_a and seq == ['work', 'recording', 'release', 'skip', 'work']
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d, '| E)', ok_e)
+        results += [ok_a, ok_b, ok_c, ok_d, ok_e]
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

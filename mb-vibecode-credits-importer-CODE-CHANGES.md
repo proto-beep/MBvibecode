@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.32.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.32.8, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,56 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys).
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.32.8 · 2026-10-27
+
+The quick switches as buttons in a box; "To the date matrix" (collected items 116, 109b).
+
+- **`quickSwitchesHtml`:** `.dci-quick` with a head `.dci-quick-h` (title, `rules.quickHint`) and a grid `.dci-quick-grid`; each switch `.dci-qbtn-wrap` = a button `.dci-qbtn` (`data-qs-toggle`, `aria-pressed`, `.dci-qled` slider, `.dci-qlabel`, `.dci-qstate` – "on"/"off" for screen readers) and the id `.dci-qid` (`data-qs-goto`, as before). No checkboxes `data-rule-on` at the top any more (the lists keep theirs).
+- **Rules window click handler:** `[data-qs-toggle]` → `setRuleOn(id, !ruleOn(id))`, `applyRulesChange(id)` (which redraws the quick switches), the focus back on the button.
+- **CSS:** `#dci-rules .dci-quick` and its parts anew (frame #b9b5cf, corners 4 px, a light shadow; on: #5b55a0).
+- **`autoPlaceFoundDates`:** the message `dm.autoPlaced` with the action `dm-goto` (`dm.goto`). **New handler `dm-goto`:** opens the dashboard if needed, `S.poolsForce` (when "Dates & tracks" is folded), `renderDates`, the matrix (`[data-el=dm]`) scrolled into view with `.dci-flash` for 2.5 s.
+- **Texts:** new `rules.quickHint`, `dm.goto` (English only).
+- **Tests:** `t_rules_window.py` case `quickswitch` reads the buttons (`aria-pressed`) and the box, switches by click; new case `dmgoto` in `t_dates_matrix.py`.
+
+## Import 3.32.7 · 2026-10-27
+
+Poems: the type follows the level; ▾ at a cell of D022 (collected items 104b, 118).
+
+- **New `POEM_RULES` (R105, R106, R107), `POEM_LEVELS` (work, recording, release), `isPoemRow(row)`, `poemTypeForLevel(row, level)`** (`row.poemLevels`; works: lyricist, recordings: vocal with `primaryText` "spoken vocals", release: `row.poemRelease` or no type; the role credit set once from the role word if empty – `optionCredit`).
+- **New question Q010** (`rules: [R105, R106, R107]`, `flag: 'poemLevels'`, `level: 'release'`; lyricist · vocal spoken vocals · liner notes, all release, credit). **Q009** gets `unless: 'poemLevels'`. **`typeQuestionFor`:** `rules` (several rules), `unless`, `level`.
+- **`setLevel`:** a row of poems takes the type of the level before `resolveRowType`. **`remapRow`:** keeps it (and the release answer). **`pickType`:** Q010 keeps its answer in `row.poemRelease` (an answer without instrument clears `primaryText`). **`rowLevels`:** all levels for a row of poems; **`nextLevel`:** works → recordings → release → skip for them. **`inEntry`:** rows of poems stay in their entry on the works level.
+- **New `singleDaysOf(src, { create })`** (the single days of separate days from the pool – `found` without ":range" – or each day of a period, 2 – 62; pool entries `found` "…:dayN" only with `create`), **`lcdMenuHtml(c)`** (▾ `dm-lcd-menu`, `S.dmLcdMenu`, options `dm-lcd` with `data-pick` single · range · lcd); `matrixCellHtml` shows it for a cell with `lcdOf`. Handlers `dm-lcd-menu`, `dm-lcd` (single: a cell per day as "dm-choose" does; range: the cell takes `lcdOf`, which goes; lcd: `auto` off), log `dmChosen`.
+- **CSS:** `.dci-dm-lcdbtn`, `.dci-dm-lcdmenu`, `.dci-dm-date:has(.dci-dm-lcdmenu)`.
+- **Texts:** new `typeAsk.askPoemsRelease`, `dm.lcdMenu`, `dm.lcdSingle` (English only).
+- **Tests:** new case `poemlevels` in `t_mapping.py`, `poems` adapted (the lyricist row stays in its entry); new case `lcdmenu` in `t_notes_dates.py`; `t_text_places.py` `placedate`: "engineered at" with its own id (694 is "mixed at" in the harness); register golden written anew (Q010, Q009).
+
+## Import 3.32.6 · 2026-10-27
+
+The credits of Bandcamp's "about" text, liner notes signed above them (collected items 115a, 115b).
+
+- **`BANDCAMP.toRelease`:** with rule S049 (`ruleOn('S049')`, on by default) all credits and companies of `aboutRes` are taken, marked `fromAbout` (the members of the band, S041, as before unmarked); its `unrecognized` stay out. `linerNotes` gets `creditLines` (the lines of `aboutRes` that gave a credit) and `artistNames` (the context's and the band's name).
+- **`linerNotes(about, { creditLines, artistNames })`:** skips empty lines and credit lines at the end before looking for the signature; new **`artistSignature(line, artistNames)`** – after a sign, one to four words with small letters or digits that are an artist's name or at most two letters off it.
+- **New `nameClose(a, b)`** (before the Node export): the same, or a Levenshtein distance of at most two, both of five letters or more (`norm`).
+- **`resolveArtists` (name search):** a release artist whose name is `nameClose` to the entry's (not the same) is the first suggestion too, `similar: true`, `release: true`.
+- **Rules:** new S049 (special rule). **⚙ Settings → Texts:** `data-set="rule-on" data-rule="S049"` above S050; `resetTopic('texts')` switches both on.
+- **Texts:** new `settings.aboutCredits`, `settings.aboutCreditsTitle` (English only).
+- **Tests:** new case `aboutcredits` in `t_sources_bandcamp.py` (Node: the credits with S049 on and off, the signature; dashboard: the rows from the "about" text, the composer column with S050, the similar release artist first; the switch); register golden written anew (S049).
+
+## Import 3.32.5 · 2026-10-27
+
+A place with a date after it, typos in role words (collected items 117, 115c).
+
+- **New `PLACE_DATE_TAIL` (T047):** a preposition followed at once by a date (a digit, a month word, a season) up to the end; `placeOf` cuts it off before splitting at commas (before, the part with the date – and the place in it – was dropped for its digits).
+- **`TEXT_MONTHS`:** only month words (whole, or three/four letters, `sept`) – "Marseille", "Augsburg" are no months any more (`noDates` took them out of an area).
+- **New `ROLE_WORDS` (T048), `roleVocab()`** (ROLE_WORDS plus the words of MB's link types and attributes from `idx()`, cached once MB data is there; in Node only ROLE_WORDS), **`oneEditApart(a, b)`** (Damerau: one swap of neighbours, one letter missing, extra or wrong), **`fixRoleTypo(phrase, check)`** (each unknown word of five letters or more with words one edit apart, tried in combinations of at most 24 – a word may stay – until `check` knows the phrase → `{ phrase, typos: [{ written, read }] }`). Defined before the Node export (used by the text adapter).
+- **`TEXT.parse`:** parameters renamed `isRoleKnown`, `isCompanyRoleKnown`; new `typoMode`, `typoCache`, `typoFix(phrase, kind)`, wrappers `isRole`, `isCompanyRole` (typo-tolerant only in typo mode), `readRole(role)`; `addCredit`, `addPlaceholder`, `place`, `inArea` push the role as read and `typos`. In `readUnit` the clause loop body is now `readClause(clause, ci)` (`continue` → `return`): a clause that gave nothing is read again in typo mode (rule S050; its unknown parts of the first reading are dropped); the "role then name" fallback (`roleThenName`) likewise.
+- **`groupCredits` / `groupCompanies`:** carry `typos` (per role, once per written word); rows get `row.typos`. **New `typoHtml(row)`** in `roleCell` (`.dci-typo`, `role.typoRead`, rule id S050); `columnHeadHtml`: an **S050** id with the text as title when a row of the column has typos.
+- **Rules:** new S050 (special rule), T047, T048 (tables).
+- **⚙ Settings → Texts:** `data-set="rule-on" data-rule="S050"` (the rule's own switch: `setRuleOn`, `applyRulesChange`, `renderRulesBody`); `resetTopic('texts')` switches S050 on again.
+- **CSS:** `.dci-typo`.
+- **Texts:** new `role.typoRead`, `settings.typos`, `settings.typosTitle` (English only).
+- **Tests:** text corpus + 5 lines (El Studio, Studio Sol in Marseille, "Muisc and cover art by j4vaman", "Gutiar – Ann Lee", "Recordd at Studio X."; the corpus prints "written …" for a typo, knows "engineered at"); new case `placedate` in `t_text_places.py`; register golden written anew (S050, T047, T048).
 
 ## Import 3.32.4 · 2026-10-27
 

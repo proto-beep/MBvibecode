@@ -275,15 +275,18 @@ def case_quickswitch():
     maintainer: "bitte lass das aber an- und abstellen. im mapping ganz oben evtl. (mit klickbarem verweis dann wo es verwendet
     wird)", "auf jeden fall noch die regel, dass performance dates die über mehrere tage hinweg gehen nach meinen regeln auf
     den kleinsten gemeinsamen nenner gekürzt werden").
-    A) Seven switches in this order – S045, D022, S021, S031, S007 on, D023 and S046 off – each with its id.
+    A) Seven switches in this order – S045, D022, S021, S031, S007 on, D023 and S046 off – each with its id. [3.32.8] In a box
+       of their own (head, frame with round corners of 4 px), each switch a button (pressed = on; collected item 116).
     B) A click on an id shows that rule in the list below (highlighted).
-    C) A quick switch and the rule's own switch are the same: S007 off at the top → off in the list and stored; on again.
+    C) A quick switch and the rule's own switch are the same: S007 off at the top (a click on its button) → off in the list and
+       stored; on again.
     D) D022: "Recorded March 1–3, 2001" in the notes → under Performance the month 2001-03 at once (the period stays in the
        pool); D022 off → the period again (the suggestions not applied yet are placed anew); on → the month.
     E) S045: a pasted text "Composed by Tomas Fujiwara (BMI)" and "Lyrics by Ann Poe / GEMA" → Tomas Fujiwara and Ann Poe
        without the society, BMI and GEMA as the release's rights societies."""
     from common_rows import cells
-    QS = """[...document.querySelectorAll('#dci-rules [data-rf=quick] .dci-quick-sw')].map(x => [x.querySelector('[data-qs-goto]').textContent.trim(), x.querySelector('input').checked])"""
+    # [3.32.8] each switch a button (aria-pressed) with its id next to it, in a box of its own (item 116)
+    QS = """[...document.querySelectorAll('#dci-rules [data-rf=quick] .dci-qbtn-wrap')].map(x => [x.querySelector('[data-qs-goto]').textContent.trim(), x.querySelector('[data-qs-toggle]').getAttribute('aria-pressed') === 'true'])"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -299,21 +302,25 @@ def case_quickswitch():
         pool0 = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date .dci-chip-main')].map(c => c.textContent.trim())")
         pg.click('.dci-head [data-act=rules]'); pg.wait_for_timeout(300)
         a = pg.evaluate(QS)
-        print('A) Schalter:', a)
-        results.append(a == [['S045', True], ['D022', True], ['S021', True], ['S031', True], ['S007', True], ['D023', False], ['S046', False]])
+        box = pg.evaluate("""(() => { const q = document.querySelector('#dci-rules [data-rf=quick] .dci-quick'); const st = getComputedStyle(q);
+          return [!!q.querySelector('.dci-quick-h strong'), q.querySelectorAll('.dci-quick-grid > .dci-qbtn-wrap').length, st.borderTopStyle, st.borderTopLeftRadius,
+            q.querySelector('[data-qs-toggle=S045]').textContent.replace(/\\s+/g, ' ').trim()]; })()""")
+        print('A) Schalter:', a, '| Kasten:', box)
+        results.append(a == [['S045', True], ['D022', True], ['S021', True], ['S031', True], ['S007', True], ['D023', False], ['S046', False]]
+                       and box[:4] == [True, 7, 'solid', '4px'] and box[4].startswith('Rights society after a writer’s name'))
         pg.click('#dci-rules [data-qs-goto=S031]'); pg.wait_for_timeout(300)
         hit = pg.evaluate("[...document.querySelectorAll('#dci-rules tr.dci-rule-hit')].map(r => r.dataset.rid)")
         print('B) gezeigt:', hit)
         results.append(hit == ['S031'])
-        pg.uncheck('#dci-rules [data-rf=quick] [data-rule-on=S007]'); pg.wait_for_timeout(500)
+        pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=S007]'); pg.wait_for_timeout(500)
         c1 = [pg.locator('#dci-rules [data-rf=tables] [data-rule-on=S007]').is_checked(), pg.evaluate("localStorage.getItem('dci-rules-off')")]
-        pg.check('#dci-rules [data-rf=quick] [data-rule-on=S007]'); pg.wait_for_timeout(500)
+        pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=S007]'); pg.wait_for_timeout(500)
         c2 = [pg.locator('#dci-rules [data-rf=tables] [data-rule-on=S007]').is_checked(), pg.evaluate("localStorage.getItem('dci-rules-off')")]
         print('C) S007 aus:', c1, '| wieder an:', c2)
         results.append(c1[0] is False and 'S007' in (c1[1] or '') and c2[0] is True and 'S007' not in (c2[1] or ''))
-        pg.uncheck('#dci-rules [data-rf=quick] [data-rule-on=D022]'); pg.wait_for_timeout(600)
+        pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=D022]'); pg.wait_for_timeout(600)
         perf1 = [c[0] for c in cells(pg).get('performance', [])]
-        pg.check('#dci-rules [data-rf=quick] [data-rule-on=D022]'); pg.wait_for_timeout(600)
+        pg.click('#dci-rules [data-rf=quick] [data-qs-toggle=D022]'); pg.wait_for_timeout(600)
         perf2 = [c[0] for c in cells(pg).get('performance', [])]
         print('D) Performance:', perf0, '| Pool:', pool0, '| D022 aus:', perf1, '| an:', perf2)
         results.append(perf0 == ['Performance 1 (month) · 2001-03'] and any('2001-03-01 – 2001-03-03' in x for x in pool0)
