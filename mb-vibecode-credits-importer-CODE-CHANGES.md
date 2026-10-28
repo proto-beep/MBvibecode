@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.5, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.6, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.6 · 2026-10-28
+
+Text from cover art (beta): booklets as PDF (collected item 123).
+
+- **New constants:** `PDFJS_VERSION` 6.2.108, `PDFJS_ROOT`, `PDFJS_URL` (`legacy/build/pdf.min.mjs`), `PDFJS_WORKER_URL`, `OCR_PDF_PX` 2400, `OCR_PDF_PAGES` 60, `OCR_PDF_TEXT` 20.
+- **New:** **`loadPdfJs()`** (once: an inline script in the page `import()`s the module, sets `GlobalWorkerOptions.workerSrc` – pdf.js wraps the cross-origin worker itself – and names it `window.pdfjsLib`, then the event `dci-pdfjs` on `document`; 60 s at most; `ocr.errNoPdf`), `isPdfFile`, **`ocrPdfRender(page, px)`** (a white canvas, the page drawn with `render({ canvas, viewport })`, `dciScale`), **`ocrAddPdf(blob, name, from)`** (`getDocument({ url: object URL, cMapUrl, standardFontDataUrl, wasmUrl })`, each page a card `src: 'pdf'` with `file`, `from`, `page`, `pdfPage`, `textLayer` (≥ 20 letters of its own text), a 300 px thumbnail; `o.pdfDocs`, `o.pdfLoading`; `ocr.pdfLong`, `ocr.errPdf`; log `ocrPdfAdded`), **`pdfLines(pts)`** (pieces in lines by their height, left to right, a space at a gap), **`ocrPdfText(img)`** (no frames: the text in its order, lines as the PDF ends them – `hasEOL`; frames: per frame the pieces starting inside it, in lines by their place), `ocrDirect(img)` (a PDF page with its own text, not turned).
+- **Changed:** `ocrAddFiles` opens PDFs (other files still named), `ocrAddUrl` fetches an address ending in .pdf and opens it (not twice: `from`); `ocrCanvas` renders a PDF page at `OCR_PDF_PX` (`pdfScale`, `turn` 0); `ocrRotate` counts `turn`; `ocrRun` starts the text recognition only for the first image that needs it (`recognizer()`), reads a direct page with `ocrPdfText` (its canvas only when it has frames), `res.direct`; `ocrText` origin "PDF name (p. …)" by file or address; `closeOcr` destroys the PDFs and revokes their object URLs; the cards say "PDF page with its own text" / "PDF page (an image)"; the result of a direct page says so (`ocr.fromPdf`); `accept` with PDFs; "Opening the PDF …" while one opens.
+- **Connections:** X016 pdf.js (kind `library`, cdn.jsdelivr.net).
+- **Header / files:** `@version 3.34.6`, `?v=3.34.6`, both files' `version`.
+- **Texts:** new (English) `ocr.pdfPage`, `ocr.pdfLoading`, `ocr.pdfText`, `ocr.pdfScan`, `ocr.pdfLong`, `ocr.errPdf`, `ocr.errNoPdf`, `ocr.fromPdf`, `log.ocrPdfAdded`, `conn.X016`; changed (English only so far) `ocr.chooseFiles`, `ocr.notImage`, `ocr.ownHint`.
+- **Harness:** `PDFJS_DIR` (a local pdfjs-dist from npm), the jsDelivr route serves its files for `pdfjs-dist@…` (`PDFJS_REQUESTS`); **`pdf_of(pages)`** writes a small PDF (lines in Helvetica, or a page with only a drawing).
+- **Tests:** `t_coverart.py` – new case `ocrpdf` (with the real pdf.js); `t_ui_settings.py` (settabs) 16 connections.
 
 ## Import 3.34.5 · 2026-10-28
 

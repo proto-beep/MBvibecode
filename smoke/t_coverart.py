@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf; `python3 t_coverart.py <case> …` runs only those."""
 import json
 
 import harness as H  # noqa: F401 – used by the cases
@@ -325,7 +325,7 @@ def case_ocrown():
         pg.wait_for_timeout(300)
         b1 = [pg.evaluate(CARDS), pg.evaluate(ERR)]
         print('B) Dateien:', b1)
-        results.append(b1[0] == [['booklet-scan.png', True, 'your file remove']] and b1[1] == 'Not an image, left out: notes.txt')
+        results.append(b1[0] == [['booklet-scan.png', True, 'your file remove']] and b1[1] == 'Not an image or a PDF, left out: notes.txt')
         png = base64.b64encode(H.png_of(800, 600)).decode()
         pg.evaluate("""(b64) => { const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0)); const dt = new DataTransfer();
           dt.items.add(new File([bytes], 'image.png', { type: 'image/png' })); document.body.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true })); }""", png)
@@ -404,6 +404,97 @@ def case_ocrown():
         results.append(g == ['This release has no images on the Cover Art Archive.', True, False])
         print('Fehler:', errs, errs2)
         results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrpdf():
+    """[3.34.6] A booklet as PDF (collected item 123; maintainer: "und auch pdf booklets!"), with the real pdf.js (a local copy
+    served as from jsDelivr).
+    A) A PDF chosen: pdf.js loaded from jsDelivr (and its worker); each page a card – "booklet.pdf · p. 1" "PDF page with its own
+       text", p. 2 (a drawing only) "PDF page (an image)", p. 3 with its own text.
+    B) Frames: p. 1 and p. 2 without, on p. 3 (two columns) a frame around the left one.
+    C) Read: p. 1 from its own text, in its order, the dash corrected ("Marc D. Rusch – double bass"), "Read from the PDF's own
+       text"; p. 2 by the text recognition (the page at 2400 px); p. 3 from its own text, only the left column, line by line. The
+       text recognition is started once, only for p. 2.
+    D) Imported: the source "PDF booklet.pdf (p. 1, 2, 3), read with text recognition".
+    E) A PDF by its address: its pages "images.example.org/…/booklet.pdf · p. 1" …; a file that is no PDF named "bad.pdf" is
+       named as not opened."""
+    import base64
+    results = []
+    pdf = H.pdf_of([[(40, 380, 14, 'Booklet'), (40, 350, 12, 'Credits'), (40, 330, 12, 'Marc D. Rusch - double bass'), (40, 310, 12, 'Recorded at the Iridium, New York')],
+                    None,
+                    [(30, 300, 12, 'Drums - Drum Guy'), (230, 300, 12, 'Piano - Keys Guy'), (30, 280, 12, 'Bass - Bass Man'), (230, 280, 12, 'Organ - Org Guy')]])
+    CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(' remove', '').trim()])"
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = []
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps([{'text': 'Producer - Bob Producer\n', 'words': []}]))
+        ctx.route('https://images.example.org/**', lambda r: r.fulfill(body=pdf, content_type='application/pdf', headers={'Access-Control-Allow-Origin': '*'}))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-files]', state='attached', timeout=10000)
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'booklet.pdf', 'mimeType': 'application/pdf', 'buffer': pdf}])
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3 && !document.querySelector('#dci-ocr [role=status]')", 30)
+        a = [pg.evaluate(CARDS), sorted({u.split('/legacy/build/')[-1] for u in H.PDFJS_REQUESTS if '/legacy/build/' in u})]
+        print('A) Seiten:', a)
+        results.append(a[0] == [['booklet.pdf · p. 1', True, 'PDF page with its own text'], ['booklet.pdf · p. 2', True, 'PDF page (an image)'],
+                                ['booklet.pdf · p. 3', True, 'PDF page with its own text']] and a[1] == ['pdf.min.mjs', 'pdf.worker.min.mjs'])
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=20000)
+        pg.click('#dci-ocr [data-ocr=next]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=20000)
+        pg.click('#dci-ocr [data-ocr=next]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=20000)
+        pg.wait_for_timeout(300)
+        box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
+        vw = pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
+        f = box['width'] / vw
+        x0, y0, x1, y1 = 23, 140, 280, 198
+        pg.mouse.move(box['x'] + x0 * f, box['y'] + y0 * f)
+        pg.mouse.down()
+        for k in range(1, 6):
+            pg.mouse.move(box['x'] + (x0 + (x1 - x0) * k / 5) * f, box['y'] + (y0 + (y1 - y0) * k / 5) * f)
+        pg.mouse.up()
+        pg.wait_for_timeout(200)
+        b1 = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-thumb')].map(t => t.innerText.replace(/\\s+/g, ' ').trim())")
+        print('B) Rahmen:', b1, '| Ansicht:', vw)
+        results.append(vw == 560 and b1[2].endswith('1 frame'))
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=30000)
+        c = pg.evaluate("""(() => { const el = document.getElementById('dci-ocr');
+          return { texts: [...el.querySelectorAll('[data-ocr-text]')].map(t => t.value), heads: [...el.querySelectorAll('.dci-ocr-res h3')].map(h => h.textContent.trim()),
+            direct: [...el.querySelectorAll('.dci-ocr-res')].map(r => r.innerText.includes("Read from the PDF's own text")), ocr: window.__ocr }; })()""")
+        print('C) Texte:', c['texts'], '| direkt:', c['direct'], '| Erkennung:', c['ocr'])
+        results.append(c['texts'] == ['Booklet\nCredits\nMarc D. Rusch – double bass\nRecorded at the Iridium, New York', 'Producer – Bob Producer', 'Drums – Drum Guy\nBass – Bass Man']
+                       and c['heads'] == ['booklet.pdf · p. 1', 'booklet.pdf · p. 2', 'booklet.pdf · p. 3'] and c['direct'] == [True, False, True]
+                       and c['ocr']['created'] == 1 and c['ocr']['calls'] == [[2400, 2400]])
+        pg.click('#dci-ocr [data-ocr=import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(800)
+        d = pg.evaluate("document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').trim()")
+        print('D) Quelle:', d[:200])
+        results.append('PDF booklet.pdf (p. 1, 2, 3), read with text recognition' in d)
+        # E) by its address; a file that is no PDF
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-url]', timeout=10000)
+        pg.fill('#dci-ocr [data-ocr-url]', 'https://images.example.org/scans/booklet.pdf')
+        pg.press('#dci-ocr [data-ocr-url]', 'Enter')
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3 && !document.querySelector('#dci-ocr [role=status]')", 30)
+        e1 = pg.evaluate(CARDS)
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'bad.pdf', 'mimeType': 'application/pdf', 'buffer': b'no pdf at all'}])
+        H.wait_for(pg, "!!document.querySelector('#dci-ocr .dci-ocr-err[role=alert]')", 30)
+        e2 = pg.evaluate("document.querySelector('#dci-ocr .dci-ocr-err[role=alert]').textContent")
+        print('E) Adresse:', e1, '| kaputt:', e2)
+        results.append([x[0] for x in e1] == ['images.example.org/…/booklet.pdf · p. 1', 'images.example.org/…/booklet.pdf · p. 2', 'images.example.org/…/booklet.pdf · p. 3']
+                       and e2.startswith('bad.pdf could not be opened as a PDF:'))
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
