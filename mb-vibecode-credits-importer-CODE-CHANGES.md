@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.13, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.14, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.14 · 2026-10-28
+
+Text from cover art (beta): the window keeps its size, is moved and resized; text fields by their text; a plain background (collected items 134, 130, 135).
+
+- **Window:** `GEOM_KEYS.ocr` (`dci-geom:ocr`), `defaultGeom('ocr')` (1400 px × its unit at most, 92 % high, 4 % from the top, centred), `bringToFront('ocr')`; `renderOcr` calls `makeMovable(el, '.dci-ocr-head', 'ocr')` when it makes the window (placed, moved by the head, size remembered, put back by ⤢ `window-reset` and the reset of all settings) and watches its size (`ocrResize`, a ResizeObserver: the frames view or the parts fitted again; disconnected in `closeOcr`). The class `dci-ocr-wide` and its rule are gone. CSS: `#dci-ocr` without `left: 50%`/`transform`, `height: 92vh`, `resize: both; overflow: hidden`, minimum 420 × 320 px; its head `cursor: move`.
+- **Frames step:** `ocrCurrent` scales to `S.ocr.viewBox` (measured) instead of `OCR_VIEW` (only until then); new **`ocrFitView()`** (the room in `.dci-ocr-stage` measured, the view canvas sized to it, drawn); `ocrDraw` sets `data-k` on the view (its scale – the tests drag in the image's pixels). CSS: the frames body in one row, the stage `flex: 1 1 0`, the side 300 px and scrolling on its own; below 700 px one above the other. "Next image →" stays, disabled on the last image.
+- **Text fields:** `OCR_TEXT_LINES` 20, new **`ocrFitText(ta)`** (as high as its text, scrolls beyond); called by `ocrZoomAll` and on input; `rows` from the text (2 – 20); the `minHeight` of 3.34.11 in `ocrZoomDraw` is gone.
+- **Plain background:** `OCR_BUSY_SHARE` 0.25, `OCR_BUSY_MIN` 4; `ocrRun` gives each part read by Tesseract `wordsN`, `shakyN`, `busy`; `ocrResultHtml` – the yellow box `[data-ocr-busy]` with a button `[data-ocr-goto="i:j"]` for each part (`ocrClick` scrolls to it); `ocrPartHtml` – class `dci-ocr-busypart` and the line `.dci-ocr-busyline`; the hint `[data-ocr-plain]` in the steps "pick" and "frames". CSS `.dci-ocr-busy`, `.dci-ocr-busypart`, `.dci-ocr-busyline`.
+- **Texts (English, OCR):** new `ocr.plainHint`, `ocr.busyTitle`, `ocr.busyHint`, `ocr.busyPart`.
+- **Header / files:** `@version 3.34.14`, `?v=3.34.14`, both files' `version`.
+- **Tests:** `t_coverart.py` – new cases `ocrwindow`, `ocrtextfit`; new helper `drag_img` (frames dragged in the image's pixels); `ocrframes`, `ocrpdf` check the view's proportions instead of 560 px; `ocrzoom` without the class `dci-ocr-wide`.
 
 ## Import 3.34.13 · 2026-10-28
 

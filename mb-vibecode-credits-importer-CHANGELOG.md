@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.13 | – |
+| 2026-10-28 | 3.34.0 – 3.34.14 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.14
+
+#### Changed
+
+- **Text from cover art (beta): the window keeps its size** (collected item 134; maintainer: "die untere navigationsleiste soll immer angezeigt werden und damit statisch sein", "ich meinte alle cover art importfenster"): the same size in every step, so the bar at its foot stays where it is (before, it moved with each image beside the frames – in a window 1000 px high its top was at 788, 683, 743, 623, 310 and 907 px); "Next image →" is greyed out on the last image. Moved by its head and resized at its lower right corner like the dashboard, both remembered. Beside the frames the image takes the room the window leaves it ("je nachdem wie groß man den cover art import dialog gestellt hat"; before at most 560 × 620 px).
+- **Each text field as high as its text** (collected item 130; maintainer: "es soll sich nach dem text richten"): it grows while you type and scrolls from 20 lines on (from 3.34.11 it was as high as its part of the image).
+
+#### Added
+
+- **A plain background reads best** (collected item 135; maintainer: "irgendwo könnte der hinweis erscheinen, dass das am besten mit gleichfarbigen hintergründen funktioniert", "evtl irgendwie gelb markiert mit hinweis der betroffenen bilder"): a hint while choosing and beside the frames; after reading, a yellow box names the parts with many words read uncertainly (more than a quarter, at least 4), and those parts are framed yellow.
 
 ### Import 3.34.13
 
