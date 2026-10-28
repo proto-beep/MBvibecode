@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.2 | – |
+| 2026-10-28 | 3.34.0 – 3.34.8 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,49 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.8
+
+#### Added
+
+- **"… from cover art" beside "Import credits …"** (collected item 124; maintainer: "neben dem initialen "Import credits …" Button soll ein Button "… from cover art" erscheinen, der dann die Bilderkennung triggert bevor bspw. von discogs importiert wird", "nur wenn beta an ist", "A"): while the beta is on, it opens the dashboard without the import and the text recognition at once; the text read is then the release's source, Discogs or Bandcamp can supplement it. A message offers the usual import instead.
+
+### Import 3.34.7
+
+#### Added
+
+- **Text from cover art (beta): Discogs images, only on request** (collected item 123; maintainer: "nur wenn eingegeben. nicht automatisch. evtl einen button mit "load discogs artworks" oder ähnlich"): "Load Discogs images (r…)" for a Discogs release linked to this one, or the address of a Discogs release typed in – its images from its page on discogs.com, each once at its largest size (at most 600 px, read enlarged ×3). Nothing of Discogs is fetched before you ask.
+
+### Import 3.34.6
+
+#### Added
+
+- **Text from cover art (beta): booklets as PDF** (collected item 123; maintainer: "und auch pdf booklets!"): a PDF chosen, dropped or given by its address opens with pdf.js (loaded from cdn.jsdelivr.net at the first PDF; connection X016), each page a card of its own. A page with a text of its own – most digital booklets – is read from that text, exactly and without recognition (with frames: only what is inside them); a scanned page with the text recognition. The source names the PDF and its pages.
+
+### Import 3.34.5
+
+#### Added
+
+- **Text from cover art (beta): "All images"** (collected item 125; maintainer: "wir brauchen einen knopf im bilderkennungsmenü, der alles abwählt oder alles anwählt. viele bookletseiten haben nur bilder oder songtexte"): a box above the images ticks all or none (half ticked while only some are).
+- **Text from cover art (beta): your own images** (collected item 123; maintainer: "bei der Bilderkennung soll auch die Möglichkeit bestehen eigene Files oder Bilder per URL zu analysieren", "ja alle drei möglichkeiten"): image files chosen, dropped onto the window or pasted (Ctrl+V), and images by their address – read like the release's images, nothing uploaded; also for releases without images on the Cover Art Archive. The source of the text names them. New permission `@connect *` (connection X015; Tampermonkey asks once for each new site) – only for the addresses you enter.
+
+### Import 3.34.4
+
+#### Added
+
+- **✎ at the wording rules and the questions** (collected item 121; maintainer: "bitte gib W und Q auch eine edit funktion", "passt so"): in "Mapping rules" every wording rule (W…) – its words, one a line, and its role credit –, every instrument question (Q001, Q002, Q004) – its word, the role credit it keeps and the instruments to choose, in their order – and every type question (Q003, Q005 …) – its choices: type, level, instrument, task, label, role credit and "suggested", ordered with ↑ ↓, removed with ✕, added with "＋ Add a choice" – can be changed like the role and company rules: your change on top of the mapping file, in effect at once, in "Your changes" (words added and taken away), exported and imported (also from a whole register). What asks a type question stays. A row keeps its answer to a changed type question while that choice is still there.
+
+### Import 3.34.3
+
+#### Fixed
+
+- **Scrolling up with ⚙ Settings → ⓘ Connections open** (collected item 122; maintainer: "ich habe das I Fenster in den Einstellungen offen und kann nicht mehr hochscrollen wenn der Dates & Tracks Pool aufgeklappt ist. Der Scrollbalken zappelt und wird sozusagen zurückgehalten."): the dashboard scrolls up smoothly again. Every scroll event took the space above the settings' content away and set it again; the browser held its place by scrolling back – at ⓘ Connections 278 px, again and again (since 3.30.4; worse from 3.34.1, when ⓘ Connections became the tenth tab).
+- **⚙ and its bridge in line** (collected item 126; maintainer: "das rädchen ist noch nicht perfekt in line mit den einstellungen"): the strip from ⚙ to the settings (and from "Mapping rules" to the rules) sits exactly below the symbol also with a larger text or a scaled screen – it was rounded to whole pixels and up to a pixel beside it – and the line below the head no longer runs across it.
+
+#### Changed
+
+- **The settings' content as high as it can be** (collected item 127; maintainer: "die rot markierte fläche soll auch genutzt werden … dies soll aber nur der fall sein, sofern die visuelle markierung nicht mehr aligned ist. es kann aber auch mittig visuell markiert sein. gerade im reiter connections wird viel platz verschwendet", "das passt so!"): the chosen tab joins the side of the content where it is – at the top, in the middle or near its foot –; the content stands lower only when it is too short for that (before, from 3.30.4, it always started at the height of the tab, with empty space above it – 278 px at ⓘ Connections).
+- **Words in German, Spanish and French** (collected items 119, 120): "Quick switches" stays English in every language (maintainer: "Quick Switches bitte nicht übersetzen."; before: Schnellschalter, Interruptores rápidos, Interrupteurs rapides); a rights society is "entidad de gestión colectiva" in Spanish and "société de gestion des droits d’auteur" in French (maintainer: "Rights Society: DE: Verwertungsgesellschaft, ES: Entidad de gestión colectiva, FR: Société de gestion des droits d'auteur"; German unchanged).
 
 ### Import 3.34.2
 

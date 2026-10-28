@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.2
+// @version      3.34.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -25,8 +25,9 @@
 // @connect      raw.githubusercontent.com
 // @connect      coverartarchive.org
 // @connect      archive.org
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.2
+// @connect      *
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.8
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.8
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -39,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1069,6 +1070,9 @@
       "log.stagedUpdated": "Updated in the editor: {text}",
       "log.stagedChangedInMb": "Changed in the editor itself, left alone: {text}",
       "launcher.shortcut": "Open or close the dashboard: Alt+Shift+D (Mac: Option+Shift+D); close it with Esc as well",
+      "launcher.ocr": "… from cover art",
+      "launcher.ocrTitle": "Import the credits from the cover art (beta): the release's images, your own files or addresses are read first – their text is then the source; Discogs or Bandcamp can supplement it",
+      "ocrStart.hint": "The import of this release has not started – the text read from the cover art will be its source.",
       "ms.2.16.0": "Status marks on every Discogs track line, each with the status of its track; “Directed By” is asked instead of assumed; columns can be taken out of the works matrix; column dates also go onto relationships MusicBrainz has without a date",
       "ms.2.17.0": "Choose the media before importing a release with several media; attributes (live, cover …) of the recording–work links in the works matrix, “live” preselected on live releases; “Music and lyrics by” → writer with “Song” preselected; the log can sit next to the edit note",
       "ms.2.18.0": "Works matrix in the look of the date matrix and more compact: column heads as cards, roles as chips, attributes (live, cover …) as short forms below each work; track groups can be dropped onto column heads, roles and attributes; track lists from the Discogs notes (“XYZ Publishing (1, 4, 6)”) as suggestions; “live” preselected only on new links",
@@ -1426,16 +1430,52 @@
       "log.ocrDone.other": "Text from cover art: {n} images read ({langs})",
       "log.ocrFailed": "Text from cover art: {why}",
       "log.ocrImported": "Text from cover art: {how} – {origin}",
+      "log.ocrOwnAdded.one": "Text from cover art: {n} own image added ({what})",
+      "log.ocrOwnAdded.other": "Text from cover art: {n} own images added ({what})",
+      "ocr.all": "All images ({n})",
+      "ocr.own": "Your own images",
+      "ocr.chooseFiles": "Choose images or PDFs …",
+      "ocr.dropHint": "or drop them onto this window, or paste one with Ctrl+V",
+      "ocr.urlLabel": "Address of an image",
+      "ocr.addUrl": "Add",
+      "ocr.ownHint": "Booklet scans, photos, screenshots, a booklet as PDF – read like the release's images, in this browser; nothing is uploaded or added to the Cover Art Archive. A page of a PDF with a text of its own is read from that text, exactly and without recognition. The address of a Discogs release gives its images (small: at most 600 px). For an image on another site the userscript manager may ask once whether the script may read from it.",
+      "ocr.ownFile": "your file",
+      "ocr.ownUrl": "by its address",
+      "ocr.remove": "remove",
+      "ocr.removeImage": "Remove {what}",
+      "ocr.pastedImage": "pasted image {n}",
+      "ocr.notImage": "Not an image or a PDF, left out: {names}",
+      "ocr.badUrl": "Not the address of an image: {url} – it starts with https://",
+      "ocr.urlTwice": "This address is in the list already.",
+      "ocr.errUrl": "The image at {url} could not be read – the site does not let the script read it. Save the image and choose it as a file.",
+      "ocr.pdfPage": "{name} · p. {n}",
+      "ocr.pdfLoading": "Opening the PDF …",
+      "ocr.pdfText": "PDF page with its own text",
+      "ocr.pdfScan": "PDF page (an image)",
+      "ocr.pdfLong": "{name}: only the first {n} of {of} pages",
+      "ocr.errPdf": "{name} could not be opened as a PDF: {why}",
+      "ocr.errNoPdf": "The PDF reader could not be loaded ({url}) – the page or the browser may not allow it.",
+      "ocr.fromPdf": "Read from the PDF's own text – no text recognition needed.",
+      "ocr.discogsLoad": "Load Discogs images (r{id})",
+      "ocr.discogsHint": "of the Discogs release linked to this one – small images (at most 600 px), read enlarged",
+      "ocr.discogsLoading": "Loading the images from Discogs …",
+      "ocr.discogsNone": "No images of Discogs release r{id} were found on its page.",
+      "ocr.discogsImage": "Discogs r{id} · {n}",
+      "ocr.ownDiscogs": "from Discogs",
+      "log.ocrPdfAdded": "Text from cover art: {name} – {n} pages, {text} with a text of their own",
       "conn.kind.library": "Library",
       "conn.X013": "Text from cover art (beta, ⚙ Settings → Beta): the list of the release's images and the images themselves (coverartarchive.org, which sends them from archive.org).",
       "conn.X014": "Text from cover art (beta): the text recognition that reads the images in this browser, with its language data – loaded from cdn.jsdelivr.net the first time it is used.",
+      "conn.X015.name": "Images by their address",
+      "conn.X015": "Text from cover art (beta): an image whose address you enter is read from its site – the userscript manager (@connect *) lets the script fetch it; Tampermonkey asks once for each new site. Only the addresses you enter.",
+      "conn.X016": "Text from cover art (beta): opens a booklet as PDF in this browser – a page with a text of its own is read from it, a scanned page with the text recognition; loaded from cdn.jsdelivr.net the first time a PDF is added.",
       "mapping.changesN.one": "your changes: {n}",
       "mapping.changesN.other": "your changes: {n}",
       "mapping.badPattern": "The pattern cannot be used: {why}",
       "mapping.empty": "it is empty",
       "mapping.tooLong": "longer than {n} characters",
       "mapping.badValue": "{id}: the field “{field}” has a value of the wrong kind",
-      "mapping.badField": "{id}: the field “{field}” cannot be changed (only data: pattern, types, level, role credit, instrument)",
+      "mapping.badField": "{id}: the field “{field}” cannot be changed (only data: pattern, types, level, role credit, instrument; the words and choices of wording rules and questions)",
       "mapping.tooMany": "More than {n} entries",
       "mapping.badLine": "This line cannot be read: {line}",
       "mapping.credit.none": "none",
@@ -1450,6 +1490,23 @@
       "mapping.field.place": "Types for places",
       "mapping.field.area": "Types for areas",
       "mapping.field.artist": "Types for artists",
+      "mapping.field.phrases": "Words",
+      "mapping.field.base": "Word",
+      "mapping.field.options": "Choices",
+      "mapping.phrasesHint": "One a line: the role with its details, in small letters, in either order (“upright bass”, “bass upright”); the instrument comes from the words.",
+      "mapping.optionsHint": "The plain word the question is for, the role credit it keeps, and the instruments to choose – one a line, in this order, as MusicBrainz names them.",
+      "mapping.choicesHint": "The choices in their order, each a type and a level; an instrument for instrument and vocal, a task for “miscellaneous support”, the label as the button shows it. What asks the question stays.",
+      "mapping.choice.type": "Type",
+      "mapping.choice.level": "Level",
+      "mapping.choice.instrument": "Instrument",
+      "mapping.choice.task": "Task",
+      "mapping.choice.label": "Label",
+      "mapping.choice.credit": "Role credit",
+      "mapping.choice.suggested": "Suggested",
+      "mapping.choiceUp": "Up",
+      "mapping.choiceDown": "Down",
+      "mapping.choiceDel": "Remove this choice",
+      "mapping.choiceAdd": "Add a choice",
       "mapping.editTitle": "✎ Change rule {id} (your change, stored in this browser)",
       "mapping.editRuleTitle": "Change rule {id}",
       "mapping.editListTitle": "Change the entries of {id}",
@@ -2121,6 +2178,15 @@
   const RULE_LEVELS = ['recording', 'release', 'release_group', 'work'];
   const ROLE_RULE_FIELDS = ['re', 'types', 'level', 'credit', 'primaryCands'];
   const COMPANY_RULE_FIELDS = ['re', 'label', 'place', 'area', 'artist', 'level'];
+  // [3.34.4] ✎ also at the wording rules and the questions (collected item 121; maintainer: "bitte gib W und Q auch eine edit
+  // funktion", "passt so"): of a wording rule (W) its phrases and role credit; of an instrument question (Q001 …) its word,
+  // role credit and the instruments to choose; of a type question (Q003 …) its choices – type, level, instrument, task, label,
+  // role credit, suggested. What asks a type question (its rule, flag, the question's text) stays, code depends on it.
+  const WORDING_RULE_FIELDS = ['phrases', 'credit'];
+  const QUESTION_RULE_FIELDS = ['base', 'credit', 'options'];
+  const TYPE_QUESTION_FIELDS = ['options'];
+  /** The fields of a choice of a type question, in the order a changed choice is written. */
+  const OPTION_FIELDS = ['type', 'level', 'instrument', 'task', 'label', 'credit', 'suggested'];
   /** The word lists and tables whose entries may be changed (words; pairs and spellings: "key = value"). */
   const EDITABLE_LISTS = {
     T001: { key: 'INSTRUMENT_ALIASES', shape: 'map' },
@@ -2130,7 +2196,7 @@
     T045: { key: 'RIGHTS_SOCIETIES', shape: 'pairs', reload: true },
     T048: { key: 'ROLE_WORDS', shape: 'words' },
   };
-  const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8 };
+  const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
   /** { rules: { id: { set: { field: value as in the file }, was: { field: built-in value then } } }, lists: { T…: { add, remove } }, base }. */
   function readMappingChanges() {
@@ -2154,13 +2220,28 @@
 
   const rawRoleRule = (raw, id) => raw.ROLE_RULE_DATA.find((x) => x.id === id) || null;
   const rawCompanyRule = (raw, id) => raw.COMPANY_ROLES.find(([, o]) => o && o.id === id) || null;
+  // [3.34.4] wording rules, instrument questions, type questions
+  const rawWordingRule = (raw, id) => (raw.WORDING_RULES || []).find((x) => x.id === id) || null;
+  const rawQuestionRule = (raw, id) => (raw.QUESTION_RULES || []).find((x) => x.id === id) || null;
+  const rawTypeQuestion = (raw, id) => (raw.TYPE_QUESTIONS || []).find((x) => x.id === id) || null;
+  const rawDataRule = (raw, id) => rawWordingRule(raw, id) || rawQuestionRule(raw, id) || rawTypeQuestion(raw, id);
+  /** [3.34.4] The kind of a rule of the file: role, company, wording, question (which instrument), typeq (which type) – or ''. */
+  function ruleKindOf(id, raw = MAPPING.raw) {
+    if (rawRoleRule(raw, id)) return 'role';
+    if (rawCompanyRule(raw, id)) return 'company';
+    if (rawWordingRule(raw, id)) return 'wording';
+    if (rawQuestionRule(raw, id)) return 'question';
+    return rawTypeQuestion(raw, id) ? 'typeq' : '';
+  }
+  const RULE_FIELDS = { role: ROLE_RULE_FIELDS, company: COMPANY_RULE_FIELDS, wording: WORDING_RULE_FIELDS, question: QUESTION_RULE_FIELDS, typeq: TYPE_QUESTION_FIELDS };
   /** A field of a built-in rule as in the file (undefined: the rule has none). */
   function builtinField(id, field) {
     const r = rawRoleRule(MAPPING.raw, id);
     if (r) return r[field];
     const c = rawCompanyRule(MAPPING.raw, id);
-    if (!c) return undefined;
-    return field === 're' ? c[0] : c[1][field];
+    if (c) return field === 're' ? c[0] : c[1][field];
+    const d = rawDataRule(MAPPING.raw, id);
+    return d ? d[field] : undefined;
   }
   const listKey = (shape, item) => norm(shape === 'pairs' || shape === 'map' ? item[0] : item);
   /** The entries of a list as in the file: words, or [key, value] ([key, [names]] for spellings). */
@@ -2187,11 +2268,17 @@
         continue;
       }
       const e = rawCompanyRule(raw, id);
-      if (e) COMPANY_RULE_FIELDS.filter((f) => f in set).forEach((f) => {
-        if (f === 're') e[0] = set.re;
-        else if (set[f] == null) delete e[1][f];
-        else e[1][f] = set[f];
-      });
+      if (e) {
+        COMPANY_RULE_FIELDS.filter((f) => f in set).forEach((f) => {
+          if (f === 're') e[0] = set.re;
+          else if (set[f] == null) delete e[1][f];
+          else e[1][f] = set[f];
+        });
+        continue;
+      }
+      // [3.34.4] a wording rule or a question: its fields as they are (checked when saved or imported)
+      const d = rawDataRule(raw, id);
+      if (d) RULE_FIELDS[ruleKindOf(id, raw)].filter((f) => f in set && set[f] != null).forEach((f) => { d[f] = JSON.parse(JSON.stringify(set[f])); });
     }
     for (const [tid, c] of Object.entries(changes.lists || {})) {
       const L = EDITABLE_LISTS[tid];
@@ -2230,6 +2317,11 @@
       pair[0] = e[0];
       refill(pair[1], e[1]);
     });
+    // [3.34.4] the wording rules and the questions, rule by rule
+    ['WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].forEach((key) => MAP[key].forEach((r) => {
+      const e = eff[key].find((x) => x.id === r.id);
+      if (e) refill(r, e);
+    }));
     for (const L of Object.values(EDITABLE_LISTS)) {
       const now = MAP[L.key];
       const to = eff[L.key];
@@ -3961,6 +4053,42 @@
         const data = res.ok ? await res.json() : null;
         return ((data && data.aliases) || []).filter((x) => x && x.id).map((x) => ({ id: x.id, name: x.name, links: [artistUrl(x.id)] }));
       },
+      // [3.34.7] Discogs images for the text from cover art (beta), only on request: the API gives their addresses only to a
+      // signed-in app, so they come from the release's page on discogs.com
+      /** A Discogs release in an address ('' if none). */
+      releaseIdInUrl: (u) => (String(u || '').match(/^https?:\/\/(?:www\.)?discogs\.com\/(?:[a-z]{2}\/)?release\/(\d+)/i) || [])[1] || '',
+      /** The images of a release from its page: those of this release only ("R-<id>-…"), each once, at its largest size. */
+      async pageImages(id) {
+        const url = `${WEB}/release/${id}`;
+        let r;
+        try {
+          r = await httpFetch(url);
+        } catch (e) {
+          throw new Error(tr('ocr.errUrl', { url }));
+        }
+        if (r.status < 200 || r.status >= 300) throw new Error(tr('err.pageHttp', { status: r.status, url }));
+        // the file an address of i.discogs.com stands for (its last parts, base64): the same for every size of an image
+        const fileOf = (u) => {
+          try {
+            const parts = new URL(u).pathname.split('/').filter(Boolean);
+            const at = parts.map((x) => /^[a-z]+:/.test(x)).lastIndexOf(true);
+            const b64 = parts.slice(at + 1).join('').replace(/\.[a-z]+$/i, '').replace(/-/g, '+').replace(/_/g, '/');
+            return window.atob(b64 + '==='.slice((b64.length + 3) % 4));
+          } catch (e) {
+            return '';
+          }
+        };
+        const found = new Map();
+        for (const m of String(r.body || '').matchAll(/https:\/\/i\.discogs\.com\/[^"'\s<>)\\]+/g)) {
+          const u = m[0].replace(/&amp;/g, '&');
+          const file = fileOf(u);
+          if (!new RegExp(`(^|/)R-${id}-`).test(file)) continue;
+          const size = Math.max(0, ...[...u.matchAll(/\/[wh]:(\d+)/g)].map((x) => Number(x[1])));
+          const had = found.get(file);
+          if (!had || size > had.size) found.set(file, { url: u, size });
+        }
+        return [...found.values()].map((x) => x.url);
+      },
       /** The label a series belongs to ("Parent Label"), as "who"; null if none. */
       async seriesParent(id) {
         const res = await fetch(`${API}/labels/${id}`);
@@ -5415,6 +5543,11 @@
       perms: '@connect coverartarchive.org · @connect archive.org · GM_xmlhttpRequest', since: '3.34.1' },
     { id: 'X014', kind: 'library', name: 'Tesseract.js', home: 'https://github.com/naptha/tesseract.js', hosts: ['cdn.jsdelivr.net'],
       perms: '– (loaded into the page from cdn.jsdelivr.net, only with the beta switched on)', since: '3.34.1' },
+    // [3.34.5] images by their address in the text from cover art (collected item 123): any site you enter
+    { id: 'X015', kind: 'site', name: '', home: '', hosts: ['*'], perms: '@connect * · GM_xmlhttpRequest (only the addresses you enter)', since: '3.34.5' },
+    // [3.34.6] booklets as PDF
+    { id: 'X016', kind: 'library', name: 'pdf.js', home: 'https://github.com/mozilla/pdf.js', hosts: ['cdn.jsdelivr.net'],
+      perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF in the beta)', since: '3.34.6' },
   ];
 
   if (IS_NODE_TEST) {
@@ -7622,11 +7755,12 @@
     return [
       sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note'), ''])}<tbody>
         ${roles.map((r) => editRow(r.id, [r.id, r.re ? patternText(r.re) : tr('rules.special'), (r.types || []).join(', '), r.level || '', r.note || ''], r.hasCode, 7)).join('')}</tbody></table>`),
-      sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code')])}<tbody>
-        ${WORDING_RULES.map((r) => row(r.id, [r.id, r.phrases.join(' | '), r.credit, r.note, r.where || ''])).join('')}</tbody></table>`),
-      sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note')])}<tbody>
-        ${QUESTION_RULES.map((q) => row(q.id, [q.id, q.base, q.options.join(' · '), q.credit, q.note])).join('')}
-        ${TYPE_QUESTIONS.map((q) => row(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note])).join('')}</tbody></table>`),
+      // [3.34.4] ✎ at the wording rules and the questions too (collected item 121)
+      sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code'), ''])}<tbody>
+        ${WORDING_RULES.map((r) => editRow(r.id, [r.id, r.phrases.join(' | '), r.credit, r.note, r.where || ''], false, 7)).join('')}</tbody></table>`),
+      sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note'), ''])}<tbody>
+        ${QUESTION_RULES.map((q) => editRow(q.id, [q.id, q.base, q.options.join(' · '), q.credit, q.note], false, 7)).join('')}
+        ${TYPE_QUESTIONS.map((q) => editRow(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note], false, 7)).join('')}</tbody></table>`),
       sect('special', `${tr('rules.specialTitle')} (S001 … · ${where('SPECIAL_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')])}<tbody>${SPECIAL_RULES.map((r) => row(r.id, [r.id, r.note, r.where || ''])).join('')}</tbody></table>`),
       sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), ''])}<tbody>
         ${COMPANY_ROLES.map(([re, o]) => editRow(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.area || []), ...(o.artist || [])]).join(', '), o.level || ''], false, 6)).join('')}</tbody></table>`),
@@ -7651,19 +7785,21 @@
 
   const RULE_PROBE = { b: '', ms: [], flags: [], consumed: new Set(), has: () => false, is: () => false, out: () => null, plainBase: '', modsIn: [], baseIn: '' };
   const isRoleRuleId = (id) => !!rawRoleRule(MAPPING.raw, id);
-  /** A rule of the file that ✎ may change: a role rule without code, or a company rule. */
+  /** A rule of the file that ✎ may change: a role rule without code, a company rule, ([3.34.4]) a wording rule or a question. */
   function ruleEditable(id) {
-    if (rawCompanyRule(MAPPING.raw, id)) return true;
+    if (rawCompanyRule(MAPPING.raw, id) || rawDataRule(MAPPING.raw, id)) return true;
     const r = roleRules(RULE_PROBE).find((x) => x.id === id);
     return !!r && !r.hasCode;
   }
-  const encJson = (v) => JSON.stringify(v === undefined ? null : v);
+  /** A value as JSON to compare: [3.34.4] with the keys of objects in order (a choice saved by ✎ equals the file's in any order). */
+  const sortedKeys = (v) => (Array.isArray(v) ? v.map(sortedKeys) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortedKeys(v[k])])) : v);
+  const encJson = (v) => JSON.stringify(v === undefined ? null : sortedKeys(v));
   /** The value of a field of a rule with the given changes (as in the file). */
   function fieldWith(changes, id, field) {
     const c = changes.rules[id];
     return c && c.set && field in c.set ? c.set[field] : builtinField(id, field);
   }
-  const ruleFieldsOf = (id) => (isRoleRuleId(id) ? ROLE_RULE_FIELDS : COMPANY_RULE_FIELDS);
+  const ruleFieldsOf = (id) => RULE_FIELDS[ruleKindOf(id)] || [];
   const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const wordsSource = (words) => (words.length === 1 ? `^${escRe(words[0])}$` : `^(${words.map(escRe).join('|')})$`);
   const showItem = (x) => (Array.isArray(x) ? `${x[0]} = ${[].concat(x[1]).join(' / ')}` : String(x));
@@ -7691,15 +7827,53 @@
     return { value: { $re: src, $flags: flags } };
   }
 
+  const okText = (x, n = LIMITS.text) => typeof x === 'string' && !!x.trim() && x.trim().length <= n;
+
+  /**
+   * [3.34.4] A field of a wording rule or a question checked → { value } (as written into the file) or {} (not usable): phrases
+   * (words in lower case, 1 – 40), a role credit (a text, empty: none), the word of a question, its instruments (1 – 8), the
+   * choices of a type question (1 – 8: type and level, instrument, task, label, role credit – true: the role word –, suggested).
+   */
+  function checkDataField(kind, f, v) {
+    if (f === 'phrases') return Array.isArray(v) && v.length && v.length <= LIMITS.phrases && v.every((x) => okText(x)) ? { value: uniq(v.map(norm)) } : {};
+    if (f === 'credit') return typeof v === 'string' && v.trim().length <= LIMITS.text ? { value: v.trim() } : {};
+    if (f === 'base') return okText(v) ? { value: norm(v) } : {};
+    if (f !== 'options' || !Array.isArray(v) || !v.length || v.length > LIMITS.names) return {};
+    if (kind === 'question') return v.every((x) => okText(x)) ? { value: uniq(v.map((x) => x.trim())) } : {};
+    const out = [];
+    for (const o of v) {
+      if (!o || typeof o !== 'object' || Array.isArray(o) || Object.keys(o).some((k) => !OPTION_FIELDS.includes(k))) return {};
+      if (!okText(o.type) || !RULE_LEVELS.includes(o.level)) return {};
+      const one = { type: o.type.trim(), level: o.level };
+      for (const k of ['instrument', 'task', 'label']) {
+        if (o[k] == null || o[k] === '') continue;
+        if (!okText(o[k], k === 'label' ? LIMITS.value : LIMITS.text)) return {};
+        one[k] = o[k].trim();
+      }
+      if (o.credit === true) one.credit = true;
+      else if (okText(o.credit)) one.credit = o.credit.trim();
+      else if (o.credit != null && o.credit !== false && o.credit !== '') return {};
+      if (o.suggested === true) one.suggested = true;
+      else if (o.suggested != null && o.suggested !== false) return {};
+      out.push(one);
+    }
+    return { value: out };
+  }
+
   /** The fields of a change of a rule checked: only those of its kind, each of the right kind → { set } or { error }. */
   function checkRuleSet(id, set) {
     if (!set || typeof set !== 'object' || Array.isArray(set)) return { error: tr('mapping.badValue', { id, field: '–' }) };
+    const kind = ruleKindOf(id);
     const fields = ruleFieldsOf(id);
     const out = {};
     for (const [f, v] of Object.entries(set)) {
       const bad = { error: tr('mapping.badValue', { id, field: f }) };
       if (!fields.includes(f)) return { error: tr('mapping.badField', { id, field: f }) };
-      if (f === 're') {
+      if (['wording', 'question', 'typeq'].includes(kind)) {
+        const got = checkDataField(kind, f, v);
+        if (!('value' in got)) return bad;
+        out[f] = got.value;
+      } else if (f === 're') {
         const p = checkPattern(v);
         if (p.error) return p;
         out.re = p.value;
@@ -7797,7 +7971,10 @@
 
   /** A field's value as text: a pattern as the register shows it, names with commas, "as written" for the role credit. */
   function fieldText(f, v) {
-    if (v == null || (Array.isArray(v) && !v.length)) return '–';
+    if (v == null || v === '' || (Array.isArray(v) && !v.length)) return '–';
+    // [3.34.4] the phrases of a wording rule, the choices of a question
+    if (f === 'phrases') return v.join(' | ');
+    if (f === 'options') return v.map((o) => (typeof o === 'string' ? o : optionText(o))).join(' · ');
     if (f === 're') {
       try {
         return patternText(new RegExp(v.$re, v.$flags || ''));
@@ -7809,10 +7986,15 @@
     if (f === 'credit') return v === true ? tr('mapping.credit.role') : `“${v}”`;
     return [].concat(v).join(', ');
   }
-  /** A changed field as HTML: of a pattern of role words the words added and taken away, else before → after. */
+  /** [3.34.4] A choice of a type question as text: its label (or type) and level. */
+  const optionText = (o) => `${o.label || o.type} (${tr(`level.${o.level}`)})`;
+  const plainWords = (v) => (Array.isArray(v) && v.every((x) => typeof x === 'string') ? v : null);
+
+  /** A changed field as HTML: of a pattern of role words ([3.34.4] or of a list of words) the words added and taken away, else before → after. */
   function fieldChangeHtml(f, a, b) {
-    const wa = f === 're' && a && typeof a.$re === 'string' && patternWords(a.$re);
-    const wb = f === 're' && b && typeof b.$re === 'string' && patternWords(b.$re);
+    const words = (v) => (f === 're' ? v && typeof v.$re === 'string' && patternWords(v.$re) : ['phrases', 'options'].includes(f) && plainWords(v));
+    const wa = words(a);
+    const wb = words(b);
     if (wa && wb) {
       const add = wb.filter((w) => !wa.includes(w));
       const rem = wa.filter((w) => !wb.includes(w));
@@ -7827,14 +8009,28 @@
   function ruleConflicts(id) {
     const c = mappingChanges.rules[id];
     if (!c) return [];
-    if (!rawRoleRule(MAPPING.raw, id) && !rawCompanyRule(MAPPING.raw, id)) return ['gone'];
+    if (!ruleKindOf(id)) return ['gone'];
     return Object.keys(c.set || {}).filter((f) => c.was && f in c.was && encJson(c.was[f]) !== encJson(builtinField(id, f)));
   }
 
   /** After a change of the register: stored, into MAP, the caches of what is built from it emptied, the rows mapped again. */
   function mappingChanged(what) {
+    // [3.34.4] a row's answer to a type question is the place of a choice: kept by the choice itself (type, level, instrument),
+    // asked anew when that choice is gone
+    const choiceKey = (o) => [o.type, o.level, o.instrument || ''].join('|');
+    const answered = S.rows.map((r) => {
+      const q = r.typeAnswer != null && typeQuestionFor(r);
+      const o = q && q.options[r.typeAnswer];
+      return o ? [r, q.id, choiceKey(o)] : null;
+    }).filter(Boolean);
     saveMappingChanges();
     applyMappingChanges();
+    answered.forEach(([r, qid, key]) => {
+      const q = TYPE_QUESTIONS.find((x) => x.id === qid);
+      const i = q ? q.options.findIndex((o) => choiceKey(o) === key) : -1;
+      if (i < 0) delete r.typeAnswer;
+      else r.typeAnswer = i;
+    });
     roleVocabCache = null;
     ruleNotesCache = null;
     applyRulesChange(what);
@@ -7857,9 +8053,44 @@
   S.ruleEdit = null;
   S.listEdit = null;
 
+  /** [3.34.4] A choice of a type question in the form. */
+  const choiceDraft = (o = {}) => ({ type: o.type || '', level: o.level || 'recording', instrument: o.instrument || '', task: o.task || '', label: o.label || '',
+    creditMode: o.credit === true ? 'role' : typeof o.credit === 'string' && o.credit ? 'text' : 'none', credit: typeof o.credit === 'string' ? o.credit : '', suggested: !!o.suggested });
+
+  /** [3.34.4] The form of a wording rule (phrases a line each, role credit), a question (word, role credit, instruments a line each) or a type question (its choices). */
+  function dataRuleDraft(kind, v) {
+    if (kind === 'wording') return { phrases: (v('phrases') || []).join('\n'), creditMode: v('credit') ? 'text' : 'none', credit: v('credit') || '' };
+    if (kind === 'question') return { base: v('base') || '', credit: v('credit') || '', options: (v('options') || []).join('\n') };
+    return { options: (v('options') || []).map(choiceDraft) };
+  }
+
+  /** [3.34.4] The form of a wording rule or a question back into the fields of the file (checked by checkRuleSet). */
+  function dataRuleSet(kind, d) {
+    const lines = (t) => String(t || '').split('\n').map((x) => x.trim()).filter(Boolean);
+    if (kind === 'wording') return { phrases: lines(d.phrases), credit: d.creditMode === 'text' ? String(d.credit || '').trim() : '' };
+    if (kind === 'question') return { base: String(d.base || ''), credit: String(d.credit || ''), options: lines(d.options) };
+    return {
+      options: d.options.map((o) => {
+        const one = { type: String(o.type || ''), level: o.level };
+        ['instrument', 'task', 'label'].forEach((k) => { if (String(o[k] || '').trim()) one[k] = String(o[k]).trim(); });
+        if (o.creditMode === 'role') one.credit = true;
+        else if (o.creditMode === 'text' && String(o.credit || '').trim()) one.credit = String(o.credit).trim();
+        if (o.suggested) one.suggested = true;
+        return one;
+      }),
+    };
+  }
+  const isDataKind = (kind) => kind === 'wording' || kind === 'question' || kind === 'typeq';
+
   /** ✎ at a rule: the form starts with the rule as it is now (with your changes). */
   function openRuleEdit(id) {
     const v = (f) => fieldWith(mappingChanges, id, f);
+    const kind = ruleKindOf(id);
+    if (isDataKind(kind)) {
+      S.ruleEdit = { id, draft: dataRuleDraft(kind, v), error: '' };
+      S.listEdit = null;
+      return;
+    }
     const names = (x) => (Array.isArray(x) ? x.join(', ') : '');
     const draft = { ...patternForm(v('re')), level: v('level') || 'recording' };
     if (isRoleRuleId(id)) {
@@ -7887,8 +8118,8 @@
   }
 
   /** ✎ saved: the form as a change of the rule (checked; fields equal to the built-in rule are none). */
-  function saveRuleEdit() {
-    const { id, draft: d } = S.ruleEdit;
+  /** The form of a role or company rule back into the fields of the file. */
+  function patternRuleSet(id, d) {
     const names = (t) => String(t || '').split(',').map((x) => x.trim()).filter(Boolean);
     const words = String(d.pattern || '').split('|').map(norm).filter(Boolean);
     const src = d.pmode === 'words' ? (words.length ? wordsSource(words) : '') : String(d.pattern || '').trim();
@@ -7900,7 +8131,13 @@
     } else {
       ['label', 'place', 'area', 'artist'].forEach((f) => { set[f] = names(d[f]).length ? names(d[f]) : null; });
     }
-    const ok = checkRuleSet(id, set);
+    return set;
+  }
+
+  function saveRuleEdit() {
+    const { id, draft: d } = S.ruleEdit;
+    const kind = ruleKindOf(id);
+    const ok = checkRuleSet(id, isDataKind(kind) ? dataRuleSet(kind, d) : patternRuleSet(id, d));
     if (ok.error) {
       S.ruleEdit.error = ok.error;
       renderRulesBody();
@@ -7912,7 +8149,53 @@
     mappingChanged(id);
   }
 
+  /** The buttons below a form of ✎: save, cancel, back to the built-in rule. */
+  const ruleEditActions = (id) => `<div class="dci-urule-actions"><button type="button" data-redit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-redit-cancel>${esc(tr('common.cancel'))}</button>
+        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div>`;
+
+  /** [3.34.4] ✎ at a wording rule, an instrument question or a type question. */
+  function dataRuleEditHtml(id, kind) {
+    const { draft: d, error } = S.ruleEdit;
+    const inp = (k, ph = '') => `<input type="text" data-redit-f="${k}" value="${esc(d[k] || '')}" placeholder="${esc(ph)}">`;
+    const area = (k) => `<textarea data-redit-f="${k}" rows="${Math.min(10, Math.max(3, String(d[k] || '').split('\n').length + 1))}" spellcheck="false">${esc(d[k] || '')}</textarea>`;
+    const creditSel = (attrs, mode, modes) => `<select ${attrs}>${modes.map((v) => `<option value="${v}" ${mode === v ? 'selected' : ''}>${esc(tr(`mapping.credit.${v}`))}</option>`).join('')}</select>`;
+    let body;
+    if (kind === 'wording') {
+      body = `<label class="dci-redit-wide">${esc(tr('mapping.field.phrases'))} ${area('phrases')}</label>
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.phrasesHint'))}</p>
+      <label>${esc(tr('mapping.field.credit'))} ${creditSel('data-redit-f="creditMode"', d.creditMode, ['none', 'text'])} ${d.creditMode === 'text' ? inp('credit', 'upright bass') : ''}</label>`;
+    } else if (kind === 'question') {
+      body = `<label>${esc(tr('mapping.field.base'))} ${inp('base', 'bass')}</label>
+      <label>${esc(tr('mapping.field.credit'))} ${inp('credit', 'bass')}</label>
+      <label class="dci-redit-wide">${esc(tr('mapping.field.options'))} ${area('options')}</label>
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.optionsHint'))}</p>`;
+    } else {
+      const n = d.options.length;
+      const head = ['type', 'level', 'instrument', 'task', 'label', 'credit', 'suggested'].map((k) => `<th>${esc(tr(`mapping.choice.${k}`))}</th>`).join('');
+      const choice = (o, i) => {
+        const at = (k) => `data-redit-o="${i}" data-redit-of="${k}" aria-label="${esc(`${i + 1} · ${tr(`mapping.choice.${k === 'creditMode' ? 'credit' : k}`)}`)}"`;
+        const f = (k, ph = '', list = '') => `<input type="text" ${at(k)} value="${esc(o[k] || '')}" placeholder="${esc(ph)}"${list ? ` list="${list}"` : ''}>`;
+        const btn = (attr, sign, title, off) => `<button type="button" class="dci-textbtn" ${attr} title="${esc(tr(title))}" aria-label="${esc(`${tr(title)} (${i + 1})`)}"${off ? ' disabled' : ''}>${sign}</button>`;
+        return `<tr data-redit-choice="${i}"><td>${i + 1}</td><td>${f('type', 'conductor', 'dci-dl-ltnames')}</td>
+          <td><select ${at('level')}>${RULE_LEVELS.map((v) => `<option value="${v}" ${o.level === v ? 'selected' : ''}>${esc(tr(`level.${v}`))}</option>`).join('')}</select></td>
+          <td>${f('instrument', '', 'dci-dl-instrnames')}</td><td>${f('task')}</td><td>${f('label')}</td>
+          <td>${creditSel(at('creditMode'), o.creditMode, ['none', 'role', 'text'])}${o.creditMode === 'text' ? ` ${f('credit')}` : ''}</td>
+          <td><input type="checkbox" ${at('suggested')} ${o.suggested ? 'checked' : ''}></td>
+          <td class="dci-redit-omove">${btn(`data-redit-omove="${i}" data-dir="-1"`, '↑', 'mapping.choiceUp', !i)}${btn(`data-redit-omove="${i}" data-dir="1"`, '↓', 'mapping.choiceDown', i === n - 1)}${btn(`data-redit-odel="${i}"`, '✕', 'mapping.choiceDel', n < 2)}</td></tr>`;
+      };
+      body = `<div class="dci-redit-wide dci-redit-choices"><table><thead><tr><th>#</th>${head}<th></th></tr></thead><tbody>${d.options.map(choice).join('')}</tbody></table>
+        <button type="button" class="dci-textbtn" data-redit-oadd${n < LIMITS.names ? '' : ' disabled'}>＋ ${esc(tr('mapping.choiceAdd'))}</button></div>
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.choicesHint'))}</p>`;
+    }
+    return `<fieldset class="dci-redit dci-redit-${kind}" data-redit="${esc(id)}"><legend>${esc(tr('mapping.editTitle', { id }))}</legend>${body}
+      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}</p>
+      ${error ? `<p class="dci-redit-err dci-redit-wide" role="alert">${esc(error)}</p>` : ''}
+      ${ruleEditActions(id)}</fieldset>`;
+  }
+
   function ruleEditHtml(id) {
+    const kind = ruleKindOf(id);
+    if (isDataKind(kind)) return dataRuleEditHtml(id, kind);
     const { draft: d, error } = S.ruleEdit;
     const role = isRoleRuleId(id);
     const inp = (k, ph = '', list = '') => `<input type="text" data-redit-f="${k}" value="${esc(d[k] || '')}" placeholder="${esc(ph)}"${list ? ` list="${list}"` : ''}>`;
@@ -7928,8 +8211,7 @@
         <label>${esc(tr('mapping.field.primaryCands'))} ${inp('instr', 'electric guitar', 'dci-dl-instrnames')}</label>` : ''}
       <p class="dci-sub dci-redit-wide">${esc(tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))} · ${esc(tr('mapping.namesHint'))}</p>
       ${error ? `<p class="dci-redit-err dci-redit-wide" role="alert">${esc(error)}</p>` : ''}
-      <div class="dci-urule-actions"><button type="button" data-redit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-redit-cancel>${esc(tr('common.cancel'))}</button>
-        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div></fieldset>`;
+      ${ruleEditActions(id)}</fieldset>`;
   }
 
   /** ✎ at a list: all its entries, a line each. */
@@ -8095,7 +8377,7 @@
     const out = { from: '', rules: {}, lists: {}, own: [], off: [], skipped: [], mapping: '', script: '' };
     const skip = (id, why) => out.skipped.push({ id: String(id), why });
     const takeRule = (id, set, was) => {
-      if (!rawRoleRule(MAPPING.raw, id) && !rawCompanyRule(MAPPING.raw, id)) return skip(id, tr('mapping.skipUnknown'));
+      if (!ruleKindOf(id)) return skip(id, tr('mapping.skipUnknown'));
       if (!ruleEditable(id)) return skip(id, tr('mapping.skipCode'));
       const ok = checkRuleSet(id, set);
       if (ok.error) return skip(id, ok.error);
@@ -8145,6 +8427,20 @@
         COMPANY_RULE_FIELDS.filter((f) => f !== 're').forEach((f) => { if (encJson(o[f]) !== encJson(b[1][f])) set[f] = o[f] === undefined ? null : o[f]; });
         if (Object.keys(set).length) takeRule(o.id, set, null);
       }
+      // [3.34.4] the wording rules and the questions
+      for (const [key, find] of [['WORDING_RULES', rawWordingRule], ['QUESTION_RULES', rawQuestionRule], ['TYPE_QUESTIONS', rawTypeQuestion]]) {
+        for (const r of Array.isArray(data[key]) ? data[key] : []) {
+          if (!r || typeof r.id !== 'string') continue;
+          const b = find(MAPPING.raw, r.id);
+          if (!b) {
+            skip(r.id, tr('mapping.skipUnknown'));
+            continue;
+          }
+          const set = {};
+          RULE_FIELDS[ruleKindOf(r.id)].forEach((f) => { if (encJson(r[f]) !== encJson(b[f])) set[f] = r[f]; });
+          if (Object.keys(set).length) takeRule(r.id, set, null);
+        }
+      }
       for (const [tid, L] of Object.entries(EDITABLE_LISTS)) {
         if (!(L.key in data)) continue;
         let items;
@@ -8165,7 +8461,7 @@
       }
       // the other lists cannot be changed here
       const editable = new Set(Object.values(EDITABLE_LISTS).map((L) => L.key));
-      Object.keys(MAPPING.raw).filter((k) => !['format', 'version', 'about', 'ROLE_RULE_DATA', 'COMPANY_ROLES'].includes(k) && !editable.has(k))
+      Object.keys(MAPPING.raw).filter((k) => !['format', 'version', 'about', 'ROLE_RULE_DATA', 'COMPANY_ROLES', 'WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].includes(k) && !editable.has(k))
         .forEach((k) => { if (k in data && encJson(data[k]) !== encJson(MAPPING.raw[k])) skip(k, tr('mapping.skipList')); });
     } else return { error: tr('rules.importBad') };
     const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit'];
@@ -8585,6 +8881,11 @@
    * the symbol pressed, a strip below it to the lower edge of the head (`--dci-bridge-down`) and one from there to the box
    * (`--dci-bridge-x`, `-w`, `-h`), drawn by CSS; the box scrolled away: only the part at the symbol.
    */
+  /** [3.34.3] A custom property set only when it changes (no new style for every scroll event). */
+  function setVar(el, name, value) {
+    if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value);
+  }
+
   function placeBridges() {
     if (!S.overlay || S.overlay.hidden) return;
     const head = S.overlay.querySelector('.dci-head');
@@ -8606,17 +8907,31 @@
       }
       const b = btn.getBoundingClientRect();
       const p = box.getBoundingClientRect();
-      btn.style.setProperty('--dci-bridge-down', `${Math.max(0, Math.round(hb - b.bottom + 1))}px`);
+      // [3.34.3] in fractions of a pixel, as the browser lays them out (collected item 126; maintainer: "das rädchen ist noch nicht
+      // perfekt in line mit den einstellungen"): rounded, the lower part sat up to a pixel beside the button with a larger text
+      // or a scaled screen; the upper part starts 2px above the button's lower edge (its border, `top: 100% - 1px` of the padding
+      // box) and now ends 1px below the head, over its lower line, which ran across the bridge before
+      const px = (v) => `${Math.round(v * 1000) / 1000}px`;
+      const borderLeft = parseFloat(getComputedStyle(box).borderLeftWidth) || 0;
+      setVar(btn, '--dci-bridge-down', px(Math.max(0, hb - b.bottom + 3)));
       box.classList.toggle('dci-bridged-box', p.top >= hb - 1);
-      box.style.setProperty('--dci-bridge-x', `${Math.round(b.left - p.left - box.clientLeft)}px`);
-      box.style.setProperty('--dci-bridge-w', `${Math.round(b.width)}px`);
-      box.style.setProperty('--dci-bridge-h', `${Math.max(0, Math.round(p.top - hb))}px`);
+      setVar(box, '--dci-bridge-x', px(b.left - p.left - borderLeft));
+      setVar(box, '--dci-bridge-w', px(b.width));
+      setVar(box, '--dci-bridge-h', px(Math.max(0, p.top - hb)));
     }
   }
 
   /**
-   * [3.30.4] The content of the settings starts at the height of the chosen tab (item 87; maintainer: "vielleicht könnte man
-   * den menüinhalt immer auf höhe der punkte starten lassen"), so every tab joins it; tabs in a row (narrow): at the top.
+   * [3.30.4] The content of the settings joins the chosen tab (item 87; maintainer: "vielleicht könnte man den menüinhalt immer
+   * auf höhe der punkte starten lassen"); tabs in a row (narrow): at the top.
+   * [3.34.3] As high as it can be while the tab still joins its side – at the top, in the middle or near its foot; lower only
+   * when it is too short for that (collected item 127; maintainer: "die rot markierte fläche soll auch genutzt werden … dies soll
+   * aber nur der fall sein, sofern die visuelle markierung nicht mehr aligned ist. es kann aber auch mittig visuell markiert
+   * sein. gerade im reiter connections wird viel platz verschwendet"); its upper left corner round unless the tab joins there.
+   * Worked out without taking the margin away first, and written only when it changes (collected item 122; maintainer: "ich habe
+   * das I Fenster in den Einstellungen offen und kann nicht mehr hochscrollen wenn der Dates & Tracks Pool aufgeklappt ist. Der
+   * Scrollbalken zappelt"): until 3.34.2 every scroll event took it away and set it again, and the browser's scroll anchoring
+   * answered the short shift by scrolling back (278px at ⓘ Connections).
    */
   function alignSettingsPane() {
     const el = S.overlay && $('settings');
@@ -8626,10 +8941,19 @@
     const tabs = el.querySelector('.dci-set-tabs');
     const sel = el.querySelector('.dci-set-tab[aria-selected="true"]');
     if (!pane || !wrap) return;
-    pane.style.marginTop = '';
-    if (!sel || !tabs || getComputedStyle(tabs).flexDirection !== 'column') return;
-    const dy = Math.round(sel.getBoundingClientRect().top - wrap.getBoundingClientRect().top);
-    if (dy > 0) pane.style.marginTop = `${dy}px`;
+    let margin = 0;
+    let atTop = false;
+    if (sel && tabs && getComputedStyle(tabs).flexDirection === 'column') {
+      const top = wrap.getBoundingClientRect().top;
+      const r = sel.getBoundingClientRect();
+      // below the tab the side goes on a little, so the corner does not cut into the join
+      const below = parseFloat(getComputedStyle(pane).borderBottomLeftRadius) + 2 || 6;
+      margin = Math.max(0, Math.min(r.top - top, r.bottom - top + below - pane.offsetHeight));
+      atTop = margin >= r.top - top - 0.5;
+    }
+    const want = margin > 0.5 ? `${Math.round(margin * 1000) / 1000}px` : '';
+    if (pane.style.marginTop !== want) pane.style.marginTop = want;
+    if (pane.classList.contains('dci-set-joined-top') !== atTop) pane.classList.toggle('dci-set-joined-top', atTop);
   }
 
   function closeRules() {
@@ -8716,7 +9040,7 @@
           if (S.ruleEdit && S.ruleEdit.id === ro.dataset.reditOpen) S.ruleEdit = null;
           else openRuleEdit(ro.dataset.reditOpen);
           renderRulesBody();
-          const f = el.querySelector('[data-redit] [data-redit-f="pattern"]');
+          const f = el.querySelector('[data-redit] [data-redit-f="pattern"]') || el.querySelector('[data-redit] textarea, [data-redit] input[type=text]');
           if (f) f.focus({ preventScroll: true });
         }
         const lo = t.closest('[data-ledit-open]');
@@ -8728,6 +9052,26 @@
           if (f) f.focus({ preventScroll: true });
         }
         if (t.closest('[data-redit-save]')) saveRuleEdit();
+        // [3.34.4] the choices of a type question: up, down, removed, added
+        const choices = S.ruleEdit && Array.isArray(S.ruleEdit.draft.options) ? S.ruleEdit.draft.options : null;
+        const om = t.closest('[data-redit-omove]');
+        if (om && choices) {
+          const i = Number(om.dataset.reditOmove);
+          const j = i + Number(om.dataset.dir);
+          if (choices[i] && choices[j]) [choices[i], choices[j]] = [choices[j], choices[i]];
+          renderRulesBody();
+        }
+        const od = t.closest('[data-redit-odel]');
+        if (od && choices && choices.length > 1) {
+          choices.splice(Number(od.dataset.reditOdel), 1);
+          renderRulesBody();
+        }
+        if (t.closest('[data-redit-oadd]') && choices && choices.length < LIMITS.names) {
+          choices.push(choiceDraft());
+          renderRulesBody();
+          const last = el.querySelector(`[data-redit-choice="${choices.length - 1}"] [data-redit-of="type"]`);
+          if (last) last.focus({ preventScroll: true });
+        }
         if (t.closest('[data-ledit-save]')) saveListEdit();
         if (t.closest('[data-redit-cancel], [data-ledit-cancel]')) {
           S.ruleEdit = null;
@@ -8785,6 +9129,11 @@
           if (t.dataset.reditF === 'pmode') switchPatternMode(S.ruleEdit.draft, t.value);
           else S.ruleEdit.draft[t.dataset.reditF] = t.value;
           if (['pmode', 'creditMode'].includes(t.dataset.reditF)) renderRulesBody();
+        } else if (t.dataset.reditOf && S.ruleEdit && Array.isArray(S.ruleEdit.draft.options)) {
+          // [3.34.4] a choice of a type question
+          const o = S.ruleEdit.draft.options[Number(t.dataset.reditO)];
+          if (o) o[t.dataset.reditOf] = t.type === 'checkbox' ? t.checked : t.value;
+          if (t.dataset.reditOf === 'creditMode') renderRulesBody();
         } else if (t.dataset.mio === 'what') {
           S.mioWhat = t.value === 'register' ? 'register' : 'changes';
           renderMappingIo();
@@ -8818,6 +9167,10 @@
         const f = e.target.dataset.rf;
         if (e.target.dataset.uf) S.ruleForm = { ...(S.ruleForm || { kind: 'role', detailsMode: 'any', level: 'recording' }), [e.target.dataset.uf]: e.target.value };
         if (e.target.dataset.reditF && S.ruleEdit && e.target.dataset.reditF !== 'pmode') S.ruleEdit.draft[e.target.dataset.reditF] = e.target.value;
+        if (e.target.dataset.reditOf && e.target.type === 'text' && S.ruleEdit && Array.isArray(S.ruleEdit.draft.options)) {
+          const o = S.ruleEdit.draft.options[Number(e.target.dataset.reditO)];
+          if (o) o[e.target.dataset.reditOf] = e.target.value;
+        }
         if (e.target.dataset.leditText != null && S.listEdit) S.listEdit.text = e.target.value;
         if (e.target.dataset.mio === 'paste') S.mPaste = e.target.value;
         if (f === 'test') el.querySelector('[data-rf="result"]').innerHTML = ruleTestHtml(e.target.value);
@@ -8896,6 +9249,17 @@
   const CAA_URL = 'https://coverartarchive.org/release/';
   const TESSERACT_VERSION = '5.1.1';
   const TESSERACT_URL = `https://cdn.jsdelivr.net/npm/tesseract.js@${TESSERACT_VERSION}/dist/tesseract.min.js`;
+  // [3.34.6] booklets as PDF (collected item 123; maintainer: "und auch pdf booklets!"): pdf.js (its legacy build, also for
+  // older browsers), loaded from jsDelivr at the first PDF; a page with a text of its own is read from it, exactly and at once,
+  // a scanned page with the text recognition
+  const PDFJS_VERSION = '6.2.108';
+  const PDFJS_ROOT = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/`;
+  const PDFJS_URL = `${PDFJS_ROOT}legacy/build/pdf.min.mjs`;
+  const PDFJS_WORKER_URL = `${PDFJS_ROOT}legacy/build/pdf.worker.min.mjs`;
+  // a page is read at this size (its longer side), at most OCR_PDF_PAGES pages of a PDF, its own text when it has this many letters
+  const OCR_PDF_PX = 2400;
+  const OCR_PDF_PAGES = 60;
+  const OCR_PDF_TEXT = 20;
   // the types of images that mostly carry credits: ticked at first ("die Vorauswahl klingt gut")
   const OCR_CREDIT_TYPES = ['Back', 'Booklet', 'Liner', 'Tray'];
   const OCR_LANGS = { en: 'eng', de: 'deu', es: 'spa', fr: 'fra' };
@@ -8942,6 +9306,37 @@
     return tesseractLoading;
   }
 
+  let pdfjsLoading = null;
+
+  /**
+   * [3.34.6] pdf.js, loaded once from jsDelivr (a module: the page imports it and names it window.pdfjsLib; its worker comes
+   * from jsDelivr too, through a small local wrapper pdf.js makes itself).
+   */
+  function loadPdfJs() {
+    const w = pageWindow;
+    if (w.pdfjsLib && typeof w.pdfjsLib.getDocument === 'function') return Promise.resolve(w.pdfjsLib);
+    if (!pdfjsLoading) {
+      pdfjsLoading = new Promise((resolve, reject) => {
+        const fail = () => reject(new Error(tr('ocr.errNoPdf', { url: PDFJS_URL })));
+        const timer = setTimeout(fail, 60000);
+        document.addEventListener('dci-pdfjs', () => {
+          clearTimeout(timer);
+          if (w.pdfjsLib && typeof w.pdfjsLib.getDocument === 'function') resolve(w.pdfjsLib);
+          else fail();
+        }, { once: true });
+        const s = document.createElement('script');
+        s.textContent = `import(${JSON.stringify(PDFJS_URL)}).then((m) => { m.GlobalWorkerOptions.workerSrc = ${JSON.stringify(PDFJS_WORKER_URL)}; window.pdfjsLib = m; }, () => {})`
+          + ".finally(() => document.dispatchEvent(new Event('dci-pdfjs')));";
+        (document.head || document.documentElement).appendChild(s);
+        s.remove();
+      }).catch((e) => {
+        pdfjsLoading = null;
+        throw e;
+      });
+    }
+    return pdfjsLoading;
+  }
+
   /** The images of the release on the Cover Art Archive (none: []); the types that mostly carry credits ticked. */
   async function ocrList() {
     const r = await httpFetch(`${CAA_URL}${releaseMbid}`);
@@ -8952,20 +9347,322 @@
     return (data.images || []).map((im, k) => {
       const th = im.thumbnails || {};
       const types = (im.types || []).map(String);
-      return { id: String(im.id || k), types, comment: String(im.comment || ''), thumb: https(th['250'] || th.small || im.image), big: https(th['1200'] || th.large || im.image),
+      return { id: String(im.id || k), src: 'caa', types, comment: String(im.comment || ''), thumb: https(th['250'] || th.small || im.image), big: https(th['1200'] || th.large || im.image),
         orig: https(im.image), sel: types.some((t) => OCR_CREDIT_TYPES.includes(t)), mode: 'frames', frames: [], canvas: null };
     });
   }
 
-  /** An image as a canvas (its longer side at most OCR_MAX), loaded once per size; w, h: its own size. */
+  // --- [3.34.5] Own images (collected item 123; maintainer: "bei der Bilderkennung soll auch die Möglichkeit bestehen eigene
+  // Files oder Bilder per URL zu analysieren", "ja alle drei möglichkeiten"): files chosen, dropped onto the window or pasted
+  // (Ctrl+V), and images by their address (@connect *: Tampermonkey asks once for each new site). Read like the release's
+  // images; they stay in this browser – nothing is uploaded, nothing goes to the Cover Art Archive.
+
+  const OCR_IMAGE_FILE = /^image\//;
+  let ocrOwnN = 0;
+  const ocrIsCaa = (img) => !img.src || img.src === 'caa';
+  /** An address as a short name: its site and the last part of its path ("example.org/…/back.jpg"). */
+  function ocrUrlName(u) {
+    try {
+      const x = new URL(u);
+      const last = x.pathname.split('/').filter(Boolean).pop() || '';
+      let name = last;
+      try {
+        name = decodeURIComponent(last);
+      } catch (e) { /* as written */ }
+      return `${x.hostname.replace(/^www\./, '')}${name ? `/…/${name.length > 40 ? `${name.slice(0, 39)}…` : name}` : ''}`;
+    } catch (e) {
+      return u;
+    }
+  }
+
+  let ocrPastedN = 0;
+  /** An own image: a file (its name – pasted: "pasted image n" –; a local address for its thumbnail) or an address. Ticked. */
+  function ocrOwnImage(src, value, pasted = false) {
+    const base = { id: `own${++ocrOwnN}`, src, types: [], comment: '', sel: true, mode: 'frames', frames: [], canvas: null };
+    if (src === 'file') {
+      const u = URL.createObjectURL(value);
+      return { ...base, name: pasted || !value.name ? tr('ocr.pastedImage', { n: ++ocrPastedN }) : value.name, blob: value, local: u, thumb: u, big: u, orig: u };
+    }
+    return { ...base, name: ocrUrlName(value), url: value, thumb: value, big: value, orig: value };
+  }
+
+  /** Files added (chosen, dropped, pasted): the images among them; others named in a message. */
+  const isPdfFile = (f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '');
+
+  function ocrAddFiles(files, pasted = false) {
+    const o = S.ocr;
+    if (!o || o.step === 'run') return;
+    const list = [...(files || [])];
+    const images = list.filter((f) => OCR_IMAGE_FILE.test(f.type || '')).map((f) => ocrOwnImage('file', f, pasted));
+    o.images.push(...images);
+    const other = list.filter((f) => !OCR_IMAGE_FILE.test(f.type || '') && !isPdfFile(f)).map((f) => f.name || f.type || '?');
+    o.error = other.length ? tr('ocr.notImage', { names: other.join(', ') }) : '';
+    // [3.34.6] a PDF: its pages
+    list.filter((f) => !OCR_IMAGE_FILE.test(f.type || '') && isPdfFile(f)).forEach((f) => ocrAddPdf(f, f.name || 'PDF'));
+    if (images.length) log('info', 'ocrOwnAdded', { n: images.length, what: images.map((im) => im.name).join(', ') });
+    if (o.step !== 'list') o.step = 'pick';
+    renderOcr();
+  }
+
+  /** An image by its address (http or https). */
+  function ocrAddUrl(text) {
+    const o = S.ocr;
+    if (!o || o.step === 'run') return;
+    const u = String(text || '').trim();
+    if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(u)) {
+      o.error = tr('ocr.badUrl', { url: u || '–' });
+    } else if (o.images.some((im) => im.url === u || (im.from && im.from === u))) {
+      o.error = tr('ocr.urlTwice');
+    } else if (DISCOGS.releaseIdInUrl(u)) {
+      // [3.34.7] a Discogs release: its images
+      o.urlDraft = '';
+      ocrAddDiscogs(DISCOGS.releaseIdInUrl(u));
+      return;
+    } else if (/\.pdf(?:[?#]|$)/i.test(u)) {
+      // [3.34.6] a PDF by its address: fetched, then its pages
+      o.urlDraft = '';
+      o.error = '';
+      o.pdfLoading = (o.pdfLoading || 0) + 1;
+      httpFetch(u, { blob: true }).then((r) => {
+        if (r.status < 200 || r.status >= 300 || !r.body) throw new Error(tr('err.pageHttp', { status: r.status, url: u }));
+        return ocrAddPdf(r.body, ocrUrlName(u), u);
+      }, () => { throw new Error(tr('ocr.errUrl', { url: u })); }).catch((e) => {
+        if (S.ocr !== o) return;
+        o.error = (e && e.message) || String(e);
+        renderOcr();
+      }).finally(() => {
+        if (S.ocr !== o) return;
+        o.pdfLoading--;
+        renderOcr();
+      });
+    } else {
+      o.images.push(ocrOwnImage('url', u));
+      o.urlDraft = '';
+      o.error = '';
+      log('info', 'ocrOwnAdded', { n: 1, what: u });
+    }
+    if (o.step !== 'list') o.step = 'pick';
+    renderOcr();
+    const f = document.querySelector('#dci-ocr [data-ocr-url]');
+    if (f && o.error) f.focus();
+  }
+
+  // --- [3.34.7] Discogs images on request (collected item 123; maintainer: "Discogs könnte schon angeboten werden", "nur wenn
+  // eingegeben. nicht automatisch. evtl einen button mit "load discogs artworks" oder ähnlich. da die discogs auflösung gering ist,
+  // wird das ohnehin nicht wirklich funktionieren"): the address of a Discogs release, or "Load Discogs images" for a release
+  // linked to this one – its images from its page on discogs.com (the API gives their addresses only to a signed-in app), at most
+  // 600 px, so read enlarged ×3 with the warning.
+
+  /** "Load Discogs images" or a Discogs address: the release's images, each a card of its own (ticked). */
+  async function ocrAddDiscogs(id) {
+    const o = S.ocr;
+    if (!o || o.step === 'run') return;
+    if (o.images.some((im) => im.discogs === id) || (o.discogsLoading || []).includes(id)) {
+      o.error = tr('ocr.urlTwice');
+      renderOcr();
+      return;
+    }
+    o.discogsLoading = [...(o.discogsLoading || []), id];
+    o.error = '';
+    if (o.step !== 'list') o.step = 'pick';
+    renderOcr();
+    try {
+      const urls = await DISCOGS.pageImages(id);
+      if (S.ocr !== o) return;
+      if (!urls.length) throw new Error(tr('ocr.discogsNone', { id }));
+      urls.forEach((u, k) => o.images.push({ ...ocrOwnImage('url', u), src: 'discogs', discogs: id, name: tr('ocr.discogsImage', { id, n: k + 1 }) }));
+      log('info', 'ocrOwnAdded', { n: urls.length, what: `Discogs r${id}` });
+    } catch (e) {
+      if (S.ocr === o) o.error = (e && e.message) || String(e);
+    } finally {
+      if (S.ocr === o) {
+        o.discogsLoading = o.discogsLoading.filter((x) => x !== id);
+        renderOcr();
+      }
+    }
+  }
+
+  /** The Discogs releases linked to this release (from the import, else asked of MusicBrainz once). */
+  function ocrDiscogsLinks() {
+    const o = S.ocr;
+    const known = (S.sourceLinks || []).filter((l) => l.source === 'discogs');
+    if (known.length || o.discogsAsked) return known.length ? known : (o.discogsLinks || []);
+    o.discogsAsked = true;
+    mbWs(`release/${releaseMbid}?inc=url-rels`, { background: true }).then((ws) => {
+      if (S.ocr !== o || !ws) return;
+      o.discogsLinks = DISCOGS.releaseLinks(ws.relations || []);
+      if (o.discogsLinks.length) renderOcr();
+    }, () => {});
+    return [];
+  }
+
+  /** Ctrl+V while the window is open: an image (a screenshot …) or an address; not while typing in a field. */
+  function ocrPaste(e) {
+    if (!S.ocr || S.ocr.step === 'run' || !e.clipboardData) return;
+    const files = [...(e.clipboardData.files || [])].filter((f) => OCR_IMAGE_FILE.test(f.type || ''));
+    if (files.length) {
+      e.preventDefault();
+      ocrAddFiles(files, true);
+      return;
+    }
+    if (e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    const text = e.clipboardData.getData('text/plain').trim();
+    if (/^https?:\/\/\S+$/i.test(text)) {
+      e.preventDefault();
+      ocrAddUrl(text);
+    }
+  }
+
+  /** [3.34.6] A page of a PDF as a canvas, its longer side px (white below, as on paper); its scale kept on it. */
+  async function ocrPdfRender(page, px) {
+    const vp1 = page.getViewport({ scale: 1 });
+    const scale = px / Math.max(vp1.width, vp1.height);
+    const vp = page.getViewport({ scale });
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(vp.width));
+    c.height = Math.max(1, Math.round(vp.height));
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvas: c, viewport: vp }).promise;
+    c.dciScale = scale;
+    return c;
+  }
+
+  /**
+   * [3.34.6] A PDF added: each page (at most OCR_PDF_PAGES) a card of its own, ticked – one with a text of its own is read from
+   * that text, a scanned one with the text recognition. `from`: its address, when it came by one.
+   */
+  async function ocrAddPdf(blob, name, from = '') {
+    const o = S.ocr;
+    if (!o) return;
+    o.pdfLoading = (o.pdfLoading || 0) + 1;
+    renderOcr();
+    const local = URL.createObjectURL(blob);
+    let kept = false;
+    try {
+      const lib = await loadPdfJs();
+      const doc = await lib.getDocument({ url: local, cMapUrl: `${PDFJS_ROOT}cmaps/`, cMapPacked: true, standardFontDataUrl: `${PDFJS_ROOT}standard_fonts/`,
+        wasmUrl: `${PDFJS_ROOT}wasm/` }).promise;
+      if (S.ocr !== o) {
+        doc.destroy();
+        return;
+      }
+      (o.pdfDocs = o.pdfDocs || []).push({ doc, local });
+      kept = true;
+      const n = Math.min(doc.numPages, OCR_PDF_PAGES);
+      let withText = 0;
+      for (let p = 1; p <= n; p++) {
+        const page = await doc.getPage(p);
+        const tc = await page.getTextContent();
+        const letters = tc.items.reduce((a, it) => a + String(it.str || '').replace(/\s+/g, '').length, 0);
+        const thumb = (await ocrPdfRender(page, 300)).toDataURL('image/jpeg', 0.85);
+        if (S.ocr !== o) return;
+        if (letters >= OCR_PDF_TEXT) withText++;
+        o.images.push({ id: `own${++ocrOwnN}`, src: 'pdf', name: tr('ocr.pdfPage', { name, n: p }), file: name, from, page: p, pdfPage: page, textLayer: letters >= OCR_PDF_TEXT,
+          types: [], comment: '', sel: true, mode: 'frames', frames: [], canvas: null, thumb });
+        renderOcr();
+      }
+      if (doc.numPages > n) o.error = tr('ocr.pdfLong', { name, n, of: doc.numPages });
+      log('info', 'ocrPdfAdded', { name, n, text: withText });
+    } catch (e) {
+      if (S.ocr === o) o.error = tr('ocr.errPdf', { name, why: (e && e.message) || String(e) });
+    } finally {
+      if (!kept) URL.revokeObjectURL(local);
+      if (S.ocr === o) {
+        o.pdfLoading--;
+        if (o.step !== 'list' && o.step !== 'run') o.step = 'pick';
+        renderOcr();
+      }
+    }
+  }
+
+  /** [3.34.6] Lines of text pieces by their place: those on one height in a line, left to right, a space where there is a gap. */
+  function pdfLines(pts) {
+    const lines = [];
+    [...pts].sort((a, b) => a.y - b.y || a.x - b.x).forEach((p) => {
+      const line = lines.find((l) => Math.abs(l.y - p.y) < Math.max(2, Math.min(l.size, p.size) * 0.5));
+      if (line) line.items.push(p);
+      else lines.push({ y: p.y, size: p.size, items: [p] });
+    });
+    return lines.sort((a, b) => a.y - b.y).map((l) => {
+      let text = '';
+      let end = null;
+      l.items.sort((a, b) => a.x - b.x).forEach((it) => {
+        if (end != null && it.x - end > it.size * 0.2 && !/\s$/.test(text) && !/^\s/.test(it.str)) text += ' ';
+        text += it.str;
+        end = it.x + it.w;
+      });
+      return text.replace(/\s+/g, ' ').trim();
+    }).filter(Boolean);
+  }
+
+  /**
+   * [3.34.6] The text of a PDF page of its own: in its order (lines as the PDF ends them); with frames, frame by frame, the pieces
+   * whose start is inside it, in lines by their place.
+   */
+  async function ocrPdfText(img) {
+    const tc = await img.pdfPage.getTextContent();
+    const items = tc.items.filter((it) => typeof it.str === 'string');
+    if (!(img.mode === 'frames' && img.frames.length)) {
+      const out = [];
+      let line = '';
+      items.forEach((it) => {
+        line += it.str;
+        if (it.hasEOL) {
+          out.push(line);
+          line = '';
+        }
+      });
+      out.push(line);
+      return out.map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+    }
+    const k = img.pdfScale;
+    const vp = img.pdfPage.getViewport({ scale: k });
+    const pts = items.filter((it) => it.str.trim()).map((it) => {
+      const [x, y] = vp.convertToViewportPoint(it.transform[4], it.transform[5]);
+      return { x, y, size: (Math.hypot(it.transform[2], it.transform[3]) || 10) * k, w: (it.width || 0) * k, str: it.str };
+    });
+    return img.frames.flatMap((b) => pdfLines(pts.filter((p) => p.x >= b.x - 2 && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h + p.size * 0.3))).join('\n');
+  }
+
+  /** [3.34.6] A PDF page read from its own text (not turned): no text recognition needed. */
+  const ocrDirect = (img) => img.src === 'pdf' && img.textLayer && !img.turn;
+
+  /** The file of an image: an own file as it is, else from its address (the release's at the size chosen). */
+  async function ocrBlob(img) {
+    if (img.blob) return img.blob;
+    const url = ocrIsCaa(img) && S.ocr.size === '1200' ? img.big : img.orig;
+    let r;
+    try {
+      r = await httpFetch(url, { blob: true });
+    } catch (e) {
+      // [3.34.5] a site that does not let the script read it: save the image and choose it as a file
+      throw new Error(ocrIsCaa(img) ? e.message : tr('ocr.errUrl', { url }));
+    }
+    if (r.status < 200 || r.status >= 300 || !r.body) throw new Error(tr('err.pageHttp', { status: r.status, url }));
+    return r.body;
+  }
+
+  /** An image as a canvas (its longer side at most OCR_MAX), loaded once ([3.34.5] the release's once per size); w, h: its own size. */
   async function ocrCanvas(img) {
-    if (img.canvas && img.canvasSize === S.ocr.size) return img.canvas;
-    const r = await httpFetch(S.ocr.size === '1200' ? img.big : img.orig, { blob: true });
-    if (r.status < 200 || r.status >= 300 || !r.body) throw new Error(tr('err.pageHttp', { status: r.status, url: img.orig }));
+    if (img.canvas && (!ocrIsCaa(img) || img.canvasSize === S.ocr.size)) return img.canvas;
+    // [3.34.6] a page of a PDF: drawn by pdf.js
+    if (img.src === 'pdf') {
+      const c = await ocrPdfRender(img.pdfPage, OCR_PDF_PX);
+      Object.assign(img, { canvas: c, pdfScale: c.dciScale, w: c.width, h: c.height, frames: [], turn: 0 });
+      return c;
+    }
+    const blob = await ocrBlob(img);
     let src;
-    if (typeof window.createImageBitmap === 'function') src = await window.createImageBitmap(r.body);
-    else {
-      const url = URL.createObjectURL(r.body);
+    if (typeof window.createImageBitmap === 'function') {
+      try {
+        src = await window.createImageBitmap(blob);
+      } catch (e) {
+        throw new Error(tr('ocr.errImage'));
+      }
+    } else {
+      const url = URL.createObjectURL(blob);
       src = await new Promise((res, rej) => {
         const el = new Image();
         el.onload = () => res(el);
@@ -9017,7 +9714,7 @@
     return { text: lines.join('\n'), fixes };
   }
 
-  const ocrTypes = (img) => (img.types.length ? img.types.join(', ') : tr('ocr.noType'));
+  const ocrTypes = (img) => (img.name || (img.types.length ? img.types.join(', ') : tr('ocr.noType')));
   /** [3.34.2] The images ticked (also those left out in the frames step) and those that are read. */
   const ocrChosen = () => S.ocr.images.filter((im) => im.sel);
   const ocrToRead = () => ocrChosen().filter((im) => im.mode !== 'skip');
@@ -9147,7 +9844,7 @@
     g.translate(c.width / 2, c.height / 2);
     g.rotate((dir * Math.PI) / 2);
     g.drawImage(src, -src.width / 2, -src.height / 2);
-    Object.assign(img, { canvas: c, w: img.h, h: img.w, frames: [] });
+    Object.assign(img, { canvas: c, w: img.h, h: img.w, frames: [], turn: ((img.turn || 0) + dir + 4) % 4 });
   }
 
   function ocrFramesHtml() {
@@ -9189,18 +9886,30 @@
     log('info', 'ocrOpen', { mbid: releaseMbid });
     ocrList().then((images) => {
       if (!S.ocr) return;
-      Object.assign(S.ocr, { images, step: 'pick' });
+      // [3.34.5] own images added while the list was loading stay, after the release's
+      Object.assign(S.ocr, { images: [...images, ...S.ocr.images.filter((im) => !ocrIsCaa(im))], step: 'pick' });
       renderOcr();
     }, (e) => {
       if (!S.ocr) return;
-      Object.assign(S.ocr, { step: 'pick', error: e.message || String(e) });
+      Object.assign(S.ocr, { step: 'pick', listError: e.message || String(e) });
       renderOcr();
     });
   }
 
   function closeOcr() {
-    if (S.ocr) S.ocr.run++;
+    if (S.ocr) {
+      S.ocr.run++;
+      // [3.34.5] the local addresses of own files; [3.34.6] the PDFs opened
+      S.ocr.images.forEach((im) => { if (im.local) URL.revokeObjectURL(im.local); });
+      (S.ocr.pdfDocs || []).forEach(({ doc, local }) => {
+        try {
+          doc.destroy();
+        } catch (e) { /* gone already */ }
+        URL.revokeObjectURL(local);
+      });
+    }
     S.ocr = null;
+    document.removeEventListener('paste', ocrPaste);
     const el = document.getElementById('dci-ocr');
     if (el) el.remove();
   }
@@ -9216,33 +9925,47 @@
     let worker = null;
     let current = null;
     const alive = () => S.ocr === o && o.run === run;
+    // [3.34.6] the text recognition only when an image needs it (PDF pages with a text of their own do not)
+    const recognizer = async () => {
+      if (!worker) {
+        const T = await loadTesseract();
+        worker = await T.createWorker(langs.length ? langs : ['eng'], 1, {
+          logger: (m) => {
+            if (current && m && /recogni/.test(String(m.status)) && typeof m.progress === 'number') {
+              current.progress = m.progress;
+              renderOcrProgress();
+            }
+          },
+        });
+      }
+      return worker;
+    };
     try {
-      const T = await loadTesseract();
-      worker = await T.createWorker(langs.length ? langs : ['eng'], 1, {
-        logger: (m) => {
-          if (current && m && /recogni/.test(String(m.status)) && typeof m.progress === 'number') {
-            current.progress = m.progress;
-            renderOcrProgress();
-          }
-        },
-      });
       for (const res of o.results) {
         if (!alive()) return;
         current = res;
         res.status = 'load';
         renderOcr();
-        if (!res.img.canvas || res.img.canvasSize !== o.size) await ocrCanvas(res.img);
-        res.small = res.img.w < OCR_SMALL;
+        const direct = ocrDirect(res.img);
+        if (!direct || res.img.frames.length) await ocrCanvas(res.img);
+        res.small = !direct && res.img.w < OCR_SMALL;
         res.status = 'read';
         renderOcr();
         const texts = [];
         const unsure = [];
-        for (const piece of ocrPieces(res.img)) {
-          const { data } = await worker.recognize(piece);
-          texts.push(String((data && data.text) || ''));
-          ((data && data.words) || []).forEach((w) => { if (w && w.confidence < OCR_UNSURE && /[\p{L}\d]/u.test(String(w.text || ''))) unsure.push(String(w.text).trim()); });
-          if (!alive()) return;
+        if (direct) {
+          texts.push(await ocrPdfText(res.img));
+          res.direct = true;
+        } else {
+          const tess = await recognizer();
+          for (const piece of ocrPieces(res.img)) {
+            const { data } = await tess.recognize(piece);
+            texts.push(String((data && data.text) || ''));
+            ((data && data.words) || []).forEach((w) => { if (w && w.confidence < OCR_UNSURE && /[\p{L}\d]/u.test(String(w.text || ''))) unsure.push(String(w.text).trim()); });
+            if (!alive()) return;
+          }
         }
+        if (!alive()) return;
         const clean = ocrClean(texts.join('\n'));
         Object.assign(res, { text: clean.text, fixes: clean.fixes, unsure: uniq(unsure), status: 'done', progress: 1 });
       }
@@ -9264,7 +9987,22 @@
     const o = S.ocr;
     const done = o.results.filter((r) => r.status === 'done' && r.text.trim());
     const text = done.map((r) => r.text.trim()).join('\n\n');
-    const origin = `Cover Art Archive images (${uniq(done.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')}), read with text recognition`;
+    // [3.34.5] with own images: their files and addresses
+    const caa = done.filter((r) => ocrIsCaa(r.img));
+    const files = uniq(done.filter((r) => r.img.src === 'file').map((r) => r.img.name));
+    const urls = uniq(done.filter((r) => r.img.src === 'url').map((r) => r.img.url));
+    const discogs = uniq(done.filter((r) => r.img.src === 'discogs').map((r) => r.img.discogs));
+    // [3.34.6] PDFs with their pages read
+    const pdfs = new Map();
+    done.filter((r) => r.img.src === 'pdf').forEach((r) => {
+      const key = r.img.from || r.img.file;
+      pdfs.set(key, [...(pdfs.get(key) || []), r.img.page]);
+    });
+    const parts = [caa.length ? `Cover Art Archive images (${uniq(caa.flatMap((r) => r.img.types.length ? r.img.types : ['other'])).join(', ')})` : '',
+      files.length ? `own image files (${files.join(', ')})` : '', urls.length ? `images from ${urls.join(', ')}` : '',
+      ...discogs.map((id) => `images of Discogs release ${DISCOGS.releaseUrl(id)}`),
+      ...[...pdfs].map(([key, pages]) => `PDF ${key} (p. ${uniq(pages).join(', ')})`)].filter(Boolean);
+    const origin = `${parts.join('; ')}, read with text recognition`;
     return { text, origin };
   }
 
@@ -9276,6 +10014,12 @@
     }
     log('info', 'ocrImported', { origin, how: tr(supp ? 'ocr.supp' : 'ocr.import') });
     closeOcr();
+    // [3.34.8] opened with "… from cover art" (nothing imported yet): the release is loaded now, with this text as its source
+    if (!S.initialized) {
+      S.startText = { text, origin };
+      initOnce();
+      return;
+    }
     if (supp) loadSupplement(TEXT, textSig(text), { text, origin });
     else {
       S.textInput = { text, origin };
@@ -9293,32 +10037,51 @@
     });
   }
 
+  /** [3.34.5] Own images: files (chosen, dropped, pasted) and addresses. */
+  function ocrOwnHtml() {
+    const o = S.ocr;
+    return `<fieldset class="dci-ocr-own"><legend>${esc(tr('ocr.own'))}</legend>
+        <div class="dci-ocr-ownrow"><button type="button" class="dci-small" data-ocr="files">${esc(tr('ocr.chooseFiles'))}</button>
+          <input type="file" data-ocr-files multiple accept="image/*,application/pdf,.pdf" hidden><span class="dci-sub">${esc(tr('ocr.dropHint'))}</span></div>
+        ${o.pdfLoading ? `<p class="dci-sub" role="status">${esc(tr('ocr.pdfLoading'))}</p>` : ''}
+        ${ocrDiscogsLinks().length ? `<div class="dci-ocr-ownrow">${ocrDiscogsLinks().map((l) => `<button type="button" class="dci-small" data-ocr-discogs="${esc(l.id)}"
+          ${(o.discogsLoading || []).includes(l.id) || o.images.some((im) => im.discogs === l.id) ? 'disabled' : ''}>${esc(tr('ocr.discogsLoad', { id: l.id }))}</button>`).join('')}
+          <span class="dci-sub">${esc(tr('ocr.discogsHint'))}</span></div>` : ''}
+        ${(o.discogsLoading || []).length ? `<p class="dci-sub" role="status">${esc(tr('ocr.discogsLoading'))}</p>` : ''}
+        <div class="dci-ocr-ownrow"><input type="url" data-ocr-url value="${esc(o.urlDraft || '')}" placeholder="https://…/back.jpg" aria-label="${esc(tr('ocr.urlLabel'))}" spellcheck="false">
+          <button type="button" class="dci-small" data-ocr="url">${esc(tr('ocr.addUrl'))}</button></div>
+        <p class="dci-sub">${esc(tr('ocr.ownHint'))}</p></fieldset>`;
+  }
+
   function ocrPickHtml() {
     const o = S.ocr;
     const n = o.images.filter((im) => im.sel).length;
     // [3.34.2] back from the frames: an image left out there is read again when ticked here
     o.images.forEach((im) => { if (im.mode === 'skip') im.mode = 'frames'; });
-    if (!o.images.length) {
-      return `<div class="dci-ocr-body"><p>${esc(o.error ? tr('ocr.listFailed', { why: o.error }) : tr('ocr.none'))}</p></div>
-        <div class="dci-ocr-foot"><span></span><button type="button" class="dci-small" data-ocr="close">${esc(tr('common.close'))}</button></div>`;
-    }
-    const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}">
+    const caa = o.images.filter(ocrIsCaa).length;
+    const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}${ocrIsCaa(im) ? '' : ' dci-ocr-owncard'}" data-ocr-card="${i}">
         <img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" loading="lazy">
-        <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> ${esc(ocrTypes(im))}</span>
+        <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> <span>${esc(ocrTypes(im))}</span></span>
         ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
-        ${im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`}</label>`;
+        ${ocrIsCaa(im) ? (im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`)
+          : `<span class="dci-sub">${esc(tr(im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : im.src === 'discogs' ? 'ocr.ownDiscogs' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
+    // [3.34.5] "All images" (collected item 125; maintainer: "wir brauchen einen knopf im bilderkennungsmenü, der alles abwählt
+    // oder alles anwählt. viele bookletseiten haben nur bilder oder songtexte"): on – all, off – none, half – some
+    const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
     return `<div class="dci-ocr-body">
         ${o.error ? `<p class="dci-ocr-err" role="alert">${esc(o.error)}</p>` : ''}
-        <p class="dci-sub">${esc(tr('ocr.pickHint'))}</p>
-        <div class="dci-ocr-grid">${o.images.map(card).join('')}</div>
+        ${o.listError ? `<p class="dci-ocr-err">${esc(tr('ocr.listFailed', { why: o.listError }))}</p>` : !caa ? `<p>${esc(tr('ocr.none'))}</p>` : `<p class="dci-sub">${esc(tr('ocr.pickHint'))}</p>`}
+        ${all}
+        ${o.images.length ? `<div class="dci-ocr-grid">${o.images.map(card).join('')}</div>` : ''}
+        ${ocrOwnHtml()}
         <div class="dci-ocr-opts">
           <fieldset><legend>${esc(tr('ocr.langs'))}</legend>
             ${Object.keys(OCR_LANGS).map((c) => `<label class="dci-check"><input type="checkbox" data-ocr-lang="${c}" ${o.langs.has(c) ? 'checked' : ''}> ${esc(LANGS[c])}</label>`).join('')}
             <p class="dci-sub">${esc(tr('ocr.langsHint'))}</p></fieldset>
-          <fieldset><legend>${esc(tr('ocr.size'))}</legend>
+          ${caa ? `<fieldset><legend>${esc(tr('ocr.size'))}</legend>
             <label class="dci-check"><input type="radio" name="dci-ocr-size" data-ocr-size="orig" ${o.size === 'orig' ? 'checked' : ''}> ${esc(tr('ocr.sizeOrig'))}</label>
             <label class="dci-check"><input type="radio" name="dci-ocr-size" data-ocr-size="1200" ${o.size === '1200' ? 'checked' : ''}> ${esc(tr('ocr.size1200'))}</label>
-            <p class="dci-sub">${esc(tr('ocr.sizeHint', { px: OCR_SMALL }))}</p></fieldset>
+            <p class="dci-sub">${esc(tr('ocr.sizeHint', { px: OCR_SMALL }))}</p></fieldset>` : ''}
           <fieldset><legend>${esc(tr('ocr.before'))}</legend>
             <label class="dci-check"><input type="checkbox" data-ocr-framefirst ${o.frameFirst ? 'checked' : ''}> ${esc(tr('ocr.frameFirst'))}</label>
             <p class="dci-sub">${esc(tr('ocr.frameFirstHint'))}</p></fieldset>
@@ -9347,6 +10110,7 @@
       return `<section class="dci-ocr-res" data-ocr-res="${i}">
         <h3>${esc(ocrTypes(r.img))}${r.img.comment ? ` <span class="dci-sub">“${esc(r.img.comment)}”</span>` : ''}</h3>
         ${r.small ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: r.img.w, h: r.img.h }))}</p>` : ''}
+        ${r.direct ? `<p class="dci-sub">${esc(tr('ocr.fromPdf'))}</p>` : ''}
         <textarea data-ocr-text="${i}" rows="${Math.min(14, Math.max(4, r.text.split('\n').length + 1))}" spellcheck="false" aria-label="${esc(tr('ocr.textOf', { what: ocrTypes(r.img) }))}">${esc(r.text)}</textarea>
         ${r.unsure.length ? `<p class="dci-ocr-unsure"><span class="dci-sub">${esc(tr('ocr.unsure'))}</span> ${r.unsure.map((w) => `<button type="button" class="dci-ocr-word" data-ocr-word="${esc(w)}" data-ocr-in="${i}">${esc(w)}</button>`).join(' ')}</p>` : ''}
         ${fixes.length ? `<p class="dci-sub">${esc(tr('ocr.fixed'))} ${esc(fixes.join(' · '))}</p>` : ''}</section>`;
@@ -9378,16 +10142,52 @@
       el.addEventListener('input', (e) => {
         const i = e.target.dataset.ocrText;
         if (i != null && S.ocr && S.ocr.results[i]) S.ocr.results[i].text = e.target.value;
+        if (e.target.dataset.ocrUrl != null && S.ocr) S.ocr.urlDraft = e.target.value;
       });
+      // [3.34.5] an address: Enter adds it
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.dataset && e.target.dataset.ocrUrl != null) {
+          e.preventDefault();
+          ocrAddUrl(e.target.value);
+        }
+      });
+      // [3.34.5] files (or an image's address) dropped onto the window; never opened by the browser instead
+      const dragged = (e) => [...((e.dataTransfer && e.dataTransfer.types) || [])].some((t) => t === 'Files' || t === 'text/uri-list');
+      el.addEventListener('dragover', (e) => {
+        if (!dragged(e)) return;
+        e.preventDefault();
+        el.classList.add('dci-ocr-drop');
+      });
+      el.addEventListener('dragleave', (e) => {
+        if (!el.contains(e.relatedTarget)) el.classList.remove('dci-ocr-drop');
+      });
+      el.addEventListener('drop', (e) => {
+        el.classList.remove('dci-ocr-drop');
+        if (!dragged(e)) return;
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (files && files.length) ocrAddFiles(files);
+        else {
+          const uri = (e.dataTransfer.getData('text/uri-list') || '').split('\n').map((x) => x.trim()).find((x) => x && !x.startsWith('#'));
+          if (uri) ocrAddUrl(uri);
+        }
+      });
+      document.addEventListener('paste', ocrPaste);
     }
     el.style.zIndex = String(++topZ);
     const body = o.step === 'list' ? `<div class="dci-ocr-body"><p>${esc(tr('ocr.loading'))}</p></div>`
       : o.step === 'run' ? ocrRunHtml() : o.step === 'result' ? ocrResultHtml() : o.step === 'frames' ? ocrFramesHtml() : ocrPickHtml();
     const cur = o.step === 'frames' ? ocrCurrent().img : null;
     el.innerHTML = `<div class="dci-ocr-head"><h2 id="dci-ocr-title">${esc(tr('ocr.title'))} <span class="dci-beta-tag">beta</span></h2>
-        <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.step === 'frames' ? ocrChosen().length : o.images.length, i: o.cur + 1, what: cur ? ocrTypes(cur) : '' }))}</span>
+        <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.step === 'frames' ? ocrChosen().length : o.images.filter(ocrIsCaa).length, i: o.cur + 1, what: cur ? ocrTypes(cur) : '' }))}</span>
         <a href="https://musicbrainz.org/release/${esc(releaseMbid)}/cover-art" target="_blank" rel="noopener">${esc(tr('ocr.caaLink'))}</a>
         <button type="button" class="dci-iconbtn" data-ocr="close" aria-label="${esc(tr('common.close'))}" title="${esc(tr('common.close'))}">✕</button></div>${body}`;
+    // [3.34.5] "All images" half ticked while only some are
+    const all = el.querySelector('[data-ocr-all]');
+    if (all) {
+      const n = o.images.filter((im) => im.sel).length;
+      all.indeterminate = n > 0 && n < o.images.length;
+    }
     // [3.34.2] the frames step: the image loaded first, then drawn
     if (o.step === 'frames') {
       const { img } = ocrCurrent();
@@ -9421,6 +10221,21 @@
       }
       return;
     }
+    const dg = t.closest('[data-ocr-discogs]');
+    if (dg && S.ocr) {
+      ocrAddDiscogs(dg.dataset.ocrDiscogs);
+      return;
+    }
+    const rm = t.closest('[data-ocr-remove]');
+    if (rm && S.ocr) {
+      // [3.34.5] an own image taken out again (the click does not tick its card)
+      e.preventDefault();
+      const [im] = S.ocr.images.splice(Number(rm.dataset.ocrRemove), 1);
+      if (im && im.local) URL.revokeObjectURL(im.local);
+      S.ocr.error = '';
+      renderOcr();
+      return;
+    }
     if (!b || !S.ocr) return;
     const act = b.dataset.ocr;
     const thumb = t.closest('[data-ocr-cur]');
@@ -9431,6 +10246,17 @@
       return;
     }
     const { img } = S.ocr.step === 'frames' ? ocrCurrent() : {};
+    // [3.34.5] own images
+    if (act === 'files') {
+      const f = document.querySelector('#dci-ocr [data-ocr-files]');
+      if (f) f.click();
+      return;
+    }
+    if (act === 'url') {
+      const f = document.querySelector('#dci-ocr [data-ocr-url]');
+      ocrAddUrl(f ? f.value : '');
+      return;
+    }
     if (act === 'close') closeOcr();
     else if (act === 'run') ocrRun();
     else if (act === 'frames') {
@@ -9466,13 +10292,20 @@
     const o = S.ocr;
     if (!o) return;
     if (t.dataset.ocrSel != null && o.images[t.dataset.ocrSel]) o.images[t.dataset.ocrSel].sel = t.checked;
+    else if (t.dataset.ocrAll != null) o.images.forEach((im) => { im.sel = t.checked; });
+    else if (t.dataset.ocrFiles != null) {
+      const files = [...(t.files || [])];
+      t.value = '';
+      ocrAddFiles(files);
+      return;
+    } else if (t.dataset.ocrUrl != null) return;
     else if (t.dataset.ocrLang) {
       if (t.checked) o.langs.add(t.dataset.ocrLang);
       else o.langs.delete(t.dataset.ocrLang);
     } else if (t.dataset.ocrSize) {
       o.size = t.dataset.ocrSize === '1200' ? '1200' : 'orig';
-      // [3.34.2] another size: the images are loaded anew, their frames go
-      o.images.forEach((im) => Object.assign(im, { canvas: null, frames: [] }));
+      // [3.34.2] another size: the images are loaded anew, their frames go ([3.34.5] the release's images; own ones keep theirs)
+      o.images.filter(ocrIsCaa).forEach((im) => Object.assign(im, { canvas: null, frames: [] }));
     } else if (t.dataset.ocrFramefirst != null) o.frameFirst = t.checked;
     else if (t.dataset.ocrMode) {
       const { img } = ocrCurrent();
@@ -10355,6 +11188,15 @@
 
   /** Imports the source chosen for this release, else the first linked one of the preference list. */
   async function startImport() {
+    // [3.34.8] started with "… from cover art": the text read from the images is the source (Discogs or Bandcamp only through
+    // "＋ Supplement" – maintainer: "A")
+    if (S.startText) {
+      const { text, origin } = S.startText;
+      S.startText = null;
+      S.textInput = { text, origin };
+      await loadRelease(textSig(text), { source: TEXT });
+      return;
+    }
     const start = startSource();
     if (start.link) {
       if (start.kept) log('info', 'sourceKept', { src: SOURCES[start.link.source].name });
@@ -21318,6 +22160,8 @@
     body.addEventListener('scroll', bridgesLater, { passive: true });
     new ResizeObserver(bridgesLater).observe(overlay.querySelector('.dci-head'));
     new ResizeObserver(bridgesLater).observe(body);
+    // [3.34.3] and the settings when their content grows or shrinks (the place of their content follows it, collected item 127)
+    new ResizeObserver(bridgesLater).observe(overlay.querySelector('[data-el="settings"]'));
     new ResizeObserver(() => {
       body.style.scrollPaddingTop = `${stick.offsetHeight + 8}px`;
       updatePageScrollPadding();
@@ -21821,6 +22665,7 @@
       log('info', 'settingValue', { what: tr('settings.betaOcr'), value: tr(el.checked ? 'common.on' : 'common.off') });
       if (!el.checked) closeOcr();
       renderSource();
+      renderLauncher();
     } else if (k === 'rule-on') {
       // [3.32.5] a rule switched here (S050; [3.32.6] S049) – the same as its switch in "Mapping rules"
       setRuleOn(el.dataset.rule, el.checked);
@@ -21906,6 +22751,7 @@
       S.betaOcr = false;
       closeOcr();
       renderSource();
+      renderLauncher();
     }
     syncSharedSwitches();
     renderSettings();
@@ -21944,6 +22790,7 @@
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false,
     });
     closeOcr();
+    renderLauncher();
     applyKindColors();
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
@@ -21988,6 +22835,8 @@
    */
   async function openDashboard(opts) {
     const settingsOnly = !!(opts && opts.settingsOnly);
+    // [3.34.8] "… from cover art": the dashboard without the import, the text recognition first
+    const ocrFirst = !!(opts && opts.ocrFirst);
     if (!S.overlay) buildOverlay();
     S.lastFocus = document.activeElement;
     S.overlay.hidden = false;
@@ -22002,11 +22851,29 @@
     clearInterval(S.syncTimer);
     S.syncTimer = setInterval(() => toDiscogs({ type: 'ping' }), 3000);
     if (S.initialized) return;
+    if (ocrFirst) {
+      if (!S.messages.some((m) => m.key === 'ocrStart.hint')) showMessage('info', 'ocrStart.hint', {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
+      return;
+    }
     if (settingsOnly) {
       if (!S.messages.some((m) => m.key === 'settingsOnly.hint')) showMessage('info', 'settingsOnly.hint', {}, { action: { act: 'start-import', label: 'settingsOnly.start' } });
       return;
     }
     await initOnce();
+  }
+
+  /**
+   * [3.34.8] "… from cover art" beside "Import credits …" (collected item 124; maintainer: "neben dem initialen "Import credits …"
+   * Button soll ein Button "… from cover art" erscheinen, der dann die Bilderkennung triggert bevor bspw. von discogs importiert
+   * wird", "nur wenn beta an ist", "also eigentlich kann das immer da sein sobald man in der beta es anklickt", "A"): the
+   * dashboard without the import and the window of the text recognition; its text then is the source. Already imported: only
+   * the window (its text replaces the source or supplements it).
+   */
+  async function openFromCoverArt() {
+    if (!S.betaOcr) return;
+    await openDashboard({ ocrFirst: true });
+    if (!S.ocr) openOcr();
+    else renderOcr();
   }
 
   /** [3.30.5] The import, started once (also from the message of the dashboard opened for its settings only). */
@@ -22239,6 +23106,12 @@
     if (!bar) return;
     bar.querySelector('#dci-open').textContent = tr('launcher.open');
     bar.querySelector('#dci-open').title = tr('launcher.shortcut');
+    const ocrBtn = bar.querySelector('#dci-open-ocr');
+    if (ocrBtn) {
+      ocrBtn.hidden = !S.betaOcr;
+      ocrBtn.innerHTML = `${esc(tr('launcher.ocr'))}<span class="dci-beta-tag">beta</span>`;
+      ocrBtn.title = tr('launcher.ocrTitle');
+    }
     bar.querySelector('#dci-log-open').textContent = tr('log.title');
     bar.querySelector('#dci-launch-status').textContent = S.launchStatus ? tr(S.launchStatus.key, S.launchStatus.params) : '';
     renderNotice();
@@ -22261,7 +23134,8 @@
     const bar = document.createElement('div');
     bar.id = 'dci-launcher';
     // [3.27.1] no language list here any more (collected item 67): the question after the installation, then ⚙ Settings → General
-    bar.innerHTML = `<button type="button" id="dci-open"></button>
+    // [3.34.8] "… from cover art" beside it while the beta is on (collected item 124)
+    bar.innerHTML = `<button type="button" id="dci-open"></button><button type="button" id="dci-open-ocr" hidden></button>
       <span class="dci-seg dci-place-seg" role="group">
         <button type="button" data-place="window"></button><button type="button" data-place="page"></button></span>
       <button type="button" id="dci-log-open" class="dci-textbtn"></button>
@@ -22275,6 +23149,7 @@
     if (anchor) anchor.after(block);
     else (document.getElementById('content') || document.body).prepend(block);
     bar.querySelector('#dci-open').addEventListener('click', openDashboard);
+    bar.querySelector('#dci-open-ocr').addEventListener('click', openFromCoverArt);
     bar.querySelector('#dci-log-open').addEventListener('click', () => setLogVisible(!S.logEl || S.logEl.hidden));
     renderLauncher();
     renderControls();
@@ -22418,6 +23293,11 @@
       #dci-launcher { display: flex; align-items: center; gap: 12px; margin: 0 0 6px; }
       #dci-open { font: inherit; padding: 4px 12px; border: 1px solid #736dab; border-radius: 3px; background: #fff; color: #4b4585; cursor: pointer; }
       #dci-open:hover { background: #f1f0f8; }
+      /* [3.34.8] "… from cover art" joined to it (collected item 124) */
+      #dci-open-ocr { font: inherit; margin-left: -13px; padding: 4px 10px; border: 1px solid #736dab; border-radius: 0 3px 3px 0; background: #f7f6fd; color: #4b4585; cursor: pointer; }
+      #dci-open-ocr:hover { background: #ecebf6; }
+      #dci-open:has(+ #dci-open-ocr:not([hidden])) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+      #dci-open-ocr .dci-beta-tag { margin-left: 6px; }
       #dci-launch-status { color: #4b4585; }
       #dci-launcher .dci-textbtn { border: 0; background: none; color: #4b4585; text-decoration: underline; cursor: pointer; font: inherit; }
       #dci-notice { position: relative; max-width: 80ch; margin: 0 0 12px; padding: 10px 36px 10px 14px; border: 1px solid #c8c5d6; border-left: 4px solid #736dab;
@@ -22489,7 +23369,15 @@
       #dci-ocr .dci-ocr-card { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8); border: 1px solid #dddae8; border-radius: 6px; cursor: pointer; }
       #dci-ocr .dci-ocr-card.dci-on { border: 2px solid #5b55a0; padding: calc(var(--u, 1px) * 7); background: #f7f6fd; }
       #dci-ocr .dci-ocr-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 3px; background: #eceaf3; }
-      #dci-ocr .dci-ocr-type { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); font-weight: 600; }
+      #dci-ocr .dci-ocr-type { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); font-weight: 600; min-width: 0; }
+      #dci-ocr .dci-ocr-type > span { overflow-wrap: anywhere; }
+      /* [3.34.5] own images: a dashed card, the box to add them, the window while something is dragged onto it */
+      #dci-ocr .dci-ocr-owncard { border-style: dashed; }
+      #dci-ocr .dci-ocr-all { font-weight: 600; }
+      #dci-ocr .dci-ocr-own { border-style: dashed; }
+      #dci-ocr .dci-ocr-ownrow { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
+      #dci-ocr .dci-ocr-ownrow input[type="url"] { flex: 1 1 calc(var(--u, 1px) * 260); min-width: 0; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 4px; font: inherit; }
+      #dci-ocr.dci-ocr-drop { outline: 3px dashed #736dab; outline-offset: -6px; }
       #dci-ocr .dci-ocr-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--u, 1px) * 260), 1fr)); gap: calc(var(--u, 1px) * 10); }
       #dci-ocr fieldset { margin: 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid #dddae8; border-radius: 6px; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 4); }
       #dci-ocr legend { font-weight: 600; padding: 0 4px; }
@@ -22593,6 +23481,17 @@
       #dci-rules .dci-redit .dci-redit-wide, #dci-rules .dci-redit-list textarea, #dci-rules .dci-redit-list p { grid-column: 1 / -1; }
       #dci-rules .dci-redit p { margin: 0; }
       #dci-rules .dci-redit-err { color: #b3261e; font-weight: 600; }
+      /* [3.34.4] ✎ at wording rules and questions: their words a line each, the choices of a type question as a table */
+      #dci-rules .dci-redit label > textarea { display: block; margin-top: calc(var(--u, 1px) * 2); font-weight: 400; }
+      #dci-rules .dci-redit-choices { overflow-x: auto; }
+      #dci-rules .dci-redit-choices table { border-collapse: collapse; width: 100%; }
+      #dci-rules .dci-redit-choices th { font-weight: 600; text-align: left; font-size: calc(var(--u, 1px) * 11); color: var(--muted); padding: 0 calc(var(--u, 1px) * 4); }
+      #dci-rules .dci-redit-choices td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4); vertical-align: middle; }
+      #dci-rules .dci-redit-choices input[type="text"] { width: 100%; min-width: calc(var(--u, 1px) * 90); box-sizing: border-box; }
+      #dci-rules .dci-redit-choices select + input[type="text"] { margin-top: calc(var(--u, 1px) * 2); }
+      #dci-rules .dci-redit-omove { white-space: nowrap; }
+      #dci-rules .dci-redit-omove .dci-textbtn { padding: 0 calc(var(--u, 1px) * 3); }
+      #dci-rules .dci-redit-omove .dci-textbtn:disabled { opacity: 0.35; cursor: default; }
       #dci-rules textarea { width: 100%; box-sizing: border-box; padding: calc(var(--u, 1px) * 4); font: calc(var(--u, 1px) * 12) / 1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
       #dci-rules .dci-mchg { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 18); }
       #dci-rules .dci-mchg li { margin: calc(var(--u, 1px) * 3) 0; }
@@ -23210,7 +24109,9 @@
       .dci-set-tab[aria-selected="true"] { background: #fff; border-color: #c9c4dd; border-right-color: #fff; font-weight: 600; margin-right: calc(var(--u, 1px) * -14 - 1px); position: relative; z-index: 1; }
       .dci-set-tab:focus-visible { outline: 2px solid var(--purple); outline-offset: -2px; }
       .dci-set-resetall { align-self: flex-start; }
-      .dci-set-pane { flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid #c9c4dd; border-radius: 0 4px 4px 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
+      .dci-set-pane { flex: 1 1 auto; min-width: 0; background: #fff; border: 1px solid #c9c4dd; border-radius: 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); }
+      /* [3.34.3] the corner where the tab joins at the top stays square (collected item 127) */
+      .dci-set-pane.dci-set-joined-top { border-top-left-radius: 0; }
       .dci-set-pane .dci-reset { margin: 0; }
       /* [3.28.1] long texts of a switch wrap with the width of the settings (collected item 74); the box stays at the first line */
       .dci-set-pane .dci-check { white-space: normal; align-items: baseline; max-width: 100%; }

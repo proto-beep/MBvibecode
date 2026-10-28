@@ -6,6 +6,10 @@ and “… COMPANION”), run with Playwright (Python) and Chromium. MusicBrainz
 MusicBrainz web service (lookups and the search), the MusicBrainz release page, the Discogs API, a Discogs release page
 and Bandcamp album and track pages. The userscript manager's shared storage (`GM_setValue` …) is replaced by a small local HTTP
 server, so the companion shares its values between pages as it does in Tampermonkey.
+For the text from cover art (beta) it serves the Cover Art Archive (PNGs of the sizes given), a stand-in of Tesseract.js as
+from jsDelivr and – from 3.34.6 – the real pdf.js as from jsDelivr, taken from a local copy of the npm package `pdfjs-dist`
+(`PDFJS_DIR`: `/opt/npm-tools/node_modules`, `~/.npm-global/lib/node_modules` or `node_modules` next to the scripts; without
+it the case `ocrpdf` fails); `pdf_of()` writes small PDFs.
 
 ## Layout
 
@@ -238,6 +242,10 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #   ruleedit: 3.33.1: ✎ at role rules without code, company rules and T001/T002/T003/T038/T045/T048 ("code" at
                                 #     the others); ✎ R071 – one more word and the credit "photos": test field, the row, "changed", your changes,
                                 #     stored; a wrong pattern not saved; kept after reloading; ✎ T002 + "zither"; ↺ and ↺ all (asked first)
+                                #   wqedit: 3.34.4: ✎ at every W and Q rule; W001 words and role credit (test field, your changes, stored);
+                                #     Q002 + "resonator guitar" in the row's question at once, an empty word refused; Q003's choices removed,
+                                #     moved, added (table, stored), a choice without a type refused; export; import skips a field that cannot
+                                #     be changed and a wrong choice, a whole register takes over Q005 turned round; ↺ all
                                 #   mappingio: 3.33.1: export of the whole register = the mapping file byte for byte (with a change: one line
                                 #     differs), export of my changes (format, versions) and the clipboard; pasted import with a preview (new,
                                 #     list, own rule, switch, skipped: unknown / code / wrong pattern / list, a conflict), "Take over", "Keep
@@ -268,7 +276,11 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, s
                                 #     the works of the artists kept across a reload (IndexedDB), clearing them, switched off
                                 #     3.25.0: the topics as tabs, one shown at a time
                                 #   bridge: 3.30.4: ⚙ pressed with a bridge to the settings (and the rules symbol to the docked rules), the content of
-                                #     every tab at the height of the tab (100 % and 90 %), the bridge scrolled away and closed
+                                #     every tab joined by the tab (100 % and 90 %), the bridge scrolled away and closed; 3.34.3: the bridge exact in
+                                #     fractions of a pixel, over the head's lower line; the content as high as it can be (ⓘ Connections at the top, its
+                                #     tab in the middle; a short one just low enough), its corner square only where the tab joins at the top
+                                #   settingsscroll: 3.34.3: ⓘ Connections and "Dates & tracks" open, scrolled down and up in small steps – never back
+                                #     down, up to the top; scrolling does not touch the content's margin (until 3.34.2 it jumped back 278px)
                                 #   ui305: 3.30.5: ⚙ below "Import credits …" before any import – only the settings ("Source pages"), no import, the
                                 #     message "Start import" starts it; the field "Tracks:" of a track group (ranges, ticks, unknown tracks,
                                 #     Enter saves, editing shows the tracks); German "Quellseiten"
@@ -379,6 +391,16 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrrun: Tesseract.js loaded once, one worker; the 500 px image read ×3 with a warning; ℗, dashes and empty lines
                                 #     corrected and named; a word read with little certainty selects itself; edited and imported as a text
                                 #   ocrerror: the library cannot be loaded – the message in the window, the log
+                                #   ocrown: 3.34.5: "All images" (half, all, none); own images – files chosen (a text file left out), pasted,
+                                #     dropped, removed; an address (Enter; wrong and twice refused); a site that refuses named; the own images
+                                #     read (a small one enlarged) and imported with their names in the source; no CAA images: only own ones
+                                #   ocrpdf: 3.34.6: a PDF with the real pdf.js (a local copy, PDFJS_DIR): pages as cards (own text / an image),
+                                #     a frame around one column, read – own text in order and by frame, a scanned page recognized –, the
+                                #     source; a PDF by its address; a broken one named
+                                #   ocrdiscogs: 3.34.7: "Load Discogs images" (nothing fetched before), the release's page: its images once at
+                                #     600 px, not another release's; a Discogs address typed (twice refused); read ×3, the source
+                                #   ocrstart: 3.34.8: "… from cover art" only with the beta, joined to "Import credits …"; the dashboard without the
+                                #     import (nothing of Discogs), the message, the window; the read text the source; beta off: gone
                                 #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
                                 #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 

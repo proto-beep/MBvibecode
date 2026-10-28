@@ -1,6 +1,6 @@
 """The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎ at built-in rules, export and import (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rulesname, rulesdock, rowrules – each the former smoke/t_<case>.py, unchanged –, quickswitch, [3.33.1] ruleedit, mappingio, mappingconflict; `python3 t_rules_window.py <case> …` runs only those."""
+Cases: rulesname, rulesdock, rowrules – each the former smoke/t_<case>.py, unchanged –, quickswitch, [3.33.1] ruleedit, [3.34.4] wqedit, [3.33.1] mappingio, mappingconflict; `python3 t_rules_window.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -464,6 +464,153 @@ def case_ruleedit():
                        and g2[0] is None and not g2[1] and len(g2[2]) == 1 and 'Really reset all' in g2[2][0])
         print('Fehler:', errs, errs2)
         results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_wqedit():
+    """Credits Importer 3.34.4: ✎ at the wording rules and the questions (collected item 121; maintainer: "bitte gib W und Q auch
+    eine edit funktion", "passt so").
+    A) ✎ at every wording rule (W…) and every question (Q…, instruments and types); none of them "code".
+    B) ✎ W001: its words a line each, its role credit; saved with "stand-up bass" / "bass stand-up" and the credit "stand-up
+       bass": "Bass [Stand-Up]" in the test field gets W001 and that credit, "Bass [Upright]" the new credit too; "Your changes"
+       shows the words added and the credit before → after; stored as phrases and credit (the words in small letters).
+    C) ✎ Q002: "resonator guitar" added – the row "Guitar" in the dashboard asks with it at once; an empty word is not saved.
+    D) ✎ Q003: a choice removed, one moved up, one added (instrument, label, suggested): the table shows them in their order,
+       stored as choices; a choice without a type is not saved.
+    E) Export of my changes holds W001, Q002, Q003. Import: a wording rule with a field that cannot be changed ("note") is
+       skipped with that reason, a question with a wrong choice too; a whole register with Q005's choices turned round takes
+       over only that.
+    F) ↺ all (asked first): the built-in rules again – "Bass [Stand-Up]" without W001, the row asks electric · acoustic."""
+    import json
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        open_rules(pg)
+        reg = json.loads(H.MAPPING_TEXT)
+        wq = sorted([r['id'] for r in reg['WORDING_RULES']] + [q['id'] for q in reg['QUESTION_RULES']] + [q['id'] for q in reg['TYPE_QUESTIONS']])
+        a = pg.evaluate("""(ids) => { const w = document.getElementById('dci-rules');
+          return [ids.filter(id => !w.querySelector(`[data-rf=tables] tr[data-rid="${id}"] [data-redit-open="${id}"]`)), ids.filter(id => !!w.querySelector(`[data-rf=tables] tr[data-rid="${id}"] .dci-codetag`))]; }""", wq)
+        print('A) ohne ✎:', a[0], '| „code“:', a[1], '| W/Q:', len(wq))
+        results.append(len(wq) >= 15 and a == [[], []])
+        # B) W001
+        pg.click('#dci-rules [data-redit-open=W001]')
+        pg.wait_for_timeout(200)
+        b0 = pg.evaluate("Object.fromEntries([...document.querySelectorAll('#dci-rules [data-redit=W001] [data-redit-f]')].map(f => [f.dataset.reditF, f.value]))")
+        pg.fill('#dci-rules [data-redit=W001] [data-redit-f=phrases]', b0.get('phrases', '') + '\nStand-up Bass\nbass stand-up')
+        pg.fill('#dci-rules [data-redit=W001] [data-redit-f=credit]', 'stand-up bass')
+        pg.click('#dci-rules [data-redit-save]')
+        pg.wait_for_timeout(600)
+        t1, t2 = pg.evaluate(TEST, 'Bass [Stand-Up]'), pg.evaluate(TEST, 'Bass [Upright]')
+        b1 = pg.evaluate("""(() => { const w = document.getElementById('dci-rules'); return [(w.querySelector('[data-mchg=W001]') || {}).innerText || '',
+          (w.querySelector('[data-rf=tables] tr[data-rid=W001] .dci-changed') || {}).textContent, JSON.parse(localStorage.getItem('dci-mapping-changes')).rules.W001]; })()""")
+        print('B) Formular:', b0, '| Test:', t1[:160], '|', t2[:120], '| Änderung:', b1)
+        results.append(b0 == {'phrases': 'upright bass\nbass upright', 'creditMode': 'text', 'credit': 'upright bass'}
+                       and 'W001' in t1 and 'Role credit stand-up bass' in t1 and 'Role credit stand-up bass' in t2
+                       and '+ stand-up bass | bass stand-up' in b1[0] and 'Role credit: “upright bass” → “stand-up bass”' in b1[0] and b1[1] == 'changed'
+                       and b1[2]['set'] == {'phrases': ['upright bass', 'bass upright', 'stand-up bass', 'bass stand-up'], 'credit': 'stand-up bass'}
+                       and b1[2]['was'] == {'phrases': ['upright bass', 'bass upright'], 'credit': 'upright bass'})
+        # C) Q002
+        ASK = "[...document.querySelectorAll('.dci-bass-ask[data-question=Q002] [data-act=instr-pick]')].map(x => x.dataset.instr)"
+        c0 = pg.evaluate(ASK)
+        pg.click('#dci-rules [data-redit-open=Q002]')
+        pg.wait_for_timeout(200)
+        pg.fill('#dci-rules [data-redit=Q002] [data-redit-f=options]', 'electric guitar\nacoustic guitar\nresonator guitar')
+        pg.click('#dci-rules [data-redit-save]')
+        pg.wait_for_timeout(600)
+        c1 = pg.evaluate(ASK)
+        pg.click('#dci-rules [data-redit-open=Q002]')
+        pg.wait_for_timeout(200)
+        pg.fill('#dci-rules [data-redit=Q002] [data-redit-f=base]', '')
+        pg.click('#dci-rules [data-redit-save]')
+        pg.wait_for_timeout(300)
+        c2 = pg.evaluate("(document.querySelector('#dci-rules [data-redit=Q002] .dci-redit-err') || {}).textContent || ''")
+        pg.click('#dci-rules [data-redit-cancel]')
+        pg.wait_for_timeout(200)
+        c3 = pg.evaluate("JSON.parse(localStorage.getItem('dci-mapping-changes')).rules.Q002")
+        print('C) Frage vorher:', c0, '| nachher:', c1, '| leeres Wort:', c2, '| gespeichert:', c3)
+        results.append(c0 == ['electric guitar', 'acoustic guitar'] and c1 == ['electric guitar', 'acoustic guitar', 'resonator guitar']
+                       and c2.startswith('Q002: the field “base”') and c3['set'] == {'options': ['electric guitar', 'acoustic guitar', 'resonator guitar']})
+        # D) Q003: chorus master out, creative direction up, a choice added
+        pg.click('#dci-rules [data-redit-open=Q003]')
+        pg.wait_for_timeout(200)
+        pg.click('#dci-rules [data-redit=Q003] [data-redit-odel="1"]')
+        pg.wait_for_timeout(150)
+        pg.click('#dci-rules [data-redit=Q003] [data-redit-omove="1"][data-dir="-1"]')
+        pg.wait_for_timeout(150)
+        pg.click('#dci-rules [data-redit=Q003] [data-redit-oadd]')
+        pg.wait_for_timeout(150)
+        pg.fill('#dci-rules [data-redit=Q003] [data-redit-o="3"][data-redit-of=type]', 'vocal')
+        pg.fill('#dci-rules [data-redit=Q003] [data-redit-o="3"][data-redit-of=instrument]', 'spoken vocals')
+        pg.fill('#dci-rules [data-redit=Q003] [data-redit-o="3"][data-redit-of=label]', 'spoken words')
+        pg.check('#dci-rules [data-redit=Q003] [data-redit-o="3"][data-redit-of=suggested]')
+        pg.select_option('#dci-rules [data-redit=Q003] [data-redit-o="3"][data-redit-of=creditMode]', 'role')
+        pg.click('#dci-rules [data-redit-save]')
+        pg.wait_for_timeout(600)
+        d1 = pg.evaluate("""(() => { const r = document.querySelector('#dci-rules [data-rf=tables] tr[data-rid=Q003]'); return [r.children[3].textContent, JSON.parse(localStorage.getItem('dci-mapping-changes')).rules.Q003.set.options]; })()""")
+        pg.click('#dci-rules [data-redit-open=Q003]')
+        pg.wait_for_timeout(200)
+        pg.click('#dci-rules [data-redit=Q003] [data-redit-oadd]')
+        pg.wait_for_timeout(150)
+        pg.click('#dci-rules [data-redit-save]')
+        pg.wait_for_timeout(300)
+        d2 = pg.evaluate("(document.querySelector('#dci-rules [data-redit=Q003] .dci-redit-err') || {}).textContent || ''")
+        pg.click('#dci-rules [data-redit-cancel]')
+        pg.wait_for_timeout(200)
+        print('D) Tabelle:', d1[0], '| gespeichert:', d1[1], '| ohne Typ:', d2)
+        results.append(d1[0] == 'creative direction (release) · conductor (recording) · miscellaneous support (task “director”) (recording) · spoken words (recording)'
+                       and d1[1] == [{'type': 'creative direction', 'level': 'release'}, {'type': 'conductor', 'level': 'recording'},
+                                     {'type': 'misc', 'level': 'recording', 'task': 'director', 'label': 'miscellaneous support (task “director”)'},
+                                     {'type': 'vocal', 'level': 'recording', 'instrument': 'spoken vocals', 'label': 'spoken words', 'credit': True, 'suggested': True}]
+                       and d2.startswith('Q003: the field “options”'))
+        # E) export, import
+        pg.select_option('#dci-rules [data-mio=what]', 'changes')
+        pg.wait_for_timeout(100)
+        with pg.expect_download() as dl:
+            pg.click('#dci-rules [data-mio-save]')
+        ch = json.loads(open(dl.value.path(), encoding='utf-8').read())
+        paste = {'format': 'mb-vibecode-credits-importer-mapping-changes', 'version': 2, 'script': H.VERSION, 'mapping': H.VERSION, 'own': [], 'off': [],
+                 'rules': {'W002': {'set': {'note': 'x'}}, 'Q006': {'set': {'options': [{'type': 'instrument'}]}}, 'W004': {'set': {'credit': 'french horn'}, 'was': {'credit': ''}}},
+                 'lists': {}}
+        pg.click('#dci-rules .dci-mio-paste > summary')
+        pg.fill('#dci-rules [data-mio=paste]', json.dumps(paste))
+        pg.click('#dci-rules [data-mio-read]')
+        pg.wait_for_timeout(500)
+        e1 = pg.evaluate("Object.fromEntries([...document.querySelectorAll('#dci-rules [data-rf=preview] li')].map(li => [li.dataset.mprev, [li.className.replace('dci-mprev-', ''), li.innerText.replace(/\\s+/g, ' ').trim()]]))")
+        pg.click('#dci-rules [data-mimport-cancel]')
+        pg.wait_for_timeout(200)
+        reg2 = json.loads(H.MAPPING_TEXT)
+        for q in reg2['TYPE_QUESTIONS']:
+            if q['id'] == 'Q005':
+                q['options'] = list(reversed(q['options']))
+            if q['id'] == 'Q007':
+                q['note'] = 'another note'
+        pg.fill('#dci-rules [data-mio=paste]', json.dumps(reg2))
+        pg.click('#dci-rules [data-mio-read]')
+        pg.wait_for_timeout(500)
+        e2 = pg.evaluate("Object.fromEntries([...document.querySelectorAll('#dci-rules [data-rf=preview] li')].map(li => [li.dataset.mprev, li.className.replace('dci-mprev-', '')]))")
+        pg.click('#dci-rules [data-mimport-apply]')
+        pg.wait_for_timeout(600)
+        e3 = pg.evaluate("JSON.parse(localStorage.getItem('dci-mapping-changes')).rules")
+        print('E) Export:', sorted(ch['rules']), '| Vorschau:', e1, '| Register:', e2, '| danach:', sorted(e3), e3.get('Q005'))
+        results.append(sorted(ch['rules']) == ['Q002', 'Q003', 'W001'] and e1.get('W002', [''])[0] == 'skipped' and 'cannot be changed' in e1['W002'][1]
+                       and e1.get('Q006', [''])[0] == 'skipped' and 'wrong kind' in e1['Q006'][1] and e1.get('W004', [''])[0] == 'new' and '– → “french horn”' in e1['W004'][1]
+                       and e2 == {'Q005': 'new'} and sorted(e3) == ['Q002', 'Q003', 'Q005', 'W001']
+                       and e3['Q005']['set']['options'] == [{'type': 'lyricist', 'level': 'work'}, {'type': 'liner notes', 'level': 'release'}])
+        # F) ↺ all
+        pg.click('#dci-rules [data-mchg-resetall]')
+        pg.wait_for_timeout(700)
+        f1 = [pg.evaluate("localStorage.getItem('dci-mapping-changes')"), pg.evaluate(TEST, 'Bass [Stand-Up]'), pg.evaluate(ASK)]
+        print('F) ↺ alle:', f1[0], '|', f1[1][:100], '|', f1[2])
+        results.append(f1[0] is None and 'W001' not in f1[1] and f1[2] == ['electric guitar', 'acoustic guitar'])
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

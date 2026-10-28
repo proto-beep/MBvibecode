@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart; `python3 t_coverart.py <case> …` runs only those."""
 import json
 
 import harness as H  # noqa: F401 – used by the cases
@@ -272,6 +272,380 @@ def case_ocrframes():
                        and [c[1] for c in e1] == [False, True, True, True, False] and e2[0] == 'Back 2 frames' and e2[2].startswith('Tray'))
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrown():
+    """[3.34.5] "All images" and own images (collected items 125, 123; maintainer: "wir brauchen einen knopf im bilderkennungsmenü,
+    der alles abwählt oder alles anwählt", "bei der Bilderkennung soll auch die Möglichkeit bestehen eigene Files oder Bilder per
+    URL zu analysieren", "ja alle drei möglichkeiten").
+    A) "All images (5)" half ticked (3 of 5); a click ticks all (Next: frames for 5 images), again none (the button off), again all.
+    B) Files chosen: an image is a card of its own (its name, "your file", ticked); a text file is left out with a message.
+    C) An image pasted (Ctrl+V) and one dropped onto the window: cards "pasted image 1" and "drop.png"; "remove" takes the pasted
+       one out again (its card not ticked by the click).
+    D) An address: Enter adds it ("images.example.org/…/back cover.png", "by its address"); a wrong one and the same one twice
+       are refused with a message.
+    E) An address whose site does not let the script read it: reading says so ("save the image and choose it as a file").
+    F) The own images read (the release's unticked): the file whole, the dropped 800 px image enlarged ×3, the address' image;
+       imported, the source names "own image files (booklet-scan.png, drop.png); images from https://…, read with text recognition".
+       Without images on the Cover Art Archive the window says so and offers the own images."""
+    import base64
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        texts = [{'text': 'Music by Ann Lee\n', 'words': []}, {'text': 'Drums – Drum Guy\n', 'words': []}, {'text': 'Mastered by Bob Producer\n', 'words': []}]
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(texts))
+        ctx.route('https://images.example.org/**', lambda r: r.fulfill(body=H.png_of(1200, 1200), content_type='image/png', headers={'Access-Control-Allow-Origin': '*'}))
+        ctx.route('https://nocors.example.org/**', lambda r: r.abort())  # (the tests' browser does not check CORS: a site that refuses)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        ALL = "(() => { const a = document.querySelector('#dci-ocr [data-ocr-all]'); const r = document.querySelector('#dci-ocr [data-ocr=run], #dci-ocr [data-ocr=frames]'); return [a.parentElement.textContent.trim(), a.checked, a.indeterminate, r.textContent, r.disabled]; })()"
+        a0 = pg.evaluate(ALL)
+        pg.click('#dci-ocr [data-ocr-all]')
+        a1 = pg.evaluate(ALL)
+        pg.click('#dci-ocr [data-ocr-all]')
+        a2 = pg.evaluate(ALL)
+        pg.click('#dci-ocr [data-ocr-all]')
+        a3 = pg.evaluate(ALL)
+        print('A) alle:', a0, a1, a2, a3)
+        results.append(a0 == ['All images (5)', False, True, 'Next: frames for 3 images →', False] and a1[1:] == [True, False, 'Next: frames for 5 images →', False]
+                       and a2[1:] == [False, False, 'Next: frames for 0 images →', True] and a3[1] is True)
+        CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(/\\s+/g, ' ').trim()])"
+        ERR = "(document.querySelector('#dci-ocr .dci-ocr-err[role=alert]') || {}).textContent || ''"
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'booklet-scan.png', 'mimeType': 'image/png', 'buffer': H.png_of(1400, 1800)},
+                                                              {'name': 'notes.txt', 'mimeType': 'text/plain', 'buffer': b'credits'}])
+        pg.wait_for_timeout(300)
+        b1 = [pg.evaluate(CARDS), pg.evaluate(ERR)]
+        print('B) Dateien:', b1)
+        results.append(b1[0] == [['booklet-scan.png', True, 'your file remove']] and b1[1] == 'Not an image or a PDF, left out: notes.txt')
+        png = base64.b64encode(H.png_of(800, 600)).decode()
+        pg.evaluate("""(b64) => { const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0)); const dt = new DataTransfer();
+          dt.items.add(new File([bytes], 'image.png', { type: 'image/png' })); document.body.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true })); }""", png)
+        pg.wait_for_timeout(300)
+        dt = pg.evaluate_handle("""(b64) => { const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0)); const d = new DataTransfer();
+          d.items.add(new File([bytes], 'drop.png', { type: 'image/png' })); return d; }""", png)
+        pg.dispatch_event('#dci-ocr', 'dragover', {'dataTransfer': dt})
+        pg.dispatch_event('#dci-ocr', 'drop', {'dataTransfer': dt})
+        pg.wait_for_timeout(300)
+        c1 = pg.evaluate(CARDS)
+        pg.click('#dci-ocr .dci-ocr-owncard:nth-child(7) [data-ocr-remove]')
+        pg.wait_for_timeout(200)
+        c2 = pg.evaluate(CARDS)
+        print('C) eingefügt, gezogen:', c1, '| entfernt:', c2)
+        results.append([x[0] for x in c1] == ['booklet-scan.png', 'pasted image 1', 'drop.png'] and all(x[1] for x in c1)
+                       and [x[0] for x in c2] == ['booklet-scan.png', 'drop.png'])
+        pg.fill('#dci-ocr [data-ocr-url]', 'https://images.example.org/scans/back%20cover.png')
+        pg.press('#dci-ocr [data-ocr-url]', 'Enter')
+        pg.wait_for_timeout(200)
+        d1 = pg.evaluate(CARDS)
+        pg.fill('#dci-ocr [data-ocr-url]', 'ftp://example.org/x.png')
+        pg.click('#dci-ocr [data-ocr=url]')
+        pg.wait_for_timeout(200)
+        d2 = pg.evaluate(ERR)
+        pg.fill('#dci-ocr [data-ocr-url]', 'https://images.example.org/scans/back%20cover.png')
+        pg.click('#dci-ocr [data-ocr=url]')
+        pg.wait_for_timeout(200)
+        d3 = pg.evaluate(ERR)
+        print('D) Adresse:', d1[-1], '| falsch:', d2, '| doppelt:', d3)
+        results.append(d1[-1] == ['images.example.org/…/back cover.png', True, 'by its address remove'] and d2.startswith('Not the address of an image: ftp://example.org/x.png')
+                       and d3 == 'This address is in the list already.')
+        # E) a site without permission: only that image, no frames
+        pg.fill('#dci-ocr [data-ocr-url]', 'https://nocors.example.org/x.png')
+        pg.press('#dci-ocr [data-ocr-url]', 'Enter')
+        pg.wait_for_timeout(200)
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        pg.click('#dci-ocr [data-ocr-all]')  # all ticked → none
+        if pg.evaluate("document.querySelector('#dci-ocr [data-ocr-all]').checked"):
+            pg.click('#dci-ocr [data-ocr-all]')
+        pg.check('#dci-ocr .dci-ocr-owncard:last-child input')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_timeout(1500)
+        e1 = pg.evaluate("(document.querySelector('#dci-ocr .dci-ocr-err') || {}).textContent || ''")
+        print('E) ohne Erlaubnis:', e1)
+        results.append(e1 == 'The image at https://nocors.example.org/x.png could not be read – the site does not let the script read it. Save the image and choose it as a file.')
+        pg.click('#dci-ocr .dci-ocr-owncard:last-child [data-ocr-remove]')
+        pg.wait_for_timeout(200)
+        # F) the own images read and imported
+        for k in range(pg.locator('#dci-ocr .dci-ocr-owncard').count()):
+            pg.check(f'#dci-ocr .dci-ocr-owncard >> nth={k} >> input')
+            pg.wait_for_timeout(100)
+        f0 = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-card input')].map(i => i.checked)")
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        f1 = pg.evaluate("""[[...document.querySelectorAll('#dci-ocr .dci-ocr-res h3')].map(h => h.textContent.trim()), window.__ocr.calls,
+          [...document.querySelectorAll('#dci-ocr .dci-ocr-warn')].length]""")
+        pg.click('#dci-ocr [data-ocr=import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(800)
+        f2 = pg.evaluate("document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').trim()")
+        print('F) gewählt:', f0, '| gelesen:', f1, '| Quelle:', f2[:260])
+        results.append(f0 == [False] * 5 + [True] * 3 and f1[0] == ['booklet-scan.png', 'drop.png', 'images.example.org/…/back cover.png']
+                       and f1[1] == [[1400, 1800], [2400, 1800], [1200, 1200]] and f1[2] == 1
+                       and 'own image files (booklet-scan.png, drop.png); images from https://images.example.org/scans/back%20cover.png, read with text recognition' in f2)
+        # without images on the Cover Art Archive
+        H.COVER_ART = []
+        ctx2 = H.new_context(b)
+        beta_on(ctx2)
+        pg2, errs2 = H.open_mb_edit(ctx2, companion=False)
+        pg2.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg2)
+        H.src_menu(pg2, 'ocr-open')
+        pg2.wait_for_selector('#dci-ocr [data-ocr-files]', state='attached', timeout=10000)
+        g = pg2.evaluate("[document.querySelector('#dci-ocr .dci-ocr-body > p').textContent, !!document.querySelector('#dci-ocr [data-ocr-url]'), !!document.querySelector('#dci-ocr [data-ocr-size]')]")
+        print('G) ohne Bilder im CAA:', g)
+        results.append(g == ['This release has no images on the Cover Art Archive.', True, False])
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrpdf():
+    """[3.34.6] A booklet as PDF (collected item 123; maintainer: "und auch pdf booklets!"), with the real pdf.js (a local copy
+    served as from jsDelivr).
+    A) A PDF chosen: pdf.js loaded from jsDelivr (and its worker); each page a card – "booklet.pdf · p. 1" "PDF page with its own
+       text", p. 2 (a drawing only) "PDF page (an image)", p. 3 with its own text.
+    B) Frames: p. 1 and p. 2 without, on p. 3 (two columns) a frame around the left one.
+    C) Read: p. 1 from its own text, in its order, the dash corrected ("Marc D. Rusch – double bass"), "Read from the PDF's own
+       text"; p. 2 by the text recognition (the page at 2400 px); p. 3 from its own text, only the left column, line by line. The
+       text recognition is started once, only for p. 2.
+    D) Imported: the source "PDF booklet.pdf (p. 1, 2, 3), read with text recognition".
+    E) A PDF by its address: its pages "images.example.org/…/booklet.pdf · p. 1" …; a file that is no PDF named "bad.pdf" is
+       named as not opened."""
+    import base64
+    results = []
+    pdf = H.pdf_of([[(40, 380, 14, 'Booklet'), (40, 350, 12, 'Credits'), (40, 330, 12, 'Marc D. Rusch - double bass'), (40, 310, 12, 'Recorded at the Iridium, New York')],
+                    None,
+                    [(30, 300, 12, 'Drums - Drum Guy'), (230, 300, 12, 'Piano - Keys Guy'), (30, 280, 12, 'Bass - Bass Man'), (230, 280, 12, 'Organ - Org Guy')]])
+    CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(' remove', '').trim()])"
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = []
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps([{'text': 'Producer - Bob Producer\n', 'words': []}]))
+        ctx.route('https://images.example.org/**', lambda r: r.fulfill(body=pdf, content_type='application/pdf', headers={'Access-Control-Allow-Origin': '*'}))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-files]', state='attached', timeout=10000)
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'booklet.pdf', 'mimeType': 'application/pdf', 'buffer': pdf}])
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3 && !document.querySelector('#dci-ocr [role=status]')", 30)
+        a = [pg.evaluate(CARDS), sorted({u.split('/legacy/build/')[-1] for u in H.PDFJS_REQUESTS if '/legacy/build/' in u})]
+        print('A) Seiten:', a)
+        results.append(a[0] == [['booklet.pdf · p. 1', True, 'PDF page with its own text'], ['booklet.pdf · p. 2', True, 'PDF page (an image)'],
+                                ['booklet.pdf · p. 3', True, 'PDF page with its own text']] and a[1] == ['pdf.min.mjs', 'pdf.worker.min.mjs'])
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=20000)
+        pg.click('#dci-ocr [data-ocr=next]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=20000)
+        pg.click('#dci-ocr [data-ocr=next]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=20000)
+        pg.wait_for_timeout(300)
+        box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
+        vw = pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
+        f = box['width'] / vw
+        x0, y0, x1, y1 = 23, 140, 280, 198
+        pg.mouse.move(box['x'] + x0 * f, box['y'] + y0 * f)
+        pg.mouse.down()
+        for k in range(1, 6):
+            pg.mouse.move(box['x'] + (x0 + (x1 - x0) * k / 5) * f, box['y'] + (y0 + (y1 - y0) * k / 5) * f)
+        pg.mouse.up()
+        pg.wait_for_timeout(200)
+        b1 = pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-thumb')].map(t => t.innerText.replace(/\\s+/g, ' ').trim())")
+        print('B) Rahmen:', b1, '| Ansicht:', vw)
+        results.append(vw == 560 and b1[2].endswith('1 frame'))
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=30000)
+        c = pg.evaluate("""(() => { const el = document.getElementById('dci-ocr');
+          return { texts: [...el.querySelectorAll('[data-ocr-text]')].map(t => t.value), heads: [...el.querySelectorAll('.dci-ocr-res h3')].map(h => h.textContent.trim()),
+            direct: [...el.querySelectorAll('.dci-ocr-res')].map(r => r.innerText.includes("Read from the PDF's own text")), ocr: window.__ocr }; })()""")
+        print('C) Texte:', c['texts'], '| direkt:', c['direct'], '| Erkennung:', c['ocr'])
+        results.append(c['texts'] == ['Booklet\nCredits\nMarc D. Rusch – double bass\nRecorded at the Iridium, New York', 'Producer – Bob Producer', 'Drums – Drum Guy\nBass – Bass Man']
+                       and c['heads'] == ['booklet.pdf · p. 1', 'booklet.pdf · p. 2', 'booklet.pdf · p. 3'] and c['direct'] == [True, False, True]
+                       and c['ocr']['created'] == 1 and c['ocr']['calls'] == [[2400, 2400]])
+        pg.click('#dci-ocr [data-ocr=import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(800)
+        d = pg.evaluate("document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').trim()")
+        print('D) Quelle:', d[:200])
+        results.append('PDF booklet.pdf (p. 1, 2, 3), read with text recognition' in d)
+        # E) by its address; a file that is no PDF
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr [data-ocr-url]', timeout=10000)
+        pg.fill('#dci-ocr [data-ocr-url]', 'https://images.example.org/scans/booklet.pdf')
+        pg.press('#dci-ocr [data-ocr-url]', 'Enter')
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3 && !document.querySelector('#dci-ocr [role=status]')", 30)
+        e1 = pg.evaluate(CARDS)
+        pg.set_input_files('#dci-ocr [data-ocr-files]', files=[{'name': 'bad.pdf', 'mimeType': 'application/pdf', 'buffer': b'no pdf at all'}])
+        H.wait_for(pg, "!!document.querySelector('#dci-ocr .dci-ocr-err[role=alert]')", 30)
+        e2 = pg.evaluate("document.querySelector('#dci-ocr .dci-ocr-err[role=alert]').textContent")
+        print('E) Adresse:', e1, '| kaputt:', e2)
+        results.append([x[0] for x in e1] == ['images.example.org/…/booklet.pdf · p. 1', 'images.example.org/…/booklet.pdf · p. 2', 'images.example.org/…/booklet.pdf · p. 3']
+                       and e2.startswith('bad.pdf could not be opened as a PDF:'))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def discogs_image(rel, n, size):
+    """[3.34.7] An address of i.discogs.com as Discogs writes them: options, then the file "R-<release>-…" in base64, in parts."""
+    import base64
+    b64 = base64.urlsafe_b64encode(f'discogs-database-images/R-{rel}-1600000000-{1000 + n}.jpeg'.encode()).decode().rstrip('=')
+    parts = '/'.join(b64[i:i + 16] for i in range(0, len(b64), 16))
+    return f'https://i.discogs.com/sig{n}{size}/rs:fit/g:sm/q:90/h:{size}/w:{size}/{parts}.jpeg'
+
+
+def case_ocrdiscogs():
+    """[3.34.7] Discogs images only on request (collected item 123; maintainer: "nur wenn eingegeben. nicht automatisch. evtl einen
+    button mit "load discogs artworks" oder ähnlich").
+    A) Opened: nothing of Discogs is fetched; "Load Discogs images (r<id>)" for the release linked to this one.
+    B) A click: the release's page on discogs.com is read – its two images, each once at its largest size (600 px, not the 150 px
+       thumbnails), not the image of another release on the page; cards "Discogs r<id> · 1" "from Discogs", ticked; the button off.
+    C) The address of another Discogs release typed: its image; the same again refused.
+    D) Read: the 600 px images enlarged ×3 (1800 × 1800) with the warning; imported, the source names
+       "images of Discogs release https://www.discogs.com/release/<id>"."""
+    results = []
+    rel = H.DISCOGS_ID
+    page = ('<html><body><img src="%s"><img src="%s"><img src="%s"><img src="%s"><a><img src="%s"></a></body></html>'
+            % (discogs_image(rel, 1, 150), discogs_image(rel, 1, 600), discogs_image(rel, 2, 600), discogs_image(rel, 2, 150), discogs_image(999, 1, 600)))
+    other = '<html><body><img src="%s"></body></html>' % discogs_image(4242, 1, 600)
+    pages = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps([{'text': 'Credits by Discogs\n', 'words': []}] * 3))
+
+        def dg_page(route):
+            pages.append(route.request.url)
+            body = page if route.request.url.endswith(f'/release/{rel}') else other
+            return route.fulfill(body=body, content_type='text/html', headers={'Access-Control-Allow-Origin': '*'})
+        ctx.route('https://www.discogs.com/release/**', dg_page)
+        ctx.route('https://i.discogs.com/**', lambda r: r.fulfill(body=H.png_of(600, 600), content_type='image/png', headers={'Access-Control-Allow-Origin': '*'}))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        a = [pg.evaluate("[...document.querySelectorAll('#dci-ocr [data-ocr-discogs]')].map(x => x.textContent.trim())"), list(pages)]
+        print('A) Knopf:', a)
+        results.append(a == [[f'Load Discogs images (r{rel})'], []])
+        CARDS = "[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.querySelector('.dci-sub').textContent.replace(' remove', '').trim()])"
+        pg.click('#dci-ocr [data-ocr-discogs]')
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 2", 20)
+        b1 = [pg.evaluate(CARDS), pg.evaluate("[...document.querySelectorAll('#dci-ocr .dci-ocr-owncard img')].map(i => i.getAttribute('src').match(/h:(\\d+)/)[1])"),
+              pg.evaluate("document.querySelector('#dci-ocr [data-ocr-discogs]').disabled"), list(pages)]
+        print('B) Discogs:', b1)
+        results.append(b1[0] == [[f'Discogs r{rel} · 1', True, 'from Discogs'], [f'Discogs r{rel} · 2', True, 'from Discogs']] and b1[1] == ['600', '600'] and b1[2]
+                       and b1[3] == [f'https://www.discogs.com/release/{rel}'])
+        pg.fill('#dci-ocr [data-ocr-url]', 'https://www.discogs.com/de/release/4242-Other-Band-Other-Album')
+        pg.press('#dci-ocr [data-ocr-url]', 'Enter')
+        H.wait_for(pg, "document.querySelectorAll('#dci-ocr .dci-ocr-owncard').length === 3", 20)
+        pg.fill('#dci-ocr [data-ocr-url]', 'https://www.discogs.com/release/4242')
+        pg.press('#dci-ocr [data-ocr-url]', 'Enter')
+        pg.wait_for_timeout(300)
+        c1 = [pg.evaluate(CARDS)[-1], pg.evaluate("(document.querySelector('#dci-ocr .dci-ocr-err[role=alert]') || {}).textContent || ''")]
+        print('C) andere Adresse:', c1)
+        results.append(c1 == [['Discogs r4242 · 1', True, 'from Discogs'], 'This address is in the list already.'])
+        # D) read the release's two Discogs images
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        if pg.evaluate("document.querySelector('#dci-ocr [data-ocr-all]').checked"):
+            pg.click('#dci-ocr [data-ocr-all]')
+        else:
+            pg.click('#dci-ocr [data-ocr-all]')
+            pg.click('#dci-ocr [data-ocr-all]')
+        for k in range(2):
+            pg.check(f'#dci-ocr .dci-ocr-owncard >> nth={k} >> input')
+            pg.wait_for_timeout(100)
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        d1 = pg.evaluate("[window.__ocr.calls, document.querySelectorAll('#dci-ocr .dci-ocr-warn').length]")
+        pg.click('#dci-ocr [data-ocr=supp]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Text from cover art: .*images of Discogs release/.test(li.textContent))", 30)
+        d2 = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Text from cover art: .*images of Discogs release/.test(t))")
+        print('D) gelesen:', d1, '| Log:', d2)
+        results.append(d1 == [[[1800, 1800], [1800, 1800]], 2] and any(f'images of Discogs release https://www.discogs.com/release/{rel}, read with text recognition' in t for t in d2))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrstart():
+    """[3.34.8] "… from cover art" beside "Import credits …" (collected item 124; maintainer: "der dann die Bilderkennung triggert
+    bevor bspw. von discogs importiert wird", "nur wenn beta an ist", "A").
+    A) Beta off: no such button; beta on: "… from cover art" with "beta", joined to "Import credits …".
+    B) A click: the dashboard without the import (nothing asked of Discogs, nothing imported), a message that offers "Start
+       import", and the window of the text recognition with the release's images; "Load Discogs images (r1234)" from the
+       release's links (asked of MusicBrainz).
+    C) Read and "Import this text": the release is loaded with the text as its source ("Cover Art Archive images (Back, Booklet,
+       Tray), read with text recognition") – still nothing of Discogs; the message is gone.
+    D) The beta switched off in ⚙ Settings → Beta: the button goes."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx0 = H.new_context(b)
+        pg0, errs0 = H.open_mb_edit(ctx0, companion=False)
+        pg0.wait_for_selector('#dci-open', timeout=20000)
+        a0 = pg0.evaluate("(() => { const b = document.getElementById('dci-open-ocr'); return !!b && !b.hidden && b.offsetParent !== null; })()")
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        reqs = []
+        pg.on('request', lambda r: reqs.append(r.url))
+        pg.wait_for_selector('#dci-open-ocr', state='visible', timeout=20000)
+        a1 = pg.evaluate("""(() => { const o = document.getElementById('dci-open'), b = document.getElementById('dci-open-ocr'); const r1 = o.getBoundingClientRect(), r2 = b.getBoundingClientRect();
+          return [b.firstChild.textContent.trim(), !!b.querySelector('.dci-beta-tag'), Math.round(r2.left - r1.right), getComputedStyle(o).borderTopRightRadius]; })()""")
+        print('A) Beta aus – Knopf:', a0, '| an:', a1)
+        results.append(not a0 and a1 == ['… from cover art', True, -1, '0px'])
+        pg.click('#dci-open-ocr')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=15000)
+        pg.wait_for_selector('#dci-ocr [data-ocr-discogs]', timeout=15000)
+        b1 = pg.evaluate("""[!document.getElementById('dci-overlay').hidden, [...document.querySelectorAll('[data-el=msgs] .dci-msg')].map(m => [m.textContent.replace(/\\s+/g, ' ').trim().slice(0, 120), !!m.querySelector('[data-act=start-import]')]),
+          [...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent)), document.querySelectorAll('#dci-ocr .dci-ocr-card').length,
+          [...document.querySelectorAll('#dci-ocr [data-ocr-discogs]')].map(x => x.textContent.trim())]""")
+        dg = [u for u in reqs if 'discogs.com' in u]
+        print('B) Dashboard:', b1, '| Discogs:', dg[:3])
+        results.append(b1[0] and len(b1[1]) == 1 and b1[1][0][0].startswith('The import of this release has not started – the text read from the cover art') and b1[1][0][1]
+                       and not b1[2] and b1[3] == 5 and b1[4] == ['Load Discogs images (r%s)' % H.DISCOGS_ID] and not dg)
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        c0 = pg.evaluate("!!document.querySelector('#dci-ocr [data-ocr=supp]')")
+        pg.click('#dci-ocr [data-ocr=import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1000)
+        c1 = pg.evaluate("""[document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').trim(), [...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim()),
+          [...document.querySelectorAll('[data-el=msgs] .dci-msg')].some(m => /has not started/.test(m.textContent))]""")
+        dg = [u for u in reqs if 'discogs.com' in u]
+        print('C) Quelle:', c1[0][:120], '| Einträge:', c1[1][:6], '| Hinweis noch da:', c1[2], '| Ergänzen vorher:', c0, '| Discogs:', dg[:3])
+        results.append('Cover Art Archive images (Back, Booklet, Tray), read with text recognition' in c1[0] and 'j4vaman' in c1[1] and not c1[2] and not c0 and not dg)
+        H.open_settings(pg, 'beta')
+        pg.uncheck('[data-el=settings] [data-set=beta-ocr]')
+        pg.wait_for_timeout(300)
+        d1 = pg.evaluate("document.getElementById('dci-open-ocr').hidden")
+        print('D) Beta aus – Knopf weg:', d1)
+        results.append(d1)
+        print('Fehler:', errs0, errs)
+        results.append(not errs0 and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
