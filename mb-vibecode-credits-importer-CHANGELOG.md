@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.1 | – |
+| 2026-10-28 | 3.34.0 – 3.34.2 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.2
+
+#### Added
+
+- **Text from cover art (beta): frames around the credits** (collected item E3; maintainer: "Rahmen Standardmäßig aber mit Option auf komplettes Bild lesen"): "Draw a frame around the credits on each image" is ticked before reading, so each image comes large with its frames – dragged across the image, changed at a corner, moved from inside, several read in their order, the rest darkened, the size in the image's pixels; per image "only the frames", "the whole image" or "nothing – leave this image out", "Remove the frames", turned by 90°. An image without a frame is read whole; untick it to read all images whole at once.
 
 ### Import 3.34.1
 

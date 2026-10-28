@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes; `python3 t_coverart.py <case> …` runs only those."""
 import json
 
 import harness as H  # noqa: F401 – used by the cases
@@ -22,7 +22,7 @@ DIALOG = """(() => { const el = document.getElementById('dci-ocr'); if (!el) ret
   return { head: el.querySelector('.dci-ocr-head').innerText.replace(/\\s+/g, ' ').trim(),
     cards: [...el.querySelectorAll('.dci-ocr-card')].map(c => [c.querySelector('.dci-ocr-type').textContent.trim(), c.querySelector('input').checked, c.innerText.includes('rarely has credits')]),
     langs: [...el.querySelectorAll('[data-ocr-lang]')].filter(x => x.checked).map(x => x.dataset.ocrLang),
-    run: (el.querySelector('[data-ocr=run]') || {}).textContent, body: el.querySelector('.dci-ocr-body').innerText.replace(/\\s+/g, ' ').trim() }; })()"""
+    run: (el.querySelector('[data-ocr=run], [data-ocr=frames]') || {}).textContent, body: el.querySelector('.dci-ocr-body').innerText.replace(/\\s+/g, ' ').trim() }; })()"""
 
 
 def beta_on(ctx):
@@ -81,7 +81,7 @@ def case_ocrpick():
         a = pg.evaluate(DIALOG)
         print('A)', a)
         results.append(a['cards'] == [['Front', False, True], ['Back', True, False], ['Booklet', True, False], ['Tray', True, False], ['Medium', False, True]]
-                       and a['langs'] == ['en'] and a['run'] == 'Recognize text in 3 images' and '5 images on the Cover Art Archive' in a['head'])
+                       and a['langs'] == ['en'] and a['run'] == 'Next: frames for 3 images →' and '5 images on the Cover Art Archive' in a['head'])
         pg.click('#dci-ocr [data-ocr-sel="4"]')
         pg.wait_for_timeout(150)
         b1 = pg.evaluate(DIALOG)
@@ -89,7 +89,7 @@ def case_ocrpick():
         pg.wait_for_timeout(200)
         gone = pg.evaluate("!document.getElementById('dci-ocr')")
         print('B) Medium dazu:', b1['run'], '| Escape:', gone)
-        results.append(b1['run'] == 'Recognize text in 4 images' and gone)
+        results.append(b1['run'] == 'Next: frames for 4 images →' and gone)
         # German dashboard: German ticked too; no images
         H.COVER_ART = []
         ctx2 = H.new_context(b)
@@ -129,6 +129,7 @@ def case_ocrrun():
         H.open_dashboard(pg)
         H.src_menu(pg, 'ocr-open')
         pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')  # [3.34.2] no frames: the whole images
         pg.click('#dci-ocr [data-ocr=run]')
         pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
         res = pg.evaluate("""(() => { const el = document.getElementById('dci-ocr');
@@ -178,12 +179,97 @@ def case_ocrerror():
         H.open_dashboard(pg)
         H.src_menu(pg, 'ocr-open')
         pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
         pg.click('#dci-ocr [data-ocr=run]')
         pg.wait_for_selector('#dci-ocr .dci-ocr-err', timeout=20000)
         a = [pg.evaluate("document.querySelector('#dci-ocr .dci-ocr-err').textContent"), pg.locator('#dci-ocr .dci-ocr-card').count(),
              pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Text from cover art: The text recognition/.test(t)).length")]
         print('A)', a)
         results.append(a[0].startswith('The text recognition could not be loaded (https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js)') and a[1] == 5 and a[2] == 1)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_ocrframes():
+    """[3.34.2] Frames around the credits (maintainer: "Rahmen Standardmäßig aber mit Option auf komplettes Bild lesen"): "Draw a
+    frame around the credits on each image" is ticked – "Next: frames for 3 images →". The Back (1500 px) in a view of 560 px: a
+    frame dragged across it (1200 × 300 px), its corner moved (1200 × 375), a second frame (600 × 225) moved by dragging inside it;
+    the image says "2 frames". The Booklet turned right and read whole; the Tray left out – "Recognize text in 2 images". Read:
+    the two frames of the Back in their order, then the whole turned Booklet (1634 × 1246); the Tray not. "← Images": the Tray
+    is ticked again, the frames of the Back stay."""
+    results = []
+    STATE = """(() => { const el = document.getElementById('dci-ocr'); const v = el.querySelector('[data-ocr-view]');
+      return { head: el.querySelector('.dci-ocr-head .dci-sub').textContent.trim(), view: v ? [v.width, v.height] : null,
+        thumbs: [...el.querySelectorAll('.dci-ocr-thumb')].map(t => t.innerText.replace(/\\s+/g, ' ').trim()),
+        mode: (el.querySelector('[data-ocr-mode]:checked') || {}).dataset?.ocrMode, run: (el.querySelector('[data-ocr=run]') || {}).textContent }; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        a0 = [pg.locator('#dci-ocr [data-ocr-framefirst]').is_checked(), pg.locator('#dci-ocr [data-ocr=frames]').inner_text()]
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        a1 = pg.evaluate(STATE)
+
+        def drag(x0, y0, x1, y1):
+            box = pg.locator('#dci-ocr [data-ocr-view]').bounding_box()
+            w = pg.evaluate("document.querySelector('#dci-ocr [data-ocr-view]').width")
+            f = box['width'] / w
+            pg.mouse.move(box['x'] + x0 * f, box['y'] + y0 * f)
+            pg.mouse.down()
+            for k in range(1, 6):
+                pg.mouse.move(box['x'] + (x0 + (x1 - x0) * k / 5) * f, box['y'] + (y0 + (y1 - y0) * k / 5) * f)
+            pg.mouse.up()
+            pg.wait_for_timeout(150)
+        drag(56, 336, 504, 448)
+        drag(504, 448, 504, 476)
+        drag(56, 56, 280, 140)
+        drag(150, 100, 178, 100)
+        b1 = pg.evaluate(STATE)
+        print('A) vorher:', a0, '| Rückseite:', a1)
+        print('B) zwei Rahmen:', b1)
+        results.append(a0 == [True, 'Next: frames for 3 images →'] and a1['view'] == [560, 560] and a1['head'] == 'frames · image 1 of 3 · Back'
+                       and a1['mode'] == 'frames' and b1['thumbs'][0] == 'Back 2 frames' and b1['mode'] == 'frames')
+        pg.click('#dci-ocr [data-ocr=next]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        pg.wait_for_timeout(200)
+        c0 = pg.evaluate(STATE)
+        pg.click('#dci-ocr [data-ocr=rotr]')
+        pg.wait_for_timeout(150)
+        pg.check('#dci-ocr [data-ocr-mode=whole]')
+        pg.wait_for_timeout(150)
+        c1 = pg.evaluate(STATE)
+        pg.click('#dci-ocr [data-ocr=next]')
+        pg.wait_for_timeout(600)
+        pg.check('#dci-ocr [data-ocr-mode=skip]')
+        pg.wait_for_timeout(150)
+        c2 = pg.evaluate(STATE)
+        print('C) Booklet:', c0['view'], '→ gedreht:', c1['view'], c1['thumbs'], '| Tray:', c2['thumbs'][2], c2['run'])
+        results.append(c0['view'] == [473, 620] and c1['view'] == [560, 427] and c1['thumbs'][1] == 'Booklet the whole image'
+                       and c2['thumbs'][2] == 'Tray left out' and c2['run'] == 'Recognize text in 2 images')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        d = pg.evaluate("[window.__ocr.calls, [...document.querySelectorAll('#dci-ocr .dci-ocr-res h3')].map(h => h.textContent.trim())]")
+        pg.click('#dci-ocr [data-ocr=back]')
+        pg.wait_for_timeout(200)
+        e1 = pg.evaluate(DIALOG)['cards']
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-thumb', timeout=10000)
+        e2 = pg.evaluate(STATE)['thumbs']
+        print('D) gelesen:', d, '| zurück:', e1, e2)
+        results.append(d[0] == [[1200, 375], [600, 225], [1634, 1246]] and d[1] == ['Back', 'Booklet “p. 4–5”']
+                       and [c[1] for c in e1] == [False, True, True, True, False] and e2[0] == 'Back 2 frames' and e2[2].startswith('Tray'))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

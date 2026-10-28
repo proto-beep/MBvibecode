@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.1
+// @version      3.34.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -25,8 +25,8 @@
 // @connect      raw.githubusercontent.com
 // @connect      coverartarchive.org
 // @connect      archive.org
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -39,7 +39,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1377,6 +1377,28 @@
       "ocr.sizeOrig": "the original (best for small print)",
       "ocr.size1200": "1200 px (faster)",
       "ocr.sizeHint": "Images under {px} px are read enlarged ×3.",
+      "ocr.before": "Before reading",
+      "ocr.frameFirst": "Draw a frame around the credits on each image",
+      "ocr.frameFirstHint": "Titles, track lists and liner prose then stay out. An image without a frame is read whole.",
+      "ocr.toFrames.one": "Next: frames for {n} image →",
+      "ocr.toFrames.other": "Next: frames for {n} images →",
+      "ocr.step.frames": "frames · image {i} of {n} · {what}",
+      "ocr.loadingImage": "Loading the image …",
+      "ocr.viewLabel": "{what}: drag across the image to draw a frame",
+      "ocr.mode": "What is read on this image",
+      "ocr.modeFrames": "only the frames ({n})",
+      "ocr.modeWhole": "the whole image",
+      "ocr.modeSkip": "nothing – leave this image out",
+      "ocr.clear": "Remove the frames",
+      "ocr.rotl": "Turn left",
+      "ocr.rotr": "Turn right",
+      "ocr.framesHint": "Drag across the image for a frame, at a corner to change it, inside it to move it. Two columns of credits: one frame each – they are read in their order. Without a frame the whole image is read.",
+      "ocr.nFrames.one": "{n} frame",
+      "ocr.nFrames.other": "{n} frames",
+      "ocr.noFrame": "no frame – the whole image",
+      "ocr.wholeImage": "the whole image",
+      "ocr.leftOut": "left out",
+      "ocr.nextImage": "Next image →",
       "ocr.chosen": "{n} of {of} images",
       "ocr.run.one": "Recognize text in {n} image",
       "ocr.run.other": "Recognize text in {n} images",
@@ -8996,10 +9018,173 @@
   }
 
   const ocrTypes = (img) => (img.types.length ? img.types.join(', ') : tr('ocr.noType'));
+  /** [3.34.2] The images ticked (also those left out in the frames step) and those that are read. */
+  const ocrChosen = () => S.ocr.images.filter((im) => im.sel);
+  const ocrToRead = () => ocrChosen().filter((im) => im.mode !== 'skip');
+
+  // --- [3.34.2] Frames around the credits (maintainer: "Rahmen Standardmäßig aber mit Option auf komplettes Bild lesen") -------
+  // Before reading, each image ticked is shown with its frames: dragged across the image (a new frame), at a corner (its
+  // size) or inside it (moved); several frames are read in their order; "the whole image" or "nothing" instead; turned by
+  // 90°. An image without a frame is read whole. The frames are on the image's canvas (its pixels, at most OCR_MAX).
+
+  const OCR_VIEW = { w: 560, h: 620 };
+
+  /** The image shown in the frames step, and the scale of its view. */
+  function ocrCurrent() {
+    const chosen = ocrChosen();
+    const img = chosen[Math.min(S.ocr.cur, chosen.length - 1)] || null;
+    const k = img && img.canvas ? Math.min(OCR_VIEW.w / img.canvas.width, OCR_VIEW.h / img.canvas.height, 1) : 1;
+    return { img, k };
+  }
+
+  /** The view of the frames step: the image, the parts outside the frames darkened, each frame with its corners. */
+  function ocrDraw() {
+    const v = document.querySelector('#dci-ocr [data-ocr-view]');
+    const { img, k } = ocrCurrent();
+    if (!v || !img || !img.canvas) return;
+    const g = v.getContext('2d');
+    g.clearRect(0, 0, v.width, v.height);
+    g.drawImage(img.canvas, 0, 0, v.width, v.height);
+    const d = S.ocr.drag;
+    const boxes = img.frames.map((b, i) => (d && d.i === i && d.box ? d.box : b));
+    if (d && d.kind === 'new' && d.box) boxes.push(d.box);
+    const norm1 = (b) => ({ x: Math.min(b.x, b.x + b.w), y: Math.min(b.y, b.y + b.h), w: Math.abs(b.w), h: Math.abs(b.h) });
+    const list = boxes.map(norm1);
+    if (!list.length || img.mode !== 'frames') return;
+    g.save();
+    g.fillStyle = 'rgba(20, 16, 40, 0.45)';
+    g.beginPath();
+    g.rect(0, 0, v.width, v.height);
+    list.forEach((b) => g.rect(b.x * k, b.y * k, b.w * k, b.h * k));
+    g.fill('evenodd');
+    list.forEach((b, i) => {
+      const [x, y, w, h] = [b.x * k, b.y * k, b.w * k, b.h * k];
+      g.setLineDash([]);
+      g.lineWidth = 4;
+      g.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      g.strokeRect(x, y, w, h);
+      g.setLineDash([6, 4]);
+      g.lineWidth = 2;
+      g.strokeStyle = '#5b55a0';
+      g.strokeRect(x, y, w, h);
+      g.setLineDash([]);
+      [[x, y], [x + w, y], [x, y + h], [x + w, y + h]].forEach(([cx, cy]) => {
+        g.fillStyle = '#fff';
+        g.fillRect(cx - 5, cy - 5, 10, 10);
+        g.strokeRect(cx - 5, cy - 5, 10, 10);
+      });
+      const f = img.w / img.canvas.width;
+      const label = `${i + 1} · ${Math.round(b.w * f)} × ${Math.round(b.h * f)} px`;
+      g.font = '600 12px system-ui, sans-serif';
+      const tw = g.measureText(label).width + 10;
+      g.fillStyle = '#5b55a0';
+      g.fillRect(x, Math.max(0, y - 20), tw, 18);
+      g.fillStyle = '#fff';
+      g.fillText(label, x + 5, Math.max(0, y - 20) + 13);
+    });
+    g.restore();
+  }
+
+  /** A pointer on the view: a corner (resize), inside a frame (move), elsewhere a new frame. */
+  function ocrPointerDown(e) {
+    const v = e.target.closest && e.target.closest('[data-ocr-view]');
+    const { img, k } = S.ocr ? ocrCurrent() : {};
+    if (!v || !img || !img.canvas || e.button !== 0) return;
+    e.preventDefault();
+    const r = v.getBoundingClientRect();
+    const at = (ev) => ({
+      x: Math.max(0, Math.min(img.canvas.width, ((ev.clientX - r.left) * (v.width / r.width)) / k)),
+      y: Math.max(0, Math.min(img.canvas.height, ((ev.clientY - r.top) * (v.height / r.height)) / k)),
+    });
+    const p = at(e);
+    const near = 8 / k;
+    let drag = null;
+    img.frames.forEach((b, i) => {
+      if (drag) return;
+      const corners = [[b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h]];
+      const c = corners.findIndex(([cx, cy]) => Math.abs(cx - p.x) <= near && Math.abs(cy - p.y) <= near);
+      if (c >= 0) drag = { kind: 'corner', i, fixed: corners[3 - c], box: { ...b } };
+      else if (p.x > b.x && p.x < b.x + b.w && p.y > b.y && p.y < b.y + b.h) drag = { kind: 'move', i, from: p, orig: { ...b }, box: { ...b } };
+    });
+    if (!drag) {
+      if (img.mode !== 'frames') img.mode = 'frames';
+      drag = { kind: 'new', from: p, box: { x: p.x, y: p.y, w: 0, h: 0 } };
+    }
+    S.ocr.drag = drag;
+    const move = (ev) => {
+      const q = at(ev);
+      if (drag.kind === 'new') drag.box = { x: drag.from.x, y: drag.from.y, w: q.x - drag.from.x, h: q.y - drag.from.y };
+      else if (drag.kind === 'corner') drag.box = { x: drag.fixed[0], y: drag.fixed[1], w: q.x - drag.fixed[0], h: q.y - drag.fixed[1] };
+      else {
+        const o = drag.orig;
+        drag.box = { ...o, x: Math.max(0, Math.min(img.canvas.width - o.w, o.x + q.x - drag.from.x)), y: Math.max(0, Math.min(img.canvas.height - o.h, o.y + q.y - drag.from.y)) };
+      }
+      ocrDraw();
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      const b = drag.box;
+      const box = { x: Math.round(Math.min(b.x, b.x + b.w)), y: Math.round(Math.min(b.y, b.y + b.h)), w: Math.round(Math.abs(b.w)), h: Math.round(Math.abs(b.h)) };
+      const big = box.w * k >= 8 && box.h * k >= 8;
+      if (drag.kind === 'new' && big) img.frames.push(box);
+      else if (drag.kind !== 'new' && big) img.frames[drag.i] = box;
+      S.ocr.drag = null;
+      renderOcr();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  /** An image turned by 90° (left: -1, right: 1); its frames go. */
+  function ocrRotate(img, dir) {
+    if (!img || !img.canvas) return;
+    const src = img.canvas;
+    const c = document.createElement('canvas');
+    c.width = src.height;
+    c.height = src.width;
+    const g = c.getContext('2d');
+    g.translate(c.width / 2, c.height / 2);
+    g.rotate((dir * Math.PI) / 2);
+    g.drawImage(src, -src.width / 2, -src.height / 2);
+    Object.assign(img, { canvas: c, w: img.h, h: img.w, frames: [] });
+  }
+
+  function ocrFramesHtml() {
+    const o = S.ocr;
+    const chosen = ocrChosen();
+    const { img, k } = ocrCurrent();
+    if (!img) return ocrPickHtml();
+    const n = ocrToRead().length;
+    const state = (im) => (im.mode === 'skip' ? tr('ocr.leftOut') : im.mode === 'whole' ? tr('ocr.wholeImage') : im.frames.length ? tr('ocr.nFrames', { n: im.frames.length }) : tr('ocr.noFrame'));
+    const view = img.canvas
+      ? `<canvas class="dci-ocr-view" data-ocr-view width="${Math.round(img.canvas.width * k)}" height="${Math.round(img.canvas.height * k)}" role="img" aria-label="${esc(tr('ocr.viewLabel', { what: ocrTypes(img) }))}"></canvas>`
+      : `<p class="dci-ocr-viewwait">${esc(o.error ? o.error : tr('ocr.loadingImage'))}</p>`;
+    const mode = (m, label) => `<label class="dci-check"><input type="radio" name="dci-ocr-mode" data-ocr-mode="${m}" ${img.mode === m ? 'checked' : ''}> ${esc(label)}</label>`;
+    return `<div class="dci-ocr-body dci-ocr-frames">
+        <div class="dci-ocr-stage">${view}</div>
+        <div class="dci-ocr-side">
+          <div class="dci-ocr-thumbs">${chosen.map((im, i) => `<button type="button" class="dci-ocr-thumb${i === o.cur ? ' dci-on' : ''}" data-ocr-cur="${i}" aria-current="${i === o.cur}">
+            <img src="${esc(im.thumb)}" alt=""><strong>${esc(ocrTypes(im))}</strong><span>${esc(state(im))}</span></button>`).join('')}</div>
+          ${img.canvas && img.w < OCR_SMALL ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: img.w, h: img.h }))}</p>` : ''}
+          <fieldset><legend>${esc(tr('ocr.mode'))}</legend>
+            ${mode('frames', tr('ocr.modeFrames', { n: img.frames.length }))}${mode('whole', tr('ocr.modeWhole'))}${mode('skip', tr('ocr.modeSkip'))}</fieldset>
+          <div class="dci-ocr-tools">
+            <button type="button" class="dci-small" data-ocr="clear" ${img.frames.length ? '' : 'disabled'}>${esc(tr('ocr.clear'))}</button>
+            <button type="button" class="dci-small" data-ocr="rotl" aria-label="${esc(tr('ocr.rotl'))}" title="${esc(tr('ocr.rotl'))}" ${img.canvas ? '' : 'disabled'}>↺</button>
+            <button type="button" class="dci-small" data-ocr="rotr" aria-label="${esc(tr('ocr.rotr'))}" title="${esc(tr('ocr.rotr'))}" ${img.canvas ? '' : 'disabled'}>↻</button>
+          </div>
+          <p class="dci-sub">${esc(tr('ocr.framesHint'))}</p>
+        </div></div>
+      <div class="dci-ocr-foot"><button type="button" class="dci-textbtn" data-ocr="back">${esc(tr('ocr.back'))}</button><span></span>
+        ${o.cur < chosen.length - 1 ? `<button type="button" class="dci-small" data-ocr="next">${esc(tr('ocr.nextImage'))}</button>` : ''}
+        <button type="button" class="dci-apply dci-small" data-ocr="run" ${n ? '' : 'disabled'}>${esc(tr('ocr.run', { n }))}</button></div>`;
+  }
 
   /** "Source ▾ → Text from cover art …": the window, and the images of the release. */
   function openOcr() {
-    S.ocr = { step: 'list', images: [], langs: new Set(['en', ...(LANG !== 'en' && OCR_LANGS[LANG] ? [LANG] : [])]), size: 'orig', error: '', results: [], run: 0 };
+    S.ocr = { step: 'list', images: [], langs: new Set(['en', ...(LANG !== 'en' && OCR_LANGS[LANG] ? [LANG] : [])]), size: 'orig', error: '', results: [], run: 0,
+      frameFirst: true, cur: 0, drag: null };
     renderOcr();
     log('info', 'ocrOpen', { mbid: releaseMbid });
     ocrList().then((images) => {
@@ -9024,7 +9209,7 @@
   async function ocrRun() {
     const o = S.ocr;
     const run = ++o.run;
-    const chosen = o.images.filter((im) => im.sel && im.mode !== 'skip');
+    const chosen = ocrToRead();
     Object.assign(o, { step: 'run', error: '', results: chosen.map((img) => ({ img, status: 'wait', progress: 0, text: '', unsure: [], fixes: { pc: 0, dash: 0 } })) });
     renderOcr();
     const langs = [...o.langs].map((c) => OCR_LANGS[c]).filter(Boolean);
@@ -9111,6 +9296,8 @@
   function ocrPickHtml() {
     const o = S.ocr;
     const n = o.images.filter((im) => im.sel).length;
+    // [3.34.2] back from the frames: an image left out there is read again when ticked here
+    o.images.forEach((im) => { if (im.mode === 'skip') im.mode = 'frames'; });
     if (!o.images.length) {
       return `<div class="dci-ocr-body"><p>${esc(o.error ? tr('ocr.listFailed', { why: o.error }) : tr('ocr.none'))}</p></div>
         <div class="dci-ocr-foot"><span></span><button type="button" class="dci-small" data-ocr="close">${esc(tr('common.close'))}</button></div>`;
@@ -9132,10 +9319,14 @@
             <label class="dci-check"><input type="radio" name="dci-ocr-size" data-ocr-size="orig" ${o.size === 'orig' ? 'checked' : ''}> ${esc(tr('ocr.sizeOrig'))}</label>
             <label class="dci-check"><input type="radio" name="dci-ocr-size" data-ocr-size="1200" ${o.size === '1200' ? 'checked' : ''}> ${esc(tr('ocr.size1200'))}</label>
             <p class="dci-sub">${esc(tr('ocr.sizeHint', { px: OCR_SMALL }))}</p></fieldset>
+          <fieldset><legend>${esc(tr('ocr.before'))}</legend>
+            <label class="dci-check"><input type="checkbox" data-ocr-framefirst ${o.frameFirst ? 'checked' : ''}> ${esc(tr('ocr.frameFirst'))}</label>
+            <p class="dci-sub">${esc(tr('ocr.frameFirstHint'))}</p></fieldset>
         </div></div>
       <div class="dci-ocr-foot"><span class="dci-sub">${esc(tr('ocr.chosen', { n, of: o.images.length }))}</span>
         <button type="button" class="dci-textbtn" data-ocr="close">${esc(tr('common.cancel'))}</button>
-        <button type="button" class="dci-apply dci-small" data-ocr="run" ${n ? '' : 'disabled'}>${esc(tr('ocr.run', { n }))}</button></div>`;
+        ${o.frameFirst ? `<button type="button" class="dci-apply dci-small" data-ocr="frames" ${n ? '' : 'disabled'}>${esc(tr('ocr.toFrames', { n }))}</button>`
+          : `<button type="button" class="dci-apply dci-small" data-ocr="run" ${n ? '' : 'disabled'}>${esc(tr('ocr.run', { n }))}</button>`}</div>`;
   }
 
   function ocrRunHtml() {
@@ -9183,6 +9374,7 @@
       document.body.appendChild(el);
       el.addEventListener('click', ocrClick);
       el.addEventListener('change', ocrChange);
+      el.addEventListener('pointerdown', ocrPointerDown);
       el.addEventListener('input', (e) => {
         const i = e.target.dataset.ocrText;
         if (i != null && S.ocr && S.ocr.results[i]) S.ocr.results[i].text = e.target.value;
@@ -9190,11 +9382,29 @@
     }
     el.style.zIndex = String(++topZ);
     const body = o.step === 'list' ? `<div class="dci-ocr-body"><p>${esc(tr('ocr.loading'))}</p></div>`
-      : o.step === 'run' ? ocrRunHtml() : o.step === 'result' ? ocrResultHtml() : ocrPickHtml();
+      : o.step === 'run' ? ocrRunHtml() : o.step === 'result' ? ocrResultHtml() : o.step === 'frames' ? ocrFramesHtml() : ocrPickHtml();
+    const cur = o.step === 'frames' ? ocrCurrent().img : null;
     el.innerHTML = `<div class="dci-ocr-head"><h2 id="dci-ocr-title">${esc(tr('ocr.title'))} <span class="dci-beta-tag">beta</span></h2>
-        <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.images.length }))}</span>
+        <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.step === 'frames' ? ocrChosen().length : o.images.length, i: o.cur + 1, what: cur ? ocrTypes(cur) : '' }))}</span>
         <a href="https://musicbrainz.org/release/${esc(releaseMbid)}/cover-art" target="_blank" rel="noopener">${esc(tr('ocr.caaLink'))}</a>
         <button type="button" class="dci-iconbtn" data-ocr="close" aria-label="${esc(tr('common.close'))}" title="${esc(tr('common.close'))}">✕</button></div>${body}`;
+    // [3.34.2] the frames step: the image loaded first, then drawn
+    if (o.step === 'frames') {
+      const { img } = ocrCurrent();
+      if (img && !img.canvas && !img.loading) {
+        img.loading = true;
+        ocrCanvas(img).then(() => {
+          img.loading = false;
+          if (S.ocr === o) renderOcr();
+        }, (e) => {
+          img.loading = false;
+          if (S.ocr !== o) return;
+          o.error = (e && e.message) || String(e);
+          renderOcr();
+        });
+      }
+      ocrDraw();
+    }
   }
 
   function ocrClick(e) {
@@ -9213,9 +9423,31 @@
     }
     if (!b || !S.ocr) return;
     const act = b.dataset.ocr;
+    const thumb = t.closest('[data-ocr-cur]');
+    if (thumb && S.ocr) {
+      S.ocr.cur = Number(thumb.dataset.ocrCur) || 0;
+      S.ocr.error = '';
+      renderOcr();
+      return;
+    }
+    const { img } = S.ocr.step === 'frames' ? ocrCurrent() : {};
     if (act === 'close') closeOcr();
     else if (act === 'run') ocrRun();
-    else if (act === 'back') {
+    else if (act === 'frames') {
+      Object.assign(S.ocr, { step: 'frames', cur: 0, error: '' });
+      renderOcr();
+    }
+    else if (act === 'next') {
+      S.ocr.cur = Math.min(S.ocr.cur + 1, ocrChosen().length - 1);
+      S.ocr.error = '';
+      renderOcr();
+    } else if (act === 'clear' && img) {
+      img.frames = [];
+      renderOcr();
+    } else if ((act === 'rotl' || act === 'rotr') && img) {
+      ocrRotate(img, act === 'rotl' ? -1 : 1);
+      renderOcr();
+    } else if (act === 'back') {
       S.ocr.step = 'pick';
       S.ocr.error = '';
       renderOcr();
@@ -9237,8 +9469,15 @@
     else if (t.dataset.ocrLang) {
       if (t.checked) o.langs.add(t.dataset.ocrLang);
       else o.langs.delete(t.dataset.ocrLang);
-    } else if (t.dataset.ocrSize) o.size = t.dataset.ocrSize === '1200' ? '1200' : 'orig';
-    else return;
+    } else if (t.dataset.ocrSize) {
+      o.size = t.dataset.ocrSize === '1200' ? '1200' : 'orig';
+      // [3.34.2] another size: the images are loaded anew, their frames go
+      o.images.forEach((im) => Object.assign(im, { canvas: null, frames: [] }));
+    } else if (t.dataset.ocrFramefirst != null) o.frameFirst = t.checked;
+    else if (t.dataset.ocrMode) {
+      const { img } = ocrCurrent();
+      if (img) img.mode = ['frames', 'whole', 'skip'].includes(t.dataset.ocrMode) ? t.dataset.ocrMode : 'frames';
+    } else return;
     renderOcr();
   }
 
@@ -22275,6 +22514,20 @@
       #dci-ocr textarea { width: 100%; box-sizing: border-box; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid #c8c5d6; border-radius: 4px;
         font: calc(var(--u, 1px) * 12.5) / 1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
       #dci-ocr .dci-ocr-word { margin: 0 2px 2px 0; padding: 0 6px; border: 1px solid #e3b65a; border-radius: 3px; background: #ffe7a8; color: #262430; }
+      /* [3.34.2] the frames step: the image with its frames, beside it the images and what is read */
+      #dci-ocr .dci-ocr-body.dci-ocr-frames { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+      #dci-ocr .dci-ocr-stage { flex: 0 1 auto; max-width: 100%; display: flex; align-items: center; justify-content: center; min-width: calc(var(--u, 1px) * 240);
+        min-height: calc(var(--u, 1px) * 240); padding: 6px; border: 1px solid #dddae8; border-radius: 4px; background: #3b3530; }
+      #dci-ocr .dci-ocr-view { display: block; max-width: 100%; height: auto; cursor: crosshair; touch-action: none; }
+      #dci-ocr .dci-ocr-viewwait { color: #f4f1ea; }
+      #dci-ocr .dci-ocr-side { flex: 1 1 calc(var(--u, 1px) * 280); min-width: 0; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 10); }
+      #dci-ocr .dci-ocr-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 96), 1fr)); gap: calc(var(--u, 1px) * 8); }
+      #dci-ocr .dci-ocr-thumb { display: flex; flex-direction: column; gap: 3px; padding: 6px; border: 1px solid #dddae8; border-radius: 6px; background: #fff; text-align: left; color: #262430; font-size: calc(var(--u, 1px) * 12); }
+      #dci-ocr .dci-ocr-thumb.dci-on { border: 2px solid #5b55a0; padding: 5px; background: #f7f6fd; }
+      #dci-ocr .dci-ocr-thumb img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 3px; }
+      #dci-ocr .dci-ocr-thumb span { color: #5d5a6e; }
+      #dci-ocr .dci-ocr-tools { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); }
+      #dci-ocr .dci-small:disabled { color: #9b98a8; cursor: default; }
       /* [3.30.0] in the dashboard below its head, like ⚙ Settings (item 75) */
       .dci-rules-dock[hidden] { display: none; }
       #dci-rules.dci-rules-docked { position: static; width: auto; height: auto; max-height: 72vh; min-width: 0; min-height: calc(var(--u, 1px) * 160); resize: vertical;

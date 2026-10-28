@@ -379,6 +379,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrrun: Tesseract.js loaded once, one worker; the 500 px image read ×3 with a warning; ℗, dashes and empty lines
                                 #     corrected and named; a word read with little certainty selects itself; edited and imported as a text
                                 #   ocrerror: the library cannot be loaded – the message in the window, the log
+                                #   ocrframes: 3.34.2: frames by default – two drawn, one changed at a corner, one moved; an image turned and read
+                                #     whole, one left out; the sizes read (frames in their order); back to the images, the frames stay
 
 python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines
                                 #   keepmarks: a click on a Discogs mark switches its credit, the pointer shows its row, "Click switches" off, "Keep marks" (3.17.5)
