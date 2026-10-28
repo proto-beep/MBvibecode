@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-28 | 3.34.0 – 3.34.7 | – |
+| 2026-10-28 | 3.34.0 – 3.34.8 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
 | 2026-10-24 | 3.22.1 – 3.30.0 | 1.8.4 – 1.9.0 |
@@ -89,6 +89,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-28
+
+### Import 3.34.8
+
+#### Added
+
+- **"… from cover art" beside "Import credits …"** (collected item 124; maintainer: "neben dem initialen "Import credits …" Button soll ein Button "… from cover art" erscheinen, der dann die Bilderkennung triggert bevor bspw. von discogs importiert wird", "nur wenn beta an ist", "A"): while the beta is on, it opens the dashboard without the import and the text recognition at once; the text read is then the release's source, Discogs or Bandcamp can supplement it. A message offers the usual import instead.
 
 ### Import 3.34.7
 

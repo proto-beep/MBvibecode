@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart; `python3 t_coverart.py <case> …` runs only those."""
 import json
 
 import harness as H  # noqa: F401 – used by the cases
@@ -582,6 +582,70 @@ def case_ocrdiscogs():
         results.append(d1 == [[[1800, 1800], [1800, 1800]], 2] and any(f'images of Discogs release https://www.discogs.com/release/{rel}, read with text recognition' in t for t in d2))
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrstart():
+    """[3.34.8] "… from cover art" beside "Import credits …" (collected item 124; maintainer: "der dann die Bilderkennung triggert
+    bevor bspw. von discogs importiert wird", "nur wenn beta an ist", "A").
+    A) Beta off: no such button; beta on: "… from cover art" with "beta", joined to "Import credits …".
+    B) A click: the dashboard without the import (nothing asked of Discogs, nothing imported), a message that offers "Start
+       import", and the window of the text recognition with the release's images; "Load Discogs images (r1234)" from the
+       release's links (asked of MusicBrainz).
+    C) Read and "Import this text": the release is loaded with the text as its source ("Cover Art Archive images (Back, Booklet,
+       Tray), read with text recognition") – still nothing of Discogs; the message is gone.
+    D) The beta switched off in ⚙ Settings → Beta: the button goes."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx0 = H.new_context(b)
+        pg0, errs0 = H.open_mb_edit(ctx0, companion=False)
+        pg0.wait_for_selector('#dci-open', timeout=20000)
+        a0 = pg0.evaluate("(() => { const b = document.getElementById('dci-open-ocr'); return !!b && !b.hidden && b.offsetParent !== null; })()")
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        reqs = []
+        pg.on('request', lambda r: reqs.append(r.url))
+        pg.wait_for_selector('#dci-open-ocr', state='visible', timeout=20000)
+        a1 = pg.evaluate("""(() => { const o = document.getElementById('dci-open'), b = document.getElementById('dci-open-ocr'); const r1 = o.getBoundingClientRect(), r2 = b.getBoundingClientRect();
+          return [b.firstChild.textContent.trim(), !!b.querySelector('.dci-beta-tag'), Math.round(r2.left - r1.right), getComputedStyle(o).borderTopRightRadius]; })()""")
+        print('A) Beta aus – Knopf:', a0, '| an:', a1)
+        results.append(not a0 and a1 == ['… from cover art', True, -1, '0px'])
+        pg.click('#dci-open-ocr')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=15000)
+        pg.wait_for_selector('#dci-ocr [data-ocr-discogs]', timeout=15000)
+        b1 = pg.evaluate("""[!document.getElementById('dci-overlay').hidden, [...document.querySelectorAll('[data-el=msgs] .dci-msg')].map(m => [m.textContent.replace(/\\s+/g, ' ').trim().slice(0, 120), !!m.querySelector('[data-act=start-import]')]),
+          [...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent)), document.querySelectorAll('#dci-ocr .dci-ocr-card').length,
+          [...document.querySelectorAll('#dci-ocr [data-ocr-discogs]')].map(x => x.textContent.trim())]""")
+        dg = [u for u in reqs if 'discogs.com' in u]
+        print('B) Dashboard:', b1, '| Discogs:', dg[:3])
+        results.append(b1[0] and len(b1[1]) == 1 and b1[1][0][0].startswith('The import of this release has not started – the text read from the cover art') and b1[1][0][1]
+                       and not b1[2] and b1[3] == 5 and b1[4] == ['Load Discogs images (r%s)' % H.DISCOGS_ID] and not dg)
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text]', timeout=20000)
+        c0 = pg.evaluate("!!document.querySelector('#dci-ocr [data-ocr=supp]')")
+        pg.click('#dci-ocr [data-ocr=import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1000)
+        c1 = pg.evaluate("""[document.querySelector('[data-el=source]').innerText.replace(/\\s+/g, ' ').trim(), [...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim()),
+          [...document.querySelectorAll('[data-el=msgs] .dci-msg')].some(m => /has not started/.test(m.textContent))]""")
+        dg = [u for u in reqs if 'discogs.com' in u]
+        print('C) Quelle:', c1[0][:120], '| Einträge:', c1[1][:6], '| Hinweis noch da:', c1[2], '| Ergänzen vorher:', c0, '| Discogs:', dg[:3])
+        results.append('Cover Art Archive images (Back, Booklet, Tray), read with text recognition' in c1[0] and 'j4vaman' in c1[1] and not c1[2] and not c0 and not dg)
+        H.open_settings(pg, 'beta')
+        pg.uncheck('[data-el=settings] [data-set=beta-ocr]')
+        pg.wait_for_timeout(300)
+        d1 = pg.evaluate("document.getElementById('dci-open-ocr').hidden")
+        print('D) Beta aus – Knopf weg:', d1)
+        results.append(d1)
+        print('Fehler:', errs0, errs)
+        results.append(not errs0 and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
