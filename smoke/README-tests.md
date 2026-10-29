@@ -96,7 +96,7 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     (S051); in one line "… are played by Jane Roe", "Bass Man plays bass and drums"; "are mixed by" (T050)
                                 #   instrguess: 3.34.20: Bongo → bongos, Woodblock → wood block … (T001); "Chaims" asks "did you mean: chimes ·
                                 #     wind chimes · tubular bells · other instruments “chaims”" (also in the compact line), each choice and its
-                                #     credit; "Buddha machine" other instruments credited "buddha machine" at once (3.34.27: in lower case);
+                                #     credit; "Buddha machine" other instruments credited "Buddha machine" at once (3.34.28: a proper name, T052);
                                 #     "Voice" asks (Q011), "use “voice” as role
                                 #     credit" after a voice typed in
                                 #   voicetech: 3.34.25: Discogs "Voice" asks four answers (spoken vocals “voice” chosen), "Vocals" plain; "Technician
@@ -106,6 +106,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     bass, sticks-and-stones" – other instruments “sticks-and-stones”; more unknown words than instruments: not recognized;
                                 #     3.34.27 (S052): credits and tasks in lower case ("chaims", "sticks-and-stones"), the field's suggestions too ("Tambourine
                                 #     [Additional, Toy]": toy · … · toy tambourine), a proper name of MB's instruments kept ("Hammond manager")
+                                #   casenote: 3.34.28 (S052a/b, T052): "Guitar [Gibson Les Paul]" → "Gibson les paul" with the note "Written small –
+                                #     …: Les → les · keep · always", in the compact line too; keep / write small again / always (stored in T052, a
+                                #     second row follows); text "Sticks-And-Stones" noted, "Buddha machine" kept; a known role without a note
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.27, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.28, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.28 · 2026-10-29
+
+Unknown words in lower case also in Discogs brackets, with a note at the row; proper names of the register (S052a/b, T052).
+
+- **Mapping file:** new list `PROPER_WORDS` (before `ART_TYPES`), table T052, editable (`EDITABLE_LISTS` shape `words`, spelling kept).
+- **New `properSpelling(w, keep)`** (a word kept at the row, else T052), **`knownWord(w, vocab)`** (T002, MusicBrainz's instrument words, `SMALL_ENGLISH`), **`lowerWord(word, vocab, keep)`** (proper names of T052 and MusicBrainz, digits; a whole hyphenated word first, then its parts). `caseWord` gets `keep` and checks T052 first.
+- **`caseCredit(text, vocab, { lowerUnknown, quiet })`:** with `lowerUnknown` through `lowerWord`; a word written wholly small that is not known is pushed to `caseCtx.lowered` unless `quiet`. **`caseCtx`** (module level) is set by `roleCreditFor` for the row: `{ lowered, keep: row.keepCase }`; `roleCreditFor` stores `row.creditLowered` (the noted words still in the credit).
+- **`creditCasing(lt)`:** `lowerUnknown` also with S052 (before: only voices, S034). **`wordingCredit`:** `lowerUnknown` with S052, quiet. **`lowerCredit(text, { off, quiet })`:** quiet for R086 and for the task of a role the register knows (noted only with the note `unknownRole`).
+- **UI:** `caseNoteHtml(row)` in `.dci-case-slot` below the role credit field ("Written small – …" with `case-keep` / `case-always`, "Kept as written: …" with `case-small`); `updateCaseNote(row)` after typing; the compact line gets `.dci-cl-case` with `case-keep`. **New `caseKeep(row, word, keep)`** (`row.keepCase = { lower: Written }`), **`caseAlways(row, word)`** (`putListChange` on T052, `mappingChanged('T052')`, log `caseAlways`). CSS `.dci-case-note`, `.dci-cl-case`.
+- **Rules:** S052 and S011 notes, new T052 in TABLES.
+- **Texts (English only):** `caseNote.small`, `caseNote.word`, `caseNote.keep`, `caseNote.always`, `caseNote.alwaysTitle`, `caseNote.kept`, `caseNote.smallAgain`, `caseNote.clTitle`, `cl.caseSmall`, `log.caseAlways`.
+- **Tests:** new case `t_text_basics.py casenote` (Discogs "Guitar [Gibson Les Paul]": note, compact line, keep, write small again, always – stored in T052 and used by a second row; a text: "Sticks-And-Stones" noted, "Buddha machine" kept; a known role without note); `instrguess`: "Buddha machine" again with its capital; `t_rules_window.py ruleedit`: T052 among the editable lists; `register_golden.json` rewritten (82 wordings in lower case, "Fender Rhodes" and "Hammond B3" now with their capitals, S011, S052, T052).
 
 ## Import 3.34.27 · 2026-10-29
 

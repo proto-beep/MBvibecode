@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.27 | – |
+| 2026-10-29 | 3.34.18 – 3.34.28 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.28
+
+#### Changed
+
+- **Discogs brackets in lower case too, and the row says what was written small** (rule S052; maintainer: "S052b, Discogs-Klammern (S011): klein schreiben", ""Buddha" ist natürlich ein eigenname also großgeschrieben. generell müssen instrumente kleingeschrieben werden. also vielleicht deutlich machen, dass gerade etwas lowercased wurde wenn die rolle oder das instrument nicht bekannt ist"): words of Discogs brackets and wordings MusicBrainz does not know are written small ("Guitar [Gibson Les Paul]" → Gibson les paul; before: as written). Below the role credit – and in the compact line – a note says it: "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”". "keep" keeps the word as written in this row, "always" adds it to the proper names of the register.
+
+#### Added
+
+- **Proper names of the register** (table T052): words that keep their capitals in role credits although MusicBrainz's instruments do not hold them – "Buddha" ("Buddha machine"), makes such as Fender, Gibson, Moog, Wurlitzer, Steinway, peoples such as Irish, Tibetan. Editable in ⚙ Mapping rules; "always write “…”" at a row adds a word.
 
 ### Import 3.34.27
 
