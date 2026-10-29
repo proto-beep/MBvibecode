@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.22, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.26, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,47 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.26 · 2026-10-29
+
+Words that are no instrument ask everywhere, with "miscellaneous support" as the last answer (collected item 137d (c)).
+
+- **`TEXT.parse`, "Name – roles":** the unknown parts that `maybePlayable` passes – when the line has at least as many instruments known (`playable`) – are credits with `guess: true`, in their order; the others stay unknown parts (not recognized). With S051.
+- **`makeRow`:** an R096 role that is no instrument of MusicBrainz goes through `guessInstrument(row, { word })` (before: `makeMiscRow`); `remapRow` keeps a question asked (and "miscellaneous support" if chosen) or asks it.
+- **`guessInstrument`:** `row.instrGuess` gets `misc` (offered; not for technicians), `level` and `chose`; new **`guessMisc(row)`** (action `instr-misc`, also `\u0000misc` from the compact line's list) – `makeMiscRow` with the word as task – and **`guessUnMisc(row)`** (in `pickInstrument`: an instrument row again, on its level). **`instrGuessHtml`:** the answer "miscellaneous support (task “…”)" (`instrGuess.misc`), with none like it the answers other instruments (chosen) · miscellaneous support (`instrGuess.noneOr`). **`roleCreditForInner`:** with "miscellaneous support" chosen the task as before.
+- **Texts:** new `instrGuess.misc`, `instrGuess.noneOr` (English only).
+- **Header / files:** `@version 3.34.26`, `?v=3.34.26`, both files' `version`.
+- **Tests:** `t_text_basics.py` – new case `unknownask`, `names` (B: "sticks-and-stones" a row of its own); `text_corpus.json` – 3 lines; `register_golden.json` written anew (the dashboard of the register: trumpet, clarinet and sticks-and-stones rows instead of not recognized).
+
+## Import 3.34.25 · 2026-10-29
+
+"Voice" from every source with four answers (collected item 137e); instrument technicians with their instrument (137f). Rule (maintainer): the mapping is the same for every source, exceptions only where a site needs them (Q007 stays Bandcamp's).
+
+- **Q011** (mapping file): a fourth answer "spoken vocals “voice”", its note. **`askVoice(row)`** for every source (not companies) – also Discogs – and in `suppRow` for a supplement.
+- **R086** (mapping file): its pattern also "bass, drum(s), keyboard(s), synth, organ, percussion, strings … technician / tech", its note; its code takes the instrument from the word before "technician" / "tech" / "tuner" (not "instrument") or from a detail (consumed) as `primaryCands` (`instrumentCandidates(…, { head: false })`: T001 spellings); "tuner" keeps its credit. **`roleCreditForInner`:** an R086 row with an instrument gets no role credit but the tuner's. New **`askTechnician(row)`** – an instrument MusicBrainz does not know asks through `guessInstrument(row, { word, misc: false })` (new options `word`, `misc`: no miscellaneous support).
+- **`suppRow`:** `guess` into `makeRow`; `askVoice`, `guessInstrument`, `askTechnician` as in the import.
+- **Header / files:** `@version 3.34.25`, `?v=3.34.25`, both files' `version`.
+- **Tests:** `t_text_basics.py` – new case `voicetech` (Discogs); `register_golden.json` written anew (R086, Q011).
+
+## Import 3.34.24 · 2026-10-29
+
+Text from cover art (beta): the origin in the head of an entry (collected item 130d).
+
+- **New:** `coverHits(refs)` (the images and crops of lines of the text read, none for another text) and `coverFromLine(hits, key, act, most)` (the line with ⓘ and the crops while `key` is in `S.cropOpen`) – `coverFromHtml(row)` uses them now (4 crops); new **`coverFromEntryHtml(a, rows)`** below the head of an entry (`.dci-gcoverfrom`, the lines of all its rows but supplements, 6 crops, key `g:<entry>`), action `cover-crop-entry` (`rerenderGroup`). Crops shown once for the same crop.
+- **CSS:** `.dci-gcoverfrom`.
+- **Header / files:** `@version 3.34.24`, `?v=3.34.24`, both files' `version`.
+- **Tests:** `t_coverart.py` – new case `ocrentry`.
+
+## Import 3.34.23 · 2026-10-29
+
+An arrow at the compact view (collected item 143); "in front" of the cover art window as a setting (138b).
+
+- **New:** `HINT_COMPACT_KEY` (`dci-hint-compact`: true once seen and switched or closed; set at the start when the compact view is stored), `compactHintOn()`, **`renderCompactHint()`** (after `buildOverlay` and ↺ of Appearance: `.dci-hint-compact` after `[data-act=view-toggle]` – a zero-size anchor with `.dci-hint-bubble` below, `pointer-events: none` but ✕), **`compactHintDone()`** (the actions `view-toggle`, `view` – when the view changes – and `hint-compact-close`; not `setView` itself, so resets do not count). The key in `TOPIC_KEYS.appearance` and `SETTINGS_KEYS`.
+- **New:** `OCR_FRONT_KEY` (`dci-ocr-front`, false when off), `S.ocrFront`; `ocrKeepOnTop` does nothing when off; ⚙ Settings → Beta `data-set="ocr-front"` (`settings.ocrFront`); in `TOPIC_KEYS.beta`, `SETTINGS_KEYS`, the resets.
+- **CSS:** `.dci-head:has(.dci-hint-compact)` (above the content), `.dci-hint-compact`, `.dci-hint-bubble` (with its tip), `@keyframes dci-hint-in` (none with reduced motion).
+- **Texts:** new `hint.compact`, `hint.close`, `settings.ocrFront`, `settings.ocrFrontTitle` (English only).
+- **Header / files:** `@version 3.34.23`, `?v=3.34.23`, both files' `version`.
+- **Tests:** `harness.py` – `VIEW_PRESET` also stores the arrow as seen (it stands below the head); `t_ui_head.py` – new case `compacthint`; `t_coverart.py` ocrwindow – part E.
 
 ## Import 3.34.22 · 2026-10-29
 

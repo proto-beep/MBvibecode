@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.22
+// @version      3.34.26
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.22
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.22
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.26
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.26
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.22';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.26';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1448,6 +1448,10 @@
       "ocr.autoTitle": "Ticks the images that mostly have credits: back cover, booklet, liner and tray, and PDF pages with credits in their own text. On, it does so each time the window opens (the same as in ⚙ Settings → Beta); off, its ticks go again.",
       "settings.ocrAuto": "Auto-select the images with credits",
       "settings.ocrAutoTitle": "Text from cover art (beta): back covers, booklets, liners and trays, and PDF pages with credits in their own text, are ticked when the window opens – the same as “Auto-select” there. Switched on, at once; switched off, its ticks go again.",
+      "hint.compact": "Try the compact view: one line per role, open a line to change it – this symbol switches",
+      "hint.close": "Hide this hint",
+      "settings.ocrFront": "Keep “Text from cover art” in front of the dashboard",
+      "settings.ocrFrontTitle": "Text from cover art (beta): while its window is open it stays in front of the dashboard, the log and “Mapping rules”. Off: like the other windows, the one clicked comes to the front.",
       "ocr.own": "Your own images",
       "ocr.chooseFiles": "Choose images or PDFs …",
       "ocr.dropHint": "or drop them onto this window, or paste one with Ctrl+V",
@@ -1659,6 +1663,8 @@
       "instrGuess.chosen": "“{word}” is no instrument of MusicBrainz – chosen:",
       "instrGuess.other": "{other} “{word}”",
       "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{word}”.",
+      "instrGuess.misc": "miscellaneous support (task “{word}”)",
+      "instrGuess.noneOr": "“{word}” is no instrument of MusicBrainz, and none is like it – as written:",
       "voiceCredit.from": "From the text:",
       "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
@@ -2835,7 +2841,14 @@
           return out(['artists and repertoire', 'misc'], { level: 'release_group', ...(task ? { credit: task } : {}) });
         } },
       R086: { run: () => {
-      return out(['instrument technician'], { credit: is(/^(tuner|piano tuner)$/) });
+      // [137f] (3.34.25) with its instrument: the word before "technician" ("Guitar Technician", "Drum Tech", "Piano Tuner") or a
+      // detail ("Technician [Guitar]"), in the spellings of T001 ("Drum" → drums (drum set)); MusicBrainz says "guitar
+      // technician" itself – no role credit, "tuner" stays its credit (collected item 137f; maintainer: "ja genau")
+      const word = ((b.match(/^(.+?)\s+(?:technician|tech|tuner)$/) || [])[1] || '').replace(/^instruments?$/, '');
+      const det = word ? '' : ms.find((x) => !CHECKBOX_DETAILS.includes(x)) || '';
+      if (det) consumed.add(det);
+      const inst = word || det;
+      return out(['instrument technician'], { credit: is(/^(tuner|piano tuner)$/), ...(inst ? { primaryCands: instrumentCandidates(inst, [], { head: false }) } : {}) });
     } },
       R089: { run: () => out(['production coordinator'], { ...rel, credit: !is(/^production coordinator$/) }) },
       R095: { run: () => {
@@ -4870,8 +4883,19 @@
             // [3.6.0] Some roles known, some not: the known ones are taken, the rest is listed as not recognized
             const rp = roleParts(right);
             if (rp.known.length) {
-              rp.known.forEach((r) => { if (addCredit(left, r, cScope)) found++; });
-              if (found) unknownParts.push(...rp.unknown);
+              // [137d] (3.34.26) words that may be instruments – at least as many instruments known as such words – ask like the
+              // words of a list of instruments ("Barry Guy – double bass, sticks-and-stones": other instruments “sticks-and-stones”;
+              // maintainer: "also c … wir wollen das auf keinen fall verlieren", "passt"); the rest stays not recognized
+              const maybe = ruleOn('S051') ? rp.unknown.filter(maybePlayable) : [];
+              const guess = maybe.length && rp.known.filter(playable).length >= maybe.length ? new Set(maybe) : new Set();
+              rp.parts.forEach((r) => {
+                if (isRole(r)) {
+                  if (addCredit(left, r, cScope)) found++;
+                } else if (guess.has(r)) {
+                  if (addCredit(left, r, cScope, { guess: true })) found++;
+                }
+              });
+              if (found) unknownParts.push(...rp.unknown.filter((r) => !guess.has(r)));
             }
           }
         };
@@ -7160,7 +7184,10 @@
     const wr = wordingRuleFor(row);
     if (wr) return wr.credit;
     // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
-    if (row.instrGuess) return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? row.instrGuess.word : '';
+    if (row.instrGuess && row.instrGuess.chose !== 'misc') return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? row.instrGuess.word : '';
+    // [137f] (3.34.25) an instrument technician with its instrument: MusicBrainz says "guitar technician" – no role credit but
+    // "tuner" ("Piano Tuner": piano, credited "piano tuner")
+    if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(norm(row.creditFromRole)) : '';
     // [Q011] (3.34.20) "Voice": plain vocals take no role credit (also until it is answered)
     if (row.askVoice) {
       const tq = typeQuestionFor(row);
@@ -7335,7 +7362,12 @@
     }
     resolveRowType(row);
     if (!row.primaryTouched) row.primaryText = pickPrimary(row);
-    if (m.fallback && !primaryIsValid(row)) makeMiscRow(row, String(row.raw || row.base).replace(/\s*\[.*$/, '').trim());
+    if (m.fallback && !primaryIsValid(row)) {
+      // [137d] (3.34.26) a question already asked stays (with "miscellaneous support" if that was chosen), else it is asked now
+      const g = row.instrGuess;
+      if (g && g.chose === 'misc') makeMiscRow(row, g.word);
+      else if (!g) guessInstrument(row, { word: String(row.raw || row.base).replace(/\s*\[.*$/, '').trim() });
+    }
     // [Q003] A type chosen in the question stays
     const tq = typeQuestionFor(row);
     const o = tq && row.typeAnswer != null ? tq.options[row.typeAnswer] : null;
@@ -7447,8 +7479,10 @@
     // [137d] (3.34.20) a word of a list of instruments (guess) stays an instrument: guessInstrument asks for it
     // [121b] (3.34.21) also a word a question asks about (a question of your own: "keys" – keyboard, synthesizer …)
     if (m.fallback && !primaryIsValid(row) && !guess && !questionRuleFor(row)) {
-      // Not an MB instrument either: keep the role as "miscellaneous support" with the Discogs role as task.
-      makeMiscRow(row, String(raw || base).replace(/\s*\[.*$/, '').trim());
+      // Not an MB instrument either: [137d] (3.34.26) it asks for similar instruments, "other instruments" credited as written or
+      // "miscellaneous support" with the role as task (before: miscellaneous support at once; maintainer: "also c … wir wollen
+      // das auf keinen fall verlieren"); without "other instruments" in MusicBrainz and without similar ones: miscellaneous support
+      guessInstrument(row, { word: String(raw || base).replace(/\s*\[.*$/, '').trim() });
     }
     refreshRowDetails(row);
     return row;
@@ -12818,7 +12852,8 @@
    * without role credit. Discogs keeps spoken vocals (R015).
    */
   function askVoice(row) {
-    if (row.ruleId !== 'R015' || norm(row.base) !== 'voice' || (row.mods || []).length || !ruleOn('Q011')) return;
+    // [137e] (3.34.25) every source (maintainer: "generell soll das mapping wirklich gleich behandelt werden")
+    if (row.company || row.ruleId !== 'R015' || norm(row.base) !== 'voice' || (row.mods || []).length || !ruleOn('Q011')) return;
     Object.assign(row, { askVoice: true, primaryText: '', primaryTouched: false });
     refreshRowDetails(row);
   }
@@ -12870,21 +12905,57 @@
    * vorschläge vorhanden sind, kann "other instruments" mit role credit vergeben werden"). Without "other instruments" in
    * MusicBrainz and without similar ones: miscellaneous support, as before.
    */
-  function guessInstrument(row) {
-    const word = String(row.base || row.raw || '').trim();
+  function guessInstrument(row, { word: word0 = '', misc = true } = {}) {
+    const word = String(word0 || row.base || row.raw || '').trim();
     const lt = currentLinkType(row);
     const root = lt ? primaryRootOf(lt) : null;
     if (!root || !word || primaryIsValid(row)) return;
     const options = similarInstruments(word);
     const other = findChildAttr(root.id, 'other instruments');
     if (!options.length && !other) {
+      if (!misc) return;
       makeMiscRow(row, word);
       refreshRowDetails(row);
       return;
     }
-    row.instrGuess = { word, options, other: other ? other.name : '' };
+    // [137d] (3.34.26) "miscellaneous support (task “…”)" as the last answer (maintainer: "behalte das als letzte Antwort bei",
+    // "aber miscellaneous support auch anbieten"); the level kept for an instrument chosen after it
+    row.instrGuess = { word, options, other: other ? other.name : '', misc, level: row.level, chose: '' };
     if (!options.length) Object.assign(row, { primaryText: other.name, primaryTouched: true });
     refreshRowDetails(row);
+  }
+
+  /** [137d] (3.34.26) "miscellaneous support (task “…”)" chosen in the question of a word MusicBrainz does not know. */
+  function guessMisc(row) {
+    const g = row.instrGuess;
+    if (!g || !g.misc) return;
+    g.chose = 'misc';
+    Object.assign(row, { primaryTouched: false });
+    makeMiscRow(row, g.word);
+    refreshRowDetails(row);
+    rerenderRow(row);
+    refresh();
+  }
+
+  /** [137d] (3.34.26) An instrument chosen after "miscellaneous support": the row an instrument again, on its level. */
+  function guessUnMisc(row) {
+    const g = row.instrGuess;
+    if (!g || g.chose !== 'misc') return;
+    g.chose = '';
+    Object.assign(row, { types: ['instrument'], notes: (row.notes || []).filter((n) => n !== 'unknownRole' && n !== 'misc'), creditFromRole: '', primaryCands: [] });
+    if (g.level) row.level = g.level;
+    resolveRowType(row);
+  }
+
+  /**
+   * [137f] (3.34.25) An instrument technician whose instrument MusicBrainz does not know ("Chaims Technician", "Technician
+   * [Chaims]"): its instrument asks like a word of a list of instruments (guessInstrument; never miscellaneous support).
+   */
+  function askTechnician(row) {
+    if (row.ruleId !== 'R086' || !norm(row.primaryText) || primaryIsValid(row)) return;
+    const word = ((String(row.base || '').match(/^(.+?)\s+(?:technician|tech|tuner)$/i) || [])[1] || '').replace(/^instruments?$/i, '')
+      || (row.mods || []).find((x) => !CHECKBOX_DETAILS.includes(norm(x))) || '';
+    if (word) guessInstrument(row, { word, misc: false });
   }
 
   /** [T035] The kinds of media of the release, from MusicBrainz's formats: 'digital', 'cd', 'vinyl', 'cassette', 'other'. */
@@ -12940,7 +13011,7 @@
   /** A row of the second source, built as the import builds rows (tracks from it, its mark). */
   function suppRow(artistKey, info, company) {
     const row = company ? makeRow(artistKey, { raw: info.r.role, company })
-      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask, artCredit: info.c.role.artCredit || '' });
+      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask, artCredit: info.c.role.artCredit || '', guess: !!info.c.guess });
     row.dAllTracks = !!info.all;
     if (!company) {
       row.dSpec = info.c.specs.join(', ');
@@ -12953,6 +13024,12 @@
     row.suppName = S.supp.source.name;
     // [3.21.4] as in the import: "Translated By" from Bandcamp asks; a credit for another medium is left out
     if (!company && S.supp.source === BANDCAMP) askTranslation(row);
+    // [3.34.25] the same questions as in the import (the mapping is the same for every source)
+    if (!company) {
+      askVoice(row);
+      if (info.c.guess) guessInstrument(row);
+      askTechnician(row);
+    }
     if (company ? companyLeftOutForMedium(row, info.r, S.supp.rel || {}, info.r.line || info.r.role) : leftOutForMedium(row, S.supp.rel || {}, (info.c.lines || [])[0] || info.c.role.raw, !!S.supp.source.nameSearch)) return null;
     if (!releaseLevelChosen(row) || noMediaFor(row)) return null;
     suggestCommissioned(row);
@@ -13569,9 +13646,11 @@
           row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
           // [3.21.4] "Translated By" in Bandcamp credits asks (Q007); [S026] a credit for a medium the release does not have
           if (source === BANDCAMP) askTranslation(row);
-          // [137d] (3.34.20) "Voice" in a text asks (Q011); a word MusicBrainz does not know as an instrument asks for similar ones
-          if (source === BANDCAMP || source === TEXT) askVoice(row);
+          // [137d] (3.34.20) "Voice" asks (Q011; [137e] 3.34.25 from every source); a word MusicBrainz does not know as an instrument
+          // asks for similar ones; [137f] so does the instrument of an instrument technician
+          askVoice(row);
           if (c.guess) guessInstrument(row);
+          askTechnician(row);
           if (leftOutForMedium(row, rel, (c.lines || [])[0] || `${g.name} – ${c.role.raw}`, !!source.nameSearch)) {
             leftOutKeys.add(artist.key);
             continue;
@@ -15041,6 +15120,7 @@
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
+        ${coverFromEntryHtml(a, rows)}
         ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
         <div class="dci-tablewrap dci-rowswrap">
@@ -15079,16 +15159,38 @@
    * [130c] (3.34.22) A row of a text read from the cover art: "From the cover art · Booklet" – and ⓘ, which shows where its line
    * is in the image (the crops made at the import; collected item 130c).
    */
-  function coverFromHtml(row) {
+  /** [130c] (3.34.22) The images and crops of lines of the text read from the cover art (none for another text). */
+  function coverHits(refs) {
     const o = S.ocrLines;
-    if (!o || row.supp || S.source !== TEXT || !S.textInput || S.textInput.text !== o.text) return '';
-    const hits = uniq((row.srcRefs || []).map((r) => ocrLineKey(r.line))).flatMap((k) => o.lines.get(k) || []);
+    if (!o || S.source !== TEXT || !S.textInput || S.textInput.text !== o.text) return [];
+    return uniq((refs || []).map((r) => ocrLineKey(r.line))).flatMap((k) => o.lines.get(k) || []);
+  }
+
+  /** [130c] "From the cover art · …" with ⓘ (`act`, its crops shown while `key` is in S.cropOpen; at most `most`). */
+  function coverFromLine(hits, key, act, most) {
     if (!hits.length) return '';
-    const crops = hits.filter((h) => h.crop);
-    const open = crops.length && S.cropOpen.has(row.id);
-    const btn = crops.length ? ` <button type="button" class="dci-textbtn dci-info dci-crop-btn" data-act="cover-crop" aria-expanded="${!!open}" title="${esc(tr('cover.cropTitle'))}" aria-label="${esc(tr('cover.cropTitle'))}">ⓘ</button>` : '';
+    const crops = uniq(hits.filter((h) => h.crop).map((h) => h.crop)).map((c) => hits.find((h) => h.crop === c));
+    const open = crops.length && S.cropOpen.has(key);
+    const btn = crops.length ? ` <button type="button" class="dci-textbtn dci-info dci-crop-btn" data-act="${act}" aria-expanded="${!!open}" title="${esc(tr('cover.cropTitle'))}" aria-label="${esc(tr('cover.cropTitle'))}">ⓘ</button>` : '';
     return `<div class="dci-sub dci-coverfrom">${esc(tr('cover.from', { what: uniq(hits.map((h) => h.what)).join(', ') }))}${btn}${open
-      ? `<div class="dci-coverfrom-crops">${crops.slice(0, 4).map((h) => `<figure><img src="${esc(h.crop)}" alt="${esc(h.text)}"><figcaption>${esc(h.what)}: ${esc(h.text)}</figcaption></figure>`).join('')}</div>` : ''}</div>`;
+      ? `<div class="dci-coverfrom-crops">${crops.slice(0, most).map((h) => `<figure><img src="${esc(h.crop)}" alt="${esc(h.text)}"><figcaption>${esc(h.what)}: ${esc(h.text)}</figcaption></figure>`).join('')}</div>` : ''}</div>`;
+  }
+
+  /**
+   * [130c] (3.34.22) A row of a text read from the cover art: "From the cover art · Booklet" – and ⓘ, which shows where its line
+   * is in the image (the crops made at the import; collected item 130c).
+   */
+  function coverFromHtml(row) {
+    return row.supp ? '' : coverFromLine(coverHits(row.srcRefs), row.id, 'cover-crop', 4);
+  }
+
+  /**
+   * [130d] (3.34.24) The same in the head of an entry (maintainer: "ja ok"): the images of all its lines, ⓘ with the crops of
+   * all of them (six at most).
+   */
+  function coverFromEntryHtml(a, rows) {
+    const hits = coverHits(rows.filter((r) => !r.supp).flatMap((r) => r.srcRefs || []));
+    return hits.length ? `<div class="dci-gcoverfrom">${coverFromLine(hits, `g:${a.key}`, 'cover-crop-entry', 6)}</div>` : '';
   }
   S.cropOpen = new Set();
 
@@ -17220,10 +17322,17 @@
   function instrGuessHtml(row) {
     const g = row.instrGuess;
     if (!g || row.level === 'skip') return '';
-    if (!g.options.length) return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.none', { word: g.word, other: g.other }))}</div>`;
-    const pick = (name, label) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}" aria-pressed="${norm(row.primaryText) === norm(name)}">${esc(label)}</button>`;
-    const chosen = primaryIsValid(row) && !!norm(row.primaryText);
-    const opts = [...g.options.map((n) => pick(n, n)), ...(g.other ? [pick(g.other, tr('instrGuess.other', { other: g.other, word: g.word }))] : [])];
+    const misc = g.chose === 'misc';
+    // [137d] (3.34.26) and "miscellaneous support (task “…”)" as the last answer
+    const miscBtn = g.misc ? `<button type="button" class="dci-textbtn" data-act="instr-misc" aria-pressed="${misc}">${esc(tr('instrGuess.misc', { word: g.word }))}</button>` : '';
+    const pick = (name, label) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}" aria-pressed="${!misc && norm(row.primaryText) === norm(name)}">${esc(label)}</button>`;
+    const otherBtn = g.other ? [pick(g.other, tr('instrGuess.other', { other: g.other, word: g.word }))] : [];
+    if (!g.options.length) {
+      if (!g.misc) return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.none', { word: g.word, other: g.other }))}</div>`;
+      return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.noneOr', { word: g.word }))} ${[...otherBtn, miscBtn].join(' · ')}</div>`;
+    }
+    const chosen = misc || (primaryIsValid(row) && !!norm(row.primaryText));
+    const opts = [...g.options.map((n) => pick(n, n)), ...otherBtn, ...(miscBtn ? [miscBtn] : [])];
     return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(chosen ? 'instrGuess.chosen' : 'instrGuess.ask', { word: g.word }))} ${opts.join(' · ')}</div>`;
   }
 
@@ -17242,6 +17351,7 @@
   /** The instrument chosen in a question (Q001 …); [3.32.3] also from the compact line. Counts as made by hand: it stays when the rules change. */
   function pickInstrument(row, name) {
     if (!row || !name) return;
+    guessUnMisc(row); // [137d] (3.34.26)
     const artist = S.artists.get(row.artistKey);
     row.primaryText = name;
     row.primaryTouched = true;
@@ -17397,8 +17507,9 @@
       if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
       const g = row.instrGuess;
-      if (g && g.options.length && !(primaryIsValid(row) && norm(row.primaryText))) {
-        parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: g.word }) }] : [])]));
+      if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(row) && norm(row.primaryText))) {
+        parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: g.word }) }] : []),
+          ...(g.misc ? [{ value: '\u0000misc', text: tr('instrGuess.misc', { word: g.word }) }] : [])]));
       }
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
@@ -17474,6 +17585,27 @@
     applyView();
     renderGroups();
     refresh();
+  }
+
+  /**
+   * [143] (3.34.23) An arrow at "Compact | Full" in the head (collected item 143; maintainer: "falls man das skript zum ersten mal
+   * startet soll ein pfeil auf den kompaktmodus hinweisen. er soll verschwinden sobald zum ersten mal umgestellt wird", "ja auch
+   * für alle die es schon haben. und auch zurücksetzen bitte"): until the view is switched for the first time (in the head or in
+   * ⚙ Settings) or the arrow closed with ✕; not for who stored the compact view; reset settings show it again. It lets the
+   * pointer through to what lies below it (only ✕ is a button).
+   */
+  const compactHintOn = () => S.view !== 'compact' && readJson('localStorage', HINT_COMPACT_KEY, false) !== true;
+  function renderCompactHint() {
+    if (!S.overlay) return;
+    S.overlay.querySelectorAll('.dci-hint-compact').forEach((x) => x.remove());
+    const btn = S.overlay.querySelector('.dci-head [data-act="view-toggle"]');
+    if (!btn || !compactHintOn()) return;
+    btn.insertAdjacentHTML('afterend', `<span class="dci-hint-compact" role="note"><span class="dci-hint-bubble"><span class="dci-hint-text">${esc(tr('hint.compact'))}</span>
+      <button type="button" class="dci-textbtn dci-hint-x" data-act="hint-compact-close" title="${esc(tr('hint.close'))}" aria-label="${esc(tr('hint.close'))}">✕</button></span></span>`);
+  }
+  function compactHintDone() {
+    writeJson('localStorage', HINT_COMPACT_KEY, true);
+    if (S.overlay) S.overlay.querySelectorAll('.dci-hint-compact').forEach((x) => x.remove());
   }
 
   /** "Compact | Full" in ⚙ Settings → General ([3.27.2] the head has a symbol for it; until then above the entries too). */
@@ -21857,11 +21989,18 @@
         if (artist) foldGroup(artist);
         break;
       case 'view':
-        if (btn.dataset.view !== S.view) setView(btn.dataset.view);
+        if (btn.dataset.view !== S.view) {
+          setView(btn.dataset.view);
+          compactHintDone(); // [143]
+        }
+        break;
+      case 'hint-compact-close':
+        compactHintDone(); // [143] (3.34.23)
         break;
       // [3.27.2] the symbol in the head (item 60)
       case 'view-toggle':
         setView(S.view === 'compact' ? 'full' : 'compact');
+        compactHintDone(); // [143] (3.34.23)
         break;
       // [3.27.2] the heading "Settings" folds them in (item 57)
       case 'settings-fold':
@@ -22085,7 +22224,12 @@
         pickType(row, Number(btn.dataset.opt));
         break;
       case 'instr-pick':
-        pickInstrument(row, btn.dataset.instr);
+        // [137d] (3.34.26) "miscellaneous support" from the compact line comes as a value of its own
+        if (btn.dataset.instr === '\u0000misc') guessMisc(row);
+        else pickInstrument(row, btn.dataset.instr);
+        break;
+      case 'instr-misc':
+        guessMisc(row); // [137d] (3.34.26)
         break;
       case 'cover-crop':
         // [130c] (3.34.22) the crops of the row's lines, shown or hidden
@@ -22102,6 +22246,14 @@
       case 'other-create':
         startOtherCreate(artist);
         break;
+      case 'cover-crop-entry': {
+        // [130d] (3.34.24) the crops of all lines of the entry, shown or hidden
+        const k = `g:${artist.key}`;
+        if (S.cropOpen.has(k)) S.cropOpen.delete(k);
+        else S.cropOpen.add(k);
+        rerenderGroup(artist);
+        break;
+      }
       case 'sugg-more':
         // [3.15.2] the suggestions folded behind "+ n more"
         artist.suggOpen = !artist.suggOpen;
@@ -22928,7 +23080,8 @@
       // [3.32.3] a question of the compact line with five possibilities or more (item 102)
       case 'cl-pick':
         if (!el.value) break;
-        if (el.dataset.kind === 'instr') pickInstrument(row, el.value);
+        if (el.dataset.kind === 'instr' && el.value === '\u0000misc') guessMisc(row); // [137d] (3.34.26)
+        else if (el.dataset.kind === 'instr') pickInstrument(row, el.value);
         else pickType(row, Number(el.value));
         break;
       case 'primary':
@@ -23446,7 +23599,8 @@
    */
   function ocrKeepOnTop() {
     const o = document.getElementById('dci-ocr');
-    if (!o || o.hidden) return;
+    // [138b] (3.34.23) unless switched off in ⚙ Settings → Beta: then it is a window like the others
+    if (!o || o.hidden || !S.ocrFront) return;
     o.style.zIndex = String(++topZ);
     const peek = document.getElementById('dci-ocr-peek');
     if (peek && !peek.hidden) peek.style.zIndex = String(topZ + 1);
@@ -23674,6 +23828,7 @@
     S.overlay = overlay;
     applyView();
     applyScale();
+    renderCompactHint(); // [143] (3.34.23)
     applyLevelColors();
     applyKindColors();
     makeMovable(overlay.querySelector('.dci-panel'), '.dci-head', 'panel');
@@ -23860,6 +24015,10 @@
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
+  // [143] (3.34.23) the arrow at "Compact | Full" was shown and the view switched (or the arrow closed): true
+  const HINT_COMPACT_KEY = 'dci-hint-compact';
+  // [138b] (3.34.23) the window "Text from cover art" kept in front of the dashboard (default on; off: stored false)
+  const OCR_FRONT_KEY = 'dci-ocr-front';
   // [3.29.2] the colours of the levels (item 79): on by default; own colours in ⚙ Settings → Appearance
   const LEVEL_COLORS_KEY = 'dci-level-colors';
   const LEVEL_PALETTE_KEY = 'dci-level-palette';
@@ -23872,7 +24031,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -23880,10 +24039,13 @@
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
-    beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY],
+    beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
+  // [143] (3.34.23) who chose the compact view before knows the switch: no arrow (also when going back to full)
+  if (S.view === 'compact') writeJson('localStorage', HINT_COMPACT_KEY, true);
+  S.ocrFront = readJson('localStorage', OCR_FRONT_KEY, true) !== false;
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
   S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
@@ -24041,6 +24203,8 @@
         S.betaOcr ? row(check('data-set="ocr-preload"', S.ocrPreload, tr('settings.ocrPreload'), tr('settings.ocrPreloadTitle'))) : '',
         // [3.34.15] the same state as "Auto-select" in the window (collected item 136)
         S.betaOcr ? row(check('data-set="ocr-auto"', S.ocrAuto, tr('settings.ocrAuto'), tr('settings.ocrAutoTitle'))) : '',
+        // [138b] (3.34.23) the window in front of the dashboard (maintainer: "vielleicht standardmäßig und in den einstellungen umstellbar")
+        S.betaOcr ? row(check('data-set="ocr-front"', S.ocrFront, tr('settings.ocrFront'), tr('settings.ocrFrontTitle'))) : '',
       ],
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
@@ -24208,6 +24372,12 @@
     } else if (k === 'ocr-auto') {
       // [3.34.15] the same as "Auto-select" in the window: switched on, the images are chosen at once
       ocrSetAuto(el.checked);
+    } else if (k === 'ocr-front') {
+      // [138b] (3.34.23) in front of the dashboard, the log and the rules – or like them
+      S.ocrFront = el.checked;
+      writeJson('localStorage', OCR_FRONT_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.ocrFront'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      ocrKeepOnTop();
     } else if (k === 'ocr-preload') {
       // [3.34.10] loading the images ticked ahead: off – those being loaded ahead stop
       S.ocrPreload = el.checked;
@@ -24269,6 +24439,8 @@
       S.rulesRowPlace = 'window';
       S.rulesAsWindow = false;
       placeRules();
+      // [143] (3.34.23) the arrow at "Compact | Full" again
+      renderCompactHint();
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
@@ -24302,6 +24474,7 @@
       S.betaOcr = false;
       S.ocrPreload = false;
       S.ocrAuto = false;
+      S.ocrFront = true;
       closeOcr();
       renderSource();
       renderLauncher();
@@ -24319,7 +24492,9 @@
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
-    BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY];
+    BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
+    // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
+    HINT_COMPACT_KEY, OCR_FRONT_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -24340,7 +24515,7 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
-      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false,
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
     });
     closeOcr();
     renderLauncher();
@@ -25285,6 +25460,18 @@
       .dci-spell-val.dci-spell-x { text-decoration: underline wavy var(--sugg-line); text-underline-offset: 3px; }
       .dci-close, .dci-headbtn { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); }
       .dci-head-tools { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-left: auto; }
+      /* [143] (3.34.23) the arrow at "Compact | Full": below the symbol, the pointer goes through it (only ✕ is a button) */
+      .dci-head:has(.dci-hint-compact) { position: relative; z-index: 6; }
+      .dci-hint-compact { position: relative; width: 0; height: 0; align-self: flex-end; pointer-events: none; }
+      .dci-hint-bubble { position: absolute; top: calc(var(--u, 1px) * 10); right: calc(var(--u, 1px) * -6); z-index: 6; display: flex; align-items: flex-start;
+        gap: calc(var(--u, 1px) * 6); width: max-content; max-width: calc(var(--u, 1px) * 260); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8);
+        background: #4b4585; color: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); font-size: calc(var(--u, 1px) * 12); line-height: 1.35;
+        white-space: normal; animation: dci-hint-in 0.4s ease-out; }
+      .dci-hint-bubble::before { content: ''; position: absolute; top: calc(var(--u, 1px) * -7); right: calc(var(--u, 1px) * 16);
+        border: calc(var(--u, 1px) * 7) solid transparent; border-top: 0; border-bottom-color: #4b4585; }
+      .dci-hint-bubble .dci-hint-x { pointer-events: auto; color: #fff; padding: 0 calc(var(--u, 1px) * 2); }
+      @keyframes dci-hint-in { from { opacity: 0; transform: translateY(calc(var(--u, 1px) * -4)); } to { opacity: 1; transform: none; } }
+      @media (prefers-reduced-motion: reduce) { .dci-hint-bubble { animation: none; } }
       .dci-panic { border: 1px solid var(--err); background: #fff; color: var(--err); border-radius: 3px; padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 10); font-weight: 600; }
       .dci-panic:hover { background: #fbeceb; }
 
@@ -25566,6 +25753,7 @@
       /* [3.32.5] a role read with a typo corrected (S050) */
       .dci-typo { color: #8a5a00; }
       .dci-coverfrom .dci-crop-btn { padding: 0 calc(var(--u, 1px) * 3); }
+      .dci-gcoverfrom { padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 4); }
       .dci-coverfrom-crops { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); margin-top: calc(var(--u, 1px) * 4); }
       .dci-coverfrom-crops figure { margin: 0; max-width: 100%; }
       .dci-coverfrom-crops img { display: block; max-width: 100%; height: auto; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; }

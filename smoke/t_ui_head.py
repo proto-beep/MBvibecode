@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint; `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -496,6 +496,85 @@ def case_jump():
         results.append(inline and y1[0] > 200 and -40 <= foot <= 20 and 0 <= top <= 20)
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_compacthint():
+    """Credits Importer 3.34.23: an arrow at "Compact | Full" (collected item 143; maintainer: "falls man das skript zum ersten
+    mal startet soll ein pfeil auf den kompaktmodus hinweisen. er soll verschwinden sobald zum ersten mal umgestellt wird", "ja
+    auch für alle die es schon haben. und auch zurücksetzen bitte", "ja ok").
+    A) Nothing stored about it: the dashboard's head shows the arrow below the symbol (its tip below the symbol), the text says
+       what the compact view is; what lies below it can still be clicked (the pointer goes through, only ✕ is a button).
+    B) The symbol switches to compact: the arrow is gone, stored; back to full and a new page: still gone.
+    C) ⚙ Settings → "Reset all settings": the arrow is back; ✕ closes it for good (stored), ↺ of Appearance brings it back.
+    D) The compact view stored before (an older version): no arrow, also after switching to full."""
+    results = []
+    HINT = """(() => { const h = document.querySelector('.dci-head .dci-hint-compact'); const b = document.querySelector('.dci-head [data-act=view-toggle]');
+      if (!h) return null; const r = h.querySelector('.dci-hint-bubble').getBoundingClientRect(); const br = b.getBoundingClientRect();
+      const tip = getComputedStyle(h.querySelector('.dci-hint-bubble'), '::before');
+      return { text: h.querySelector('.dci-hint-text').textContent, below: r.top >= br.bottom - 2, near: r.right >= br.left && r.left <= br.right + 40,
+        through: getComputedStyle(h).pointerEvents === 'none', tip: tip.content !== 'none' }; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.evaluate("localStorage.removeItem('dci-hint-compact')")
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(800)
+        a = pg.evaluate(HINT)
+        print('A) Pfeil:', a)
+        results.append(bool(a) and a['text'].startswith('Try the compact view') and a['below'] and a['near'] and a['through'] and a['tip'])
+        # B) switched
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(300)
+        b1 = [pg.evaluate(HINT), pg.evaluate("localStorage.getItem('dci-hint-compact')")]
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(300)
+        b2 = pg.evaluate(HINT)
+        pg.close()
+        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(800)
+        b3 = pg.evaluate(HINT)
+        print('B) nach dem Umschalten:', b1, '| wieder voll:', b2, '| neue Seite:', b3)
+        results.append(b1 == [None, 'true'] and b2 is None and b3 is None)
+        # C) reset all settings, ✕, ↺ of Appearance
+        H.open_settings(pg)
+        pg.click('[data-el=settings] [data-act=reset-open]')
+        pg.wait_for_timeout(200)
+        pg.click('[data-act=reset-do]')
+        pg.wait_for_timeout(2500)
+        c1 = pg.evaluate(HINT)
+        pg.click('.dci-head .dci-hint-compact [data-act=hint-compact-close]')
+        pg.wait_for_timeout(300)
+        c2 = [pg.evaluate(HINT), pg.evaluate("localStorage.getItem('dci-hint-compact')")]
+        H.open_settings(pg, 'appearance')
+        pg.locator('[data-el=settings] [data-act=settings-reset]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(500)
+        c3 = pg.evaluate(HINT)
+        print('C) nach „Reset all“:', bool(c1), '| ✕:', c2, '| ↺ Appearance:', bool(c3))
+        results.append(bool(c1) and c2 == [None, 'true'] and bool(c3))
+        print('Fehler:', errs + errs2)
+        results.append(not errs and not errs2)
+        pg.close()
+        # D) the compact view stored before
+        ctx2 = H.new_context(b)
+        ctx2.add_init_script("if (localStorage.getItem('dci-view') === null) { localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-view', JSON.stringify('compact')); }")
+        pg, errs3 = H.open_mb_edit(ctx2, companion=False, view=None)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(800)
+        d1 = [pg.evaluate(HINT), pg.evaluate("localStorage.getItem('dci-hint-compact')")]
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(300)
+        d2 = pg.evaluate(HINT)
+        print('D) kompakt gespeichert:', d1, '| voll:', d2, '| Fehler:', errs3)
+        results.append(d1 == [None, 'true'] and d2 is None and not errs3)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
