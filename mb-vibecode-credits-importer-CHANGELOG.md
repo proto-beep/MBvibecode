@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.23 | – |
+| 2026-10-29 | 3.34.18 – 3.34.24 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.24
+
+#### Added
+
+- **Text from cover art (beta): the origin in the head of an entry** (collected item 130d; maintainer: "ja ok"): "From the cover art · Back, Tray" – the images of all lines of the entry –, ⓘ shows the crops of all of them.
 
 ### Import 3.34.23
 

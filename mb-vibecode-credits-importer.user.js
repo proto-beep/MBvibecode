@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.23
+// @version      3.34.24
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.23
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.23
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.24
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.24
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.23';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.24';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -15045,6 +15045,7 @@
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
+        ${coverFromEntryHtml(a, rows)}
         ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
         <div class="dci-tablewrap dci-rowswrap">
@@ -15083,16 +15084,38 @@
    * [130c] (3.34.22) A row of a text read from the cover art: "From the cover art · Booklet" – and ⓘ, which shows where its line
    * is in the image (the crops made at the import; collected item 130c).
    */
-  function coverFromHtml(row) {
+  /** [130c] (3.34.22) The images and crops of lines of the text read from the cover art (none for another text). */
+  function coverHits(refs) {
     const o = S.ocrLines;
-    if (!o || row.supp || S.source !== TEXT || !S.textInput || S.textInput.text !== o.text) return '';
-    const hits = uniq((row.srcRefs || []).map((r) => ocrLineKey(r.line))).flatMap((k) => o.lines.get(k) || []);
+    if (!o || S.source !== TEXT || !S.textInput || S.textInput.text !== o.text) return [];
+    return uniq((refs || []).map((r) => ocrLineKey(r.line))).flatMap((k) => o.lines.get(k) || []);
+  }
+
+  /** [130c] "From the cover art · …" with ⓘ (`act`, its crops shown while `key` is in S.cropOpen; at most `most`). */
+  function coverFromLine(hits, key, act, most) {
     if (!hits.length) return '';
-    const crops = hits.filter((h) => h.crop);
-    const open = crops.length && S.cropOpen.has(row.id);
-    const btn = crops.length ? ` <button type="button" class="dci-textbtn dci-info dci-crop-btn" data-act="cover-crop" aria-expanded="${!!open}" title="${esc(tr('cover.cropTitle'))}" aria-label="${esc(tr('cover.cropTitle'))}">ⓘ</button>` : '';
+    const crops = uniq(hits.filter((h) => h.crop).map((h) => h.crop)).map((c) => hits.find((h) => h.crop === c));
+    const open = crops.length && S.cropOpen.has(key);
+    const btn = crops.length ? ` <button type="button" class="dci-textbtn dci-info dci-crop-btn" data-act="${act}" aria-expanded="${!!open}" title="${esc(tr('cover.cropTitle'))}" aria-label="${esc(tr('cover.cropTitle'))}">ⓘ</button>` : '';
     return `<div class="dci-sub dci-coverfrom">${esc(tr('cover.from', { what: uniq(hits.map((h) => h.what)).join(', ') }))}${btn}${open
-      ? `<div class="dci-coverfrom-crops">${crops.slice(0, 4).map((h) => `<figure><img src="${esc(h.crop)}" alt="${esc(h.text)}"><figcaption>${esc(h.what)}: ${esc(h.text)}</figcaption></figure>`).join('')}</div>` : ''}</div>`;
+      ? `<div class="dci-coverfrom-crops">${crops.slice(0, most).map((h) => `<figure><img src="${esc(h.crop)}" alt="${esc(h.text)}"><figcaption>${esc(h.what)}: ${esc(h.text)}</figcaption></figure>`).join('')}</div>` : ''}</div>`;
+  }
+
+  /**
+   * [130c] (3.34.22) A row of a text read from the cover art: "From the cover art · Booklet" – and ⓘ, which shows where its line
+   * is in the image (the crops made at the import; collected item 130c).
+   */
+  function coverFromHtml(row) {
+    return row.supp ? '' : coverFromLine(coverHits(row.srcRefs), row.id, 'cover-crop', 4);
+  }
+
+  /**
+   * [130d] (3.34.24) The same in the head of an entry (maintainer: "ja ok"): the images of all its lines, ⓘ with the crops of
+   * all of them (six at most).
+   */
+  function coverFromEntryHtml(a, rows) {
+    const hits = coverHits(rows.filter((r) => !r.supp).flatMap((r) => r.srcRefs || []));
+    return hits.length ? `<div class="dci-gcoverfrom">${coverFromLine(hits, `g:${a.key}`, 'cover-crop-entry', 6)}</div>` : '';
   }
   S.cropOpen = new Set();
 
@@ -22134,6 +22157,14 @@
       case 'other-create':
         startOtherCreate(artist);
         break;
+      case 'cover-crop-entry': {
+        // [130d] (3.34.24) the crops of all lines of the entry, shown or hidden
+        const k = `g:${artist.key}`;
+        if (S.cropOpen.has(k)) S.cropOpen.delete(k);
+        else S.cropOpen.add(k);
+        rerenderGroup(artist);
+        break;
+      }
       case 'sugg-more':
         // [3.15.2] the suggestions folded behind "+ n more"
         artist.suggOpen = !artist.suggOpen;
@@ -25632,6 +25663,7 @@
       /* [3.32.5] a role read with a typo corrected (S050) */
       .dci-typo { color: #8a5a00; }
       .dci-coverfrom .dci-crop-btn { padding: 0 calc(var(--u, 1px) * 3); }
+      .dci-gcoverfrom { padding: 0 calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 4); }
       .dci-coverfrom-crops { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); margin-top: calc(var(--u, 1px) * 4); }
       .dci-coverfrom-crops figure { margin: 0; max-width: 100%; }
       .dci-coverfrom-crops img { display: block; max-width: 100%; height: auto; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; }
