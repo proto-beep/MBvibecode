@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.35.1, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.35.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.35.2 · 2026-10-29
+
+Proper names of several words in T052, the note offers words one after another as a whole (collected item 144).
+
+- **New `properPhrases(keep)`:** the entries with spaces of `PROPER_WORDS` (T052) and of the row's `keepCase`, each `{ re, spelling }` (a regular expression with the words separated by `\s+`, bounded by start/end or the separators of `caseCredit`), the longest first; cached by their text (`phraseCache`).
+- **`caseCredit`:** first finds the phrases (not overlapping) and writes each as a whole in its spelling; the text between them word by word as before. New: with `caseCtx.runs`, words noted as written small that follow each other with only spaces between them are noted as a run ("Les Paul"); a phrase or any other word ends a run.
+- **`roleCreditFor`:** `caseCtx` gets `runs: []`; new `row.creditPhrases` – the runs still in the credit.
+- **`caseNoteHtml`:** the runs (`row.creditPhrases`) before the words, with the same buttons (`case-keep`, `case-always` with the whole as `data-word`). The compact line's "keep" buttons: the runs first. `caseKeep`/`caseAlways` unchanged (the key of `keepCase` is the lower-case text, with spaces for a phrase).
+- **Register:** T052 note names the phrases; `where` with `properPhrases`. **Mapping file:** "Gibson Les Paul" and "Les Paul" in `PROPER_WORDS` (after "Gibson").
+- **Texts:** none new (the note's texts take the whole as `{word}`).
+- **Tests:** `t_text_basics.py` `casenote` now with "Guitar [Gretsch Duo Jet]" (Gibson Les Paul is a proper name of the register itself now; the run "Duo Jet" offered first); new case `casephrase` (Gibson Les Paul from the register, "Les Paul Junior", "Paul Reed Smith" offered as a whole, keep / write small again / always, a "Les" in a text stays small). `smoke/register_golden.json` written anew (T052).
 
 ## Import 3.35.1 · 2026-10-29
 
