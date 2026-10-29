@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.21
+// @version      3.34.22
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.21
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.21
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.22
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.22
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.21';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.22';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -932,6 +932,8 @@
       "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
       "role.notesTracks": "Tracks {list} from the notes",
       "role.typoRead": "Read as “{read}” (written “{written}”)",
+      "cover.from": "From the cover art · {what}",
+      "cover.cropTitle": "Where this line is in the image (read from the cover art)",
       "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
       "matrix.suggOk": "Keep the suggestion",
       "matrix.suggNo": "Take the suggestion out",
@@ -10832,6 +10834,53 @@
     return { text, origin };
   }
 
+  // [130c] (3.34.22) the crop of a line at most this large (px)
+  const OCR_CROP_W = 640;
+  const OCR_CROP_H = 160;
+  const ocrLineKey = (t) => String(t || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+  /** [130c] (3.34.22) A line's place cut out of its image as a small JPEG (data: address); '' if it cannot be. */
+  function ocrCrop(canvas, box) {
+    try {
+      const pad = Math.max(4, Math.round(box.h * 0.25));
+      const x = Math.max(0, Math.floor(box.x - pad));
+      const y = Math.max(0, Math.floor(box.y - pad));
+      const w = Math.min(canvas.width - x, Math.ceil(box.w + 2 * pad));
+      const h = Math.min(canvas.height - y, Math.ceil(box.h + 2 * pad));
+      if (w < 2 || h < 2) return '';
+      const k = Math.min(1, OCR_CROP_W / w, OCR_CROP_H / h);
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(w * k));
+      c.height = Math.max(1, Math.round(h * k));
+      c.getContext('2d').drawImage(canvas, x, y, w, h, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.85);
+    } catch (e) {
+      return '';
+    }
+  }
+
+  /**
+   * [130c] (3.34.22) Where each line of the text read is (collected item 130c; maintainer: "was verbirgt sich hinter 130c?"):
+   * { text, lines: Map(line in small letters → [{ what: the image, crop, text }]) }, the crops made now while the images are
+   * there – in memory only, for this import (S.ocrLines).
+   */
+  function ocrLineOrigins(text) {
+    const lines = new Map();
+    for (const r of S.ocr.results.filter((x) => x.status === 'done')) {
+      const what = ocrTypes(r.img);
+      for (const pt of r.parts || []) {
+        String(pt.text || '').split('\n').forEach((t, n) => {
+          const key = ocrLineKey(t);
+          if (!key) return;
+          const hit = pt.lines && pt.lines.length ? ocrLineFor(pt.lines, t, n) : null;
+          const crop = hit && hit.box && r.img.canvas ? ocrCrop(r.img.canvas, hit.box) : '';
+          lines.set(key, [...(lines.get(key) || []), { what, crop, text: t.trim() }]);
+        });
+      }
+    }
+    return { text, lines };
+  }
+
   function ocrImport(supp) {
     const { text, origin } = ocrText();
     if (!text.trim()) {
@@ -10839,6 +10888,8 @@
       return;
     }
     log('info', 'ocrImported', { origin, how: tr(supp ? 'ocr.supp' : 'ocr.import') });
+    // [130c] (3.34.22) the image and the place of each line, for the rows of this text (not of a supplement)
+    if (!supp) S.ocrLines = ocrLineOrigins(text);
     closeOcr();
     // [3.34.8] opened with "… from cover art" (nothing imported yet): the release is loaded now, with this text as its source
     if (!S.initialized) {
@@ -15024,6 +15075,23 @@
     return out.join('');
   }
 
+  /**
+   * [130c] (3.34.22) A row of a text read from the cover art: "From the cover art · Booklet" – and ⓘ, which shows where its line
+   * is in the image (the crops made at the import; collected item 130c).
+   */
+  function coverFromHtml(row) {
+    const o = S.ocrLines;
+    if (!o || row.supp || S.source !== TEXT || !S.textInput || S.textInput.text !== o.text) return '';
+    const hits = uniq((row.srcRefs || []).map((r) => ocrLineKey(r.line))).flatMap((k) => o.lines.get(k) || []);
+    if (!hits.length) return '';
+    const crops = hits.filter((h) => h.crop);
+    const open = crops.length && S.cropOpen.has(row.id);
+    const btn = crops.length ? ` <button type="button" class="dci-textbtn dci-info dci-crop-btn" data-act="cover-crop" aria-expanded="${!!open}" title="${esc(tr('cover.cropTitle'))}" aria-label="${esc(tr('cover.cropTitle'))}">ⓘ</button>` : '';
+    return `<div class="dci-sub dci-coverfrom">${esc(tr('cover.from', { what: uniq(hits.map((h) => h.what)).join(', ') }))}${btn}${open
+      ? `<div class="dci-coverfrom-crops">${crops.slice(0, 4).map((h) => `<figure><img src="${esc(h.crop)}" alt="${esc(h.text)}"><figcaption>${esc(h.what)}: ${esc(h.text)}</figcaption></figure>`).join('')}</div>` : ''}</div>`;
+  }
+  S.cropOpen = new Set();
+
   /** [3.31.6] Tracks set from the notes: ⓘ with the line they come from (item 97c). */
   const notesFromHtml = (row) => (row.notesFrom ? `<div class="dci-sub dci-notesfrom"><span class="dci-info" title="${esc(tr('matrix.notesFrom', { text: row.notesFrom }))}">ⓘ</span> ${esc(tr('role.notesTracks', { list: trackListLabel(row.notesTracks || new Set()) }))}</div>` : '');
 
@@ -15044,7 +15112,7 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}${typoHtml(row)}
-        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
+        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec && !(row.dSpecTracks && row.notesFrom) ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
@@ -15056,7 +15124,7 @@
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
-        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
+        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
       <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
       ${notes}`;
@@ -22019,6 +22087,12 @@
       case 'instr-pick':
         pickInstrument(row, btn.dataset.instr);
         break;
+      case 'cover-crop':
+        // [130c] (3.34.22) the crops of the row's lines, shown or hidden
+        if (S.cropOpen.has(row.id)) S.cropOpen.delete(row.id);
+        else S.cropOpen.add(row.id);
+        rerenderRow(row);
+        break;
       case 'voice-credit':
         // [Q011] (3.34.20) "voice" as the role credit of another voice
         Object.assign(row, { roleCredit: norm(row.base), roleCreditTouched: true });
@@ -25491,6 +25565,11 @@
       .dci-livecom-warn { color: #b3261e; }
       /* [3.32.5] a role read with a typo corrected (S050) */
       .dci-typo { color: #8a5a00; }
+      .dci-coverfrom .dci-crop-btn { padding: 0 calc(var(--u, 1px) * 3); }
+      .dci-coverfrom-crops { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); margin-top: calc(var(--u, 1px) * 4); }
+      .dci-coverfrom-crops figure { margin: 0; max-width: 100%; }
+      .dci-coverfrom-crops img { display: block; max-width: 100%; height: auto; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; }
+      .dci-coverfrom-crops figcaption { font-size: calc(var(--u, 1px) * 11); color: #5d5a6e; }
       .dci-type-ask [aria-pressed="true"] { font-weight: 700; text-decoration: none; }
       .dci-incomplete { white-space: nowrap; }
       .dci-incomplete .dci-textbtn { color: inherit; font-weight: 600; }
