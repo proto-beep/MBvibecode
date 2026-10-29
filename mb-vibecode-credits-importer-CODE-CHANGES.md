@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.35.3, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.35.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.35.4 · 2026-10-29
+
+An event of an entry's matrix opened: level, date and tracks for all its rows (AE-3).
+
+- **`evHeadHtml(e, open)`:** ▸ / ▾ (`data-act="em-evopen"`, `data-ev`) before ①; opened: class `dci-em-evopen`. `emBlockHtml` passes whether the event is the one opened in this block and draws **new `emEventHtml(a, e)`** below its table.
+- **State:** `S.emEvOpen` (Map entry key → `{ block, ev }`, one event per entry; not stored).
+- **New `emEventHtml`:** the levels (`recording`, `release`, `release_group` – those `typeOnLevel` has for a row of the event, and its own), the date field (`data-f="em-evdate"`, as in the head), the dates of the pool (`data-act="em-evpool"`, `data-id`; '' = no date), on recordings the tracks (`data-f="em-evtrack"`, `data-i`), media (`em-evmedium`), track groups (`em-evtg`), all (`em-evall`), ✕ (`em-evopen`).
+- **New `emEventLevel(a, evKey, level)`:** rows whose type is on the level → new **`levelOf(row, level)`** (the part of `setLevel` without drawing; `setLevel` uses it), from release to recording with all tracks of the selection if they had none; `matrixDateForLevel`; the others get `row.emLevelKept = level`. **New `emEventPool`**, **`emEventTracks`** (at least one track, else the message `em.evNoTracks`). All mark the rows `dateKeyed` and call **new `emEventMoved(a, rows)`**: two rows of one line in the same event – the later ones to Skip; the opened event follows the rows' new key. `emEventDate` calls it too.
+- **New `levelKeptHtml(l)`** in `lineAskHtml`: the yellow note of a row with `emLevelKept`, "ok" (`em-keptok`) takes it off the line's rows; a row in the event again loses it.
+- **`entryMatrixChange`:** `em-evtrack`. **`onClick`:** `em-evopen`, `em-evlevel`, `em-evpool`, `em-evall`, `em-evtg`, `em-evmedium`, `em-keptok`. **`rerenderGroup`:** a field of the opened event keeps the focus (its key changes): the same `data-f` (and `data-i`) in `.dci-em-evedit`.
+- **CSS:** `.dci-em-evtoggle`, `.dci-em-ev.dci-em-evopen`, `.dci-em-evedit`, `.dci-em-evrow`, `.dci-em-evtop`, `.dci-em-evlab`, `.dci-em-evpool`.
+- **Texts (English only):** `em.evOpen`, `em.evClose`, `em.evEditTitle`, `em.evLevel`, `em.evDate`, `em.evPool`, `em.evTracks`, `em.evGroups`, `em.evNoTracks`, `em.levelKept`, `em.keptOk`, `log.emEvLevel`, `log.emEvTracks`.
+- **Tests:** `t_entries.py` new case `evhead` (opened, a track added with the focus, the last track stays, all – two events one, a date typed / none / of the pool, Release and back with the note and "ok", ✕, staged with the date); `BLOCKS` leaves ▸ out of the event heads' text.
 
 ## Import 3.35.3 · 2026-10-29
 

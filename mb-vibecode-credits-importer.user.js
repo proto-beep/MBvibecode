@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.35.3
+// @version      3.35.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1722,6 +1722,17 @@
       "em.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head) and its tracks",
       "em.evDateLabel": "Date of event {n}",
       "em.badDate": "“{text}” is no date (2024-08-14, 2024-01 – 2024-07, 2024)",
+      "em.evOpen": "Open event {n}: its level, its date and its tracks, for all its rows",
+      "em.evClose": "Close event {n}",
+      "em.evEditTitle": "Event {n} – what you set here goes for all its rows ({rows})",
+      "em.evLevel": "Level:",
+      "em.evDate": "Date:",
+      "em.evPool": "from the pool:",
+      "em.evTracks": "Tracks:",
+      "em.evGroups": "track groups:",
+      "em.evNoTracks": "An event on recordings needs at least one track – take its rows out with their ticks instead",
+      "em.levelKept": "{name} stays on the level {level}: MusicBrainz has no “{type}” on the level {to}",
+      "em.keptOk": "ok",
       "em.dateDropped": "{date}: rows moved into its event {moved}, rows of their own in it {added}",
       "em.undo": "↶ Undo",
       "em.bothAsk": "{name}: {tracks} with and without a date –",
@@ -1760,6 +1771,8 @@
       "log.emJoin": "{name}: instruments and voices joined in one block",
       "log.emSplit": "{name}: each instrument a block of its own",
       "log.emEvDate": "Date of an event ({n} rows): {date}",
+      "log.emEvLevel": "{name}: event {n} on the level {level} ({moved} rows moved, {kept} stay)",
+      "log.emEvTracks": "{name}: event {n} on {tracks}",
       "log.emDateDrop": "{name}: {date} dropped – moved {moved}, rows of their own {added}",
       "rules.questions": "Instrument questions",
       "rules.options": "Choices",
@@ -15699,11 +15712,14 @@
    * immer das selbe sein. wenn ich also das event hier editiere verändert sich auch der date/track pool"); a date of the pool
    * dropped onto the head gives it to the event.
    */
-  function evHeadHtml(e) {
+  function evHeadHtml(e, open = false) {
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
     const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
-    return `<th class="dci-em-ev" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><span class="dci-em-evn">${circled(e.n)}</span>
+    // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
+    const t = tr(open ? 'em.evClose' : 'em.evOpen', { n: circled(e.n) });
+    return `<th class="dci-em-ev${open ? ' dci-em-evopen' : ''}" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><button type="button" class="dci-textbtn dci-em-evtoggle" data-act="em-evopen"
+      data-ev="${esc(e.key)}" aria-expanded="${open}" title="${esc(t)}" aria-label="${esc(t)}">${open ? '▾' : '▸'}</button><span class="dci-em-evn">${circled(e.n)}</span>
       <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>${pool && pool.name ? ` <span class="dci-em-evname">${esc(pool.name)}</span>` : ''}
       <input type="text" class="dci-em-evdate${date ? ' dci-cl-has' : ''}" data-f="em-evdate" data-ev="${esc(e.key)}" value="${esc(date)}" placeholder="${esc(tr('cl.noDate'))}"
         aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}"> ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
@@ -15711,6 +15727,139 @@
 
   /** [E4] (3.34.31) The rows of an entry in an event. */
   const rowsInEvent = (a, evKey) => S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey);
+
+  /**
+   * [AE-3] (3.35.4) An event opened below its block (maintainer: "wenn man den ereigniskopf öffnet soll man datum und tracks
+   * einstellen können", "auch ebene ändern können"): its level (the levels of MusicBrainz its rows' types have), its date (a
+   * field as in the head, the dates of the pool, no date) and on recordings its tracks (a box per track, the media, the track
+   * groups of the pool, all). What is set goes for all rows of the entry in this event.
+   */
+  function emEventHtml(a, e) {
+    const rows = rowsInEvent(a, e.key);
+    const levels = ['recording', 'release', 'release_group'].filter((lv) => lv === e.level || rows.some((r) => typeOnLevel(r, lv)));
+    const levelSeg = `<span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('em.evLevel'))}">${levels.map((lv) => `<button type="button" data-act="em-evlevel"
+      data-ev="${esc(e.key)}" data-level="${lv}" aria-pressed="${lv === e.level}">${esc(tr(`level.${lv}`))}</button>`).join('')}</span>`;
+    const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
+    const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
+    const dated = hasDateInput(e.date) || !!pool;
+    const poolBtns = S.datePool.map((d) => `<button type="button" class="dci-small dci-em-evpool" data-act="em-evpool" data-ev="${esc(e.key)}" data-id="${esc(d.id)}"
+      aria-pressed="${!!pool && pool.id === d.id}">${esc(poolLabel(d))}</button>`).join(' ');
+    let tracks = '';
+    if (e.level === 'recording') {
+      const multi = new Set(S.mbTracks.map((x) => x.medium)).size > 1;
+      let last = null;
+      const chips = selTracks().map((x) => {
+        const head = multi && x.medium !== last ? `<button type="button" class="dci-medium dci-medium-toggle" data-act="em-evmedium" data-ev="${esc(e.key)}" data-medium="${x.medium}"
+          title="${esc(tr('picker.mediumTitle'))}">${esc(mediumLabel(x.medium))}</button>` : '';
+        last = x.medium;
+        return `${head}<label class="dci-chip"><input type="checkbox" data-f="em-evtrack" data-ev="${esc(e.key)}" data-i="${x.idx}" ${e.tracks.has(x.idx) ? 'checked' : ''}>
+          <span class="dci-tn">${esc(x.number)}</span> <span class="dci-tt">${esc(x.title)}</span></label>`;
+      }).join('');
+      tracks = `<div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evTracks'))}</span><div class="dci-picker">
+        <div class="dci-picker-actions"><button type="button" data-act="em-evall" data-ev="${esc(e.key)}">${esc(tr('picker.all'))}</button>
+        ${S.trackPool.length ? `<span class="dci-sub">${esc(tr('em.evGroups'))}</span> ${S.trackPool.map((g) => `<button type="button" data-act="em-evtg" data-ev="${esc(e.key)}" data-id="${esc(g.id)}">${esc(g.name)}</button>`).join('')}` : ''}</div>
+        <div class="dci-chips">${chips}</div></div></div>`;
+    }
+    return `<div class="dci-em-evedit" data-evedit="${esc(e.key)}" role="group" aria-label="${esc(tr('em.evEditTitle', { n: circled(e.n), rows: rows.length }))}">
+      <div class="dci-em-evrow dci-em-evtop"><strong>${esc(tr('em.evEditTitle', { n: circled(e.n), rows: rows.length }))}</strong>
+        <button type="button" class="dci-iconbtn" data-act="em-evopen" data-ev="${esc(e.key)}" title="${esc(tr('common.close'))}" aria-label="${esc(tr('common.close'))}">✕</button></div>
+      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evLevel'))}</span>${levelSeg}</div>
+      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evDate'))}</span><input type="text" class="dci-em-evdate${date ? ' dci-cl-has' : ''}" data-f="em-evdate" data-ev="${esc(e.key)}"
+        value="${esc(date)}" placeholder="${esc(tr('cl.noDate'))}" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">
+        ${S.datePool.length ? `<span class="dci-sub">${esc(tr('em.evPool'))}</span> ${poolBtns}` : ''}
+        ${dated ? ` <button type="button" class="dci-textbtn" data-act="em-evpool" data-ev="${esc(e.key)}" data-id="">${esc(tr('cl.noDate'))}</button>` : ''}</div>
+      ${tracks}
+    </div>`;
+  }
+
+  /**
+   * [AE-3] (3.35.4) After an event was changed: the open event follows its rows (their new key); two rows of one line now in the
+   * same event are one – the first stays, the others are taken out (Skip).
+   */
+  function emEventMoved(a, rows) {
+    const seen = new Map();
+    S.rows.forEach((r) => {
+      if (r.artistKey !== a.key || r.level === 'skip' || r.level === 'work') return;
+      const k = `${lineKeyOf(r)}#${eventKeyOf(r)}`;
+      if (!seen.has(k)) seen.set(k, r);
+      else if (rows.includes(r) || rows.includes(seen.get(k))) Object.assign(r, { level: 'skip', levelTouched: true });
+    });
+    const first = rows.find((r) => r.level !== 'skip');
+    const o = S.emEvOpen.get(a.key);
+    if (o && first) S.emEvOpen.set(a.key, { block: o.block, ev: eventKeyOf(first) });
+    else if (o && !first) S.emEvOpen.delete(a.key);
+  }
+
+  /**
+   * [AE-3] (3.35.4) An event on another level: its rows whose type MusicBrainz has there move (on recordings with all tracks of
+   * the media chosen), the others keep their level and their line says so (maintainer: "ja passt").
+   */
+  function emEventLevel(a, evKey, level) {
+    const rows = rowsInEvent(a, evKey);
+    if (!rows.length || rows[0].level === level) return;
+    const n = (entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work')).evByKey.get(evKey) || {}).n || 0;
+    const moved = [];
+    const kept = [];
+    for (const r of rows) {
+      if (!typeOnLevel(r, level)) {
+        r.emLevelKept = level;
+        kept.push(r);
+        continue;
+      }
+      const from = r.level;
+      delete r.emLevelKept;
+      levelOf(r, level);
+      if (level === 'recording' && from !== 'recording' && !r.tracks.size) r.tracks = new Set(selTracks().map((x) => x.idx));
+      r.dateKeyed = true;
+      moved.push(r);
+    }
+    const mx = moved.some((r) => matrixDateForLevel(r));
+    emEventMoved(a, moved.length ? moved : rows);
+    // a row that stayed before and is in the event again: no note
+    const now = moved.find((r) => r.level !== 'skip');
+    if (now) S.rows.forEach((r) => { if (r.artistKey === a.key && r.emLevelKept && eventKeyOf(r) === eventKeyOf(now)) delete r.emLevelKept; });
+    log('info', 'emEvLevel', { name: a.mbName || a.name, n: circled(n), level: tr(`level.${level}`), moved: moved.length, kept: kept.length });
+    if (mx) renderDates();
+    renderWorks();
+    rerenderGroup(a);
+    refresh();
+  }
+
+  /** [AE-3] (3.35.4) An event with a date of the pool ('' – no date): all its rows get it. */
+  function emEventPool(a, evKey, poolId) {
+    const rows = rowsInEvent(a, evKey).filter((r) => {
+      const lt = currentLinkType(r);
+      return !(lt && lt.has_dates === false);
+    });
+    const entry = poolId ? S.datePool.find((d) => d.id === poolId) : null;
+    if (!rows.length || (poolId && !entry)) return;
+    rows.forEach((r) => Object.assign(r, { date: entry ? { ...fieldsFromDate(entry), poolId: entry.id } : null, dateOpen: !!entry, dateKeyed: true }));
+    emEventMoved(a, rows);
+    log('info', 'emEvDate', { n: rows.length, date: entry ? poolLabel(entry) : tr('cl.noDate') });
+    rerenderGroup(a);
+    refresh();
+  }
+
+  /** [AE-3] (3.35.4) An event on other tracks (a box, a medium, a track group, all): all its rows get them; at least one track. */
+  function emEventTracks(a, evKey, next) {
+    const rows = rowsInEvent(a, evKey).filter((r) => r.level === 'recording');
+    if (!rows.length) return;
+    const tracks = [...next].filter((i) => i < S.mbTracks.length && inSelection(i));
+    if (!tracks.length) {
+      showMessage('warn', 'em.evNoTracks');
+      rerenderGroup(a);
+      return;
+    }
+    rows.forEach((r) => {
+      r.tracks = new Set(tracks);
+      r.dateKeyed = true;
+    });
+    emEventMoved(a, rows);
+    const n = (entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work')).evByKey.get(eventKeyOf(rows[0])) || {}).n || 0;
+    log('info', 'emEvTracks', { name: a.mbName || a.name, n: circled(n), tracks: tracksShort(rows[0]) });
+    rerenderGroup(a);
+    refresh();
+  }
 
   /** [E4] (3.34.31) The date typed in the head of an event: its rows get it (as a date of the pool); empty – no date. */
   function emEventDate(a, evKey, text) {
@@ -15754,6 +15903,8 @@
       savePool();
       log('info', 'emEvDate', { n: rows.length, date: formatDateValue(entry) });
     }
+    // [AE-3] (3.35.4) an opened event stays open with its new date
+    emEventMoved(a, rows);
     renderDates();
     renderWorks();
     renderGroups();
@@ -15881,7 +16032,18 @@
   function lineAskHtml(l) {
     // [3.35.0] the first row not taken out (a question of a row taken out says nothing)
     const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
-    return [unmappedHtml(r), instrumentAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), bothAskHtml(l)].join('');
+    return [unmappedHtml(r), instrumentAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), bothAskHtml(l), levelKeptHtml(l)].join('');
+  }
+
+  /**
+   * [AE-3] (3.35.4) A line whose rows stayed on their level when their event went to another one (maintainer: "ja passt"):
+   * "Mastered By stays on Release: MusicBrainz has no mastering on Recording · ok".
+   */
+  function levelKeptHtml(l) {
+    const r = l.rows.find((x) => x.emLevelKept && x.level !== 'skip');
+    if (!r) return '';
+    return `<div class="dci-bass-ask dci-em-kept">${esc(tr('em.levelKept', { name: r.raw || rowTypeName(r), level: tr(`level.${r.level}`), type: rowTypeName(r), to: tr(`level.${r.emLevelKept}`) }))}
+      <button type="button" class="dci-textbtn" data-act="em-keptok" data-row="${r.id}">${esc(tr('em.keptOk'))}</button></div>`;
   }
 
   /** [E4] A line of a block: instrument (MusicBrainz) · role credit · additional / guest / solo · a tick per event · ▸ ✕. */
@@ -15950,13 +16112,16 @@
     const needed = (l) => !ltOf(l.rows[0]) || !!lineAskHtml(l) || S.emOpen.has(l.id);
     const shown = more || b.lines.length <= max + 1 ? b.lines : b.lines.filter((l, i) => i < max || needed(l));
     const hidden = b.lines.filter((l) => !shown.includes(l));
+    // [AE-3] (3.35.4) the event opened in this block
+    const o = S.emEvOpen.get(a.key);
+    const openEv = o && o.block === b.key ? b.events.find((e) => e.key === o.ev) || null : null;
     const addEv = b.others.length ? `<th class="dci-em-addev"><select data-f="em-addev" data-block="${esc(b.key)}" aria-label="${esc(tr('em.addEv'))}"><option value="">${esc(tr('em.addEv'))}</option>${b.others.map((e) => `<option value="${esc(e.key)}">${esc(`${circled(e.n)} ${tr(`level.${e.level}`)}`)}</option>`).join('')}</select></th>` : '';
     return `<div class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
       <div class="dci-em-scroll"><table class="dci-em-grid">
         <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr(b.kind === 'role' ? 'em.colRoleOther' : 'em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th>
-          <th class="dci-em-c-flags" scope="col">${flagNames.map((f) => `<span>${esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f)}</span>`).join('')}</th>${b.events.map(evHeadHtml).join('')}${addEv}<th scope="col"></th></tr></thead>
+          <th class="dci-em-c-flags" scope="col">${flagNames.map((f) => `<span>${esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f)}</span>`).join('')}</th>${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key)).join('')}${addEv}<th scope="col"></th></tr></thead>
         <tbody>${shown.map((l) => emLineHtml(a, b, l, flagNames, cols)).join('')}</tbody>
-      </table></div>
+      </table></div>${openEv ? emEventHtml(a, openEv) : ''}
       ${hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
         : more ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.less'))}</button>` : ''}
     </div>`;
@@ -16160,6 +16325,17 @@
     if (!a) return false;
     if (f === 'em-evdate') {
       emEventDate(a, el.dataset.ev, el.value);
+      return true;
+    }
+    // [AE-3] (3.35.4) a track of an opened event
+    if (f === 'em-evtrack') {
+      const e = rowsInEvent(a, el.dataset.ev)[0];
+      if (!e) return true;
+      const next = new Set(e.tracks);
+      const i = Number(el.dataset.i);
+      if (el.checked) next.add(i);
+      else next.delete(i);
+      emEventTracks(a, el.dataset.ev, next);
       return true;
     }
     if (f === 'em-addev') {
@@ -18881,7 +19057,10 @@
     // [E4] (3.35.0) the field with the focus keeps it when the entry is drawn anew (the same field of the same row, line or event)
     const act = document.activeElement;
     let again = null;
-    if (act && section.contains(act) && act.dataset && act.dataset.f) {
+    // [AE-3] (3.35.4) a field of an opened event: the same field of the event (its key changes with what was set)
+    const inEdit = act && section.contains(act) && act.closest && act.closest('.dci-em-evedit');
+    if (inEdit && act.dataset.f) again = { edit: true, f: act.dataset.f, i: act.dataset.i || '' };
+    else if (act && section.contains(act) && act.dataset && act.dataset.f) {
       const holder = act.closest('[data-row], [data-line], [data-evhead]');
       const attr = holder ? (holder.dataset.row ? 'data-row' : holder.dataset.line ? 'data-line' : 'data-evhead') : '';
       again = { f: act.dataset.f, attr, id: holder ? holder.getAttribute(attr) : '', ev: act.dataset.ev || '' };
@@ -18892,7 +19071,8 @@
     section.replaceWith(fresh);
     if (again) {
       const q = (v) => (window.CSS && CSS.escape ? CSS.escape(v) : v);
-      const el = fresh.querySelector(`${again.attr ? `[${again.attr}="${q(again.id)}"] ` : ''}[data-f="${q(again.f)}"]${again.ev ? `[data-ev="${q(again.ev)}"]` : ''}`);
+      const el = again.edit ? fresh.querySelector(`.dci-em-evedit [data-f="${q(again.f)}"]${again.i ? `[data-i="${q(again.i)}"]` : ''}`)
+        : fresh.querySelector(`${again.attr ? `[${again.attr}="${q(again.id)}"] ` : ''}[data-f="${q(again.f)}"]${again.ev ? `[data-ev="${q(again.ev)}"]` : ''}`);
       if (el) el.focus({ preventScroll: true });
     }
   }
@@ -22641,7 +22821,8 @@
     refresh();
   }
 
-  function setLevel(row, level) {
+  /** [3.35.4] A row on another level, without drawing (setLevel; the event of an entry's matrix, AE-3): whether it was or is on works. */
+  function levelOf(row, level) {
     delete row.scopeLevel;
     delete row.mxSkipped;
     const toOrFromWork = level === 'work' || row.level === 'work';
@@ -22652,6 +22833,11 @@
     resolveRowType(row);
     if (!primaryIsValid(row) || !norm(row.primaryText)) row.primaryText = pickPrimary(row);
     refreshRowDetails(row);
+    return toOrFromWork;
+  }
+
+  function setLevel(row, level) {
+    const toOrFromWork = levelOf(row, level);
     if (matrixDateForLevel(row)) {
       renderGroups();
       renderWorks();
@@ -23467,6 +23653,50 @@
           el.scrollIntoView({ block: 'nearest' });
           el.classList.add('dci-flash');
           setTimeout(() => el.classList.remove('dci-flash'), 2500);
+        }
+        break;
+      }
+      // [AE-3] (3.35.4) an event opened below its block, its level, its date of the pool, its tracks
+      case 'em-evopen': {
+        if (!artist) break;
+        const o = S.emEvOpen.get(artist.key);
+        const block = (btn.closest('.dci-em-block') || {}).dataset;
+        if (o && o.ev === btn.dataset.ev && (!block || o.block === block.block)) S.emEvOpen.delete(artist.key);
+        else if (block) S.emEvOpen.set(artist.key, { block: block.block, ev: btn.dataset.ev });
+        rerenderGroup(artist);
+        const again = S.overlay.querySelector(`[data-group="${artist.key}"] .dci-em-evedit, [data-group="${artist.key}"] th[data-evhead] .dci-em-evtoggle[aria-expanded="false"]`);
+        if (again && S.emEvOpen.has(artist.key)) again.scrollIntoView({ block: 'nearest' });
+        break;
+      }
+      case 'em-evlevel':
+        if (artist) emEventLevel(artist, btn.dataset.ev, btn.dataset.level);
+        break;
+      case 'em-evpool':
+        if (artist) emEventPool(artist, btn.dataset.ev, btn.dataset.id || '');
+        break;
+      case 'em-evall':
+      case 'em-evtg':
+      case 'em-evmedium': {
+        if (!artist) break;
+        const r0 = rowsInEvent(artist, btn.dataset.ev)[0];
+        if (!r0) break;
+        let next;
+        if (act === 'em-evall') next = new Set(selTracks().map((x) => x.idx));
+        else if (act === 'em-evtg') next = new Set(((S.trackPool.find((g) => g.id === btn.dataset.id) || {}).tracks || []));
+        else {
+          const of = selTracks().filter((x) => String(x.medium) === btn.dataset.medium).map((x) => x.idx);
+          const all = of.every((i) => r0.tracks.has(i));
+          next = new Set(r0.tracks);
+          of.forEach((i) => (all ? next.delete(i) : next.add(i)));
+        }
+        emEventTracks(artist, btn.dataset.ev, next);
+        break;
+      }
+      case 'em-keptok': {
+        const r = S.rows.find((x) => x.id === btn.dataset.row);
+        if (r) {
+          S.rows.filter((x) => x.artistKey === r.artistKey && lineKeyOf(x) === lineKeyOf(r)).forEach((x) => { delete x.emLevelKept; });
+          if (artist) rerenderGroup(artist);
         }
         break;
       }
@@ -25529,7 +25759,7 @@
   // before "▸ n more"; lines with their rows open, blocks with all lines, folded blocks, events added to a block
   S.evShared = clampInt(readJson('localStorage', EV_SHARED_KEY, 3), 1, 12, 3);
   S.emShow = clampInt(readJson('localStorage', EM_SHOW_KEY, 8), 1, 50, 8);
-  Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map(), emUndo: new Map() });
+  Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map(), emUndo: new Map(), emEvOpen: new Map() });
   // [E4] (3.35.0) compact as a matrix: by event (default) or by role, per entry; entries opened to their full matrix
   S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
@@ -27583,6 +27813,18 @@
       .dci-em-detail-row > td { padding: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 18); background: var(--soft); }
       .dci-em-more { margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-em-ev input.dci-em-evdate { width: calc(var(--u, 1px) * 140); font: inherit; font-size: calc(var(--u, 1px) * 12); padding: 0 calc(var(--u, 1px) * 4); margin: calc(var(--u, 1px) * 2) 0; }
+      /* [AE-3] (3.35.4) ▸ of an event, the event opened below its block */
+      .dci-em-ev .dci-em-evtoggle { padding: 0 calc(var(--u, 1px) * 3) 0 0; }
+      .dci-em-ev.dci-em-evopen { background: var(--date-bg); box-shadow: inset 0 -2px 0 var(--purple); }
+      .dci-em-evedit { margin: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid var(--line);
+        border-left: 3px solid var(--purple); border-radius: calc(var(--u, 1px) * 4); background: var(--soft); }
+      .dci-em-evrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 6); margin: calc(var(--u, 1px) * 3) 0; }
+      .dci-em-evtop { justify-content: space-between; }
+      .dci-em-evlab { min-width: calc(var(--u, 1px) * 56); font-weight: 600; }
+      .dci-em-evrow .dci-picker { flex: 1 1 auto; }
+      .dci-em-evedit input.dci-em-evdate { width: calc(var(--u, 1px) * 170); font: inherit; }
+      .dci-em-evpool { border-color: var(--date-line); background: var(--date-bg); color: var(--date-d); }
+      .dci-em-evpool[aria-pressed="true"] { outline: 2px solid var(--purple); }
       .dci-em-evname { color: var(--muted); }
       /* [E4] (3.35.0) an entry compact as a matrix: a line per event (or per role), the roles as chips */
       .dci-em-compact { gap: calc(var(--u, 1px) * 5); }

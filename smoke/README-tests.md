@@ -373,6 +373,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   order: 3.35.3 (AE-2): ⠿ drags a line before or after another of its block (the mark above / below), Alt+↑,
                                 #     not onto another entry's line, no ⠿ in a block of one line, the compact view follows, staged as before, a new
                                 #     import in the order of the source
+                                #   evhead: 3.35.4 (AE-3): ▸ opens an event below its block – a track added (focus kept), the last track stays,
+                                #     all (two events one), a date typed / none / of the pool, Release and back (Mastered By stays, the note, ok),
+                                #     ✕, staged together with the date
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
