@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.36.2
+// @version      3.36.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -747,6 +747,40 @@
       "settings.textsHint": "Pasted texts and the credits texts of Bandcamp. What the text recognition reads (rules T020 – T038) is listed in",
       "settings.resetAll": "↺ Reset all settings …",
       "connections.open": "Connections to other sites, tools and scripts (⚙ Settings → ⓘ Connections)",
+      "keys.open": "Keyboard shortcuts",
+      "keys.title": "Keyboard shortcuts",
+      "keys.system": "the keys of this computer (Windows, Linux)",
+      "keys.systemMac": "the keys of this computer (Mac)",
+      "keys.g.page": "On the pages of MusicBrainz with the script",
+      "keys.g.editor": "In the release editor (Add release, Edit release)",
+      "keys.g.dashboard": "In the dashboard",
+      "keys.g.media": "In the media choice",
+      "keys.g.ocr": "In the window “Text from cover art”",
+      "keys.toggle": "Show the dashboard, or send it to the background",
+      "keys.esc": "Close what is open – first the window “Text from cover art”, then “Mapping rules”, these shortcuts, the menu “Source ▾”, a chip picked with ⠿, a dialog (the media choice …), then the dashboard; not while you type in a field of MusicBrainz or a dialog of MusicBrainz is open",
+      "keys.enterEdit": "“Enter edit & import credits”, where the button is shown: enter the edit, then the relationship editor of the release opens with the dashboard",
+      "keys.enter": "In a field: what it is for – an MBID at an entry (Apply), “Artist credit for all roles” (Set for all), “Add entry manually” (Add), the address of another source (Load) or of a supplement, the forms of the date pool and the track pool (Save); in the field of a role: done",
+      "keys.tabs": "On a tab of ⚙ Settings: the next tab · the first, the last",
+      "keys.lines": "On ⠿ of a line of an entry’s matrix: one place up, one place down in its block",
+      "keys.shiftDrop": "Held while dropping: a track group adds its tracks (instead of replacing them); a date onto the matrix of an entry: the rows stay where they are too",
+      "keys.pasteDate": "Into a field of a date: a whole date or period (“2024-08-14 – 2024-08-16”) fills all its fields",
+      "keys.mediaEnter": "In the field of the media: OK",
+      "keys.ocrPaste": "Paste an image (a screenshot, a copied image)",
+      "keys.ocrUrl": "In the field of an address: add the image",
+      "keys.ocrZoom": "On a part of an image beside its text: zoom in or out at the mouse (a double click zooms in; on a Mac also two fingers on the trackpad)",
+      "keys.k.alt": "Alt",
+      "keys.k.altMac": "⌥ Option",
+      "keys.k.ctrl": "Ctrl",
+      "keys.k.ctrlMac": "⌃ Control",
+      "keys.k.shift": "⇧ Shift",
+      "keys.k.enter": "Enter",
+      "keys.k.enterMac": "↩ Return",
+      "keys.k.paste": "Ctrl",
+      "keys.k.pasteMac": "⌘ Command",
+      "keys.k.esc": "Esc",
+      "keys.k.home": "Home",
+      "keys.k.end": "End",
+      "keys.k.wheel": "mouse wheel",
       "srcmenu.button": "Source",
       "srcmenu.title": "Another source, a pasted text, the order of the sources, Bandcamp, delete the stored import",
       "supp.open": "Supplement",
@@ -24964,6 +24998,10 @@
         if (tabBtn) tabBtn.focus();
         break;
       }
+      case 'keys-open':
+        // [3.36.3] the keyboard shortcuts below the head
+        setKeysOpen(!S.keysOpen);
+        break;
       case 'connections-open':
         // [3.25.0] the ⓘ in the head: the settings at the tab "Connections"
         S.settingsOpen = true;
@@ -26064,6 +26102,8 @@
     rules: '<path d="M2 4h4.5M2 8h4.5M2 12h4.5M9 8h5M11.5 5.5L14 8l-2.5 2.5"/>',
     log: '<rect x="3" y="1.8" width="10" height="12.4" rx="1.5"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/>',
     info: '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4.2"/><circle cx="8" cy="4.9" r="0.5" fill="currentColor"/>',
+    // [3.36.3] the keyboard shortcuts
+    keys: '<rect x="1.5" y="4" width="13" height="8.5" rx="1.5"/><path d="M4 6.9h.01M6.7 6.9h.01M9.3 6.9h.01M12 6.9h.01M4.6 9.8h6.8"/>',
     fit: '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>',
     close: '<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>',
     down: '<path d="M4 6l4 4 4-4"/>',
@@ -26096,6 +26136,7 @@
             ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
             ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'), 'aria-expanded="false"')}
             ${headBtn('log', 'log', tr('log.title'), tr('log.title'))}
+            ${headBtn('keys-open', 'keys', '', tr('keys.open'), 'aria-expanded="false" aria-controls="dci-keys"')}
             ${headBtn('connections-open', 'info', '', tr('connections.open'))}
             ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
             ${headBtn('close', 'close', tr('common.close'), tr('common.close'), '', 'dci-close')}
@@ -26103,6 +26144,7 @@
         </header>
         <div class="dci-body" data-el="body">
           <div class="dci-settings" data-el="settings" role="region" aria-label="${esc(tr('settings.title'))}" hidden></div>
+          <div class="dci-keys" id="dci-keys" data-el="keys" role="region" aria-label="${esc(tr('keys.title'))}" hidden></div>
           <div class="dci-rules-dock" data-el="rules-dock" hidden></div>
           <div class="dci-srcpanels" data-el="srcpanels"></div>
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
@@ -26245,6 +26287,7 @@
     renderSync();
     renderReset();
     renderSettings();
+    renderKeys(); // [3.36.3]
     renderDates();
     renderMessages();
     renderBusy();
@@ -26689,6 +26732,59 @@
   }
 
   /** The menu, drawn anew (the field being used keeps the focus). */
+  /**
+   * [3.36.3] The keyboard shortcuts (maintainer: "Bitte einen neuen Infoknopf oben in der Leiste der die aktuelle
+   * Tastaturbelegung aller shortcuts zeigt."): ⌨ in the head shows them below it, with the keys of this computer (a Mac:
+   * ⌥ Option, ⌃ Control, ⌘ Command, ↩ Return); ⌨ again or Esc closes them.
+   */
+  const IS_MAC = /Mac|iPhone|iPad|iPod/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || navigator.userAgent || '');
+  function keysHtml() {
+    const k = (name) => tr(`keys.k.${IS_MAC && ['alt', 'ctrl', 'enter', 'paste'].includes(name) ? `${name}Mac` : name}`);
+    const kbd = (...keys) => keys.map((x) => (Array.isArray(x) ? x.map((y) => `<kbd>${esc(y)}</kbd>`).join('+') : `<kbd>${esc(x)}</kbd>`)).join(' / ');
+    const groups = [
+      ['page', [
+        [kbd([k('alt'), k('shift'), 'D']), 'keys.toggle'],
+        [kbd(k('esc')), 'keys.esc'],
+      ]],
+      ['editor', [[kbd([k('ctrl'), k('alt'), k('enter')]), 'keys.enterEdit']]],
+      ['dashboard', [
+        [kbd(k('enter')), 'keys.enter'],
+        [`${kbd('↑', '↓', '←', '→')} · ${kbd(k('home'), k('end'))}`, 'keys.tabs'],
+        [kbd([k('alt'), '↑'], [k('alt'), '↓']), 'keys.lines'],
+        [kbd(k('shift')), 'keys.shiftDrop'],
+        [kbd([k('paste'), 'V']), 'keys.pasteDate'],
+      ]],
+      ['media', [[kbd(k('enter')), 'keys.mediaEnter']]],
+      ['ocr', [
+        [kbd([k('paste'), 'V']), 'keys.ocrPaste'],
+        [kbd(k('enter')), 'keys.ocrUrl'],
+        [kbd([k('ctrl'), k('wheel')]), 'keys.ocrZoom'],
+      ]],
+    ];
+    return `<div class="dci-keys-head"><strong>${esc(tr('keys.title'))}</strong> <span class="dci-sub">${esc(tr(IS_MAC ? 'keys.systemMac' : 'keys.system'))}</span>
+        <button type="button" class="dci-iconbtn" data-act="keys-open" title="${esc(tr('common.close'))}" aria-label="${esc(tr('common.close'))}">✕</button></div>
+      <table class="dci-keys-table">${groups.map(([g, list]) => `<tbody><tr><th colspan="2" scope="rowgroup"><h3>${esc(tr(`keys.g.${g}`))}</h3></th></tr>
+        ${list.map(([keys, what]) => `<tr><th scope="row">${keys}</th><td>${esc(tr(what))}</td></tr>`).join('')}</tbody>`).join('')}</table>`;
+  }
+
+  function setKeysOpen(open) {
+    S.keysOpen = open;
+    renderKeys();
+    if (open) {
+      const el = $('keys');
+      if (el) el.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function renderKeys() {
+    if (!S.overlay) return;
+    const el = $('keys');
+    if (!el) return;
+    S.overlay.querySelectorAll('.dci-head [data-act="keys-open"]').forEach((b) => b.setAttribute('aria-expanded', String(!!S.keysOpen)));
+    el.hidden = !S.keysOpen;
+    el.innerHTML = S.keysOpen ? keysHtml() : '';
+  }
+
   function renderSettings() {
     if (!S.overlay) return;
     const el = $('settings');
@@ -27548,6 +27644,14 @@
     if (!S.overlay || S.overlay.hidden) return;
     // The dashboard does not block the page: Escape closes it unless MusicBrainz needs the key.
     if (!S.overlay.contains(document.activeElement) && mbUsesEscape()) return;
+    // [3.36.3] the keyboard shortcuts first
+    if (S.keysOpen) {
+      e.preventDefault();
+      setKeysOpen(false);
+      const b = S.overlay.querySelector('.dci-head [data-act="keys-open"]');
+      if (b) b.focus({ preventScroll: true });
+      return;
+    }
     // [3.26.0] the menu "Source ▾" first
     if (S.srcMenuOpen) {
       e.preventDefault();
@@ -28445,6 +28549,18 @@
       .dci-set-title:hover { color: var(--purple-d); }
       /* [3.25.0] the topics as tabs: vertical on the left, at the top in a narrow dashboard */
       .dci-settings { container-type: inline-size; }
+      /* [3.36.3] the keyboard shortcuts */
+      .dci-keys { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid #c9c4dd; border-left: 4px solid var(--purple);
+        border-radius: calc(var(--u, 1px) * 4); background: var(--soft); }
+      .dci-keys-head { display: flex; align-items: baseline; gap: calc(var(--u, 1px) * 8); }
+      .dci-keys-head .dci-iconbtn { margin-left: auto; }
+      .dci-keys h3 { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 2); font-size: 1em; color: var(--purple-d); }
+      .dci-keys-table { border-collapse: collapse; width: 100%; }
+      .dci-keys-table th { text-align: left; font-weight: 400; white-space: nowrap; vertical-align: top; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 2) 0; width: 1%; }
+      .dci-keys-table th[colspan] { white-space: normal; padding: 0; }
+      .dci-keys-table td { padding: calc(var(--u, 1px) * 2) 0; vertical-align: top; }
+      .dci-keys kbd { display: inline-block; min-width: 1.4em; padding: 0 calc(var(--u, 1px) * 4); border: 1px solid #b9b4cf; border-bottom-width: 2px; border-radius: calc(var(--u, 1px) * 3);
+        background: #fff; font: inherit; font-size: .92em; text-align: center; line-height: 1.5; }
       .dci-set-wrap { display: flex; gap: calc(var(--u, 1px) * 14); align-items: flex-start; }
       .dci-set-side { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 10); flex: 0 0 auto; }
       .dci-set-tabs { display: flex; flex-direction: column; gap: 2px; }

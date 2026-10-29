@@ -307,6 +307,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   compacthint: 3.34.23: the arrow at ☰ (nothing stored) below the symbol, the pointer goes through; gone after
                                 #     switching (stored, also on a new page); back after "Reset all settings", ✕, back with ↺ of Appearance;
                                 #     the compact view stored before – no arrow
+                                #   keys: 3.36.3: ⌨ in the head shows all keyboard shortcuts (groups, the keys of this computer, as a Mac ⌥ ⌃ ⌘ ↩),
+                                #     Esc and ✕ close them, the focus back on ⌨
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
