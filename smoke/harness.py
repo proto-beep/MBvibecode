@@ -982,7 +982,8 @@ VIEW_PRESET = "(v) => { if (!localStorage.getItem('dci-store-epoch')) localStora
 # [3.34.29] the entries as before ("legacy": a row per role, nothing joined) for the cases written before E4; the cases of the
 # matrix set ENTRIES_VIEW = 'matrix' (the default of the script) before they open the page
 ENTRIES_VIEW = 'legacy'
-ENTRIES_PRESET = "(v) => { if (localStorage.getItem('dci-entries-view') === null && v === 'legacy') localStorage.setItem('dci-entries-view', JSON.stringify(v)); }"
+# (with the generation of the stored data: without it the script clears what is stored when it starts)
+ENTRIES_PRESET = "(v) => { if (v !== 'legacy' || localStorage.getItem('dci-entries-view') !== null) return; if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-entries-view', JSON.stringify(v)); }"
 
 
 # [3.32.0] built-in rules switched off before the script starts, unless the browser has stored switched rules already

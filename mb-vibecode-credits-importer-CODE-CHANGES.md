@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.29, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.30, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.30 · 2026-10-29
+
+Block AE (E4), step 2: an entry as a matrix in the full view.
+
+- **New section "[E4] (3.34.30) An entry as a matrix"** before `groupHtml`: `mxEntry(a)` (matrix, full view, not folded, persons only), `ltOf(r)` (the type of a skipped row too), `dateKeyOf`, `eventKeyOf` (level · tracks · date), `lineKeyOf` (type, instrument, role credit, flags, artist credit; rows without a type each their own), `lineKindOf`, `circled`, **`entryModel(a, rows)`** (lines with their rows per event, events sorted – recordings first, more tracks first –, blocks: instruments / voices joined when `joinOn(a)`, else each line; per block its events: all up to `S.evShared`, else its own and `S.emBlockEv`), `evHeadHtml`, `typeOnLevel`, `lineAskHtml`, `emLineHtml`, `emBlockHtml`, **`entryMatrixHtml(a, rows)`** (work-level rows stay rows below), `lineRows(el)` (`data-rows`), `copyRowForEvent`, **`emTick(a, rows, evKey, on)`** (on: a skipped row of the line or a copy takes the event's level, tracks, date, `dateKeyed`; off: Skip), `entryMatrixChange(f, el)` (`em-tick`, `em-flag`, `em-primary`, `em-credit`, `em-addev`), `entryMatrixInput`, `EM_LINE_ACTS` (type-pick, instr-pick, instr-misc, voice-credit, case-keep, case-small – for all rows of the line), `updateEntryMatrixStatus(rowInfo, items)` (`data-emstatus`, `data-emcount`), `rerenderGroupSoon(a)`.
+- **`groupHtml`:** `dci-em-entry` and `entryMatrixHtml` for a matrix entry instead of the table; `updateGroupHeader` keeps the class. **`rerenderRow`:** a row of a matrix entry redraws its entry (soon). **`revealRow`:** opens the line's rows. **`add-role`:** the new row's line open. **`refresh`:** `updateEntryMatrixStatus`. **`onChangeInner`:** `em-…` → `entryMatrixChange` (not `mx-…`, which is the works matrix). **`onInput`:** `em-primary`, `em-credit`. **`onClick`:** answers of `.dci-em-ask` for all rows; `em-detail`, `em-remove`, `em-more`, `em-fold`, `em-join`, `em-split` (`artist.join`).
+- **State and settings:** `S.emOpen`, `S.emMore`, `S.emFold`, `S.emBlockEv`; `EV_SHARED_KEY` `dci-ev-shared` (`S.evShared`, 1–12, 3), `EM_SHOW_KEY` `dci-em-show` (`S.emShow`, 1–50, 8) in ⚙ Staging (`data-set="ev-shared"`, `"em-show"`), `clampInt`.
+- **CSS:** `.dci-em`, `.dci-em-block`, `.dci-em-bhead`, `.dci-em-grid` (the role column sticky), `.dci-em-ev`, `.dci-em-skip`, `.dci-em-ask`, `.dci-em-detail-row`, `.dci-em-foot` …
+- **Texts (English only):** `em.*` (31), `settings.evShared`, `settings.evSharedAfter`, `settings.evSharedTitle`, `settings.emShow`, `log.emOut`, `log.emIn`, `log.emJoin`, `log.emSplit`.
+- **Tests:** `t_entries.py` new case `matrix` (the block of Multi Man, ▸ rows, guest ticked, more events than shared – fold, One row each, ＋ Event, a tick –, a line taken out, One row each, what is staged); `join` types the role credit in the line. `harness.py`: `ENTRIES_PRESET` also sets the generation of the stored data (`dci-store-epoch`) – without it the script cleared "legacy" at its start for the cases that open the page without a view (`view=None`). `t_ui_view.py levels`: the ↺ of Appearance sets the entries back to the matrix; the case switches to Legacy again.
 
 ## Import 3.34.29 · 2026-10-29
 

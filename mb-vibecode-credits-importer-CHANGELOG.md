@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.29 | – |
+| 2026-10-29 | 3.34.18 – 3.34.30 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.30
+
+#### Added
+
+- **Entries as a matrix (E4), step 2: the entry as blocks of lines with the events as columns** (Block AE; mockup version 3): in the full view the instruments of a person are one block ("19 instruments → instrument · from 19 rows"), the voices another, each other role a block of its own; each role a line – the instrument of MusicBrainz, "written “…”", the role credit, add. · guest · solo, a tick per event (① Recording · no date · all 8 tracks, ② … – the events of the date pool and the date matrix), its status, ▸ rows (the rows with all their fields, as before), ✕. A tick puts the line into an event (a row of its own), off takes it out. Questions stand below their line and are answered for all its rows. More than 8 lines: "▸ n more". More than 3 events: each block its own, "＋ Event ▾", folding. "One row each" / "Join in one block" per entry. ⚙ Settings → Staging: "Events shared by all roles of an entry up to [3]", "Lines of a block shown before “▸ n more” [8]". Companies, other entries and the compact view keep their rows for now.
 
 ### Import 3.34.29
 
