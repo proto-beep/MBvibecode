@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.22 | – |
+| 2026-10-29 | 3.34.18 – 3.34.23 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.23
+
+#### Added
+
+- **An arrow at the compact view** (collected item 143; maintainer: "falls man das skript zum ersten mal startet soll ein pfeil auf den kompaktmodus hinweisen. er soll verschwinden sobald zum ersten mal umgestellt wird", "ja auch für alle die es schon haben. und auch zurücksetzen bitte"): a note below ☰ in the head until the view is switched for the first time (or ✕); also after the update, not for who chose the compact view before; "Reset all settings" shows it again.
+- **Text from cover art (beta): "in front" as a setting** (collected item 138b; maintainer: "vielleicht standardmäßig und in den einstellungen umstellbar"): ⚙ Settings → Beta "Keep “Text from cover art” in front of the dashboard", on by default; off, the window behaves like the others.
 
 ### Import 3.34.22
 

@@ -280,6 +280,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   bar: language before opening (3.27.1: the question after the installation, then the settings), fold at the
                                 #     bottom, date pool kept when folded, common month/year, horns, producer
                                 #   jump: ▲ ▼ in the status bar jump to the top and bottom of the dashboard, in the window and in the page (3.14.1)
+                                #   compacthint: 3.34.23: the arrow at ☰ (nothing stored) below the symbol, the pointer goes through; gone after
+                                #     switching (stored, also on a new page); back after "Reset all settings", ✕, back with ↺ of Appearance;
+                                #     the compact view stored before – no arrow
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
@@ -440,6 +443,7 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     out at the end); the image beside the frames takes the room; smaller at its corner (remembered);
                                 #     moved by its head, opened again at the same place; [3.34.18] in front after a click into the dashboard,
                                 #     the rules (as a window) and the log
+                                #     [3.34.23] ⚙ → Beta "Keep … in front" off: the dashboard comes in front with a click; on again
                                 #   ocrtextfit: 3.34.14: "Reads best: text on a plain, even background …" while choosing and beside the
                                 #     frames; a text field as high as its text, growing; many uncertain words – a yellow box names the part
                                 #   (from 3.34.14 the cases drag frames in the pixels of the image: drag_img – the view follows the window)

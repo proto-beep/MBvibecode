@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.22
+// @version      3.34.23
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.22
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.22
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.23
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.23
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.22';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.23';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1448,6 +1448,10 @@
       "ocr.autoTitle": "Ticks the images that mostly have credits: back cover, booklet, liner and tray, and PDF pages with credits in their own text. On, it does so each time the window opens (the same as in ⚙ Settings → Beta); off, its ticks go again.",
       "settings.ocrAuto": "Auto-select the images with credits",
       "settings.ocrAutoTitle": "Text from cover art (beta): back covers, booklets, liners and trays, and PDF pages with credits in their own text, are ticked when the window opens – the same as “Auto-select” there. Switched on, at once; switched off, its ticks go again.",
+      "hint.compact": "Try the compact view: one line per role, open a line to change it – this symbol switches",
+      "hint.close": "Hide this hint",
+      "settings.ocrFront": "Keep “Text from cover art” in front of the dashboard",
+      "settings.ocrFrontTitle": "Text from cover art (beta): while its window is open it stays in front of the dashboard, the log and “Mapping rules”. Off: like the other windows, the one clicked comes to the front.",
       "ocr.own": "Your own images",
       "ocr.chooseFiles": "Choose images or PDFs …",
       "ocr.dropHint": "or drop them onto this window, or paste one with Ctrl+V",
@@ -17476,6 +17480,27 @@
     refresh();
   }
 
+  /**
+   * [143] (3.34.23) An arrow at "Compact | Full" in the head (collected item 143; maintainer: "falls man das skript zum ersten mal
+   * startet soll ein pfeil auf den kompaktmodus hinweisen. er soll verschwinden sobald zum ersten mal umgestellt wird", "ja auch
+   * für alle die es schon haben. und auch zurücksetzen bitte"): until the view is switched for the first time (in the head or in
+   * ⚙ Settings) or the arrow closed with ✕; not for who stored the compact view; reset settings show it again. It lets the
+   * pointer through to what lies below it (only ✕ is a button).
+   */
+  const compactHintOn = () => S.view !== 'compact' && readJson('localStorage', HINT_COMPACT_KEY, false) !== true;
+  function renderCompactHint() {
+    if (!S.overlay) return;
+    S.overlay.querySelectorAll('.dci-hint-compact').forEach((x) => x.remove());
+    const btn = S.overlay.querySelector('.dci-head [data-act="view-toggle"]');
+    if (!btn || !compactHintOn()) return;
+    btn.insertAdjacentHTML('afterend', `<span class="dci-hint-compact" role="note"><span class="dci-hint-bubble"><span class="dci-hint-text">${esc(tr('hint.compact'))}</span>
+      <button type="button" class="dci-textbtn dci-hint-x" data-act="hint-compact-close" title="${esc(tr('hint.close'))}" aria-label="${esc(tr('hint.close'))}">✕</button></span></span>`);
+  }
+  function compactHintDone() {
+    writeJson('localStorage', HINT_COMPACT_KEY, true);
+    if (S.overlay) S.overlay.querySelectorAll('.dci-hint-compact').forEach((x) => x.remove());
+  }
+
   /** "Compact | Full" in ⚙ Settings → General ([3.27.2] the head has a symbol for it; until then above the entries too). */
   const viewToggleHtml = (small = false) => `<span class="dci-seg${small ? ' dci-seg-small' : ''} dci-viewseg" role="group" aria-label="${esc(tr('view.label'))}" title="${esc(tr('view.title'))}">${
     ['compact', 'full'].map((v) => `<button type="button" data-act="view" data-view="${v}" aria-pressed="${S.view === v}">${esc(tr(`view.${v}`))}</button>`).join('')}</span>`;
@@ -21857,11 +21882,18 @@
         if (artist) foldGroup(artist);
         break;
       case 'view':
-        if (btn.dataset.view !== S.view) setView(btn.dataset.view);
+        if (btn.dataset.view !== S.view) {
+          setView(btn.dataset.view);
+          compactHintDone(); // [143]
+        }
+        break;
+      case 'hint-compact-close':
+        compactHintDone(); // [143] (3.34.23)
         break;
       // [3.27.2] the symbol in the head (item 60)
       case 'view-toggle':
         setView(S.view === 'compact' ? 'full' : 'compact');
+        compactHintDone(); // [143] (3.34.23)
         break;
       // [3.27.2] the heading "Settings" folds them in (item 57)
       case 'settings-fold':
@@ -23446,7 +23478,8 @@
    */
   function ocrKeepOnTop() {
     const o = document.getElementById('dci-ocr');
-    if (!o || o.hidden) return;
+    // [138b] (3.34.23) unless switched off in ⚙ Settings → Beta: then it is a window like the others
+    if (!o || o.hidden || !S.ocrFront) return;
     o.style.zIndex = String(++topZ);
     const peek = document.getElementById('dci-ocr-peek');
     if (peek && !peek.hidden) peek.style.zIndex = String(topZ + 1);
@@ -23674,6 +23707,7 @@
     S.overlay = overlay;
     applyView();
     applyScale();
+    renderCompactHint(); // [143] (3.34.23)
     applyLevelColors();
     applyKindColors();
     makeMovable(overlay.querySelector('.dci-panel'), '.dci-head', 'panel');
@@ -23860,6 +23894,10 @@
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
+  // [143] (3.34.23) the arrow at "Compact | Full" was shown and the view switched (or the arrow closed): true
+  const HINT_COMPACT_KEY = 'dci-hint-compact';
+  // [138b] (3.34.23) the window "Text from cover art" kept in front of the dashboard (default on; off: stored false)
+  const OCR_FRONT_KEY = 'dci-ocr-front';
   // [3.29.2] the colours of the levels (item 79): on by default; own colours in ⚙ Settings → Appearance
   const LEVEL_COLORS_KEY = 'dci-level-colors';
   const LEVEL_PALETTE_KEY = 'dci-level-palette';
@@ -23872,7 +23910,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -23880,10 +23918,13 @@
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
-    beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY],
+    beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
+  // [143] (3.34.23) who chose the compact view before knows the switch: no arrow (also when going back to full)
+  if (S.view === 'compact') writeJson('localStorage', HINT_COMPACT_KEY, true);
+  S.ocrFront = readJson('localStorage', OCR_FRONT_KEY, true) !== false;
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
   S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
@@ -24041,6 +24082,8 @@
         S.betaOcr ? row(check('data-set="ocr-preload"', S.ocrPreload, tr('settings.ocrPreload'), tr('settings.ocrPreloadTitle'))) : '',
         // [3.34.15] the same state as "Auto-select" in the window (collected item 136)
         S.betaOcr ? row(check('data-set="ocr-auto"', S.ocrAuto, tr('settings.ocrAuto'), tr('settings.ocrAutoTitle'))) : '',
+        // [138b] (3.34.23) the window in front of the dashboard (maintainer: "vielleicht standardmäßig und in den einstellungen umstellbar")
+        S.betaOcr ? row(check('data-set="ocr-front"', S.ocrFront, tr('settings.ocrFront'), tr('settings.ocrFrontTitle'))) : '',
       ],
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
@@ -24208,6 +24251,12 @@
     } else if (k === 'ocr-auto') {
       // [3.34.15] the same as "Auto-select" in the window: switched on, the images are chosen at once
       ocrSetAuto(el.checked);
+    } else if (k === 'ocr-front') {
+      // [138b] (3.34.23) in front of the dashboard, the log and the rules – or like them
+      S.ocrFront = el.checked;
+      writeJson('localStorage', OCR_FRONT_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.ocrFront'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      ocrKeepOnTop();
     } else if (k === 'ocr-preload') {
       // [3.34.10] loading the images ticked ahead: off – those being loaded ahead stop
       S.ocrPreload = el.checked;
@@ -24269,6 +24318,8 @@
       S.rulesRowPlace = 'window';
       S.rulesAsWindow = false;
       placeRules();
+      // [143] (3.34.23) the arrow at "Compact | Full" again
+      renderCompactHint();
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
@@ -24302,6 +24353,7 @@
       S.betaOcr = false;
       S.ocrPreload = false;
       S.ocrAuto = false;
+      S.ocrFront = true;
       closeOcr();
       renderSource();
       renderLauncher();
@@ -24319,7 +24371,9 @@
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
-    BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY];
+    BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
+    // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
+    HINT_COMPACT_KEY, OCR_FRONT_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -24340,7 +24394,7 @@
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
-      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false,
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
     });
     closeOcr();
     renderLauncher();
@@ -25285,6 +25339,18 @@
       .dci-spell-val.dci-spell-x { text-decoration: underline wavy var(--sugg-line); text-underline-offset: 3px; }
       .dci-close, .dci-headbtn { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); }
       .dci-head-tools { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); margin-left: auto; }
+      /* [143] (3.34.23) the arrow at "Compact | Full": below the symbol, the pointer goes through it (only ✕ is a button) */
+      .dci-head:has(.dci-hint-compact) { position: relative; z-index: 6; }
+      .dci-hint-compact { position: relative; width: 0; height: 0; align-self: flex-end; pointer-events: none; }
+      .dci-hint-bubble { position: absolute; top: calc(var(--u, 1px) * 10); right: calc(var(--u, 1px) * -6); z-index: 6; display: flex; align-items: flex-start;
+        gap: calc(var(--u, 1px) * 6); width: max-content; max-width: calc(var(--u, 1px) * 260); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8);
+        background: #4b4585; color: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); font-size: calc(var(--u, 1px) * 12); line-height: 1.35;
+        white-space: normal; animation: dci-hint-in 0.4s ease-out; }
+      .dci-hint-bubble::before { content: ''; position: absolute; top: calc(var(--u, 1px) * -7); right: calc(var(--u, 1px) * 16);
+        border: calc(var(--u, 1px) * 7) solid transparent; border-top: 0; border-bottom-color: #4b4585; }
+      .dci-hint-bubble .dci-hint-x { pointer-events: auto; color: #fff; padding: 0 calc(var(--u, 1px) * 2); }
+      @keyframes dci-hint-in { from { opacity: 0; transform: translateY(calc(var(--u, 1px) * -4)); } to { opacity: 1; transform: none; } }
+      @media (prefers-reduced-motion: reduce) { .dci-hint-bubble { animation: none; } }
       .dci-panic { border: 1px solid var(--err); background: #fff; color: var(--err); border-radius: 3px; padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 10); font-weight: 600; }
       .dci-panic:hover { background: #fbeceb; }
 
