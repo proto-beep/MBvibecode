@@ -108,9 +108,13 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     bass, sticks-and-stones" – other instruments “sticks-and-stones”; more unknown words than instruments: not recognized;
                                 #     3.34.27 (S052): credits and tasks in lower case ("chaims", "sticks-and-stones"), the field's suggestions too ("Tambourine
                                 #     [Additional, Toy]": toy · … · toy tambourine), a proper name of MB's instruments kept ("Hammond manager")
-                                #   casenote: 3.34.28 (S052a/b, T052): "Guitar [Gibson Les Paul]" → "Gibson les paul" with the note "Written small –
-                                #     …: Les → les · keep · always", in the compact line too; keep / write small again / always (stored in T052, a
-                                #     second row follows); text "Sticks-And-Stones" noted, "Buddha machine" kept; a known role without a note
+                                #   casenote: 3.34.28 (S052a/b, T052): "Guitar [Gretsch Duo Jet]" (until 3.35.2 "Gibson Les Paul") → "Gretsch duo jet"
+                                #     with the note "Written small – …: Duo Jet → duo jet · keep · always · Duo → duo …", in the compact line too; keep /
+                                #     write small again / always (stored in T052, a second row follows); text "Sticks-And-Stones" noted, "Buddha
+                                #     machine" kept; a known role without a note
+                                #   casephrase: 3.35.2 (item 144): "Gibson Les Paul" from T052 as a whole, "Les Paul Junior" → "Les Paul junior" (only
+                                #     "Junior" noted), "Paul Reed Smith" offered as a whole first (note and compact line), keep / small again / always
+                                #     (stored, a second row follows), a "Les" in a text stays small
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,

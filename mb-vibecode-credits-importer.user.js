@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.35.1
+// @version      3.35.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3042,7 +3042,7 @@
     { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area',
       show: () => ({ pattern: TEXT_PLACE_WORDS }) },
     // [3.34.28] maintainer: ""Buddha" ist natürlich ein eigenname also großgeschrieben"
-    { id: 'T052', where: 'PROPER_WORDS, properSpelling, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). "always write “…”" at a row adds a word',
+    { id: 'T052', where: 'PROPER_WORDS, properSpelling, properPhrases, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). From 3.35.2 also names of several words ("Gibson Les Paul", "Les Paul"): only as a whole in this spelling, a "les" elsewhere stays small. "always write “…”" at a row adds a word or a name',
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T049', where: 'TEXT_PLAY_VERBS, chainOf, PLAYS_LIST', note: 'Texts (3.34.19): the verbs that give instruments and voices to a name (S051) – "Guitar, bass and drums are played by X", "X plays guitar, bass …"; they give no role of their own then',
       show: () => ({ pattern: TEXT_PLAY_VERBS }) },
@@ -3722,6 +3722,34 @@
     return PROPER_WORDS.find((p) => p.toLowerCase() === w) || '';
   }
 
+  /**
+   * [144] (3.35.2) Proper names of several words (maintainer: ""Gibson Les Paul" in dieser Groß- und Kleinschreibung bitte zu
+   * Ausnahmen hinzufügen, das ist ja der korrekte name."): those of the register (T052) and those kept at the row ("keep “Les
+   * Paul”"), the longest first, each as { re, spelling } – a match is written as a whole in this spelling.
+   */
+  let phraseCache = { key: null, list: [] };
+  function properPhrases(keep = null) {
+    const own = Object.values(keep || {}).filter((x) => /\s/.test(String(x).trim()));
+    const all = [...own, ...PROPER_WORDS.filter((x) => /\s/.test(String(x).trim()))];
+    const key = all.join('\u0001');
+    if (phraseCache.key !== key) {
+      const seen = new Set();
+      const list = [];
+      all.forEach((x) => {
+        const words = String(x).trim().split(/\s+/);
+        const k = words.join(' ').toLowerCase();
+        if (seen.has(k)) return;  // kept at the row before the register
+        seen.add(k);
+        const body = words.map((w) => w.replace(/[.*+?^$()|[\]{}\\]/g, (c) => `\\${c}`)).join('\\s+');
+        const re = new RegExp(`(^|[\\s,\\[\\]()/])(${body})(?=$|[\\s,\\[\\]()/])`, 'gi');
+        list.push({ re, spelling: words.join(' '), n: k.length });
+      });
+      list.sort((a, b) => b.n - a.n);
+      phraseCache = { key, list };
+    }
+    return phraseCache.list;
+  }
+
   /** [S052] (3.34.28) A word known as written small: generic (T002), in MusicBrainz's instruments, a small English word. */
   const SMALL_ENGLISH = new Set(['a', 'an', 'and', 'or', 'of', 'the', 'in', 'on', 'for', 'with', 'by', 'to', 'at', 'from', '&']);
   function knownWord(w, vocab) {
@@ -3755,12 +3783,55 @@
     // proper names and models with digits keep their capitals); [S052] (3.34.28) they are noted for the row unless quiet
     const keep = caseCtx && caseCtx.keep;
     const note = !quiet && caseCtx ? caseCtx.lowered : null;
-    return String(text || '').replace(/[^\s,\[\]()/]+/g, (w) => {
+    // [144] (3.35.2) words written small one after another (only spaces between them: "Les Paul") are noted as a whole too
+    const runs = !quiet && caseCtx && caseCtx.runs ? caseCtx.runs : null;
+    const src = String(text || '');
+    // [144] (3.35.2) the proper names of several words first, as a whole; the words between them one by one
+    const fixed = [];
+    properPhrases(keep).forEach(({ re, spelling }) => {
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(src))) {
+        const start = m.index + m[1].length;
+        const end = start + m[2].length;
+        if (!fixed.some((f) => start < f.end && end > f.start)) fixed.push({ start, end, spelling });
+        if (re.lastIndex === m.index) re.lastIndex++;
+      }
+    });
+    fixed.sort((a, b) => a.start - b.start);
+    let run = null;
+    let runEnd = -1;
+    const close = () => {
+      if (runs && run && run.length > 1) runs.push(run.join(' '));
+      run = null;
+    };
+    const words = (part, base) => part.replace(/[^\s,\[\]()/]+/g, (w, off) => {
       if (!lowerUnknown) return caseWord(w, vocab, keep);
       const out = lowerWord(w, vocab, keep);
-      if (note && out !== w && out === w.toLowerCase() && !w.split('-').every((x) => !x || /\d/.test(x) || knownWord(x.toLowerCase(), vocab))) note.push(w);
+      const small = out !== w && out === w.toLowerCase() && !w.split('-').every((x) => !x || /\d/.test(x) || knownWord(x.toLowerCase(), vocab));
+      if (note && small) note.push(w);
+      if (runs) {
+        const at = base + off;
+        if (small && run && /^\s+$/.test(src.slice(runEnd, at))) run.push(w);
+        else {
+          close();
+          if (small) run = [w];
+        }
+        runEnd = at + w.length;
+      }
       return out;
     });
+    let out = '';
+    let at = 0;
+    fixed.forEach((f) => {
+      out += words(src.slice(at, f.start), at);
+      close();
+      out += f.spelling;
+      at = f.end;
+    });
+    out += words(src.slice(at), at);
+    close();
+    return out;
   }
 
   /**
@@ -7339,11 +7410,14 @@
   function roleCreditFor(row) {
     // [S052] (3.34.28) the words written small that MusicBrainz does not know, for the note of the row (caseNoteHtml)
     const outer = caseCtx;
-    caseCtx = { lowered: [], keep: row.keepCase || null };
+    caseCtx = { lowered: [], runs: [], keep: row.keepCase || null };
     try {
       const credit = typo(roleCreditForInner(row)); // [S012]
       const words = new Set(norm(credit).split(/[\s,[\]()/]+/));
       row.creditLowered = uniq(caseCtx.lowered).filter((w) => words.has(w.toLowerCase()));
+      // [144] (3.35.2) words written small one after another ("Les Paul"), offered as a whole too
+      const flat = ` ${norm(credit).replace(/[,[\]()/]+/g, ' ').replace(/\s+/g, ' ')} `;
+      row.creditPhrases = uniq(caseCtx.runs).filter((p) => flat.includes(` ${p.toLowerCase()} `));
       return credit;
     } finally {
       caseCtx = outer;
@@ -18393,7 +18467,8 @@
     if (!ruleOn('S052') || row.level === 'skip' || (row.roleCreditTouched && norm(row.roleCredit) !== norm(row.roleCreditSuggest))) return '';
     const btn = (act, word, text, title = '') => `<button type="button" class="dci-textbtn" data-act="${act}" data-word="${esc(word)}"${title ? ` title="${esc(title)}"` : ''}>${esc(text)}</button>`;
     const out = [];
-    const low = row.creditLowered || [];
+    // [144] (3.35.2) words written small one after another first as a whole ("Les Paul → les paul · keep “Les Paul” · …")
+    const low = [...(row.creditPhrases || []), ...(row.creditLowered || [])];
     if (low.length) {
       out.push(`<div class="dci-sub dci-case-note" data-case="small">${esc(tr('caseNote.small'))} ${low.map((w) => `<span class="dci-case-word">${esc(tr('caseNote.word', { word: w, small: w.toLowerCase() }))}</span> ${btn('case-keep', w, tr('caseNote.keep', { word: w }))} · ${btn('case-always', w, tr('caseNote.always', { word: w }), tr('caseNote.alwaysTitle', { word: w }))}`).join(' · ')}</div>`);
     }
@@ -18613,7 +18688,9 @@
       // [S052] (3.34.28) words of the role credit written small that MusicBrainz does not know
       const low = ruleOn('S052') && !(row.roleCreditTouched && norm(row.roleCredit) !== norm(row.roleCreditSuggest)) ? (row.creditLowered || []) : [];
       if (low.length) {
-        parts.push(`<span class="dci-cl-flag dci-cl-case" title="${esc(tr('caseNote.clTitle'))}">${esc(tr('cl.caseSmall', { words: low.map((w) => tr('caseNote.word', { word: w, small: w.toLowerCase() })).join(', ') }))} ${low.map((w) => `<button type="button" class="dci-textbtn" data-act="case-keep" data-word="${esc(w)}">${esc(tr('caseNote.keep', { word: w }))}</button>`).join(' · ')}</span>`);
+        // [144] (3.35.2) words one after another kept as a whole first ("keep “Les Paul”")
+        const keepOf = [...(row.creditPhrases || []), ...low];
+        parts.push(`<span class="dci-cl-flag dci-cl-case" title="${esc(tr('caseNote.clTitle'))}">${esc(tr('cl.caseSmall', { words: low.map((w) => tr('caseNote.word', { word: w, small: w.toLowerCase() })).join(', ') }))} ${keepOf.map((w) => `<button type="button" class="dci-textbtn" data-act="case-keep" data-word="${esc(w)}">${esc(tr('caseNote.keep', { word: w }))}</button>`).join(' · ')}</span>`);
       }
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);

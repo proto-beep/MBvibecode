@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.35.1 | – |
+| 2026-10-29 | 3.34.18 – 3.35.2 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -91,6 +91,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.35.2
+
+#### Changed
+
+- **Proper names of several words** (collected item 144; maintainer: ""Gibson Les Paul" in dieser Groß- und Kleinschreibung bitte zu Ausnahmen hinzufügen, das ist ja der korrekte name."): the proper names of the register (table T052) can be names of several words. They keep their spelling only as a whole – "Guitar [Gibson Les Paul]" gives the role credit **Gibson Les Paul** (before: "Gibson les paul"), "Les Paul Junior" gives "Les Paul junior", and a "les" outside such a name stays small. "Gibson Les Paul" and "Les Paul" are in the list; you can add more names in ⚙ Mapping rules (one name per line).
+- **The yellow note offers words one after another as a whole** (maintainer: "ja bitte"): when several words in a row were written small, the note offers them as a whole first – "Written small – unknown to MusicBrainz: Paul Reed Smith → paul reed smith · keep “Paul Reed Smith” · always write “Paul Reed Smith” · Paul → paul · …"; the compact line offers "keep “Paul Reed Smith”" first. **keep** keeps the name as written in this row, **always** adds it to T052.
 
 ### Import 3.35.1
 
