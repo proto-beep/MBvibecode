@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.35.5 | – |
+| 2026-10-29 | 3.34.18 – 3.35.6 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -91,6 +91,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.35.6
+
+#### Added
+
+- **The works of the source as track groups** (collected item 145b; maintainer: "ja lass das mal anbieten, aber mit der option das auch auszuschalten. und mit der option im date track pool auf die interpretation von werken als group hier zu verzichten. an und abschaltbar jeweils holt es die daten wieder oder schließt sie aus.", "B"): a work whose parts are tracks of their own (index tracks of Discogs, 3.35.1) comes into the track pool as a track group with its name – "First Encounter" on A1, A2, B1, B2 –, as a suggestion. "n works as track groups" in the track pool leaves them out for this import: out of the pool and out of the date matrix (a date only on such a work goes too); ticked again, they come back with their places. The next import ticks it again. ⚙ Settings → Dates & tracks "Offer the works of the source as track groups" (on) switches them off for all releases.
 
 ### Import 3.35.5
 

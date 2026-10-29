@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.35.5
+// @version      3.35.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.6
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.6
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1900,6 +1900,9 @@
       "trackpool.formTitle": "Track group",
       "trackpool.editTitle": "Edit this track group",
       "trackpool.explain": "Groups of tracks (e.g. “Tracks 1–5”), from dates in the text or made by hand; drag them onto a date in the matrix, or let a row take their tracks.",
+      "trackpool.works.one": "{n} work as track group",
+      "trackpool.works.other": "{n} works as track groups",
+      "trackpool.worksTitle": "The works of the source (their parts are tracks of their own) as track groups – unticked, they leave the pool and the date matrix (until the next import); ticked again, they come back as they were",
       "trackpool.errEmpty": "Please choose at least one track.",
       "trackpool.useInRow": "Tracks of a group:",
       "trackpool.applied": "{group} {date} on tracks {tracks}: {n} rows.",
@@ -1995,6 +1998,8 @@
       "pools.fold": "fold",
       "pools.keep": "keep the pools in the bar when folded",
       "pools.keepTitle": "Folded, the dates and track groups stay in the bar at the top, so they can be dragged onto rows while you scroll through the dashboard",
+      "settings.workGroups": "Offer the works of the source as track groups",
+      "settings.workGroupsTitle": "A work whose parts are tracks of their own (index tracks of Discogs: “First Encounter” on A1, A2, B1, B2) comes into the track pool as a track group with its name – as a suggestion. In the track pool you can leave them out for this import.",
       "date.dragHint": "drag",
       "date.dragHintTitle": "Drag a date into a column of the matrix, onto the date field of a row, or onto another date (makes a period of both)",
       "trackpool.dragHint": "drag",
@@ -2029,6 +2034,10 @@
       "dm.autoPooled.other": "{n} dates from the notes have no word naming their group; they are in the date pool – drag them into the matrix or onto a row if needed.",
       "date.chipTitle": "Click to edit or delete; drag into the matrix, onto the date field of a row, or onto another date (makes a period of both)",
       "log.poolsReloaded": "Pools loaded again from the notes: {n} new dates, {placed} in the matrix (own ones removed: {all})",
+      "log.workGroupsIn.one": "{n} work of the source in the track pool",
+      "log.workGroupsIn.other": "{n} works of the source in the track pool",
+      "log.workGroupsOut.one": "{n} work of the source left out of the track pool",
+      "log.workGroupsOut.other": "{n} works of the source left out of the track pool",
       "log.datesMerged": "Dates joined: {a} + {b} → {date}",
       "trackpool.pick": "choose tracks …",
       "trackpool.allMedia": "all media (one group each, {n})",
@@ -8263,13 +8272,27 @@
   const SRC_OFF_KEY = `dci-src-off:${releaseMbid}`;
   S.srcOff = new Set([...(readJson('localStorage', SRC_OFF_KEY, []) || []), ...(readJson('localStorage', BC_OFF_KEY, []) || []).map((k) => `bandcamp|${k}`)]);
   S.trackPool = readJson('localStorage', TRACKPOOL_KEY, null) || [];
-  const saveTrackPool = () => writeJson('localStorage', TRACKPOOL_KEY, S.trackPool.length ? S.trackPool : null);
+  // [145b] (3.35.6) works left out of the pool (S.workGroupsStash) are stored with it all the same: leaving them out holds until
+  // the next import only
+  const saveTrackPool = () => {
+    const st = S.workGroupsStash;
+    const pool = st ? [...S.trackPool, ...st.groups.filter((g) => !S.trackPool.some((x) => x.id === g.id))] : S.trackPool;
+    writeJson('localStorage', TRACKPOOL_KEY, pool.length ? pool : null);
+  };
 
   // Date matrix: which pool dates belong to which date group (column) and to which track groups, per release.
   // Read on first use (see dm()), because the date groups are defined further down.
   const MATRIX_KEY = `dci-date-matrix:${releaseMbid}`;
   S.dm = null;
-  const saveMatrix = () => writeJson('localStorage', MATRIX_KEY, S.dm && (S.dm.cells.length || S.dm.found) ? S.dm : null);
+  const saveMatrix = () => {
+    // [145b] (3.35.6) with the places of the works left out (as for the pool)
+    const st = S.workGroupsStash;
+    const m = S.dm && st ? { ...S.dm, cells: [...S.dm.cells.map((c) => {
+      const back = st.cells.find((x) => x.id === c.id);
+      return back ? { ...c, tgs: uniq([...(c.tgs || []), ...back.ids]) } : c;
+    }), ...st.removed.filter((c) => !S.dm.cells.some((x) => x.id === c.id))] } : S.dm;
+    writeJson('localStorage', MATRIX_KEY, m && (m.cells.length || m.found) ? m : null);
+  };
   // "Apply automatically" below the matrix (off: rows change only with "Apply")
   S.dmAuto = readJson('localStorage', 'dci-dm-auto', false) === true;
   // Dates & tracks open or folded; null until switched once: open when there are dates
@@ -14042,6 +14065,9 @@
       await bandPageInfo(rel);
       refreshRulesWindow();
       S.srcTracks = rel.tracks;
+      // [145b] (3.35.6) "Works as track groups" of the track pool: ticked again with each import (those left out back first)
+      unstashWorkGroups();
+      S.workGroupsOff = false;
       S.artists = new Map();
       S.rows = [];
       S.rowOpen.clear();
@@ -14189,6 +14215,8 @@
       autoPlaceFoundDates();
       // [D023] (3.31.7) dates in the titles of the tracks (off until switched on)
       placeTitleDates();
+      // [145b] (3.35.6) the works of the source as track groups (or out of the pool with the setting off)
+      applyWorkGroups({ quiet: true });
       // [3.32.1] suggestions waiting for "Apply" (collected item 109; maintainer: "automatisch dashboard aufklappen sofern
       // daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das dashboard muss doch auf sein, damit Dates &
       // Tracks sichtbar ist?"): the dashboard opens (if it is closed) and "Dates & tracks" with both pools – once for this
@@ -17344,6 +17372,96 @@
     return g;
   }
 
+  /**
+   * [145b] (3.35.6) The works of the source with their tracks ([{ name, tracks }]): the tracks that name a work (the parts of an
+   * index track of Discogs, 3.35.1), in the order of the tracks; only tracks of the MusicBrainz release.
+   */
+  function sourceWorks() {
+    const by = new Map();
+    (S.srcTracks || []).forEach((t, i) => {
+      const w = String((t && t.work) || '').trim();
+      if (!w || i >= S.mbTracks.length) return;
+      if (!by.has(w)) by.set(w, []);
+      by.get(w).push(i);
+    });
+    return [...by.entries()].map(([name, tracks]) => ({ name, tracks }));
+  }
+
+  /** [145b] (3.35.6) The works of the source into the track pool, as suggestions (`found`, `work`); none twice (same tracks). */
+  function placeWorkGroups() {
+    let n = 0;
+    for (const w of sourceWorks()) {
+      const tracks = [...w.tracks].sort((a, b) => a - b);
+      if (S.trackPool.some((g) => g.tracks.length === tracks.length && g.tracks.every((x, k) => x === tracks[k]))) continue;
+      S.trackPool.push({ id: `t${newPoolId().slice(1)}`, name: w.name, tracks, found: true, work: true });
+      n++;
+    }
+    return n;
+  }
+
+  /**
+   * [145b] (3.35.6) The works of the source as track groups (maintainer: "ja lass das mal anbieten, aber mit der option das auch
+   * auszuschalten. und mit der option im date track pool auf die interpretation von werken als group hier zu verzichten. an und
+   * abschaltbar jeweils holt es die daten wieder oder schließt sie aus.", "B"): wanted (⚙ Settings → Dates & tracks, on, and not
+   * unticked in the track pool for this import) – they are in the pool, those taken out before come back with their places in
+   * the date matrix; not wanted – they leave the pool, and the date matrix loses them (a date only on them goes, kept for coming
+   * back). Rows keep the tracks they got from them.
+   */
+  /** [145b] (3.35.6) The works left out back into the pool and their places into the date matrix: how many. */
+  function unstashWorkGroups() {
+    const st = S.workGroupsStash;
+    S.workGroupsStash = null;
+    if (!st) return 0;
+    const m = dm();
+    st.groups.forEach((g) => { if (!S.trackPool.some((x) => x.id === g.id)) S.trackPool.push(g); });
+    st.cells.forEach((c) => {
+      const cur = m.cells.find((x) => x.id === c.id);
+      if (cur) cur.tgs = uniq([...(cur.tgs || []), ...c.ids]);
+    });
+    st.removed.forEach((c) => { if (!m.cells.some((x) => x.id === c.id)) m.cells.push(c); });
+    return st.groups.length;
+  }
+
+  function applyWorkGroups({ quiet = false } = {}) {
+    const want = S.workGroupsOn && !S.workGroupsOff;
+    const has = S.trackPool.some((g) => g.work);
+    const m = dm();
+    let n = 0;
+    if (want) {
+      n += unstashWorkGroups();
+      n += placeWorkGroups();
+    } else if (has) {
+      const ids = new Set(S.trackPool.filter((g) => g.work).map((g) => g.id));
+      const st = { groups: S.trackPool.filter((g) => ids.has(g.id)), cells: [], removed: [] };
+      m.cells = m.cells.filter((c) => {
+        const mine = (c.tgs || []).filter((t) => ids.has(t));
+        if (!mine.length) return true;
+        const rest = c.tgs.filter((t) => !ids.has(t));
+        if (!rest.length) {
+          st.removed.push(c);
+          return false;
+        }
+        st.cells.push({ id: c.id, ids: mine });
+        c.tgs = rest;
+        return true;
+      });
+      S.trackPool = S.trackPool.filter((g) => !ids.has(g.id));
+      S.workGroupsStash = st;
+      n = st.groups.length;
+    }
+    if (!n) return;
+    saveTrackPool();
+    log('info', want ? 'workGroupsIn' : 'workGroupsOut', { n });
+    if (quiet) {
+      saveMatrix();
+      return;
+    }
+    dmChanged();
+    renderDates();
+    renderGroups();
+    refresh();
+  }
+
   /** A copy of a row right after it (for splitting by tracks or dates). */
   function cloneRow(r, changes) {
     const c = { ...r, id: nextId('r'), flags: new Set(r.flags), suggested: new Set(r.suggested || []), tracks: new Set(r.tracks),
@@ -17954,6 +18072,10 @@
     S.messages = S.messages.filter((x) => !['dm.autoPlaced', 'dm.autoPooled', 'dm.widened', 'dm.titlePlaced'].includes(x.key));
     const res = autoPlaceFoundDates({ force: true });
     placeTitleDates({ force: true });
+    // [145b] (3.35.6) the works of the source again
+    S.workGroupsStash = null;
+    S.workGroupsOff = false;
+    applyWorkGroups({ quiet: true });
     if (!S.source.readsTrackLists) applyNotesTrackCredits({ rows: false });
     dm().dirty = true;
     saveMatrix();
@@ -18165,8 +18287,11 @@
           ${media.map((md) => `<option value="m:${md}">${esc(mediumGroupName(md))}</option>`).join('')}
           <option value="all">${esc(tr('trackpool.allMedia', { n: media.length }))}</option></select>`
       : `<button type="button" class="dci-textbtn" data-act="tg-new">${esc(tr('trackpool.new'))}</button>`;
+    // [145b] (3.35.6) the works of the source as track groups, for this import
+    const works = S.workGroupsOn && sourceWorks().length ? `<label class="dci-check dci-wg-toggle" title="${esc(tr('trackpool.worksTitle'))}"><input type="checkbox" data-f="work-groups-pool"
+      ${S.workGroupsOff ? '' : 'checked'}> ${esc(tr('trackpool.works', { n: sourceWorks().length }))}</label>` : '';
     return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}
-        ${add}
+        ${add}${works}
         ${S.trackPool.length ? hint : `<span class="dci-sub">${esc(tr('trackpool.explain'))}</span>`}</div>`;
   }
 
@@ -24682,6 +24807,12 @@
       setAboutOff(el.checked);
       return;
     }
+    if (f === 'work-groups-pool') {
+      // [145b] (3.35.6) for this import: the works as track groups, or not
+      S.workGroupsOff = !el.checked;
+      applyWorkGroups();
+      return;
+    }
     if (f === 'pools-keep') {
       S.poolsKeep = el.checked;
       writeJson('localStorage', 'dci-pools-keep', el.checked ? null : false);
@@ -25719,6 +25850,8 @@
   // of an entry joined in one relationship per recording and event (default on; off: stored false)
   const ENTRIES_VIEW_KEY = 'dci-entries-view';
   const JOIN_KEY = 'dci-join';
+  // [145b] (3.35.6) the works of the source as track groups (default on; off: stored false)
+  const WORK_GROUPS_KEY = 'dci-work-groups';
   // [E4] (3.34.30) events shared by all blocks of an entry up to (default 3); lines of a block before "▸ n more" (default 8)
   const EV_SHARED_KEY = 'dci-ev-shared';
   const EM_SHOW_KEY = 'dci-em-show';
@@ -25747,7 +25880,7 @@
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY],
-    dates: ['dci-dm-auto', 'dci-pools-keep'],
+    dates: ['dci-dm-auto', 'dci-pools-keep', WORK_GROUPS_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
@@ -25758,6 +25891,7 @@
   // [E4] (3.34.29)
   S.entriesView = readJson('localStorage', ENTRIES_VIEW_KEY, 'matrix') === 'legacy' ? 'legacy' : 'matrix';
   S.joinAuto = readJson('localStorage', JOIN_KEY, true) !== false;
+  S.workGroupsOn = readJson('localStorage', WORK_GROUPS_KEY, true) !== false;
   // [E4] (3.34.30) the matrix of an entry: events shared by all its blocks up to … (more: each block its own), lines of a block
   // before "▸ n more"; lines with their rows open, blocks with all lines, folded blocks, events added to a block
   S.evShared = clampInt(readJson('localStorage', EV_SHARED_KEY, 3), 1, 12, 3);
@@ -25924,6 +26058,8 @@
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
         row(check('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'))),
+        // [145b] (3.35.6) the works of the source (index tracks of Discogs) as track groups
+        row(check('data-set="work-groups"', S.workGroupsOn, tr('settings.workGroups'), tr('settings.workGroupsTitle'))),
       ],
       // [3.34.1] functions to try out (maintainer: "Die Beta Funktion muss im Einstellungsmenü aktiviert werden")
       beta: () => [
@@ -26112,6 +26248,13 @@
       log('info', 'settingValue', { what: tr(k === 'ev-shared' ? 'settings.evShared' : 'settings.emShow'), value: String(v) });
       if (S.overlay) renderGroups();
       refresh();
+    } else if (k === 'work-groups') {
+      // [145b] (3.35.6) the works of the source as track groups
+      S.workGroupsOn = el.checked;
+      writeJson('localStorage', WORK_GROUPS_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.workGroups'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
+      renderDates();
     } else if (k === 'join') {
       // [E4] (3.34.29) joining the instruments and voices of an entry
       S.joinAuto = el.checked;
@@ -26218,7 +26361,8 @@
       renderGroups();
       refresh();
     } else if (t === 'dates') {
-      Object.assign(S, { dmAuto: false, poolsKeep: true });
+      Object.assign(S, { dmAuto: false, poolsKeep: true, workGroupsOn: true });
+      if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
       renderDates();
     } else if (t === 'beta') {
       S.betaOcr = false;
@@ -26246,7 +26390,9 @@
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY];
+    ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
+    // [145b] (3.35.6) the works of the source as track groups
+    WORK_GROUPS_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -26268,6 +26414,7 @@
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
+      workGroupsOn: true,
     });
     closeOcr();
     renderLauncher();
