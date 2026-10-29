@@ -335,6 +335,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, s
                                 #     forgotten with 1, "Forget all remembered releases …" with the space shown
                                 #   cache2: 3.36.1: a row removed with ✕ stays removed, a pasted text keeps its own state (the Discogs one stays),
                                 #     switched on in a tab opened while off: the message "Load the page again", nothing written over, back after it
+                                #   logdiag: 3.36.2: "Start diagnosis" only with ⚙ General "Diagnosis in the log" (off by default); a running one
+                                #     stops when switched off; ↺ of General
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
