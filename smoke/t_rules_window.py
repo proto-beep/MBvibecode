@@ -388,7 +388,7 @@ def case_ruleedit():
           return { R071: has('R071'), C023: has('C023'), R031: [has('R031'), code('R031')],
             lists: [...w.querySelectorAll('[data-ledit-open]')].map(x => x.dataset.leditOpen).sort() }; })()""")
         print('A)', a, '| Zeile vorher:', row0)
-        results.append(a == {'R071': True, 'C023': True, 'R031': [False, True], 'lists': ['T001', 'T002', 'T003', 'T038', 'T045', 'T048']})
+        results.append(a == {'R071': True, 'C023': True, 'R031': [False, True], 'lists': ['T001', 'T002', 'T003', 'T038', 'T045', 'T048', 'T052']})  # [3.34.28] T052 the proper names
         pg.click('#dci-rules [data-redit-open=R071]')
         pg.wait_for_timeout(200)
         form = pg.evaluate("Object.fromEntries([...document.querySelectorAll('#dci-rules [data-redit] [data-redit-f]')].map(f => [f.dataset.reditF, f.value]))")

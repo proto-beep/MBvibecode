@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -484,8 +484,8 @@ def case_instrguess():
     B) "Chaims" (no instrument of MusicBrainz): an instrument row asking "did you mean: chimes · wind chimes · tubular bells ·
        other instruments “Chaims”" (tubular bells by its other name "orchestral chimes"), nothing chosen – incomplete; in the
        compact line too. "chimes" chosen: no role credit; "other instruments …": credited "chaims" (3.34.27, S052: in lower
-       case; before "Chaims"). "Buddha machine" (none like it): other instruments credited "buddha machine" at once (before
-       "Buddha machine"). Nothing is listed as not recognized.
+       case; before "Chaims"). "Buddha machine" (none like it): other instruments credited "Buddha machine" at once ("Buddha" a
+       proper name of the register, T052, from 3.34.28). Nothing is listed as not recognized.
     C) "Voice" asks (Q011): vocals · other vocals “voice” · lead vocals “voice”, until then vocals without role credit;
        "lead vocals “voice”" → lead vocals credited "voice"; "vocals" → no role credit; a voice typed by hand (lead vocals)
        then offers "use “voice” as role credit", which sets it."""
@@ -529,7 +529,7 @@ def case_instrguess():
         print('B) Chaims:', ch, '| unbekannt markiert:', issue, '| Buddha machine:', r.get('Buddha machine'), bm, '| nicht erkannt:', unrec)
         ok_b1 = bool(ch) and ch[0].startswith('“Chaims” is no instrument of MusicBrainz – did you mean:') \
             and [x[0] for x in ch[1]] == ['chimes', 'wind chimes', 'tubular bells', 'other instruments'] and all(x[1] == 'false' for x in ch[1]) \
-            and r.get('Buddha machine', [''] * 4)[1:4] == ['instrument', 'other instruments', 'buddha machine'] and 'none is like it' in (bm or [''])[0] and not unrec
+            and r.get('Buddha machine', [''] * 4)[1:4] == ['instrument', 'other instruments', 'Buddha machine'] and 'none is like it' in (bm or [''])[0] and not unrec
         # the compact line asks too
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(300)
@@ -750,6 +750,110 @@ def case_unknownask():
         print('C) Barry Guy:', barry, '| Jane Roe:', jane, '| nicht erkannt:', unrec)
         results.append(barry == [['instrument', 'double bass', ''], ['instrument', 'other instruments', 'sticks-and-stones']] and jane == ['guitar']
                        and unrec == ['Jane Roe – guitar, kalimba, buddha machine → ? “kalimba”, “buddha machine”'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_casenote():
+    """Credits Importer 3.34.28 (S052a/b; maintainer: ""Buddha" ist natürlich ein eigenname also großgeschrieben. generell müssen
+    instrumente kleingeschrieben werden. also vielleicht deutlich machen, dass gerade etwas lowercased wurde wenn die rolle oder das
+    instrument nicht bekannt ist", "S052b, Discogs-Klammern (S011): klein schreiben").
+    A) Discogs "Guitar [Gibson Les Paul]": guitar credited "Gibson les paul" (Gibson a proper name of the register, T052; before
+       "Gibson Les Paul" as written), the row says "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write
+       “Les” · Paul → paul …", the suggestions of the field written so too; in the compact line "written small: Les → les, Paul →
+       paul" with "keep". B) "keep “Paul”": "Gibson les Paul", the note "Kept as written: Paul · write small again"; "write small
+       again": "Gibson les paul". C) "always write “Les”": "Les" in the changes of T052 (stored), the credit "Gibson Les paul";
+       a second row with the same detail "Gibson Les paul" too. D) A text "Barry Guy – double bass, Sticks-And-Stones": other
+       instruments “sticks-and-stones” with the note; "Jane Roe – guitar, Buddha machine": “Buddha machine” (T052), no note.
+       E) Discogs "Tour Manager" (a role the register knows): no note."""
+    import json
+    H.attr(9124, 'other instruments', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    CREDITS = [('Les Man', 'Guitar [Gibson Les Paul]', 3061), ('Les Two', 'Guitar [Gibson Les Paul]', 3062), ('Tour Man', 'Tour Manager', 3063)]
+    for n, r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    Q = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const tr = g && g.querySelector('tr.dci-row'); const c = tr && tr.querySelector('[data-f=role-credit]');
+      const notes = tr ? [...tr.querySelectorAll('.dci-case-note')].map(n => [n.dataset.case, n.textContent.replace(/\\s+/g, ' ').trim()]) : [];
+      const dl = c && c.list ? [...c.list.querySelectorAll('option')].map(o => o.value) : null;
+      return tr ? { row: tr.dataset.row, credit: c ? c.value : '-', notes, dl, instr: (tr.querySelector('[data-f=primary]') || {}).value || '' } : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        a0 = pg.evaluate(Q, 'Les Man')
+        print('A) Gibson Les Paul:', a0)
+        results.append(bool(a0) and a0['credit'] == 'Gibson les paul' and len(a0['notes']) == 1 and a0['notes'][0][0] == 'small'
+                       and a0['notes'][0][1] == 'Written small – unknown to MusicBrainz: Les → les keep “Les” · always write “Les” · Paul → paul keep “Paul” · always write “Paul”'
+                       and 'Gibson les paul guitar' in (a0['dl'] or []) and all(o == o[:1] + o[1:].lower() or o.startswith('Gibson') for o in (a0['dl'] or [])))
+        sec = f'tr.dci-row[data-row="{a0["row"]}"]' if a0 else 'tr.none'
+        # the compact line
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(300)
+        cl = pg.evaluate("(sel) => { const c = document.querySelector(sel + ' .dci-cl-case'); return c ? c.textContent.replace(/\\s+/g, ' ').trim() : ''; }", sec)
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(300)
+        print('   kompakte Zeile:', cl)
+        results.append(cl == 'written small: Les → les, Paul → paul keep “Les” · keep “Paul”')
+        # B) keep "Paul", then small again
+        pg.click(f'{sec} .dci-case-note [data-act=case-keep][data-word="Paul"]')
+        pg.wait_for_timeout(300)
+        b1 = pg.evaluate(Q, 'Les Man')
+        pg.click(f'{sec} .dci-case-note [data-act=case-small][data-word="Paul"]')
+        pg.wait_for_timeout(300)
+        b2 = pg.evaluate(Q, 'Les Man')
+        print('B) keep Paul:', b1, '| klein:', b2)
+        results.append(bool(b1) and b1['credit'] == 'Gibson les Paul' and [n[0] for n in b1['notes']] == ['small', 'kept']
+                       and b1['notes'][1][1].startswith('Kept as written: Paul write small again') and b2['credit'] == 'Gibson les paul')
+        # C) always "Les"
+        pg.click(f'{sec} .dci-case-note [data-act=case-always][data-word="Les"]')
+        pg.wait_for_timeout(600)
+        c1 = pg.evaluate(Q, 'Les Man')
+        c2 = pg.evaluate(Q, 'Les Two')
+        stored = pg.evaluate("(() => { try { return JSON.parse(localStorage.getItem('dci-mapping-changes')).lists.T052; } catch (e) { return null; } })()")
+        print('C) always Les:', c1, '| zweite Zeile:', c2, '| gespeichert:', stored)
+        results.append(bool(c1) and c1['credit'] == 'Gibson Les paul' and c2['credit'] == 'Gibson Les paul' and bool(stored) and stored.get('add') == ['Les']
+                       and all('Les →' not in n[1] for n in c1['notes']))
+        e0 = pg.evaluate(Q, 'Tour Man')
+        print('E) Tour Manager:', e0)
+        results.append(bool(e0) and e0['notes'] == [])
+        # D) texts
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Barry Guy – double bass, Sticks-And-Stones\nJane Roe – guitar, Buddha machine')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1000)
+        RQ = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+          return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-f=primary]') || {}).value || '', (tr.querySelector('[data-f=role-credit]') || {}).value || '',
+            [...tr.querySelectorAll('.dci-case-note')].map(n => n.textContent.replace(/\\s+/g, ' ').trim())]) : null; }"""
+        barry = pg.evaluate(RQ, 'Barry Guy')
+        jane = pg.evaluate(RQ, 'Jane Roe')
+        print('D) Barry Guy:', barry, '| Jane Roe:', jane)
+        results.append(barry == [['double bass', '', []], ['other instruments', 'sticks-and-stones',
+                                  ['Written small – unknown to MusicBrainz: Sticks-And-Stones → sticks-and-stones keep “Sticks-And-Stones” · always write “Sticks-And-Stones”']]]
+                       and jane == [['guitar', '', []], ['other instruments', 'Buddha machine', []]])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

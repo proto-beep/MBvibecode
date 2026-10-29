@@ -329,12 +329,17 @@ def case_levels():
               pg.evaluate(PRESSED, 'Bass Man')[:2], pg.evaluate("document.querySelector('.dci-set-pane [data-set=level-color]').disabled")]
         pg.click('[data-el=settings] [data-act=settings-reset][data-topic=appearance]')
         pg.wait_for_timeout(500)
+        # [3.34.29] the ↺ of Appearance also sets the entries back to the matrix (E4, the default): this case looks at the rows
+        # as before, so "Legacy" again
+        matrix_back = pg.evaluate("[localStorage.getItem('dci-entries-view'), document.querySelectorAll('section.dci-em-entry').length > 0]")
+        pg.click('.dci-set-pane [data-act=entries-view][data-view=legacy]')
+        pg.wait_for_timeout(500)
         c3 = [pg.evaluate("[localStorage.getItem('dci-level-colors'), localStorage.getItem('dci-level-palette')]"),
               pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-lvlc')"), pg.evaluate(PRESSED, 'Bass Man')[:2]]
-        print('C) eigene Farbe:', c1, '| aus:', c2, '| ↺:', c3)
+        print('C) eigene Farbe:', c1, '| aus:', c2, '| ↺:', c3, '| Matrix wieder:', matrix_back)
         results.append(c1 == ['{"release":"#aa0000"}', ['release', 'rgb(170, 0, 0)', 'rgb(255, 255, 255)']]
                        and c2 == ['false', False, ['release', 'rgb(61, 58, 79)'], True]
-                       and c3 == [[None, None], True, ['release', 'rgb(46, 139, 87)']])
+                       and c3 == [[None, None], True, ['release', 'rgb(46, 139, 87)']] and matrix_back == [None, True])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
