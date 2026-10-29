@@ -91,6 +91,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     "design and layout", "Artist credit for all roles" empty for a case-only spelling, a text's name linked:
                                 #     credited as written (not when only the case differs)
                                 #   distrib: "Distribution - !K7" and variants (3.17.3, T028): company "Distributed By", label → release distributed
+                                #   playedby: 3.34.19: Go Kurosawa's "soft shakes" – twenty lines of instruments, "are played, mixed and produced
+                                #     by Go Kurosawa": a row per instrument, Mixed By, Produced By, no Played By, "Chaims" not recognized
+                                #     (S051); in one line "… are played by Jane Roe", "Bass Man plays bass and drums"; "are mixed by" (T050)
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,

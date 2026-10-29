@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.18
+// @version      3.34.19
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.18
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.18
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.19
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.19
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.18';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.19';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2603,6 +2603,9 @@
     // [3.32.5] collected item 115 (maintainer: "muisc hat einen schreibfehler", "Wir probieren es mal mit Tippefehler allgemein
     // erkennen")
     { id: 'S050', where: 'TEXT.parse (typoMode, readRole), fixRoleTypo, roleVocab, roleCell', note: 'Typos in role words: a part of a text that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word (T048) – a letter swapped, missing, too many or wrong – read as that word, when the role is known then ("Muisc and cover art by X" → Music By, cover art); only role words, never names; the row says "Read as “Music” (written “Muisc”)". All texts (pasted, Bandcamp, Discogs notes); switch also in ⚙ Settings → Texts' },
+    // [3.34.19] collected item 137a (maintainer: "gibt es eine nachhaltige möglichkeit folgendes zu interpretieren", Go Kurosawa
+    // "soft shakes" on Bandcamp; "ja passt", "ja okay")
+    { id: 'S051', where: 'TEXT.parse (roleBlock, readBlock, linkOf, chainOf, playedList, PLAYS_LIST)', note: 'Instruments and the name they are played by: lines that are only instruments or voices (one or several each, empty lines between them), then a line "are played, mixed and produced by X" (also "played by X", "All instruments played by X"): each instrument a row of X, the other verbs roles of their own ("Mixed By", "Produced By"), "played" none (T049). In one line too: "Electric guitar, drums and piano are played by X", "X plays guitar, bass and drums". Lines without an instrument before the first one are read as usual; words that are no instrument MusicBrainz knows are listed as not recognized. Words like "are", "is", "were" before a verb are never a part of the role (T050: "are played by X" is "Played By", before "Played By [Are]")' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -2895,6 +2898,10 @@
       show: () => ({ pairs: [['words', ROLE_WORDS.join(' · ')]] }) },
     { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area',
       show: () => ({ pattern: TEXT_PLACE_WORDS }) },
+    { id: 'T049', where: 'TEXT_PLAY_VERBS, chainOf, PLAYS_LIST', note: 'Texts (3.34.19): the verbs that give instruments and voices to a name (S051) – "Guitar, bass and drums are played by X", "X plays guitar, bass …"; they give no role of their own then',
+      show: () => ({ pattern: TEXT_PLAY_VERBS }) },
+    { id: 'T050', where: 'TEXT_AUX_WORDS, byRole, chainOf', note: 'Texts (3.34.19): words before a verb that are no part of the role – "are played by X" is "Played By", not "Played By [Are]"; "were mixed by X" is "Mixed By" (S051)',
+      show: () => ({ pattern: TEXT_AUX_WORDS }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both, one sign only that one; after the name a code such as "DDD", a catalogue number after "·", "All rights reserved" and (3.30.9) a year ("© & ℗ TUM Records Oy 2021") are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
@@ -3023,6 +3030,12 @@
   // [T021] Texts (3.14.0): words before a verb that only say what was done – "Music played and recorded by X" is
   // played by and recorded by X
   const TEXT_WHAT_WORDS = MAP.TEXT_WHAT_WORDS;
+  // [T049] Texts (3.34.19): the verbs that give instruments and voices to a name – "Guitar, bass and drums are played by X",
+  // "X plays guitar, bass …" (S051); they give no role of their own then
+  const TEXT_PLAY_VERBS = MAP.TEXT_PLAY_VERBS;
+  // [T050] Texts (3.34.19): words before a verb that are no part of the role – "are played by X" is "Played By", not "Played
+  // By [Are]" (S051)
+  const TEXT_AUX_WORDS = MAP.TEXT_AUX_WORDS;
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
@@ -4413,9 +4426,11 @@
        * "Mixed and mastered" → ["Mixed By", "Mastered By"]; one known role stays one ("Music and lyrics by");
        * "Strings arranged" → "Arranged By [Strings]".
        */
+      // [T050] (3.34.19) "are", "is", "were" … before a verb ("are played", "were mixed")
+      const AUX_BEFORE_VERB = new RegExp(`^(?:${TEXT_AUX_WORDS.source}\\s+)+(?=\\p{L}+ed$)`, 'iu');
       const byRole = (r0) => {
         // [3.14.0] "Music played" → played (T021)
-        const r = r0.replace(TEXT_WHAT_WORDS, '');
+        const r = r0.replace(TEXT_WHAT_WORDS, '').replace(AUX_BEFORE_VERB, '');
         const m2 = r.match(/^(.+?)\s+(\p{L}+ed)$/iu);
         return m2 ? `${cap(m2[2])} By [${cap(m2[1])}]` : roleOf(r);
       };
@@ -4507,6 +4522,54 @@
         const parts = splitRoles(side);
         return { parts, known: parts.filter(isRole), unknown: parts.filter((x) => !isRole(x)) };
       };
+      // [S051] (3.34.19) An instrument or a voice: a role the register reads as instrument or vocal only
+      const playable = (x) => {
+        if (!isRole(x)) return false;
+        const p = parseRoleNotation(x)[0];
+        const types = p ? mapRole(p.base, p.mods).types || [] : [];
+        return types.length > 0 && types.every((t) => t === 'instrument' || t === 'vocal');
+      };
+      // a word for an instrument MusicBrainz does not know (yet): a few letters, no role of another kind
+      const maybePlayable = (x) => x.split(' ').length <= 3 && /^\p{L}[\p{L}'’.\s-]*$/u.test(x) && !isRole(x) && !isRole(`${cap(x)} By`);
+      /** [S051] A list of instruments: { known, unknown } – at least one known, no fewer than unknown, nothing else; else null. */
+      const playList = (side) => {
+        const parts = splitRoles(clean(side));
+        const known = parts.filter(playable);
+        const unknown = parts.filter((x) => !playable(x));
+        return known.length && known.length >= unknown.length && unknown.every(maybePlayable) ? { known, unknown } : null;
+      };
+      const PLAY_WORD = new RegExp(`^${TEXT_PLAY_VERBS.source}$`, 'i');
+      const AUX_WORD = new RegExp(`^${TEXT_AUX_WORDS.source}$`, 'i');
+      /**
+       * [S051] The verbs at the end of a phrase before "by", one of them of T049: "Electric guitar, drums are played, mixed and
+       * produced" → { before: 'Electric guitar, drums', roles: ['Mixed By', 'Produced By'] } (the words of T050 left out); null
+       * without a verb of T049.
+       */
+      const chainOf = (t0) => {
+        const words = clean(t0).split(' ');
+        let k = words.length;
+        let play = false;
+        const verbs = [];
+        while (k > 0) {
+          const w = words[k - 1].replace(/,$/, '');
+          if (/^(?:and|&|\+)$/i.test(w)) k--;
+          else if (PLAY_WORD.test(w) || /^\p{L}+ed$/u.test(w)) {
+            if (PLAY_WORD.test(w)) play = true;
+            else verbs.unshift(w);
+            k--;
+          } else break;
+        }
+        while (k > 0 && AUX_WORD.test(words[k - 1])) k--;
+        if (!play) return null;
+        const roles = verbs.map((v) => roleOf(v)).filter((r) => isRole(r));
+        return { before: clean(words.slice(0, k).join(' ').replace(/,$/, '')), roles };
+      };
+      /** [S051] "Electric guitar, drums and piano are played (, mixed and produced)": the instruments and the other roles. */
+      const playedList = (t) => {
+        const c = chainOf(t);
+        const list = c && c.before && playList(c.before);
+        return list ? { ...list, roles: c.roles } : null;
+      };
       /**
        * [S038] (3.29.0) Names each with its roles in brackets: "K.M. (sounds, words) & E. (voice)" → [{ name: 'K.M.', roles:
        * ['Performer', 'Lyrics By'] }, { name: 'E.', roles: ['Vocals'] }]; [] unless every name has roles and every word is one
@@ -4529,6 +4592,8 @@
         return out.length && !clean(t.slice(end)) ? out : [];
       };
       const names = (side) => side.split(TEXT_NAME_SEP).flatMap((n) => n.split(TEXT_NAME_SEP_Y)).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
+      // [S051] (3.34.19) "X plays guitar, bass and drums"
+      const PLAYS_LIST = new RegExp(`^(.+?)\\s+${TEXT_PLAY_VERBS.source}\\s+(?:the\\s+)?(.+)$`, 'i');
 
       /**
        * [3.21.0] The credits of one sentence of a line (mostly the whole line), its track list given (scope); pi: the
@@ -4647,6 +4712,17 @@
             // [3.21.0] "…, courtesy of the X Estate" is no name (T031)
             const courtesy = right.search(TEXT_COURTESY);
             if (courtesy >= 0) right = right.slice(0, courtesy);
+            // [S051] (3.34.19) "Electric guitar, drums and piano are played (, mixed and produced) by X", "All instruments played
+            // by X": each instrument a row of X, the other verbs roles of their own, "played" none (T049, T050)
+            // (the phrase as written: "are played" is no "contribution" here, T031; not with tracks named by their titles)
+            const plSrc = clause.slice(0, m[1].length);
+            const pl = ruleOn('S051') && !ts && !TEXT_WHAT_WORDS.test(clean(plSrc)) ? playedList(plSrc) : null;
+            const plWho = pl ? names(firstSentence(right).replace(TEXT_TIME_AFTER_NAME, '')) : [];
+            if (pl && plWho.length && plWho.every(looksLikeName)) {
+              for (const n of plWho) [...pl.known, ...pl.roles].forEach((r) => { if (addCredit(n, r, cScope)) found++; });
+              unknownParts.push(...pl.unknown);
+              return;
+            }
             // [3.14.0] "Music and artwork of this release were entirely created by …" (T022): a sentence (with "of this …",
             // "was/were …" or "entirely …") names its roles before the verb; otherwise the verbs are the roles
             const sentence = /\s(?:of|on|for)\s+(?:this|the)\s|\s(?:was|were|is|are|been)\s|\s(?:entirely|completely|fully|solely|exclusively)\s/i.test(` ${left} `);
@@ -4709,6 +4785,15 @@
             && (placeIn(m[1], m[2]) || inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, ''))))) return;
           // [T051] (3.34.18) … and with "the" before the place: "Recorded in the Church of St. Mary, Berlin"
           if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+the\s+(\p{Lu}.*)$/u)) && placeIn(m[1], m[2])) return;
+          // [S051] (3.34.19) "Go Kurosawa plays guitar, bass and drums" (T049)
+          if (ruleOn('S051') && (m = clause.match(PLAYS_LIST)) && looksLikeName(clean(m[1])) && /^\p{Lu}/u.test(clean(m[1])) && !isRole(cap(clean(m[1])))) {
+            const list = playList(m[2]);
+            if (list) {
+              list.known.forEach((r) => { if (addCredit(clean(m[1]), r, cScope)) found++; });
+              unknownParts.push(...list.unknown);
+              return;
+            }
+          }
           // "Name – roles", "Name: roles", "Role: names", "Role – names", "Name (roles)"
           let left = null;
           let right = null;
@@ -4847,17 +4932,67 @@
         return !item.unresolved;
       };
 
-      for (const raw of String(text || '').split(/\r?\n/)) {
-        let line = clean(raw);
-        if (!line) {
-          // [S043] an empty line after its publishers ends a block
-          if (pubBlock && pubBlock.n) pubBlock = null;
-          continue;
+      /** [S051] A line of a block: only words for instruments or voices – no name, digit, "by", ":" or dash between words. */
+      const blockLine = (raw) => {
+        const l = clean(raw);
+        if (!l || l.split(' ').length > 10 || /\d|:|[()[\]@]|https?:|www\.|\s[–—-]\s/i.test(l) || /\s(?:by|at|in|on|for|with|von|par|por)\s/i.test(` ${l} `)) return false;
+        const parts = splitRoles(l);
+        return parts.length > 0 && parts.every((x) => playable(x) || maybePlayable(x));
+      };
+      /**
+       * [S051] A line that links a block to a name: "are played, mixed and produced by X", "played by X", "All instruments played
+       * by X", "All of the above performed by X" → { names, roles } (the roles of the other verbs), else null.
+       */
+      const linkOf = (raw) => {
+        const l = clean(raw);
+        const m = l.match(/^(.+?)\s+by\s+(.+)$/i);
+        const c = m && chainOf(m[1]);
+        if (!c || !/^(?:(?:all|both)(?:\s+(?:of\s+)?(?:the\s+)?(?:instruments|above|them|these))?|(?:the\s+)?(?:instruments|above)|these)?$/i.test(c.before)) return null;
+        const who2 = names(firstSentence(m[2]).replace(TEXT_TIME_AFTER_NAME, ''));
+        return who2.length && who2.every(looksLikeName) ? { names: who2, roles: c.roles } : null;
+      };
+      /** [S051] The block held back with the line that links it: each instrument a row of each name; false if it is none. */
+      const readBlock = (held, linkRaw) => {
+        const link = linkOf(linkRaw);
+        if (!link) return false;
+        const rows = held.map((raw) => ({ raw, parts: clean(raw) ? splitRoles(clean(raw)) : [] }));
+        // lines before the first instrument (a heading, "Credits") are read as usual
+        const first = rows.findIndex((r) => r.parts.some(playable));
+        if (first < 0) return false;
+        const body = rows.slice(first).filter((r) => r.parts.length);
+        const known = body.reduce((n, r) => n + r.parts.filter(playable).length, 0);
+        const unknown = body.reduce((n, r) => n + r.parts.filter((x) => !playable(x)).length, 0);
+        if (known < unknown) return false;
+        rows.slice(0, first).forEach((r) => readLine(r.raw));
+        for (const r of body) {
+          startLine(r.raw);
+          const unk = r.parts.filter((x) => !playable(x));
+          link.names.forEach((n) => r.parts.filter(playable).forEach((x) => addCredit(n, x, null)));
+          if (unk.length === r.parts.length) unrecognized.push(line0);
+          else if (unk.length) unrecognized.push(`${line0} → ? ${unk.map((x) => `“${x}”`).join(', ')}`);
         }
+        startLine(linkRaw);
+        link.names.forEach((n) => link.roles.forEach((x) => addCredit(n, x, null)));
+        return true;
+      };
+      /** The line a credit comes from, and which of the lines with the same text it is. */
+      const startLine = (raw) => {
         line0 = raw.trim();
         const sameKey = line0.replace(/\s+/g, ' ').toLowerCase();
         n0 = lineCount.get(sameKey) || 0;
         lineCount.set(sameKey, n0 + 1);
+        part0 = clean(raw);
+        pi0 = 0;
+      };
+      /** One line of the text. */
+      const readLine = (raw) => {
+        let line = clean(raw);
+        if (!line) {
+          // [S043] an empty line after its publishers ends a block
+          if (pubBlock && pubBlock.n) pubBlock = null;
+          return;
+        }
+        startLine(raw);
         // A track list for the line (only when it names tracks of this release)
         let scope = null;
         let m;
@@ -4880,22 +5015,22 @@
         if (ruleOn('S043')) {
           if (PUBLISHER_HEAD.test(line)) {
             pubBlock = { n: 0, societies: societiesIn(line) };
-            continue;
+            return;
           }
           if (SOCIETY_LINE.test(line)) {
             societiesIn(line).forEach(addSociety);
-            continue;
+            return;
           }
           const item = pubBlock || SOCIETY_AFTER_NAME.test(clean(line).replace(PUB_TAIL, '$1')) ? publisherOf(line, scope) : null;
           if (item && (pubBlock || item.societies.length)) {
             if (!addPublisher(item, pubBlock)) unrecognized.push(`${line0} → ? “${item.unresolved}”`);
             if (pubBlock) pubBlock.n++;
-            continue;
+            return;
           }
           pubBlock = null;
         }
         // [3.14.0] a line that only names the label of the release is left out (T024)
-        if (TEXT_LABEL_LINE.test(line)) continue;
+        if (TEXT_LABEL_LINE.test(line)) return;
         // [3.21.0] sentence by sentence (T029); thanks and endorsements are left out (T030), web addresses taken out (T032)
         const units = sentencesOf(line);
         let found = 0;
@@ -4936,7 +5071,36 @@
           missed.forEach((u) => unrecognized.push(u));
           if (unknownParts.length) unrecognized.push(`${line0} → ? ${unknownParts.map((x) => `“${x}”`).join(', ')}`);
         }
+      };
+
+      // [S051] (3.34.19) Lines that are only instruments or voices ("Electric guitar", "Drums", …, empty lines between them) are
+      // held back until a line links them to a name ("are played, mixed and produced by Go Kurosawa"); any other line reads them
+      // as usual first (collected item 137a)
+      let roleBlock = [];
+      const flushBlock = () => {
+        const held = roleBlock;
+        roleBlock = [];
+        held.forEach(readLine);
+      };
+      for (const raw of String(text || '').split(/\r?\n/)) {
+        if (ruleOn('S051')) {
+          if (roleBlock.length && !clean(raw)) {
+            roleBlock.push(raw);
+            continue;
+          }
+          if (blockLine(raw)) {
+            roleBlock.push(raw);
+            continue;
+          }
+          if (roleBlock.length && readBlock(roleBlock, raw)) {
+            roleBlock = [];
+            continue;
+          }
+          flushBlock();
+        }
+        readLine(raw);
       }
+      flushBlock();
       return { credits, companies, unrecognized, ignored };
     }
 
