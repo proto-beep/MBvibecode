@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore, [3.34.17] ocrremember, [3.34.22] ocrorigin; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore, [3.34.17] ocrremember, [3.34.22] ocrorigin, [3.34.24] ocrentry; `python3 t_coverart.py <case> …` runs only those."""
 import json
 import re
 
@@ -1559,6 +1559,63 @@ def case_ocrorigin():
             print('Fehler:', errs)
             results.append(not errs)
             pg.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocrentry():
+    """[3.34.24] The origin from the cover art in the head of an entry (collected item 130d; maintainer: "ja ok").
+    A) Bob Lee on the Back ("Mixed by Bob Lee") and on the Tray ("Bob Lee - drums"): the head of his entry says "From the cover
+       art · Back, Tray" with ⓘ; each of his rows names its own image.
+    B) ⓘ in the head: the crops of both lines (Back, Tray) below it; ⓘ again hides them. An entry from a pasted text afterwards:
+       nothing in its head."""
+    results = []
+    texts = [{'text': 'Mixed by Bob Lee\n', 'lines': [{'text': 'Mixed by Bob Lee\n', 'bbox': {'x0': 20, 'y0': 30, 'x1': 600, 'y1': 80}}], 'words': []},
+             {'text': 'Bob Lee - drums\n', 'lines': [{'text': 'Bob Lee - drums\n', 'bbox': {'x0': 300, 'y0': 600, 'x1': 900, 'y1': 690}}], 'words': []}]
+    HEAD = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Bob Lee');
+      if (!g) return null; const f = g.querySelector('.dci-gcoverfrom .dci-coverfrom');
+      return { head: f ? [...f.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim() : '', btn: !!(f && f.querySelector('[data-act=cover-crop-entry]')),
+        crops: f ? [...f.querySelectorAll('.dci-coverfrom-crops figcaption')].map(c => c.textContent) : [],
+        rows: [...g.querySelectorAll('tr.dci-row .dci-coverfrom')].map(x => [...x.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim()) }; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(texts))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-sel="2"]')
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text="1:0"]', timeout=20000)
+        pg.wait_for_timeout(300)
+        pg.click('#dci-ocr [data-ocr=import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1000)
+        a = pg.evaluate(HEAD)
+        print('A) Kopf:', a)
+        results.append(bool(a) and a['head'] == 'From the cover art · Back, Tray' and a['btn'] and sorted(a['rows']) == ['From the cover art · Back', 'From the cover art · Tray'])
+        pg.locator('.dci-gcoverfrom [data-act=cover-crop-entry]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(400)
+        b1 = pg.evaluate(HEAD)
+        pg.locator('.dci-gcoverfrom [data-act=cover-crop-entry]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        b2 = pg.evaluate(HEAD)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Mixed by Bob Lee')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 90)
+        pg.wait_for_timeout(1000)
+        b3 = pg.evaluate(HEAD)
+        print('B) ⓘ:', b1 and b1['crops'], '| zu:', b2 and b2['crops'], '| anderer Text:', b3)
+        results.append(bool(b1) and b1['crops'] == ['Back: Mixed by Bob Lee', 'Tray: Bob Lee – drums'] and b2['crops'] == [] and bool(b3) and b3['head'] == '' and b3['rows'] == [])
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

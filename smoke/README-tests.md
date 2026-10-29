@@ -435,6 +435,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     beside the frames, then 24; Auto-select with 30 booklet pages – all shown; a PDF of 15 pages – 12
                                 #   ocrorigin: 3.34.22: Back and Tray read and imported – "From the cover art · Back" / "… · Tray" at the rows, ⓘ shows
                                 #     the crop of the line (JPEG, at most 640 × 160) and hides it again; a line changed: no ⓘ; another text: nothing
+                                #   ocrentry: 3.34.24: Bob Lee on the Back and the Tray – the head of his entry "From the cover art · Back, Tray", ⓘ the
+                                #     crops of both lines, hidden again; an entry of a pasted text afterwards: nothing
                                 #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,
                                 #     those set by hand stay; switched on in ⚙ Settings with the window open – ticked at once, and when
                                 #     opened again; 30 booklet pages, loading ahead on: 2 load, 22 wait, 6 not ahead
