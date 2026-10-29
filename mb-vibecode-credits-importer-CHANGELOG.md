@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.28 | – |
+| 2026-10-29 | 3.34.18 – 3.34.29 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.29
+
+#### Added
+
+- **Entries as a matrix (E4), step 1: the instruments and voices of an entry in one relationship** (Block AE; maintainer: "kannst du Block AE umsetzen und als standard führen? die alte darstellung aber als "Legacy" darstellung in den einstellungen behalten"): when staged, the instruments of a person go into MusicBrainz as one relationship per recording (same date, artist credit, additional / guest / solo) with all of them, each with its own role credit – as MusicBrainz's own dialog does (before: one relationship per instrument); voices the same. An instrument with its own "solo" stays apart. A joined relationship that changes after staging is staged anew with all its instruments. ⚙ Settings → Staging "Join the instruments and voices of an entry in one relationship" (on).
+- **⚙ Settings → Appearance → Entries: Matrix | Legacy**: the matrix is the default (its view of the entries follows in the next versions); **Legacy** is the dashboard as before – a row per role, nothing joined. Nothing stored changes when switching.
 
 ### Import 3.34.28
 

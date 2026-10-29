@@ -25,6 +25,8 @@ MBvibecode/ (this repository)
   smoke/zooid.py                      scenario after Discogs release 38282688 (10 tracks, two sessions, two studios)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
+                                      [3.34.29] ENTRIES_VIEW: the entries as before ('legacy') for every file but t_entries.py – the matrix
+                                      (E4, the script's default) is tested there
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
   smoke/caserun.py                    [3.31.1] runs the cases of a topic file: one shared browser, what a case changes in the
                                       harness set back after it, one result per case and one for the file
@@ -345,6 +347,12 @@ python3 t_ui_place.py           # Window or page, the log, staying in place afte
                                 #     edit note drawn anew, remembered after reloading, "↺ Defaults" → window
                                 #   keepplace: after "Create artist …" the dashboard stays at the entry (window and page, without scroll anchoring)
                                 #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
+
+python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   join: 3.34.29: the instruments and voices of an entry joined when staged (one relationship per recording,
+                                #     date, artist credit and additional / guest / solo; "solo" apart) – 20 instead of 33; a role credit typed
+                                #     after staging stages the joins anew (taken out, staged again, nothing twice); legacy stages the same
+                                #     instruments apart; ⚙ Staging "Join …", ⚙ Appearance "Entries: Matrix | Legacy"
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
