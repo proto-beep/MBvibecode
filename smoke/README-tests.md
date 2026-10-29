@@ -98,6 +98,11 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     wind chimes · tubular bells · other instruments “Chaims”" (also in the compact line), each choice and its
                                 #     credit; "Buddha machine" other instruments credited at once; "Voice" asks (Q011), "use “voice” as role
                                 #     credit" after a voice typed in
+                                #   voicetech: 3.34.25: Discogs "Voice" asks four answers (spoken vocals “voice” chosen), "Vocals" plain; "Technician
+                                #     [Guitar]" → instrument technician · guitar, "Drum Technician" → drums (drum set), no credit; "[Chaims]" asks
+                                #   unknownask: 3.34.26: Discogs "Chaims" asks with "miscellaneous support (task “Chaims”)" last – chosen: misc with the
+                                #     task, then chimes: an instrument row again; "Sticks-And-Stones": other instruments at once; "Barry Guy – double
+                                #     bass, sticks-and-stones" – other instruments “sticks-and-stones”; more unknown words than instruments: not recognized
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -280,6 +285,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   bar: language before opening (3.27.1: the question after the installation, then the settings), fold at the
                                 #     bottom, date pool kept when folded, common month/year, horns, producer
                                 #   jump: ▲ ▼ in the status bar jump to the top and bottom of the dashboard, in the window and in the page (3.14.1)
+                                #   compacthint: 3.34.23: the arrow at ☰ (nothing stored) below the symbol, the pointer goes through; gone after
+                                #     switching (stored, also on a new page); back after "Reset all settings", ✕, back with ↺ of Appearance;
+                                #     the compact view stored before – no arrow
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
@@ -432,6 +440,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     beside the frames, then 24; Auto-select with 30 booklet pages – all shown; a PDF of 15 pages – 12
                                 #   ocrorigin: 3.34.22: Back and Tray read and imported – "From the cover art · Back" / "… · Tray" at the rows, ⓘ shows
                                 #     the crop of the line (JPEG, at most 640 × 160) and hides it again; a line changed: no ⓘ; another text: nothing
+                                #   ocrentry: 3.34.24: Bob Lee on the Back and the Tray – the head of his entry "From the cover art · Back, Tray", ⓘ the
+                                #     crops of both lines, hidden again; an entry of a pasted text afterwards: nothing
                                 #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,
                                 #     those set by hand stay; switched on in ⚙ Settings with the window open – ticked at once, and when
                                 #     opened again; 30 booklet pages, loading ahead on: 2 load, 22 wait, 6 not ahead
@@ -440,6 +450,7 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     out at the end); the image beside the frames takes the room; smaller at its corner (remembered);
                                 #     moved by its head, opened again at the same place; [3.34.18] in front after a click into the dashboard,
                                 #     the rules (as a window) and the log
+                                #     [3.34.23] ⚙ → Beta "Keep … in front" off: the dashboard comes in front with a click; on again
                                 #   ocrtextfit: 3.34.14: "Reads best: text on a plain, even background …" while choosing and beside the
                                 #     frames; a text field as high as its text, growing; many uncertain words – a yellow box names the part
                                 #   (from 3.34.14 the cases drag frames in the pixels of the image: drag_img – the view follows the window)
