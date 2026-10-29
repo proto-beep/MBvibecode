@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.28, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.29, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.29 · 2026-10-29
+
+Block AE (E4), step 1: the entries as a matrix the default, "Legacy" as before; joining when staged.
+
+- **Settings:** `ENTRIES_VIEW_KEY` `dci-entries-view` (`S.entriesView` 'matrix' | 'legacy', only 'legacy' stored; ⚙ Appearance, segment `data-act="entries-view"`, `setEntriesView(view)`: `renderGroups`, `refresh`, `renderSettings`), `JOIN_KEY` `dci-join` (`S.joinAuto`, only off stored; ⚙ Staging `data-set="join"`, disabled in legacy). Both in `TOPIC_KEYS` (appearance, staging; their ↺ set them back) and `SETTINGS_KEYS`.
+- **New section "[E4] Entries as a matrix"** after `computePlan`: `matrixOn()`, `joinOn(artist)` (`artist.join` true/false wins over the setting – for the buttons of later steps), `primaryAttrsOf(it)` (attributes under the type's own root), `joinable(it)` (a new credit item of type instrument or vocal on a recording, the release or its group, with an instrument or voice), `joinKeyOf(it)` (target, entry, type, date, artist credit, other attributes, direction), **`joinPlan(items, removals, stagedItems)`**.
+- **`joinPlan`:** (1) joined relationships staged before (`S.staged` entries with `joined`, `jkey`) are "dirty" when an item updates or replaces one of their rows, a row of them is to be removed, or a new joinable item has their `jkey`: those items become fresh adds (`rejoin`), the unchanged rows' items (`stagedItems`, recorded in `planTarget` when the staged sig is the same) are added again, and one removal per dirty join (`{ key, staged, joined }`) replaces the removals of its rows. (2) With `matrixOn()`: joinable items are bucketed by `joinKeyOf`, a bucket takes no attribute twice (a second bucket instead); a bucket of several becomes one item with `joinedItems`, `jkey`, the attributes of all, `key` `join|…`.
+- **`computePlan`:** `stagedItems`; returns `joinPlan(items, removals, stagedItems)`. **`applyPlan`:** a joined item is staged once and stored under each row's key (`joined: 'j<state id>'`, `jkey`, the row's own sig); edit-note lines of all rows; removals of a join forget all keys of that join (`forget`), not those staged anew in another join just now. **`describeItem`:** a joined item names its instruments.
+- **Texts (English only):** `settings.entries`, `settings.entries.matrix`, `settings.entries.legacy`, `settings.entries.matrixTitle`, `settings.entries.legacyTitle`, `settings.join`, `settings.joinTitle`.
+- **Tests:** new file `smoke/t_entries.py` (case `join`: the matrix joins – 20 relationships instead of 33 –, a role credit typed after staging stages the joins anew, the legacy view stages the same instruments apart, the switches). `harness.py`: `ENTRIES_VIEW` ('legacy' for the files written before E4) and `ENTRIES_PRESET` (`dci-entries-view` before the script starts).
 
 ## Import 3.34.28 · 2026-10-29
 

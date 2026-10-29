@@ -643,7 +643,7 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     errs = errors_of(pg)
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
-    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) (%s)('full');" % VIEW_PRESET
+    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW))
     codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
@@ -979,6 +979,10 @@ def with_companion(pg):
 # the default again – the preset stays, harmless)
 # [3.34.23] … and the arrow at "Compact | Full" (item 143) as seen – it stands below the head; t_ui_head.py compacthint tests it
 VIEW_PRESET = "(v) => { if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); if (localStorage.getItem('dci-view') === null) localStorage.setItem('dci-view', JSON.stringify(v)); if (localStorage.getItem('dci-hint-compact') === null) localStorage.setItem('dci-hint-compact', 'true'); }"
+# [3.34.29] the entries as before ("legacy": a row per role, nothing joined) for the cases written before E4; the cases of the
+# matrix set ENTRIES_VIEW = 'matrix' (the default of the script) before they open the page
+ENTRIES_VIEW = 'legacy'
+ENTRIES_PRESET = "(v) => { if (localStorage.getItem('dci-entries-view') === null && v === 'legacy') localStorage.setItem('dci-entries-view', JSON.stringify(v)); }"
 
 
 # [3.32.0] built-in rules switched off before the script starts, unless the browser has stored switched rules already
@@ -993,6 +997,7 @@ def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
     pg.goto(f'https://musicbrainz.org/release/{REL}/edit-relationships')
     if view:
         pg.evaluate(VIEW_PRESET, view)
+    pg.evaluate(ENTRIES_PRESET, ENTRIES_VIEW)
     if RULES_OFF:
         pg.evaluate(RULES_PRESET, RULES_OFF)
     if companion:

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.28
+// @version      3.34.29
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.28
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.28
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.29
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.29
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.28';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.29';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -698,6 +698,11 @@
       "settings.levelColorsTitle": "Recording, release, release group and work each in its own colour – in the rows and in the compact view",
       "settings.levelColor": "Colour of the level “{level}”",
       "settings.rulesPlace": "Mapping rules",
+      "settings.entries": "Entries",
+      "settings.entries.matrix": "Matrix",
+      "settings.entries.legacy": "Legacy",
+      "settings.entries.matrixTitle": "The roles of an entry as a matrix: the instruments and voices together, the events (level · date · tracks) as columns (E4, the default from 3.34.29)",
+      "settings.entries.legacyTitle": "As before 3.34.29: a row per role, each relationship of its own – nothing stored changes, you can switch back at any time",
       "settings.rulesPlace.dashboard": "in the dashboard",
       "settings.rulesPlace.window": "as a window",
       "settings.rulesRowPlace": "Rule ids and ⓘ at rows open them",
@@ -815,6 +820,8 @@
       "settings.capLimit": "Relationships per round",
       "settings.liveComments": "Live recordings: add a disambiguation comment",
       "settings.liveCommentsTitle": "Proposes a comment for each live recording, as “MB: QoL: Seed the batch recording comments script” does (“live, 2004‐03‐23: Iridium, New York, NY, USA”: the date and the place – its “credited as” or its name, with its area – of the rows “recorded at” or “recorded in”). The list is shown above “Stage …”: tick, change. The comments are entered after “Enter edit” in the relationship editor, once the relationships are saved. Only live recordings; another comment in MusicBrainz is not overwritten.",
+      "settings.join": "Join the instruments and voices of an entry in one relationship",
+      "settings.joinTitle": "Per recording (or release) and event – the same date, artist credit and additional / guest / solo – one relationship with all its instruments, each with its own role credit (E4). Off: a relationship per instrument. Not in the legacy view.",
       "settings.aria.awMax": "At most works and recordings per artist",
       "settings.aria.awSlowSec": "Seconds before a large catalogue is named",
       "settings.aria.awSlowN": "Entries to read before a large catalogue is named",
@@ -7629,6 +7636,8 @@
     // Staged relationships: unchanged if any row still matches what was staged (duplicate rows are common)
     const unchanged = new Set();
     const pendingUpdates = [];
+    // [E4] (3.34.29) the items of relationships staged and unchanged: a joined one is staged anew with them when it changes
+    const stagedItems = new Map();
 
     // Planned recording→work links come first: work credits below depend on them.
     const perf = idx().performanceLt;
@@ -7746,6 +7755,7 @@
         if (staged && staged.sig === itemSig(item)) {
           info.applied++;
           unchanged.add(key);
+          if (!stagedItems.has(key)) stagedItems.set(key, item);
           return;
         }
         if (staged) {
@@ -7864,7 +7874,121 @@
       it.replaces = { key: r.key, staged: r.staged };
       removals.splice(removals.indexOf(r), 1);
     }
-    return { items, rowInfo, removals, waiting };
+    return { items: joinPlan(items, removals, stagedItems), rowInfo, removals, waiting };
+  }
+
+  // --- [E4] (3.34.29) Entries as a matrix: the instruments and voices of an entry in one relationship ------------------------
+
+  /** [E4] The entries as a matrix (the default) – not in the legacy view (a row per role, as before 3.34.29). */
+  const matrixOn = () => S.entriesView !== 'legacy';
+
+  /** [E4] Switches the view of the entries (⚙ Settings → Appearance). */
+  function setEntriesView(view) {
+    S.entriesView = view === 'legacy' ? 'legacy' : 'matrix';
+    writeJson('localStorage', ENTRIES_VIEW_KEY, S.entriesView === 'legacy' ? 'legacy' : null);
+    log('info', 'settingValue', { what: tr('settings.entries'), value: tr(`settings.entries.${S.entriesView}`) });
+    if (S.overlay) {
+      renderGroups();
+      refresh();
+      renderSettings();
+    }
+  }
+
+  /** [E4] Whether the instruments and voices of an entry are joined: the setting, unless the entry was set otherwise. */
+  const joinOn = (artist) => matrixOn() && (artist && typeof artist.join === 'boolean' ? artist.join : S.joinAuto);
+
+  /** [E4] The attributes of an item that are its instrument or voice (under the relationship type's own root). */
+  function primaryAttrsOf(it) {
+    const root = primaryRootOf(it.lt);
+    return root ? it.attrs.filter((a) => a.type.id !== root.id && (a.type.root_id === root.id || a.type.parent_id === root.id)) : [];
+  }
+
+  /** [E4] Items that may be joined: a new instrument or voice of an entry on a recording, the release or its group. */
+  function joinable(it) {
+    return it.kind === 'credit' && !!it.row && !!it.artist && !it.update && !it.replaces && !it.fill && !it.fillDate && !it.attrFill
+      && ['recording', 'release', 'release_group'].includes(it.target.kind) && ['instrument', 'vocal'].includes(norm(it.lt.name))
+      && primaryAttrsOf(it).length > 0 && joinOn(it.artist);
+  }
+
+  /** [E4] Relationships that are one when joined: same target, entry, type, date, artist credit, direction and other attributes. */
+  function joinKeyOf(it) {
+    const prim = new Set(primaryAttrsOf(it));
+    const rest = it.attrs.filter((a) => !prim.has(a)).map((a) => (a.text_value != null ? `${a.type.id}=${a.text_value}` : String(a.type.id))).sort().join(',');
+    return [it.target.gid, it.artist.mbid, it.lt.gid, JSON.stringify(it.date || null), it.credit || '', rest, it.row.enteredFirst ? 1 : 0].join('|');
+  }
+
+  /**
+   * [E4] (3.34.29) Joins the planned instruments and voices of an entry: per target, date, artist credit and the other attributes
+   * (additional, guest, solo …) one relationship with all of them, each with its own role credit – an instrument that is there
+   * already goes into another one (MusicBrainz holds an attribute once). A joined relationship staged before that changed (one of
+   * its rows changed, went or came) is taken out of the editor and staged anew with all its rows. The legacy view joins nothing.
+   */
+  function joinPlan(items, removals, stagedItems) {
+    const joinedStates = new Map();
+    for (const [k, st] of S.staged) {
+      if (!st.joined) continue;
+      if (!joinedStates.has(st.joined)) joinedStates.set(st.joined, []);
+      joinedStates.get(st.joined).push([k, st]);
+    }
+    if (joinedStates.size) {
+      const dirty = new Set();
+      const stOf = (it) => it.update || (it.replaces && it.replaces.staged) || null;
+      for (const it of items) {
+        const st = stOf(it);
+        if (st && st.joined) dirty.add(st.joined);
+      }
+      for (const r of removals) if (r.staged.joined) dirty.add(r.staged.joined);
+      // a new row of a joined relationship staged before (another instrument of the same recording and event)
+      const keys = new Map([...joinedStates].map(([J, list]) => [list[0][1].jkey, J]).filter(([k]) => k));
+      for (const it of items) if (joinable(it) && keys.has(joinKeyOf(it))) dirty.add(keys.get(joinKeyOf(it)));
+      if (dirty.size) {
+        for (const it of items) {
+          const st = stOf(it);
+          if (st && dirty.has(st.joined)) Object.assign(it, { update: null, replaces: null, rejoin: true });
+        }
+        const keep = removals.filter((r) => !(r.staged.joined && dirty.has(r.staged.joined)));
+        for (const J of dirty) {
+          const list = joinedStates.get(J) || [];
+          if (!list.length) continue;
+          keep.push({ key: list[0][0], staged: list[0][1], joined: J });
+          for (const [k] of list) {
+            const it = stagedItems.get(k);
+            if (it && !items.includes(it) && !items.some((x) => x.key === k)) items.push(Object.assign(it, { rejoin: true }));
+          }
+        }
+        removals.splice(0, removals.length, ...keep);
+      }
+    }
+    if (!matrixOn()) return items;
+    const out = [];
+    const buckets = new Map();
+    for (const it of items) {
+      if (!joinable(it)) {
+        out.push(it);
+        continue;
+      }
+      const jk = joinKeyOf(it);
+      if (!buckets.has(jk)) buckets.set(jk, []);
+      const ids = primaryAttrsOf(it).map((a) => a.type.id);
+      let b = buckets.get(jk).find((x) => !ids.some((id) => x.ids.has(id)));
+      if (!b) {
+        b = { items: [], ids: new Set(), at: out.length, jk };
+        buckets.get(jk).push(b);
+        out.push(b);
+      }
+      b.items.push(it);
+      ids.forEach((id) => b.ids.add(id));
+    }
+    return out.map((x) => {
+      if (!x.items) return x;
+      if (x.items.length === 1) return x.items[0];
+      const first = x.items[0];
+      const prim = x.items.flatMap(primaryAttrsOf);
+      const primSet = new Set(primaryAttrsOf(first));
+      const rest = first.attrs.filter((a) => !primSet.has(a));
+      return { ...first, attrs: [...prim, ...rest], joinedItems: x.items, jkey: x.jk, key: `join|${x.items.map((m) => m.key).join('+')}`,
+        noteText: '', update: null, replaces: null };
+    });
   }
 
   // ===========================================================================
@@ -14360,6 +14484,8 @@
   function describeItem(it) {
     const date = it.date ? ` [${formatDateValue(it.date) || tr('date.endedOnly')}]` : '';
     if (it.kind === 'work-link') return `${it.target.label} → ${it.workTitle} (${it.lt.name})${date}`;
+    // [E4] (3.34.29) a joined relationship names its instruments or voices
+    if (it.joinedItems) return `${it.artist.mbName || it.artist.name}: ${it.lt.name} (${it.joinedItems.flatMap(primaryAttrsOf).map((a) => a.type.name).join(', ')}) → ${it.target.label}${date}`;
     return `${it.artist.mbName || it.artist.name}: ${it.lt.name} → ${it.target.label}${date}`;
   }
 
@@ -14648,7 +14774,17 @@
         const targetEntity = it.kind === 'work-link' && isPending(it.workGid) ? pendingWorkEntity(Number(it.workGid.split(':')[1]))
           : await fetchJsEntity(it.kind === 'work-link' ? it.workGid : it.artist.mbid);
         const newState = dispatchAddRelationship(source, targetEntity, it.lt.id, it.attrs, it.credit, it.date, !!(it.row && it.row.enteredFirst));
-        if (newState) {
+        if (newState && it.joinedItems) {
+          // [E4] (3.34.29) one relationship for all rows joined: each row's key stands for it (unchanged rows find it staged)
+          const J = `j${newState.id}`;
+          for (const m of it.joinedItems) {
+            S.staged.set(m.key, {
+              state: newState, source, sig: itemSig(m), text, rowId: m.row.id, joined: J, jkey: it.jkey,
+              track: m.target && m.target.track ? m.target.track.idx : null, workLink: false,
+            });
+            S.appliedKeys.add(m.key);
+          }
+        } else if (newState) {
           S.staged.set(it.key, {
             state: newState, source, sig: itemSig(it), text, rowId: it.row ? it.row.id : null,
             track: it.target && it.target.track ? it.target.track.idx : null, workLink: it.kind === 'work-link',
@@ -14669,8 +14805,8 @@
         } else {
           S.noteStats[it.target.kind]++;
         }
-        if (it.noteText) {
-          S.noteLines.add(`${it.artist.mbName || it.artist.name}, ${it.lt.name}: "${it.noteText}" (${S.source.noteName}: ${it.row.raw})`);
+        for (const m of it.joinedItems || [it]) {
+          if (m.noteText) S.noteLines.add(`${m.artist.mbName || m.artist.name}, ${m.lt.name}: "${m.noteText}" (${S.source.noteName}: ${m.row.raw})`);
         }
         added++;
         log('ok', 'staged', { text });
@@ -14684,10 +14820,22 @@
     // but only if it still looks as the dashboard left it; already gone → forgotten here
     const toRemove = [];
     let removed = 0;
+    // [E4] (3.34.29) a joined relationship: all keys of its rows go with it (not those staged anew in another one just now)
+    const forget = (r) => {
+      if (!r.joined) {
+        S.staged.delete(r.key);
+        return;
+      }
+      for (const [k, st] of [...S.staged]) {
+        if (st.joined !== r.joined) continue;
+        S.staged.delete(k);
+        S.appliedKeys.delete(k);
+      }
+    };
     for (const r of removals) {
       const current = findRelationshipStates(re.state, new Set([r.staged.state.id])).get(r.staged.state.id);
       if (!current) {
-        S.staged.delete(r.key);
+        forget(r);
         continue;
       }
       if (relSig(current) !== relSig(r.staged.state)) {
@@ -14696,8 +14844,8 @@
       }
       try {
         re.dispatch({ type: 'remove-relationship', relationship: current });
-        S.staged.delete(r.key);
-        S.appliedKeys.delete(r.key);
+        forget(r);
+        if (!r.joined) S.appliedKeys.delete(r.key);
         removed++;
         log('ok', 'stagedRemoved', { text: r.staged.text });
       } catch (e) {
@@ -22246,6 +22394,10 @@
       case 'rules-place':
         if (btn.dataset.place !== S.rulesPlace) setRulesPlace(btn.dataset.place);
         break;
+      case 'entries-view':
+        // [E4] (3.34.29) the entries as a matrix or as before
+        if (btn.dataset.view !== S.entriesView) setEntriesView(btn.dataset.view);
+        break;
       // [3.30.5] the message of the dashboard opened for its settings only
       case 'start-import':
         initOnce();
@@ -24198,6 +24350,11 @@
   const HINT_COMPACT_KEY = 'dci-hint-compact';
   // [138b] (3.34.23) the window "Text from cover art" kept in front of the dashboard (default on; off: stored false)
   const OCR_FRONT_KEY = 'dci-ocr-front';
+  // [E4] (3.34.29) the entries as a matrix (default) or as before, a row per role ("legacy"; maintainer: "Block AE umsetzen und als
+  // standard führen? die alte darstellung aber als "Legacy" darstellung in den einstellungen behalten"); the instruments and voices
+  // of an entry joined in one relationship per recording and event (default on; off: stored false)
+  const ENTRIES_VIEW_KEY = 'dci-entries-view';
+  const JOIN_KEY = 'dci-join';
   // [3.29.2] the colours of the levels (item 79): on by default; own colours in ⚙ Settings → Appearance
   const LEVEL_COLORS_KEY = 'dci-level-colors';
   const LEVEL_PALETTE_KEY = 'dci-level-palette';
@@ -24210,13 +24367,13 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
   };
@@ -24225,6 +24382,9 @@
   // [143] (3.34.23) who chose the compact view before knows the switch: no arrow (also when going back to full)
   if (S.view === 'compact') writeJson('localStorage', HINT_COMPACT_KEY, true);
   S.ocrFront = readJson('localStorage', OCR_FRONT_KEY, true) !== false;
+  // [E4] (3.34.29)
+  S.entriesView = readJson('localStorage', ENTRIES_VIEW_KEY, 'matrix') === 'legacy' ? 'legacy' : 'matrix';
+  S.joinAuto = readJson('localStorage', JOIN_KEY, true) !== false;
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
   S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
@@ -24314,6 +24474,9 @@
           ? `<button type="button" aria-pressed="true" disabled>${esc(tr(`settings.place.${pl}`))}</button>`
           : `<button type="button" aria-pressed="false" data-act="place-toggle">${esc(tr(`settings.place.${pl}`))}</button>`)).join('')}</span>`),
         row(`${esc(tr('view.label'))} ${viewToggleHtml(true)}`),
+        // [E4] (3.34.29) the entries as a matrix (default) or as before
+        row(`${esc(tr('settings.entries'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.entries'))}">${['matrix', 'legacy'].map((v) => `<button type="button"
+          data-act="entries-view" data-view="${v}" aria-pressed="${S.entriesView === v}" title="${esc(tr(`settings.entries.${v}Title`))}">${esc(tr(`settings.entries.${v}`))}</button>`).join('')}</span>`),
         // [3.30.0] where the mapping rules open (item 75)
         row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
           data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
@@ -24368,6 +24531,8 @@
         row(`<label>${esc(tr('settings.capLimit'))} <input type="number" data-set="cap-limit" min="50" max="2000" step="50" value="${S.capLimit}"></label>`),
         // [3.32.9] disambiguation comments of live recordings (item 113)
         row(check('data-set="live-comments"', S.liveCom, tr('settings.liveComments'), tr('settings.liveCommentsTitle'))),
+        // [E4] (3.34.29) the instruments and voices of an entry in one relationship (not in the legacy view)
+        row(check(`data-set="join"${S.entriesView === 'legacy' ? ' disabled' : ''}`, S.joinAuto, tr('settings.join'), tr('settings.joinTitle'))),
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
@@ -24551,6 +24716,12 @@
     } else if (k === 'ocr-auto') {
       // [3.34.15] the same as "Auto-select" in the window: switched on, the images are chosen at once
       ocrSetAuto(el.checked);
+    } else if (k === 'join') {
+      // [E4] (3.34.29) joining the instruments and voices of an entry
+      S.joinAuto = el.checked;
+      writeJson('localStorage', JOIN_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.join'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      refresh();
     } else if (k === 'ocr-front') {
       // [138b] (3.34.23) in front of the dashboard, the log and the rules – or like them
       S.ocrFront = el.checked;
@@ -24620,6 +24791,8 @@
       placeRules();
       // [143] (3.34.23) the arrow at "Compact | Full" again
       renderCompactHint();
+      // [E4] (3.34.29) the entries as a matrix again
+      if (S.entriesView !== 'matrix') setEntriesView('matrix');
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
@@ -24644,7 +24817,7 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true });
       refresh();
     } else if (t === 'dates') {
       Object.assign(S, { dmAuto: false, poolsKeep: true });
@@ -24673,7 +24846,9 @@
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
     BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
-    HINT_COMPACT_KEY, OCR_FRONT_KEY];
+    HINT_COMPACT_KEY, OCR_FRONT_KEY,
+    // [E4] (3.34.29) the entries as a matrix or legacy, joining
+    ENTRIES_VIEW_KEY, JOIN_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
