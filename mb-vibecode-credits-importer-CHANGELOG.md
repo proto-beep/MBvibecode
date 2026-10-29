@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.35.3 | – |
+| 2026-10-29 | 3.34.18 – 3.35.4 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -91,6 +91,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.35.4
+
+#### Added
+
+- **An event of the matrix opened** (AE-3; maintainer: "wenn man den ereigniskopf öffnet soll man datum und tracks einstellen können", "auch ebene ändern können"): ▸ in the head of an event opens it below its block, with its level (Recording · Release · Release group, as MusicBrainz has them for its rows' types), its date (typed, a date of the pool, no date) and on recordings its tracks (a box per track, the media, the track groups, all). It goes for all rows of the entry in the event; the opened event follows them. A row whose type MusicBrainz has not on the new level stays and its line says so: "Mastered By stays on the level Release: MusicBrainz has no “mastering” on the level Recording · ok" (maintainer: "ja passt").
 
 ### Import 3.35.3
 
