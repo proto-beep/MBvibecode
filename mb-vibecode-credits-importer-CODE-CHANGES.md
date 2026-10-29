@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.17, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.18, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.18 · 2026-10-29
+
+Texts: a place after "in", the year before the month (collected items 137b, 137c); the window "Text from cover art" stays in front (138).
+
+- **New `ocrKeepOnTop()`:** `#dci-ocr`, while open, gets `++topZ` (its larger view `#dci-ocr-peek` above it); called by `bringToFront(kind)` for every kind but `ocr` (dashboard, log, rules) and by `renderRules` when the rules open as a window of their own.
+- **New word list T051 `TEXT_PLACE_WORDS`** (mapping file; `(?<![\p{L}])(?:studios?|hall|church|chapel|cathedral|abbey|basilica|club|theat(?:re|er)|auditorium|arena|ballroom|caf[eé]|venue|tavern|pub|lounge)(?![\p{L}])`, flags `iu`), with its register entry.
+- **`TEXT.parse`:** new `placeIn(verb, text)` – the first part of `text` (before a comma; a date of T047 cut off, "the" left out) has a word of T051 and a word in capitals besides it → `place(verb, placeOf(text))` ("Recorded At" with the area). Tried before `inArea` in the three places an "in …" is read (`inL` "Recorded in X by Y", `inR` "Recorded by Y in X", the clause "Recorded in X" alone); new: the clause "Recorded in the X" (only as a place). `place()` returns whether it added the place.
+- **T047 `PLACE_DATE_TAIL`** (mapping file): a second form – a date with its year first right after the area, without a preposition (`\s+(?=\d{4},?\s+<month>\b)`); its register note says so.
+- **New date rule D024** (`DATE_RULES`, `DATE_MATCHERS`): year, month, day – month, day; year, month, day – day; year, month – month (also "and", "&", "/") – these before D017; one month after its year after D008 – the year only when a word in capitals follows on the same line (not after a dot) or for "may" written small.
+- **Header / files:** `@version 3.34.18`, `?v=3.34.18`, both files' `version`.
+- **Tests:** `t_coverart.py` ocrwindow – part D (in front after a click into the dashboard, the rules as a window – `dci-rules-place` – and a click into them and into the log; z-index the highest), ocrauto – the window closed before it is opened again from the menu of the dashboard (it is in front of it now); `t_text_places.py` – new case `recordedin`; `text_corpus.json` – 7 lines (places after "in", D024 after an area); `register_golden.json` written anew (D024, T047, T051).
 
 ## Import 3.34.17 · 2026-10-28
 

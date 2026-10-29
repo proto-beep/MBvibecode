@@ -127,6 +127,10 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     Marseille" keeps its area; "Muisc and cover art by Jo Vaman" – Music By (S050, the column head of the
                                 #     works matrix says "Read as “Music” (written “Muisc”)"); ⚙ Settings → Texts switches S050 off (stored),
                                 #     the line is not recognized then; ↺ of the tab switches it on
+                                #   recordedin: 3.34.18: the year before the month (D024: "2024 January - July", "2024 Jan - Jul", "2024 March",
+                                #     "2024 March 3–5", "2024 March 30 – April 2"; "© 2019 March Records" the year only); "Recorded in Guruguru
+                                #     Brain studio, Rotterdam, 2024 January - July" – the place (Rotterdam), recorded at (T051), 2024-01 –
+                                #     2024-07 in the pool; "Mixed at Studio Sol, Marseille 2023 March" keeps its area; "Recorded in Berlin" an area
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
                                 #   discnotes: 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
@@ -422,7 +426,8 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   (from 3.34.15 beta_on also switches "Auto-select" on – as before, the images with credits are ticked)
                                 #   ocrwindow: 3.34.14: the window the same size in every step (its foot bar in place, "Next image →" greyed
                                 #     out at the end); the image beside the frames takes the room; smaller at its corner (remembered);
-                                #     moved by its head, opened again at the same place
+                                #     moved by its head, opened again at the same place; [3.34.18] in front after a click into the dashboard,
+                                #     the rules (as a window) and the log
                                 #   ocrtextfit: 3.34.14: "Reads best: text on a plain, even background …" while choosing and beside the
                                 #     frames; a text field as high as its text, growing; many uncertain words – a yellow box names the part
                                 #   (from 3.34.14 the cases drag frames in the pixels of the image: drag_img – the view follows the window)

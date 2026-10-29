@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.17
+// @version      3.34.18
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.17
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.17
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.18
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.18
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.17';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.18';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2889,10 +2889,12 @@
       show: () => ({ pairs: [['heading of a block of publishers', PUBLISHER_HEAD], ...RIGHTS_SOCIETIES.map(([a, what]) => [a, what])] }) },
     { id: 'T046', where: 'apartNames, digitWords, sameCompanyName, suggestByName', note: 'All sources (3.31.0): a company\'s name written together ("FlizmoMusic", "4WordSeaMusic", "Fourwordseamusic") – searched in MusicBrainz written apart too and with a number as a word ("Flizmo Music", "4 Word Sea Music", "Four Word Sea Music", "Fourwordsea Music"); compared so too (S043), offered as similar',
       show: () => ({ pairs: [['numbers as words', NUMBER_WORDS.map((w, k) => `${k} ${w}`).join(' · ')], ['the kind of company at the end', COMPANY_KIND_END]] }) },
-    { id: 'T047', where: 'PLACE_DATE_TAIL, placeOf', note: 'Texts (3.32.5): a date right after a place ("El Studio in San Francisco on September 3rd and 4th 2016", "… in September 2016", "… on 2016-09-03") is cut off before the place is read; the area before it stays',
+    { id: 'T047', where: 'PLACE_DATE_TAIL, placeOf', note: 'Texts (3.32.5): a date right after a place ("El Studio in San Francisco on September 3rd and 4th 2016", "… in September 2016", "… on 2016-09-03") is cut off before the place is read; the area before it stays. (3.34.18) Also a date with its year first without a preposition ("…, Rotterdam 2024 January - July", D024)',
       show: () => ({ pattern: PLACE_DATE_TAIL }) },
     { id: 'T048', where: 'ROLE_WORDS, roleVocab, fixRoleTypo', note: 'Texts (3.32.5): the words of roles a typo is read as (S050: "Muisc" → "Music"); on MusicBrainz also the words of its relationship types and attributes',
       show: () => ({ pairs: [['words', ROLE_WORDS.join(' · ')]] }) },
+    { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area',
+      show: () => ({ pattern: TEXT_PLACE_WORDS }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both, one sign only that one; after the name a code such as "DDD", a catalogue number after "·", "All rights reserved" and (3.30.9) a year ("© & ℗ TUM Records Oy 2021") are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
@@ -3011,7 +3013,12 @@
   // September 2016", "… on 2016-09-03" – is cut off before the place is read (collected item 117; before, the place was
   // left out with the date, because it had digits); the area before it stays ("in San Francisco"). Only a preposition
   // followed at once by a date: a day, a month (whole, or its first three letters), a season.
+  // [137c] (3.34.18) also a date with its year first right after the area, without a preposition ("…, Rotterdam 2024 January
+  // - July": D024)
   const PLACE_DATE_TAIL = MAP.PLACE_DATE_TAIL;
+  // [T051] Texts (3.34.18): the words of places – "Recorded in Guruguru Brain studio, Rotterdam" names a place (recorded at),
+  // not an area (collected item 137b); only with a word in capitals besides it ("my studio", "a church" stay as they were)
+  const TEXT_PLACE_WORDS = MAP.TEXT_PLACE_WORDS;
 
   // [T021] Texts (3.14.0): words before a verb that only say what was done – "Music played and recorded by X" is
   // played by and recorded by X
@@ -3662,6 +3669,7 @@
     // [3.31.7] collected item 110 (maintainer, Bandcamp "At Iridium 2004": "wir brauchen eine option um daten von tracknamen in den
     // datums/trackpool aufzunehmen. die Tracknummern hat man dann ja direkt. … standardeinstellung = aus")
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
+    { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
   ];
 
   const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
@@ -3729,6 +3737,11 @@
     { id: 'D007', re: '(?<!\\d)(\\d{4})\\s*/\\s*(\\d{2}|\\d{4})(?![\\d/])', make: (m) => span(ymd(m[1]), ymd(m[2].length === 2 ? `${m[1].slice(0, 2)}${m[2]}` : m[2])) },
     { id: 'D005', re: `${P.O}(?:\\s+day)?${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), ORDINALS.get(m[1].toLowerCase()))) },
     { id: 'D005', re: `${P.M}\\s+(?:the\\s+)?${P.O},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), ORDINALS.get(m[2].toLowerCase()))) },
+    // [D024] (3.34.18) the year before the month(s): "2024 January - July", "2024 Jan – Jul", "2024 March 30 – April 2",
+    // "2024 March 3–5" (collected item 137c; one month after D008, a day alone with D017)
+    { id: 'D024', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}${P.TO}${P.M}\\s+${P.D}(?![\\d.])`, make: (m) => span(ymd(m[1], monthNo(m[2]), m[3]), ymd(m[1], monthNo(m[4]), m[5])) },
+    { id: 'D024', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}${P.TO}${P.D}(?![\\d.])`, make: (m) => span(ymd(m[1], monthNo(m[2]), m[3]), ymd(m[1], monthNo(m[2]), m[4])) },
+    { id: 'D024', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}(?:${P.TO}|\\s+(?:and|&|und|y|et)\\s+|\\s*/\\s*)${P.M}(?![\\s,]*\\d)`, make: (m) => span(ymd(m[1], monthNo(m[2])), ymd(m[1], monthNo(m[3]))) },
     // [D017] (3.28.5) year, month, day: "1973 October 19" (collected item 64d)
     { id: 'D017', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}(?![\\d.])`, make: (m) => single(ymd(m[1], monthNo(m[2]), m[3])) },
     { id: 'D004', re: `${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), m[2])) },
@@ -3749,6 +3762,12 @@
     { id: 'D011', re: '(?:(?:early|mid|late|the|frühe[n]?|späte[n]?|mitte der)[-\\s]+)?(?:\\d{2})?\\d0\'?s(?![\\p{L}])|(?:\\d{2})?\\d0er(?:\\s+jahren?)?', make: () => 'skip' },
     { id: 'D009', re: `${P.SEASON}(?:\\s+(?:of|de|du))?\\s+${P.Y}`, make: (m) => single(ymd(m[2])) },
     { id: 'D008', re: `${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[2], monthNo(m[1]))) },
+    // [D024] (3.34.18) one month after its year ("2024 March"); the year only when a name in capitals follows ("© 2019 March
+    // Records"; not after a dot: "2024 March. Mixed by …") or for "may" written small ("in 1998 may …")
+    { id: 'D024', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}(?![\\s,]*\\d)`, make: (m) => {
+      const name = !/\.$/.test(m[0]) && /^[ \t]+\p{Lu}/u.test(m.input.slice(m.index + m[0].length));
+      return single(name || m[2] === 'may' ? ymd(m[1]) : ymd(m[1], monthNo(m[2])));
+    } },
     { id: 'D016', re: '(?<=[”"’»\'],?\\s{0,2}\\(?)(1[89]\\d{2}|20\\d{2})(?![\\d/-])', make: () => 'skip' },
     { id: 'D010', re: '(?<![\\d./-])(1[89]\\d{2}|20\\d{2})(?![\\d/-]|\\.\\d)', make: (m) => single(ymd(m[1])) },
   ].map((x) => ({ ...x, rx: new RegExp(x.re, 'giu') }));
@@ -4559,11 +4578,19 @@
           // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
           const place = (verb, where) => {
             const n = where && clean(where.name);
-            if (!looksLikeName(n) || !isCompanyRole(`${cap(verb)} At`)) return;
+            if (!looksLikeName(n) || !isCompanyRole(`${cap(verb)} At`)) return false;
             // [S050] (3.32.5) "Recordd at X": the verb as it is read
             const { role, typos } = readRole(`${cap(verb)} At`);
             companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}) });
             found++;
+            return true;
+          };
+          // [T051] (3.34.18) "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July": a name with a word of places and
+          // a word in capitals besides it is a place ("recorded at"), the part after the comma its area (collected item 137b)
+          const placeIn = (verb, text) => {
+            const first = clean(String(text || '').replace(PLACE_DATE_TAIL, '').split(/\s*,\s*/)[0]).replace(/^the\s+/i, '');
+            if (!TEXT_PLACE_WORDS.test(first) || !/\p{Lu}/u.test(first.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), ''))) return false;
+            return place(verb, placeOf(text));
           };
           // [3.22.0] "Recorded by X in Xixon, Asturies, Spain", "Recorded in Berlin": the area (T037; C038 …)
           const areaRole = (verb) => `${cap(verb)} In`;
@@ -4604,7 +4631,7 @@
             }
             // [3.22.0] "Recorded in Xixon, Asturies by X"
             const inL = !at && left.match(/^(.*?)(?:\s+(?:live|again))?\s+in\s+(\p{Lu}.*)$/u);
-            if (inL && inArea(verb, areaOf(inL[2].replace(TEXT_TIME_AFTER_NAME, '')))) left = inL[1];
+            if (inL && (placeIn(verb, inL[2]) || inArea(verb, areaOf(inL[2].replace(TEXT_TIME_AFTER_NAME, ''))))) left = inL[1];
             // "Recorded in the living room by X", "Mixed in Dolby Atmos by X": X, the rest listed as not recognized
             const inOther = !at && !byRoles(left).length && left.match(/^(\p{L}+(?:\s+(?:live|again))?)\s+in\s+(.+)$/u);
             if (inOther && byRoles(inOther[1]).length) {
@@ -4642,7 +4669,7 @@
             right = firstSentence(right).replace(TEXT_TIME_AFTER_NAME, '');
             // [3.22.0] "Recorded by X in Xixon, Asturies, Spain (in the spring, 2017)": X, and the area (T037)
             const inR = right.match(/^(.+?)\s+in\s+(\p{Lu}.*)$/u);
-            if (inR && looksLikeName(clean(inR[1])) && inArea(verb, areaOf(inR[2]))) right = inR[1];
+            if (inR && looksLikeName(clean(inR[1])) && (placeIn(verb, inR[2]) || inArea(verb, areaOf(inR[2])))) right = inR[1];
             // [3.14.0] a person without a name ("a (cat assisted) human", "the band"): the release's artists (T023)
             const nobody = clean(right.replace(/\s*\([^)]*\)/g, ''));
             if (roles.length && PLACEHOLDER_WHO.test(nobody)) {
@@ -4679,7 +4706,9 @@
           }
           // [3.22.0] "Recorded in Xixon, Asturies, Spain in 2017", "Mixed live in Berlin" (an area without a person, T037)
           if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+(\p{Lu}.*)$/u))
-            && inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, '')))) return;
+            && (placeIn(m[1], m[2]) || inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, ''))))) return;
+          // [T051] (3.34.18) … and with "the" before the place: "Recorded in the Church of St. Mary, Berlin"
+          if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+the\s+(\p{Lu}.*)$/u)) && placeIn(m[1], m[2])) return;
           // "Name – roles", "Name: roles", "Role: names", "Role – names", "Name (roles)"
           let left = null;
           let right = null;
@@ -8890,6 +8919,7 @@
         placeWindow(el, saved && saved.w >= 160 && saved.h >= 100 ? saved : defaultGeom('rules'), true);
       }
       el.style.zIndex = String(++topZ);
+      ocrKeepOnTop();
     }
     const tools = el.querySelector('[data-rf="head-tools"]');
     if (tools) tools.innerHTML = rulesHeadToolsHtml();
@@ -22916,6 +22946,19 @@
   function bringToFront(kind) {
     const el = kind === 'panel' ? S.overlay : kind === 'rules' ? document.getElementById('dci-rules') : kind === 'ocr' ? document.getElementById('dci-ocr') : S.logEl;
     if (el) el.style.zIndex = String(++topZ);
+    if (kind !== 'ocr') ocrKeepOnTop();
+  }
+
+  /**
+   * [138] (3.34.18) The window "Text from cover art" stays above the dashboard, the log and the rules: raised again after
+   * each of them (its larger view above it). Before, a click into the dashboard hid it behind it.
+   */
+  function ocrKeepOnTop() {
+    const o = document.getElementById('dci-ocr');
+    if (!o || o.hidden) return;
+    o.style.zIndex = String(++topZ);
+    const peek = document.getElementById('dci-ocr-peek');
+    if (peek && !peek.hidden) peek.style.zIndex = String(topZ + 1);
   }
 
   /** Drag by the title bar; the size is changed with the grip in the lower right corner. Both are remembered. */
