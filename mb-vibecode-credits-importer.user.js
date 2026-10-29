@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.29
+// @version      3.34.30
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.29
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.29
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.30
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.30
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.29';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.30';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -822,6 +822,10 @@
       "settings.liveCommentsTitle": "Proposes a comment for each live recording, as “MB: QoL: Seed the batch recording comments script” does (“live, 2004‐03‐23: Iridium, New York, NY, USA”: the date and the place – its “credited as” or its name, with its area – of the rows “recorded at” or “recorded in”). The list is shown above “Stage …”: tick, change. The comments are entered after “Enter edit” in the relationship editor, once the relationships are saved. Only live recordings; another comment in MusicBrainz is not overwritten.",
       "settings.join": "Join the instruments and voices of an entry in one relationship",
       "settings.joinTitle": "Per recording (or release) and event – the same date, artist credit and additional / guest / solo – one relationship with all its instruments, each with its own role credit (E4). Off: a relationship per instrument. Not in the legacy view.",
+      "settings.evShared": "Events shared by all roles of an entry up to",
+      "settings.evSharedAfter": "events",
+      "settings.evSharedTitle": "More events than this: each block of an entry shows only its own (“＋ Event ▾” adds another one, blocks fold)",
+      "settings.emShow": "Lines of a block shown before “▸ n more”",
       "settings.aria.awMax": "At most works and recordings per artist",
       "settings.aria.awSlowSec": "Seconds before a large catalogue is named",
       "settings.aria.awSlowN": "Entries to read before a large catalogue is named",
@@ -1681,6 +1685,36 @@
       "caseNote.kept": "Kept as written:",
       "caseNote.smallAgain": "write small again",
       "caseNote.clTitle": "The role credit writes words small that MusicBrainz does not know – keep a proper name as written",
+      "em.instruments": "{n} instruments",
+      "em.voices": "{n} voices",
+      "em.joinedFrom": "from {n} rows",
+      "em.evCount": "{n} events",
+      "em.split": "One row each",
+      "em.splitTitle": "Each instrument of this entry a block of its own – and a relationship of its own when staged",
+      "em.join": "Join in one block",
+      "em.joinTitle": "The instruments and voices of this entry in one block – joined in one relationship per recording and event when staged",
+      "em.joinHint": "{n} instruments, each a block of its own –",
+      "em.colRole": "Role · instrument (MusicBrainz)",
+      "em.colRoleOther": "Role → MusicBrainz",
+      "em.colCredit": "Role credit",
+      "em.flag.additional": "add.",
+      "em.flag.guest": "guest",
+      "em.flag.solo": "solo",
+      "em.noCredit": "none",
+      "em.creditLabel": "Role credit of {name}",
+      "em.flagLabel": "{flag}: {name}",
+      "em.tickLabel": "{name} in event {n}",
+      "em.tickNo": "MusicBrainz has no “{type}” on the level {level}",
+      "em.wrote": "written “{raw}”",
+      "em.detail": "rows",
+      "em.detailTitle": "The rows of this line with all their fields (type, level, date, tracks …)",
+      "em.remove": "Take this role out (Skip)",
+      "em.more": "▸ {n} more: {list}",
+      "em.less": "▴ fewer",
+      "em.addEv": "＋ Event ▾",
+      "em.fold": "Fold this block",
+      "em.unfold": "Show this block",
+      "em.count": "{n} relationships to stage",
       "voiceCredit.from": "From the text:",
       "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
@@ -1698,6 +1732,10 @@
       "instrAsk.otherwiseTr": "(otherwise it stays “{credit}”; “{word}” is a translation, so there is no role credit)",
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
       "log.caseAlways": "“{word}” added to the proper names (T052): it keeps its capitals in role credits",
+      "log.emOut": "{name}: {role} taken out of an event",
+      "log.emIn": "{name}: {role} into an event",
+      "log.emJoin": "{name}: instruments and voices joined in one block",
+      "log.emSplit": "{name}: each instrument a block of its own",
       "rules.questions": "Instrument questions",
       "rules.options": "Choices",
       "rules.question": "Question",
@@ -15357,6 +15395,366 @@
     b.replaceWith(tmp.firstElementChild);
   }
 
+
+  // --- [E4] (3.34.30) An entry as a matrix: its roles as lines, the events (level · date · tracks) as columns ----------------
+
+  /**
+   * [E4] An entry shown as a matrix (collected items E4, 139, 141): the matrix view, full, the entry not folded to compact lines;
+   * persons only – companies and other entries keep their rows.
+   */
+  const mxEntry = (a) => !!a && matrixOn() && S.view === 'full' && !groupFolded(a.key) && !a.company && !a.other;
+
+  /** [E4] The relationship type of a row – of one taken out (Skip) too: the type it had. */
+  const ltOf = (r) => currentLinkType(r) || (r.level === 'skip' && r.linkTypeId ? idx().ltById.get(r.linkTypeId) || null : null);
+
+  /** [E4] The date of a row as a key: its pool date, or its fields. */
+  function dateKeyOf(row) {
+    const d = row.date;
+    if (d && d.poolId) return `p:${d.poolId}`;
+    return hasDateInput(d) ? `f:${fieldsText(d)}${d.ended ? '|e' : ''}` : '';
+  }
+
+  /** [E4] The event of a row: its level, its tracks (on recordings) and its date. */
+  const eventKeyOf = (row) => `${row.level}|${row.level === 'recording' ? [...row.tracks].sort((x, y) => x - y).join(',') : ''}|${dateKeyOf(row)}`;
+
+  /** [E4] The line of a row: rows of the same type, instrument or voice, role credit, additional / guest / solo and artist credit. */
+  function lineKeyOf(row) {
+    const lt = ltOf(row);
+    return lt ? [lt.name, norm(row.primaryText), norm(row.roleCredit), [...row.flags].sort().join(','), norm(row.credit)].join('|')
+      : `?|${norm(row.raw || row.base)}|${row.id}`;
+  }
+
+  /** [E4] The kind of block of a line: instruments and voices together, every other role a block of its own. */
+  function lineKindOf(line) {
+    const lt = ltOf(line.rows[0]);
+    const n = lt ? norm(lt.name) : '';
+    return n === 'instrument' || n === 'vocal' ? n : '';
+  }
+
+  const circled = (n) => (n >= 1 && n <= 20 ? String.fromCharCode(0x2460 + n - 1) : `(${n})`);
+
+  /**
+   * [E4] The matrix of an entry: its lines (the rows of one role), its events (from the rows: level · tracks · date – the
+   * entries of the date pool and the date matrix), its blocks (instruments, voices, each other role). Up to S.evShared events
+   * all blocks have the same columns; more: each block only its own (and those added with "＋ Event ▾").
+   */
+  function entryModel(a, rows) {
+    const lines = [];
+    const byKey = new Map();
+    for (const r of rows) {
+      const k = lineKeyOf(r);
+      let l = byKey.get(k);
+      if (!l) {
+        l = { key: k, id: r.id, rows: [], ev: new Map() };
+        byKey.set(k, l);
+        lines.push(l);
+      }
+      l.rows.push(r);
+    }
+    const events = [];
+    const evByKey = new Map();
+    for (const r of rows) {
+      if (r.level === 'skip' || r.level === 'work') continue;
+      const k = eventKeyOf(r);
+      if (evByKey.has(k)) continue;
+      const e = { key: k, level: r.level, tracks: new Set(r.tracks), date: r.date ? { ...r.date } : null, n: 0 };
+      evByKey.set(k, e);
+      events.push(e);
+    }
+    // recordings first, the release, its group; on recordings those with more tracks first (all tracks before an overdub on two)
+    const rank = { recording: 0, release: 1, release_group: 2 };
+    events.sort((x, y) => (rank[x.level] ?? 3) - (rank[y.level] ?? 3) || (x.level === 'recording' ? y.tracks.size - x.tracks.size : 0));
+    events.forEach((e, i) => { e.n = i + 1; });
+    for (const l of lines) {
+      for (const r of l.rows) {
+        if (r.level === 'skip' || r.level === 'work') continue;
+        const k = eventKeyOf(r);
+        if (!l.ev.has(k)) l.ev.set(k, []);
+        l.ev.get(k).push(r);
+      }
+    }
+    const join = joinOn(a);
+    const blocks = [];
+    const byKind = new Map();
+    for (const l of lines) {
+      const kind = lineKindOf(l);
+      if (kind && join) {
+        let b = byKind.get(kind);
+        if (!b) {
+          b = { key: `k:${kind}`, kind, lines: [] };
+          byKind.set(kind, b);
+          blocks.push(b);
+        }
+        b.lines.push(l);
+      } else {
+        blocks.push({ key: `l:${l.id}`, kind: kind || 'role', lines: [l] });
+      }
+    }
+    const shared = events.length <= S.evShared;
+    for (const b of blocks) {
+      const own = new Set(b.lines.flatMap((l) => [...l.ev.keys()]));
+      const extra = S.emBlockEv.get(`${a.key}|${b.key}`) || new Set();
+      b.events = shared ? events : events.filter((e) => own.has(e.key) || extra.has(e.key));
+      b.others = shared ? [] : events.filter((e) => !b.events.includes(e));
+    }
+    return { lines, events, blocks, shared, join, evByKey };
+  }
+
+  /** [E4] The head of an event column: ① · its level · its date · its tracks. */
+  function evHeadHtml(e) {
+    const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
+    const date = pool ? poolLabel(pool) : hasDateInput(e.date) ? fieldsText(e.date) : '';
+    const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
+    return `<th class="dci-em-ev" scope="col" data-evhead="${esc(e.key)}"><span class="dci-em-evn">${circled(e.n)}</span>
+      <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>
+      <span class="dci-em-evdate${date ? ' dci-cl-has' : ''}">${esc(date || tr('cl.noDate'))}</span> ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
+  }
+
+  /** [E4] Whether a row's relationship type exists on a level (instrument on recordings and on the release …). */
+  function typeOnLevel(row, level) {
+    const lt = ltOf(row);
+    return !!lt && typesFor(level, row.entityType || 'artist').some((t) => norm(t.name) === norm(lt.name));
+  }
+
+  /** [E4] The questions and notes of a line: those of its first row, answered for all its rows (EM_LINE_ACTS). */
+  function lineAskHtml(r) {
+    return [unmappedHtml(r), instrumentAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r)].join('');
+  }
+
+  /** [E4] A line of a block: instrument (MusicBrainz) · role credit · additional / guest / solo · a tick per event · ▸ ✕. */
+  function emLineHtml(a, b, l, flagNames, cols) {
+    const r = l.rows[0];
+    const lt = ltOf(r);
+    const root = lt && primaryRootOf(lt);
+    const ids = l.rows.map((x) => x.id).join(',');
+    const skip = l.rows.every((x) => x.level === 'skip');
+    const name = root ? (r.primaryText || r.raw) : rowTypeName(r);
+    let role;
+    if (root) {
+      const valid = primaryIsValid(r);
+      const wrote = norm(r.raw) && norm(r.raw) !== norm(r.primaryText) ? `<span class="dci-sub dci-em-raw">${esc(tr('em.wrote', { raw: r.raw }))}</span>` : '';
+      role = `<input type="text" data-f="em-primary" list="dci-dl-${root.id}" value="${esc(r.primaryText)}" class="${valid ? '' : 'dci-invalid'}"
+        aria-label="${esc(root.name)}" placeholder="${esc(root.name)}">${valid ? '' : `<span class="dci-mark dci-bad">${esc(markText(r))}</span>`}${wrote}`;
+    } else {
+      role = `<span class="dci-em-role">${esc(r.raw || rowTypeName(r) || '–')}</span> <span class="dci-sub">→ ${esc(rowTypeName(r) || tr('cl.noType'))}</span>`;
+    }
+    const credit = lt && canRoleCredit(lt)
+      ? `<input type="text" data-f="em-credit" value="${esc(r.roleCredit)}" placeholder="${esc(tr('em.noCredit'))}" aria-label="${esc(tr('em.creditLabel', { name }))}">` : '';
+    const allowed = new Set(lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : []);
+    const flags = flagNames.map((f) => (allowed.has(f) ? `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">` : '<span></span>')).join('');
+    const ticks = b.events.map((e) => {
+      const on = l.ev.has(e.key);
+      const ok = on || typeOnLevel(r, e.level);
+      return `<td class="dci-em-c-ev"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''}${ok ? '' : ` disabled title="${esc(tr('em.tickNo', { type: rowTypeName(r), level: tr(`level.${e.level}`) }))}"`}
+        aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"></td>`;
+    }).join('');
+    const open = S.emOpen.has(l.id);
+    const tools = `<td class="dci-em-c-tools"><span class="dci-status" data-emstatus="${esc(l.id)}"></span>
+      <button type="button" class="dci-textbtn dci-em-detail" data-act="em-detail" aria-expanded="${open}" title="${esc(tr('em.detailTitle'))}">${open ? '▾' : '▸'} ${esc(tr('em.detail'))}</button>
+      <button type="button" class="dci-iconbtn" data-act="em-remove" title="${esc(tr('em.remove'))}" aria-label="${esc(tr('em.remove'))}">✕</button></td>`;
+    const ask = skip ? '' : lineAskHtml(r);
+    return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
+        <td class="dci-em-c-role">${role}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-flags">${flags}</td>${ticks}${b.others.length ? '<td></td>' : ''}${tools}
+      </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
+        <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
+  }
+
+  /** [E4] A block: its head ("19 instruments → instrument · joined from 19 rows · One row each"), its events, its lines. */
+  function emBlockHtml(a, m, b) {
+    const r0 = b.lines[0].rows[0];
+    const lt0 = ltOf(r0);
+    const nRows = b.lines.reduce((n, l) => n + l.rows.length, 0);
+    const many = b.lines.length > 1;
+    const title = (b.kind === 'instrument' || b.kind === 'vocal') && many ? tr(b.kind === 'instrument' ? 'em.instruments' : 'em.voices', { n: b.lines.length })
+      : r0.raw || rowTypeName(r0) || '–';
+    const fk = `${a.key}|${b.key}`;
+    const folded = !m.shared && S.emFold.has(fk);
+    const fold = m.shared ? '' : `<button type="button" class="dci-textbtn dci-em-fold" data-act="em-fold" data-block="${esc(b.key)}" aria-expanded="${!folded}" title="${esc(tr(folded ? 'em.unfold' : 'em.fold'))}">${folded ? '▸' : '▾'}</button> `;
+    const split = many && (b.kind === 'instrument' || b.kind === 'vocal') ? ` <button type="button" class="dci-textbtn" data-act="em-split" title="${esc(tr('em.splitTitle'))}">${esc(tr('em.split'))}</button>` : '';
+    const head = `<div class="dci-em-bhead">${fold}<strong>${esc(title)}</strong> <span class="dci-sub">→ ${esc((lt0 && lt0.name) || rowTypeName(r0) || tr('cl.noType'))}${many || nRows > 1 ? ` · ${esc(tr('em.joinedFrom', { n: nRows }))}` : ''}${!m.shared ? ` · ${esc(tr('em.evCount', { n: b.events.length }))}` : ''}</span>${split}</div>`;
+    if (folded) return `<div class="dci-em-block dci-em-folded" data-block="${esc(b.key)}">${head}</div>`;
+    const flagNames = uniq(b.lines.flatMap((l) => {
+      const lt = ltOf(l.rows[0]);
+      return lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : [];
+    }));
+    const cols = 3 + b.events.length + (b.others.length ? 1 : 0) + 1;
+    const more = S.emMore.has(fk);
+    const max = Math.max(1, S.emShow);
+    // lines with a question or without a type are always shown
+    const needed = (l) => !ltOf(l.rows[0]) || !!lineAskHtml(l.rows[0]) || S.emOpen.has(l.id);
+    const shown = more || b.lines.length <= max + 1 ? b.lines : b.lines.filter((l, i) => i < max || needed(l));
+    const hidden = b.lines.filter((l) => !shown.includes(l));
+    const addEv = b.others.length ? `<th class="dci-em-addev"><select data-f="em-addev" data-block="${esc(b.key)}" aria-label="${esc(tr('em.addEv'))}"><option value="">${esc(tr('em.addEv'))}</option>${b.others.map((e) => `<option value="${esc(e.key)}">${esc(`${circled(e.n)} ${tr(`level.${e.level}`)}`)}</option>`).join('')}</select></th>` : '';
+    return `<div class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
+      <div class="dci-em-scroll"><table class="dci-em-grid">
+        <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr(b.kind === 'role' ? 'em.colRoleOther' : 'em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th>
+          <th class="dci-em-c-flags" scope="col">${flagNames.map((f) => `<span>${esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f)}</span>`).join('')}</th>${b.events.map(evHeadHtml).join('')}${addEv}<th scope="col"></th></tr></thead>
+        <tbody>${shown.map((l) => emLineHtml(a, b, l, flagNames, cols)).join('')}</tbody>
+      </table></div>
+      ${hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
+        : more ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.less'))}</button>` : ''}
+    </div>`;
+  }
+
+  /** [E4] The body of an entry as a matrix (instead of its table of rows): its blocks and a foot with the count. */
+  function entryMatrixHtml(a, all) {
+    // publishing and poems on works stay rows of their own below the matrix
+    const rows = all.filter((r) => r.level !== 'work');
+    const works = all.filter((r) => r.level === 'work');
+    const m = entryModel(a, rows);
+    const instr = m.lines.filter((l) => lineKindOf(l) === 'instrument').length;
+    const joinBtn = !m.join && instr > 1 ? `<span class="dci-sub">${esc(tr('em.joinHint', { n: instr }))}</span> <button type="button" class="dci-small" data-act="em-join" title="${esc(tr('em.joinTitle'))}">${esc(tr('em.join'))}</button>` : '';
+    return `<div class="dci-em" data-em="${esc(a.key)}">${m.blocks.map((b) => emBlockHtml(a, m, b)).join('')}
+      ${works.length ? `<div class="dci-tablewrap dci-rowswrap"><table class="dci-table dci-rows"><tbody>${works.map(rowHtml).join('')}</tbody></table></div>` : ''}
+      <div class="dci-em-foot">${joinBtn}<span class="dci-sub" data-emcount="${esc(a.key)}"></span></div></div>`;
+  }
+
+  /** [E4] The rows of the line an element is in. */
+  const lineRows = (el) => {
+    const t = el.closest('[data-rows]');
+    return t ? t.dataset.rows.split(',').map((id) => S.rows.find((r) => r.id === id)).filter(Boolean) : [];
+  };
+
+  /** [E4] A copy of a row for another event (a tick): its own id, its sets and lists copied (not put into S.rows). */
+  function copyRowForEvent(row) {
+    const c = { ...row, id: nextId('r'), tracksOpen: false, dateOpen: false };
+    for (const [k, v] of Object.entries(row)) {
+      if (v instanceof Set) c[k] = new Set(v);
+      else if (v instanceof Map) c[k] = new Map(v);
+      else if (Array.isArray(v)) c[k] = [...v];
+    }
+    if (row.date) c.date = { ...row.date };
+    if (row.instrGuess) c.instrGuess = { ...row.instrGuess, options: [...row.instrGuess.options] };
+    if (row.keepCase) c.keepCase = { ...row.keepCase };
+    delete c.mxOrigin;
+    delete c.splitFrom;
+    return c;
+  }
+
+  /**
+   * [E4] A tick of a line in an event: on – a row of the line takes the event's level, tracks and date (a row of the line that
+   * was taken out, else a copy of its first row); off – its rows in the event are taken out (Skip). Ticks are rows: what is
+   * staged comes from them as before.
+   */
+  function emTick(a, rows, evKey, on) {
+    const inEv = rows.filter((r) => r.level !== 'skip' && eventKeyOf(r) === evKey);
+    const name = rows[0].primaryText || rows[0].raw;
+    if (!on) {
+      inEv.forEach((r) => Object.assign(r, { level: 'skip', levelTouched: true }));
+      log('info', 'emOut', { name: a.mbName || a.name, role: name });
+      return;
+    }
+    if (inEv.length) return;
+    const src = S.rows.find((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey);
+    if (!src) return;
+    const spare = rows.find((r) => r.level === 'skip');
+    const row = spare || copyRowForEvent(rows[0]);
+    const keep = row.primaryText;
+    Object.assign(row, { level: src.level, levelTouched: true, tracks: new Set(src.tracks), date: src.date ? { ...src.date } : null, dateOpen: !!src.date, dateKeyed: true });
+    if (!spare) S.rows.splice(S.rows.indexOf(rows[rows.length - 1]) + 1, 0, row);
+    resolveRowType(row);
+    row.primaryText = keep;
+    refreshRowDetails(row);
+    log('info', 'emIn', { name: a.mbName || a.name, role: name });
+  }
+
+  /** [E4] What changed in the matrix of an entry (data-f "em-…"): ticks, additional / guest / solo, instrument, role credit, an event added to a block. */
+  function entryMatrixChange(f, el) {
+    const a = artistOf(el);
+    if (!a) return false;
+    if (f === 'em-addev') {
+      if (el.value) {
+        const k = `${a.key}|${el.dataset.block}`;
+        const set = S.emBlockEv.get(k) || new Set();
+        set.add(el.value);
+        S.emBlockEv.set(k, set);
+        rerenderGroup(a);
+      }
+      return true;
+    }
+    const rows = lineRows(el);
+    if (!rows.length) return true;
+    if (f === 'em-tick') emTick(a, rows, el.dataset.ev, el.checked);
+    else if (f === 'em-flag') rows.forEach((r) => (el.checked ? r.flags.add(el.value) : r.flags.delete(el.value)));
+    else if (f === 'em-primary') {
+      rows.forEach((r) => {
+        r.primaryText = el.value;
+        r.primaryTouched = true;
+        refreshRowDetails(r);
+      });
+    } else if (f === 'em-credit') {
+      rows.forEach((r) => Object.assign(r, { roleCredit: el.value, roleCreditTouched: true }));
+    } else return false;
+    rerenderGroup(a);
+    refresh();
+    return true;
+  }
+
+  /** [E4] Typing in a line (instrument, role credit): its rows follow at once; the line is drawn anew when the field is left. */
+  function entryMatrixInput(f, el) {
+    const rows = lineRows(el);
+    if (f === 'em-primary') rows.forEach((r) => Object.assign(r, { primaryText: el.value, primaryTouched: true }));
+    else if (f === 'em-credit') rows.forEach((r) => Object.assign(r, { roleCredit: el.value, roleCreditTouched: true }));
+  }
+
+  /** [E4] The answers of a line's questions, for all its rows (the question is drawn for the first). */
+  const EM_LINE_ACTS = {
+    'type-pick': (r, btn) => pickType(r, Number(btn.dataset.opt)),
+    'instr-pick': (r, btn) => (btn.dataset.instr === '\u0000misc' ? guessMisc(r) : pickInstrument(r, btn.dataset.instr)),
+    'instr-misc': (r) => guessMisc(r),
+    'voice-credit': (r) => Object.assign(r, { roleCredit: norm(r.base), roleCreditTouched: true }),
+    'case-keep': (r, btn) => caseKeep(r, btn.dataset.word || '', true),
+    'case-small': (r, btn) => caseKeep(r, btn.dataset.word || '', false),
+  };
+
+  /** [E4] The status of the lines and the count of an entry (refresh): what is missing, new, in MusicBrainz, staged. */
+  function updateEntryMatrixStatus(rowInfo, items) {
+    if (!S.overlay) return;
+    S.overlay.querySelectorAll('.dci-em-line').forEach((tr1) => {
+      const el = tr1.querySelector('[data-emstatus]');
+      if (!el) return;
+      const infos = tr1.dataset.rows.split(',').map((id) => ({ row: S.rows.find((r) => r.id === id), info: rowInfo.get(id) })).filter((x) => x.row && x.info && x.row.level !== 'skip');
+      const issues = uniq(infos.flatMap((x) => x.info.issues));
+      const sum = (k) => infos.reduce((n, x) => n + (x.info[k] || 0), 0);
+      el.className = 'dci-status';
+      if (!infos.length) {
+        el.textContent = '';
+        return;
+      }
+      if (issues.length) {
+        el.classList.add('dci-bad');
+        el.textContent = issues.join(', ');
+        return;
+      }
+      const parts = [];
+      if (sum('ready')) parts.push(tr('status.new', { n: sum('ready') }));
+      if (sum('existing')) parts.push(tr('status.existing', { n: sum('existing') }));
+      if (sum('applied')) parts.push(tr('status.applied', { n: sum('applied') }));
+      if (!sum('ready')) el.classList.add('dci-muted');
+      el.textContent = parts.join(', ') || tr('status.nothing');
+    });
+    S.overlay.querySelectorAll('[data-emcount]').forEach((el) => {
+      const n = items.filter((it) => it.artist && it.artist.key === el.dataset.emcount && it.kind === 'credit').length;
+      el.textContent = n ? tr('em.count', { n }) : '';
+    });
+  }
+
+  /** [E4] A row's entry drawn anew soon (several changes at once, e.g. the answer of a line for all its rows). */
+  const emSoon = new Set();
+  function rerenderGroupSoon(a) {
+    emSoon.add(a.key);
+    if (emSoon.size > 1) return;
+    setTimeout(() => {
+      const keys = [...emSoon];
+      emSoon.clear();
+      keys.forEach((k) => {
+        const x = S.artists.get(k);
+        if (x) rerenderGroup(x);
+      });
+      if (S.rowInfo) updateEntryMatrixStatus(S.rowInfo, S.plan || []);
+    }, 0);
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -15371,7 +15769,7 @@
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
-      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}" data-group="${a.key}">
+      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
           <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
@@ -15380,11 +15778,11 @@
         ${coverFromEntryHtml(a, rows)}
         ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
-        <div class="dci-tablewrap dci-rowswrap">
+        ${mxEntry(a) ? entryMatrixHtml(a, rows) : `<div class="dci-tablewrap dci-rowswrap">
           <table class="dci-table dci-rows">
             <tbody>${rows.map(rowHtml).join('')}</tbody>
           </table>
-        </div>
+        </div>`}
         ${allRows.some((r) => r.level === 'work' && !isPublishingRow(r)) ? `<p class="dci-sub dci-work-note">${esc(tr('group.workNote'))}</p>` : ''}
         ${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}
         <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>
@@ -17890,6 +18288,15 @@
 
   /** [3.27.0] A row to jump to (incomplete rows, the companion, a new row): opened in the compact view. */
   function revealRow(row) {
+    // [E4] (3.34.30) in an entry's matrix: the line of the row with its rows open
+    const ra = row && S.artists.get(row.artistKey);
+    if (mxEntry(ra) && !S.overlay.querySelector(`tr[data-row="${row.id}"]`)) {
+      const k = lineKeyOf(row);
+      const first = S.rows.find((r) => r.artistKey === row.artistKey && lineKeyOf(r) === k);
+      S.emOpen.add((first || row).id);
+      rerenderGroup(ra);
+      return;
+    }
     if (row && compactFor(row) && !S.rowOpen.has(row.id)) setRowOpen(row, true);
   }
 
@@ -17969,7 +18376,7 @@
     if (!S.overlay) return;
     const section = S.overlay.querySelector(`[data-group="${a.key}"]`);
     if (!section) return;
-    section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}`;
+    section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : ''}`;
     const tag = section.querySelector('.dci-kind-tag');
     if (tag) tag.outerHTML = kindTagHtml(a);
     section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
@@ -17980,6 +18387,12 @@
   }
 
   function rerenderRow(row) {
+    // [E4] (3.34.30) a row of an entry shown as a matrix: the entry is drawn anew (its lines follow the row)
+    const ra = S.artists.get(row.artistKey);
+    if (mxEntry(ra)) {
+      rerenderGroupSoon(ra);
+      return;
+    }
     const tr1 = S.overlay.querySelector(`tr[data-row="${row.id}"]`);
     const tr2 = S.overlay.querySelector(`tr[data-tracksrow="${row.id}"]`);
     if (!tr1 || !tr2) return;
@@ -18125,6 +18538,8 @@
       el.textContent = parts.join(', ') || tr('status.nothing');
     }
 
+    // [E4] (3.34.30) the lines of the entries shown as a matrix
+    updateEntryMatrixStatus(rowInfo, items);
     const count = (fn) => items.filter(fn).length;
     const kinds = [
       ['kind.recording', count((i) => i.kind === 'credit' && i.target.kind === 'recording')],
@@ -22275,6 +22690,13 @@
     const artist = artistOf(btn);
     // [3.26.0] an entry of the menu "Source ▾" closes it
     if (S.srcMenuOpen && btn.closest('.dci-srcmenu')) closeSrcMenu();
+    // [E4] (3.34.30) a question of a line of an entry's matrix: answered for all rows of the line
+    if (EM_LINE_ACTS[act] && btn.closest('.dci-em-ask[data-rows]')) {
+      lineRows(btn).forEach((r) => EM_LINE_ACTS[act](r, btn));
+      if (artist) rerenderGroup(artist);
+      refresh();
+      return;
+    }
 
     switch (act) {
       case 'close':
@@ -22397,6 +22819,42 @@
       case 'entries-view':
         // [E4] (3.34.29) the entries as a matrix or as before
         if (btn.dataset.view !== S.entriesView) setEntriesView(btn.dataset.view);
+        break;
+      // [E4] (3.34.30) the matrix of an entry: the rows of a line with all their fields, a line taken out, more lines, a block
+      // folded, the instruments joined in one block or each apart
+      case 'em-detail': {
+        const line = btn.closest('[data-line]');
+        if (line && artist) {
+          if (S.emOpen.has(line.dataset.line)) S.emOpen.delete(line.dataset.line);
+          else S.emOpen.add(line.dataset.line);
+          rerenderGroup(artist);
+          refresh();
+        }
+        break;
+      }
+      case 'em-remove':
+        if (artist) {
+          lineRows(btn).forEach((r) => Object.assign(r, { level: 'skip', levelTouched: true }));
+          rerenderGroup(artist);
+          refresh();
+        }
+        break;
+      case 'em-more':
+      case 'em-fold': {
+        const set = act === 'em-more' ? S.emMore : S.emFold;
+        const k = `${artist.key}|${btn.dataset.block}`;
+        if (set.has(k)) set.delete(k);
+        else set.add(k);
+        rerenderGroup(artist);
+        refresh();
+        break;
+      }
+      case 'em-join':
+      case 'em-split':
+        artist.join = act === 'em-join';
+        log('info', act === 'em-join' ? 'emJoin' : 'emSplit', { name: artist.mbName || artist.name });
+        rerenderGroup(artist);
+        refresh();
         break;
       // [3.30.5] the message of the dashboard opened for its settings only
       case 'start-import':
@@ -23026,6 +23484,15 @@
         }
         r.tracks = new Set(selIdx());
         S.rows.push(r);
+        // [E4] (3.34.30) in an entry's matrix: its line with the row's fields open
+        if (mxEntry(artist)) {
+          S.emOpen.add(r.id);
+          rerenderGroup(artist);
+          const inp = S.overlay.querySelector(`tr[data-row="${r.id}"] [data-f="role-text"]`);
+          if (inp) inp.focus();
+          refresh();
+          break;
+        }
         // [3.27.0] a new row is open (its role is still to type)
         S.rowOpen.add(r.id);
         S.overlay.querySelector(`[data-group="${artist.key}"] tbody`).insertAdjacentHTML('beforeend', rowHtml(r));
@@ -23382,6 +23849,8 @@
       return;
     }
     if ((f.startsWith('mx-') || f.startsWith('cd-') || f.startsWith('xd-') || f === 'work-lang-add') && matrixChange(f, el)) return;
+    // [E4] (3.34.30) the matrix of an entry
+    if (f.startsWith('em-') && entryMatrixChange(f, el)) return;
     const row = rowOf(el);
     switch (f) {
       case 'lang':
@@ -23668,6 +24137,13 @@
     if (el.dataset && el.dataset.set === 'kind-color' && /^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
       S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
       applyKindColors();
+      return;
+    }
+    // [E4] (3.34.30) typing in a line of an entry's matrix
+    if (f === 'em-primary' || f === 'em-credit') {
+      entryMatrixInput(f, el);
+      clearTimeout(inputTimer);
+      inputTimer = setTimeout(refresh, 250);
       return;
     }
     // [3.30.5] the tracks typed in (item 90)
@@ -24355,6 +24831,13 @@
   // of an entry joined in one relationship per recording and event (default on; off: stored false)
   const ENTRIES_VIEW_KEY = 'dci-entries-view';
   const JOIN_KEY = 'dci-join';
+  // [E4] (3.34.30) events shared by all blocks of an entry up to (default 3); lines of a block before "▸ n more" (default 8)
+  const EV_SHARED_KEY = 'dci-ev-shared';
+  const EM_SHOW_KEY = 'dci-em-show';
+  const clampInt = (v, lo, hi, def) => {
+    const n = Math.round(Number(v));
+    return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : def;
+  };
   // [3.29.2] the colours of the levels (item 79): on by default; own colours in ⚙ Settings → Appearance
   const LEVEL_COLORS_KEY = 'dci-level-colors';
   const LEVEL_PALETTE_KEY = 'dci-level-palette';
@@ -24373,7 +24856,7 @@
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
   };
@@ -24385,6 +24868,11 @@
   // [E4] (3.34.29)
   S.entriesView = readJson('localStorage', ENTRIES_VIEW_KEY, 'matrix') === 'legacy' ? 'legacy' : 'matrix';
   S.joinAuto = readJson('localStorage', JOIN_KEY, true) !== false;
+  // [E4] (3.34.30) the matrix of an entry: events shared by all its blocks up to … (more: each block its own), lines of a block
+  // before "▸ n more"; lines with their rows open, blocks with all lines, folded blocks, events added to a block
+  S.evShared = clampInt(readJson('localStorage', EV_SHARED_KEY, 3), 1, 12, 3);
+  S.emShow = clampInt(readJson('localStorage', EM_SHOW_KEY, 8), 1, 50, 8);
+  Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map() });
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
   S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
@@ -24533,6 +25021,9 @@
         row(check('data-set="live-comments"', S.liveCom, tr('settings.liveComments'), tr('settings.liveCommentsTitle'))),
         // [E4] (3.34.29) the instruments and voices of an entry in one relationship (not in the legacy view)
         row(check(`data-set="join"${S.entriesView === 'legacy' ? ' disabled' : ''}`, S.joinAuto, tr('settings.join'), tr('settings.joinTitle'))),
+        // [E4] (3.34.30) the matrix of an entry
+        row(`<label title="${esc(tr('settings.evSharedTitle'))}">${esc(tr('settings.evShared'))} <input type="number" data-set="ev-shared" min="1" max="12" value="${S.evShared}"> ${esc(tr('settings.evSharedAfter'))}</label>`),
+        row(`<label>${esc(tr('settings.emShow'))} <input type="number" data-set="em-show" min="1" max="50" value="${S.emShow}"></label>`),
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
@@ -24716,6 +25207,15 @@
     } else if (k === 'ocr-auto') {
       // [3.34.15] the same as "Auto-select" in the window: switched on, the images are chosen at once
       ocrSetAuto(el.checked);
+    } else if (k === 'ev-shared' || k === 'em-show') {
+      // [E4] (3.34.30) the matrix of an entry
+      const v = clampInt(el.value, 1, k === 'ev-shared' ? 12 : 50, k === 'ev-shared' ? 3 : 8);
+      if (k === 'ev-shared') S.evShared = v;
+      else S.emShow = v;
+      writeJson('localStorage', k === 'ev-shared' ? EV_SHARED_KEY : EM_SHOW_KEY, v === (k === 'ev-shared' ? 3 : 8) ? null : v);
+      log('info', 'settingValue', { what: tr(k === 'ev-shared' ? 'settings.evShared' : 'settings.emShow'), value: String(v) });
+      if (S.overlay) renderGroups();
+      refresh();
     } else if (k === 'join') {
       // [E4] (3.34.29) joining the instruments and voices of an entry
       S.joinAuto = el.checked;
@@ -24817,7 +25317,8 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8 });
+      renderGroups();
       refresh();
     } else if (t === 'dates') {
       Object.assign(S, { dmAuto: false, poolsKeep: true });
@@ -24847,8 +25348,8 @@
     BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
-    // [E4] (3.34.29) the entries as a matrix or legacy, joining
-    ENTRIES_VIEW_KEY, JOIN_KEY];
+    // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
+    ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -26390,6 +26891,33 @@
       .dci-case-note .dci-case-word { font-weight: 600; }
       .dci-case-note .dci-textbtn, .dci-cl-case .dci-textbtn { color: var(--sugg-ink); text-decoration: underline; }
       .dci-cl-case { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      /* [E4] (3.34.30) an entry as a matrix: blocks of lines, the events as columns */
+      .dci-em { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 8); }
+      .dci-em-block { border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+      .dci-em-bhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border-bottom: 1px solid var(--line); }
+      .dci-em-folded .dci-em-bhead { border-bottom: 0; }
+      .dci-em-scroll { overflow-x: auto; }
+      .dci-em-grid { border-collapse: collapse; min-width: 100%; font-size: calc(var(--u, 1px) * 13); }
+      .dci-em-grid th, .dci-em-grid td { padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 6); border-bottom: 1px solid var(--row); text-align: left; vertical-align: middle; }
+      .dci-em-grid thead th { font-size: calc(var(--u, 1px) * 12); font-weight: 600; border-bottom: 2px solid var(--line); vertical-align: bottom; }
+      .dci-em-grid .dci-em-c-role { position: sticky; left: 0; background: #fff; min-width: calc(var(--u, 1px) * 200); z-index: 1; }
+      .dci-em-c-role input { width: calc(var(--u, 1px) * 190); }
+      .dci-em-c-credit input { width: calc(var(--u, 1px) * 130); }
+      .dci-em-c-flags { white-space: nowrap; }
+      .dci-em-c-flags > * { display: inline-block; width: calc(var(--u, 1px) * 34); text-align: center; }
+      .dci-em-ev { min-width: calc(var(--u, 1px) * 120); background: var(--soft); }
+      .dci-em-ev > span { display: block; font-weight: 400; }
+      .dci-em-ev .dci-em-evn { display: inline; font-weight: 700; }
+      .dci-em-ev .dci-cl-level { display: inline-block; }
+      .dci-em-evtr { color: #a64812; }
+      .dci-em-c-ev { text-align: center; }
+      .dci-em-c-tools { white-space: nowrap; width: 100%; padding-left: calc(var(--u, 1px) * 12) !important; }
+      .dci-em-raw { display: block; }
+      .dci-em-skip td { opacity: .55; }
+      .dci-em-ask td { padding-left: calc(var(--u, 1px) * 18); }
+      .dci-em-detail-row > td { padding: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 18); background: var(--soft); }
+      .dci-em-more { margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
+      .dci-em-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }

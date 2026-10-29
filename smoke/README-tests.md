@@ -26,7 +26,7 @@ MBvibecode/ (this repository)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
                                       [3.34.29] ENTRIES_VIEW: the entries as before ('legacy') for every file but t_entries.py – the matrix
-                                      (E4, the script's default) is tested there
+                                      (E4, the script's default) is tested there; [3.34.30] with the generation of the stored data
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
   smoke/caserun.py                    [3.31.1] runs the cases of a topic file: one shared browser, what a case changes in the
                                       harness set back after it, one result per case and one for the file
@@ -353,6 +353,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     date, artist credit and additional / guest / solo; "solo" apart) – 20 instead of 33; a role credit typed
                                 #     after staging stages the joins anew (taken out, staged again, nothing twice); legacy stages the same
                                 #     instruments apart; ⚙ Staging "Join …", ⚙ Appearance "Entries: Matrix | Legacy"
+                                #   matrix: 3.34.30: an entry as blocks of lines with the events as columns (Multi Man: "3 instruments", ①, written
+                                #     “Drums”), ▸ rows, add. / guest / solo, more events than shared (fold, One row each, ＋ Event ▾, a tick into ①),
+                                #     a line out of ① (grey), One row each, what is staged after all of it
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
