@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-29 | 3.34.18 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -87,6 +88,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-29
+
+### Import 3.34.18
+
+#### Added
+
+- **A place after "in"** (collected item 137b; maintainer: "gibt es eine nachhaltige möglichkeit folgendes zu interpretieren", the credits of Go Kurosawa's "soft shakes" on Bandcamp): "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam – before, the line was not recognized. A name with a word of places (studio, hall, church, club, theatre … – a new word list, T051) and a word in capitals besides it is a place, not an area; also with "the" ("Recorded in the Church of St. Mary, Berlin"). "Recorded in Berlin" stays the area, "Recorded in a church" stays not recognized.
+- **The year before the month** (collected item 137c; new date rule D024): "2024 January - July", "2024 January–July", "2024 Jan - Jul" are 2024-01 – 2024-07, "2024 March" is 2024-03, "2024 March 3–5" and "2024 March 30 – April 2" are periods (before: the year only). "© 2019 March Records" keeps the year only. Such a date right after the area of a place no longer takes the area with it ("Mixed at Studio Sol, Marseille 2023 March": Marseille).
+
+#### Fixed
+
+- **Text from cover art (beta) stays in front** (collected item 138; maintainer: "ja bitte"): a click into the dashboard, the log or "Mapping rules" (as a window) hid the window behind them; it now stays in front while it is open.
 
 ## 2026-10-28
 

@@ -1,6 +1,6 @@
 """Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: areas, v3222, medium, initials, placedate (3.32.5) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_places.py <case> …` runs only those."""
+Cases: areas, v3222, medium, initials, placedate (3.32.5), recordedin (3.34.18) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_places.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -474,6 +474,73 @@ Muisc and cover art by Jo Vaman"""
         ok_c = on0 and 'S050' in off and not any(r[0] == 'Music By' for r in jo2) and any('Muisc' in u for u in unrec2) and 'S050' not in off2
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
         results += [ok_a, ok_b, ok_c]
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_recordedin():
+    """Credits Importer 3.34.18: "Recorded in" with a word of places, the year before the month (collected items 137b, 137c;
+    T051, T047, D024; the text of Go Kurosawa's "soft shakes" on Bandcamp).
+    A) In Node: "2024 January - July", "2024 January–July", "2024 Jan - Jul" → 2024-01 – 2024-07; "2024 March" → 2024-03;
+       "2024 March 3" → 2024-03-03 (D017); "2024 March 3–5", "2024 March 30 – April 2" periods; "© 2019 March Records" →
+       2019 only; "in 1998 may be" → 1998 only; "March 2024" stays D008.
+    B) The dashboard, a pasted text "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" and "Mixed at Studio
+       Sol, Marseille 2023 March": the place Guruguru Brain studio with its area "(Rotterdam)" – recorded at (before: not
+       recognized) – and Studio Sol "(Marseille)" – mixed at (before, the area was left out with the date); the date pool has
+       2024-01 – 2024-07 and 2023-03; "Recorded in Berlin" (no word of places) stays the area Berlin, recorded in."""
+    import json
+    import subprocess
+
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const T = ['2024 January - July', '2024 January–July', '2024 Jan - Jul', '2024 March', '2024 March 3', '2024 March 3–5', '2024 March 30 – April 2', '© 2019 March Records', 'in 1998 may be', 'March 2024'];
+const v = (d) => [d.value.begin, d.value.end].map((x) => [x.year, x.month, x.day].filter((y) => y != null).join('-')).join('/');
+console.log(JSON.stringify(T.map((t) => m.findDates(t).map((d) => [d.rule, v(d)]))));
+"""
+    a = json.loads(subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True, check=True).stdout)
+    want = [[['D024', '2024-1/2024-7']], [['D024', '2024-1/2024-7']], [['D024', '2024-1/2024-7']], [['D024', '2024-3/2024-3']],
+            [['D017', '2024-3-3/2024-3-3']], [['D024', '2024-3-3/2024-3-5']], [['D024', '2024-3-30/2024-4-2']], [['D024', '2019/2019']],
+            [['D024', '1998/1998']], [['D008', '2024-3/2024-3']]]
+    print('A) Node:', a, a == want)
+    results = [a == want]
+    H.lt(698, '37ef3a0c-cac3-4172-b09a-4ca98d2857fc', 'recorded in', 'area', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July
+Mixed at Studio Sol, Marseille 2023 March
+Recorded in Berlin"""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+  head: g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(), kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1],
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return t ? (t.options[t.selectedIndex] || {}).text : ''; }) }])))()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        g = pg.evaluate(GROUPS)
+        for k, v in g.items():
+            print('   ', k, v['kind'], v['head'], v['rows'])
+        none = {'rows': [], 'head': '', 'kind': ''}
+        gk = g.get('Guruguru Brain studio') or none
+        sol = g.get('Studio Sol') or none
+        ber = g.get('Berlin') or none
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+        pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => JSON.stringify([d.begin, d.end]))")
+        print('B) Guruguru:', gk, '| Studio Sol:', sol, '| Berlin:', ber, '| nicht erkannt:', unrec, '| Pool:', pool)
+        day = lambda y, m: '{"year":%d,"month":%d,"day":null}' % (y, m)
+        results.append(gk['kind'] == 'place' and '(Rotterdam)' in gk['head'] and gk['rows'] == ['recorded at']
+                       and sol['kind'] == 'place' and '(Marseille)' in sol['head'] and sol['rows'] == ['mixed at']
+                       and ber['kind'] == 'area' and ber['rows'] == ['recorded in'] and not unrec
+                       and '[%s,%s]' % (day(2024, 1), day(2024, 7)) in pool and '[%s,%s]' % (day(2023, 3), day(2023, 3)) in pool)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

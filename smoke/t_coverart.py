@@ -862,7 +862,10 @@ def case_ocrwindow():
        Booklet, the Tray (there "Next image →" is greyed out, not gone) and while checking the text.
     B) The image of the frames step takes the room there (the Back larger than the 560 px before, square); the window made
        smaller at its lower right corner: the image smaller, the size remembered.
-    C) Moved by its head; closed and opened again: at the same place, of the same size."""
+    C) Moved by its head; closed and opened again: at the same place, of the same size.
+    D) [3.34.18] It stays above the dashboard (collected item 138): a click into the dashboard, the rules opened as a window of
+       their own (⚙ → Appearance: in a window), a click into them and into the log – the window is still in front (the point at
+       its head is its own, its z-index the highest)."""
     results = []
     FOOT = "(() => { const w = document.getElementById('dci-ocr'); const f = w.querySelector('.dci-ocr-foot').getBoundingClientRect(); const r = w.getBoundingClientRect(); return [Math.round(f.top), Math.round(f.bottom), [r.left, r.top, r.width, r.height].map(Math.round)]; })()"
     VIEW = "(() => { const v = document.querySelector('#dci-ocr [data-ocr-view]'); return v ? [v.width, v.height] : null; })()"
@@ -872,6 +875,7 @@ def case_ocrwindow():
         ctx = H.new_context(b)
         beta_on(ctx)
         ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        ctx.add_init_script("localStorage.setItem('dci-rules-place', JSON.stringify('window'))")  # D) the rules as a window
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
@@ -932,6 +936,24 @@ def case_ocrwindow():
         r3 = pg.evaluate(FOOT)[2]
         print('C) verschoben', r2, '| wieder geöffnet', r3)
         results.append(abs(r2[0] - r1[0] - 120) <= 2 and abs(r2[1] - r1[1] - 60) <= 2 and r3 == r2)
+        # D) above the dashboard, the rules and the log
+        TOP = "(() => { const w = document.getElementById('dci-ocr').getBoundingClientRect(); const e = document.elementFromPoint(w.left + w.width / 2, w.top + 12); return !!(e && e.closest('#dci-ocr')); })()"
+        DOWN = "(sel) => { const e = document.querySelector(sel); if (e) e.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); return !!e; }"
+        top = [pg.evaluate(TOP)]
+        pg.evaluate(DOWN, '#dci-overlay .dci-panel')
+        top.append(pg.evaluate(TOP))
+        pg.evaluate("document.querySelector('.dci-head [data-act=rules]').click()")
+        pg.wait_for_selector('#dci-rules [data-rsect=roles]', timeout=10000)
+        pg.wait_for_timeout(300)
+        top.append(pg.evaluate(TOP))
+        pg.evaluate(DOWN, '#dci-rules')
+        top.append(pg.evaluate(TOP))
+        log = pg.evaluate(DOWN, '#dci-log')
+        top.append(pg.evaluate(TOP))
+        zs = pg.evaluate("['dci-ocr', 'dci-overlay', 'dci-rules', 'dci-log'].map(id => { const e = document.getElementById(id); return e ? getComputedStyle(e).zIndex : null; })")
+        docked = pg.evaluate("document.getElementById('dci-rules').classList.contains('dci-rules-docked')")
+        print('D) vorn:', top, '| Log:', log, '| Regeln angedockt:', docked, '| z-index (OCR, Dashboard, Regeln, Log):', zs)
+        results.append(all(top) and not docked and int(zs[0]) > max(int(z) for z in zs[1:] if z and z != 'auto'))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -1043,7 +1065,8 @@ def case_ocrauto():
         pg.locator('[data-el=settings] [data-set=ocr-auto]').evaluate('x => x.click()')
         pg.wait_for_timeout(200)
         d1 = [pg.evaluate(TICKS), pg.evaluate(AUTO)]
-        # opened again (the dashboard is in front now: from its menu)
+        # opened again ([3.34.18] the window stays in front of the dashboard: closed first, then from its menu)
+        pg.click('#dci-ocr [data-ocr=close]')
         H.src_menu(pg, 'ocr-open')
         pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
         d2 = pg.evaluate(TICKS)

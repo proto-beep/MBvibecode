@@ -1,5 +1,5 @@
 {
-  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\").",
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024).",
   "lines": [
     {
       "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
@@ -1495,6 +1495,106 @@
             "Studio X",
             "Recorded At",
             "written Recordd"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Guruguru Brain studio",
+            "Recorded At",
+            "(Rotterdam)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Carnegie Hall, New York",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Carnegie Hall",
+            "Recorded At",
+            "(New York)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in the Church of St. Mary, Berlin",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Church of St. Mary",
+            "Recorded At",
+            "(Berlin)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded at Studio Sol, Marseille 2023 March",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Studio Sol",
+            "Recorded At",
+            "(Marseille)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded live in Club Volta, Cologne, 2019 May 3",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Club Volta",
+            "Recorded At",
+            "(Cologne)"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in a church, Berlin",
+      "expect": {
+        "credits": [],
+        "companies": [],
+        "unrecognized": [
+          "Recorded in a church, Berlin"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Recorded in Berlin, 2023",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Berlin",
+            "Recorded In"
           ]
         ],
         "unrecognized": [],
