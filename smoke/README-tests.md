@@ -351,14 +351,21 @@ python3 t_ui_place.py           # Window or page, the log, staying in place afte
 python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
                                 #   join: 3.34.29: the instruments and voices of an entry joined when staged (one relationship per recording,
                                 #     date, artist credit and additional / guest / solo; "solo" apart) – 20 instead of 33; a role credit typed
-                                #     after staging stages the joins anew (taken out, staged again, nothing twice); legacy stages the same
+                                #     after staging stages the joins anew (taken out, staged again, nothing twice; [3.35.0] also a row taken
+                                #     out of a join); legacy stages the same
                                 #     instruments apart; ⚙ Staging "Join …", ⚙ Appearance "Entries: Matrix | Legacy"
                                 #   matrix: 3.34.30: an entry as blocks of lines with the events as columns (Multi Man: "3 instruments", ①, written
                                 #     “Drums”), ▸ rows, add. / guest / solo, more events than shared (fold, One row each, ＋ Event ▾, a tick into ①),
                                 #     a line out of ① (grey), One row each, what is staged after all of it
                                 #   dates: 3.34.31: a pool date onto a line (it moves into the date's event; ↶), onto the head of an event, typed
                                 #     into the heads (a new pool date; the pool's own date changed), with ⇧ onto a block (both, "only … · keep both"),
-                                #     what is staged (lead and background vocals with the date joined, background vocals without)
+                                #     what is staged (lead and background vocals with the date joined, background vocals without); [3.35.0] a date onto
+                                #     a block with lines behind "▸ n more"
+                                #   compact: 3.35.0 (milestone): compact as a matrix – a line per event with the roles as chips, a chip dragged onto
+                                #     another event (moved), ✕ (taken out), by role, ▸ / ▾ in the head, a chip clicked (full matrix at its line),
+                                #     ⚙ Staging "An entry, compact, at first: by role", the summary "a relationship per instrument would be 33"
+                                #   restage: 3.35.0: "One row each" and "Join in one block" after staging (joined ↔ singles in the editor), a joined
+                                #     relationship changed in the editor itself stays (its rows not staged again), the others anew
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,

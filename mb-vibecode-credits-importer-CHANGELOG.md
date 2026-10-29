@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.31 | – |
+| 2026-10-29 | 3.34.18 – 3.35.0 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -43,6 +43,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-29 | Import 3.35.0 | Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before. |
 | 2026-10-28 | Import 3.34.0 | The languages file: the texts in German, Spanish and French are a file of their own, `mb-vibecode-credits-importer-languages.json`, loaded with the script like the mapping file (English stays in the script, also when the file is missing); every text translated again. Also: ✎ changes built-in rules in “Mapping rules”, your changes exported (a file of their own, or the whole register for a pull request) and imported with a preview. |
 | 2026-10-27 | Import 3.33.0 | The mapping file: the data of the mapping rules – role rules, company roles, questions, tables and word lists, the quick switches – is a file of its own, `mb-vibecode-credits-importer-mapping.json`, which the userscript manager loads with the script (the script fetches it from GitHub itself if not); rules can be kept on GitHub without touching the code. Since 3.32.0 also: places with a date after them, typos in role words, the credits of Bandcamp's “about” text, poems that follow their level, single days instead of a month, the quick switches as buttons, comments of live recordings. |
 | 2026-10-27 | Import 3.32.0 | Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background. |
@@ -90,6 +91,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.35.0 – milestone “Entries as a matrix”
+
+#### Added
+
+- **Entries as a matrix (E4), the last step: compact** (Block AE; mockup version 3; maintainer: "ok ansicht pro event"): in the compact view an entry is a line per event (① Recording · date · tracks) with the roles ticked there as chips – their role credit, add. / guest / solo, questions yellow with "?" –, the first 8 and "+ n more", what is missing in red. A chip opens the entry's full matrix at its line, ✕ takes it out of the event, dragged onto another event's line it moves there (⇧ Shift: in both). "by event | by role" per entry, the default in ⚙ Settings → Staging "An entry, compact, at first". ▸ in the head shows the full matrix right there. The summary says how many relationships a row per instrument would be.
+#### Fixed (found in a review of the matrix before the release)
+
+- What was staged follows a change of the joining: "One row each" or "Join in one block" (or the setting) after staging takes the joined relationships (or the single ones) out of the editor and stages them the other way. A joined relationship is taken out only once all its instruments are staged anew – also when the round limit leaves some for the next round – and not at all when it was changed in the relationship editor itself (its instruments are not staged a second time then).
+- Rows of one line in several events are relationships of their own by their dates: a date dropped or typed no longer stages an instrument twice (or not at all) where the line has rows with and without that date.
+- A date that covers a row only in part moves those tracks into its event – "other tracks there" stay without it – instead of adding the instrument to tracks it never had; a date dropped onto the head of a block reaches its lines behind "▸ n more" and of a folded block too; "only <date>" works for the release level.
+- The answer of a line no longer brings back its rows taken out, and rows on several levels keep theirs; a question stays when the first row of its line was taken out; a change in the rows opened below a line redraws the matrix, the field keeps the focus.
+- **The milestone** in the update notice: Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before.
 
 ### Import 3.34.31
 
