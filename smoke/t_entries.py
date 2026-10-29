@@ -1,6 +1,6 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -58,6 +58,7 @@ def case_join():
        the same recordings (the matrix's joined ones split again); the choice stored.
     C) Matrix again, a role credit typed after staging (acoustic guitar "steel-string"): stage – the joined relationship of each
        recording is taken out of the editor and staged anew with all three, acoustic guitar credited "steel-string"; nothing twice.
+       (3.35.0) Then drums taken out of ① (its tick off) and staged: the joins again, with electric and acoustic guitar only.
     D) ⚙ Settings → Staging: the switch is there and on; off – nothing is joined."""
     import json
     orig, rel = join_release()
@@ -100,6 +101,18 @@ def case_join():
             print('C) neu:', sorted(set(tuple(sorted(r['attrs'])) for r in multi2)), len(multi2), '| herausgenommen:', sorted(removed) == ids_before, '| insgesamt:', len(after))
             results.append(len(multi2) == 4 and all(sorted(r['attrs']) == ['acoustic guitar [steel-string]', 'drums (drum set) [drums]', 'electric guitar'] for r in multi2)
                            and sorted(removed) == ids_before and len(after) == len(mx))
+            # C2) (3.35.0) drums taken out of ① after staging: the joins are staged anew with the other two
+            drums = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Multi Man');
+              const tr = [...g.querySelectorAll('tr.dci-em-line')].find(t => ((t.querySelector('[data-f=em-primary]') || {}).value || '') === 'drums (drum set)'); return tr ? tr.dataset.line : null; })()""")
+            if drums:
+                pg.click(f'tr.dci-em-line[data-line="{drums}"] [data-f=em-tick]')
+                pg.wait_for_timeout(500)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            after2 = pg.evaluate(ADDED)
+            multi3 = [r for r in after2 if artist_of(r) == 'Multi Man']
+            print('C2) ohne drums:', sorted(set(tuple(sorted(r['attrs'])) for r in multi3)), len(multi3), '| insgesamt:', len(after2))
+            results.append(len(multi3) == 4 and all(sorted(r['attrs']) == ['acoustic guitar [steel-string]', 'electric guitar'] for r in multi3) and len(after2) == len(mx))
             # D) the switch
             H.open_settings(pg, 'staging')
             sw = pg.evaluate("(() => { const c = document.querySelector('[data-set=join]'); return c ? [c.checked, c.disabled] : null; })()")
@@ -297,6 +310,8 @@ def case_dates():
        it – ticked in ① and ②, a yellow question each ("… with and without a date – only … · keep both"); "only" for lead
        vocals: its row without a date goes (① stays ① – the events keep their numbers); "keep both" for background vocals: the
        question goes.
+    E2) (3.35.0) With one line of a block shown (⚙ "Lines … before ▸ n more": 1) a date dropped onto the block's head: all three
+       instruments of Multi Man get it, also those behind "▸ 2 more".
     F) Staged: Voc Man – lead and background vocals with the date joined (4), background vocals without a date (4)."""
     orig, rel = join_release()
     H.discogs_release = rel
@@ -371,6 +386,21 @@ def case_dates():
             asks1 = pg.evaluate("(sel) => document.querySelectorAll(sel + ' .dci-em-both').length", voc)
             print('   only / both:', [(l['role'], l['ticks']) for l in e1[0]['lines']], '| Fragen:', asks1, lead, back)
             results.append(ok_e and [(l['role'], l['ticks']) for l in e1[0]['lines']] == [('lead vocals', [False, True]), ('background vocals', [True, True])] and asks1 == 0)
+            # E2) (3.35.0) onto the head of a block whose lines are partly behind "▸ n more": all its lines
+            H.open_settings(pg, 'staging')
+            pg.fill('[data-set=em-show]', '1')
+            pg.press('[data-set=em-show]', 'Tab')
+            pg.wait_for_timeout(400)
+            hidden = pg.evaluate("(sel) => document.querySelectorAll(sel + ' tr.dci-em-line').length", multi)
+            pg.evaluate(DROP, [f'.dci-pchip-date[data-id="{d2}"]', f'{multi} .dci-em-bhead', False])
+            pg.wait_for_timeout(500)
+            pg.fill('[data-set=em-show]', '8')
+            pg.press('[data-set=em-show]', 'Tab')
+            pg.wait_for_timeout(400)
+            e2 = pg.evaluate(BLOCKS, 'Multi Man')
+            ev2 = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev [data-f=em-evdate]')].map(x => x.value)", multi)
+            print('E2) Kopf des Blocks, 1 Zeile gezeigt:', hidden, '| danach:', ev2, [(l['role'], l['ticks']) for l in e2[0]['lines']])
+            results.append(hidden == 1 and ev2 == ['2001-05'] and all(l['ticks'] == [True] for l in e2[0]['lines']) and len(e2[0]['lines']) == 3)
             # F) staged
             pg.click('[data-act=apply]')
             pg.wait_for_timeout(1500)
@@ -381,6 +411,173 @@ def case_dates():
             dated = [x for x in vm if x[0]]
             results.append(len(vm) == 8 and len(dated) == 4 and all(x[1] == ('background vocals', 'lead vocals') for x in dated)
                            and all(x[1] == ('background vocals',) for x in vm if not x[0]))
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# the compact lines of an entry: per event (its head, its chips) or per role
+CLINES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+  if (!g) return null;
+  return { wide: g.classList.contains('dci-em-entry'), compact: g.classList.contains('dci-em-centry'),
+    by: (g.querySelector('[data-act=em-by][aria-pressed=true]') || {}).dataset ? (g.querySelector('[data-act=em-by][aria-pressed=true]') || { dataset: {} }).dataset.by : '',
+    lines: [...g.querySelectorAll('.dci-em-cl')].map(l => ({ ev: l.dataset.emev || '', head: [...l.querySelectorAll('.dci-em-evn, .dci-cl-level, .dci-cl-date, .dci-cl-tracks')].slice(0, 4).map(x => x.textContent.trim()).join(' '),
+      chips: [...l.querySelectorAll('.dci-em-chipname')].map(c => c.textContent.replace(/\\s+/g, ' ').trim()), skip: l.classList.contains('dci-em-skip') })) }; }"""
+
+
+def case_compact():
+    """Credits Importer 3.35.0 (E4, the last step of Block AE, milestone "Entries as a matrix"; mockup version 3, board 1: "die
+    kompakte Ansicht ist die Matrix gedreht"): an entry compact as a matrix.
+    A) ☰ compact: Multi Man – one line "① Recording no date all 4 tracks" with the chips electric guitar · acoustic guitar ·
+       drums (drum set) “drums”; Part Man – ① electric guitar, ② (track 2) piano.
+    B) The piano chip dragged onto the line of ①: piano moves there – one line ① with both (in the order of the source); ② is
+       gone.
+    C) ✕ on acoustic guitar (Multi Man): out of ① – "Taken out: acoustic guitar".
+    D) "by role" for Solo Man: a line per role with its events.
+    E) ▸ in the head of Multi Man: its full matrix here; ▾ compact again; a chip clicked: the full matrix, at its line.
+    F) ⚙ Settings → Staging "An entry, compact, at first: by role": every entry by role (Solo Man as chosen).
+    G) The summary says how many relationships a row per instrument would be (joined)."""
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            summ = pg.evaluate("(document.querySelector('[data-el=sum-joined]') || { textContent: '' }).textContent.trim()")
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(600)
+            a_multi = pg.evaluate(CLINES, 'Multi Man')
+            a_part = pg.evaluate(CLINES, 'Part Man')
+            print('A) Multi Man:', a_multi, '| Part Man:', [(l['head'], l['chips']) for l in a_part['lines']])
+            results.append(a_multi['compact'] and not a_multi['wide'] and a_multi['by'] == 'event'
+                           and [(l['head'], l['chips']) for l in a_multi['lines']] == [('① Recording no date all 4 tracks', ['electric guitar', 'acoustic guitar', 'drums (drum set) “drums”'])]
+                           and [(l['head'], l['chips']) for l in a_part['lines']] == [('① Recording no date all 4 tracks', ['electric guitar']), ('② Recording no date track 2', ['piano'])])
+            part = sec_sel(pg, 'Part Man')
+            ev1, ev2 = a_part['lines'][0]['ev'], a_part['lines'][1]['ev']
+            pg.evaluate(DROP, [f'{part} .dci-em-cl[data-emev="{ev2}"] .dci-em-chip', f'{part} .dci-em-cl[data-emev="{ev1}"]', False])
+            pg.wait_for_timeout(500)
+            b_part = pg.evaluate(CLINES, 'Part Man')
+            print('B) gezogen:', [(l['head'], l['chips']) for l in b_part['lines']])
+            results.append([(l['head'], l['chips']) for l in b_part['lines']] == [('① Recording no date all 4 tracks', ['piano', 'electric guitar'])])
+            multi = sec_sel(pg, 'Multi Man')
+            pg.click(f'{multi} .dci-em-chip:has-text("acoustic guitar") [data-act=em-chipout]')
+            pg.wait_for_timeout(500)
+            c_multi = pg.evaluate(CLINES, 'Multi Man')
+            print('C) ✕:', [(l['head'], l['chips'], l['skip']) for l in c_multi['lines']])
+            results.append([(l['chips'], l['skip']) for l in c_multi['lines']] == [(['electric guitar', 'drums (drum set) “drums”'], False), (['acoustic guitar'], True)])
+            solo = sec_sel(pg, 'Solo Man')
+            pg.click(f'{solo} [data-act=em-by][data-by=role]')
+            pg.wait_for_timeout(400)
+            d_solo = pg.evaluate(CLINES, 'Solo Man')
+            print('D) by role:', d_solo['by'], [(l['chips'], l['head']) for l in d_solo['lines']])
+            results.append(d_solo['by'] == 'role' and [l['chips'] for l in d_solo['lines']] == [['electric guitar'], ['saxophone · solo']])
+            pg.click(f'{multi} [data-act=em-wide]')
+            pg.wait_for_timeout(400)
+            e1 = pg.evaluate(CLINES, 'Multi Man')
+            e1b = pg.evaluate(BLOCKS, 'Multi Man')
+            pg.click(f'{multi} [data-act=em-wide]')
+            pg.wait_for_timeout(400)
+            e2 = pg.evaluate(CLINES, 'Multi Man')
+            pg.click(f'{multi} .dci-em-chip:has-text("drums") [data-act=em-chip]')
+            pg.wait_for_timeout(400)
+            e3 = pg.evaluate(CLINES, 'Multi Man')
+            flash = pg.evaluate("(sel) => !!document.querySelector(sel + ' tr.dci-em-line.dci-flash')", multi)
+            print('E) ▸:', e1['wide'], len(e1b or []), '| ▾:', e2['compact'], '| Chip:', e3['wide'], flash)
+            results.append(e1['wide'] and len(e1b) == 1 and e2['compact'] and e3['wide'] and flash)
+            H.open_settings(pg, 'staging')
+            pg.click('.dci-set-pane [data-act=em-by-default][data-by=role]')
+            pg.wait_for_timeout(400)
+            f_part = pg.evaluate(CLINES, 'Part Man')
+            stored = pg.evaluate("localStorage.getItem('dci-em-by')")
+            pg.click('.dci-set-pane [data-act=em-by-default][data-by=event]')
+            pg.wait_for_timeout(300)
+            print('F) Standard by role:', f_part['by'], stored, '| G) Summe:', summ)
+            results.append(f_part['by'] == 'role' and stored == '"role"' and 'a relationship per instrument would be 33' in summ)
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_restage():
+    """Credits Importer 3.35.0 (fixes after a review of Block AE): what was staged follows when the joining changes.
+    A) Staged: Multi Man – 4 joined relationships (electric guitar, acoustic guitar, drums).
+    B) "One row each", staged again: the joined ones taken out, a relationship per instrument (12).
+    C) "Join in one block", staged again: the singles taken out, joined again (4).
+    D) A joined relationship changed in the relationship editor itself (an artist credit), then a role credit typed: staged –
+       the changed one stays as it is (its rows are not staged again, the summary of the staging says so), the other three are
+       staged anew – nothing twice."""
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    names = {H.uid('dddddddd', i - 2990): n for n, _r, i, _t in JOIN_CREDITS}
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            multi_of = lambda: [r for r in pg.evaluate(ADDED) if names.get(r['a']) == 'Multi Man' or names.get(r['b']) == 'Multi Man']
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            a = multi_of()
+            print('A)', len(a), sorted(set(tuple(sorted(r['attrs'])) for r in a)))
+            results.append(len(a) == 4 and all(len(r['attrs']) == 3 for r in a))
+            multi = sec_sel(pg, 'Multi Man')
+            pg.click(f'{multi} [data-act=em-split]')
+            pg.wait_for_timeout(400)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            bb = multi_of()
+            print('B) einzeln:', len(bb), sorted(set(tuple(sorted(r['attrs'])) for r in bb)))
+            results.append(len(bb) == 12 and all(len(r['attrs']) == 1 for r in bb))
+            # (the foot of the entry may lie below the footer of the dashboard: a click by script)
+            pg.evaluate("(sel) => document.querySelector(sel + ' [data-act=em-join]').click()", multi)
+            pg.wait_for_timeout(400)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            c = multi_of()
+            print('C) zusammen:', len(c), sorted(set(tuple(sorted(r['attrs'])) for r in c)))
+            results.append(len(c) == 4 and all(len(r['attrs']) == 3 for r in c))
+            # D) one of them changed in the editor itself
+            edited = pg.evaluate("""(gid) => { const re = MB.relationshipEditor; const st = re.state.added.find(r => (r.entity0 || {}).gid === gid || (r.entity1 || {}).gid === gid);
+              const changed = { ...st, entity1_credit: 'M. Man', entity0_credit: st.entity0_credit };
+              re.dispatch({ type: 'update-relationship-state', sourceEntity: st.entity1, oldRelationshipState: st, newRelationshipState: changed }); return st.id; }""", H.uid('dddddddd', 3071 - 2990))
+            line = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Multi Man');
+              const tr = [...g.querySelectorAll('tr.dci-em-line')].find(t => ((t.querySelector('[data-f=em-primary]') || {}).value || '') === 'electric guitar'); return tr ? tr.dataset.line : null; })()""")
+            pg.fill(f'{multi} tr.dci-em-line[data-line="{line}"] [data-f=em-credit]', 'lead')
+            pg.press(f'{multi} tr.dci-em-line[data-line="{line}"] [data-f=em-credit]', 'Tab')
+            pg.wait_for_timeout(400)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            d = multi_of()
+            kept = [r for r in d if r['id'] == edited]
+            fresh = [r for r in d if r['id'] != edited]
+            print('D) geändert behalten:', len(kept), kept[0]['attrs'] if kept else None, '| neu:', len(fresh), sorted(set(tuple(sorted(r['attrs'])) for r in fresh)))
+            results.append(len(kept) == 1 and len(fresh) == 3 and all('electric guitar [lead]' in r['attrs'] for r in fresh) and 'electric guitar' in kept[0]['attrs'])
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()

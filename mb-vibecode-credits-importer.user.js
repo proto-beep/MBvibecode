@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.31
+// @version      3.35.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.31
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.31
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.31';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -391,6 +391,7 @@
       "issue.requiredAttr": "required attribute “{name}” missing",
       "sum.new.one": "{n} new relationship",
       "sum.new.other": "{n} new relationships",
+      "sum.joined": "instruments and voices joined – a relationship per instrument would be {n}",
       "kind.recording": "{n} on recordings",
       "kind.release": "{n} on the release",
       "kind.work": "{n} on works",
@@ -826,6 +827,7 @@
       "settings.evSharedAfter": "events",
       "settings.evSharedTitle": "More events than this: each block of an entry shows only its own (“＋ Event ▾” adds another one, blocks fold)",
       "settings.emShow": "Lines of a block shown before “▸ n more”",
+      "settings.emBy": "An entry, compact, at first",
       "settings.aria.awMax": "At most works and recordings per artist",
       "settings.aria.awSlowSec": "Seconds before a large catalogue is named",
       "settings.aria.awSlowN": "Entries to read before a large catalogue is named",
@@ -1723,6 +1725,16 @@
       "em.bothAsk": "{name}: {tracks} with and without a date –",
       "em.bothOnly": "only {date}",
       "em.bothKeep": "keep both",
+      "em.wide": "Show the roles of {name} as their full matrix",
+      "em.narrow": "Show the roles of {name} compact again",
+      "em.chipTitle": "Opens the full matrix of this entry at this role – drag the chip onto another event's line to move it there (⇧ Shift: in both)",
+      "em.chipAskTitle": "A question to answer: opens the full matrix of this entry at this role",
+      "em.chipOut": "Take {name} out of this event",
+      "em.by.event": "by event",
+      "em.by.role": "by role",
+      "em.noEvent": "in no event",
+      "em.moreChips": "+ {n} more",
+      "em.out": "Taken out:",
       "voiceCredit.from": "From the text:",
       "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
@@ -1807,6 +1819,7 @@
       "ms.3.32.0": "Quick switches at the top of “Mapping rules”: a rights society after a writer’s name (“Composed by X (BMI)”) as the release’s rights society, Performance on several days as their common month or year (now the default), “live” for live releases, no “credited as” when only the case differs, festivals left out, dates in the titles of the tracks, “Performer” on tracks for the instruments (the last two off until switched on). Since 3.31.0 also: a person as publisher is a role of that person (artist–work “publishing”), a publisher’s row on the works or on the release, tracks from the notes set (ⓘ says where from), poems and poetry (lyricist, spoken vocals, asked when alone), the kind of engineer said twice (“Engineer [Recording Engineer]”), places from the notes looked up by name and area (“Loft Köln”), days with commas only (“November 7, 8, 2016”); Companion 1.9.1: the status marks and the cover box stay while MusicBrainz is in the background.",
       "ms.3.33.0": "The mapping file: the data of the mapping rules – role rules, company roles, questions, tables and word lists, the quick switches – is a file of its own, mb-vibecode-credits-importer-mapping.json, which the userscript manager loads with the script (and the script fetches from GitHub itself if not); rules can be kept on GitHub without touching the code. Also: places with a date after them, typos in role words, the credits of Bandcamp's “about” text, poems that follow their level, single days instead of a month, the quick switches as buttons, comments of live recordings.",
       "ms.3.34.0": "The languages file: the texts in German, Spanish and French are a file of their own, mb-vibecode-credits-importer-languages.json, loaded with the script like the mapping file (English stays in the script, also when the file is missing); every text is translated again. Also: ✎ changes built-in rules in “Mapping rules”, and your changes can be exported – as a file of their own or as the whole register for a pull request – and imported with a preview.",
+      "ms.3.35.0": "Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -7953,9 +7966,14 @@
 
   /** [E4] Items that may be joined: a new instrument or voice of an entry on a recording, the release or its group. */
   function joinable(it) {
+    return joinableKind(it) && joinOn(it.artist);
+  }
+
+  /** [E4] (3.35.0) Items of the kind that is joined (whether it is joined now or not – a single one keeps its jkey). */
+  function joinableKind(it) {
     return it.kind === 'credit' && !!it.row && !!it.artist && !it.update && !it.replaces && !it.fill && !it.fillDate && !it.attrFill
       && ['recording', 'release', 'release_group'].includes(it.target.kind) && ['instrument', 'vocal'].includes(norm(it.lt.name))
-      && primaryAttrsOf(it).length > 0 && joinOn(it.artist);
+      && primaryAttrsOf(it).length > 0;
   }
 
   /** [E4] Relationships that are one when joined: same target, entry, type, date, artist credit, direction and other attributes. */
@@ -7972,42 +7990,64 @@
    * its rows changed, went or came) is taken out of the editor and staged anew with all its rows. The legacy view joins nothing.
    */
   function joinPlan(items, removals, stagedItems) {
-    const joinedStates = new Map();
+    // [3.35.0] each staged relationship of an instrument or a voice is a group: a joined one with all its rows, a single one alone
+    // (a single one keeps its jkey when it was joinable)
+    const groups = new Map();
     for (const [k, st] of S.staged) {
-      if (!st.joined) continue;
-      if (!joinedStates.has(st.joined)) joinedStates.set(st.joined, []);
-      joinedStates.get(st.joined).push([k, st]);
+      if (!st.joined && !st.jkey) continue;
+      const G = st.joined || `s:${k}`;
+      if (!groups.has(G)) groups.set(G, []);
+      groups.get(G).push([k, st]);
     }
-    if (joinedStates.size) {
+    if (groups.size) {
       const dirty = new Set();
+      const groupOf = (st) => (!st ? '' : st.joined || (st.jkey ? `s:${[...S.staged].find(([, x]) => x === st)?.[0] || ''}` : ''));
       const stOf = (it) => it.update || (it.replaces && it.replaces.staged) || null;
       for (const it of items) {
         const st = stOf(it);
         if (st && st.joined) dirty.add(st.joined);
       }
       for (const r of removals) if (r.staged.joined) dirty.add(r.staged.joined);
-      // a new row of a joined relationship staged before (another instrument of the same recording and event)
-      const keys = new Map([...joinedStates].map(([J, list]) => [list[0][1].jkey, J]).filter(([k]) => k));
-      for (const it of items) if (joinable(it) && keys.has(joinKeyOf(it))) dirty.add(keys.get(joinKeyOf(it)));
+      // a new row of a joined relationship staged before (another instrument of the same recording and event), or of a single
+      // one it should be joined with now
+      const byJkey = new Map();
+      for (const [G, list] of groups) {
+        const jk = list[0][1].jkey;
+        if (!jk) continue;
+        if (!byJkey.has(jk)) byJkey.set(jk, []);
+        byJkey.get(jk).push(G);
+      }
+      for (const it of items) if (joinable(it) && byJkey.has(joinKeyOf(it))) byJkey.get(joinKeyOf(it)).forEach((G) => dirty.add(G));
+      // the decision to join changed (One row each / Join in one block, the setting, the view): joined ones apart, singles together
+      for (const [G, list] of groups) {
+        const it = stagedItems.get(list[0][0]);
+        if (!it) continue;
+        if (G.startsWith('s:')) {
+          const peers = byJkey.get(list[0][1].jkey) || [];
+          if (peers.length > 1 && joinable(it)) peers.forEach((x) => dirty.add(x));
+        } else if (!joinable(it)) dirty.add(G);
+      }
       if (dirty.size) {
         for (const it of items) {
           const st = stOf(it);
-          if (st && dirty.has(st.joined)) Object.assign(it, { update: null, replaces: null, rejoin: true });
+          const G = st && (st.joined || groupOf(st));
+          if (G && dirty.has(G)) Object.assign(it, { update: null, replaces: null, rejoin: true, rejoinOf: G });
         }
-        const keep = removals.filter((r) => !(r.staged.joined && dirty.has(r.staged.joined)));
-        for (const J of dirty) {
-          const list = joinedStates.get(J) || [];
+        const keep = removals.filter((r) => !(r.staged.joined && dirty.has(r.staged.joined)) && !dirty.has(`s:${r.key}`));
+        for (const G of dirty) {
+          const list = groups.get(G) || [];
           if (!list.length) continue;
-          keep.push({ key: list[0][0], staged: list[0][1], joined: J });
           for (const [k] of list) {
             const it = stagedItems.get(k);
-            if (it && !items.includes(it) && !items.some((x) => x.key === k)) items.push(Object.assign(it, { rejoin: true }));
+            if (it && !items.includes(it) && !items.some((x) => x.key === k)) items.push(Object.assign(it, { rejoin: true, rejoinOf: G }));
           }
+          // the rows of it that are staged anew (not those taken out)
+          keep.push({ key: list[0][0], staged: list[0][1], joined: G.startsWith('s:') ? null : G, restage: list.map(([k]) => k).filter((k) => items.some((x) => x.key === k)) });
         }
         removals.splice(0, removals.length, ...keep);
       }
     }
-    if (!matrixOn()) return items;
+    if (!matrixOn()) return items.map((it) => (joinableKind(it) ? Object.assign(it, { jkey: joinKeyOf(it) }) : it));
     const out = [];
     const buckets = new Map();
     for (const it of items) {
@@ -8035,8 +8075,8 @@
       const primSet = new Set(primaryAttrsOf(first));
       const rest = first.attrs.filter((a) => !primSet.has(a));
       return { ...first, attrs: [...prim, ...rest], joinedItems: x.items, jkey: x.jk, key: `join|${x.items.map((m) => m.key).join('+')}`,
-        noteText: '', update: null, replaces: null };
-    });
+        noteText: '', update: null, replaces: null, rejoinOf: uniq(x.items.map((m) => m.rejoinOf).filter(Boolean)).join(' ') || '' };
+    }).map((it) => (it.joinedItems || !joinableKind(it) ? it : Object.assign(it, { jkey: joinKeyOf(it) })));
   }
 
   // ===========================================================================
@@ -14609,6 +14649,15 @@
     setBusy('busy.apply', { n: items.length });
     log('info', 'applyStart', { n: items.length });
 
+    // [E4] (3.35.0) relationships staged anew (joined, or joined now): one changed in the editor itself stays, its rows are not
+    // staged again; the old one goes only once all its rows are staged anew (also when the cap leaves some for the next round)
+    const restage = new Map();
+    for (const r of removals) {
+      if (!r.restage || !r.restage.length) continue;
+      const cur = findRelationshipStates(re.state, new Set([r.staged.state.id])).get(r.staged.state.id);
+      restage.set(r.joined || `s:${r.key}`, { r, edited: !!cur && relSig(cur) !== relSig(r.staged.state) });
+    }
+    const editedGroups = (it) => String(it.rejoinOf || '').split(' ').filter((G) => restage.has(G) && restage.get(G).edited);
     const recordings = pageRecordings();
     const release = re.state.entity;
     let added = 0;
@@ -14629,6 +14678,10 @@
         setBusy(round ? 'busy.applyProgressRound' : 'busy.applyProgress', { i: step, n: items.length, ...(round || {}) });
       }
       const text = describeItem(it);
+      if (it.rejoinOf && editedGroups(it).length) {
+        changedInMb.push(text);
+        continue;
+      }
       // Attributes added to an existing link recording → work (works matrix)
       if (it.attrFill) {
         try {
@@ -14836,6 +14889,7 @@
           S.staged.set(it.key, {
             state: newState, source, sig: itemSig(it), text, rowId: it.row ? it.row.id : null,
             track: it.target && it.target.track ? it.target.track.idx : null, workLink: it.kind === 'work-link',
+            ...(it.jkey ? { jkey: it.jkey } : {}),
           });
         }
         if (it.date) {
@@ -14845,7 +14899,7 @@
           S.noteDates.set(pool ? pool.id : dateText, pool && pool.name ? `${pool.name} ${dateText}` : dateText);
           if (newState && typeof newState.id === 'number') stagedDates.push({ id: newState.id, date: it.date, text });
         }
-        S.appliedKeys.add(it.key);
+        if (!it.joinedItems) S.appliedKeys.add(it.key);
         if (it.kind === 'work-link') {
           S.noteStats.workLinks++;
           if (it.origin === 'created') S.noteStats.newWorkLinks++;
@@ -14868,10 +14922,11 @@
     // but only if it still looks as the dashboard left it; already gone → forgotten here
     const toRemove = [];
     let removed = 0;
-    // [E4] (3.34.29) a joined relationship: all keys of its rows go with it (not those staged anew in another one just now)
+    // [E4] (3.34.29) a joined relationship: all keys of its rows go with it (not those staged anew in another one just now);
+    // [3.35.0] a single one only if its key was not staged anew
     const forget = (r) => {
       if (!r.joined) {
-        S.staged.delete(r.key);
+        if (S.staged.get(r.key) === r.staged) S.staged.delete(r.key);
         return;
       }
       for (const [k, st] of [...S.staged]) {
@@ -14881,6 +14936,16 @@
       }
     };
     for (const r of removals) {
+      // [3.35.0] staged anew: only once every row of it is staged anew (not cut by the cap, not failed), and not if it was changed
+      // in the editor itself
+      if (r.restage && r.restage.length) {
+        const g = restage.get(r.joined || `s:${r.key}`);
+        const done = r.restage.every((k) => {
+          const st = S.staged.get(k);
+          return !!st && st !== r.staged && (!r.joined || st.joined !== r.joined);
+        });
+        if ((g && g.edited) || !done) continue;
+      }
       const current = findRelationshipStates(re.state, new Set([r.staged.state.id])).get(r.staged.state.id);
       if (!current) {
         forget(r);
@@ -14893,7 +14958,7 @@
       try {
         re.dispatch({ type: 'remove-relationship', relationship: current });
         forget(r);
-        if (!r.joined) S.appliedKeys.delete(r.key);
+        if (!r.joined && !S.staged.has(r.key)) S.appliedKeys.delete(r.key);
         removed++;
         log('ok', 'stagedRemoved', { text: r.staged.text });
       } catch (e) {
@@ -15412,7 +15477,11 @@
    * [E4] An entry shown as a matrix (collected items E4, 139, 141): the matrix view, full, the entry not folded to compact lines;
    * persons only – companies and other entries keep their rows.
    */
-  const mxEntry = (a) => !!a && matrixOn() && S.view === 'full' && !groupFolded(a.key) && !a.company && !a.other;
+  const mxPerson = (a) => !!a && matrixOn() && !a.company && !a.other;
+  // [3.35.0] in the compact view (or folded to compact lines) an entry opened with ▸ shows its full matrix
+  const mxEntry = (a) => mxPerson(a) && ((S.view === 'full' && !groupFolded(a.key)) || S.emWide.has(a.key));
+  /** [E4] (3.35.0) An entry compact as a matrix: a line per event (or per role) with the roles as chips. */
+  const mxCompact = (a) => mxPerson(a) && !mxEntry(a);
 
   /** [E4] The relationship type of a row – of one taken out (Skip) too: the type it had. */
   const ltOf = (r) => currentLinkType(r) || (r.level === 'skip' && r.linkTypeId ? idx().ltById.get(r.linkTypeId) || null : null);
@@ -15576,6 +15645,8 @@
         if (!S.datePool.includes(entry)) S.datePool.push(entry);
         rows.forEach((r) => Object.assign(r, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true }));
       }
+      // [3.35.0] relationships of their own by their dates (as the rows of their lines in other events)
+      rows.forEach((r) => { r.dateKeyed = true; });
       savePool();
       log('info', 'emEvDate', { n: rows.length, date: formatDateValue(entry) });
     }
@@ -15599,7 +15670,12 @@
     let rows;
     if (t.kind === 'em-ev') rows = rowsInEvent(a, t.el.dataset.evhead);
     else if (t.kind === 'em-line') rows = lineRows(t.el).filter((r) => r.level !== 'skip');
-    else rows = [...t.el.closest('.dci-em-block').querySelectorAll('tr.dci-em-line')].flatMap(lineRows).filter((r) => r.level !== 'skip');
+    else {
+      // [3.35.0] all lines of the block, also those behind "▸ n more" and of a folded block
+      const key = t.el.closest('.dci-em-block').dataset.block;
+      const b = entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work')).blocks.find((x) => x.key === key);
+      rows = b ? b.lines.flatMap((l) => l.rows).filter((r) => r.level !== 'skip') : [];
+    }
     const undo = [];
     let moved = 0;
     let added = 0;
@@ -15609,18 +15685,22 @@
       const group = t.kind !== 'em-ev' && dateGroupOf(r);
       const cell = group && dm().cells.find((c) => c.col === group.key && c.date === entry.id && !c.alt);
       const set = cell && r.level === 'recording' ? cellTracks(cell) : null;
-      const covers = !set || [...r.tracks].every((i) => set.has(i));
-      if (set && ![...r.tracks].some((i) => set.has(i)) && !both) continue;
+      // [3.35.0] the tracks of the row the date has (all of them without tracks of its own in the date matrix)
+      const inter = set ? new Set([...r.tracks].filter((i) => set.has(i))) : new Set(r.tracks);
+      if (set && !inter.size) continue;
+      const covers = !set || inter.size === r.tracks.size;
+      undo.push({ id: r.id, date: r.date ? { ...r.date } : null, open: r.dateOpen, tracks: new Set(r.tracks), keyed: !!r.dateKeyed });
+      r.dateKeyed = true;
       if (covers && !both) {
-        undo.push({ id: r.id, date: r.date ? { ...r.date } : null, open: r.dateOpen });
         Object.assign(r, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true });
         moved++;
         continue;
       }
+      // in part (its tracks with the date move, the others stay – "other tracks there"), or with ⇧ Shift: a row of its own
       const c = copyRowForEvent(r);
-      Object.assign(c, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true, dateKeyed: true, levelTouched: true, emBoth: !!both && covers });
-      if (set) c.tracks = new Set([...set].filter((i) => r.level !== 'recording' || selIdx().includes(i)));
-      r.dateKeyed = true;
+      Object.assign(c, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true, dateKeyed: true, levelTouched: true, emBoth: !!both });
+      if (set) c.tracks = inter;
+      if (!both) r.tracks = new Set([...r.tracks].filter((i) => !inter.has(i)));
       S.rows.splice(S.rows.indexOf(r) + 1, 0, c);
       undo.push({ add: c.id });
       added++;
@@ -15645,7 +15725,7 @@
       if (u.add) S.rows = S.rows.filter((r) => r.id !== u.add);
       else {
         const r = S.rows.find((x) => x.id === u.id);
-        if (r) Object.assign(r, { date: u.date, dateOpen: !!u.open });
+        if (r) Object.assign(r, { date: u.date, dateOpen: !!u.open, ...(u.tracks ? { tracks: u.tracks } : {}), dateKeyed: !!u.keyed });
       }
     }
     S.messages = S.messages.filter((m) => !(m.action && m.action.act === 'em-undo' && m.action.arg === id));
@@ -15674,10 +15754,15 @@
     row.emBoth = false;
     if (only) {
       const others = S.rows.filter((r) => r !== row && r.artistKey === row.artistKey && r.level === row.level && lineKeyOf(r) === lineKeyOf(row) && !hasDateInput(r.date)
-        && [...r.tracks].some((i) => row.tracks.has(i)));
+        && (r.level !== 'recording' || [...r.tracks].some((i) => row.tracks.has(i))));
       for (const r of others) {
+        // [3.35.0] on the release (or its group) the row without a date goes at once
+        if (r.level !== 'recording') {
+          Object.assign(r, { level: 'skip', levelTouched: true });
+          continue;
+        }
         r.tracks = new Set([...r.tracks].filter((i) => !row.tracks.has(i)));
-        if (!r.tracks.size && r.level === 'recording') Object.assign(r, { level: 'skip', levelTouched: true });
+        if (!r.tracks.size) Object.assign(r, { level: 'skip', levelTouched: true });
       }
     }
   }
@@ -15690,13 +15775,14 @@
 
   /** [E4] The questions and notes of a line: those of its first row, answered for all its rows (EM_LINE_ACTS); [3.34.31] with and without a date. */
   function lineAskHtml(l) {
-    const r = l.rows[0];
+    // [3.35.0] the first row not taken out (a question of a row taken out says nothing)
+    const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
     return [unmappedHtml(r), instrumentAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), bothAskHtml(l)].join('');
   }
 
   /** [E4] A line of a block: instrument (MusicBrainz) · role credit · additional / guest / solo · a tick per event · ▸ ✕. */
   function emLineHtml(a, b, l, flagNames, cols) {
-    const r = l.rows[0];
+    const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
     const lt = ltOf(r);
     const root = lt && primaryRootOf(lt);
     const ids = l.rows.map((x) => x.id).join(',');
@@ -15782,6 +15868,93 @@
       <div class="dci-em-foot">${joinBtn}<span class="dci-sub" data-emcount="${esc(a.key)}"></span></div></div>`;
   }
 
+
+  /** [E4] (3.35.0) ▸ / ▾ in the head of an entry, compact as a matrix: its full matrix shown here, or compact again. */
+  function emWideHtml(a) {
+    const wide = S.emWide.has(a.key);
+    const t = tr(wide ? 'em.narrow' : 'em.wide', { name: a.name });
+    return `<button type="button" class="dci-iconbtn dci-gopen" data-act="em-wide" aria-expanded="${wide}" title="${esc(t)}" aria-label="${esc(t)}">${wide ? '▾' : '▸'}</button>`;
+  }
+
+  /** [E4] (3.35.0) The level, date and tracks of an event in short ("① Recording · 2024-08-14 · tracks 2, 5"). */
+  function evShortHtml(e) {
+    const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
+    const date = pool ? poolLabel(pool) : hasDateInput(e.date) ? fieldsText(e.date) : '';
+    const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
+    return `<span class="dci-em-evn">${circled(e.n)}</span> <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>
+      <span class="dci-cl-date${date ? ' dci-cl-has' : ''}">${esc(date || tr('cl.noDate'))}</span>${tracks ? ` <span class="dci-cl-tracks">${esc(tracks)}</span>` : ''}`;
+  }
+
+  /** [E4] (3.35.0) A role as a chip of a compact line: its name, its role credit, add. / guest / solo; a question "? Chaims". */
+  function emChipHtml(l, e) {
+    const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
+    const lt = ltOf(r);
+    const root = lt && primaryRootOf(lt);
+    const ask = !!lineAskHtml(l);
+    // a word MusicBrainz does not know: as written ("? Chaims")
+    const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || r.raw : rowTypeName(r) || r.raw) || '–';
+    const flags = [...r.flags].filter((f) => ['additional', 'guest', 'solo'].includes(f)).map((f) => tr(`em.flag.${f}`));
+    const credit = String(r.roleCredit || '').trim();
+    const ids = l.rows.map((x) => x.id).join(',');
+    return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : ''}>
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}</button>${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}</span>`;
+  }
+
+  /**
+   * [E4] (3.35.0) An entry compact as a matrix (mockup board 1: "die kompakte Ansicht ist die Matrix gedreht"): by event – a line
+   * per event (① Recording · date · tracks) with the roles ticked there as chips, the first S.emShow and "+ n more"; by role – a
+   * line per role with its events. A chip opens the entry's full matrix (▸ in the head too), ✕ takes it out of the event, dragged
+   * onto another event's line it moves there (⇧ Shift: it stays in both).
+   */
+  function entryCompactHtml(a, all) {
+    const rows = all.filter((r) => r.level !== 'work');
+    const works = all.filter((r) => r.level === 'work');
+    const m = entryModel(a, rows);
+    const by = S.emBy.get(a.key) || S.emByDefault;
+    const seg = `<span class="dci-seg dci-seg-small dci-em-by" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
+      data-act="em-by" data-by="${v}" aria-pressed="${by === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`;
+    let body;
+    if (by === 'role') {
+      body = m.lines.map((l) => {
+        const evs = m.events.filter((e) => l.ev.has(e.key));
+        return `<div class="dci-em-cl dci-em-clrole${evs.length ? '' : ' dci-em-skip'}" data-rows="${l.rows.map((x) => x.id).join(',')}" data-line="${esc(l.id)}">${emChipHtml(l, null)}
+          <span class="dci-sub">→ ${esc(rowTypeName(l.rows[0]) || tr('cl.noType'))}</span>
+          ${evs.map((e) => `<span class="dci-em-evchip">${evShortHtml(e)}</span>`).join('') || `<span class="dci-sub">${esc(tr('em.noEvent'))}</span>`}
+          <span class="dci-status" data-emrows="${l.rows.map((x) => x.id).join(',')}"></span></div>`;
+      }).join('');
+    } else {
+      body = m.events.map((e) => {
+        const ls = m.lines.filter((l) => l.ev.has(e.key));
+        const k = `${a.key}|e:${e.key}`;
+        const max = Math.max(1, S.emShow);
+        const more = S.emMore.has(k);
+        const shown = more || ls.length <= max + 1 ? ls : ls.filter((l, i) => i < max || !!lineAskHtml(l));
+        const hidden = ls.length - shown.length;
+        const ids = uniq(ls.flatMap((l) => l.ev.get(e.key)).map((r) => r.id)).join(',');
+        return `<div class="dci-em-cl" data-emev="${esc(e.key)}">${evShortHtml(e)} <span class="dci-em-sep" aria-hidden="true"></span>
+          ${shown.map((l) => emChipHtml(l, e)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
+          : more ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.less'))}</button>` : ''}
+          <span class="dci-status" data-emrows="${ids}"></span></div>`;
+      }).join('');
+      const out = m.lines.filter((l) => !l.ev.size);
+      if (out.length) body += `<div class="dci-em-cl dci-em-skip"><span class="dci-sub">${esc(tr('em.out'))}</span> ${out.map((l) => emChipHtml(l, null)).join('')}</div>`;
+    }
+    return `<div class="dci-em dci-em-compact" data-em="${esc(a.key)}"><div class="dci-em-chead">${seg}</div>${body}
+      ${works.length ? `<div class="dci-tablewrap dci-rowswrap"><table class="dci-table dci-rows"><tbody>${works.map(rowHtml).join('')}</tbody></table></div>` : ''}
+      <div class="dci-em-foot"><span class="dci-sub" data-emcount="${esc(a.key)}"></span></div></div>`;
+  }
+
+  /** [E4] (3.35.0) A chip dragged onto another event's line: its rows there (moved; ⇧ Shift: in both). */
+  function emMoveChip(a, lineId, fromEv, toEv, both) {
+    if (fromEv === toEv) return;
+    const line = entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work')).lines.find((l) => l.id === lineId);
+    if (!line) return;
+    emTick(a, line.rows, toEv, true);
+    if (!both) emTick(a, line.rows, fromEv, false);
+    rerenderGroup(a);
+    refresh();
+  }
+
   /** [E4] The rows of the line an element is in. */
   const lineRows = (el) => {
     const t = el.closest('[data-rows]');
@@ -15823,8 +15996,13 @@
     const spare = rows.find((r) => r.level === 'skip');
     const row = spare || copyRowForEvent(rows[0]);
     const keep = row.primaryText;
+    // [3.35.0] a row taken out before: as a level chosen by hand (not a level of the scope or of skipped works)
+    delete row.scopeLevel;
+    delete row.mxSkipped;
     Object.assign(row, { level: src.level, levelTouched: true, tracks: new Set(src.tracks), date: src.date ? { ...src.date } : null, dateOpen: !!src.date, dateKeyed: true });
     if (!spare) S.rows.splice(S.rows.indexOf(rows[rows.length - 1]) + 1, 0, row);
+    // [3.35.0] rows of one line in several events are relationships of their own by their dates
+    rows.forEach((r) => { r.dateKeyed = true; });
     resolveRowType(row);
     row.primaryText = keep;
     refreshRowDetails(row);
@@ -15910,6 +16088,13 @@
       if (!sum('ready')) el.classList.add('dci-muted');
       el.textContent = parts.join(', ') || tr('status.nothing');
     });
+    // [3.35.0] the compact lines: what is missing of their rows
+    S.overlay.querySelectorAll('[data-emrows]').forEach((el) => {
+      const infos = el.dataset.emrows.split(',').map((id) => ({ row: S.rows.find((r) => r.id === id), info: rowInfo.get(id) })).filter((x) => x.row && x.info && x.row.level !== 'skip');
+      const issues = uniq(infos.flatMap((x) => x.info.issues));
+      el.className = `dci-status${issues.length ? ' dci-cl-flag dci-cl-bad' : ''}`;
+      el.textContent = issues.join(', ');
+    });
     S.overlay.querySelectorAll('[data-emcount]').forEach((el) => {
       const n = items.filter((it) => it.artist && it.artist.key === el.dataset.emcount && it.kind === 'credit').length;
       el.textContent = n ? tr('em.count', { n }) : '';
@@ -15946,16 +16131,16 @@
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
-      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : ''}" data-group="${a.key}">
+      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          <div class="dci-gname">${mxPerson(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${coverFromEntryHtml(a, rows)}
         ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
-        ${mxEntry(a) ? entryMatrixHtml(a, rows) : `<div class="dci-tablewrap dci-rowswrap">
+        ${mxEntry(a) ? entryMatrixHtml(a, rows) : mxCompact(a) ? entryCompactHtml(a, rows) : `<div class="dci-tablewrap dci-rowswrap">
           <table class="dci-table dci-rows">
             <tbody>${rows.map(rowHtml).join('')}</tbody>
           </table>
@@ -18467,6 +18652,7 @@
   function revealRow(row) {
     // [E4] (3.34.30) in an entry's matrix: the line of the row with its rows open
     const ra = row && S.artists.get(row.artistKey);
+    if (mxCompact(ra)) S.emWide.add(ra.key);
     if (mxEntry(ra) && !S.overlay.querySelector(`tr[data-row="${row.id}"]`)) {
       const k = lineKeyOf(row);
       const first = S.rows.find((r) => r.artistKey === row.artistKey && lineKeyOf(r) === k);
@@ -18544,16 +18730,30 @@
   function rerenderGroup(a) {
     const section = S.overlay && S.overlay.querySelector(`[data-group="${a.key}"]`);
     if (!section) return;
+    // [E4] (3.35.0) the field with the focus keeps it when the entry is drawn anew (the same field of the same row, line or event)
+    const act = document.activeElement;
+    let again = null;
+    if (act && section.contains(act) && act.dataset && act.dataset.f) {
+      const holder = act.closest('[data-row], [data-line], [data-evhead]');
+      const attr = holder ? (holder.dataset.row ? 'data-row' : holder.dataset.line ? 'data-line' : 'data-evhead') : '';
+      again = { f: act.dataset.f, attr, id: holder ? holder.getAttribute(attr) : '', ev: act.dataset.ev || '' };
+    }
     const tmp = document.createElement('div');
     tmp.innerHTML = groupHtml(a);
-    section.replaceWith(tmp.firstElementChild);
+    const fresh = tmp.firstElementChild;
+    section.replaceWith(fresh);
+    if (again) {
+      const q = (v) => (window.CSS && CSS.escape ? CSS.escape(v) : v);
+      const el = fresh.querySelector(`${again.attr ? `[${again.attr}="${q(again.id)}"] ` : ''}[data-f="${q(again.f)}"]${again.ev ? `[data-ev="${q(again.ev)}"]` : ''}`);
+      if (el) el.focus({ preventScroll: true });
+    }
   }
 
   function updateGroupHeader(a) {
     if (!S.overlay) return;
     const section = S.overlay.querySelector(`[data-group="${a.key}"]`);
     if (!section) return;
-    section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : ''}`;
+    section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}`;
     const tag = section.querySelector('.dci-kind-tag');
     if (tag) tag.outerHTML = kindTagHtml(a);
     section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
@@ -18566,7 +18766,7 @@
   function rerenderRow(row) {
     // [E4] (3.34.30) a row of an entry shown as a matrix: the entry is drawn anew (its lines follow the row)
     const ra = S.artists.get(row.artistKey);
-    if (mxEntry(ra)) {
+    if (mxPerson(ra) && (mxEntry(ra) || mxCompact(ra))) {
       rerenderGroupSoon(ra);
       return;
     }
@@ -18726,6 +18926,9 @@
       ['kind.workLink', count((i) => i.kind === 'work-link')],
     ].filter(([, n]) => n).map(([key, n]) => tr(key, { n }));
     const sum = [`<strong>${esc(tr('sum.new', { n: items.length }))}</strong>${kinds.length ? ` (${esc(kinds.join(', '))})` : ''}`];
+    // [E4] (3.35.0) joined: how many a relationship per instrument would be
+    const apart = items.reduce((n, it) => n + (it.joinedItems ? it.joinedItems.length : 1), 0);
+    if (apart > items.length) sum.push(`<span class="dci-sub" data-el="sum-joined">${esc(tr('sum.joined', { n: apart }))}</span>`);
     // Incomplete rows: a click goes to the next one, ‹ › step back and forth
     S.incompleteIds = incompleteIds;
     if (S.incIdx >= incompleteIds.length) S.incIdx = incompleteIds.length - 1;
@@ -22600,6 +22803,11 @@
       const row = place && rowOf(place);
       return row && tracksDropFits(row) ? { el: place, kind: 'row-tracks' } : null;
     }
+    // [E4] (3.35.0) a role chip of a compact line: onto the line of another event of the same entry
+    if (d.kind === 'em-chip') {
+      const ev = t.closest('.dci-em-cl[data-emev]');
+      return ev && ev.dataset.emev !== S.dmDrag.ev && ev.closest('[data-group]') === S.dmDrag.group ? { el: ev, kind: 'em-chip-ev' } : null;
+    }
     if (d.kind !== 'date' && d.kind !== 'cell') return null;
     const onDate = t.closest('.dci-dm-cell:not(.dci-dm-choose) .dci-dm-date');
     if (onDate) {
@@ -22698,6 +22906,8 @@
     const src = e.target && e.target.closest && e.target.closest('[data-drag]');
     if (!src || !S.overlay.contains(src)) return;
     S.dmDrag = { kind: src.dataset.drag, id: src.dataset.id, cell: src.dataset.cell || null, list: src.dataset.list || null };
+    // [E4] (3.35.0) a role chip: its event and its entry
+    if (S.dmDrag.kind === 'em-chip') Object.assign(S.dmDrag, { ev: src.dataset.ev, group: src.closest('[data-group]') });
     try {
       e.dataTransfer.setData('text/plain', src.dataset.id);
       e.dataTransfer.effectAllowed = 'copyMove';
@@ -22796,6 +23006,11 @@
       moveSourceOrder(d.list, d.id, 0, t.el.dataset.id);
       return;
     }
+    if (t.kind === 'em-chip-ev') {
+      const a = artistOf(t.el);
+      if (a) emMoveChip(a, d.id, d.ev, t.el.dataset.emev, !!e.shiftKey);
+      return;
+    }
     if (t.kind === 'tracks') {
       dmAddTracks(t.el.dataset.dmcell, d.id, d.kind === 'cell-tg' ? d.cell : null);
       return;
@@ -22876,7 +23091,18 @@
     if (S.srcMenuOpen && btn.closest('.dci-srcmenu')) closeSrcMenu();
     // [E4] (3.34.30) a question of a line of an entry's matrix: answered for all rows of the line
     if (EM_LINE_ACTS[act] && btn.closest('.dci-em-ask[data-rows]')) {
-      lineRows(btn).forEach((r) => EM_LINE_ACTS[act](r, btn));
+      // [3.35.0] not the rows taken out; with rows on several levels each keeps its own where the type is there
+      const lrows = lineRows(btn).filter((r) => r.level !== 'skip');
+      const multi = new Set(lrows.map((r) => r.level)).size > 1;
+      lrows.forEach((r) => {
+        const lv = r.level;
+        EM_LINE_ACTS[act](r, btn);
+        if (multi && r.level !== lv && r.level !== 'skip' && findRowType(r, lv)) {
+          r.level = lv;
+          resolveRowType(r);
+          refreshRowDetails(r);
+        }
+      });
       if (artist) rerenderGroup(artist);
       refresh();
       return;
@@ -23035,6 +23261,44 @@
       }
       case 'em-undo':
         emUndoDrop(btn.dataset.arg);
+        break;
+      // [E4] (3.35.0) compact as a matrix: by event or by role, the full matrix of an entry, a chip opened or taken out
+      case 'em-by':
+        S.emBy.set(artist.key, btn.dataset.by === 'role' ? 'role' : 'event');
+        rerenderGroup(artist);
+        refresh();
+        break;
+      case 'em-by-default':
+        S.emByDefault = btn.dataset.by === 'role' ? 'role' : 'event';
+        writeJson('localStorage', EM_BY_KEY, S.emByDefault === 'role' ? 'role' : null);
+        log('info', 'settingValue', { what: tr('settings.emBy'), value: tr(`em.by.${S.emByDefault}`) });
+        renderGroups();
+        refresh();
+        renderSettings();
+        break;
+      case 'em-wide':
+        if (S.emWide.has(artist.key)) S.emWide.delete(artist.key);
+        else S.emWide.add(artist.key);
+        rerenderGroup(artist);
+        refresh();
+        break;
+      case 'em-chip': {
+        const line = btn.closest('[data-line]');
+        S.emWide.add(artist.key);
+        rerenderGroup(artist);
+        refresh();
+        const el = line && S.overlay.querySelector(`[data-group="${artist.key}"] tr.dci-em-line[data-line="${line.dataset.line}"]`);
+        if (el) {
+          el.scrollIntoView({ block: 'nearest' });
+          el.classList.add('dci-flash');
+          setTimeout(() => el.classList.remove('dci-flash'), 2500);
+        }
+        break;
+      }
+      case 'em-chipout':
+        emTick(artist, lineRows(btn), btn.dataset.ev, false);
+        rerenderGroup(artist);
+        refresh();
         break;
       case 'em-only':
       case 'em-both': {
@@ -23682,7 +23946,8 @@
         }
         r.tracks = new Set(selIdx());
         S.rows.push(r);
-        // [E4] (3.34.30) in an entry's matrix: its line with the row's fields open
+        // [E4] (3.34.30) in an entry's matrix: its line with the row's fields open; [3.35.0] compact: the entry opened
+        if (mxCompact(artist)) S.emWide.add(artist.key);
         if (mxEntry(artist)) {
           S.emOpen.add(r.id);
           rerenderGroup(artist);
@@ -23985,11 +24250,14 @@
     // [3.26.0] a choice in the menu "Source ▾" (a linked source, "Leave out the about text") closes it; a text field not
     // (its change comes before the click on "Load")
     if (S.srcMenuOpen && e.target.closest && e.target.closest('.dci-srcmenu') && /^(SELECT|INPUT)$/.test(e.target.tagName) && e.target.type !== 'text') closeSrcMenu();
+    // [E4] (3.35.0) a field of a row opened below a line of an entry's matrix: the matrix follows (lines, events)
+    const emDetail = e.target.closest && e.target.closest('.dci-em-detail-row') ? artistOf(e.target) : null;
     try {
       onChangeInner(e);
     } finally {
       S.changingEl = null;
     }
+    if (emDetail && mxEntry(emDetail)) rerenderGroupSoon(emDetail);
   }
 
   function onChangeInner(e) {
@@ -25032,6 +25300,8 @@
   // [E4] (3.34.30) events shared by all blocks of an entry up to (default 3); lines of a block before "▸ n more" (default 8)
   const EV_SHARED_KEY = 'dci-ev-shared';
   const EM_SHOW_KEY = 'dci-em-show';
+  // [E4] (3.35.0) an entry, compact, at first: a line per event (default) or per role
+  const EM_BY_KEY = 'dci-em-by';
   const clampInt = (v, lo, hi, def) => {
     const n = Math.round(Number(v));
     return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : def;
@@ -25054,7 +25324,7 @@
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY],
     dates: ['dci-dm-auto', 'dci-pools-keep'],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
   };
@@ -25071,6 +25341,9 @@
   S.evShared = clampInt(readJson('localStorage', EV_SHARED_KEY, 3), 1, 12, 3);
   S.emShow = clampInt(readJson('localStorage', EM_SHOW_KEY, 8), 1, 50, 8);
   Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map(), emUndo: new Map() });
+  // [E4] (3.35.0) compact as a matrix: by event (default) or by role, per entry; entries opened to their full matrix
+  S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
+  Object.assign(S, { emBy: new Map(), emWide: new Set() });
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
   S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
@@ -25222,6 +25495,9 @@
         // [E4] (3.34.30) the matrix of an entry
         row(`<label title="${esc(tr('settings.evSharedTitle'))}">${esc(tr('settings.evShared'))} <input type="number" data-set="ev-shared" min="1" max="12" value="${S.evShared}"> ${esc(tr('settings.evSharedAfter'))}</label>`),
         row(`<label>${esc(tr('settings.emShow'))} <input type="number" data-set="em-show" min="1" max="50" value="${S.emShow}"></label>`),
+        // [E4] (3.35.0) an entry, compact, at first
+        row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
+          data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
@@ -25419,6 +25695,7 @@
       S.joinAuto = el.checked;
       writeJson('localStorage', JOIN_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr('settings.join'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      if (S.overlay) renderGroups();
       refresh();
     } else if (k === 'ocr-front') {
       // [138b] (3.34.23) in front of the dashboard, the log and the rules – or like them
@@ -25515,7 +25792,7 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8 });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event' });
       renderGroups();
       refresh();
     } else if (t === 'dates') {
@@ -25547,7 +25824,7 @@
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY];
+    ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -25710,6 +25987,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.35.0', label: 'Credits Importer 3.35.0' },
     { v: '3.34.0', label: 'Credits Importer 3.34.0' },
     { v: '3.33.0', label: 'Credits Importer 3.33.0' },
     { v: '3.32.0', label: 'Credits Importer 3.32.0' },
@@ -27117,6 +27395,21 @@
       .dci-em-more { margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-em-ev input.dci-em-evdate { width: calc(var(--u, 1px) * 140); font: inherit; font-size: calc(var(--u, 1px) * 12); padding: 0 calc(var(--u, 1px) * 4); margin: calc(var(--u, 1px) * 2) 0; }
       .dci-em-evname { color: var(--muted); }
+      /* [E4] (3.35.0) an entry compact as a matrix: a line per event (or per role), the roles as chips */
+      .dci-em-compact { gap: calc(var(--u, 1px) * 5); }
+      .dci-em-chead { display: flex; justify-content: flex-end; }
+      .dci-em-cl { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 9); border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+      .dci-em-cl.dci-dm-over { outline: 2px solid var(--purple); background: var(--date-bg); }
+      .dci-em-sep { width: 1px; height: calc(var(--u, 1px) * 20); background: var(--line); }
+      .dci-em-chip { display: inline-flex; align-items: stretch; border: 1px solid #9d97c9; border-radius: 3px; background: #ecebf7; }
+      .dci-em-chip > button { border: 0; background: none; font: inherit; font-size: calc(var(--u, 1px) * 12); color: var(--purple-d); padding: 0 calc(var(--u, 1px) * 6); cursor: pointer; }
+      .dci-em-chip .dci-em-chipx { border-left: 1px solid #c9c4dd; color: var(--muted); padding: 0 calc(var(--u, 1px) * 4); }
+      .dci-em-chip-ask { border-color: var(--sugg-line); background: var(--sugg-bg); }
+      .dci-em-chip-ask > button { color: var(--sugg-ink); font-weight: 600; }
+      .dci-em-chip[draggable="true"] { cursor: grab; }
+      .dci-em-evchip { display: inline-flex; gap: calc(var(--u, 1px) * 4); align-items: center; }
+      .dci-em-cl .dci-status:empty { display: none; }
+      .dci-em-cl .dci-status { margin-left: auto; }
       /* [E4] (3.34.31) dates of the pool dropped onto an event, a block, a line */
       #dci-overlay.dci-dm-drag-date .dci-em-ev, #dci-overlay.dci-dm-drag-date .dci-em-bhead { outline: 1px dashed var(--purple); outline-offset: -2px; }
       #dci-overlay th.dci-em-ev.dci-dm-over, #dci-overlay .dci-em-bhead.dci-dm-over { outline: 2px solid var(--purple); background: var(--date-bg); }

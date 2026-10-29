@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.31, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.35.0, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,25 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.35.0 · 2026-10-29 · milestone "Entries as a matrix"
+
+Block AE (E4), the last step: an entry compact as a matrix.
+
+- **`mxPerson(a)`, `mxEntry(a)`** (now also an entry in `S.emWide`: its full matrix in the compact view), **`mxCompact(a)`** (a person in the matrix view, compact or folded, not wide). `groupHtml`: `dci-em-centry` and `entryCompactHtml`; the arrow in the head of such an entry is `emWideHtml` (instead of `openAllHtml`). `rerenderRow`, `revealRow` (opens it wide), `add-role` (opens it wide), `updateGroupHeader` follow.
+- **New:** `emWideHtml(a)`, `evShortHtml(e)`, **`emChipHtml(l, e)`** (`data-drag="em-chip"`, `data-ev`; a question with "?" and the word as written), **`entryCompactHtml(a, all)`** (by event: a line `.dci-em-cl[data-emev]` per event with its chips, `S.emShow` and "+ n more" – `S.emMore` key `e:<event>` –, "Taken out:"; by role: a line per role with its events), **`emMoveChip(a, lineId, fromEv, toEv, both)`**.
+- **Drag & drop:** `onDragStart` keeps the event and the entry of a chip (`S.dmDrag.ev`, `.group`); `dmTargetOf` – a chip onto `.dci-em-cl[data-emev]` of another event of the same entry (`em-chip-ev`); `onDropOn` → `emMoveChip(…, e.shiftKey)`.
+- **Clicks:** `em-by` (`S.emBy` per entry), `em-by-default` (`EM_BY_KEY` `dci-em-by`, `S.emByDefault`, ⚙ Staging), `em-wide` (`S.emWide`), `em-chip` (wide, the line flashes), `em-chipout` (`emTick` off). **`updateEntryMatrixStatus`:** `[data-emrows]` – the issues of the rows of a compact line.
+- **Summary:** `sum.joined` (`data-el="sum-joined"`) – the relationships a row per instrument would be (the rows of the joined items).
+- **Milestone:** `MILESTONES` 3.35.0, text `ms.3.35.0`.
+- **CSS:** `.dci-em-compact`, `.dci-em-cl`, `.dci-em-chip` (`-ask`, `-chipx`), `.dci-em-sep`, `.dci-em-evchip`.
+- **Texts (English only):** `em.wide`, `em.narrow`, `em.chipTitle`, `em.chipAskTitle`, `em.chipOut`, `em.by.event`, `em.by.role`, `em.noEvent`, `em.moreChips`, `em.out`, `settings.emBy`, `sum.joined`, `ms.3.35.0`.
+- **Fixes after a review (an agent that had not seen the work read the new code):**
+  - `joinPlan`: groups of staged relationships – joined ones (`joined`) and single ones with a `jkey` (`s:<key>`; `joinableKind(it)` gives every item of that kind its `jkey`, also in the legacy view); dirty also when the decision changed (a joined one no longer `joinable`, or singles of one `jkey` that are joinable now); a dirty group's items get `rejoinOf`, its removal `restage` (the keys of its rows staged anew). `joinable` = `joinableKind` + `joinOn`.
+  - `applyPlan`: `restage` (a group changed in the editor itself – `relSig` – is left: its rows are not staged anew, `changedInMb`); a removal with `restage` only once all its keys hold a new staged entry; `forget` deletes a single key only if it still holds the old entry; `appliedKeys` not for the `join|…` key; staged singles keep `jkey`.
+  - `emTick`: a spare row loses `scopeLevel`/`mxSkipped`; all rows of the line `dateKeyed`. `emEventDate`: its rows `dateKeyed`. `emDropDate`: the rows of a block from `entryModel(a, shownRowsOf(a))` (also behind "▸ n more" and folded); the tracks the date has (`inter`): all – it moves, part – a row of its own with those tracks and the original loses them, ⇧ – a row of its own (`emBoth`); `dateKeyed`; ↶ restores tracks and `dateKeyed`. `emBothAnswer`: the release level skips the row without a date. `lineAskHtml`, `emLineHtml`, `emChipHtml`: the first row not taken out. `emMoveChip`: `shownRowsOf`.
+  - `onClick` (answers of a line): only rows not taken out; with rows on several levels each keeps its own where its type is there (`findRowType`). `onChange`: a field of a row opened below a line redraws the entry (`rerenderGroupSoon`). `rerenderGroup`: the focused field keeps the focus (the same `data-f` of the same row, line or event). The setting "Join …" also draws the entries anew.
+- **Tests:** `t_entries.py` new case `compact` (the lines per event, a chip dragged onto another event, ✕, by role, ▸ / ▾, a chip clicked, the default by role, the summary), new case `restage` (One row each and Join in one block after staging; a joined relationship changed in the editor stays, the others are staged anew), `dates` E2 (a block with hidden lines); `join` C2 – a row taken out of a staged join (its tick off): the join staged anew without it; `t_ui_settings.py notice` – the three newest milestones are 3.35.0, 3.34.0, 3.33.0.
 
 ## Import 3.34.31 · 2026-10-29
 
