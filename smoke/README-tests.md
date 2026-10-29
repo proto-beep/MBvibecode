@@ -376,6 +376,8 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   evhead: 3.35.4 (AE-3): ▸ opens an event below its block – a track added (focus kept), the last track stays,
                                 #     all (two events one), a date typed / none / of the pool, Release and back (Mastered By stays, the note, ok),
                                 #     ✕, staged together with the date
+                                #   companies: 3.35.5 (AE-4): a place ("Recorded At") and a label (℗) as matrices, publishing on works keeps its
+                                #     rows, compact, staged the same as legacy, a date typed into the place's event
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
