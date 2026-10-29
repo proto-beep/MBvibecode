@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.20, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.21, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.21 · 2026-10-29
+
+Mapping rules: wording rules and questions of your own – "＋ New rule" (collected item 121b).
+
+- **Stored:** in your changes (`dci-mapping-changes`) as `rules[id] = { set: all fields, was: {}, add: 'wording' | 'question' }`; ids `OWN_DATA_ID` (W901 …, Q901 …; `nextOwnDataId(kind)`); new `OWN_DATA_KEYS`, `isOwnDataId(id)`, `ownDataKind(id, changes)` (also the last answer of `ruleKindOf`).
+- **`effectiveRaw`:** the rules of your own (`ownDataKind`) go before the built-in ones of `WORDING_RULES` / `QUESTION_RULES`, in the order of their ids; **`applyMappingChanges`:** the three arrays of W and Q in the order of the effective register (the objects of built-in rules kept, the rules of your own come and go).
+- **Checks:** `checkRuleSet(id, set, kind = ruleKindOf(id))`; new `checkOwnRule(id, kind, set)` (all fields: a wording rule its words – the credit may be empty –, a question its word and instruments); `putRuleChange(…, add)` keeps a rule of your own whole.
+- **Window:** `sect(…, extra)` – **"＋ New rule"** (`data-redit-new="wording" | "question"`, `openNewRule(kind)`: `S.ruleEdit = { id, draft, error, add }`) in the headings; the form of a rule not saved yet below its table (`data-rnew`); `noteOf(r)` ("your rule"); `ruleEditHtml`, `dataRuleEditHtml` (legend `mapping.ownTitle`, `mapping.ownHint`), `saveRuleEdit` (a rule of your own through `checkOwnRule`), `ruleEditActions` and `changesHtml` ("✕ delete this rule", "your rule" with its fields), `editToolsHtml` (tag "yours", `.dci-own`), `resetMappingChange` (asks `mapping.deleteOwnAsk`).
+- **Import:** `takeRule(id, set, was, add)` – a rule of your own with `add` (its id must fit its kind) through `checkOwnRule`; from a whole register the W9xx / Q9xx of its wording rules and questions; `planImport` passes `add`; the preview takes the fields of a rule only the import has.
+- **Rows:** `isKnownRole` – a word a question asks about is a role (texts: "Key Man – keys"); `makeRow` – no "miscellaneous support" for a word a question asks about (the row stays an instrument and asks).
+- **Texts:** new `mapping.newRule`, `mapping.newWordingTitle`, `mapping.newQuestionTitle`, `mapping.ownTitle`, `mapping.ownHint`, `mapping.ownTag`, `mapping.ownNote`, `mapping.ownChange`, `mapping.deleteOwn`, `mapping.deleteOwnAsk` (English only). **CSS:** `.dci-changed.dci-own`, `.dci-mchg-own`, `h3 .dci-rnew-btn`.
+- **Header / files:** `@version 3.34.21`, `?v=3.34.21`, both files' `version`.
+- **Tests:** `t_rules_window.py` – new case `wqnew`; `register_golden.json` written anew (the headings with "＋ New rule").
 
 ## Import 3.34.20 · 2026-10-29
 

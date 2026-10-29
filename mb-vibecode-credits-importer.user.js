@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.20
+// @version      3.34.21
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.20
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.20
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.21
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.21
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.20';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.21';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1537,6 +1537,16 @@
       "mapping.choiceDown": "Down",
       "mapping.choiceDel": "Remove this choice",
       "mapping.choiceAdd": "Add a choice",
+      "mapping.newRule": "New rule",
+      "mapping.newWordingTitle": "A wording rule of your own: words of a role (with its details) and the role credit they get",
+      "mapping.newQuestionTitle": "A question of your own: a word of a role, its role credit and the instruments to choose from",
+      "mapping.ownTitle": "Your rule {id} (stored in this browser with your changes)",
+      "mapping.ownHint": "Your own rule: stored in this browser with your changes and tried before the built-in rules; it goes with your changes when they are exported and imported.",
+      "mapping.ownTag": "yours",
+      "mapping.ownNote": "your rule",
+      "mapping.ownChange": "your rule",
+      "mapping.deleteOwn": "delete this rule",
+      "mapping.deleteOwnAsk": "Really delete your rule {id}?",
       "mapping.editTitle": "✎ Change rule {id} (your change, stored in this browser)",
       "mapping.editRuleTitle": "Change rule {id}",
       "mapping.editListTitle": "Change the entries of {id}",
@@ -2263,13 +2273,26 @@
   const rawQuestionRule = (raw, id) => (raw.QUESTION_RULES || []).find((x) => x.id === id) || null;
   const rawTypeQuestion = (raw, id) => (raw.TYPE_QUESTIONS || []).find((x) => x.id === id) || null;
   const rawDataRule = (raw, id) => rawWordingRule(raw, id) || rawQuestionRule(raw, id) || rawTypeQuestion(raw, id);
+  // [121b] (3.34.21) wording rules and questions of your own ("＋ New rule"; collected item 121b): W901 …, Q901 … – the
+  // built-in rules never take numbers from 900 on. Stored with your changes ({ set, was: {}, add: kind }), tried before the
+  // built-in rules, exported and imported with your changes.
+  const OWN_DATA_ID = /^[WQ]9\d\d$/;
+  const OWN_DATA_KEYS = { wording: 'WORDING_RULES', question: 'QUESTION_RULES' };
+  const isOwnDataId = (id) => OWN_DATA_ID.test(String(id || ''));
+  /** [121b] The kind of a rule of your own, or ''. */
+  const ownDataKind = (id, changes = mappingChanges) => {
+    const c = isOwnDataId(id) && changes.rules[id];
+    return c && OWN_DATA_KEYS[c.add] && id[0] === (c.add === 'wording' ? 'W' : 'Q') ? c.add : '';
+  };
   /** [3.34.4] The kind of a rule of the file: role, company, wording, question (which instrument), typeq (which type) – or ''. */
   function ruleKindOf(id, raw = MAPPING.raw) {
     if (rawRoleRule(raw, id)) return 'role';
     if (rawCompanyRule(raw, id)) return 'company';
     if (rawWordingRule(raw, id)) return 'wording';
     if (rawQuestionRule(raw, id)) return 'question';
-    return rawTypeQuestion(raw, id) ? 'typeq' : '';
+    if (rawTypeQuestion(raw, id)) return 'typeq';
+    // [121b] (3.34.21) a rule of your own
+    return ownDataKind(id);
   }
   const RULE_FIELDS = { role: ROLE_RULE_FIELDS, company: COMPANY_RULE_FIELDS, wording: WORDING_RULE_FIELDS, question: QUESTION_RULE_FIELDS, typeq: TYPE_QUESTION_FIELDS };
   /** A field of a built-in rule as in the file (undefined: the rule has none). */
@@ -2294,8 +2317,15 @@
   /** Your changes applied to a copy of the file's data (as in the file) → the effective register. */
   function effectiveRaw(changes = mappingChanges) {
     const raw = JSON.parse(JSON.stringify(MAPPING.raw));
+    const own = { wording: [], question: [] };
     for (const [id, c] of Object.entries(changes.rules || {})) {
       const set = (c && c.set) || {};
+      // [121b] (3.34.21) a rule of your own: before the built-in ones, in the order of their ids
+      const ok = ownDataKind(id, changes);
+      if (ok) {
+        own[ok].push({ id, ...JSON.parse(JSON.stringify(set)), note: '' });
+        continue;
+      }
       const r = rawRoleRule(raw, id);
       if (r) {
         ROLE_RULE_FIELDS.filter((f) => f in set).forEach((f) => { if (set[f] == null) delete r[f]; else r[f] = set[f]; });
@@ -2318,6 +2348,7 @@
       const d = rawDataRule(raw, id);
       if (d) RULE_FIELDS[ruleKindOf(id, raw)].filter((f) => f in set && set[f] != null).forEach((f) => { d[f] = JSON.parse(JSON.stringify(set[f])); });
     }
+    Object.entries(own).forEach(([kind, list]) => raw[OWN_DATA_KEYS[kind]].unshift(...list.sort((a, b) => a.id.localeCompare(b.id))));
     for (const [tid, c] of Object.entries(changes.lists || {})) {
       const L = EDITABLE_LISTS[tid];
       if (!L || !c) continue;
@@ -2355,11 +2386,18 @@
       pair[0] = e[0];
       refill(pair[1], e[1]);
     });
-    // [3.34.4] the wording rules and the questions, rule by rule
-    ['WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].forEach((key) => MAP[key].forEach((r) => {
-      const e = eff[key].find((x) => x.id === r.id);
-      if (e) refill(r, e);
-    }));
+    // [3.34.4] the wording rules and the questions, rule by rule; [121b] (3.34.21) in the order of the effective register, with
+    // the rules of your own (the objects of the built-in rules stay the same)
+    ['WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].forEach((key) => {
+      const now = new Map(MAP[key].map((r) => [r.id, r]));
+      const next = eff[key].map((e) => {
+        const r = now.get(e.id);
+        if (!r) return e;
+        refill(r, e);
+        return r;
+      });
+      MAP[key].splice(0, MAP[key].length, ...next);
+    });
     for (const L of Object.values(EDITABLE_LISTS)) {
       const now = MAP[L.key];
       const to = eff[L.key];
@@ -7405,7 +7443,8 @@
     resolveRowType(row);
     row.primaryText = pickPrimary(row);
     // [137d] (3.34.20) a word of a list of instruments (guess) stays an instrument: guessInstrument asks for it
-    if (m.fallback && !primaryIsValid(row) && !guess) {
+    // [121b] (3.34.21) also a word a question asks about (a question of your own: "keys" – keyboard, synthesizer …)
+    if (m.fallback && !primaryIsValid(row) && !guess && !questionRuleFor(row)) {
       // Not an MB instrument either: keep the role as "miscellaneous support" with the Discogs role as task.
       makeMiscRow(row, String(raw || base).replace(/\s*\[.*$/, '').trim());
     }
@@ -7994,17 +8033,22 @@
       S.ruleEdit && S.ruleEdit.id === id ? `<tr class="dci-redit-row"><td colspan="${span}">${ruleEditHtml(id)}</td></tr>` : ''}`;
     const listTools = (tid) => (EDITABLE_LISTS[tid] ? ` ${editToolsHtml(tid, { list: true })}` : '');
     const listForm = (tid) => (S.listEdit && S.listEdit.tid === tid ? listEditHtml(tid) : '');
-    const sect = (id, title, html, tid = '') => `<section data-rsect="${id}"${tid ? ` data-ledit-anchor="${tid}"` : ''}><h3>${esc(title)}${tid ? listTools(tid) : ''}</h3>${tid ? listForm(tid) : ''}<div class="dci-rules-wrap">${html}</div></section>`;
+    const sect = (id, title, html, tid = '', extra = '') => `<section data-rsect="${id}"${tid ? ` data-ledit-anchor="${tid}"` : ''}><h3>${esc(title)}${tid ? listTools(tid) : ''}${extra}</h3>${tid ? listForm(tid) : ''}<div class="dci-rules-wrap">${html}</div></section>`;
+    // [121b] (3.34.21) "＋ New rule" at the wording rules and the questions; the form of a rule not saved yet below the table
+    const newBtn = (kind) => ` <button type="button" class="dci-textbtn dci-rnew-btn" data-redit-new="${kind}" title="${esc(tr(kind === 'wording' ? 'mapping.newWordingTitle' : 'mapping.newQuestionTitle'))}">＋ ${esc(tr('mapping.newRule'))}</button>`;
+    const newForm = (kind, list, span) => (S.ruleEdit && S.ruleEdit.add === kind && !list.some((r) => r.id === S.ruleEdit.id)
+      ? `<tr class="dci-redit-row" data-rnew="${kind}"><td colspan="${span}">${ruleEditHtml(S.ruleEdit.id)}</td></tr>` : '');
+    const noteOf = (r) => r.note || (isOwnDataId(r.id) ? tr('mapping.ownNote') : '');
     const where = (w) => `${tr('rules.code')}: ${w}`;
     return [
       sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note'), ''])}<tbody>
         ${roles.map((r) => editRow(r.id, [r.id, r.re ? patternText(r.re) : tr('rules.special'), (r.types || []).join(', '), r.level || '', r.note || ''], r.hasCode, 7)).join('')}</tbody></table>`),
       // [3.34.4] ✎ at the wording rules and the questions too (collected item 121)
       sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code'), ''])}<tbody>
-        ${WORDING_RULES.map((r) => editRow(r.id, [r.id, r.phrases.join(' | '), r.credit, r.note, r.where || ''], false, 7)).join('')}</tbody></table>`),
+        ${WORDING_RULES.map((r) => editRow(r.id, [r.id, r.phrases.join(' | '), r.credit, noteOf(r), r.where || ''], false, 7)).join('')}${newForm('wording', WORDING_RULES, 7)}</tbody></table>`, '', newBtn('wording')),
       sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note'), ''])}<tbody>
-        ${QUESTION_RULES.map((q) => editRow(q.id, [q.id, q.base, q.options.join(' · '), q.credit, q.note], false, 7)).join('')}
-        ${TYPE_QUESTIONS.map((q) => editRow(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note], false, 7)).join('')}</tbody></table>`),
+        ${QUESTION_RULES.map((q) => editRow(q.id, [q.id, q.base, q.options.join(' · '), q.credit, noteOf(q)], false, 7)).join('')}${newForm('question', QUESTION_RULES, 7)}
+        ${TYPE_QUESTIONS.map((q) => editRow(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note], false, 7)).join('')}</tbody></table>`, '', newBtn('question')),
       sect('special', `${tr('rules.specialTitle')} (S001 … · ${where('SPECIAL_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')])}<tbody>${SPECIAL_RULES.map((r) => row(r.id, [r.id, r.note, r.where || ''])).join('')}</tbody></table>`),
       sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), ''])}<tbody>
         ${COMPANY_ROLES.map(([re, o]) => editRow(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.area || []), ...(o.artist || [])]).join(', '), o.level || ''], false, 6)).join('')}</tbody></table>`),
@@ -8105,10 +8149,9 @@
   }
 
   /** The fields of a change of a rule checked: only those of its kind, each of the right kind → { set } or { error }. */
-  function checkRuleSet(id, set) {
+  function checkRuleSet(id, set, kind = ruleKindOf(id)) {
     if (!set || typeof set !== 'object' || Array.isArray(set)) return { error: tr('mapping.badValue', { id, field: '–' }) };
-    const kind = ruleKindOf(id);
-    const fields = ruleFieldsOf(id);
+    const fields = RULE_FIELDS[kind] || [];
     const out = {};
     for (const [f, v] of Object.entries(set)) {
       const bad = { error: tr('mapping.badValue', { id, field: f }) };
@@ -8138,11 +8181,29 @@
   }
 
   /**
+   * [121b] (3.34.21) A rule of your own checked: the fields of its kind, all there (a wording rule: its words – the role
+   * credit may be empty –; a question: its word and instruments) → { set } or { error }.
+   */
+  function checkOwnRule(id, kind, set) {
+    const ok = checkRuleSet(id, set, kind);
+    if (ok.error) return ok;
+    const need = kind === 'wording' ? ['phrases'] : ['base', 'options'];
+    const miss = need.find((f) => !(f in ok.set));
+    if (miss) return { error: tr('mapping.badValue', { id, field: miss }) };
+    return { set: { ...ok.set, credit: ok.set.credit || '' } };
+  }
+
+  /**
    * A change of a rule into `changes`: fields equal to the built-in rule are left out (none left: the change goes). `was`:
    * the built-in value each field had when it was changed (kept from before, or from an imported file) – after an update
    * that changed the built-in rule the change is marked.
    */
-  function putRuleChange(changes, id, set, wasOld = {}) {
+  function putRuleChange(changes, id, set, wasOld = {}, add = '') {
+    // [121b] (3.34.21) a rule of your own: all its fields, nothing built in to compare with
+    if (add) {
+      changes.rules[id] = { set: JSON.parse(JSON.stringify(set)), was: {}, add };
+      return;
+    }
     const keep = {};
     const was = {};
     for (const [f, v] of Object.entries(set)) {
@@ -8248,6 +8309,12 @@
     return `${esc(fieldText(f, a))} → <strong>${esc(fieldText(f, b))}</strong>`;
   }
   const ruleFieldsText = (id, changes) => ruleFieldsOf(id).map((f) => `${tr(`mapping.field.${f}`)}: ${fieldText(f, changes ? fieldWith(changes, id, f) : builtinField(id, f))}`).join(' · ');
+  /** [121b] (3.34.21) The next id of a rule of your own: W901 …, Q901 … */
+  function nextOwnDataId(kind) {
+    const p = kind === 'wording' ? 'W' : 'Q';
+    const used = Object.keys(mappingChanges.rules).filter((id) => isOwnDataId(id) && id[0] === p).map((id) => Number(id.slice(1)));
+    return `${p}${Math.max(900, ...used) + 1}`;
+  }
 
   /** The fields of a change whose built-in value is no longer what it was when changed (['gone']: the rule is gone). */
   function ruleConflicts(id) {
@@ -8348,6 +8415,14 @@
     S.listEdit = null;
   }
 
+  /** [121b] (3.34.21) "＋ New rule" at the wording rules or the questions: an empty form (a role credit for a wording rule). */
+  function openNewRule(kind) {
+    const d = dataRuleDraft(kind, () => undefined);
+    if (kind === 'wording') d.creditMode = 'text';
+    S.ruleEdit = { id: nextOwnDataId(kind), draft: d, error: '', add: kind };
+    S.listEdit = null;
+  }
+
   /** The pattern field from words to a regular expression and back, when its kind is switched. */
   function switchPatternMode(d, to) {
     if (to === d.pmode) return;
@@ -8380,22 +8455,24 @@
 
   function saveRuleEdit() {
     const { id, draft: d } = S.ruleEdit;
-    const kind = ruleKindOf(id);
-    const ok = checkRuleSet(id, isDataKind(kind) ? dataRuleSet(kind, d) : patternRuleSet(id, d));
+    // [121b] (3.34.21) a rule of your own (new, or saved before)
+    const own = S.ruleEdit.add || ownDataKind(id);
+    const kind = own || ruleKindOf(id);
+    const ok = own ? checkOwnRule(id, kind, dataRuleSet(kind, d)) : checkRuleSet(id, isDataKind(kind) ? dataRuleSet(kind, d) : patternRuleSet(id, d));
     if (ok.error) {
       S.ruleEdit.error = ok.error;
       renderRulesBody();
       return;
     }
     const old = mappingChanges.rules[id];
-    putRuleChange(mappingChanges, id, ok.set, (old && old.was) || {});
+    putRuleChange(mappingChanges, id, ok.set, (old && old.was) || {}, own);
     S.ruleEdit = null;
     mappingChanged(id);
   }
 
   /** The buttons below a form of ✎: save, cancel, back to the built-in rule. */
   const ruleEditActions = (id) => `<div class="dci-urule-actions"><button type="button" data-redit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-redit-cancel>${esc(tr('common.cancel'))}</button>
-        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div>`;
+        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">${ownDataKind(id) ? `✕ ${esc(tr('mapping.deleteOwn'))}` : `↺ ${esc(tr('mapping.toBuiltin'))}`}</button>` : ''}</div>`;
 
   /** [3.34.4] ✎ at a wording rule, an instrument question or a type question. */
   function dataRuleEditHtml(id, kind) {
@@ -8431,14 +8508,16 @@
         <button type="button" class="dci-textbtn" data-redit-oadd${n < LIMITS.names ? '' : ' disabled'}>＋ ${esc(tr('mapping.choiceAdd'))}</button></div>
       <p class="dci-sub dci-redit-wide">${esc(tr('mapping.choicesHint'))}</p>`;
     }
-    return `<fieldset class="dci-redit dci-redit-${kind}" data-redit="${esc(id)}"><legend>${esc(tr('mapping.editTitle', { id }))}</legend>${body}
-      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}</p>
+    // [121b] (3.34.21) a rule of your own: no built-in rule to name
+    const own = (S.ruleEdit && S.ruleEdit.add) || ownDataKind(id);
+    return `<fieldset class="dci-redit dci-redit-${kind}" data-redit="${esc(id)}"><legend>${esc(tr(own ? 'mapping.ownTitle' : 'mapping.editTitle', { id }))}</legend>${body}
+      <p class="dci-sub dci-redit-wide">${esc(own ? tr('mapping.ownHint') : tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}</p>
       ${error ? `<p class="dci-redit-err dci-redit-wide" role="alert">${esc(error)}</p>` : ''}
       ${ruleEditActions(id)}</fieldset>`;
   }
 
   function ruleEditHtml(id) {
-    const kind = ruleKindOf(id);
+    const kind = ruleKindOf(id) || (S.ruleEdit && S.ruleEdit.id === id && S.ruleEdit.add) || '';
     if (isDataKind(kind)) return dataRuleEditHtml(id, kind);
     const { draft: d, error } = S.ruleEdit;
     const role = isRoleRuleId(id);
@@ -8494,7 +8573,10 @@
     const changed = list ? !!mappingChanges.lists[id] : !!mappingChanges.rules[id];
     const conflict = !list && ruleConflicts(id).length > 0;
     const t = tr(list ? 'mapping.editListTitle' : 'mapping.editRuleTitle', { id });
-    return `<span class="dci-redit-tools">${changed ? `<span class="dci-changed${conflict ? ' dci-conflict' : ''}" title="${esc(list ? tr('mapping.changedTitle') : tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}">${esc(tr(conflict ? 'mapping.conflictTag' : 'mapping.changedTag'))}</span>` : ''}<button type="button" class="dci-textbtn dci-redit-btn" data-${list ? 'ledit' : 'redit'}-open="${esc(id)}" title="${esc(t)}" aria-label="${esc(t)}">✎</button></span>`;
+    // [121b] (3.34.21) a rule of your own: "yours"
+    const own = !list && !!ownDataKind(id);
+    const tagTitle = list ? tr('mapping.changedTitle') : own ? tr('mapping.ownHint') : tr('mapping.builtinIs', { what: ruleFieldsText(id, null) });
+    return `<span class="dci-redit-tools">${changed ? `<span class="dci-changed${conflict ? ' dci-conflict' : ''}${own ? ' dci-own' : ''}" title="${esc(tagTitle)}">${esc(tr(conflict ? 'mapping.conflictTag' : own ? 'mapping.ownTag' : 'mapping.changedTag'))}</span>` : ''}<button type="button" class="dci-textbtn dci-redit-btn" data-${list ? 'ledit' : 'redit'}-open="${esc(id)}" title="${esc(t)}" aria-label="${esc(t)}">✎</button></span>`;
   }
 
   /** "Your changes of built-in rules": each change with before → after, ↺; conflicts after an update; ↺ all. */
@@ -8507,12 +8589,15 @@
       const c = mappingChanges.rules[id];
       const conf = ruleConflicts(id);
       const gone = conf[0] === 'gone';
-      const fields = gone ? '' : Object.keys(c.set).map((f) => `<span class="dci-mchg-f">${esc(tr(`mapping.field.${f}`))}: ${fieldChangeHtml(f, builtinField(id, f), c.set[f])}</span>`).join(' · ');
+      // [121b] (3.34.21) a rule of your own: what it is
+      const own = !!ownDataKind(id);
+      const fields = gone ? '' : own ? `<span class="dci-mchg-own">${esc(tr('mapping.ownChange'))}</span> ${Object.keys(c.set).map((f) => `<span class="dci-mchg-f">${esc(tr(`mapping.field.${f}`))}: ${esc(fieldText(f, c.set[f]))}</span>`).join(' · ')}`
+        : Object.keys(c.set).map((f) => `<span class="dci-mchg-f">${esc(tr(`mapping.field.${f}`))}: ${fieldChangeHtml(f, builtinField(id, f), c.set[f])}</span>`).join(' · ');
       const confHtml = gone ? `<span class="dci-mchg-conf">⚠ ${esc(tr('mapping.gone'))}</span>`
         : conf.length ? `<span class="dci-mchg-conf">⚠ ${esc(tr('mapping.conflict', { fields: conf.map((f) => `${tr(`mapping.field.${f}`)} ${fieldText(f, c.was[f])} → ${fieldText(f, builtinField(id, f))}`).join(', ') }))}</span>
           <button type="button" class="dci-textbtn" data-mchg-keep="${esc(id)}">${esc(tr('mapping.keepMine'))}</button>` : '';
       return `<li data-mchg="${esc(id)}"${conf.length ? ' class="dci-mchg-conflict"' : ''}><button type="button" class="dci-textbtn dci-ruleid" data-mchg-goto="${esc(id)}">${esc(id)}</button> ${fields} ${confHtml}
-        <button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr(conf.length ? 'mapping.discard' : 'mapping.toBuiltin'))}</button></li>`;
+        <button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">${own ? `✕ ${esc(tr('mapping.deleteOwn'))}` : `↺ ${esc(tr(conf.length ? 'mapping.discard' : 'mapping.toBuiltin'))}`}</button></li>`;
     };
     const listLi = (tid) => {
       const c = mappingChanges.lists[tid];
@@ -8527,7 +8612,7 @@
 
   /** ↺ a change (asked first – maintainer: "frag mich in zukunft ob ich wirklich einen reset machen möchte"). */
   function resetMappingChange(id) {
-    if (!confirm(tr('mapping.resetAsk', { id }))) return;
+    if (!confirm(tr(ownDataKind(id) ? 'mapping.deleteOwnAsk' : 'mapping.resetAsk', { id }))) return;
     delete mappingChanges.rules[id];
     delete mappingChanges.lists[id];
     if (S.ruleEdit && S.ruleEdit.id === id) S.ruleEdit = null;
@@ -8620,7 +8705,15 @@
     if (!data || typeof data !== 'object' || Array.isArray(data)) return { error: tr('rules.importBad') };
     const out = { from: '', rules: {}, lists: {}, own: [], off: [], skipped: [], mapping: '', script: '' };
     const skip = (id, why) => out.skipped.push({ id: String(id), why });
-    const takeRule = (id, set, was) => {
+    const takeRule = (id, set, was, add = '') => {
+      // [121b] (3.34.21) a rule of your own (W901 …, Q901 …)
+      if (add || isOwnDataId(id)) {
+        if (!isOwnDataId(id) || !OWN_DATA_KEYS[add] || id[0] !== (add === 'wording' ? 'W' : 'Q')) return skip(id, tr('mapping.skipUnknown'));
+        const own = checkOwnRule(id, add, set);
+        if (own.error) return skip(id, own.error);
+        out.rules[id] = { set: own.set, was: {}, add };
+        return null;
+      }
       if (!ruleKindOf(id)) return skip(id, tr('mapping.skipUnknown'));
       if (!ruleEditable(id)) return skip(id, tr('mapping.skipCode'));
       const ok = checkRuleSet(id, set);
@@ -8637,7 +8730,7 @@
       Object.assign(out, { from: 'changes', mapping: String(data.mapping || ''), script: String(data.script || '') });
       out.own = Array.isArray(data.own) ? data.own : [];
       out.off = Array.isArray(data.off) ? data.off : [];
-      Object.entries(data.rules && typeof data.rules === 'object' ? data.rules : {}).forEach(([id, c]) => takeRule(id, c && c.set, c && c.was));
+      Object.entries(data.rules && typeof data.rules === 'object' ? data.rules : {}).forEach(([id, c]) => takeRule(id, c && c.set, c && c.was, (c && c.add) || ''));
       Object.entries(data.lists && typeof data.lists === 'object' ? data.lists : {}).forEach(([tid, c]) => {
         if (!EDITABLE_LISTS[tid]) return skip(tid, tr('mapping.skipList'));
         const ok = checkListChange(tid, c);
@@ -8676,6 +8769,12 @@
         for (const r of Array.isArray(data[key]) ? data[key] : []) {
           if (!r || typeof r.id !== 'string') continue;
           const b = find(MAPPING.raw, r.id);
+          // [121b] (3.34.21) a rule of your own in a whole register (W901 …, Q901 …)
+          const ownKind = key === 'WORDING_RULES' ? 'wording' : key === 'QUESTION_RULES' ? 'question' : '';
+          if (!b && ownKind && isOwnDataId(r.id)) {
+            takeRule(r.id, Object.fromEntries(RULE_FIELDS[ownKind].filter((f) => f in r).map((f) => [f, r[f]])), null, ownKind);
+            continue;
+          }
           if (!b) {
             skip(r.id, tr('mapping.skipUnknown'));
             continue;
@@ -8722,7 +8821,7 @@
     const changes = replace ? { rules: {}, lists: {} } : JSON.parse(JSON.stringify({ rules: mappingChanges.rules, lists: mappingChanges.lists }));
     for (const [id, c] of Object.entries(imp.rules)) {
       const mine = changes.rules[id];
-      putRuleChange(changes, id, { ...(mine ? mine.set : {}), ...c.set }, { ...(mine ? mine.was : {}), ...c.was });
+      putRuleChange(changes, id, { ...(mine ? mine.set : {}), ...c.set }, { ...(mine ? mine.was : {}), ...c.was }, c.add || '');
     }
     for (const [tid, c] of Object.entries(imp.lists)) {
       const L = EDITABLE_LISTS[tid];
@@ -8778,7 +8877,8 @@
       const a = mappingChanges.rules[id];
       const b = plan.changes.rules[id];
       const kind = !a ? 'new' : !b ? 'removed' : 'changed';
-      const fields = ruleFieldsOf(id).filter((f) => encJson(fieldWith(mappingChanges, id, f)) !== encJson(fieldWith(plan.changes, id, f)));
+      // [121b] (3.34.21) a rule of your own that only the import has
+      const fields = (RULE_FIELDS[ruleKindOf(id) || ownDataKind(id, plan.changes)] || []).filter((f) => encJson(fieldWith(mappingChanges, id, f)) !== encJson(fieldWith(plan.changes, id, f)));
       const inc = imp.rules[id];
       const conflict = inc && imp.from === 'changes' ? Object.keys(inc.set).filter((f) => f in inc.was && encJson(inc.was[f]) !== encJson(builtinField(id, f))) : [];
       li(kind, id, `${fields.map((f) => `${esc(tr(`mapping.field.${f}`))} ${fieldChangeHtml(f, fieldWith(mappingChanges, id, f), fieldWith(plan.changes, id, f))}`).join(' · ')}
@@ -9294,6 +9394,15 @@
           else openListEdit(lo.dataset.leditOpen);
           renderRulesBody();
           const f = el.querySelector('[data-ledit-text]');
+          if (f) f.focus({ preventScroll: true });
+        }
+        // [121b] (3.34.21) "＋ New rule" (again: closed)
+        const rn = t.closest('[data-redit-new]');
+        if (rn) {
+          if (S.ruleEdit && S.ruleEdit.add === rn.dataset.reditNew && !mappingChanges.rules[S.ruleEdit.id]) S.ruleEdit = null;
+          else openNewRule(rn.dataset.reditNew);
+          renderRulesBody();
+          const f = el.querySelector('[data-rnew] [data-redit] textarea, [data-rnew] [data-redit] input[type=text]');
           if (f) f.focus({ preventScroll: true });
         }
         if (t.closest('[data-redit-save]')) saveRuleEdit();
@@ -13214,6 +13323,8 @@
     if (splitArtTasks(p).length > 1) return true;
     const m = mapRole(p.base, p.mods);
     if (m.rule && m.rule !== 'R096' && !m.fallback) return true;
+    // [121b] (3.34.21) a word a question asks about ("keys" of a question of your own: keyboard, synthesizer …)
+    if (ruleOn('S005') && !p.mods.length && QUESTION_RULES.some((q) => ruleOn(q.id) && q.base === norm(p.base))) return true;
     const lt = typesFor('recording').find((l) => norm(l.name) === 'instrument');
     const root = lt ? primaryRootOf(lt) : null;
     // [3.21.2] a translation: the candidates of its English term
@@ -24884,6 +24995,9 @@
       #dci-rules .dci-redit-btn:hover { border-color: #8e88c2; background: #f4f3fb; }
       #dci-rules .dci-changed { padding: 0 calc(var(--u, 1px) * 6); border-radius: 999px; background: #e6e3f5; color: #3e3873; font-size: calc(var(--u, 1px) * 11); white-space: nowrap; }
       #dci-rules .dci-changed.dci-conflict { background: #fdecd2; color: #7a4a00; }
+      #dci-rules .dci-changed.dci-own, #dci-rules .dci-mchg-own { background: #e2f1e5; color: #1e6b35; }
+      #dci-rules .dci-mchg-own { padding: 0 calc(var(--u, 1px) * 6); border-radius: 999px; font-size: calc(var(--u, 1px) * 11); white-space: nowrap; }
+      #dci-rules h3 .dci-rnew-btn { font-weight: normal; font-size: calc(var(--u, 1px) * 12); margin-left: calc(var(--u, 1px) * 6); }
       #dci-rules .dci-codetag { font-size: calc(var(--u, 1px) * 11); }
       #dci-rules tr.dci-rchanged > td { background: #f7f5fd; }
       #dci-rules tr.dci-redit-row > td { background: #faf9fd; }

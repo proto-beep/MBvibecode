@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.20 | – |
+| 2026-10-29 | 3.34.18 – 3.34.21 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.21
+
+#### Added
+
+- **Wording rules and questions of your own** (collected item 121b; maintainer: "so wie du schreibst"): "＋ New rule" in "Mapping rules" at the wording rules (words of a role and the role credit they get) and at the questions (a word, its role credit and the instruments to choose). They are W901 …, Q901 …, tried before the built-in rules, marked "yours", stored with your changes and exported and imported with them (also in the whole register); "✕ delete this rule" asks first. A word of a question of your own is read in texts too ("Key Man – keys") and asks even when MusicBrainz has no instrument of that name.
 
 ### Import 3.34.20
 
