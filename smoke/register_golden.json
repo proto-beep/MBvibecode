@@ -2073,7 +2073,7 @@
    "new rule"
   ],
   "questions": [
-   "Instrument questions (Q001 … · Code: QUESTION_RULES)",
+   "Instrument questions (Q001 … · Code: QUESTION_RULES) ＋ New rule",
    "On Rule Role Choices Role credit Note",
    "Q001 bass electric bass guitar · double bass · acoustic bass guitar bass Plain \"Bass\": which bass?",
    "Q002 guitar electric guitar · acoustic guitar guitar Plain \"Guitar\": which guitar?",
@@ -2309,7 +2309,7 @@
    "T033 Texts (3.21.0): ℗ and © together (\"P + © 2023 X\", \"℗ & ©\", \"(P) & (C)\") give both, one sign only that one; after the name a code such as \"DDD\", a catalogue number after \"·\", \"All rights reserved\" and (3.30.9) a year (\"© & ℗ TUM Records Oy 2021\") are left out TEXT_PC_SIGNS, TEXT_PC_STRIP"
   ],
   "wording": [
-   "Role credit wording (W001 … · Code: WORDING_RULES)",
+   "Role credit wording (W001 … · Code: WORDING_RULES) ＋ New rule",
    "On Rule Role Role credit Note Code",
    "W001 upright bass | bass upright upright bass Upright bass is a double bass; the Discogs word stays as role credit wordingRuleFor, roleCreditFor",
    "W002 contrabass | bass contrabass | contrabass bass contrabass Contrabass is a double bass; the Discogs word stays as role credit wordingRuleFor, roleCreditFor",

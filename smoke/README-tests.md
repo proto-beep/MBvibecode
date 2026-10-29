@@ -257,6 +257,9 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     Q002 + "resonator guitar" in the row's question at once, an empty word refused; Q003's choices removed,
                                 #     moved, added (table, stored), a choice without a type refused; export; import skips a field that cannot
                                 #     be changed and a wrong choice, a whole register takes over Q005 turned round; ↺ all
+                                #   wqnew: 3.34.21: "＋ New rule" at the wording rules (W901: "fretless bass" → credit, first in its table, "yours") and at
+                                #     the questions (Q901 "keys": keyboard · synthesizer · piano – a pasted "Key Man – keys" asks); your changes,
+                                #     export (with "add"), import (Q902 new, W903 of the wrong kind skipped, W904 from a whole register), deleted
                                 #   mappingio: 3.33.1: export of the whole register = the mapping file byte for byte (with a change: one line
                                 #     differs), export of my changes (format, versions) and the clipboard; pasted import with a preview (new,
                                 #     list, own rule, switch, skipped: unknown / code / wrong pattern / list, a conflict), "Take over", "Keep
