@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.26
+// @version      3.34.27
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.26
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.26
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.27
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.27
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.26';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.27';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1662,9 +1662,9 @@
       "instrGuess.ask": "“{word}” is no instrument of MusicBrainz – did you mean:",
       "instrGuess.chosen": "“{word}” is no instrument of MusicBrainz – chosen:",
       "instrGuess.other": "{other} “{word}”",
-      "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{word}”.",
+      "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{credit}”.",
       "instrGuess.misc": "miscellaneous support (task “{word}”)",
-      "instrGuess.noneOr": "“{word}” is no instrument of MusicBrainz, and none is like it – as written:",
+      "instrGuess.noneOr": "“{word}” is no instrument of MusicBrainz, and none is like it:",
       "voiceCredit.from": "From the text:",
       "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
@@ -2661,6 +2661,8 @@
     // [3.34.19] collected item 137a (maintainer: "gibt es eine nachhaltige möglichkeit folgendes zu interpretieren", Go Kurosawa
     // "soft shakes" on Bandcamp; "ja passt", "ja okay")
     { id: 'S051', where: 'TEXT.parse (roleBlock, readBlock, linkOf, chainOf, playedList, PLAYS_LIST)', note: 'Instruments and the name they are played by: lines that are only instruments or voices (one or several each, empty lines between them), then a line "are played, mixed and produced by X" (also "played by X", "All instruments played by X"): each instrument a row of X, the other verbs roles of their own ("Mixed By", "Produced By"), "played" none (T049). In one line too: "Electric guitar, drums and piano are played by X", "X plays guitar, bass and drums". Lines without an instrument before the first one are read as usual; words that are no instrument MusicBrainz knows are listed as not recognized. Words like "are", "is", "were" before a verb are never a part of the role (T050: "are played by X" is "Played By", before "Played By [Are]")' },
+    // [3.34.27] maintainer: "bitte nicht vergessen, instrumente und role credits immer kleinschreiben außer bei eigennamen"
+    { id: 'S052', where: 'lowerCredit, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing)', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). Off: tasks all in lower case and "other instruments" credited as written, as before' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -3677,15 +3679,16 @@
     }).join(', ');
   }
 
-  /** Options for the role credit field: everything exactly as written on Discogs. */
   /**
    * Suggestions for the role credit field: never the Discogs role itself when it only names the MusicBrainz
    * role in another word form ("Produced By" for producer), never "by" or Discogs brackets (S009, S010).
+   * [S052] (3.34.27) Written like the role credit ("cased": creditCasing of the relationship type; "Acoustic" → acoustic,
+   * "Horns Arranged" → horns arranged, "Fender Rhodes" stays); before: exactly as written on Discogs.
    */
-  function roleCreditOptions(raw, base, mods, suggestion, typeName = '') {
+  function roleCreditOptions(raw, base, mods, suggestion, typeName = '', cased = (t) => t) {
     const out = [];
     const push = (x) => {
-      const t = typo(withoutBy(String(x || '').replace(/\s*\[.*?\]/g, '').trim()));
+      const t = typo(withoutBy(cased(String(x || '').replace(/\s*\[.*?\]/g, '').trim())));
       if (!t || out.includes(t) || (typeName && sameWording(t, typeName))) return;
       out.push(t);
     };
@@ -7150,6 +7153,31 @@
     return vocabCache;
   }
 
+  /**
+   * [S052] (3.34.27) Role credits and tasks are written in lower case, proper names keep their capitals (maintainer:
+   * "instrumente und role credits immer kleinschreiben außer bei eigennamen"): the proper names of MusicBrainz's instruments
+   * ("Hammond", "Rhodes") and models with digits ("TR-808") stay, every other word is written small ("Chaims" → chaims,
+   * "Sticks-And-Stones" → sticks-and-stones, "Tour Manager" → tour manager). Off: all in lower case, as before (tasks) or as
+   * written (the credit of "other instruments").
+   */
+  function lowerCredit(text, { off = 'lower' } = {}) {
+    const t = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!ruleOn('S052')) return off === 'lower' ? norm(t) : t;
+    return caseCredit(t, instrumentVocabulary(), { lowerUnknown: true });
+  }
+
+  /**
+   * [S011, S034] How the details of a role become its role credit for a relationship type: artwork in lower case, the kind
+   * of a voice in lower case, otherwise the words MusicBrainz knows in lower case and the others as written. [S052]
+   * (3.34.27) Also used for the suggestions of the role credit field, so that they are written like the credit.
+   */
+  function creditCasing(lt) {
+    const vocab = instrumentVocabulary();
+    const art = !!lt && ART_TYPES.includes(norm(lt.name));
+    const vocal = !!lt && norm(lt.name) === 'vocal' && ruleOn('S034');
+    return (raw) => (!ruleOn('S011') ? raw : art ? norm(raw) : caseCredit(raw, vocab, { lowerUnknown: vocal }));
+  }
+
   /** Artwork relationships: their role credits are written entirely in lower case. */
 
   function roleCreditFor(row) {
@@ -7184,10 +7212,11 @@
     const wr = wordingRuleFor(row);
     if (wr) return wr.credit;
     // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
-    if (row.instrGuess && row.instrGuess.chose !== 'misc') return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? row.instrGuess.word : '';
+    // [S052] (3.34.27) in lower case ("Chaims" → chaims)
+    if (row.instrGuess && row.instrGuess.chose !== 'misc') return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? guessCredit(row.instrGuess) : '';
     // [137f] (3.34.25) an instrument technician with its instrument: MusicBrainz says "guitar technician" – no role credit but
     // "tuner" ("Piano Tuner": piano, credited "piano tuner")
-    if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(norm(row.creditFromRole)) : '';
+    if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole)) : '';
     // [Q011] (3.34.20) "Voice": plain vocals take no role credit (also until it is answered)
     if (row.askVoice) {
       const tq = typeQuestionFor(row);
@@ -7195,13 +7224,11 @@
       if (!o || o.plain) return '';
     }
     const vocab = instrumentVocabulary();
-    const lt0 = currentLinkType(row);
-    const art = lt0 && ART_TYPES.includes(norm(lt0.name));
     const raw = suggestRoleCredit(row.mods, [...(row.consumed || []), ...(row.flagMods || []), ...repeatedDetails(row)], row.primaryText);
-    // [S034] (3.28.2) the kind of a voice is written in lower case ("Vocals [Screams]" → screams, "[Clean]" → clean)
-    const vocal = !!lt0 && norm(lt0.name) === 'vocal' && ruleOn('S034');
-    const details = raw ? (!ruleOn('S011') ? raw : art ? norm(raw) : caseCredit(raw, vocab, { lowerUnknown: vocal })) : ''; // [S011]
-    const task = row.creditFromRole ? withoutBy(norm(row.creditFromRole)) : '';
+    // [S011]; [S034] (3.28.2) the kind of a voice is written in lower case ("Vocals [Screams]" → screams, "[Clean]" → clean)
+    const details = raw ? creditCasing(currentLinkType(row))(raw) : '';
+    // [S052] (3.34.27) the task in lower case, proper names of MusicBrainz's instruments and models kept
+    const task = row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole)) : '';
     // [S009] No Discogs brackets in role credits: the details come before the role ("tour coordinator")
     if (task) return details ? (ruleOn('S009') ? `${details} ${task}` : `${task} [${details}]`) : task;
     if (details) return details;
@@ -12925,6 +12952,16 @@
     refreshRowDetails(row);
   }
 
+  /** [S052] (3.34.27) The role credit of "other instruments" for a word MusicBrainz does not know: in lower case ("chaims"). */
+  function guessCredit(g) {
+    return lowerCredit(g.word, { off: 'written' });
+  }
+
+  /** [S052] (3.34.27) The task of "miscellaneous support" for such a word, as the row gets it (roleCreditFor). */
+  function guessTask(g) {
+    return withoutBy(lowerCredit(g.word));
+  }
+
   /** [137d] (3.34.26) "miscellaneous support (task “…”)" chosen in the question of a word MusicBrainz does not know. */
   function guessMisc(row) {
     const g = row.instrGuess;
@@ -15307,7 +15344,8 @@
       </label>`);
       return parts.join('');
     }
-    const options = roleCreditOptions(row.raw, row.base, row.mods, row.roleCreditSuggest, lt ? lt.name : '');
+    // [S052] (3.34.27) the suggestions written like the role credit
+    const options = roleCreditOptions(row.raw, row.base, row.mods, row.roleCreditSuggest, lt ? lt.name : '', ruleOn('S052') ? creditCasing(lt) : undefined);
     const fromDiscogs = !row.manual && !!norm(row.roleCredit) && norm(row.roleCredit) === norm(row.roleCreditSuggest);
     parts.push(`<label class="dci-credit"><span class="dci-credit-name">${esc(tr('roleCredit.label'))}${fromDiscogs ? ` <span class="dci-src dci-src-dg" title="${esc(trSrc('roleCredit.fromDiscogs'))}">${esc(trSrc('roleCredit.fromTag'))}</span>` : ''}</span>
         <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(tr('roleCredit.fromDiscogs')) : ''}">
@@ -17324,11 +17362,12 @@
     if (!g || row.level === 'skip') return '';
     const misc = g.chose === 'misc';
     // [137d] (3.34.26) and "miscellaneous support (task “…”)" as the last answer
-    const miscBtn = g.misc ? `<button type="button" class="dci-textbtn" data-act="instr-misc" aria-pressed="${misc}">${esc(tr('instrGuess.misc', { word: g.word }))}</button>` : '';
+    const miscBtn = g.misc ? `<button type="button" class="dci-textbtn" data-act="instr-misc" aria-pressed="${misc}">${esc(tr('instrGuess.misc', { word: guessTask(g) }))}</button>` : '';
     const pick = (name, label) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}" aria-pressed="${!misc && norm(row.primaryText) === norm(name)}">${esc(label)}</button>`;
-    const otherBtn = g.other ? [pick(g.other, tr('instrGuess.other', { other: g.other, word: g.word }))] : [];
+    // [S052] (3.34.27) the buttons name the role credit and the task as they are set (in lower case); the question the word as written
+    const otherBtn = g.other ? [pick(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : [];
     if (!g.options.length) {
-      if (!g.misc) return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.none', { word: g.word, other: g.other }))}</div>`;
+      if (!g.misc) return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.none', { word: g.word, other: g.other, credit: guessCredit(g) }))}</div>`;
       return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.noneOr', { word: g.word }))} ${[...otherBtn, miscBtn].join(' · ')}</div>`;
     }
     const chosen = misc || (primaryIsValid(row) && !!norm(row.primaryText));
@@ -17508,8 +17547,8 @@
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
       const g = row.instrGuess;
       if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(row) && norm(row.primaryText))) {
-        parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: g.word }) }] : []),
-          ...(g.misc ? [{ value: '\u0000misc', text: tr('instrGuess.misc', { word: g.word }) }] : [])]));
+        parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: guessCredit(g) }) }] : []),
+          ...(g.misc ? [{ value: '\u0000misc', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])]));
       }
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);

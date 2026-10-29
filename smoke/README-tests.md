@@ -95,14 +95,17 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     by Go Kurosawa": a row per instrument, Mixed By, Produced By, no Played By, "Chaims" not recognized
                                 #     (S051); in one line "… are played by Jane Roe", "Bass Man plays bass and drums"; "are mixed by" (T050)
                                 #   instrguess: 3.34.20: Bongo → bongos, Woodblock → wood block … (T001); "Chaims" asks "did you mean: chimes ·
-                                #     wind chimes · tubular bells · other instruments “Chaims”" (also in the compact line), each choice and its
-                                #     credit; "Buddha machine" other instruments credited at once; "Voice" asks (Q011), "use “voice” as role
+                                #     wind chimes · tubular bells · other instruments “chaims”" (also in the compact line), each choice and its
+                                #     credit; "Buddha machine" other instruments credited "buddha machine" at once (3.34.27: in lower case);
+                                #     "Voice" asks (Q011), "use “voice” as role
                                 #     credit" after a voice typed in
                                 #   voicetech: 3.34.25: Discogs "Voice" asks four answers (spoken vocals “voice” chosen), "Vocals" plain; "Technician
                                 #     [Guitar]" → instrument technician · guitar, "Drum Technician" → drums (drum set), no credit; "[Chaims]" asks
-                                #   unknownask: 3.34.26: Discogs "Chaims" asks with "miscellaneous support (task “Chaims”)" last – chosen: misc with the
+                                #   unknownask: 3.34.26: Discogs "Chaims" asks with "miscellaneous support (task “chaims”)" last – chosen: misc with the
                                 #     task, then chimes: an instrument row again; "Sticks-And-Stones": other instruments at once; "Barry Guy – double
-                                #     bass, sticks-and-stones" – other instruments “sticks-and-stones”; more unknown words than instruments: not recognized
+                                #     bass, sticks-and-stones" – other instruments “sticks-and-stones”; more unknown words than instruments: not recognized;
+                                #     3.34.27 (S052): credits and tasks in lower case ("chaims", "sticks-and-stones"), the field's suggestions too ("Tambourine
+                                #     [Additional, Toy]": toy · … · toy tambourine), a proper name of MB's instruments kept ("Hammond manager")
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,

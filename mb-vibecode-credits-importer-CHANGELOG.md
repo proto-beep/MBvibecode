@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.26 | – |
+| 2026-10-29 | 3.34.18 – 3.34.27 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.27
+
+#### Changed
+
+- **Role credits and tasks in lower case, proper names keep their capitals** (rule S052; maintainer: "bitte nicht vergessen, instrumente und role credits immer kleinschreiben außer bei eigennamen"): a word MusicBrainz does not know as an instrument is credited in lower case – other instruments “chaims”, “sticks-and-stones” (before: “Chaims”, “Sticks-And-Stones” as written on Discogs) –, and the question names the role credit and the task as they are set ("miscellaneous support (task “chaims”)"). Tasks keep the proper names of MusicBrainz's instruments ("Hammond manager"; before: all in lower case). The suggestions of the role credit field are written like the role credit ("toy tambourine", "additional"; before: "Toy Tambourine", "Additional" as on Discogs). Words in the brackets of Discogs that MusicBrainz does not know stay as written, as before (S011: mostly makes and models, "Fender Rhodes").
 
 ### Import 3.34.26
 
