@@ -1,6 +1,6 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -900,6 +900,63 @@ def case_companies():
         finally:
             H.ENTRIES_VIEW = 'legacy'
             H.BROWSER.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_remember():
+    """Credits Importer 3.36.0 (146; maintainer: "ja genau, soll alles wieder kommen"): the matrix of a remembered release after the
+    page is loaded again (⚙ Settings → Cache on): Multi Man's lines in the order dragged (drums first), Part Man's event ② on the
+    tracks set in the opened event (2–3), Solo Man "One row each" – all as before; staged the same (20)."""
+    H.REMEMBER = True
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    sl = lambda bl: [(x['head'], x['ev'], [l['role'] for l in x['lines']]) for x in (bl or [])]
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+
+            def load():
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1500)
+            load()
+            multi = sec_sel(pg, 'Multi Man')
+            ids = {l['role']: l['line'] for l in pg.evaluate(BLOCKS, 'Multi Man')[0]['lines']}
+            pg.evaluate(DROP_AT, [f'{multi} tr.dci-em-line[data-line="{ids["drums (drum set)"]}"] .dci-em-grip', f'{multi} tr.dci-em-line[data-line="{ids["electric guitar"]}"]', False])
+            pg.wait_for_timeout(300)
+            part = sec_sel(pg, 'Part Man')
+            pg.click(f'{part} th.dci-em-ev >> nth=1 >> [data-act=em-evopen]')
+            pg.wait_for_timeout(300)
+            pg.click(f'{part} .dci-em-evedit [data-f=em-evtrack][data-i="2"]')
+            pg.wait_for_timeout(300)
+            pg.click(f'{sec_sel(pg, "Solo Man")} [data-act=em-split]')
+            pg.wait_for_timeout(1600)
+            before = [sl(pg.evaluate(BLOCKS, n)) for n in ('Multi Man', 'Part Man', 'Solo Man')]
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            load()
+            after = [sl(pg.evaluate(BLOCKS, n)) for n in ('Multi Man', 'Part Man', 'Solo Man')]
+            print('vorher:', before)
+            print('nachher:', after)
+            results.append(before == after and before[0][0][2][0] == 'drums (drum set)' and before[1][0][1][1] == '② Recording tracks 2–3' and len(before[2]) == 2)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            n = len(pg.evaluate(ADDED))
+            print('gestaged:', n)
+            results.append(n == 20)
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

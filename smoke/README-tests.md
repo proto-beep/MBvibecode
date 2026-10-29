@@ -333,6 +333,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, s
                                 #     reload, nothing stored), on (stored at once, rows and pool back after a reload, the log), the source changed
                                 #     (changes of gone or changed lines left out, the message), the number 0 (off) and 50, another release
                                 #     forgotten with 1, "Forget all remembered releases …" with the space shown
+                                #   cache2: 3.36.1: a row removed with ✕ stays removed, a pasted text keeps its own state (the Discogs one stays),
+                                #     switched on in a tab opened while off: the message "Load the page again", nothing written over, back after it
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
@@ -387,6 +389,8 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   evhead: 3.35.4 (AE-3): ▸ opens an event below its block – a track added (focus kept), the last track stays,
                                 #     all (two events one), a date typed / none / of the pool, Release and back (Mastered By stays, the note, ok),
                                 #     ✕, staged together with the date
+                                #   remember: 3.36.0: a remembered release – the order dragged, an opened event's tracks, one row each: back after the
+                                #     page is loaded again, staged the same
                                 #   companies: 3.35.5 (AE-4): a place ("Recorded At") and a label (℗) as matrices, publishing on works keeps its
                                 #     rows, compact, staged the same as legacy, a date typed into the place's event
 

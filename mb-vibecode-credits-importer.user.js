@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.36.0
+// @version      3.36.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1738,6 +1738,8 @@
       "em.evDateLabel": "Date of event {n}",
       "em.badDate": "“{text}” is no date (2024-08-14, 2024-01 – 2024-07, 2024)",
       "remember.full": "The browser’s storage for musicbrainz.org is full: releases used longest ago were forgotten, and this one could not be stored completely.",
+      "remember.hold": "This release was remembered before, but this tab did not read it (it was opened while nothing was remembered). Load the page again to get it back – until then nothing of this release is stored, so it is not written over.",
+      "remember.reload": "Load the page again",
       "remember.lost.one": "{n} remembered change no longer fits the source (its line there is gone or changed) – it was left out.",
       "remember.lost.other": "{n} remembered changes no longer fit the source (their lines there are gone or changed) – they were left out.",
       "remember.forgot.one": "Forgotten: everything remembered for {n} release.",
@@ -1792,6 +1794,7 @@
       "log.emSplit": "{name}: each instrument a block of its own",
       "log.emEvDate": "Date of an event ({n} rows): {date}",
       "log.rememberFull": "The browser’s storage is full: not all of this release could be remembered",
+      "log.rememberError": "What was remembered for this release could not be taken over ({text}) – the import is as the source gives it",
       "log.rememberDropped": "The release used longest ago was forgotten (the browser’s storage is full)",
       "log.rememberForgot.one": "Forgotten: everything remembered for {n} release",
       "log.rememberForgot.other": "Forgotten: everything remembered for {n} releases",
@@ -7714,6 +7717,8 @@
       const before = JSON.stringify([r.types, r.level, r.primaryText, r.roleCredit, r.ruleId]);
       remapRow(r);
       if (JSON.stringify([r.types, r.level, r.primaryText, r.roleCredit, r.ruleId]) !== before) n++;
+      // [3.36.1] what the rules made of a row is no change of yours (not remembered as one)
+      rebaseFresh(r);
     }
     log('info', 'rulesChanged', { what, n });
     // [S046] (3.31.8) performers on tracks: at once, both ways
@@ -8261,6 +8266,8 @@
     return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 50;
   })();
   const remembering = () => S.rememberOn && S.rememberMax > 0;
+  // [3.36.1] whether this tab read the stores of the release when it was opened (switched on later: they were not read)
+  S.rememberRead = remembering();
   // the stores of one release (the key ends with its MBID), and those of all releases in one (keyed by the MBID)
   const REL_PREFIXES = ['date-pool', 'track-pool', 'date-matrix', 'about-off', 'bc-off', 'src-off', 'works-skip', 'remember'];
   const REL_KEY_RE = new RegExp(`^dci-(${REL_PREFIXES.join('|')}):([0-9a-f-]{36})$`);
@@ -8277,7 +8284,7 @@
     return remembering() ? (readJson('localStorage', key, {}) || {}) : { ...(relMem[key] || {}) };
   }
   function relMapWrite(key, all) {
-    if (!remembering()) {
+    if (!remembering() || S.rememberHold) {
       relMem[key] = all;
       return;
     }
@@ -8286,7 +8293,9 @@
 
   /** A store of this release written, only while remembering; the browser's storage full – the oldest releases go first. */
   function relWrite(key, value) {
-    if (!remembering()) return;
+    // [3.36.1] switched on in a tab that did not read what is stored for the release: nothing is written over it until the page
+    // is loaded again (S.rememberHold)
+    if (!remembering() || S.rememberHold) return;
     const empty = value == null || (Array.isArray(value) && !value.length);
     for (let i = 0; i < 30; i++) {
       try {
@@ -8316,8 +8325,21 @@
         if (m && !known.has(m[2])) more.add(m[2]);
       }
     } catch (e) { /* storage blocked */ }
-    REL_MAPS.forEach((key) => Object.keys(readJson('localStorage', key, {}) || {}).forEach((id) => { if (!known.has(id)) more.add(id); }));
-    return [...index, ...[...more].map((id) => [id, 0])];
+    // [3.36.1] those not in the index by the time the maps have for them (else 0), the most recent first
+    const at = new Map();
+    REL_MAPS.forEach((key) => Object.entries(readJson('localStorage', key, {}) || {}).forEach(([id, v]) => {
+      if (known.has(id)) return;
+      more.add(id);
+      const t = Number((v && (v.at || v.t)) || 0);
+      if (t > (at.get(id) || 0)) at.set(id, t);
+    }));
+    return [...index, ...[...more].map((id) => [id, at.get(id) || 0]).sort((a, b) => b[1] - a[1])];
+  }
+
+  /** [3.36.1] Whether something is stored for a release. */
+  function hasRemembered(id) {
+    if (REL_PREFIXES.some((p) => { try { return window.localStorage.getItem(`dci-${p}:${id}`) !== null; } catch (e) { return false; } })) return true;
+    return REL_MAPS.some((key) => !!(readJson('localStorage', key, {}) || {})[id]);
   }
 
   /** This release used (first in the index; once a minute); beyond S.rememberMax releases the oldest go. */
@@ -8384,6 +8406,9 @@
 
   /** [146] "Forget all remembered releases": every store of every release goes (the lists of created works stay). */
   function forgetAllRemembered() {
+    // [3.36.1] a store of this release waiting for its second does not bring it back
+    clearTimeout(rememberTimer);
+    rememberTimer = null;
     const n = rememberedReleases().length;
     rememberedReleases().forEach(([id]) => forgetRelease(id));
     REL_MAPS.forEach((k) => writeJson('localStorage', k, null));
@@ -14235,7 +14260,9 @@
    */
   // not stored: what a row is in this import (its id, its entry, open or not) and what MusicBrainz or "Stage: …" made of it –
   // rows already in MusicBrainz are skipped anew, the stage choice is not remembered
-  const ROW_OWN_FIELDS = new Set(['id', 'artistKey', 'tracksOpen', 'existingChecked', 'existingAll', 'levelBeforeSkip', 'scopeLevel']);
+  // [3.36.1] also what a supplement marked (differ, confirmedBy, suppTook) and what is open for editing (redrawLater, dateEdit)
+  const ROW_OWN_FIELDS = new Set(['id', 'artistKey', 'tracksOpen', 'existingChecked', 'existingAll', 'levelBeforeSkip', 'scopeLevel',
+    'differ', 'confirmedBy', 'suppTook', 'redrawLater', 'dateEdit']);
   const encField = (v) => JSON.stringify(v, (k, x) => (x instanceof Set ? { $set: [...x] } : x instanceof Map ? { $map: [...x] } : x));
   const decField = (t) => JSON.parse(t, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)
     ? (Array.isArray(x.$set) ? new Set(x.$set) : Array.isArray(x.$map) ? new Map(x.$map) : x) : x));
@@ -14272,9 +14299,30 @@
     });
   }
 
+  /** [3.36.1] The media chosen for this import, as text (remembered tracks only fit the same choice). */
+  const mediaSig = () => (S.mediaSel ? JSON.stringify([[...S.mediaSel.media].sort((a, b) => a - b), !!S.mediaSel.release]) : '');
+
+  /**
+   * [3.36.1] After the rules mapped a row again: the fields they set count as the source's (S.freshRows) – a level, instrument
+   * or role credit set by hand stays a change.
+   */
+  const REMAP_FIELDS = ['types', 'notes', 'work', 'primaryCands', 'consumed', 'defaultLevel', 'creditFromRole', 'ruleId', 'linkTypeId', 'translated',
+    'translatedBase', 'base', 'flags', 'typeOptions', 'roleCreditSuggest', 'instrGuess', 'creditLowered', 'creditPhrases'];
+  function rebaseFresh(row) {
+    const f = S.freshRows && S.freshRows.get(row.id);
+    if (!f) return;
+    const cur = rowFieldsOf(row);
+    const keys = [...REMAP_FIELDS, ...(row.levelTouched ? [] : ['level']), ...(row.primaryTouched ? [] : ['primaryText']), ...(row.roleCreditTouched ? [] : ['roleCredit'])];
+    keys.forEach((k) => {
+      if (k in cur) f.f[k] = cur[k];
+      else delete f.f[k];
+    });
+  }
+
   /** [146] What is remembered for this release now. */
   function rememberSnapshot() {
     const rows = [];
+    const here = new Set(S.rows.map((r) => r.id));
     for (const r of S.rows) {
       if (r.supp) continue;
       const fresh = S.freshRows.get(r.id);
@@ -14284,12 +14332,16 @@
         new Set([...Object.keys(cur), ...Object.keys(fresh.f)]).forEach((k) => {
           if (cur[k] !== fresh.f[k]) d[k] = k in cur ? cur[k] : null;
         });
+        // [3.36.1] a level chosen by hand always (also when it is the one of the source: a row already in MusicBrainz taken in again)
+        if (r.levelTouched && fresh.f.levelTouched !== 'true') d.level = cur.level;
         rows.push(Object.keys(d).length ? { k: fresh.k, i: r.id, d } : { k: fresh.k, i: r.id });
         continue;
       }
       const a = S.artists.get(r.artistKey);
       if (a) rows.push({ e: entryIdOf(a), b: r.manual ? '' : rowBaseKey(r), i: r.id, f: cur });
     }
+    // [3.36.1] rows of the source removed with ✕
+    S.freshRows.forEach((f, id) => { if (!here.has(id)) rows.push({ k: f.k, i: id, x: 1 }); });
     const used = [...S.artists.values()].filter((a) => S.rows.some((r) => r.artistKey === a.key && !r.supp));
     const entries = used.map((a) => {
       const x = { e: entryIdOf(a) };
@@ -14299,7 +14351,39 @@
       return x;
     }).filter((x) => Object.keys(x).length > 1);
     const manual = used.filter((a) => a.manual).map((a) => ({ e: entryIdOf(a), a: { name: a.name, company: !!a.company, other: !!a.other, entityType: a.entityType || null, mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '' } }));
-    return { v: 1, at: Date.now(), src: S.importSrc || '', rows, entries, manual };
+    return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual };
+  }
+
+  /** [146] (3.36.1) At the end of an import (the last one started): what is remembered taken over, then this one remembered. */
+  function finishRemember(seq) {
+    if (seq !== importSeq) return;
+    // what the lookups of the entries made of the rows counts as the source's; a row changed by hand meanwhile (a level, an
+    // instrument, a credit or a role credit set) keeps the first state, so that its change is one
+    const TOUCH = ['levelTouched', 'primaryTouched', 'roleCreditTouched', 'creditTouched', 'typeAnswer'];
+    const byId = new Map(S.rows.map((r) => [r.id, r]));
+    (S.freshRows || new Map()).forEach((f, id) => {
+      const r = byId.get(id);
+      if (!r) return;
+      const cur = rowFieldsOf(r);
+      if (TOUCH.every((k) => cur[k] === f.f[k])) f.f = cur;
+    });
+    if (remembering() && !S.rememberHold) {
+      // what is remembered never stops an import: taken over or not at all
+      const before = S.rows;
+      const entries = new Map(S.artists);
+      try {
+        restoreRemembered();
+      } catch (e) {
+        console.warn('[Credits-Importer] remembered', e);
+        S.rows = before;
+        S.artists = entries;
+        log('warn', 'rememberError', { text: e.message });
+      }
+      renderGroups();
+      renderWorks();
+      refresh();
+    }
+    S.rememberReady = true;
   }
 
   /** [146] Stored soon after a change (a second without changes), and when the page goes. */
@@ -14313,8 +14397,14 @@
   function saveRememberNow() {
     clearTimeout(rememberTimer);
     rememberTimer = null;
-    if (!S.rememberReady || !remembering() || !S.freshRows) return;
-    relWrite(REMEMBER_ROWS_KEY, rememberSnapshot());
+    if (!S.rememberReady || !remembering() || !S.freshRows || S.rememberHold) return;
+    // [3.36.1] one snapshot per source (another source of the release keeps its own; the 3 used last)
+    const snap = rememberSnapshot();
+    const stored = readJson('localStorage', REMEMBER_ROWS_KEY, null);
+    const by = stored && stored.v === 2 && stored.by ? { ...stored.by } : stored && stored.v === 1 && stored.src ? { [stored.src]: stored } : {};
+    by[snap.src] = snap;
+    const keep = Object.entries(by).sort((a, b) => (b[1].at || 0) - (a[1].at || 0)).slice(0, 3);
+    relWrite(REMEMBER_ROWS_KEY, { v: 2, by: Object.fromEntries(keep) });
   }
 
   /**
@@ -14323,8 +14413,16 @@
    * hand), entries added by hand too; the order is the remembered one, new lines of the source after the rows of their entry.
    */
   function restoreRemembered() {
-    const snap = relRead(REMEMBER_ROWS_KEY, null);
+    const stored = relRead(REMEMBER_ROWS_KEY, null);
+    const snap = stored && stored.v === 2 && stored.by ? stored.by[S.importSrc || ''] : stored && stored.v === 1 ? stored : null;
     if (!snap || snap.v !== 1 || !Array.isArray(snap.rows) || snap.src !== (S.importSrc || '')) return;
+    // [3.36.1] other media chosen than then: the tracks stay as the source gives them now
+    const sameMedia = (snap.media || '') === mediaSig();
+    const fits = (r) => {
+      r.tracks = new Set([...(r.tracks || [])].filter((i) => i < S.mbTracks.length && inSelection(i)));
+      if (r.suggested instanceof Set) r.suggested = new Set([...r.suggested].filter((i) => r.tracks.has(i)));
+      return r.tracks.size > 0 || !['recording', 'work'].includes(r.level);
+    };
     const byKey = new Map();
     const bases = new Set();
     S.rows.forEach((r) => {
@@ -14340,9 +14438,13 @@
       S.artists.set(a.key, a);
       entries.set(m.e, a);
     }
-    const set = (r, fields) => Object.entries(fields).forEach(([k, t]) => {
+    // rows that got a reference to another row from what is remembered (its id then)
+    const refRows = new Set();
+    const set = (r, fields, keepTracks = false) => Object.entries(fields).forEach(([k, t]) => {
+      if (keepTracks && (k === 'tracks' || k === 'suggested')) return;
       if (t === null) delete r[k];
       else r[k] = decField(t);
+      if (k === 'splitFrom' || k === 'mxOrigin') refRows.add(r);
     });
     const out = [];
     const used = new Set();
@@ -14357,8 +14459,20 @@
           continue;
         }
         used.add(r);
+        // [3.36.1] removed with ✕: it stays removed
+        if (x.x) {
+          changed++;
+          continue;
+        }
         if (x.d) {
-          set(r, x.d);
+          const keep = { tracks: new Set(r.tracks), suggested: new Set(r.suggested || []) };
+          set(r, x.d, !sameMedia);
+          if (!fits(r)) Object.assign(r, keep);
+          // a row already in MusicBrainz taken in again by hand: not skipped anew
+          if (r.levelTouched && r.existingAll) {
+            delete r.existingAll;
+            delete r.levelBeforeSkip;
+          }
           changed++;
         }
         ids.set(x.i, r.id);
@@ -14372,6 +14486,10 @@
       }
       const r = { id: nextId('r'), artistKey: a.key, tracksOpen: false };
       set(r, x.f || {});
+      if (!fits(r)) {
+        lost++;
+        continue;
+      }
       ids.set(x.i, r.id);
       out.push(r);
       changed++;
@@ -14392,9 +14510,14 @@
     [...S.rows, ...out].forEach((r) => {
       if (done.has(r.artistKey)) return;
       done.add(r.artistKey);
-      order.push(...byEntry.get(r.artistKey));
+      order.push(...(byEntry.get(r.artistKey) || []));
     });
-    order.forEach((r) => { if (r.splitFrom && ids.has(r.splitFrom)) r.splitFrom = ids.get(r.splitFrom); });
+    // the rows a row refers to by its id (a split, a copy of the date matrix): their new ids, or none (they are gone)
+    refRows.forEach((r) => ['splitFrom', 'mxOrigin'].forEach((k) => {
+      if (!r[k]) return;
+      if (ids.has(r[k])) r[k] = ids.get(r[k]);
+      else delete r[k];
+    }));
     S.rows = order;
     for (const e of snap.entries || []) {
       const a = entries.get(e.e);
@@ -14403,7 +14526,8 @@
       if (e.by) S.emBy.set(a.key, e.by);
       if (e.match && e.match.mbid) {
         Object.assign(a, { mbid: e.match.mbid, mbName: e.match.mbName || '', mbComment: e.match.mbComment || '', status: e.match.status || 'manual', matchTouched: true });
-        if (a.company && e.match.entityType) setCompanyEntityType(a, e.match.entityType);
+        // [3.36.1] the entity type only: its rows came back with their types (setCompanyEntityType would set them anew)
+        if (a.company && e.match.entityType) a.entityType = e.match.entityType;
       }
     }
     if (changed || lost) {
@@ -14640,6 +14764,8 @@
           renderWorks();
         }
       }
+      // [3.36.1] the rows as the source gave them – before the entries are looked up (changes made meanwhile are changes)
+      if (seq === importSeq) rememberFresh();
       if (S.artists.size) {
         setBusy('busy.artists');
         await resolveArtists();
@@ -14652,21 +14778,15 @@
         if (!S.source.readsTrackLists) applyNotesTrackCredits();
         if (S.trackPool.length !== pooled) renderDates();
         await computePublisherEvidence();
-        // [146] (3.36.0) the rows as the source gave them; what was changed in them before, if the release is remembered
-        if (seq === importSeq) {
-          rememberFresh();
-          if (remembering()) {
-            restoreRemembered();
-            renderGroups();
-            renderWorks();
-            refresh();
-          }
-          S.rememberReady = true;
-        }
+        // [146] (3.36.0) what was changed in the rows before, if the release is remembered
+        finishRemember(seq);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
         autoSearchWorks();
         runArtistWorks();
+      } else {
+        // [3.36.1] also a release without credits at the source (rows added by hand)
+        finishRemember(seq);
       }
       setBusy('');
     } catch (e) {
@@ -16241,7 +16361,15 @@
       r.dateKeyed = true;
       moved.push(r);
     }
-    const mx = moved.some((r) => matrixDateForLevel(r));
+    // [3.36.1] the date matrix applied again for each of their date groups (before: only the first)
+    const groups = new Set();
+    let mx = false;
+    moved.forEach((r) => {
+      const g = r.date && r.date.mx ? dateGroupOf(r) : null;
+      if (g && groups.has(g.key)) return;
+      if (g) groups.add(g.key);
+      if (matrixDateForLevel(r)) mx = true;
+    });
     emEventMoved(a, moved.length ? moved : rows);
     // a row that stayed before and is in the event again: no note
     const now = moved.find((r) => r.level !== 'skip');
@@ -18964,6 +19092,8 @@
       const n = S.trackPool.length;
       S.trackPool = [];
       S.trackForm = null;
+      // [3.36.1] the works left out go too (they would come back with the pool stored)
+      S.workGroupsStash = null;
       saveTrackPool();
       log('info', 'trackPoolCleared', { n });
       if (others) otherPoolKeys('dci-track-pool:').forEach((k) => writeJson('localStorage', k, null));
@@ -24446,7 +24576,7 @@
       case 'name-use': {
         const h = (artist.nameHits || []).find((x) => x.mbid === btn.dataset.mbid);
         if (!h) break;
-        Object.assign(artist, { status: 'manual', mbid: h.mbid, mbName: h.name, mbComment: h.disambiguation || '', candidates: [h], editing: false, error: '' });
+        Object.assign(artist, { status: 'manual', mbid: h.mbid, mbName: h.name, mbComment: h.disambiguation || '', candidates: [h], editing: false, error: '', matchTouched: true });
         if (artist.company) setCompanyEntityType(artist, h.entityType);
         log('ok', 'artistManual', { name: artist.name, mb: h.name });
         if (artist.company) rerenderGroup(artist);
@@ -24459,7 +24589,7 @@
       case 'alias-use': {
         const h = (artist.aliasHits || []).find((x) => x.c.mbid === btn.dataset.mbid);
         if (!h) break;
-        Object.assign(artist, { status: 'manual', mbid: h.c.mbid, mbName: h.c.name, mbComment: h.c.disambiguation || '', viaAlias: h.alias, candidates: [h.c], editing: false, error: '' });
+        Object.assign(artist, { status: 'manual', mbid: h.c.mbid, mbName: h.c.name, mbComment: h.c.disambiguation || '', viaAlias: h.alias, candidates: [h.c], editing: false, error: '', matchTouched: true });
         log('ok', 'artistLinkedAlias', { name: artist.name, mb: artist.mbName, alias: h.alias });
         updateGroupHeader(artist);
         refresh();
@@ -24838,6 +24968,11 @@
         break;
       case 'settings-reset':
         if (confirm(tr('settings.resetAsk', { topic: tr(`settings.t.${btn.dataset.topic}`) }))) resetTopic(btn.dataset.topic);
+        break;
+      case 'remember-reload':
+        // [3.36.1] the page loaded again: what is remembered for the release comes back
+        saveRememberNow();
+        window.location.reload();
         break;
       case 'remember-forget': {
         // [146] (3.36.0) all releases forgotten (asked first)
@@ -26683,13 +26818,11 @@
       S.rememberMax = v;
       writeJson('localStorage', REMEMBER_MAX_KEY, v === 50 ? null : v);
       log('info', 'settingValue', { what: tr('settings.rememberMax'), value: String(v) });
-      // 0 is off (maintainer: "0=aus")
+      // 0 is off (maintainer: "0=aus"); [3.36.1] fewer releases: the oldest go when something is stored next (not at each step
+      // of the field – going down to 0 passed 1)
+      S.rememberTouched = 0;
       if (!v && S.rememberOn) setRemember(false);
-      else {
-        S.rememberTouched = 0;
-        if (remembering()) touchRemembered();
-        renderSettings();
-      }
+      else renderSettings();
     } else if (k === 'work-groups') {
       // [145b] (3.35.6) the works of the source as track groups
       S.workGroupsOn = el.checked;
@@ -26762,7 +26895,15 @@
     }
     writeJson('localStorage', REMEMBER_ON_KEY, on ? true : null);
     log('info', 'settingValue', { what: tr('settings.remember'), value: tr(on ? 'common.on' : 'common.off') });
-    if (on) rememberNow();
+    // [3.36.1] this tab did not read what is stored for the release (opened while off): it is not written over – loading the
+    // page again brings it back; until then, nothing of this release is stored
+    if (on && !S.rememberRead && hasRemembered(releaseMbid)) {
+      S.rememberHold = true;
+      showMessage('info', 'remember.hold', {}, { action: { act: 'remember-reload', label: 'remember.reload' } });
+    } else if (on) {
+      S.rememberRead = true;
+      rememberNow();
+    }
     renderSettings();
   }
 
@@ -26774,7 +26915,8 @@
     saveTrackPool();
     if (S.dm) saveMatrix();
     if (S.srcOff.size) saveSrcOff();
-    if (S.aboutOff) relWrite(ABOUT_KEY, { stash: S.aboutStash || { pool: [], cells: [] } });
+    // [3.36.1] the dates taken out with the about text: only when this tab holds them (else they are stored already)
+    if (S.aboutOff && S.aboutStash) relWrite(ABOUT_KEY, { stash: S.aboutStash });
     if (S.worksSkip) relWrite(WORKS_SKIP_KEY, true);
     REL_MAPS.forEach((k) => {
       const mine = relMem[k] && relMem[k][releaseMbid];

@@ -21,7 +21,7 @@ def case_compact():
        mark is gone.
     E) A skipped row: grey, with ✕ – out of the dashboard; the next import brings it back. [3.30.1] Its type stays on the
        line (grey), so the level does not move.
-    F) "Compact" remembered after reloading; ⚙ Settings → General ([3.29.2] Appearance) has the same switch: "Full" – every row with its fields,
+    F) "Compact" remembered after reloading (3.36.1: Guitar Guy's row removed with ✕ stays removed – the release is remembered); ⚙ Settings → General ([3.29.2] Appearance) has the same switch: "Full" – every row with its fields,
        nothing stored.
     G) A jump to an incomplete row (› in the summary) opens it ([3.31.5] › until it gets there: the row of the publisher
        Ghost Pub, not in MusicBrainz, is incomplete too and shows in its entry – item 112)."""
@@ -113,7 +113,8 @@ def case_compact():
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
         pg.wait_for_timeout(800)
-        f2 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), line('Guitar Guy') is not None]
+        # [3.36.1] Guitar Guy's row removed with ✕ stays removed (the release is remembered in the tests: harness.REMEMBER)
+        f2 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), line('Bass Man') is not None, line('Guitar Guy') is None]
         H.open_settings(pg, 'appearance')  # [3.29.2] the view is under "Appearance" now
         f3 = pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-act=view]')].map(b => [b.dataset.view, b.getAttribute('aria-pressed')])")
         pg.click('[data-el=settings] [data-act=view][data-view=full]')
@@ -123,7 +124,7 @@ def case_compact():
         pg.click('[data-el=settings] [data-act=view][data-view=compact]')
         pg.wait_for_timeout(300)
         print('F) kompakt:', f1, '| neu geladen:', f2, '| Einstellungen:', f3, '| voll dort:', f4)
-        results.append(f1 == [True, False, '"compact"'] and f2 == [True, True] and f3 == [['compact', 'true'], ['full', 'false']] and f4 == [False, None, 'false', True])
+        results.append(f1 == [True, False, '"compact"'] and f2 == [True, True, True] and f3 == [['compact', 'true'], ['full', 'false']] and f4 == [False, None, 'false', True])
         pg.click('.dci-head [data-act=settings-open]')
         # G) a new row ("+ Another role") is open; closed and incomplete, a jump to it (› in the summary) opens it again
         pg.click('section.dci-group:has(.dci-gname strong:text-is("Bass Man")) [data-act=add-role]')

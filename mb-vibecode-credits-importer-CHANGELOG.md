@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.36.0 | – |
+| 2026-10-29 | 3.34.18 – 3.36.1 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -92,6 +92,23 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.36.1
+
+#### Fixed
+
+- **Remember per release, after a review of 3.36.0:**
+  - switched on in a tab opened while off, it no longer writes over what was remembered for the release (the tab had not read it) – a message offers "Load the page again" to get it back;
+  - each source of a release keeps its own remembered state (a pasted text no longer replaces the changes of the Discogs import);
+  - a row removed with ✕ stays removed (it came back as a new line of the source);
+  - changes made while the entries are looked up after an import are remembered too (they counted as the source's);
+  - a release without credits at the source (rows added by hand) is remembered too;
+  - a row already in MusicBrainz taken in again by hand is not skipped anew; other media chosen than then: the tracks as the source gives them now; what the mapping rules make of a row is not pinned as a change of yours; supplements' marks and fields being edited are not stored;
+  - the MusicBrainz entity chosen by hand from the names found ("use") and from aliases is remembered too; a company's remembered entity type no longer sets its rows' types anew;
+  - "Releases to remember" forgets the oldest releases when something is stored next (stepping the field down to 0 passed 1 and forgot all others); "Forget all …" is not undone by a store waiting for its second; releases stored before 3.36.0 count by when they were used;
+  - an error while taking over what is remembered no longer stops the import.
+- **The works as track groups:** clearing the track pool while the works are left out no longer brings them back with the pool stored.
+- **An event opened, its level changed:** the date matrix is applied again for each date group of the rows (before: only the first).
 
 ### Import 3.36.0 – milestone “Remember per release”
 

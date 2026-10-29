@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, bridge, ui305, reset, notice, cache (3.36.0) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, bridge, ui305, reset, notice, cache (3.36.0), cache2 (3.36.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -613,7 +613,8 @@ def case_cache():
     D) The source changed (Photo Guy no longer credited, Bass Man "Electric Bass"): what was changed of their lines is left out
        ("2 remembered changes no longer fit the source"), the pool date is there.
     E) The number 0: the switch goes off; ticked again: 50.
-    F) Another release stored before (a pool of its own, used earlier): with 1 release to remember it is forgotten.
+    F) Another release stored before (a pool of its own, used earlier): with 1 release to remember it is forgotten – when something
+       is stored next (3.36.1; not at each step of the field).
     G) "Forget all remembered releases …" (asked): nothing of the release stored any more, "0 releases"."""
     import re
     H.REMEMBER = False
@@ -714,9 +715,16 @@ def case_cache():
             pg.fill('.dci-set-pane [data-set=remember-max]', '1')
             pg.press('.dci-set-pane [data-set=remember-max]', 'Tab')
             pg.wait_for_timeout(400)
+            # [3.36.1] the oldest go when something is stored next (not at each step of the field)
+            f0 = pg.evaluate("(id) => localStorage.getItem('dci-date-pool:' + id) !== null", other)
+            pg.click('[data-act=pool-new]')
+            pg.fill('[data-f=pf-name]', 'Next')
+            pg.fill('[data-f=pf-by]', '2020')
+            pg.click('[data-act=pool-save]')
+            pg.wait_for_timeout(400)
             f1 = pg.evaluate("(id) => [localStorage.getItem('dci-date-pool:' + id), JSON.parse(localStorage.getItem('dci-remember-index') || '[]').map(x => x[0])]", other)
-            print('F) anderes Release:', f1)
-            results.append(f1[0] is None and f1[1] == [H.REL])
+            print('F) anderes Release: noch da', f0, '| nach dem Speichern:', f1)
+            results.append(f0 and f1[0] is None and f1[1] == [H.REL])
             pg.click('.dci-set-pane [data-act=remember-forget]')
             pg.wait_for_timeout(500)
             g1 = pg.evaluate(CACHE)
@@ -727,6 +735,81 @@ def case_cache():
             b.close()
     finally:
         H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_cache2():
+    """Credits Importer 3.36.1 (the review of 3.36.0): remembered per release – removed rows, another source, a tab opened while off.
+    A) On: Bass Man credited "fretless", Photo Guy's row removed (✕) – the page loaded again: "fretless", Photo Guy without a row
+       (before: his row came back as a new line of the source).
+    B) A pasted text imported (another source of the release), the page loaded again: Bass Man still "fretless" – the text has a
+       snapshot of its own (before: it replaced the one of Discogs).
+    C) Off, the page loaded again (nothing read: Bass Man without credit); switched on: a message "This release was remembered
+       before …" with "Load the page again"; a credit typed meanwhile is not stored (what was remembered is not written over);
+       loaded again: "fretless" back."""
+    H.REMEMBER = True
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level, (tr.querySelector('[data-f=role-credit]') || { value: '-' }).value]) : null; }"""
+    row_of = "(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); const t = g && g.querySelector('tr.dci-row'); return t ? t.dataset.row : ''; }"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def load():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+
+        def again():
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            load()
+
+        def credit(text):
+            r = pg.evaluate(row_of, 'Bass Man')
+            pg.fill(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', text)
+            pg.press(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', 'Tab')
+        load()
+        credit('fretless')
+        photo = pg.evaluate(row_of, 'Photo Guy')
+        pg.click(f'tr.dci-row[data-row="{photo}"] [data-act=remove-row]')
+        pg.wait_for_timeout(1600)
+        again()
+        a1 = (pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'))
+        print('A) neu geladen:', a1)
+        results.append(a1[0] == [['recording', 'fretless']] and not a1[1])
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Jane Roe – guitar')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1600)
+        jane = pg.evaluate(ROWS, 'Jane Roe')
+        again()
+        b1 = pg.evaluate(ROWS, 'Bass Man')
+        print('B) Text:', jane, '| neu geladen:', b1)
+        results.append(bool(jane) and b1 == [['recording', 'fretless']])
+        H.open_settings(pg, 'cache')
+        pg.click('.dci-set-pane [data-set=remember]')
+        pg.wait_for_timeout(300)
+        again()
+        c0 = pg.evaluate(ROWS, 'Bass Man')
+        H.open_settings(pg, 'cache')
+        pg.click('.dci-set-pane [data-set=remember]')
+        pg.wait_for_timeout(300)
+        msg = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /remembered before/.test(t))")
+        credit('typed meanwhile')
+        pg.wait_for_timeout(1600)
+        again()
+        c1 = pg.evaluate(ROWS, 'Bass Man')
+        print('C) aus, neu geladen:', c0, '| Meldung:', msg, '| an, neu geladen:', c1)
+        results.append(c0 == [['recording', '']] and bool(msg) and 'Load the page again' in msg[0] and c1 == [['recording', 'fretless']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
