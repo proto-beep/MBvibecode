@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.27
+// @version      3.34.28
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.27
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.27
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.28
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.28
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.27';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.28';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -778,6 +778,7 @@
       "cl.unmapped": "no MusicBrainz type",
       "cl.instrAsk": "{name}: which instrument?",
       "cl.instrGuess": "“{word}”: did you mean",
+      "cl.caseSmall": "written small: {words}",
       "cl.typeAsk": "type to choose",
       "cl.pickList": "choose …",
       "cl.dateSugg": "date suggested",
@@ -1665,6 +1666,14 @@
       "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{credit}”.",
       "instrGuess.misc": "miscellaneous support (task “{word}”)",
       "instrGuess.noneOr": "“{word}” is no instrument of MusicBrainz, and none is like it:",
+      "caseNote.small": "Written small – unknown to MusicBrainz:",
+      "caseNote.word": "{word} → {small}",
+      "caseNote.keep": "keep “{word}”",
+      "caseNote.always": "always write “{word}”",
+      "caseNote.alwaysTitle": "Adds “{word}” to the proper names of the register (T052, ⚙ Mapping rules): it keeps its capitals in every role credit from now on.",
+      "caseNote.kept": "Kept as written:",
+      "caseNote.smallAgain": "write small again",
+      "caseNote.clTitle": "The role credit writes words small that MusicBrainz does not know – keep a proper name as written",
       "voiceCredit.from": "From the text:",
       "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
@@ -1681,6 +1690,7 @@
       "instrAsk.otherwise": "(otherwise it stays “{credit}”, without a role credit; with another choice the role credit is “{credit}”)",
       "instrAsk.otherwiseTr": "(otherwise it stays “{credit}”; “{word}” is a translation, so there is no role credit)",
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
+      "log.caseAlways": "“{word}” added to the proper names (T052): it keeps its capitals in role credits",
       "rules.questions": "Instrument questions",
       "rules.options": "Choices",
       "rules.question": "Question",
@@ -2251,6 +2261,7 @@
     T038: { key: 'TITLE_SMALL_WORDS', shape: 'set' },
     T045: { key: 'RIGHTS_SOCIETIES', shape: 'pairs', reload: true },
     T048: { key: 'ROLE_WORDS', shape: 'words' },
+    T052: { key: 'PROPER_WORDS', shape: 'words' },
   };
   const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
@@ -2662,9 +2673,9 @@
     // "soft shakes" on Bandcamp; "ja passt", "ja okay")
     { id: 'S051', where: 'TEXT.parse (roleBlock, readBlock, linkOf, chainOf, playedList, PLAYS_LIST)', note: 'Instruments and the name they are played by: lines that are only instruments or voices (one or several each, empty lines between them), then a line "are played, mixed and produced by X" (also "played by X", "All instruments played by X"): each instrument a row of X, the other verbs roles of their own ("Mixed By", "Produced By"), "played" none (T049). In one line too: "Electric guitar, drums and piano are played by X", "X plays guitar, bass and drums". Lines without an instrument before the first one are read as usual; words that are no instrument MusicBrainz knows are listed as not recognized. Words like "are", "is", "were" before a verb are never a part of the role (T050: "are played by X" is "Played By", before "Played By [Are]")' },
     // [3.34.27] maintainer: "bitte nicht vergessen, instrumente und role credits immer kleinschreiben außer bei eigennamen"
-    { id: 'S052', where: 'lowerCredit, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing)', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). Off: tasks all in lower case and "other instruments" credited as written, as before' },
+    { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
-    { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
+    { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes"); from 3.34.28 with S052 only proper names (MusicBrainz\'s and T052) and models with digits' },
   ];
 
   /**
@@ -2962,6 +2973,9 @@
       show: () => ({ pairs: [['words', ROLE_WORDS.join(' · ')]] }) },
     { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area',
       show: () => ({ pattern: TEXT_PLACE_WORDS }) },
+    // [3.34.28] maintainer: ""Buddha" ist natürlich ein eigenname also großgeschrieben"
+    { id: 'T052', where: 'PROPER_WORDS, properSpelling, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). "always write “…”" at a row adds a word',
+      show: () => ({ words: PROPER_WORDS }) },
     { id: 'T049', where: 'TEXT_PLAY_VERBS, chainOf, PLAYS_LIST', note: 'Texts (3.34.19): the verbs that give instruments and voices to a name (S051) – "Guitar, bass and drums are played by X", "X plays guitar, bass …"; they give no role of their own then',
       show: () => ({ pattern: TEXT_PLAY_VERBS }) },
     { id: 'T050', where: 'TEXT_AUX_WORDS, byRole, chainOf', note: 'Texts (3.34.19): words before a verb that are no part of the role – "are played by X" is "Played By", not "Played By [Are]"; "were mixed by X" is "Mixed By" (S051)',
@@ -2976,6 +2990,8 @@
 
   // [T002] (S011)
   const GENERIC_WORDS = MAP.GENERIC_WORDS;
+  // [T052] (3.34.28) Proper names MusicBrainz's instruments do not hold, written with their capitals in role credits (S052)
+  const PROPER_WORDS = MAP.PROPER_WORDS;
 
   // [T003] Artwork relationships: their role credits are written entirely in lower case (S011)
   const ART_TYPES = MAP.ART_TYPES;
@@ -3617,11 +3633,14 @@
    * names decide where they can (lower case there: generic; capitalized there, like "Rhodes" in
    * "Rhodes piano": proper name). Words MB does not know are kept as Discogs writes them.
    */
-  function caseWord(word, vocab) {
+  function caseWord(word, vocab, keep = null) {
     const w = word.toLowerCase();
     if (/\d/.test(word)) return word;  // models such as Jupiter-8 or TR-808
+    // [T052] (3.34.28) a proper name of the register or one kept at the row (also a whole "Sticks-And-Stones")
+    const own = properSpelling(w, keep);
+    if (own) return own;
     // "Tenor-Sax", "Bass-Clarinet": each part on its own
-    if (word.includes('-')) return word.split('-').map((part) => (part ? caseWord(part, vocab) : part)).join('-');
+    if (word.includes('-')) return word.split('-').map((part) => (part ? caseWord(part, vocab, keep) : part)).join('-');
     const generic = GENERIC_WORDS.has(w) || vocab.lower.has(w) || vocab.lower.has(w.replace(/e?s$/, ''))
       || (w.length >= 3 && [...vocab.lower].some((v) => v.length > w.length && v.startsWith(w)));
     if (generic && !vocab.proper.has(w)) return w;
@@ -3629,12 +3648,51 @@
     return word;
   }
 
+  /** [T052] (3.34.28) The spelling of a proper name: kept at the row ("keep “Buddha”"), else of the register's list; '' if none. */
+  function properSpelling(w, keep = null) {
+    if (keep && Object.prototype.hasOwnProperty.call(keep, w)) return keep[w];
+    return PROPER_WORDS.find((p) => p.toLowerCase() === w) || '';
+  }
+
+  /** [S052] (3.34.28) A word known as written small: generic (T002), in MusicBrainz's instruments, a small English word. */
+  const SMALL_ENGLISH = new Set(['a', 'an', 'and', 'or', 'of', 'the', 'in', 'on', 'for', 'with', 'by', 'to', 'at', 'from', '&']);
+  function knownWord(w, vocab) {
+    return GENERIC_WORDS.has(w) || SMALL_ENGLISH.has(w) || vocab.lower.has(w) || vocab.lower.has(w.replace(/e?s$/, ''))
+      || (w.length >= 3 && [...vocab.lower].some((v) => v.length > w.length && v.startsWith(w)));
+  }
+
+  /**
+   * [S034, S035, S052] A word in lower case unless it is a proper name – of MusicBrainz's instruments, of the register (T052)
+   * or kept at the row – or a model with digits; the parts of "Fender-Rhodes" each on their own.
+   */
+  function lowerWord(word, vocab, keep = null) {
+    if (/\d/.test(word)) return word;
+    const w = word.toLowerCase();
+    const own = properSpelling(w, keep);
+    if (own) return own;
+    if (word.includes('-')) return word.split('-').map((part) => (part ? lowerWord(part, vocab, keep) : part)).join('-');
+    return vocab.proper.has(w) ? vocab.proper.get(w) : w;
+  }
+
+  /**
+   * [S052] (3.34.28) While a row's role credit is made (roleCreditFor): the words written small that MusicBrainz does not know
+   * ("Buddha" → buddha) – the row says so –, and the words kept as written at the row ({ buddha: 'Buddha' }).
+   */
+  let caseCtx = null;
+
   /** Applies the word rule to a credit text, keeping separators and brackets. */
   // [S011] which words stay capitalised (instrument models) and which are written in lower case
-  function caseCredit(text, vocab = { lower: new Set(), proper: new Map() }, { lowerUnknown = false } = {}) {
+  function caseCredit(text, vocab = { lower: new Set(), proper: new Map() }, { lowerUnknown = false, quiet = false } = {}) {
     // [S034, S035] (3.28.2) lowerUnknown: also the words MusicBrainz does not know are written in lower case (only its
-    // proper names and models with digits keep their capitals)
-    return String(text || '').replace(/[^\s,\[\]()/]+/g, (w) => (lowerUnknown && !/\d/.test(w) && !vocab.proper.has(w.toLowerCase()) ? w.toLowerCase() : caseWord(w, vocab)));
+    // proper names and models with digits keep their capitals); [S052] (3.34.28) they are noted for the row unless quiet
+    const keep = caseCtx && caseCtx.keep;
+    const note = !quiet && caseCtx ? caseCtx.lowered : null;
+    return String(text || '').replace(/[^\s,\[\]()/]+/g, (w) => {
+      if (!lowerUnknown) return caseWord(w, vocab, keep);
+      const out = lowerWord(w, vocab, keep);
+      if (note && out !== w && out === w.toLowerCase() && !w.split('-').every((x) => !x || /\d/.test(x) || knownWord(x.toLowerCase(), vocab))) note.push(w);
+      return out;
+    });
   }
 
   /**
@@ -3651,7 +3709,8 @@
     if (!wording) return '';
     // [S017] Spaces and hyphens do not make a role credit ("Flugel Horn" for flugelhorn, "Hand Claps" for handclaps)
     const squash = (t) => norm(t).replace(ruleOn('S017') ? /[\s-]+/g : /$^/, '');
-    if (norm(primaryName)) return squash(primaryName) === squash(wording) ? '' : caseCredit(original, vocab);
+    // [S052] (3.34.28) in lower case, proper names kept (the words of a role the register knows: not noted)
+    if (norm(primaryName)) return squash(primaryName) === squash(wording) ? '' : caseCredit(original, vocab, { lowerUnknown: ruleOn('S052'), quiet: true });
     if (!typeName) return '';
     const synonyms = WORDING_SYNONYMS[norm(typeName)] || [];
     // "A & R Consultant", "A&R Coordinator" …: not as wording – the word after A&R is the task (S013)
@@ -7158,30 +7217,42 @@
    * "instrumente und role credits immer kleinschreiben außer bei eigennamen"): the proper names of MusicBrainz's instruments
    * ("Hammond", "Rhodes") and models with digits ("TR-808") stay, every other word is written small ("Chaims" → chaims,
    * "Sticks-And-Stones" → sticks-and-stones, "Tour Manager" → tour manager). Off: all in lower case, as before (tasks) or as
-   * written (the credit of "other instruments").
+   * written (the credit of "other instruments"). [T052] (3.34.28) also the proper names of the register ("Buddha"); quiet: the
+   * words of a role the register knows, not noted at the row.
    */
-  function lowerCredit(text, { off = 'lower' } = {}) {
+  function lowerCredit(text, { off = 'lower', quiet = false } = {}) {
     const t = String(text || '').replace(/\s+/g, ' ').trim();
     if (!ruleOn('S052')) return off === 'lower' ? norm(t) : t;
-    return caseCredit(t, instrumentVocabulary(), { lowerUnknown: true });
+    return caseCredit(t, instrumentVocabulary(), { lowerUnknown: true, quiet });
   }
 
   /**
    * [S011, S034] How the details of a role become its role credit for a relationship type: artwork in lower case, the kind
    * of a voice in lower case, otherwise the words MusicBrainz knows in lower case and the others as written. [S052]
-   * (3.34.27) Also used for the suggestions of the role credit field, so that they are written like the credit.
+   * (3.34.27) Also used for the suggestions of the role credit field, so that they are written like the credit; (3.34.28)
+   * the words MusicBrainz does not know in lower case too (maintainer: "S052b, Discogs-Klammern (S011): klein schreiben").
    */
   function creditCasing(lt) {
     const vocab = instrumentVocabulary();
     const art = !!lt && ART_TYPES.includes(norm(lt.name));
     const vocal = !!lt && norm(lt.name) === 'vocal' && ruleOn('S034');
-    return (raw) => (!ruleOn('S011') ? raw : art ? norm(raw) : caseCredit(raw, vocab, { lowerUnknown: vocal }));
+    return (raw) => (!ruleOn('S011') ? raw : art ? norm(raw) : caseCredit(raw, vocab, { lowerUnknown: vocal || ruleOn('S052') }));
   }
 
   /** Artwork relationships: their role credits are written entirely in lower case. */
 
   function roleCreditFor(row) {
-    return typo(roleCreditForInner(row)); // [S012]
+    // [S052] (3.34.28) the words written small that MusicBrainz does not know, for the note of the row (caseNoteHtml)
+    const outer = caseCtx;
+    caseCtx = { lowered: [], keep: row.keepCase || null };
+    try {
+      const credit = typo(roleCreditForInner(row)); // [S012]
+      const words = new Set(norm(credit).split(/[\s,[\]()/]+/));
+      row.creditLowered = uniq(caseCtx.lowered).filter((w) => words.has(w.toLowerCase()));
+      return credit;
+    } finally {
+      caseCtx = outer;
+    }
   }
 
   /**
@@ -7216,7 +7287,7 @@
     if (row.instrGuess && row.instrGuess.chose !== 'misc') return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? guessCredit(row.instrGuess) : '';
     // [137f] (3.34.25) an instrument technician with its instrument: MusicBrainz says "guitar technician" – no role credit but
     // "tuner" ("Piano Tuner": piano, credited "piano tuner")
-    if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole)) : '';
+    if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole, { quiet: true })) : '';
     // [Q011] (3.34.20) "Voice": plain vocals take no role credit (also until it is answered)
     if (row.askVoice) {
       const tq = typeQuestionFor(row);
@@ -7227,8 +7298,9 @@
     const raw = suggestRoleCredit(row.mods, [...(row.consumed || []), ...(row.flagMods || []), ...repeatedDetails(row)], row.primaryText);
     // [S011]; [S034] (3.28.2) the kind of a voice is written in lower case ("Vocals [Screams]" → screams, "[Clean]" → clean)
     const details = raw ? creditCasing(currentLinkType(row))(raw) : '';
-    // [S052] (3.34.27) the task in lower case, proper names of MusicBrainz's instruments and models kept
-    const task = row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole)) : '';
+    // [S052] (3.34.27) the task in lower case, proper names of MusicBrainz's instruments and models kept; (3.34.28) noted at the row
+    // only for a role the register does not know (miscellaneous support)
+    const task = row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole, { quiet: !(row.notes || []).includes('unknownRole') })) : '';
     // [S009] No Discogs brackets in role credits: the details come before the role ("tour coordinator")
     if (task) return details ? (ruleOn('S009') ? `${details} ${task}` : `${task} [${details}]`) : task;
     if (details) return details;
@@ -15351,7 +15423,8 @@
         <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(tr('roleCredit.fromDiscogs')) : ''}">
       </label>
       <datalist id="dci-rc-${row.id}">${options.map((o) => `<option value="${esc(o)}"></option>`).join('')}</datalist>
-      <div class="dci-dest" data-dest="${row.id}">${esc(roleCreditHint(row))}</div>`);
+      <div class="dci-dest" data-dest="${row.id}">${esc(roleCreditHint(row))}</div>
+      <div class="dci-case-slot">${caseNoteHtml(row)}</div>`);
     parts.push(`<label class="dci-credit">${esc(tr('artistCredit.label'))}
         <input type="text" data-f="credit" list="dci-ac-${row.artistKey}" value="${esc(row.credit)}" placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('artistCredit.label'))}">
       </label>`);
@@ -17375,6 +17448,58 @@
     return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(chosen ? 'instrGuess.chosen' : 'instrGuess.ask', { word: g.word }))} ${opts.join(' · ')}</div>`;
   }
 
+  /**
+   * [S052] (3.34.28) Words MusicBrainz does not know that the role credit writes small say so (maintainer: "vielleicht deutlich
+   * machen, dass gerade etwas lowercased wurde wenn die rolle oder das instrument nicht bekannt ist"): "Written small –
+   * unknown to MusicBrainz: Buddha → buddha · keep “Buddha” · always write “Buddha”" (always: the proper names of the register,
+   * T052); a word kept: "Kept as written: Buddha · write small again". Not once the role credit was typed by hand.
+   */
+  function caseNoteHtml(row) {
+    if (!ruleOn('S052') || row.level === 'skip' || (row.roleCreditTouched && norm(row.roleCredit) !== norm(row.roleCreditSuggest))) return '';
+    const btn = (act, word, text, title = '') => `<button type="button" class="dci-textbtn" data-act="${act}" data-word="${esc(word)}"${title ? ` title="${esc(title)}"` : ''}>${esc(text)}</button>`;
+    const out = [];
+    const low = row.creditLowered || [];
+    if (low.length) {
+      out.push(`<div class="dci-sub dci-case-note" data-case="small">${esc(tr('caseNote.small'))} ${low.map((w) => `<span class="dci-case-word">${esc(tr('caseNote.word', { word: w, small: w.toLowerCase() }))}</span> ${btn('case-keep', w, tr('caseNote.keep', { word: w }))} · ${btn('case-always', w, tr('caseNote.always', { word: w }), tr('caseNote.alwaysTitle', { word: w }))}`).join(' · ')}</div>`);
+    }
+    const kept = Object.values(row.keepCase || {});
+    if (kept.length) {
+      out.push(`<div class="dci-sub dci-case-note" data-case="kept">${esc(tr('caseNote.kept'))} ${kept.map((w) => `<span class="dci-case-word">${esc(w)}</span> ${btn('case-small', w, tr('caseNote.smallAgain'))} · ${btn('case-always', w, tr('caseNote.always', { word: w }), tr('caseNote.alwaysTitle', { word: w }))}`).join(' · ')}</div>`);
+    }
+    return out.join('');
+  }
+
+  /** [S052] (3.34.28) The note after the role credit was typed (the row is not drawn anew then). */
+  function updateCaseNote(row) {
+    const slot = S.overlay && S.overlay.querySelector(`tr.dci-row[data-row="${row.id}"] .dci-case-slot`);
+    if (slot) slot.innerHTML = caseNoteHtml(row);
+  }
+
+  /**
+   * [S052] (3.34.28) A word written small kept as written at the row ("keep “Buddha”"), or written small again; "always":
+   * added to the proper names of the register (T052) – it keeps its capitals in every role credit from now on.
+   */
+  function caseKeep(row, word, keep) {
+    const k = word.toLowerCase();
+    const next = { ...(row.keepCase || {}) };
+    if (keep) next[k] = word;
+    else delete next[k];
+    row.keepCase = Object.keys(next).length ? next : null;
+    refreshRowDetails(row);
+    rerenderRow(row);
+    refresh();
+  }
+
+  function caseAlways(row, word) {
+    const items = rawListItems(effectiveRaw(), 'T052');
+    if (!items.some((x) => x.toLowerCase() === word.toLowerCase())) {
+      putListChange(mappingChanges, 'T052', [...items, word]);
+      if (row && row.keepCase) caseKeep(row, word, false);
+      mappingChanged('T052');
+    }
+    log('info', 'caseAlways', { word });
+  }
+
   /** [Q011] (3.34.20) "Voice" answered, the role credit empty, a voice chosen: "voice" offered as its role credit. */
   function voiceCreditHtml(row) {
     if (!row.askVoice || row.level === 'skip' || row.typeAnswer == null || String(row.roleCredit || '').trim() || !norm(row.primaryText)) return '';
@@ -17549,6 +17674,11 @@
       if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(row) && norm(row.primaryText))) {
         parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: guessCredit(g) }) }] : []),
           ...(g.misc ? [{ value: '\u0000misc', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])]));
+      }
+      // [S052] (3.34.28) words of the role credit written small that MusicBrainz does not know
+      const low = ruleOn('S052') && !(row.roleCreditTouched && norm(row.roleCredit) !== norm(row.roleCreditSuggest)) ? (row.creditLowered || []) : [];
+      if (low.length) {
+        parts.push(`<span class="dci-cl-flag dci-cl-case" title="${esc(tr('caseNote.clTitle'))}">${esc(tr('cl.caseSmall', { words: low.map((w) => tr('caseNote.word', { word: w, small: w.toLowerCase() })).join(', ') }))} ${low.map((w) => `<button type="button" class="dci-textbtn" data-act="case-keep" data-word="${esc(w)}">${esc(tr('caseNote.keep', { word: w }))}</button>`).join(' · ')}</span>`);
       }
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
@@ -22276,6 +22406,14 @@
         else S.cropOpen.add(row.id);
         rerenderRow(row);
         break;
+      case 'case-keep':
+      case 'case-small':
+        // [S052] (3.34.28) a word written small kept as written at the row, or written small again
+        caseKeep(row, btn.dataset.word || '', act === 'case-keep');
+        break;
+      case 'case-always':
+        caseAlways(row, btn.dataset.word || '');
+        break;
       case 'voice-credit':
         // [Q011] (3.34.20) "voice" as the role credit of another voice
         Object.assign(row, { roleCredit: norm(row.base), roleCreditTouched: true });
@@ -23141,6 +23279,7 @@
         row.roleCreditTouched = true;
         updateHint(row);
         updateVoiceCredit(row);
+        updateCaseNote(row);
         refresh();
         break;
       case 'artist-pick': {
@@ -23469,6 +23608,7 @@
       row.roleCredit = el.value;
       row.roleCreditTouched = true;
       updateHint(row);
+      updateCaseNote(row);
     } else {
       row.credit = el.value;
       row.creditTouched = true;
@@ -26070,6 +26210,11 @@
       .dci-cl-askq { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); }
       .dci-cl-askq .dci-cl-pick { color: var(--sugg-ink); text-decoration: underline; font-weight: 600; }
       .dci-cl-askq select { font: inherit; font-size: calc(var(--u, 1px) * 12); }
+      /* [S052] (3.34.28) words written small that MusicBrainz does not know */
+      .dci-case-note { margin-top: calc(var(--u, 1px) * 3); padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 6); border: 1px dashed var(--sugg-line); border-radius: 3px; background: var(--sugg-bg); color: var(--sugg-ink); }
+      .dci-case-note .dci-case-word { font-weight: 600; }
+      .dci-case-note .dci-textbtn, .dci-cl-case .dci-textbtn { color: var(--sugg-ink); text-decoration: underline; }
+      .dci-cl-case { display: inline-flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4); border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
