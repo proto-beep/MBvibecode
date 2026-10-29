@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.30, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.31, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.31 · 2026-10-29
+
+Block AE (E4), step 3: dates in an entry's matrix.
+
+- **`evHeadHtml`:** the date an input (`data-f="em-evdate"`, the pool's name above it); title `em.evTitle`. **`entryModel`:** events sorted also by their date (without first, then the earlier – `when(e)`), so their numbers stay.
+- **New:** `rowsInEvent(a, evKey)`, **`emEventDate(a, evKey, text)`** (`parseDatePeriod`, `single`; rows with one date of the pool → that pool entry changes, all its rows and work links follow; else a pool date with that value or a new one – `newPoolId`; empty: no date; `savePool`, log `emEvDate`), **`emDropDate(t, entry, both)`** (onto `em-ev` / `em-line` / `em-block`: a row covered by the date – no cell of the date matrix for its date group, or all its tracks in it – gets the date; covered in part or with ⇧: `copyRowForEvent` with the date (and the cell's tracks), `dateKeyed`, `emBoth` with ⇧; `S.emUndo`, message `em.dateDropped` with the action `em-undo`, log `emDateDrop`), `emUndoDrop(id)`, **`bothAskHtml(l)`**, **`emBothAnswer(row, only)`**. `lineAskHtml` takes the line (with `bothAskHtml`).
+- **Handlers:** `entryMatrixChange` `em-evdate`; `onClick` `em-undo`, `em-only`, `em-both`; **`dmTargetOf`**: `th.dci-em-ev[data-evhead]`, `.dci-em-bhead`, `tr.dci-em-line` for a dragged pool date; **`onDropOn`**: those → `emDropDate(t, entry, e.shiftKey)`.
+- **CSS:** the date field of the head, the targets while a date is dragged (`.dci-dm-drag-date`), `.dci-dm-over`.
+- **Texts (English only):** `em.evTitle`, `em.evDateLabel`, `em.badDate`, `em.dateDropped`, `em.undo`, `em.bothAsk`, `em.bothOnly`, `em.bothKeep`, `log.emEvDate`, `log.emDateDrop`.
+- **Tests:** `t_entries.py` new case `dates` (a date onto a line – it moves –, ↶, onto the head of an event, typed into two heads – a new pool date, the pool's own date changed –, with ⇧ onto a block: both, the questions answered, what is staged); `matrix`: the event heads without "no date" (a field now).
 
 ## Import 3.34.30 · 2026-10-29
 

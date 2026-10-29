@@ -1,6 +1,6 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -149,8 +149,8 @@ def case_matrix():
     Instrumente in einer Zeile (E4)", version 3): an entry as a matrix – its instruments in one block (lines: the instrument of
     MusicBrainz, "written …", role credit, add. / guest / solo, a tick per event, its status, ▸ rows, ✕), the events (level ·
     date · tracks) as columns.
-    A) Multi Man: one block "3 instruments → instrument · from 3 rows · One row each", one event "① Recording no date all 4
-       tracks", electric guitar, acoustic guitar, drums (drum set) “drums” (written “Drums”) – all ticked, "4 new" each.
+    A) Multi Man: one block "3 instruments → instrument · from 3 rows · One row each", one event "① Recording all 4 tracks"
+       (3.34.31: the date a field, empty), electric guitar, acoustic guitar, drums (drum set) “drums” (written “Drums”) – all ticked, "4 new" each.
     B) ▸ rows of the drums line: its row with all its fields (the legacy row) below the line.
     C) Solo Man: saxophone with "solo" ticked; "guest" ticked for electric guitar – stays (its rows).
     D) ⚙ Settings → Staging "Events shared … up to 1": Part Man (2 events) – its block shows its own, "· 2 events", folds and
@@ -178,7 +178,7 @@ def case_matrix():
             print('A) Multi Man:', a)
             b0 = (a or [{}])[0]
             results.append(bool(a) and len(a) == 1 and b0['head'] == '3 instruments → instrument · from 3 rows One row each'
-                           and b0['ev'] == ['① Recording no date all 4 tracks']
+                           and b0['ev'] == ['① Recording all 4 tracks']
                            and [(l['role'], l['credit'], l['wrote'], l['ticks'], l['status']) for l in b0['lines']] == [
                                ('electric guitar', '', '', [True], '4 new'), ('acoustic guitar', '', '', [True], '4 new'),
                                ('drums (drum set)', 'drums', 'written “Drums”', [True], '4 new')])
@@ -228,10 +228,10 @@ def case_matrix():
             d4 = pg.evaluate(BLOCKS, 'Part Man')
             print('D) geteilt:', d0[0]['head'], d0[0]['ev'], '| gefaltet:', folded, '| einzeln:', [(x['lines'][0]['role'], x['ev'], x['add']) for x in d1],
                   '| piano:', piano3['ev'], piano3['lines'][0]['ticks'], piano3['lines'][0]['n'], '| Knopf:', join_btn, '| zusammen:', [x['head'] for x in d4])
-            results.append(d0[0]['head'].endswith('· 2 events One row each') and d0[0]['ev'] == ['① Recording no date all 4 tracks', '② Recording no date track 2']
+            results.append(d0[0]['head'].endswith('· 2 events One row each') and d0[0]['ev'] == ['① Recording all 4 tracks', '② Recording track 2']
                            and folded == [[True, 0]] and len(d1) == 2
                            and sorted((x['lines'][0]['role'], len(x['ev']), len(x['add'])) for x in d1) == [('electric guitar', 1, 1), ('piano', 1, 1)]
-                           and piano3['ev'] == ['① Recording no date all 4 tracks', '② Recording no date track 2'] and piano3['lines'][0]['ticks'] == [True, True]
+                           and piano3['ev'] == ['① Recording all 4 tracks', '② Recording track 2'] and piano3['lines'][0]['ticks'] == [True, True]
                            and piano3['lines'][0]['n'] == 2 and join_btn and len(d4) == 1)
             H.open_settings(pg, 'staging')
             pg.fill('[data-set=ev-shared]', '3')
@@ -262,6 +262,125 @@ def case_matrix():
             print('G) Multi Man:', len(of('Multi Man')), '| Part Man:', of('Part Man'), '| Solo Man:', of('Solo Man'))
             results.append(len(of('Multi Man')) == 12 and of('Part Man') == [['piano']] * 4
                            and sorted(of('Solo Man')) == [['electric guitar', 'guest']] * 4 + [['saxophone', 'solo']] * 4)
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# a date of the pool dropped (dragstart, dragover, drop as events: Playwright's mouse carries no Shift)
+DROP = """([src, dst, shift]) => { const s = document.querySelector(src); const d = document.querySelector(dst); if (!s || !d) return false;
+  const dt = new DataTransfer(); s.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+  d.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt, shiftKey: shift }));
+  d.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt, shiftKey: shift }));
+  s.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt })); return true; }"""
+ADDED_D = """(() => MB.relationshipEditor.state.added.map((r) => ({ a: (r.entity0 || {}).gid, b: (r.entity1 || {}).gid,
+  date: r.begin_date ? [r.begin_date.year, r.begin_date.month, r.begin_date.day].filter(Boolean).join('-') : '',
+  attrs: ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName).sort() })))()"""
+
+
+def case_dates():
+    """Credits Importer 3.34.31 (E4, step 3 of Block AE; mockup version 3, board 4; collected item 139, maintainer: "ja mach
+    das mal", "das soll immer das selbe sein. wenn ich also das event hier editiere verändert sich auch der date/track pool"):
+    dates in an entry's matrix.
+    A) A date of the pool dropped onto the line of acoustic guitar (Multi Man): the line moves into the date's event – a second
+       column ② with the date, acoustic guitar ticked there only (the instrument "wanders"); a message with ↶.
+    B) ↶: acoustic guitar back in ①, one event again.
+    C) The date dropped onto the head of ①: all three instruments get it – still one event, its head shows the date.
+    D) A date typed into the head of Solo Man's ① ("2001-06-05"): its rows get it as a new date of the pool; the date of
+       Multi Man's ① changed in its head ("2001-03-02"): the pool's date itself changes.
+    E) Another date dropped with ⇧ Shift onto the head of Voc Man's block: both voices stay without a date and get a row with
+       it – ticked in ① and ②, a yellow question each ("… with and without a date – only … · keep both"); "only" for lead
+       vocals: its row without a date goes (① stays ① – the events keep their numbers); "keep both" for background vocals: the
+       question goes.
+    F) Staged: Voc Man – lead and background vocals with the date joined (4), background vocals without a date (4)."""
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            chips = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => [c.dataset.id, c.textContent.replace(/\\s+/g, ' ').trim()])")
+            print('   Pool:', chips)
+            d1, d2 = chips[0][0], chips[-1][0]
+            multi = sec_sel(pg, 'Multi Man')
+            a0 = pg.evaluate(BLOCKS, 'Multi Man')
+            ac = [l for l in a0[0]['lines'] if l['role'] == 'acoustic guitar'][0]['line']
+            pg.evaluate(DROP, [f'.dci-pchip-date[data-id="{d1}"]', f'{multi} tr.dci-em-line[data-line="{ac}"]', False])
+            pg.wait_for_timeout(500)
+            a1 = pg.evaluate(BLOCKS, 'Multi Man')
+            msg = pg.evaluate("[...document.querySelectorAll('[data-act=em-undo]')].map(x => x.closest('li, div, p').textContent.replace(/\\s+/g, ' ').trim())")
+            print('A) Linie:', a1[0]['ev'], [(l['role'], l['ticks']) for l in a1[0]['lines']], '| Meldung:', msg)
+            results.append(len(a1[0]['ev']) == 2 and [(l['role'], l['ticks']) for l in a1[0]['lines']] == [
+                ('electric guitar', [True, False]), ('acoustic guitar', [False, True]), ('drums (drum set)', [True, False])] and len(msg) == 1)
+            pg.click('[data-act=em-undo]')
+            pg.wait_for_timeout(500)
+            a2 = pg.evaluate(BLOCKS, 'Multi Man')
+            print('B) ↶:', a2[0]['ev'], [(l['role'], l['ticks']) for l in a2[0]['lines']])
+            results.append(a2[0]['ev'] == ['① Recording all 4 tracks'] and all(l['ticks'] == [True] for l in a2[0]['lines']))
+            pg.evaluate(DROP, [f'.dci-pchip-date[data-id="{d1}"]', f'{multi} th.dci-em-ev', False])
+            pg.wait_for_timeout(500)
+            a3 = pg.evaluate(BLOCKS, 'Multi Man')
+            v3 = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev [data-f=em-evdate]')].map(x => x.value)", multi)
+            print('C) Kopf:', a3[0]['ev'], v3, [(l['role'], l['ticks']) for l in a3[0]['lines']])
+            results.append(len(a3[0]['ev']) == 1 and v3 and v3[0] != '' and all(l['ticks'] == [True] for l in a3[0]['lines']))
+            # D) dates typed into the heads
+            solo = sec_sel(pg, 'Solo Man')
+            n_pool = len(chips)
+            pg.fill(f'{solo} th.dci-em-ev [data-f=em-evdate]', '2001-06-05')
+            pg.press(f'{solo} th.dci-em-ev [data-f=em-evdate]', 'Tab')
+            pg.wait_for_timeout(500)
+            sv = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev [data-f=em-evdate]')].map(x => x.value)", solo)
+            chips2 = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => [c.dataset.id, c.textContent.replace(/\\s+/g, ' ').trim()])")
+            pg.fill(f'{multi} th.dci-em-ev [data-f=em-evdate]', '2001-03-02')
+            pg.press(f'{multi} th.dci-em-ev [data-f=em-evdate]', 'Tab')
+            pg.wait_for_timeout(500)
+            chips3 = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => [c.dataset.id, c.textContent.replace(/\\s+/g, ' ').trim()])")
+            mv = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev [data-f=em-evdate]')].map(x => x.value)", multi)
+            changed = [c for c in chips3 if c[0] == d1]
+            print('D) Solo Man:', sv, '| Pool:', len(chips2), '| Multi Man:', mv, '| der Pool-Eintrag:', changed)
+            results.append(sv == ['2001-06-05'] and len(chips2) == n_pool + 1 and mv == ['2001-03-02'] and changed and '2001-03-02' in changed[0][1])
+            # E) with Shift onto the head of a block
+            voc = sec_sel(pg, 'Voc Man')
+            pg.evaluate(DROP, [f'.dci-pchip-date[data-id="{d2}"]', f'{voc} .dci-em-bhead', True])
+            pg.wait_for_timeout(500)
+            e0 = pg.evaluate(BLOCKS, 'Voc Man')
+            asks = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' .dci-em-both')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())", voc)
+            print('E) mit ⇧:', e0[0]['ev'], [(l['role'], l['ticks'], l['n']) for l in e0[0]['lines']], '| Fragen:', asks)
+            ok_e = len(e0[0]['ev']) == 2 and [(l['role'], l['ticks'], l['n']) for l in e0[0]['lines']] == [('lead vocals', [True, True], 2), ('background vocals', [True, True], 2)] \
+                and len(asks) == 2 and all('with and without a date' in x and 'keep both' in x for x in asks)
+            lead = e0[0]['lines'][0]['line']
+            back = e0[0]['lines'][1]['line']
+            pg.click(f'{voc} tr.dci-em-ask[data-rows] >> nth=0 >> [data-act=em-only]')
+            pg.wait_for_timeout(400)
+            pg.click(f'{voc} tr.dci-em-ask[data-rows] >> nth=0 >> [data-act=em-both]')
+            pg.wait_for_timeout(400)
+            e1 = pg.evaluate(BLOCKS, 'Voc Man')
+            asks1 = pg.evaluate("(sel) => document.querySelectorAll(sel + ' .dci-em-both').length", voc)
+            print('   only / both:', [(l['role'], l['ticks']) for l in e1[0]['lines']], '| Fragen:', asks1, lead, back)
+            results.append(ok_e and [(l['role'], l['ticks']) for l in e1[0]['lines']] == [('lead vocals', [False, True]), ('background vocals', [True, True])] and asks1 == 0)
+            # F) staged
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate(ADDED_D)
+            names = {H.uid('dddddddd', i - 2990): n for n, _r, i, _t in JOIN_CREDITS}
+            vm = sorted((r['date'], tuple(r['attrs'])) for r in added if names.get(r['a']) == 'Voc Man' or names.get(r['b']) == 'Voc Man')
+            print('F) Voc Man:', vm)
+            dated = [x for x in vm if x[0]]
+            results.append(len(vm) == 8 and len(dated) == 4 and all(x[1] == ('background vocals', 'lead vocals') for x in dated)
+                           and all(x[1] == ('background vocals',) for x in vm if not x[0]))
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()

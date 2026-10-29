@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.30 | – |
+| 2026-10-29 | 3.34.18 – 3.34.31 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.31
+
+#### Added
+
+- **Entries as a matrix (E4), step 3: dates** (collected item 139; maintainer: "das soll immer das selbe sein. wenn ich also das event hier editiere verändert sich auch der date/track pool"): the date in the head of an event is a field – typed there, it is the date of all the event's rows, as a date of the pool (an existing date of the pool changes itself). A date of the pool dragged onto a line, the head of a block or the head of an event moves the rows it covers into its event (↶ Undo in the message); rows it covers in part get a row of their own in it; with ⇧ Shift the rows stay and get a row with the date too, and their line asks "only <date> · keep both". The events keep their numbers.
 
 ### Import 3.34.30
 

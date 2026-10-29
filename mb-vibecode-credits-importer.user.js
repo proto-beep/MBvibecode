@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.30
+// @version      3.34.31
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.30
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.30
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.31
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.31
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.30';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.31';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1715,6 +1715,14 @@
       "em.fold": "Fold this block",
       "em.unfold": "Show this block",
       "em.count": "{n} relationships to stage",
+      "em.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head) and its tracks",
+      "em.evDateLabel": "Date of event {n}",
+      "em.badDate": "“{text}” is no date (2024-08-14, 2024-01 – 2024-07, 2024)",
+      "em.dateDropped": "{date}: rows moved into its event {moved}, rows of their own in it {added}",
+      "em.undo": "↶ Undo",
+      "em.bothAsk": "{name}: {tracks} with and without a date –",
+      "em.bothOnly": "only {date}",
+      "em.bothKeep": "keep both",
       "voiceCredit.from": "From the text:",
       "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
@@ -1736,6 +1744,8 @@
       "log.emIn": "{name}: {role} into an event",
       "log.emJoin": "{name}: instruments and voices joined in one block",
       "log.emSplit": "{name}: each instrument a block of its own",
+      "log.emEvDate": "Date of an event ({n} rows): {date}",
+      "log.emDateDrop": "{name}: {date} dropped – moved {moved}, rows of their own {added}",
       "rules.questions": "Instrument questions",
       "rules.options": "Choices",
       "rules.question": "Question",
@@ -15461,9 +15471,19 @@
       evByKey.set(k, e);
       events.push(e);
     }
-    // recordings first, the release, its group; on recordings those with more tracks first (all tracks before an overdub on two)
+    // recordings first, the release, its group; on recordings those with more tracks first (all tracks before an overdub on two);
+    // [3.34.31] then without a date before those with one, the earlier first (the numbers stay when rows move)
     const rank = { recording: 0, release: 1, release_group: 2 };
-    events.sort((x, y) => (rank[x.level] ?? 3) - (rank[y.level] ?? 3) || (x.level === 'recording' ? y.tracks.size - x.tracks.size : 0));
+    const when = (e) => {
+      const d = e.date;
+      if (!d || (!d.poolId && !hasDateInput(d))) return '';
+      const pool = d.poolId ? S.datePool.find((x) => x.id === d.poolId) : null;
+      const b = pool ? pool.begin || pool.end : null;
+      return b ? [b.year, b.month || 0, b.day || 0].map((n, i) => String(n).padStart(i ? 2 : 4, '0')).join('-')
+        : [d.by || d.ey || '9999', d.bm || d.em || '00', d.bd || d.ed || '00'].map((x, i) => String(x).padStart(i ? 2 : 4, '0')).join('-');
+    };
+    events.sort((x, y) => (rank[x.level] ?? 3) - (rank[y.level] ?? 3) || (x.level === 'recording' ? y.tracks.size - x.tracks.size : 0)
+      || (when(x) === when(y) ? 0 : !when(x) ? -1 : !when(y) ? 1 : when(x) < when(y) ? -1 : 1));
     events.forEach((e, i) => { e.n = i + 1; });
     for (const l of lines) {
       for (const r of l.rows) {
@@ -15500,14 +15520,166 @@
     return { lines, events, blocks, shared, join, evByKey };
   }
 
-  /** [E4] The head of an event column: ① · its level · its date · its tracks. */
+  /**
+   * [E4] The head of an event column: ① · its level · its date · its tracks. [3.34.31] The date is a field: changed, the event's
+   * rows get it – one date of the pool for all of them, the pool's own date changed when they had one (maintainer: "das soll
+   * immer das selbe sein. wenn ich also das event hier editiere verändert sich auch der date/track pool"); a date of the pool
+   * dropped onto the head gives it to the event.
+   */
   function evHeadHtml(e) {
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
-    const date = pool ? poolLabel(pool) : hasDateInput(e.date) ? fieldsText(e.date) : '';
+    const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
-    return `<th class="dci-em-ev" scope="col" data-evhead="${esc(e.key)}"><span class="dci-em-evn">${circled(e.n)}</span>
-      <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>
-      <span class="dci-em-evdate${date ? ' dci-cl-has' : ''}">${esc(date || tr('cl.noDate'))}</span> ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
+    return `<th class="dci-em-ev" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><span class="dci-em-evn">${circled(e.n)}</span>
+      <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>${pool && pool.name ? ` <span class="dci-em-evname">${esc(pool.name)}</span>` : ''}
+      <input type="text" class="dci-em-evdate${date ? ' dci-cl-has' : ''}" data-f="em-evdate" data-ev="${esc(e.key)}" value="${esc(date)}" placeholder="${esc(tr('cl.noDate'))}"
+        aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}"> ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
+  }
+
+  /** [E4] (3.34.31) The rows of an entry in an event. */
+  const rowsInEvent = (a, evKey) => S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey);
+
+  /** [E4] (3.34.31) The date typed in the head of an event: its rows get it (as a date of the pool); empty – no date. */
+  function emEventDate(a, evKey, text) {
+    const rows = rowsInEvent(a, evKey).filter((r) => {
+      const lt = currentLinkType(r);
+      return !(lt && lt.has_dates === false);
+    });
+    if (!rows.length) return;
+    const t = String(text || '').trim();
+    if (!t) {
+      rows.forEach((r) => Object.assign(r, { date: null, dateOpen: false }));
+      log('info', 'emEvDate', { n: rows.length, date: tr('cl.noDate') });
+    } else {
+      const p = parseDatePeriod(t);
+      const value = p && (p.single ? single(p.single) : p.period);
+      if (!value) {
+        showMessage('warn', 'em.badDate', { text: t });
+        rerenderGroup(a);
+        return;
+      }
+      const ids = uniq(rows.map((r) => r.date && r.date.poolId).filter(Boolean));
+      let entry = ids.length === 1 && rows.every((r) => r.date && r.date.poolId === ids[0]) ? S.datePool.find((d) => d.id === ids[0]) : null;
+      if (entry) {
+        // the pool's date itself: every row and work link with it follows
+        Object.assign(entry, { begin: value.begin, end: value.end, ended: !!value.ended });
+        S.rows.forEach((r) => {
+          if (r.date && r.date.poolId === entry.id) r.date = { ...fieldsFromDate(entry), poolId: entry.id, mx: !!r.date.mx };
+        });
+        S.workPlan.forEach((pl, i) => {
+          if (!pl.date || pl.date.poolId !== entry.id) return;
+          pl.date = { ...fieldsFromDate(entry), poolId: entry.id };
+          saveCreatedWorkDate(i);
+        });
+      } else {
+        entry = S.datePool.find((d) => formatDateValue(d) === formatDateValue(value)) || { id: newPoolId(), name: '', ...value };
+        if (!S.datePool.includes(entry)) S.datePool.push(entry);
+        rows.forEach((r) => Object.assign(r, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true }));
+      }
+      savePool();
+      log('info', 'emEvDate', { n: rows.length, date: formatDateValue(entry) });
+    }
+    renderDates();
+    renderWorks();
+    renderGroups();
+    refresh();
+  }
+
+  /**
+   * [E4] (3.34.31) A date of the pool dropped into an entry's matrix (mockup version 3, board 4): onto a line – its rows; onto
+   * the head of a block – the rows of all its lines; onto the head of an event – the rows in it. A row the date covers (the date
+   * has no tracks in the date matrix, or all of the row's) moves into the date's event: it gets the date, nothing stays without
+   * it ("ohne und mit Datum auf denselben Tracks: das Instrument wandert"; ↶ in the message). A row the date covers only in part
+   * ("2024-08-14, tracks 2, 5") stays and gets a row of its own in the date's event. With ⇧ Shift a row stays where it is and
+   * gets the row of its own too – a yellow question in its line then: "only <date> · keep both".
+   */
+  function emDropDate(t, entry, both) {
+    const a = artistOf(t.el);
+    if (!a) return;
+    let rows;
+    if (t.kind === 'em-ev') rows = rowsInEvent(a, t.el.dataset.evhead);
+    else if (t.kind === 'em-line') rows = lineRows(t.el).filter((r) => r.level !== 'skip');
+    else rows = [...t.el.closest('.dci-em-block').querySelectorAll('tr.dci-em-line')].flatMap(lineRows).filter((r) => r.level !== 'skip');
+    const undo = [];
+    let moved = 0;
+    let added = 0;
+    for (const r of rows) {
+      const lt = currentLinkType(r);
+      if ((lt && lt.has_dates === false) || (r.date && r.date.poolId === entry.id)) continue;
+      const group = t.kind !== 'em-ev' && dateGroupOf(r);
+      const cell = group && dm().cells.find((c) => c.col === group.key && c.date === entry.id && !c.alt);
+      const set = cell && r.level === 'recording' ? cellTracks(cell) : null;
+      const covers = !set || [...r.tracks].every((i) => set.has(i));
+      if (set && ![...r.tracks].some((i) => set.has(i)) && !both) continue;
+      if (covers && !both) {
+        undo.push({ id: r.id, date: r.date ? { ...r.date } : null, open: r.dateOpen });
+        Object.assign(r, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true });
+        moved++;
+        continue;
+      }
+      const c = copyRowForEvent(r);
+      Object.assign(c, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true, dateKeyed: true, levelTouched: true, emBoth: !!both && covers });
+      if (set) c.tracks = new Set([...set].filter((i) => r.level !== 'recording' || selIdx().includes(i)));
+      r.dateKeyed = true;
+      S.rows.splice(S.rows.indexOf(r) + 1, 0, c);
+      undo.push({ add: c.id });
+      added++;
+    }
+    if (!moved && !added) return;
+    const id = `u${++emUndoSeq}`;
+    S.emUndo.set(id, undo);
+    log('info', 'emDateDrop', { name: a.mbName || a.name, date: poolLabel(entry), moved, added });
+    showMessage('ok', 'em.dateDropped', { date: poolLabel(entry), moved, added }, { action: { act: 'em-undo', arg: id, label: 'em.undo' } });
+    renderDates();
+    rerenderGroup(a);
+    refresh();
+  }
+  let emUndoSeq = 0;
+
+  /** [E4] (3.34.31) ↶ of a dropped date: the rows moved get their date back, the rows added go. */
+  function emUndoDrop(id) {
+    const undo = S.emUndo.get(id);
+    if (!undo) return;
+    S.emUndo.delete(id);
+    for (const u of undo) {
+      if (u.add) S.rows = S.rows.filter((r) => r.id !== u.add);
+      else {
+        const r = S.rows.find((x) => x.id === u.id);
+        if (r) Object.assign(r, { date: u.date, dateOpen: !!u.open });
+      }
+    }
+    S.messages = S.messages.filter((m) => !(m.action && m.action.act === 'em-undo' && m.action.arg === id));
+    renderMessages();
+    renderDates();
+    renderGroups();
+    refresh();
+  }
+
+  /**
+   * [E4] (3.34.31) The yellow question of a line that has the same tracks with and without a date (a date dropped with ⇧):
+   * "electric guitar: tracks 1–4 with and without a date – only 2001-03 · keep both".
+   */
+  function bothAskHtml(l) {
+    const dated = l.rows.find((r) => r.emBoth && r.level !== 'skip');
+    if (!dated) return '';
+    const pool = dated.date && dated.date.poolId ? S.datePool.find((d) => d.id === dated.date.poolId) : null;
+    const date = pool ? formatDateValue(pool) : fieldsText(dated.date || {});
+    return `<div class="dci-bass-ask dci-em-both">${esc(tr('em.bothAsk', { name: dated.primaryText || dated.raw, tracks: tracksShort(dated) }))}
+      <button type="button" class="dci-textbtn" data-act="em-only" data-row="${dated.id}">${esc(tr('em.bothOnly', { date }))}</button> ·
+      <button type="button" class="dci-textbtn" data-act="em-both" data-row="${dated.id}">${esc(tr('em.bothKeep'))}</button></div>`;
+  }
+
+  /** [E4] (3.34.31) The answer: only the date – the rows of the line without a date lose these tracks –, or both. */
+  function emBothAnswer(row, only) {
+    row.emBoth = false;
+    if (only) {
+      const others = S.rows.filter((r) => r !== row && r.artistKey === row.artistKey && r.level === row.level && lineKeyOf(r) === lineKeyOf(row) && !hasDateInput(r.date)
+        && [...r.tracks].some((i) => row.tracks.has(i)));
+      for (const r of others) {
+        r.tracks = new Set([...r.tracks].filter((i) => !row.tracks.has(i)));
+        if (!r.tracks.size && r.level === 'recording') Object.assign(r, { level: 'skip', levelTouched: true });
+      }
+    }
   }
 
   /** [E4] Whether a row's relationship type exists on a level (instrument on recordings and on the release …). */
@@ -15516,9 +15688,10 @@
     return !!lt && typesFor(level, row.entityType || 'artist').some((t) => norm(t.name) === norm(lt.name));
   }
 
-  /** [E4] The questions and notes of a line: those of its first row, answered for all its rows (EM_LINE_ACTS). */
-  function lineAskHtml(r) {
-    return [unmappedHtml(r), instrumentAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r)].join('');
+  /** [E4] The questions and notes of a line: those of its first row, answered for all its rows (EM_LINE_ACTS); [3.34.31] with and without a date. */
+  function lineAskHtml(l) {
+    const r = l.rows[0];
+    return [unmappedHtml(r), instrumentAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), bothAskHtml(l)].join('');
   }
 
   /** [E4] A line of a block: instrument (MusicBrainz) · role credit · additional / guest / solo · a tick per event · ▸ ✕. */
@@ -15552,7 +15725,7 @@
     const tools = `<td class="dci-em-c-tools"><span class="dci-status" data-emstatus="${esc(l.id)}"></span>
       <button type="button" class="dci-textbtn dci-em-detail" data-act="em-detail" aria-expanded="${open}" title="${esc(tr('em.detailTitle'))}">${open ? '▾' : '▸'} ${esc(tr('em.detail'))}</button>
       <button type="button" class="dci-iconbtn" data-act="em-remove" title="${esc(tr('em.remove'))}" aria-label="${esc(tr('em.remove'))}">✕</button></td>`;
-    const ask = skip ? '' : lineAskHtml(r);
+    const ask = skip ? '' : lineAskHtml(l);
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
         <td class="dci-em-c-role">${role}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-flags">${flags}</td>${ticks}${b.others.length ? '<td></td>' : ''}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
@@ -15581,7 +15754,7 @@
     const more = S.emMore.has(fk);
     const max = Math.max(1, S.emShow);
     // lines with a question or without a type are always shown
-    const needed = (l) => !ltOf(l.rows[0]) || !!lineAskHtml(l.rows[0]) || S.emOpen.has(l.id);
+    const needed = (l) => !ltOf(l.rows[0]) || !!lineAskHtml(l) || S.emOpen.has(l.id);
     const shown = more || b.lines.length <= max + 1 ? b.lines : b.lines.filter((l, i) => i < max || needed(l));
     const hidden = b.lines.filter((l) => !shown.includes(l));
     const addEv = b.others.length ? `<th class="dci-em-addev"><select data-f="em-addev" data-block="${esc(b.key)}" aria-label="${esc(tr('em.addEv'))}"><option value="">${esc(tr('em.addEv'))}</option>${b.others.map((e) => `<option value="${esc(e.key)}">${esc(`${circled(e.n)} ${tr(`level.${e.level}`)}`)}</option>`).join('')}</select></th>` : '';
@@ -15662,6 +15835,10 @@
   function entryMatrixChange(f, el) {
     const a = artistOf(el);
     if (!a) return false;
+    if (f === 'em-evdate') {
+      emEventDate(a, el.dataset.ev, el.value);
+      return true;
+    }
     if (f === 'em-addev') {
       if (el.value) {
         const k = `${a.key}|${el.dataset.block}`;
@@ -22435,6 +22612,9 @@
     const col = t.closest('[data-dmdrop]');
     if (col) return { el: col, kind: 'place' };
     if (d.kind !== 'date') return null;
+    // [E4] (3.34.31) the matrix of an entry: the head of an event, the head of a block, a line
+    const em = t.closest('#dci-overlay th.dci-em-ev[data-evhead], #dci-overlay .dci-em-bhead, #dci-overlay tr.dci-em-line');
+    if (em) return { el: em, kind: em.matches('th') ? 'em-ev' : em.matches('tr') ? 'em-line' : 'em-block' };
     // Date fields of rows, work links and the works matrix
     const field = t.closest('.dci-mx-cell[data-col]:not(.dci-mx-locked), .dci-mx-cell.dci-mx-locked[data-fill], [data-colhead] .dci-mx-card, tr[data-work] .dci-w-date, tr[data-row] .dci-c-date, tr[data-row] .dci-cl-date');
     if (!field || field.closest('[data-el="dates"]')) return null;
@@ -22632,6 +22812,10 @@
     const dragged = d.kind === 'cell' ? m.cells.find((c) => c.id === d.id) : null;
     const entry = dragged ? cellEntry(dragged) : S.datePool.find((x) => x.id === d.id);
     if (!entry) return;
+    if (t.kind === 'em-ev' || t.kind === 'em-line' || t.kind === 'em-block') {
+      emDropDate(t, entry, !!e.shiftKey);
+      return;
+    }
     if (t.kind === 'place') {
       if (dragged) dmPlace(t.el.dataset.dmdrop, { cell: d.id });
       else dmPlace(t.el.dataset.dmdrop, { date: d.id });
@@ -22847,6 +23031,20 @@
         else set.add(k);
         rerenderGroup(artist);
         refresh();
+        break;
+      }
+      case 'em-undo':
+        emUndoDrop(btn.dataset.arg);
+        break;
+      case 'em-only':
+      case 'em-both': {
+        // [E4] (3.34.31) the same tracks with and without a date
+        const r = S.rows.find((x) => x.id === btn.dataset.row);
+        if (r) {
+          emBothAnswer(r, act === 'em-only');
+          if (artist) rerenderGroup(artist);
+          refresh();
+        }
         break;
       }
       case 'em-join':
@@ -24872,7 +25070,7 @@
   // before "▸ n more"; lines with their rows open, blocks with all lines, folded blocks, events added to a block
   S.evShared = clampInt(readJson('localStorage', EV_SHARED_KEY, 3), 1, 12, 3);
   S.emShow = clampInt(readJson('localStorage', EM_SHOW_KEY, 8), 1, 50, 8);
-  Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map() });
+  Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map(), emUndo: new Map() });
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
   S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
@@ -26917,6 +27115,12 @@
       .dci-em-ask td { padding-left: calc(var(--u, 1px) * 18); }
       .dci-em-detail-row > td { padding: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 18); background: var(--soft); }
       .dci-em-more { margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
+      .dci-em-ev input.dci-em-evdate { width: calc(var(--u, 1px) * 140); font: inherit; font-size: calc(var(--u, 1px) * 12); padding: 0 calc(var(--u, 1px) * 4); margin: calc(var(--u, 1px) * 2) 0; }
+      .dci-em-evname { color: var(--muted); }
+      /* [E4] (3.34.31) dates of the pool dropped onto an event, a block, a line */
+      #dci-overlay.dci-dm-drag-date .dci-em-ev, #dci-overlay.dci-dm-drag-date .dci-em-bhead { outline: 1px dashed var(--purple); outline-offset: -2px; }
+      #dci-overlay th.dci-em-ev.dci-dm-over, #dci-overlay .dci-em-bhead.dci-dm-over { outline: 2px solid var(--purple); background: var(--date-bg); }
+      #dci-overlay tr.dci-em-line.dci-dm-over > td { background: var(--date-bg); box-shadow: inset 0 2px 0 var(--purple), inset 0 -2px 0 var(--purple); }
       .dci-em-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
