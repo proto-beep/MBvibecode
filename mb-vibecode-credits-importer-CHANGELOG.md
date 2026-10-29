@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.35.6 | – |
+| 2026-10-29 | 3.34.18 – 3.36.0 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -43,6 +43,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-29 | Import 3.36.0 | Remember per release, in ⚙ Settings → Cache (off by default): on, a release imported again from the same source comes back as you left it – its rows with what you changed, its entries, the pools and the date matrix, the source and media chosen, “Skip works”, the credits switched off on the source pages; up to 100 releases (50), the space they take is shown, one button forgets them all. Off, every import starts afresh – until 3.35 the pools, the matrix and these choices were always kept. Since 3.35.0 also: names of several words as proper names (“Gibson Les Paul”), lines of the matrix dragged, an event opened with its level, date and tracks, companies and places as a matrix, the works of index tracks as track groups. |
 | 2026-10-29 | Import 3.35.0 | Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before. |
 | 2026-10-28 | Import 3.34.0 | The languages file: the texts in German, Spanish and French are a file of their own, `mb-vibecode-credits-importer-languages.json`, loaded with the script like the mapping file (English stays in the script, also when the file is missing); every text translated again. Also: ✎ changes built-in rules in “Mapping rules”, your changes exported (a file of their own, or the whole register for a pull request) and imported with a preview. |
 | 2026-10-27 | Import 3.33.0 | The mapping file: the data of the mapping rules – role rules, company roles, questions, tables and word lists, the quick switches – is a file of its own, `mb-vibecode-credits-importer-mapping.json`, which the userscript manager loads with the script (the script fetches it from GitHub itself if not); rules can be kept on GitHub without touching the code. Since 3.32.0 also: places with a date after them, typos in role words, the credits of Bandcamp's “about” text, poems that follow their level, single days instead of a month, the quick switches as buttons, comments of live recordings. |
@@ -91,6 +92,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.36.0 – milestone “Remember per release”
+
+#### Added
+
+- **Remember per release, switched on in ⚙ Settings → Cache** (collected item 146; maintainer: "vielleicht können wir global einen schalter einführen, der sich änderungen und import einstellungen an releases merkt oder eben nicht. standardmäßig auf jeden fall aus", "ja genau, soll alles wieder kommen. aber nur wenn man das ausdrücklich in den einstellungen aktiviert hat"): a new tab **Cache** (after Beta) with **Remember changes and import settings per release** (off). On, a release imported again from the same source comes back as you left it: its rows with what you changed in them (types, levels, role credits, answers, rows taken out or added, their order), its entries (join or split, by event or by role, the MusicBrainz entity chosen by hand, entries added by hand), the pools and the date matrix, the source and media chosen, "Skip works", "Leave out the about text", the credits switched off on the source pages, the frames of the images. A row whose line at the source has changed since comes as the source gives it now – a message says how many changes were left out (146d: "ja einverstanden").
+- **Releases to remember: 50** (0 – 100, 0 = off; maintainer: "50 releases ist gut, aber lass das doch auch einstellen", "bitte 1-100. 0=aus"); beyond it, and when the browser's storage is full, the release used longest ago goes first.
+- **Forget all remembered releases …** with the space they take and that of all data of the script ("12 releases · 1.3 MB · all data of the script in this browser: 2.1 MB"; maintainer: "lass neben dem rücksetzen button auch den gebrauchten speicher anzeigen in KB oder MB mit einer kommazahl").
+
+#### Changed
+
+- **Off – the default – every import starts afresh** (maintainer, 146b: "bitte nach deinem vorschlag"): the pools and the date matrix, the source and media chosen, "Skip works", "Leave out the about text", the credits switched off on the source pages and the frames of the images of a release are no longer stored or read unless the release is remembered (until 3.35 they always were). Within the open tab they hold as before; what was stored before stays, unused. Always kept: the safety list of created works and the status marks of the companion.
 
 ### Import 3.35.6
 
