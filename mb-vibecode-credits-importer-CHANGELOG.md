@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.19 | – |
+| 2026-10-29 | 3.34.18 – 3.34.20 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.20
+
+#### Added
+
+- **Words that are no instrument of MusicBrainz ask** (collected item 137d; maintainer: "falls keine ähnlichen vorschläge vorhanden sind, kann "other instruments" mit role credit vergeben werden"): in a list of instruments (3.34.19) "Chaims" is a row asking "did you mean: chimes · wind chimes · tubular bells · other instruments “Chaims”" – MusicBrainz's instruments one or two letters off, or with such a word; nothing is assumed. "Buddha machine", like none, is other instruments credited "Buddha machine" at once. Before, both were listed as not recognized.
+- **"Voice" asks** (question Q011; maintainer: "auf vocals ebene lässt sich kein Role Credit vergeben. Daher kann man bei voice auch "other vocals" oder "lead vocals" jeweils mit role credit voice vorschlagen. als rückfrage. also drei antwortmöglichkeiten"): vocals · other vocals “voice” · lead vocals “voice” – in pasted texts and Bandcamp credits; until answered vocals without role credit. With another voice typed in, "use “voice” as role credit" is offered. From Discogs "Voice" stays spoken vocals.
+- **More spellings of instruments** (T001): "Bongo" → bongos, "Woodblock" → wood block.
 
 ### Import 3.34.19
 

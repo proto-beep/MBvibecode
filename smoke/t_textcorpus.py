@@ -59,7 +59,9 @@ const out = corpus.lines.map((l) => {
   const titles = (c) => (c.tracks && c.tracks.spec ? [`on ${c.tracks.spec}`] : []);
   // [3.32.5] a role read with a typo corrected (S050): what was written
   const typos = (c) => (c.typos ? [`written ${c.typos.map((t) => t.written).join(', ')}`] : []);
-  return { credits: r.credits.map((c) => [c.who.name || `(${c.who.placeholder})`, c.role, ...(c.who.links.length ? [c.who.links] : []), ...term(c), ...titles(c), ...typos(c)]),
+  // [3.34.20] a word of a list of instruments MusicBrainz does not know: the dashboard asks for it (137d)
+  const guess = (c) => (c.guess ? ['asked: no known instrument'] : []);
+  return { credits: r.credits.map((c) => [c.who.name || `(${c.who.placeholder})`, c.role, ...(c.who.links.length ? [c.who.links] : []), ...term(c), ...titles(c), ...typos(c), ...guess(c)]),
     companies: r.companies.map((c) => [c.who.name, c.role, ...(c.who.area ? [`(${c.who.area})`] : []), ...(c.who.links.length ? [c.who.links] : []), ...(c.medium ? [`for ${c.medium}`] : []),
       ...(c.tracks && c.tracks.indexes ? [`tracks ${c.tracks.indexes.map((i) => i + 1).join(', ')}`] : []), ...typos(c)]),
     unrecognized: r.unrecognized, ignored: r.ignored };
