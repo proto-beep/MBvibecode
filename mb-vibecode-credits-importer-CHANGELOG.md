@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.36.2 | – |
+| 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -92,6 +92,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.36.3
+
+#### Added
+
+- **⌨ Keyboard shortcuts in the head of the dashboard** (maintainer: "Bitte einen neuen Infoknopf oben in der Leiste der die aktuelle Tastaturbelegung aller shortcuts zeigt."): next to ⓘ; it shows all shortcuts of the script below the head, grouped (the pages of MusicBrainz, the release editor, the dashboard, the media choice, the window "Text from cover art"), with the keys of this computer (on a Mac ⌥ Option, ⌃ Control, ⌘ Command, ↩ Return). ⌨, ✕ or Esc closes them.
 
 ### Import 3.36.2
 

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.36.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.36.3, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.36.3 · 2026-10-29
+
+⌨ in the head: the keyboard shortcuts.
+
+- **Head:** `headBtn('keys-open', 'keys', …)` before ⓘ (new icon `ICONS.keys`), `aria-expanded`, `aria-controls="dci-keys"`; the panel `div.dci-keys#dci-keys[data-el=keys]` after the settings in the body.
+- **New `IS_MAC`** (`navigator.userAgentData.platform`, else `navigator.platform` / the user agent), **`keysHtml()`** (one table: the groups as `tbody` with a heading row, each shortcut a `kbd` per key – `keys.k.*`, on a Mac the `…Mac` variants of alt, ctrl, enter, paste), **`setKeysOpen(open)`**, **`renderKeys()`** (also in `renderAll`). State `S.keysOpen` (not stored).
+- **`onClick`:** `keys-open` (the head button and ✕). **Esc** (the global handler): the shortcuts close first after "Text from cover art" and "Mapping rules", the focus back on ⌨.
+- **CSS:** `.dci-keys`, `.dci-keys-head`, `.dci-keys h3`, `.dci-keys-table`, `.dci-keys kbd`.
+- **Texts (English only):** `keys.open`, `keys.title`, `keys.system`, `keys.systemMac`, `keys.g.page/editor/dashboard/media/ocr`, `keys.toggle`, `keys.esc`, `keys.enterEdit`, `keys.enter`, `keys.tabs`, `keys.lines`, `keys.shiftDrop`, `keys.pasteDate`, `keys.mediaEnter`, `keys.ocrPaste`, `keys.ocrUrl`, `keys.ocrZoom`, `keys.k.alt/altMac/ctrl/ctrlMac/shift/enter/enterMac/paste/pasteMac/esc/home/end/wheel`.
+- **Tests:** `t_ui_head.py` new case `keys` (opened with the groups and keys, Esc and ✕ close it, as a Mac); `head` with ⌨ among the buttons.
 
 ## Import 3.36.2 · 2026-10-29
 

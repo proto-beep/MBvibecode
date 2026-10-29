@@ -651,6 +651,12 @@ The toolbar has **Stage: all relationships · only work relationships · only no
 
 ## Keyboard
 
+**⌨ in the head of the dashboard** (3.36.3; maintainer: "Bitte einen neuen Infoknopf oben in der Leiste der die aktuelle Tastaturbelegung aller shortcuts zeigt.", before ⓘ) shows all keyboard shortcuts below the head, grouped – the pages of MusicBrainz, the release editor, the dashboard, the media choice, the window "Text from cover art" –, with the keys of this computer: on a Mac ⌥ Option, ⌃ Control, ⌘ Command and ↩ Return, elsewhere Alt, Ctrl and Enter. ⌨ again, ✕ or Esc closes them. The shortcuts:
+
+- **Alt+⇧ Shift+D**, **Esc** (below), and in the release editor **Ctrl+Alt+Enter** (Mac: ⌃ Control+⌥ Option+↩ Return) for "Enter edit & import credits" where the button is shown (see [Start from the release editor](#start-from-the-release-editor)).
+- In the dashboard: **Enter** in a field does what it is for (an MBID at an entry: Apply; "Artist credit for all roles": Set for all; "Add entry manually": Add; the address of another source or of a supplement; the forms of the pools: Save); **↑ ↓ ← →**, **Home**, **End** on a tab of ⚙ Settings; **Alt+↑ / Alt+↓** on ⠿ of a line of an entry's matrix; **⇧ Shift** held while dropping a track group (adds) or a date onto an entry's matrix (the rows stay too); **Ctrl+V** (Mac: ⌘ Command+V) of a date or period into a date field fills all its fields.
+- In the media choice: **Enter** in the field of the media is OK. In the window "Text from cover art": **Ctrl+V** pastes an image, **Enter** in the field of an address adds it, **Ctrl + mouse wheel** zooms a part of an image (a double click zooms in).
+
 - **Esc** closes the dashboard, wherever the focus is, unless a MusicBrainz dialog is open or you are typing in a field of the MusicBrainz page (then Esc belongs to MusicBrainz). While you move a chip with its grip ⠿ (or the editor of a matrix entry is open), Esc cancels that first; open **Mapping rules** (in the dashboard or as a window) are closed first (the dashboard stays open), and the media choice is cancelled.
 - **Alt+Shift+D** (Mac: Option+Shift+D) opens the dashboard or sends it to the background. Ctrl+D is not used because browsers bookmark the page with it.
 
