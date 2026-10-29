@@ -25,6 +25,8 @@ MBvibecode/ (this repository)
   smoke/zooid.py                      scenario after Discogs release 38282688 (10 tracks, two sessions, two studios)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
+                                      [3.34.29] ENTRIES_VIEW: the entries as before ('legacy') for every file but t_entries.py – the matrix
+                                      (E4, the script's default) is tested there; [3.34.30] with the generation of the stored data
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
   smoke/caserun.py                    [3.31.1] runs the cases of a topic file: one shared browser, what a case changes in the
                                       harness set back after it, one result per case and one for the file
@@ -96,7 +98,7 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     (S051); in one line "… are played by Jane Roe", "Bass Man plays bass and drums"; "are mixed by" (T050)
                                 #   instrguess: 3.34.20: Bongo → bongos, Woodblock → wood block … (T001); "Chaims" asks "did you mean: chimes ·
                                 #     wind chimes · tubular bells · other instruments “chaims”" (also in the compact line), each choice and its
-                                #     credit; "Buddha machine" other instruments credited "buddha machine" at once (3.34.27: in lower case);
+                                #     credit; "Buddha machine" other instruments credited "Buddha machine" at once (3.34.28: a proper name, T052);
                                 #     "Voice" asks (Q011), "use “voice” as role
                                 #     credit" after a voice typed in
                                 #   voicetech: 3.34.25: Discogs "Voice" asks four answers (spoken vocals “voice” chosen), "Vocals" plain; "Technician
@@ -106,6 +108,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     bass, sticks-and-stones" – other instruments “sticks-and-stones”; more unknown words than instruments: not recognized;
                                 #     3.34.27 (S052): credits and tasks in lower case ("chaims", "sticks-and-stones"), the field's suggestions too ("Tambourine
                                 #     [Additional, Toy]": toy · … · toy tambourine), a proper name of MB's instruments kept ("Hammond manager")
+                                #   casenote: 3.34.28 (S052a/b, T052): "Guitar [Gibson Les Paul]" → "Gibson les paul" with the note "Written small –
+                                #     …: Les → les · keep · always", in the compact line too; keep / write small again / always (stored in T052, a
+                                #     second row follows); text "Sticks-And-Stones" noted, "Buddha machine" kept; a known role without a note
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -342,6 +347,25 @@ python3 t_ui_place.py           # Window or page, the log, staying in place afte
                                 #     edit note drawn anew, remembered after reloading, "↺ Defaults" → window
                                 #   keepplace: after "Create artist …" the dashboard stays at the entry (window and page, without scroll anchoring)
                                 #   srctexts: texts that named Discogs say "the source" with another source (3.16.2)
+
+python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.29; the default of the script)
+                                #   join: 3.34.29: the instruments and voices of an entry joined when staged (one relationship per recording,
+                                #     date, artist credit and additional / guest / solo; "solo" apart) – 20 instead of 33; a role credit typed
+                                #     after staging stages the joins anew (taken out, staged again, nothing twice; [3.35.0] also a row taken
+                                #     out of a join); legacy stages the same
+                                #     instruments apart; ⚙ Staging "Join …", ⚙ Appearance "Entries: Matrix | Legacy"
+                                #   matrix: 3.34.30: an entry as blocks of lines with the events as columns (Multi Man: "3 instruments", ①, written
+                                #     “Drums”), ▸ rows, add. / guest / solo, more events than shared (fold, One row each, ＋ Event ▾, a tick into ①),
+                                #     a line out of ① (grey), One row each, what is staged after all of it
+                                #   dates: 3.34.31: a pool date onto a line (it moves into the date's event; ↶), onto the head of an event, typed
+                                #     into the heads (a new pool date; the pool's own date changed), with ⇧ onto a block (both, "only … · keep both"),
+                                #     what is staged (lead and background vocals with the date joined, background vocals without); [3.35.0] a date onto
+                                #     a block with lines behind "▸ n more"
+                                #   compact: 3.35.0 (milestone): compact as a matrix – a line per event with the roles as chips, a chip dragged onto
+                                #     another event (moved), ✕ (taken out), by role, ▸ / ▾ in the head, a chip clicked (full matrix at its line),
+                                #     ⚙ Staging "An entry, compact, at first: by role", the summary "a relationship per instrument would be 33"
+                                #   restage: 3.35.0: "One row each" and "Join in one block" after staging (joined ↔ singles in the editor), a joined
+                                #     relationship changed in the editor itself stays (its rows not staged again), the others anew
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
