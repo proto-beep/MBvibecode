@@ -382,6 +382,9 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #   tracksfit: tracks compared with MusicBrainz (3.24.1): in the dialog a release with a bonus track yellow, the one with the
                                 #     most data among the fitting ones preselected ("most data with matching tracks"); the yellow message after
                                 #     the import (number, titles with the differing ones); small differences ("(Remastered)", "The …") fit
+                                #   indextracks: 3.35.1: index tracks of Discogs whose parts are tracks of their own (Discogs 3139201: 13 tracks,
+                                #     not 3; the work's credit on its parts, "C1 to D, F2"), parts of one track ("C1a", "C1b") one track "C1",
+                                #     "AA"/"AB", in the dashboard a credit on "B1" on the third recording, no message about the tracks
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text
                                 #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and

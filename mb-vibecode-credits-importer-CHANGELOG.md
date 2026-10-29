@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.35.0 | – |
+| 2026-10-29 | 3.34.18 – 3.35.1 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -91,6 +91,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.35.1
+
+#### Fixed
+
+- **Index tracks of Discogs: their parts are tracks of their own** (collected item 145; maintainer, about Discogs release 3139201: "da werden immer noch nicht die vinyl tracks erkannt", "wahrscheinlich wird es nicht erkannt weil Discogs alle Tracks unter Werken gruppiert … kann das Dashboard alle tracks abnehmen?"): a work with its parts on tracks of their own ("First Encounter": A1, A2, B1, B2; "Organic": C1, C2, D) counted as one track, so the 13 tracks of the release were 3 for the dashboard – they did not fit the release, and credits by track went onto the wrong recordings. Now each part with a position of its own is a track; the work's credits go onto all its parts. Parts of one track ("C1a", "C1b") stay one track, now with the position "C1".
 
 ### Import 3.35.0 – milestone “Entries as a matrix”
 
