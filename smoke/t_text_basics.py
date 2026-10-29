@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20), voicetech (3.34.25) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20), voicetech (3.34.25), unknownask (3.34.26) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -174,7 +174,8 @@ def case_names():
        saxophone, soprano saxophone, trumpet, clarinet. "acoustic & electric guitar" likewise; "bass & electric guitar" stays
        two instruments (bass is no modifier).
     B) A list with a part it does not know: the known roles are taken, the line is listed as not recognized with the
-       unknown part ("Barry Guy – double bass, sticks-and-stones" → double bass; "? “sticks-and-stones”").
+       unknown part ("Barry Guy – double bass, sticks-and-stones" → double bass; "? “sticks-and-stones”"). [3.34.26] The unknown
+       part is a row of its own that asks (137d) – here, without "other instruments" and similar ones, miscellaneous support.
     C) Name suggestions: accents do not count ("Agusti Fernández" → MB "Agustí Fernández", same name); a middle name more
        or less is a similar name, marked as such ("Barry Guy" → MB "Barry John Guy"); nothing is assigned by itself."""
     for i, n in [(9120, 'trumpet'), (9121, 'clarinet'), (9122, 'tenor saxophone'), (9123, 'soprano saxophone')]:
@@ -216,7 +217,8 @@ Bo Strum – bass & electric guitar"""
             and g['Gene Pick'][0] == ['acoustic guitar', 'electric guitar'] and g['Bo Strum'][0] == ['bass', 'electric guitar']
         results.append(ok_a)
         # B) partly known
-        ok_b = g['Barry Guy'][0] == ['double bass'] and unrec == ['Barry Guy – double bass, sticks-and-stones → ? “sticks-and-stones”']
+        # [3.34.26] the unknown part a row of its own that asks (137d; here no "other instruments": miscellaneous support)
+        ok_b = g['Barry Guy'][0] == ['double bass', 'sticks-and-stones'] and unrec == []
         results.append(ok_b)
         # C) name suggestions
         sim = pg.evaluate("(() => { const b = [...document.querySelectorAll('[data-act=name-use]')].find(x => /Barry John Guy/.test(x.textContent)); return b ? [b.title, !!b.querySelector('.dci-similar')] : null; })()")
@@ -642,6 +644,89 @@ def case_voicetech():
         print('B) Techniker:', t1[1:4], t2[1:4], t3[1:4], '| Chaims:', ask)
         results.append(t1[1:4] == ['instrument technician', 'guitar', ''] and t2[1:4] == ['instrument technician', 'drums (drum set)', '']
                        and t3[1] == 'instrument technician' and ask == ['chimes', 'wind chimes', 'other instruments'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_unknownask():
+    """Credits Importer 3.34.26: words that are no instrument ask in every source (collected item 137d, (c); maintainer: "also c.
+    sticks-and-stones bspw. könnte auch einfach "other instruments" werden. wir wollen das auf keinen fall verlieren", "behalte das
+    als letzte Antwort bei. auch bei discogs other instruments. aber miscellaneous support auch anbieten", "passt").
+    A) Discogs "Chaims" (before: miscellaneous support at once) asks chimes · wind chimes · tubular bells · other instruments
+       “Chaims” · miscellaneous support (task “Chaims”), nothing chosen; "miscellaneous support" chosen – type miscellaneous
+       support with the task "chaims" (in small letters, as before); then "chimes" – an instrument row again (recording), chimes, no role credit.
+    B) Discogs "Sticks-And-Stones" (none like it): other instruments credited "Sticks-And-Stones" at once, "miscellaneous support"
+       offered.
+    C) A pasted text "Barry Guy – double bass, sticks-and-stones": double bass and other instruments “sticks-and-stones” (before:
+       "→ ? “sticks-and-stones”" not recognized); "Jane Roe – guitar, kalimba, buddha machine" (more unknown words than
+       instruments): guitar, the rest not recognized as before."""
+    for i, n in GK_INSTRUMENTS:
+        H.attr(i, n, 14, 14, aliases=['orchestral chimes'] if n == 'tubular bells' else None)
+    H.attr(9124, 'other instruments', 14, 14)
+    H.attr(9102, 'double bass', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    CREDITS = [('Chime Man', 'Chaims', 3051), ('Stick Man', 'Sticks-And-Stones', 3052)]
+    for n, r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    Q = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const tr = g && g.querySelector('tr.dci-row'); const q = tr && tr.querySelector('.dci-instr-guess'); const t = tr && tr.querySelector('[data-f=type]');
+      const p = tr && tr.querySelector('[data-f=primary]'); const c = tr && tr.querySelector('[data-f=role-credit]');
+      return tr ? { row: tr.dataset.row, type: t ? (t.options[t.selectedIndex] || {}).text : '', instr: p ? p.value : '', credit: c ? c.value : '-', level: (tr.className.match(/dci-lv-(\\w+)/) || [])[1],
+        opts: q ? [...q.querySelectorAll('button')].map(b => [b.textContent.trim(), b.getAttribute('aria-pressed')]) : null } : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        a0 = pg.evaluate(Q, 'Chime Man')
+        sec = f'tr.dci-row[data-row="{a0["row"]}"]' if a0 else 'tr.none'
+        pg.click(f'{sec} .dci-instr-guess [data-act=instr-misc]')
+        pg.wait_for_timeout(400)
+        a1 = pg.evaluate(Q, 'Chime Man')
+        pg.click(f'{sec} .dci-instr-guess [data-act=instr-pick][data-instr=chimes]')
+        pg.wait_for_timeout(400)
+        a2 = pg.evaluate(Q, 'Chime Man')
+        print('A) Chaims:', a0, '| misc:', a1, '| chimes:', a2)
+        results.append(bool(a0) and [o[0] for o in a0['opts']] == ['chimes', 'wind chimes', 'tubular bells', 'other instruments “Chaims”', 'miscellaneous support (task “Chaims”)']
+                       and all(o[1] == 'false' for o in a0['opts']) and a0['type'] == 'instrument'
+                       and a1['type'] == 'misc' and a1['credit'] == 'chaims' and a1['opts'][-1] == ['miscellaneous support (task “Chaims”)', 'true']
+                       and a2['type'] == 'instrument' and a2['instr'] == 'chimes' and a2['credit'] == '' and a2['level'] == 'recording')
+        b0 = pg.evaluate(Q, 'Stick Man')
+        print('B) Sticks-And-Stones:', b0)
+        results.append(bool(b0) and b0['type'] == 'instrument' and b0['instr'] == 'other instruments' and b0['credit'] == 'Sticks-And-Stones'
+                       and [o[0] for o in b0['opts']] == ['other instruments “Sticks-And-Stones”', 'miscellaneous support (task “Sticks-And-Stones”)'])
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Barry Guy – double bass, sticks-and-stones\nJane Roe – guitar, kalimba, buddha machine')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1000)
+        g = pg.evaluate(GK_ROWS)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+        barry = [r[1:4] for r in (g.get('Barry Guy') or {'rows': []})['rows']]
+        jane = [r[0] for r in (g.get('Jane Roe') or {'rows': []})['rows']]
+        print('C) Barry Guy:', barry, '| Jane Roe:', jane, '| nicht erkannt:', unrec)
+        results.append(barry == [['instrument', 'double bass', ''], ['instrument', 'other instruments', 'sticks-and-stones']] and jane == ['guitar']
+                       and unrec == ['Jane Roe – guitar, kalimba, buddha machine → ? “kalimba”, “buddha machine”'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
