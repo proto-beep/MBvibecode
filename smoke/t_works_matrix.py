@@ -1,6 +1,6 @@
 """Works matrix: track groups and notes, columns, dates of cells, attributes, publishers (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: mxdrop, matrixcols, fill, wattrs, pub – each the former smoke/t_<case>.py, unchanged; `python3 t_works_matrix.py <case> …` runs only those."""
+Cases: mxdrop, matrixcols, fill, wattrs, pub, remember – each the former smoke/t_<case>.py, unchanged; `python3 t_works_matrix.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -554,6 +554,89 @@ def case_pub():
         print('Im Editor vorgemerkte Verlagsbeziehungen:', pub)
         print('Ergebnis:', 'OK' if ok and pub == ['Pub Co → Song One', 'Other Pub → Song One'] or ok and sorted(pub) == sorted(['Pub Co → Song One', 'Other Pub → Song One']) else 'PRÜFEN', '| Fehler:', errs)
         b.close()
+
+
+def case_remember():
+    """Credits Importer 3.36.4 (146; maintainer: "ja bitte dazu"): the choices of the works matrix of a remembered release after the
+    page is loaded again (⚙ Settings → Cache on): an attribute set on the link in MusicBrainz ("co"), a new work planned for
+    track 2, the column Writer W taken out (its rows still on "Skip"; brought back, they are not), a column date, the type of
+    new works – all as before."""
+    import re
+    for i, n in [(567, 'cover'), (578, 'live'), (750, 'medley')]:
+        H.attr(i, n, i)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (567, 578, 750))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.REMEMBER = True
+    PILLS = """(sel) => [...document.querySelectorAll(sel + ' .dci-wattrs .dci-wpill')].map(b => [b.textContent.trim(),
+  (b.className.match(/dci-wpill-(\\w+)/) || [])[1]])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def load():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+
+        w1 = 'tr[data-work="0"][data-mrow^="w:0"]'
+        p2 = 'tr[data-work="1"][data-mrow^="p:1"]'
+        writer_rows = lambda: pg.evaluate("""[...document.querySelectorAll('.dci-group')].filter(g => (g.querySelector('.dci-gname') || {textContent: ''}).textContent.includes('Writer W'))
+      .flatMap(g => [...g.querySelectorAll('tr.dci-row')]).map(tr => (tr.className.match(/dci-lv-(\\w+)/) || [])[1])""")
+
+        def state():
+            other = pg.evaluate("[...document.querySelectorAll('[data-colhead^=\"k:\"]')].filter(h => !h.textContent.includes('Writer W')).map(h => h.dataset.colhead)[0] || ''")
+            cd = ''
+            if other:
+                pg.click(f'[data-colhead="{other}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(300)
+                cd = pg.locator(f'[data-colhead="{other}"] [data-f=cd-by]').input_value()
+                pg.click(f'[data-colhead="{other}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(200)
+            stub = pg.locator('th.dci-mx-removed [data-act=mx-col-restore]')
+            wtype = pg.evaluate("(() => { const s = document.querySelector('[data-f=work-type]'); return s ? s.options[s.selectedIndex].text : ''; })()")
+            return {'co': dict((x[0].rstrip('?✎✓'), x[1]) for x in pg.evaluate(PILLS, w1)).get('co'), 'neu': pg.locator(p2).count(),
+                    'raus': stub.get_attribute('title') if stub.count() else '', 'zeilen': writer_rows(), 'datum': cd, 'typ': wtype}
+
+        load()
+        # (a row without an attribute is closed: ▸ opens it)
+        if not pg.locator(f'{w1} .dci-wpill[data-attr=cover]').count():
+            pg.click(f'{w1} [data-act=mx-wattr-open]'); pg.wait_for_timeout(200)
+        pg.click(f'{w1} .dci-wpill[data-attr=cover]'); pg.wait_for_timeout(200)
+        pg.click('tr[data-work="1"] [data-act=work-pending]'); pg.wait_for_timeout(300)
+        wk = pg.evaluate("[...document.querySelectorAll('[data-colhead]')].find(h => h.textContent.includes('Writer W')).dataset.colhead")
+        pg.click(f'[data-colhead="{wk}"] [data-act=mx-col-remove]'); pg.wait_for_timeout(300)
+        other = pg.evaluate("[...document.querySelectorAll('[data-colhead^=\"k:\"]')].filter(h => !h.textContent.includes('Writer W')).map(h => h.dataset.colhead)[0] || ''")
+        if other:
+            pg.click(f'[data-colhead="{other}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(300)
+            pg.fill(f'[data-colhead="{other}"] [data-f=cd-by]', '1999'); pg.wait_for_timeout(200)
+            pg.click(f'[data-colhead="{other}"] [data-act=mx-colmenu]'); pg.wait_for_timeout(200)
+        sel = pg.locator('[data-f=work-type]')
+        label = 'Aria'
+        sel.select_option(label=label); pg.wait_for_timeout(200)
+        pg.wait_for_timeout(1600)
+        before = state()
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        load()
+        after = state()
+        print('vorher:', before)
+        print('nachher:', after)
+        ok = before == after and before['co'] == 'on' and before['neu'] == 1 and 'Writer W' in before['raus'] and before['zeilen'] \
+            and all(x == 'skip' for x in before['zeilen']) and before['datum'] == '1999' and before['typ'] == label
+        results.append(bool(ok))
+        # the column brought back: its rows (mapped to this import's rows) no longer skipped
+        pg.click('th.dci-mx-removed [data-act=mx-col-restore]'); pg.wait_for_timeout(300)
+        back = writer_rows()
+        head = pg.locator(f'[data-colhead="{wk}"]').count()
+        print('zurückgeholt:', back, '| Spaltenkopf:', head)
+        results.append(back == [] and head == 1)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 run_cases(globals())

@@ -222,13 +222,17 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     "li?" offered on the existing one, open/closed rows, "Attributes for all", "spell out", staging;
                                 #     "Music And Lyrics By" → writer, "Song" preselected (R098, S020)
                                 #   pub: publishers ticked only where a writer has them as personal publisher
+                                #   remember (3.36.4, 146): with ⚙ Settings → Cache on, the choices of the works matrix after the page is
+                                #     loaded again: an attribute set on a link, a new work planned, a column taken out (and brought back:
+                                #     its rows no longer skipped), a column date, the type of new works
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, comments of live recordings
                                 #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                                 #     writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                                 #     2,000), no redraw while typing in the works matrix (takes about 3 minutes)
                                 #   worksskip: the works matrix (3.18.0): fold / unfold (not kept), "Skip works matrix" (rows on "Skip", nothing of it planned,
-                                #     no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later);
+                                #     no works level, kept across a reload, no lookups), taken again (3.36.4: the new works planned before come
+                                #     back with it, nothing looked up), the question from N tracks ("Not now", later);
                                 #     3.19.3: the tooltips of what is counted, the setting for the skipped rows
                                 #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off), the list above "Stage …": live
                                 #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),

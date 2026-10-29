@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.36.3, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.36.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.36.4 · 2026-10-30
+
+The choices of the works matrix remembered per release (146).
+
+- **New `worksSnapshot()`** (in `rememberSnapshot`, key `works`): `plan` (`S.workPlan`, only `origin` search and pending, without `entity`), `on` / `off` (`S.linkAttrOn` / `S.linkAttrOff`, the non-empty ones), `fills` (`S.dateFills`, `fromCol` by entry), `colDate` (`S.mxColDate`), `removed` (`S.mxRemoved`: name, MBID, entity type, entry, row ids), `collapsed` (`S.mxCollapsed`), `opts` (`S.workRowOpts`), `defaults` (`S.workDefaults`, when chosen). A column of an entry (`k:<key>`, the key changes with each import) is stored by the entry (`e:<entry id>`, **`colKeyOut`** / **`colKeyIn`**).
+- **New `restoreWorks(w, entries, ids)`** (at the end of `restoreRemembered`): sets only what this import lacks; the row ids of a column taken out mapped to this import's rows; returns how many (they count in "rememberRestored").
+- **Stored after a change:** `renderWorks()` calls `scheduleRemember()`; also the type of a new work (`mx-type`) and the type for all new works (`work-type`).
+- **Tests:** `t_works_matrix.py` new case `remember` (attribute, new work, column taken out and brought back, column date, type of new works after the page is loaded again); `t_works_more.py worksskip` C: taken again after the page was loaded again, the new works planned before the skip come back (nothing looked up), their plans taken back before D.
 
 ## Import 3.36.3 · 2026-10-29
 

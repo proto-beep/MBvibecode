@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.36.3
+// @version      3.36.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -14391,7 +14391,92 @@
       return x;
     }).filter((x) => Object.keys(x).length > 1);
     const manual = used.filter((a) => a.manual).map((a) => ({ e: entryIdOf(a), a: { name: a.name, company: !!a.company, other: !!a.other, entityType: a.entityType || null, mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '' } }));
-    return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual };
+    return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual, works: worksSnapshot() };
+  }
+
+  /**
+   * [146] (3.36.4) The choices of the works matrix (maintainer, on remembering them: "ja bitte dazu"): the works chosen for tracks
+   * and the new ones planned (not those already created – the list of created works keeps them), the attributes of the links
+   * set by hand, the dates of columns and those planned for relationships in MusicBrainz, the columns taken out or folded, the
+   * options of new works. A column of an entry by the entry (its key changes with each import).
+   */
+  const colKeyOut = (key) => {
+    const m = /^k:(.+)$/.exec(String(key || ''));
+    if (!m) return key;
+    const a = S.artists.get(m[1]);
+    return a ? `e:${entryIdOf(a)}` : null;
+  };
+  const colKeyIn = (key, entries) => {
+    const m = /^e:(.+)$/.exec(String(key || ''));
+    if (!m) return key;
+    const a = entries.get(m[1]);
+    return a ? `k:${a.key}` : null;
+  };
+  function worksSnapshot() {
+    const keep = (p) => {
+      const o = { ...p };
+      delete o.entity;  // the work as staged in the editor (made again when staged)
+      return o;
+    };
+    return {
+      plan: [...S.workPlan].filter(([, p]) => p && (p.origin === 'search' || p.origin === 'pending')).map(([i, p]) => [i, encField(keep(p))]),
+      on: encField([...S.linkAttrOn].filter(([, v]) => v && v.size)),
+      off: encField([...S.linkAttrOff].filter(([, v]) => v && v.size)),
+      fills: [...S.dateFills].map(([k, f]) => [k, encField({ ...f, fromCol: f.fromCol ? colKeyOut(f.fromCol) : null })]),
+      colDate: [...S.mxColDate].map(([k, d]) => [colKeyOut(k), encField(d)]).filter((x) => x[0]),
+      removed: [...S.mxRemoved].map(([k, rm]) => [colKeyOut(k), { name: rm.name, mbid: rm.mbid, entityType: rm.entityType, e: rm.artist ? entryIdOf(rm.artist) : '', rowIds: rm.rowIds || [] }]).filter((x) => x[0]),
+      collapsed: [...S.mxCollapsed].map(colKeyOut).filter(Boolean),
+      opts: encField([...S.workRowOpts]),
+      defaults: S.workDefaults && (S.workDefaults.typeId || (S.workDefaults.languageIds || []).length) ? { ...S.workDefaults } : null,
+    };
+  }
+
+  /** [146] (3.36.4) The choices of the works matrix taken over (what this import has already stays); how many. */
+  function restoreWorks(w, entries, ids) {
+    let n = 0;
+    const count = () => { n++; };
+    (w.plan || []).forEach(([i, t]) => {
+      if (!(i < S.mbTracks.length) || S.workPlan.has(i)) return;
+      const p = decField(t);
+      if (!(p.flags instanceof Set)) p.flags = new Set(p.flags || []);
+      S.workPlan.set(i, p);
+      count();
+    });
+    [['on', S.linkAttrOn], ['off', S.linkAttrOff]].forEach(([k, map]) => {
+      if (w[k]) decField(w[k]).forEach(([key, v]) => { if (!map.has(key)) { map.set(key, v instanceof Set ? v : new Set(v || [])); count(); } });
+    });
+    (w.fills || []).forEach(([k, t]) => {
+      if (S.dateFills.has(k)) return;
+      const f = decField(t);
+      f.fromCol = f.fromCol ? colKeyIn(f.fromCol, entries) : null;
+      S.dateFills.set(k, f);
+      count();
+    });
+    (w.colDate || []).forEach(([k, t]) => {
+      const key = colKeyIn(k, entries);
+      if (!key || S.mxColDate.has(key)) return;
+      S.mxColDate.set(key, decField(t));
+      count();
+    });
+    (w.removed || []).forEach(([k, rm]) => {
+      const key = colKeyIn(k, entries);
+      if (!key || S.mxRemoved.has(key)) return;
+      const a = rm.e ? entries.get(rm.e) : null;
+      S.mxRemoved.set(key, { key, name: rm.name, mbid: rm.mbid, entityType: rm.entityType, ...(a ? { artist: a } : {}), rowIds: (rm.rowIds || []).map((id) => ids.get(id)).filter(Boolean) });
+      count();
+    });
+    (w.collapsed || []).forEach((k) => {
+      const key = colKeyIn(k, entries);
+      if (key) S.mxCollapsed.add(key);
+    });
+    if (w.opts) decField(w.opts).forEach(([i, o]) => { if (!S.workRowOpts.has(i)) { S.workRowOpts.set(i, o); count(); } });
+    // the options for every new work (until changed), when none were chosen in this import
+    const d = S.workDefaults || {};
+    if (w.defaults && !d.typeId && !(d.languageIds || []).length) {
+      S.workDefaults = { typeId: w.defaults.typeId || '', languageIds: [...(w.defaults.languageIds || [])] };
+      count();
+    }
+    return n;
   }
 
   /** [146] (3.36.1) At the end of an import (the last one started): what is remembered taken over, then this one remembered. */
@@ -14570,6 +14655,8 @@
         if (a.company && e.match.entityType) a.entityType = e.match.entityType;
       }
     }
+    // [3.36.4] the choices of the works matrix
+    if (snap.works) changed += restoreWorks(snap.works, entries, ids);
     if (changed || lost) {
       log('info', 'rememberRestored', { n: changed, date: new Date(snap.at || Date.now()).toLocaleString(LANG) });
       if (lost) {
@@ -22378,6 +22465,8 @@
   }
 
   function renderWorks() {
+    // [3.36.4] the choices of the works matrix remembered too (soon after a change)
+    scheduleRemember();
     // Keep the scroll position of the matrix (and of the dashboard) while it is drawn again
     const wrap = S.overlay && S.overlay.querySelector('.dci-mx-wrap');
     const pos = wrap ? [wrap.scrollTop, wrap.scrollLeft] : null;
@@ -22881,6 +22970,7 @@
       case 'mx-type': {
         const i = workIndexOf(el);
         S.workRowOpts.set(i, { ...rowOpts(i), typeId: el.value, typeAuto: null });
+        scheduleRemember();
         return true;
       }
       case 'work-lang-add': {
@@ -25635,6 +25725,7 @@
       case 'work-type':
         S.workDefaults.typeId = el.value;
         S.workDefaults.typeAuto = null;
+        scheduleRemember();
         break;
 
       case 'work-flag': {
