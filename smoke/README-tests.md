@@ -26,7 +26,10 @@ MBvibecode/ (this repository)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
                                       [3.34.29] ENTRIES_VIEW: the entries as before ('legacy') for every file but t_entries.py – the matrix
-                                      (E4, the script's default) is tested there; [3.34.30] with the generation of the stored data
+                                      (E4, the script's default) is tested there; [3.34.30] with the generation of the stored data;
+                                      [3.36.0] REMEMBER: True – ⚙ Settings → Cache "Remember … per release" switched on before the
+                                      script starts (the files written before expect the stores of a release kept); False in
+                                      t_ui_settings.py cache and t_entries.py order (the script's default: off)
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
   smoke/caserun.py                    [3.31.1] runs the cases of a topic file: one shared browser, what a case changes in the
                                       harness set back after it, one result per case and one for the file
@@ -68,7 +71,8 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # ~1,200 roles, ~100 company roles, ~50 date phrases, pasted texts) through the register in Node, the
                                 # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
                                 # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
-                                # (3.33.1: ✎, "code" and the forms of the window are hidden before its sections are read)
+                                # (3.33.1: ✎, "code" and the forms of the window are hidden before its sections are read; 3.36.0: the
+                                # texts only after the import of the release is complete – before, their end depended on the timing)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                                 # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
@@ -325,6 +329,10 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, s
                                 #     rules, pools of all releases, cover box on Discogs
                                 #   notice: update notice (milestones, closed, language) and the one-time resets of stored data (generations 2 to 4, also companion;
                                 #     generation 4 clears the list of created works too)
+                                #   cache: 3.36.0 (item 146, milestone): ⚙ Settings → Cache – remembering off by default (changes gone after a
+                                #     reload, nothing stored), on (stored at once, rows and pool back after a reload, the log), the source changed
+                                #     (changes of gone or changed lines left out, the message), the number 0 (off) and 50, another release
+                                #     forgotten with 1, "Forget all remembered releases …" with the space shown
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):

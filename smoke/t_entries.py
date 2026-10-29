@@ -610,7 +610,9 @@ def case_order():
        both lines of its block; after "One row each" each line is a block of its own – no ⠿.
     E) ☰ compact: the chips in the new order.
     F) Staged: Multi Man – one relationship per recording with all three instruments, as before (4).
-    G) The page loaded again (a new import): the order of the source again."""
+    G) The page loaded again (a new import): the order of the source again (3.36.0: as long as the release is not remembered –
+       ⚙ Settings → Cache, off by default)."""
+    H.REMEMBER = False
     orig, rel = join_release()
     H.discogs_release = rel
     results = []

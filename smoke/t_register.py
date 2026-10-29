@@ -95,6 +95,9 @@ def page_part():
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
+        # [3.36.0] the import of the release first (before, the text came while it still ran: its end met the text's rows,
+        # and what S006 made of "Strings arranged by Zoe Q" depended on the timing)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         H.src_menu(pg, 'text-open')
         pg.fill('[data-f=text-src]', '\n'.join(corpus['texts']))
         pg.click('[data-act=text-load]')

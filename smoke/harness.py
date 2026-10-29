@@ -643,7 +643,7 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     errs = errors_of(pg)
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
-    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW))
+    view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER))
     codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
@@ -985,6 +985,13 @@ ENTRIES_VIEW = 'legacy'
 # (with the generation of the stored data: without it the script clears what is stored when it starts)
 ENTRIES_PRESET = "(v) => { if (v !== 'legacy' || localStorage.getItem('dci-entries-view') !== null) return; if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-entries-view', JSON.stringify(v)); }"
 
+# [3.36.0] what is stored for a release (pools, matrix, the choices of the import, the rows) is only remembered with
+# ⚙ Settings → Cache → "Remember changes and import settings per release" (off by default); the tests written before it
+# expect it on: REMEMBER = True switches it on before the script starts (unless the browser has it stored already); the cases
+# of t_ui_settings.py 'cache' set REMEMBER = False to see the script's default
+REMEMBER = True
+REMEMBER_PRESET = "(on) => { if (!on || localStorage.getItem('dci-remember-on') !== null) return; if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-remember-on', 'true'); }"
+
 
 # [3.32.0] built-in rules switched off before the script starts, unless the browser has stored switched rules already
 # (e.g. ['D022'] for the cases about periods and "choose", written before D022 placed what the days have in common)
@@ -999,6 +1006,7 @@ def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
     if view:
         pg.evaluate(VIEW_PRESET, view)
     pg.evaluate(ENTRIES_PRESET, ENTRIES_VIEW)
+    pg.evaluate(REMEMBER_PRESET, REMEMBER)
     if RULES_OFF:
         pg.evaluate(RULES_PRESET, RULES_OFF)
     if companion:
