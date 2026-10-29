@@ -1,6 +1,6 @@
 """Sources: the adapter, several linked releases, supplementing, the tracks of a source (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: adapter, links, supp, tracksfit – each the former smoke/t_<case>.py, unchanged; `python3 t_sources.py <case> …` runs only those."""
+Cases: adapter, links, supp, tracksfit, indextracks (3.35.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -692,6 +692,90 @@ def case_tracksfit():
             results.append(not errs)
             pg.close()
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_indextracks():
+    """Credits Importer 3.35.1 (collected item 145; maintainer, about Discogs release 3139201 – MusicBrainz ad8fe956-…: "da werden
+    immer noch nicht die vinyl tracks erkannt", "wahrscheinlich wird es nicht erkannt weil Discogs alle Tracks unter Werken
+    gruppiert … kann das Dashboard alle tracks abnehmen?"): index tracks of Discogs whose sub-tracks are on tracks of their own.
+    A) The release as on Discogs: three index tracks "First Encounter" (A1, A2, B1, B2), "Organic" (C1, C2, D – a whole side),
+       "Trisect" (E1 … F2) – 13 tracks (before: 3), each with its work; the index's credit on its four tracks, a sub-track's on
+       its own, "C1 to D, F2" on 5–7 and 13.
+    B) As before: parts of one track ("C1a", "C1b" – from 3.35.1 with the position C1) and an index with a position of its own are
+       one track; sub-tracks without positions too; "4a, 4b, 5" – two tracks (4 with 4a, 4b); sides "AA", "AB" – two tracks.
+    C) In the dashboard: the four tracks of the test release under one index track – no message about the tracks, a credit on
+       "B1" on the third recording."""
+    import json
+    import subprocess
+    sub = lambda p, t, ea=None: {'position': p, 'title': t, 'type_': 'track', 'extraartists': ea or []}
+    ex = lambda name, role, i, tracks='': {'name': name, 'anv': '', 'role': role, 'tracks': tracks, 'id': i, 'join': ''}
+    rel_a = {'id': 3139201, 'title': 'X', 'tracklist': [
+        {'position': '', 'title': 'First Encounter', 'type_': 'index', 'extraartists': [ex('Comp A', 'Composed By', 1)],
+         'sub_tracks': [sub('A1', 'First Encounter'), sub('A2', 'Two In One Pt. 1'), sub('B1', 'Two In One Pt. 2'), sub('B2', 'Twenty-First-Century Blues')]},
+        {'position': '', 'title': 'Organic', 'type_': 'index', 'sub_tracks': [sub('C1', 'Just'), sub('C2', 'One Way'), sub('D', 'Ontology', [ex('Sax B', 'Saxophone', 2)])]},
+        {'position': '', 'title': 'Trisect', 'type_': 'index', 'sub_tracks': [sub('E1', 'Introduction'), sub('E2', 'Phase One'), sub('E3', 'Phase Two'),
+                                                                            sub('E4', 'Phase Three'), sub('F1', 'Transition'), sub('F2', 'Phase Four / Coda')]}],
+        'extraartists': [ex('Bass C', 'Bass', 3, 'C1 to D, F2')]}
+    rel_b = {'id': 2, 'title': 'Y', 'tracklist': [
+        {'position': '', 'title': 'Suite', 'type_': 'index', 'sub_tracks': [sub('C1a', 'a'), sub('C1b', 'b')]},
+        {'position': '2', 'title': 'Own', 'type_': 'index', 'sub_tracks': [sub('2a', 'x'), sub('3', 'y')]},
+        {'position': '', 'title': 'Loose', 'type_': 'index', 'sub_tracks': [sub('', 'p'), sub('', 'q')]},
+        {'position': '', 'title': 'Mixed', 'type_': 'index', 'sub_tracks': [sub('4a', 'm'), sub('4b', 'n'), sub('5', 'o')]},
+        {'position': '', 'title': 'Single', 'type_': 'index', 'sub_tracks': [sub('AA', 'Side AA'), sub('AB', 'Side AB')]}]}
+    js = """
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const out = JSON.parse(process.argv[2]).map((d) => { const r = m.DISCOGS.toRelease(d, d.id);
+  return { tracks: r.tracks.map((t) => [t.position, t.title, t.aliases, t.work || '']), credits: r.credits.map((c) => [c.who.name, c.role, (c.tracks.indexes || []).slice().sort((a, b) => a - b), !!c.tracks.all]) }; });
+console.log(JSON.stringify(out));
+"""
+    a, bb = json.loads(subprocess.run(['node', '-e', js, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([rel_a, rel_b])],
+                                      capture_output=True, text=True, check=True).stdout)
+    print('A) Tracks:', [(t[0], t[3]) for t in a['tracks']])
+    print('   Credits:', a['credits'])
+    comp = [c[2] for c in a['credits'] if c[0] == 'Comp A']
+    ok_a = [t[0] for t in a['tracks']] == ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D', 'E1', 'E2', 'E3', 'E4', 'F1', 'F2'] \
+        and a['tracks'][6][1:] == ['Ontology', [], 'Organic'] and a['tracks'][12][3] == 'Trisect' \
+        and comp == [[0], [1], [2], [3]] and ['Sax B', 'Saxophone', [6], False] in a['credits'] and ['Bass C', 'Bass', [4, 5, 6, 12], False] in a['credits']
+    print('B) Tracks:', bb['tracks'])
+    ok_b = [(t[0], t[2]) for t in bb['tracks']] == [('C1', ['C1a', 'C1b']), ('2', ['2a', '3']), ('', []), ('4', ['4a', '4b']), ('5', []), ('AA', []), ('AB', [])] \
+        and bb['tracks'][3][1] == 'm / n' and bb['tracks'][0][1] == 'Suite'
+    # C) the dashboard
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        tl = d['tracklist']
+        for t, pos in zip(tl, ['A1', 'A2', 'B1', 'B2']):
+            t['position'] = pos
+        d['tracklist'] = [{'position': '', 'title': 'The Suite', 'type_': 'index', 'sub_tracks': tl}]
+        d['extraartists'] = [{'name': 'Bass Man', 'anv': '', 'role': 'Bass', 'tracks': 'B1', 'id': 3001, 'join': ''}]
+        d['companies'] = []
+        return d
+    H.discogs_release = rel
+    results = [ok_a, ok_b]
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            msg = pg.evaluate("[...document.querySelectorAll('.dci-msg-tracks')].map(m => m.textContent.trim())")
+            tracks = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man');
+              const tr = g && g.querySelector('tr.dci-row'); return tr ? [...g.querySelectorAll(`tr[data-tracksrow="${tr.dataset.row}"] input[data-f=track]`)].filter(c => c.checked).map(c => Number(c.dataset.i)) : null; })()""")
+            print('C) Meldung zu den Tracks:', msg, '| Bass Man auf:', tracks)
+            results.append(msg == [] and tracks == [2])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

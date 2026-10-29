@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.35.0
+// @version      3.35.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4179,6 +4179,12 @@
       return { id, name: cleanName(ea.name), rawName: String(ea.name || '').trim(), links: id ? [artistUrl(id)] : [] };
     };
 
+    /**
+     * [145] (3.35.1) The track a position of a sub-track belongs to: "C1a", "C1.b", "3-b" → C1, C1, 3; a position without a part
+     * letter is a track itself ("A1", "D" – a whole side –, "AA", "1-1").
+     */
+    const partOf = (p) => String(p || '').trim().replace(/^(.*\d)[.-]?[a-z]$/i, '$1');
+
     /** The JSON of a Discogs release → the neutral release. */
     function toRelease(d, releaseId) {
       // Tracks without headings; an index track counts as one track, its sub-tracks become aliases
@@ -4186,7 +4192,28 @@
       const onTracks = [];
       for (const t of d.tracklist || []) {
         if (t.type_ === 'heading') continue;
-        const entry = { position: t.position || '', title: t.title || '', aliases: [] };
+        // [145] (3.35.1) an index track without a position of its own whose sub-tracks are on tracks of their own (maintainer:
+        // "wahrscheinlich wird es nicht erkannt weil Discogs alle Tracks unter Werken gruppiert … kann das Dashboard alle tracks
+        // abnehmen?"; "First Encounter": A1, A2, B1, B2): each of them a track – the index's credits on all of them, the work
+        // kept as `work`. Parts of one track ("C1a", "C1b") and an index with a position stay one track, as before.
+        const subs = t.type_ === 'index' ? (t.sub_tracks || []) : [];
+        const bases = [];
+        subs.forEach((x) => {
+          const b = partOf(x.position);
+          if (b && !bases.some((y) => normPos(y) === normPos(b))) bases.push(b);
+        });
+        if (bases.length > 1 && !String(t.position || '').trim()) {
+          for (const base of bases) {
+            const parts = subs.filter((x) => normPos(partOf(x.position)) === normPos(base));
+            const own = parts.find((x) => normPos(x.position) === normPos(base));
+            const title = own ? own.title : parts.length === 1 ? parts[0].title : parts.map((x) => x.title).filter(Boolean).join(' / ');
+            tracks.push({ position: base, title: title || t.title || '', aliases: parts.map((x) => x.position).filter((x) => normPos(x) !== normPos(base)), work: t.title || '' });
+            onTracks.push([...(t.extraartists || []), ...parts.flatMap((x) => x.extraartists || [])]);
+          }
+          continue;
+        }
+        // [145] (3.35.1) an index of the parts of one track without a position of its own: that track's ("C1" for C1a, C1b)
+        const entry = { position: t.position || (bases.length === 1 ? bases[0] : ''), title: t.title || '', aliases: [] };
         const people = [...(t.extraartists || [])];
         if (t.type_ === 'index') {
           for (const sub of t.sub_tracks || []) {
