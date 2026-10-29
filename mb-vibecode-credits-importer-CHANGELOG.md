@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.25 | – |
+| 2026-10-29 | 3.34.18 – 3.34.26 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.26
+
+#### Changed
+
+- **Words that are no instrument ask everywhere, and nothing is lost** (collected item 137d (c); maintainer: "also c. sticks-and-stones bspw. könnte auch einfach "other instruments" werden. wir wollen das auf keinen fall verlieren", "auch bei discogs other instruments. aber miscellaneous support auch anbieten", "passt"): "Barry Guy – double bass, sticks-and-stones" gives other instruments “sticks-and-stones” (before: not recognized); a role of Discogs that MusicBrainz has no instrument for ("Chaims") asks chimes · … · other instruments “Chaims” · miscellaneous support (task “Chaims”) (before: miscellaneous support at once). Every such question has "miscellaneous support (task “…”)" as its last answer.
 
 ### Import 3.34.25
 

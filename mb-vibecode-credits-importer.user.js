@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.25
+// @version      3.34.26
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.25
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.25
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.26
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.26
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.25';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.26';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1663,6 +1663,8 @@
       "instrGuess.chosen": "“{word}” is no instrument of MusicBrainz – chosen:",
       "instrGuess.other": "{other} “{word}”",
       "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{word}”.",
+      "instrGuess.misc": "miscellaneous support (task “{word}”)",
+      "instrGuess.noneOr": "“{word}” is no instrument of MusicBrainz, and none is like it – as written:",
       "voiceCredit.from": "From the text:",
       "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
@@ -4881,8 +4883,19 @@
             // [3.6.0] Some roles known, some not: the known ones are taken, the rest is listed as not recognized
             const rp = roleParts(right);
             if (rp.known.length) {
-              rp.known.forEach((r) => { if (addCredit(left, r, cScope)) found++; });
-              if (found) unknownParts.push(...rp.unknown);
+              // [137d] (3.34.26) words that may be instruments – at least as many instruments known as such words – ask like the
+              // words of a list of instruments ("Barry Guy – double bass, sticks-and-stones": other instruments “sticks-and-stones”;
+              // maintainer: "also c … wir wollen das auf keinen fall verlieren", "passt"); the rest stays not recognized
+              const maybe = ruleOn('S051') ? rp.unknown.filter(maybePlayable) : [];
+              const guess = maybe.length && rp.known.filter(playable).length >= maybe.length ? new Set(maybe) : new Set();
+              rp.parts.forEach((r) => {
+                if (isRole(r)) {
+                  if (addCredit(left, r, cScope)) found++;
+                } else if (guess.has(r)) {
+                  if (addCredit(left, r, cScope, { guess: true })) found++;
+                }
+              });
+              if (found) unknownParts.push(...rp.unknown.filter((r) => !guess.has(r)));
             }
           }
         };
@@ -7171,7 +7184,7 @@
     const wr = wordingRuleFor(row);
     if (wr) return wr.credit;
     // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
-    if (row.instrGuess) return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? row.instrGuess.word : '';
+    if (row.instrGuess && row.instrGuess.chose !== 'misc') return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? row.instrGuess.word : '';
     // [137f] (3.34.25) an instrument technician with its instrument: MusicBrainz says "guitar technician" – no role credit but
     // "tuner" ("Piano Tuner": piano, credited "piano tuner")
     if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(norm(row.creditFromRole)) : '';
@@ -7349,7 +7362,12 @@
     }
     resolveRowType(row);
     if (!row.primaryTouched) row.primaryText = pickPrimary(row);
-    if (m.fallback && !primaryIsValid(row)) makeMiscRow(row, String(row.raw || row.base).replace(/\s*\[.*$/, '').trim());
+    if (m.fallback && !primaryIsValid(row)) {
+      // [137d] (3.34.26) a question already asked stays (with "miscellaneous support" if that was chosen), else it is asked now
+      const g = row.instrGuess;
+      if (g && g.chose === 'misc') makeMiscRow(row, g.word);
+      else if (!g) guessInstrument(row, { word: String(row.raw || row.base).replace(/\s*\[.*$/, '').trim() });
+    }
     // [Q003] A type chosen in the question stays
     const tq = typeQuestionFor(row);
     const o = tq && row.typeAnswer != null ? tq.options[row.typeAnswer] : null;
@@ -7461,8 +7479,10 @@
     // [137d] (3.34.20) a word of a list of instruments (guess) stays an instrument: guessInstrument asks for it
     // [121b] (3.34.21) also a word a question asks about (a question of your own: "keys" – keyboard, synthesizer …)
     if (m.fallback && !primaryIsValid(row) && !guess && !questionRuleFor(row)) {
-      // Not an MB instrument either: keep the role as "miscellaneous support" with the Discogs role as task.
-      makeMiscRow(row, String(raw || base).replace(/\s*\[.*$/, '').trim());
+      // Not an MB instrument either: [137d] (3.34.26) it asks for similar instruments, "other instruments" credited as written or
+      // "miscellaneous support" with the role as task (before: miscellaneous support at once; maintainer: "also c … wir wollen
+      // das auf keinen fall verlieren"); without "other instruments" in MusicBrainz and without similar ones: miscellaneous support
+      guessInstrument(row, { word: String(raw || base).replace(/\s*\[.*$/, '').trim() });
     }
     refreshRowDetails(row);
     return row;
@@ -12898,9 +12918,33 @@
       refreshRowDetails(row);
       return;
     }
-    row.instrGuess = { word, options, other: other ? other.name : '' };
+    // [137d] (3.34.26) "miscellaneous support (task “…”)" as the last answer (maintainer: "behalte das als letzte Antwort bei",
+    // "aber miscellaneous support auch anbieten"); the level kept for an instrument chosen after it
+    row.instrGuess = { word, options, other: other ? other.name : '', misc, level: row.level, chose: '' };
     if (!options.length) Object.assign(row, { primaryText: other.name, primaryTouched: true });
     refreshRowDetails(row);
+  }
+
+  /** [137d] (3.34.26) "miscellaneous support (task “…”)" chosen in the question of a word MusicBrainz does not know. */
+  function guessMisc(row) {
+    const g = row.instrGuess;
+    if (!g || !g.misc) return;
+    g.chose = 'misc';
+    Object.assign(row, { primaryTouched: false });
+    makeMiscRow(row, g.word);
+    refreshRowDetails(row);
+    rerenderRow(row);
+    refresh();
+  }
+
+  /** [137d] (3.34.26) An instrument chosen after "miscellaneous support": the row an instrument again, on its level. */
+  function guessUnMisc(row) {
+    const g = row.instrGuess;
+    if (!g || g.chose !== 'misc') return;
+    g.chose = '';
+    Object.assign(row, { types: ['instrument'], notes: (row.notes || []).filter((n) => n !== 'unknownRole' && n !== 'misc'), creditFromRole: '', primaryCands: [] });
+    if (g.level) row.level = g.level;
+    resolveRowType(row);
   }
 
   /**
@@ -17278,10 +17322,17 @@
   function instrGuessHtml(row) {
     const g = row.instrGuess;
     if (!g || row.level === 'skip') return '';
-    if (!g.options.length) return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.none', { word: g.word, other: g.other }))}</div>`;
-    const pick = (name, label) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}" aria-pressed="${norm(row.primaryText) === norm(name)}">${esc(label)}</button>`;
-    const chosen = primaryIsValid(row) && !!norm(row.primaryText);
-    const opts = [...g.options.map((n) => pick(n, n)), ...(g.other ? [pick(g.other, tr('instrGuess.other', { other: g.other, word: g.word }))] : [])];
+    const misc = g.chose === 'misc';
+    // [137d] (3.34.26) and "miscellaneous support (task “…”)" as the last answer
+    const miscBtn = g.misc ? `<button type="button" class="dci-textbtn" data-act="instr-misc" aria-pressed="${misc}">${esc(tr('instrGuess.misc', { word: g.word }))}</button>` : '';
+    const pick = (name, label) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}" aria-pressed="${!misc && norm(row.primaryText) === norm(name)}">${esc(label)}</button>`;
+    const otherBtn = g.other ? [pick(g.other, tr('instrGuess.other', { other: g.other, word: g.word }))] : [];
+    if (!g.options.length) {
+      if (!g.misc) return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.none', { word: g.word, other: g.other }))}</div>`;
+      return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.noneOr', { word: g.word }))} ${[...otherBtn, miscBtn].join(' · ')}</div>`;
+    }
+    const chosen = misc || (primaryIsValid(row) && !!norm(row.primaryText));
+    const opts = [...g.options.map((n) => pick(n, n)), ...otherBtn, ...(miscBtn ? [miscBtn] : [])];
     return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(chosen ? 'instrGuess.chosen' : 'instrGuess.ask', { word: g.word }))} ${opts.join(' · ')}</div>`;
   }
 
@@ -17300,6 +17351,7 @@
   /** The instrument chosen in a question (Q001 …); [3.32.3] also from the compact line. Counts as made by hand: it stays when the rules change. */
   function pickInstrument(row, name) {
     if (!row || !name) return;
+    guessUnMisc(row); // [137d] (3.34.26)
     const artist = S.artists.get(row.artistKey);
     row.primaryText = name;
     row.primaryTouched = true;
@@ -17455,8 +17507,9 @@
       if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
       const g = row.instrGuess;
-      if (g && g.options.length && !(primaryIsValid(row) && norm(row.primaryText))) {
-        parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: g.word }) }] : [])]));
+      if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(row) && norm(row.primaryText))) {
+        parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: g.word }) }] : []),
+          ...(g.misc ? [{ value: '\u0000misc', text: tr('instrGuess.misc', { word: g.word }) }] : [])]));
       }
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
@@ -22171,7 +22224,12 @@
         pickType(row, Number(btn.dataset.opt));
         break;
       case 'instr-pick':
-        pickInstrument(row, btn.dataset.instr);
+        // [137d] (3.34.26) "miscellaneous support" from the compact line comes as a value of its own
+        if (btn.dataset.instr === '\u0000misc') guessMisc(row);
+        else pickInstrument(row, btn.dataset.instr);
+        break;
+      case 'instr-misc':
+        guessMisc(row); // [137d] (3.34.26)
         break;
       case 'cover-crop':
         // [130c] (3.34.22) the crops of the row's lines, shown or hidden
@@ -23022,7 +23080,8 @@
       // [3.32.3] a question of the compact line with five possibilities or more (item 102)
       case 'cl-pick':
         if (!el.value) break;
-        if (el.dataset.kind === 'instr') pickInstrument(row, el.value);
+        if (el.dataset.kind === 'instr' && el.value === '\u0000misc') guessMisc(row); // [137d] (3.34.26)
+        else if (el.dataset.kind === 'instr') pickInstrument(row, el.value);
         else pickType(row, Number(el.value));
         break;
       case 'primary':
