@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.18, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.19, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.19 · 2026-10-29
+
+Texts: instruments and the name they are played by (collected item 137a, new rule S051; word lists T049, T050).
+
+- **New word lists** (mapping file, with register entries): **T049 `TEXT_PLAY_VERBS`** (played, performed, sung, plays, performs, sings, sang) and **T050 `TEXT_AUX_WORDS`** (are, is, were, was, been, all, both).
+- **`TEXT.parse`, new helpers:** `playable(x)` (a known role the register maps to instrument or vocal only), `maybePlayable(x)` (up to three words of letters, no role of another kind), `playList(side)` (`{ known, unknown }` – at least one instrument, no fewer than unknown words), `chainOf(t)` (the verbs before "by" at the end of a phrase, one of T049, the words of T050 before them left out → `{ before, roles }`, the roles of the other verbs via `roleOf`), `playedList(t)`, `PLAYS_LIST` ("X plays …").
+- **One line:** the "… by …" branch of `readClause` reads `playedList` of the phrase as written (before `TEXT_CONTRIBUTION`; not with titles, not with `TEXT_WHAT_WORDS`): each instrument and each other role for each name, the unknown words as unknown parts. New clause check before "Name – roles": `PLAYS_LIST` with a name in capitals and `playList`.
+- **Blocks:** the line loop is now `readLine(raw)` (the former body; `continue` → `return`) with `startLine(raw)` (line0, n0, part0); a line of `blockLine` (only instruments or unknown short words; no digit, ":", brackets, dash, "by", "at", "in" …) is held in `roleBlock`, empty lines with it; `readBlock(held, linkRaw)` with `linkOf` ("(all instruments | all of the above …) (are …) played, mixed … by X") – from the first line with an instrument (the lines before it through `readLine`), at least as many instruments as unknown words: each instrument a credit of each name (its own line as `line`), a line with unknown words listed (whole, or "→ ? “…”"), the other roles on the linking line; any other line (and the end) reads the held lines with `readLine` first (`flushBlock`).
+- **`byRole`:** `AUX_BEFORE_VERB` – the words of T050 before a verb are left out ("are played" → "Played By", before "Played By [Are]").
+- **Register:** new rule **S051**.
+- **Header / files:** `@version 3.34.19`, `?v=3.34.19`, both files' `version`.
+- **Tests:** `t_text_basics.py` – new case `playedby` (the text of Go Kurosawa, `GK_TEXT`, with instruments of MusicBrainz `GK_INSTRUMENTS`; in one line); `text_corpus.json` – 6 lines; `register_golden.json` written anew (S051, T049, T050).
 
 ## Import 3.34.18 · 2026-10-29
 

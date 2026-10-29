@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 | – |
+| 2026-10-29 | 3.34.18 – 3.34.19 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.19
+
+#### Added
+
+- **Instruments and the name they are played by** (collected item 137a, rule S051; maintainer: "die liste an durch absätzen getrennten instrumenten und eine zwischenzeile", "ja passt", "ja okay"): lines that are only instruments or voices (Go Kurosawa's "soft shakes": "Electric guitar", "Acoustic guitar", … "Voice", one per line), then "are played, mixed and produced by Go Kurosawa" – a row per instrument for Go Kurosawa, "Mixed By" and "Produced By" as rows of their own, no "Played By". Before, the instruments were not recognized and the line gave "Played By [Are]". Also "played by X", "All instruments played by X", "All of the above performed by X"; in one line "Electric guitar, drums and piano are played by X" and "X plays guitar, bass and drums". Words that are no instrument MusicBrainz knows ("Chaims", "Buddha machine") are listed as not recognized; one row per instrument for now (several in one row: E4).
+
+#### Fixed
+
+- **"are played by X"** gave "Played By [Are]": words like "are", "is", "were" before a verb are no part of the role any more (T050).
 
 ### Import 3.34.18
 
