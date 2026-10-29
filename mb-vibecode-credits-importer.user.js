@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.35.4
+// @version      3.35.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.4
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.4
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.5
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.5
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -15591,14 +15591,17 @@
   // --- [E4] (3.34.30) An entry as a matrix: its roles as lines, the events (level · date · tracks) as columns ----------------
 
   /**
-   * [E4] An entry shown as a matrix (collected items E4, 139, 141): the matrix view, full, the entry not folded to compact lines;
-   * persons only – companies and other entries keep their rows.
+   * [E4] An entry shown as a matrix (collected items E4, 139, 141): the matrix view, full, the entry not folded to compact lines.
+   * [AE-4] (3.35.5) Not only persons (maintainer: "ja können auch in die matrix", "alle einträge die daten und/oder tracks
+   * anbieten. solche einträge kommen ja eher selten vor."): companies, places, areas and other entries too, when a row of theirs
+   * offers a date and/or tracks – on recordings, or of a type with dates; the others keep their rows (publishing on works).
    */
-  const mxPerson = (a) => !!a && matrixOn() && !a.company && !a.other;
+  const offersEvent = (r) => r.level !== 'work' && (r.level === 'recording' || (ltOf(r) || {}).has_dates !== false);
+  const mxOn = (a) => !!a && matrixOn() && (!(a.company || a.other) || S.rows.some((r) => r.artistKey === a.key && inEntry(r) && !r.s046Out && offersEvent(r)));
   // [3.35.0] in the compact view (or folded to compact lines) an entry opened with ▸ shows its full matrix
-  const mxEntry = (a) => mxPerson(a) && ((S.view === 'full' && !groupFolded(a.key)) || S.emWide.has(a.key));
+  const mxEntry = (a) => mxOn(a) && ((S.view === 'full' && !groupFolded(a.key)) || S.emWide.has(a.key));
   /** [E4] (3.35.0) An entry compact as a matrix: a line per event (or per role) with the roles as chips. */
-  const mxCompact = (a) => mxPerson(a) && !mxEntry(a);
+  const mxCompact = (a) => mxOn(a) && !mxEntry(a);
 
   /** [E4] The relationship type of a row – of one taken out (Skip) too: the type it had. */
   const ltOf = (r) => currentLinkType(r) || (r.level === 'skip' && r.linkTypeId ? idx().ltById.get(r.linkTypeId) || null : null);
@@ -16454,7 +16457,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${mxPerson(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          <div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -19094,7 +19097,7 @@
   function rerenderRow(row) {
     // [E4] (3.34.30) a row of an entry shown as a matrix: the entry is drawn anew (its lines follow the row)
     const ra = S.artists.get(row.artistKey);
-    if (mxPerson(ra) && (mxEntry(ra) || mxCompact(ra))) {
+    if (mxOn(ra) && (mxEntry(ra) || mxCompact(ra))) {
       rerenderGroupSoon(ra);
       return;
     }

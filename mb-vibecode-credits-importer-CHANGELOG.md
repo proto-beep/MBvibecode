@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.35.4 | – |
+| 2026-10-29 | 3.34.18 – 3.35.5 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -91,6 +91,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.35.5
+
+#### Changed
+
+- **Companies, places and other entries as a matrix too** (AE-4; maintainer: "ja können auch in die matrix", "alle einträge die daten und/oder tracks anbieten. solche einträge kommen ja eher selten vor."): when a row of theirs offers a date and/or tracks (on recordings, or a type with dates) – "Recorded At" of a place, "Phonographic Copyright (p)" of a label; each role a block, the events as columns, compact a line per event. What is staged stays the same. Entries with nothing that offers a date or tracks (publishing on works) keep their rows.
 
 ### Import 3.35.4
 

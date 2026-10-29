@@ -1,6 +1,6 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -821,6 +821,83 @@ def case_evhead():
             H.ENTRIES_VIEW = 'legacy'
             H.discogs_release = orig
             b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_companies():
+    """Credits Importer 3.35.5 (AE-4; maintainer: "ja können auch in die matrix", "alle einträge die daten und/oder tracks anbieten.
+    solche einträge kommen ja eher selten vor."): companies and places as a matrix when a row of theirs offers a date and/or tracks.
+    A) The test release: Abbey Road Studios (a place, "Recorded At" on the 4 recordings) – a matrix: a block "Recorded At →
+       recorded at", ① Recording all 4 tracks, ticked; Sony ("Phonographic Copyright (p)", a label on the release) – a matrix,
+       ① Release whole release.
+    B) Pub Co ("Published By" on the works): its rows as before (no matrix – nothing on it offers a date or tracks).
+    C) ☰ compact: Abbey Road Studios a line "① Recording no date all 4 tracks" with the chip "recorded at".
+    D) Staged: the relationships of the companies and places the same as in the legacy view.
+    E) A date typed into the head of Abbey Road's event (2001-03): staged "recorded at" on the 4 recordings with it."""
+    results = []
+    with sync_playwright() as p:
+        H.BROWSER = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            ctx, pg, errs, leg, _label = staged_by(None, 'legacy')
+            ctx.close()
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(H.BROWSER)
+            pg, errs2 = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            kind = "(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); return g ? [g.classList.contains('dci-em-entry'), g.querySelectorAll('tr.dci-row').length] : null; }"
+            abbey = pg.evaluate(BLOCKS, 'Abbey Road Studios')
+            sony = pg.evaluate(BLOCKS, 'Sony')
+            k_abbey, k_sony, k_pub = pg.evaluate(kind, 'Abbey Road Studios'), pg.evaluate(kind, 'Sony'), pg.evaluate(kind, 'Pub Co')
+            print('A) Abbey Road:', k_abbey, abbey, '| Sony:', k_sony, sony)
+            results.append(k_abbey == [True, 0] and bool(abbey) and len(abbey) == 1 and abbey[0]['head'].startswith('Recorded At → recorded at')
+                           and abbey[0]['ev'] == ['① Recording all 4 tracks'] and abbey[0]['lines'][0]['ticks'] == [True]
+                           and k_sony == [True, 0] and bool(sony) and sony[0]['ev'] == ['① Release whole release'] and sony[0]['lines'][0]['ticks'] == [True])
+            print('B) Pub Co:', k_pub)
+            results.append(bool(k_pub) and k_pub[0] is False and k_pub[1] >= 1)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(500)
+            c_abbey = pg.evaluate(CLINES, 'Abbey Road Studios')
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(500)
+            print('C) kompakt:', c_abbey)
+            results.append(bool(c_abbey) and c_abbey['compact'] and [(l['head'], l['chips']) for l in c_abbey['lines']] == [('① Recording no date all 4 tracks', ['recorded at'])])
+            ids = {v[1] for v in H.COMPANIES.values()}
+            comp = lambda rels: sorted((r['lt'], r['a'], r['b'], tuple(r['attrs'])) for r in rels if r['a'] in ids or r['b'] in ids)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            mx = pg.evaluate(ADDED)
+            print('D) Firmen:', len(comp(mx)), '| legacy:', len(comp(leg)), '| gleich:', comp(mx) == comp(leg))
+            results.append(len(comp(leg)) > 0 and comp(mx) == comp(leg))
+            ctx.close()
+            # E) a date for the place
+            ctx = H.new_context(H.BROWSER)
+            pg, errs3 = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            sec = sec_sel(pg, 'Abbey Road Studios')
+            pg.fill(f'{sec} th.dci-em-ev [data-f=em-evdate]', '2001-03')
+            pg.press(f'{sec} th.dci-em-ev [data-f=em-evdate]', 'Tab')
+            pg.wait_for_timeout(600)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            dd = pg.evaluate(ADDED_D)
+            place = H.uid('eeeeeeee', 2)
+            mine = sorted(r['date'] for r in dd if place in (r['a'], r['b']))
+            print('E) recorded at:', mine)
+            results.append(mine == ['2001-3'] * 4)
+            print('Fehler:', errs, errs2, errs3)
+            results.append(not errs and not errs2 and not errs3)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.BROWSER.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
