@@ -204,6 +204,9 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     suggestions, stored "+D023"; off → gone; on and "Apply" → the row split by date
                                 #   dmgoto: 3.32.8: "To the date matrix" in the message of dates placed – "Dates & tracks" folded by hand opens,
                                 #     the matrix in view and lit up, the folding stays stored
+                                #   workgroups: 3.35.6 (item 145b): the works of index tracks as track groups (suggestions), one on a date of the
+                                #     matrix, the box of the track pool off / on (the date leaves and comes back), the setting off / on, a new
+                                #     import ticks the box again, the setting stored
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;

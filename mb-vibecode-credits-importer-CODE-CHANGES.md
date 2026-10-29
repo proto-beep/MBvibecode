@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.35.5, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.35.6, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.35.6 · 2026-10-29
+
+The works of the source as track groups, with a box in the track pool and a setting (collected item 145b).
+
+- **New `sourceWorks()`:** the tracks of `S.srcTracks` with `work` (the parts of an index track of Discogs, `DISCOGS.toRelease` 3.35.1), by work, only tracks of the MusicBrainz release. **New `placeWorkGroups()`:** each work a group `{ id, name, tracks, found: true, work: true }` (a suggestion, `trackGroupSuggested`), none if a group has the same tracks.
+- **New `applyWorkGroups({ quiet })`:** wanted (`S.workGroupsOn` and not `S.workGroupsOff`) – **new `unstashWorkGroups()`** puts back what was left out, then `placeWorkGroups`; not wanted – the groups with `work` leave `S.trackPool`, the cells of the date matrix lose their ids in `tgs` (a cell only on them is removed), all kept in `S.workGroupsStash = { groups, cells: [{ id, ids }], removed }`. Log `workGroupsIn` / `workGroupsOut`; `dmChanged` (quiet: `saveMatrix` only).
+- **Storage:** `saveTrackPool` and `saveMatrix` store the pool and the matrix with what is in the stash (leaving the works out holds until the next import). The import calls `unstashWorkGroups()` and sets `S.workGroupsOff = false` where it takes the new `S.srcTracks`, and `applyWorkGroups({ quiet: true })` after `placeTitleDates()`; `reloadPools` places them anew.
+- **Track pool:** `trackPoolHtml` – the box `data-f="work-groups-pool"` ("n works as track groups", ticked = not `S.workGroupsOff`) while the setting is on and the source has works; `onChange` → `applyWorkGroups()`.
+- **Setting:** new `WORK_GROUPS_KEY` 'dci-work-groups' (false while off), `S.workGroupsOn`; ⚙ Settings → Dates & tracks `data-set="work-groups"`; in `TOPIC_KEYS.dates`, `SETTINGS_KEYS`, `resetTopic('dates')`, `resetSettings`.
+- **Texts (English only):** `settings.workGroups`, `settings.workGroupsTitle`, `trackpool.works.one/.other`, `trackpool.worksTitle`, `log.workGroupsIn.one/.other`, `log.workGroupsOut.one/.other`.
+- **Tests:** `t_dates_matrix.py` new case `workgroups` (two works in the pool as suggestions, one on a date of the matrix, the box off and on with the date, the setting off and on, a new import ticks it again with the date, the setting off stored).
 
 ## Import 3.35.5 · 2026-10-29
 
