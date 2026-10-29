@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-30 | 3.36.4 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -90,6 +91,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-30
+
+### Import 3.36.4
+
+#### Changed
+
+- **Remember per release: the works matrix too** (collected item 146; maintainer: "ja bitte dazu"): with ⚙ Settings → Cache → Remember changes and import settings per release on, a release imported again comes back with the choices of its works matrix – the works chosen for tracks and the new ones planned, the attributes of the links set by hand, the column dates and the dates planned for relationships in MusicBrainz, the columns taken out (their rows stay on "Skip"; brought back, they are not) or folded, the type and languages of new works. With "Skip works", the new works planned before come back with "Take works again" also after the page is loaded again (as within the tab). Not remembered: the works created through the dashboard (MusicBrainz has them).
 
 ## 2026-10-29
 
