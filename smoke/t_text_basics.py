@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20), voicetech (3.34.25), unknownask (3.34.26) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -483,8 +483,9 @@ def case_instrguess():
        Drums → drums (drum set) – each credited as written (Woodblock not: only the space differs).
     B) "Chaims" (no instrument of MusicBrainz): an instrument row asking "did you mean: chimes · wind chimes · tubular bells ·
        other instruments “Chaims”" (tubular bells by its other name "orchestral chimes"), nothing chosen – incomplete; in the
-       compact line too. "chimes" chosen: no role credit; "other instruments …": credited "Chaims". "Buddha machine" (none
-       like it): other instruments credited "Buddha machine" at once. Nothing is listed as not recognized.
+       compact line too. "chimes" chosen: no role credit; "other instruments …": credited "chaims" (3.34.27, S052: in lower
+       case; before "Chaims"). "Buddha machine" (none like it): other instruments credited "buddha machine" at once (before
+       "Buddha machine"). Nothing is listed as not recognized.
     C) "Voice" asks (Q011): vocals · other vocals “voice” · lead vocals “voice”, until then vocals without role credit;
        "lead vocals “voice”" → lead vocals credited "voice"; "vocals" → no role credit; a voice typed by hand (lead vocals)
        then offers "use “voice” as role credit", which sets it."""
@@ -528,7 +529,7 @@ def case_instrguess():
         print('B) Chaims:', ch, '| unbekannt markiert:', issue, '| Buddha machine:', r.get('Buddha machine'), bm, '| nicht erkannt:', unrec)
         ok_b1 = bool(ch) and ch[0].startswith('“Chaims” is no instrument of MusicBrainz – did you mean:') \
             and [x[0] for x in ch[1]] == ['chimes', 'wind chimes', 'tubular bells', 'other instruments'] and all(x[1] == 'false' for x in ch[1]) \
-            and r.get('Buddha machine', [''] * 4)[1:4] == ['instrument', 'other instruments', 'Buddha machine'] and 'none is like it' in (bm or [''])[0] and not unrec
+            and r.get('Buddha machine', [''] * 4)[1:4] == ['instrument', 'other instruments', 'buddha machine'] and 'none is like it' in (bm or [''])[0] and not unrec
         # the compact line asks too
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(300)
@@ -544,7 +545,7 @@ def case_instrguess():
         pg.wait_for_timeout(300)
         r2 = rows().get('Chaims')
         print('   chimes gewählt:', r1, '| other instruments:', r2)
-        ok_b = ok_b1 and 'did you mean' in cl and r1[1:4] == ['instrument', 'chimes', ''] and r2[1:4] == ['instrument', 'other instruments', 'Chaims']
+        ok_b = ok_b1 and 'did you mean' in cl and r1[1:4] == ['instrument', 'chimes', ''] and r2[1:4] == ['instrument', 'other instruments', 'chaims']
         results.append(ok_b)
         # C) Voice
         VO = """(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === 'Voice'); const q = tr && tr.querySelector('.dci-type-ask'); const v = tr && tr.querySelector('.dci-voice-credit');
@@ -661,15 +662,24 @@ def case_unknownask():
        offered.
     C) A pasted text "Barry Guy – double bass, sticks-and-stones": double bass and other instruments “sticks-and-stones” (before:
        "→ ? “sticks-and-stones”" not recognized); "Jane Roe – guitar, kalimba, buddha machine" (more unknown words than
-       instruments): guitar, the rest not recognized as before."""
+       instruments): guitar, the rest not recognized as before.
+    3.34.27 (S052; maintainer: "instrumente und role credits immer kleinschreiben außer bei eigennamen"): the credit and the task
+    of such a word in lower case – "other instruments “chaims”", "miscellaneous support (task “chaims”)", Sticks-And-Stones
+    credited "sticks-and-stones" (before: as written); D) "Tambourine [Additional, Toy]": the suggestions of the role credit
+    field written like the credit (toy · additional, toy · additional · additional tambourine · toy tambourine; before: "Additional,
+    Toy", "Toy Tambourine" …); E) "Hammond Manager" (no role of the register, no instrument like it): other instruments credited
+    "Hammond manager" – the proper name of a MusicBrainz instrument ("Hammond organ") keeps its capital –, "miscellaneous support"
+    chosen: the task "Hammond manager" (before: "hammond manager")."""
     for i, n in GK_INSTRUMENTS:
         H.attr(i, n, 14, 14, aliases=['orchestral chimes'] if n == 'tubular bells' else None)
     H.attr(9124, 'other instruments', 14, 14)
     H.attr(9102, 'double bass', 14, 14)
+    H.attr(9125, 'Hammond organ', 14, 14)
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
-    CREDITS = [('Chime Man', 'Chaims', 3051), ('Stick Man', 'Sticks-And-Stones', 3052)]
+    CREDITS = [('Chime Man', 'Chaims', 3051), ('Stick Man', 'Sticks-And-Stones', 3052), ('Tam Man', 'Tambourine [Additional, Toy]', 3053),
+               ('Ham Man', 'Hammond Manager', 3054)]
     for n, r, i in CREDITS:
         H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
     orig = H.discogs_release
@@ -686,7 +696,8 @@ def case_unknownask():
     Q = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
       const tr = g && g.querySelector('tr.dci-row'); const q = tr && tr.querySelector('.dci-instr-guess'); const t = tr && tr.querySelector('[data-f=type]');
       const p = tr && tr.querySelector('[data-f=primary]'); const c = tr && tr.querySelector('[data-f=role-credit]');
-      return tr ? { row: tr.dataset.row, type: t ? (t.options[t.selectedIndex] || {}).text : '', instr: p ? p.value : '', credit: c ? c.value : '-', level: (tr.className.match(/dci-lv-(\\w+)/) || [])[1],
+      const dl = c && c.list ? [...c.list.querySelectorAll('option')].map(o => o.value) : null;
+      return tr ? { row: tr.dataset.row, type: t ? (t.options[t.selectedIndex] || {}).text : '', instr: p ? p.value : '', credit: c ? c.value : '-', level: (tr.className.match(/dci-lv-(\\w+)/) || [])[1], dl,
         opts: q ? [...q.querySelectorAll('button')].map(b => [b.textContent.trim(), b.getAttribute('aria-pressed')]) : null } : null; }"""
     results = []
     with sync_playwright() as p:
@@ -707,14 +718,26 @@ def case_unknownask():
         pg.wait_for_timeout(400)
         a2 = pg.evaluate(Q, 'Chime Man')
         print('A) Chaims:', a0, '| misc:', a1, '| chimes:', a2)
-        results.append(bool(a0) and [o[0] for o in a0['opts']] == ['chimes', 'wind chimes', 'tubular bells', 'other instruments “Chaims”', 'miscellaneous support (task “Chaims”)']
+        results.append(bool(a0) and [o[0] for o in a0['opts']] == ['chimes', 'wind chimes', 'tubular bells', 'other instruments “chaims”', 'miscellaneous support (task “chaims”)']
                        and all(o[1] == 'false' for o in a0['opts']) and a0['type'] == 'instrument'
-                       and a1['type'] == 'misc' and a1['credit'] == 'chaims' and a1['opts'][-1] == ['miscellaneous support (task “Chaims”)', 'true']
+                       and a1['type'] == 'misc' and a1['credit'] == 'chaims' and a1['opts'][-1] == ['miscellaneous support (task “chaims”)', 'true']
                        and a2['type'] == 'instrument' and a2['instr'] == 'chimes' and a2['credit'] == '' and a2['level'] == 'recording')
         b0 = pg.evaluate(Q, 'Stick Man')
         print('B) Sticks-And-Stones:', b0)
-        results.append(bool(b0) and b0['type'] == 'instrument' and b0['instr'] == 'other instruments' and b0['credit'] == 'Sticks-And-Stones'
-                       and [o[0] for o in b0['opts']] == ['other instruments “Sticks-And-Stones”', 'miscellaneous support (task “Sticks-And-Stones”)'])
+        results.append(bool(b0) and b0['type'] == 'instrument' and b0['instr'] == 'other instruments' and b0['credit'] == 'sticks-and-stones'
+                       and [o[0] for o in b0['opts']] == ['other instruments “sticks-and-stones”', 'miscellaneous support (task “sticks-and-stones”)'])
+        d0 = pg.evaluate(Q, 'Tam Man')
+        e0 = pg.evaluate(Q, 'Ham Man')
+        if e0:
+            pg.click(f'tr.dci-row[data-row="{e0["row"]}"] .dci-instr-guess [data-act=instr-misc]')
+            pg.wait_for_timeout(400)
+        e1 = pg.evaluate(Q, 'Ham Man')
+        print('D) Tambourine [Additional, Toy]:', d0, '| E) Hammond Manager:', e0, '| misc:', e1)
+        results.append(bool(d0) and d0['instr'] == 'tambourine' and d0['credit'] == 'toy'
+                       and d0['dl'] == ['toy', 'additional, toy', 'additional', 'additional tambourine', 'toy tambourine'])
+        results.append(bool(e0) and e0['instr'] == 'other instruments' and e0['credit'] == 'Hammond manager'
+                       and [o[0] for o in e0['opts']] == ['other instruments “Hammond manager”', 'miscellaneous support (task “Hammond manager”)']
+                       and e1['type'] == 'misc' and e1['credit'] == 'Hammond manager')
         H.src_menu(pg, 'text-open')
         pg.fill('[data-f=text-src]', 'Barry Guy – double bass, sticks-and-stones\nJane Roe – guitar, kalimba, buddha machine')
         pg.click('[data-act=text-load]')

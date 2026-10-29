@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.26, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.27, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.27 · 2026-10-29
+
+Role credits and tasks in lower case, proper names keep their capitals (rule S052, maintainer's rule of 2026-10-29).
+
+- **New `lowerCredit(text, { off })`:** `caseCredit(text, instrumentVocabulary(), { lowerUnknown: true })` – only the proper names of MusicBrainz's instruments (`vocab.proper`) and words with digits keep their capitals. S052 off: `norm` (`off: 'lower'`, the default) or the text as written (`off: 'written'`).
+- **New `creditCasing(lt)`:** the casing of the details as role credit for a relationship type (S011 artwork in lower case, S034 voices with `lowerUnknown`, otherwise `caseCredit`), taken out of `roleCreditForInner` unchanged; also used for the suggestions of the field.
+- **`roleCreditForInner`:** the credit of "other instruments" for a word MusicBrainz does not know is `guessCredit(row.instrGuess)` (before: `instrGuess.word` as written); the task (`creditFromRole`) and the credit of R086 go through `lowerCredit` (before: `norm`).
+- **New `guessCredit(g)`, `guessTask(g)`:** the role credit and the task of such a word as they are set; `instrGuessHtml` and the compact line (`clineAskHtml` "instr") name them in the buttons "other instruments “…”" and "miscellaneous support (task “…”)" – the question itself keeps the word as written.
+- **`roleCreditOptions(raw, base, mods, suggestion, typeName, cased)`:** new last parameter `cased` (default: the text as it is – the node run of `t_register.py` and its golden are unchanged); the field passes `creditCasing(lt)` when S052 is on (before: the Discogs variants exactly as written).
+- **Rules:** new S052 in SPECIAL_RULES (after S051).
+- **Texts (English only):** `instrGuess.none` names the credit with the new placeholder `{credit}`; `instrGuess.noneOr` without "– as written".
+- **Tests:** `t_text_basics.py instrguess` – "other instruments" credited "chaims", "buddha machine"; `unknownask` – the buttons and credits in lower case (A, B), new D ("Tambourine [Additional, Toy]": the suggestions of the field `toy · additional, toy · additional · additional tambourine · toy tambourine`) and E ("Hammond Manager" with the attribute "Hammond organ": other instruments “Hammond manager”, after "miscellaneous support" the task "Hammond manager"). `register_golden.json` rewritten (only the row of S052 is new).
 
 ## Import 3.34.26 · 2026-10-29
 
