@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.34.24 | – |
+| 2026-10-29 | 3.34.18 – 3.34.25 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -90,6 +90,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.34.25
+
+#### Changed
+
+- **"Voice" asks from every source, with four answers** (collected item 137e; maintainer: "generell soll das mapping wirklich gleich behandelt werden", "alle vier rollen sollen angeboten werden"): vocals · other vocals “voice” · lead vocals “voice” · spoken vocals “voice” – also from Discogs (before: spoken vocals at once) and in a supplement; until answered vocals without role credit. "Vocals" stays vocals without a question.
+- **Instrument technicians get their instrument** (collected item 137f; maintainer: "ja genau"): "Technician [Guitar]", "Guitar Technician", "Drum Tech" → instrument technician · guitar / drums (drum set), without role credit (before: no instrument, "guitar" as role credit); "Piano Tuner" keeps "piano tuner"; an instrument MusicBrainz does not know asks ("Technician [Chaims]": chimes · wind chimes · …).
 
 ### Import 3.34.24
 

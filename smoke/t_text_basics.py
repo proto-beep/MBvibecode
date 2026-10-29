@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20), voicetech (3.34.25) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -572,6 +572,76 @@ def case_instrguess():
         results.append(bool(v0) and 'other vocals “voice”' in v0[0] and 'lead vocals “voice”' in v0[0] and c0[1:4] == ['vocal', '', '']
                        and c1[1:4] == ['vocal', 'lead vocals', 'voice'] and c2[1:4] == ['vocal', '', ''] and v2[2] == ''
                        and 'use “voice” as role credit' in v3[2] and c4[1:4] == ['vocal', 'lead vocals', 'voice'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_voicetech():
+    """Credits Importer 3.34.25: "Voice" asks from every source with four answers, instrument technicians get their instrument
+    (collected items 137e, 137f; maintainer: "generell soll das mapping wirklich gleich behandelt werden", "alle vier rollen sollen
+    angeboten werden", "wenn vocals da steht, dann immer vocals ohne credit", "ja genau").
+    A) Discogs "Voice": asks vocals · other vocals “voice” · lead vocals “voice” · spoken vocals “voice” – until then vocal without
+       voice and role credit (before: spoken vocals at once); "spoken vocals “voice”" → spoken vocals credited "voice".
+       "Vocals": vocal without a question and without role credit.
+    B) "Technician [Guitar]" → instrument technician · guitar, "Drum Technician" → drums (drum set), no role credit (before:
+       without instrument, "guitar" as role credit); "Technician [Chaims]" asks "did you mean: chimes · wind chimes · …"."""
+    for i, n in GK_INSTRUMENTS:
+        H.attr(i, n, 14, 14)
+    H.attr(9124, 'other instruments', 14, 14)
+    H.attr(9125, 'other vocals', 3, 3)
+    H.attr(9126, 'spoken vocals', 3, 3)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.lt(986, 'bd780597-0b67-4b97-a4a0-671a70e1182d', 'instrument technician', 'artist', 'release', (14,))
+    H.lt(987, H.uid('eeeeeeee', 987), 'instrument technician', 'artist', 'recording', (14,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    CREDITS = [('Vee Speaker', 'Voice', 3041), ('Plain Singer', 'Vocals', 3042), ('Tech One', 'Technician [Guitar]', 3043),
+               ('Tech Two', 'Drum Technician', 3044), ('Tech Three', 'Technician [Chaims]', 3045)]
+    for n, r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        g = pg.evaluate(GK_ROWS)
+        first = lambda n: (g.get(n) or {'rows': [['', '', '', '', '']]})['rows'][0]
+        for n, _, _ in CREDITS:
+            print('   ', n, first(n))
+        v0 = first('Vee Speaker')
+        sec = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Vee Speaker');
+          return g ? g.querySelector('tr.dci-row').dataset.row : ''; })()""")
+        opts = pg.evaluate(f"[...document.querySelectorAll('tr.dci-row[data-row=\"{sec}\"] .dci-type-ask [data-act=type-pick]')].map(b => b.textContent.trim())")
+        pg.click(f'tr.dci-row[data-row="{sec}"] .dci-type-ask [data-act=type-pick][data-opt="3"]')
+        pg.wait_for_timeout(400)
+        g = pg.evaluate(GK_ROWS)
+        v1 = first('Vee Speaker')
+        print('A) Voice:', v0[1:4], opts, '→', v1[1:4], '| Vocals:', first('Plain Singer')[1:5])
+        results.append(v0[1:4] == ['vocal', '', ''] and opts == ['vocals', 'other vocals “voice”', 'lead vocals “voice”', 'spoken vocals “voice”']
+                       and v1[1:4] == ['vocal', 'spoken vocals', 'voice'] and first('Plain Singer')[1:5] == ['vocal', '', '', ''])
+        t1, t2, t3 = first('Tech One'), first('Tech Two'), first('Tech Three')
+        ask = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Tech Three');
+          const q = g && g.querySelector('.dci-instr-guess'); return q ? [...q.querySelectorAll('[data-act=instr-pick]')].map(b => b.dataset.instr) : null; })()""")
+        print('B) Techniker:', t1[1:4], t2[1:4], t3[1:4], '| Chaims:', ask)
+        results.append(t1[1:4] == ['instrument technician', 'guitar', ''] and t2[1:4] == ['instrument technician', 'drums (drum set)', '']
+                       and t3[1] == 'instrument technician' and ask == ['chimes', 'wind chimes', 'other instruments'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

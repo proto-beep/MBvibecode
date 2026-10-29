@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.24
+// @version      3.34.25
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.24
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.24
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.25
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.25
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.24';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.25';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2839,7 +2839,14 @@
           return out(['artists and repertoire', 'misc'], { level: 'release_group', ...(task ? { credit: task } : {}) });
         } },
       R086: { run: () => {
-      return out(['instrument technician'], { credit: is(/^(tuner|piano tuner)$/) });
+      // [137f] (3.34.25) with its instrument: the word before "technician" ("Guitar Technician", "Drum Tech", "Piano Tuner") or a
+      // detail ("Technician [Guitar]"), in the spellings of T001 ("Drum" → drums (drum set)); MusicBrainz says "guitar
+      // technician" itself – no role credit, "tuner" stays its credit (collected item 137f; maintainer: "ja genau")
+      const word = ((b.match(/^(.+?)\s+(?:technician|tech|tuner)$/) || [])[1] || '').replace(/^instruments?$/, '');
+      const det = word ? '' : ms.find((x) => !CHECKBOX_DETAILS.includes(x)) || '';
+      if (det) consumed.add(det);
+      const inst = word || det;
+      return out(['instrument technician'], { credit: is(/^(tuner|piano tuner)$/), ...(inst ? { primaryCands: instrumentCandidates(inst, [], { head: false }) } : {}) });
     } },
       R089: { run: () => out(['production coordinator'], { ...rel, credit: !is(/^production coordinator$/) }) },
       R095: { run: () => {
@@ -7165,6 +7172,9 @@
     if (wr) return wr.credit;
     // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
     if (row.instrGuess) return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? row.instrGuess.word : '';
+    // [137f] (3.34.25) an instrument technician with its instrument: MusicBrainz says "guitar technician" – no role credit but
+    // "tuner" ("Piano Tuner": piano, credited "piano tuner")
+    if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(norm(row.creditFromRole)) : '';
     // [Q011] (3.34.20) "Voice": plain vocals take no role credit (also until it is answered)
     if (row.askVoice) {
       const tq = typeQuestionFor(row);
@@ -12822,7 +12832,8 @@
    * without role credit. Discogs keeps spoken vocals (R015).
    */
   function askVoice(row) {
-    if (row.ruleId !== 'R015' || norm(row.base) !== 'voice' || (row.mods || []).length || !ruleOn('Q011')) return;
+    // [137e] (3.34.25) every source (maintainer: "generell soll das mapping wirklich gleich behandelt werden")
+    if (row.company || row.ruleId !== 'R015' || norm(row.base) !== 'voice' || (row.mods || []).length || !ruleOn('Q011')) return;
     Object.assign(row, { askVoice: true, primaryText: '', primaryTouched: false });
     refreshRowDetails(row);
   }
@@ -12874,14 +12885,15 @@
    * vorschläge vorhanden sind, kann "other instruments" mit role credit vergeben werden"). Without "other instruments" in
    * MusicBrainz and without similar ones: miscellaneous support, as before.
    */
-  function guessInstrument(row) {
-    const word = String(row.base || row.raw || '').trim();
+  function guessInstrument(row, { word: word0 = '', misc = true } = {}) {
+    const word = String(word0 || row.base || row.raw || '').trim();
     const lt = currentLinkType(row);
     const root = lt ? primaryRootOf(lt) : null;
     if (!root || !word || primaryIsValid(row)) return;
     const options = similarInstruments(word);
     const other = findChildAttr(root.id, 'other instruments');
     if (!options.length && !other) {
+      if (!misc) return;
       makeMiscRow(row, word);
       refreshRowDetails(row);
       return;
@@ -12889,6 +12901,17 @@
     row.instrGuess = { word, options, other: other ? other.name : '' };
     if (!options.length) Object.assign(row, { primaryText: other.name, primaryTouched: true });
     refreshRowDetails(row);
+  }
+
+  /**
+   * [137f] (3.34.25) An instrument technician whose instrument MusicBrainz does not know ("Chaims Technician", "Technician
+   * [Chaims]"): its instrument asks like a word of a list of instruments (guessInstrument; never miscellaneous support).
+   */
+  function askTechnician(row) {
+    if (row.ruleId !== 'R086' || !norm(row.primaryText) || primaryIsValid(row)) return;
+    const word = ((String(row.base || '').match(/^(.+?)\s+(?:technician|tech|tuner)$/i) || [])[1] || '').replace(/^instruments?$/i, '')
+      || (row.mods || []).find((x) => !CHECKBOX_DETAILS.includes(norm(x))) || '';
+    if (word) guessInstrument(row, { word, misc: false });
   }
 
   /** [T035] The kinds of media of the release, from MusicBrainz's formats: 'digital', 'cd', 'vinyl', 'cassette', 'other'. */
@@ -12944,7 +12967,7 @@
   /** A row of the second source, built as the import builds rows (tracks from it, its mark). */
   function suppRow(artistKey, info, company) {
     const row = company ? makeRow(artistKey, { raw: info.r.role, company })
-      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask, artCredit: info.c.role.artCredit || '' });
+      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask, artCredit: info.c.role.artCredit || '', guess: !!info.c.guess });
     row.dAllTracks = !!info.all;
     if (!company) {
       row.dSpec = info.c.specs.join(', ');
@@ -12957,6 +12980,12 @@
     row.suppName = S.supp.source.name;
     // [3.21.4] as in the import: "Translated By" from Bandcamp asks; a credit for another medium is left out
     if (!company && S.supp.source === BANDCAMP) askTranslation(row);
+    // [3.34.25] the same questions as in the import (the mapping is the same for every source)
+    if (!company) {
+      askVoice(row);
+      if (info.c.guess) guessInstrument(row);
+      askTechnician(row);
+    }
     if (company ? companyLeftOutForMedium(row, info.r, S.supp.rel || {}, info.r.line || info.r.role) : leftOutForMedium(row, S.supp.rel || {}, (info.c.lines || [])[0] || info.c.role.raw, !!S.supp.source.nameSearch)) return null;
     if (!releaseLevelChosen(row) || noMediaFor(row)) return null;
     suggestCommissioned(row);
@@ -13573,9 +13602,11 @@
           row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
           // [3.21.4] "Translated By" in Bandcamp credits asks (Q007); [S026] a credit for a medium the release does not have
           if (source === BANDCAMP) askTranslation(row);
-          // [137d] (3.34.20) "Voice" in a text asks (Q011); a word MusicBrainz does not know as an instrument asks for similar ones
-          if (source === BANDCAMP || source === TEXT) askVoice(row);
+          // [137d] (3.34.20) "Voice" asks (Q011; [137e] 3.34.25 from every source); a word MusicBrainz does not know as an instrument
+          // asks for similar ones; [137f] so does the instrument of an instrument technician
+          askVoice(row);
           if (c.guess) guessInstrument(row);
+          askTechnician(row);
           if (leftOutForMedium(row, rel, (c.lines || [])[0] || `${g.name} – ${c.role.raw}`, !!source.nameSearch)) {
             leftOutKeys.add(artist.key);
             continue;
