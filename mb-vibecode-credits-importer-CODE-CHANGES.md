@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.36.0, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.36.1, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,22 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.36.1 · 2026-10-29
+
+Fixes of 3.36.0 (and two of 3.35.4 / 3.35.6) after an independent review of the code of Block AH.
+
+- **`S.rememberRead`** (the tab read the stores when it was opened) and **`S.rememberHold`**: `setRemember(true)` in a tab that did not read them, for a release with something stored (**new `hasRemembered(id)`**) – nothing of the release is written (`relWrite`, `relMapWrite`, `saveRememberNow` return), message `remember.hold` with the action `remember-reload` (`location.reload()`); otherwise `rememberNow()` as before, and the about stash only when the tab holds it (`S.aboutStash`).
+- **`REMEMBER_ROWS_KEY`** holds `{ v: 2, by: { <source>: snapshot } }` (the 3 used last; a stored `v: 1` snapshot is read too) – `saveRememberNow` merges, `restoreRemembered` takes the one of `S.importSrc`.
+- **`rememberSnapshot`:** rows of the source removed with ✕ as `{ k, i, x: 1 }` (restored: they stay removed); a level set by hand in this import always in `d` (with `existingAll` taken off on restore); `media` (new **`mediaSig()`**) – with another media choice the tracks of the diffs are not taken over, and own rows keep only tracks of the selection (none left: left out). `ROW_OWN_FIELDS` with `differ`, `confirmedBy`, `suppTook`, `redrawLater`, `dateEdit`.
+- **`loadRelease`:** `rememberFresh()` before `resolveArtists` (rows added meanwhile are rows of their own); new **`finishRemember(seq)`** – rows whose touch fields (`levelTouched`, `primaryTouched`, `roleCreditTouched`, `creditTouched`, `typeAnswer`) did not change get the state after the lookups as their baseline; restore in `try` (an error: rows and entries as before, log `rememberError`); also for an import without entries.
+- **`restoreRemembered`:** references to rows (`splitFrom`, `mxOrigin`) only on rows that got them from the snapshot, mapped to the new ids or removed; entries: the remembered entity type set directly (no `setCompanyEntityType`); the order: a removed row's entry without rows no longer throws (`byEntry.get(…) || []`).
+- **New `rebaseFresh(row)`** (`REMAP_FIELDS`), called in `applyRulesChange` after `remapRow`.
+- **`name-use` / `alias-use`** set `matchTouched`.
+- **`rememberedReleases`:** releases not in the index by the time of `dci-source-pick` / `dci-media-sel` / `dci-ocr-frames` (`at`, `t`), the most recent first. **`remember-max`:** no `touchRemembered()` at the change (the next store trims). **`forgetAllRemembered`** clears the pending store.
+- **`clearPools('tracks')`:** `S.workGroupsStash = null`. **`emEventLevel`:** `matrixDateForLevel` once per date group of the moved rows.
+- **Texts (English only):** `remember.hold`, `remember.reload`, `log.rememberError`.
+- **Tests:** `t_ui_settings.py` new case `cache2` (a removed row stays removed, a text does not replace the Discogs state, switched on in a tab opened while off: the message, nothing written over, back after loading again); `cache` F: the other release goes when something is stored next; `t_entries.py` new case `remember` (order, an opened event's tracks, one row each – back after loading again, staged the same); `t_ui_view.py compact` F: Guitar Guy's row removed with ✕ stays removed after loading again.
 
 ## Import 3.36.0 · 2026-10-29
 
