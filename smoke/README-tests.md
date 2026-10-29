@@ -98,6 +98,8 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     wind chimes · tubular bells · other instruments “Chaims”" (also in the compact line), each choice and its
                                 #     credit; "Buddha machine" other instruments credited at once; "Voice" asks (Q011), "use “voice” as role
                                 #     credit" after a voice typed in
+                                #   voicetech: 3.34.25: Discogs "Voice" asks four answers (spoken vocals “voice” chosen), "Vocals" plain; "Technician
+                                #     [Guitar]" → instrument technician · guitar, "Drum Technician" → drums (drum set), no credit; "[Chaims]" asks
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
