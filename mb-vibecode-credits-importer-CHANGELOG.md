@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.35.2 | – |
+| 2026-10-29 | 3.34.18 – 3.35.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -91,6 +91,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-29
+
+### Import 3.35.3
+
+#### Added
+
+- **Lines of the matrix in another order** (AE-2; maintainer: "bitte noch ziehen ermöglichen", "ja nur bis zum nächsten import"): ⠿ at each line of a block drags it to another place in the block – before a line (its upper half) or after it (its lower half), shown by a line above or below; Alt+↑ / Alt+↓ on ⠿ moves it one place. The compact view follows. The order holds until the next import.
 
 ### Import 3.35.2
 

@@ -1,6 +1,6 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -578,6 +578,113 @@ def case_restage():
             fresh = [r for r in d if r['id'] != edited]
             print('D) geändert behalten:', len(kept), kept[0]['attrs'] if kept else None, '| neu:', len(fresh), sorted(set(tuple(sorted(r['attrs'])) for r in fresh)))
             results.append(len(kept) == 1 and len(fresh) == 3 and all('electric guitar [lead]' in r['attrs'] for r in fresh) and 'electric guitar' in kept[0]['attrs'])
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# a line dragged by its ⠿ onto another line: before it (upper half) or after it (lower half)
+DROP_AT = """([src, dst, after]) => { const s = document.querySelector(src); const d = document.querySelector(dst); if (!s || !d) return false;
+  const box = d.getBoundingClientRect(); const y = after ? box.bottom - 2 : box.top + 2; const x = box.left + 20;
+  const dt = new DataTransfer(); s.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+  d.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt, clientX: x, clientY: y }));
+  const mark = d.classList.contains('dci-dm-over') ? (d.classList.contains('dci-em-after') ? 'after' : 'before') : '';
+  d.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt, clientX: x, clientY: y }));
+  s.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt })); return mark; }"""
+
+
+def case_order():
+    """Credits Importer 3.35.3 (AE-2; maintainer: "bitte noch ziehen ermöglichen", "ja nur bis zum nächsten import"): the lines
+    of a block in another order.
+    A) Multi Man: ⠿ at each line of its block (electric guitar · acoustic guitar · drums); drums dragged onto the upper half of
+       electric guitar – the mark above it, drums first.
+    B) Electric guitar dropped onto the lower half of acoustic guitar – the mark below it: drums · acoustic guitar · electric
+       guitar.
+    C) Alt+↑ on ⠿ of electric guitar: one place up (drums · electric guitar · acoustic guitar), ⠿ keeps the focus.
+    D) A line of another entry (Voc Man) dropped onto Multi Man's lines: nothing (not a place for it, no mark). Solo Man: ⠿ at
+       both lines of its block; after "One row each" each line is a block of its own – no ⠿.
+    E) ☰ compact: the chips in the new order.
+    F) Staged: Multi Man – one relationship per recording with all three instruments, as before (4).
+    G) The page loaded again (a new import): the order of the source again."""
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    roles = lambda bl: [l['role'] for l in bl[0]['lines']] if bl else None
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            multi = sec_sel(pg, 'Multi Man')
+            a0 = pg.evaluate(BLOCKS, 'Multi Man')
+            grips = pg.evaluate("(sel) => document.querySelectorAll(sel + ' tr.dci-em-line .dci-em-grip').length", multi)
+            ids = {l['role']: l['line'] for l in a0[0]['lines']}
+            mark_a = pg.evaluate(DROP_AT, [f'{multi} tr.dci-em-line[data-line="{ids["drums (drum set)"]}"] .dci-em-grip', f'{multi} tr.dci-em-line[data-line="{ids["electric guitar"]}"]', False])
+            pg.wait_for_timeout(400)
+            a1 = pg.evaluate(BLOCKS, 'Multi Man')
+            print('A) vorher:', roles(a0), '| ⠿:', grips, '| Marke:', mark_a, '| nachher:', roles(a1))
+            results.append(roles(a0) == ['electric guitar', 'acoustic guitar', 'drums (drum set)'] and grips == 3 and mark_a == 'before'
+                           and roles(a1) == ['drums (drum set)', 'electric guitar', 'acoustic guitar'])
+            mark_b = pg.evaluate(DROP_AT, [f'{multi} tr.dci-em-line[data-line="{ids["electric guitar"]}"] .dci-em-grip', f'{multi} tr.dci-em-line[data-line="{ids["acoustic guitar"]}"]', True])
+            pg.wait_for_timeout(400)
+            b1 = pg.evaluate(BLOCKS, 'Multi Man')
+            print('B) Marke:', mark_b, '| nachher:', roles(b1))
+            results.append(mark_b == 'after' and roles(b1) == ['drums (drum set)', 'acoustic guitar', 'electric guitar'])
+            pg.focus(f'{multi} tr.dci-em-line[data-line="{ids["electric guitar"]}"] .dci-em-grip')
+            pg.keyboard.press('Alt+ArrowUp')
+            pg.wait_for_timeout(400)
+            c1 = pg.evaluate(BLOCKS, 'Multi Man')
+            focus = pg.evaluate("(() => { const a = document.activeElement; return a && a.classList.contains('dci-em-grip') ? a.dataset.id : ''; })()")
+            print('C) Alt+↑:', roles(c1), '| Fokus:', focus == ids['electric guitar'])
+            results.append(roles(c1) == ['drums (drum set)', 'electric guitar', 'acoustic guitar'] and focus == ids['electric guitar'])
+            voc = sec_sel(pg, 'Voc Man')
+            v0 = pg.evaluate(BLOCKS, 'Voc Man')
+            mark_d = pg.evaluate(DROP_AT, [f'{voc} tr.dci-em-line .dci-em-grip', f'{multi} tr.dci-em-line[data-line="{ids["drums (drum set)"]}"]', False])
+            pg.wait_for_timeout(400)
+            d1 = pg.evaluate(BLOCKS, 'Multi Man')
+            d_voc = pg.evaluate(BLOCKS, 'Voc Man')
+            solo = sec_sel(pg, 'Solo Man')
+            grips_of = "(sel) => [...document.querySelectorAll(sel + ' .dci-em-block')].map(b => b.querySelectorAll('.dci-em-grip').length)"
+            solo_joined = pg.evaluate(grips_of, solo)
+            pg.click(f'{solo} [data-act=em-split]')
+            pg.wait_for_timeout(400)
+            solo_grips = [solo_joined, pg.evaluate(grips_of, solo)]
+            print('D) andere Zeile:', mark_d, roles(d1), roles(d_voc), '| Solo Man ⠿ je Block:', solo_grips)
+            results.append(mark_d == '' and roles(d1) == roles(c1) and roles(d_voc) == roles(v0) and solo_grips == [[2], [0, 0]])
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(500)
+            e1 = pg.evaluate(CLINES, 'Multi Man')
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(500)
+            print('E) kompakt:', [l['chips'] for l in e1['lines']])
+            results.append([l['chips'] for l in e1['lines']] == [['drums (drum set) “drums”', 'electric guitar', 'acoustic guitar']])
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate(ADDED)
+            names = {H.uid('dddddddd', i - 2990): n for n, _r, i, _t in JOIN_CREDITS}
+            of = lambda n: [sorted(r['attrs']) for r in added if names.get(r['a']) == n or names.get(r['b']) == n]
+            print('F) Multi Man:', of('Multi Man'))
+            results.append(of('Multi Man') == [['acoustic guitar', 'drums (drum set) [drums]', 'electric guitar']] * 4)
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            g1 = pg.evaluate(BLOCKS, 'Multi Man')
+            print('G) neu geladen:', roles(g1))
+            results.append(roles(g1) == ['electric guitar', 'acoustic guitar', 'drums (drum set)'])
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()

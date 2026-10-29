@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.35.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.35.3, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.35.3 · 2026-10-29
+
+Lines of an entry's matrix in another order (AE-2).
+
+- **`emLineHtml`:** a block of more than one line – ⠿ (`button.dci-em-grip`, `data-drag="em-line"`, `data-id` the line, `data-block` its block, draggable) before the role.
+- **New `emMoveLine(a, lineId, targetId, after)`:** the block's line order changed (before / after the target line, or by a number: ±1); the entry's lines in the new order (the block's lines in the places its lines had among all lines); the rows of those lines put in that order into the places they had in `S.rows` (other rows stay). Log `emOrder`.
+- **Drag and drop:** `onDragStart` keeps `block` and `group` for `em-line`; `dmTargetOf` – kind `em-line` onto another `tr.dci-em-line` of the same block and entry → target `em-order`; `onDragOver` toggles `dci-em-after` (new `emAfter(el, e)`: the lower half); `onDropOn` `em-order` → `emMoveLine`, `rerenderGroup`. `dmDragEnd` now removes every `dci-dm-drag-…` class of the overlay (before, `dci-dm-drag-em-chip` stayed after a chip was dragged) and `dci-em-after`.
+- **`onKeydown`:** Alt+↑ / Alt+↓ on `.dci-em-grip` – `emMoveLine` by one, focus back on the line's ⠿.
+- **CSS:** `.dci-em-grip`; while a line is dragged (`dci-dm-drag-em-line`) the line under the pointer shows a mark above it, or below it with `dci-em-after`.
+- **Texts (English only):** `em.gripTitle`, `em.gripLabel`, `log.emOrder`.
+- **Tests:** `t_entries.py` new case `order` (dragged before and after with the mark, Alt+↑ with the focus, not onto another entry's line, no ⠿ in a block of one line, the compact view, staged as before, a new import in the order of the source).
 
 ## Import 3.35.2 · 2026-10-29
 
