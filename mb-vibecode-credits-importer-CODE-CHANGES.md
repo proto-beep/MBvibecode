@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.19, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.20, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.20 · 2026-10-29
+
+Texts: words that are no instrument of MusicBrainz, "Voice", more spellings (collected item 137d).
+
+- **`TEXT.parse`:** a word of a list of instruments (S051: blocks, one line, "X plays …") that is no known instrument is a credit with `guess: true` (before: listed as not recognized); the parts of a one-line list in their order (`playList` gives `parts`).
+- **`groupCredits`:** `entry.guess`; **`makeRow`** – new option `guess` (no "miscellaneous support" for it); after the row of a text or Bandcamp credit: `askVoice(row)` and, for a guess, `guessInstrument(row)`.
+- **New `editDistance(a, b, max)`, `similarInstruments(word, most = 5)`** (the children of the instrument root of `idx()`, names and aliases: 2 letters off from 6 letters, 1 from 4; a word of a name so, + 0.5; not "other instruments"), **`guessInstrument(row)`** (`row.instrGuess = { word, options, other }`; none like it: `primaryText` "other instruments"; without that in MusicBrainz and without options: `makeMiscRow` as before), **`instrGuessHtml(row)`** (`.dci-instr-guess`, `data-act="instr-pick"` – `pickInstrument` as for Q001), the compact line asks too (`cl.instrGuess`).
+- **`roleCreditForInner`:** a guess – the word for "other instruments", none for a similar instrument; `askVoice` – none until answered or for plain vocals.
+- **Q011** (mapping file, `TYPE_QUESTIONS`: rule R015, `flag` askVoice, new `keep` – `blankForQuestion` keeps the type; options with the new `plain` – `pickType` clears the voice), **`askVoice(row)`** (R015, base "voice" without details, text or Bandcamp; plain vocals until answered); **`voiceCreditHtml(row)`** in `.dci-voice-slot`, **`updateVoiceCredit(row)`** after the voice or the role credit typed; action `voice-credit` (role credit "voice", touched).
+- **T001:** bongo → bongos, woodblock(s), wood blocks → wood block.
+- **Texts:** new `instrGuess.ask`, `instrGuess.chosen`, `instrGuess.other`, `instrGuess.none`, `cl.instrGuess`, `voiceCredit.from`, `voiceCredit.use`, `typeAsk.askVoice`, `typeAsk.pendingVoice` (English only).
+- **Header / files:** `@version 3.34.20`, `?v=3.34.20`, both files' `version`.
+- **Tests:** `t_text_basics.py` – new case `instrguess` (the harness gets chimes, wind chimes, tubular bells "orchestral chimes", other instruments, other vocals), `playedby` – nothing not recognized now; `t_textcorpus.py` – a guess marked "asked: no known instrument" (1 line changed); `register_golden.json` written anew (T001, Q011).
 
 ## Import 3.34.19 · 2026-10-29
 

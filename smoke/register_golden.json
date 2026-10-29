@@ -1682,6 +1682,10 @@
    "hammond organ hammond organ / organ",
    "congas conga / congas",
    "bongos bongos / bongo",
+   "bongo bongos",
+   "woodblock wood block",
+   "woodblocks wood block",
+   "wood blocks wood block",
    "turntables turntable(s) / turntables / turntable",
    "scratches turntable(s) / turntables / turntable",
    "horns brass",
@@ -2080,6 +2084,7 @@
    "Q008 sounds performer (recording) · effects (credited “sounds”) (recording) \"Sounds\" (3.30.6): performer (without role credit) or the instrument effects credited \"sounds\"? Until answered it stays performer",
    "Q009 poems / poetry / poem lyricist (the words of the works) (work) · liner notes (poems in the booklet) (release) · spoken vocals (read out) (recording) \"Poems\", \"Poetry\", \"Poem\" alone (3.31.4): the words of the works (lyricist), poems printed in the booklet (liner notes) or poems read out (spoken vocals)? Nothing is assumed; each gets the word in lower case as role credit (\"poems\", \"poetry\", \"poem\")",
    "Q010 poems by / poetry / recitation … lyricist (the words) (release) · spoken vocals (read out) (release) · liner notes (poems in the booklet) (release) A credit of poems switched to the release level (3.32.7; R105, R106, R107 – their type follows the level: works lyricist, recordings spoken vocals): the words of the works (lyricist), poems read out (spoken vocals) or poems printed in the booklet (liner notes)? Each keeps the role credit (\"poems\", \"poetry\", \"recitation\" …)",
+   "Q011 voice vocals (recording) · other vocals “voice” (recording) · lead vocals “voice” (recording) \"Voice\" alone in a pasted text or Bandcamp credits (3.34.20): plain vocals (MusicBrainz has no role credit for them), other vocals or lead vocals credited \"voice\"? Until answered it stays vocals without role credit; with another voice chosen by hand \"voice\" is offered as its role credit. Discogs keeps spoken vocals (R015)",
    "Q005 text liner notes (release) · lyricist (work) \"Text\" alone (3.21.0): liner notes – an essay in the booklet – or the lyrics (in German \"Text\" is the lyrics)? Nothing is assumed"
   ],
   "roles": [

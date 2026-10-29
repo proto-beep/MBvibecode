@@ -94,6 +94,10 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   playedby: 3.34.19: Go Kurosawa's "soft shakes" – twenty lines of instruments, "are played, mixed and produced
                                 #     by Go Kurosawa": a row per instrument, Mixed By, Produced By, no Played By, "Chaims" not recognized
                                 #     (S051); in one line "… are played by Jane Roe", "Bass Man plays bass and drums"; "are mixed by" (T050)
+                                #   instrguess: 3.34.20: Bongo → bongos, Woodblock → wood block … (T001); "Chaims" asks "did you mean: chimes ·
+                                #     wind chimes · tubular bells · other instruments “Chaims”" (also in the compact line), each choice and its
+                                #     credit; "Buddha machine" other instruments credited at once; "Voice" asks (Q011), "use “voice” as role
+                                #     credit" after a voice typed in
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,

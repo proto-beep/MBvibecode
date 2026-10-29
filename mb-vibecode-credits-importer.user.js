@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.19
+// @version      3.34.20
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.19
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.19
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.20
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.20
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.19';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.20';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -777,6 +777,7 @@
       "cl.noDate": "no date",
       "cl.unmapped": "no MusicBrainz type",
       "cl.instrAsk": "{name}: which instrument?",
+      "cl.instrGuess": "“{word}”: did you mean",
       "cl.typeAsk": "type to choose",
       "cl.pickList": "choose …",
       "cl.dateSugg": "date suggested",
@@ -1642,6 +1643,12 @@
       "rules.lists": "Tables and word lists",
       "rules.listsHint": "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; ✎ changes the entries of T001, T002, T003, T038, T045 and T048 (your changes), the others change with an update of the script.",
       "instrAsk.ask": "Discogs only says “{name}”. Do you know which one it is?",
+      "instrGuess.ask": "“{word}” is no instrument of MusicBrainz – did you mean:",
+      "instrGuess.chosen": "“{word}” is no instrument of MusicBrainz – chosen:",
+      "instrGuess.other": "{other} “{word}”",
+      "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{word}”.",
+      "voiceCredit.from": "From the text:",
+      "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
       "instrAsk.askAny": "The source ({src}) only says “{name}”. Do you know which one it is?",
       "matrix.emptyAny": "No writing credits yet. They appear here once the source names them, or add them with “Add entry manually” and a work-level role such as composer.",
@@ -1947,6 +1954,8 @@
       "typeAsk.askTranslation": "“{role}” in Bandcamp credits: mostly the translation of the liner notes, sometimes of the lyrics – please choose:",
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
+      "typeAsk.askVoice": "“{role}”: plain vocals (MusicBrainz has no role credit for them), or other vocals or lead vocals credited “voice”? – please choose:",
+      "typeAsk.pendingVoice": "Until you choose, the row stays vocals without role credit.",
       "typeAsk.askPoems": "“{role}” alone: the words of the works, poems printed in the booklet or poems read out? – please choose:",
       "typeAsk.askPoemsRelease": "“{role}” on the release: the words, poems read out or poems printed in the booklet? – please choose:",
       "typeAsk.suggested": "suggested",
@@ -3385,7 +3394,8 @@
   /** [3.21.4] A question that only some rows get (Q007): until it is answered the row has no type, on the first option's level. */
   function blankForQuestion(row) {
     const q = typeQuestionFor(row);
-    if (!q || !q.flag || row.typeAnswer != null) return;
+    // [Q011] (3.34.20) a question that keeps the type until it is answered (`keep`)
+    if (!q || !q.flag || q.keep || row.typeAnswer != null) return;
     row.types = [];
     if (!row.levelTouched) row.level = q.options[0].level;
     row.defaultLevel = q.options[0].level;
@@ -4531,12 +4541,12 @@
       };
       // a word for an instrument MusicBrainz does not know (yet): a few letters, no role of another kind
       const maybePlayable = (x) => x.split(' ').length <= 3 && /^\p{L}[\p{L}'’.\s-]*$/u.test(x) && !isRole(x) && !isRole(`${cap(x)} By`);
-      /** [S051] A list of instruments: { known, unknown } – at least one known, no fewer than unknown, nothing else; else null. */
+      /** [S051] A list of instruments: { known, unknown, parts (in their order) } – at least one known, no fewer than unknown, nothing else; else null. */
       const playList = (side) => {
         const parts = splitRoles(clean(side));
         const known = parts.filter(playable);
         const unknown = parts.filter((x) => !playable(x));
-        return known.length && known.length >= unknown.length && unknown.every(maybePlayable) ? { known, unknown } : null;
+        return known.length && known.length >= unknown.length && unknown.every(maybePlayable) ? { known, unknown, parts } : null;
       };
       const PLAY_WORD = new RegExp(`^${TEXT_PLAY_VERBS.source}$`, 'i');
       const AUX_WORD = new RegExp(`^${TEXT_AUX_WORDS.source}$`, 'i');
@@ -4719,8 +4729,9 @@
             const pl = ruleOn('S051') && !ts && !TEXT_WHAT_WORDS.test(clean(plSrc)) ? playedList(plSrc) : null;
             const plWho = pl ? names(firstSentence(right).replace(TEXT_TIME_AFTER_NAME, '')) : [];
             if (pl && plWho.length && plWho.every(looksLikeName)) {
-              for (const n of plWho) [...pl.known, ...pl.roles].forEach((r) => { if (addCredit(n, r, cScope)) found++; });
-              unknownParts.push(...pl.unknown);
+              // [137d] (3.34.20) in their order; a word that is no instrument MusicBrainz knows: a row that asks (guessInstrument)
+              for (const n of plWho) pl.parts.forEach((r) => { if (addCredit(n, r, cScope, playable(r) ? {} : { guess: true })) found++; });
+              for (const n of plWho) pl.roles.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
               return;
             }
             // [3.14.0] "Music and artwork of this release were entirely created by …" (T022): a sentence (with "of this …",
@@ -4789,8 +4800,7 @@
           if (ruleOn('S051') && (m = clause.match(PLAYS_LIST)) && looksLikeName(clean(m[1])) && /^\p{Lu}/u.test(clean(m[1])) && !isRole(cap(clean(m[1])))) {
             const list = playList(m[2]);
             if (list) {
-              list.known.forEach((r) => { if (addCredit(clean(m[1]), r, cScope)) found++; });
-              unknownParts.push(...list.unknown);
+              list.parts.forEach((r) => { if (addCredit(clean(m[1]), r, cScope, playable(r) ? {} : { guess: true })) found++; });
               return;
             }
           }
@@ -4951,7 +4961,10 @@
         const who2 = names(firstSentence(m[2]).replace(TEXT_TIME_AFTER_NAME, ''));
         return who2.length && who2.every(looksLikeName) ? { names: who2, roles: c.roles } : null;
       };
-      /** [S051] The block held back with the line that links it: each instrument a row of each name; false if it is none. */
+      /**
+       * [S051] The block held back with the line that links it: each instrument a row of each name (a word MusicBrainz does
+       * not know too, marked `guess` – 137d); false if it is none.
+       */
       const readBlock = (held, linkRaw) => {
         const link = linkOf(linkRaw);
         if (!link) return false;
@@ -4966,10 +4979,8 @@
         rows.slice(0, first).forEach((r) => readLine(r.raw));
         for (const r of body) {
           startLine(r.raw);
-          const unk = r.parts.filter((x) => !playable(x));
-          link.names.forEach((n) => r.parts.filter(playable).forEach((x) => addCredit(n, x, null)));
-          if (unk.length === r.parts.length) unrecognized.push(line0);
-          else if (unk.length) unrecognized.push(`${line0} → ? ${unk.map((x) => `“${x}”`).join(', ')}`);
+          // [137d] (3.34.20) a word that is no instrument MusicBrainz knows ("Chaims", "Buddha machine"): a row that asks
+          link.names.forEach((n) => r.parts.forEach((x) => addCredit(n, x, null, playable(x) ? {} : { guess: true })));
         }
         startLine(linkRaw);
         link.names.forEach((n) => link.roles.forEach((x) => addCredit(n, x, null)));
@@ -5452,6 +5463,8 @@
         const entry = group.roles.get(rKey);
         // [S050] (3.32.5) typos read as role words: what was written
         (c.typos || []).forEach((t) => { entry.typos = entry.typos || []; if (!entry.typos.some((x) => x.written === t.written)) entry.typos.push(t); });
+        // [137d] (3.34.20) a word of a list of instruments MusicBrainz does not know
+        if (c.guess) entry.guess = true;
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
@@ -7106,6 +7119,14 @@
     // [W001–W003] A wording rule of the register wins (e.g. "Bass [Upright]" → "upright bass")
     const wr = wordingRuleFor(row);
     if (wr) return wr.credit;
+    // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
+    if (row.instrGuess) return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? row.instrGuess.word : '';
+    // [Q011] (3.34.20) "Voice": plain vocals take no role credit (also until it is answered)
+    if (row.askVoice) {
+      const tq = typeQuestionFor(row);
+      const o = tq && row.typeAnswer != null ? tq.options[row.typeAnswer] : null;
+      if (!o || o.plain) return '';
+    }
     const vocab = instrumentVocabulary();
     const lt0 = currentLinkType(row);
     const art = lt0 && ART_TYPES.includes(norm(lt0.name));
@@ -7323,7 +7344,7 @@
     renderRulesBody();
   }
 
-  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null, artTask = false, artCredit = '' } = {}) {
+  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null, artTask = false, artCredit = '', guess = false } = {}) {
     let m;
     if (company) {
       const c = mapCompanyRole(raw);
@@ -7383,7 +7404,8 @@
     if (!company && typeof dBase === 'string') row.dBase = dBase;
     resolveRowType(row);
     row.primaryText = pickPrimary(row);
-    if (m.fallback && !primaryIsValid(row)) {
+    // [137d] (3.34.20) a word of a list of instruments (guess) stays an instrument: guessInstrument asks for it
+    if (m.fallback && !primaryIsValid(row) && !guess) {
       // Not an MB instrument either: keep the role as "miscellaneous support" with the Discogs role as task.
       makeMiscRow(row, String(raw || base).replace(/\s*\[.*$/, '').trim());
     }
@@ -12629,6 +12651,82 @@
     refreshRowDetails(row);
   }
 
+  /**
+   * [Q011] (3.34.20) "Voice" alone in a pasted text or Bandcamp credits (collected item 137d; maintainer: "auf vocals ebene lässt
+   * sich kein Role Credit vergeben. Daher kann man bei voice auch "other vocals" oder "lead vocals" jeweils mit role credit
+   * voice vorschlagen. als rückfrage"): asks vocals · other vocals “voice” · lead vocals “voice”; until then plain vocals
+   * without role credit. Discogs keeps spoken vocals (R015).
+   */
+  function askVoice(row) {
+    if (row.ruleId !== 'R015' || norm(row.base) !== 'voice' || (row.mods || []).length || !ruleOn('Q011')) return;
+    Object.assign(row, { askVoice: true, primaryText: '', primaryTouched: false });
+    refreshRowDetails(row);
+  }
+
+  /** [137d] (3.34.20) Levenshtein distance of a and b, max + 1 once it is larger than max. */
+  function editDistance(a, b, max) {
+    if (Math.abs(a.length - b.length) > max) return max + 1;
+    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      let low = i;
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        low = Math.min(low, cur[j]);
+      }
+      if (low > max) return max + 1;
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+
+  /**
+   * [137d] (3.34.20) MusicBrainz instruments like a word that is none (collected item 137d): its name or one of its other
+   * names two letters off at most (one for words of four or five letters: "Chaims" → chimes), or a word of it so ("wind
+   * chimes", tubular bells as "orchestral chimes"); the closest first, five at most. "other instruments" is never one of them.
+   */
+  function similarInstruments(word, most = 5) {
+    const lt = typesFor('recording').find((l) => norm(l.name) === 'instrument');
+    const root = lt ? primaryRootOf(lt) : null;
+    const kids = root ? idx().children.get(root.id) : null;
+    const w = norm(word);
+    const lim = w.length >= 6 ? 2 : w.length >= 4 ? 1 : 0;
+    if (!kids || !lim) return [];
+    const best = new Map();
+    for (const [key, a] of kids) {
+      if (norm(a.name) === 'other instruments') continue;
+      let d = editDistance(w, key, lim);
+      if (d > lim && key.includes(' ')) d = Math.min(d, ...key.split(' ').filter((x) => x.length >= 4).map((x) => editDistance(w, x, lim) + 0.5));
+      if (d > lim + 0.5) continue;
+      if (!best.has(a.name) || d < best.get(a.name)) best.set(a.name, d);
+    }
+    return [...best.entries()].sort((x, y) => x[1] - y[1] || x[0].length - y[0].length || x[0].localeCompare(y[0])).slice(0, most).map(([n]) => n);
+  }
+
+  /**
+   * [137d] (3.34.20) A word of a list of instruments that MusicBrainz does not know ("Chaims", "Buddha machine"; S051): the
+   * row asks for the similar instruments (similarInstruments) and "other instruments" credited as written – nothing is
+   * assumed –; with none like it, "other instruments" credited as written at once (maintainer: "falls keine ähnlichen
+   * vorschläge vorhanden sind, kann "other instruments" mit role credit vergeben werden"). Without "other instruments" in
+   * MusicBrainz and without similar ones: miscellaneous support, as before.
+   */
+  function guessInstrument(row) {
+    const word = String(row.base || row.raw || '').trim();
+    const lt = currentLinkType(row);
+    const root = lt ? primaryRootOf(lt) : null;
+    if (!root || !word || primaryIsValid(row)) return;
+    const options = similarInstruments(word);
+    const other = findChildAttr(root.id, 'other instruments');
+    if (!options.length && !other) {
+      makeMiscRow(row, word);
+      refreshRowDetails(row);
+      return;
+    }
+    row.instrGuess = { word, options, other: other ? other.name : '' };
+    if (!options.length) Object.assign(row, { primaryText: other.name, primaryTouched: true });
+    refreshRowDetails(row);
+  }
+
   /** [T035] The kinds of media of the release, from MusicBrainz's formats: 'digital', 'cd', 'vinyl', 'cassette', 'other'. */
   const releaseMediaKinds = () => new Set([...((S.mediaInfo && S.mediaInfo.values()) || [])].map((m) => formatKind(m.format || '')));
   /** [S026] A medium the release does not have (its media all of known formats): credits for it are left out. */
@@ -13303,12 +13401,15 @@
         };
         S.artists.set(artist.key, artist);
         for (const c of g.roles.values()) {
-          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '' });
+          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '', guess: !!c.guess });
           if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
           if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
           row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
           // [3.21.4] "Translated By" in Bandcamp credits asks (Q007); [S026] a credit for a medium the release does not have
           if (source === BANDCAMP) askTranslation(row);
+          // [137d] (3.34.20) "Voice" in a text asks (Q011); a word MusicBrainz does not know as an instrument asks for similar ones
+          if (source === BANDCAMP || source === TEXT) askVoice(row);
+          if (c.guess) guessInstrument(row);
           if (leftOutForMedium(row, rel, (c.lines || [])[0] || `${g.name} – ${c.role.raw}`, !!source.nameSearch)) {
             leftOutKeys.add(artist.key);
             continue;
@@ -16933,6 +17034,32 @@
       <span class="dci-sub">${esc(row.translated ? tr('instrAsk.otherwiseTr', { credit: q.credit, word: row.translated }) : tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
 
+  /**
+   * [137d] (3.34.20) A word MusicBrainz does not know as an instrument: "did you mean" its similar instruments · other
+   * instruments credited as written (the one chosen pressed); with none like it, what was given.
+   */
+  function instrGuessHtml(row) {
+    const g = row.instrGuess;
+    if (!g || row.level === 'skip') return '';
+    if (!g.options.length) return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.none', { word: g.word, other: g.other }))}</div>`;
+    const pick = (name, label) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}" aria-pressed="${norm(row.primaryText) === norm(name)}">${esc(label)}</button>`;
+    const chosen = primaryIsValid(row) && !!norm(row.primaryText);
+    const opts = [...g.options.map((n) => pick(n, n)), ...(g.other ? [pick(g.other, tr('instrGuess.other', { other: g.other, word: g.word }))] : [])];
+    return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(chosen ? 'instrGuess.chosen' : 'instrGuess.ask', { word: g.word }))} ${opts.join(' · ')}</div>`;
+  }
+
+  /** [Q011] (3.34.20) "Voice" answered, the role credit empty, a voice chosen: "voice" offered as its role credit. */
+  function voiceCreditHtml(row) {
+    if (!row.askVoice || row.level === 'skip' || row.typeAnswer == null || String(row.roleCredit || '').trim() || !norm(row.primaryText)) return '';
+    return `<div class="dci-sub dci-voice-credit">${esc(tr('voiceCredit.from'))} <button type="button" class="dci-textbtn" data-act="voice-credit">${esc(tr('voiceCredit.use', { word: norm(row.base) }))}</button></div>`;
+  }
+
+  /** [Q011] The offer after the voice or the role credit was typed (the row is not drawn anew then). */
+  function updateVoiceCredit(row) {
+    const slot = row.askVoice && S.overlay && S.overlay.querySelector(`tr.dci-row[data-row="${row.id}"] .dci-voice-slot`);
+    if (slot) slot.innerHTML = voiceCreditHtml(row);
+  }
+
   /** The instrument chosen in a question (Q001 …); [3.32.3] also from the compact line. Counts as made by hand: it stays when the rules change. */
   function pickInstrument(row, name) {
     if (!row || !name) return;
@@ -16966,6 +17093,8 @@
     resolveRowType(row);
     // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
     if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
+    // [Q011] (3.34.20) plain vocals: no voice
+    if (o.plain) Object.assign(row, { primaryText: '', primaryTouched: true });
     refreshRowDetails(row);
     log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
     // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
@@ -17007,7 +17136,7 @@
     return `
       <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
         <td class="dci-c-cline">${clineHtml(row, S.rowInfo && S.rowInfo.get(row.id))}</td>
-        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${typeAskHtml(row)}</td>
+        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}</td>
         <td class="dci-c-type"><div class="dci-cap">${esc(tr('th.type'))}</div>${typeCell(row)}</td>
         <td class="dci-c-attr"><div class="dci-cap">${esc(tr('th.attrs'))}</div>${attrCell(row)}</td>
         <td class="dci-c-level"><div class="dci-cap">${esc(tr('th.level'))}</div>${levelCell(row)}</td>
@@ -17087,6 +17216,11 @@
       // [3.32.3] the questions whole and to click (item 102)
       if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
       if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
+      // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
+      const g = row.instrGuess;
+      if (g && g.options.length && !(primaryIsValid(row) && norm(row.primaryText))) {
+        parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: g.word }) }] : [])]));
+      }
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
     }
@@ -21774,6 +21908,12 @@
       case 'instr-pick':
         pickInstrument(row, btn.dataset.instr);
         break;
+      case 'voice-credit':
+        // [Q011] (3.34.20) "voice" as the role credit of another voice
+        Object.assign(row, { roleCredit: norm(row.base), roleCreditTouched: true });
+        rerenderRow(row);
+        refresh();
+        break;
       case 'other-create':
         startOtherCreate(artist);
         break;
@@ -22611,6 +22751,7 @@
         row.primaryTouched = true;
         updateMark(row);
         updateHint(row);
+        updateVoiceCredit(row);
         refresh();
         break;
       case 'credit':
@@ -22622,6 +22763,7 @@
         row.roleCredit = el.value;
         row.roleCreditTouched = true;
         updateHint(row);
+        updateVoiceCredit(row);
         refresh();
         break;
       case 'artist-pick': {

@@ -1,5 +1,5 @@
 {
-  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024). 3.34.19: instruments and the name they are played by in one line (S051, item 137a), \"are\" no part of the role (T050).",
+  "note": "Credits lines from real releases (Bandcamp, booklets) and the cases built around them (3.21.0, collected items 33 and 37). t_textcorpus.py reads each line with the text adapter and compares with 'expect' (UPDATE=1 rewrites 'expect' after a change that is meant). 'later' marks lines whose reading is still wrong and planned (none at the moment; 33d and 33e are read since 3.22.0). 3.29.0: the prose credits of ekstasis (70), \"mixed and mastered at/by\" (71, 76) and the lists of Antifascist Freedom Music (77, 78) – the instrument lists are read with the few instruments of this test (see the case prose of t_text_languages.py for the dashboard). 3.31.1: lines of the cases sounds, members, pcline, discnotes and publishers (item 103) – a line may name the release's artists (\"artists\") and its number of tracks (\"tracks\"). 3.34.18: places after \"in\" with a word of places (T051, item 137b: \"Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July\" from Go Kurosawa's \"soft shakes\" on Bandcamp), a date with its year first after the area (T047, D024). 3.34.19: instruments and the name they are played by in one line (S051, item 137a), \"are\" no part of the role (T050). 3.34.20: a word of such a list that is no instrument of this test is marked \"asked: no known instrument\" (137d: the dashboard asks for a similar instrument).",
   "lines": [
     {
       "text": "Cover art: “Madison” 1988 by Albert Irvin, courtesy of the Albert Irvin Estate. Graphic design: Jonas Schoder. Text: Evan Parker. Produced by Maya Homburger and Barry Guy.",
@@ -1629,6 +1629,16 @@
         "credits": [
           [
             "Go Kurosawa",
+            "Electric guitar",
+            "asked: no known instrument"
+          ],
+          [
+            "Go Kurosawa",
+            "acoustic guitar",
+            "asked: no known instrument"
+          ],
+          [
+            "Go Kurosawa",
             "drums"
           ],
           [
@@ -1637,9 +1647,7 @@
           ]
         ],
         "companies": [],
-        "unrecognized": [
-          "Electric guitar, acoustic guitar, drums and piano are played by Go Kurosawa → ? “Electric guitar”, “acoustic guitar”"
-        ],
+        "unrecognized": [],
         "ignored": []
       }
     },
