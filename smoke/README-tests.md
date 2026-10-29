@@ -370,6 +370,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     ⚙ Staging "An entry, compact, at first: by role", the summary "a relationship per instrument would be 33"
                                 #   restage: 3.35.0: "One row each" and "Join in one block" after staging (joined ↔ singles in the editor), a joined
                                 #     relationship changed in the editor itself stays (its rows not staged again), the others anew
+                                #   order: 3.35.3 (AE-2): ⠿ drags a line before or after another of its block (the mark above / below), Alt+↑,
+                                #     not onto another entry's line, no ⠿ in a block of one line, the compact view follows, staged as before, a new
+                                #     import in the order of the source
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,

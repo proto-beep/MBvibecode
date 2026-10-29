@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.35.2
+// @version      3.35.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1710,6 +1710,8 @@
       "em.wrote": "written “{raw}”",
       "em.detail": "rows",
       "em.detailTitle": "The rows of this line with all their fields (type, level, date, tracks …)",
+      "em.gripTitle": "Drag to another place in the block – or Alt+↑ / Alt+↓ (the order holds until the next import)",
+      "em.gripLabel": "Move {name} in the block (Alt+↑ / Alt+↓)",
       "em.remove": "Take this role out (Skip)",
       "em.more": "▸ {n} more: {list}",
       "em.less": "▴ fewer",
@@ -1754,6 +1756,7 @@
       "log.caseAlways": "“{word}” added to the proper names (T052): it keeps its capitals in role credits",
       "log.emOut": "{name}: {role} taken out of an event",
       "log.emIn": "{name}: {role} into an event",
+      "log.emOrder": "{name}: {role} moved to place {n} in its block",
       "log.emJoin": "{name}: instruments and voices joined in one block",
       "log.emSplit": "{name}: each instrument a block of its own",
       "log.emEvDate": "Date of an event ({n} rows): {date}",
@@ -15913,8 +15916,11 @@
       <button type="button" class="dci-textbtn dci-em-detail" data-act="em-detail" aria-expanded="${open}" title="${esc(tr('em.detailTitle'))}">${open ? '▾' : '▸'} ${esc(tr('em.detail'))}</button>
       <button type="button" class="dci-iconbtn" data-act="em-remove" title="${esc(tr('em.remove'))}" aria-label="${esc(tr('em.remove'))}">✕</button></td>`;
     const ask = skip ? '' : lineAskHtml(l);
+    // [AE-2] (3.35.3) ⠿ drags the line to another place in its block (Alt+↑ / Alt+↓ too)
+    const grip = b.lines.length > 1 ? `<button type="button" class="dci-em-grip" data-drag="em-line" data-id="${esc(l.id)}" data-block="${esc(b.key)}" draggable="true"
+      title="${esc(tr('em.gripTitle'))}" aria-label="${esc(tr('em.gripLabel', { name }))}">⠿</button>` : '';
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
-        <td class="dci-em-c-role">${role}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-flags">${flags}</td>${ticks}${b.others.length ? '<td></td>' : ''}${tools}
+        <td class="dci-em-c-role">${grip}${role}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-flags">${flags}</td>${ticks}${b.others.length ? '<td></td>' : ''}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
   }
@@ -16054,6 +16060,44 @@
     if (!both) emTick(a, line.rows, fromEv, false);
     rerenderGroup(a);
     refresh();
+  }
+
+  /**
+   * [AE-2] (3.35.3) A line moved to another place in its block (maintainer: "bitte noch ziehen ermöglichen", "ja nur bis zum
+   * nächsten import"): dropped before or after another line of the block, or one place up or down (Alt+↑ / Alt+↓ on ⠿). The
+   * order of the lines is the order of their rows, so the rows of the block's lines are put in the new order – in the places
+   * the entry's rows had in S.rows (rows of other entries and the entry's other rows stay where they are). The compact view
+   * follows; the next import starts from the source's order again.
+   */
+  function emMoveLine(a, lineId, targetId, after) {
+    const m = entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work'));
+    const b = m.blocks.find((x) => x.lines.some((l) => l.id === lineId));
+    if (!b) return false;
+    const order = b.lines.map((l) => l.id);
+    const from = order.indexOf(lineId);
+    let to;
+    if (typeof targetId === 'number') to = Math.max(0, Math.min(order.length - 1, from + targetId));
+    else {
+      const t = order.indexOf(targetId);
+      if (t < 0 || t === from) return false;
+      to = t + (after ? 1 : 0) - (t > from ? 1 : 0);
+    }
+    if (to === from) return false;
+    order.splice(from, 1);
+    order.splice(to, 0, lineId);
+    // the lines of the entry in their new order: the block's lines take the places its lines had
+    const places = m.lines.map((l, i) => (b.lines.includes(l) ? i : -1)).filter((i) => i >= 0);
+    const ids = m.lines.map((l) => l.id);
+    places.forEach((p, i) => { ids[p] = order[i]; });
+    const rank = new Map();
+    m.lines.forEach((l) => l.rows.forEach((r) => rank.set(r, ids.indexOf(l.id))));
+    const at = [];
+    S.rows.forEach((r, i) => { if (rank.has(r)) at.push(i); });
+    const moved = at.map((i) => S.rows[i]).map((r, i) => ({ r, i })).sort((x, y) => rank.get(x.r) - rank.get(y.r) || x.i - y.i).map((x) => x.r);
+    at.forEach((p, i) => { S.rows[p] = moved[i]; });
+    const line = m.lines.find((l) => l.id === lineId);
+    log('info', 'emOrder', { name: a.mbName || a.name, role: line.rows[0].primaryText || line.rows[0].raw, n: to + 1 });
+    return true;
   }
 
   /** [E4] The rows of the line an element is in. */
@@ -22907,6 +22951,12 @@
       const row = place && rowOf(place);
       return row && tracksDropFits(row) ? { el: place, kind: 'row-tracks' } : null;
     }
+    // [AE-2] (3.35.3) a line of an entry's matrix: onto another line of its block – before it (upper half) or after it
+    if (d.kind === 'em-line') {
+      const line = t.closest('tr.dci-em-line');
+      const block = line && line.closest('.dci-em-block');
+      return line && line.dataset.line !== d.id && block && block.dataset.block === d.block && line.closest('[data-group]') === d.group ? { el: line, kind: 'em-order' } : null;
+    }
     // [E4] (3.35.0) a role chip of a compact line: onto the line of another event of the same entry
     if (d.kind === 'em-chip') {
       const ev = t.closest('.dci-em-cl[data-emev]');
@@ -23012,6 +23062,8 @@
     S.dmDrag = { kind: src.dataset.drag, id: src.dataset.id, cell: src.dataset.cell || null, list: src.dataset.list || null };
     // [E4] (3.35.0) a role chip: its event and its entry
     if (S.dmDrag.kind === 'em-chip') Object.assign(S.dmDrag, { ev: src.dataset.ev, group: src.closest('[data-group]') });
+    // [AE-2] (3.35.3) a line of the matrix: its block and its entry
+    if (S.dmDrag.kind === 'em-line') Object.assign(S.dmDrag, { block: src.dataset.block, group: src.closest('[data-group]') });
     try {
       e.dataTransfer.setData('text/plain', src.dataset.id);
       e.dataTransfer.effectAllowed = 'copyMove';
@@ -23079,6 +23131,8 @@
     const t = dmTargetOf(e);
     dmMarkOver(t && t.el);
     if (!t) return;
+    // [AE-2] (3.35.3) where the line goes: a mark above or below the line under the pointer
+    if (t.kind === 'em-order') t.el.classList.toggle('dci-em-after', emAfter(t.el, e));
     if (['row-tracks', 'mx-col', 'mx-role', 'mx-attr'].includes(t.kind)) {
       t.el.classList.toggle('dci-drop-add', !!e.shiftKey);
       const card = t.el.closest('.dci-mx-cardover');
@@ -23105,7 +23159,21 @@
     }
   }
 
+  /** [AE-2] (3.35.3) A line dropped in the lower half of another line goes after it. */
+  function emAfter(el, e) {
+    const box = el.getBoundingClientRect();
+    return e.clientY > box.top + box.height / 2;
+  }
+
   function onDropOn(t, d, e) {
+    if (t.kind === 'em-order') {
+      const a = artistOf(t.el);
+      if (a && emMoveLine(a, d.id, t.el.dataset.line, emAfter(t.el, e))) {
+        rerenderGroup(a);
+        refresh();
+      }
+      return;
+    }
     if (t.kind === 'srcorder') {
       moveSourceOrder(d.list, d.id, 0, t.el.dataset.id);
       return;
@@ -23169,6 +23237,9 @@
     S.dmDrag = null;
     if (!S.overlay) return;
     S.overlay.classList.remove('dci-dm-dragging', 'dci-dm-drag-date', 'dci-dm-drag-tg', 'dci-dm-drag-pool');
+    // [3.35.3] also the class of any other kind ("dci-dm-drag-em-chip", "dci-dm-drag-em-line")
+    [...S.overlay.classList].filter((c) => c.startsWith('dci-dm-drag-')).forEach((c) => S.overlay.classList.remove(c));
+    S.overlay.querySelectorAll('.dci-em-after').forEach((x) => x.classList.remove('dci-em-after'));
     dmMarkOver(null);
     S.overlay.querySelectorAll('.dci-mx-cardover').forEach((x) => x.classList.remove('dci-mx-cardover', 'dci-drop-add'));
   }
@@ -24824,6 +24895,20 @@
       const to = e.key === 'Home' ? 0 : e.key === 'End' ? all.length - 1 : (i + (['ArrowUp', 'ArrowLeft'].includes(e.key) ? -1 : 1) + all.length) % all.length;
       e.preventDefault();
       all[to].click();
+      return;
+    }
+    // [AE-2] (3.35.3) Alt+↑ / Alt+↓ on ⠿ of a line: one place up or down in its block
+    const grip = e.target.closest && e.target.closest('.dci-em-grip');
+    if (grip && e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault();
+      const a = artistOf(grip);
+      const id = grip.dataset.id;
+      if (a && emMoveLine(a, id, e.key === 'ArrowUp' ? -1 : 1)) {
+        rerenderGroup(a);
+        refresh();
+        const again = S.overlay.querySelector(`[data-group="${a.key}"] .dci-em-grip[data-id="${id}"]`);
+        if (again) again.focus({ preventScroll: true });
+      }
       return;
     }
     if (e.key !== 'Enter') return;
@@ -27518,6 +27603,11 @@
       #dci-overlay.dci-dm-drag-date .dci-em-ev, #dci-overlay.dci-dm-drag-date .dci-em-bhead { outline: 1px dashed var(--purple); outline-offset: -2px; }
       #dci-overlay th.dci-em-ev.dci-dm-over, #dci-overlay .dci-em-bhead.dci-dm-over { outline: 2px solid var(--purple); background: var(--date-bg); }
       #dci-overlay tr.dci-em-line.dci-dm-over > td { background: var(--date-bg); box-shadow: inset 0 2px 0 var(--purple), inset 0 -2px 0 var(--purple); }
+      /* [AE-2] (3.35.3) ⠿ of a line, and where a dragged line goes (a mark above or below the line under the pointer) */
+      .dci-em-grip { border: 0; background: none; color: var(--muted); cursor: grab; padding: 0 calc(var(--u, 1px) * 4) 0 0; font: inherit; line-height: 1; }
+      .dci-em-grip:hover, .dci-em-grip:focus-visible { color: var(--purple-d); }
+      #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over > td { background: none; box-shadow: inset 0 2px 0 var(--purple); }
+      #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over.dci-em-after > td { box-shadow: inset 0 -2px 0 var(--purple); }
       .dci-em-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
