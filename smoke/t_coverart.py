@@ -865,7 +865,9 @@ def case_ocrwindow():
     C) Moved by its head; closed and opened again: at the same place, of the same size.
     D) [3.34.18] It stays above the dashboard (collected item 138): a click into the dashboard, the rules opened as a window of
        their own (⚙ → Appearance: in a window), a click into them and into the log – the window is still in front (the point at
-       its head is its own, its z-index the highest)."""
+       its head is its own, its z-index the highest).
+    E) [3.34.23] ⚙ Settings → Beta "Keep “Text from cover art” in front of the dashboard" (138b; on by default) switched off: a
+       click into the dashboard brings the dashboard in front of it (stored false); on again: the window in front at once."""
     results = []
     FOOT = "(() => { const w = document.getElementById('dci-ocr'); const f = w.querySelector('.dci-ocr-foot').getBoundingClientRect(); const r = w.getBoundingClientRect(); return [Math.round(f.top), Math.round(f.bottom), [r.left, r.top, r.width, r.height].map(Math.round)]; })()"
     VIEW = "(() => { const v = document.querySelector('#dci-ocr [data-ocr-view]'); return v ? [v.width, v.height] : null; })()"
@@ -954,6 +956,22 @@ def case_ocrwindow():
         docked = pg.evaluate("document.getElementById('dci-rules').classList.contains('dci-rules-docked')")
         print('D) vorn:', top, '| Log:', log, '| Regeln angedockt:', docked, '| z-index (OCR, Dashboard, Regeln, Log):', zs)
         results.append(all(top) and not docked and int(zs[0]) > max(int(z) for z in zs[1:] if z and z != 'auto'))
+        # E) [3.34.23] ⚙ Settings → Beta "Keep … in front" off (138b): a click into the dashboard brings it in front; on again: the
+        #    window in front at once
+        H.open_settings(pg)
+        pg.locator('[data-el=settings] .dci-set-tab[data-topic=beta]').evaluate('b => b.click()')
+        pg.wait_for_timeout(150)
+        sw = pg.locator('[data-el=settings] [data-set=ocr-front]')
+        e0 = sw.is_checked()
+        sw.evaluate('x => x.click()')
+        pg.wait_for_timeout(200)
+        pg.evaluate(DOWN, '#dci-overlay .dci-panel')
+        e1 = [pg.evaluate(TOP), pg.evaluate("localStorage.getItem('dci-ocr-front')")]
+        sw.evaluate('x => x.click()')
+        pg.wait_for_timeout(200)
+        e2 = [pg.evaluate(TOP), pg.evaluate("localStorage.getItem('dci-ocr-front')")]
+        print('E) Einstellung an:', e0, '| aus, Klick ins Dashboard – Fenster vorn:', e1, '| wieder an:', e2)
+        results.append(e0 is True and e1 == [False, 'false'] and e2 == [True, None])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

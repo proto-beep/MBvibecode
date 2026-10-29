@@ -977,7 +977,8 @@ def with_companion(pg):
 
 # [3.27.0] the tests were written for the full view of the entries; the compact view has a test of its own ([3.27.2] full is
 # the default again – the preset stays, harmless)
-VIEW_PRESET = "(v) => { if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); if (localStorage.getItem('dci-view') === null) localStorage.setItem('dci-view', JSON.stringify(v)); }"
+# [3.34.23] … and the arrow at "Compact | Full" (item 143) as seen – it stands below the head; t_ui_head.py compacthint tests it
+VIEW_PRESET = "(v) => { if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); if (localStorage.getItem('dci-view') === null) localStorage.setItem('dci-view', JSON.stringify(v)); if (localStorage.getItem('dci-hint-compact') === null) localStorage.setItem('dci-hint-compact', 'true'); }"
 
 
 # [3.32.0] built-in rules switched off before the script starts, unless the browser has stored switched rules already
