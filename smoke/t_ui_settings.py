@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, bridge, ui305, reset, notice, cache (3.36.0), cache2 (3.36.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, bridge, ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -807,6 +807,47 @@ def case_cache2():
         c1 = pg.evaluate(ROWS, 'Bass Man')
         print('C) aus, neu geladen:', c0, '| Meldung:', msg, '| an, neu geladen:', c1)
         results.append(c0 == [['recording', '']] and bool(msg) and 'Load the page again' in msg[0] and c1 == [['recording', 'fretless']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_logdiag():
+    """Credits Importer 3.36.2 (maintainer: "Bitte eine Option, die die Diagnose Funktion im Log ermöglicht oder den Button
+    ausblendet. Standardmäßig aus."): the diagnosis in the log as a setting.
+    A) The log open: no "Start diagnosis"; ⚙ Settings → General "Diagnosis in the log" off.
+    B) On: the button in the log, stored.
+    C) Diagnosis started, the setting off: it stops (the log says so), the button goes.
+    D) On again, "↺ Defaults" of General: off, no button."""
+    DIAGBTN = "!!document.querySelector('#dci-log [data-log-act=diag]')"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_settings(pg, 'general')
+        a = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=log-diag]').is_checked()]
+        pg.click('.dci-set-pane [data-set=log-diag]')
+        pg.wait_for_timeout(300)
+        b1 = [pg.evaluate(DIAGBTN), pg.evaluate("localStorage.getItem('dci-log-diag')")]
+        pg.evaluate("document.querySelector('#dci-log [data-log-act=diag]').click()")  # the log window may lie below the dashboard
+        pg.wait_for_timeout(700)
+        c0 = pg.evaluate("(document.querySelector('#dci-log [data-log-act=diag]') || {}).textContent || ''")
+        pg.click('.dci-set-pane [data-set=log-diag]')
+        pg.wait_for_timeout(300)
+        c1 = [pg.evaluate(DIAGBTN), pg.evaluate("[...document.querySelectorAll('#dci-log li')].some(li => /Diagnosis stopped/.test(li.textContent))"), pg.evaluate("localStorage.getItem('dci-log-diag')")]
+        pg.click('.dci-set-pane [data-set=log-diag]')
+        pg.wait_for_timeout(300)
+        pg.click('.dci-set-pane [data-act=settings-reset][data-topic=general]')
+        pg.wait_for_timeout(500)
+        d1 = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=log-diag]').is_checked(), pg.evaluate("localStorage.getItem('dci-log-diag')")]
+        print('A) Standard:', a, '| B) an:', b1, '| C) gestartet:', c0, '→ aus:', c1, '| D) zurückgesetzt:', d1)
+        results.append(a == [False, False] and b1 == [True, 'true'] and c0 == 'Stop diagnosis' and c1 == [False, True, None] and d1 == [False, False, None])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

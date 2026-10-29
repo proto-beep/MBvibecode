@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.36.1
+// @version      3.36.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -800,6 +800,8 @@
       "settings.place.window": "as a window",
       "settings.place.page": "in the page",
       "settings.logOpen": "Show the log",
+      "settings.logDiag": "Diagnosis in the log (“Start diagnosis”)",
+      "settings.logDiagTitle": "Shows “Start diagnosis” in the log: it records what MusicBrainz’s relationship editor does while you use its own tools (e.g. “Batch-create new works”), for reporting an issue. Only observes, changes nothing. Off: the button is not shown.",
       "settings.logPlace": "Place of the log",
       "settings.discogsHint": "With the companion script in a Discogs or Bandcamp tab: when the view follows the dashboard and what it shows (the cover only on Discogs). It shows the source that is loaded.",
       "settings.awOn": "Compare the tracks without a work with the works of the release's artists, writers and musicians",
@@ -8542,6 +8544,10 @@
   // works"), so the dashboard can later use the same internal steps. It only observes; nothing changes.
 
   const DIAG = { timer: null, last: null, lastDialog: '', step: 0, origDispatch: null };
+  // [3.36.2] "Start diagnosis" in the log only with ⚙ Settings → General → "Diagnosis in the log" (off; maintainer: "Bitte eine
+  // Option, die die Diagnose Funktion im Log ermöglicht oder den Button ausblendet. Standardmäßig aus.")
+  const LOG_DIAG_KEY = 'dci-log-diag';
+  S.logDiag = readJson('localStorage', LOG_DIAG_KEY, false) === true;
 
   /** A compact, size-limited picture of any value for the log. */
   function diagShape(value, depth = 0, seen = new WeakSet(), max = 2) {
@@ -12566,7 +12572,7 @@
         <h2 id="dci-log-title">${esc(tr('log.title'))}</h2>
         <label class="dci-log-place">${esc(tr('log.place'))} <select data-log-f="place">${LOG_PLACES.map((p) => `<option value="${p}">${esc(tr(`log.place.${p}`))}</option>`).join('')}</select></label>
         <button type="button" data-log-act="dashboard" class="dci-log-dash" title="${esc(tr('log.dashboardTitle'))}">${esc(tr('log.dashboard'))}</button>
-        <button type="button" data-log-act="diag" aria-pressed="${!!DIAG.timer}" title="${esc(tr('log.diagTitle'))}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>
+        ${S.logDiag || DIAG.timer ? `<button type="button" data-log-act="diag" aria-pressed="${!!DIAG.timer}" title="${esc(tr('log.diagTitle'))}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>` : ''}
         <button type="button" data-log-act="copy">${esc(tr('log.copy'))}</button>
         <button type="button" data-log-act="clear">${esc(tr('log.clear'))}</button>
         <button type="button" data-log-act="hide">${esc(tr('log.hide'))}</button>
@@ -26419,7 +26425,7 @@
   const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
-    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
+    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', LOG_DIAG_KEY],
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
@@ -26529,6 +26535,8 @@
         row(`<label>${esc(tr('lang.label'))} <select data-f="lang">${Object.entries(LANGS).map(([code, name]) => `<option value="${code}" ${code === LANG ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`),
         row(check('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'))),
         row(`<label>${esc(tr('settings.logPlace'))} <select data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select></label>`),
+        // [3.36.2] the diagnosis of the relationship editor in the log (off: its button is not shown)
+        row(check('data-set="log-diag"', S.logDiag, tr('settings.logDiag'), tr('settings.logDiagTitle'))),
       ],
       // [3.29.2] how the dashboard looks (item 79; text size, place and view came from "General")
       appearance: () => [
@@ -26810,6 +26818,13 @@
       log('info', 'settingValue', { what: tr(k === 'ev-shared' ? 'settings.evShared' : 'settings.emShow'), value: String(v) });
       if (S.overlay) renderGroups();
       refresh();
+    } else if (k === 'log-diag') {
+      // [3.36.2] off: a diagnosis running stops, its button goes
+      S.logDiag = el.checked;
+      writeJson('localStorage', LOG_DIAG_KEY, el.checked ? true : null);
+      if (!el.checked && DIAG.timer) stopDiag();
+      log('info', 'settingValue', { what: tr('settings.logDiag'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderLog();
     } else if (k === 'remember') {
       // [146] (3.36.0) remembered per release, or not
       setRemember(el.checked);
@@ -26934,6 +26949,10 @@
     if (t === 'general') {
       if (S.logEl) setLogVisible(true);
       setLogPlace('window');
+      // [3.36.2] the diagnosis off again
+      S.logDiag = false;
+      if (DIAG.timer) stopDiag();
+      renderLog();
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'appearance') {
       setScale(1);
@@ -27015,7 +27034,9 @@
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
     ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
-    WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY];
+    WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
+    // [3.36.2] the diagnosis in the log
+    LOG_DIAG_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -27037,8 +27058,11 @@
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
-      workGroupsOn: true, rememberOn: false, rememberMax: 50,
+      workGroupsOn: true, rememberOn: false, rememberMax: 50, logDiag: false,
     });
+    // [3.36.2] a diagnosis running stops, its button goes
+    if (DIAG.timer) stopDiag();
+    renderLog();
     closeOcr();
     renderLauncher();
     applyKindColors();
