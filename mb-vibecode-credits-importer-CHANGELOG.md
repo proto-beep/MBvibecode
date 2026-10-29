@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-29 | 3.34.18 – 3.34.22 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -87,6 +88,49 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-29
+
+### Import 3.34.22
+
+#### Added
+
+- **Text from cover art (beta): where a row comes from** (collected item 130c): the rows of a text read from the cover art say "From the cover art · Booklet" (or Back, Tray, the page of a PDF …), and ⓘ shows the line cut out of its image. The crops are made at "Import this text" and kept in memory only.
+
+### Import 3.34.21
+
+#### Added
+
+- **Wording rules and questions of your own** (collected item 121b; maintainer: "so wie du schreibst"): "＋ New rule" in "Mapping rules" at the wording rules (words of a role and the role credit they get) and at the questions (a word, its role credit and the instruments to choose). They are W901 …, Q901 …, tried before the built-in rules, marked "yours", stored with your changes and exported and imported with them (also in the whole register); "✕ delete this rule" asks first. A word of a question of your own is read in texts too ("Key Man – keys") and asks even when MusicBrainz has no instrument of that name.
+
+### Import 3.34.20
+
+#### Added
+
+- **Words that are no instrument of MusicBrainz ask** (collected item 137d; maintainer: "falls keine ähnlichen vorschläge vorhanden sind, kann "other instruments" mit role credit vergeben werden"): in a list of instruments (3.34.19) "Chaims" is a row asking "did you mean: chimes · wind chimes · tubular bells · other instruments “Chaims”" – MusicBrainz's instruments one or two letters off, or with such a word; nothing is assumed. "Buddha machine", like none, is other instruments credited "Buddha machine" at once. Before, both were listed as not recognized.
+- **"Voice" asks** (question Q011; maintainer: "auf vocals ebene lässt sich kein Role Credit vergeben. Daher kann man bei voice auch "other vocals" oder "lead vocals" jeweils mit role credit voice vorschlagen. als rückfrage. also drei antwortmöglichkeiten"): vocals · other vocals “voice” · lead vocals “voice” – in pasted texts and Bandcamp credits; until answered vocals without role credit. With another voice typed in, "use “voice” as role credit" is offered. From Discogs "Voice" stays spoken vocals.
+- **More spellings of instruments** (T001): "Bongo" → bongos, "Woodblock" → wood block.
+
+### Import 3.34.19
+
+#### Added
+
+- **Instruments and the name they are played by** (collected item 137a, rule S051; maintainer: "die liste an durch absätzen getrennten instrumenten und eine zwischenzeile", "ja passt", "ja okay"): lines that are only instruments or voices (Go Kurosawa's "soft shakes": "Electric guitar", "Acoustic guitar", … "Voice", one per line), then "are played, mixed and produced by Go Kurosawa" – a row per instrument for Go Kurosawa, "Mixed By" and "Produced By" as rows of their own, no "Played By". Before, the instruments were not recognized and the line gave "Played By [Are]". Also "played by X", "All instruments played by X", "All of the above performed by X"; in one line "Electric guitar, drums and piano are played by X" and "X plays guitar, bass and drums". Words that are no instrument MusicBrainz knows ("Chaims", "Buddha machine") are listed as not recognized; one row per instrument for now (several in one row: E4).
+
+#### Fixed
+
+- **"are played by X"** gave "Played By [Are]": words like "are", "is", "were" before a verb are no part of the role any more (T050).
+
+### Import 3.34.18
+
+#### Added
+
+- **A place after "in"** (collected item 137b; maintainer: "gibt es eine nachhaltige möglichkeit folgendes zu interpretieren", the credits of Go Kurosawa's "soft shakes" on Bandcamp): "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam – before, the line was not recognized. A name with a word of places (studio, hall, church, club, theatre … – a new word list, T051) and a word in capitals besides it is a place, not an area; also with "the" ("Recorded in the Church of St. Mary, Berlin"). "Recorded in Berlin" stays the area, "Recorded in a church" stays not recognized.
+- **The year before the month** (collected item 137c; new date rule D024): "2024 January - July", "2024 January–July", "2024 Jan - Jul" are 2024-01 – 2024-07, "2024 March" is 2024-03, "2024 March 3–5" and "2024 March 30 – April 2" are periods (before: the year only). "© 2019 March Records" keeps the year only. Such a date right after the area of a place no longer takes the area with it ("Mixed at Studio Sol, Marseille 2023 March": Marseille).
+
+#### Fixed
+
+- **Text from cover art (beta) stays in front** (collected item 138; maintainer: "ja bitte"): a click into the dashboard, the log or "Mapping rules" (as a window) hid the window behind them; it now stays in front while it is open.
 
 ## 2026-10-28
 

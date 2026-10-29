@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.34.17, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.34.22, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,70 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.34.22 · 2026-10-29
+
+Text from cover art (beta): the image and the place of each row's line (collected item 130c).
+
+- **New:** `OCR_CROP_W` 640, `OCR_CROP_H` 160, `ocrLineKey(t)` (the line in small letters, spaces joined), **`ocrCrop(canvas, box)`** (the line with a margin as a JPEG `data:` address, '' if it cannot be: try/catch), **`ocrLineOrigins(text)`** (every line of the parts as checked → `[{ what: ocrTypes(img), crop, text }]`, its place by `ocrLineFor` on `pt.lines` of 3.34.12).
+- **`ocrImport`:** `S.ocrLines = ocrLineOrigins(text)` before the window closes (not for a supplement); in memory only.
+- **Rows:** new **`coverFromHtml(row)`** in `roleCell` (people and companies) – while `S.source` is TEXT and `S.textInput.text` is the text of `S.ocrLines`: the images of the row's lines (`row.srcRefs[].line`), "From the cover art · …" (`cover.from`), ⓘ (`data-act="cover-crop"`, `aria-expanded`) for the crops; `S.cropOpen` (row ids with their crops shown), action `cover-crop`.
+- **Texts:** new `cover.from`, `cover.cropTitle` (English only). **CSS:** `.dci-coverfrom`, `.dci-coverfrom-crops`.
+- **Header / files:** `@version 3.34.22`, `?v=3.34.22`, both files' `version`.
+- **Tests:** `t_coverart.py` – new case `ocrorigin`.
+
+## Import 3.34.21 · 2026-10-29
+
+Mapping rules: wording rules and questions of your own – "＋ New rule" (collected item 121b).
+
+- **Stored:** in your changes (`dci-mapping-changes`) as `rules[id] = { set: all fields, was: {}, add: 'wording' | 'question' }`; ids `OWN_DATA_ID` (W901 …, Q901 …; `nextOwnDataId(kind)`); new `OWN_DATA_KEYS`, `isOwnDataId(id)`, `ownDataKind(id, changes)` (also the last answer of `ruleKindOf`).
+- **`effectiveRaw`:** the rules of your own (`ownDataKind`) go before the built-in ones of `WORDING_RULES` / `QUESTION_RULES`, in the order of their ids; **`applyMappingChanges`:** the three arrays of W and Q in the order of the effective register (the objects of built-in rules kept, the rules of your own come and go).
+- **Checks:** `checkRuleSet(id, set, kind = ruleKindOf(id))`; new `checkOwnRule(id, kind, set)` (all fields: a wording rule its words – the credit may be empty –, a question its word and instruments); `putRuleChange(…, add)` keeps a rule of your own whole.
+- **Window:** `sect(…, extra)` – **"＋ New rule"** (`data-redit-new="wording" | "question"`, `openNewRule(kind)`: `S.ruleEdit = { id, draft, error, add }`) in the headings; the form of a rule not saved yet below its table (`data-rnew`); `noteOf(r)` ("your rule"); `ruleEditHtml`, `dataRuleEditHtml` (legend `mapping.ownTitle`, `mapping.ownHint`), `saveRuleEdit` (a rule of your own through `checkOwnRule`), `ruleEditActions` and `changesHtml` ("✕ delete this rule", "your rule" with its fields), `editToolsHtml` (tag "yours", `.dci-own`), `resetMappingChange` (asks `mapping.deleteOwnAsk`).
+- **Import:** `takeRule(id, set, was, add)` – a rule of your own with `add` (its id must fit its kind) through `checkOwnRule`; from a whole register the W9xx / Q9xx of its wording rules and questions; `planImport` passes `add`; the preview takes the fields of a rule only the import has.
+- **Rows:** `isKnownRole` – a word a question asks about is a role (texts: "Key Man – keys"); `makeRow` – no "miscellaneous support" for a word a question asks about (the row stays an instrument and asks).
+- **Texts:** new `mapping.newRule`, `mapping.newWordingTitle`, `mapping.newQuestionTitle`, `mapping.ownTitle`, `mapping.ownHint`, `mapping.ownTag`, `mapping.ownNote`, `mapping.ownChange`, `mapping.deleteOwn`, `mapping.deleteOwnAsk` (English only). **CSS:** `.dci-changed.dci-own`, `.dci-mchg-own`, `h3 .dci-rnew-btn`.
+- **Header / files:** `@version 3.34.21`, `?v=3.34.21`, both files' `version`.
+- **Tests:** `t_rules_window.py` – new case `wqnew`; `register_golden.json` written anew (the headings with "＋ New rule").
+
+## Import 3.34.20 · 2026-10-29
+
+Texts: words that are no instrument of MusicBrainz, "Voice", more spellings (collected item 137d).
+
+- **`TEXT.parse`:** a word of a list of instruments (S051: blocks, one line, "X plays …") that is no known instrument is a credit with `guess: true` (before: listed as not recognized); the parts of a one-line list in their order (`playList` gives `parts`).
+- **`groupCredits`:** `entry.guess`; **`makeRow`** – new option `guess` (no "miscellaneous support" for it); after the row of a text or Bandcamp credit: `askVoice(row)` and, for a guess, `guessInstrument(row)`.
+- **New `editDistance(a, b, max)`, `similarInstruments(word, most = 5)`** (the children of the instrument root of `idx()`, names and aliases: 2 letters off from 6 letters, 1 from 4; a word of a name so, + 0.5; not "other instruments"), **`guessInstrument(row)`** (`row.instrGuess = { word, options, other }`; none like it: `primaryText` "other instruments"; without that in MusicBrainz and without options: `makeMiscRow` as before), **`instrGuessHtml(row)`** (`.dci-instr-guess`, `data-act="instr-pick"` – `pickInstrument` as for Q001), the compact line asks too (`cl.instrGuess`).
+- **`roleCreditForInner`:** a guess – the word for "other instruments", none for a similar instrument; `askVoice` – none until answered or for plain vocals.
+- **Q011** (mapping file, `TYPE_QUESTIONS`: rule R015, `flag` askVoice, new `keep` – `blankForQuestion` keeps the type; options with the new `plain` – `pickType` clears the voice), **`askVoice(row)`** (R015, base "voice" without details, text or Bandcamp; plain vocals until answered); **`voiceCreditHtml(row)`** in `.dci-voice-slot`, **`updateVoiceCredit(row)`** after the voice or the role credit typed; action `voice-credit` (role credit "voice", touched).
+- **T001:** bongo → bongos, woodblock(s), wood blocks → wood block.
+- **Texts:** new `instrGuess.ask`, `instrGuess.chosen`, `instrGuess.other`, `instrGuess.none`, `cl.instrGuess`, `voiceCredit.from`, `voiceCredit.use`, `typeAsk.askVoice`, `typeAsk.pendingVoice` (English only).
+- **Header / files:** `@version 3.34.20`, `?v=3.34.20`, both files' `version`.
+- **Tests:** `t_text_basics.py` – new case `instrguess` (the harness gets chimes, wind chimes, tubular bells "orchestral chimes", other instruments, other vocals), `playedby` – nothing not recognized now; `t_textcorpus.py` – a guess marked "asked: no known instrument" (1 line changed); `register_golden.json` written anew (T001, Q011).
+
+## Import 3.34.19 · 2026-10-29
+
+Texts: instruments and the name they are played by (collected item 137a, new rule S051; word lists T049, T050).
+
+- **New word lists** (mapping file, with register entries): **T049 `TEXT_PLAY_VERBS`** (played, performed, sung, plays, performs, sings, sang) and **T050 `TEXT_AUX_WORDS`** (are, is, were, was, been, all, both).
+- **`TEXT.parse`, new helpers:** `playable(x)` (a known role the register maps to instrument or vocal only), `maybePlayable(x)` (up to three words of letters, no role of another kind), `playList(side)` (`{ known, unknown }` – at least one instrument, no fewer than unknown words), `chainOf(t)` (the verbs before "by" at the end of a phrase, one of T049, the words of T050 before them left out → `{ before, roles }`, the roles of the other verbs via `roleOf`), `playedList(t)`, `PLAYS_LIST` ("X plays …").
+- **One line:** the "… by …" branch of `readClause` reads `playedList` of the phrase as written (before `TEXT_CONTRIBUTION`; not with titles, not with `TEXT_WHAT_WORDS`): each instrument and each other role for each name, the unknown words as unknown parts. New clause check before "Name – roles": `PLAYS_LIST` with a name in capitals and `playList`.
+- **Blocks:** the line loop is now `readLine(raw)` (the former body; `continue` → `return`) with `startLine(raw)` (line0, n0, part0); a line of `blockLine` (only instruments or unknown short words; no digit, ":", brackets, dash, "by", "at", "in" …) is held in `roleBlock`, empty lines with it; `readBlock(held, linkRaw)` with `linkOf` ("(all instruments | all of the above …) (are …) played, mixed … by X") – from the first line with an instrument (the lines before it through `readLine`), at least as many instruments as unknown words: each instrument a credit of each name (its own line as `line`), a line with unknown words listed (whole, or "→ ? “…”"), the other roles on the linking line; any other line (and the end) reads the held lines with `readLine` first (`flushBlock`).
+- **`byRole`:** `AUX_BEFORE_VERB` – the words of T050 before a verb are left out ("are played" → "Played By", before "Played By [Are]").
+- **Register:** new rule **S051**.
+- **Header / files:** `@version 3.34.19`, `?v=3.34.19`, both files' `version`.
+- **Tests:** `t_text_basics.py` – new case `playedby` (the text of Go Kurosawa, `GK_TEXT`, with instruments of MusicBrainz `GK_INSTRUMENTS`; in one line); `text_corpus.json` – 6 lines; `register_golden.json` written anew (S051, T049, T050).
+
+## Import 3.34.18 · 2026-10-29
+
+Texts: a place after "in", the year before the month (collected items 137b, 137c); the window "Text from cover art" stays in front (138).
+
+- **New `ocrKeepOnTop()`:** `#dci-ocr`, while open, gets `++topZ` (its larger view `#dci-ocr-peek` above it); called by `bringToFront(kind)` for every kind but `ocr` (dashboard, log, rules) and by `renderRules` when the rules open as a window of their own.
+- **New word list T051 `TEXT_PLACE_WORDS`** (mapping file; `(?<![\p{L}])(?:studios?|hall|church|chapel|cathedral|abbey|basilica|club|theat(?:re|er)|auditorium|arena|ballroom|caf[eé]|venue|tavern|pub|lounge)(?![\p{L}])`, flags `iu`), with its register entry.
+- **`TEXT.parse`:** new `placeIn(verb, text)` – the first part of `text` (before a comma; a date of T047 cut off, "the" left out) has a word of T051 and a word in capitals besides it → `place(verb, placeOf(text))` ("Recorded At" with the area). Tried before `inArea` in the three places an "in …" is read (`inL` "Recorded in X by Y", `inR` "Recorded by Y in X", the clause "Recorded in X" alone); new: the clause "Recorded in the X" (only as a place). `place()` returns whether it added the place.
+- **T047 `PLACE_DATE_TAIL`** (mapping file): a second form – a date with its year first right after the area, without a preposition (`\s+(?=\d{4},?\s+<month>\b)`); its register note says so.
+- **New date rule D024** (`DATE_RULES`, `DATE_MATCHERS`): year, month, day – month, day; year, month, day – day; year, month – month (also "and", "&", "/") – these before D017; one month after its year after D008 – the year only when a word in capitals follows on the same line (not after a dot) or for "may" written small.
+- **Header / files:** `@version 3.34.18`, `?v=3.34.18`, both files' `version`.
+- **Tests:** `t_coverart.py` ocrwindow – part D (in front after a click into the dashboard, the rules as a window – `dci-rules-place` – and a click into them and into the log; z-index the highest), ocrauto – the window closed before it is opened again from the menu of the dashboard (it is in front of it now); `t_text_places.py` – new case `recordedin`; `text_corpus.json` – 7 lines (places after "in", D024 after an area); `register_golden.json` written anew (D024, T047, T051).
 
 ## Import 3.34.17 · 2026-10-28
 

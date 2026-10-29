@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -377,6 +377,201 @@ console.log(JSON.stringify(out));
         e = pg.evaluate(ENTRY)
         print('B) Eintrag !K7:', e)
         results.append(e is not None and e[0] == 'Distributed By' and 'distributed' in e[1] and e[2] == 'release' and e[3] != 'linked' and e[4] >= 1)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+GK_TEXT = """Electric guitar
+Acoustic guitar
+Electric bass
+Drums
+Piano
+Organ
+Keyboards
+Trumpet
+Clarinet
+Marimba
+Shaker
+Tambourine
+Bongo
+Melodica
+Chaims
+Whistle
+Woodblock
+Cowbell
+Buddha machine
+Voice
+
+are played, mixed and produced by Go Kurosawa
+
+Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July"""
+# instruments of MusicBrainz for the text of Go Kurosawa (3.34.19, 3.34.20)
+GK_INSTRUMENTS = [(9110, 'organ'), (9111, 'keyboard'), (9140, 'trumpet'), (9112, 'clarinet'), (9113, 'marimba'), (9114, 'shaker'), (9115, 'tambourine'),
+                  (9116, 'bongos'), (9117, 'melodica'), (9118, 'whistle'), (9119, 'wood block'), (9120, 'cowbell'), (9121, 'chimes'), (9122, 'wind chimes'),
+                  (9123, 'tubular bells')]
+GK_ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+  kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1], head: g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(),
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const i = tr.querySelector('[data-f=primary]');
+    const c = tr.querySelector('[data-f=role-credit]');
+    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', i ? (i.value || (i.options && i.options[i.selectedIndex] || {}).text || '') : '', c ? c.value : '-',
+      (tr.querySelector('.dci-type-ask') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim()]; }) }])))()"""
+
+
+def case_playedby():
+    """Credits Importer 3.34.19: instruments and the name they are played by (collected item 137a, S051; T049, T050; the text of
+    Go Kurosawa's "soft shakes" on Bandcamp).
+    A) The text pasted – twenty lines with an instrument each, an empty line, "are played, mixed and produced by Go Kurosawa":
+       Go Kurosawa has a row per instrument MusicBrainz knows (Electric guitar … Voice), "Mixed By" (mix) and "Produced By"
+       (producer) – no "Played By" (before: "Played By [Are]", mixed, produced and the twenty lines not recognized); [3.34.20]
+       also the words MusicBrainz does not know ("Chaims", "Buddha machine": they ask – instrguess), nothing not recognized;
+       the place of "Recorded in …".
+    B) In one line: "Electric guitar, acoustic guitar and piano are played by Jane Roe" – three rows; "Bass Man plays bass and
+       drums" – two rows; "are mixed by John Doe" alone – "Mixed By" (not "[Are]")."""
+    for i, n in GK_INSTRUMENTS:
+        H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+
+        def load(text):
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', text)
+            n = pg.evaluate("[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length")
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length > {n}", 90)
+            pg.wait_for_timeout(1200)
+            return pg.evaluate(GK_ROWS), pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+
+        g, unrec = load(GK_TEXT)
+        for k, v in g.items():
+            print('   ', k, v['kind'], v['rows'])
+        gk = [r[0] for r in (g.get('Go Kurosawa') or {'rows': []})['rows']]
+        types = {r[0]: r[1] for r in (g.get('Go Kurosawa') or {'rows': []})['rows']}
+        place = g.get('Guruguru Brain studio') or {'kind': '', 'rows': []}
+        print('A) Go Kurosawa:', gk, '| nicht erkannt:', unrec, '| Ort:', place['kind'], place['rows'])
+        results.append(all(x in gk for x in ['Electric guitar', 'Acoustic guitar', 'Drums', 'Piano', 'Organ', 'Trumpet', 'Clarinet', 'Marimba', 'Shaker',
+                                              'Tambourine', 'Melodica', 'Whistle', 'Cowbell', 'Voice', 'Mixed By', 'Produced By'])
+                       and not any(x.startswith('Played By') for x in gk) and types.get('Mixed By') == 'mix' and types.get('Produced By') == 'producer'
+                       and types.get('Piano') == 'instrument' and types.get('Voice') == 'vocal'
+                       and 'Chaims' in gk and 'Buddha machine' in gk and not unrec
+                       and place['kind'] == 'place' and [r[1] for r in place['rows']] == ['recorded at'])
+        g2, unrec2 = load('Electric guitar, acoustic guitar and piano are played by Jane Roe\nBass Man plays bass and drums\nare mixed by John Doe')
+        rows = lambda n: [r[0] for r in (g2.get(n) or {'rows': []})['rows']]
+        print('B) Jane Roe:', rows('Jane Roe'), '| Bass Man:', rows('Bass Man'), '| John Doe:', rows('John Doe'), '| nicht erkannt:', unrec2)
+        results.append(rows('Jane Roe') == ['Electric guitar', 'acoustic guitar', 'piano'] and rows('Bass Man') == ['bass', 'drums']
+                       and rows('John Doe') == ['Mixed By'] and not unrec2)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_instrguess():
+    """Credits Importer 3.34.20: instruments MusicBrainz names otherwise, "Voice", words that are no instrument (collected item
+    137d; T001, Q011; the text of Go Kurosawa's "soft shakes").
+    A) Spellings (T001): Bongo → bongos, Woodblock → wood block, Keyboards → keyboard, Electric bass → electric bass guitar,
+       Drums → drums (drum set) – each credited as written (Woodblock not: only the space differs).
+    B) "Chaims" (no instrument of MusicBrainz): an instrument row asking "did you mean: chimes · wind chimes · tubular bells ·
+       other instruments “Chaims”" (tubular bells by its other name "orchestral chimes"), nothing chosen – incomplete; in the
+       compact line too. "chimes" chosen: no role credit; "other instruments …": credited "Chaims". "Buddha machine" (none
+       like it): other instruments credited "Buddha machine" at once. Nothing is listed as not recognized.
+    C) "Voice" asks (Q011): vocals · other vocals “voice” · lead vocals “voice”, until then vocals without role credit;
+       "lead vocals “voice”" → lead vocals credited "voice"; "vocals" → no role credit; a voice typed by hand (lead vocals)
+       then offers "use “voice” as role credit", which sets it."""
+    for i, n in GK_INSTRUMENTS:
+        H.attr(i, n, 14, 14, aliases=['orchestral chimes'] if n == 'tubular bells' else None)
+    H.attr(9124, 'other instruments', 14, 14)
+    H.attr(9125, 'other vocals', 3, 3)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', GK_TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+
+        def rows():
+            g = pg.evaluate(GK_ROWS)
+            return {r[0]: r for r in (g.get('Go Kurosawa') or {'rows': []})['rows']}
+
+        r = rows()
+        for k, v in r.items():
+            print('   ', v)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+        a = [r.get(k, [k, '', '', ''])[1:4] for k in ('Bongo', 'Woodblock', 'Keyboards', 'Electric bass', 'Drums')]
+        print('A) Schreibweisen:', a)
+        results.append(a == [['instrument', 'bongos', 'bongo'], ['instrument', 'wood block', ''], ['instrument', 'keyboard', 'keyboards'],
+                             ['instrument', 'electric bass guitar', 'electric bass'], ['instrument', 'drums (drum set)', 'drums']])
+        # B) Chaims and Buddha machine
+        CH = """(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === %s); const q = tr && tr.querySelector('.dci-instr-guess');
+          return tr ? [q ? q.textContent.replace(/\\s+/g, ' ').trim() : '', q ? [...q.querySelectorAll('[data-act=instr-pick]')].map(b => [b.dataset.instr, b.getAttribute('aria-pressed')]) : [], tr.dataset.row] : null; })()"""
+        ch = pg.evaluate(CH % '"Chaims"')
+        bm = pg.evaluate(CH % '"Buddha machine"')
+        issue = pg.evaluate("(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === 'Chaims'); return tr ? tr.textContent.includes('unknown') : null; })()")
+        print('B) Chaims:', ch, '| unbekannt markiert:', issue, '| Buddha machine:', r.get('Buddha machine'), bm, '| nicht erkannt:', unrec)
+        ok_b1 = bool(ch) and ch[0].startswith('“Chaims” is no instrument of MusicBrainz – did you mean:') \
+            and [x[0] for x in ch[1]] == ['chimes', 'wind chimes', 'tubular bells', 'other instruments'] and all(x[1] == 'false' for x in ch[1]) \
+            and r.get('Buddha machine', [''] * 4)[1:4] == ['instrument', 'other instruments', 'Buddha machine'] and 'none is like it' in (bm or [''])[0] and not unrec
+        # the compact line asks too
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(300)
+        cl = pg.evaluate("(() => { const tr = document.querySelector('tr.dci-row[data-row=\"%s\"] .dci-cline'); return tr ? tr.textContent.replace(/\\s+/g, ' ').trim() : ''; })()" % ch[2]) if ch else ''
+        print('   kompakte Zeile:', cl)
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(300)
+        sec = f'tr.dci-row[data-row="{ch[2]}"]' if ch else 'tr.none'
+        pg.click(f'{sec} .dci-instr-guess [data-act=instr-pick][data-instr="chimes"]')
+        pg.wait_for_timeout(300)
+        r1 = rows().get('Chaims')
+        pg.click(f'{sec} .dci-instr-guess [data-act=instr-pick][data-instr="other instruments"]')
+        pg.wait_for_timeout(300)
+        r2 = rows().get('Chaims')
+        print('   chimes gewählt:', r1, '| other instruments:', r2)
+        ok_b = ok_b1 and 'did you mean' in cl and r1[1:4] == ['instrument', 'chimes', ''] and r2[1:4] == ['instrument', 'other instruments', 'Chaims']
+        results.append(ok_b)
+        # C) Voice
+        VO = """(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === 'Voice'); const q = tr && tr.querySelector('.dci-type-ask'); const v = tr && tr.querySelector('.dci-voice-credit');
+          return tr ? [q ? q.textContent.replace(/\\s+/g, ' ').trim() : '', tr.dataset.row, v ? v.textContent.replace(/\\s+/g, ' ').trim() : ''] : null; })()"""
+        v0 = pg.evaluate(VO)
+        c0 = rows().get('Voice')
+        vsec = f'tr.dci-row[data-row="{v0[1]}"]' if v0 else 'tr.none'
+        pg.click(f'{vsec} .dci-type-ask [data-act=type-pick][data-opt="2"]')
+        pg.wait_for_timeout(300)
+        c1 = rows().get('Voice')
+        pg.click(f'{vsec} .dci-type-ask [data-act=type-pick][data-opt="0"]')
+        pg.wait_for_timeout(300)
+        c2 = rows().get('Voice')
+        v2 = pg.evaluate(VO)
+        # a voice by hand: the field of the voice
+        pg.fill(f'{vsec} [data-f=primary]', 'lead vocals')
+        pg.press(f'{vsec} [data-f=primary]', 'Tab')
+        pg.wait_for_timeout(400)
+        v3 = pg.evaluate(VO)
+        btn = pg.locator(f'{vsec} [data-act=voice-credit]')
+        has_btn = btn.count() > 0
+        if has_btn:
+            btn.click()
+            pg.wait_for_timeout(300)
+        c4 = rows().get('Voice')
+        print('C) Frage:', v0[0] if v0 else None, '| vorher:', c0, '| lead vocals “voice”:', c1, '| vocals:', c2, v2, '| von Hand:', v3, has_btn, '| danach:', c4)
+        results.append(bool(v0) and 'other vocals “voice”' in v0[0] and 'lead vocals “voice”' in v0[0] and c0[1:4] == ['vocal', '', '']
+                       and c1[1:4] == ['vocal', 'lead vocals', 'voice'] and c2[1:4] == ['vocal', '', ''] and v2[2] == ''
+                       and 'use “voice” as role credit' in v3[2] and c4[1:4] == ['vocal', 'lead vocals', 'voice'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

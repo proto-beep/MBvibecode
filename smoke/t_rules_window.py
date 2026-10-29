@@ -1,6 +1,6 @@
 """The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎ at built-in rules, export and import (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rulesname, rulesdock, rowrules – each the former smoke/t_<case>.py, unchanged –, quickswitch, [3.33.1] ruleedit, [3.34.4] wqedit, [3.33.1] mappingio, mappingconflict; `python3 t_rules_window.py <case> …` runs only those."""
+Cases: rulesname, rulesdock, rowrules – each the former smoke/t_<case>.py, unchanged –, quickswitch, [3.33.1] ruleedit, [3.34.4] wqedit, [3.34.21] wqnew, [3.33.1] mappingio, mappingconflict; `python3 t_rules_window.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -609,6 +609,128 @@ def case_wqedit():
         f1 = [pg.evaluate("localStorage.getItem('dci-mapping-changes')"), pg.evaluate(TEST, 'Bass [Stand-Up]'), pg.evaluate(ASK)]
         print('F) ↺ alle:', f1[0], '|', f1[1][:100], '|', f1[2])
         results.append(f1[0] is None and 'W001' not in f1[1] and f1[2] == ['electric guitar', 'acoustic guitar'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_wqnew():
+    """Credits Importer 3.34.21: wording rules and questions of your own – "＋ New rule" (collected item 121b; maintainer: "so wie
+    du schreibst").
+    A) "＋ New rule" at the wording rules: an empty form (a role credit as text); "fretless bass" / "bass fretless" with the
+       credit "fretless bass" saved as W901 – the table has it first, marked "yours" ("your rule" as its note); "Bass
+       [Fretless]" in the test field gets W901 and that credit; stored with your changes as { set, was: {}, add: wording }.
+    B) "＋ New rule" at the questions: without instruments it is not saved (an error); "keys", credit "keys", "keyboard",
+       "synthesizer", "piano" saved as Q901 – a pasted text "Key Man – keys" asks "keyboard · synthesizer · piano" (Q901;
+       "keys" is no instrument of MusicBrainz: the row stays an instrument and asks); "piano" chosen – credited "keys".
+    C) "Your changes" names both as "your rule"; the export of your changes holds W901 and Q901 with "add", the whole register
+       has W901 first among the wording rules.
+    D) Import (pasted): Q902 (a question of your own) is new in the preview and taken over; W903 with "add": "question" is
+       skipped; a whole register with a wording rule W904 of its own takes it over.
+    E) W901 deleted (asked first): gone from the table and the stored changes; "Bass [Fretless]" without it."""
+    import json
+    H.attr(9111, 'keyboard', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        asked = []
+        pg.on('dialog', lambda d: (asked.append(d.message), d.accept()))
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        open_rules(pg)
+        # A) a wording rule of your own
+        pg.click('#dci-rules [data-redit-new=wording]')
+        pg.wait_for_timeout(200)
+        a0 = pg.evaluate("Object.fromEntries([...document.querySelectorAll('#dci-rules [data-rnew=wording] [data-redit-f]')].map(f => [f.dataset.reditF, f.value]))")
+        pg.fill('#dci-rules [data-rnew=wording] [data-redit-f=phrases]', 'Fretless Bass\nbass fretless')
+        pg.fill('#dci-rules [data-rnew=wording] [data-redit-f=credit]', 'fretless bass')
+        pg.click('#dci-rules [data-rnew=wording] [data-redit-save]')
+        pg.wait_for_timeout(600)
+        a1 = pg.evaluate("""(() => { const w = document.getElementById('dci-rules'); const rows = [...w.querySelectorAll('[data-rsect=wording] tbody tr[data-rid]')];
+          return [rows.map(r => r.dataset.rid)[0], (w.querySelector('[data-rsect=wording] tr[data-rid=W901] .dci-changed') || {}).textContent, (w.querySelector('[data-rsect=wording] tr[data-rid=W901]') || {}).innerText,
+            JSON.parse(localStorage.getItem('dci-mapping-changes')).rules.W901]; })()""")
+        t1 = pg.evaluate(TEST, 'Bass [Fretless]')
+        print('A) Formular:', a0, '| Tabelle:', a1, '| Test:', t1[:160])
+        results.append(a0 == {'phrases': '', 'creditMode': 'text', 'credit': ''} and a1[0] == 'W901' and a1[1] == 'yours' and 'your rule' in (a1[2] or '')
+                       and a1[3] == {'set': {'phrases': ['fretless bass', 'bass fretless'], 'credit': 'fretless bass'}, 'was': {}, 'add': 'wording'}
+                       and 'W901' in t1 and 'Role credit fretless bass' in t1)
+        # B) a question of your own
+        pg.click('#dci-rules [data-redit-new=question]')
+        pg.wait_for_timeout(200)
+        pg.fill('#dci-rules [data-rnew=question] [data-redit-f=base]', 'keys')
+        pg.fill('#dci-rules [data-rnew=question] [data-redit-f=credit]', 'keys')
+        pg.click('#dci-rules [data-rnew=question] [data-redit-save]')
+        pg.wait_for_timeout(300)
+        b0 = pg.evaluate("(document.querySelector('#dci-rules [data-rnew=question] .dci-redit-err') || {}).textContent || ''")
+        pg.fill('#dci-rules [data-rnew=question] [data-redit-f=options]', 'keyboard\nsynthesizer\npiano')
+        pg.click('#dci-rules [data-rnew=question] [data-redit-save]')
+        pg.wait_for_timeout(600)
+        b1 = pg.evaluate("JSON.parse(localStorage.getItem('dci-mapping-changes')).rules.Q901")
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Key Man – keys')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1000)
+        ASK = "[...document.querySelectorAll('.dci-bass-ask[data-question=Q901] [data-act=instr-pick]')].map(x => x.dataset.instr)"
+        b2 = pg.evaluate(ASK)
+        if b2:
+            pg.locator('.dci-bass-ask[data-question=Q901] [data-act=instr-pick][data-instr=piano]').first.evaluate('b => b.click()')
+            pg.wait_for_timeout(400)
+        b3 = pg.evaluate("""(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === 'keys');
+          return tr ? [(tr.querySelector('[data-f=type]').selectedOptions[0] || {}).text, tr.querySelector('[data-f=primary]').value, tr.querySelector('[data-f=role-credit]').value] : null; })()""")
+        print('B) ohne Instrumente:', b0, '| gespeichert:', b1, '| Frage:', b2, '| piano:', b3)
+        results.append(b0.startswith('Q901: the field “options”') and b1 == {'set': {'base': 'keys', 'credit': 'keys', 'options': ['keyboard', 'synthesizer', 'piano']}, 'was': {}, 'add': 'question'}
+                       and b2 == ['keyboard', 'synthesizer', 'piano'] and b3 == ['instrument', 'piano', 'keys'])
+        # C) your changes, export
+        open_rules(pg) if not pg.locator('#dci-rules [data-rsect=roles]').count() else None
+        c0 = pg.evaluate("[...document.querySelectorAll('#dci-rules [data-mchg]')].map(li => [li.dataset.mchg, li.innerText.replace(/\\s+/g, ' ').trim()])")
+        pg.select_option('#dci-rules [data-mio=what]', 'changes')
+        pg.wait_for_timeout(100)
+        with pg.expect_download() as dl:
+            pg.click('#dci-rules [data-mio-save]')
+        ch = json.loads(open(dl.value.path(), encoding='utf-8').read())
+        pg.select_option('#dci-rules [data-mio=what]', 'register')
+        pg.wait_for_timeout(100)
+        with pg.expect_download() as dl2:
+            pg.click('#dci-rules [data-mio-save]')
+        reg = json.loads(open(dl2.value.path(), encoding='utf-8').read())
+        print('C) Änderungen:', c0, '| Export:', {k: v.get('add') for k, v in ch['rules'].items()}, '| Register:', [r['id'] for r in reg['WORDING_RULES']][:3], [q['id'] for q in reg['QUESTION_RULES']][:2])
+        results.append(dict(c0).get('W901', '').startswith('W901 your rule') and dict(c0).get('Q901', '').startswith('Q901 your rule')
+                       and {k: v.get('add') for k, v in ch['rules'].items()} == {'W901': 'wording', 'Q901': 'question'}
+                       and [r['id'] for r in reg['WORDING_RULES']][:2] == ['W901', 'W001'] and [q['id'] for q in reg['QUESTION_RULES']][0] == 'Q901')
+        # D) import
+        paste = {'format': 'mb-vibecode-credits-importer-mapping-changes', 'version': 2, 'script': H.VERSION, 'mapping': H.VERSION, 'own': [], 'off': [], 'lists': {},
+                 'rules': {'Q902': {'set': {'base': 'perc', 'credit': 'perc', 'options': ['percussion', 'drums (drum set)']}, 'add': 'question'},
+                           'W903': {'set': {'phrases': ['x y'], 'credit': 'x'}, 'add': 'question'}}}
+        pg.click('#dci-rules .dci-mio-paste > summary')
+        pg.fill('#dci-rules [data-mio=paste]', json.dumps(paste))
+        pg.click('#dci-rules [data-mio-read]')
+        pg.wait_for_timeout(500)
+        d0 = pg.evaluate("Object.fromEntries([...document.querySelectorAll('#dci-rules [data-rf=preview] li')].map(li => [li.dataset.mprev, li.className.replace('dci-mprev-', '')]))")
+        pg.click('#dci-rules [data-mimport-apply]')
+        pg.wait_for_timeout(600)
+        reg['WORDING_RULES'].insert(0, {'id': 'W904', 'phrases': ['piccolo bass'], 'credit': 'piccolo bass', 'note': ''})
+        pg.fill('#dci-rules [data-mio=paste]', json.dumps(reg))
+        pg.click('#dci-rules [data-mio-read]')
+        pg.wait_for_timeout(500)
+        d1 = pg.evaluate("Object.fromEntries([...document.querySelectorAll('#dci-rules [data-rf=preview] li')].map(li => [li.dataset.mprev, li.className.replace('dci-mprev-', '')]))")
+        pg.click('#dci-rules [data-mimport-apply]')
+        pg.wait_for_timeout(600)
+        d2 = pg.evaluate("Object.fromEntries(Object.entries(JSON.parse(localStorage.getItem('dci-mapping-changes')).rules).map(([k, v]) => [k, v.add || '']))")
+        print('D) Vorschau:', d0, '| Register:', d1, '| gespeichert:', d2)
+        results.append(d0 == {'Q902': 'new', 'W903': 'skipped'} and d1 == {'W904': 'new'} and d2 == {'W901': 'wording', 'Q901': 'question', 'Q902': 'question', 'W904': 'wording'})
+        # E) W901 deleted
+        pg.click('#dci-rules [data-mchg=W901] [data-mchg-reset]')
+        pg.wait_for_timeout(600)
+        e0 = [pg.evaluate("!!document.querySelector('#dci-rules [data-rsect=wording] tr[data-rid=W901]')"),
+              'W901' in pg.evaluate("JSON.parse(localStorage.getItem('dci-mapping-changes')).rules"), pg.evaluate(TEST, 'Bass [Fretless]')]
+        print('E) gelöscht:', e0[:2], '| gefragt:', asked[-1:], '| Test:', e0[2][:120])
+        results.append(e0[:2] == [False, False] and asked and 'Really delete your rule W901' in asked[-1] and 'W901' not in e0[2])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
