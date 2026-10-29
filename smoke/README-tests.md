@@ -91,6 +91,13 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     "design and layout", "Artist credit for all roles" empty for a case-only spelling, a text's name linked:
                                 #     credited as written (not when only the case differs)
                                 #   distrib: "Distribution - !K7" and variants (3.17.3, T028): company "Distributed By", label → release distributed
+                                #   playedby: 3.34.19: Go Kurosawa's "soft shakes" – twenty lines of instruments, "are played, mixed and produced
+                                #     by Go Kurosawa": a row per instrument, Mixed By, Produced By, no Played By, "Chaims" not recognized
+                                #     (S051); in one line "… are played by Jane Roe", "Bass Man plays bass and drums"; "are mixed by" (T050)
+                                #   instrguess: 3.34.20: Bongo → bongos, Woodblock → wood block … (T001); "Chaims" asks "did you mean: chimes ·
+                                #     wind chimes · tubular bells · other instruments “Chaims”" (also in the compact line), each choice and its
+                                #     credit; "Buddha machine" other instruments credited at once; "Voice" asks (Q011), "use “voice” as role
+                                #     credit" after a voice typed in
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -127,6 +134,10 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     Marseille" keeps its area; "Muisc and cover art by Jo Vaman" – Music By (S050, the column head of the
                                 #     works matrix says "Read as “Music” (written “Muisc”)"); ⚙ Settings → Texts switches S050 off (stored),
                                 #     the line is not recognized then; ↺ of the tab switches it on
+                                #   recordedin: 3.34.18: the year before the month (D024: "2024 January - July", "2024 Jan - Jul", "2024 March",
+                                #     "2024 March 3–5", "2024 March 30 – April 2"; "© 2019 March Records" the year only); "Recorded in Guruguru
+                                #     Brain studio, Rotterdam, 2024 January - July" – the place (Rotterdam), recorded at (T051), 2024-01 –
+                                #     2024-07 in the pool; "Mixed at Studio Sol, Marseille 2023 March" keeps its area; "Recorded in Berlin" an area
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
                                 #   discnotes: 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
@@ -246,6 +257,9 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     Q002 + "resonator guitar" in the row's question at once, an empty word refused; Q003's choices removed,
                                 #     moved, added (table, stored), a choice without a type refused; export; import skips a field that cannot
                                 #     be changed and a wrong choice, a whole register takes over Q005 turned round; ↺ all
+                                #   wqnew: 3.34.21: "＋ New rule" at the wording rules (W901: "fretless bass" → credit, first in its table, "yours") and at
+                                #     the questions (Q901 "keys": keyboard · synthesizer · piano – a pasted "Key Man – keys" asks); your changes,
+                                #     export (with "add"), import (Q902 new, W903 of the wrong kind skipped, W904 from a whole register), deleted
                                 #   mappingio: 3.33.1: export of the whole register = the mapping file byte for byte (with a change: one line
                                 #     differs), export of my changes (format, versions) and the clipboard; pasted import with a preview (new,
                                 #     list, own rule, switch, skipped: unknown / code / wrong pattern / list, a conflict), "Take over", "Keep
@@ -416,13 +430,16 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     import …" and the reset of Beta
                                 #   ocrmore: 3.34.16: 30 images – 12 shown (12 previews), "Load 12 more", "All shown (24)"; 12 small images
                                 #     beside the frames, then 24; Auto-select with 30 booklet pages – all shown; a PDF of 15 pages – 12
+                                #   ocrorigin: 3.34.22: Back and Tray read and imported – "From the cover art · Back" / "… · Tray" at the rows, ⓘ shows
+                                #     the crop of the line (JPEG, at most 640 × 160) and hides it again; a line changed: no ⓘ; another text: nothing
                                 #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,
                                 #     those set by hand stay; switched on in ⚙ Settings with the window open – ticked at once, and when
                                 #     opened again; 30 booklet pages, loading ahead on: 2 load, 22 wait, 6 not ahead
                                 #   (from 3.34.15 beta_on also switches "Auto-select" on – as before, the images with credits are ticked)
                                 #   ocrwindow: 3.34.14: the window the same size in every step (its foot bar in place, "Next image →" greyed
                                 #     out at the end); the image beside the frames takes the room; smaller at its corner (remembered);
-                                #     moved by its head, opened again at the same place
+                                #     moved by its head, opened again at the same place; [3.34.18] in front after a click into the dashboard,
+                                #     the rules (as a window) and the log
                                 #   ocrtextfit: 3.34.14: "Reads best: text on a plain, even background …" while choosing and beside the
                                 #     frames; a text field as high as its text, growing; many uncertain words – a yellow box names the part
                                 #   (from 3.34.14 the cases drag frames in the pixels of the image: drag_img – the view follows the window)

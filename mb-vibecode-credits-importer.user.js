@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.34.17
+// @version      3.34.22
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.17
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.17
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.34.22
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.34.22
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.17';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.34.22';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -777,6 +777,7 @@
       "cl.noDate": "no date",
       "cl.unmapped": "no MusicBrainz type",
       "cl.instrAsk": "{name}: which instrument?",
+      "cl.instrGuess": "“{word}”: did you mean",
       "cl.typeAsk": "type to choose",
       "cl.pickList": "choose …",
       "cl.dateSugg": "date suggested",
@@ -931,6 +932,8 @@
       "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
       "role.notesTracks": "Tracks {list} from the notes",
       "role.typoRead": "Read as “{read}” (written “{written}”)",
+      "cover.from": "From the cover art · {what}",
+      "cover.cropTitle": "Where this line is in the image (read from the cover art)",
       "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
       "matrix.suggOk": "Keep the suggestion",
       "matrix.suggNo": "Take the suggestion out",
@@ -1536,6 +1539,16 @@
       "mapping.choiceDown": "Down",
       "mapping.choiceDel": "Remove this choice",
       "mapping.choiceAdd": "Add a choice",
+      "mapping.newRule": "New rule",
+      "mapping.newWordingTitle": "A wording rule of your own: words of a role (with its details) and the role credit they get",
+      "mapping.newQuestionTitle": "A question of your own: a word of a role, its role credit and the instruments to choose from",
+      "mapping.ownTitle": "Your rule {id} (stored in this browser with your changes)",
+      "mapping.ownHint": "Your own rule: stored in this browser with your changes and tried before the built-in rules; it goes with your changes when they are exported and imported.",
+      "mapping.ownTag": "yours",
+      "mapping.ownNote": "your rule",
+      "mapping.ownChange": "your rule",
+      "mapping.deleteOwn": "delete this rule",
+      "mapping.deleteOwnAsk": "Really delete your rule {id}?",
       "mapping.editTitle": "✎ Change rule {id} (your change, stored in this browser)",
       "mapping.editRuleTitle": "Change rule {id}",
       "mapping.editListTitle": "Change the entries of {id}",
@@ -1642,6 +1655,12 @@
       "rules.lists": "Tables and word lists",
       "rules.listsHint": "What the register reads with besides the rules: details, words of texts, dates, date groups, “live” in titles, roles in the notes. They cannot be switched off; ✎ changes the entries of T001, T002, T003, T038, T045 and T048 (your changes), the others change with an update of the script.",
       "instrAsk.ask": "Discogs only says “{name}”. Do you know which one it is?",
+      "instrGuess.ask": "“{word}” is no instrument of MusicBrainz – did you mean:",
+      "instrGuess.chosen": "“{word}” is no instrument of MusicBrainz – chosen:",
+      "instrGuess.other": "{other} “{word}”",
+      "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{word}”.",
+      "voiceCredit.from": "From the text:",
+      "voiceCredit.use": "use “{word}” as role credit",
       "src.textLabel": "pasted text",
       "instrAsk.askAny": "The source ({src}) only says “{name}”. Do you know which one it is?",
       "matrix.emptyAny": "No writing credits yet. They appear here once the source names them, or add them with “Add entry manually” and a work-level role such as composer.",
@@ -1947,6 +1966,8 @@
       "typeAsk.askTranslation": "“{role}” in Bandcamp credits: mostly the translation of the liner notes, sometimes of the lyrics – please choose:",
       "typeAsk.askSounds": "“{role}”: a performer, or the instrument effects credited “sounds”? – please choose:",
       "typeAsk.pendingSounds": "Until you choose, the row stays performer.",
+      "typeAsk.askVoice": "“{role}”: plain vocals (MusicBrainz has no role credit for them), or other vocals or lead vocals credited “voice”? – please choose:",
+      "typeAsk.pendingVoice": "Until you choose, the row stays vocals without role credit.",
       "typeAsk.askPoems": "“{role}” alone: the words of the works, poems printed in the booklet or poems read out? – please choose:",
       "typeAsk.askPoemsRelease": "“{role}” on the release: the words, poems read out or poems printed in the booklet? – please choose:",
       "typeAsk.suggested": "suggested",
@@ -2254,13 +2275,26 @@
   const rawQuestionRule = (raw, id) => (raw.QUESTION_RULES || []).find((x) => x.id === id) || null;
   const rawTypeQuestion = (raw, id) => (raw.TYPE_QUESTIONS || []).find((x) => x.id === id) || null;
   const rawDataRule = (raw, id) => rawWordingRule(raw, id) || rawQuestionRule(raw, id) || rawTypeQuestion(raw, id);
+  // [121b] (3.34.21) wording rules and questions of your own ("＋ New rule"; collected item 121b): W901 …, Q901 … – the
+  // built-in rules never take numbers from 900 on. Stored with your changes ({ set, was: {}, add: kind }), tried before the
+  // built-in rules, exported and imported with your changes.
+  const OWN_DATA_ID = /^[WQ]9\d\d$/;
+  const OWN_DATA_KEYS = { wording: 'WORDING_RULES', question: 'QUESTION_RULES' };
+  const isOwnDataId = (id) => OWN_DATA_ID.test(String(id || ''));
+  /** [121b] The kind of a rule of your own, or ''. */
+  const ownDataKind = (id, changes = mappingChanges) => {
+    const c = isOwnDataId(id) && changes.rules[id];
+    return c && OWN_DATA_KEYS[c.add] && id[0] === (c.add === 'wording' ? 'W' : 'Q') ? c.add : '';
+  };
   /** [3.34.4] The kind of a rule of the file: role, company, wording, question (which instrument), typeq (which type) – or ''. */
   function ruleKindOf(id, raw = MAPPING.raw) {
     if (rawRoleRule(raw, id)) return 'role';
     if (rawCompanyRule(raw, id)) return 'company';
     if (rawWordingRule(raw, id)) return 'wording';
     if (rawQuestionRule(raw, id)) return 'question';
-    return rawTypeQuestion(raw, id) ? 'typeq' : '';
+    if (rawTypeQuestion(raw, id)) return 'typeq';
+    // [121b] (3.34.21) a rule of your own
+    return ownDataKind(id);
   }
   const RULE_FIELDS = { role: ROLE_RULE_FIELDS, company: COMPANY_RULE_FIELDS, wording: WORDING_RULE_FIELDS, question: QUESTION_RULE_FIELDS, typeq: TYPE_QUESTION_FIELDS };
   /** A field of a built-in rule as in the file (undefined: the rule has none). */
@@ -2285,8 +2319,15 @@
   /** Your changes applied to a copy of the file's data (as in the file) → the effective register. */
   function effectiveRaw(changes = mappingChanges) {
     const raw = JSON.parse(JSON.stringify(MAPPING.raw));
+    const own = { wording: [], question: [] };
     for (const [id, c] of Object.entries(changes.rules || {})) {
       const set = (c && c.set) || {};
+      // [121b] (3.34.21) a rule of your own: before the built-in ones, in the order of their ids
+      const ok = ownDataKind(id, changes);
+      if (ok) {
+        own[ok].push({ id, ...JSON.parse(JSON.stringify(set)), note: '' });
+        continue;
+      }
       const r = rawRoleRule(raw, id);
       if (r) {
         ROLE_RULE_FIELDS.filter((f) => f in set).forEach((f) => { if (set[f] == null) delete r[f]; else r[f] = set[f]; });
@@ -2309,6 +2350,7 @@
       const d = rawDataRule(raw, id);
       if (d) RULE_FIELDS[ruleKindOf(id, raw)].filter((f) => f in set && set[f] != null).forEach((f) => { d[f] = JSON.parse(JSON.stringify(set[f])); });
     }
+    Object.entries(own).forEach(([kind, list]) => raw[OWN_DATA_KEYS[kind]].unshift(...list.sort((a, b) => a.id.localeCompare(b.id))));
     for (const [tid, c] of Object.entries(changes.lists || {})) {
       const L = EDITABLE_LISTS[tid];
       if (!L || !c) continue;
@@ -2346,11 +2388,18 @@
       pair[0] = e[0];
       refill(pair[1], e[1]);
     });
-    // [3.34.4] the wording rules and the questions, rule by rule
-    ['WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].forEach((key) => MAP[key].forEach((r) => {
-      const e = eff[key].find((x) => x.id === r.id);
-      if (e) refill(r, e);
-    }));
+    // [3.34.4] the wording rules and the questions, rule by rule; [121b] (3.34.21) in the order of the effective register, with
+    // the rules of your own (the objects of the built-in rules stay the same)
+    ['WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].forEach((key) => {
+      const now = new Map(MAP[key].map((r) => [r.id, r]));
+      const next = eff[key].map((e) => {
+        const r = now.get(e.id);
+        if (!r) return e;
+        refill(r, e);
+        return r;
+      });
+      MAP[key].splice(0, MAP[key].length, ...next);
+    });
     for (const L of Object.values(EDITABLE_LISTS)) {
       const now = MAP[L.key];
       const to = eff[L.key];
@@ -2603,6 +2652,9 @@
     // [3.32.5] collected item 115 (maintainer: "muisc hat einen schreibfehler", "Wir probieren es mal mit Tippefehler allgemein
     // erkennen")
     { id: 'S050', where: 'TEXT.parse (typoMode, readRole), fixRoleTypo, roleVocab, roleCell', note: 'Typos in role words: a part of a text that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word (T048) – a letter swapped, missing, too many or wrong – read as that word, when the role is known then ("Muisc and cover art by X" → Music By, cover art); only role words, never names; the row says "Read as “Music” (written “Muisc”)". All texts (pasted, Bandcamp, Discogs notes); switch also in ⚙ Settings → Texts' },
+    // [3.34.19] collected item 137a (maintainer: "gibt es eine nachhaltige möglichkeit folgendes zu interpretieren", Go Kurosawa
+    // "soft shakes" on Bandcamp; "ja passt", "ja okay")
+    { id: 'S051', where: 'TEXT.parse (roleBlock, readBlock, linkOf, chainOf, playedList, PLAYS_LIST)', note: 'Instruments and the name they are played by: lines that are only instruments or voices (one or several each, empty lines between them), then a line "are played, mixed and produced by X" (also "played by X", "All instruments played by X"): each instrument a row of X, the other verbs roles of their own ("Mixed By", "Produced By"), "played" none (T049). In one line too: "Electric guitar, drums and piano are played by X", "X plays guitar, bass and drums". Lines without an instrument before the first one are read as usual; words that are no instrument MusicBrainz knows are listed as not recognized. Words like "are", "is", "were" before a verb are never a part of the role (T050: "are played by X" is "Played By", before "Played By [Are]")' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes")' },
   ];
@@ -2889,10 +2941,16 @@
       show: () => ({ pairs: [['heading of a block of publishers', PUBLISHER_HEAD], ...RIGHTS_SOCIETIES.map(([a, what]) => [a, what])] }) },
     { id: 'T046', where: 'apartNames, digitWords, sameCompanyName, suggestByName', note: 'All sources (3.31.0): a company\'s name written together ("FlizmoMusic", "4WordSeaMusic", "Fourwordseamusic") – searched in MusicBrainz written apart too and with a number as a word ("Flizmo Music", "4 Word Sea Music", "Four Word Sea Music", "Fourwordsea Music"); compared so too (S043), offered as similar',
       show: () => ({ pairs: [['numbers as words', NUMBER_WORDS.map((w, k) => `${k} ${w}`).join(' · ')], ['the kind of company at the end', COMPANY_KIND_END]] }) },
-    { id: 'T047', where: 'PLACE_DATE_TAIL, placeOf', note: 'Texts (3.32.5): a date right after a place ("El Studio in San Francisco on September 3rd and 4th 2016", "… in September 2016", "… on 2016-09-03") is cut off before the place is read; the area before it stays',
+    { id: 'T047', where: 'PLACE_DATE_TAIL, placeOf', note: 'Texts (3.32.5): a date right after a place ("El Studio in San Francisco on September 3rd and 4th 2016", "… in September 2016", "… on 2016-09-03") is cut off before the place is read; the area before it stays. (3.34.18) Also a date with its year first without a preposition ("…, Rotterdam 2024 January - July", D024)',
       show: () => ({ pattern: PLACE_DATE_TAIL }) },
     { id: 'T048', where: 'ROLE_WORDS, roleVocab, fixRoleTypo', note: 'Texts (3.32.5): the words of roles a typo is read as (S050: "Muisc" → "Music"); on MusicBrainz also the words of its relationship types and attributes',
       show: () => ({ pairs: [['words', ROLE_WORDS.join(' · ')]] }) },
+    { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area',
+      show: () => ({ pattern: TEXT_PLACE_WORDS }) },
+    { id: 'T049', where: 'TEXT_PLAY_VERBS, chainOf, PLAYS_LIST', note: 'Texts (3.34.19): the verbs that give instruments and voices to a name (S051) – "Guitar, bass and drums are played by X", "X plays guitar, bass …"; they give no role of their own then',
+      show: () => ({ pattern: TEXT_PLAY_VERBS }) },
+    { id: 'T050', where: 'TEXT_AUX_WORDS, byRole, chainOf', note: 'Texts (3.34.19): words before a verb that are no part of the role – "are played by X" is "Played By", not "Played By [Are]"; "were mixed by X" is "Mixed By" (S051)',
+      show: () => ({ pattern: TEXT_AUX_WORDS }) },
     { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both, one sign only that one; after the name a code such as "DDD", a catalogue number after "·", "All rights reserved" and (3.30.9) a year ("© & ℗ TUM Records Oy 2021") are left out',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
@@ -3011,11 +3069,22 @@
   // September 2016", "… on 2016-09-03" – is cut off before the place is read (collected item 117; before, the place was
   // left out with the date, because it had digits); the area before it stays ("in San Francisco"). Only a preposition
   // followed at once by a date: a day, a month (whole, or its first three letters), a season.
+  // [137c] (3.34.18) also a date with its year first right after the area, without a preposition ("…, Rotterdam 2024 January
+  // - July": D024)
   const PLACE_DATE_TAIL = MAP.PLACE_DATE_TAIL;
+  // [T051] Texts (3.34.18): the words of places – "Recorded in Guruguru Brain studio, Rotterdam" names a place (recorded at),
+  // not an area (collected item 137b); only with a word in capitals besides it ("my studio", "a church" stay as they were)
+  const TEXT_PLACE_WORDS = MAP.TEXT_PLACE_WORDS;
 
   // [T021] Texts (3.14.0): words before a verb that only say what was done – "Music played and recorded by X" is
   // played by and recorded by X
   const TEXT_WHAT_WORDS = MAP.TEXT_WHAT_WORDS;
+  // [T049] Texts (3.34.19): the verbs that give instruments and voices to a name – "Guitar, bass and drums are played by X",
+  // "X plays guitar, bass …" (S051); they give no role of their own then
+  const TEXT_PLAY_VERBS = MAP.TEXT_PLAY_VERBS;
+  // [T050] Texts (3.34.19): words before a verb that are no part of the role – "are played by X" is "Played By", not "Played
+  // By [Are]" (S051)
+  const TEXT_AUX_WORDS = MAP.TEXT_AUX_WORDS;
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
@@ -3365,7 +3434,8 @@
   /** [3.21.4] A question that only some rows get (Q007): until it is answered the row has no type, on the first option's level. */
   function blankForQuestion(row) {
     const q = typeQuestionFor(row);
-    if (!q || !q.flag || row.typeAnswer != null) return;
+    // [Q011] (3.34.20) a question that keeps the type until it is answered (`keep`)
+    if (!q || !q.flag || q.keep || row.typeAnswer != null) return;
     row.types = [];
     if (!row.levelTouched) row.level = q.options[0].level;
     row.defaultLevel = q.options[0].level;
@@ -3662,6 +3732,7 @@
     // [3.31.7] collected item 110 (maintainer, Bandcamp "At Iridium 2004": "wir brauchen eine option um daten von tracknamen in den
     // datums/trackpool aufzunehmen. die Tracknummern hat man dann ja direkt. … standardeinstellung = aus")
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
+    { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
   ];
 
   const MONTH_BY_NAME = new Map(Object.entries(MONTH_NAMES).flatMap(([n, names]) => names.map((x) => [x, Number(n)])));
@@ -3729,6 +3800,11 @@
     { id: 'D007', re: '(?<!\\d)(\\d{4})\\s*/\\s*(\\d{2}|\\d{4})(?![\\d/])', make: (m) => span(ymd(m[1]), ymd(m[2].length === 2 ? `${m[1].slice(0, 2)}${m[2]}` : m[2])) },
     { id: 'D005', re: `${P.O}(?:\\s+day)?${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), ORDINALS.get(m[1].toLowerCase()))) },
     { id: 'D005', re: `${P.M}\\s+(?:the\\s+)?${P.O},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), ORDINALS.get(m[2].toLowerCase()))) },
+    // [D024] (3.34.18) the year before the month(s): "2024 January - July", "2024 Jan – Jul", "2024 March 30 – April 2",
+    // "2024 March 3–5" (collected item 137c; one month after D008, a day alone with D017)
+    { id: 'D024', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}${P.TO}${P.M}\\s+${P.D}(?![\\d.])`, make: (m) => span(ymd(m[1], monthNo(m[2]), m[3]), ymd(m[1], monthNo(m[4]), m[5])) },
+    { id: 'D024', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}${P.TO}${P.D}(?![\\d.])`, make: (m) => span(ymd(m[1], monthNo(m[2]), m[3]), ymd(m[1], monthNo(m[2]), m[4])) },
+    { id: 'D024', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}(?:${P.TO}|\\s+(?:and|&|und|y|et)\\s+|\\s*/\\s*)${P.M}(?![\\s,]*\\d)`, make: (m) => span(ymd(m[1], monthNo(m[2])), ymd(m[1], monthNo(m[3]))) },
     // [D017] (3.28.5) year, month, day: "1973 October 19" (collected item 64d)
     { id: 'D017', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}(?![\\d.])`, make: (m) => single(ymd(m[1], monthNo(m[2]), m[3])) },
     { id: 'D004', re: `${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), m[2])) },
@@ -3749,6 +3825,12 @@
     { id: 'D011', re: '(?:(?:early|mid|late|the|frühe[n]?|späte[n]?|mitte der)[-\\s]+)?(?:\\d{2})?\\d0\'?s(?![\\p{L}])|(?:\\d{2})?\\d0er(?:\\s+jahren?)?', make: () => 'skip' },
     { id: 'D009', re: `${P.SEASON}(?:\\s+(?:of|de|du))?\\s+${P.Y}`, make: (m) => single(ymd(m[2])) },
     { id: 'D008', re: `${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[2], monthNo(m[1]))) },
+    // [D024] (3.34.18) one month after its year ("2024 March"); the year only when a name in capitals follows ("© 2019 March
+    // Records"; not after a dot: "2024 March. Mixed by …") or for "may" written small ("in 1998 may …")
+    { id: 'D024', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}(?![\\s,]*\\d)`, make: (m) => {
+      const name = !/\.$/.test(m[0]) && /^[ \t]+\p{Lu}/u.test(m.input.slice(m.index + m[0].length));
+      return single(name || m[2] === 'may' ? ymd(m[1]) : ymd(m[1], monthNo(m[2])));
+    } },
     { id: 'D016', re: '(?<=[”"’»\'],?\\s{0,2}\\(?)(1[89]\\d{2}|20\\d{2})(?![\\d/-])', make: () => 'skip' },
     { id: 'D010', re: '(?<![\\d./-])(1[89]\\d{2}|20\\d{2})(?![\\d/-]|\\.\\d)', make: (m) => single(ymd(m[1])) },
   ].map((x) => ({ ...x, rx: new RegExp(x.re, 'giu') }));
@@ -4394,9 +4476,11 @@
        * "Mixed and mastered" → ["Mixed By", "Mastered By"]; one known role stays one ("Music and lyrics by");
        * "Strings arranged" → "Arranged By [Strings]".
        */
+      // [T050] (3.34.19) "are", "is", "were" … before a verb ("are played", "were mixed")
+      const AUX_BEFORE_VERB = new RegExp(`^(?:${TEXT_AUX_WORDS.source}\\s+)+(?=\\p{L}+ed$)`, 'iu');
       const byRole = (r0) => {
         // [3.14.0] "Music played" → played (T021)
-        const r = r0.replace(TEXT_WHAT_WORDS, '');
+        const r = r0.replace(TEXT_WHAT_WORDS, '').replace(AUX_BEFORE_VERB, '');
         const m2 = r.match(/^(.+?)\s+(\p{L}+ed)$/iu);
         return m2 ? `${cap(m2[2])} By [${cap(m2[1])}]` : roleOf(r);
       };
@@ -4488,6 +4572,54 @@
         const parts = splitRoles(side);
         return { parts, known: parts.filter(isRole), unknown: parts.filter((x) => !isRole(x)) };
       };
+      // [S051] (3.34.19) An instrument or a voice: a role the register reads as instrument or vocal only
+      const playable = (x) => {
+        if (!isRole(x)) return false;
+        const p = parseRoleNotation(x)[0];
+        const types = p ? mapRole(p.base, p.mods).types || [] : [];
+        return types.length > 0 && types.every((t) => t === 'instrument' || t === 'vocal');
+      };
+      // a word for an instrument MusicBrainz does not know (yet): a few letters, no role of another kind
+      const maybePlayable = (x) => x.split(' ').length <= 3 && /^\p{L}[\p{L}'’.\s-]*$/u.test(x) && !isRole(x) && !isRole(`${cap(x)} By`);
+      /** [S051] A list of instruments: { known, unknown, parts (in their order) } – at least one known, no fewer than unknown, nothing else; else null. */
+      const playList = (side) => {
+        const parts = splitRoles(clean(side));
+        const known = parts.filter(playable);
+        const unknown = parts.filter((x) => !playable(x));
+        return known.length && known.length >= unknown.length && unknown.every(maybePlayable) ? { known, unknown, parts } : null;
+      };
+      const PLAY_WORD = new RegExp(`^${TEXT_PLAY_VERBS.source}$`, 'i');
+      const AUX_WORD = new RegExp(`^${TEXT_AUX_WORDS.source}$`, 'i');
+      /**
+       * [S051] The verbs at the end of a phrase before "by", one of them of T049: "Electric guitar, drums are played, mixed and
+       * produced" → { before: 'Electric guitar, drums', roles: ['Mixed By', 'Produced By'] } (the words of T050 left out); null
+       * without a verb of T049.
+       */
+      const chainOf = (t0) => {
+        const words = clean(t0).split(' ');
+        let k = words.length;
+        let play = false;
+        const verbs = [];
+        while (k > 0) {
+          const w = words[k - 1].replace(/,$/, '');
+          if (/^(?:and|&|\+)$/i.test(w)) k--;
+          else if (PLAY_WORD.test(w) || /^\p{L}+ed$/u.test(w)) {
+            if (PLAY_WORD.test(w)) play = true;
+            else verbs.unshift(w);
+            k--;
+          } else break;
+        }
+        while (k > 0 && AUX_WORD.test(words[k - 1])) k--;
+        if (!play) return null;
+        const roles = verbs.map((v) => roleOf(v)).filter((r) => isRole(r));
+        return { before: clean(words.slice(0, k).join(' ').replace(/,$/, '')), roles };
+      };
+      /** [S051] "Electric guitar, drums and piano are played (, mixed and produced)": the instruments and the other roles. */
+      const playedList = (t) => {
+        const c = chainOf(t);
+        const list = c && c.before && playList(c.before);
+        return list ? { ...list, roles: c.roles } : null;
+      };
       /**
        * [S038] (3.29.0) Names each with its roles in brackets: "K.M. (sounds, words) & E. (voice)" → [{ name: 'K.M.', roles:
        * ['Performer', 'Lyrics By'] }, { name: 'E.', roles: ['Vocals'] }]; [] unless every name has roles and every word is one
@@ -4510,6 +4642,8 @@
         return out.length && !clean(t.slice(end)) ? out : [];
       };
       const names = (side) => side.split(TEXT_NAME_SEP).flatMap((n) => n.split(TEXT_NAME_SEP_Y)).map((n) => clean(n).replace(/\s*\([^)]*\)$/, '')).filter(Boolean);
+      // [S051] (3.34.19) "X plays guitar, bass and drums"
+      const PLAYS_LIST = new RegExp(`^(.+?)\\s+${TEXT_PLAY_VERBS.source}\\s+(?:the\\s+)?(.+)$`, 'i');
 
       /**
        * [3.21.0] The credits of one sentence of a line (mostly the whole line), its track list given (scope); pi: the
@@ -4559,11 +4693,19 @@
           // "Recorded live at Café Oto, London, 12 May 2019 by John Doe"
           const place = (verb, where) => {
             const n = where && clean(where.name);
-            if (!looksLikeName(n) || !isCompanyRole(`${cap(verb)} At`)) return;
+            if (!looksLikeName(n) || !isCompanyRole(`${cap(verb)} At`)) return false;
             // [S050] (3.32.5) "Recordd at X": the verb as it is read
             const { role, typos } = readRole(`${cap(verb)} At`);
             companies.push({ who: { ...who(n), area: where.area || '' }, role, catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at(), ...(typos ? { typos } : {}) });
             found++;
+            return true;
+          };
+          // [T051] (3.34.18) "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July": a name with a word of places and
+          // a word in capitals besides it is a place ("recorded at"), the part after the comma its area (collected item 137b)
+          const placeIn = (verb, text) => {
+            const first = clean(String(text || '').replace(PLACE_DATE_TAIL, '').split(/\s*,\s*/)[0]).replace(/^the\s+/i, '');
+            if (!TEXT_PLACE_WORDS.test(first) || !/\p{Lu}/u.test(first.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), ''))) return false;
+            return place(verb, placeOf(text));
           };
           // [3.22.0] "Recorded by X in Xixon, Asturies, Spain", "Recorded in Berlin": the area (T037; C038 …)
           const areaRole = (verb) => `${cap(verb)} In`;
@@ -4604,7 +4746,7 @@
             }
             // [3.22.0] "Recorded in Xixon, Asturies by X"
             const inL = !at && left.match(/^(.*?)(?:\s+(?:live|again))?\s+in\s+(\p{Lu}.*)$/u);
-            if (inL && inArea(verb, areaOf(inL[2].replace(TEXT_TIME_AFTER_NAME, '')))) left = inL[1];
+            if (inL && (placeIn(verb, inL[2]) || inArea(verb, areaOf(inL[2].replace(TEXT_TIME_AFTER_NAME, ''))))) left = inL[1];
             // "Recorded in the living room by X", "Mixed in Dolby Atmos by X": X, the rest listed as not recognized
             const inOther = !at && !byRoles(left).length && left.match(/^(\p{L}+(?:\s+(?:live|again))?)\s+in\s+(.+)$/u);
             if (inOther && byRoles(inOther[1]).length) {
@@ -4620,6 +4762,18 @@
             // [3.21.0] "…, courtesy of the X Estate" is no name (T031)
             const courtesy = right.search(TEXT_COURTESY);
             if (courtesy >= 0) right = right.slice(0, courtesy);
+            // [S051] (3.34.19) "Electric guitar, drums and piano are played (, mixed and produced) by X", "All instruments played
+            // by X": each instrument a row of X, the other verbs roles of their own, "played" none (T049, T050)
+            // (the phrase as written: "are played" is no "contribution" here, T031; not with tracks named by their titles)
+            const plSrc = clause.slice(0, m[1].length);
+            const pl = ruleOn('S051') && !ts && !TEXT_WHAT_WORDS.test(clean(plSrc)) ? playedList(plSrc) : null;
+            const plWho = pl ? names(firstSentence(right).replace(TEXT_TIME_AFTER_NAME, '')) : [];
+            if (pl && plWho.length && plWho.every(looksLikeName)) {
+              // [137d] (3.34.20) in their order; a word that is no instrument MusicBrainz knows: a row that asks (guessInstrument)
+              for (const n of plWho) pl.parts.forEach((r) => { if (addCredit(n, r, cScope, playable(r) ? {} : { guess: true })) found++; });
+              for (const n of plWho) pl.roles.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
+              return;
+            }
             // [3.14.0] "Music and artwork of this release were entirely created by …" (T022): a sentence (with "of this …",
             // "was/were …" or "entirely …") names its roles before the verb; otherwise the verbs are the roles
             const sentence = /\s(?:of|on|for)\s+(?:this|the)\s|\s(?:was|were|is|are|been)\s|\s(?:entirely|completely|fully|solely|exclusively)\s/i.test(` ${left} `);
@@ -4642,7 +4796,7 @@
             right = firstSentence(right).replace(TEXT_TIME_AFTER_NAME, '');
             // [3.22.0] "Recorded by X in Xixon, Asturies, Spain (in the spring, 2017)": X, and the area (T037)
             const inR = right.match(/^(.+?)\s+in\s+(\p{Lu}.*)$/u);
-            if (inR && looksLikeName(clean(inR[1])) && inArea(verb, areaOf(inR[2]))) right = inR[1];
+            if (inR && looksLikeName(clean(inR[1])) && (placeIn(verb, inR[2]) || inArea(verb, areaOf(inR[2])))) right = inR[1];
             // [3.14.0] a person without a name ("a (cat assisted) human", "the band"): the release's artists (T023)
             const nobody = clean(right.replace(/\s*\([^)]*\)/g, ''));
             if (roles.length && PLACEHOLDER_WHO.test(nobody)) {
@@ -4679,7 +4833,17 @@
           }
           // [3.22.0] "Recorded in Xixon, Asturies, Spain in 2017", "Mixed live in Berlin" (an area without a person, T037)
           if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+(\p{Lu}.*)$/u))
-            && inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, '')))) return;
+            && (placeIn(m[1], m[2]) || inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, ''))))) return;
+          // [T051] (3.34.18) … and with "the" before the place: "Recorded in the Church of St. Mary, Berlin"
+          if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+the\s+(\p{Lu}.*)$/u)) && placeIn(m[1], m[2])) return;
+          // [S051] (3.34.19) "Go Kurosawa plays guitar, bass and drums" (T049)
+          if (ruleOn('S051') && (m = clause.match(PLAYS_LIST)) && looksLikeName(clean(m[1])) && /^\p{Lu}/u.test(clean(m[1])) && !isRole(cap(clean(m[1])))) {
+            const list = playList(m[2]);
+            if (list) {
+              list.parts.forEach((r) => { if (addCredit(clean(m[1]), r, cScope, playable(r) ? {} : { guess: true })) found++; });
+              return;
+            }
+          }
           // "Name – roles", "Name: roles", "Role: names", "Role – names", "Name (roles)"
           let left = null;
           let right = null;
@@ -4818,17 +4982,68 @@
         return !item.unresolved;
       };
 
-      for (const raw of String(text || '').split(/\r?\n/)) {
-        let line = clean(raw);
-        if (!line) {
-          // [S043] an empty line after its publishers ends a block
-          if (pubBlock && pubBlock.n) pubBlock = null;
-          continue;
+      /** [S051] A line of a block: only words for instruments or voices – no name, digit, "by", ":" or dash between words. */
+      const blockLine = (raw) => {
+        const l = clean(raw);
+        if (!l || l.split(' ').length > 10 || /\d|:|[()[\]@]|https?:|www\.|\s[–—-]\s/i.test(l) || /\s(?:by|at|in|on|for|with|von|par|por)\s/i.test(` ${l} `)) return false;
+        const parts = splitRoles(l);
+        return parts.length > 0 && parts.every((x) => playable(x) || maybePlayable(x));
+      };
+      /**
+       * [S051] A line that links a block to a name: "are played, mixed and produced by X", "played by X", "All instruments played
+       * by X", "All of the above performed by X" → { names, roles } (the roles of the other verbs), else null.
+       */
+      const linkOf = (raw) => {
+        const l = clean(raw);
+        const m = l.match(/^(.+?)\s+by\s+(.+)$/i);
+        const c = m && chainOf(m[1]);
+        if (!c || !/^(?:(?:all|both)(?:\s+(?:of\s+)?(?:the\s+)?(?:instruments|above|them|these))?|(?:the\s+)?(?:instruments|above)|these)?$/i.test(c.before)) return null;
+        const who2 = names(firstSentence(m[2]).replace(TEXT_TIME_AFTER_NAME, ''));
+        return who2.length && who2.every(looksLikeName) ? { names: who2, roles: c.roles } : null;
+      };
+      /**
+       * [S051] The block held back with the line that links it: each instrument a row of each name (a word MusicBrainz does
+       * not know too, marked `guess` – 137d); false if it is none.
+       */
+      const readBlock = (held, linkRaw) => {
+        const link = linkOf(linkRaw);
+        if (!link) return false;
+        const rows = held.map((raw) => ({ raw, parts: clean(raw) ? splitRoles(clean(raw)) : [] }));
+        // lines before the first instrument (a heading, "Credits") are read as usual
+        const first = rows.findIndex((r) => r.parts.some(playable));
+        if (first < 0) return false;
+        const body = rows.slice(first).filter((r) => r.parts.length);
+        const known = body.reduce((n, r) => n + r.parts.filter(playable).length, 0);
+        const unknown = body.reduce((n, r) => n + r.parts.filter((x) => !playable(x)).length, 0);
+        if (known < unknown) return false;
+        rows.slice(0, first).forEach((r) => readLine(r.raw));
+        for (const r of body) {
+          startLine(r.raw);
+          // [137d] (3.34.20) a word that is no instrument MusicBrainz knows ("Chaims", "Buddha machine"): a row that asks
+          link.names.forEach((n) => r.parts.forEach((x) => addCredit(n, x, null, playable(x) ? {} : { guess: true })));
         }
+        startLine(linkRaw);
+        link.names.forEach((n) => link.roles.forEach((x) => addCredit(n, x, null)));
+        return true;
+      };
+      /** The line a credit comes from, and which of the lines with the same text it is. */
+      const startLine = (raw) => {
         line0 = raw.trim();
         const sameKey = line0.replace(/\s+/g, ' ').toLowerCase();
         n0 = lineCount.get(sameKey) || 0;
         lineCount.set(sameKey, n0 + 1);
+        part0 = clean(raw);
+        pi0 = 0;
+      };
+      /** One line of the text. */
+      const readLine = (raw) => {
+        let line = clean(raw);
+        if (!line) {
+          // [S043] an empty line after its publishers ends a block
+          if (pubBlock && pubBlock.n) pubBlock = null;
+          return;
+        }
+        startLine(raw);
         // A track list for the line (only when it names tracks of this release)
         let scope = null;
         let m;
@@ -4851,22 +5066,22 @@
         if (ruleOn('S043')) {
           if (PUBLISHER_HEAD.test(line)) {
             pubBlock = { n: 0, societies: societiesIn(line) };
-            continue;
+            return;
           }
           if (SOCIETY_LINE.test(line)) {
             societiesIn(line).forEach(addSociety);
-            continue;
+            return;
           }
           const item = pubBlock || SOCIETY_AFTER_NAME.test(clean(line).replace(PUB_TAIL, '$1')) ? publisherOf(line, scope) : null;
           if (item && (pubBlock || item.societies.length)) {
             if (!addPublisher(item, pubBlock)) unrecognized.push(`${line0} → ? “${item.unresolved}”`);
             if (pubBlock) pubBlock.n++;
-            continue;
+            return;
           }
           pubBlock = null;
         }
         // [3.14.0] a line that only names the label of the release is left out (T024)
-        if (TEXT_LABEL_LINE.test(line)) continue;
+        if (TEXT_LABEL_LINE.test(line)) return;
         // [3.21.0] sentence by sentence (T029); thanks and endorsements are left out (T030), web addresses taken out (T032)
         const units = sentencesOf(line);
         let found = 0;
@@ -4907,7 +5122,36 @@
           missed.forEach((u) => unrecognized.push(u));
           if (unknownParts.length) unrecognized.push(`${line0} → ? ${unknownParts.map((x) => `“${x}”`).join(', ')}`);
         }
+      };
+
+      // [S051] (3.34.19) Lines that are only instruments or voices ("Electric guitar", "Drums", …, empty lines between them) are
+      // held back until a line links them to a name ("are played, mixed and produced by Go Kurosawa"); any other line reads them
+      // as usual first (collected item 137a)
+      let roleBlock = [];
+      const flushBlock = () => {
+        const held = roleBlock;
+        roleBlock = [];
+        held.forEach(readLine);
+      };
+      for (const raw of String(text || '').split(/\r?\n/)) {
+        if (ruleOn('S051')) {
+          if (roleBlock.length && !clean(raw)) {
+            roleBlock.push(raw);
+            continue;
+          }
+          if (blockLine(raw)) {
+            roleBlock.push(raw);
+            continue;
+          }
+          if (roleBlock.length && readBlock(roleBlock, raw)) {
+            roleBlock = [];
+            continue;
+          }
+          flushBlock();
+        }
+        readLine(raw);
       }
+      flushBlock();
       return { credits, companies, unrecognized, ignored };
     }
 
@@ -5259,6 +5503,8 @@
         const entry = group.roles.get(rKey);
         // [S050] (3.32.5) typos read as role words: what was written
         (c.typos || []).forEach((t) => { entry.typos = entry.typos || []; if (!entry.typos.some((x) => x.written === t.written)) entry.typos.push(t); });
+        // [137d] (3.34.20) a word of a list of instruments MusicBrainz does not know
+        if (c.guess) entry.guess = true;
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
@@ -6913,6 +7159,14 @@
     // [W001–W003] A wording rule of the register wins (e.g. "Bass [Upright]" → "upright bass")
     const wr = wordingRuleFor(row);
     if (wr) return wr.credit;
+    // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
+    if (row.instrGuess) return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? row.instrGuess.word : '';
+    // [Q011] (3.34.20) "Voice": plain vocals take no role credit (also until it is answered)
+    if (row.askVoice) {
+      const tq = typeQuestionFor(row);
+      const o = tq && row.typeAnswer != null ? tq.options[row.typeAnswer] : null;
+      if (!o || o.plain) return '';
+    }
     const vocab = instrumentVocabulary();
     const lt0 = currentLinkType(row);
     const art = lt0 && ART_TYPES.includes(norm(lt0.name));
@@ -7130,7 +7384,7 @@
     renderRulesBody();
   }
 
-  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null, artTask = false, artCredit = '' } = {}) {
+  function makeRow(artistKey, { raw = '', base = '', mods = [], manual = false, anv = '', company = null, artTask = false, artCredit = '', guess = false } = {}) {
     let m;
     if (company) {
       const c = mapCompanyRole(raw);
@@ -7190,7 +7444,9 @@
     if (!company && typeof dBase === 'string') row.dBase = dBase;
     resolveRowType(row);
     row.primaryText = pickPrimary(row);
-    if (m.fallback && !primaryIsValid(row)) {
+    // [137d] (3.34.20) a word of a list of instruments (guess) stays an instrument: guessInstrument asks for it
+    // [121b] (3.34.21) also a word a question asks about (a question of your own: "keys" – keyboard, synthesizer …)
+    if (m.fallback && !primaryIsValid(row) && !guess && !questionRuleFor(row)) {
       // Not an MB instrument either: keep the role as "miscellaneous support" with the Discogs role as task.
       makeMiscRow(row, String(raw || base).replace(/\s*\[.*$/, '').trim());
     }
@@ -7779,17 +8035,22 @@
       S.ruleEdit && S.ruleEdit.id === id ? `<tr class="dci-redit-row"><td colspan="${span}">${ruleEditHtml(id)}</td></tr>` : ''}`;
     const listTools = (tid) => (EDITABLE_LISTS[tid] ? ` ${editToolsHtml(tid, { list: true })}` : '');
     const listForm = (tid) => (S.listEdit && S.listEdit.tid === tid ? listEditHtml(tid) : '');
-    const sect = (id, title, html, tid = '') => `<section data-rsect="${id}"${tid ? ` data-ledit-anchor="${tid}"` : ''}><h3>${esc(title)}${tid ? listTools(tid) : ''}</h3>${tid ? listForm(tid) : ''}<div class="dci-rules-wrap">${html}</div></section>`;
+    const sect = (id, title, html, tid = '', extra = '') => `<section data-rsect="${id}"${tid ? ` data-ledit-anchor="${tid}"` : ''}><h3>${esc(title)}${tid ? listTools(tid) : ''}${extra}</h3>${tid ? listForm(tid) : ''}<div class="dci-rules-wrap">${html}</div></section>`;
+    // [121b] (3.34.21) "＋ New rule" at the wording rules and the questions; the form of a rule not saved yet below the table
+    const newBtn = (kind) => ` <button type="button" class="dci-textbtn dci-rnew-btn" data-redit-new="${kind}" title="${esc(tr(kind === 'wording' ? 'mapping.newWordingTitle' : 'mapping.newQuestionTitle'))}">＋ ${esc(tr('mapping.newRule'))}</button>`;
+    const newForm = (kind, list, span) => (S.ruleEdit && S.ruleEdit.add === kind && !list.some((r) => r.id === S.ruleEdit.id)
+      ? `<tr class="dci-redit-row" data-rnew="${kind}"><td colspan="${span}">${ruleEditHtml(S.ruleEdit.id)}</td></tr>` : '');
+    const noteOf = (r) => r.note || (isOwnDataId(r.id) ? tr('mapping.ownNote') : '');
     const where = (w) => `${tr('rules.code')}: ${w}`;
     return [
       sect('roles', `${tr('rules.roles')} (R001 … · ${where('roleRules')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), tr('rules.note'), ''])}<tbody>
         ${roles.map((r) => editRow(r.id, [r.id, r.re ? patternText(r.re) : tr('rules.special'), (r.types || []).join(', '), r.level || '', r.note || ''], r.hasCode, 7)).join('')}</tbody></table>`),
       // [3.34.4] ✎ at the wording rules and the questions too (collected item 121)
       sect('wording', `${tr('rules.wording')} (W001 … · ${where('WORDING_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.credit'), tr('rules.note'), tr('rules.code'), ''])}<tbody>
-        ${WORDING_RULES.map((r) => editRow(r.id, [r.id, r.phrases.join(' | '), r.credit, r.note, r.where || ''], false, 7)).join('')}</tbody></table>`),
+        ${WORDING_RULES.map((r) => editRow(r.id, [r.id, r.phrases.join(' | '), r.credit, noteOf(r), r.where || ''], false, 7)).join('')}${newForm('wording', WORDING_RULES, 7)}</tbody></table>`, '', newBtn('wording')),
       sect('questions', `${tr('rules.questions')} (Q001 … · ${where('QUESTION_RULES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.options'), tr('rules.credit'), tr('rules.note'), ''])}<tbody>
-        ${QUESTION_RULES.map((q) => editRow(q.id, [q.id, q.base, q.options.join(' · '), q.credit, q.note], false, 7)).join('')}
-        ${TYPE_QUESTIONS.map((q) => editRow(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note], false, 7)).join('')}</tbody></table>`),
+        ${QUESTION_RULES.map((q) => editRow(q.id, [q.id, q.base, q.options.join(' · '), q.credit, noteOf(q)], false, 7)).join('')}${newForm('question', QUESTION_RULES, 7)}
+        ${TYPE_QUESTIONS.map((q) => editRow(q.id, [q.id, q.base, q.options.map((o) => `${o.label || o.type} (${o.level})`).join(' · '), '', q.note], false, 7)).join('')}</tbody></table>`, '', newBtn('question')),
       sect('special', `${tr('rules.specialTitle')} (S001 … · ${where('SPECIAL_RULES')})`, `<table>${head([tr('rules.id'), tr('rules.note'), tr('rules.code')])}<tbody>${SPECIAL_RULES.map((r) => row(r.id, [r.id, r.note, r.where || ''])).join('')}</tbody></table>`),
       sect('companies', `${tr('rules.companies')} (C001 … · ${where('COMPANY_ROLES')})`, `<table>${head([tr('rules.id'), trRules('rules.discogs'), tr('rules.mb'), tr('rules.level'), ''])}<tbody>
         ${COMPANY_ROLES.map(([re, o]) => editRow(o.id, [o.id || '', patternText(re), uniq([...(o.label || []), ...(o.place || []), ...(o.area || []), ...(o.artist || [])]).join(', '), o.level || ''], false, 6)).join('')}</tbody></table>`),
@@ -7890,10 +8151,9 @@
   }
 
   /** The fields of a change of a rule checked: only those of its kind, each of the right kind → { set } or { error }. */
-  function checkRuleSet(id, set) {
+  function checkRuleSet(id, set, kind = ruleKindOf(id)) {
     if (!set || typeof set !== 'object' || Array.isArray(set)) return { error: tr('mapping.badValue', { id, field: '–' }) };
-    const kind = ruleKindOf(id);
-    const fields = ruleFieldsOf(id);
+    const fields = RULE_FIELDS[kind] || [];
     const out = {};
     for (const [f, v] of Object.entries(set)) {
       const bad = { error: tr('mapping.badValue', { id, field: f }) };
@@ -7923,11 +8183,29 @@
   }
 
   /**
+   * [121b] (3.34.21) A rule of your own checked: the fields of its kind, all there (a wording rule: its words – the role
+   * credit may be empty –; a question: its word and instruments) → { set } or { error }.
+   */
+  function checkOwnRule(id, kind, set) {
+    const ok = checkRuleSet(id, set, kind);
+    if (ok.error) return ok;
+    const need = kind === 'wording' ? ['phrases'] : ['base', 'options'];
+    const miss = need.find((f) => !(f in ok.set));
+    if (miss) return { error: tr('mapping.badValue', { id, field: miss }) };
+    return { set: { ...ok.set, credit: ok.set.credit || '' } };
+  }
+
+  /**
    * A change of a rule into `changes`: fields equal to the built-in rule are left out (none left: the change goes). `was`:
    * the built-in value each field had when it was changed (kept from before, or from an imported file) – after an update
    * that changed the built-in rule the change is marked.
    */
-  function putRuleChange(changes, id, set, wasOld = {}) {
+  function putRuleChange(changes, id, set, wasOld = {}, add = '') {
+    // [121b] (3.34.21) a rule of your own: all its fields, nothing built in to compare with
+    if (add) {
+      changes.rules[id] = { set: JSON.parse(JSON.stringify(set)), was: {}, add };
+      return;
+    }
     const keep = {};
     const was = {};
     for (const [f, v] of Object.entries(set)) {
@@ -8033,6 +8311,12 @@
     return `${esc(fieldText(f, a))} → <strong>${esc(fieldText(f, b))}</strong>`;
   }
   const ruleFieldsText = (id, changes) => ruleFieldsOf(id).map((f) => `${tr(`mapping.field.${f}`)}: ${fieldText(f, changes ? fieldWith(changes, id, f) : builtinField(id, f))}`).join(' · ');
+  /** [121b] (3.34.21) The next id of a rule of your own: W901 …, Q901 … */
+  function nextOwnDataId(kind) {
+    const p = kind === 'wording' ? 'W' : 'Q';
+    const used = Object.keys(mappingChanges.rules).filter((id) => isOwnDataId(id) && id[0] === p).map((id) => Number(id.slice(1)));
+    return `${p}${Math.max(900, ...used) + 1}`;
+  }
 
   /** The fields of a change whose built-in value is no longer what it was when changed (['gone']: the rule is gone). */
   function ruleConflicts(id) {
@@ -8133,6 +8417,14 @@
     S.listEdit = null;
   }
 
+  /** [121b] (3.34.21) "＋ New rule" at the wording rules or the questions: an empty form (a role credit for a wording rule). */
+  function openNewRule(kind) {
+    const d = dataRuleDraft(kind, () => undefined);
+    if (kind === 'wording') d.creditMode = 'text';
+    S.ruleEdit = { id: nextOwnDataId(kind), draft: d, error: '', add: kind };
+    S.listEdit = null;
+  }
+
   /** The pattern field from words to a regular expression and back, when its kind is switched. */
   function switchPatternMode(d, to) {
     if (to === d.pmode) return;
@@ -8165,22 +8457,24 @@
 
   function saveRuleEdit() {
     const { id, draft: d } = S.ruleEdit;
-    const kind = ruleKindOf(id);
-    const ok = checkRuleSet(id, isDataKind(kind) ? dataRuleSet(kind, d) : patternRuleSet(id, d));
+    // [121b] (3.34.21) a rule of your own (new, or saved before)
+    const own = S.ruleEdit.add || ownDataKind(id);
+    const kind = own || ruleKindOf(id);
+    const ok = own ? checkOwnRule(id, kind, dataRuleSet(kind, d)) : checkRuleSet(id, isDataKind(kind) ? dataRuleSet(kind, d) : patternRuleSet(id, d));
     if (ok.error) {
       S.ruleEdit.error = ok.error;
       renderRulesBody();
       return;
     }
     const old = mappingChanges.rules[id];
-    putRuleChange(mappingChanges, id, ok.set, (old && old.was) || {});
+    putRuleChange(mappingChanges, id, ok.set, (old && old.was) || {}, own);
     S.ruleEdit = null;
     mappingChanged(id);
   }
 
   /** The buttons below a form of ✎: save, cancel, back to the built-in rule. */
   const ruleEditActions = (id) => `<div class="dci-urule-actions"><button type="button" data-redit-save>${esc(tr('rules.save'))}</button> <button type="button" class="dci-textbtn" data-redit-cancel>${esc(tr('common.cancel'))}</button>
-        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr('mapping.toBuiltin'))}</button>` : ''}</div>`;
+        ${mappingChanges.rules[id] ? `<button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">${ownDataKind(id) ? `✕ ${esc(tr('mapping.deleteOwn'))}` : `↺ ${esc(tr('mapping.toBuiltin'))}`}</button>` : ''}</div>`;
 
   /** [3.34.4] ✎ at a wording rule, an instrument question or a type question. */
   function dataRuleEditHtml(id, kind) {
@@ -8216,14 +8510,16 @@
         <button type="button" class="dci-textbtn" data-redit-oadd${n < LIMITS.names ? '' : ' disabled'}>＋ ${esc(tr('mapping.choiceAdd'))}</button></div>
       <p class="dci-sub dci-redit-wide">${esc(tr('mapping.choicesHint'))}</p>`;
     }
-    return `<fieldset class="dci-redit dci-redit-${kind}" data-redit="${esc(id)}"><legend>${esc(tr('mapping.editTitle', { id }))}</legend>${body}
-      <p class="dci-sub dci-redit-wide">${esc(tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}</p>
+    // [121b] (3.34.21) a rule of your own: no built-in rule to name
+    const own = (S.ruleEdit && S.ruleEdit.add) || ownDataKind(id);
+    return `<fieldset class="dci-redit dci-redit-${kind}" data-redit="${esc(id)}"><legend>${esc(tr(own ? 'mapping.ownTitle' : 'mapping.editTitle', { id }))}</legend>${body}
+      <p class="dci-sub dci-redit-wide">${esc(own ? tr('mapping.ownHint') : tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}</p>
       ${error ? `<p class="dci-redit-err dci-redit-wide" role="alert">${esc(error)}</p>` : ''}
       ${ruleEditActions(id)}</fieldset>`;
   }
 
   function ruleEditHtml(id) {
-    const kind = ruleKindOf(id);
+    const kind = ruleKindOf(id) || (S.ruleEdit && S.ruleEdit.id === id && S.ruleEdit.add) || '';
     if (isDataKind(kind)) return dataRuleEditHtml(id, kind);
     const { draft: d, error } = S.ruleEdit;
     const role = isRoleRuleId(id);
@@ -8279,7 +8575,10 @@
     const changed = list ? !!mappingChanges.lists[id] : !!mappingChanges.rules[id];
     const conflict = !list && ruleConflicts(id).length > 0;
     const t = tr(list ? 'mapping.editListTitle' : 'mapping.editRuleTitle', { id });
-    return `<span class="dci-redit-tools">${changed ? `<span class="dci-changed${conflict ? ' dci-conflict' : ''}" title="${esc(list ? tr('mapping.changedTitle') : tr('mapping.builtinIs', { what: ruleFieldsText(id, null) }))}">${esc(tr(conflict ? 'mapping.conflictTag' : 'mapping.changedTag'))}</span>` : ''}<button type="button" class="dci-textbtn dci-redit-btn" data-${list ? 'ledit' : 'redit'}-open="${esc(id)}" title="${esc(t)}" aria-label="${esc(t)}">✎</button></span>`;
+    // [121b] (3.34.21) a rule of your own: "yours"
+    const own = !list && !!ownDataKind(id);
+    const tagTitle = list ? tr('mapping.changedTitle') : own ? tr('mapping.ownHint') : tr('mapping.builtinIs', { what: ruleFieldsText(id, null) });
+    return `<span class="dci-redit-tools">${changed ? `<span class="dci-changed${conflict ? ' dci-conflict' : ''}${own ? ' dci-own' : ''}" title="${esc(tagTitle)}">${esc(tr(conflict ? 'mapping.conflictTag' : own ? 'mapping.ownTag' : 'mapping.changedTag'))}</span>` : ''}<button type="button" class="dci-textbtn dci-redit-btn" data-${list ? 'ledit' : 'redit'}-open="${esc(id)}" title="${esc(t)}" aria-label="${esc(t)}">✎</button></span>`;
   }
 
   /** "Your changes of built-in rules": each change with before → after, ↺; conflicts after an update; ↺ all. */
@@ -8292,12 +8591,15 @@
       const c = mappingChanges.rules[id];
       const conf = ruleConflicts(id);
       const gone = conf[0] === 'gone';
-      const fields = gone ? '' : Object.keys(c.set).map((f) => `<span class="dci-mchg-f">${esc(tr(`mapping.field.${f}`))}: ${fieldChangeHtml(f, builtinField(id, f), c.set[f])}</span>`).join(' · ');
+      // [121b] (3.34.21) a rule of your own: what it is
+      const own = !!ownDataKind(id);
+      const fields = gone ? '' : own ? `<span class="dci-mchg-own">${esc(tr('mapping.ownChange'))}</span> ${Object.keys(c.set).map((f) => `<span class="dci-mchg-f">${esc(tr(`mapping.field.${f}`))}: ${esc(fieldText(f, c.set[f]))}</span>`).join(' · ')}`
+        : Object.keys(c.set).map((f) => `<span class="dci-mchg-f">${esc(tr(`mapping.field.${f}`))}: ${fieldChangeHtml(f, builtinField(id, f), c.set[f])}</span>`).join(' · ');
       const confHtml = gone ? `<span class="dci-mchg-conf">⚠ ${esc(tr('mapping.gone'))}</span>`
         : conf.length ? `<span class="dci-mchg-conf">⚠ ${esc(tr('mapping.conflict', { fields: conf.map((f) => `${tr(`mapping.field.${f}`)} ${fieldText(f, c.was[f])} → ${fieldText(f, builtinField(id, f))}`).join(', ') }))}</span>
           <button type="button" class="dci-textbtn" data-mchg-keep="${esc(id)}">${esc(tr('mapping.keepMine'))}</button>` : '';
       return `<li data-mchg="${esc(id)}"${conf.length ? ' class="dci-mchg-conflict"' : ''}><button type="button" class="dci-textbtn dci-ruleid" data-mchg-goto="${esc(id)}">${esc(id)}</button> ${fields} ${confHtml}
-        <button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">↺ ${esc(tr(conf.length ? 'mapping.discard' : 'mapping.toBuiltin'))}</button></li>`;
+        <button type="button" class="dci-textbtn" data-mchg-reset="${esc(id)}">${own ? `✕ ${esc(tr('mapping.deleteOwn'))}` : `↺ ${esc(tr(conf.length ? 'mapping.discard' : 'mapping.toBuiltin'))}`}</button></li>`;
     };
     const listLi = (tid) => {
       const c = mappingChanges.lists[tid];
@@ -8312,7 +8614,7 @@
 
   /** ↺ a change (asked first – maintainer: "frag mich in zukunft ob ich wirklich einen reset machen möchte"). */
   function resetMappingChange(id) {
-    if (!confirm(tr('mapping.resetAsk', { id }))) return;
+    if (!confirm(tr(ownDataKind(id) ? 'mapping.deleteOwnAsk' : 'mapping.resetAsk', { id }))) return;
     delete mappingChanges.rules[id];
     delete mappingChanges.lists[id];
     if (S.ruleEdit && S.ruleEdit.id === id) S.ruleEdit = null;
@@ -8405,7 +8707,15 @@
     if (!data || typeof data !== 'object' || Array.isArray(data)) return { error: tr('rules.importBad') };
     const out = { from: '', rules: {}, lists: {}, own: [], off: [], skipped: [], mapping: '', script: '' };
     const skip = (id, why) => out.skipped.push({ id: String(id), why });
-    const takeRule = (id, set, was) => {
+    const takeRule = (id, set, was, add = '') => {
+      // [121b] (3.34.21) a rule of your own (W901 …, Q901 …)
+      if (add || isOwnDataId(id)) {
+        if (!isOwnDataId(id) || !OWN_DATA_KEYS[add] || id[0] !== (add === 'wording' ? 'W' : 'Q')) return skip(id, tr('mapping.skipUnknown'));
+        const own = checkOwnRule(id, add, set);
+        if (own.error) return skip(id, own.error);
+        out.rules[id] = { set: own.set, was: {}, add };
+        return null;
+      }
       if (!ruleKindOf(id)) return skip(id, tr('mapping.skipUnknown'));
       if (!ruleEditable(id)) return skip(id, tr('mapping.skipCode'));
       const ok = checkRuleSet(id, set);
@@ -8422,7 +8732,7 @@
       Object.assign(out, { from: 'changes', mapping: String(data.mapping || ''), script: String(data.script || '') });
       out.own = Array.isArray(data.own) ? data.own : [];
       out.off = Array.isArray(data.off) ? data.off : [];
-      Object.entries(data.rules && typeof data.rules === 'object' ? data.rules : {}).forEach(([id, c]) => takeRule(id, c && c.set, c && c.was));
+      Object.entries(data.rules && typeof data.rules === 'object' ? data.rules : {}).forEach(([id, c]) => takeRule(id, c && c.set, c && c.was, (c && c.add) || ''));
       Object.entries(data.lists && typeof data.lists === 'object' ? data.lists : {}).forEach(([tid, c]) => {
         if (!EDITABLE_LISTS[tid]) return skip(tid, tr('mapping.skipList'));
         const ok = checkListChange(tid, c);
@@ -8461,6 +8771,12 @@
         for (const r of Array.isArray(data[key]) ? data[key] : []) {
           if (!r || typeof r.id !== 'string') continue;
           const b = find(MAPPING.raw, r.id);
+          // [121b] (3.34.21) a rule of your own in a whole register (W901 …, Q901 …)
+          const ownKind = key === 'WORDING_RULES' ? 'wording' : key === 'QUESTION_RULES' ? 'question' : '';
+          if (!b && ownKind && isOwnDataId(r.id)) {
+            takeRule(r.id, Object.fromEntries(RULE_FIELDS[ownKind].filter((f) => f in r).map((f) => [f, r[f]])), null, ownKind);
+            continue;
+          }
           if (!b) {
             skip(r.id, tr('mapping.skipUnknown'));
             continue;
@@ -8507,7 +8823,7 @@
     const changes = replace ? { rules: {}, lists: {} } : JSON.parse(JSON.stringify({ rules: mappingChanges.rules, lists: mappingChanges.lists }));
     for (const [id, c] of Object.entries(imp.rules)) {
       const mine = changes.rules[id];
-      putRuleChange(changes, id, { ...(mine ? mine.set : {}), ...c.set }, { ...(mine ? mine.was : {}), ...c.was });
+      putRuleChange(changes, id, { ...(mine ? mine.set : {}), ...c.set }, { ...(mine ? mine.was : {}), ...c.was }, c.add || '');
     }
     for (const [tid, c] of Object.entries(imp.lists)) {
       const L = EDITABLE_LISTS[tid];
@@ -8563,7 +8879,8 @@
       const a = mappingChanges.rules[id];
       const b = plan.changes.rules[id];
       const kind = !a ? 'new' : !b ? 'removed' : 'changed';
-      const fields = ruleFieldsOf(id).filter((f) => encJson(fieldWith(mappingChanges, id, f)) !== encJson(fieldWith(plan.changes, id, f)));
+      // [121b] (3.34.21) a rule of your own that only the import has
+      const fields = (RULE_FIELDS[ruleKindOf(id) || ownDataKind(id, plan.changes)] || []).filter((f) => encJson(fieldWith(mappingChanges, id, f)) !== encJson(fieldWith(plan.changes, id, f)));
       const inc = imp.rules[id];
       const conflict = inc && imp.from === 'changes' ? Object.keys(inc.set).filter((f) => f in inc.was && encJson(inc.was[f]) !== encJson(builtinField(id, f))) : [];
       li(kind, id, `${fields.map((f) => `${esc(tr(`mapping.field.${f}`))} ${fieldChangeHtml(f, fieldWith(mappingChanges, id, f), fieldWith(plan.changes, id, f))}`).join(' · ')}
@@ -8890,6 +9207,7 @@
         placeWindow(el, saved && saved.w >= 160 && saved.h >= 100 ? saved : defaultGeom('rules'), true);
       }
       el.style.zIndex = String(++topZ);
+      ocrKeepOnTop();
     }
     const tools = el.querySelector('[data-rf="head-tools"]');
     if (tools) tools.innerHTML = rulesHeadToolsHtml();
@@ -9078,6 +9396,15 @@
           else openListEdit(lo.dataset.leditOpen);
           renderRulesBody();
           const f = el.querySelector('[data-ledit-text]');
+          if (f) f.focus({ preventScroll: true });
+        }
+        // [121b] (3.34.21) "＋ New rule" (again: closed)
+        const rn = t.closest('[data-redit-new]');
+        if (rn) {
+          if (S.ruleEdit && S.ruleEdit.add === rn.dataset.reditNew && !mappingChanges.rules[S.ruleEdit.id]) S.ruleEdit = null;
+          else openNewRule(rn.dataset.reditNew);
+          renderRulesBody();
+          const f = el.querySelector('[data-rnew] [data-redit] textarea, [data-rnew] [data-redit] input[type=text]');
           if (f) f.focus({ preventScroll: true });
         }
         if (t.closest('[data-redit-save]')) saveRuleEdit();
@@ -10507,6 +10834,53 @@
     return { text, origin };
   }
 
+  // [130c] (3.34.22) the crop of a line at most this large (px)
+  const OCR_CROP_W = 640;
+  const OCR_CROP_H = 160;
+  const ocrLineKey = (t) => String(t || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+  /** [130c] (3.34.22) A line's place cut out of its image as a small JPEG (data: address); '' if it cannot be. */
+  function ocrCrop(canvas, box) {
+    try {
+      const pad = Math.max(4, Math.round(box.h * 0.25));
+      const x = Math.max(0, Math.floor(box.x - pad));
+      const y = Math.max(0, Math.floor(box.y - pad));
+      const w = Math.min(canvas.width - x, Math.ceil(box.w + 2 * pad));
+      const h = Math.min(canvas.height - y, Math.ceil(box.h + 2 * pad));
+      if (w < 2 || h < 2) return '';
+      const k = Math.min(1, OCR_CROP_W / w, OCR_CROP_H / h);
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(w * k));
+      c.height = Math.max(1, Math.round(h * k));
+      c.getContext('2d').drawImage(canvas, x, y, w, h, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.85);
+    } catch (e) {
+      return '';
+    }
+  }
+
+  /**
+   * [130c] (3.34.22) Where each line of the text read is (collected item 130c; maintainer: "was verbirgt sich hinter 130c?"):
+   * { text, lines: Map(line in small letters → [{ what: the image, crop, text }]) }, the crops made now while the images are
+   * there – in memory only, for this import (S.ocrLines).
+   */
+  function ocrLineOrigins(text) {
+    const lines = new Map();
+    for (const r of S.ocr.results.filter((x) => x.status === 'done')) {
+      const what = ocrTypes(r.img);
+      for (const pt of r.parts || []) {
+        String(pt.text || '').split('\n').forEach((t, n) => {
+          const key = ocrLineKey(t);
+          if (!key) return;
+          const hit = pt.lines && pt.lines.length ? ocrLineFor(pt.lines, t, n) : null;
+          const crop = hit && hit.box && r.img.canvas ? ocrCrop(r.img.canvas, hit.box) : '';
+          lines.set(key, [...(lines.get(key) || []), { what, crop, text: t.trim() }]);
+        });
+      }
+    }
+    return { text, lines };
+  }
+
   function ocrImport(supp) {
     const { text, origin } = ocrText();
     if (!text.trim()) {
@@ -10514,6 +10888,8 @@
       return;
     }
     log('info', 'ocrImported', { origin, how: tr(supp ? 'ocr.supp' : 'ocr.import') });
+    // [130c] (3.34.22) the image and the place of each line, for the rows of this text (not of a supplement)
+    if (!supp) S.ocrLines = ocrLineOrigins(text);
     closeOcr();
     // [3.34.8] opened with "… from cover art" (nothing imported yet): the release is loaded now, with this text as its source
     if (!S.initialized) {
@@ -12435,6 +12811,82 @@
     refreshRowDetails(row);
   }
 
+  /**
+   * [Q011] (3.34.20) "Voice" alone in a pasted text or Bandcamp credits (collected item 137d; maintainer: "auf vocals ebene lässt
+   * sich kein Role Credit vergeben. Daher kann man bei voice auch "other vocals" oder "lead vocals" jeweils mit role credit
+   * voice vorschlagen. als rückfrage"): asks vocals · other vocals “voice” · lead vocals “voice”; until then plain vocals
+   * without role credit. Discogs keeps spoken vocals (R015).
+   */
+  function askVoice(row) {
+    if (row.ruleId !== 'R015' || norm(row.base) !== 'voice' || (row.mods || []).length || !ruleOn('Q011')) return;
+    Object.assign(row, { askVoice: true, primaryText: '', primaryTouched: false });
+    refreshRowDetails(row);
+  }
+
+  /** [137d] (3.34.20) Levenshtein distance of a and b, max + 1 once it is larger than max. */
+  function editDistance(a, b, max) {
+    if (Math.abs(a.length - b.length) > max) return max + 1;
+    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      let low = i;
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        low = Math.min(low, cur[j]);
+      }
+      if (low > max) return max + 1;
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+
+  /**
+   * [137d] (3.34.20) MusicBrainz instruments like a word that is none (collected item 137d): its name or one of its other
+   * names two letters off at most (one for words of four or five letters: "Chaims" → chimes), or a word of it so ("wind
+   * chimes", tubular bells as "orchestral chimes"); the closest first, five at most. "other instruments" is never one of them.
+   */
+  function similarInstruments(word, most = 5) {
+    const lt = typesFor('recording').find((l) => norm(l.name) === 'instrument');
+    const root = lt ? primaryRootOf(lt) : null;
+    const kids = root ? idx().children.get(root.id) : null;
+    const w = norm(word);
+    const lim = w.length >= 6 ? 2 : w.length >= 4 ? 1 : 0;
+    if (!kids || !lim) return [];
+    const best = new Map();
+    for (const [key, a] of kids) {
+      if (norm(a.name) === 'other instruments') continue;
+      let d = editDistance(w, key, lim);
+      if (d > lim && key.includes(' ')) d = Math.min(d, ...key.split(' ').filter((x) => x.length >= 4).map((x) => editDistance(w, x, lim) + 0.5));
+      if (d > lim + 0.5) continue;
+      if (!best.has(a.name) || d < best.get(a.name)) best.set(a.name, d);
+    }
+    return [...best.entries()].sort((x, y) => x[1] - y[1] || x[0].length - y[0].length || x[0].localeCompare(y[0])).slice(0, most).map(([n]) => n);
+  }
+
+  /**
+   * [137d] (3.34.20) A word of a list of instruments that MusicBrainz does not know ("Chaims", "Buddha machine"; S051): the
+   * row asks for the similar instruments (similarInstruments) and "other instruments" credited as written – nothing is
+   * assumed –; with none like it, "other instruments" credited as written at once (maintainer: "falls keine ähnlichen
+   * vorschläge vorhanden sind, kann "other instruments" mit role credit vergeben werden"). Without "other instruments" in
+   * MusicBrainz and without similar ones: miscellaneous support, as before.
+   */
+  function guessInstrument(row) {
+    const word = String(row.base || row.raw || '').trim();
+    const lt = currentLinkType(row);
+    const root = lt ? primaryRootOf(lt) : null;
+    if (!root || !word || primaryIsValid(row)) return;
+    const options = similarInstruments(word);
+    const other = findChildAttr(root.id, 'other instruments');
+    if (!options.length && !other) {
+      makeMiscRow(row, word);
+      refreshRowDetails(row);
+      return;
+    }
+    row.instrGuess = { word, options, other: other ? other.name : '' };
+    if (!options.length) Object.assign(row, { primaryText: other.name, primaryTouched: true });
+    refreshRowDetails(row);
+  }
+
   /** [T035] The kinds of media of the release, from MusicBrainz's formats: 'digital', 'cd', 'vinyl', 'cassette', 'other'. */
   const releaseMediaKinds = () => new Set([...((S.mediaInfo && S.mediaInfo.values()) || [])].map((m) => formatKind(m.format || '')));
   /** [S026] A medium the release does not have (its media all of known formats): credits for it are left out. */
@@ -12922,6 +13374,8 @@
     if (splitArtTasks(p).length > 1) return true;
     const m = mapRole(p.base, p.mods);
     if (m.rule && m.rule !== 'R096' && !m.fallback) return true;
+    // [121b] (3.34.21) a word a question asks about ("keys" of a question of your own: keyboard, synthesizer …)
+    if (ruleOn('S005') && !p.mods.length && QUESTION_RULES.some((q) => ruleOn(q.id) && q.base === norm(p.base))) return true;
     const lt = typesFor('recording').find((l) => norm(l.name) === 'instrument');
     const root = lt ? primaryRootOf(lt) : null;
     // [3.21.2] a translation: the candidates of its English term
@@ -13109,12 +13563,15 @@
         };
         S.artists.set(artist.key, artist);
         for (const c of g.roles.values()) {
-          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '' });
+          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '', guess: !!c.guess });
           if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
           if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
           row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
           // [3.21.4] "Translated By" in Bandcamp credits asks (Q007); [S026] a credit for a medium the release does not have
           if (source === BANDCAMP) askTranslation(row);
+          // [137d] (3.34.20) "Voice" in a text asks (Q011); a word MusicBrainz does not know as an instrument asks for similar ones
+          if (source === BANDCAMP || source === TEXT) askVoice(row);
+          if (c.guess) guessInstrument(row);
           if (leftOutForMedium(row, rel, (c.lines || [])[0] || `${g.name} – ${c.role.raw}`, !!source.nameSearch)) {
             leftOutKeys.add(artist.key);
             continue;
@@ -14618,6 +15075,23 @@
     return out.join('');
   }
 
+  /**
+   * [130c] (3.34.22) A row of a text read from the cover art: "From the cover art · Booklet" – and ⓘ, which shows where its line
+   * is in the image (the crops made at the import; collected item 130c).
+   */
+  function coverFromHtml(row) {
+    const o = S.ocrLines;
+    if (!o || row.supp || S.source !== TEXT || !S.textInput || S.textInput.text !== o.text) return '';
+    const hits = uniq((row.srcRefs || []).map((r) => ocrLineKey(r.line))).flatMap((k) => o.lines.get(k) || []);
+    if (!hits.length) return '';
+    const crops = hits.filter((h) => h.crop);
+    const open = crops.length && S.cropOpen.has(row.id);
+    const btn = crops.length ? ` <button type="button" class="dci-textbtn dci-info dci-crop-btn" data-act="cover-crop" aria-expanded="${!!open}" title="${esc(tr('cover.cropTitle'))}" aria-label="${esc(tr('cover.cropTitle'))}">ⓘ</button>` : '';
+    return `<div class="dci-sub dci-coverfrom">${esc(tr('cover.from', { what: uniq(hits.map((h) => h.what)).join(', ') }))}${btn}${open
+      ? `<div class="dci-coverfrom-crops">${crops.slice(0, 4).map((h) => `<figure><img src="${esc(h.crop)}" alt="${esc(h.text)}"><figcaption>${esc(h.what)}: ${esc(h.text)}</figcaption></figure>`).join('')}</div>` : ''}</div>`;
+  }
+  S.cropOpen = new Set();
+
   /** [3.31.6] Tracks set from the notes: ⓘ with the line they come from (item 97c). */
   const notesFromHtml = (row) => (row.notesFrom ? `<div class="dci-sub dci-notesfrom"><span class="dci-info" title="${esc(tr('matrix.notesFrom', { text: row.notesFrom }))}">ⓘ</span> ${esc(tr('role.notesTracks', { list: trackListLabel(row.notesTracks || new Set()) }))}</div>` : '');
 
@@ -14638,7 +15112,7 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}${typoHtml(row)}
-        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
+        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec && !(row.dSpecTracks && row.notesFrom) ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
@@ -14650,7 +15124,7 @@
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
       <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
-        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
+        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
       <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
       ${notes}`;
@@ -16739,6 +17213,32 @@
       <span class="dci-sub">${esc(row.translated ? tr('instrAsk.otherwiseTr', { credit: q.credit, word: row.translated }) : tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
 
+  /**
+   * [137d] (3.34.20) A word MusicBrainz does not know as an instrument: "did you mean" its similar instruments · other
+   * instruments credited as written (the one chosen pressed); with none like it, what was given.
+   */
+  function instrGuessHtml(row) {
+    const g = row.instrGuess;
+    if (!g || row.level === 'skip') return '';
+    if (!g.options.length) return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.none', { word: g.word, other: g.other }))}</div>`;
+    const pick = (name, label) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}" aria-pressed="${norm(row.primaryText) === norm(name)}">${esc(label)}</button>`;
+    const chosen = primaryIsValid(row) && !!norm(row.primaryText);
+    const opts = [...g.options.map((n) => pick(n, n)), ...(g.other ? [pick(g.other, tr('instrGuess.other', { other: g.other, word: g.word }))] : [])];
+    return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(chosen ? 'instrGuess.chosen' : 'instrGuess.ask', { word: g.word }))} ${opts.join(' · ')}</div>`;
+  }
+
+  /** [Q011] (3.34.20) "Voice" answered, the role credit empty, a voice chosen: "voice" offered as its role credit. */
+  function voiceCreditHtml(row) {
+    if (!row.askVoice || row.level === 'skip' || row.typeAnswer == null || String(row.roleCredit || '').trim() || !norm(row.primaryText)) return '';
+    return `<div class="dci-sub dci-voice-credit">${esc(tr('voiceCredit.from'))} <button type="button" class="dci-textbtn" data-act="voice-credit">${esc(tr('voiceCredit.use', { word: norm(row.base) }))}</button></div>`;
+  }
+
+  /** [Q011] The offer after the voice or the role credit was typed (the row is not drawn anew then). */
+  function updateVoiceCredit(row) {
+    const slot = row.askVoice && S.overlay && S.overlay.querySelector(`tr.dci-row[data-row="${row.id}"] .dci-voice-slot`);
+    if (slot) slot.innerHTML = voiceCreditHtml(row);
+  }
+
   /** The instrument chosen in a question (Q001 …); [3.32.3] also from the compact line. Counts as made by hand: it stays when the rules change. */
   function pickInstrument(row, name) {
     if (!row || !name) return;
@@ -16772,6 +17272,8 @@
     resolveRowType(row);
     // [3.21.2] with its instrument or voice ("alto": viola, alto saxophone, alto vocals – Q006)
     if (o.instrument) Object.assign(row, { primaryText: o.instrument, primaryTouched: true });
+    // [Q011] (3.34.20) plain vocals: no voice
+    if (o.plain) Object.assign(row, { primaryText: '', primaryTouched: true });
     refreshRowDetails(row);
     log('info', 'typePicked', { role: row.raw || row.base, type: o.label || o.type });
     // [3.21.0] a work level (Q005 "lyricist"): the row leaves its entry for the works matrix, which is drawn again
@@ -16813,7 +17315,7 @@
     return `
       <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
         <td class="dci-c-cline">${clineHtml(row, S.rowInfo && S.rowInfo.get(row.id))}</td>
-        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${typeAskHtml(row)}</td>
+        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}</td>
         <td class="dci-c-type"><div class="dci-cap">${esc(tr('th.type'))}</div>${typeCell(row)}</td>
         <td class="dci-c-attr"><div class="dci-cap">${esc(tr('th.attrs'))}</div>${attrCell(row)}</td>
         <td class="dci-c-level"><div class="dci-cap">${esc(tr('th.level'))}</div>${levelCell(row)}</td>
@@ -16893,6 +17395,11 @@
       // [3.32.3] the questions whole and to click (item 102)
       if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
       if (tq && row.typeAnswer == null) parts.push(clineAskHtml('type', tr('cl.typeAsk'), tq.options.map((o, i) => ({ value: String(i), text: o.label || o.type }))));
+      // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
+      const g = row.instrGuess;
+      if (g && g.options.length && !(primaryIsValid(row) && norm(row.primaryText))) {
+        parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: g.word }) }] : [])]));
+      }
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
     }
@@ -21580,6 +22087,18 @@
       case 'instr-pick':
         pickInstrument(row, btn.dataset.instr);
         break;
+      case 'cover-crop':
+        // [130c] (3.34.22) the crops of the row's lines, shown or hidden
+        if (S.cropOpen.has(row.id)) S.cropOpen.delete(row.id);
+        else S.cropOpen.add(row.id);
+        rerenderRow(row);
+        break;
+      case 'voice-credit':
+        // [Q011] (3.34.20) "voice" as the role credit of another voice
+        Object.assign(row, { roleCredit: norm(row.base), roleCreditTouched: true });
+        rerenderRow(row);
+        refresh();
+        break;
       case 'other-create':
         startOtherCreate(artist);
         break;
@@ -22417,6 +22936,7 @@
         row.primaryTouched = true;
         updateMark(row);
         updateHint(row);
+        updateVoiceCredit(row);
         refresh();
         break;
       case 'credit':
@@ -22428,6 +22948,7 @@
         row.roleCredit = el.value;
         row.roleCreditTouched = true;
         updateHint(row);
+        updateVoiceCredit(row);
         refresh();
         break;
       case 'artist-pick': {
@@ -22916,6 +23437,19 @@
   function bringToFront(kind) {
     const el = kind === 'panel' ? S.overlay : kind === 'rules' ? document.getElementById('dci-rules') : kind === 'ocr' ? document.getElementById('dci-ocr') : S.logEl;
     if (el) el.style.zIndex = String(++topZ);
+    if (kind !== 'ocr') ocrKeepOnTop();
+  }
+
+  /**
+   * [138] (3.34.18) The window "Text from cover art" stays above the dashboard, the log and the rules: raised again after
+   * each of them (its larger view above it). Before, a click into the dashboard hid it behind it.
+   */
+  function ocrKeepOnTop() {
+    const o = document.getElementById('dci-ocr');
+    if (!o || o.hidden) return;
+    o.style.zIndex = String(++topZ);
+    const peek = document.getElementById('dci-ocr-peek');
+    if (peek && !peek.hidden) peek.style.zIndex = String(topZ + 1);
   }
 
   /** Drag by the title bar; the size is changed with the grip in the lower right corner. Both are remembered. */
@@ -24535,6 +25069,9 @@
       #dci-rules .dci-redit-btn:hover { border-color: #8e88c2; background: #f4f3fb; }
       #dci-rules .dci-changed { padding: 0 calc(var(--u, 1px) * 6); border-radius: 999px; background: #e6e3f5; color: #3e3873; font-size: calc(var(--u, 1px) * 11); white-space: nowrap; }
       #dci-rules .dci-changed.dci-conflict { background: #fdecd2; color: #7a4a00; }
+      #dci-rules .dci-changed.dci-own, #dci-rules .dci-mchg-own { background: #e2f1e5; color: #1e6b35; }
+      #dci-rules .dci-mchg-own { padding: 0 calc(var(--u, 1px) * 6); border-radius: 999px; font-size: calc(var(--u, 1px) * 11); white-space: nowrap; }
+      #dci-rules h3 .dci-rnew-btn { font-weight: normal; font-size: calc(var(--u, 1px) * 12); margin-left: calc(var(--u, 1px) * 6); }
       #dci-rules .dci-codetag { font-size: calc(var(--u, 1px) * 11); }
       #dci-rules tr.dci-rchanged > td { background: #f7f5fd; }
       #dci-rules tr.dci-redit-row > td { background: #faf9fd; }
@@ -25028,6 +25565,11 @@
       .dci-livecom-warn { color: #b3261e; }
       /* [3.32.5] a role read with a typo corrected (S050) */
       .dci-typo { color: #8a5a00; }
+      .dci-coverfrom .dci-crop-btn { padding: 0 calc(var(--u, 1px) * 3); }
+      .dci-coverfrom-crops { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); margin-top: calc(var(--u, 1px) * 4); }
+      .dci-coverfrom-crops figure { margin: 0; max-width: 100%; }
+      .dci-coverfrom-crops img { display: block; max-width: 100%; height: auto; border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; }
+      .dci-coverfrom-crops figcaption { font-size: calc(var(--u, 1px) * 11); color: #5d5a6e; }
       .dci-type-ask [aria-pressed="true"] { font-weight: 700; text-decoration: none; }
       .dci-incomplete { white-space: nowrap; }
       .dci-incomplete .dci-textbtn { color: inherit; font-weight: 600; }
