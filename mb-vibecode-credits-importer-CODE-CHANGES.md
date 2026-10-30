@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.37.5, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.37.6, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.37.6 · 2026-10-30
+
+"Remove nonsensical words and signs" in the window "Text from cover art" (156).
+
+- **New** `OCR_KEEP_SIGNS`, `OCR_SEP_SIGNS`, `OCR_VOWEL`, `OCR_SHORT_WORDS`, `ocrCore`; **`ocrNonsenseWord(tok)`** (a word read uncertainly – in `pt.unsure` – that is no word: signs among its letters, digits among letters except numbers, positions, years, "2nd"; one letter except an initial; no vowel; three same letters), **`ocrSignJunk(tok, i, toks)`** (signs without letters or digits, not those kept; • · | only between two words).
+- **`ocrCutText(pt)`** → `{ text, cut }`: per line the tokens dropped, as runs `{ n, before, after, text }` (the kept neighbours) and whole lines `gone: [{ n, text }]`; `cut.n` the number. **`ocrUncutText(pt)`**: the lines put back first, then each run between its neighbours (line n first, then the others), else after the word before it, before the word after it, at the end of line n. **`ocrNonsense(results, on)`** (`r.clean`, `pt.cut`; named so beside the corrector `ocrClean`), **`ocrCleanSync()`** (the text fields, the switches, "n removed", the struck buttons `dci-ocr-word-cut`, without drawing the window anew), `ocrCutWords`, `ocrCleanCount`, `ocrCleanNote`.
+- **`ocrResultHtml`:** below each image's name `.dci-ocr-cleanbox` with `data-ocr-clean="i"` (aria-pressed) and `data-ocr-cleann="i"`; in the foot `data-ocr="clean-all"` with `data-ocr-cleann="all"`. **`ocrPartHtml`:** a word taken out struck through. **`ocrClick`:** both switches. **Store of the window** (3.37.5): `clean` per result, `cut` per part.
+- **CSS:** `.dci-ocr-word-cut`, `.dci-ocr-cleanbox`, `.dci-ocr-clean[aria-pressed="true"]`.
+- **Texts (English only):** `ocr.clean`, `ocr.cleanTitle`, `ocr.cleanAll`, `ocr.cleanN.one/other`, `ocr.cleanNone`.
+- **Tests:** `t_coverart.py` new case `ocrnonsense`.
 
 ## Import 3.37.5 · 2026-10-30
 

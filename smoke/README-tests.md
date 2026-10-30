@@ -543,6 +543,9 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     "An own file was used: credits.png – add it again", added: its card back, ticked; "To the texts read";
                                 #     1200 px: the places fit; the list of the release failing after a reload erases nothing;
                                 #     "↺ Start over": as at first, nothing stored; remembering off: kept only until the reload
+                                #   ocrnonsense: 3.37.6: "Remove nonsensical words and signs" – the Back's switch: "~", "|" at a line's end, a
+                                #     line of signs, uncertain words without a vowel go ("7 removed", struck), » | between words, ℗, sure words
+                                #     stay; a word added by hand, off: all back in place, the word stays; the switch for all (8); imported on
                                 #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,
                                 #     those set by hand stay; switched on in ⚙ Settings with the window open – ticked at once, and when
                                 #     opened again; 30 booklet pages, loading ahead on: 2 load, 22 wait, 6 not ahead

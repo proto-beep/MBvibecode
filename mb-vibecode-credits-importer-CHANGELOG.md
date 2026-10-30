@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.5 | – |
+| 2026-10-30 | 3.36.4 – 3.37.6 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.6
+
+#### Added
+
+- **Remove nonsensical words and signs** (collected item 156; maintainer: "gibt es eine möglichkeit beim textimport aus bildern "delete nonsensical words and signs" (erneuter klick holt text zurück)", "je Bild und unten in der leiste für alle bilder. Eigene Änderungen so wie du vorschlägst."): in "Text from cover art" a switch for each image and one in the bar for all takes out the words read uncertainly that are no word (signs or digits among the letters, no vowel, a letter alone, three same letters) and groups of signs without letters; : – , ; / & » « ( ) ℗ © and • · | between words stay. "7 removed"; again, everything comes back where it was – what was changed by hand in between stays.
 
 ### Import 3.37.5
 
