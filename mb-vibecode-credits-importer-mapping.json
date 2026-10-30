@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.37.6",
+  "version": "3.37.12",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
   "CHECKBOX_DETAILS": [
@@ -183,7 +183,7 @@
     {"id":"R075","kind":"simple","note":"","re":{"$re":"^(drawing|drawings by)$","$flags":""},"types":["illustration"],"level":"release","credit":true},
     {"id":"R076","kind":"simple","note":"","re":{"$re":"^(film director|video director|director)$","$flags":""},"types":["video director"],"level":"release"},
     {"id":"R077","kind":"simple","note":"","re":{"$re":"^(design|designed by|design by|layout|cover design|sleeve design|package design|packaging)$","$flags":""},"types":["design","design/illustration","graphic design"],"level":"release"},
-    {"id":"R078","kind":"simple","note":"","re":{"$re":"^(illustration|illustrated by|illustrations|drawings|painting|paintings|cover illustration)$","$flags":""},"types":["illustration","design/illustration"],"level":"release"},
+    {"id":"R078","kind":"simple","note":"","re":{"$re":"^(illustration|illustrated by|illustrations|drawings|painting|paintings|painted by|cover painting|cover paintings|cover illustration)$","$flags":""},"types":["illustration","design/illustration"],"level":"release"},
     {"id":"R079","kind":"simple","note":"","re":{"$re":"^(artwork|artwork by|art)$","$flags":""},"types":["artwork","design/illustration"],"level":"release"},
     {"id":"R080","kind":"simple","note":"","re":{"$re":"^(art direction|art director|art directed by)$","$flags":""},"types":["art direction"],"level":"release"},
     {"id":"R081","kind":"simple","note":"","re":{"$re":"^(creative direction|creative director)$","$flags":""},"types":["creative direction","art direction"],"level":"release","credit":true},
@@ -445,6 +445,7 @@
   "TEXT_GUEST_HEAD": {"$re":"^(?:special\\s+guests?|guests?|gäste|gast|invitée?s?|invitad[oa]s?)$","$flags":"iu"},
   "TEXT_FEAT_HEAD": {"$re":"^(?:featuring|feat\\.?|ft\\.?|with)$","$flags":"i"},
   "TEXT_CREDIT_SEPS": {"$re":"\\s+[»«•·|]\\s+","$flags":"u"},
+  "TEXT_FESTIVAL_WORDS": {"$re":"(?<![\\p{L}])\\p{L}*(?:festival|festspiele|jazzfest)\\p{L}*(?![\\p{L}])","$flags":"iu"},
   "TEXT_WHAT_WORDS": {"$re":"^(?:the\\s+)?(?:music|songs?|album|tracks?|record|recordings?|everything|all)\\s+(?=\\p{L}+ed$)","$flags":"iu"},
   "TEXT_WHAT_PREFIX": {"$re":"^(?:all\\s+)?(?:the\\s+)?(?:music|songs?|album|tracks?|record|recordings?|material|pieces?|compositions?|everything|all)\\s+(?:(?:was|were|is|are)\\s+)?(?=\\p{L}+ed\\b)","$flags":"iu"},
   "TEXT_PACKAGE": {"$re":"^(?:including|includes|incl\\.?|comes\\s+with|with)\\s+(?:an?\\s+|the\\s+)?(?:\\d+[\\s-]*(?:p\\.?|pp\\.?|pages?|seiten|s\\.)\\s+)?(?:(?:full[\\s-]colou?r|colou?r|printed|illustrated|extensive|deluxe|\\d+[\\s-]?panel)\\s+)*(?:booklet|poster|insert|inlay|obi|sticker|postcard|print|download\\s+(?:code|card)|liner\\s+notes)\\b","$flags":"i"},
@@ -768,6 +769,7 @@
     ["mix",{"$re":"\\bmix(ed|ing)?\\b|abgemischt|mezcl|mixag","$flags":"i"}],
     ["copyright",{"$re":"℗|©|\\(p\\)|\\(c\\)|copyright|phonographic","$flags":"i"}],
     ["performance",{"$re":"\\brecord(ed|ing|ings)?\\b|\\brec\\.|\\blive at\\b|\\bsessions?\\b|aufgenommen|aufnahme|grabad|enregistr|\\bconcert|\\bkonzert","$flags":"i"}],
+    ["artwork",{"$re":"\\bcover\\s+(?:painting|art(?:work)?|illustration|drawing|design)s?\\b|\\bpaint(?:ing|ings|ed)\\b|\\billustrat(?:ion|ions|ed)\\b|\\bdrawings?\\b|\\bartwork\\b|\\bgemälde\\b|\\bzeichnung(?:en)?\\b|\\bpeinture\\b|\\bpintura\\b","$flags":"i"}],
     ["issue",{"$re":"\\b(?:re-?)?(?:issued|released)\\b|\\bfirst (?:issued|released|published)\\b|veröffentlicht|erschienen|\\bpublicad[oa]\\b|\\beditad[oa]\\b|\\bpublié|\\bsorti\\b","$flags":"i"}]
   ],
   "TEXT_MONTHS": {"$re":"\\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?(?=\\s|$)","$flags":"gi"},

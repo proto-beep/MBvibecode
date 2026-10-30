@@ -75,7 +75,7 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # texts only after the import of the release is complete – before, their end depended on the timing)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
-                                # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
+                                # on purpose, 1988 in the pool (3.37.9: the artwork's year; before: none); "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
                                 # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
                                 # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                                 # with a studio's profile
@@ -195,6 +195,13 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #   linkedsugg: 3.37.1 (E5a): a name whose artist MusicBrainz links to this release (mix on the release) – that
                                 #     artist first among the suggestions, solid green and bold, "in this release: …", before a namesake; the log; a label of
                                 #     the same name not offered the artist
+                                #   festival: 3.37.8: "Recorded June, 26, 1993 at the Western Front Lodge, … during the … International Jazz
+                                #     Festival Vancouver" – the day, the place without "the"; the hint, the event of 1993 offered (not 1994),
+                                #     nothing set; its button: an event entry in plum; ⚙ Appearance "Event"; a pasted festival without a
+                                #     date: the hint alone, "Royal Festival Hall" none
+                                #   pcperson: 3.37.10: ℗ / © of the Discogs label "Martin Davidson" (unknown to MB) – the producer Martin Davidson
+                                #     takes them (hint, "As the label instead" gives them back); linked in MB only: the entry is that artist;
+                                #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
@@ -207,8 +214,15 @@ python3 t_notes_dates.py        # Discogs notes: dates and track groups found in
                                 #   trackpool: dates for some tracks: suggestions in the matrix, Apply splits rows, applying again, several days
                                 #   reldate: date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level
                                 #     takes the matching date, a date typed by hand stays, the mark stored with the matrix
+                                #   trackside: 3.37.7: "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" (A1, A2, A3, B) – the date on
+                                #     track B only, Zojoji Hall (Tokyo) from the notes on B; listed by Discogs: its entry with B; a pasted
+                                #     "Tracks A2 & B:" on tracks 2 and 4
+                                #   artwork: 3.37.9: "Cover Painting: “View at Nice” (1992)" – the column Artwork, applied to Mary Vernon's
+                                #     illustration (R078), not to the photographer; "Photography By [Live Photos]": the concert's date suggested, ✓
                                 #   lcdmenu: 3.32.7: ▾ at the month D022 placed – single days (a cell each; Apply: a row per day), the period
                                 #     (one cell; opening ▾ adds nothing to the pool), the month
+                                #   periodsplit: 3.37.12: "19 & 20. 01. 2009" – the period chosen keeps a ▾ (2 single days, the month) → two
+                                #     cells; a period of the pool: "⇢ 2 days" adds its days (log)
 
 python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging dates and track groups, the pools
                                 #   matrix: date matrix by hand: drag & drop, grip + "place here", editor, auto apply, stamp, after reload
@@ -323,6 +337,7 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), [3.32.2] the
                                 #     release's spelling "B. Man*" in the head (tooltip "Discogs: Bass Man") instead of the chip "as “B. Man”",
                                 #     a row credited otherwise "as “Bassman”", the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
+                                #     3.37.11: the chip "artist credit in MusicBrainz: “B. Man” (the Discogs spelling *)", the * explained
                                 #   manualtop: "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
                                 #     page), an entry added from there is shown
                                 #   msgs: messages (3.27.3): ✕ on each, "▾ n messages" folds them, a new error unfolds, a fresh import shows them again
@@ -334,6 +349,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the compact view stored before – no arrow
                                 #   keys: 3.36.3: ⌨ in the head shows all keyboard shortcuts (groups, the keys of this computer, as a Mac ⌥ ⌃ ⌘ ↩),
                                 #     Esc and ✕ close them, the focus back on ⌨
+                                #   anvcredit: 3.37.11: "Kenneth Ansell*" (Ken Ansell) in the matrix view – the chip "artist credit in MusicBrainz:
+                                #     “Kenneth Ansell” (the Discogs spelling *)", the field, the log; emptied: no chip
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
@@ -387,6 +404,7 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   clineask: 3.32.3: a type question in the compact line ("Directed By": four buttons), chosen there, the row closed
                                 #   kindcolors: 3.32.4: the heads of the works matrix in the colours of their kinds (Writer W artist, Pub Co label,
                                 #     with the tag), ⚙ Settings → Appearance: own artist colour (entry and head follow, stored), off → grey, ↺
+                                #     3.37.8: the colour Event (plum) among them
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset

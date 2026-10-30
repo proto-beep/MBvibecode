@@ -1,14 +1,14 @@
 """Credits Importer 3.21.0: text recognition, part 1 – a corpus of credits lines (text_corpus.json; golden test).
 A) In Node: every line of the corpus through the text adapter (credits, companies, web links, not recognized, left out on
    purpose) equals its stored reading ('expect'; UPDATE=1 writes it anew after a change that is meant). Lines marked
-   'later' are stored as they are read today (none since 3.22.0). The dates: "“Madison” 1988" gives none (D016), "© 2023"
-   does. [3.22.0] A credit with the titles it is for ("on “A”, “B”", T036), a place or area with the larger areas
+   'later' are stored as they are read today (none since 3.22.0). The dates: "“Madison” 1988" gives none (D016) – [3.37.9]
+   after "Cover art:" it is the artwork's year (collected item 159) –, "© 2023" does. [3.22.0] A credit with the titles it is for ("on “A”, “B”", T036), a place or area with the larger areas
    after it ("(Asturies, Spain)", T037).
 B) In the dashboard, the Maya Recordings credits pasted as a text: one line with four sentences gives Albert Irvin (cover
    art – the title and its year, "courtesy of …" left out), Jonas Schoder, Evan Parker ("Text": the question liner notes
    or lyrics, nothing assumed), Maya Homburger and Barry Guy (produced); "P + ©" gives ℗ and © for Maya Recordings
    (without the address, "DDD" and "· MCD 2301"); thanks and the strings are listed as left out on purpose, nothing as
-   not recognized; the date pool has 2023 but not 1988.
+   not recognized; the date pool has 2023 and ([3.37.9] the artwork's year) 1988.
 C) "Logo by Cole Barrington instagram.com/blueeyedhorse84": the name without the address, design with the credit "logo";
    the profile is shown at the entry, MusicBrainz has an artist with it – the first suggestion, marked "via
    instagram.com", nothing assigned.
@@ -89,7 +89,7 @@ for d in diff:
     print('A) ABWEICHUNG:', d)
 years = [d for d in res['dates'] if '"year":1988' in d]
 print('A) Zeilen:', len(corpus['lines']), '| Abweichungen:', len(diff), '| Daten mit 1988:', years, '| mit 2023:', any('"year":2023' in d for d in res['dates']))
-results.append(not diff and not years and any('"year":2023' in d for d in res['dates']))
+results.append(not diff and len(years) == 1 and years[0].startswith('D016 ') and any('"year":2023' in d for d in res['dates']))
 
 COLE = H.uid('cccccccc', 77)
 H.WEB_URLS['https://www.instagram.com/blueeyedhorse84/'] = (COLE, 'Cole Barrington')
@@ -135,7 +135,7 @@ with sync_playwright() as p:
         and sorted(roles('Maya Recordings')) == ['Copyright (c)', 'Phonographic Copyright (p)'] \
         and 'liner notes' in g['Evan Parker']['rows'][0][3] and 'lyricist' in g['Evan Parker']['rows'][0][3] \
         and unrec == [] and ign_title == '2 lines left out on purpose' and ign[0].startswith('Thanks to Mike Eden') and ign[1].startswith('Barry Guy plays') \
-        and any('"year":2023' in d for d in pool) and not any('"year":1988' in d for d in pool)
+        and any('"year":2023' in d for d in pool) and any('"year":1988' in d for d in pool)
     # C) the logo, its profile and the suggestion through it
     cole = g.get('Cole Barrington', {})
     logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'web link' in x]

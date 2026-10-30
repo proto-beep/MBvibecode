@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.6 | – |
+| 2026-10-30 | 3.36.4 – 3.37.12 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,49 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.12
+
+#### Added
+
+- **A period into its single days** (collected item 162; maintainer: "ich habe gerade "2009-01-19 - 2009-01-20" in einen pool gezogen und wollte dann die einzelnen tage haben, das ging aber nicht."): every cell of the date matrix with a period of 2 – 31 days has a ▾ – the single days (one relationship each) or the month / year – also one dragged there by hand (until 3.37.11 only the cells of a common month or year had it); in the date pool such a period has "⇢ 2 days", which adds its days.
+
+### Import 3.37.11
+
+#### Changed
+
+- **The Discogs spelling as the artist credit in MusicBrainz, visible** (collected item 161, Discogs 3139201 "Facets"; maintainer: "Kenneth Ansell* wurde so im Dashboard dargestellt, es war aber nicht ersichtlich, dass das Dashboard diesen Artist Credit auch für MB übernimmt (obwohl es das gemacht hat)"): the head of such an entry has the chip "artist credit in MusicBrainz: “Kenneth Ansell” (the Discogs spelling *)", the tooltip of the name explains the *, and the log names these credits once per import. Until 3.37.10 only "Kenneth Ansell*" was shown.
+
+### Import 3.37.10
+
+#### Added
+
+- **℗ / © of a person Discogs lists as a label** (collected item 160, rule S057; maintainer: "… soll der an anderer Stelle verknüpfte Martin Davidson auf artist ebene für die Copyrights eingetragen werden mit hinweis darauf, dass Discogs das als label führt …", "primär bei treffer im release, ansonsten vorschläge. wenn MB ein Label gleichen namens hat muss das auch in die auswahl. dass es sich label oder artist handelt muss in solchen seltenen fällen erkennbar sein."): a Discogs label with a person's name and only ℗ / ©, unknown to MusicBrainz by its link – a person of that name in the release takes its rows as an artist (with the hint and "As the label instead"); an artist of that name linked in the release in MusicBrainz becomes its entity; otherwise artists and labels of that name are offered, each named as such.
+
+### Import 3.37.9
+
+#### Added
+
+- **The dates of the artwork** (collected item 159, Discogs 1565448 "Cascades"; maintainer: "da wir außerdem "Painting [Cover Painting] – Mary Vernon (2)" haben, können wir bei Mary Vernon - illustration das datum hinzufügen. Painting ist übrigens immer illustration."): a new date group and matrix column **Artwork** (design/illustration, illustration, design, graphic design, art direction, artwork; release level). "Cover Painting: “View at Nice” (1992)" gives 1992 to Mary Vernon's illustration – until 3.37.8 a year after a title in quotation marks was no date. R078 also reads "Cover Painting(s)", "Painted By".
+- **Photographs of the concert** (maintainer: "manchmal gibt es bei foto-credits sowas wie "at the concert" oder so, dann kann das datum aus der performance gelesen werden. (mit transparenzhinweis)"): a photography credit with "Live Photos", "at the concert", "in concert" … gets the concert's date as a suggestion (✓ / ✕), its tooltip says why – when the Performance dates are one day.
+
+### Import 3.37.8
+
+#### Added
+
+- **Festival recordings** (collected item 158, rule S056; maintainer: "aus texteinträgen kann bei freitext und dann auch discogs text zumindest ein hinweis ausgegeben werden, der besagt, dass es sich um eine festivalaufnahme handelt und MB standardmäßig das Event dem Place vorzieht", "vielleicht dann wirklich nur bei festivals, wo der name passt und die sich im Zeitraum (Date period) befinden. und immer nur als angebot, nie vorbelegt."): a sentence with a festival in the notes or a pasted text gives a hint above the entries; MusicBrainz's events of that name whose time holds the date of the sentence are offered – a click adds one as an entry, nothing is set.
+- **A colour for events** (maintainer: "also brauchen wir dafür auch eine farbe", "die farbe passt"): plum, ⚙ Settings → Appearance "Event" (until 3.37.7 grey as "Other").
+
+#### Fixed
+
+- **"Recorded June, 26, 1993 …"** (Discogs 1565448 "Cascades"; maintainer: "aus "Recorded June, 26, 1993" wird nur 1993 als Datum ausgegeben"): a comma after the month is read (D004, D006, D007, D013); "at the Western Front Lodge" gives the place Western Front Lodge (an article written small is no part of the name).
+
+### Import 3.37.7
+
+#### Fixed
+
+- **"Track B recorded …"** (collected item 157, Discogs 3749161 "Assist"; maintainer: "das wird nicht zum korrekten track "B" zugeordnet"): a side alone after "Track(s)" is read – the source's position, else the whole side –, so the date of "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" goes to track B only (until 3.37.6 to all tracks); also "Tracks A2 & B:" in pasted texts.
+- **The place after its city** (maintainer: "ja, solche Orte sollen auch erkannt werden, sofern sie nicht schon durch Companies etc. verknüpft sind"): "in Tokyo, Zojoji Hall" gives the place Zojoji Hall (area Tokyo), with its tracks; listed by Discogs, Discogs's entry gets them.
 
 ### Import 3.37.6
 

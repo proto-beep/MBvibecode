@@ -823,7 +823,7 @@ def install_routes(ctx):
             parent = AREA_PARENTS.get(m.group(1))
             return json_route(route, {'id': m.group(1), 'relations': [{'type': 'part of', 'direction': 'backward', 'target-type': 'area',
                                                                        'area': {'id': uid('aaaaaaaa', 1), 'name': parent}}] if parent else []})
-        m = re.match(r'/ws/2/(artist|label|place|area)$', p)
+        m = re.match(r'/ws/2/(artist|label|place|area|event)$', p)
         if m:
             return json_route(route, ws_search(m.group(1), u.query))
         if p == '/ws/2/url':
