@@ -403,6 +403,8 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     page is loaded again, staged the same
                                 #   companies: 3.35.5 (AE-4): a place ("Recorded At") and a label (℗) as matrices, publishing on works keeps its
                                 #     rows, compact, staged the same as legacy, a date typed into the place's event
+                                #   flagcols: 3.36.6 (148): add. / guest / solo a column each, every word centred over its checkboxes (±2 px)
+                                #     and not wider than its cell, at 100 % and A+ ×3
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,

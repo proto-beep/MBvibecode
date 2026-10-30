@@ -1,6 +1,6 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0), flagcols (3.36.6) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -950,6 +950,54 @@ def case_remember():
             n = len(pg.evaluate(ADDED))
             print('gestaged:', n)
             results.append(n == 20)
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_flagcols():
+    """Credits Importer 3.36.6 (collected item 148; maintainer, with a screenshot of "add. guestsolo" over three checkboxes: "die anzeige
+    hier ist noch nicht gut abgestimmt. solo muss über der rechten checkbox stehen."): in the full matrix each attribute of the
+    lines (add., guest, solo …) is a column of its own – its word centred over the checkboxes of every line (±2 px), not wider
+    than its cell, at 100 % and at the largest text size (A+ ×3); until 3.36.5 one cell with fixed widths: the checkboxes 4, 11
+    and 18 px to the right of their words."""
+    H.ENTRIES_VIEW = 'matrix'
+    orig, rel = join_release()
+    H.discogs_release = rel
+    CHECK = """(() => { const out = []; for (const tbl of document.querySelectorAll('.dci-em-grid')) {
+      const ths = [...tbl.querySelectorAll('thead th')]; const idx = ths.map((t, i) => [t, i]).filter(([t]) => t.classList.contains('dci-em-c-flag') && t.textContent.trim());
+      for (const [th, i] of idx) { const r = th.getBoundingClientRect(); const rg = document.createRange(); rg.selectNodeContents(th); const w = rg.getBoundingClientRect();
+        const boxes = [...tbl.querySelectorAll('tbody tr.dci-em-line')].map(tr => tr.children[i] && tr.children[i].querySelector('input[type=checkbox]')).filter(Boolean);
+        out.push({ word: th.textContent.trim(), off: boxes.map(b => { const q = b.getBoundingClientRect(); return Math.round((q.left + q.width / 2 - (w.left + w.width / 2)) * 10) / 10; }),
+          fits: w.width <= r.width + 0.5, n: boxes.length }); } } return out; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            a1 = pg.evaluate(CHECK)
+            for _ in range(3):
+                pg.click('[data-act=zoom-in]')
+                pg.wait_for_timeout(200)
+            pg.wait_for_timeout(300)
+            a2 = pg.evaluate(CHECK)
+            for _ in range(3):
+                pg.click('[data-act=zoom-out]')
+            print('100 %:', a1)
+            print('A+ ×3:', a2)
+            ok = lambda a: a and all(x['n'] and x['fits'] and all(abs(o) <= 2 for o in x['off']) for x in a) and {'add.', 'guest', 'solo'} <= {x['word'] for x in a}
+            results.append(ok(a1) and ok(a2))
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()
