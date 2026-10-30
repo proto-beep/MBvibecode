@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.35.1
+// @version      3.36.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.35.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.35.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.35.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -747,6 +747,40 @@
       "settings.textsHint": "Pasted texts and the credits texts of Bandcamp. What the text recognition reads (rules T020 – T038) is listed in",
       "settings.resetAll": "↺ Reset all settings …",
       "connections.open": "Connections to other sites, tools and scripts (⚙ Settings → ⓘ Connections)",
+      "keys.open": "Keyboard shortcuts",
+      "keys.title": "Keyboard shortcuts",
+      "keys.system": "the keys of this computer (Windows, Linux)",
+      "keys.systemMac": "the keys of this computer (Mac)",
+      "keys.g.page": "On the pages of MusicBrainz with the script",
+      "keys.g.editor": "In the release editor (Add release, Edit release)",
+      "keys.g.dashboard": "In the dashboard",
+      "keys.g.media": "In the media choice",
+      "keys.g.ocr": "In the window “Text from cover art”",
+      "keys.toggle": "Show the dashboard, or send it to the background",
+      "keys.esc": "Close what is open – first the window “Text from cover art”, then “Mapping rules”, these shortcuts, the menu “Source ▾”, a chip picked with ⠿, a dialog (the media choice …), then the dashboard; not while you type in a field of MusicBrainz or a dialog of MusicBrainz is open",
+      "keys.enterEdit": "“Enter edit & import credits”, where the button is shown: enter the edit, then the relationship editor of the release opens with the dashboard",
+      "keys.enter": "In a field: what it is for – an MBID at an entry (Apply), “Artist credit for all roles” (Set for all), “Add entry manually” (Add), the address of another source (Load) or of a supplement, the forms of the date pool and the track pool (Save); in the field of a role: done",
+      "keys.tabs": "On a tab of ⚙ Settings: the next tab · the first, the last",
+      "keys.lines": "On ⠿ of a line of an entry’s matrix: one place up, one place down in its block",
+      "keys.shiftDrop": "Held while dropping: a track group adds its tracks (instead of replacing them); a date onto the matrix of an entry: the rows stay where they are too",
+      "keys.pasteDate": "Into a field of a date: a whole date or period (“2024-08-14 – 2024-08-16”) fills all its fields",
+      "keys.mediaEnter": "In the field of the media: OK",
+      "keys.ocrPaste": "Paste an image (a screenshot, a copied image)",
+      "keys.ocrUrl": "In the field of an address: add the image",
+      "keys.ocrZoom": "On a part of an image beside its text: zoom in or out at the mouse (a double click zooms in; on a Mac also two fingers on the trackpad)",
+      "keys.k.alt": "Alt",
+      "keys.k.altMac": "⌥ Option",
+      "keys.k.ctrl": "Ctrl",
+      "keys.k.ctrlMac": "⌃ Control",
+      "keys.k.shift": "⇧ Shift",
+      "keys.k.enter": "Enter",
+      "keys.k.enterMac": "↩ Return",
+      "keys.k.paste": "Ctrl",
+      "keys.k.pasteMac": "⌘ Command",
+      "keys.k.esc": "Esc",
+      "keys.k.home": "Home",
+      "keys.k.end": "End",
+      "keys.k.wheel": "mouse wheel",
       "srcmenu.button": "Source",
       "srcmenu.title": "Another source, a pasted text, the order of the sources, Bandcamp, delete the stored import",
       "supp.open": "Supplement",
@@ -800,6 +834,8 @@
       "settings.place.window": "as a window",
       "settings.place.page": "in the page",
       "settings.logOpen": "Show the log",
+      "settings.logDiag": "Diagnosis in the log (“Start diagnosis”)",
+      "settings.logDiagTitle": "Shows “Start diagnosis” in the log: it records what MusicBrainz’s relationship editor does while you use its own tools (e.g. “Batch-create new works”), for reporting an issue. Only observes, changes nothing. Off: the button is not shown.",
       "settings.logPlace": "Place of the log",
       "settings.discogsHint": "With the companion script in a Discogs or Bandcamp tab: when the view follows the dashboard and what it shows (the cover only on Discogs). It shows the source that is loaded.",
       "settings.awOn": "Compare the tracks without a work with the works of the release's artists, writers and musicians",
@@ -1198,6 +1234,8 @@
       "media.bad": "Not a medium of this release: {list} (media: {known})",
       "media.release": "Also import relationships on the release level (release and release group)",
       "media.remember": "Remember this choice for this release",
+      "media.rememberTabOnly": "Remember this choice for this release (in this tab)",
+      "media.rememberTab": "The release is not remembered (⚙ Settings → Cache): the choice holds until the page is loaded again",
       "media.load": "Load the chosen media in the relationship editor in the background",
       "media.loadTitle": "MusicBrainz's relationship editor shows the tracks of large releases only when a medium is opened, and relationships can be staged only on loaded media. The chosen media are opened one after another while the import runs.",
       "media.loadState.one": "({n} of them not loaded yet: {list})",
@@ -1373,7 +1411,20 @@
       "log.languagesVersion": "The languages file is of version {version}, the script of {script} – please update the script",
       "log.languagesMissing": "The languages file ({file}) is missing – the dashboard speaks English",
       "settings.t.beta": "Beta",
+      "settings.t.cache": "Cache",
       "settings.betaHint": "Functions to try out before they become a regular part of the script: off until switched on here, and they may still change.",
+      "settings.cacheHint": "What the dashboard remembers for a release in this browser. Off (the default), every import starts afresh: nothing of a release is stored or read again – only the list of works created through the dashboard (a safety list) and the status marks of the companion are kept.",
+      "settings.remember": "Remember changes and import settings per release",
+      "settings.rememberTitle": "On: a release imported again from the same source comes back as you left it – its rows (types, levels, role credits, answers, rows taken out or added, their order), its entries (join or split, the MusicBrainz entity chosen by hand), the date pool, track pool and date matrix, the source and media chosen, “Skip works”, “Leave out the about text”, the credits switched off on the source pages, the frames of its images. Off: none of it is stored or read (what is stored stays until it is forgotten).",
+      "settings.rememberMax": "Releases to remember:",
+      "settings.rememberMaxTitle": "0 – 100; 0 switches remembering off. Beyond it, the release used longest ago is forgotten first.",
+      "settings.rememberMaxHint": "(0 – 100, 0 = off)",
+      "settings.rememberForget": "Forget all remembered releases …",
+      "settings.rememberSize.one": "{n} release · {size}",
+      "settings.rememberSize.other": "{n} releases · {size}",
+      "settings.rememberAll": "all data of the script in this browser: {size}",
+      "settings.rememberAsk.one": "Forget everything remembered for {n} release ({size})? The lists of works created through the dashboard stay.",
+      "settings.rememberAsk.other": "Forget everything remembered for {n} releases ({size})? The lists of works created through the dashboard stay.",
       "settings.betaOcr": "Text from cover art (beta)",
       "settings.betaOcrTitle": "“Source ▾” gets “Text from cover art …”: the credits printed on the images of the release are read with text recognition",
       "settings.betaOcrWhat": "Reads the images of the release on the Cover Art Archive in this browser with {lib}, which is loaded from {cdn} the first time it is used (with 2–4 MB of language data for each language, then kept by the browser). Nothing is uploaded.",
@@ -1710,6 +1761,8 @@
       "em.wrote": "written “{raw}”",
       "em.detail": "rows",
       "em.detailTitle": "The rows of this line with all their fields (type, level, date, tracks …)",
+      "em.gripTitle": "Drag to another place in the block – or Alt+↑ / Alt+↓ (the order holds until the next import)",
+      "em.gripLabel": "Move {name} in the block (Alt+↑ / Alt+↓)",
       "em.remove": "Take this role out (Skip)",
       "em.more": "▸ {n} more: {list}",
       "em.less": "▴ fewer",
@@ -1720,6 +1773,24 @@
       "em.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head) and its tracks",
       "em.evDateLabel": "Date of event {n}",
       "em.badDate": "“{text}” is no date (2024-08-14, 2024-01 – 2024-07, 2024)",
+      "remember.full": "The browser’s storage for musicbrainz.org is full: releases used longest ago were forgotten, and this one could not be stored completely.",
+      "remember.hold": "This release was remembered before, but this tab did not read it (it was opened while nothing was remembered). Load the page again to get it back – until then nothing of this release is stored, so it is not written over.",
+      "remember.reload": "Load the page again",
+      "remember.lost.one": "{n} remembered change no longer fits the source (its line there is gone or changed) – it was left out.",
+      "remember.lost.other": "{n} remembered changes no longer fit the source (their lines there are gone or changed) – they were left out.",
+      "remember.forgot.one": "Forgotten: everything remembered for {n} release.",
+      "remember.forgot.other": "Forgotten: everything remembered for {n} releases.",
+      "em.evOpen": "Open event {n}: its level, its date and its tracks, for all its rows",
+      "em.evClose": "Close event {n}",
+      "em.evEditTitle": "Event {n} – what you set here goes for all its rows ({rows})",
+      "em.evLevel": "Level:",
+      "em.evDate": "Date:",
+      "em.evPool": "from the pool:",
+      "em.evTracks": "Tracks:",
+      "em.evGroups": "track groups:",
+      "em.evNoTracks": "An event on recordings needs at least one track – take its rows out with their ticks instead",
+      "em.levelKept": "{name} stays on the level {level}: MusicBrainz has no “{type}” on the level {to}",
+      "em.keptOk": "ok",
       "em.dateDropped": "{date}: rows moved into its event {moved}, rows of their own in it {added}",
       "em.undo": "↶ Undo",
       "em.bothAsk": "{name}: {tracks} with and without a date –",
@@ -1754,9 +1825,21 @@
       "log.caseAlways": "“{word}” added to the proper names (T052): it keeps its capitals in role credits",
       "log.emOut": "{name}: {role} taken out of an event",
       "log.emIn": "{name}: {role} into an event",
+      "log.emOrder": "{name}: {role} moved to place {n} in its block",
       "log.emJoin": "{name}: instruments and voices joined in one block",
       "log.emSplit": "{name}: each instrument a block of its own",
       "log.emEvDate": "Date of an event ({n} rows): {date}",
+      "log.rememberFull": "The browser’s storage is full: not all of this release could be remembered",
+      "log.rememberError": "What was remembered for this release could not be taken over ({text}) – the import is as the source gives it",
+      "log.rememberDropped": "The release used longest ago was forgotten (the browser’s storage is full)",
+      "log.rememberForgot.one": "Forgotten: everything remembered for {n} release",
+      "log.rememberForgot.other": "Forgotten: everything remembered for {n} releases",
+      "log.rememberRestored.one": "{n} remembered change of {date} taken over",
+      "log.rememberRestored.other": "{n} remembered changes of {date} taken over",
+      "log.rememberLost.one": "{n} remembered change left out: its line of the source is gone or changed",
+      "log.rememberLost.other": "{n} remembered changes left out: their lines of the source are gone or changed",
+      "log.emEvLevel": "{name}: event {n} on the level {level} ({moved} rows moved, {kept} stay)",
+      "log.emEvTracks": "{name}: event {n} on {tracks}",
       "log.emDateDrop": "{name}: {date} dropped – moved {moved}, rows of their own {added}",
       "rules.questions": "Instrument questions",
       "rules.options": "Choices",
@@ -1820,6 +1903,7 @@
       "ms.3.33.0": "The mapping file: the data of the mapping rules – role rules, company roles, questions, tables and word lists, the quick switches – is a file of its own, mb-vibecode-credits-importer-mapping.json, which the userscript manager loads with the script (and the script fetches from GitHub itself if not); rules can be kept on GitHub without touching the code. Also: places with a date after them, typos in role words, the credits of Bandcamp's “about” text, poems that follow their level, single days instead of a month, the quick switches as buttons, comments of live recordings.",
       "ms.3.34.0": "The languages file: the texts in German, Spanish and French are a file of their own, mb-vibecode-credits-importer-languages.json, loaded with the script like the mapping file (English stays in the script, also when the file is missing); every text is translated again. Also: ✎ changes built-in rules in “Mapping rules”, and your changes can be exported – as a file of their own or as the whole register for a pull request – and imported with a preview.",
       "ms.3.35.0": "Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before.",
+      "ms.3.36.0": "Remember per release, in ⚙ Settings → Cache (off by default): on, a release imported again from the same source comes back as you left it – its rows with what you changed, its entries, the pools and the date matrix, the source and media chosen, “Skip works”, the credits switched off on the source pages; up to 100 releases (50), the space they take is shown, one button forgets them all. Off, every import starts afresh – until 3.35 the pools, the matrix and these choices were always kept. Since 3.35.0 also: names of several words as proper names (“Gibson Les Paul”), lines of the matrix dragged, an event opened with its level, date and tracks, companies and places as a matrix, the works of index tracks as track groups.",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -1884,6 +1968,9 @@
       "trackpool.formTitle": "Track group",
       "trackpool.editTitle": "Edit this track group",
       "trackpool.explain": "Groups of tracks (e.g. “Tracks 1–5”), from dates in the text or made by hand; drag them onto a date in the matrix, or let a row take their tracks.",
+      "trackpool.works.one": "{n} work as track group",
+      "trackpool.works.other": "{n} works as track groups",
+      "trackpool.worksTitle": "The works of the source (their parts are tracks of their own) as track groups – unticked, they leave the pool and the date matrix (until the next import); ticked again, they come back as they were",
       "trackpool.errEmpty": "Please choose at least one track.",
       "trackpool.useInRow": "Tracks of a group:",
       "trackpool.applied": "{group} {date} on tracks {tracks}: {n} rows.",
@@ -1979,6 +2066,8 @@
       "pools.fold": "fold",
       "pools.keep": "keep the pools in the bar when folded",
       "pools.keepTitle": "Folded, the dates and track groups stay in the bar at the top, so they can be dragged onto rows while you scroll through the dashboard",
+      "settings.workGroups": "Offer the works of the source as track groups",
+      "settings.workGroupsTitle": "A work whose parts are tracks of their own (index tracks of Discogs: “First Encounter” on A1, A2, B1, B2) comes into the track pool as a track group with its name – as a suggestion. In the track pool you can leave them out for this import.",
       "date.dragHint": "drag",
       "date.dragHintTitle": "Drag a date into a column of the matrix, onto the date field of a row, or onto another date (makes a period of both)",
       "trackpool.dragHint": "drag",
@@ -2013,6 +2102,10 @@
       "dm.autoPooled.other": "{n} dates from the notes have no word naming their group; they are in the date pool – drag them into the matrix or onto a row if needed.",
       "date.chipTitle": "Click to edit or delete; drag into the matrix, onto the date field of a row, or onto another date (makes a period of both)",
       "log.poolsReloaded": "Pools loaded again from the notes: {n} new dates, {placed} in the matrix (own ones removed: {all})",
+      "log.workGroupsIn.one": "{n} work of the source in the track pool",
+      "log.workGroupsIn.other": "{n} works of the source in the track pool",
+      "log.workGroupsOut.one": "{n} work of the source left out of the track pool",
+      "log.workGroupsOut.other": "{n} works of the source left out of the track pool",
       "log.datesMerged": "Dates joined: {a} + {b} → {date}",
       "trackpool.pick": "choose tracks …",
       "trackpool.allMedia": "all media (one group each, {n})",
@@ -3042,7 +3135,7 @@
     { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area',
       show: () => ({ pattern: TEXT_PLACE_WORDS }) },
     // [3.34.28] maintainer: ""Buddha" ist natürlich ein eigenname also großgeschrieben"
-    { id: 'T052', where: 'PROPER_WORDS, properSpelling, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). "always write “…”" at a row adds a word',
+    { id: 'T052', where: 'PROPER_WORDS, properSpelling, properPhrases, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). From 3.35.2 also names of several words ("Gibson Les Paul", "Les Paul"): only as a whole in this spelling, a "les" elsewhere stays small. "always write “…”" at a row adds a word or a name',
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T049', where: 'TEXT_PLAY_VERBS, chainOf, PLAYS_LIST', note: 'Texts (3.34.19): the verbs that give instruments and voices to a name (S051) – "Guitar, bass and drums are played by X", "X plays guitar, bass …"; they give no role of their own then',
       show: () => ({ pattern: TEXT_PLAY_VERBS }) },
@@ -3722,6 +3815,34 @@
     return PROPER_WORDS.find((p) => p.toLowerCase() === w) || '';
   }
 
+  /**
+   * [144] (3.35.2) Proper names of several words (maintainer: ""Gibson Les Paul" in dieser Groß- und Kleinschreibung bitte zu
+   * Ausnahmen hinzufügen, das ist ja der korrekte name."): those of the register (T052) and those kept at the row ("keep “Les
+   * Paul”"), the longest first, each as { re, spelling } – a match is written as a whole in this spelling.
+   */
+  let phraseCache = { key: null, list: [] };
+  function properPhrases(keep = null) {
+    const own = Object.values(keep || {}).filter((x) => /\s/.test(String(x).trim()));
+    const all = [...own, ...PROPER_WORDS.filter((x) => /\s/.test(String(x).trim()))];
+    const key = all.join('\u0001');
+    if (phraseCache.key !== key) {
+      const seen = new Set();
+      const list = [];
+      all.forEach((x) => {
+        const words = String(x).trim().split(/\s+/);
+        const k = words.join(' ').toLowerCase();
+        if (seen.has(k)) return;  // kept at the row before the register
+        seen.add(k);
+        const body = words.map((w) => w.replace(/[.*+?^$()|[\]{}\\]/g, (c) => `\\${c}`)).join('\\s+');
+        const re = new RegExp(`(^|[\\s,\\[\\]()/])(${body})(?=$|[\\s,\\[\\]()/])`, 'gi');
+        list.push({ re, spelling: words.join(' '), n: k.length });
+      });
+      list.sort((a, b) => b.n - a.n);
+      phraseCache = { key, list };
+    }
+    return phraseCache.list;
+  }
+
   /** [S052] (3.34.28) A word known as written small: generic (T002), in MusicBrainz's instruments, a small English word. */
   const SMALL_ENGLISH = new Set(['a', 'an', 'and', 'or', 'of', 'the', 'in', 'on', 'for', 'with', 'by', 'to', 'at', 'from', '&']);
   function knownWord(w, vocab) {
@@ -3755,12 +3876,55 @@
     // proper names and models with digits keep their capitals); [S052] (3.34.28) they are noted for the row unless quiet
     const keep = caseCtx && caseCtx.keep;
     const note = !quiet && caseCtx ? caseCtx.lowered : null;
-    return String(text || '').replace(/[^\s,\[\]()/]+/g, (w) => {
+    // [144] (3.35.2) words written small one after another (only spaces between them: "Les Paul") are noted as a whole too
+    const runs = !quiet && caseCtx && caseCtx.runs ? caseCtx.runs : null;
+    const src = String(text || '');
+    // [144] (3.35.2) the proper names of several words first, as a whole; the words between them one by one
+    const fixed = [];
+    properPhrases(keep).forEach(({ re, spelling }) => {
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(src))) {
+        const start = m.index + m[1].length;
+        const end = start + m[2].length;
+        if (!fixed.some((f) => start < f.end && end > f.start)) fixed.push({ start, end, spelling });
+        if (re.lastIndex === m.index) re.lastIndex++;
+      }
+    });
+    fixed.sort((a, b) => a.start - b.start);
+    let run = null;
+    let runEnd = -1;
+    const close = () => {
+      if (runs && run && run.length > 1) runs.push(run.join(' '));
+      run = null;
+    };
+    const words = (part, base) => part.replace(/[^\s,\[\]()/]+/g, (w, off) => {
       if (!lowerUnknown) return caseWord(w, vocab, keep);
       const out = lowerWord(w, vocab, keep);
-      if (note && out !== w && out === w.toLowerCase() && !w.split('-').every((x) => !x || /\d/.test(x) || knownWord(x.toLowerCase(), vocab))) note.push(w);
+      const small = out !== w && out === w.toLowerCase() && !w.split('-').every((x) => !x || /\d/.test(x) || knownWord(x.toLowerCase(), vocab));
+      if (note && small) note.push(w);
+      if (runs) {
+        const at = base + off;
+        if (small && run && /^\s+$/.test(src.slice(runEnd, at))) run.push(w);
+        else {
+          close();
+          if (small) run = [w];
+        }
+        runEnd = at + w.length;
+      }
       return out;
     });
+    let out = '';
+    let at = 0;
+    fixed.forEach((f) => {
+      out += words(src.slice(at, f.start), at);
+      close();
+      out += f.spelling;
+      at = f.end;
+    });
+    out += words(src.slice(at), at);
+    close();
+    return out;
   }
 
   /**
@@ -7339,11 +7503,14 @@
   function roleCreditFor(row) {
     // [S052] (3.34.28) the words written small that MusicBrainz does not know, for the note of the row (caseNoteHtml)
     const outer = caseCtx;
-    caseCtx = { lowered: [], keep: row.keepCase || null };
+    caseCtx = { lowered: [], runs: [], keep: row.keepCase || null };
     try {
       const credit = typo(roleCreditForInner(row)); // [S012]
       const words = new Set(norm(credit).split(/[\s,[\]()/]+/));
       row.creditLowered = uniq(caseCtx.lowered).filter((w) => words.has(w.toLowerCase()));
+      // [144] (3.35.2) words written small one after another ("Les Paul"), offered as a whole too
+      const flat = ` ${norm(credit).replace(/[,[\]()/]+/g, ' ').replace(/\s+/g, ' ')} `;
+      row.creditPhrases = uniq(caseCtx.runs).filter((p) => flat.includes(` ${p.toLowerCase()} `));
       return credit;
     } finally {
       caseCtx = outer;
@@ -7586,6 +7753,8 @@
       const before = JSON.stringify([r.types, r.level, r.primaryText, r.roleCredit, r.ruleId]);
       remapRow(r);
       if (JSON.stringify([r.types, r.level, r.primaryText, r.roleCredit, r.ruleId]) !== before) n++;
+      // [3.36.1] what the rules made of a row is no change of yours (not remembered as one)
+      rebaseFresh(r);
     }
     log('info', 'rulesChanged', { what, n });
     // [S046] (3.31.8) performers on tracks: at once, both ways
@@ -8110,6 +8279,181 @@
   // 6. Log, messages, edit note, registry of created works
   // ===========================================================================
 
+  // --- [146] (3.36.0) What is stored for a release: only while it is remembered ------------------------------------------
+
+  /**
+   * [146] (3.36.0) Remembered per release (maintainer: "vielleicht können wir global einen schalter einführen, der sich änderungen
+   * und import einstellungen an releases merkt oder eben nicht. standardmäßig auf jeden fall aus", "ja genau, soll alles wieder
+   * kommen. aber nur wenn man das ausdrücklich in den einstellungen aktiviert hat", "bitte nach deinem vorschlag"): with
+   * ⚙ Settings → Cache → "Remember changes and import settings per release" (off) the stores of a release – its pools and date
+   * matrix, the source and the media chosen, "Skip works", "Leave out the about text", the credits switched off on the source
+   * pages, the frames of its images and (new) its rows and entries with what was changed in them – are written and read; off,
+   * none of them is written or read (what is stored stays, unused). The safety list of created works and the status marks of
+   * the companion are always kept. The last S.rememberMax releases (0 – 100, 50; 0: off); beyond that, and when the browser's
+   * storage is full, the oldest goes first.
+   */
+  const REMEMBER_ON_KEY = 'dci-remember-on';
+  const REMEMBER_MAX_KEY = 'dci-remember-max';
+  const REMEMBER_INDEX_KEY = 'dci-remember-index';
+  const REMEMBER_ROWS_KEY = `dci-remember:${releaseMbid}`;
+  S.rememberOn = readJson('localStorage', REMEMBER_ON_KEY, false) === true;
+  S.rememberMax = (() => {
+    const n = Number(readJson('localStorage', REMEMBER_MAX_KEY, 50));
+    return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 50;
+  })();
+  const remembering = () => S.rememberOn && S.rememberMax > 0;
+  // [3.36.1] whether this tab read the stores of the release when it was opened (switched on later: they were not read)
+  S.rememberRead = remembering();
+  // the stores of one release (the key ends with its MBID), and those of all releases in one (keyed by the MBID)
+  const REL_PREFIXES = ['date-pool', 'track-pool', 'date-matrix', 'about-off', 'bc-off', 'src-off', 'works-skip', 'remember'];
+  const REL_KEY_RE = new RegExp(`^dci-(${REL_PREFIXES.join('|')}):([0-9a-f-]{36})$`);
+  const REL_MAPS = ['dci-source-pick', 'dci-media-sel', 'dci-ocr-frames'];
+  // the maps while nothing is remembered: the choices hold in this tab only
+  const relMem = {};
+
+  /** A store of this release, read only while remembering. */
+  function relRead(key, fallback) {
+    return remembering() ? readJson('localStorage', key, fallback) : fallback;
+  }
+  /** A map of all releases (keyed by MBID): the stored one while remembering, else the one of this tab. */
+  function relMapRead(key) {
+    return remembering() ? (readJson('localStorage', key, {}) || {}) : { ...(relMem[key] || {}) };
+  }
+  function relMapWrite(key, all) {
+    if (!remembering() || S.rememberHold) {
+      relMem[key] = all;
+      return;
+    }
+    relWrite(key, Object.keys(all).length ? all : null);
+  }
+
+  /** A store of this release written, only while remembering; the browser's storage full – the oldest releases go first. */
+  function relWrite(key, value) {
+    // [3.36.1] switched on in a tab that did not read what is stored for the release: nothing is written over it until the page
+    // is loaded again (S.rememberHold)
+    if (!remembering() || S.rememberHold) return;
+    const empty = value == null || (Array.isArray(value) && !value.length);
+    for (let i = 0; i < 30; i++) {
+      try {
+        if (empty) window.localStorage.removeItem(key);
+        else window.localStorage.setItem(key, JSON.stringify(value));
+        if (!empty) touchRemembered();
+        return;
+      } catch (e) {
+        if (!dropOldestRemembered()) break;
+      }
+    }
+    if (!S.rememberFull) {
+      S.rememberFull = true;
+      log('warn', 'rememberFull');
+      showMessage('warn', 'remember.full');
+    }
+  }
+
+  /** The releases with something stored, the most recently used first: [[mbid, time] …] (those not in the index last). */
+  function rememberedReleases() {
+    const index = (readJson('localStorage', REMEMBER_INDEX_KEY, []) || []).filter((x) => Array.isArray(x) && x[0]);
+    const known = new Set(index.map((x) => x[0]));
+    const more = new Set();
+    try {
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const m = String(window.localStorage.key(i) || '').match(REL_KEY_RE);
+        if (m && !known.has(m[2])) more.add(m[2]);
+      }
+    } catch (e) { /* storage blocked */ }
+    // [3.36.1] those not in the index by the time the maps have for them (else 0), the most recent first
+    const at = new Map();
+    REL_MAPS.forEach((key) => Object.entries(readJson('localStorage', key, {}) || {}).forEach(([id, v]) => {
+      if (known.has(id)) return;
+      more.add(id);
+      const t = Number((v && (v.at || v.t)) || 0);
+      if (t > (at.get(id) || 0)) at.set(id, t);
+    }));
+    return [...index, ...[...more].map((id) => [id, at.get(id) || 0]).sort((a, b) => b[1] - a[1])];
+  }
+
+  /** [3.36.1] Whether something is stored for a release. */
+  function hasRemembered(id) {
+    if (REL_PREFIXES.some((p) => { try { return window.localStorage.getItem(`dci-${p}:${id}`) !== null; } catch (e) { return false; } })) return true;
+    return REL_MAPS.some((key) => !!(readJson('localStorage', key, {}) || {})[id]);
+  }
+
+  /** This release used (first in the index; once a minute); beyond S.rememberMax releases the oldest go. */
+  function touchRemembered() {
+    const now = Date.now();
+    if (S.rememberTouched && now - S.rememberTouched < 60000) return;
+    S.rememberTouched = now;
+    const next = [[releaseMbid, now], ...rememberedReleases().filter((x) => x[0] !== releaseMbid)];
+    const max = Math.max(1, S.rememberMax);
+    next.slice(max).forEach(([id]) => forgetRelease(id));
+    writeJson('localStorage', REMEMBER_INDEX_KEY, next.slice(0, max));
+  }
+
+  /** Everything stored for one release goes (not its list of created works). */
+  function forgetRelease(id) {
+    REL_PREFIXES.forEach((p) => writeJson('localStorage', `dci-${p}:${id}`, null));
+    REL_MAPS.forEach((key) => {
+      const all = readJson('localStorage', key, {}) || {};
+      if (!all[id]) return;
+      delete all[id];
+      writeJson('localStorage', key, Object.keys(all).length ? all : null);
+    });
+    const index = (readJson('localStorage', REMEMBER_INDEX_KEY, []) || []).filter((x) => Array.isArray(x) && x[0] !== id);
+    writeJson('localStorage', REMEMBER_INDEX_KEY, index.length ? index : null);
+  }
+
+  /** The browser's storage full: the oldest release (not this one) goes; false if there is none. */
+  function dropOldestRemembered() {
+    const list = rememberedReleases().filter((x) => x[0] !== releaseMbid);
+    if (!list.length) return false;
+    forgetRelease(list[list.length - 1][0]);
+    log('info', 'rememberDropped');
+    return true;
+  }
+
+  /** [146] What the script stores in this browser: the releases remembered, the bytes of their stores and of all its data. */
+  function storageSizes() {
+    let rel = 0;
+    let all = 0;
+    try {
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i);
+        if (!k || !k.startsWith('dci-')) continue;
+        const n = (k.length + String(window.localStorage.getItem(k) || '').length) * 2;
+        all += n;
+        if (REL_KEY_RE.test(k) || REL_MAPS.includes(k) || k === REMEMBER_INDEX_KEY) rel += n;
+      }
+    } catch (e) { /* storage blocked */ }
+    return { releases: rememberedReleases().length, rel, all };
+  }
+
+  /** "1.3 MB", "640.2 KB" – one decimal, in the number format of the language (maintainer: "in KB oder MB mit einer kommazahl"). */
+  function bytesText(n) {
+    const mb = n >= 1024 * 1024;
+    const v = mb ? n / (1024 * 1024) : n / 1024;
+    let num;
+    try {
+      num = new Intl.NumberFormat(LANG, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v);
+    } catch (e) {
+      num = v.toFixed(1);
+    }
+    return `${num} ${mb ? 'MB' : 'KB'}`;
+  }
+
+  /** [146] "Forget all remembered releases": every store of every release goes (the lists of created works stay). */
+  function forgetAllRemembered() {
+    // [3.36.1] a store of this release waiting for its second does not bring it back
+    clearTimeout(rememberTimer);
+    rememberTimer = null;
+    const n = rememberedReleases().length;
+    rememberedReleases().forEach(([id]) => forgetRelease(id));
+    REL_MAPS.forEach((k) => writeJson('localStorage', k, null));
+    writeJson('localStorage', REMEMBER_INDEX_KEY, null);
+    Object.keys(relMem).forEach((k) => delete relMem[k]);
+    S.rememberTouched = 0;
+    log('info', 'rememberForgot', { n });
+  }
+
   const LOG_KEY = `dci-log:${releaseMbid}`;
   const POOL_KEY = `dci-date-pool:${releaseMbid}`;
   const CREATED_KEY = `dci-created-works:${releaseMbid}`;
@@ -8157,29 +8501,43 @@
     return (Array.isArray(a.links) ? a.links : []).filter((l) => l && LINKED_SOURCES.includes(l.source) && l.id);
   })();
   S.autostart = !!S.editorLinks;
-  S.datePool = readJson('localStorage', POOL_KEY, null) || [];
+  S.datePool = relRead(POOL_KEY, null) || [];
   S.syncMode = readJson('localStorage', 'dci-sync-mode', 'click') === 'hover' ? 'hover' : 'click';
 
-  const savePool = () => writeJson('localStorage', POOL_KEY, S.datePool.length ? S.datePool : null);
+  const savePool = () => relWrite(POOL_KEY, S.datePool.length ? S.datePool : null);
 
   // Track pool: named groups of tracks ("Tracks 1–5"), from text or made by hand, per release
   const TRACKPOOL_KEY = `dci-track-pool:${releaseMbid}`;
   // [3.16.1] "Leave out the about text" for this release: { stash: { pool, cells } } (the dates taken out), null when not
   const ABOUT_KEY = `dci-about-off:${releaseMbid}`;
-  S.aboutOff = !!readJson('localStorage', ABOUT_KEY, null);
+  S.aboutOff = !!relRead(ABOUT_KEY, null);
   // [3.17.1] Credits switched off on Bandcamp; [3.17.5] on Discogs too (a click on a mark in the companion): stored per
   // release as "source|name|role" (the "name|role" of 3.17.1 were Bandcamp's)
   const BC_OFF_KEY = `dci-bc-off:${releaseMbid}`;
   const SRC_OFF_KEY = `dci-src-off:${releaseMbid}`;
-  S.srcOff = new Set([...(readJson('localStorage', SRC_OFF_KEY, []) || []), ...(readJson('localStorage', BC_OFF_KEY, []) || []).map((k) => `bandcamp|${k}`)]);
-  S.trackPool = readJson('localStorage', TRACKPOOL_KEY, null) || [];
-  const saveTrackPool = () => writeJson('localStorage', TRACKPOOL_KEY, S.trackPool.length ? S.trackPool : null);
+  S.srcOff = new Set([...(relRead(SRC_OFF_KEY, []) || []), ...(relRead(BC_OFF_KEY, []) || []).map((k) => `bandcamp|${k}`)]);
+  S.trackPool = relRead(TRACKPOOL_KEY, null) || [];
+  // [145b] (3.35.6) works left out of the pool (S.workGroupsStash) are stored with it all the same: leaving them out holds until
+  // the next import only
+  const saveTrackPool = () => {
+    const st = S.workGroupsStash;
+    const pool = st ? [...S.trackPool, ...st.groups.filter((g) => !S.trackPool.some((x) => x.id === g.id))] : S.trackPool;
+    relWrite(TRACKPOOL_KEY, pool.length ? pool : null);
+  };
 
   // Date matrix: which pool dates belong to which date group (column) and to which track groups, per release.
   // Read on first use (see dm()), because the date groups are defined further down.
   const MATRIX_KEY = `dci-date-matrix:${releaseMbid}`;
   S.dm = null;
-  const saveMatrix = () => writeJson('localStorage', MATRIX_KEY, S.dm && (S.dm.cells.length || S.dm.found) ? S.dm : null);
+  const saveMatrix = () => {
+    // [145b] (3.35.6) with the places of the works left out (as for the pool)
+    const st = S.workGroupsStash;
+    const m = S.dm && st ? { ...S.dm, cells: [...S.dm.cells.map((c) => {
+      const back = st.cells.find((x) => x.id === c.id);
+      return back ? { ...c, tgs: uniq([...(c.tgs || []), ...back.ids]) } : c;
+    }), ...st.removed.filter((c) => !S.dm.cells.some((x) => x.id === c.id))] } : S.dm;
+    relWrite(MATRIX_KEY, m && (m.cells.length || m.found) ? m : null);
+  };
   // "Apply automatically" below the matrix (off: rows change only with "Apply")
   S.dmAuto = readJson('localStorage', 'dci-dm-auto', false) === true;
   // Dates & tracks open or folded; null until switched once: open when there are dates
@@ -8220,6 +8578,10 @@
   // works"), so the dashboard can later use the same internal steps. It only observes; nothing changes.
 
   const DIAG = { timer: null, last: null, lastDialog: '', step: 0, origDispatch: null };
+  // [3.36.2] "Start diagnosis" in the log only with ⚙ Settings → General → "Diagnosis in the log" (off; maintainer: "Bitte eine
+  // Option, die die Diagnose Funktion im Log ermöglicht oder den Button ausblendet. Standardmäßig aus.")
+  const LOG_DIAG_KEY = 'dci-log-diag';
+  S.logDiag = readJson('localStorage', LOG_DIAG_KEY, false) === true;
 
   /** A compact, size-limited picture of any value for the log. */
   function diagShape(value, depth = 0, seen = new WeakSet(), max = 2) {
@@ -10949,7 +11311,7 @@
 
   /** What is stored for an image of this release ({ f: [[x, y, w, h] …], turn, mode }), or null. */
   function ocrSavedFor(img) {
-    const all = readJson('localStorage', OCR_FRAMES_KEY, {}) || {};
+    const all = relMapRead(OCR_FRAMES_KEY);
     const rel = all[releaseMbid];
     return (rel && rel.imgs && rel.imgs[ocrFrameKey(img)]) || null;
   }
@@ -10957,7 +11319,7 @@
   /** An image's frames, turn and choice stored (nothing to store: its entry goes); the oldest releases beyond the last 50 go. */
   function ocrSaveFrames(img) {
     if (!img || !img.canvas || !releaseMbid) return;
-    const all = readJson('localStorage', OCR_FRAMES_KEY, {}) || {};
+    const all = relMapRead(OCR_FRAMES_KEY);
     const rel = all[releaseMbid] || { t: 0, imgs: {} };
     const cw = img.canvas.width;
     const ch = img.canvas.height;
@@ -10972,7 +11334,7 @@
       all[releaseMbid] = rel;
     } else delete all[releaseMbid];
     Object.entries(all).sort((a, b) => (b[1].t || 0) - (a[1].t || 0)).slice(OCR_FRAMES_MAX).forEach(([id]) => delete all[id]);
-    writeJson('localStorage', OCR_FRAMES_KEY, Object.keys(all).length ? all : null);
+    relMapWrite(OCR_FRAMES_KEY, all);
   }
 
   /** The stored choice taken over when an image comes into the window (its frames: once its canvas is there). */
@@ -12244,7 +12606,7 @@
         <h2 id="dci-log-title">${esc(tr('log.title'))}</h2>
         <label class="dci-log-place">${esc(tr('log.place'))} <select data-log-f="place">${LOG_PLACES.map((p) => `<option value="${p}">${esc(tr(`log.place.${p}`))}</option>`).join('')}</select></label>
         <button type="button" data-log-act="dashboard" class="dci-log-dash" title="${esc(tr('log.dashboardTitle'))}">${esc(tr('log.dashboard'))}</button>
-        <button type="button" data-log-act="diag" aria-pressed="${!!DIAG.timer}" title="${esc(tr('log.diagTitle'))}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>
+        ${S.logDiag || DIAG.timer ? `<button type="button" data-log-act="diag" aria-pressed="${!!DIAG.timer}" title="${esc(tr('log.diagTitle'))}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>` : ''}
         <button type="button" data-log-act="copy">${esc(tr('log.copy'))}</button>
         <button type="button" data-log-act="clear">${esc(tr('log.clear'))}</button>
         <button type="button" data-log-act="hide">${esc(tr('log.hide'))}</button>
@@ -12508,11 +12870,11 @@
   /** A source chosen by hand for this release is remembered and wins over the list. */
   function keepSourcePick(source, id) {
     if (!LINKED_SOURCES.includes(source.id)) return;
-    const all = readJson('localStorage', SOURCE_PICK_KEY, {}) || {};
+    const all = relMapRead(SOURCE_PICK_KEY);
     all[releaseMbid] = { source: source.id, id: String(id), at: Date.now() };
     // only the last 200 releases are remembered
     const keep = Object.entries(all).sort((a, c) => (c[1].at || 0) - (a[1].at || 0)).slice(0, 200);
-    writeJson('localStorage', SOURCE_PICK_KEY, Object.fromEntries(keep));
+    relMapWrite(SOURCE_PICK_KEY, Object.fromEntries(keep));
   }
 
   /** Moves a source in a preference list (by ▲▼, or dropped onto another source: to its place). */
@@ -12566,7 +12928,7 @@
       S.editorLinks = null;
       if (fresh.length === 1) return { link: fresh[0], fromEditor: true };
     }
-    const kept = (readJson('localStorage', SOURCE_PICK_KEY, {}) || {})[releaseMbid];
+    const kept = relMapRead(SOURCE_PICK_KEY)[releaseMbid];
     const keptLink = kept && S.sourceLinks.find((x) => x.source === kept.source && x.id === kept.id);
     if (keptLink) return { link: keptLink, kept: true };
     for (const k of sourceOrder()) {
@@ -12978,6 +13340,10 @@
     S.trackForm = null;
     S.dm = { cells: [], found: '', dirty: false };
     [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY, ABOUT_KEY, BC_OFF_KEY, SRC_OFF_KEY, WORKS_SKIP_KEY].forEach((k) => writeJson('localStorage', k, null));
+    // [146] (3.36.0) its rows and entries remembered, its place in the index, what this tab kept of it
+    forgetRelease(releaseMbid);
+    Object.values(relMem).forEach((all) => { delete all[releaseMbid]; });
+    Object.assign(S, { aboutStash: null, workGroupsStash: null, freshRows: null, rememberReady: false });
     S.aboutOff = false;
     Object.assign(S, { worksSkip: false, worksFolded: false });
     S.srcOff = new Set();
@@ -13617,7 +13983,7 @@
     if (media.length < 2 || !S.overlay) return Promise.resolve({ media: new Set(media), release: true, all: true });
     // [3.21.1] media without a tracklist in MusicBrainz cannot be chosen: named below the intro
     const empty = [...((S.mediaInfo && S.mediaInfo.keys()) || [])].filter((m) => !media.includes(m)).sort((a, b) => a - b);
-    const store = readJson('localStorage', MEDIA_SEL_KEY, {}) || {};
+    const store = relMapRead(MEDIA_SEL_KEY);
     const saved = store[releaseMbid] && Array.isArray(store[releaseMbid].media) ? store[releaseMbid] : null;
     let sel = new Set(saved ? saved.media.filter((m) => media.includes(m)) : media);
     let release = saved ? saved.release !== false : true;
@@ -13657,7 +14023,7 @@
             <strong data-mel="works-n" title="${esc(tr('matrix.askCountTitle'))}"></strong> <span class="dci-sub" data-mel="works-time"></span>
             <span class="dci-seg dci-seg-small">${['yes', 'no', 'skip'].map((w) => `<button type="button" data-mact="works" data-w="${w}" aria-pressed="${works === w}">${esc(tr(`media.works.${w}`))}</button>`).join('')}</span>
           </div>
-          <label class="dci-check"><input type="checkbox" data-mf="remember" ${saved ? 'checked' : ''}> ${esc(tr('media.remember'))}</label>
+          <label class="dci-check"${remembering() ? '' : ` title="${esc(tr('media.rememberTab'))}"`}><input type="checkbox" data-mf="remember" ${saved ? 'checked' : ''}> ${esc(tr(remembering() ? 'media.remember' : 'media.rememberTabOnly'))}</label>
           <p class="dci-sub">${esc(tr(saved ? 'media.savedHint' : 'media.askHint'))}</p>
         </div>
         <footer class="dci-media-foot">
@@ -13722,12 +14088,12 @@
           const all = sel.size === media.length;
           const load = el.querySelector('[data-mf="load"]').checked;
           writeJson('localStorage', 'dci-media-load', load || null);
-          const st = readJson('localStorage', MEDIA_SEL_KEY, {}) || {};
+          const st = relMapRead(MEDIA_SEL_KEY);
           if (el.querySelector('[data-mf="remember"]').checked) st[releaseMbid] = { media: [...sel].sort((a, c) => a - c), release, at: Date.now() };
           else delete st[releaseMbid];
           // only the last 50 releases are remembered
           const keep = Object.entries(st).sort((a, c) => (c[1].at || 0) - (a[1].at || 0)).slice(0, 50);
-          writeJson('localStorage', MEDIA_SEL_KEY, keep.length ? Object.fromEntries(keep) : null);
+          relMapWrite(MEDIA_SEL_KEY, Object.fromEntries(keep));
           done({ media: new Set(sel), release, all, load, works: askWorks(withoutWork(sel)) ? works : null });
           return;
         }
@@ -13921,6 +14287,385 @@
     }
   }
 
+  // --- [146] (3.36.0) The rows and entries of a release remembered ---------------------------------------------------------
+
+  /**
+   * [146] (3.36.0) Its rows and entries come back when the release is imported again from the same source (maintainer: "ja
+   * genau, soll alles wieder kommen"): at the end of an import the rows as the source gave them are noted (S.freshRows: the
+   * line of the source each comes from, its fields); what is stored is how they differ now – and the rows of their own (a
+   * row for another event, a split, a row added by hand) whole, the entries' join / split, their compact view and the
+   * MusicBrainz entity chosen by hand, entries added by hand. A row whose line of the source is gone is not brought back
+   * (maintainer, 146d: "ja einverstanden"): the log says how many; new lines of the source come as they are. Not remembered:
+   * what was staged, supplements from another source, the choices of the works matrix.
+   */
+  // not stored: what a row is in this import (its id, its entry, open or not) and what MusicBrainz or "Stage: …" made of it –
+  // rows already in MusicBrainz are skipped anew, the stage choice is not remembered
+  // [3.36.1] also what a supplement marked (differ, confirmedBy, suppTook) and what is open for editing (redrawLater, dateEdit)
+  const ROW_OWN_FIELDS = new Set(['id', 'artistKey', 'tracksOpen', 'existingChecked', 'existingAll', 'levelBeforeSkip', 'scopeLevel',
+    'differ', 'confirmedBy', 'suppTook', 'redrawLater', 'dateEdit']);
+  const encField = (v) => JSON.stringify(v, (k, x) => (x instanceof Set ? { $set: [...x] } : x instanceof Map ? { $map: [...x] } : x));
+  const decField = (t) => JSON.parse(t, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)
+    ? (Array.isArray(x.$set) ? new Set(x.$set) : Array.isArray(x.$map) ? new Map(x.$map) : x) : x));
+  /** The fields of a row as text (Sets and Maps kept, also inside), without what is not stored; the level before a skip of those. */
+  function rowFieldsOf(r) {
+    const o = {};
+    for (const [k, v] of Object.entries(r)) {
+      if (ROW_OWN_FIELDS.has(k) || v === undefined || typeof v === 'function') continue;
+      try {
+        o[k] = encField(v);
+      } catch (e) { /* not storable */ }
+    }
+    const level = r.scopeLevel || (r.existingAll && !r.levelTouched && r.levelBeforeSkip) || r.level;
+    o.level = encField(level);
+    return o;
+  }
+  /** An entry by what it is at the source (or, added by hand, in MusicBrainz) – the same in every import. */
+  const entryIdOf = (a) => (a.manual ? `m|${a.entityType || 'artist'}|${a.mbid}` : `${a.company ? 'c' : a.other ? 'o' : 'p'}|${a.dId || ''}|${norm(a.rawName || a.name || a.placeholder || '')}`);
+  /** The line of the source a row comes from (the same line in every import gives the same key). */
+  function rowBaseKey(r) {
+    const a = S.artists.get(r.artistKey);
+    return JSON.stringify([a ? entryIdOf(a) : '', r.raw || '', r.base || '', r.dSpec || '', r.anv || '', r.company ? 1 : 0, r.dSplitFrom || '', r.artTask ? 1 : 0, r.fromAbout ? 1 : 0]);
+  }
+
+  /** [146] The rows at the end of an import, as the source gave them. */
+  function rememberFresh() {
+    const n = new Map();
+    S.freshRows = new Map();
+    S.rows.forEach((r) => {
+      const base = rowBaseKey(r);
+      const i = (n.get(base) || 0) + 1;
+      n.set(base, i);
+      S.freshRows.set(r.id, { k: `${base}#${i}`, b: base, f: rowFieldsOf(r) });
+    });
+  }
+
+  /** [3.36.1] The media chosen for this import, as text (remembered tracks only fit the same choice). */
+  const mediaSig = () => (S.mediaSel ? JSON.stringify([[...S.mediaSel.media].sort((a, b) => a - b), !!S.mediaSel.release]) : '');
+
+  /**
+   * [3.36.1] After the rules mapped a row again: the fields they set count as the source's (S.freshRows) – a level, instrument
+   * or role credit set by hand stays a change.
+   */
+  const REMAP_FIELDS = ['types', 'notes', 'work', 'primaryCands', 'consumed', 'defaultLevel', 'creditFromRole', 'ruleId', 'linkTypeId', 'translated',
+    'translatedBase', 'base', 'flags', 'typeOptions', 'roleCreditSuggest', 'instrGuess', 'creditLowered', 'creditPhrases'];
+  function rebaseFresh(row) {
+    const f = S.freshRows && S.freshRows.get(row.id);
+    if (!f) return;
+    const cur = rowFieldsOf(row);
+    const keys = [...REMAP_FIELDS, ...(row.levelTouched ? [] : ['level']), ...(row.primaryTouched ? [] : ['primaryText']), ...(row.roleCreditTouched ? [] : ['roleCredit'])];
+    keys.forEach((k) => {
+      if (k in cur) f.f[k] = cur[k];
+      else delete f.f[k];
+    });
+  }
+
+  /** [146] What is remembered for this release now. */
+  function rememberSnapshot() {
+    const rows = [];
+    const here = new Set(S.rows.map((r) => r.id));
+    for (const r of S.rows) {
+      if (r.supp) continue;
+      const fresh = S.freshRows.get(r.id);
+      const cur = rowFieldsOf(r);
+      if (fresh) {
+        const d = {};
+        new Set([...Object.keys(cur), ...Object.keys(fresh.f)]).forEach((k) => {
+          if (cur[k] !== fresh.f[k]) d[k] = k in cur ? cur[k] : null;
+        });
+        // [3.36.1] a level chosen by hand always (also when it is the one of the source: a row already in MusicBrainz taken in again)
+        if (r.levelTouched && fresh.f.levelTouched !== 'true') d.level = cur.level;
+        rows.push(Object.keys(d).length ? { k: fresh.k, i: r.id, d } : { k: fresh.k, i: r.id });
+        continue;
+      }
+      const a = S.artists.get(r.artistKey);
+      if (a) rows.push({ e: entryIdOf(a), b: r.manual ? '' : rowBaseKey(r), i: r.id, f: cur });
+    }
+    // [3.36.1] rows of the source removed with ✕
+    S.freshRows.forEach((f, id) => { if (!here.has(id)) rows.push({ k: f.k, i: id, x: 1 }); });
+    const used = [...S.artists.values()].filter((a) => S.rows.some((r) => r.artistKey === a.key && !r.supp));
+    const entries = used.map((a) => {
+      const x = { e: entryIdOf(a) };
+      if (a.join !== undefined) x.join = a.join;
+      if (S.emBy.has(a.key)) x.by = S.emBy.get(a.key);
+      if (a.matchTouched) x.match = { mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '', status: a.status, entityType: a.entityType || null };
+      return x;
+    }).filter((x) => Object.keys(x).length > 1);
+    const manual = used.filter((a) => a.manual).map((a) => ({ e: entryIdOf(a), a: { name: a.name, company: !!a.company, other: !!a.other, entityType: a.entityType || null, mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '' } }));
+    return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual, works: worksSnapshot() };
+  }
+
+  /**
+   * [146] (3.36.4) The choices of the works matrix (maintainer, on remembering them: "ja bitte dazu"): the works chosen for tracks
+   * and the new ones planned (not those already created – the list of created works keeps them), the attributes of the links
+   * set by hand, the dates of columns and those planned for relationships in MusicBrainz, the columns taken out or folded, the
+   * options of new works. A column of an entry by the entry (its key changes with each import).
+   */
+  const colKeyOut = (key) => {
+    const m = /^k:(.+)$/.exec(String(key || ''));
+    if (!m) return key;
+    const a = S.artists.get(m[1]);
+    return a ? `e:${entryIdOf(a)}` : null;
+  };
+  const colKeyIn = (key, entries) => {
+    const m = /^e:(.+)$/.exec(String(key || ''));
+    if (!m) return key;
+    const a = entries.get(m[1]);
+    return a ? `k:${a.key}` : null;
+  };
+  function worksSnapshot() {
+    const keep = (p) => {
+      const o = { ...p };
+      delete o.entity;  // the work as staged in the editor (made again when staged)
+      return o;
+    };
+    return {
+      plan: [...S.workPlan].filter(([, p]) => p && (p.origin === 'search' || p.origin === 'pending')).map(([i, p]) => [i, encField(keep(p))]),
+      on: encField([...S.linkAttrOn].filter(([, v]) => v && v.size)),
+      off: encField([...S.linkAttrOff].filter(([, v]) => v && v.size)),
+      fills: [...S.dateFills].map(([k, f]) => [k, encField({ ...f, fromCol: f.fromCol ? colKeyOut(f.fromCol) : null })]),
+      colDate: [...S.mxColDate].map(([k, d]) => [colKeyOut(k), encField(d)]).filter((x) => x[0]),
+      removed: [...S.mxRemoved].map(([k, rm]) => [colKeyOut(k), { name: rm.name, mbid: rm.mbid, entityType: rm.entityType, e: rm.artist ? entryIdOf(rm.artist) : '', rowIds: rm.rowIds || [] }]).filter((x) => x[0]),
+      collapsed: [...S.mxCollapsed].map(colKeyOut).filter(Boolean),
+      opts: encField([...S.workRowOpts]),
+      defaults: S.workDefaults && (S.workDefaults.typeId || (S.workDefaults.languageIds || []).length) ? { ...S.workDefaults } : null,
+    };
+  }
+
+  /** [146] (3.36.4) The choices of the works matrix taken over (what this import has already stays); how many. */
+  function restoreWorks(w, entries, ids) {
+    let n = 0;
+    const count = () => { n++; };
+    (w.plan || []).forEach(([i, t]) => {
+      if (!(i < S.mbTracks.length) || S.workPlan.has(i)) return;
+      const p = decField(t);
+      if (!(p.flags instanceof Set)) p.flags = new Set(p.flags || []);
+      S.workPlan.set(i, p);
+      count();
+    });
+    [['on', S.linkAttrOn], ['off', S.linkAttrOff]].forEach(([k, map]) => {
+      if (w[k]) decField(w[k]).forEach(([key, v]) => { if (!map.has(key)) { map.set(key, v instanceof Set ? v : new Set(v || [])); count(); } });
+    });
+    (w.fills || []).forEach(([k, t]) => {
+      if (S.dateFills.has(k)) return;
+      const f = decField(t);
+      f.fromCol = f.fromCol ? colKeyIn(f.fromCol, entries) : null;
+      S.dateFills.set(k, f);
+      count();
+    });
+    (w.colDate || []).forEach(([k, t]) => {
+      const key = colKeyIn(k, entries);
+      if (!key || S.mxColDate.has(key)) return;
+      S.mxColDate.set(key, decField(t));
+      count();
+    });
+    (w.removed || []).forEach(([k, rm]) => {
+      const key = colKeyIn(k, entries);
+      if (!key || S.mxRemoved.has(key)) return;
+      const a = rm.e ? entries.get(rm.e) : null;
+      S.mxRemoved.set(key, { key, name: rm.name, mbid: rm.mbid, entityType: rm.entityType, ...(a ? { artist: a } : {}), rowIds: (rm.rowIds || []).map((id) => ids.get(id)).filter(Boolean) });
+      count();
+    });
+    (w.collapsed || []).forEach((k) => {
+      const key = colKeyIn(k, entries);
+      if (key) S.mxCollapsed.add(key);
+    });
+    if (w.opts) decField(w.opts).forEach(([i, o]) => { if (!S.workRowOpts.has(i)) { S.workRowOpts.set(i, o); count(); } });
+    // the options for every new work (until changed), when none were chosen in this import
+    const d = S.workDefaults || {};
+    if (w.defaults && !d.typeId && !(d.languageIds || []).length) {
+      S.workDefaults = { typeId: w.defaults.typeId || '', languageIds: [...(w.defaults.languageIds || [])] };
+      count();
+    }
+    return n;
+  }
+
+  /** [146] (3.36.1) At the end of an import (the last one started): what is remembered taken over, then this one remembered. */
+  function finishRemember(seq) {
+    if (seq !== importSeq) return;
+    // what the lookups of the entries made of the rows counts as the source's; a row changed by hand meanwhile (a level, an
+    // instrument, a credit or a role credit set) keeps the first state, so that its change is one
+    const TOUCH = ['levelTouched', 'primaryTouched', 'roleCreditTouched', 'creditTouched', 'typeAnswer'];
+    const byId = new Map(S.rows.map((r) => [r.id, r]));
+    (S.freshRows || new Map()).forEach((f, id) => {
+      const r = byId.get(id);
+      if (!r) return;
+      const cur = rowFieldsOf(r);
+      if (TOUCH.every((k) => cur[k] === f.f[k])) f.f = cur;
+    });
+    if (remembering() && !S.rememberHold) {
+      // what is remembered never stops an import: taken over or not at all
+      const before = S.rows;
+      const entries = new Map(S.artists);
+      try {
+        restoreRemembered();
+      } catch (e) {
+        console.warn('[Credits-Importer] remembered', e);
+        S.rows = before;
+        S.artists = entries;
+        log('warn', 'rememberError', { text: e.message });
+      }
+      renderGroups();
+      renderWorks();
+      refresh();
+    }
+    S.rememberReady = true;
+  }
+
+  /** [146] Stored soon after a change (a second without changes), and when the page goes. */
+  let rememberTimer = null;
+  let importSeq = 0;
+  function scheduleRemember() {
+    if (!S.rememberReady || !remembering()) return;
+    clearTimeout(rememberTimer);
+    rememberTimer = setTimeout(saveRememberNow, 1000);
+  }
+  function saveRememberNow() {
+    clearTimeout(rememberTimer);
+    rememberTimer = null;
+    if (!S.rememberReady || !remembering() || !S.freshRows || S.rememberHold) return;
+    // [3.36.1] one snapshot per source (another source of the release keeps its own; the 3 used last)
+    const snap = rememberSnapshot();
+    const stored = readJson('localStorage', REMEMBER_ROWS_KEY, null);
+    const by = stored && stored.v === 2 && stored.by ? { ...stored.by } : stored && stored.v === 1 && stored.src ? { [stored.src]: stored } : {};
+    by[snap.src] = snap;
+    const keep = Object.entries(by).sort((a, b) => (b[1].at || 0) - (a[1].at || 0)).slice(0, 3);
+    relWrite(REMEMBER_ROWS_KEY, { v: 2, by: Object.fromEntries(keep) });
+  }
+
+  /**
+   * [146] The rows and entries remembered for this release taken over, when the same source is imported again: a row of a line
+   * of the source gets what was changed in it, the rows of their own come back (of a line that is still there, or added by
+   * hand), entries added by hand too; the order is the remembered one, new lines of the source after the rows of their entry.
+   */
+  function restoreRemembered() {
+    const stored = relRead(REMEMBER_ROWS_KEY, null);
+    const snap = stored && stored.v === 2 && stored.by ? stored.by[S.importSrc || ''] : stored && stored.v === 1 ? stored : null;
+    if (!snap || snap.v !== 1 || !Array.isArray(snap.rows) || snap.src !== (S.importSrc || '')) return;
+    // [3.36.1] other media chosen than then: the tracks stay as the source gives them now
+    const sameMedia = (snap.media || '') === mediaSig();
+    const fits = (r) => {
+      r.tracks = new Set([...(r.tracks || [])].filter((i) => i < S.mbTracks.length && inSelection(i)));
+      if (r.suggested instanceof Set) r.suggested = new Set([...r.suggested].filter((i) => r.tracks.has(i)));
+      return r.tracks.size > 0 || !['recording', 'work'].includes(r.level);
+    };
+    const byKey = new Map();
+    const bases = new Set();
+    S.rows.forEach((r) => {
+      const f = S.freshRows.get(r.id);
+      if (!f) return;
+      byKey.set(f.k, r);
+      bases.add(f.b);
+    });
+    const entries = new Map([...S.artists.values()].map((a) => [entryIdOf(a), a]));
+    for (const m of snap.manual || []) {
+      if (entries.has(m.e) || !m.a || !m.a.mbid) continue;
+      const a = { ...m.a, key: nextId(m.a.company ? 'c' : m.a.other ? 'o' : 'a'), dId: 0, rawName: '', status: 'manual', manual: true, candidates: [], editing: false, error: '', anvs: [] };
+      S.artists.set(a.key, a);
+      entries.set(m.e, a);
+    }
+    // rows that got a reference to another row from what is remembered (its id then)
+    const refRows = new Set();
+    const set = (r, fields, keepTracks = false) => Object.entries(fields).forEach(([k, t]) => {
+      if (keepTracks && (k === 'tracks' || k === 'suggested')) return;
+      if (t === null) delete r[k];
+      else r[k] = decField(t);
+      if (k === 'splitFrom' || k === 'mxOrigin') refRows.add(r);
+    });
+    const out = [];
+    const used = new Set();
+    const ids = new Map();
+    let changed = 0;
+    let lost = 0;
+    for (const x of snap.rows) {
+      if (x.k) {
+        const r = byKey.get(x.k);
+        if (!r || used.has(r)) {
+          if (x.d) lost++;
+          continue;
+        }
+        used.add(r);
+        // [3.36.1] removed with ✕: it stays removed
+        if (x.x) {
+          changed++;
+          continue;
+        }
+        if (x.d) {
+          const keep = { tracks: new Set(r.tracks), suggested: new Set(r.suggested || []) };
+          set(r, x.d, !sameMedia);
+          if (!fits(r)) Object.assign(r, keep);
+          // a row already in MusicBrainz taken in again by hand: not skipped anew
+          if (r.levelTouched && r.existingAll) {
+            delete r.existingAll;
+            delete r.levelBeforeSkip;
+          }
+          changed++;
+        }
+        ids.set(x.i, r.id);
+        out.push(r);
+        continue;
+      }
+      const a = entries.get(x.e);
+      if (!a || (x.b && !bases.has(x.b))) {
+        lost++;
+        continue;
+      }
+      const r = { id: nextId('r'), artistKey: a.key, tracksOpen: false };
+      set(r, x.f || {});
+      if (!fits(r)) {
+        lost++;
+        continue;
+      }
+      ids.set(x.i, r.id);
+      out.push(r);
+      changed++;
+    }
+    // the order: the entries as the source gives them, the rows of an entry as remembered (new lines of the source after them)
+    const byEntry = new Map();
+    out.forEach((r) => {
+      if (!byEntry.has(r.artistKey)) byEntry.set(r.artistKey, []);
+      byEntry.get(r.artistKey).push(r);
+    });
+    S.rows.forEach((r) => {
+      if (used.has(r)) return;
+      if (!byEntry.has(r.artistKey)) byEntry.set(r.artistKey, []);
+      byEntry.get(r.artistKey).push(r);
+    });
+    const order = [];
+    const done = new Set();
+    [...S.rows, ...out].forEach((r) => {
+      if (done.has(r.artistKey)) return;
+      done.add(r.artistKey);
+      order.push(...(byEntry.get(r.artistKey) || []));
+    });
+    // the rows a row refers to by its id (a split, a copy of the date matrix): their new ids, or none (they are gone)
+    refRows.forEach((r) => ['splitFrom', 'mxOrigin'].forEach((k) => {
+      if (!r[k]) return;
+      if (ids.has(r[k])) r[k] = ids.get(r[k]);
+      else delete r[k];
+    }));
+    S.rows = order;
+    for (const e of snap.entries || []) {
+      const a = entries.get(e.e);
+      if (!a) continue;
+      if ('join' in e) a.join = e.join;
+      if (e.by) S.emBy.set(a.key, e.by);
+      if (e.match && e.match.mbid) {
+        Object.assign(a, { mbid: e.match.mbid, mbName: e.match.mbName || '', mbComment: e.match.mbComment || '', status: e.match.status || 'manual', matchTouched: true });
+        // [3.36.1] the entity type only: its rows came back with their types (setCompanyEntityType would set them anew)
+        if (a.company && e.match.entityType) a.entityType = e.match.entityType;
+      }
+    }
+    // [3.36.4] the choices of the works matrix
+    if (snap.works) changed += restoreWorks(snap.works, entries, ids);
+    if (changed || lost) {
+      log('info', 'rememberRestored', { n: changed, date: new Date(snap.at || Date.now()).toLocaleString(LANG) });
+      if (lost) {
+        log('warn', 'rememberLost', { n: lost });
+        showMessage('warn', 'remember.lost', { n: lost });
+      }
+    }
+  }
+
   async function loadRelease(id, { confirmed = false, source = S.source } = {}) {
     if (!confirmed && S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
       renderSource();
@@ -13952,6 +14697,14 @@
       await bandPageInfo(rel);
       refreshRulesWindow();
       S.srcTracks = rel.tracks;
+      // [146] (3.36.0) what is remembered of the import before is stored first; this one is remembered once it is complete
+      // (an import started while another one still runs: only the last one counts)
+      saveRememberNow();
+      const seq = ++importSeq;
+      Object.assign(S, { rememberReady: false, freshRows: null, importSrc: `${source.id}:${id}` });
+      // [145b] (3.35.6) "Works as track groups" of the track pool: ticked again with each import (those left out back first)
+      unstashWorkGroups();
+      S.workGroupsOff = false;
       S.artists = new Map();
       S.rows = [];
       S.rowOpen.clear();
@@ -14099,6 +14852,8 @@
       autoPlaceFoundDates();
       // [D023] (3.31.7) dates in the titles of the tracks (off until switched on)
       placeTitleDates();
+      // [145b] (3.35.6) the works of the source as track groups (or out of the pool with the setting off)
+      applyWorkGroups({ quiet: true });
       // [3.32.1] suggestions waiting for "Apply" (collected item 109; maintainer: "automatisch dashboard aufklappen sofern
       // daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das dashboard muss doch auf sein, damit Dates &
       // Tracks sichtbar ist?"): the dashboard opens (if it is closed) and "Dates & tracks" with both pools – once for this
@@ -14136,6 +14891,8 @@
           renderWorks();
         }
       }
+      // [3.36.1] the rows as the source gave them – before the entries are looked up (changes made meanwhile are changes)
+      if (seq === importSeq) rememberFresh();
       if (S.artists.size) {
         setBusy('busy.artists');
         await resolveArtists();
@@ -14148,10 +14905,15 @@
         if (!S.source.readsTrackLists) applyNotesTrackCredits();
         if (S.trackPool.length !== pooled) renderDates();
         await computePublisherEvidence();
+        // [146] (3.36.0) what was changed in the rows before, if the release is remembered
+        finishRemember(seq);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
         autoSearchWorks();
         runArtistWorks();
+      } else {
+        // [3.36.1] also a release without credits at the source (rows added by hand)
+        finishRemember(seq);
       }
       setBusy('');
     } catch (e) {
@@ -14531,7 +15293,7 @@
       } else if (e.entityType !== 'artist') {
         throw new Error(tr('msg.notArtist'));
       }
-      Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'manual', editing: false, error: '' });
+      Object.assign(artist, { mbid: e.gid || mbid, mbName: e.name, mbComment: e.comment || '', status: 'manual', editing: false, error: '', matchTouched: true });
       if (artist.company) setCompanyEntityType(artist, e.entityType);
       log('ok', 'artistManual', { name: artist.name, mb: e.name });
     } catch (err) {
@@ -15501,14 +16263,17 @@
   // --- [E4] (3.34.30) An entry as a matrix: its roles as lines, the events (level · date · tracks) as columns ----------------
 
   /**
-   * [E4] An entry shown as a matrix (collected items E4, 139, 141): the matrix view, full, the entry not folded to compact lines;
-   * persons only – companies and other entries keep their rows.
+   * [E4] An entry shown as a matrix (collected items E4, 139, 141): the matrix view, full, the entry not folded to compact lines.
+   * [AE-4] (3.35.5) Not only persons (maintainer: "ja können auch in die matrix", "alle einträge die daten und/oder tracks
+   * anbieten. solche einträge kommen ja eher selten vor."): companies, places, areas and other entries too, when a row of theirs
+   * offers a date and/or tracks – on recordings, or of a type with dates; the others keep their rows (publishing on works).
    */
-  const mxPerson = (a) => !!a && matrixOn() && !a.company && !a.other;
+  const offersEvent = (r) => r.level !== 'work' && (r.level === 'recording' || (ltOf(r) || {}).has_dates !== false);
+  const mxOn = (a) => !!a && matrixOn() && (!(a.company || a.other) || S.rows.some((r) => r.artistKey === a.key && inEntry(r) && !r.s046Out && offersEvent(r)));
   // [3.35.0] in the compact view (or folded to compact lines) an entry opened with ▸ shows its full matrix
-  const mxEntry = (a) => mxPerson(a) && ((S.view === 'full' && !groupFolded(a.key)) || S.emWide.has(a.key));
+  const mxEntry = (a) => mxOn(a) && ((S.view === 'full' && !groupFolded(a.key)) || S.emWide.has(a.key));
   /** [E4] (3.35.0) An entry compact as a matrix: a line per event (or per role) with the roles as chips. */
-  const mxCompact = (a) => mxPerson(a) && !mxEntry(a);
+  const mxCompact = (a) => mxOn(a) && !mxEntry(a);
 
   /** [E4] The relationship type of a row – of one taken out (Skip) too: the type it had. */
   const ltOf = (r) => currentLinkType(r) || (r.level === 'skip' && r.linkTypeId ? idx().ltById.get(r.linkTypeId) || null : null);
@@ -15622,11 +16387,14 @@
    * immer das selbe sein. wenn ich also das event hier editiere verändert sich auch der date/track pool"); a date of the pool
    * dropped onto the head gives it to the event.
    */
-  function evHeadHtml(e) {
+  function evHeadHtml(e, open = false) {
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
     const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
-    return `<th class="dci-em-ev" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><span class="dci-em-evn">${circled(e.n)}</span>
+    // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
+    const t = tr(open ? 'em.evClose' : 'em.evOpen', { n: circled(e.n) });
+    return `<th class="dci-em-ev${open ? ' dci-em-evopen' : ''}" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><button type="button" class="dci-textbtn dci-em-evtoggle" data-act="em-evopen"
+      data-ev="${esc(e.key)}" aria-expanded="${open}" title="${esc(t)}" aria-label="${esc(t)}">${open ? '▾' : '▸'}</button><span class="dci-em-evn">${circled(e.n)}</span>
       <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>${pool && pool.name ? ` <span class="dci-em-evname">${esc(pool.name)}</span>` : ''}
       <input type="text" class="dci-em-evdate${date ? ' dci-cl-has' : ''}" data-f="em-evdate" data-ev="${esc(e.key)}" value="${esc(date)}" placeholder="${esc(tr('cl.noDate'))}"
         aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}"> ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
@@ -15634,6 +16402,147 @@
 
   /** [E4] (3.34.31) The rows of an entry in an event. */
   const rowsInEvent = (a, evKey) => S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey);
+
+  /**
+   * [AE-3] (3.35.4) An event opened below its block (maintainer: "wenn man den ereigniskopf öffnet soll man datum und tracks
+   * einstellen können", "auch ebene ändern können"): its level (the levels of MusicBrainz its rows' types have), its date (a
+   * field as in the head, the dates of the pool, no date) and on recordings its tracks (a box per track, the media, the track
+   * groups of the pool, all). What is set goes for all rows of the entry in this event.
+   */
+  function emEventHtml(a, e) {
+    const rows = rowsInEvent(a, e.key);
+    const levels = ['recording', 'release', 'release_group'].filter((lv) => lv === e.level || rows.some((r) => typeOnLevel(r, lv)));
+    const levelSeg = `<span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('em.evLevel'))}">${levels.map((lv) => `<button type="button" data-act="em-evlevel"
+      data-ev="${esc(e.key)}" data-level="${lv}" aria-pressed="${lv === e.level}">${esc(tr(`level.${lv}`))}</button>`).join('')}</span>`;
+    const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
+    const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
+    const dated = hasDateInput(e.date) || !!pool;
+    const poolBtns = S.datePool.map((d) => `<button type="button" class="dci-small dci-em-evpool" data-act="em-evpool" data-ev="${esc(e.key)}" data-id="${esc(d.id)}"
+      aria-pressed="${!!pool && pool.id === d.id}">${esc(poolLabel(d))}</button>`).join(' ');
+    let tracks = '';
+    if (e.level === 'recording') {
+      const multi = new Set(S.mbTracks.map((x) => x.medium)).size > 1;
+      let last = null;
+      const chips = selTracks().map((x) => {
+        const head = multi && x.medium !== last ? `<button type="button" class="dci-medium dci-medium-toggle" data-act="em-evmedium" data-ev="${esc(e.key)}" data-medium="${x.medium}"
+          title="${esc(tr('picker.mediumTitle'))}">${esc(mediumLabel(x.medium))}</button>` : '';
+        last = x.medium;
+        return `${head}<label class="dci-chip"><input type="checkbox" data-f="em-evtrack" data-ev="${esc(e.key)}" data-i="${x.idx}" ${e.tracks.has(x.idx) ? 'checked' : ''}>
+          <span class="dci-tn">${esc(x.number)}</span> <span class="dci-tt">${esc(x.title)}</span></label>`;
+      }).join('');
+      tracks = `<div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evTracks'))}</span><div class="dci-picker">
+        <div class="dci-picker-actions"><button type="button" data-act="em-evall" data-ev="${esc(e.key)}">${esc(tr('picker.all'))}</button>
+        ${S.trackPool.length ? `<span class="dci-sub">${esc(tr('em.evGroups'))}</span> ${S.trackPool.map((g) => `<button type="button" data-act="em-evtg" data-ev="${esc(e.key)}" data-id="${esc(g.id)}">${esc(g.name)}</button>`).join('')}` : ''}</div>
+        <div class="dci-chips">${chips}</div></div></div>`;
+    }
+    return `<div class="dci-em-evedit" data-evedit="${esc(e.key)}" role="group" aria-label="${esc(tr('em.evEditTitle', { n: circled(e.n), rows: rows.length }))}">
+      <div class="dci-em-evrow dci-em-evtop"><strong>${esc(tr('em.evEditTitle', { n: circled(e.n), rows: rows.length }))}</strong>
+        <button type="button" class="dci-iconbtn" data-act="em-evopen" data-ev="${esc(e.key)}" title="${esc(tr('common.close'))}" aria-label="${esc(tr('common.close'))}">✕</button></div>
+      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evLevel'))}</span>${levelSeg}</div>
+      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evDate'))}</span><input type="text" class="dci-em-evdate${date ? ' dci-cl-has' : ''}" data-f="em-evdate" data-ev="${esc(e.key)}"
+        value="${esc(date)}" placeholder="${esc(tr('cl.noDate'))}" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">
+        ${S.datePool.length ? `<span class="dci-sub">${esc(tr('em.evPool'))}</span> ${poolBtns}` : ''}
+        ${dated ? ` <button type="button" class="dci-textbtn" data-act="em-evpool" data-ev="${esc(e.key)}" data-id="">${esc(tr('cl.noDate'))}</button>` : ''}</div>
+      ${tracks}
+    </div>`;
+  }
+
+  /**
+   * [AE-3] (3.35.4) After an event was changed: the open event follows its rows (their new key); two rows of one line now in the
+   * same event are one – the first stays, the others are taken out (Skip).
+   */
+  function emEventMoved(a, rows) {
+    const seen = new Map();
+    S.rows.forEach((r) => {
+      if (r.artistKey !== a.key || r.level === 'skip' || r.level === 'work') return;
+      const k = `${lineKeyOf(r)}#${eventKeyOf(r)}`;
+      if (!seen.has(k)) seen.set(k, r);
+      else if (rows.includes(r) || rows.includes(seen.get(k))) Object.assign(r, { level: 'skip', levelTouched: true });
+    });
+    const first = rows.find((r) => r.level !== 'skip');
+    const o = S.emEvOpen.get(a.key);
+    if (o && first) S.emEvOpen.set(a.key, { block: o.block, ev: eventKeyOf(first) });
+    else if (o && !first) S.emEvOpen.delete(a.key);
+  }
+
+  /**
+   * [AE-3] (3.35.4) An event on another level: its rows whose type MusicBrainz has there move (on recordings with all tracks of
+   * the media chosen), the others keep their level and their line says so (maintainer: "ja passt").
+   */
+  function emEventLevel(a, evKey, level) {
+    const rows = rowsInEvent(a, evKey);
+    if (!rows.length || rows[0].level === level) return;
+    const n = (entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work')).evByKey.get(evKey) || {}).n || 0;
+    const moved = [];
+    const kept = [];
+    for (const r of rows) {
+      if (!typeOnLevel(r, level)) {
+        r.emLevelKept = level;
+        kept.push(r);
+        continue;
+      }
+      const from = r.level;
+      delete r.emLevelKept;
+      levelOf(r, level);
+      if (level === 'recording' && from !== 'recording' && !r.tracks.size) r.tracks = new Set(selTracks().map((x) => x.idx));
+      r.dateKeyed = true;
+      moved.push(r);
+    }
+    // [3.36.1] the date matrix applied again for each of their date groups (before: only the first)
+    const groups = new Set();
+    let mx = false;
+    moved.forEach((r) => {
+      const g = r.date && r.date.mx ? dateGroupOf(r) : null;
+      if (g && groups.has(g.key)) return;
+      if (g) groups.add(g.key);
+      if (matrixDateForLevel(r)) mx = true;
+    });
+    emEventMoved(a, moved.length ? moved : rows);
+    // a row that stayed before and is in the event again: no note
+    const now = moved.find((r) => r.level !== 'skip');
+    if (now) S.rows.forEach((r) => { if (r.artistKey === a.key && r.emLevelKept && eventKeyOf(r) === eventKeyOf(now)) delete r.emLevelKept; });
+    log('info', 'emEvLevel', { name: a.mbName || a.name, n: circled(n), level: tr(`level.${level}`), moved: moved.length, kept: kept.length });
+    if (mx) renderDates();
+    renderWorks();
+    rerenderGroup(a);
+    refresh();
+  }
+
+  /** [AE-3] (3.35.4) An event with a date of the pool ('' – no date): all its rows get it. */
+  function emEventPool(a, evKey, poolId) {
+    const rows = rowsInEvent(a, evKey).filter((r) => {
+      const lt = currentLinkType(r);
+      return !(lt && lt.has_dates === false);
+    });
+    const entry = poolId ? S.datePool.find((d) => d.id === poolId) : null;
+    if (!rows.length || (poolId && !entry)) return;
+    rows.forEach((r) => Object.assign(r, { date: entry ? { ...fieldsFromDate(entry), poolId: entry.id } : null, dateOpen: !!entry, dateKeyed: true }));
+    emEventMoved(a, rows);
+    log('info', 'emEvDate', { n: rows.length, date: entry ? poolLabel(entry) : tr('cl.noDate') });
+    rerenderGroup(a);
+    refresh();
+  }
+
+  /** [AE-3] (3.35.4) An event on other tracks (a box, a medium, a track group, all): all its rows get them; at least one track. */
+  function emEventTracks(a, evKey, next) {
+    const rows = rowsInEvent(a, evKey).filter((r) => r.level === 'recording');
+    if (!rows.length) return;
+    const tracks = [...next].filter((i) => i < S.mbTracks.length && inSelection(i));
+    if (!tracks.length) {
+      showMessage('warn', 'em.evNoTracks');
+      rerenderGroup(a);
+      return;
+    }
+    rows.forEach((r) => {
+      r.tracks = new Set(tracks);
+      r.dateKeyed = true;
+    });
+    emEventMoved(a, rows);
+    const n = (entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work')).evByKey.get(eventKeyOf(rows[0])) || {}).n || 0;
+    log('info', 'emEvTracks', { name: a.mbName || a.name, n: circled(n), tracks: tracksShort(rows[0]) });
+    rerenderGroup(a);
+    refresh();
+  }
 
   /** [E4] (3.34.31) The date typed in the head of an event: its rows get it (as a date of the pool); empty – no date. */
   function emEventDate(a, evKey, text) {
@@ -15677,6 +16586,8 @@
       savePool();
       log('info', 'emEvDate', { n: rows.length, date: formatDateValue(entry) });
     }
+    // [AE-3] (3.35.4) an opened event stays open with its new date
+    emEventMoved(a, rows);
     renderDates();
     renderWorks();
     renderGroups();
@@ -15804,7 +16715,18 @@
   function lineAskHtml(l) {
     // [3.35.0] the first row not taken out (a question of a row taken out says nothing)
     const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
-    return [unmappedHtml(r), instrumentAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), bothAskHtml(l)].join('');
+    return [unmappedHtml(r), instrumentAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), bothAskHtml(l), levelKeptHtml(l)].join('');
+  }
+
+  /**
+   * [AE-3] (3.35.4) A line whose rows stayed on their level when their event went to another one (maintainer: "ja passt"):
+   * "Mastered By stays on Release: MusicBrainz has no mastering on Recording · ok".
+   */
+  function levelKeptHtml(l) {
+    const r = l.rows.find((x) => x.emLevelKept && x.level !== 'skip');
+    if (!r) return '';
+    return `<div class="dci-bass-ask dci-em-kept">${esc(tr('em.levelKept', { name: r.raw || rowTypeName(r), level: tr(`level.${r.level}`), type: rowTypeName(r), to: tr(`level.${r.emLevelKept}`) }))}
+      <button type="button" class="dci-textbtn" data-act="em-keptok" data-row="${r.id}">${esc(tr('em.keptOk'))}</button></div>`;
   }
 
   /** [E4] A line of a block: instrument (MusicBrainz) · role credit · additional / guest / solo · a tick per event · ▸ ✕. */
@@ -15839,8 +16761,11 @@
       <button type="button" class="dci-textbtn dci-em-detail" data-act="em-detail" aria-expanded="${open}" title="${esc(tr('em.detailTitle'))}">${open ? '▾' : '▸'} ${esc(tr('em.detail'))}</button>
       <button type="button" class="dci-iconbtn" data-act="em-remove" title="${esc(tr('em.remove'))}" aria-label="${esc(tr('em.remove'))}">✕</button></td>`;
     const ask = skip ? '' : lineAskHtml(l);
+    // [AE-2] (3.35.3) ⠿ drags the line to another place in its block (Alt+↑ / Alt+↓ too)
+    const grip = b.lines.length > 1 ? `<button type="button" class="dci-em-grip" data-drag="em-line" data-id="${esc(l.id)}" data-block="${esc(b.key)}" draggable="true"
+      title="${esc(tr('em.gripTitle'))}" aria-label="${esc(tr('em.gripLabel', { name }))}">⠿</button>` : '';
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
-        <td class="dci-em-c-role">${role}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-flags">${flags}</td>${ticks}${b.others.length ? '<td></td>' : ''}${tools}
+        <td class="dci-em-c-role">${grip}${role}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-flags">${flags}</td>${ticks}${b.others.length ? '<td></td>' : ''}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
   }
@@ -15870,13 +16795,16 @@
     const needed = (l) => !ltOf(l.rows[0]) || !!lineAskHtml(l) || S.emOpen.has(l.id);
     const shown = more || b.lines.length <= max + 1 ? b.lines : b.lines.filter((l, i) => i < max || needed(l));
     const hidden = b.lines.filter((l) => !shown.includes(l));
+    // [AE-3] (3.35.4) the event opened in this block
+    const o = S.emEvOpen.get(a.key);
+    const openEv = o && o.block === b.key ? b.events.find((e) => e.key === o.ev) || null : null;
     const addEv = b.others.length ? `<th class="dci-em-addev"><select data-f="em-addev" data-block="${esc(b.key)}" aria-label="${esc(tr('em.addEv'))}"><option value="">${esc(tr('em.addEv'))}</option>${b.others.map((e) => `<option value="${esc(e.key)}">${esc(`${circled(e.n)} ${tr(`level.${e.level}`)}`)}</option>`).join('')}</select></th>` : '';
     return `<div class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
       <div class="dci-em-scroll"><table class="dci-em-grid">
         <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr(b.kind === 'role' ? 'em.colRoleOther' : 'em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th>
-          <th class="dci-em-c-flags" scope="col">${flagNames.map((f) => `<span>${esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f)}</span>`).join('')}</th>${b.events.map(evHeadHtml).join('')}${addEv}<th scope="col"></th></tr></thead>
+          <th class="dci-em-c-flags" scope="col">${flagNames.map((f) => `<span>${esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f)}</span>`).join('')}</th>${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key)).join('')}${addEv}<th scope="col"></th></tr></thead>
         <tbody>${shown.map((l) => emLineHtml(a, b, l, flagNames, cols)).join('')}</tbody>
-      </table></div>
+      </table></div>${openEv ? emEventHtml(a, openEv) : ''}
       ${hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
         : more ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.less'))}</button>` : ''}
     </div>`;
@@ -15982,6 +16910,44 @@
     refresh();
   }
 
+  /**
+   * [AE-2] (3.35.3) A line moved to another place in its block (maintainer: "bitte noch ziehen ermöglichen", "ja nur bis zum
+   * nächsten import"): dropped before or after another line of the block, or one place up or down (Alt+↑ / Alt+↓ on ⠿). The
+   * order of the lines is the order of their rows, so the rows of the block's lines are put in the new order – in the places
+   * the entry's rows had in S.rows (rows of other entries and the entry's other rows stay where they are). The compact view
+   * follows; the next import starts from the source's order again.
+   */
+  function emMoveLine(a, lineId, targetId, after) {
+    const m = entryModel(a, shownRowsOf(a).filter((r) => r.level !== 'work'));
+    const b = m.blocks.find((x) => x.lines.some((l) => l.id === lineId));
+    if (!b) return false;
+    const order = b.lines.map((l) => l.id);
+    const from = order.indexOf(lineId);
+    let to;
+    if (typeof targetId === 'number') to = Math.max(0, Math.min(order.length - 1, from + targetId));
+    else {
+      const t = order.indexOf(targetId);
+      if (t < 0 || t === from) return false;
+      to = t + (after ? 1 : 0) - (t > from ? 1 : 0);
+    }
+    if (to === from) return false;
+    order.splice(from, 1);
+    order.splice(to, 0, lineId);
+    // the lines of the entry in their new order: the block's lines take the places its lines had
+    const places = m.lines.map((l, i) => (b.lines.includes(l) ? i : -1)).filter((i) => i >= 0);
+    const ids = m.lines.map((l) => l.id);
+    places.forEach((p, i) => { ids[p] = order[i]; });
+    const rank = new Map();
+    m.lines.forEach((l) => l.rows.forEach((r) => rank.set(r, ids.indexOf(l.id))));
+    const at = [];
+    S.rows.forEach((r, i) => { if (rank.has(r)) at.push(i); });
+    const moved = at.map((i) => S.rows[i]).map((r, i) => ({ r, i })).sort((x, y) => rank.get(x.r) - rank.get(y.r) || x.i - y.i).map((x) => x.r);
+    at.forEach((p, i) => { S.rows[p] = moved[i]; });
+    const line = m.lines.find((l) => l.id === lineId);
+    log('info', 'emOrder', { name: a.mbName || a.name, role: line.rows[0].primaryText || line.rows[0].raw, n: to + 1 });
+    return true;
+  }
+
   /** [E4] The rows of the line an element is in. */
   const lineRows = (el) => {
     const t = el.closest('[data-rows]');
@@ -16042,6 +17008,17 @@
     if (!a) return false;
     if (f === 'em-evdate') {
       emEventDate(a, el.dataset.ev, el.value);
+      return true;
+    }
+    // [AE-3] (3.35.4) a track of an opened event
+    if (f === 'em-evtrack') {
+      const e = rowsInEvent(a, el.dataset.ev)[0];
+      if (!e) return true;
+      const next = new Set(e.tracks);
+      const i = Number(el.dataset.i);
+      if (el.checked) next.add(i);
+      else next.delete(i);
+      emEventTracks(a, el.dataset.ev, next);
       return true;
     }
     if (f === 'em-addev') {
@@ -16160,7 +17137,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${mxPerson(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          <div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -16941,8 +17918,8 @@
 
   // (the key of 3.17.1 is taken over into the new one and goes)
   function saveSrcOff() {
-    writeJson('localStorage', SRC_OFF_KEY, S.srcOff.size ? [...S.srcOff] : null);
-    writeJson('localStorage', BC_OFF_KEY, null);
+    relWrite(SRC_OFF_KEY, S.srcOff.size ? [...S.srcOff] : null);
+    relWrite(BC_OFF_KEY, null);
   }
 
   /** [3.17.1] Forgets that a credit was switched off (its level is set by the caller). */
@@ -17017,12 +17994,15 @@
       S.datePool = S.datePool.filter((d) => !ids.has(d.id));
       m.cells = m.cells.filter((c) => !cells.includes(c));
       dates = pool.length;
-      writeJson('localStorage', ABOUT_KEY, { stash: { pool, cells } });
+      // [146] (3.36.0) kept in this tab too (stored only while the release is remembered)
+      S.aboutStash = { pool, cells };
+      relWrite(ABOUT_KEY, { stash: { pool, cells } });
     } else {
-      const stash = (readJson('localStorage', ABOUT_KEY, null) || {}).stash || { pool: [], cells: [] };
+      const stash = S.aboutStash || (relRead(ABOUT_KEY, null) || {}).stash || { pool: [], cells: [] };
+      S.aboutStash = null;
       for (const d of stash.pool || []) if (!S.datePool.some((x) => x.id === d.id)) { S.datePool.push(d); dates++; }
       for (const c of stash.cells || []) if (!m.cells.some((x) => x.id === c.id)) m.cells.push(c);
-      writeJson('localStorage', ABOUT_KEY, null);
+      relWrite(ABOUT_KEY, null);
     }
     savePool();
     dmChanged();
@@ -17045,6 +18025,96 @@
     saveTrackPool();
     log('info', 'trackGroupSaved', { name: g.name, n: tracks.length });
     return g;
+  }
+
+  /**
+   * [145b] (3.35.6) The works of the source with their tracks ([{ name, tracks }]): the tracks that name a work (the parts of an
+   * index track of Discogs, 3.35.1), in the order of the tracks; only tracks of the MusicBrainz release.
+   */
+  function sourceWorks() {
+    const by = new Map();
+    (S.srcTracks || []).forEach((t, i) => {
+      const w = String((t && t.work) || '').trim();
+      if (!w || i >= S.mbTracks.length) return;
+      if (!by.has(w)) by.set(w, []);
+      by.get(w).push(i);
+    });
+    return [...by.entries()].map(([name, tracks]) => ({ name, tracks }));
+  }
+
+  /** [145b] (3.35.6) The works of the source into the track pool, as suggestions (`found`, `work`); none twice (same tracks). */
+  function placeWorkGroups() {
+    let n = 0;
+    for (const w of sourceWorks()) {
+      const tracks = [...w.tracks].sort((a, b) => a - b);
+      if (S.trackPool.some((g) => g.tracks.length === tracks.length && g.tracks.every((x, k) => x === tracks[k]))) continue;
+      S.trackPool.push({ id: `t${newPoolId().slice(1)}`, name: w.name, tracks, found: true, work: true });
+      n++;
+    }
+    return n;
+  }
+
+  /**
+   * [145b] (3.35.6) The works of the source as track groups (maintainer: "ja lass das mal anbieten, aber mit der option das auch
+   * auszuschalten. und mit der option im date track pool auf die interpretation von werken als group hier zu verzichten. an und
+   * abschaltbar jeweils holt es die daten wieder oder schließt sie aus.", "B"): wanted (⚙ Settings → Dates & tracks, on, and not
+   * unticked in the track pool for this import) – they are in the pool, those taken out before come back with their places in
+   * the date matrix; not wanted – they leave the pool, and the date matrix loses them (a date only on them goes, kept for coming
+   * back). Rows keep the tracks they got from them.
+   */
+  /** [145b] (3.35.6) The works left out back into the pool and their places into the date matrix: how many. */
+  function unstashWorkGroups() {
+    const st = S.workGroupsStash;
+    S.workGroupsStash = null;
+    if (!st) return 0;
+    const m = dm();
+    st.groups.forEach((g) => { if (!S.trackPool.some((x) => x.id === g.id)) S.trackPool.push(g); });
+    st.cells.forEach((c) => {
+      const cur = m.cells.find((x) => x.id === c.id);
+      if (cur) cur.tgs = uniq([...(cur.tgs || []), ...c.ids]);
+    });
+    st.removed.forEach((c) => { if (!m.cells.some((x) => x.id === c.id)) m.cells.push(c); });
+    return st.groups.length;
+  }
+
+  function applyWorkGroups({ quiet = false } = {}) {
+    const want = S.workGroupsOn && !S.workGroupsOff;
+    const has = S.trackPool.some((g) => g.work);
+    const m = dm();
+    let n = 0;
+    if (want) {
+      n += unstashWorkGroups();
+      n += placeWorkGroups();
+    } else if (has) {
+      const ids = new Set(S.trackPool.filter((g) => g.work).map((g) => g.id));
+      const st = { groups: S.trackPool.filter((g) => ids.has(g.id)), cells: [], removed: [] };
+      m.cells = m.cells.filter((c) => {
+        const mine = (c.tgs || []).filter((t) => ids.has(t));
+        if (!mine.length) return true;
+        const rest = c.tgs.filter((t) => !ids.has(t));
+        if (!rest.length) {
+          st.removed.push(c);
+          return false;
+        }
+        st.cells.push({ id: c.id, ids: mine });
+        c.tgs = rest;
+        return true;
+      });
+      S.trackPool = S.trackPool.filter((g) => !ids.has(g.id));
+      S.workGroupsStash = st;
+      n = st.groups.length;
+    }
+    if (!n) return;
+    saveTrackPool();
+    log('info', want ? 'workGroupsIn' : 'workGroupsOut', { n });
+    if (quiet) {
+      saveMatrix();
+      return;
+    }
+    dmChanged();
+    renderDates();
+    renderGroups();
+    refresh();
   }
 
   /** A copy of a row right after it (for splitting by tracks or dates). */
@@ -17277,7 +18347,7 @@
    */
   function dm() {
     if (S.dm) return S.dm;
-    const stored = readJson('localStorage', MATRIX_KEY, null);
+    const stored = relRead(MATRIX_KEY, null);
     S.dm = stored && Array.isArray(stored.cells) ? stored : { cells: [], found: '', dirty: false };
     return S.dm;
   }
@@ -17657,6 +18727,10 @@
     S.messages = S.messages.filter((x) => !['dm.autoPlaced', 'dm.autoPooled', 'dm.widened', 'dm.titlePlaced'].includes(x.key));
     const res = autoPlaceFoundDates({ force: true });
     placeTitleDates({ force: true });
+    // [145b] (3.35.6) the works of the source again
+    S.workGroupsStash = null;
+    S.workGroupsOff = false;
+    applyWorkGroups({ quiet: true });
     if (!S.source.readsTrackLists) applyNotesTrackCredits({ rows: false });
     dm().dirty = true;
     saveMatrix();
@@ -17868,8 +18942,11 @@
           ${media.map((md) => `<option value="m:${md}">${esc(mediumGroupName(md))}</option>`).join('')}
           <option value="all">${esc(tr('trackpool.allMedia', { n: media.length }))}</option></select>`
       : `<button type="button" class="dci-textbtn" data-act="tg-new">${esc(tr('trackpool.new'))}</button>`;
+    // [145b] (3.35.6) the works of the source as track groups, for this import
+    const works = S.workGroupsOn && sourceWorks().length ? `<label class="dci-check dci-wg-toggle" title="${esc(tr('trackpool.worksTitle'))}"><input type="checkbox" data-f="work-groups-pool"
+      ${S.workGroupsOff ? '' : 'checked'}> ${esc(tr('trackpool.works', { n: sourceWorks().length }))}</label>` : '';
     return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}
-        ${add}
+        ${add}${works}
         ${S.trackPool.length ? hint : `<span class="dci-sub">${esc(tr('trackpool.explain'))}</span>`}</div>`;
   }
 
@@ -18142,6 +19219,8 @@
       const n = S.trackPool.length;
       S.trackPool = [];
       S.trackForm = null;
+      // [3.36.1] the works left out go too (they would come back with the pool stored)
+      S.workGroupsStash = null;
       saveTrackPool();
       log('info', 'trackPoolCleared', { n });
       if (others) otherPoolKeys('dci-track-pool:').forEach((k) => writeJson('localStorage', k, null));
@@ -18393,7 +19472,8 @@
     if (!ruleOn('S052') || row.level === 'skip' || (row.roleCreditTouched && norm(row.roleCredit) !== norm(row.roleCreditSuggest))) return '';
     const btn = (act, word, text, title = '') => `<button type="button" class="dci-textbtn" data-act="${act}" data-word="${esc(word)}"${title ? ` title="${esc(title)}"` : ''}>${esc(text)}</button>`;
     const out = [];
-    const low = row.creditLowered || [];
+    // [144] (3.35.2) words written small one after another first as a whole ("Les Paul → les paul · keep “Les Paul” · …")
+    const low = [...(row.creditPhrases || []), ...(row.creditLowered || [])];
     if (low.length) {
       out.push(`<div class="dci-sub dci-case-note" data-case="small">${esc(tr('caseNote.small'))} ${low.map((w) => `<span class="dci-case-word">${esc(tr('caseNote.word', { word: w, small: w.toLowerCase() }))}</span> ${btn('case-keep', w, tr('caseNote.keep', { word: w }))} · ${btn('case-always', w, tr('caseNote.always', { word: w }), tr('caseNote.alwaysTitle', { word: w }))}`).join(' · ')}</div>`);
     }
@@ -18613,7 +19693,9 @@
       // [S052] (3.34.28) words of the role credit written small that MusicBrainz does not know
       const low = ruleOn('S052') && !(row.roleCreditTouched && norm(row.roleCredit) !== norm(row.roleCreditSuggest)) ? (row.creditLowered || []) : [];
       if (low.length) {
-        parts.push(`<span class="dci-cl-flag dci-cl-case" title="${esc(tr('caseNote.clTitle'))}">${esc(tr('cl.caseSmall', { words: low.map((w) => tr('caseNote.word', { word: w, small: w.toLowerCase() })).join(', ') }))} ${low.map((w) => `<button type="button" class="dci-textbtn" data-act="case-keep" data-word="${esc(w)}">${esc(tr('caseNote.keep', { word: w }))}</button>`).join(' · ')}</span>`);
+        // [144] (3.35.2) words one after another kept as a whole first ("keep “Les Paul”")
+        const keepOf = [...(row.creditPhrases || []), ...low];
+        parts.push(`<span class="dci-cl-flag dci-cl-case" title="${esc(tr('caseNote.clTitle'))}">${esc(tr('cl.caseSmall', { words: low.map((w) => tr('caseNote.word', { word: w, small: w.toLowerCase() })).join(', ') }))} ${keepOf.map((w) => `<button type="button" class="dci-textbtn" data-act="case-keep" data-word="${esc(w)}">${esc(tr('caseNote.keep', { word: w }))}</button>`).join(' · ')}</span>`);
       }
     } else {
       parts.push(`<button type="button" class="dci-iconbtn dci-cl-x" data-act="remove-row" title="${esc(tr('cl.removeTitle'))}" aria-label="${esc(tr('cl.removeTitle'))}">✕</button>`);
@@ -18760,7 +19842,10 @@
     // [E4] (3.35.0) the field with the focus keeps it when the entry is drawn anew (the same field of the same row, line or event)
     const act = document.activeElement;
     let again = null;
-    if (act && section.contains(act) && act.dataset && act.dataset.f) {
+    // [AE-3] (3.35.4) a field of an opened event: the same field of the event (its key changes with what was set)
+    const inEdit = act && section.contains(act) && act.closest && act.closest('.dci-em-evedit');
+    if (inEdit && act.dataset.f) again = { edit: true, f: act.dataset.f, i: act.dataset.i || '' };
+    else if (act && section.contains(act) && act.dataset && act.dataset.f) {
       const holder = act.closest('[data-row], [data-line], [data-evhead]');
       const attr = holder ? (holder.dataset.row ? 'data-row' : holder.dataset.line ? 'data-line' : 'data-evhead') : '';
       again = { f: act.dataset.f, attr, id: holder ? holder.getAttribute(attr) : '', ev: act.dataset.ev || '' };
@@ -18771,7 +19856,8 @@
     section.replaceWith(fresh);
     if (again) {
       const q = (v) => (window.CSS && CSS.escape ? CSS.escape(v) : v);
-      const el = fresh.querySelector(`${again.attr ? `[${again.attr}="${q(again.id)}"] ` : ''}[data-f="${q(again.f)}"]${again.ev ? `[data-ev="${q(again.ev)}"]` : ''}`);
+      const el = again.edit ? fresh.querySelector(`.dci-em-evedit [data-f="${q(again.f)}"]${again.i ? `[data-i="${q(again.i)}"]` : ''}`)
+        : fresh.querySelector(`${again.attr ? `[${again.attr}="${q(again.id)}"] ` : ''}[data-f="${q(again.f)}"]${again.ev ? `[data-ev="${q(again.ev)}"]` : ''}`);
       if (el) el.focus({ preventScroll: true });
     }
   }
@@ -18793,7 +19879,7 @@
   function rerenderRow(row) {
     // [E4] (3.34.30) a row of an entry shown as a matrix: the entry is drawn anew (its lines follow the row)
     const ra = S.artists.get(row.artistKey);
-    if (mxPerson(ra) && (mxEntry(ra) || mxCompact(ra))) {
+    if (mxOn(ra) && (mxEntry(ra) || mxCompact(ra))) {
       rerenderGroupSoon(ra);
       return;
     }
@@ -18869,6 +19955,8 @@
 
   function refresh() {
     if (!S.overlay) return;
+    // [146] (3.36.0) the rows remembered soon after a change
+    scheduleRemember();
     scheduleWorkRecheck();
     autoSkipExisting();
     syncSourceCredits();
@@ -19633,7 +20721,7 @@
   // lookups rest; the matrix folded (not stored, folded with the skip); the work lookups after the question for many
   // tracks: null (not decided), 'ask' (the question is shown), 'yes', 'no' ("Not now", for this page)
   const WORKS_SKIP_KEY = `dci-works-skip:${releaseMbid}`;
-  S.worksSkip = !!readJson('localStorage', WORKS_SKIP_KEY, null);
+  S.worksSkip = !!relRead(WORKS_SKIP_KEY, null);
   S.worksFolded = S.worksSkip;
   S.worksLookups = null;
   // [3.19.3] the rows skipped with the works matrix shown with their entries (setting, on; only "off" is stored)
@@ -20896,7 +21984,7 @@
     log('info', 'worksChosen', { choice: tr(`media.works.${w}`) });
     if (w === 'skip') {
       Object.assign(S, { worksSkip: true, worksFolded: true });
-      writeJson('localStorage', WORKS_SKIP_KEY, true);
+      relWrite(WORKS_SKIP_KEY, true);
       return;
     }
     S.worksLookups = w === 'no' ? 'no' : 'yes';
@@ -20946,7 +22034,7 @@
   function setWorksSkip(skip) {
     S.worksSkip = skip;
     S.worksFolded = skip;
-    writeJson('localStorage', WORKS_SKIP_KEY, skip || null);
+    relWrite(WORKS_SKIP_KEY, skip || null);
     const n = setWorksRowsSkipped(skip);
     if (skip && S.searchRunning) S.searchCancel = true;
     log('info', skip ? 'worksSkipped' : 'worksTaken', { n });
@@ -21377,6 +22465,8 @@
   }
 
   function renderWorks() {
+    // [3.36.4] the choices of the works matrix remembered too (soon after a change)
+    scheduleRemember();
     // Keep the scroll position of the matrix (and of the dashboard) while it is drawn again
     const wrap = S.overlay && S.overlay.querySelector('.dci-mx-wrap');
     const pos = wrap ? [wrap.scrollTop, wrap.scrollLeft] : null;
@@ -21880,6 +22970,7 @@
       case 'mx-type': {
         const i = workIndexOf(el);
         S.workRowOpts.set(i, { ...rowOpts(i), typeId: el.value, typeAuto: null });
+        scheduleRemember();
         return true;
       }
       case 'work-lang-add': {
@@ -22520,7 +23611,8 @@
     refresh();
   }
 
-  function setLevel(row, level) {
+  /** [3.35.4] A row on another level, without drawing (setLevel; the event of an entry's matrix, AE-3): whether it was or is on works. */
+  function levelOf(row, level) {
     delete row.scopeLevel;
     delete row.mxSkipped;
     const toOrFromWork = level === 'work' || row.level === 'work';
@@ -22531,6 +23623,11 @@
     resolveRowType(row);
     if (!primaryIsValid(row) || !norm(row.primaryText)) row.primaryText = pickPrimary(row);
     refreshRowDetails(row);
+    return toOrFromWork;
+  }
+
+  function setLevel(row, level) {
+    const toOrFromWork = levelOf(row, level);
     if (matrixDateForLevel(row)) {
       renderGroups();
       renderWorks();
@@ -22830,6 +23927,12 @@
       const row = place && rowOf(place);
       return row && tracksDropFits(row) ? { el: place, kind: 'row-tracks' } : null;
     }
+    // [AE-2] (3.35.3) a line of an entry's matrix: onto another line of its block – before it (upper half) or after it
+    if (d.kind === 'em-line') {
+      const line = t.closest('tr.dci-em-line');
+      const block = line && line.closest('.dci-em-block');
+      return line && line.dataset.line !== d.id && block && block.dataset.block === d.block && line.closest('[data-group]') === d.group ? { el: line, kind: 'em-order' } : null;
+    }
     // [E4] (3.35.0) a role chip of a compact line: onto the line of another event of the same entry
     if (d.kind === 'em-chip') {
       const ev = t.closest('.dci-em-cl[data-emev]');
@@ -22935,6 +24038,8 @@
     S.dmDrag = { kind: src.dataset.drag, id: src.dataset.id, cell: src.dataset.cell || null, list: src.dataset.list || null };
     // [E4] (3.35.0) a role chip: its event and its entry
     if (S.dmDrag.kind === 'em-chip') Object.assign(S.dmDrag, { ev: src.dataset.ev, group: src.closest('[data-group]') });
+    // [AE-2] (3.35.3) a line of the matrix: its block and its entry
+    if (S.dmDrag.kind === 'em-line') Object.assign(S.dmDrag, { block: src.dataset.block, group: src.closest('[data-group]') });
     try {
       e.dataTransfer.setData('text/plain', src.dataset.id);
       e.dataTransfer.effectAllowed = 'copyMove';
@@ -23002,6 +24107,8 @@
     const t = dmTargetOf(e);
     dmMarkOver(t && t.el);
     if (!t) return;
+    // [AE-2] (3.35.3) where the line goes: a mark above or below the line under the pointer
+    if (t.kind === 'em-order') t.el.classList.toggle('dci-em-after', emAfter(t.el, e));
     if (['row-tracks', 'mx-col', 'mx-role', 'mx-attr'].includes(t.kind)) {
       t.el.classList.toggle('dci-drop-add', !!e.shiftKey);
       const card = t.el.closest('.dci-mx-cardover');
@@ -23028,7 +24135,21 @@
     }
   }
 
+  /** [AE-2] (3.35.3) A line dropped in the lower half of another line goes after it. */
+  function emAfter(el, e) {
+    const box = el.getBoundingClientRect();
+    return e.clientY > box.top + box.height / 2;
+  }
+
   function onDropOn(t, d, e) {
+    if (t.kind === 'em-order') {
+      const a = artistOf(t.el);
+      if (a && emMoveLine(a, d.id, t.el.dataset.line, emAfter(t.el, e))) {
+        rerenderGroup(a);
+        refresh();
+      }
+      return;
+    }
     if (t.kind === 'srcorder') {
       moveSourceOrder(d.list, d.id, 0, t.el.dataset.id);
       return;
@@ -23092,6 +24213,9 @@
     S.dmDrag = null;
     if (!S.overlay) return;
     S.overlay.classList.remove('dci-dm-dragging', 'dci-dm-drag-date', 'dci-dm-drag-tg', 'dci-dm-drag-pool');
+    // [3.35.3] also the class of any other kind ("dci-dm-drag-em-chip", "dci-dm-drag-em-line")
+    [...S.overlay.classList].filter((c) => c.startsWith('dci-dm-drag-')).forEach((c) => S.overlay.classList.remove(c));
+    S.overlay.querySelectorAll('.dci-em-after').forEach((x) => x.classList.remove('dci-em-after'));
     dmMarkOver(null);
     S.overlay.querySelectorAll('.dci-mx-cardover').forEach((x) => x.classList.remove('dci-mx-cardover', 'dci-drop-add'));
   }
@@ -23322,6 +24446,50 @@
         }
         break;
       }
+      // [AE-3] (3.35.4) an event opened below its block, its level, its date of the pool, its tracks
+      case 'em-evopen': {
+        if (!artist) break;
+        const o = S.emEvOpen.get(artist.key);
+        const block = (btn.closest('.dci-em-block') || {}).dataset;
+        if (o && o.ev === btn.dataset.ev && (!block || o.block === block.block)) S.emEvOpen.delete(artist.key);
+        else if (block) S.emEvOpen.set(artist.key, { block: block.block, ev: btn.dataset.ev });
+        rerenderGroup(artist);
+        const again = S.overlay.querySelector(`[data-group="${artist.key}"] .dci-em-evedit, [data-group="${artist.key}"] th[data-evhead] .dci-em-evtoggle[aria-expanded="false"]`);
+        if (again && S.emEvOpen.has(artist.key)) again.scrollIntoView({ block: 'nearest' });
+        break;
+      }
+      case 'em-evlevel':
+        if (artist) emEventLevel(artist, btn.dataset.ev, btn.dataset.level);
+        break;
+      case 'em-evpool':
+        if (artist) emEventPool(artist, btn.dataset.ev, btn.dataset.id || '');
+        break;
+      case 'em-evall':
+      case 'em-evtg':
+      case 'em-evmedium': {
+        if (!artist) break;
+        const r0 = rowsInEvent(artist, btn.dataset.ev)[0];
+        if (!r0) break;
+        let next;
+        if (act === 'em-evall') next = new Set(selTracks().map((x) => x.idx));
+        else if (act === 'em-evtg') next = new Set(((S.trackPool.find((g) => g.id === btn.dataset.id) || {}).tracks || []));
+        else {
+          const of = selTracks().filter((x) => String(x.medium) === btn.dataset.medium).map((x) => x.idx);
+          const all = of.every((i) => r0.tracks.has(i));
+          next = new Set(r0.tracks);
+          of.forEach((i) => (all ? next.delete(i) : next.add(i)));
+        }
+        emEventTracks(artist, btn.dataset.ev, next);
+        break;
+      }
+      case 'em-keptok': {
+        const r = S.rows.find((x) => x.id === btn.dataset.row);
+        if (r) {
+          S.rows.filter((x) => x.artistKey === r.artistKey && lineKeyOf(x) === lineKeyOf(r)).forEach((x) => { delete x.emLevelKept; });
+          if (artist) rerenderGroup(artist);
+        }
+        break;
+      }
       case 'em-chipout':
         emTick(artist, lineRows(btn), btn.dataset.ev, false);
         rerenderGroup(artist);
@@ -23538,7 +24706,7 @@
       case 'name-use': {
         const h = (artist.nameHits || []).find((x) => x.mbid === btn.dataset.mbid);
         if (!h) break;
-        Object.assign(artist, { status: 'manual', mbid: h.mbid, mbName: h.name, mbComment: h.disambiguation || '', candidates: [h], editing: false, error: '' });
+        Object.assign(artist, { status: 'manual', mbid: h.mbid, mbName: h.name, mbComment: h.disambiguation || '', candidates: [h], editing: false, error: '', matchTouched: true });
         if (artist.company) setCompanyEntityType(artist, h.entityType);
         log('ok', 'artistManual', { name: artist.name, mb: h.name });
         if (artist.company) rerenderGroup(artist);
@@ -23551,7 +24719,7 @@
       case 'alias-use': {
         const h = (artist.aliasHits || []).find((x) => x.c.mbid === btn.dataset.mbid);
         if (!h) break;
-        Object.assign(artist, { status: 'manual', mbid: h.c.mbid, mbName: h.c.name, mbComment: h.c.disambiguation || '', viaAlias: h.alias, candidates: [h.c], editing: false, error: '' });
+        Object.assign(artist, { status: 'manual', mbid: h.c.mbid, mbName: h.c.name, mbComment: h.c.disambiguation || '', viaAlias: h.alias, candidates: [h.c], editing: false, error: '', matchTouched: true });
         log('ok', 'artistLinkedAlias', { name: artist.name, mb: artist.mbName, alias: h.alias });
         updateGroupHeader(artist);
         refresh();
@@ -23920,6 +25088,10 @@
         if (tabBtn) tabBtn.focus();
         break;
       }
+      case 'keys-open':
+        // [3.36.3] the keyboard shortcuts below the head
+        setKeysOpen(!S.keysOpen);
+        break;
       case 'connections-open':
         // [3.25.0] the ⓘ in the head: the settings at the tab "Connections"
         S.settingsOpen = true;
@@ -23931,6 +25103,20 @@
       case 'settings-reset':
         if (confirm(tr('settings.resetAsk', { topic: tr(`settings.t.${btn.dataset.topic}`) }))) resetTopic(btn.dataset.topic);
         break;
+      case 'remember-reload':
+        // [3.36.1] the page loaded again: what is remembered for the release comes back
+        saveRememberNow();
+        window.location.reload();
+        break;
+      case 'remember-forget': {
+        // [146] (3.36.0) all releases forgotten (asked first)
+        const z = storageSizes();
+        if (!confirm(tr('settings.rememberAsk', { n: z.releases, size: bytesText(z.rel) }))) break;
+        forgetAllRemembered();
+        showMessage('ok', 'remember.forgot', { n: z.releases });
+        renderSettings();
+        break;
+      }
       case 'aw-clear': {
         const n = S.awStoreCount || 0;
         if (!confirm(tr('settings.awClearAsk', { n }))) break;
@@ -24301,6 +25487,12 @@
       setAboutOff(el.checked);
       return;
     }
+    if (f === 'work-groups-pool') {
+      // [145b] (3.35.6) for this import: the works as track groups, or not
+      S.workGroupsOff = !el.checked;
+      applyWorkGroups();
+      return;
+    }
     if (f === 'pools-keep') {
       S.poolsKeep = el.checked;
       writeJson('localStorage', 'dci-pools-keep', el.checked ? null : false);
@@ -24400,7 +25592,7 @@
         const artist = artistOf(el);
         const c = artist.candidates.find((x) => x.mbid === el.value);
         if (c) {
-          Object.assign(artist, { mbid: c.mbid, mbName: c.name, mbComment: c.disambiguation || '', status: 'linked' });
+          Object.assign(artist, { mbid: c.mbid, mbName: c.name, mbComment: c.disambiguation || '', status: 'linked', matchTouched: true });
           log('ok', 'artistLinked', { name: artist.name, mb: c.name });
           if (artist.company) {
             setCompanyEntityType(artist, c.entityType);
@@ -24533,6 +25725,7 @@
       case 'work-type':
         S.workDefaults.typeId = el.value;
         S.workDefaults.typeAuto = null;
+        scheduleRemember();
         break;
 
       case 'work-flag': {
@@ -24747,6 +25940,20 @@
       const to = e.key === 'Home' ? 0 : e.key === 'End' ? all.length - 1 : (i + (['ArrowUp', 'ArrowLeft'].includes(e.key) ? -1 : 1) + all.length) % all.length;
       e.preventDefault();
       all[to].click();
+      return;
+    }
+    // [AE-2] (3.35.3) Alt+↑ / Alt+↓ on ⠿ of a line: one place up or down in its block
+    const grip = e.target.closest && e.target.closest('.dci-em-grip');
+    if (grip && e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault();
+      const a = artistOf(grip);
+      const id = grip.dataset.id;
+      if (a && emMoveLine(a, id, e.key === 'ArrowUp' ? -1 : 1)) {
+        rerenderGroup(a);
+        refresh();
+        const again = S.overlay.querySelector(`[data-group="${a.key}"] .dci-em-grip[data-id="${id}"]`);
+        if (again) again.focus({ preventScroll: true });
+      }
       return;
     }
     if (e.key !== 'Enter') return;
@@ -24986,6 +26193,8 @@
     rules: '<path d="M2 4h4.5M2 8h4.5M2 12h4.5M9 8h5M11.5 5.5L14 8l-2.5 2.5"/>',
     log: '<rect x="3" y="1.8" width="10" height="12.4" rx="1.5"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/>',
     info: '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4.2"/><circle cx="8" cy="4.9" r="0.5" fill="currentColor"/>',
+    // [3.36.3] the keyboard shortcuts
+    keys: '<rect x="1.5" y="4" width="13" height="8.5" rx="1.5"/><path d="M4 6.9h.01M6.7 6.9h.01M9.3 6.9h.01M12 6.9h.01M4.6 9.8h6.8"/>',
     fit: '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>',
     close: '<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>',
     down: '<path d="M4 6l4 4 4-4"/>',
@@ -25018,6 +26227,7 @@
             ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
             ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'), 'aria-expanded="false"')}
             ${headBtn('log', 'log', tr('log.title'), tr('log.title'))}
+            ${headBtn('keys-open', 'keys', '', tr('keys.open'), 'aria-expanded="false" aria-controls="dci-keys"')}
             ${headBtn('connections-open', 'info', '', tr('connections.open'))}
             ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
             ${headBtn('close', 'close', tr('common.close'), tr('common.close'), '', 'dci-close')}
@@ -25025,6 +26235,7 @@
         </header>
         <div class="dci-body" data-el="body">
           <div class="dci-settings" data-el="settings" role="region" aria-label="${esc(tr('settings.title'))}" hidden></div>
+          <div class="dci-keys" id="dci-keys" data-el="keys" role="region" aria-label="${esc(tr('keys.title'))}" hidden></div>
           <div class="dci-rules-dock" data-el="rules-dock" hidden></div>
           <div class="dci-srcpanels" data-el="srcpanels"></div>
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
@@ -25167,6 +26378,7 @@
     renderSync();
     renderReset();
     renderSettings();
+    renderKeys(); // [3.36.3]
     renderDates();
     renderMessages();
     renderBusy();
@@ -25311,7 +26523,8 @@
   // [3.25.0] tabs (collected item 42): "Texts" and "ⓘ Connections" (item 40) new
   // [3.29.2] "Appearance" new (item 79): text size, the place of the dashboard, the view and the colours of the levels
   // [3.34.1] "Beta" new (item E3): functions to try out, off until switched on
-  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'connections'];
+  // [146] (3.36.0) "Cache" new: what is remembered per release (maintainer: "setting -> Cache vielleicht besser")
+  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
@@ -25324,6 +26537,8 @@
   // of an entry joined in one relationship per recording and event (default on; off: stored false)
   const ENTRIES_VIEW_KEY = 'dci-entries-view';
   const JOIN_KEY = 'dci-join';
+  // [145b] (3.35.6) the works of the source as track groups (default on; off: stored false)
+  const WORK_GROUPS_KEY = 'dci-work-groups';
   // [E4] (3.34.30) events shared by all blocks of an entry up to (default 3); lines of a block before "▸ n more" (default 8)
   const EV_SHARED_KEY = 'dci-ev-shared';
   const EM_SHOW_KEY = 'dci-em-show';
@@ -25344,7 +26559,7 @@
   const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
-    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h'],
+    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', LOG_DIAG_KEY],
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
@@ -25352,8 +26567,10 @@
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows'],
     staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY],
-    dates: ['dci-dm-auto', 'dci-pools-keep'],
+    dates: ['dci-dm-auto', 'dci-pools-keep', WORK_GROUPS_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
+    // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …")
+    cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -25363,11 +26580,12 @@
   // [E4] (3.34.29)
   S.entriesView = readJson('localStorage', ENTRIES_VIEW_KEY, 'matrix') === 'legacy' ? 'legacy' : 'matrix';
   S.joinAuto = readJson('localStorage', JOIN_KEY, true) !== false;
+  S.workGroupsOn = readJson('localStorage', WORK_GROUPS_KEY, true) !== false;
   // [E4] (3.34.30) the matrix of an entry: events shared by all its blocks up to … (more: each block its own), lines of a block
   // before "▸ n more"; lines with their rows open, blocks with all lines, folded blocks, events added to a block
   S.evShared = clampInt(readJson('localStorage', EV_SHARED_KEY, 3), 1, 12, 3);
   S.emShow = clampInt(readJson('localStorage', EM_SHOW_KEY, 8), 1, 50, 8);
-  Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map(), emUndo: new Map() });
+  Object.assign(S, { emOpen: new Set(), emMore: new Set(), emFold: new Set(), emBlockEv: new Map(), emUndo: new Map(), emEvOpen: new Map() });
   // [E4] (3.35.0) compact as a matrix: by event (default) or by role, per entry; entries opened to their full matrix
   S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
@@ -25451,6 +26669,8 @@
         row(`<label>${esc(tr('lang.label'))} <select data-f="lang">${Object.entries(LANGS).map(([code, name]) => `<option value="${code}" ${code === LANG ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`),
         row(check('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'))),
         row(`<label>${esc(tr('settings.logPlace'))} <select data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select></label>`),
+        // [3.36.2] the diagnosis of the relationship editor in the log (off: its button is not shown)
+        row(check('data-set="log-diag"', S.logDiag, tr('settings.logDiag'), tr('settings.logDiagTitle'))),
       ],
       // [3.29.2] how the dashboard looks (item 79; text size, place and view came from "General")
       appearance: () => [
@@ -25529,6 +26749,8 @@
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
         row(check('data-f="pools-keep"', S.poolsKeep, tr('pools.keep'), tr('pools.keepTitle'))),
+        // [145b] (3.35.6) the works of the source (index tracks of Discogs) as track groups
+        row(check('data-set="work-groups"', S.workGroupsOn, tr('settings.workGroups'), tr('settings.workGroupsTitle'))),
       ],
       // [3.34.1] functions to try out (maintainer: "Die Beta Funktion muss im Einstellungsmenü aktiviert werden")
       beta: () => [
@@ -25542,6 +26764,19 @@
         // [138b] (3.34.23) the window in front of the dashboard (maintainer: "vielleicht standardmäßig und in den einstellungen umstellbar")
         S.betaOcr ? row(check('data-set="ocr-front"', S.ocrFront, tr('settings.ocrFront'), tr('settings.ocrFrontTitle'))) : '',
       ],
+      // [146] (3.36.0) remembered per release (maintainer: "50 releases ist gut, aber lass das doch auch einstellen. und lass neben
+      // dem rücksetzen button auch den gebrauchten speicher anzeigen in KB oder MB mit einer kommazahl", "bitte 1-100. 0=aus")
+      cache: () => {
+        const z = storageSizes();
+        return [
+          `<p class="dci-sub">${esc(tr('settings.cacheHint'))}</p>`,
+          row(check('data-set="remember"', remembering(), tr('settings.remember'), tr('settings.rememberTitle'))),
+          row(`<label title="${esc(tr('settings.rememberMaxTitle'))}">${esc(tr('settings.rememberMax'))} <input type="number" data-set="remember-max" min="0" max="100" step="1"
+            value="${S.rememberMax}"></label> <span class="dci-sub">${esc(tr('settings.rememberMaxHint'))}</span>`),
+          row(`<button type="button" class="dci-small" data-act="remember-forget"${z.releases ? '' : ' disabled'}>${esc(tr('settings.rememberForget'))}</button>
+            <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
+        ];
+      },
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
     const tab = SETTING_TOPICS.includes(S.settingsTab) ? S.settingsTab : 'general';
@@ -25588,6 +26823,59 @@
   }
 
   /** The menu, drawn anew (the field being used keeps the focus). */
+  /**
+   * [3.36.3] The keyboard shortcuts (maintainer: "Bitte einen neuen Infoknopf oben in der Leiste der die aktuelle
+   * Tastaturbelegung aller shortcuts zeigt."): ⌨ in the head shows them below it, with the keys of this computer (a Mac:
+   * ⌥ Option, ⌃ Control, ⌘ Command, ↩ Return); ⌨ again or Esc closes them.
+   */
+  const IS_MAC = /Mac|iPhone|iPad|iPod/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || navigator.userAgent || '');
+  function keysHtml() {
+    const k = (name) => tr(`keys.k.${IS_MAC && ['alt', 'ctrl', 'enter', 'paste'].includes(name) ? `${name}Mac` : name}`);
+    const kbd = (...keys) => keys.map((x) => (Array.isArray(x) ? x.map((y) => `<kbd>${esc(y)}</kbd>`).join('+') : `<kbd>${esc(x)}</kbd>`)).join(' / ');
+    const groups = [
+      ['page', [
+        [kbd([k('alt'), k('shift'), 'D']), 'keys.toggle'],
+        [kbd(k('esc')), 'keys.esc'],
+      ]],
+      ['editor', [[kbd([k('ctrl'), k('alt'), k('enter')]), 'keys.enterEdit']]],
+      ['dashboard', [
+        [kbd(k('enter')), 'keys.enter'],
+        [`${kbd('↑', '↓', '←', '→')} · ${kbd(k('home'), k('end'))}`, 'keys.tabs'],
+        [kbd([k('alt'), '↑'], [k('alt'), '↓']), 'keys.lines'],
+        [kbd(k('shift')), 'keys.shiftDrop'],
+        [kbd([k('paste'), 'V']), 'keys.pasteDate'],
+      ]],
+      ['media', [[kbd(k('enter')), 'keys.mediaEnter']]],
+      ['ocr', [
+        [kbd([k('paste'), 'V']), 'keys.ocrPaste'],
+        [kbd(k('enter')), 'keys.ocrUrl'],
+        [kbd([k('ctrl'), k('wheel')]), 'keys.ocrZoom'],
+      ]],
+    ];
+    return `<div class="dci-keys-head"><strong>${esc(tr('keys.title'))}</strong> <span class="dci-sub">${esc(tr(IS_MAC ? 'keys.systemMac' : 'keys.system'))}</span>
+        <button type="button" class="dci-iconbtn" data-act="keys-open" title="${esc(tr('common.close'))}" aria-label="${esc(tr('common.close'))}">✕</button></div>
+      <table class="dci-keys-table">${groups.map(([g, list]) => `<tbody><tr><th colspan="2" scope="rowgroup"><h3>${esc(tr(`keys.g.${g}`))}</h3></th></tr>
+        ${list.map(([keys, what]) => `<tr><th scope="row">${keys}</th><td>${esc(tr(what))}</td></tr>`).join('')}</tbody>`).join('')}</table>`;
+  }
+
+  function setKeysOpen(open) {
+    S.keysOpen = open;
+    renderKeys();
+    if (open) {
+      const el = $('keys');
+      if (el) el.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function renderKeys() {
+    if (!S.overlay) return;
+    const el = $('keys');
+    if (!el) return;
+    S.overlay.querySelectorAll('.dci-head [data-act="keys-open"]').forEach((b) => b.setAttribute('aria-expanded', String(!!S.keysOpen)));
+    el.hidden = !S.keysOpen;
+    el.innerHTML = S.keysOpen ? keysHtml() : '';
+  }
+
   function renderSettings() {
     if (!S.overlay) return;
     const el = $('settings');
@@ -25717,6 +27005,33 @@
       log('info', 'settingValue', { what: tr(k === 'ev-shared' ? 'settings.evShared' : 'settings.emShow'), value: String(v) });
       if (S.overlay) renderGroups();
       refresh();
+    } else if (k === 'log-diag') {
+      // [3.36.2] off: a diagnosis running stops, its button goes
+      S.logDiag = el.checked;
+      writeJson('localStorage', LOG_DIAG_KEY, el.checked ? true : null);
+      if (!el.checked && DIAG.timer) stopDiag();
+      log('info', 'settingValue', { what: tr('settings.logDiag'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderLog();
+    } else if (k === 'remember') {
+      // [146] (3.36.0) remembered per release, or not
+      setRemember(el.checked);
+    } else if (k === 'remember-max') {
+      const v = clampInt(el.value, 0, 100, 50);
+      S.rememberMax = v;
+      writeJson('localStorage', REMEMBER_MAX_KEY, v === 50 ? null : v);
+      log('info', 'settingValue', { what: tr('settings.rememberMax'), value: String(v) });
+      // 0 is off (maintainer: "0=aus"); [3.36.1] fewer releases: the oldest go when something is stored next (not at each step
+      // of the field – going down to 0 passed 1)
+      S.rememberTouched = 0;
+      if (!v && S.rememberOn) setRemember(false);
+      else renderSettings();
+    } else if (k === 'work-groups') {
+      // [145b] (3.35.6) the works of the source as track groups
+      S.workGroupsOn = el.checked;
+      writeJson('localStorage', WORK_GROUPS_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.workGroups'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
+      renderDates();
     } else if (k === 'join') {
       // [E4] (3.34.29) joining the instruments and voices of an entry
       S.joinAuto = el.checked;
@@ -25770,12 +27085,61 @@
   }
 
   /** "↺" of a topic: its settings back to their defaults (after a question). */
+  /**
+   * [146] (3.36.0) Remembered per release, or not; switched on, what this tab holds of the release is stored at once – with the
+   * number 0 it becomes 50 (0 is off).
+   */
+  function setRemember(on) {
+    S.rememberOn = on;
+    if (on && !S.rememberMax) {
+      S.rememberMax = 50;
+      writeJson('localStorage', REMEMBER_MAX_KEY, null);
+    }
+    writeJson('localStorage', REMEMBER_ON_KEY, on ? true : null);
+    log('info', 'settingValue', { what: tr('settings.remember'), value: tr(on ? 'common.on' : 'common.off') });
+    // [3.36.1] this tab did not read what is stored for the release (opened while off): it is not written over – loading the
+    // page again brings it back; until then, nothing of this release is stored
+    if (on && !S.rememberRead && hasRemembered(releaseMbid)) {
+      S.rememberHold = true;
+      showMessage('info', 'remember.hold', {}, { action: { act: 'remember-reload', label: 'remember.reload' } });
+    } else if (on) {
+      S.rememberRead = true;
+      rememberNow();
+    }
+    renderSettings();
+  }
+
+  /** [146] (3.36.0) Everything of this release this tab holds, stored now (switched on). */
+  function rememberNow() {
+    S.rememberTouched = 0;
+    if (!remembering()) return;
+    savePool();
+    saveTrackPool();
+    if (S.dm) saveMatrix();
+    if (S.srcOff.size) saveSrcOff();
+    // [3.36.1] the dates taken out with the about text: only when this tab holds them (else they are stored already)
+    if (S.aboutOff && S.aboutStash) relWrite(ABOUT_KEY, { stash: S.aboutStash });
+    if (S.worksSkip) relWrite(WORKS_SKIP_KEY, true);
+    REL_MAPS.forEach((k) => {
+      const mine = relMem[k] && relMem[k][releaseMbid];
+      if (!mine) return;
+      const all = readJson('localStorage', k, {}) || {};
+      all[releaseMbid] = mine;
+      relWrite(k, all);
+    });
+    saveRememberNow();
+  }
+
   function resetTopic(t) {
     (TOPIC_KEYS[t] || []).forEach((k) => writeJson('localStorage', k, null));
     log('info', 'settingsTopicReset', { topic: tr(`settings.t.${t}`) });
     if (t === 'general') {
       if (S.logEl) setLogVisible(true);
       setLogPlace('window');
+      // [3.36.2] the diagnosis off again
+      S.logDiag = false;
+      if (DIAG.timer) stopDiag();
+      renderLog();
       if (LANG !== 'en') setLanguage('en');
     } else if (t === 'appearance') {
       setScale(1);
@@ -25823,8 +27187,12 @@
       renderGroups();
       refresh();
     } else if (t === 'dates') {
-      Object.assign(S, { dmAuto: false, poolsKeep: true });
+      Object.assign(S, { dmAuto: false, poolsKeep: true, workGroupsOn: true });
+      if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
       renderDates();
+    } else if (t === 'cache') {
+      // [146] (3.36.0) off again, 50 releases – what is remembered stays (forgotten with its own button)
+      Object.assign(S, { rememberOn: false, rememberMax: 50 });
     } else if (t === 'beta') {
       S.betaOcr = false;
       S.ocrPreload = false;
@@ -25851,7 +27219,11 @@
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY];
+    ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
+    // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
+    WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
+    // [3.36.2] the diagnosis in the log
+    LOG_DIAG_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -25873,7 +27245,11 @@
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
+      workGroupsOn: true, rememberOn: false, rememberMax: 50, logDiag: false,
     });
+    // [3.36.2] a diagnosis running stops, its button goes
+    if (DIAG.timer) stopDiag();
+    renderLog();
     closeOcr();
     renderLauncher();
     applyKindColors();
@@ -25899,7 +27275,8 @@
       clearPools('dates', true);
       clearPools('tracks', true);
       S.dm = { cells: [], found: '', dirty: false };
-      writeJson('localStorage', MATRIX_KEY, null);
+      // [146] (3.36.0) those of this release too, also while it is not remembered
+      [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY].forEach((k) => writeJson('localStorage', k, null));
     }
     toDiscogs({ type: 'reset-settings' });
     log('info', 'settingsReset', { rules: tr(rules ? 'common.on' : 'common.off'), pools: tr(pools ? 'common.on' : 'common.off') });
@@ -26014,6 +27391,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.36.0', label: 'Credits Importer 3.36.0' },
     { v: '3.35.0', label: 'Credits Importer 3.35.0' },
     { v: '3.34.0', label: 'Credits Importer 3.34.0' },
     { v: '3.33.0', label: 'Credits Importer 3.33.0' },
@@ -26329,6 +27707,8 @@
     if (S.srcMenuOpen && !(e.target.closest && e.target.closest('.dci-srcwrap'))) closeSrcMenu();
   }, true);
 
+  // [146] (3.36.0) what is remembered for the release is stored when the page goes
+  window.addEventListener('pagehide', () => saveRememberNow());
   document.addEventListener('keydown', (e) => {
     // Alt+Shift+D (Option+Shift+D on a Mac) shows the dashboard or sends it to the background.
     // Ctrl+D is not used: browsers bookmark the page with it.
@@ -26355,6 +27735,14 @@
     if (!S.overlay || S.overlay.hidden) return;
     // The dashboard does not block the page: Escape closes it unless MusicBrainz needs the key.
     if (!S.overlay.contains(document.activeElement) && mbUsesEscape()) return;
+    // [3.36.3] the keyboard shortcuts first
+    if (S.keysOpen) {
+      e.preventDefault();
+      setKeysOpen(false);
+      const b = S.overlay.querySelector('.dci-head [data-act="keys-open"]');
+      if (b) b.focus({ preventScroll: true });
+      return;
+    }
     // [3.26.0] the menu "Source ▾" first
     if (S.srcMenuOpen) {
       e.preventDefault();
@@ -27252,6 +28640,18 @@
       .dci-set-title:hover { color: var(--purple-d); }
       /* [3.25.0] the topics as tabs: vertical on the left, at the top in a narrow dashboard */
       .dci-settings { container-type: inline-size; }
+      /* [3.36.3] the keyboard shortcuts */
+      .dci-keys { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid #c9c4dd; border-left: 4px solid var(--purple);
+        border-radius: calc(var(--u, 1px) * 4); background: var(--soft); }
+      .dci-keys-head { display: flex; align-items: baseline; gap: calc(var(--u, 1px) * 8); }
+      .dci-keys-head .dci-iconbtn { margin-left: auto; }
+      .dci-keys h3 { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 2); font-size: 1em; color: var(--purple-d); }
+      .dci-keys-table { border-collapse: collapse; width: 100%; }
+      .dci-keys-table th { text-align: left; font-weight: 400; white-space: nowrap; vertical-align: top; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 2) 0; width: 1%; }
+      .dci-keys-table th[colspan] { white-space: normal; padding: 0; }
+      .dci-keys-table td { padding: calc(var(--u, 1px) * 2) 0; vertical-align: top; }
+      .dci-keys kbd { display: inline-block; min-width: 1.4em; padding: 0 calc(var(--u, 1px) * 4); border: 1px solid #b9b4cf; border-bottom-width: 2px; border-radius: calc(var(--u, 1px) * 3);
+        background: #fff; font: inherit; font-size: .92em; text-align: center; line-height: 1.5; }
       .dci-set-wrap { display: flex; gap: calc(var(--u, 1px) * 14); align-items: flex-start; }
       .dci-set-side { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 10); flex: 0 0 auto; }
       .dci-set-tabs { display: flex; flex-direction: column; gap: 2px; }
@@ -27421,6 +28821,18 @@
       .dci-em-detail-row > td { padding: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 18); background: var(--soft); }
       .dci-em-more { margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-em-ev input.dci-em-evdate { width: calc(var(--u, 1px) * 140); font: inherit; font-size: calc(var(--u, 1px) * 12); padding: 0 calc(var(--u, 1px) * 4); margin: calc(var(--u, 1px) * 2) 0; }
+      /* [AE-3] (3.35.4) ▸ of an event, the event opened below its block */
+      .dci-em-ev .dci-em-evtoggle { padding: 0 calc(var(--u, 1px) * 3) 0 0; }
+      .dci-em-ev.dci-em-evopen { background: var(--date-bg); box-shadow: inset 0 -2px 0 var(--purple); }
+      .dci-em-evedit { margin: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid var(--line);
+        border-left: 3px solid var(--purple); border-radius: calc(var(--u, 1px) * 4); background: var(--soft); }
+      .dci-em-evrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 6); margin: calc(var(--u, 1px) * 3) 0; }
+      .dci-em-evtop { justify-content: space-between; }
+      .dci-em-evlab { min-width: calc(var(--u, 1px) * 56); font-weight: 600; }
+      .dci-em-evrow .dci-picker { flex: 1 1 auto; }
+      .dci-em-evedit input.dci-em-evdate { width: calc(var(--u, 1px) * 170); font: inherit; }
+      .dci-em-evpool { border-color: var(--date-line); background: var(--date-bg); color: var(--date-d); }
+      .dci-em-evpool[aria-pressed="true"] { outline: 2px solid var(--purple); }
       .dci-em-evname { color: var(--muted); }
       /* [E4] (3.35.0) an entry compact as a matrix: a line per event (or per role), the roles as chips */
       .dci-em-compact { gap: calc(var(--u, 1px) * 5); }
@@ -27441,6 +28853,11 @@
       #dci-overlay.dci-dm-drag-date .dci-em-ev, #dci-overlay.dci-dm-drag-date .dci-em-bhead { outline: 1px dashed var(--purple); outline-offset: -2px; }
       #dci-overlay th.dci-em-ev.dci-dm-over, #dci-overlay .dci-em-bhead.dci-dm-over { outline: 2px solid var(--purple); background: var(--date-bg); }
       #dci-overlay tr.dci-em-line.dci-dm-over > td { background: var(--date-bg); box-shadow: inset 0 2px 0 var(--purple), inset 0 -2px 0 var(--purple); }
+      /* [AE-2] (3.35.3) ⠿ of a line, and where a dragged line goes (a mark above or below the line under the pointer) */
+      .dci-em-grip { border: 0; background: none; color: var(--muted); cursor: grab; padding: 0 calc(var(--u, 1px) * 4) 0 0; font: inherit; line-height: 1; }
+      .dci-em-grip:hover, .dci-em-grip:focus-visible { color: var(--purple-d); }
+      #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over > td { background: none; box-shadow: inset 0 2px 0 var(--purple); }
+      #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over.dci-em-after > td { box-shadow: inset 0 -2px 0 var(--purple); }
       .dci-em-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }

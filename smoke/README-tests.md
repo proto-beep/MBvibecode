@@ -26,7 +26,10 @@ MBvibecode/ (this repository)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
                                       [3.34.29] ENTRIES_VIEW: the entries as before ('legacy') for every file but t_entries.py – the matrix
-                                      (E4, the script's default) is tested there; [3.34.30] with the generation of the stored data
+                                      (E4, the script's default) is tested there; [3.34.30] with the generation of the stored data;
+                                      [3.36.0] REMEMBER: True – ⚙ Settings → Cache "Remember … per release" switched on before the
+                                      script starts (the files written before expect the stores of a release kept); False in
+                                      t_ui_settings.py cache and t_entries.py order (the script's default: off)
                                       date_field(row, f): a date field of a row – opens a date chip (3.9.0) first
   smoke/caserun.py                    [3.31.1] runs the cases of a topic file: one shared browser, what a case changes in the
                                       harness set back after it, one result per case and one for the file
@@ -68,7 +71,8 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # ~1,200 roles, ~100 company roles, ~50 date phrases, pasted texts) through the register in Node, the
                                 # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
                                 # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
-                                # (3.33.1: ✎, "code" and the forms of the window are hidden before its sections are read)
+                                # (3.33.1: ✎, "code" and the forms of the window are hidden before its sections are read; 3.36.0: the
+                                # texts only after the import of the release is complete – before, their end depended on the timing)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                                 # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
@@ -108,9 +112,13 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     bass, sticks-and-stones" – other instruments “sticks-and-stones”; more unknown words than instruments: not recognized;
                                 #     3.34.27 (S052): credits and tasks in lower case ("chaims", "sticks-and-stones"), the field's suggestions too ("Tambourine
                                 #     [Additional, Toy]": toy · … · toy tambourine), a proper name of MB's instruments kept ("Hammond manager")
-                                #   casenote: 3.34.28 (S052a/b, T052): "Guitar [Gibson Les Paul]" → "Gibson les paul" with the note "Written small –
-                                #     …: Les → les · keep · always", in the compact line too; keep / write small again / always (stored in T052, a
-                                #     second row follows); text "Sticks-And-Stones" noted, "Buddha machine" kept; a known role without a note
+                                #   casenote: 3.34.28 (S052a/b, T052): "Guitar [Gretsch Duo Jet]" (until 3.35.2 "Gibson Les Paul") → "Gretsch duo jet"
+                                #     with the note "Written small – …: Duo Jet → duo jet · keep · always · Duo → duo …", in the compact line too; keep /
+                                #     write small again / always (stored in T052, a second row follows); text "Sticks-And-Stones" noted, "Buddha
+                                #     machine" kept; a known role without a note
+                                #   casephrase: 3.35.2 (item 144): "Gibson Les Paul" from T052 as a whole, "Les Paul Junior" → "Les Paul junior" (only
+                                #     "Junior" noted), "Paul Reed Smith" offered as a whole first (note and compact line), keep / small again / always
+                                #     (stored, a second row follows), a "Les" in a text stays small
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -200,6 +208,9 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     suggestions, stored "+D023"; off → gone; on and "Apply" → the row split by date
                                 #   dmgoto: 3.32.8: "To the date matrix" in the message of dates placed – "Dates & tracks" folded by hand opens,
                                 #     the matrix in view and lit up, the folding stays stored
+                                #   workgroups: 3.35.6 (item 145b): the works of index tracks as track groups (suggestions), one on a date of the
+                                #     matrix, the box of the track pool off / on (the date leaves and comes back), the setting off / on, a new
+                                #     import ticks the box again, the setting stored
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -211,13 +222,17 @@ python3 t_works_matrix.py       # Works matrix: track groups and notes, columns,
                                 #     "li?" offered on the existing one, open/closed rows, "Attributes for all", "spell out", staging;
                                 #     "Music And Lyrics By" → writer, "Song" preselected (R098, S020)
                                 #   pub: publishers ticked only where a writer has them as personal publisher
+                                #   remember (3.36.4, 146): with ⚙ Settings → Cache on, the choices of the works matrix after the page is
+                                #     loaded again: an attribute set on a link, a new work planned, a column taken out (and brought back:
+                                #     its rows no longer skipped), a column date, the type of new works
 
 python3 t_works_more.py         # Works: the works of the artists, skipping the works matrix, comments of live recordings
                                 #   artistworks: works of the artists (3.15.0): a release artist's work, a performer's cover, no duplicate with the
                                 #     writers' search, the order, read once per session, 2,500 recordings (message after 10 s, capped at
                                 #     2,000), no redraw while typing in the works matrix (takes about 3 minutes)
                                 #   worksskip: the works matrix (3.18.0): fold / unfold (not kept), "Skip works matrix" (rows on "Skip", nothing of it planned,
-                                #     no works level, kept across a reload, no lookups), taken again, the question from N tracks ("Not now", later);
+                                #     no works level, kept across a reload, no lookups), taken again (3.36.4: the new works planned before come
+                                #     back with it, nothing looked up), the question from N tracks ("Not now", later);
                                 #     3.19.3: the tooltips of what is counted, the setting for the skipped rows
                                 #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off), the list above "Stage …": live
                                 #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),
@@ -296,6 +311,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   compacthint: 3.34.23: the arrow at ☰ (nothing stored) below the symbol, the pointer goes through; gone after
                                 #     switching (stored, also on a new page); back after "Reset all settings", ✕, back with ↺ of Appearance;
                                 #     the compact view stored before – no arrow
+                                #   keys: 3.36.3: ⌨ in the head shows all keyboard shortcuts (groups, the keys of this computer, as a Mac ⌥ ⌃ ⌘ ↩),
+                                #     Esc and ✕ close them, the focus back on ⌨
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
@@ -318,6 +335,14 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, s
                                 #     rules, pools of all releases, cover box on Discogs
                                 #   notice: update notice (milestones, closed, language) and the one-time resets of stored data (generations 2 to 4, also companion;
                                 #     generation 4 clears the list of created works too)
+                                #   cache: 3.36.0 (item 146, milestone): ⚙ Settings → Cache – remembering off by default (changes gone after a
+                                #     reload, nothing stored), on (stored at once, rows and pool back after a reload, the log), the source changed
+                                #     (changes of gone or changed lines left out, the message), the number 0 (off) and 50, another release
+                                #     forgotten with 1, "Forget all remembered releases …" with the space shown
+                                #   cache2: 3.36.1: a row removed with ✕ stays removed, a pasted text keeps its own state (the Discogs one stays),
+                                #     switched on in a tab opened while off: the message "Load the page again", nothing written over, back after it
+                                #   logdiag: 3.36.2: "Start diagnosis" only with ⚙ General "Diagnosis in the log" (off by default); a running one
+                                #     stops when switched off; ↺ of General
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
@@ -366,6 +391,16 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     ⚙ Staging "An entry, compact, at first: by role", the summary "a relationship per instrument would be 33"
                                 #   restage: 3.35.0: "One row each" and "Join in one block" after staging (joined ↔ singles in the editor), a joined
                                 #     relationship changed in the editor itself stays (its rows not staged again), the others anew
+                                #   order: 3.35.3 (AE-2): ⠿ drags a line before or after another of its block (the mark above / below), Alt+↑,
+                                #     not onto another entry's line, no ⠿ in a block of one line, the compact view follows, staged as before, a new
+                                #     import in the order of the source
+                                #   evhead: 3.35.4 (AE-3): ▸ opens an event below its block – a track added (focus kept), the last track stays,
+                                #     all (two events one), a date typed / none / of the pool, Release and back (Mastered By stays, the note, ok),
+                                #     ✕, staged together with the date
+                                #   remember: 3.36.0: a remembered release – the order dragged, an opened event's tracks, one row each: back after the
+                                #     page is loaded again, staged the same
+                                #   companies: 3.35.5 (AE-4): a place ("Recorded At") and a label (℗) as matrices, publishing on works keeps its
+                                #     rows, compact, staged the same as legacy, a date typed into the place's event
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,

@@ -271,16 +271,24 @@ def case_worksskip():
         lv2 = [level(pg, 'Writer W'), level(pg, 'Pub Co')]
         print('   neu geladen:', b2['badge'], b2['table'], lv2, '| Werk-Abfragen:', len(H.WORK_QUERIES) - q1, len(H.BROWSES))
         results.append(ok_b and b2['badge'] == 'skipped' and not b2['table'] and lv2 == ['skip', 'skip'] and len(H.WORK_QUERIES) == q1 and not H.BROWSES)
-        # C) take it again
+        # C) take it again – [3.36.4] the new works planned before the matrix was skipped come back with it (remembered with the
+        #    release, as within the tab), so no track is looked up; their plans taken back, the next load looks the tracks up (D)
         click(pg, '[data-el=works] [data-act=mx-skip]')
-        H.wait_for(pg, f"{LOGS}.some(x => /Checks complete/.test(x))", 60)
+        H.wait_for(pg, f"{LOGS}.some(x => /Works matrix taken again/.test(x))", 60)
         pg.wait_for_timeout(800)
         c1 = head(pg)
         lv3 = [level(pg, 'Writer W'), level(pg, 'Pub Co')]
         stored = pg.evaluate(f"localStorage.getItem('dci-works-skip:{H.REL}')")
-        print('C) wieder genommen:', c1['fold'], c1['table'], c1['badge'], lv3, '| gespeichert:', stored, '| Abfragen:', len(H.WORK_QUERIES) - q1)
+        plan2 = pg.evaluate(PLAN)
+        print('C) wieder genommen:', c1['fold'], c1['table'], c1['badge'], lv3, '| gespeichert:', stored, '| Abfragen:', len(H.WORK_QUERIES) - q1,
+              '| Werk-Links wieder:', plan2.count('Link work'))
         print('   Protokoll:', logs(pg, 'Works matrix'))
-        results.append(c1['fold'][1] == 'true' and c1['table'] and not c1['badge'] and lv3 == [None, 'work'] and stored is None and len(H.WORK_QUERIES) > q1)
+        results.append(c1['fold'][1] == 'true' and c1['table'] and not c1['badge'] and lv3 == [None, 'work'] and stored is None
+                       and plan2.count('Link work') == plan0.count('Link work') and len(H.WORK_QUERIES) == q1)
+        while pg.locator('tr[data-mrow^="p:"] [data-act=work-unplan]').count():
+            click(pg, 'tr[data-mrow^="p:"] [data-act=work-unplan]')
+            pg.wait_for_timeout(200)
+        pg.wait_for_timeout(1600)
         pg.close()
         # D) the question for many tracks
         pg = ctx.new_page()

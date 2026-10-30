@@ -1,6 +1,6 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -142,7 +142,7 @@ def case_join():
 BLOCKS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
   if (!g) return null;
   return [...g.querySelectorAll('.dci-em-block')].map(b => ({ key: b.dataset.block, head: b.querySelector('.dci-em-bhead').textContent.replace(/\\s+/g, ' ').trim(),
-    ev: [...b.querySelectorAll('th.dci-em-ev')].map(h => h.textContent.replace(/\\s+/g, ' ').trim()),
+    ev: [...b.querySelectorAll('th.dci-em-ev')].map(h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-evtoggle').forEach(x => x.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
     add: [...b.querySelectorAll('[data-f=em-addev] option')].filter(o => o.value).map(o => o.textContent.trim()),
     lines: [...b.querySelectorAll('tr.dci-em-line')].map(t => ({ line: t.dataset.line, n: t.dataset.rows.split(',').length, skip: t.classList.contains('dci-em-skip'),
       role: ((t.querySelector('[data-f=em-primary]') || {}).value) || t.querySelector('.dci-em-c-role').textContent.replace(/\\s+/g, ' ').trim(),
@@ -578,6 +578,378 @@ def case_restage():
             fresh = [r for r in d if r['id'] != edited]
             print('D) geändert behalten:', len(kept), kept[0]['attrs'] if kept else None, '| neu:', len(fresh), sorted(set(tuple(sorted(r['attrs'])) for r in fresh)))
             results.append(len(kept) == 1 and len(fresh) == 3 and all('electric guitar [lead]' in r['attrs'] for r in fresh) and 'electric guitar' in kept[0]['attrs'])
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# a line dragged by its ⠿ onto another line: before it (upper half) or after it (lower half)
+DROP_AT = """([src, dst, after]) => { const s = document.querySelector(src); const d = document.querySelector(dst); if (!s || !d) return false;
+  const box = d.getBoundingClientRect(); const y = after ? box.bottom - 2 : box.top + 2; const x = box.left + 20;
+  const dt = new DataTransfer(); s.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+  d.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt, clientX: x, clientY: y }));
+  const mark = d.classList.contains('dci-dm-over') ? (d.classList.contains('dci-em-after') ? 'after' : 'before') : '';
+  d.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt, clientX: x, clientY: y }));
+  s.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt })); return mark; }"""
+
+
+def case_order():
+    """Credits Importer 3.35.3 (AE-2; maintainer: "bitte noch ziehen ermöglichen", "ja nur bis zum nächsten import"): the lines
+    of a block in another order.
+    A) Multi Man: ⠿ at each line of its block (electric guitar · acoustic guitar · drums); drums dragged onto the upper half of
+       electric guitar – the mark above it, drums first.
+    B) Electric guitar dropped onto the lower half of acoustic guitar – the mark below it: drums · acoustic guitar · electric
+       guitar.
+    C) Alt+↑ on ⠿ of electric guitar: one place up (drums · electric guitar · acoustic guitar), ⠿ keeps the focus.
+    D) A line of another entry (Voc Man) dropped onto Multi Man's lines: nothing (not a place for it, no mark). Solo Man: ⠿ at
+       both lines of its block; after "One row each" each line is a block of its own – no ⠿.
+    E) ☰ compact: the chips in the new order.
+    F) Staged: Multi Man – one relationship per recording with all three instruments, as before (4).
+    G) The page loaded again (a new import): the order of the source again (3.36.0: as long as the release is not remembered –
+       ⚙ Settings → Cache, off by default)."""
+    H.REMEMBER = False
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    roles = lambda bl: [l['role'] for l in bl[0]['lines']] if bl else None
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            multi = sec_sel(pg, 'Multi Man')
+            a0 = pg.evaluate(BLOCKS, 'Multi Man')
+            grips = pg.evaluate("(sel) => document.querySelectorAll(sel + ' tr.dci-em-line .dci-em-grip').length", multi)
+            ids = {l['role']: l['line'] for l in a0[0]['lines']}
+            mark_a = pg.evaluate(DROP_AT, [f'{multi} tr.dci-em-line[data-line="{ids["drums (drum set)"]}"] .dci-em-grip', f'{multi} tr.dci-em-line[data-line="{ids["electric guitar"]}"]', False])
+            pg.wait_for_timeout(400)
+            a1 = pg.evaluate(BLOCKS, 'Multi Man')
+            print('A) vorher:', roles(a0), '| ⠿:', grips, '| Marke:', mark_a, '| nachher:', roles(a1))
+            results.append(roles(a0) == ['electric guitar', 'acoustic guitar', 'drums (drum set)'] and grips == 3 and mark_a == 'before'
+                           and roles(a1) == ['drums (drum set)', 'electric guitar', 'acoustic guitar'])
+            mark_b = pg.evaluate(DROP_AT, [f'{multi} tr.dci-em-line[data-line="{ids["electric guitar"]}"] .dci-em-grip', f'{multi} tr.dci-em-line[data-line="{ids["acoustic guitar"]}"]', True])
+            pg.wait_for_timeout(400)
+            b1 = pg.evaluate(BLOCKS, 'Multi Man')
+            print('B) Marke:', mark_b, '| nachher:', roles(b1))
+            results.append(mark_b == 'after' and roles(b1) == ['drums (drum set)', 'acoustic guitar', 'electric guitar'])
+            pg.focus(f'{multi} tr.dci-em-line[data-line="{ids["electric guitar"]}"] .dci-em-grip')
+            pg.keyboard.press('Alt+ArrowUp')
+            pg.wait_for_timeout(400)
+            c1 = pg.evaluate(BLOCKS, 'Multi Man')
+            focus = pg.evaluate("(() => { const a = document.activeElement; return a && a.classList.contains('dci-em-grip') ? a.dataset.id : ''; })()")
+            print('C) Alt+↑:', roles(c1), '| Fokus:', focus == ids['electric guitar'])
+            results.append(roles(c1) == ['drums (drum set)', 'electric guitar', 'acoustic guitar'] and focus == ids['electric guitar'])
+            voc = sec_sel(pg, 'Voc Man')
+            v0 = pg.evaluate(BLOCKS, 'Voc Man')
+            mark_d = pg.evaluate(DROP_AT, [f'{voc} tr.dci-em-line .dci-em-grip', f'{multi} tr.dci-em-line[data-line="{ids["drums (drum set)"]}"]', False])
+            pg.wait_for_timeout(400)
+            d1 = pg.evaluate(BLOCKS, 'Multi Man')
+            d_voc = pg.evaluate(BLOCKS, 'Voc Man')
+            solo = sec_sel(pg, 'Solo Man')
+            grips_of = "(sel) => [...document.querySelectorAll(sel + ' .dci-em-block')].map(b => b.querySelectorAll('.dci-em-grip').length)"
+            solo_joined = pg.evaluate(grips_of, solo)
+            pg.click(f'{solo} [data-act=em-split]')
+            pg.wait_for_timeout(400)
+            solo_grips = [solo_joined, pg.evaluate(grips_of, solo)]
+            print('D) andere Zeile:', mark_d, roles(d1), roles(d_voc), '| Solo Man ⠿ je Block:', solo_grips)
+            results.append(mark_d == '' and roles(d1) == roles(c1) and roles(d_voc) == roles(v0) and solo_grips == [[2], [0, 0]])
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(500)
+            e1 = pg.evaluate(CLINES, 'Multi Man')
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(500)
+            print('E) kompakt:', [l['chips'] for l in e1['lines']])
+            results.append([l['chips'] for l in e1['lines']] == [['drums (drum set) “drums”', 'electric guitar', 'acoustic guitar']])
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate(ADDED)
+            names = {H.uid('dddddddd', i - 2990): n for n, _r, i, _t in JOIN_CREDITS}
+            of = lambda n: [sorted(r['attrs']) for r in added if names.get(r['a']) == n or names.get(r['b']) == n]
+            print('F) Multi Man:', of('Multi Man'))
+            results.append(of('Multi Man') == [['acoustic guitar', 'drums (drum set) [drums]', 'electric guitar']] * 4)
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            g1 = pg.evaluate(BLOCKS, 'Multi Man')
+            print('G) neu geladen:', roles(g1))
+            results.append(roles(g1) == ['electric guitar', 'acoustic guitar', 'drums (drum set)'])
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# an opened event: level, date, pool, tracks
+EVEDIT = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+  const ed = g && g.querySelector('.dci-em-evedit'); if (!ed) return null;
+  return { title: ed.querySelector('strong').textContent.trim(), levels: [...ed.querySelectorAll('[data-act=em-evlevel]')].map(b => b.textContent.trim() + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')),
+    date: (ed.querySelector('[data-f=em-evdate]') || {}).value, pool: [...ed.querySelectorAll('.dci-em-evpool')].map(b => b.textContent.trim() + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')),
+    tracks: [...ed.querySelectorAll('[data-f=em-evtrack]')].filter(c => c.checked).map(c => Number(c.dataset.i)), n: ed.querySelectorAll('[data-f=em-evtrack]').length,
+    open: [...g.querySelectorAll('th.dci-em-ev.dci-em-evopen')].map(h => h.textContent.replace(/\\s+/g, ' ').replace('▾', '').trim()) }; }"""
+
+
+def case_evhead():
+    """Credits Importer 3.35.4 (AE-3; maintainer: "wenn man den ereigniskopf öffnet soll man datum und tracks einstellen können",
+    "auch ebene ändern können", on roles MusicBrainz has not on the new level: "ja passt"): an event opened below its block.
+    A) Part Man: ▸ in the head of ② (piano, track 2) opens it – "Event ② – … all its rows (1)", the levels of its types
+       (here Recording only – the test's MusicBrainz has instruments on recordings only), the date field, the dates of the
+       pool, the tracks with track 2 ticked; the head marked.
+    B) Track 3 ticked: ② on tracks 2–3, still open, the focus on the box; both boxes taken off one after the other – the last
+       one stays with a message (an event needs a track).
+    C) "All": piano on all 4 tracks – the same event as electric guitar (①): one event, the opened one follows (2 rows).
+    D) A date typed ("2024-03"): both rows have it, a date of the pool; "no date": without; the date of the pool chosen: with it.
+    E) Level Man ("Producer" on the recordings ①, "Mastered By" on the release ②): ① to Release – the producer joins
+       mastering's event (one event, 2 rows, the opened event follows); back to Recording – the producer moves (all tracks),
+       mastering stays with the note "Mastered By stays on the level Release: MusicBrainz has no “mastering” on the level
+       Recording"; "ok" takes the note away.
+    F) ✕ in the opened event closes it.
+    G) Staged: Part Man – piano and electric guitar together on the 4 recordings with the date 2024-03."""
+    orig, rel0 = join_release()
+    extra = [('Level Man', 'Producer', 3075, ''), ('Level Man', 'Mastered By', 3075, '')]
+    H.ARTISTS[3075] = (H.uid('dddddddd', 3075 - 2990), 'Level Man')
+
+    def rel():
+        d = rel0()
+        d['extraartists'] += [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, i, t in extra]
+        return d
+    H.discogs_release = rel
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            part = sec_sel(pg, 'Part Man')
+            p0 = pg.evaluate(BLOCKS, 'Part Man')
+            pg.click(f'{part} th.dci-em-ev >> nth=1 >> [data-act=em-evopen]')
+            pg.wait_for_timeout(400)
+            a1 = pg.evaluate(EVEDIT, 'Part Man')
+            print('A) vorher:', p0[0]['ev'] if p0 else None, '| offen:', a1)
+            results.append(bool(a1) and a1['title'] == 'Event ② – what you set here goes for all its rows (1)' and a1['levels'] == ['Recording*']
+                           and a1['date'] == '' and a1['tracks'] == [1] and a1['n'] == 4 and a1['open'] == ['② Recording track 2'])
+            pg.click(f'{part} .dci-em-evedit [data-f=em-evtrack][data-i="2"]')
+            pg.wait_for_timeout(400)
+            b1 = pg.evaluate(EVEDIT, 'Part Man')
+            focus = pg.evaluate("(() => { const a = document.activeElement; return a && a.dataset ? a.dataset.f + ':' + a.dataset.i : ''; })()")
+            pg.click(f'{part} .dci-em-evedit [data-f=em-evtrack][data-i="1"]')
+            pg.wait_for_timeout(400)
+            pg.click(f'{part} .dci-em-evedit [data-f=em-evtrack][data-i="2"]')
+            pg.wait_for_timeout(400)
+            b2 = pg.evaluate(EVEDIT, 'Part Man')
+            msg = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent).join(' | ')")
+            print('B) Track 3:', b1['tracks'] if b1 else None, '| Fokus:', focus, '| letzter:', b2['tracks'] if b2 else None, '| Meldung:', 'at least one track' in msg)
+            results.append(bool(b1) and b1['tracks'] == [1, 2] and focus == 'em-evtrack:2' and bool(b2) and b2['tracks'] == [2] and 'at least one track' in msg)
+            pg.click(f'{part} .dci-em-evedit [data-act=em-evall]')
+            pg.wait_for_timeout(400)
+            c1 = pg.evaluate(EVEDIT, 'Part Man')
+            c1b = pg.evaluate(BLOCKS, 'Part Man')
+            print('C) alle:', c1, '| Ereignisse:', c1b[0]['ev'] if c1b else None)
+            results.append(bool(c1) and c1['title'].endswith('(2)') and c1['tracks'] == [0, 1, 2, 3] and c1b[0]['ev'] == ['① Recording all 4 tracks'])
+            pg.fill(f'{part} .dci-em-evedit [data-f=em-evdate]', '2024-03')
+            pg.press(f'{part} .dci-em-evedit [data-f=em-evdate]', 'Tab')
+            pg.wait_for_timeout(500)
+            d1 = pg.evaluate(EVEDIT, 'Part Man')
+            pg.click(f'{part} .dci-em-evedit [data-act=em-evpool][data-id=""]')
+            pg.wait_for_timeout(400)
+            d2 = pg.evaluate(EVEDIT, 'Part Man')
+            pg.click(f'{part} .dci-em-evedit .dci-em-evpool:has-text("2024-03")')
+            pg.wait_for_timeout(400)
+            d3 = pg.evaluate(EVEDIT, 'Part Man')
+            print('D) Datum:', d1['date'] if d1 else None, d1['pool'] if d1 else None, '| ohne:', d2['date'] if d2 else None, '| Pool:', d3['date'] if d3 else None, d3['pool'] if d3 else None)
+            results.append(bool(d1) and d1['date'] == '2024-03' and any(x.endswith('*') for x in d1['pool']) and bool(d2) and d2['date'] == ''
+                           and bool(d3) and d3['date'] == '2024-03' and d3['title'].endswith('(2)'))
+            lvl = sec_sel(pg, 'Level Man')
+            e0 = pg.evaluate(BLOCKS, 'Level Man')
+            pg.click(f'{lvl} th.dci-em-ev >> nth=0 >> [data-act=em-evopen]')
+            pg.wait_for_timeout(400)
+            e1 = pg.evaluate(EVEDIT, 'Level Man')
+            pg.click(f'{lvl} .dci-em-evedit [data-act=em-evlevel][data-level=release]')
+            pg.wait_for_timeout(400)
+            e2 = pg.evaluate(EVEDIT, 'Level Man')
+            e2b = pg.evaluate(BLOCKS, 'Level Man')
+            pg.click(f'{lvl} .dci-em-evedit [data-act=em-evlevel][data-level=recording]')
+            pg.wait_for_timeout(400)
+            e3 = pg.evaluate(EVEDIT, 'Level Man')
+            kept = pg.evaluate("(sel) => [...document.querySelectorAll(sel + ' .dci-em-kept')].map(k => k.textContent.replace(/\\s+/g, ' ').trim())", lvl)
+            pg.click(f'{lvl} [data-act=em-keptok]')
+            pg.wait_for_timeout(300)
+            kept2 = pg.evaluate("(sel) => document.querySelectorAll(sel + ' .dci-em-kept').length", lvl)
+            print('E) vorher:', e0[0]['ev'] if e0 else None, '| offen:', e1, '| Release:', e2, e2b[0]['ev'] if e2b else None,
+                  '| zurück:', e3, '| Hinweis:', kept, kept2)
+            results.append(bool(e1) and e1['title'].endswith('(1)') and e1['levels'] == ['Recording*', 'Release']
+                           and bool(e2) and e2['title'].endswith('(2)') and e2['levels'] == ['Recording', 'Release*'] and e2b[0]['ev'] == ['① Release whole release']
+                           and bool(e3) and e3['levels'] == ['Recording*', 'Release'] and e3['tracks'] == [0, 1, 2, 3] and e3['title'].endswith('(1)')
+                           and kept == ['Mastered By stays on the level Release: MusicBrainz has no “mastering” on the level Recording ok'] and kept2 == 0)
+            pg.click(f'{lvl} .dci-em-evedit [data-act=em-evopen]')
+            pg.wait_for_timeout(300)
+            f1 = pg.evaluate(EVEDIT, 'Level Man')
+            print('F) zu:', f1)
+            results.append(f1 is None)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            added = pg.evaluate(ADDED_D)
+            pm = H.uid('dddddddd', 3074 - 2990)
+            mine = sorted((r['date'], tuple(r['attrs'])) for r in added if pm in (r['a'], r['b']))
+            print('G) Part Man:', mine)
+            results.append(mine == [('2024-3', ('electric guitar', 'piano'))] * 4)
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_companies():
+    """Credits Importer 3.35.5 (AE-4; maintainer: "ja können auch in die matrix", "alle einträge die daten und/oder tracks anbieten.
+    solche einträge kommen ja eher selten vor."): companies and places as a matrix when a row of theirs offers a date and/or tracks.
+    A) The test release: Abbey Road Studios (a place, "Recorded At" on the 4 recordings) – a matrix: a block "Recorded At →
+       recorded at", ① Recording all 4 tracks, ticked; Sony ("Phonographic Copyright (p)", a label on the release) – a matrix,
+       ① Release whole release.
+    B) Pub Co ("Published By" on the works): its rows as before (no matrix – nothing on it offers a date or tracks).
+    C) ☰ compact: Abbey Road Studios a line "① Recording no date all 4 tracks" with the chip "recorded at".
+    D) Staged: the relationships of the companies and places the same as in the legacy view.
+    E) A date typed into the head of Abbey Road's event (2001-03): staged "recorded at" on the 4 recordings with it."""
+    results = []
+    with sync_playwright() as p:
+        H.BROWSER = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            ctx, pg, errs, leg, _label = staged_by(None, 'legacy')
+            ctx.close()
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(H.BROWSER)
+            pg, errs2 = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            kind = "(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); return g ? [g.classList.contains('dci-em-entry'), g.querySelectorAll('tr.dci-row').length] : null; }"
+            abbey = pg.evaluate(BLOCKS, 'Abbey Road Studios')
+            sony = pg.evaluate(BLOCKS, 'Sony')
+            k_abbey, k_sony, k_pub = pg.evaluate(kind, 'Abbey Road Studios'), pg.evaluate(kind, 'Sony'), pg.evaluate(kind, 'Pub Co')
+            print('A) Abbey Road:', k_abbey, abbey, '| Sony:', k_sony, sony)
+            results.append(k_abbey == [True, 0] and bool(abbey) and len(abbey) == 1 and abbey[0]['head'].startswith('Recorded At → recorded at')
+                           and abbey[0]['ev'] == ['① Recording all 4 tracks'] and abbey[0]['lines'][0]['ticks'] == [True]
+                           and k_sony == [True, 0] and bool(sony) and sony[0]['ev'] == ['① Release whole release'] and sony[0]['lines'][0]['ticks'] == [True])
+            print('B) Pub Co:', k_pub)
+            results.append(bool(k_pub) and k_pub[0] is False and k_pub[1] >= 1)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(500)
+            c_abbey = pg.evaluate(CLINES, 'Abbey Road Studios')
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(500)
+            print('C) kompakt:', c_abbey)
+            results.append(bool(c_abbey) and c_abbey['compact'] and [(l['head'], l['chips']) for l in c_abbey['lines']] == [('① Recording no date all 4 tracks', ['recorded at'])])
+            ids = {v[1] for v in H.COMPANIES.values()}
+            comp = lambda rels: sorted((r['lt'], r['a'], r['b'], tuple(r['attrs'])) for r in rels if r['a'] in ids or r['b'] in ids)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            mx = pg.evaluate(ADDED)
+            print('D) Firmen:', len(comp(mx)), '| legacy:', len(comp(leg)), '| gleich:', comp(mx) == comp(leg))
+            results.append(len(comp(leg)) > 0 and comp(mx) == comp(leg))
+            ctx.close()
+            # E) a date for the place
+            ctx = H.new_context(H.BROWSER)
+            pg, errs3 = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            sec = sec_sel(pg, 'Abbey Road Studios')
+            pg.fill(f'{sec} th.dci-em-ev [data-f=em-evdate]', '2001-03')
+            pg.press(f'{sec} th.dci-em-ev [data-f=em-evdate]', 'Tab')
+            pg.wait_for_timeout(600)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            dd = pg.evaluate(ADDED_D)
+            place = H.uid('eeeeeeee', 2)
+            mine = sorted(r['date'] for r in dd if place in (r['a'], r['b']))
+            print('E) recorded at:', mine)
+            results.append(mine == ['2001-3'] * 4)
+            print('Fehler:', errs, errs2, errs3)
+            results.append(not errs and not errs2 and not errs3)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.BROWSER.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_remember():
+    """Credits Importer 3.36.0 (146; maintainer: "ja genau, soll alles wieder kommen"): the matrix of a remembered release after the
+    page is loaded again (⚙ Settings → Cache on): Multi Man's lines in the order dragged (drums first), Part Man's event ② on the
+    tracks set in the opened event (2–3), Solo Man "One row each" – all as before; staged the same (20)."""
+    H.REMEMBER = True
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    sl = lambda bl: [(x['head'], x['ev'], [l['role'] for l in x['lines']]) for x in (bl or [])]
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            H.ENTRIES_VIEW = 'matrix'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+
+            def load():
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1500)
+            load()
+            multi = sec_sel(pg, 'Multi Man')
+            ids = {l['role']: l['line'] for l in pg.evaluate(BLOCKS, 'Multi Man')[0]['lines']}
+            pg.evaluate(DROP_AT, [f'{multi} tr.dci-em-line[data-line="{ids["drums (drum set)"]}"] .dci-em-grip', f'{multi} tr.dci-em-line[data-line="{ids["electric guitar"]}"]', False])
+            pg.wait_for_timeout(300)
+            part = sec_sel(pg, 'Part Man')
+            pg.click(f'{part} th.dci-em-ev >> nth=1 >> [data-act=em-evopen]')
+            pg.wait_for_timeout(300)
+            pg.click(f'{part} .dci-em-evedit [data-f=em-evtrack][data-i="2"]')
+            pg.wait_for_timeout(300)
+            pg.click(f'{sec_sel(pg, "Solo Man")} [data-act=em-split]')
+            pg.wait_for_timeout(1600)
+            before = [sl(pg.evaluate(BLOCKS, n)) for n in ('Multi Man', 'Part Man', 'Solo Man')]
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            load()
+            after = [sl(pg.evaluate(BLOCKS, n)) for n in ('Multi Man', 'Part Man', 'Solo Man')]
+            print('vorher:', before)
+            print('nachher:', after)
+            results.append(before == after and before[0][0][2][0] == 'drums (drum set)' and before[1][0][1][1] == '② Recording tracks 2–3' and len(before[2]) == 2)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(1500)
+            n = len(pg.evaluate(ADDED))
+            print('gestaged:', n)
+            results.append(n == 20)
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()

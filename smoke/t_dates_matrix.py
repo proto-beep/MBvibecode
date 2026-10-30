@@ -1,6 +1,6 @@
 """Dates & tracks: the date matrix, dragging dates and track groups, the pools (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: matrix, dragdates, pools, poolsmx, tracksdrop, titledates (3.31.7), poolsopen (3.32.1), dmgoto (3.32.8) – each the former smoke/t_<case>.py, unchanged; `python3 t_dates_matrix.py <case> …` runs only those."""
+Cases: matrix, dragdates, pools, poolsmx, tracksdrop, titledates (3.31.7), poolsopen (3.32.1), dmgoto (3.32.8), workgroups (3.35.6) – each the former smoke/t_<case>.py, unchanged; `python3 t_dates_matrix.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -659,6 +659,136 @@ def case_dmgoto():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_workgroups():
+    """Credits Importer 3.35.6 (collected item 145b; maintainer: "ja lass das mal anbieten, aber mit der option das auch
+    auszuschalten. und mit der option im date track pool auf die interpretation von werken als group hier zu verzichten. an und
+    abschaltbar jeweils holt es die daten wieder oder schließt sie aus.", "B", "der schalter im track pool gilt nur bis zum
+    nächsten import"): the works of the source as track groups.
+    A) The test release as two index tracks of Discogs, "Work One" (A1, A2) and "Work Two" (B1, B2): both in the track pool as
+       suggestions (2 tracks each), the box "2 works as track groups" ticked.
+    B) A date "Session A" into the column Performance, "Work One" onto it: the date of the matrix on Work One.
+    C) The box unticked: both works out of the pool, the date (only on Work One) out of the matrix; the log says so.
+    D) Ticked again: both back, the date with Work One back in the matrix.
+    E) ⚙ Settings → Dates & tracks "Offer the works of the source as track groups" off: out again, no box; on: back.
+    F) Unticked, the page loaded again (a new import): ticked again, the works and the date with Work One there (leaving them
+       out held until the next import).
+    G) The setting off, the page loaded again: no works in the pool, no box; stored "false"."""
+    from common_rows import cells
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        tl = d['tracklist']
+        for t, pos in zip(tl, ['A1', 'A2', 'B1', 'B2']):
+            t['position'] = pos
+        d['tracklist'] = [{'position': '', 'title': 'Work One', 'type_': 'index', 'sub_tracks': tl[:2]},
+                          {'position': '', 'title': 'Work Two', 'type_': 'index', 'sub_tracks': tl[2:]}]
+        return d
+    H.discogs_release = rel
+    TGS = """[...document.querySelectorAll('.dci-pools .dci-pchip-tg, [data-el=dates] .dci-pchip-tg')].filter((c, i, a) => a.indexOf(c) === i)
+      .map(c => [c.querySelector('.dci-chip-main').textContent.replace(/\\s+/g, ' ').trim(), c.classList.contains('dci-pchip-sugg')])"""
+    BOX = "(() => { const b = document.querySelector('[data-f=work-groups-pool]'); return b ? [b.checked, b.closest('label').textContent.replace(/\\s+/g, ' ').trim()] : null; })()"
+    works = lambda tg: [x for x in tg if x[0].startswith('Work ')]
+    perf = lambda pg: [c for c in cells(pg).get('performance', []) if c[0].startswith('Session A')]
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+                pg.click('.dci-pools-toggle')
+                pg.wait_for_timeout(200)
+            a_tg = pg.evaluate(TGS)
+            a_box = pg.evaluate(BOX)
+            print('A) Track-Pool:', a_tg, '| Kasten:', a_box)
+            results.append(works(a_tg) == [['Work One 2 tracks', True], ['Work Two 2 tracks', True]] and a_box == [True, '2 works as track groups'])
+            pg.click('[data-act=pool-new]')
+            pg.fill('[data-f=pf-name]', 'Session A')
+            pg.fill('[data-f=pf-by]', '2025')
+            pg.fill('[data-f=pf-bm]', '06')
+            pg.click('[data-act=pool-save]')
+            pg.wait_for_timeout(300)
+            d_id = pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].find(c => /Session A/.test(c.textContent)).dataset.id")
+            w_id = pg.evaluate("[...document.querySelectorAll('.dci-pchip-tg')].find(c => /Work One/.test(c.textContent)).dataset.id")
+            pg.drag_and_drop(f'.dci-pchip-date[data-id="{d_id}"]', '[data-dmdrop=performance]')
+            pg.wait_for_timeout(300)
+            cell = pg.evaluate("[...document.querySelectorAll('.dci-dm-col[data-dmcol=performance] .dci-dm-cell')].find(c => /Session A/.test(c.textContent)).dataset.id")
+            pg.drag_and_drop(f'.dci-pchip-tg[data-id="{w_id}"]', f'.dci-dm-cell[data-id="{cell}"]')
+            pg.wait_for_timeout(300)
+            b1 = perf(pg)
+            print('B) Matrix:', b1)
+            results.append(len(b1) == 1 and b1[0][1] == ['Work One'])
+            pg.click('[data-f=work-groups-pool]')
+            pg.wait_for_timeout(400)
+            c_tg = pg.evaluate(TGS)
+            c1 = perf(pg)
+            logl = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /works of the source/.test(t))")
+            print('C) aus:', works(c_tg), c1, '| Log:', logl[-1:] if logl else None)
+            results.append(works(c_tg) == [] and c1 == [] and bool(logl) and '2 works of the source left out of the track pool' in logl[-1])
+            pg.click('[data-f=work-groups-pool]')
+            pg.wait_for_timeout(400)
+            d_tg = pg.evaluate(TGS)
+            d1 = perf(pg)
+            print('D) an:', works(d_tg), d1)
+            results.append(len(works(d_tg)) == 2 and len(d1) == 1 and d1[0][1] == ['Work One'])
+            H.open_settings(pg, 'dates')
+            pg.click('[data-set=work-groups]')
+            pg.wait_for_timeout(400)
+            e_tg = pg.evaluate(TGS)
+            e_box = pg.evaluate(BOX)
+            pg.click('[data-set=work-groups]')
+            pg.wait_for_timeout(400)
+            e2_tg = pg.evaluate(TGS)
+            e2 = perf(pg)
+            print('E) Einstellung aus:', works(e_tg), e_box, '| an:', works(e2_tg), e2)
+            results.append(works(e_tg) == [] and e_box is None and len(works(e2_tg)) == 2 and len(e2) == 1 and e2[0][1] == ['Work One'])
+            pg.click('[data-f=work-groups-pool]')
+            pg.wait_for_timeout(400)
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+                pg.click('.dci-pools-toggle')
+                pg.wait_for_timeout(200)
+            f_tg = pg.evaluate(TGS)
+            f_box = pg.evaluate(BOX)
+            f1 = perf(pg)
+            print('F) neu geladen:', works(f_tg), f_box, f1)
+            results.append(len(works(f_tg)) == 2 and f_box == [True, '2 works as track groups'] and len(f1) == 1 and f1[0][1] == ['Work One'])
+            H.open_settings(pg, 'dates')
+            pg.click('[data-set=work-groups]')
+            pg.wait_for_timeout(400)
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+                pg.click('.dci-pools-toggle')
+                pg.wait_for_timeout(200)
+            g_tg = pg.evaluate(TGS)
+            g_box = pg.evaluate(BOX)
+            stored = pg.evaluate("localStorage.getItem('dci-work-groups')")
+            print('G) Einstellung aus, neu geladen:', works(g_tg), g_box, stored)
+            results.append(works(g_tg) == [] and g_box is None and stored == 'false')
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

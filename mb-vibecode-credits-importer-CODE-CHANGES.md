@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.35.1, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.36.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,123 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.36.4 · 2026-10-30
+
+The choices of the works matrix remembered per release (146).
+
+- **New `worksSnapshot()`** (in `rememberSnapshot`, key `works`): `plan` (`S.workPlan`, only `origin` search and pending, without `entity`), `on` / `off` (`S.linkAttrOn` / `S.linkAttrOff`, the non-empty ones), `fills` (`S.dateFills`, `fromCol` by entry), `colDate` (`S.mxColDate`), `removed` (`S.mxRemoved`: name, MBID, entity type, entry, row ids), `collapsed` (`S.mxCollapsed`), `opts` (`S.workRowOpts`), `defaults` (`S.workDefaults`, when chosen). A column of an entry (`k:<key>`, the key changes with each import) is stored by the entry (`e:<entry id>`, **`colKeyOut`** / **`colKeyIn`**).
+- **New `restoreWorks(w, entries, ids)`** (at the end of `restoreRemembered`): sets only what this import lacks; the row ids of a column taken out mapped to this import's rows; returns how many (they count in "rememberRestored").
+- **Stored after a change:** `renderWorks()` calls `scheduleRemember()`; also the type of a new work (`mx-type`) and the type for all new works (`work-type`).
+- **Tests:** `t_works_matrix.py` new case `remember` (attribute, new work, column taken out and brought back, column date, type of new works after the page is loaded again); `t_works_more.py worksskip` C: taken again after the page was loaded again, the new works planned before the skip come back (nothing looked up), their plans taken back before D.
+
+## Import 3.36.3 · 2026-10-29
+
+⌨ in the head: the keyboard shortcuts.
+
+- **Head:** `headBtn('keys-open', 'keys', …)` before ⓘ (new icon `ICONS.keys`), `aria-expanded`, `aria-controls="dci-keys"`; the panel `div.dci-keys#dci-keys[data-el=keys]` after the settings in the body.
+- **New `IS_MAC`** (`navigator.userAgentData.platform`, else `navigator.platform` / the user agent), **`keysHtml()`** (one table: the groups as `tbody` with a heading row, each shortcut a `kbd` per key – `keys.k.*`, on a Mac the `…Mac` variants of alt, ctrl, enter, paste), **`setKeysOpen(open)`**, **`renderKeys()`** (also in `renderAll`). State `S.keysOpen` (not stored).
+- **`onClick`:** `keys-open` (the head button and ✕). **Esc** (the global handler): the shortcuts close first after "Text from cover art" and "Mapping rules", the focus back on ⌨.
+- **CSS:** `.dci-keys`, `.dci-keys-head`, `.dci-keys h3`, `.dci-keys-table`, `.dci-keys kbd`.
+- **Texts (English only):** `keys.open`, `keys.title`, `keys.system`, `keys.systemMac`, `keys.g.page/editor/dashboard/media/ocr`, `keys.toggle`, `keys.esc`, `keys.enterEdit`, `keys.enter`, `keys.tabs`, `keys.lines`, `keys.shiftDrop`, `keys.pasteDate`, `keys.mediaEnter`, `keys.ocrPaste`, `keys.ocrUrl`, `keys.ocrZoom`, `keys.k.alt/altMac/ctrl/ctrlMac/shift/enter/enterMac/paste/pasteMac/esc/home/end/wheel`.
+- **Tests:** `t_ui_head.py` new case `keys` (opened with the groups and keys, Esc and ✕ close it, as a Mac); `head` with ⌨ among the buttons.
+
+## Import 3.36.2 · 2026-10-29
+
+The diagnosis in the log as a setting (off).
+
+- **New `LOG_DIAG_KEY`** 'dci-log-diag' (true while on), `S.logDiag`. `renderLog` draws `data-log-act="diag"` only with `S.logDiag` (or while a diagnosis runs).
+- **Settings:** ⚙ General `data-set="log-diag"`; the handler stops a running diagnosis (`stopDiag`) when switched off and draws the log anew; in `TOPIC_KEYS.general`, `SETTINGS_KEYS`; `resetTopic('general')` and `resetSettings` switch it off (and stop a diagnosis).
+- **Texts (English only):** `settings.logDiag`, `settings.logDiagTitle`.
+- **Tests:** `t_ui_settings.py` new case `logdiag` (no button by default, on, a running diagnosis stops when switched off, ↺ of General).
+
+## Import 3.36.1 · 2026-10-29
+
+Fixes of 3.36.0 (and two of 3.35.4 / 3.35.6) after an independent review of the code of Block AH.
+
+- **`S.rememberRead`** (the tab read the stores when it was opened) and **`S.rememberHold`**: `setRemember(true)` in a tab that did not read them, for a release with something stored (**new `hasRemembered(id)`**) – nothing of the release is written (`relWrite`, `relMapWrite`, `saveRememberNow` return), message `remember.hold` with the action `remember-reload` (`location.reload()`); otherwise `rememberNow()` as before, and the about stash only when the tab holds it (`S.aboutStash`).
+- **`REMEMBER_ROWS_KEY`** holds `{ v: 2, by: { <source>: snapshot } }` (the 3 used last; a stored `v: 1` snapshot is read too) – `saveRememberNow` merges, `restoreRemembered` takes the one of `S.importSrc`.
+- **`rememberSnapshot`:** rows of the source removed with ✕ as `{ k, i, x: 1 }` (restored: they stay removed); a level set by hand in this import always in `d` (with `existingAll` taken off on restore); `media` (new **`mediaSig()`**) – with another media choice the tracks of the diffs are not taken over, and own rows keep only tracks of the selection (none left: left out). `ROW_OWN_FIELDS` with `differ`, `confirmedBy`, `suppTook`, `redrawLater`, `dateEdit`.
+- **`loadRelease`:** `rememberFresh()` before `resolveArtists` (rows added meanwhile are rows of their own); new **`finishRemember(seq)`** – rows whose touch fields (`levelTouched`, `primaryTouched`, `roleCreditTouched`, `creditTouched`, `typeAnswer`) did not change get the state after the lookups as their baseline; restore in `try` (an error: rows and entries as before, log `rememberError`); also for an import without entries.
+- **`restoreRemembered`:** references to rows (`splitFrom`, `mxOrigin`) only on rows that got them from the snapshot, mapped to the new ids or removed; entries: the remembered entity type set directly (no `setCompanyEntityType`); the order: a removed row's entry without rows no longer throws (`byEntry.get(…) || []`).
+- **New `rebaseFresh(row)`** (`REMAP_FIELDS`), called in `applyRulesChange` after `remapRow`.
+- **`name-use` / `alias-use`** set `matchTouched`.
+- **`rememberedReleases`:** releases not in the index by the time of `dci-source-pick` / `dci-media-sel` / `dci-ocr-frames` (`at`, `t`), the most recent first. **`remember-max`:** no `touchRemembered()` at the change (the next store trims). **`forgetAllRemembered`** clears the pending store.
+- **`clearPools('tracks')`:** `S.workGroupsStash = null`. **`emEventLevel`:** `matrixDateForLevel` once per date group of the moved rows.
+- **Texts (English only):** `remember.hold`, `remember.reload`, `log.rememberError`.
+- **Tests:** `t_ui_settings.py` new case `cache2` (a removed row stays removed, a text does not replace the Discogs state, switched on in a tab opened while off: the message, nothing written over, back after loading again); `cache` F: the other release goes when something is stored next; `t_entries.py` new case `remember` (order, an opened event's tracks, one row each – back after loading again, staged the same); `t_ui_view.py compact` F: Guitar Guy's row removed with ✕ stays removed after loading again.
+
+## Import 3.36.0 · 2026-10-29
+
+Milestone "Remember per release": the stores of a release only with the new switch, its rows and entries remembered too (collected item 146).
+
+- **Storage layer (before `LOG_KEY`):** `REMEMBER_ON_KEY` 'dci-remember-on' (true while on), `REMEMBER_MAX_KEY` 'dci-remember-max' (0 – 100, 50 not stored), `REMEMBER_INDEX_KEY` 'dci-remember-index' ([[mbid, time] …], the most recent first), `REMEMBER_ROWS_KEY` `dci-remember:<MBID>`; `S.rememberOn`, `S.rememberMax`, **`remembering()`**. `REL_PREFIXES` / `REL_KEY_RE` (the stores of one release: date-pool, track-pool, date-matrix, about-off, bc-off, src-off, works-skip, remember), `REL_MAPS` (dci-source-pick, dci-media-sel, dci-ocr-frames), `relMem` (those maps in this tab while nothing is remembered). New **`relRead`**, **`relMapRead`**, **`relMapWrite`**, **`relWrite`** (only while remembering; the storage full: `dropOldestRemembered` and again, then the message `remember.full` once), **`rememberedReleases`** (the index, then releases found in the storage), **`touchRemembered`** (once a minute; beyond `S.rememberMax` → `forgetRelease`), **`forgetRelease(id)`**, **`dropOldestRemembered`**, **`storageSizes`** (bytes as UTF-16 of the releases' stores and of every `dci-…` key), **`bytesText`** (KB / MB, one decimal, `Intl.NumberFormat(LANG)`), **`forgetAllRemembered`**.
+- **The stores read and written through it:** `S.datePool`, `savePool`, `S.aboutOff`, `S.srcOff`, `S.trackPool`, `saveTrackPool`, `saveMatrix`, `dm()`, `ocrSavedFor` / `ocrSaveFrames`, `keepSourcePick` / `startSource`, `chooseMedia` (read and write), `saveSrcOff`, `setAboutOff` (its stash also in `S.aboutStash` – before it was read back from the storage), `S.worksSkip`, `applyWorksChoice`, `setWorksSkip`. Writing `null` for them stays direct where something is deleted (`forgetImport`, `resetSettings` with the pools – now also those of this release).
+- **Rows and entries:** new `ROW_OWN_FIELDS` (not stored: id, entry, open, and what MusicBrainz or "Stage: …" made of a row – `existingChecked`, `existingAll`, `levelBeforeSkip`, `scopeLevel`; `rowFieldsOf` takes the level before them), `encField` / `decField` (JSON, Sets and Maps also inside), **`rowFieldsOf`**, **`entryIdOf`** (an entry by its source id and name, an entry added by hand by its MusicBrainz id), **`rowBaseKey`** (the line of the source: entry, raw, base, dSpec, anv, company, dSplitFrom, artTask, fromAbout), **`rememberFresh`** (`S.freshRows`: key with its number among equal ones, base, fields), **`rememberSnapshot`** (`{ v: 1, at, src, rows, entries, manual }` – a row of the source with how it differs, `{ k, i, d }`; a row of its own whole, `{ e, b, i, f }`; supplements left out), **`scheduleRemember`** (a second after a change, from `refresh()`), **`saveRememberNow`** (also on `pagehide` and at the start of the next import), **`restoreRemembered`** (only with the same `S.importSrc`; rows of the source get their differences, rows of their own come back if their line is still there or they were added by hand, entries added by hand anew; the order: the entries as the source gives them, the rows of an entry as remembered, new lines after them; `splitFrom` mapped to the new ids; join, by, the entity chosen by hand; log `rememberRestored`, `rememberLost` and the message `remember.lost`).
+- **`loadRelease`:** `importSeq` – only the last import started counts (an import started while another still ran met its rows at its end); `S.importSrc` = `<source>:<id>`; at the end (after `computePublisherEvidence`) `rememberFresh()`, `restoreRemembered()` while remembering, `S.rememberReady`. `artist-pick` and `setArtistManually` mark `matchTouched`.
+- **Settings:** `SETTING_TOPICS` with `cache` (after `beta`); its body: the switch `data-set="remember"`, the number `data-set="remember-max"`, `data-act="remember-forget"` (confirm) with `data-el="remember-size"`. New **`setRemember(on)`** (on with 0 → 50) and **`rememberNow()`** (switched on: pools, matrix, switched-off credits, about, works skip, the maps of this tab and the rows stored at once); the number 0 switches off. `TOPIC_KEYS.cache`, `SETTINGS_KEYS`, `resetTopic('cache')`, `resetSettings`.
+- **Media dialog:** while not remembered, "Remember this choice for this release (in this tab)" with a tooltip.
+- **Milestone:** `MILESTONES` 3.36.0, `ms.3.36.0`.
+- **Texts (English only):** `settings.t.cache`, `settings.cacheHint`, `settings.remember`, `settings.rememberTitle`, `settings.rememberMax`, `settings.rememberMaxTitle`, `settings.rememberMaxHint`, `settings.rememberForget`, `settings.rememberSize.one/.other`, `settings.rememberAll`, `settings.rememberAsk.one/.other`, `remember.full`, `remember.lost.one/.other`, `remember.forgot.one/.other`, `media.rememberTabOnly`, `media.rememberTab`, `log.rememberFull`, `log.rememberDropped`, `log.rememberForgot.one/.other`, `log.rememberRestored.one/.other`, `log.rememberLost.one/.other`, `ms.3.36.0`.
+- **Tests:** `harness.REMEMBER` (True: switched on before the script starts – the files written before expect the stores remembered) and `REMEMBER_PRESET` in `open_mb_edit` / `open_mb_any`; `t_ui_settings.py` new case `cache` (the default off, the changes gone after a reload, switched on and back, the source changed, 0 and 50, another release forgotten with 1, forget all), `settabs` / `settings` / `bridge` with the tab Cache, `reset` (the stores of rows are no settings), `notice` (3.36.0, 3.35.0, 3.34.0); `t_coverart.py ocrsetting` (Cache before ⓘ Connections); `t_entries.py order` with `REMEMBER = False` (the order holds until the next import while not remembered); `t_register.py` waits for the import of the release before the text (before, the text met the end of that import – "Strings arranged by Zoe Q" and Kim's arrangement stayed on the recordings by chance; now S006 puts them into the works matrix), `register_golden.json` written anew.
+
+## Import 3.35.6 · 2026-10-29
+
+The works of the source as track groups, with a box in the track pool and a setting (collected item 145b).
+
+- **New `sourceWorks()`:** the tracks of `S.srcTracks` with `work` (the parts of an index track of Discogs, `DISCOGS.toRelease` 3.35.1), by work, only tracks of the MusicBrainz release. **New `placeWorkGroups()`:** each work a group `{ id, name, tracks, found: true, work: true }` (a suggestion, `trackGroupSuggested`), none if a group has the same tracks.
+- **New `applyWorkGroups({ quiet })`:** wanted (`S.workGroupsOn` and not `S.workGroupsOff`) – **new `unstashWorkGroups()`** puts back what was left out, then `placeWorkGroups`; not wanted – the groups with `work` leave `S.trackPool`, the cells of the date matrix lose their ids in `tgs` (a cell only on them is removed), all kept in `S.workGroupsStash = { groups, cells: [{ id, ids }], removed }`. Log `workGroupsIn` / `workGroupsOut`; `dmChanged` (quiet: `saveMatrix` only).
+- **Storage:** `saveTrackPool` and `saveMatrix` store the pool and the matrix with what is in the stash (leaving the works out holds until the next import). The import calls `unstashWorkGroups()` and sets `S.workGroupsOff = false` where it takes the new `S.srcTracks`, and `applyWorkGroups({ quiet: true })` after `placeTitleDates()`; `reloadPools` places them anew.
+- **Track pool:** `trackPoolHtml` – the box `data-f="work-groups-pool"` ("n works as track groups", ticked = not `S.workGroupsOff`) while the setting is on and the source has works; `onChange` → `applyWorkGroups()`.
+- **Setting:** new `WORK_GROUPS_KEY` 'dci-work-groups' (false while off), `S.workGroupsOn`; ⚙ Settings → Dates & tracks `data-set="work-groups"`; in `TOPIC_KEYS.dates`, `SETTINGS_KEYS`, `resetTopic('dates')`, `resetSettings`.
+- **Texts (English only):** `settings.workGroups`, `settings.workGroupsTitle`, `trackpool.works.one/.other`, `trackpool.worksTitle`, `log.workGroupsIn.one/.other`, `log.workGroupsOut.one/.other`.
+- **Tests:** `t_dates_matrix.py` new case `workgroups` (two works in the pool as suggestions, one on a date of the matrix, the box off and on with the date, the setting off and on, a new import ticks it again with the date, the setting off stored).
+
+## Import 3.35.5 · 2026-10-29
+
+Companies, places, areas and other entries as a matrix too, when their rows offer a date or tracks (AE-4).
+
+- **`mxPerson` renamed `mxOn`** (all 4 callers): persons as before; companies (`a.company`) and other entries (`a.other`) when one of their rows (`inEntry`, not `s046Out`) offers an event – **new `offersEvent(r)`**: not on works, and on recordings or of a type without `has_dates === false` (also a row taken out: `ltOf`). `mxEntry` / `mxCompact` follow.
+- No other change: their roles are lines of their own blocks (`lineKindOf` '' – nothing to join), the rows of works (publishing) stay below the matrix as before.
+- **Tests:** `t_entries.py` new case `companies` (Abbey Road Studios and Sony as matrices, Pub Co with its rows, compact, staged the same as in the legacy view, a date typed into the place's event).
+
+## Import 3.35.4 · 2026-10-29
+
+An event of an entry's matrix opened: level, date and tracks for all its rows (AE-3).
+
+- **`evHeadHtml(e, open)`:** ▸ / ▾ (`data-act="em-evopen"`, `data-ev`) before ①; opened: class `dci-em-evopen`. `emBlockHtml` passes whether the event is the one opened in this block and draws **new `emEventHtml(a, e)`** below its table.
+- **State:** `S.emEvOpen` (Map entry key → `{ block, ev }`, one event per entry; not stored).
+- **New `emEventHtml`:** the levels (`recording`, `release`, `release_group` – those `typeOnLevel` has for a row of the event, and its own), the date field (`data-f="em-evdate"`, as in the head), the dates of the pool (`data-act="em-evpool"`, `data-id`; '' = no date), on recordings the tracks (`data-f="em-evtrack"`, `data-i`), media (`em-evmedium`), track groups (`em-evtg`), all (`em-evall`), ✕ (`em-evopen`).
+- **New `emEventLevel(a, evKey, level)`:** rows whose type is on the level → new **`levelOf(row, level)`** (the part of `setLevel` without drawing; `setLevel` uses it), from release to recording with all tracks of the selection if they had none; `matrixDateForLevel`; the others get `row.emLevelKept = level`. **New `emEventPool`**, **`emEventTracks`** (at least one track, else the message `em.evNoTracks`). All mark the rows `dateKeyed` and call **new `emEventMoved(a, rows)`**: two rows of one line in the same event – the later ones to Skip; the opened event follows the rows' new key. `emEventDate` calls it too.
+- **New `levelKeptHtml(l)`** in `lineAskHtml`: the yellow note of a row with `emLevelKept`, "ok" (`em-keptok`) takes it off the line's rows; a row in the event again loses it.
+- **`entryMatrixChange`:** `em-evtrack`. **`onClick`:** `em-evopen`, `em-evlevel`, `em-evpool`, `em-evall`, `em-evtg`, `em-evmedium`, `em-keptok`. **`rerenderGroup`:** a field of the opened event keeps the focus (its key changes): the same `data-f` (and `data-i`) in `.dci-em-evedit`.
+- **CSS:** `.dci-em-evtoggle`, `.dci-em-ev.dci-em-evopen`, `.dci-em-evedit`, `.dci-em-evrow`, `.dci-em-evtop`, `.dci-em-evlab`, `.dci-em-evpool`.
+- **Texts (English only):** `em.evOpen`, `em.evClose`, `em.evEditTitle`, `em.evLevel`, `em.evDate`, `em.evPool`, `em.evTracks`, `em.evGroups`, `em.evNoTracks`, `em.levelKept`, `em.keptOk`, `log.emEvLevel`, `log.emEvTracks`.
+- **Tests:** `t_entries.py` new case `evhead` (opened, a track added with the focus, the last track stays, all – two events one, a date typed / none / of the pool, Release and back with the note and "ok", ✕, staged with the date); `BLOCKS` leaves ▸ out of the event heads' text.
+
+## Import 3.35.3 · 2026-10-29
+
+Lines of an entry's matrix in another order (AE-2).
+
+- **`emLineHtml`:** a block of more than one line – ⠿ (`button.dci-em-grip`, `data-drag="em-line"`, `data-id` the line, `data-block` its block, draggable) before the role.
+- **New `emMoveLine(a, lineId, targetId, after)`:** the block's line order changed (before / after the target line, or by a number: ±1); the entry's lines in the new order (the block's lines in the places its lines had among all lines); the rows of those lines put in that order into the places they had in `S.rows` (other rows stay). Log `emOrder`.
+- **Drag and drop:** `onDragStart` keeps `block` and `group` for `em-line`; `dmTargetOf` – kind `em-line` onto another `tr.dci-em-line` of the same block and entry → target `em-order`; `onDragOver` toggles `dci-em-after` (new `emAfter(el, e)`: the lower half); `onDropOn` `em-order` → `emMoveLine`, `rerenderGroup`. `dmDragEnd` now removes every `dci-dm-drag-…` class of the overlay (before, `dci-dm-drag-em-chip` stayed after a chip was dragged) and `dci-em-after`.
+- **`onKeydown`:** Alt+↑ / Alt+↓ on `.dci-em-grip` – `emMoveLine` by one, focus back on the line's ⠿.
+- **CSS:** `.dci-em-grip`; while a line is dragged (`dci-dm-drag-em-line`) the line under the pointer shows a mark above it, or below it with `dci-em-after`.
+- **Texts (English only):** `em.gripTitle`, `em.gripLabel`, `log.emOrder`.
+- **Tests:** `t_entries.py` new case `order` (dragged before and after with the mark, Alt+↑ with the focus, not onto another entry's line, no ⠿ in a block of one line, the compact view, staged as before, a new import in the order of the source).
+
+## Import 3.35.2 · 2026-10-29
+
+Proper names of several words in T052, the note offers words one after another as a whole (collected item 144).
+
+- **New `properPhrases(keep)`:** the entries with spaces of `PROPER_WORDS` (T052) and of the row's `keepCase`, each `{ re, spelling }` (a regular expression with the words separated by `\s+`, bounded by start/end or the separators of `caseCredit`), the longest first; cached by their text (`phraseCache`).
+- **`caseCredit`:** first finds the phrases (not overlapping) and writes each as a whole in its spelling; the text between them word by word as before. New: with `caseCtx.runs`, words noted as written small that follow each other with only spaces between them are noted as a run ("Les Paul"); a phrase or any other word ends a run.
+- **`roleCreditFor`:** `caseCtx` gets `runs: []`; new `row.creditPhrases` – the runs still in the credit.
+- **`caseNoteHtml`:** the runs (`row.creditPhrases`) before the words, with the same buttons (`case-keep`, `case-always` with the whole as `data-word`). The compact line's "keep" buttons: the runs first. `caseKeep`/`caseAlways` unchanged (the key of `keepCase` is the lower-case text, with spaces for a phrase).
+- **Register:** T052 note names the phrases; `where` with `properPhrases`. **Mapping file:** "Gibson Les Paul" and "Les Paul" in `PROPER_WORDS` (after "Gibson").
+- **Texts:** none new (the note's texts take the whole as `{word}`).
+- **Tests:** `t_text_basics.py` `casenote` now with "Guitar [Gretsch Duo Jet]" (Gibson Les Paul is a proper name of the register itself now; the run "Duo Jet" offered first); new case `casephrase` (Gibson Les Paul from the register, "Les Paul Junior", "Paul Reed Smith" offered as a whole, keep / write small again / always, a "Les" in a text stays small). `smoke/register_golden.json` written anew (T052).
 
 ## Import 3.35.1 · 2026-10-29
 
