@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.2 | – |
+| 2026-10-30 | 3.36.4 – 3.37.3 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.3
+
+#### Changed
+
+- **Comments of live recordings offered** (collected item 150b; maintainer: "so als abfrage/angebot für den jeweiligen fall. per mouseover tooltip wo das standardmäßig eingestellt werden kann"): with ⚙ Settings → Staging "Live recordings: add a disambiguation comment" off, a release with live recordings shows an offer above "Stage …" – "Tracks 2, 3, 4 are live recordings. Propose disambiguation comments for them (“live: …”)?" – with **✓ Propose comments** (the list for this release) and **✕ Not for this release**; its tooltip names the setting that proposes them always. Until 3.37.2 nothing was shown while the setting was off.
 
 ### Import 3.37.2
 
