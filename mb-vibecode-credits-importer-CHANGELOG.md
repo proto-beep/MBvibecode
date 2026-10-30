@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.6 | – |
+| 2026-10-30 | 3.36.4 – 3.37.7 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.7
+
+#### Fixed
+
+- **"Track B recorded …"** (collected item 157, Discogs 3749161 "Assist"; maintainer: "das wird nicht zum korrekten track "B" zugeordnet"): a side alone after "Track(s)" is read – the source's position, else the whole side –, so the date of "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" goes to track B only (until 3.37.6 to all tracks); also "Tracks A2 & B:" in pasted texts.
+- **The place after its city** (maintainer: "ja, solche Orte sollen auch erkannt werden, sofern sie nicht schon durch Companies etc. verknüpft sind"): "in Tokyo, Zojoji Hall" gives the place Zojoji Hall (area Tokyo), with its tracks; listed by Discogs, Discogs's entry gets them.
 
 ### Import 3.37.6
 

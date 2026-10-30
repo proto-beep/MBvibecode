@@ -207,6 +207,9 @@ python3 t_notes_dates.py        # Discogs notes: dates and track groups found in
                                 #   trackpool: dates for some tracks: suggestions in the matrix, Apply splits rows, applying again, several days
                                 #   reldate: date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level
                                 #     takes the matching date, a date typed by hand stays, the mark stored with the matrix
+                                #   trackside: 3.37.7: "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" (A1, A2, A3, B) – the date on
+                                #     track B only, Zojoji Hall (Tokyo) from the notes on B; listed by Discogs: its entry with B; a pasted
+                                #     "Tracks A2 & B:" on tracks 2 and 4
                                 #   lcdmenu: 3.32.7: ▾ at the month D022 placed – single days (a cell each; Apply: a row per day), the period
                                 #     (one cell; opening ▾ adds nothing to the pool), the month
 

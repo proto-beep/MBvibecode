@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.6
+// @version      3.37.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.6
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.6
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.7
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.7
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2880,7 +2880,7 @@
     { id: 'S051', where: 'TEXT.parse (roleBlock, readBlock, linkOf, chainOf, playedList, PLAYS_LIST)', note: 'Instruments and the name they are played by: lines that are only instruments or voices (one or several each, empty lines between them), then a line "are played, mixed and produced by X" (also "played by X", "All instruments played by X"): each instrument a row of X, the other verbs roles of their own ("Mixed By", "Produced By"), "played" none (T049). In one line too: "Electric guitar, drums and piano are played by X", "X plays guitar, bass and drums". Lines without an instrument before the first one are read as usual; words that are no instrument MusicBrainz knows are listed as not recognized. Words like "are", "is", "were" before a verb are never a part of the role (T050: "are played by X" is "Played By", before "Played By [Are]")' },
     // [3.34.27] maintainer: "bitte nicht vergessen, instrumente und role credits immer kleinschreiben außer bei eigennamen"
     { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
-    { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks)' },
+    { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks). [3.37.7] Also after a word for tracks ("Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall"), and a side alone after such a word everywhere – "Tracks A2 & B:", the tracks of a date in the notes ("Track B …": until 3.37.6 the date was for all tracks)' },
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S055', where: 'TEXT.parse (readClause; TEXT_GUEST_HEAD, TEXT_FEAT_HEAD)', note: 'Texts (3.37.2): "Special Guest: M. Osswald on Sax and Clarinet" – the words before the colon are no person (T053): "Special Guest(s)", "Guest(s)" (and in German, French, Spanish) give the attribute guest to the instruments and voices of the names after it (a name without roles: performer, guest), "featuring", "feat.", "with" give none; "NAME on X and Y" (instruments or voices) gives them to the name, also without such a word. Before: "Special Guest" was read as the name and "M. Osswald on Sax" as a role credit' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
@@ -3180,7 +3180,7 @@
       show: () => ({ pattern: PLACE_DATE_TAIL }) },
     { id: 'T048', where: 'ROLE_WORDS, roleVocab, fixRoleTypo', note: 'Texts (3.32.5): the words of roles a typo is read as (S050: "Muisc" → "Music"); on MusicBrainz also the words of its relationship types and attributes',
       show: () => ({ pairs: [['words', ROLE_WORDS.join(' · ')]] }) },
-    { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area',
+    { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area. [3.37.7] The place also after its city: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" gives Zojoji Hall with its area Tokyo (a date between the verb and "in" is fine)',
       show: () => ({ pattern: TEXT_PLACE_WORDS }) },
     // [3.34.28] maintainer: ""Buddha" ist natürlich ein eigenname also großgeschrieben"
     { id: 'T052', where: 'PROPER_WORDS, properSpelling, properPhrases, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). From 3.35.2 also names of several words ("Gibson Les Paul", "Les Paul"): only as a whole in this spelling, a "les" elsewhere stays small. "always write “…”" at a row adds a word or a name',
@@ -4614,13 +4614,18 @@
   const TEXT = (() => {
     // A track list in front of a line or after it: "Tracks 3–5:", "(tracks 1, 4)", "on track 2", "(1, 3)"
     const SPEC = '[A-Za-z]?\\d+(?:[.\\-–—]\\d+)?(?:\\s*(?:,|&|-|–|—|\\bto\\b|\\band\\b|\\bbis\\b)\\s*[A-Za-z]?\\d+(?:[.\\-–—]\\d+)?)*';
-    const PREFIX = new RegExp(`^${TEXT_TRACK_WORDS}\\s*(${SPEC})\\s*[:–—-]\\s*(.+)$`, 'i');
-    const SUFFIX = new RegExp(`^(.*?)[\\s,]*\\(?\\s*(?:on\\s+|auf\\s+)?${TEXT_TRACK_WORDS}\\s*(${SPEC})\\s*\\)?\\s*\\.?$`, 'i');
+    // [3.37.7] after a word for tracks also a side alone ("Tracks 2 & B:", collected item 157; resolved as positions or sides)
+    const SPEC_ONE_W = '(?:[A-Za-z]?\\d+(?:[.\\-–—]\\d+)?|[A-H](?![\\w]))';
+    const SPEC_W = `${SPEC_ONE_W}(?:\\s*(?:,|&|-|–|—|\\bto\\b|\\band\\b|\\bbis\\b)\\s*${SPEC_ONE_W})*`;
+    const PREFIX = new RegExp(`^${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*[:–—-]\\s*(.+)$`, 'i');
+    const SUFFIX = new RegExp(`^(.*?)[\\s,]*\\(?\\s*(?:on\\s+|auf\\s+)?${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*\\)?\\s*\\.?$`, 'i');
     const NUMBERS = new RegExp(`^(.*?)\\s*\\((${SPEC})\\)\\s*\\.?$`);
     // [S053] (3.36.7) positions in front of a sentence, without "Tracks" and a colon, before its verb ("A1 to B2 recorded 22nd May
     // 1981 in live concert at Goldsmith's College, London", "C1 to D recorded …" – D a whole side; collected item 150)
     const LEAD_POS_ONE = '(?:[A-Z]{1,2}\\d{0,3}|\\d{1,3}(?:\\.\\d{1,3})?)';
     const LEAD_POS = new RegExp(`^(${LEAD_POS_ONE}(?:\\s*(?:,|&|-|–|—|\\bto\\b|\\band\\b)\\s*${LEAD_POS_ONE})*)\\s+(\\p{L}+ed\\b.*)$`, 'u');
+    // [3.37.7] … also after a word for tracks: "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" (collected item 157)
+    const LEAD_TRACK_WORD = new RegExp(`^${TEXT_TRACK_WORDS}\\s+(?=\\S)`, 'i');
 
     const cap = (s) => String(s || '').replace(/^\s*\S/, (c) => c.toUpperCase());
     const clean = (s) => String(s || '').replace(/^[\s•·*▪◦>–—-]+/, '').replace(/[\s.;:]+$/, '').replace(/\s+/g, ' ').trim();
@@ -5115,9 +5120,14 @@
           // [T051] (3.34.18) "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July": a name with a word of places and
           // a word in capitals besides it is a place ("recorded at"), the part after the comma its area (collected item 137b)
           const placeIn = (verb, text) => {
-            const first = clean(String(text || '').replace(PLACE_DATE_TAIL, '').split(/\s*,\s*/)[0]).replace(/^the\s+/i, '');
-            if (!TEXT_PLACE_WORDS.test(first) || !/\p{Lu}/u.test(first.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), ''))) return false;
-            return place(verb, placeOf(text));
+            const isPlace = (x) => TEXT_PLACE_WORDS.test(x) && /\p{Lu}/u.test(x.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), ''));
+            const parts = String(text || '').replace(PLACE_DATE_TAIL, '').split(/\s*,\s*/).map((x) => clean(x).replace(/^the\s+/i, ''));
+            if (isPlace(parts[0])) return place(verb, placeOf(text));
+            // [3.37.7] the place after its city: "in Tokyo, Zojoji Hall" → Zojoji Hall, its area Tokyo (collected item 157)
+            const last = parts.length >= 2 && parts.length <= 4 ? parts[parts.length - 1] : '';
+            const city = last && areaOf(parts.slice(0, -1).join(', '));
+            if (!last || /\d/.test(last) || !isPlace(last) || !city) return false;
+            return place(verb, { name: last, area: [city.name, city.area].filter(Boolean).join(', ') });
           };
           // [3.22.0] "Recorded by X in Xixon, Asturies, Spain", "Recorded in Berlin": the area (T037; C038 …)
           const areaRole = (verb) => `${cap(verb)} In`;
@@ -5246,6 +5256,9 @@
           // [3.22.0] "Recorded in Xixon, Asturies, Spain in 2017", "Mixed live in Berlin" (an area without a person, T037)
           if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+(\p{Lu}.*)$/u))
             && (placeIn(m[1], m[2]) || inArea(m[1], areaOf(m[2].replace(TEXT_TIME_AFTER_NAME, ''))))) return;
+          // [3.37.7] … with a date between: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" (collected item 157)
+          if ((m = clause.match(/^(\p{L}+)\s+(.*?\d.*?)\s+in\s+(\p{Lu}.*)$/u)) && !noDates(m[2]).replace(/^(?:on|am|le|el)\b\s*/i, '')
+            && (placeIn(m[1], m[3]) || inArea(m[1], areaOf(m[3].replace(TEXT_TIME_AFTER_NAME, ''))))) return;
           // [T051] (3.34.18) … and with "the" before the place: "Recorded in the Church of St. Mary, Berlin"
           if ((m = clause.match(/^(\p{L}+)(?:\s+(?:live|again|entirely|mostly|partly|partially))?\s+in\s+the\s+(\p{Lu}.*)$/u)) && placeIn(m[1], m[2])) return;
           // [S051] (3.34.19) "Go Kurosawa plays guitar, bass and drums" (T049)
@@ -5511,7 +5524,8 @@
         };
         if (!((m = line.match(PREFIX)) && useScope(m[1], m[2]))) {
           if (!((m = line.match(SUFFIX)) && m[1] && useScope(m[2], m[1]))) {
-            if (!((m = line.match(NUMBERS)) && m[1] && useScope(m[2], m[1])) && ruleOn('S053') && (m = line.match(LEAD_POS))) useScope(m[1], m[2]);
+            if (!((m = line.match(NUMBERS)) && m[1] && useScope(m[2], m[1])) && ruleOn('S053')
+              && ((m = line.match(LEAD_POS)) || (m = line.replace(LEAD_TRACK_WORD, '').match(LEAD_POS)))) useScope(m[1], m[2]);
           }
         }
         part0 = line;
@@ -18518,13 +18532,23 @@
       if (idx.length === 2) for (let i = Math.min(...idx); i <= Math.max(...idx); i++) out.add(i);
       else out.add(idx[0]);
     };
-    const tok = '[A-Za-z]?\\d+(?:[-.]\\d+)?';
+    // [3.37.7] also a position without a digit ("Track B recorded on …": a side of one track; collected item 157)
+    const tok = '(?:[A-Za-z]?\\d+(?:[-.]\\d+)?|[A-H](?![\\w]))';
     const conn = '(?:-|–|—|to|bis|à|a|thru|through|,|&|and|und|y|et)';
     const listRe = new RegExp(`\\b(?:tracks?|titles?|titel|pistas?|morceaux|plages?|songs?|stücke?)\\s*:?\\s*(${tok}(?:\\s*${conn}\\s*${tok})*)`, 'gi');
+    // a letter alone (in capitals): the source's position, else the tracks of that side
+    const sideTracks = (L) => (srcTracks || []).map((t, i) => [normPos(t.position), i]).filter(([pos, i]) => i < S.mbTracks.length && new RegExp(`^${L}(?:\\d|$)`).test(pos)).map(([, i]) => i);
     let m;
     while ((m = listRe.exec(text))) {
       named = true;
       for (const part of m[1].split(/\s*(?:,|&|\band\b|\bund\b|\by\b|\bet\b)\s*/i).filter(Boolean)) {
+        if (/^[A-Za-z]$/.test(part)) {
+          if (/^[A-H]$/.test(part)) {
+            const p = posMap.get(normPos(part));
+            (p !== undefined && p < S.mbTracks.length ? [p] : sideTracks(part)).forEach((i) => out.add(i));
+          }
+          continue;
+        }
         let ends = part.split(/\s*(?:–|—|\bto\b|\bbis\b|\bà\b|\ba\b|\bthru\b|\bthrough\b)\s*/i).filter(Boolean);
         if (ends.length === 1 && /^[A-Za-z]?\d+\s*-\s*[A-Za-z]?\d+$/.test(part)) {
           // "1-5": a Discogs position on releases with several media, otherwise a range
@@ -18566,7 +18590,8 @@
    */
   function trackRefsIn(text) {
     const src = String(text || '');
-    const tok = '[A-Za-z]?\\d+(?:[-.]\\d+)?';
+    // ([3.37.7] also "Track B")
+    const tok = '(?:[A-Za-z]?\\d+(?:[-.]\\d+)?|[A-H](?![\\w]))';
     const conn = '(?:-|–|—|to|bis|à|a|thru|through|,|&|and|und|y|et)';
     const res = [new RegExp(`\\b(?:tracks?|titles?|titel|pistas?|morceaux|plages?|songs?|stücke?)\\s*:?\\s*${tok}(?:\\s*${conn}\\s*${tok})*`, 'gi'),
       /\b[A-H]\d{0,2}\s*(?:-|–|—|to|bis)\s*[A-H]\d{0,2}(?![\w])/g, /\bside\s+[A-H]\b/gi];
