@@ -1,6 +1,6 @@
 """Discogs notes: dates and track groups found in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: datewords, facets, choose, lcdmenu (3.32.7), trackpool, reldate, trackside (3.37.7), artwork (3.37.9) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
+Cases: datewords, facets, choose, lcdmenu (3.32.7), trackpool, reldate, trackside (3.37.7), artwork (3.37.9), periodsplit (3.37.12) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -364,7 +364,8 @@ def case_lcdmenu():
        · 1980-06-19 – one relationship per day", the period and the month. Single days → two cells (the days of the pool); Apply →
        each row twice, one with each day.
     B) "Recorded November 7–8, 2016 at …" (a period): ▾ → "2 single days: 2016-11-07 · 2016-11-08" (the pool gets them only when
-       they are chosen – opening ▾ adds nothing); the period chosen instead → one cell with the period, the pool as before."""
+       they are chosen – opening ▾ adds nothing); the period chosen instead → one cell with the period, the pool as before
+       ([3.37.12] the cell keeps a ▾ – its single days, case periodsplit)."""
     import re
     import zooid
     from common_rows import lib, cells
@@ -405,13 +406,72 @@ def case_lcdmenu():
                 print('   Zeitraum:', c1, '| Pool vorher/nachher:', pool0, pool1)
                 ok = len(c0) == 1 and c0[0][0].endswith('· 2016-11') and opts[0] == '2 single days: 2016-11-07 · 2016-11-08 – one relationship per day' \
                     and opts[1:] == ['period: 2016-11-07 – 2016-11-08', 'month only: 2016-11'] and len(c1) == 1 and c1[0][0].endswith('2016-11-07 – 2016-11-08') \
-                    and pg.locator('.dci-dm-col[data-dmcol=performance] [data-act=dm-lcd-menu]').count() == 0 and pool0 == pool1 == 2
+                    and pg.locator('.dci-dm-col[data-dmcol=performance] [data-act=dm-lcd-menu]').count() == 1 and pool0 == pool1 == 2
             print(f'{part})', ok, '| Fehler:', errs)
             results += [ok, not errs]
             pg.close()
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_periodsplit():
+    """Credits Importer 3.37.12: a period in the matrix or the pool split into its days (collected item 162; maintainer: "bei "19 &
+    20. 01. 2009." haben wir ja schon die möglichkeit das auf drei verschiedene weisen zu interpretieren. ich habe gerade
+    "2009-01-19 - 2009-01-20" in einen pool gezogen und wollte dann die einzelnen tage haben, das ging aber nicht.").
+    A) "Recorded 19 & 20. 01. 2009 at …": the month in the matrix (D022) with ▾; the period chosen – the cell keeps a ▾ now
+       (until 3.37.11 none): "2 single days: 2009-01-19 · 2009-01-20 – one relationship per day", "month only: 2009-01"; the
+       single days → two cells.
+    B) "Recorded November 7–8, 2016 at …": the period in the pool has "⇢ 2 days"; a click – the pool gets both days, the
+       button goes, the log says so."""
+    import re
+    import zooid
+    from common_rows import cells
+
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for part, notes in (('A', 'Recorded 19 & 20. 01. 2009 at Scholes Street Studio, Brooklyn, New York.'),
+                            ('B', 'Recorded November 7–8, 2016 at Scholes Street Studio, Brooklyn, New York.')):
+            zooid.setup(notes)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(500)
+            if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+                pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+            MENU = '.dci-dm-col[data-dmcol=performance] [data-act=dm-lcd-menu]'
+            if part == 'A':
+                c0 = cells(pg)['performance']
+                pg.click(MENU); pg.wait_for_timeout(200)
+                pg.click('.dci-dm-lcdmenu [data-pick=range]'); pg.wait_for_timeout(300)
+                c1 = cells(pg)['performance']
+                has = pg.locator(MENU).count()
+                pg.click(MENU); pg.wait_for_timeout(200)
+                opts = [re.sub(r'\s+', ' ', x).strip() for x in pg.locator('.dci-dm-lcdmenu .dci-dm-opt').all_inner_texts()]
+                pg.click('.dci-dm-lcdmenu [data-act=dm-period][data-pick=single]'); pg.wait_for_timeout(300)
+                c2 = cells(pg)['performance']
+                print('A) Matrix:', c0, '→ Zeitraum:', c1, '| ▾:', has, opts, '→', c2)
+                ok = len(c0) == 1 and c0[0][0].endswith('· 2009-01') and len(c1) == 1 and c1[0][0].endswith('2009-01-19 – 2009-01-20') and has == 1 \
+                    and opts == ['2 single days: 2009-01-19 · 2009-01-20 – one relationship per day', 'month only: 2009-01'] \
+                    and [c[0].split(' · ')[-1] for c in c2] == ['2009-01-19', '2009-01-20']
+            else:
+                CHIPS = "[...document.querySelectorAll('.dci-pchip-date')].map(c => [c.querySelector('.dci-chip-main').textContent.replace(/\\s+/g, ' ').trim(), (c.querySelector('[data-act=pool-split]') || {}).textContent || ''])"
+                p0 = pg.evaluate(CHIPS)
+                pg.locator('[data-act=pool-split]').first.click(); pg.wait_for_timeout(300)
+                p1 = pg.evaluate(CHIPS)
+                logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'split into its days' in x]
+                print('B) Pool:', p0, '→', p1, '| Protokoll:', logs)
+                labels = [x[0].split(' 0 ')[0].split(' · ')[-1] for x in p1]
+                ok = any(x[1] == '⇢ 2 days' and '2016-11-07 – 2016-11-08' in x[0] for x in p0) and not any(x[1] for x in p1) \
+                    and any('2016-11-07' == l.split(' ')[0] for l in labels) and any('2016-11-08' == l.split(' ')[0] for l in labels) \
+                    and logs and logs[0].endswith('→ 2016-11-07, 2016-11-08')
+            print(f'{part})', ok, '| Fehler:', errs)
+            results += [ok, not errs]
+            pg.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_trackpool():
     """Dates for some tracks (Discogs notes of Zooid – Cut You Where You Was): found dates are placed in the date
