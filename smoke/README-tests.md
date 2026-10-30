@@ -393,6 +393,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     and days, the top lists; "Reset all" keeps them with "keep statistics", unticked deletes; off: no job; the
                                 #     release page counts a waiting job (a relationship not in MusicBrainz left out, and one it had before – n0);
                                 #     F2: a job with nothing to look up counts at once on the release page
+                                #   statsmore: 3.38.1: three stored submissions → the boxes: sources, how found, dates and places, levels and
+                                #     works, the releases, when (7 + 24 bars, days in a row, records), instruments, text from cover art, own rules
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
