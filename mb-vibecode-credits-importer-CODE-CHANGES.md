@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.37.14, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.37.15, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.37.15 · 2026-10-30
+
+"+ New" in folded pools (165); the fold buttons at a fixed place (166).
+
+- **`datePoolHtml`:** the button `pool-new` (`date.poolNew`) as `add`, also in the folded bar and in the kept bar. **`trackPoolHtml`:** `add` (the button `tg-new`, or with several media the list `tg-new-pick`) computed first; the folded and the kept bar end with it.
+- **`renderDates`:** the head has `.dci-pools-fold` (`data-act="pools-toggle"`, `aria-expanded`) right after `.dci-pools-toggle` – "▲ fold" open, "▼ show" folded (`pools.show`); the foot keeps only `pools-keep`. The kept bar (`S.poolsKeep` and a pool not empty) now shows both pools (until 3.37.14 only the ones with chips).
+- **New** `groupFoldHtml(a)` (the arrow `group-fold`, from `variantsHtml`): in the full view the first child of `.dci-ghead`, before `.dci-gname` (not for companies; the name's text stays without it); `variantsHtml` keeps it in the compact view only.
+- **Fixed** `case 'pool-fold'`: by `poolFolded(pool)` – shown folded: unfolded (`S.poolFold[pool]` removed); shown open: `S.poolFold[pool] = true` and `S.poolsForce[pool]` removed (until 3.37.14 a pool forced open and not remembered folded only got the memory, and stayed open).
+- **CSS:** `.dci-pools-head .dci-pools-fold` (min-width, centred), `.dci-ghead > .dci-gfold` (margin-right −12 px: 6 px to the name).
+- **Texts (English only):** `pools.show`.
+- **Tests:** `t_ui_head.py` new case `poolbar`; `t_ui_view.py` `fold` A) expects the arrow first in the head, at the same x for two entries.
 
 ## Import 3.37.14 · 2026-10-30
 
