@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.7
+// @version      3.37.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.7
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.7
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.8
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.8
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.7';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -716,13 +716,22 @@
       "settings.t.appearance": "Appearance",
       "settings.levelColors": "Colours for the levels",
       "settings.kindColors": "Colours for the kinds of entries",
-      "settings.kindColorsTitle": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind (artist, label, place, area, other); off: all grey",
+      "settings.kindColorsTitle": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind (artist, label, place, area, event, other); off: all grey",
       "settings.kindColor": "Colour for {kind}",
       "kind.artist": "Artist",
       "kind.label": "Label",
       "kind.place": "Place",
       "kind.area": "Area",
       "kind.other": "Other",
+      "kind.event": "Event",
+      "festival.title": "Festival recording:",
+      "festival.hint": "“{name}”{date}. MusicBrainz prefers the event to the place – the event is linked to its place. Add the event with its MBID (“Add entry manually”), or one found below.",
+      "festival.hintNone": "“{name}”{date}. MusicBrainz prefers the event to the place – the event is linked to its place. Add the event with its MBID (“Add entry manually”).",
+      "festival.offers": "Events of that name in MusicBrainz at that time (nothing is set – add the right one):",
+      "festival.add": "+ {name} ({period})",
+      "festival.addTitle": "Adds the event as an entry, as “Add entry manually” with its MBID does; choose its relationship there.",
+      "log.festivalFound": "Festival recording in the text: “{name}” – events offered from MusicBrainz: {n}",
+      "log.festivalAdded": "Event added: {name}",
       "settings.levelColorsTitle": "Recording, release, release group and work each in its own colour – in the rows and in the compact view",
       "settings.levelColor": "Colour of the level “{level}”",
       "settings.rulesPlace": "Mapping rules",
@@ -2882,6 +2891,7 @@
     { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
     { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks). [3.37.7] Also after a word for tracks ("Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall"), and a side alone after such a word everywhere – "Tracks A2 & B:", the tracks of a date in the notes ("Track B …": until 3.37.6 the date was for all tracks)' },
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
+    { id: 'S056', where: 'findFestivals, festivalHtml', note: 'Festival recordings (3.37.8): a sentence of the text or the notes with a festival (T055) – "… during the du Maurier, Ltd. International Jazz Festival Vancouver" – gives a hint above the entries: MusicBrainz prefers the event to the place (the event is linked to its place); with a date in the sentence, MusicBrainz\'s events of that name whose time holds the date are offered – never set, a click adds one as an entry' },
     { id: 'S055', where: 'TEXT.parse (readClause; TEXT_GUEST_HEAD, TEXT_FEAT_HEAD)', note: 'Texts (3.37.2): "Special Guest: M. Osswald on Sax and Clarinet" – the words before the colon are no person (T053): "Special Guest(s)", "Guest(s)" (and in German, French, Spanish) give the attribute guest to the instruments and voices of the names after it (a name without roles: performer, guest), "featuring", "feat.", "with" give none; "NAME on X and Y" (instruments or voices) gives them to the name, also without such a word. Before: "Special Guest" was read as the name and "M. Osswald on Sax" as a role credit' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes"); from 3.34.28 with S052 only proper names (MusicBrainz\'s and T052) and models with digits' },
@@ -3187,6 +3197,7 @@
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T055', where: 'TEXT_FESTIVAL_WORDS, findFestivals', note: 'Texts (3.37.8): the words of festivals – "Festival", "Jazzfestival", "Festspiele", "Jazzfest" – for S056', show: () => ({ pattern: TEXT_FESTIVAL_WORDS }) },
     { id: 'T054', where: 'TEXT_CREDIT_SEPS, sentencesOf', note: 'Texts (3.37.2): signs between the credits of one line – » « • · | ("Cover-Photo: Photorama International » Photos: Dirk Glawe « Cover Design: Payola « Layout: Bernd Struckmeyer"); only when every part is a credit ("Role: Name", "… by Name"), so a « in a title or "℗ 2019 X · CAT 1" stays as it is',
       show: () => ({ pattern: TEXT_CREDIT_SEPS }) },
     { id: 'T049', where: 'TEXT_PLAY_VERBS, chainOf, PLAYS_LIST', note: 'Texts (3.34.19): the verbs that give instruments and voices to a name (S051) – "Guitar, bass and drums are played by X", "X plays guitar, bass …"; they give no role of their own then',
@@ -3334,6 +3345,8 @@
   const TEXT_FEAT_HEAD = MAP.TEXT_FEAT_HEAD;
   // [T054] (3.37.2) signs between credits on one line ("Photos: X » Cover Design: Y « Layout: Z")
   const TEXT_CREDIT_SEPS = MAP.TEXT_CREDIT_SEPS;
+  // [T055] (3.37.8) words of festivals ("Festival", "Jazzfestival", "Festspiele", "Jazzfest"; item 158)
+  const TEXT_FESTIVAL_WORDS = MAP.TEXT_FESTIVAL_WORDS;
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
@@ -4078,7 +4091,7 @@
     { id: 'D001', note: 'ISO and MusicBrainz dates and periods: 2022-11-01, 2022-11, 1998-03-01 – 1998-03-20, 1997–1998' },
     { id: 'D002', note: 'Numbers with dots, day first: 01.11.2022 · [3.28.5] also with spaces: 20. 01. 2009' },
     { id: 'D003', note: 'Numbers with slashes: 1/11/2022 – a number over 12 decides; otherwise the Discogs release country (US: month/day, elsewhere day/month), with a note and the other reading to choose' },
-    { id: 'D004', note: 'Month names (English, German, Spanish, French): November 1, 2022 · November 1. 2022 · Nov. 1st, 2022 · 1 November 2022 · 1. November 2022 · 1st of November 2022 · 1 de noviembre de 2022' },
+    { id: 'D004', note: 'Month names (English, German, Spanish, French): November 1, 2022 · November 1. 2022 · Nov. 1st, 2022 · 1 November 2022 · 1. November 2022 · 1st of November 2022 · 1 de noviembre de 2022 · [3.37.8] also with a comma after the month: June, 26, 1993 (until 3.37.7 only the year; also in D006, D007, D013)' },
     { id: 'D005', note: 'Ordinal words: first of November 2022 · November the first, 2022' },
     { id: 'D006', note: 'Days within one month: March 1–3, 1998 · 1–3 March 1998 · 1.–3. März 1998' },
     { id: 'D007', note: 'Periods across months or years: March 1 to April 2, 1998 · December 2003 to January 2004 · September and October 2026 · between 1997 and 1998 · 1997/98' },
@@ -4153,16 +4166,17 @@
 
   /** The matchers of the date rules, longest forms first (a period wins over the dates inside it). */
   const DATE_MATCHERS = [
-    { id: 'D013', re: `${P.M}\\s+(${DAYLIST}|${DAYLIST_C}),?\\s+${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[1]), m[2]) },
+    // ([3.37.8] also with a comma after the month: "June, 26, 1993", collected item 158 – D004, D006, D007, D013)
+    { id: 'D013', re: `${P.M},?\\s+(${DAYLIST}|${DAYLIST_C}),?\\s+${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[1]), m[2]) },
     { id: 'D013', re: `(${DAYLIST}|${DAYLIST_C})${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => multiDays(m[3], monthNo(m[2]), m[1]) },
     // [3.28.5] the days of a date in numbers: "19 & 20. 01. 2009", "19./20.01.2009" (collected item 64a)
     { id: 'D013', re: `(?<![\\d.])(${DAYLIST})\\s*(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)`, make: (m) => multiDays(m[3], m[2], m[1]) },
-    { id: 'D007', re: `${P.M}\\s+${P.D}${P.TO}${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
+    { id: 'D007', re: `${P.M},?\\s+${P.D}${P.TO}${P.M},?\\s+${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[1]), m[2]), ymd(m[5], monthNo(m[3]), m[4])) },
     { id: 'D007', re: `${P.D}${P.OF}\\s+${P.M}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[5], monthNo(m[2]), m[1]), ymd(m[5], monthNo(m[4]), m[3])) },
     { id: 'D007', re: `${P.M},?\\s+${P.Y}${P.TO}${P.M},?\\s+${P.Y}`, make: (m) => span(ymd(m[2], monthNo(m[1])), ymd(m[4], monthNo(m[3]))) },
     // [3.14.0] two months of one year: "September and October 2026", "September to October 2026", "September/October 2026"
     { id: 'D007', re: `${P.M}(?:${P.TO}|\\s+(?:and|&|und|y|et)\\s+|\\s*/\\s*)${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => span(ymd(m[3], monthNo(m[1])), ymd(m[3], monthNo(m[2]))) },
-    { id: 'D006', re: `${P.M}\\s+${P.D}${P.TO}${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[4], monthNo(m[1]), m[2]), ymd(m[4], monthNo(m[1]), m[3])) },
+    { id: 'D006', re: `${P.M},?\\s+${P.D}${P.TO}${P.D},?\\s+${P.Y}`, make: (m) => span(ymd(m[4], monthNo(m[1]), m[2]), ymd(m[4], monthNo(m[1]), m[3])) },
     { id: 'D006', re: `${P.D}${P.TO}${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => span(ymd(m[4], monthNo(m[3]), m[1]), ymd(m[4], monthNo(m[3]), m[2])) },
     { id: 'D001', re: '(?<!\\d)(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?(?:\\s+[-–—]\\s+|\\s*[–—]\\s*|\\s+(?:to|bis|until)\\s+)(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?(?!\\d)',
       make: (m) => span(ymd(m[1], m[2], m[3]), ymd(m[4], m[5], m[6])) },
@@ -4177,7 +4191,7 @@
     { id: 'D024', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}(?:${P.TO}|\\s+(?:and|&|und|y|et)\\s+|\\s*/\\s*)${P.M}(?![\\s,]*\\d)`, make: (m) => span(ymd(m[1], monthNo(m[2])), ymd(m[1], monthNo(m[3]))) },
     // [D017] (3.28.5) year, month, day: "1973 October 19" (collected item 64d)
     { id: 'D017', re: `(?<![\\d./-])${P.Y},?\\s+${P.M}\\s+${P.D}(?![\\d.])`, make: (m) => single(ymd(m[1], monthNo(m[2]), m[3])) },
-    { id: 'D004', re: `${P.M}\\s+${P.D},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), m[2])) },
+    { id: 'D004', re: `${P.M},?\\s+${P.D},?\\s+${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[1]), m[2])) },
     { id: 'D004', re: `${P.D}${P.OF}\\s+${P.M},?\\s+(?:de\\s+)?${P.Y}`, make: (m) => single(ymd(m[3], monthNo(m[2]), m[1])) },
     { id: 'D001', re: '(?<![\\d./-])(\\d{4})-(\\d{1,2})(?:-(\\d{1,2}))?(?![\\d-])', make: (m) => single(ymd(m[1], m[2], m[3])) },
     { id: 'D002', re: '(?<![\\d.])(\\d{1,2})\\.\\s?(\\d{1,2})\\.\\s?(\\d{4})(?!\\d)', make: (m) => single(ymd(m[3], m[2], m[1])) },
@@ -4647,7 +4661,9 @@
       const inArea = name.match(/^(.+?)\s+in\s+(\p{L}[\p{L}\s.'’-]*)$/u);
       if (inArea) [name, area] = [inArea[1], [inArea[2], area].filter(Boolean).join(', ')];
       if (PRIVATE_PLACE.test(clean(name)) || NOT_A_PLACE.test(clean(name))) return null;
-      return { name: clean(name), area: clean(noDates(area)) };
+      // [3.37.8] "at the Western Front Lodge": the article written small is no part of the name ("The Hit Factory" keeps it; item 158)
+      name = clean(name).replace(/^the\s+(?=\p{Lu})/u, '');
+      return { name, area: clean(noDates(area)) };
     }
 
     /**
@@ -15411,6 +15427,7 @@
       S.workGroupsOff = false;
       S.artists = new Map();
       S.rows = [];
+      S.festivals = []; // [3.37.8] (S056)
       S.rowOpen.clear();
     S.groupCompact.clear();
       S.supp = null;
@@ -15624,12 +15641,15 @@
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
+        // [S056] (3.37.8) festival recordings in the text: a hint, events offered
+        findFestivals(seq);
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
         autoSearchWorks();
         runArtistWorks();
       } else {
         // [3.36.1] also a release without credits at the source (rows added by hand)
         finishRemember(seq);
+        findFestivals(seq);
       }
       setBusy('');
     } catch (e) {
@@ -16036,6 +16056,137 @@
     refresh();
   }
 
+  // --- [S056] (3.37.8) Festival recordings (collected item 158; maintainer: "aus texteinträgen kann bei freitext und dann auch
+  // discogs text zumindest ein hinweis ausgegeben werden, der besagt, dass es sich um eine festivalaufnahme handelt und MB
+  // standardmäßig das Event dem Place vorzieht (weil events ja mit Places verknüpft sind)", "vielleicht dann wirklich nur bei
+  // festivals, wo der name passt und die sich im Zeitraum (Date period) befinden. und immer nur als angebot, nie vorbelegt."):
+  // a sentence with a festival gives a hint above the entries; MusicBrainz's events of its name whose time holds the date of
+  // the sentence are offered – a click adds one as an entry.
+
+  const FEST_PARTICLE = /^(?:of|de|du|der|des|di|da|del|della|la|le|les|am|an|im|and|&|et|y|und)$/i;
+
+  /** The name of a festival from the words around its word: those in capitals (and small words between them) up to a comma. */
+  function festivalName(before, word, after) {
+    const lw = String(before).split(/[,;:()"“”„]/).pop().trim().split(/\s+/).filter(Boolean);
+    const left = [];
+    for (let i = lw.length - 1; i >= 0; i--) {
+      const w = lw[i];
+      // an abbreviation ("Ltd.") ends it
+      if (/\.$/.test(w) || !(/^\p{Lu}/u.test(w) || FEST_PARTICLE.test(w))) break;
+      left.unshift(w);
+    }
+    while (left.length && FEST_PARTICLE.test(left[0])) left.shift();
+    const right = [];
+    for (const w0 of String(after).split(/[,;:()"“”„]/)[0].trim().split(/\s+/).filter(Boolean)) {
+      const w = w0.replace(/\.$/, '');
+      if (!(/^\p{Lu}/u.test(w) || /^(?:19|20)\d{2}$/.test(w) || FEST_PARTICLE.test(w))) break;
+      right.push(w);
+      if (w !== w0) break;
+    }
+    while (right.length && FEST_PARTICLE.test(right[right.length - 1])) right.pop();
+    return [...left, word, ...right].join(' ');
+  }
+
+  /** "1993-06-26" of a partial date at its start (end: its last day) – for comparing periods. */
+  const dayKey = (d, end) => (d && d.year ? `${String(d.year).padStart(4, '0')}-${String(d.month || (end ? 12 : 1)).padStart(2, '0')}-${String(d.day || (end ? 31 : 1)).padStart(2, '0')}` : '');
+  const lsKey = (s, end) => {
+    const m = String(s || '').match(/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/);
+    return m ? dayKey({ year: Number(m[1]), month: m[2] ? Number(m[2]) : null, day: m[3] ? Number(m[3]) : null }, end) : '';
+  };
+
+  async function findFestivals(seq) {
+    S.festivals = [];
+    const text = String((S.release && S.release.notes) || '');
+    if (!ruleOn('S056') || !text.trim()) return;
+    const re = new RegExp(TEXT_FESTIVAL_WORDS.source, 'giu');
+    const seen = new Set();
+    let m;
+    while ((m = re.exec(text))) {
+      const sentence = sentenceAround(text, m.index, m.index + m[0].length);
+      const at = sentence.indexOf(m[0]);
+      const name = festivalName(sentence.slice(0, Math.max(0, at)), m[0], sentence.slice(at + m[0].length));
+      // (a place of that name is no festival: "Royal Festival Hall", "Festival Theatre")
+      if (!/\p{Lu}/u.test(name) || seen.has(norm(name)) || TEXT_PLACE_WORDS.test(name)) continue;
+      seen.add(norm(name));
+      const date = (findDates(sentence, { usOrder: usDateOrder() })[0] || {}).value || null;
+      S.festivals.push({ name, date, offers: [], line: sentence.trim() });
+    }
+    if (!S.festivals.length) return;
+    renderSource();
+    for (const f of S.festivals) {
+      if (f.date && f.date.begin && f.date.begin.year) {
+        const words = f.name.split(' ').filter((w) => !/^\d{4}$/.test(w) && !FEST_PARTICLE.test(w)).join(' ');
+        const q = luceneWords(words);
+        const data = q ? await mbWs(`event?query=${encodeURIComponent(`event:(${q})`)}&limit=25`, { background: true }).catch(() => null) : null;
+        if (seq !== importSeq) return;
+        const from = dayKey(f.date.begin, false);
+        const to = dayKey(f.date.end && f.date.end.year ? f.date.end : f.date.begin, true);
+        f.offers = ((data && data.events) || []).filter((e) => {
+          const ls = e['life-span'] || {};
+          const b = lsKey(ls.begin, false);
+          const en = lsKey(ls.end || ls.begin, true);
+          // its time holds the date (overlaps a period)
+          return b && en && b <= to && en >= from;
+        }).slice(0, 5).map((e) => ({ mbid: e.id, name: e.name, period: [e['life-span'] && e['life-span'].begin, e['life-span'] && e['life-span'].end].filter(Boolean).join(' – '),
+          comment: [e.disambiguation, e.type].filter(Boolean).join(', ') }));
+      }
+      log('info', 'festivalFound', { name: f.name, n: f.offers.length });
+    }
+    renderSource();
+  }
+
+  /** The hint above the entries, with the events offered. */
+  function festivalHtml() {
+    const list = S.festivals || [];
+    if (!list.length) return '';
+    return `<div class="dci-festival" role="note">${list.map((f) => {
+      const date = f.date ? ` (${formatDateValue(f.date)})` : '';
+      const offers = f.offers.length ? `<div class="dci-festival-offers"><span class="dci-sub">${esc(tr('festival.offers'))}</span> ${f.offers.map((o) => `<button type="button" class="dci-small dci-kind-event"
+        data-act="festival-add" data-mbid="${esc(o.mbid)}" title="${esc([o.comment, tr('festival.addTitle')].filter(Boolean).join(' – '))}" ${o.added ? 'disabled' : ''}>${esc(tr('festival.add', { name: o.name, period: o.period || '?' }))}</button>`).join(' ')}</div>` : '';
+      return `<p><strong>${esc(tr('festival.title'))}</strong> ${esc(tr(f.offers.length ? 'festival.hint' : 'festival.hintNone', { name: f.name, date }))}</p>${offers}`;
+    }).join('')}</div>`;
+  }
+
+  /** An entry of any kind by its MBID (one with a role text: its row): the row. */
+  async function addEntryByMbid(mbid, roleText = '') {
+    const e = await fetchJsEntity(mbid.toLowerCase());
+    const et = String(e.entityType || '').replace('-', '_');
+    if (et === 'url') throw new Error(tr('msg.urlNotHere'));
+    if (!idx().relatableTypes.includes(et)) throw new Error(tr('msg.noRelTypes', { type: tr(`entity.${et}`) }));
+    const gid = e.gid || mbid.toLowerCase();
+    const company = et === 'label' || et === 'place';
+    const other = !company && et !== 'artist';
+    let owner = [...S.artists.values()].find((a) => a.mbid === gid && (a.entityType || 'artist') === et);
+    if (!owner) {
+      owner = {
+        key: nextId(company ? 'c' : other ? 'o' : 'a'), dId: 0, name: e.name, rawName: '', status: 'manual', manual: true,
+        company, other, entityType: company || other ? et : undefined, mbid: gid, mbName: e.name, mbComment: e.comment || '',
+        candidates: [], editing: false, error: '', anvs: [],
+      };
+      S.artists.set(owner.key, owner);
+    }
+    const row = makeRow(owner.key, { manual: true, company: company ? owner : null });
+    if (company || other) row.entityType = et;
+    if (other) Object.assign(row, { other: true, types: [], typeOptions: null, notes: [] });
+    applyRoleText(row, roleText);
+    row.tracks = new Set(selIdx());
+    row.suggested = new Set(row.tracks);
+    S.rows.push(row);
+    renderGroups();
+    log('info', 'manualAdded', { name: e.name, role: row.raw || '–' });
+    $('toolbar').hidden = false;
+    revealRow(row);
+    refresh();
+    const added = S.overlay.querySelector(`tr[data-row="${row.id}"]`);
+    if (added) {
+      added.scrollIntoView({ block: 'nearest' });
+      // [3.18.0] the line sits above the pool now: the new row lights up where it was added
+      added.classList.add('dci-flash');
+      setTimeout(() => added.classList.remove('dci-flash'), 2500);
+    }
+    return row;
+  }
+
   async function addManualEntry() {
     const entityInput = S.overlay.querySelector('[data-f="manual-artist"]');
     const roleInput = S.overlay.querySelector('[data-f="manual-role"]');
@@ -16047,44 +16198,11 @@
       return;
     }
     try {
-      const e = await fetchJsEntity(mbid.toLowerCase());
-      const et = String(e.entityType || '').replace('-', '_');
-      if (et === 'url') throw new Error(tr('msg.urlNotHere'));
-      if (!idx().relatableTypes.includes(et)) throw new Error(tr('msg.noRelTypes', { type: tr(`entity.${et}`) }));
-      const gid = e.gid || mbid.toLowerCase();
-      const company = et === 'label' || et === 'place';
-      const other = !company && et !== 'artist';
-      let owner = [...S.artists.values()].find((a) => a.mbid === gid && (a.entityType || 'artist') === et);
-      if (!owner) {
-        owner = {
-          key: nextId(company ? 'c' : other ? 'o' : 'a'), dId: 0, name: e.name, rawName: '', status: 'manual', manual: true,
-          company, other, entityType: company || other ? et : undefined, mbid: gid, mbName: e.name, mbComment: e.comment || '',
-          candidates: [], editing: false, error: '', anvs: [],
-        };
-        S.artists.set(owner.key, owner);
-      }
-      const row = makeRow(owner.key, { manual: true, company: company ? owner : null });
-      if (company || other) row.entityType = et;
-      if (other) Object.assign(row, { other: true, types: [], typeOptions: null, notes: [] });
-      applyRoleText(row, roleInput.value);
-      row.tracks = new Set(selIdx());
-      row.suggested = new Set(row.tracks);
-      S.rows.push(row);
-      renderGroups();
-      log('info', 'manualAdded', { name: e.name, role: row.raw || '–' });
-      $('toolbar').hidden = false;
+      // [3.37.8] (addEntryByMbid: also for the events offered, S056)
+      await addEntryByMbid(mbid, roleInput.value);
       entityInput.value = '';
       roleInput.value = '';
       roleInput.setAttribute('list', 'dci-dl-roles-artist');
-      revealRow(row);
-      refresh();
-      const added = S.overlay.querySelector(`tr[data-row="${row.id}"]`);
-      if (added) {
-        added.scrollIntoView({ block: 'nearest' });
-        // [3.18.0] the line sits above the pool now: the new row lights up where it was added
-        added.classList.add('dci-flash');
-        setTimeout(() => added.classList.remove('dci-flash'), 2500);
-      }
     } catch (err) {
       errEl.textContent = err.message;
     }
@@ -16605,6 +16723,8 @@
     const ignHtml = ign.length ? `<details class="dci-ignored"><summary>${esc(tr('ignored.title', { n: ign.length }))}</summary>
       <ol>${ign.map((l) => `<li${linePeekAttrs(l.text != null ? l.text : l)}><span class="dci-ign-text">${esc(l.text != null ? l.text : l)}</span>${l.why ? ` <span class="dci-sub dci-ign-why">– ${esc(tr(`ignored.why.${l.why}`, l))}</span>` : ''}</li>`).join('')}</ol>
       ${peekHint(ign.map((l) => (l.text != null ? l.text : l)))}<p class="dci-sub">${esc(tr('ignored.hint'))}</p></details>` : '';
+    // [S056] (3.37.8) festival recordings
+    const festHtml = festivalHtml();
     const f = S.textForm;
     const textForm = f ? `<div class="dci-textsrc${f.supp ? ' dci-textsrc-supp' : ''}" role="group" aria-label="${esc(tr(f.supp ? 'supp.textTitle' : 'textsrc.title'))}">
         ${f.supp ? `<p class="dci-sub">${esc(tr('supp.textTitle'))}</p>` : ''}
@@ -16654,7 +16774,7 @@
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
-      ${suppOpen ? suppBarHtml() : ''}${unrecHtml}${ignHtml}${textForm}`;
+      ${suppOpen ? suppBarHtml() : ''}${festHtml}${unrecHtml}${ignHtml}${textForm}`;
     panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
   }
 
@@ -16885,7 +17005,7 @@
 
   /** Kind of an entry for its colour and label: artist, label, place or another entity (series, event …). */
   function groupKindOf(a) {
-    if (a.other) return { kind: 'other', type: a.entityType || 'series' };
+    if (a.other) return { kind: a.entityType === 'event' ? 'event' : 'other', type: a.entityType || 'series' };
     if (a.company) {
       const type = a.entityType || (companyTypes(a)[0]) || 'label';
       return { kind: type === 'place' || type === 'area' || type === 'artist' ? type : 'label', type };
@@ -23201,7 +23321,7 @@
    * and "credited as". The date fields, the pool and the publisher tools are in the ▾ menu.
    */
   /** [3.32.4] The kind of a column of the works matrix (its entry, or for one only in MusicBrainz its entity type; item 107). */
-  const columnKind = (col) => (col.artist ? groupKindOf(col.artist).kind : ['artist', 'label', 'place', 'area'].includes(col.entityType) ? col.entityType : 'other');
+  const columnKind = (col) => (col.artist ? groupKindOf(col.artist).kind : ['artist', 'label', 'place', 'area', 'event'].includes(col.entityType) ? col.entityType : 'other');
   const columnKindTag = (col) => {
     const text = tr(`entity.${col.artist ? groupKindOf(col.artist).type : col.entityType || 'artist'}`);
     return `<span class="dci-kind-tag dci-mx-kind">${esc(text.charAt(0).toUpperCase() + text.slice(1))}</span>`;
@@ -25149,6 +25269,21 @@
       case 'close':
         closeDashboard();
         break;
+      // [S056] (3.37.8) an event offered for a festival recording: added as an entry
+      case 'festival-add': {
+        const mbid = btn.dataset.mbid;
+        const offer = (S.festivals || []).flatMap((f) => f.offers).find((o) => o.mbid === mbid);
+        btn.disabled = true;
+        addEntryByMbid(mbid).then(() => {
+          if (offer) offer.added = true;
+          log('ok', 'festivalAdded', { name: offer ? offer.name : mbid });
+          renderSource();
+        }, (err) => {
+          btn.disabled = false;
+          showError(err);
+        });
+        break;
+      }
       // [3.37.3] the offer of comments of live recordings (item 150b): for this release
       case 'livecom-yes':
       case 'livecom-no':
@@ -27448,7 +27583,8 @@
   // [3.32.4] the colours of the kinds of entries (items 107, 108): on by default; own colours in ⚙ Settings → Appearance
   const KIND_COLORS_KEY = 'dci-kind-colors';
   const KIND_PALETTE_KEY = 'dci-kind-palette';
-  const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', other: '#8a8799' };
+  // [3.37.8] events their own colour, plum (collected item 158; maintainer: "also brauchen wir dafür auch eine farbe", "die farbe passt")
+  const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', event: '#8a4f7d', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', LOG_DIAG_KEY],
@@ -29061,6 +29197,12 @@
       .dci-textsrc-text { display: grid; gap: 2px; }
       .dci-textsrc textarea { width: 100%; min-height: calc(var(--u, 1px) * 140); font: inherit; font-size: calc(var(--u, 1px) * 12); resize: vertical; }
       .dci-textsrc input { width: calc(var(--u, 1px) * 280); }
+      /* [3.37.8] festival recordings (S056) */
+      .dci-festival { width: 100%; margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border-left: 4px solid var(--dci-kind-event, #8a4f7d);
+        background: var(--dci-kind-event-bg, #f5edf3); border-radius: 0 4px 4px 0; font-size: calc(var(--u, 1px) * 12); }
+      .dci-festival p { margin: 0 0 calc(var(--u, 1px) * 4); }
+      .dci-festival-offers { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 6); }
+      .dci-festival-offers button { border-color: var(--dci-kind-event, #8a4f7d); }
       .dci-unrec { width: 100%; margin-top: calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 12); }
       .dci-unrec summary { cursor: pointer; color: var(--warn); }
       .dci-unrec ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }
@@ -29161,6 +29303,7 @@
       .dci-kind-label { --kind: var(--dci-kind-label, #2a8a8a); --kind-bg: var(--dci-kind-label-bg, #e8f4f4); }
       .dci-kind-place { --kind: var(--dci-kind-place, #4e8a3e); --kind-bg: var(--dci-kind-place-bg, #edf5e9); }
       .dci-kind-area { --kind: var(--dci-kind-area, #8a6a3e); --kind-bg: var(--dci-kind-area-bg, #f6f0e7); }
+      .dci-kind-event { --kind: var(--dci-kind-event, #8a4f7d); --kind-bg: var(--dci-kind-event-bg, #f5edf3); }
       .dci-kind-other { --kind: var(--dci-kind-other, #8a8799); --kind-bg: var(--dci-kind-other-bg, #f4f3f7); }
       /* [3.32.4] the heads of the works matrix in the colour of their kind; only in MusicBrainz paler; the cells neutral (item 107) */
       .dci-matrix th.dci-mx-col[class*="dci-kind-"] .dci-mx-card { border-top: 3px solid var(--kind); background: var(--kind-bg); }

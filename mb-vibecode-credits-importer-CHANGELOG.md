@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.7 | – |
+| 2026-10-30 | 3.36.4 – 3.37.8 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.8
+
+#### Added
+
+- **Festival recordings** (collected item 158, rule S056; maintainer: "aus texteinträgen kann bei freitext und dann auch discogs text zumindest ein hinweis ausgegeben werden, der besagt, dass es sich um eine festivalaufnahme handelt und MB standardmäßig das Event dem Place vorzieht", "vielleicht dann wirklich nur bei festivals, wo der name passt und die sich im Zeitraum (Date period) befinden. und immer nur als angebot, nie vorbelegt."): a sentence with a festival in the notes or a pasted text gives a hint above the entries; MusicBrainz's events of that name whose time holds the date of the sentence are offered – a click adds one as an entry, nothing is set.
+- **A colour for events** (maintainer: "also brauchen wir dafür auch eine farbe", "die farbe passt"): plum, ⚙ Settings → Appearance "Event" (until 3.37.7 grey as "Other").
+
+#### Fixed
+
+- **"Recorded June, 26, 1993 …"** (Discogs 1565448 "Cascades"; maintainer: "aus "Recorded June, 26, 1993" wird nur 1993 als Datum ausgegeben"): a comma after the month is read (D004, D006, D007, D013); "at the Western Front Lodge" gives the place Western Front Lodge (an article written small is no part of the name).
 
 ### Import 3.37.7
 
