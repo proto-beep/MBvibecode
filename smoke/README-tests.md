@@ -195,6 +195,10 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #   linkedsugg: 3.37.1 (E5a): a name whose artist MusicBrainz links to this release (mix on the release) – that
                                 #     artist first among the suggestions, solid green and bold, "in this release: …", before a namesake; the log; a label of
                                 #     the same name not offered the artist
+                                #   festival: 3.37.8: "Recorded June, 26, 1993 at the Western Front Lodge, … during the … International Jazz
+                                #     Festival Vancouver" – the day, the place without "the"; the hint, the event of 1993 offered (not 1994),
+                                #     nothing set; its button: an event entry in plum; ⚙ Appearance "Event"; a pasted festival without a
+                                #     date: the hint alone, "Royal Festival Hall" none
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
@@ -390,6 +394,7 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   clineask: 3.32.3: a type question in the compact line ("Directed By": four buttons), chosen there, the row closed
                                 #   kindcolors: 3.32.4: the heads of the works matrix in the colours of their kinds (Writer W artist, Pub Co label,
                                 #     with the tag), ⚙ Settings → Appearance: own artist colour (entry and head follow, stored), off → grey, ↺
+                                #     3.37.8: the colour Event (plum) among them
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
