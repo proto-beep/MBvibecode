@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.4 | – |
+| 2026-10-30 | 3.36.4 – 3.37.5 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.5
+
+#### Changed
+
+- **"Text from cover art" kept as you left it** (collected item 155; maintainer: "falls ich übrigens immernoch im dashboard bin, nachdem ich from image importiert habe soll alles im cache bleiben was ich im bildimport eingestellt habe (also heruntergeladene bilder, textauswahl etc.)", "wenn das release gemerkt soll je nach cache einstellungen es auch ein neuladen überstehen. ansonsten nur bis zum neuladen"): ✕, Esc, "Cancel" and the import only hide the window; opened again, the images loaded, ticked and framed, the step and the texts read with your changes are there – until the page is loaded again. **To the texts read →** goes back to them from the images. Until 3.37.4 the window started afresh each time (only the frames came back).
+- **Through a reload** with ⚙ Settings → Cache "Remember …" on (maintainer: "nicht mitspeichern bitte. aber anmerken, dass bilder hochgeladen wurden. vielleicht lassen sich ausschnitte merken sofern der dateiname (nur lokal im browser gespeichert) übereinstimmt?"): stored for the release without the images (they are loaded anew); own files are named – "An own file was used: credits.png – add it again …" –, and a file of that name added again gets its frames, tick and text back.
+
+#### Added
+
+- **↺ Start over** in the head of the window (asks first): the images of the release as the first time; what was stored of the window goes (the frames drawn stay).
 
 ### Import 3.37.4
 
