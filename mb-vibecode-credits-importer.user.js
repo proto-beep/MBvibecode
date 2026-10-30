@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.2
+// @version      3.37.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -438,6 +438,13 @@
       "livecom.same": "MusicBrainz has this comment already",
       "livecom.pending": "looking up the area …",
       "livecom.manual": "changed by you",
+      "livecom.offer.one": "Track {list} is a live recording. Propose a disambiguation comment for it (“{example}”)?",
+      "livecom.offer.other": "Tracks {list} are live recordings. Propose disambiguation comments for them (“{example}”)?",
+      "livecom.offerYes": "✓ Propose comments",
+      "livecom.offerNo": "✕ Not for this release",
+      "livecom.offerTitle": "Asked for each release while the setting is off. To have them always proposed: ⚙ Settings → Staging → “Live recordings: add a disambiguation comment”.",
+      "log.liveOfferYes": "Comments of live recordings: proposed for this release (always: ⚙ Settings → Staging)",
+      "log.liveOfferNo": "Comments of live recordings: not for this release",
       "log.liveSaved": "Comments of {n} live recordings will be entered after “Enter edit”, once the relationships are saved",
       "log.liveArmed": "“Enter edit”: the comments of {n} live recordings are entered once MusicBrainz has the relationships",
       "log.liveNotLive": "Track {pos}: not live in MusicBrainz – no comment",
@@ -13472,6 +13479,7 @@
     S.rowOpen.clear();
     S.groupCompact.clear();
     S.textInput = null;
+    S.liveComOffer = null;
     $('toolbar').hidden = true;
     clearMessages();
     renderSource();
@@ -21188,6 +21196,14 @@
   const SEED_NOTE = SEED_NOTE_TEXT;
   // the setting (⚙ Settings → Staging, off by default; maintainer: "standardmäßig aus", "unter staging")
   S.liveCom = readJson('localStorage', LIVE_COM_KEY, false) === true;
+  // [3.37.3] with the setting off, the comments are offered for the release (item 150b; maintainer: "so als abfrage/angebot
+  // für den jeweiligen fall. per mouseover tooltip wo das standardmäßig eingestellt werden kann"): null (asked), 'yes', 'no'
+  S.liveComOffer = null;
+
+  /** [3.37.3] The comments are proposed: the setting is on, or the offer was accepted for this release. */
+  function liveComOn() {
+    return S.liveCom || S.liveComOffer === 'yes';
+  }
 
   /** [3.32.9] A date as the seed script writes it: "2004‐03‐23" (U+2010), a period "2004‐03‐23–2004‐03‐28"; '' without a year. */
   function liveDateText(v) {
@@ -21251,7 +21267,7 @@
         console.warn('[Credits-Importer] live area', key, e);
       }
       entry.pending = false;
-      if (S.overlay && S.liveCom) renderLiveComments();
+      if (S.overlay && (S.liveCom || S.liveComOffer !== 'no')) renderLiveComments();
     })();
     return entry;
   }
@@ -21324,7 +21340,7 @@
     const key = `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`;
     const had = readJson('localStorage', key, null);
     if (had && had.armedAt && !had.done) return;
-    const items = !S.liveCom ? [] : liveProposals().map((p) => ({ p, c: liveChoice(p) })).filter((x) => x.c.on && x.c.text)
+    const items = !liveComOn() ? [] : liveProposals().map((p) => ({ p, c: liveChoice(p) })).filter((x) => x.c.on && x.c.text)
       .map(({ p, c }) => ({ rec: p.rec, pos: p.pos, comment: c.text, manual: c.manual,
         place: p.place && p.place.mbid ? { mbid: p.place.mbid, credit: p.place.credit || '', name: p.place.name || '' } : null }));
     if (!items.length) {
@@ -21336,15 +21352,29 @@
     if (!quiet) log('info', 'liveSaved', { n: items.length });
   }
 
-  /** [3.32.9] The list of live recordings with their comments above "Stage …" (setting "Live recordings: add a disambiguation comment"). */
+  /**
+   * [3.32.9] The list of live recordings with their comments above "Stage …" (setting "Live recordings: add a disambiguation
+   * comment"). [3.37.3] With the setting off: an offer for the release – ✓ shows the list, ✕ hides it (item 150b).
+   */
   function renderLiveComments() {
     const el = S.overlay && $('livecom');
     if (!el) return;
-    const list = S.liveCom && S.rows.length ? liveProposals() : [];
+    const list = (S.liveCom || S.liveComOffer !== 'no') && S.rows.length ? liveProposals() : [];
     el.hidden = !list.length;
     if (!list.length) {
       el.innerHTML = '';
       el.dataset.html = '';
+      return;
+    }
+    if (!liveComOn()) {
+      const offer = `<div class="dci-livecom-offer" title="${esc(tr('livecom.offerTitle'))}"><span>${esc(tr('livecom.offer', {
+        n: list.length, list: list.map((p) => p.pos).join(', '), example: list[0].auto }))}</span>
+        <button type="button" class="dci-small" data-act="livecom-yes">${esc(tr('livecom.offerYes'))}</button>
+        <button type="button" class="dci-small" data-act="livecom-no">${esc(tr('livecom.offerNo'))}</button></div>`;
+      if (el.dataset.html !== offer) {
+        el.innerHTML = offer;
+        el.dataset.html = offer;
+      }
       return;
     }
     // (not while a comment is being typed in it)
@@ -24527,6 +24557,14 @@
     switch (act) {
       case 'close':
         closeDashboard();
+        break;
+      // [3.37.3] the offer of comments of live recordings (item 150b): for this release
+      case 'livecom-yes':
+      case 'livecom-no':
+        S.liveComOffer = act === 'livecom-yes' ? 'yes' : 'no';
+        log('info', act === 'livecom-yes' ? 'liveOfferYes' : 'liveOfferNo');
+        renderLiveComments();
+        if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
         break;
       // [3.26.0] the head in one line (item 30): the menu "Source ▾" and "+ Supplement"
       case 'srcmenu': {
@@ -28751,6 +28789,9 @@
       /* [3.32.9] the comments of live recordings above "Stage …" (item 113) */
       .dci-livecom { margin: calc(var(--u, 1px) * 6) 0; }
       .dci-livecom-box { border: 1px solid #c8c5d6; border-radius: 4px; background: #fff; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
+      .dci-livecom-offer { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 4px; background: #f7f6fb; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); cursor: help; }
+      .dci-livecom-offer span { flex: 1 1 calc(var(--u, 1px) * 300); }
+      .dci-livecom-offer button { cursor: pointer; }
       .dci-livecom-box > summary { cursor: pointer; font-weight: 600; }
       .dci-livecom-table td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4); vertical-align: top; }
       .dci-livecom-table input[type=text] { width: 100%; min-width: calc(var(--u, 1px) * 240); }

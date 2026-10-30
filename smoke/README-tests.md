@@ -251,12 +251,15 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     no works level, kept across a reload, no lookups), taken again (3.36.4: the new works planned before come
                                 #     back with it, nothing looked up), the question from N tracks ("Not now", later);
                                 #     3.19.3: the tooltips of what is counted, the setting for the skipped rows
-                                #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off), the list above "Stage …": live
+                                #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off; 3.37.3 the offer), the list above "Stage …": live
                                 #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),
                                 #     another comment of MB not tickable, changed by hand, unticked
                                 #   livecomrun: 3.32.10: the job at staging (with the seed line in the note), "Enter edit" → once MB has the
                                 #     relationships one POST to /ws/js/edit/create (type 72, the credit changed in the editor: red log, the new
                                 #     credit), done; the release page enters an armed job (hand-made comment, another comment of MB in red)
+                                #   liveoffer: 3.37.3: the setting off – the offer above "Stage …" (tracks, the first proposal, the tooltip naming
+                                #     the setting), ✓ the list for the release (setting not stored, the job at staging), loaded again: the offer
+                                #     back, ✕ hides it (log, the job gone)
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
