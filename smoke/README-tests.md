@@ -446,6 +446,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     rows, compact, staged the same as legacy, a date typed into the place's event
                                 #   flagcols: 3.36.6 (148): add. / guest / solo a column each, every word centred over its checkboxes (±2 px)
                                 #     and not wider than its cell, at 100 % and A+ ×3
+                                #   chipask: 3.37.14 (163): compact – "? bass ▾" lists electric bass guitar · double bass · acoustic bass guitar
+                                #     (focus on the first, visible), double bass chosen: "double bass “bass”" without "?"; "? Taischigoto ▾", Esc
+                                #     closes (focus on ▾), taishōgoto chosen; "? Directed By ▾" conductor; the chip's name opens the full matrix
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,

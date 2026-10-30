@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.37.13, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.37.14, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.37.14 · 2026-10-30
+
+The answers of a question at its chip (163).
+
+- **New** `chipAnswers(r)` (the answers of the first row of a line: instrument question – `questionRuleFor`, as `instrumentAskHtml`; a guess not answered – options, "other instruments “…”", misc; a type question with `typeAnswer == null`; each `{ act, attr, value, text }`), **`chipNotesOpen(l)`** (`unmappedHtml`, `bothAskHtml`, `levelKeptHtml`).
+- **Changed** `emChipHtml(l, e, a)` (the entry as third argument, from `entryCompactHtml`): `ask` = answers or open notes (until 3.37.13 `!!lineAskHtml(l)`); with answers ▾ `data-act="em-chipask"` `data-ask="<entry>|<line>|<event>"`; open (`S.emChipAsk`) – `.dci-em-chipmenu.dci-em-ask[data-rows]` with the answer buttons (`instr-pick`, `instr-misc`, `type-pick`), so the `EM_LINE_ACTS` branch answers for all rows of the line.
+- **State:** `S.emChipAsk` (null; the key of the open chip).
+- **Handlers:** `case 'em-chipask'` (toggles, `rerenderGroup`, focus on the first answer or back on ▾); the `EM_LINE_ACTS` branch clears `S.emChipAsk` for an answer from the list; Escape closes the list first (after `dmPick`), focus back on ▾.
+- **CSS:** `.dci-em-chip { position: relative }`, `.dci-em-chipq`, `.dci-em-chip-open`, `.dci-em-chipmenu` (absolute below the chip, z-index 6).
+- **Texts (English only):** `em.chipAsk`.
+- **Tests:** `t_entries.py` new case `chipask`.
 
 ## Import 3.37.13 · 2026-10-30
 
