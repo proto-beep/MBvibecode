@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.1
+// @version      3.37.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2858,6 +2858,7 @@
     { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
     { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks)' },
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
+    { id: 'S055', where: 'TEXT.parse (readClause; TEXT_GUEST_HEAD, TEXT_FEAT_HEAD)', note: 'Texts (3.37.2): "Special Guest: M. Osswald on Sax and Clarinet" – the words before the colon are no person (T053): "Special Guest(s)", "Guest(s)" (and in German, French, Spanish) give the attribute guest to the instruments and voices of the names after it (a name without roles: performer, guest), "featuring", "feat.", "with" give none; "NAME on X and Y" (instruments or voices) gives them to the name, also without such a word. Before: "Special Guest" was read as the name and "M. Osswald on Sax" as a role credit' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes"); from 3.34.28 with S052 only proper names (MusicBrainz\'s and T052) and models with digits' },
   ];
@@ -3160,11 +3161,15 @@
     // [3.34.28] maintainer: ""Buddha" ist natürlich ein eigenname also großgeschrieben"
     { id: 'T052', where: 'PROPER_WORDS, properSpelling, properPhrases, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). From 3.35.2 also names of several words ("Gibson Les Paul", "Les Paul"): only as a whole in this spelling, a "les" elsewhere stays small. "always write “…”" at a row adds a word or a name',
       show: () => ({ words: PROPER_WORDS }) },
+    { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
+      show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T054', where: 'TEXT_CREDIT_SEPS, sentencesOf', note: 'Texts (3.37.2): signs between the credits of one line – » « • · | ("Cover-Photo: Photorama International » Photos: Dirk Glawe « Cover Design: Payola « Layout: Bernd Struckmeyer"); only when every part is a credit ("Role: Name", "… by Name"), so a « in a title or "℗ 2019 X · CAT 1" stays as it is',
+      show: () => ({ pattern: TEXT_CREDIT_SEPS }) },
     { id: 'T049', where: 'TEXT_PLAY_VERBS, chainOf, PLAYS_LIST', note: 'Texts (3.34.19): the verbs that give instruments and voices to a name (S051) – "Guitar, bass and drums are played by X", "X plays guitar, bass …"; they give no role of their own then',
       show: () => ({ pattern: TEXT_PLAY_VERBS }) },
     { id: 'T050', where: 'TEXT_AUX_WORDS, byRole, chainOf', note: 'Texts (3.34.19): words before a verb that are no part of the role – "are played by X" is "Played By", not "Played By [Are]"; "were mixed by X" is "Mixed By" (S051)',
       show: () => ({ pattern: TEXT_AUX_WORDS }) },
-    { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both, one sign only that one; after the name a code such as "DDD", a catalogue number after "·", "All rights reserved" and (3.30.9) a year ("© & ℗ TUM Records Oy 2021") are left out',
+    { id: 'T033', where: 'TEXT_PC_SIGNS, TEXT_PC_STRIP, PC_AGAIN', note: 'Texts (3.21.0): ℗ and © together ("P + © 2023 X", "℗ & ©", "(P) & (C)") give both, one sign only that one; after the name a code such as "DDD", a catalogue number after "·", "All rights reserved" and (3.30.9) a year ("© & ℗ TUM Records Oy 2021") are left out; (3.37.2) a sign again after a name begins a part of its own ("(P) 1998 loudsprecher (c) 1998 loudsprecher": both roles)',
       show: () => ({ pairs: [['signs', TEXT_PC_SIGNS], ['left out', TEXT_PC_STRIP]] }) },
   ];
 
@@ -3300,6 +3305,11 @@
   // [T050] Texts (3.34.19): words before a verb that are no part of the role – "are played by X" is "Played By", not "Played
   // By [Are]" (S051)
   const TEXT_AUX_WORDS = MAP.TEXT_AUX_WORDS;
+  // [T053] (3.37.2) the word before a colon that is no person: "Special Guest:" (gives "guest"), "featuring:" (does not)
+  const TEXT_GUEST_HEAD = MAP.TEXT_GUEST_HEAD;
+  const TEXT_FEAT_HEAD = MAP.TEXT_FEAT_HEAD;
+  // [T054] (3.37.2) signs between credits on one line ("Photos: X » Cover Design: Y « Layout: Z")
+  const TEXT_CREDIT_SEPS = MAP.TEXT_CREDIT_SEPS;
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
@@ -3702,7 +3712,13 @@
       if (res.level === 'recording') res.level = 'release';
       return res;
     }
-    return mapRoleInner(baseIn, modsIn);
+    const res = mapRoleInner(baseIn, modsIn);
+    // [3.37.2] a hyphen between two words as a space, when only so a rule knows the role ("Cover-Photo" = "Cover Photo"; item 152)
+    if ((res.fallback || res.rule === 'R096') && /\p{L}-\p{L}/u.test(String(baseIn || ''))) {
+      const alt = mapRoleInner(String(baseIn).replace(/(\p{L})-(?=\p{L})/gu, '$1 '), modsIn);
+      if (alt.rule && alt.rule !== 'R096' && !alt.fallback) return alt;
+    }
+    return res;
   }
 
   function mapRoleInner(baseIn, modsIn0) {
@@ -4640,6 +4656,9 @@
     /** Dates and numbers out of a role phrase ("Recorded 12 May 2019" → "Recorded"). */
     const noDates = (s) => clean(String(s || '').replace(/\d+(?:[./–—-]\d+)*(?:st|nd|rd|th)?/g, ' ').replace(TEXT_MONTHS, ' ').replace(/\s+(?:on|am|le|el)\s*$/i, ''));
 
+    // [T033] (3.37.2) a line starting with ℗ / ©, and such a sign again after a name (with a year or a name after it)
+    const PC_START = /^(?:℗|Ⓟ|©|\(p\)|\(c\))\s*/i;
+    const PC_AGAIN = /\s+(?=(?:℗|Ⓟ|©|\(p\)|\(c\))\s*(?:(?:19|20)\d{2}\s*)?\p{L})/giu;
     /** [3.21.0] A later sentence of a line that starts a credit ("Text: X", "Produced by X", "℗ …") or is left out (T030). */
     const creditLike = (u) => /^[^:]{1,40}:\s/.test(u) || /\sby\s/i.test(` ${u} `) || /^(?:℗|Ⓟ|©|\(p\)|\(c\))/i.test(u) || /\s[–—]\s/.test(u) || TEXT_IGNORE_LINE.test(u);
 
@@ -4650,6 +4669,14 @@
      * later sentence starts a credit – prose ("… by a human. No AI tools were used.") is not cut up.
      */
     function sentencesOf(line) {
+      // [T054] (3.37.2) credits joined by » « • · | – each part a credit ("Role: Name" or "… by Name"; collected item 152)
+      const bySign = line.split(TEXT_CREDIT_SEPS);
+      if (bySign.length > 1 && bySign.every((u) => /^[^:]{1,40}:\s*\S/.test(u) || /\sby\s/i.test(` ${u} `))) return bySign.flatMap(sentencesOf);
+      // [T033] (3.37.2) ℗ / © a second time, after a name ("(P) 1998 loudsprecher (c) 1998 loudsprecher"; collected item 151)
+      if (PC_START.test(line)) {
+        const pcs = line.split(PC_AGAIN).map(clean).filter(Boolean);
+        if (pcs.length > 1 && pcs.every((u) => /\p{L}{2}/u.test(u.replace(PC_START, '').replace(/^\s*(?:(?:19|20)\d{2}\s*)?/, '')))) return pcs;
+      }
       const out = [];
       let start = 0;
       const re = /[.!?]\s+(?=[\p{Lu}℗©Ⓟ(“"‘'])/gu;
@@ -5202,6 +5229,38 @@
             const list = playList(m[2]);
             if (list) {
               list.parts.forEach((r) => { if (addCredit(clean(m[1]), r, cScope, playable(r) ? {} : { guess: true })) found++; });
+              return;
+            }
+          }
+          // [S055] (3.37.2) "Special Guest: M. Osswald on Sax and Clarinet" (T053): the words before the colon are no person;
+          // "Special Guest(s)", "Guest(s)" … give the attribute guest, "featuring", "with" … none (collected item 153; maintainer:
+          // "Special guest und Guest lösen auf jeden fall das attribut "guest" aus!", "ich würde erst mal auf "guest" verzichten")
+          if (ruleOn('S055') && (m = clause.match(/^([^:–—]{2,25}?)\s*[:–—]\s*(.+)$/u)) && (TEXT_GUEST_HEAD.test(clean(m[1])) || TEXT_FEAT_HEAD.test(clean(m[1])))) {
+            const guest = TEXT_GUEST_HEAD.test(clean(m[1]));
+            const asGuest = (r) => {
+              if (!guest) return r;
+              const p = parseRoleNotation(r)[0];
+              return p ? `${p.base} [${[...p.mods, 'Guest'].join(', ')}]` : r;
+            };
+            const items = m[2].split(/\s*;\s*|,\s+(?=[^,]*\s(?:on|[–—-])\s)/u).map(clean).filter(Boolean);
+            for (const item of items) {
+              const it = item.match(/^(.+?)\s+on\s+(.+)$/i) || item.match(/^(.+?)\s+[–—-]\s+(.+)$/) || item.match(/^(.+?)\s*\(([^)]+)\)$/);
+              const roles = it ? listRoles(clean(it[2])) : null;
+              const who0 = it && roles ? [clean(it[1])] : names(item);
+              for (const n of who0) {
+                if (!looksLikeName(n)) continue;
+                // without roles: a guest performer ("Special Guest: Jane Roe"); featuring without roles gives nothing
+                (roles || (guest ? ['Guest'] : [])).forEach((r) => { if (addCredit(n, roles ? asGuest(r) : r, cScope)) found++; });
+              }
+            }
+            return;
+          }
+          // [S055] (3.37.2) "M. Osswald on Sax and Clarinet": a name, "on", its instruments and voices
+          if (ruleOn('S055') && (m = clause.match(/^(.+?)\s+on\s+(.+)$/i))) {
+            const nm = clean(m[1]);
+            const roles = listRoles(clean(m[2]));
+            if (roles && looksLikeName(nm) && /^\p{Lu}/u.test(nm) && !listRoles(nm) && roles.every(playable)) {
+              roles.forEach((r) => { if (addCredit(nm, r, cScope)) found++; });
               return;
             }
           }

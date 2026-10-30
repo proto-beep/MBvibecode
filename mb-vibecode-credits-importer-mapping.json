@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.37.1",
+  "version": "3.37.2",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
   "CHECKBOX_DETAILS": [
@@ -442,6 +442,9 @@
   "TEXT_PLACE_WORDS": {"$re":"(?<![\\p{L}])(?:studios?|hall|church|chapel|cathedral|abbey|basilica|club|theat(?:re|er)|auditorium|arena|ballroom|caf[eé]|venue|tavern|pub|lounge)(?![\\p{L}])","$flags":"iu"},
   "TEXT_PLAY_VERBS": {"$re":"(?:played|performed|sung|plays|performs|sings|sang)","$flags":"i"},
   "TEXT_AUX_WORDS": {"$re":"(?:are|is|were|was|been|all|both)","$flags":"i"},
+  "TEXT_GUEST_HEAD": {"$re":"^(?:special\\s+guests?|guests?|gäste|gast|invitée?s?|invitad[oa]s?)$","$flags":"iu"},
+  "TEXT_FEAT_HEAD": {"$re":"^(?:featuring|feat\\.?|ft\\.?|with)$","$flags":"i"},
+  "TEXT_CREDIT_SEPS": {"$re":"\\s+[»«•·|]\\s+","$flags":"u"},
   "TEXT_WHAT_WORDS": {"$re":"^(?:the\\s+)?(?:music|songs?|album|tracks?|record|recordings?|everything|all)\\s+(?=\\p{L}+ed$)","$flags":"iu"},
   "TEXT_WHAT_PREFIX": {"$re":"^(?:all\\s+)?(?:the\\s+)?(?:music|songs?|album|tracks?|record|recordings?|material|pieces?|compositions?|everything|all)\\s+(?:(?:was|were|is|are)\\s+)?(?=\\p{L}+ed\\b)","$flags":"iu"},
   "TEXT_PACKAGE": {"$re":"^(?:including|includes|incl\\.?|comes\\s+with|with)\\s+(?:an?\\s+|the\\s+)?(?:\\d+[\\s-]*(?:p\\.?|pp\\.?|pages?|seiten|s\\.)\\s+)?(?:(?:full[\\s-]colou?r|colou?r|printed|illustrated|extensive|deluxe|\\d+[\\s-]?panel)\\s+)*(?:booklet|poster|insert|inlay|obi|sticker|postcard|print|download\\s+(?:code|card)|liner\\s+notes)\\b","$flags":"i"},
