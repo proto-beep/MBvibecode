@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.36.5 | – |
+| 2026-10-30 | 3.36.4 – 3.36.6 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -93,6 +93,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.36.6
+
+#### Fixed
+
+- **"add. guest solo" over their checkboxes** (collected item 148; maintainer: "die anzeige hier ist noch nicht gut abgestimmt. solo muss über der rechten checkbox stehen."): in the full matrix each attribute of the lines is a column of its own, its word centred over its checkboxes, also with a larger text. Until 3.36.5 the three shared one cell of fixed widths: the checkboxes stood 4, 11 and 18 px to the right of their words, and "guest" could run into "solo".
 
 ### Import 3.36.5
 

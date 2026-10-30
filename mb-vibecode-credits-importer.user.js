@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.36.5
+// @version      3.36.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.6
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.6
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -16724,7 +16724,8 @@
     const credit = lt && canRoleCredit(lt)
       ? `<input type="text" data-f="em-credit" value="${esc(r.roleCredit)}" placeholder="${esc(tr('em.noCredit'))}" aria-label="${esc(tr('em.creditLabel', { name }))}">` : '';
     const allowed = new Set(lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : []);
-    const flags = flagNames.map((f) => (allowed.has(f) ? `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">` : '<span></span>')).join('');
+    // [3.36.6] a cell per attribute, below its word in the head (collected item 148)
+    const flags = (flagNames.length ? flagNames : ['']).map((f) => `<td class="dci-em-c-flag">${f && allowed.has(f) ? `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">` : ''}</td>`).join('');
     const ticks = b.events.map((e) => {
       const on = l.ev.has(e.key);
       const ok = on || typeOnLevel(r, e.level);
@@ -16740,7 +16741,7 @@
     const grip = b.lines.length > 1 ? `<button type="button" class="dci-em-grip" data-drag="em-line" data-id="${esc(l.id)}" data-block="${esc(b.key)}" draggable="true"
       title="${esc(tr('em.gripTitle'))}" aria-label="${esc(tr('em.gripLabel', { name }))}">⠿</button>` : '';
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
-        <td class="dci-em-c-role">${grip}${role}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-flags">${flags}</td>${ticks}${b.others.length ? '<td></td>' : ''}${tools}
+        <td class="dci-em-c-role">${grip}${role}</td><td class="dci-em-c-credit">${credit}</td>${flags}${ticks}${b.others.length ? '<td></td>' : ''}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
   }
@@ -16763,7 +16764,10 @@
       const lt = ltOf(l.rows[0]);
       return lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : [];
     }));
-    const cols = 3 + b.events.length + (b.others.length ? 1 : 0) + 1;
+    // [3.36.6] additional / guest / solo a column each (until 3.36.5 one cell with fixed widths – the words in the head stood
+    // beside their checkboxes: their margins pushed them to the right, 4, 11 and 18 px, and "guest" ran into "solo"; collected item
+    // 148, maintainer: "die anzeige hier ist noch nicht gut abgestimmt. solo muss über der rechten checkbox stehen.")
+    const cols = 2 + Math.max(1, flagNames.length) + b.events.length + (b.others.length ? 1 : 0) + 1;
     const more = S.emMore.has(fk);
     const max = Math.max(1, S.emShow);
     // lines with a question or without a type are always shown
@@ -16777,7 +16781,7 @@
     return `<div class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
       <div class="dci-em-scroll"><table class="dci-em-grid">
         <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr(b.kind === 'role' ? 'em.colRoleOther' : 'em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th>
-          <th class="dci-em-c-flags" scope="col">${flagNames.map((f) => `<span>${esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f)}</span>`).join('')}</th>${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key)).join('')}${addEv}<th scope="col"></th></tr></thead>
+          ${(flagNames.length ? flagNames : ['']).map((f) => `<th class="dci-em-c-flag" scope="col">${f ? esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f) : ''}</th>`).join('')}${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key)).join('')}${addEv}<th scope="col"></th></tr></thead>
         <tbody>${shown.map((l) => emLineHtml(a, b, l, flagNames, cols)).join('')}</tbody>
       </table></div>${openEv ? emEventHtml(a, openEv) : ''}
       ${hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
@@ -28769,8 +28773,10 @@
       .dci-em-grid .dci-em-c-role { position: sticky; left: 0; background: #fff; min-width: calc(var(--u, 1px) * 200); z-index: 1; }
       .dci-em-c-role input { width: calc(var(--u, 1px) * 190); }
       .dci-em-c-credit input { width: calc(var(--u, 1px) * 130); }
-      .dci-em-c-flags { white-space: nowrap; }
-      .dci-em-c-flags > * { display: inline-block; width: calc(var(--u, 1px) * 34); text-align: center; }
+      /* [3.36.6] a column per attribute: the word centred over its checkbox (collected item 148) */
+      .dci-em-grid th.dci-em-c-flag, .dci-em-grid td.dci-em-c-flag { text-align: center; white-space: nowrap; min-width: calc(var(--u, 1px) * 22);
+        padding-left: calc(var(--u, 1px) * 4); padding-right: calc(var(--u, 1px) * 4); }
+      .dci-em-c-flag input { margin: 0; vertical-align: middle; }
       .dci-em-ev { min-width: calc(var(--u, 1px) * 120); background: var(--soft); }
       .dci-em-ev > span { display: block; font-weight: 400; }
       .dci-em-ev .dci-em-evn { display: inline; font-weight: 700; }
