@@ -13,7 +13,8 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-29 | 3.34.18 – 3.35.1 | – |
+| 2026-10-30 | 3.36.4 | – |
+| 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
 | 2026-10-25 | 3.30.1 – 3.31.1 | – |
@@ -43,6 +44,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-29 | Import 3.36.0 | Remember per release, in ⚙ Settings → Cache (off by default): on, a release imported again from the same source comes back as you left it – its rows with what you changed, its entries, the pools and the date matrix, the source and media chosen, “Skip works”, the credits switched off on the source pages; up to 100 releases (50), the space they take is shown, one button forgets them all. Off, every import starts afresh – until 3.35 the pools, the matrix and these choices were always kept. Since 3.35.0 also: names of several words as proper names (“Gibson Les Paul”), lines of the matrix dragged, an event opened with its level, date and tracks, companies and places as a matrix, the works of index tracks as track groups. |
 | 2026-10-29 | Import 3.35.0 | Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before. |
 | 2026-10-28 | Import 3.34.0 | The languages file: the texts in German, Spanish and French are a file of their own, `mb-vibecode-credits-importer-languages.json`, loaded with the script like the mapping file (English stays in the script, also when the file is missing); every text translated again. Also: ✎ changes built-in rules in “Mapping rules”, your changes exported (a file of their own, or the whole register for a pull request) and imported with a preview. |
 | 2026-10-27 | Import 3.33.0 | The mapping file: the data of the mapping rules – role rules, company roles, questions, tables and word lists, the quick switches – is a file of its own, `mb-vibecode-credits-importer-mapping.json`, which the userscript manager loads with the script (the script fetches it from GitHub itself if not); rules can be kept on GitHub without touching the code. Since 3.32.0 also: places with a date after them, typos in role words, the credits of Bandcamp's “about” text, poems that follow their level, single days instead of a month, the quick switches as buttons, comments of live recordings. |
@@ -90,7 +92,87 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
+## 2026-10-30
+
+### Import 3.36.4
+
+#### Changed
+
+- **Remember per release: the works matrix too** (collected item 146; maintainer: "ja bitte dazu"): with ⚙ Settings → Cache → Remember changes and import settings per release on, a release imported again comes back with the choices of its works matrix – the works chosen for tracks and the new ones planned, the attributes of the links set by hand, the column dates and the dates planned for relationships in MusicBrainz, the columns taken out (their rows stay on "Skip"; brought back, they are not) or folded, the type and languages of new works. With "Skip works", the new works planned before come back with "Take works again" also after the page is loaded again (as within the tab). Not remembered: the works created through the dashboard (MusicBrainz has them).
+
 ## 2026-10-29
+
+### Import 3.36.3
+
+#### Added
+
+- **⌨ Keyboard shortcuts in the head of the dashboard** (maintainer: "Bitte einen neuen Infoknopf oben in der Leiste der die aktuelle Tastaturbelegung aller shortcuts zeigt."): next to ⓘ; it shows all shortcuts of the script below the head, grouped (the pages of MusicBrainz, the release editor, the dashboard, the media choice, the window "Text from cover art"), with the keys of this computer (on a Mac ⌥ Option, ⌃ Control, ⌘ Command, ↩ Return). ⌨, ✕ or Esc closes them.
+
+### Import 3.36.2
+
+#### Changed
+
+- **The diagnosis in the log is a setting** (maintainer: "Bitte eine Option, die die Diagnose Funktion im Log ermöglicht oder den Button ausblendet. Standardmäßig aus."): ⚙ Settings → General → **Diagnosis in the log** (off). Off, the log has no "Start diagnosis"; switched off while a diagnosis runs, it stops.
+
+### Import 3.36.1
+
+#### Fixed
+
+- **Remember per release, after a review of 3.36.0:**
+  - switched on in a tab opened while off, it no longer writes over what was remembered for the release (the tab had not read it) – a message offers "Load the page again" to get it back;
+  - each source of a release keeps its own remembered state (a pasted text no longer replaces the changes of the Discogs import);
+  - a row removed with ✕ stays removed (it came back as a new line of the source);
+  - changes made while the entries are looked up after an import are remembered too (they counted as the source's);
+  - a release without credits at the source (rows added by hand) is remembered too;
+  - a row already in MusicBrainz taken in again by hand is not skipped anew; other media chosen than then: the tracks as the source gives them now; what the mapping rules make of a row is not pinned as a change of yours; supplements' marks and fields being edited are not stored;
+  - the MusicBrainz entity chosen by hand from the names found ("use") and from aliases is remembered too; a company's remembered entity type no longer sets its rows' types anew;
+  - "Releases to remember" forgets the oldest releases when something is stored next (stepping the field down to 0 passed 1 and forgot all others); "Forget all …" is not undone by a store waiting for its second; releases stored before 3.36.0 count by when they were used;
+  - an error while taking over what is remembered no longer stops the import.
+- **The works as track groups:** clearing the track pool while the works are left out no longer brings them back with the pool stored.
+- **An event opened, its level changed:** the date matrix is applied again for each date group of the rows (before: only the first).
+
+### Import 3.36.0 – milestone “Remember per release”
+
+#### Added
+
+- **Remember per release, switched on in ⚙ Settings → Cache** (collected item 146; maintainer: "vielleicht können wir global einen schalter einführen, der sich änderungen und import einstellungen an releases merkt oder eben nicht. standardmäßig auf jeden fall aus", "ja genau, soll alles wieder kommen. aber nur wenn man das ausdrücklich in den einstellungen aktiviert hat"): a new tab **Cache** (after Beta) with **Remember changes and import settings per release** (off). On, a release imported again from the same source comes back as you left it: its rows with what you changed in them (types, levels, role credits, answers, rows taken out or added, their order), its entries (join or split, by event or by role, the MusicBrainz entity chosen by hand, entries added by hand), the pools and the date matrix, the source and media chosen, "Skip works", "Leave out the about text", the credits switched off on the source pages, the frames of the images. A row whose line at the source has changed since comes as the source gives it now – a message says how many changes were left out (146d: "ja einverstanden").
+- **Releases to remember: 50** (0 – 100, 0 = off; maintainer: "50 releases ist gut, aber lass das doch auch einstellen", "bitte 1-100. 0=aus"); beyond it, and when the browser's storage is full, the release used longest ago goes first.
+- **Forget all remembered releases …** with the space they take and that of all data of the script ("12 releases · 1.3 MB · all data of the script in this browser: 2.1 MB"; maintainer: "lass neben dem rücksetzen button auch den gebrauchten speicher anzeigen in KB oder MB mit einer kommazahl").
+
+#### Changed
+
+- **Off – the default – every import starts afresh** (maintainer, 146b: "bitte nach deinem vorschlag"): the pools and the date matrix, the source and media chosen, "Skip works", "Leave out the about text", the credits switched off on the source pages and the frames of the images of a release are no longer stored or read unless the release is remembered (until 3.35 they always were). Within the open tab they hold as before; what was stored before stays, unused. Always kept: the safety list of created works and the status marks of the companion.
+
+### Import 3.35.6
+
+#### Added
+
+- **The works of the source as track groups** (collected item 145b; maintainer: "ja lass das mal anbieten, aber mit der option das auch auszuschalten. und mit der option im date track pool auf die interpretation von werken als group hier zu verzichten. an und abschaltbar jeweils holt es die daten wieder oder schließt sie aus.", "B"): a work whose parts are tracks of their own (index tracks of Discogs, 3.35.1) comes into the track pool as a track group with its name – "First Encounter" on A1, A2, B1, B2 –, as a suggestion. "n works as track groups" in the track pool leaves them out for this import: out of the pool and out of the date matrix (a date only on such a work goes too); ticked again, they come back with their places. The next import ticks it again. ⚙ Settings → Dates & tracks "Offer the works of the source as track groups" (on) switches them off for all releases.
+
+### Import 3.35.5
+
+#### Changed
+
+- **Companies, places and other entries as a matrix too** (AE-4; maintainer: "ja können auch in die matrix", "alle einträge die daten und/oder tracks anbieten. solche einträge kommen ja eher selten vor."): when a row of theirs offers a date and/or tracks (on recordings, or a type with dates) – "Recorded At" of a place, "Phonographic Copyright (p)" of a label; each role a block, the events as columns, compact a line per event. What is staged stays the same. Entries with nothing that offers a date or tracks (publishing on works) keep their rows.
+
+### Import 3.35.4
+
+#### Added
+
+- **An event of the matrix opened** (AE-3; maintainer: "wenn man den ereigniskopf öffnet soll man datum und tracks einstellen können", "auch ebene ändern können"): ▸ in the head of an event opens it below its block, with its level (Recording · Release · Release group, as MusicBrainz has them for its rows' types), its date (typed, a date of the pool, no date) and on recordings its tracks (a box per track, the media, the track groups, all). It goes for all rows of the entry in the event; the opened event follows them. A row whose type MusicBrainz has not on the new level stays and its line says so: "Mastered By stays on the level Release: MusicBrainz has no “mastering” on the level Recording · ok" (maintainer: "ja passt").
+
+### Import 3.35.3
+
+#### Added
+
+- **Lines of the matrix in another order** (AE-2; maintainer: "bitte noch ziehen ermöglichen", "ja nur bis zum nächsten import"): ⠿ at each line of a block drags it to another place in the block – before a line (its upper half) or after it (its lower half), shown by a line above or below; Alt+↑ / Alt+↓ on ⠿ moves it one place. The compact view follows. The order holds until the next import.
+
+### Import 3.35.2
+
+#### Changed
+
+- **Proper names of several words** (collected item 144; maintainer: ""Gibson Les Paul" in dieser Groß- und Kleinschreibung bitte zu Ausnahmen hinzufügen, das ist ja der korrekte name."): the proper names of the register (table T052) can be names of several words. They keep their spelling only as a whole – "Guitar [Gibson Les Paul]" gives the role credit **Gibson Les Paul** (before: "Gibson les paul"), "Les Paul Junior" gives "Les Paul junior", and a "les" outside such a name stays small. "Gibson Les Paul" and "Les Paul" are in the list; you can add more names in ⚙ Mapping rules (one name per line).
+- **The yellow note offers words one after another as a whole** (maintainer: "ja bitte"): when several words in a row were written small, the note offers them as a whole first – "Written small – unknown to MusicBrainz: Paul Reed Smith → paul reed smith · keep “Paul Reed Smith” · always write “Paul Reed Smith” · Paul → paul · …"; the compact line offers "keep “Paul Reed Smith”" first. **keep** keeps the name as written in this row, **always** adds it to T052.
 
 ### Import 3.35.1
 

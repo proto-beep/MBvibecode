@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys; `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -67,8 +67,8 @@ def case_head():
         pg.wait_for_timeout(300)
         a2 = pg.evaluate(HEAD)
         print('A) Kopf:', {k: v for k, v in a1.items() if k != 'btns'}, '\n   Knöpfe:', a1['btns'], '\n   breit:', a2['spread'], a2['label'])
-        # [3.27.2] the symbol of the compact view first, left of the text size (item 60)
-        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'settings-open', 'rules', 'log', 'connections-open', 'window-reset', 'close']
+        # [3.27.2] the symbol of the compact view first, left of the text size (item 60); [3.36.3] ⌨ the keyboard shortcuts before ⓘ
+        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'settings-open', 'rules', 'log', 'keys-open', 'connections-open', 'window-reset', 'close']
                        and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][1][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
                        and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
                        and a2['spread'] <= 6 and a2['label'] != 'none')
@@ -575,6 +575,62 @@ def case_compacthint():
         d2 = pg.evaluate(HINT)
         print('D) kompakt gespeichert:', d1, '| voll:', d2, '| Fehler:', errs3)
         results.append(d1 == [None, 'true'] and d2 is None and not errs3)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_keys():
+    """Credits Importer 3.36.3 (maintainer: "Bitte einen neuen Infoknopf oben in der Leiste der die aktuelle Tastaturbelegung aller
+    shortcuts zeigt."): ⌨ in the head.
+    A) ⌨ (before ⓘ) opens the shortcuts below the head: the groups (the pages, the release editor, the dashboard, the media
+       choice, the window "Text from cover art"), Alt+⇧ Shift+D, Esc, Ctrl+Alt+Enter, Alt+↑ / Alt+↓ … – the keys of this
+       computer (Linux here: "Windows, Linux").
+    B) Esc closes them (the dashboard stays open), the focus back on ⌨; ⌨ opens them again, ✕ closes them.
+    C) As a Mac ("MacIntel"): ⌥ Option, ⌃ Control, ⌘ Command, ↩ Return."""
+    KEYS = """(() => { const el = document.querySelector('#dci-overlay [data-el=keys]'); const b = document.querySelector('.dci-head [data-act=keys-open]');
+      return { shown: !!el && !el.hidden, expanded: b ? b.getAttribute('aria-expanded') : null, title: b ? b.title : '',
+        groups: el ? [...el.querySelectorAll('h3')].map(h => h.textContent.trim()) : [], system: el && el.querySelector('.dci-keys-head .dci-sub') ? el.querySelector('.dci-keys-head .dci-sub').textContent : '',
+        keys: el ? [...el.querySelectorAll('tr th[scope=row]')].map(t => t.textContent.replace(/\\s+/g, ' ').trim()) : [] }; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.click('.dci-head [data-act=keys-open]')
+        pg.wait_for_timeout(300)
+        a = pg.evaluate(KEYS)
+        print('A)', a)
+        results.append(a['shown'] and a['expanded'] == 'true' and a['title'] == 'Keyboard shortcuts' and a['system'] == 'the keys of this computer (Windows, Linux)'
+                       and a['groups'] == ['On the pages of MusicBrainz with the script', 'In the release editor (Add release, Edit release)', 'In the dashboard',
+                                           'In the media choice', 'In the window “Text from cover art”']
+                       and a['keys'][:3] == ['Alt+⇧ Shift+D', 'Esc', 'Ctrl+Alt+Enter'] and 'Alt+↑ / Alt+↓' in a['keys'] and 'Ctrl+mouse wheel' in a['keys'])
+        pg.keyboard.press('Escape')
+        pg.wait_for_timeout(300)
+        b1 = [pg.evaluate(KEYS)['shown'], pg.evaluate("!document.getElementById('dci-overlay').hidden"), pg.evaluate("(document.activeElement || {}).dataset ? document.activeElement.dataset.act : ''")]
+        pg.click('.dci-head [data-act=keys-open]')
+        pg.wait_for_timeout(200)
+        pg.click('#dci-overlay [data-el=keys] .dci-keys-head [data-act=keys-open]')
+        pg.wait_for_timeout(200)
+        b2 = pg.evaluate(KEYS)
+        print('B) Esc:', b1, '| ✕:', b2['shown'], b2['expanded'])
+        results.append(b1 == [False, True, 'keys-open'] and b2['shown'] is False and b2['expanded'] == 'false')
+        ctx.close()
+        ctx = H.new_context(b)
+        ctx.add_init_script("Object.defineProperty(navigator, 'platform', { get: () => 'MacIntel' }); try { Object.defineProperty(navigator, 'userAgentData', { get: () => undefined }); } catch (e) {}")
+        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.click('.dci-head [data-act=keys-open]')
+        pg.wait_for_timeout(300)
+        c = pg.evaluate(KEYS)
+        print('C) Mac:', c['system'], c['keys'])
+        results.append(c['system'] == 'the keys of this computer (Mac)' and c['keys'][:3] == ['⌥ Option+⇧ Shift+D', 'Esc', '⌃ Control+⌥ Option+↩ Return']
+                       and '⌘ Command+V' in c['keys'] and '⌥ Option+↑ / ⌥ Option+↓' in c['keys'])
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

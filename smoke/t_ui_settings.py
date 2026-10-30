@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, bridge, ui305, reset, notice – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, bridge, ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -37,7 +37,7 @@ def case_settabs():
         pg.wait_for_timeout(200)
         a.append(pg.evaluate(f"{SET}.hidden"))
         print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
-        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'connections']
+        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
                        and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
         # B) keys
         pg.click(gear)
@@ -180,7 +180,7 @@ def case_settings():
         vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
         print('A) Themen:', topics, '| Werke:', vals)
-        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'connections']
+        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
                        and [t for t, e in topics if e == 'true'] == ['general']
                        and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
         # B) shared switches
@@ -279,7 +279,7 @@ def case_bridge():
         # the tab within the side of the content, a little side below it; as high as can be; the corner square only at a join at the top
         return (t['above'] <= 1 and t['below'] >= 4.5 and 0 <= t['into'] <= 3 and (t['atTabsTop'] or abs(t['below'] - 6) <= 1)
                 and t['joinedTop'] == (abs(t['above']) <= 1) and (t['corner'] == '0px') == t['joinedTop'])
-    TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'connections']
+    TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -519,7 +519,8 @@ def case_reset():
         print('   Titel:', pg.locator('#dci-title').inner_text(), '| Zoom:', pg.locator('[data-el=zoom]').inner_text(), '| Meldung:', [m for m in pg.locator('.dci-msg').all_inner_texts() if 'defaults' in m])
         print('   Cover auf Discogs (Position, eingeklappt):', art, '| Daten & Tracks offen:', pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'),
               '| automatisch anwenden:', pg.locator('[data-f=dm-auto]').is_checked() if pg.locator('[data-f=dm-auto]').count() else '–')
-        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask')]  # [3.26.0] the question of the language is no setting
+        # [3.36.0] what is remembered for a release (its rows, the index of the releases) is no setting either
+        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index')]  # [3.26.0] the question of the language is no setting
         ok1 = set(settings) <= {'dci-log-open'} and 'dci-date-pool:other' in after and 'dci-created-works:other' in after \
             and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
             and art == [None, None]
@@ -562,8 +563,8 @@ def case_notice():
         print('   Nachricht:', notice())
         n = notice() or ''
         ok2 = keys() == ['dci-notice-version', 'dci-store-epoch', 'dci-updated-from'] or set(keys()) == {'dci-store-epoch', 'dci-updated-from'}
-        # [3.34.0] the three newest milestones: 3.34.0, 3.33.0, 3.32.0; [3.35.0] 3.35.0, 3.34.0, 3.33.0
-        ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.35.0' in n and 'Credits Importer 3.34.0' in n and 'Credits Importer 3.33.0' in n and 'Credits Importer 3.32.0' not in n and 'reset once' in n
+        # [3.34.0] the three newest milestones: 3.34.0, 3.33.0, 3.32.0; [3.35.0] 3.35.0, 3.34.0, 3.33.0; [3.36.0] 3.36.0, 3.35.0, 3.34.0
+        ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.36.0' in n and 'Credits Importer 3.35.0' in n and 'Credits Importer 3.34.0' in n and 'Credits Importer 3.33.0' not in n and 'reset once' in n
         # 3) closing is remembered
         pg.click('#dci-notice .dci-notice-x'); pg.wait_for_timeout(200)
         reload()
@@ -596,6 +597,261 @@ def case_notice():
         ok5 = gm[0] is None and gm[1] is None and gm[2] == 4 and gm[3] is None and gm[4] == '4'
         print('Ergebnis:', 'OK' if all([ok1, ok2, ok3, ok4, ok5]) else 'FEHLER', [ok1, ok2, ok3, ok4, ok5], '| Fehler:', errs, dg_errs)
         b.close()
+
+
+def case_cache():
+    """Credits Importer 3.36.0 (collected item 146; maintainer: "global einen schalter … der sich änderungen und import
+    einstellungen an releases merkt oder eben nicht. standardmäßig auf jeden fall aus", "ja genau, soll alles wieder kommen",
+    "bitte nach deinem vorschlag", "setting -> Cache", "50 releases ist gut, aber lass das doch auch einstellen … den gebrauchten
+    speicher anzeigen in KB oder MB mit einer kommazahl", "bitte 1-100. 0=aus", 146d "ja einverstanden"): remembered per release.
+    A) The script's default: ⚙ Settings → "Cache" (after Beta), "Remember changes and import settings per release" off, 50
+       releases, "Forget all …" not to click, "0 releases · 0.0 KB · all data of the script in this browser: … KB".
+    B) Off: a role credit typed (Bass Man "fretless"), Photo Guy taken out (Skip), a date in the pool – the page loaded again:
+       all as from the source, nothing of the release stored (no pool, no rows).
+    C) On: what the tab holds stored at once ("1 release · … KB"); the same changes, the page loaded again: they come back
+       (the log says so).
+    D) The source changed (Photo Guy no longer credited, Bass Man "Electric Bass"): what was changed of their lines is left out
+       ("2 remembered changes no longer fit the source"), the pool date is there.
+    E) The number 0: the switch goes off; ticked again: 50.
+    F) Another release stored before (a pool of its own, used earlier): with 1 release to remember it is forgotten – when something
+       is stored next (3.36.1; not at each step of the field).
+    G) "Forget all remembered releases …" (asked): nothing of the release stored any more, "0 releases"."""
+    import re
+    H.REMEMBER = False
+    rel_key = lambda p: f'dci-{p}:{H.REL}'
+    CACHE = """(() => { const pane = document.querySelector('.dci-set-pane'); const tabs = [...document.querySelectorAll('.dci-set-tab')].map(t => t.textContent.trim());
+      const sw = pane && pane.querySelector('[data-set=remember]'); const n = pane && pane.querySelector('[data-set=remember-max]');
+      const f = pane && pane.querySelector('[data-act=remember-forget]'); const z = pane && pane.querySelector('[data-el=remember-size]');
+      return { tabs, on: sw ? sw.checked : null, max: n ? n.value : null, forget: f ? !f.disabled : null, size: z ? z.textContent.replace(/\\s+/g, ' ').trim() : '' }; })()"""
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level, (tr.querySelector('[data-f=role-credit]') || { value: '-' }).value]) : null; }"""
+    orig = H.discogs_release
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+
+            def load():
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1200)
+
+            def again():
+                pg.reload()
+                pg.add_script_tag(content=H.MAIN)
+                load()
+
+            def change():
+                bass = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man'); return g.querySelector('tr.dci-row').dataset.row; })()")
+                pg.fill(f'tr.dci-row[data-row="{bass}"] [data-f=role-credit]', 'fretless')
+                pg.press(f'tr.dci-row[data-row="{bass}"] [data-f=role-credit]', 'Tab')
+                photo = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Photo Guy'); return g.querySelector('tr.dci-row').dataset.row; })()")
+                pg.click(f'tr.dci-row[data-row="{photo}"] [data-act=level][data-level=skip]')
+                if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+                    pg.click('.dci-pools-toggle')
+                pg.click('[data-act=pool-new]')
+                pg.fill('[data-f=pf-name]', 'Kept')
+                pg.fill('[data-f=pf-by]', '2019')
+                pg.click('[data-act=pool-save]')
+                pg.wait_for_timeout(1600)
+            state = lambda: (pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'), pg.evaluate("[...document.querySelectorAll('.dci-pchip-date')].map(c => c.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Kept/.test(t)).length"))
+            stored = lambda: pg.evaluate("(keys) => keys.filter(k => localStorage.getItem(k) !== null)", [rel_key('date-pool'), rel_key('remember'), 'dci-remember-index'])
+            load()
+            H.open_settings(pg, 'cache')
+            a = pg.evaluate(CACHE)
+            print('A) Cache:', a)
+            results.append(a['tabs'][-3:] == ['Beta', 'Cache', 'ⓘ Connections'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
+                           and re.match(r'^0 releases · 0\.0 KB · all data of the script in this browser: \d+\.\d KB$', a['size']) is not None)
+            change()
+            b0 = state()
+            again()
+            b1 = state()
+            print('B) aus – geändert:', b0, '| neu geladen:', b1, '| gespeichert:', stored())
+            results.append(b0 == ([['recording', 'fretless']], [['skip', '-']], 1) and b1 == ([['recording', '']], [['release', '']], 0) and stored() == [])
+            H.open_settings(pg, 'cache')
+            pg.click('.dci-set-pane [data-set=remember]')
+            pg.wait_for_timeout(500)
+            c0 = pg.evaluate(CACHE)
+            change()
+            again()
+            c1 = state()
+            logl = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /remembered change/.test(t))")
+            print('C) an:', c0, '| neu geladen:', c1, '| Log:', logl, '| gespeichert:', stored())
+            results.append(c0['on'] is True and c0['size'].startswith('1 release · ') and c1 == ([['recording', 'fretless']], [['skip', '-']], 1)
+                           and bool(logl) and stored() == [rel_key('date-pool'), rel_key('remember'), 'dci-remember-index'])
+
+            def rel2():
+                d = orig()
+                d['extraartists'] = [x for x in d['extraartists'] if x['name'] != 'Photo Guy']
+                for x in d['extraartists']:
+                    if x['name'] == 'Bass Man':
+                        x['role'] = 'Electric Bass'
+                return d
+            H.discogs_release = rel2
+            again()
+            d1 = state()
+            msg = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /no longer fit/.test(t))")
+            print('D) Quelle geändert:', d1, '| Meldung:', msg)
+            results.append(d1[1] is None and d1[0] and d1[0][0][1] != 'fretless' and d1[2] == 1 and bool(msg) and msg[0].startswith('2 remembered changes no longer fit the source'))
+            H.discogs_release = orig
+            H.open_settings(pg, 'cache')
+            pg.fill('.dci-set-pane [data-set=remember-max]', '0')
+            pg.press('.dci-set-pane [data-set=remember-max]', 'Tab')
+            pg.wait_for_timeout(400)
+            e0 = pg.evaluate(CACHE)
+            e0s = pg.evaluate("localStorage.getItem('dci-remember-on')")
+            pg.click('.dci-set-pane [data-set=remember]')
+            pg.wait_for_timeout(400)
+            e1 = pg.evaluate(CACHE)
+            print('E) 0:', e0['on'], e0['max'], e0s, '| wieder an:', e1['on'], e1['max'])
+            results.append(e0['on'] is False and e0['max'] == '0' and e0s is None and e1['on'] is True and e1['max'] == '50')
+            other = '11111111-2222-4333-8444-555555555555'
+            pg.evaluate("(id) => { localStorage.setItem('dci-date-pool:' + id, JSON.stringify([{ id: 'd1', name: 'Old' }]));"
+                        " localStorage.setItem('dci-remember-index', JSON.stringify([[id, 1]])); }", other)
+            pg.fill('.dci-set-pane [data-set=remember-max]', '1')
+            pg.press('.dci-set-pane [data-set=remember-max]', 'Tab')
+            pg.wait_for_timeout(400)
+            # [3.36.1] the oldest go when something is stored next (not at each step of the field)
+            f0 = pg.evaluate("(id) => localStorage.getItem('dci-date-pool:' + id) !== null", other)
+            pg.click('[data-act=pool-new]')
+            pg.fill('[data-f=pf-name]', 'Next')
+            pg.fill('[data-f=pf-by]', '2020')
+            pg.click('[data-act=pool-save]')
+            pg.wait_for_timeout(400)
+            f1 = pg.evaluate("(id) => [localStorage.getItem('dci-date-pool:' + id), JSON.parse(localStorage.getItem('dci-remember-index') || '[]').map(x => x[0])]", other)
+            print('F) anderes Release: noch da', f0, '| nach dem Speichern:', f1)
+            results.append(f0 and f1[0] is None and f1[1] == [H.REL])
+            pg.click('.dci-set-pane [data-act=remember-forget]')
+            pg.wait_for_timeout(500)
+            g1 = pg.evaluate(CACHE)
+            print('G) vergessen:', g1['size'], '| gespeichert:', stored())
+            results.append(g1['size'].startswith('0 releases · ') and stored() == [] and g1['forget'] is False)
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_cache2():
+    """Credits Importer 3.36.1 (the review of 3.36.0): remembered per release – removed rows, another source, a tab opened while off.
+    A) On: Bass Man credited "fretless", Photo Guy's row removed (✕) – the page loaded again: "fretless", Photo Guy without a row
+       (before: his row came back as a new line of the source).
+    B) A pasted text imported (another source of the release), the page loaded again: Bass Man still "fretless" – the text has a
+       snapshot of its own (before: it replaced the one of Discogs).
+    C) Off, the page loaded again (nothing read: Bass Man without credit); switched on: a message "This release was remembered
+       before …" with "Load the page again"; a credit typed meanwhile is not stored (what was remembered is not written over);
+       loaded again: "fretless" back."""
+    H.REMEMBER = True
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level, (tr.querySelector('[data-f=role-credit]') || { value: '-' }).value]) : null; }"""
+    row_of = "(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); const t = g && g.querySelector('tr.dci-row'); return t ? t.dataset.row : ''; }"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def load():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1200)
+
+        def again():
+            pg.reload()
+            pg.add_script_tag(content=H.MAIN)
+            load()
+
+        def credit(text):
+            r = pg.evaluate(row_of, 'Bass Man')
+            pg.fill(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', text)
+            pg.press(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', 'Tab')
+        load()
+        credit('fretless')
+        photo = pg.evaluate(row_of, 'Photo Guy')
+        pg.click(f'tr.dci-row[data-row="{photo}"] [data-act=remove-row]')
+        pg.wait_for_timeout(1600)
+        again()
+        a1 = (pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'))
+        print('A) neu geladen:', a1)
+        results.append(a1[0] == [['recording', 'fretless']] and not a1[1])
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Jane Roe – guitar')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1600)
+        jane = pg.evaluate(ROWS, 'Jane Roe')
+        again()
+        b1 = pg.evaluate(ROWS, 'Bass Man')
+        print('B) Text:', jane, '| neu geladen:', b1)
+        results.append(bool(jane) and b1 == [['recording', 'fretless']])
+        H.open_settings(pg, 'cache')
+        pg.click('.dci-set-pane [data-set=remember]')
+        pg.wait_for_timeout(300)
+        again()
+        c0 = pg.evaluate(ROWS, 'Bass Man')
+        H.open_settings(pg, 'cache')
+        pg.click('.dci-set-pane [data-set=remember]')
+        pg.wait_for_timeout(300)
+        msg = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /remembered before/.test(t))")
+        credit('typed meanwhile')
+        pg.wait_for_timeout(1600)
+        again()
+        c1 = pg.evaluate(ROWS, 'Bass Man')
+        print('C) aus, neu geladen:', c0, '| Meldung:', msg, '| an, neu geladen:', c1)
+        results.append(c0 == [['recording', '']] and bool(msg) and 'Load the page again' in msg[0] and c1 == [['recording', 'fretless']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_logdiag():
+    """Credits Importer 3.36.2 (maintainer: "Bitte eine Option, die die Diagnose Funktion im Log ermöglicht oder den Button
+    ausblendet. Standardmäßig aus."): the diagnosis in the log as a setting.
+    A) The log open: no "Start diagnosis"; ⚙ Settings → General "Diagnosis in the log" off.
+    B) On: the button in the log, stored.
+    C) Diagnosis started, the setting off: it stops (the log says so), the button goes.
+    D) On again, "↺ Defaults" of General: off, no button."""
+    DIAGBTN = "!!document.querySelector('#dci-log [data-log-act=diag]')"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_settings(pg, 'general')
+        a = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=log-diag]').is_checked()]
+        pg.click('.dci-set-pane [data-set=log-diag]')
+        pg.wait_for_timeout(300)
+        b1 = [pg.evaluate(DIAGBTN), pg.evaluate("localStorage.getItem('dci-log-diag')")]
+        pg.evaluate("document.querySelector('#dci-log [data-log-act=diag]').click()")  # the log window may lie below the dashboard
+        pg.wait_for_timeout(700)
+        c0 = pg.evaluate("(document.querySelector('#dci-log [data-log-act=diag]') || {}).textContent || ''")
+        pg.click('.dci-set-pane [data-set=log-diag]')
+        pg.wait_for_timeout(300)
+        c1 = [pg.evaluate(DIAGBTN), pg.evaluate("[...document.querySelectorAll('#dci-log li')].some(li => /Diagnosis stopped/.test(li.textContent))"), pg.evaluate("localStorage.getItem('dci-log-diag')")]
+        pg.click('.dci-set-pane [data-set=log-diag]')
+        pg.wait_for_timeout(300)
+        pg.click('.dci-set-pane [data-act=settings-reset][data-topic=general]')
+        pg.wait_for_timeout(500)
+        d1 = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=log-diag]').is_checked(), pg.evaluate("localStorage.getItem('dci-log-diag')")]
+        print('A) Standard:', a, '| B) an:', b1, '| C) gestartet:', c0, '→ aus:', c1, '| D) zurückgesetzt:', d1)
+        results.append(a == [False, False] and b1 == [True, 'true'] and c0 == 'Stop diagnosis' and c1 == [False, True, None] and d1 == [False, False, None])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 run_cases(globals())
