@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.10 | – |
+| 2026-10-30 | 3.36.4 – 3.37.11 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.11
+
+#### Changed
+
+- **The Discogs spelling as the artist credit in MusicBrainz, visible** (collected item 161, Discogs 3139201 "Facets"; maintainer: "Kenneth Ansell* wurde so im Dashboard dargestellt, es war aber nicht ersichtlich, dass das Dashboard diesen Artist Credit auch für MB übernimmt (obwohl es das gemacht hat)"): the head of such an entry has the chip "artist credit in MusicBrainz: “Kenneth Ansell” (the Discogs spelling *)", the tooltip of the name explains the *, and the log names these credits once per import. Until 3.37.10 only "Kenneth Ansell*" was shown.
 
 ### Import 3.37.10
 
