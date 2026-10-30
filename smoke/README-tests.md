@@ -119,6 +119,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   casephrase: 3.35.2 (item 144): "Gibson Les Paul" from T052 as a whole, "Les Paul Junior" → "Les Paul junior" (only
                                 #     "Junior" noted), "Paul Reed Smith" offered as a whole first (note and compact line), keep / small again / always
                                 #     (stored, a second row follows), a "Les" in a text stays small
+                                #   guests: 3.37.2 (151 – 153): "(P) 1998 loudsprecher (c) 1998 loudsprecher" both roles; credits split at » « ("Cover-Photo"
+                                #     = cover photo, cover design); "Special Guest: M. Osswald on Sax and Piano" – guest on both, "Guest: Jane Roe"
+                                #     performer guest, "featuring:" without guest, "NAME on X and Y"
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.1 | – |
+| 2026-10-30 | 3.36.4 – 3.37.2 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.2
+
+#### Added
+
+- **Texts: ℗ / © twice on a line, credits between » «, guests** (collected items 151 – 153; maintainer: "auch das soll als copyright credits erkannt werden", "was nach "Special Guest:" kommt ist der artist", "Special guest und Guest lösen auf jeden fall das attribut "guest" aus!"):
+  - "(P) 1998 loudsprecher (c) 1998 loudsprecher" gives loudsprecher both roles (phonographic copyright, copyright); until 3.37.1 not recognized.
+  - "Cover-Photo: Photorama International » Photos: Dirk Glawe « Cover Design: Payola « Layout: Bernd Struckmeyer" gives four credits – » « • · | cut a line when every part is a credit; "Cover-Photo" is read as "Cover Photo" (photography, "cover photo").
+  - "Special Guest: M. Osswald on Sax and Clarinet" gives M. Osswald the instruments with the attribute guest (rule S055); "Special Guest(s)", "Guest(s)" and their German, French and Spanish words give guest, "featuring", "feat.", "with" none (maintainer: "ich würde erst mal auf "guest" verzichten"); "NAME on X and Y" gives the instruments to the name. Until 3.37.1 "Special Guest" became the name.
 
 ### Import 3.37.1
 
