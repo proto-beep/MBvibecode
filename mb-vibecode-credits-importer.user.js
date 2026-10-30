@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.13
+// @version      3.37.14
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.13
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.13
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.14
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.14
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.13';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.14';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1868,6 +1868,7 @@
       "em.narrow": "Show the roles of {name} compact again",
       "em.chipTitle": "Opens the full matrix of this entry at this role – drag the chip onto another event's line to move it there (⇧ Shift: in both)",
       "em.chipAskTitle": "A question to answer: opens the full matrix of this entry at this role",
+      "em.chipAsk": "Answer the question of {name} here",
       "em.chipOut": "Take {name} out of this event",
       "em.by.event": "by event",
       "em.by.role": "by role",
@@ -17806,19 +17807,60 @@
       <span class="dci-cl-date${date ? ' dci-cl-has' : ''}">${esc(date || tr('cl.noDate'))}</span>${tracks ? ` <span class="dci-cl-tracks">${esc(tracks)}</span>` : ''}`;
   }
 
-  /** [E4] (3.35.0) A role as a chip of a compact line: its name, its role credit, add. / guest / solo; a question "? Chaims". */
-  function emChipHtml(l, e) {
+  /**
+   * [163] (3.37.14) The answers of a chip's question, to be chosen at the chip (collected item 163; maintainer: "kann man die
+   * rollenabfragen nicht auch direkt auf dieser ebene durchführen? per drop down menü?", "ja das passt"): the instrument
+   * question (Q001 …), a word MusicBrainz does not know not answered yet, a type question not answered yet – as in the
+   * compact line (clineAskHtml). Other notes (written small, voice, both, level kept) stay in the full matrix.
+   */
+  function chipAnswers(r) {
+    if (!r || r.level === 'skip') return [];
+    const lt = currentLinkType(r);
+    const q = questionRuleFor(r);
+    const instr = (x, text = x) => ({ act: 'instr-pick', attr: 'instr', value: x, text });
+    if (q && lt && primaryRootOf(lt) && norm(r.primaryText) === q.base) return q.options.map((x) => instr(x));
+    const g = r.instrGuess;
+    if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(r) && norm(r.primaryText))) {
+      return [...g.options.map((x) => instr(x)), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
+        ...(g.misc ? [{ act: 'instr-misc', attr: '', value: '', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])];
+    }
+    const tq = typeQuestionFor(r);
+    if (tq && r.typeAnswer == null) return tq.options.map((o, i) => ({ act: 'type-pick', attr: 'opt', value: String(i), text: o.label || o.type }));
+    return [];
+  }
+
+  /**
+   * [163] (3.37.14) Besides the answers of the chip, what still asks for the full matrix: a role without a proper type, "with and
+   * without a date", a level kept to be confirmed. Notes whose answer is already applied (written small, "use “voice”", "none is
+   * like it" with other instruments) no longer give the chip a "?".
+   */
+  function chipNotesOpen(l) {
+    const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
+    return !!(unmappedHtml(r) || bothAskHtml(l) || levelKeptHtml(l));
+  }
+
+  /**
+   * [E4] (3.35.0) A role as a chip of a compact line: its name, its role credit, add. / guest / solo; a question "? Chaims".
+   * [163] (3.37.14) A question with fixed answers has ▾ at the chip: its answers below it, chosen for all rows of the line; the
+   * "?" only while a question is open (chipAnswers, chipNotesOpen) – until 3.37.13 as long as the full matrix showed any note.
+   */
+  function emChipHtml(l, e, a = null) {
     const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
     const lt = ltOf(r);
     const root = lt && primaryRootOf(lt);
-    const ask = !!lineAskHtml(l);
+    const answers = chipAnswers(r);
+    const ask = !!answers.length || chipNotesOpen(l);
     // a word MusicBrainz does not know: as written ("? Chaims")
     const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || r.raw : rowTypeName(r) || r.raw) || '–';
     const flags = [...r.flags].filter((f) => ['additional', 'guest', 'solo'].includes(f)).map((f) => tr(`em.flag.${f}`));
     const credit = String(r.roleCredit || '').trim();
     const ids = l.rows.map((x) => x.id).join(',');
-    return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : ''}>
-      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}</button>${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}</span>`;
+    const key = `${a ? a.key : ''}|${l.id}|${e ? e.key : ''}`;
+    const open = !!answers.length && S.emChipAsk === key;
+    const q = answers.length ? `<button type="button" class="dci-em-chipq" data-act="em-chipask" data-ask="${esc(key)}" aria-expanded="${open}" title="${esc(tr('em.chipAsk', { name }))}" aria-label="${esc(tr('em.chipAsk', { name }))}">▾</button>` : '';
+    const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
+    return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : ''}>
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}</button>${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
   /**
@@ -17838,7 +17880,7 @@
     if (by === 'role') {
       body = m.lines.map((l) => {
         const evs = m.events.filter((e) => l.ev.has(e.key));
-        return `<div class="dci-em-cl dci-em-clrole${evs.length ? '' : ' dci-em-skip'}" data-rows="${l.rows.map((x) => x.id).join(',')}" data-line="${esc(l.id)}">${emChipHtml(l, null)}
+        return `<div class="dci-em-cl dci-em-clrole${evs.length ? '' : ' dci-em-skip'}" data-rows="${l.rows.map((x) => x.id).join(',')}" data-line="${esc(l.id)}">${emChipHtml(l, null, a)}
           <span class="dci-sub">→ ${esc(rowTypeName(l.rows[0]) || tr('cl.noType'))}</span>
           ${evs.map((e) => `<span class="dci-em-evchip">${evShortHtml(e)}</span>`).join('') || `<span class="dci-sub">${esc(tr('em.noEvent'))}</span>`}
           <span class="dci-status" data-emrows="${l.rows.map((x) => x.id).join(',')}"></span></div>`;
@@ -17853,12 +17895,12 @@
         const hidden = ls.length - shown.length;
         const ids = uniq(ls.flatMap((l) => l.ev.get(e.key)).map((r) => r.id)).join(',');
         return `<div class="dci-em-cl" data-emev="${esc(e.key)}">${evShortHtml(e)} <span class="dci-em-sep" aria-hidden="true"></span>
-          ${shown.map((l) => emChipHtml(l, e)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
+          ${shown.map((l) => emChipHtml(l, e, a)).join('')}${hidden ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.moreChips', { n: hidden }))}</button>`
           : more ? ` <button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="e:${esc(e.key)}">${esc(tr('em.less'))}</button>` : ''}
           <span class="dci-status" data-emrows="${ids}"></span></div>`;
       }).join('');
       const out = m.lines.filter((l) => !l.ev.size);
-      if (out.length) body += `<div class="dci-em-cl dci-em-skip"><span class="dci-sub">${esc(tr('em.out'))}</span> ${out.map((l) => emChipHtml(l, null)).join('')}</div>`;
+      if (out.length) body += `<div class="dci-em-cl dci-em-skip"><span class="dci-sub">${esc(tr('em.out'))}</span> ${out.map((l) => emChipHtml(l, null, a)).join('')}</div>`;
     }
     return `<div class="dci-em dci-em-compact" data-em="${esc(a.key)}"><div class="dci-em-chead">${seg}</div>${body}
       ${works.length ? `<div class="dci-tablewrap dci-rowswrap"><table class="dci-table dci-rows"><tbody>${works.map(rowHtml).join('')}</tbody></table></div>` : ''}
@@ -25495,6 +25537,8 @@
     if (S.srcMenuOpen && btn.closest('.dci-srcmenu')) closeSrcMenu();
     // [E4] (3.34.30) a question of a line of an entry's matrix: answered for all rows of the line
     if (EM_LINE_ACTS[act] && btn.closest('.dci-em-ask[data-rows]')) {
+      // [163] (3.37.14) an answer chosen at a chip closes its list
+      if (btn.closest('.dci-em-chipmenu')) S.emChipAsk = null;
       // [3.35.0] not the rows taken out; with rows on several levels each keeps its own where the type is there
       const lrows = lineRows(btn).filter((r) => r.level !== 'skip');
       const multi = new Set(lrows.map((r) => r.level)).size > 1;
@@ -25772,6 +25816,20 @@
         if (r) {
           S.rows.filter((x) => x.artistKey === r.artistKey && lineKeyOf(x) === lineKeyOf(r)).forEach((x) => { delete x.emLevelKept; });
           if (artist) rerenderGroup(artist);
+        }
+        break;
+      }
+      case 'em-chipask': {
+        // [163] (3.37.14) ▾ at a chip: its answers shown below it, or hidden again
+        const k = btn.dataset.ask || '';
+        S.emChipAsk = S.emChipAsk === k ? null : k;
+        if (artist) rerenderGroup(artist);
+        const first = S.emChipAsk && [...S.overlay.querySelectorAll('.dci-em-chipmenu')].find((m) => m.dataset.ask === k);
+        const b1 = first && first.querySelector('button');
+        if (b1) b1.focus({ preventScroll: true });
+        else {
+          const back = [...S.overlay.querySelectorAll('[data-act=em-chipask]')].find((x) => x.dataset.ask === k);
+          if (back) back.focus({ preventScroll: true });
         }
         break;
       }
@@ -27925,6 +27983,7 @@
   // [E4] (3.35.0) compact as a matrix: by event (default) or by role, per entry; entries opened to their full matrix
   S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
+  S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
   S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
@@ -29098,6 +29157,18 @@
       renderDates();
       return;
     }
+    // [163] (3.37.14) the answers open at a chip
+    if (S.emChipAsk) {
+      e.preventDefault();
+      const k = S.emChipAsk;
+      const menu = [...S.overlay.querySelectorAll('.dci-em-chipmenu')].find((m) => m.dataset.ask === k);
+      const a = menu && artistOf(menu);
+      S.emChipAsk = null;
+      if (a) rerenderGroup(a);
+      const back = [...S.overlay.querySelectorAll('[data-act=em-chipask]')].find((x) => x.dataset.ask === k);
+      if (back) back.focus({ preventScroll: true });
+      return;
+    }
     if (S.subDialog) S.subDialog.cancel();
     else closeDashboard();
   });
@@ -30226,6 +30297,14 @@
       .dci-em-chip-ask { border-color: var(--sugg-line); background: var(--sugg-bg); }
       .dci-em-chip-ask > button { color: var(--sugg-ink); font-weight: 600; }
       .dci-em-chip[draggable="true"] { cursor: grab; }
+      /* [163] (3.37.14) ▾ at a chip with a question and its answers below it */
+      .dci-em-chip { position: relative; }
+      .dci-em-chip .dci-em-chipq { border-left: 1px solid var(--sugg-line); padding: 0 calc(var(--u, 1px) * 4); font-weight: 400; }
+      .dci-em-chip-open { z-index: 6; }
+      .dci-em-chipmenu { position: absolute; top: 100%; left: -1px; z-index: 6; display: flex; flex-direction: column; align-items: stretch; min-width: 100%;
+        margin-top: 2px; padding: calc(var(--u, 1px) * 3) 0; border: 1px solid var(--sugg-line); border-radius: 4px; background: #fff; box-shadow: 0 4px 12px rgba(38, 36, 48, 0.16); cursor: default; }
+      .dci-em-chipmenu .dci-textbtn { text-align: left; white-space: nowrap; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); font-size: calc(var(--u, 1px) * 12); color: var(--sugg-ink); }
+      .dci-em-chipmenu .dci-textbtn:hover, .dci-em-chipmenu .dci-textbtn:focus-visible { background: var(--sugg-bg); }
       .dci-em-evchip { display: inline-flex; gap: calc(var(--u, 1px) * 4); align-items: center; }
       .dci-em-cl .dci-status:empty { display: none; }
       .dci-em-cl .dci-status { margin-left: auto; }

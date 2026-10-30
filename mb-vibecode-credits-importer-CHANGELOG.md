@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.13 | – |
+| 2026-10-30 | 3.36.4 – 3.37.14 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.14
+
+#### Added
+
+- **The answers of a question at its chip** (collected item 163; maintainer, with a screenshot of the chips "? bass ✕": "kann man die rollenabfragen nicht auch direkt auf dieser ebene durchführen? per drop down menü?", "ja das passt"): in an entry compact as a matrix a chip with a question ("? bass", "? Taischigoto", "? Directed By") has ▾ – its answers below it, chosen for all rows of the line as in the full matrix; Esc closes the list. The chip's name still opens the full matrix.
+
+#### Changed
+
+- The "?" of a chip stays only while a question is open; notes whose answer is already applied (written small, "use “voice”", "none is like it") no longer give one. Until 3.37.13 a chip kept its "?" as long as the full matrix showed a note, also after the answer.
 
 ### Import 3.37.13
 
