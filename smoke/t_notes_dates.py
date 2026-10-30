@@ -1,6 +1,6 @@
 """Discogs notes: dates and track groups found in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: datewords, facets, choose, lcdmenu (3.32.7), trackpool, reldate – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
+Cases: datewords, facets, choose, lcdmenu (3.32.7), trackpool, reldate, trackside (3.37.7) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -146,6 +146,90 @@ def case_facets():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_trackside():
+    """Credits Importer 3.37.7: "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" as on Discogs 3749161 "Assist"
+    (collected item 157; maintainer: "das wird nicht zum korrekten track "B" zugeordnet", "ja, solche Orte sollen auch erkannt
+    werden, sofern sie nicht schon durch Companies etc. verknüpft sind").
+    A) Sides A1, A2, A3, B (B one track without a number): the date 1985-11-12 under Performance with the track group of B only
+       (until 3.37.6: for all tracks – "Track B" was not read).
+    B) Zojoji Hall is a place from the notes – its area Tokyo (the city before it) –, recorded at on track B.
+    C) Discogs lists "Recorded At – Zojoji Hall": one entry, Discogs's, with track B from the notes (nothing twice).
+    D) A pasted text "Tracks A2 & B: Ann Blow – saxophone" (MusicBrainz numbers the tracks A1 … B too): Ann Blow on tracks 2 and 4."""
+    POS = ['A1', 'A2', 'A3', 'B']
+    NOTES = 'Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall'
+    orig = H.discogs_release
+    listed = {'on': False}
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        for t, pos in zip(d['tracklist'], POS):
+            t['position'] = pos
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        if listed['on']:
+            d['companies'].append({'name': 'Zojoji Hall', 'entity_type_name': 'Recorded At', 'id': 1020, 'catno': ''})
+        return d
+
+    H.discogs_release = rel
+    # the vinyl numbers in MusicBrainz too (A1, A2, A3, B – as on the release's page)
+    ws0 = H.ws_release
+
+    def ws(full=False):
+        d = ws0(full)
+        for m in d['media']:
+            for t, pos in zip(m['tracks'], POS):
+                t['number'] = pos
+        return d
+
+    H.ws_release = ws
+    H.COMPANIES[1020] = ('place', H.uid('eeeeeeee', 20), 'Zojoji Hall')
+    PLACES = """[...document.querySelectorAll('section.dci-group')].filter(g => /Zojoji/.test(g.querySelector('.dci-gname strong').textContent))
+      .map(g => [g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(),
+        ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim(), (r.querySelector('.dci-role') || r).textContent.includes('from the notes')])])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for run in ('notes', 'listed'):
+            listed['on'] = run == 'listed'
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            places = pg.evaluate(PLACES)
+            if run == 'notes':
+                pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")
+                tgs = {g['id']: g for g in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-track-pool:{H.REL}') || '[]')")}
+                mx = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-matrix:{H.REL}') || '{{}}')")
+                byId = {d['id']: d for d in pool}
+                cells = [(c['col'], byId[c['date']]['begin'], [tgs[t]['tracks'] for t in c['tgs']]) for c in mx.get('cells', [])]
+                print('A) Matrix:', cells)
+                results.append(cells == [('performance', {'year': 1985, 'month': 11, 'day': 12}, [[3]])])
+                print('B) Ort:', places)
+                results.append(len(places) == 1 and 'Zojoji Hall (Tokyo)' in places[0][0] and places[0][1][0][0] == 'Recorded At'
+                               and 'Tracks B from the notes' in places[0][1][0][1])
+                # D) a pasted text with a side alone
+                H.src_menu(pg, 'text-open')
+                pg.fill('[data-f=text-src]', 'Tracks A2 & B: Ann Blow – saxophone')
+                pg.click('[data-act=text-load]')
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
+                pg.wait_for_timeout(800)
+                ann = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Ann Blow/.test(x.querySelector('.dci-gname strong').textContent));
+                  return g ? [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => (r.innerText.match(/Text: [^\\n]*/) || [''])[0].trim())] : null; })()""")
+                print('D) Ann Blow:', ann)
+                results.append(bool(ann) and ann[0] == 'Ann Blow' and len(ann[1]) == 1 and ann[1][0].startswith('Text: A2 & B'))
+            else:
+                print('C) gelistet:', places)
+                results.append(len(places) == 1 and places[0][1][0][0] == 'Recorded At' and 'Tracks B from the notes' in places[0][1][0][1])
+            print('Fehler:', errs)
+            results.append(not errs)
+            pg.close()
+            ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_choose():
     """Separate days ("Recorded June 16 & 19, 1980 at …"): the pool keeps both days as Discogs gives them and gets

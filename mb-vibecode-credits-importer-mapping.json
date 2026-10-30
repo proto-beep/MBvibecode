@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.37.6",
+  "version": "3.37.7",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
   "CHECKBOX_DETAILS": [
