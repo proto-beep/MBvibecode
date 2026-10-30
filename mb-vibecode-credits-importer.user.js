@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.36.4
+// @version      3.36.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.4
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.4
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.5
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.5
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -746,7 +746,6 @@
       "settings.t.connections": "ⓘ Connections",
       "settings.textsHint": "Pasted texts and the credits texts of Bandcamp. What the text recognition reads (rules T020 – T038) is listed in",
       "settings.resetAll": "↺ Reset all settings …",
-      "connections.open": "Connections to other sites, tools and scripts (⚙ Settings → ⓘ Connections)",
       "keys.open": "Keyboard shortcuts",
       "keys.title": "Keyboard shortcuts",
       "keys.system": "the keys of this computer (Windows, Linux)",
@@ -9952,54 +9951,18 @@
   function syncRulesBtn() {
     if (!S.overlay) return;
     S.overlay.querySelectorAll('.dci-head [data-act="rules"]').forEach((b) => b.setAttribute('aria-expanded', String(rulesShown())));
-    placeBridges();
+    alignPanes();
   }
 
   /**
-   * [3.30.4] A bridge from ⚙ (or "Mapping rules") in the head to what it opened below the head (item 87; maintainer: "kannst
-   * du zusätzlich wo im screenshot rot markiert eine visuelle brücke zum menu führen? es ist auch derzeit am symbol noch nicht
-   * eindeutig, dass das menü geöffnet ist. genau so verhält es sich auch beim mapping sofern man es im dashboard anzeigt."):
-   * the symbol pressed, a strip below it to the lower edge of the head (`--dci-bridge-down`) and one from there to the box
-   * (`--dci-bridge-x`, `-w`, `-h`), drawn by CSS; the box scrolled away: only the part at the symbol.
+   * [3.36.5] What follows the boxes below the head: the content of the settings joins its tab. Until 3.36.4 also a bridge from ⚙
+   * (or "Mapping rules") in the head to its box (3.30.4, item 87); gone (collected item 147b; maintainer: "dann also auch auf
+   * die visuelle verbindung bei den einstellung verzichten", "Brücke weg") – the symbols only show that their box is open,
+   * like ⌨.
    */
-  /** [3.34.3] A custom property set only when it changes (no new style for every scroll event). */
-  function setVar(el, name, value) {
-    if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value);
-  }
-
-  function placeBridges() {
+  function alignPanes() {
     if (!S.overlay || S.overlay.hidden) return;
-    const head = S.overlay.querySelector('.dci-head');
-    if (!head) return;
     alignSettingsPane();
-    const hb = head.getBoundingClientRect().bottom;
-    const dock = S.overlay.querySelector('[data-el="rules-dock"]');
-    const pairs = [
-      [S.overlay.querySelector('.dci-head [data-act="settings-open"]'), $('settings'), !!S.settingsOpen],
-      [S.overlay.querySelector('.dci-head [data-act="rules"]'), dock, !!(dock && !dock.hidden && rulesDocked() && rulesShown())],
-    ];
-    for (const [btn, box, open] of pairs) {
-      if (!btn || !box) continue;
-      const on = open && !box.hidden && !!btn.offsetParent;
-      btn.classList.toggle('dci-bridged', on);
-      if (!on) {
-        box.classList.remove('dci-bridged-box');
-        continue;
-      }
-      const b = btn.getBoundingClientRect();
-      const p = box.getBoundingClientRect();
-      // [3.34.3] in fractions of a pixel, as the browser lays them out (collected item 126; maintainer: "das rädchen ist noch nicht
-      // perfekt in line mit den einstellungen"): rounded, the lower part sat up to a pixel beside the button with a larger text
-      // or a scaled screen; the upper part starts 2px above the button's lower edge (its border, `top: 100% - 1px` of the padding
-      // box) and now ends 1px below the head, over its lower line, which ran across the bridge before
-      const px = (v) => `${Math.round(v * 1000) / 1000}px`;
-      const borderLeft = parseFloat(getComputedStyle(box).borderLeftWidth) || 0;
-      setVar(btn, '--dci-bridge-down', px(Math.max(0, hb - b.bottom + 3)));
-      box.classList.toggle('dci-bridged-box', p.top >= hb - 1);
-      setVar(box, '--dci-bridge-x', px(b.left - p.left - borderLeft));
-      setVar(box, '--dci-bridge-w', px(b.width));
-      setVar(box, '--dci-bridge-h', px(Math.max(0, p.top - hb)));
-    }
   }
 
   /**
@@ -12616,9 +12579,21 @@
     scrollLog();
   }
 
+  /**
+   * [3.36.5] The symbol of the log in the head of the dashboard: pressed while the log is shown, wherever it is (collected item
+   * 147a; maintainer: "dass das symbol im oberen bereich lila dunkler wird wenn die "keyboard shortcuts" geklickt werden finde ich
+   * ganz gut. können wir das bei allen anderen symbolen auch einführen?").
+   */
+  function syncLogBtn() {
+    if (!S.overlay) return;
+    const on = !!(S.logEl && !S.logEl.hidden);
+    S.overlay.querySelectorAll('.dci-head [data-act="log"]').forEach((b) => b.setAttribute('aria-pressed', String(on)));
+  }
+
   function setLogVisible(visible) {
     if (!S.logEl) buildLogWindow();
     S.logEl.hidden = !visible;
+    syncLogBtn();
     writeJson('localStorage', 'dci-log-open', visible);
     if (S.logPlace !== 'window') applyLogPlace();
     if (visible) {
@@ -25092,14 +25067,6 @@
         // [3.36.3] the keyboard shortcuts below the head
         setKeysOpen(!S.keysOpen);
         break;
-      case 'connections-open':
-        // [3.25.0] the ⓘ in the head: the settings at the tab "Connections"
-        S.settingsOpen = true;
-        S.resetOpen = false;
-        S.settingsTab = 'connections';
-        renderSettings();
-        $('settings').scrollIntoView({ block: 'nearest' });
-        break;
       case 'settings-reset':
         if (confirm(tr('settings.resetAsk', { topic: tr(`settings.t.${btn.dataset.topic}`) }))) resetTopic(btn.dataset.topic);
         break;
@@ -26192,7 +26159,6 @@
     gear: '<circle cx="8" cy="8" r="4.2"/><circle cx="8" cy="8" r="1.6"/><path d="M12.5 9.9L14.2 10.6M9.9 12.5L10.6 14.2M6.1 12.5L5.4 14.2M3.5 9.9L1.8 10.6M3.5 6.1L1.8 5.4M6.1 3.5L5.4 1.8M9.9 3.5L10.6 1.8M12.5 6.1L14.2 5.4" stroke-width="2"/>',
     rules: '<path d="M2 4h4.5M2 8h4.5M2 12h4.5M9 8h5M11.5 5.5L14 8l-2.5 2.5"/>',
     log: '<rect x="3" y="1.8" width="10" height="12.4" rx="1.5"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/>',
-    info: '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4.2"/><circle cx="8" cy="4.9" r="0.5" fill="currentColor"/>',
     // [3.36.3] the keyboard shortcuts
     keys: '<rect x="1.5" y="4" width="13" height="8.5" rx="1.5"/><path d="M4 6.9h.01M6.7 6.9h.01M9.3 6.9h.01M12 6.9h.01M4.6 9.8h6.8"/>',
     fit: '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>',
@@ -26226,9 +26192,8 @@
             </span>
             ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
             ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'), 'aria-expanded="false"')}
-            ${headBtn('log', 'log', tr('log.title'), tr('log.title'))}
+            ${headBtn('log', 'log', tr('log.title'), tr('log.title'), 'aria-pressed="false"')}
             ${headBtn('keys-open', 'keys', '', tr('keys.open'), 'aria-expanded="false" aria-controls="dci-keys"')}
-            ${headBtn('connections-open', 'info', '', tr('connections.open'))}
             ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
             ${headBtn('close', 'close', tr('common.close'), tr('common.close'), '', 'dci-close')}
           </div>
@@ -26348,20 +26313,17 @@
     // "Add entry manually" above it, always in view)
     const body = overlay.querySelector('[data-el="body"]');
     const stick = overlay.querySelector('[data-el="stick"]');
-    // [3.30.4] the bridges follow the boxes when the body scrolls, and the head when it changes
-    let bridgeFrame = 0;
-    const bridgesLater = () => {
-      if (bridgeFrame) return;
-      bridgeFrame = requestAnimationFrame(() => {
-        bridgeFrame = 0;
-        placeBridges();
+    // [3.34.3] the content of the settings follows its tab when the dashboard or the settings change in size (collected item 127)
+    let paneFrame = 0;
+    const panesLater = () => {
+      if (paneFrame) return;
+      paneFrame = requestAnimationFrame(() => {
+        paneFrame = 0;
+        alignPanes();
       });
     };
-    body.addEventListener('scroll', bridgesLater, { passive: true });
-    new ResizeObserver(bridgesLater).observe(overlay.querySelector('.dci-head'));
-    new ResizeObserver(bridgesLater).observe(body);
-    // [3.34.3] and the settings when their content grows or shrinks (the place of their content follows it, collected item 127)
-    new ResizeObserver(bridgesLater).observe(overlay.querySelector('[data-el="settings"]'));
+    new ResizeObserver(panesLater).observe(body);
+    new ResizeObserver(panesLater).observe(overlay.querySelector('[data-el="settings"]'));
     new ResizeObserver(() => {
       body.style.scrollPaddingTop = `${stick.offsetHeight + 8}px`;
       updatePageScrollPadding();
@@ -26379,6 +26341,7 @@
     renderReset();
     renderSettings();
     renderKeys(); // [3.36.3]
+    syncLogBtn(); // [3.36.5]
     renderDates();
     renderMessages();
     renderBusy();
@@ -26884,7 +26847,7 @@
     el.hidden = !S.settingsOpen;
     if (!S.settingsOpen) {
       el.innerHTML = '';
-      placeBridges();
+      alignPanes();
       return;
     }
     const active = document.activeElement;
@@ -26894,7 +26857,7 @@
     el.innerHTML = settingsHtml();
     const again = key && el.querySelector(key);
     if (again) again.focus();
-    placeBridges();
+    alignPanes();
   }
 
   /** The switches elsewhere in the dashboard show what was set in the menu (and the other way round). */
@@ -28112,15 +28075,10 @@
       .dci-head .dci-ibtn { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 7); }
       /* [3.27.2] a symbol switched on (the compact view) */
       #dci-overlay .dci-head .dci-headbtn[aria-pressed="true"] { background: #ecebf6; border-color: var(--purple); color: var(--purple-d); }
-      /* [3.30.4] ⚙ and "Mapping rules" pressed while open, with a bridge to their box below the head (item 87) */
+      /* [3.30.4] ⚙, "Mapping rules", [3.36.3] ⌨ and [3.36.5] the log pressed while open (the bridge to the box below the head
+         is gone, collected item 147b) */
       #dci-overlay .dci-head .dci-headbtn[aria-expanded="true"] { background: #ecebf6; border-color: var(--purple); color: var(--purple-d); }
-      #dci-overlay .dci-head .dci-headbtn.dci-bridged { position: relative; }
-      #dci-overlay .dci-head .dci-headbtn.dci-bridged::after { content: ''; position: absolute; left: -1px; right: -1px; top: calc(100% - 1px);
-        height: var(--dci-bridge-down, 0px); background: #ecebf6; border-left: 1px solid var(--purple); border-right: 1px solid var(--purple); z-index: 2; pointer-events: none; }
       #dci-overlay .dci-settings, #dci-overlay .dci-rules-dock { position: relative; }
-      #dci-overlay .dci-bridged-box::before { content: ''; position: absolute; left: var(--dci-bridge-x, 0px); width: var(--dci-bridge-w, 0px);
-        top: calc(-1 * var(--dci-bridge-h, 0px) - 1px); height: calc(var(--dci-bridge-h, 0px) + 2px); box-sizing: border-box;
-        background: #ecebf6; border-left: 1px solid var(--purple); border-right: 1px solid var(--purple); z-index: 2; pointer-events: none; }
       .dci-ico { width: calc(var(--u, 1px) * 15); height: calc(var(--u, 1px) * 15); flex: none; }
       .dci-hlabel { display: none; }
       @container (min-width: 1600px) { .dci-head .dci-hlabel { display: inline; } }
@@ -28467,6 +28425,11 @@
       .dci-seg button { border: 0; background: #fff; color: var(--ink); padding: 3px calc(var(--u, 1px) * 8); }
       .dci-seg button + button { border-left: 1px solid #c8c5d6; }
       .dci-seg button:hover { background: var(--soft); }
+      /* [3.36.5] every switch of this kind shows its choice: the chosen button filled (collected item 149; maintainer: "die "by event /
+         by role" müssen visuell auch hervorgehoben werden je nach zustand", "Alle Umschalter dieser Art bitte"); the levels keep
+         their colours (below) */
+      .dci-seg button[aria-pressed="true"], .dci-seg button[aria-pressed="true"]:hover, .dci-seg button[aria-pressed="true"]:disabled {
+        background: #736dab; color: #fff; opacity: 1; cursor: default; }
       /* Links to the two databases look different: Discogs neutral dark, MusicBrainz in MB purple */
       .dci-src { display: inline-block; margin-right: 0.35em; padding: 0 0.4em; border-radius: 3px; font-size: 0.8em; font-weight: 700; letter-spacing: 0.02em; line-height: 1.5; vertical-align: 0.1em; color: #fff; text-decoration: none; }
       .dci-src-dg { background: #333; }

@@ -298,7 +298,8 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
                                 #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
-                                #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
+                                #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update);
+                                #     3.36.5: no ⓘ among the symbols
                                 #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), [3.32.2] the
                                 #     release's spelling "B. Man*" in the head (tooltip "Discogs: Bass Man") instead of the chip "as “B. Man”",
                                 #     a row credited otherwise "as “Bassman”", the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
@@ -314,18 +315,19 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   keys: 3.36.3: ⌨ in the head shows all keyboard shortcuts (groups, the keys of this computer, as a Mac ⌥ ⌃ ⌘ ↩),
                                 #     Esc and ✕ close them, the focus back on ⌨
 
-python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice
+python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
-                                #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), the ⓘ in the head
-                                #     opens "ⓘ Connections" (ten rows, Harmony with its home page), "↺ Reset all settings …" below the tabs shows
+                                #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), "ⓘ Connections"
+                                #     (3.36.5: through ⚙, the ⓘ in the head is gone; Harmony with its home page), "↺ Reset all settings …" below the tabs shows
                                 #     the question in the settings ("Cancel" back to the tab), no "↺ Defaults" in the head, narrow: tabs in a row
                                 #   settings: the menu "Settings" (3.16.0): topics, shared switches both ways, values in steps, a topic's "↺",
                                 #     the works of the artists kept across a reload (IndexedDB), clearing them, switched off
                                 #     3.25.0: the topics as tabs, one shown at a time
-                                #   bridge: 3.30.4: ⚙ pressed with a bridge to the settings (and the rules symbol to the docked rules), the content of
-                                #     every tab joined by the tab (100 % and 90 %), the bridge scrolled away and closed; 3.34.3: the bridge exact in
-                                #     fractions of a pixel, over the head's lower line; the content as high as it can be (ⓘ Connections at the top, its
-                                #     tab in the middle; a short one just low enough), its corner square only where the tab joins at the top
+                                #   pressed (until 3.36.4 "bridge", 3.30.4 – 3.34.3): 3.36.5 (147, 149): ⚙, the rules symbol, the log and ⌨ pressed while
+                                #     open (tinted), no bridge any more, A−, A+, ⤢ never pressed, no ⓘ; the content of every tab joined by the tab
+                                #     (100 % and 90 %), as high as it can be (ⓘ Connections at the top, its tab in the middle; a short one just low
+                                #     enough), its corner square only where the tab joins at the top; switches show their choice filled purple
+                                #     ("Entries: Matrix | Legacy", "by event | by role")
                                 #   settingsscroll: 3.34.3: ⓘ Connections and "Dates & tracks" open, scrolled down and up in small steps – never back
                                 #     down, up to the top; scrolling does not touch the content's margin (until 3.34.2 it jumped back 278px)
                                 #   ui305: 3.30.5: ⚙ below "Import credits …" before any import – only the settings ("Source pages"), no import, the
@@ -572,7 +574,7 @@ python3 t_static.py             # Without a browser: the texts of the script, th
 | t_bcoff.py | t_companion_bandcamp.py | bcoff |
 | t_bctrack.py | t_sources_bandcamp.py | bctrack |
 | t_bcview.py | t_companion_bandcamp.py | bcview |
-| t_bridge.py | t_ui_settings.py | bridge |
+| t_bridge.py | t_ui_settings.py | pressed (until 3.36.4: bridge) |
 | t_choose.py | t_notes_dates.py | choose |
 | t_compact.py | t_ui_view.py | compact |
 | t_connections.py | t_static.py | connections |
