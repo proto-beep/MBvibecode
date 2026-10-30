@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.1 | – |
+| 2026-10-30 | 3.36.4 – 3.37.6 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,44 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.6
+
+#### Added
+
+- **Remove nonsensical words and signs** (collected item 156; maintainer: "gibt es eine möglichkeit beim textimport aus bildern "delete nonsensical words and signs" (erneuter klick holt text zurück)", "je Bild und unten in der leiste für alle bilder. Eigene Änderungen so wie du vorschlägst."): in "Text from cover art" a switch for each image and one in the bar for all takes out the words read uncertainly that are no word (signs or digits among the letters, no vowel, a letter alone, three same letters) and groups of signs without letters; : – , ; / & » « ( ) ℗ © and • · | between words stay. "7 removed"; again, everything comes back where it was – what was changed by hand in between stays.
+
+### Import 3.37.5
+
+#### Changed
+
+- **"Text from cover art" kept as you left it** (collected item 155; maintainer: "falls ich übrigens immernoch im dashboard bin, nachdem ich from image importiert habe soll alles im cache bleiben was ich im bildimport eingestellt habe (also heruntergeladene bilder, textauswahl etc.)", "wenn das release gemerkt soll je nach cache einstellungen es auch ein neuladen überstehen. ansonsten nur bis zum neuladen"): ✕, Esc, "Cancel" and the import only hide the window; opened again, the images loaded, ticked and framed, the step and the texts read with your changes are there – until the page is loaded again. **To the texts read →** goes back to them from the images. Until 3.37.4 the window started afresh each time (only the frames came back).
+- **Through a reload** with ⚙ Settings → Cache "Remember …" on (maintainer: "nicht mitspeichern bitte. aber anmerken, dass bilder hochgeladen wurden. vielleicht lassen sich ausschnitte merken sofern der dateiname (nur lokal im browser gespeichert) übereinstimmt?"): stored for the release without the images (they are loaded anew); own files are named – "An own file was used: credits.png – add it again …" –, and a file of that name added again gets its frames, tick and text back.
+
+#### Added
+
+- **↺ Start over** in the head of the window (asks first): the images of the release as the first time; what was stored of the window goes (the frames drawn stay).
+
+### Import 3.37.4
+
+#### Added
+
+- **Lines of the cover art in the image** (collected item 154; maintainer: "kannst du bei den "3 lines not recognized", sofern sie aus der bilderkennung, stammen jede zeile per mouseover die ausschnitte mit den betroffenen zeilen … anzeigen lassen? (und ein wenig raum um die zeile herum zusätzlich)"): in "… lines not recognized" and "… lines left out on purpose" of a text read from the cover art, the mouse on a line (or the keyboard focus) shows its cut-out below it – with about a line of room around it and the image's name. Not for a pasted text.
+
+### Import 3.37.3
+
+#### Changed
+
+- **Comments of live recordings offered** (collected item 150b; maintainer: "so als abfrage/angebot für den jeweiligen fall. per mouseover tooltip wo das standardmäßig eingestellt werden kann"): with ⚙ Settings → Staging "Live recordings: add a disambiguation comment" off, a release with live recordings shows an offer above "Stage …" – "Tracks 2, 3, 4 are live recordings. Propose disambiguation comments for them (“live: …”)?" – with **✓ Propose comments** (the list for this release) and **✕ Not for this release**; its tooltip names the setting that proposes them always. Until 3.37.2 nothing was shown while the setting was off.
+
+### Import 3.37.2
+
+#### Added
+
+- **Texts: ℗ / © twice on a line, credits between » «, guests** (collected items 151 – 153; maintainer: "auch das soll als copyright credits erkannt werden", "was nach "Special Guest:" kommt ist der artist", "Special guest und Guest lösen auf jeden fall das attribut "guest" aus!"):
+  - "(P) 1998 loudsprecher (c) 1998 loudsprecher" gives loudsprecher both roles (phonographic copyright, copyright); until 3.37.1 not recognized.
+  - "Cover-Photo: Photorama International » Photos: Dirk Glawe « Cover Design: Payola « Layout: Bernd Struckmeyer" gives four credits – » « • · | cut a line when every part is a credit; "Cover-Photo" is read as "Cover Photo" (photography, "cover photo").
+  - "Special Guest: M. Osswald on Sax and Clarinet" gives M. Osswald the instruments with the attribute guest (rule S055); "Special Guest(s)", "Guest(s)" and their German, French and Spanish words give guest, "featuring", "feat.", "with" none (maintainer: "ich würde erst mal auf "guest" verzichten"); "NAME on X and Y" gives the instruments to the name. Until 3.37.1 "Special Guest" became the name.
 
 ### Import 3.37.1
 

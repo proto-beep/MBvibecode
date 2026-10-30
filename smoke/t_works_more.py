@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10) – each the former smoke/t_<case>.py, unchanged; `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged; `python3 t_works_more.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -353,7 +353,8 @@ def case_livecom():
     du das feature bei live recordings als abfrage das disambiguation comment zu ergänzen in die optionen mit einbinden?
     standardmäßig aus. die infos kommen aus dem im dashboard eingegebenen alias des recording places und des datums.", "ja bitte
     mit Kommentar. unter staging. nur "live"").
-    A) ⚙ Settings → Staging: "Live recordings: add a disambiguation comment" is off – no list above "Stage …"; switched on (stored).
+    A) ⚙ Settings → Staging: "Live recordings: add a disambiguation comment" is off – no list above "Stage …" ([3.37.3] the offer
+       instead, case liveoffer); switched on (stored).
     B) The release group is Live: tracks 2–4 (planned links with "live" preselected, S021) are listed – track 1 (a link in
        MusicBrainz without "live") is not; "live: Abbey Road Studios, New York, NY, USA" (the place of "recorded at", its area
        from MusicBrainz: city, US state code, "USA"); track 3 has "live" in MusicBrainz (ticked), track 4 another comment (not
@@ -392,6 +393,7 @@ def case_livecom():
         H.open_dashboard(pg)
         pg.wait_for_timeout(1000)
         a0 = pg.evaluate(LIST)
+        offer0 = pg.evaluate("!!document.querySelector('[data-el=livecom] .dci-livecom-offer')")
         H.open_settings(pg, 'staging')
         sw = pg.locator('[data-el=settings] [data-set=live-comments]')
         off0 = sw.is_checked()
@@ -399,12 +401,13 @@ def case_livecom():
         pg.wait_for_timeout(2500)
         stored = pg.evaluate("localStorage.getItem('dci-live-comments')")
         b1 = pg.evaluate(LIST)
-        print('A) vorher:', a0, '| Schalter an?', off0, '| gespeichert:', stored)
+        print('A) vorher:', a0, '| Angebot:', offer0, '| Schalter an?', off0, '| gespeichert:', stored)
         print('B)', b1)
-        ok_a = a0 is None and off0 is False and stored == 'true'
+        ok_a = a0 == [] and offer0 and off0 is False and stored == 'true'
         base = 'live: Abbey Road Studios, New York, NY, USA'
         ok_b = b1 is not None and [x[0] for x in b1] == ['2', '3', '4'] and all(x[1] == base for x in b1) \
-            and [x[2] for x in b1] == [True, True, False] and [x[3] for x in b1] == [False, False, True] and 'demo version' in b1[2][4]
+            and [x[2] for x in b1] == [True, True, False] and [x[3] for x in b1] == [False, False, True] and 'demo version' in b1[2][4] \
+            and not pg.evaluate("!!document.querySelector('[data-el=livecom] .dci-livecom-offer')")
         # C)
         rid = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => /Abbey Road Studios/.test(s.querySelector('.dci-gname').textContent));
           return g ? g.querySelector('tr.dci-row').dataset.row : null; })()""")
@@ -545,6 +548,95 @@ def case_livecomrun():
         results += [ok_a, ok_b, ok_c]
         print('Fehler:', errs, errs2)
         results.append(not errs and not errs2)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_liveoffer():
+    """Credits Importer 3.37.3: the comments of live recordings offered while the setting is off (collected item 150b; maintainer:
+    "so als abfrage/angebot für den jeweiligen fall. per mouseover tooltip wo das standardmäßig eingestellt werden kann").
+    A) The setting off, the release group Live: above "Stage …" the offer "Tracks 2, 3, 4 are live recordings. Propose
+       disambiguation comments for them (“live: Abbey Road Studios, New York, NY, USA”)?" – no list; its tooltip names
+       ⚙ Settings → Staging → “Live recordings: add a disambiguation comment”.
+    B) ✓: the list as with the setting on (tracks 2–4, 2 and 3 ticked), the setting stays off (not stored); the log says so;
+       staged: the job of the release holds tracks 2 and 3.
+    C) The page loaded again: the offer is back (for the case, not stored); ✕: no offer, no list, the log says so; the job is
+       gone."""
+    PLACE = H.COMPANIES[1002][1]
+    NYC, NYS, US = H.uid('abababab', 1), H.uid('abababab', 2), H.uid('abababab', 3)
+    H.PLACE_AREAS[PLACE] = NYC
+    H.AREA_INFO.update({NYC: {'name': 'New York', 'type': 'City', 'parent': NYS}, NYS: {'name': 'New York', 'type': 'Subdivision', 'iso2': ['US-NY'], 'parent': US},
+                        US: {'name': 'United States', 'type': 'Country', 'iso1': ['US']}})
+    orig = H.ws_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['release-group']['secondary-types'] = ['Live']
+        for m in d['media']:
+            for t in m['tracks']:
+                if t['position'] == 3:
+                    t['recording']['disambiguation'] = 'live'
+                if t['position'] == 4:
+                    t['recording']['disambiguation'] = 'demo version'
+        return d
+
+    H.ws_release = ws
+    LIST = """(() => { const el = document.querySelector('[data-el=livecom]'); if (!el || el.hidden) return null;
+      return [...el.querySelectorAll('tr[data-livecom]')].map(tr => [tr.querySelector('.dci-livecom-pos').textContent.trim(), tr.querySelector('[data-f=livecom-text]').value,
+        tr.querySelector('[data-f=livecom-on]').checked]); })()"""
+    OFFER = """(() => { const o = document.querySelector('[data-el=livecom]:not([hidden]) .dci-livecom-offer'); return o ? [o.querySelector('span').textContent.replace(/\\s+/g, ' ').trim(), o.title,
+      [...o.querySelectorAll('button')].map(b => b.textContent.trim())] : null; })()"""
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Comments of live recordings/.test(t))"
+    JOB = f"JSON.parse(localStorage.getItem('dci-live-job:{H.REL}') || 'null')"
+    base = 'live: Abbey Road Studios, New York, NY, USA'
+
+    def stage(pg):
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(1500)
+
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(2500)
+        a_offer, a_list = pg.evaluate(OFFER), pg.evaluate(LIST)
+        print('A) Angebot:', a_offer, '| Liste:', a_list)
+        ok_a = bool(a_offer) and a_offer[0] == f'Tracks 2, 3, 4 are live recordings. Propose disambiguation comments for them (“{base}”)?' \
+            and '⚙ Settings → Staging → “Live recordings: add a disambiguation comment”' in a_offer[1] and a_offer[2] == ['✓ Propose comments', '✕ Not for this release'] \
+            and a_list == []
+        # B) ✓
+        pg.click('[data-act=livecom-yes]'); pg.wait_for_timeout(500)
+        b_list, b_offer = pg.evaluate(LIST), pg.evaluate(OFFER)
+        stored = pg.evaluate("localStorage.getItem('dci-live-comments')")
+        H.open_settings(pg, 'staging')
+        sw_on = pg.locator('[data-el=settings] [data-set=live-comments]').is_checked()
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        b_logs = pg.evaluate(LOGS)
+        stage(pg)
+        job = pg.evaluate(JOB)
+        print('B) Liste:', b_list, '| Angebot:', b_offer, '| Einstellung:', stored, sw_on, '\n   Protokoll:', b_logs, '\n   Auftrag:', job and [(x['pos'], x['comment']) for x in job['items']])
+        ok_b = b_list == [['2', base, True], ['3', base, True], ['4', base, False]] and b_offer is None and stored is None and sw_on is False \
+            and any('proposed for this release' in t for t in b_logs) and bool(job) and [(x['pos'], x['comment']) for x in job['items']] == [('2', base), ('3', base)]
+        # C) loaded again, ✕
+        pg.reload(); pg.add_script_tag(content=H.MAIN)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(2500)
+        c_offer = pg.evaluate(OFFER)
+        pg.click('[data-act=livecom-no]'); pg.wait_for_timeout(500)
+        c_offer2, c_list, c_logs, c_job = pg.evaluate(OFFER), pg.evaluate(LIST), pg.evaluate(LOGS), pg.evaluate(JOB)
+        print('C) Angebot wieder:', bool(c_offer), '| nach ✕:', c_offer2, c_list, '\n   Protokoll:', c_logs, '| Auftrag:', c_job)
+        ok_c = bool(c_offer) and c_offer2 is None and c_list is None and any('not for this release' in t for t in c_logs) and c_job is None
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
+        results += [ok_a, ok_b, ok_c]
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
