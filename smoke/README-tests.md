@@ -184,6 +184,11 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     Goldsmith's College, London" – Discogs's place for the whole release only on A1–B2 (ⓘ), Heiman Recording
                                 #     Studios from the notes on C1–D and E1–F2; after "Apply" one date each (1981 / 1979 / 1980); "li" on A2's new
                                 #     link, its live comment; "1.1 to 1.2 recorded … at …" in a pasted text
+                                #   notescredits: 3.37.0 (E5, S054): the Discogs notes read in full – new names entries, a new role of a Discogs
+                                #     name a row of its entry, "From the Discogs notes" with ⓘ; nothing twice (producer – its two lines merged –, bass, a
+                                #     studio's name; "Executive producer" a role of its own); Discogs's
+                                #     guitar for the whole release gets the notes' tracks; Source ▾ "Leave out the credits of the notes" and back;
+                                #     ⚙ Texts: the rule off and on
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
@@ -219,6 +224,7 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
+                                #     [3.37.0] the strings arranger of the notes an entry (E5), nothing of a track list a name;
                                 #     track groups dropped onto a column head (Shift adds), a role, an attribute of the works matrix
                                 #   matrixcols: "Directed By" asked, works matrix columns taken out / back, column dates for MB's dateless relationships
                                 #   fill: dates added to MB's dateless relationships from the works matrix (edit, ×, edit note),

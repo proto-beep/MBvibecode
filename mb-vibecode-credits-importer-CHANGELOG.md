@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.36.7 | – |
+| 2026-10-30 | 3.36.4 – 3.37.0 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -44,6 +44,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-30 | Import 3.37.0 | The Discogs notes read in full (⚙ Settings → Texts, on): every credit line of them – people and companies, with or without tracks – becomes an entry or a row, marked “From the Discogs notes” (ⓘ shows the line); nothing twice – what Discogs lists already is left out, and gets the tracks of the notes when Discogs gives it for the whole release; “Leave out the credits of the notes” in the menu Source ▾ for one release. Since 3.36.5 also: the symbols of the head pressed while open (the log too; no bridge, no ⓘ – the connections are in ⚙ Settings), every switch shows its choice, add. / guest / solo over their checkboxes, a place of the notes only on its tracks (“A1 to B2 recorded … at …”). |
 | 2026-10-29 | Import 3.36.0 | Remember per release, in ⚙ Settings → Cache (off by default): on, a release imported again from the same source comes back as you left it – its rows with what you changed, its entries, the pools and the date matrix, the source and media chosen, “Skip works”, the credits switched off on the source pages; up to 100 releases (50), the space they take is shown, one button forgets them all. Off, every import starts afresh – until 3.35 the pools, the matrix and these choices were always kept. Since 3.35.0 also: names of several words as proper names (“Gibson Les Paul”), lines of the matrix dragged, an event opened with its level, date and tracks, companies and places as a matrix, the works of index tracks as track groups. |
 | 2026-10-29 | Import 3.35.0 | Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before. |
 | 2026-10-28 | Import 3.34.0 | The languages file: the texts in German, Spanish and French are a file of their own, `mb-vibecode-credits-importer-languages.json`, loaded with the script like the mapping file (English stays in the script, also when the file is missing); every text translated again. Also: ✎ changes built-in rules in “Mapping rules”, your changes exported (a file of their own, or the whole register for a pull request) and imported with a preview. |
@@ -93,6 +94,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.0 (milestone: the Discogs notes read in full)
+
+#### Added
+
+- **The Discogs notes read in full** (collected item E5, rule S054; maintainer: "dann nimm E5 bitte auch in die Sammelliste auf. das können wir später umsetzen.", "gleich als Eintrag mit Transparenzhinweis", "also alle informationen die sonst noch nicht per relationships vorhanden sind sollen abgegriffen werden. (es soll sich nichts doppeln)"): every credit line of the notes is read like a pasted text – people and companies, with or without tracks. A new name is an entry (searched by its name), a new role of a Discogs name a row of its entry; each row says **From the Discogs notes**, **ⓘ** shows the line, the log names them. Nothing twice: what Discogs lists already (the same name, a role of the same kind) is left out – and gets the tracks of the notes when Discogs gives it for the whole release. Until 3.36.7 only places, ℗ / © and publishers were taken from the notes, and a person with a track list only gave a track group.
+- **Switches** (maintainer: "ja bitte mit schalter. und vielleicht auch noch bei der quelle (falls discogs import) ein quick switch?"): ⚙ Settings → Texts **Discogs: read the credits in the notes** (on; rule S054) and **Leave out the credits of the notes** in the menu **Source ▾** for one release (at once, without a new import).
 
 ### Import 3.36.7
 
