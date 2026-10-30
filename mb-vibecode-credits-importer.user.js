@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.14
+// @version      3.37.15
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.14
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.14
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.15
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.15
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.14';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.15';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2140,6 +2140,7 @@
       "dm.goto": "To the date matrix",
       "dm.choiceLcd": "common month or year",
       "pools.fold": "fold",
+      "pools.show": "show",
       "pools.keep": "keep the pools in the bar when folded",
       "pools.keepTitle": "Folded, the dates and track groups stay in the bar at the top, so they can be dragged onto rows while you scroll through the dashboard",
       "settings.workGroups": "Offer the works of the source as track groups",
@@ -17072,6 +17073,18 @@
   /** [S031] (3.28.4) A name variation that differs from the MusicBrainz name only in its case: the header field stays empty. */
   const caseOnlyAnv = (a, anv) => ruleOn('S031') && !!a.mbName && typo(anv).toLocaleLowerCase() === typo(a.mbName).toLocaleLowerCase();
 
+  /**
+   * [3.29.3] The arrow of an entry (item 82): folds its rows to compact lines (full view) or closes the open ones (compact
+   * view). [166] (3.37.15) In the full view at the front of the head, before the name – the same place in every entry
+   * (maintainer: "der falten knopf soll immer an der gleichen stelle erscheinen", "wenn (a) auch nicht immer stimmt, dann
+   * kann beides verbessert werden"); until 3.37.14 after "Spelling on Discogs: …", which moved it from entry to entry.
+   */
+  function groupFoldHtml(a) {
+    const folded = groupFolded(a.key);
+    const foldTitle = tr(S.view === 'compact' ? 'group.foldOpen' : folded ? 'group.unfold' : 'group.fold', { name: a.name });
+    return `<button type="button" class="dci-iconbtn dci-gfold" data-act="group-fold" aria-expanded="${!folded}" title="${esc(foldTitle)}" aria-label="${esc(foldTitle)}">${folded ? '▸' : '▾'}</button>`;
+  }
+
   function variantsHtml(a) {
     const anvs = a.anvs || [];
     let spelled = '';
@@ -17081,10 +17094,9 @@
     } else if (a.dId && !(a.src || S.source).strictNames) {
       spelled = esc(tr('group.noVariant'));
     }
-    // [3.29.3] the arrow (item 82): folds the rows of the entry to compact lines (full view) or closes them (compact view)
-    const folded = groupFolded(a.key);
-    const foldTitle = tr(S.view === 'compact' ? 'group.foldOpen' : folded ? 'group.unfold' : 'group.fold', { name: a.name });
-    const fold = `<button type="button" class="dci-iconbtn dci-gfold" data-act="group-fold" aria-expanded="${!folded}" title="${esc(foldTitle)}" aria-label="${esc(foldTitle)}">${folded ? '▸' : '▾'}</button>`;
+    // [3.29.3] the arrow (item 82): in the compact view it closes the open rows here; [166] (3.37.15) in the full view it is at
+    // the front of the entry's head (groupFoldHtml)
+    const fold = S.view === 'compact' ? groupFoldHtml(a) : '';
     return `<span data-spell="${a.key}">${spellHtml(a)}</span>${spelled ? `<span>${spelled}</span>` : ''}
       ${fold}<label class="dci-credit">${esc(tr('group.creditAll'))}
         <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(anvs.length === 1 && !caseOnlyAnv(a, anvs[0]) ? anvs[0] : '')}"
@@ -18146,7 +18158,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          <div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
+          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
@@ -20003,6 +20015,7 @@
     el.innerHTML = `<div class="dci-pools-head">
         <button type="button" class="dci-pools-toggle" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">
           <span class="dci-chev" aria-hidden="true">▶</span><span class="dci-pools-title">${esc(tr('pools.title'))}</span></button>
+        <button type="button" class="dci-pools-fold" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">${open ? `▲ ${esc(tr('pools.fold'))}` : `▼ ${esc(tr('pools.show'))}`}</button>
         <span class="dci-sub">${esc(summary)}</span>
         ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
         ${choose ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: choose }))}</span>` : ''}
@@ -20022,10 +20035,9 @@
         ${dateFinderHtml()}
       </div>
       <div class="dci-pools-foot">
-        <button type="button" class="dci-pools-fold" data-act="pools-toggle" aria-expanded="true" title="${esc(tr('pools.toggleTitle'))}">▲ ${esc(tr('pools.fold'))}</button>
         <label class="dci-check" title="${esc(tr('pools.keepTitle'))}"><input type="checkbox" data-f="pools-keep" ${S.poolsKeep ? 'checked' : ''}> ${esc(tr('pools.keep'))}</label>
       </div>` : S.poolsKeep && (S.datePool.length || S.trackPool.length)
-        ? `<div class="dci-pools-kept">${S.datePool.length ? datePoolHtml(true) : ''}${S.trackPool.length ? trackPoolHtml(true) : ''}</div>` : ''}`;
+        ? `<div class="dci-pools-kept">${datePoolHtml(true)}${trackPoolHtml(true)}</div>` : ''}`;
     refreshPoolSelects();
   }
 
@@ -20067,14 +20079,16 @@
     const suggHtml = suggestions.length ? `<span class="dci-date-sugg"><span class="dci-sub">${esc(tr('date.suggestions'))}</span>
       ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin) }))}</button>`).join(' ')}</span>` : '';
     const hint = S.datePool.length ? `<span class="dci-drag-hint" title="${esc(tr('date.dragHintTitle'))}">⠿ ${esc(tr('date.dragHint'))}</span>` : '';
-    if (poolFolded('dates')) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}</div>`;
+    // [165] (3.37.15) "+ New date" also in a folded pool and in the bar kept while "Dates & tracks" is folded
+    const add = `<button type="button" class="dci-textbtn" data-act="pool-new">${esc(tr('date.poolNew'))}</button>`;
+    if (poolFolded('dates')) return `<div class="dci-dates-bar dci-pool-dates dci-pool-folded">${poolLabelHtml('dates', S.datePool.length)}${add}</div>`;
     if (kept) {
-      return `<div class="dci-dates-bar dci-pool-dates">${poolLabelHtml('dates', S.datePool.length)}${chips}${hint}</div>`;
+      return `<div class="dci-dates-bar dci-pool-dates">${poolLabelHtml('dates', S.datePool.length)}${chips}${add}${hint}</div>`;
     }
     return `<div class="dci-dates-bar dci-pool-dates">
         ${poolLabelHtml('dates', S.datePool.length)}
         ${chips}
-        <button type="button" class="dci-textbtn" data-act="pool-new">${esc(tr('date.poolNew'))}</button>
+        ${add}
         ${hint}
         ${suggHtml}
       </div>
@@ -20091,9 +20105,7 @@
       <button type="button" class="dci-chip-main" data-act="tg-edit" data-id="${esc(g.id)}" title="${esc(tr('trackpool.editTitle'))}${trackGroupSuggested(g) ? ` – ${esc(tr('pools.suggested'))}` : ''}">
       ${esc(g.name)} <span class="dci-chip-count">${esc(tr('trackpool.count', { n: g.tracks.length }))}</span></button></span>`).join('');
     const hint = `<span class="dci-drag-hint" title="${esc(tr('trackpool.dragHintTitle'))}">⠿ ${esc(tr('trackpool.dragHint'))}</span>`;
-    if (poolFolded('tracks')) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}</div>`;
-    if (kept) return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}${hint}</div>`;
-    // Several media: a whole medium (or one group per medium) in one step (of the chosen media)
+    // Several media: a whole medium (or one group per medium) in one step (of the chosen media); [165] (3.37.15) also folded
     const media = selMedia();
     const add = media.length > 1
       ? `<select data-f="tg-new-pick" class="dci-tg-newsel" aria-label="${esc(tr('trackpool.new'))}">
@@ -20102,6 +20114,8 @@
           ${media.map((md) => `<option value="m:${md}">${esc(mediumGroupName(md))}</option>`).join('')}
           <option value="all">${esc(tr('trackpool.allMedia', { n: media.length }))}</option></select>`
       : `<button type="button" class="dci-textbtn" data-act="tg-new">${esc(tr('trackpool.new'))}</button>`;
+    if (poolFolded('tracks')) return `<div class="dci-dates-bar dci-tracks-bar dci-pool-folded">${poolLabelHtml('tracks', S.trackPool.length)}${add}</div>`;
+    if (kept) return `<div class="dci-dates-bar dci-tracks-bar">${poolLabelHtml('tracks', S.trackPool.length)}${chips}${add}${hint}</div>`;
     // [145b] (3.35.6) the works of the source as track groups, for this import
     const works = S.workGroupsOn && sourceWorks().length ? `<label class="dci-check dci-wg-toggle" title="${esc(tr('trackpool.worksTitle'))}"><input type="checkbox" data-f="work-groups-pool"
       ${S.workGroupsOff ? '' : 'checked'}> ${esc(tr('trackpool.works', { n: sourceWorks().length }))}</label>` : '';
@@ -26173,9 +26187,13 @@
       // Dates & tracks
       case 'pool-fold': {
         const pool = btn.dataset.pool === 'tracks' ? 'tracks' : 'dates';
-        // [3.32.1] opened for this import only: folded again as remembered
-        if (S.poolsForce && S.poolsForce[pool] && S.poolFold[pool]) delete S.poolsForce[pool];
-        else S.poolFold = { ...S.poolFold, [pool]: !S.poolFold[pool] };
+        // [3.32.1] opened for this import only: folded again as remembered; [166] (3.37.15) a pool shown open always folds at
+        // the first click (until 3.37.14 one opened for the suggestions of this import and not folded before needed two)
+        if (poolFolded(pool)) S.poolFold = { ...S.poolFold, [pool]: false };
+        else {
+          S.poolFold = { ...S.poolFold, [pool]: true };
+          if (S.poolsForce) delete S.poolsForce[pool];
+        }
         if (!S.poolFold[pool]) delete S.poolFold[pool];
         writeJson('localStorage', POOL_FOLD_KEY, Object.keys(S.poolFold).length ? S.poolFold : null);
         renderDates();
@@ -30064,6 +30082,8 @@
         margin-top: calc(var(--u, 1px) * 4); padding-top: calc(var(--u, 1px) * 4); border-top: 1px dashed var(--date-line); font-size: calc(var(--u, 1px) * 12); }
       .dci-pools-fold { border: 1px solid var(--date-line); border-radius: 10px; background: var(--date-bg); color: var(--date-d); padding: 1px calc(var(--u, 1px) * 12); font-weight: 600; }
       .dci-pools-fold:hover { border-color: var(--date); }
+      /* [166] (3.37.15) in the head, at the same place open and folded */
+      .dci-pools-head .dci-pools-fold { min-width: calc(var(--u, 1px) * 70); font-size: calc(var(--u, 1px) * 12); text-align: center; }
       .dci-pools-kept { margin-top: calc(var(--u, 1px) * 6); }
       .dci-pools-kept .dci-date-chip { font-size: calc(var(--u, 1px) * 12); }
       .dci-drag-hint { color: var(--muted); font-size: calc(var(--u, 1px) * 11); font-style: italic; cursor: help; }
@@ -30341,6 +30361,8 @@
       .dci-gopen { padding: 0 calc(var(--u, 1px) * 4); margin-right: calc(var(--u, 1px) * 6); color: var(--muted); font-size: calc(var(--u, 1px) * 13); }
       .dci-gopen:hover { color: var(--ink); }
       .dci-gfold:hover { color: var(--ink); }
+      /* [166] (3.37.15) the arrow before the name: the gap of the head (18 px) narrowed to 6 px */
+      .dci-ghead > .dci-gfold { margin-right: calc(var(--u, 1px) * -12); align-self: center; }
 
       /* Companies, etc. */
       .dci-companies { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 22); padding-top: calc(var(--u, 1px) * 10); border-top: 1px solid var(--line); }
