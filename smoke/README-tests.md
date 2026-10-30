@@ -180,13 +180,18 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #   placesearch: 3.31.2: places from the notes looked up in the first part of their area (West Orange) or by name alone
                                 #     (Turtle Tone Studio in Manhattan, similar); "Recorded November 7, 8, 2016, at Loft Köln." – the period
                                 #     2016-11-07 – 08, "Loft" in Cologne (alias Köln) for "Loft Köln", the entry's area "(Köln)"
+                                #   facets: 3.36.7 (150, S053): Discogs 3139201 "Facets" (3 LPs, 13 tracks): "A1 to B2 recorded … in live concert at
+                                #     Goldsmith's College, London" – Discogs's place for the whole release only on A1–B2 (ⓘ), Heiman Recording
+                                #     Studios from the notes on C1–D and E1–F2; after "Apply" one date each (1981 / 1979 / 1980); "li" on A2's new
+                                #     link, its live comment; "1.1 to 1.2 recorded … at …" in a pasted text
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
                                 #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
                                 #     the date's sentence, "mixed and mastered" → Mix and Mastering (Node and the date matrix)
                                 #   facets: 3.28.6: "C1 to D" (side D one track) and the other ranges of "Facets" as dated track groups in the matrix,
-                                #     "in live concert" → "live" for the tracks of that sentence only, no places from the notes
+                                #     "in live concert" → "live" for the tracks of that sentence only; 3.36.7: the places of the notes on their
+                                #     tracks (before: no places from the notes)
                                 #   choose: separate days ("June 16 & 19"): both days and the period in the pool, "Choose" in the matrix
                                 #   trackpool: dates for some tracks: suggestions in the matrix, Apply splits rows, applying again, several days
                                 #   reldate: date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level

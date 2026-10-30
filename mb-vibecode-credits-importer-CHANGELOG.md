@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.36.6 | – |
+| 2026-10-30 | 3.36.4 – 3.36.7 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -93,6 +93,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.36.7
+
+#### Fixed
+
+- **A place of the Discogs notes on its tracks** (collected item 150, rule S053; Discogs 3139201 "Facets"; maintainer: "warum wird … Goldsmiths College 2x angeboten und dann auch noch an den falschen tracks und ohne date? das muss gefixt werden"): sentences with positions in front, without "Tracks" and a colon – "A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith's College, London", "C1 to D recorded 4th October 1979 at Heiman Recording Studios, London" – are read: Discogs's "Recorded At – Goldsmiths College" (for the whole release) gets the tracks A1–B2 (set, ⓘ shows the line), Heiman Recording Studios comes from the notes with C1–D and E1–F2, and each place gets only the dates of its tracks when the date matrix is applied. Until 3.36.6 the sentences gave only their dates: Goldsmiths College stayed on all 13 tracks and got all three dates (several events), Heiman Recording Studios was missing. The positions of the notes are Discogs's (vinyl sides), also for publishers. Also in a pasted text ("1.1 to 1.2 recorded … at …").
+- With it, "in live concert" gives the right live recordings their comment ("live, 1981‐05‐22: Goldsmiths College, …", ⚙ Settings → Staging "Live recordings: add a disambiguation comment"); "li" on their new work links as since 3.28.6.
 
 ### Import 3.36.6
 
