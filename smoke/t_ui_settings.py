@@ -585,8 +585,9 @@ def case_notice():
         print('   Nachricht:', notice())
         n = notice() or ''
         ok2 = keys() == ['dci-notice-version', 'dci-store-epoch', 'dci-updated-from'] or set(keys()) == {'dci-store-epoch', 'dci-updated-from'}
-        # [3.34.0] the three newest milestones: 3.34.0, 3.33.0, 3.32.0; [3.35.0] 3.35.0, 3.34.0, 3.33.0; [3.36.0] 3.36.0, 3.35.0, 3.34.0
-        ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.36.0' in n and 'Credits Importer 3.35.0' in n and 'Credits Importer 3.34.0' in n and 'Credits Importer 3.33.0' not in n and 'reset once' in n
+        # [3.34.0] the three newest milestones: 3.34.0, 3.33.0, 3.32.0; [3.35.0] 3.35.0, 3.34.0, 3.33.0; [3.36.0] 3.36.0, 3.35.0, 3.34.0;
+        # [3.37.0] 3.37.0, 3.36.0, 3.35.0
+        ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.37.0' in n and 'Credits Importer 3.36.0' in n and 'Credits Importer 3.35.0' in n and 'Credits Importer 3.34.0' not in n and 'reset once' in n
         # 3) closing is remembered
         pg.click('#dci-notice .dci-notice-x'); pg.wait_for_timeout(200)
         reload()

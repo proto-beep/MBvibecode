@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.36.7
+// @version      3.37.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.36.7
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.36.7
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.36.7';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -127,10 +127,18 @@
       "forget.button": "Delete stored import …",
       "about.off": "Leave out the “about” text",
       "about.offTitle": "Only for this release: the places, liner notes and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
+      "notes.credit": "From the Discogs notes",
+      "notes.creditLine": "From the Discogs notes: “{text}”",
+      "notes.off": "Leave out the credits of the notes",
+      "notes.offTitle": "Only for this release: the credits read from the Discogs notes (people and companies) are left out – their rows hidden – at once, without a new import. Ticked off again, they are back, with what you changed in them. The tracks the notes gave to credits Discogs lists, and the dates of the notes, stay.",
       "log.aboutOff": "“about” text left out (rows hidden: {rows}, dates out of the pool: {dates})",
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "ignored.why.package": "about the package",
       "log.notesCompanies": "From the Discogs notes, not listed by Discogs ({n}): {list}",
+      "log.notesCredits": "From the Discogs notes, credits not listed by Discogs ({n}): {list}",
+      "log.notesCreditTracks": "From the Discogs notes: the tracks of credits Discogs lists for the whole release – {list} (set; ⓘ shows the line)",
+      "log.notesOff": "Credits of the Discogs notes left out (rows hidden: {rows})",
+      "log.notesOn": "Credits of the Discogs notes taken in again (rows back: {rows})",
       "log.notesPubTracks": "From the Discogs notes: the tracks of publishers Discogs lists – {list} (set in the works matrix; ⓘ shows the line)",
       "log.notesCompanyTracks": "From the Discogs notes: the tracks of what Discogs lists for the whole release – {list} (set; ⓘ shows the line)",
       "log.pubOfPerson": "{name} as publisher is the person {person}: publishing is a role of that entry (MusicBrainz: artist–work “published / publisher”), no company of its own",
@@ -1177,6 +1185,8 @@
       "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
       "settings.aboutCredits": "Bandcamp: read the credits in the “about” text",
       "settings.aboutCreditsTitle": "Rule S049: every credit line of Bandcamp's “about” text is read like those of the credits field (“Music and cover art by X”), marked “from the about text” – prose gives nothing. “Leave out the about text” (menu Source ▾) still leaves out all of it for one release. Takes effect at the next import.",
+      "settings.notesCredits": "Discogs: read the credits in the notes",
+      "settings.notesCreditsTitle": "Rule S054: every credit line of the Discogs notes is read like a pasted text – people and companies – and becomes an entry or a row, marked “From the Discogs notes” (ⓘ shows the line). Nothing twice: what Discogs lists already is left out – when Discogs gives it for the whole release and the notes name tracks, it gets those; what MusicBrainz has is skipped as always. “Leave out the credits of the notes” (menu Source ▾) leaves them out for one release. Takes effect at the next import.",
       "settings.typos": "Typos in role words (“Muisc” → “Music”)",
       "settings.typosTitle": "Rule S050: a part of a text (pasted, Bandcamp, Discogs notes) that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word read as that word – only role words, never names; the row says what was written. Takes effect at the next import.",
       "harmony.opened": "– opened in a background tab",
@@ -1906,6 +1916,7 @@
       "ms.3.34.0": "The languages file: the texts in German, Spanish and French are a file of their own, mb-vibecode-credits-importer-languages.json, loaded with the script like the mapping file (English stays in the script, also when the file is missing); every text is translated again. Also: ✎ changes built-in rules in “Mapping rules”, and your changes can be exported – as a file of their own or as the whole register for a pull request – and imported with a preview.",
       "ms.3.35.0": "Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before.",
       "ms.3.36.0": "Remember per release, in ⚙ Settings → Cache (off by default): on, a release imported again from the same source comes back as you left it – its rows with what you changed, its entries, the pools and the date matrix, the source and media chosen, “Skip works”, the credits switched off on the source pages; up to 100 releases (50), the space they take is shown, one button forgets them all. Off, every import starts afresh – until 3.35 the pools, the matrix and these choices were always kept. Since 3.35.0 also: names of several words as proper names (“Gibson Les Paul”), lines of the matrix dragged, an event opened with its level, date and tracks, companies and places as a matrix, the works of index tracks as track groups.",
+      "ms.3.37.0": "The Discogs notes read in full (⚙ Settings → Texts, on): every credit line of them – people and companies, with or without tracks – becomes an entry or a row, marked “From the Discogs notes” (ⓘ shows the line); nothing twice – what Discogs lists already is left out, and gets the tracks of the notes when Discogs gives it for the whole release; “Leave out the credits of the notes” in the menu Source ▾ for one release. Since 3.36.5 also: the symbols of the head pressed while open (the log too; no bridge, no ⓘ – the connections are in ⚙ Settings), every switch shows its choice, add. / guest / solo over their checkboxes, a place of the notes only on its tracks (“A1 to B2 recorded … at …”).",
       "log.stagedRemoved": "Taken out of the editor (no longer wanted): {text}",
       "msg.stagedRemovedAll.one": "{n} relationship staged before is no longer wanted and was taken out of the editor.",
       "msg.stagedRemovedAll.other": "{n} relationships staged before are no longer wanted and were taken out of the editor.",
@@ -2838,6 +2849,7 @@
     // [3.34.27] maintainer: "bitte nicht vergessen, instrumente und role credits immer kleinschreiben außer bei eigennamen"
     { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
     { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks)' },
+    { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
     { id: 'S011', where: 'roleCreditFor, caseCredit (ART_TYPES, GENERIC_WORDS)', note: 'Artwork role credits are in lower case; instrument models keep their capitals ("Fender Rhodes"); from 3.34.28 with S052 only proper names (MusicBrainz\'s and T052) and models with digits' },
   ];
@@ -5841,6 +5853,9 @@
           ...(who.pageOf ? { pageOf: who.pageOf } : {}) });
       }
       const group = groups.get(gKey);
+      // [S054] (3.37.0) a name only from the Discogs notes: searched by its name
+      if (c.fromNotes && !who.id && group.fromNotes !== false) group.fromNotes = true;
+      if (!c.fromNotes) group.fromNotes = false;
       // [3.21.0] a name without an id: the web profiles found next to it anywhere in the text (T032)
       if (!who.id && (who.links || []).length) group.links = uniq([...group.links, ...who.links]);
       if (!c.role) continue;
@@ -5850,9 +5865,14 @@
         const rKey = `${norm(role.raw)}|${norm(anv)}`;
         if (!group.roles.has(rKey)) {
           group.roles.set(rKey, { role, anv, allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
-            fromAbout: !!c.fromAbout });
+            fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes });
         }
         const entry = group.roles.get(rKey);
+        // [S054] (3.37.0) from the Discogs notes only while every credit of it comes from there; the line(s) of the notes
+        if (!c.fromNotes) entry.fromNotes = false;
+        if (c.notesLine) entry.notesLine = entry.notesLine && entry.notesLine !== c.notesLine ? `${entry.notesLine} / ${c.notesLine}` : c.notesLine;
+        // only the tracks the notes give (Discogs's own track credits of the role are its, not the notes')
+        if (c.notesIdx) entry.notesIdx = uniq([...(entry.notesIdx || []), ...c.notesIdx]);
         // [S050] (3.32.5) typos read as role words: what was written
         (c.typos || []).forEach((t) => { entry.typos = entry.typos || []; if (!entry.typos.some((x) => x.written === t.written)) entry.typos.push(t); });
         // [137d] (3.34.20) a word of a list of instruments MusicBrainz does not know
@@ -5886,12 +5906,13 @@
       // [3.21.3] a name without an id: the web profiles found next to it (T032)
       if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
-      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.medium ? { medium: c.medium } : {}),
+      if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.fromNotes ? { fromNotes: true } : {}), ...(c.medium ? { medium: c.medium } : {}),
         ...(c.notesLine ? { notesLine: c.notesLine } : {}), ...(c.typos ? { typos: c.typos } : {}), refs: [] });
       addSrcRef((same || g.roles[g.roles.length - 1]).refs, c);
       if (!same) continue;
       if (c.notesLine) same.notesLine = c.notesLine;
       if (!c.fromAbout) delete same.fromAbout;
+      if (!c.fromNotes) delete same.fromNotes;
       // the same role once for some tracks and once for all: all ([3.17.0] again also when it is not from the "about"
       // text: since 3.16.1 the tracks of a company named twice, e.g. on two track pages, had not been joined)
       if (same.tracks && (!c.tracks || c.tracks.all)) same.tracks = null;
@@ -8312,7 +8333,7 @@
   // [3.36.1] whether this tab read the stores of the release when it was opened (switched on later: they were not read)
   S.rememberRead = remembering();
   // the stores of one release (the key ends with its MBID), and those of all releases in one (keyed by the MBID)
-  const REL_PREFIXES = ['date-pool', 'track-pool', 'date-matrix', 'about-off', 'bc-off', 'src-off', 'works-skip', 'remember'];
+  const REL_PREFIXES = ['date-pool', 'track-pool', 'date-matrix', 'about-off', 'notes-off', 'bc-off', 'src-off', 'works-skip', 'remember'];
   const REL_KEY_RE = new RegExp(`^dci-(${REL_PREFIXES.join('|')}):([0-9a-f-]{36})$`);
   const REL_MAPS = ['dci-source-pick', 'dci-media-sel', 'dci-ocr-frames'];
   // the maps while nothing is remembered: the choices hold in this tab only
@@ -8518,6 +8539,9 @@
   // [3.16.1] "Leave out the about text" for this release: { stash: { pool, cells } } (the dates taken out), null when not
   const ABOUT_KEY = `dci-about-off:${releaseMbid}`;
   S.aboutOff = !!relRead(ABOUT_KEY, null);
+  // [S054] (3.37.0) the credits of the Discogs notes left out for this release (menu Source ▾)
+  const NOTES_OFF_KEY = `dci-notes-off:${releaseMbid}`;
+  S.notesOff = !!relRead(NOTES_OFF_KEY, null);
   // [3.17.1] Credits switched off on Bandcamp; [3.17.5] on Discogs too (a click on a mark in the companion): stored per
   // release as "source|name|role" (the "name|role" of 3.17.1 were Bandcamp's)
   const BC_OFF_KEY = `dci-bc-off:${releaseMbid}`;
@@ -13328,6 +13352,7 @@
     Object.values(relMem).forEach((all) => { delete all[releaseMbid]; });
     Object.assign(S, { aboutStash: null, workGroupsStash: null, freshRows: null, rememberReady: false });
     S.aboutOff = false;
+    S.notesOff = false;
     Object.assign(S, { worksSkip: false, worksFolded: false });
     S.srcOff = new Set();
     S.mediaSel = null;
@@ -14209,7 +14234,7 @@
    * Discogs's entry (its link). Marked `fromNotes`. [3.30.9] Also the label of "℗ / © Name Year" (only the signs named).
    */
   function addNotesCompanies(rel) {
-    if (!ruleOn('S042') || !rel || !String(rel.notes || '').trim()) return;
+    if (!(ruleOn('S042') || ruleOn('S054')) || !rel || !String(rel.notes || '').trim()) return;
     let res;
     try {
       // [S053] (3.36.7) the positions of the notes are Discogs's ("A1 to B2", "C1 to D" – vinyl sides), not MusicBrainz's numbers
@@ -14221,12 +14246,16 @@
     }
     // [3.30.9] also ℗ and © ("© & ℗ TUM Records Oy 2021": both; one sign: that one – item 99); [S043] (3.31.0) the
     // publishers of a block ("[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5") and the rights societies
-    const wanted = (c) => /\s(?:At)$/.test(c.role) || /^(?:Phonographic Copyright \(p\)|Copyright \(c\))$/.test(c.role) || (ruleOn('S043') && (c.pubBlock || c.society));
+    // [S054] (3.37.0) every company of the notes (E5: "alle informationen die sonst noch nicht per relationships vorhanden sind") – with
+    // a plain name: what a track list of the notes leaves of a name ("Pub Co (1" of "Published by Pub Co (1, 3); Ghostpub (4)") is
+    // no name (S022 reads those lines)
+    const known = (c) => /\s(?:At)$/.test(c.role) || /^(?:Phonographic Copyright \(p\)|Copyright \(c\))$/.test(c.role) || (ruleOn('S043') && (c.pubBlock || c.society));
+    const wanted = (c) => known(c) || (ruleOn('S054') && plainNotesName(c.who.name));
     const added = [];
     const joined = [];
     const joinedOther = [];
     const someTracks = (t) => !!(t && !t.all && (t.indexes || []).length);
-    for (const c of res.companies.filter(wanted)) {
+    for (const c of ruleOn('S042') ? res.companies.filter(wanted) : []) {
       if (!looseName(c.who.name)) continue;
       // [3.31.0] also written together or with a number as a word ("4WordSeaMusic" – Discogs: "Fourwordseamusic"; T046)
       const same = rel.companies.filter((d) => sameCompanyName(d.who.name, c.who.name));
@@ -14247,12 +14276,79 @@
       }
       const who = same.length ? same[0].who : { id: 0, name: c.who.name, rawName: c.who.rawName || c.who.name, links: [], area: c.who.area || '' };
       if (same.length) alt(same[0]);
-      rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}) });
+      rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}) });
       added.push(`${c.who.name} (${c.role})`);
     }
     if (added.length) log('info', 'notesCompanies', { n: added.length, list: added.join(', ') });
+    if (ruleOn('S054')) addNotesPersons(rel, res);
     if (joined.length) log('info', 'notesPubTracks', { list: joined.join(', ') });
     if (joinedOther.length) log('info', 'notesCompanyTracks', { list: joinedOther.join(', ') });
+  }
+
+  /** [S054] (3.37.0) A name as the notes give it, without brackets left from a track list ("Pub Co (1"); not a number only. */
+  const plainNotesName = (n) => !!n && !/[()[\]{}]/.test(n) && !/^\s*[\d\s,.–-]+\s*$/.test(n);
+
+  /**
+   * [S054] (3.37.0) The credits of people in the Discogs notes (E5; maintainer: "dann nimm E5 bitte auch in die Sammelliste auf",
+   * "gleich als Eintrag mit Transparenzhinweis", "also alle informationen die sonst noch nicht per relationships vorhanden sind
+   * sollen abgegriffen werden. (es soll sich nichts doppeln)"): read like a pasted text, each becomes a credit of the release –
+   * marked `fromNotes` with its line. Nothing twice: a credit Discogs lists already (the same name – also as credited – and a
+   * role of the same kind: "Produced by X" = "Producer", "Written by X" = "Written-By"; an instrument the same) is left out, and
+   * when Discogs gives it for the whole release and the notes name tracks, Discogs's credit gets those (set, ⓘ shows the line);
+   * the same name with another role joins Discogs's entry; a new name is an entry of its own, searched by its name. What
+   * MusicBrainz has already is skipped at the import as always.
+   */
+  function addNotesPersons(rel, res) {
+    const someTracks = (t) => !!(t && !t.all && (t.indexes || []).length);
+    const kindOf = (x) => {
+      const p = parseRoleNotation(x.role)[0] || { base: x.role, mods: [] };
+      const m = mapRole(x.base || p.base, x.details && x.details.length ? x.details : p.mods);
+      return { type: (m.types || [])[0] || '', flags: [...(m.flags || [])].sort().join(','), prim: (m.primaryCands || [])[0] || '' };
+    };
+    // the same kind of role: the same first type, the same attributes ("Executive Producer" is no "Producer") and the same
+    // instrument or voice ("Instruments" is no "Piano", "Lyrics By" no "Music By")
+    const sameKind = (x, y) => {
+      const a = kindOf(x);
+      const b = kindOf(y);
+      return !!a.type && a.type === b.type && a.flags === b.flags && a.prim === b.prim;
+    };
+    const names = (d) => [d.who.name, d.who.rawName, d.credited].map((n) => looseName(n)).filter(Boolean);
+    const added = [];
+    const tracksTo = [];
+    const joinLine = (a, b) => (a && a !== b ? `${a} / ${b}` : b);
+    // the tracks of two lines together; one for the whole release: the whole release
+    const joinTracks = (a, b) => (!someTracks(a) || !someTracks(b) ? null : { ...a, indexes: uniq([...a.indexes, ...b.indexes]) });
+    // [3.37.0] a company of the release ("Mastered At – Sterling Sound") is no person of the notes ("Mastered by Sterling Sound")
+    const companyNames = new Set((rel.companies || []).map((d) => looseName(d.who.name)).filter(Boolean));
+    for (const c of res.credits || []) {
+      const k = looseName(c.who.name);
+      // a credit without a name (the band, "a human") is not taken from the notes, nor what a track list leaves of one
+      if (!k || c.who.placeholder || !plainNotesName(c.who.name) || companyNames.has(k)) continue;
+      const same = (rel.credits || []).filter((d) => !d.fromNotes && names(d).includes(k));
+      const twin = same.find((d) => sameKind(d, c));
+      if (twin) {
+        // Discogs's credit for the whole release: the tracks of the notes (of all its lines – "Produced by X (1-3)", "… (7-9)")
+        if (someTracks(c.tracks) && (!someTracks(twin.tracks) || twin.notesLine)) {
+          twin.tracks = someTracks(twin.tracks) ? joinTracks(twin.tracks, c.tracks) : c.tracks;
+          twin.notesIdx = uniq([...(twin.notesIdx || []), ...c.tracks.indexes]);
+          twin.notesLine = joinLine(twin.notesLine, c.line);
+          tracksTo.push(`${twin.who.name} – ${twin.role} (${trackListLabel(new Set(c.tracks.indexes))})`);
+        }
+        continue;
+      }
+      // the same credit in two lines of the notes: one, with the tracks of both
+      const again = (rel.credits || []).find((d) => d.fromNotes && looseName(d.who.name) === k && sameKind(d, c));
+      if (again) {
+        again.tracks = joinTracks(again.tracks, c.tracks);
+        again.notesLine = joinLine(again.notesLine, c.line);
+        continue;
+      }
+      const who = same.length ? same[0].who : { id: 0, name: c.who.name, rawName: c.who.rawName || c.who.name, links: c.who.links || [] };
+      rel.credits.push({ ...c, who, fromNotes: true, notesLine: c.line });
+      added.push(`${c.who.name} (${c.role})`);
+    }
+    if (added.length) log('info', 'notesCredits', { n: added.length, list: added.join(', ') });
+    if (tracksTo.length) log('info', 'notesCreditTracks', { list: tracksTo.join(', ') });
   }
 
   /**
@@ -14724,6 +14820,7 @@
           key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending',
           ...(g.placeholder ? { placeholder: g.placeholder, releaseMbid: g.releaseMbid } : {}),
           ...(g.pageOf ? { pageOf: g.pageOf } : {}),
+          ...(g.fromNotes ? { fromNotes: true } : {}),
           mbid: null, mbName: '', candidates: [], editing: false, error: '',
           anvs: uniq([...g.roles.values()].map((c) => c.anv).filter(Boolean)),
         };
@@ -14745,6 +14842,8 @@
             continue;
           }
           if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
+          // [S054] (3.37.0) a credit from the Discogs notes (its line shown at the row)
+          if (c.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: c.notesLine || '' });
           if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
           row.dSpec = c.specs.join(', ');
           row.dPositions = c.positions;
@@ -14759,6 +14858,11 @@
           if (S.mediaSel && !c.allTracks && c.indexes.size && !suggested.length) continue;
           row.suggested = new Set(suggested);
           row.tracks = new Set(suggested);
+          // [S054] (3.37.0) Discogs's credit for the whole release, its tracks from the notes: set, ⓘ shows the line
+          if (c.notesLine && !c.fromNotes && !c.allTracks && suggested.length) {
+            const fromNotesIdx = (c.notesIdx || []).filter((i) => suggested.includes(i));
+            if (fromNotesIdx.length) Object.assign(row, { notesTracks: new Set(fromNotesIdx), notesFrom: c.notesLine });
+          }
           // A producer role meant for the release stays on the recordings Discogs names it for.
           if (row.level === 'release' && !c.allTracks && suggested.length && row.types.includes('producer')) {
             row.level = 'recording';
@@ -14784,6 +14888,8 @@
         for (const r of g.roles) {
           const row = makeRow(company.key, { raw: r.role, company });
           if (r.fromAbout) row.fromAbout = true;
+          // [S054] (3.37.0) a company from the Discogs notes (S042): its line shown at the row, left out with the notes
+          if (r.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: r.line || '' });
           if (r.typos) row.typos = r.typos; // [S050] (3.32.5)
           row.srcRefs = r.refs || []; // [3.17.0]
           // [S026] a place or company for a medium the release does not have ("Lacquer Cut At", the studio of a vinyl mastering)
@@ -14826,6 +14932,8 @@
       if (leftOutKeys.size) renderSource();
       // [3.16.1] "about" text left out for this release: its rows hidden at once
       if (S.aboutOff) setAboutRowsHidden(true);
+      // [S054] (3.37.0) the credits of the Discogs notes left out for this release: their rows hidden at once
+      if (S.notesOff) setNotesRowsHidden(true);
       if (rel.liner) log('info', 'linerFound', { name: rel.liner.name }); // [3.17.2]
       // [3.17.1] credits switched off on Bandcamp ([3.17.5] or Discogs) for this release: their rows on "Skip" at once
       if (S.source.companion && S.srcOff.size) {
@@ -15891,6 +15999,7 @@
         ${item('srcorder-toggle', `${S.srcOrderOpen ? '▾' : '▸'} ${esc(tr('srcorder.toggle'))}`, `aria-expanded="${S.srcOrderOpen}"`)}
         ${item('bc-toggle', `${S.bcOpen ? '▾' : '▸'} Bandcamp`, `aria-expanded="${S.bcOpen}"`)}
         ${rel && rel.aboutAt != null ? `<label class="dci-check dci-menuitem" title="${esc(tr('about.offTitle'))}"><input type="checkbox" data-f="about-off" ${S.aboutOff ? 'checked' : ''}> ${esc(tr('about.off'))}</label>` : ''}
+        ${S.source === DISCOGS && (S.notesOff || S.rows.some((r) => r.fromNotes)) ? `<label class="dci-check dci-menuitem" title="${esc(tr('notes.offTitle'))}"><input type="checkbox" data-f="notes-off" ${S.notesOff ? 'checked' : ''}> ${esc(tr('notes.off'))}</label>` : ''}
         ${item('forget-open', esc(tr('forget.button')), `aria-expanded="${!!S.forgetOpen}"`, tr('forget.title'))}
       </div>`;
     const suppOpen = suppIsOpen();
@@ -16750,11 +16859,14 @@
       <button type="button" class="dci-textbtn dci-em-detail" data-act="em-detail" aria-expanded="${open}" title="${esc(tr('em.detailTitle'))}">${open ? '▾' : '▸'} ${esc(tr('em.detail'))}</button>
       <button type="button" class="dci-iconbtn" data-act="em-remove" title="${esc(tr('em.remove'))}" aria-label="${esc(tr('em.remove'))}">✕</button></td>`;
     const ask = skip ? '' : lineAskHtml(l);
+    // [S054] (3.37.0) a line from the Discogs notes: ⓘ with its line
+    const nLines = uniq(l.rows.filter((x) => x.fromNotes && x.notesCredit).map((x) => x.notesCredit));
+    const notesInfo = nLines.length ? ` <span class="dci-info dci-notesline" title="${esc(nLines.map((t) => tr('notes.creditLine', { text: t })).join('\n'))}">ⓘ</span>` : '';
     // [AE-2] (3.35.3) ⠿ drags the line to another place in its block (Alt+↑ / Alt+↓ too)
     const grip = b.lines.length > 1 ? `<button type="button" class="dci-em-grip" data-drag="em-line" data-id="${esc(l.id)}" data-block="${esc(b.key)}" draggable="true"
       title="${esc(tr('em.gripTitle'))}" aria-label="${esc(tr('em.gripLabel', { name }))}">⠿</button>` : '';
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
-        <td class="dci-em-c-role">${grip}${role}</td><td class="dci-em-c-credit">${credit}</td>${flags}${ticks}${b.others.length ? '<td></td>' : ''}${tools}
+        <td class="dci-em-c-role">${grip}${role}${notesInfo}</td><td class="dci-em-c-credit">${credit}</td>${flags}${ticks}${b.others.length ? '<td></td>' : ''}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
   }
@@ -17119,7 +17231,7 @@
     // skipped with the works matrix only with the setting (on)
     const rows = allRows.filter((r) => inEntry(r) && !r.s046Out && (S.mxSkipRows || !r.mxSkipped));
     const mxHidden = allRows.filter((r) => r.mxSkipped && !S.mxSkipRows).length;
-    const hidden = rows.length && rows.every((r) => r.aboutHidden) ? ' dci-about-hidden' : '';
+    const hidden = rows.length && rows.every((r) => r.aboutHidden || r.notesHidden) ? ' dci-about-hidden' : '';
     // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again)
     const sourceLink = a.dId && (a.links || [])[0]
       ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle')}: ${a.rawName || a.name}`)}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
@@ -17208,6 +17320,8 @@
   S.cropOpen = new Set();
 
   /** [3.31.6] Tracks set from the notes: ⓘ with the line they come from (item 97c). */
+  /** [S054] (3.37.0) ⓘ with the line of the Discogs notes a row comes from (the transparency note; maintainer: "gleich als Eintrag mit Transparenzhinweis"). */
+  const notesLineInfo = (row) => (row.notesCredit ? `<span class="dci-info dci-notesline" title="${esc(tr('notes.creditLine', { text: row.notesCredit }))}">ⓘ</span>` : '');
   const notesFromHtml = (row) => (row.notesFrom ? `<div class="dci-sub dci-notesfrom"><span class="dci-info" title="${esc(tr('matrix.notesFrom', { text: row.notesFrom }))}">ⓘ</span> ${esc(tr('role.notesTracks', { list: trackListLabel(row.notesTracks || new Set()) }))}</div>` : '');
 
   /** [S050] (3.32.5) A role read with its typos corrected: what was written (collected item 115). */
@@ -17227,7 +17341,7 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}${typoHtml(row)}
-        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr(row.notesFrom ? ((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.notesOnly' : 'role.companyNotesTracks') : (S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
+        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr(row.notesFrom ? ((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.notesOnly' : 'role.companyNotesTracks') : (S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))}${row.fromNotes && !row.notesFrom ? ` ${notesLineInfo(row)}` : ''} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec && !(row.dSpecTracks && row.notesFrom) ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
@@ -17238,7 +17352,8 @@
     return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}${typoHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
-      <div class="dci-sub">${esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
+      <div class="dci-sub">${row.fromNotes ? `${notesLineInfo(row)} ${esc(tr('notes.credit'))}${where.length ? ` (${esc(where.join('; '))})` : ''}`
+    : esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
         ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
       <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
@@ -17966,6 +18081,40 @@
       }
     }
     return n;
+  }
+
+  /**
+   * [S054] (3.37.0) The rows of credits from the Discogs notes hidden (on "Skip", the level before kept) or shown again as they
+   * were (maintainer: "vielleicht auch noch bei der quelle (falls discogs import) ein quick switch?").
+   */
+  function setNotesRowsHidden(hide) {
+    let n = 0;
+    for (const r of S.rows) {
+      if (!r.fromNotes) continue;
+      if (hide && !r.notesHidden) {
+        Object.assign(r, { notesHidden: true, notesLevel: r.level, level: 'skip' });
+        n++;
+      } else if (!hide && r.notesHidden) {
+        r.level = r.notesLevel || r.level;
+        delete r.notesHidden;
+        delete r.notesLevel;
+        if (S.worksSkip && r.level === 'work') Object.assign(r, { level: 'skip', mxSkipped: true });
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /** [S054] (3.37.0) The credits of the Discogs notes left out for this release, or taken in again (stored for it). */
+  function setNotesOff(off) {
+    S.notesOff = off;
+    const rows = setNotesRowsHidden(off);
+    relWrite(NOTES_OFF_KEY, off || null);
+    log('info', off ? 'notesOff' : 'notesOn', { rows });
+    renderSource();
+    renderGroups();
+    renderWorks();
+    refresh();
   }
 
   /**
@@ -19594,7 +19743,7 @@
     // [3.27.0] the compact line (shown in the compact view while the row is closed) and, there, "▴" to close it again
     const rowOpen = S.rowOpen.has(row.id) ? ' dci-open' : '';
     return `
-      <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
+      <tr class="dci-row dci-lv-${row.level}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden || row.notesHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
         <td class="dci-c-cline">${clineHtml(row, S.rowInfo && S.rowInfo.get(row.id))}</td>
         <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}</td>
         <td class="dci-c-type"><div class="dci-cap">${esc(tr('th.type'))}</div>${typeCell(row)}</td>
@@ -21574,7 +21723,8 @@
       // Credits Discogs gives on these tracks already (track credits) are left alone
       const open = target.filter((r) => !((r.dPositions || []).length && [...tracks].every((i) => (r.suggested || new Set()).has(i))));
       if (!open.length) {
-        log('info', 'notesTracksPool', { name: f.name, list: trackListLabel(tracks) });
+        // [S054] (3.37.0) a credit of the notes is an entry already (its row has the tracks): no word about a track group
+        if (!S.rows.some((r) => r.artistKey === a.key && (r.fromNotes || r.notesFrom) && [...tracks].every((i) => r.tracks.has(i)))) log('info', 'notesTracksPool', { name: f.name, list: trackListLabel(tracks) });
         continue;
       }
       // [3.31.6] the tracks of the notes are set, not suggested; ⓘ at the row and in the column shows the line (collected
@@ -22008,6 +22158,7 @@
         delete r.mxSkipped;
         if (r.srcOff) r.srcOffLevel = 'work';
         else if (r.aboutHidden) r.aboutLevel = 'work';
+        else if (r.notesHidden) r.notesLevel = 'work';
         else if (r.level === 'skip') {
           r.level = 'work';
           resolveRowType(r);
@@ -23096,6 +23247,8 @@
               refs: refs.map((r) => ({ page: r.page, line: r.line, part: r.part, pi: r.pi, n: r.n, ...(r.pos ? { pos: r.pos, ...ofTrack(r.pos) } : { status }) })) });
             continue;
           }
+          // [S054] (3.37.0) a credit from the notes is no line of Discogs's credits (its mark would land on another role of the name)
+          if (row.fromNotes) continue;
           // Credits on Discogs track lines: a status for each line (each track), with its targets for the release page
           let byPos = null;
           if ((row.dPositions || []).length && row.level !== 'skip') byPos = row.dPositions.map((pos) => ({ pos, ...ofTrack(pos) }));
@@ -25471,6 +25624,10 @@
       setAboutOff(el.checked);
       return;
     }
+    if (f === 'notes-off') {
+      setNotesOff(el.checked);
+      return;
+    }
     if (f === 'work-groups-pool') {
       // [145b] (3.35.6) for this import: the works as track groups, or not
       S.workGroupsOff = !el.checked;
@@ -26693,6 +26850,8 @@
         // [3.32.5] typos in role words (S050, collected item 115: "an/ausschaltbar in den einstellungen") – the rule's switch
         // [3.32.6] the credits of Bandcamp's "about" text (S049, collected item 115)
         row(check('data-set="rule-on" data-rule="S049"', ruleOn('S049'), tr('settings.aboutCredits'), tr('settings.aboutCreditsTitle'))),
+        // [3.37.0] the credits of the Discogs notes (S054, E5; maintainer: "ja bitte mit schalter")
+        row(check('data-set="rule-on" data-rule="S054"', ruleOn('S054'), tr('settings.notesCredits'), tr('settings.notesCreditsTitle'))),
         row(check('data-set="rule-on" data-rule="S050"', ruleOn('S050'), tr('settings.typos'), tr('settings.typosTitle'))),
         `<p class="dci-sub">${esc(tr('settings.textsHint'))} <button type="button" class="dci-textbtn" data-act="rules">${esc(tr('rules.title'))}</button></p>`,
       ],
@@ -27146,7 +27305,7 @@
       // [3.25.0] the web links next to names moved here from "Sources"
       S.webLinksShow = false;
       // [3.32.5] the rules switched here, on again
-      ['S049', 'S050'].forEach((id) => setRuleOn(id, true));
+      ['S049', 'S050', 'S054'].forEach((id) => setRuleOn(id, true));
       saveRules();
       renderRulesBody();
       renderGroups();
@@ -27371,6 +27530,7 @@
    * translations. After an update the page bar shows those since the version last seen.
    */
   const MILESTONES = [
+    { v: '3.37.0', label: 'Credits Importer 3.37.0' },
     { v: '3.36.0', label: 'Credits Importer 3.36.0' },
     { v: '3.35.0', label: 'Credits Importer 3.35.0' },
     { v: '3.34.0', label: 'Credits Importer 3.34.0' },

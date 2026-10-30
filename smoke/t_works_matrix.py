@@ -10,7 +10,9 @@ def case_mxdrop():
     the tracks in the column of Pub Co (ahead of the personal publisher evidence, which gives 1, 2; [3.31.6] set, not
     suggested – ⓘ in the head and in the cells' titles names the line, item 97c); "Ghostpub (4)" matches "Ghost Pub"
     (spaces); "Written by Writer W (1, 2)" is in the Discogs track credits already (no change); "Strings arranged by
-    Nobody Here (4)" is no entry (only the track group). A click on a cell takes a track out.
+    Nobody Here (4)" is no entry (only the track group) – [3.37.0] (E5, S054) the notes read in full: Nobody Here is an entry from them,
+    the strings arranger of tracks 2 and 4 (its column), and nothing of the track lists becomes a name ("Pub Co (1"). A click on a
+    cell takes a track out.
     Dropped (S023): onto a column head – all its roles only for the group's tracks; Shift adds; onto a role – only
     that role; onto an attribute in the head of the track column – the links of the group's tracks (MB's own stay)."""
     import re
@@ -65,7 +67,8 @@ def case_mxdrop():
         ok_a = c0.get('Pub Co') == ['1', '3'] and c0.get('Ghost Pub') == ['4'] and c0.get('Writer W') == ['1', '2'] \
             and info == 'Tracks from the Discogs notes: “Published by Pub Co (1, 3)”' and 'from the notes: “Published by Pub Co (1, 3)”' in ctitle \
             and any('Pub Co · 1, 3' in x for x in pool()) and any('Ghostpub · 4' in x for x in pool()) and any('Nobody Here · 2, 4' in x for x in pool()) \
-            and any('Nobody Here' in x and 'only a track group' in x for x in logs) and any('Writer W' in x and 'only a track group' in x for x in logs)
+            and any('Writer W' in x and 'only a track group' in x for x in logs) \
+            and c0.get('Nobody Here') == ['2', '4'] and any('Nobody Here (arranger) on tracks 2, 4' in x for x in logs) and not any('(' in k for k in c0)
         pg.click(f'{cell("Pub Co", 3)} [data-act=mx-cell]'); pg.wait_for_timeout(200)
         c1 = cols()
         print('A2) Track 3 weggeklickt:', c1.get('Pub Co'))

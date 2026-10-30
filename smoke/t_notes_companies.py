@@ -1,6 +1,6 @@
 """Discogs notes: places, ℗ / © and publishers named in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: discnotes, pcline, publishers, personpub, placesearch, facets (3.36.7) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
+Cases: discnotes, pcline, publishers, personpub, placesearch, facets (3.36.7), notescredits (3.37.0) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -582,6 +582,112 @@ E1 to F2 recorded 2nd May 1980 at Heiman Recording Studios, London"""
   .flatMap(g => [...g.querySelectorAll('tr.dci-row')]).map(r => [(r.querySelector('.dci-drole') || {}).textContent, ((r.textContent.match(/(\\d+) of 13 tracks/) || [])[1] || '')])""", 'Abbey Road Studios')
         print('D) Text:', d1)
         results.append(d1 == [['Recorded At', '2']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_notescredits():
+    """Credits Importer 3.37.0 (E5, rule S054; maintainer: "dann nimm E5 bitte auch in die Sammelliste auf", "gleich als Eintrag mit
+    Transparenzhinweis", "also alle informationen die sonst noch nicht per relationships vorhanden sind sollen abgegriffen werden. (es
+    soll sich nichts doppeln)", "ja bitte mit schalter. und vielleicht auch noch bei der quelle (falls discogs import) ein quick
+    switch?"). The Discogs notes read in full:
+    A) New names an entry each – Ann Blow (saxophone, track 3), Jane Notes (liner notes), Nobody Here (strings arranged, 2, 4) –,
+       a new role of a Discogs name a row of its entry (Bass Man: backing vocals), each "From the Discogs notes" with ⓘ and the
+       line; nothing twice: Bob Producer ("Produced by" = "Produced By" – its two lines give it tracks 1 and 3, ⓘ), Bass Man's bass,
+       Abbey Road Studios ("Recorded … at"; "Mastered by Abbey Road Studios" is no person); "Executive producer: Bob Producer" is a
+       role of its own (3.37.0, after a review: the kinds of roles compared strictly); Guitar Guy's guitar (whole release on Discogs)
+       gets the tracks of the notes (1, 3; ⓘ). The log names them.
+    B) Source ▾ "Leave out the credits of the notes": their rows hidden (also the entries made of them), stored for the release;
+       ticked off: back with what was changed in them.
+    C) ⚙ Settings → Texts "Discogs: read the credits in the notes" off (the rule S054) and imported again: none of them, Guitar Guy
+       on all tracks; on again: back."""
+    import json
+    NOTES = """Recorded March 1–3, 2001 at Abbey Road Studios.
+Strings arranged by Nobody Here (2, 4).
+Produced by Bob Producer (1).
+Produced by Bob Producer (3).
+Executive producer: Bob Producer
+Mastered by Abbey Road Studios
+Bass Man – bass, backing vocals
+Guitar Guy – guitar (tracks 1, 3)
+Saxophone: Ann Blow (3)
+Liner notes by Jane Notes"""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        return d
+
+    H.discogs_release = rel
+    GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].filter(g => !g.classList.contains('dci-about-hidden')).map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+  [...g.querySelectorAll('tr.dci-row')].filter(r => !r.classList.contains('dci-about-hidden')).map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(), (r.textContent.match(/(\\d+) of 4 tracks/) || [])[1] || '',
+    ((r.querySelector('.dci-notesline') || {}).title || '').replace(/^From the Discogs notes: /, ''), /From the Discogs notes/.test(r.textContent),
+    ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim()])]))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def load():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+        load()
+        g = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'notes' in x.lower()]
+        print('A)', json.dumps({k: g.get(k) for k in ('Ann Blow', 'Jane Notes', 'Nobody Here', 'Bass Man', 'Guitar Guy', 'Bob Producer', 'Abbey Road Studios')}, ensure_ascii=False))
+        print('   Protokoll:', logs)
+        ok_a = (g.get('Ann Blow') == [['Saxophone', '1', '“Saxophone: Ann Blow (3)”', True, '']]
+                and g.get('Jane Notes') == [['Liner notes', '', '“Liner notes by Jane Notes”', True, '']]
+                and 'Nobody Here' in g
+                and [r[0] for r in g.get('Bass Man', [])] == ['Bass', 'backing vocals'] and g['Bass Man'][1][3] and not g['Bass Man'][0][3]
+                and g.get('Guitar Guy') == [['Guitar', '2', '', False, 'ⓘ Tracks 1, 3 from the notes']]
+                and g.get('Bob Producer') == [['Produced By', '2', '', False, 'ⓘ Tracks 1, 3 from the notes'],
+                                              ['Executive producer', '', '“Executive producer: Bob Producer”', True, '']]
+                and [r[0] for r in g.get('Abbey Road Studios', [])] == ['Recorded At']
+                and any('credits not listed by Discogs (5)' in x and 'Ann Blow (Saxophone)' in x for x in logs)
+                and any('Guitar Guy – Guitar (1, 3)' in x for x in logs) and not any('Ann Blow' in x and 'only a track group' in x for x in logs))
+        results.append(ok_a)
+        # B) left out for this release, from the menu Source ▾
+        H.src_menu(pg, None)
+        box = pg.locator('[data-f=notes-off]')
+        has = box.count()
+        if has:
+            box.check()
+            pg.wait_for_timeout(500)
+        b1 = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        stored = pg.evaluate(f"localStorage.getItem('dci-notes-off:{H.REL}')")
+        H.src_menu(pg, None)
+        pg.locator('[data-f=notes-off]').uncheck()
+        pg.wait_for_timeout(500)
+        b2 = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        print('B) Menü:', has, '| aus:', sorted(b1), '| Bass Man:', [r[0] for r in b1.get('Bass Man', [])], '| gespeichert:', stored, '| wieder:', 'Ann Blow' in b2, [r[0] for r in b2.get('Bass Man', [])])
+        results.append(has == 1 and 'Ann Blow' not in b1 and 'Jane Notes' not in b1 and [r[0] for r in b1.get('Bass Man', [])] == ['Bass'] and stored == 'true'
+                       and 'Ann Blow' in b2 and [r[0] for r in b2.get('Bass Man', [])] == ['Bass', 'backing vocals'])
+        # C) the rule off in the settings, imported again
+        H.open_settings(pg, 'texts')
+        pg.uncheck('[data-el=settings] [data-set=rule-on][data-rule=S054]')
+        pg.wait_for_timeout(300)
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        load()
+        c1 = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        H.open_settings(pg, 'texts')
+        pg.check('[data-el=settings] [data-set=rule-on][data-rule=S054]')
+        pg.wait_for_timeout(300)
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        load()
+        c2 = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        print('C) Regel aus:', sorted(c1), '| Guitar Guy:', c1.get('Guitar Guy'), '| wieder an:', 'Ann Blow' in c2)
+        results.append('Ann Blow' not in c1 and 'Jane Notes' not in c1 and [r[0] for r in c1.get('Bass Man', [])] == ['Bass'] and c1.get('Guitar Guy', [[0, '']])[0][1] == '4'
+                       and 'Ann Blow' in c2)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
