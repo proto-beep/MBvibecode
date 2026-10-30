@@ -1,6 +1,6 @@
 """Discogs notes: places, ℗ / © and publishers named in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: discnotes, pcline, publishers, personpub, placesearch, facets (3.36.7), notescredits (3.37.0), linkedsugg (3.37.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
+Cases: discnotes, pcline, publishers, personpub, placesearch, facets (3.36.7), notescredits (3.37.0), linkedsugg (3.37.1), festival (3.37.8), pcperson (3.37.10) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -736,6 +736,167 @@ def case_linkedsugg():
                        and links == [f'/artist/{ANN}'])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_festival():
+    """Credits Importer 3.37.8: "Recorded June, 26, 1993 at the Western Front Lodge, Vancouver, B.C., Canada during the du Maurier,
+    Ltd. International Jazz Festival Vancouver" as on Discogs 1565448 "Cascades" (collected item 158; maintainer: "aus "Recorded
+    June, 26, 1993" wird nur 1993 als Datum ausgegeben", "aus texteinträgen kann bei freitext und dann auch discogs text zumindest
+    ein hinweis ausgegeben werden …", "vielleicht dann wirklich nur bei festivals, wo der name passt und die sich im Zeitraum (Date
+    period) befinden. und immer nur als angebot, nie vorbelegt.", "also brauchen wir dafür auch eine farbe").
+    A) The date 1993-06-26 (until 3.37.7: 1993); the place from the notes "Western Front Lodge" (Vancouver) – without "the".
+    B) Above the entries: "Festival recording: “International Jazz Festival Vancouver” (1993-06-26). MusicBrainz prefers the event
+       to the place …"; offered: the event of that name whose time holds the date (1993-06-25 – 1993-07-04) – not the one of
+       1994 –, nothing set (no entry of it).
+    C) Its button: the event an entry, in the colour of events (plum); the button greyed out; the log says so. ⚙ Appearance has
+       the colour "Event".
+    D) A pasted text "Recorded live at the Montreux Jazz Festival." (no date): the hint without events; "the Royal Festival Hall"
+       (a place) gives none."""
+    NOTES = ('Recorded June, 26, 1993 at the Western Front Lodge, Vancouver, B.C., Canada during the du Maurier, Ltd. International Jazz Festival Vancouver.')
+    E1, E2 = H.uid('fefefefe', 1), H.uid('fefefefe', 2)
+    H.MB_SEARCH['event'] = [{'id': E1, 'name': 'du Maurier Ltd. International Jazz Festival Vancouver 1993', 'disambiguation': '', 'type': 'Festival',
+                             'life-span': {'begin': '1993-06-25', 'end': '1993-07-04'}},
+                            {'id': E2, 'name': 'International Jazz Festival Vancouver 1994', 'disambiguation': '', 'type': 'Festival',
+                             'life-span': {'begin': '1994-06-24', 'end': '1994-07-03'}}]
+    H.COMPANIES[1030] = ('event', E1, 'du Maurier Ltd. International Jazz Festival Vancouver 1993')
+    H.lt(9001, H.uid('9e9e9e9e', 1), 'recorded at', 'event', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        return d
+
+    H.discogs_release = rel
+    FEST = """(() => { const f = document.querySelector('.dci-festival'); return f ? { text: f.querySelector('p').textContent.replace(/\\s+/g, ' ').trim(), n: f.querySelectorAll('p').length,
+      offers: [...f.querySelectorAll('[data-act=festival-add]')].map(b => [b.textContent.trim(), b.disabled]) } : null; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_for(pg, "!!document.querySelector('.dci-festival [data-act=festival-add]')", 20)
+        pool = [(d['begin'], d.get('found')) for d in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")]
+        names = pg.evaluate("[...document.querySelectorAll('section.dci-group')].map(g => g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim())")
+        print('A) Pool:', pool, '| Einträge:', names)
+        results.append(pool == [({'year': 1993, 'month': 6, 'day': 26}, 'notes:0')] and any(n.startswith('PlaceWestern Front Lodge (Vancouver)') for n in names)
+                       and not any('the Western' in n for n in names))
+        f = pg.evaluate(FEST)
+        print('B)', f)
+        results.append(bool(f) and f['text'].startswith('Festival recording: “International Jazz Festival Vancouver” (1993-06-26). MusicBrainz prefers the event to the place')
+                       and f['offers'] == [['+ du Maurier Ltd. International Jazz Festival Vancouver 1993 (1993-06-25 – 1993-07-04)', False]]
+                       and not any('du Maurier' in n for n in names))
+        pg.click('.dci-festival [data-act=festival-add]')
+        H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(g => /du Maurier/.test(g.textContent))", 20)
+        pg.wait_for_timeout(300)
+        ev = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /du Maurier/.test(x.querySelector('.dci-gname').textContent));
+          return g ? [g.classList.contains('dci-kind-event'), getComputedStyle(g).borderLeftColor] : null; })()""")
+        f2 = pg.evaluate(FEST)
+        logs = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Event added|Festival recording/.test(t))")
+        H.open_settings(pg, 'appearance')
+        kinds = pg.evaluate("[...document.querySelectorAll('[data-el=settings] [data-set=kind-color]')].map(i => [i.dataset.kind, i.value])")
+        print('C) Eintrag:', ev, '| Knopf:', f2 and f2['offers'], '| Protokoll:', logs, '| Farben:', kinds)
+        results.append(ev == [True, 'rgb(138, 79, 125)'] and f2 and f2['offers'][0][1] is True and any('Event added' in t for t in logs)
+                       and ['event', '#8a4f7d'] in kinds)
+        H.open_settings(pg)
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        # D) a pasted text without a date
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Recorded live at the Montreux Jazz Festival.\nMixed at the Royal Festival Hall, London.')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "(() => { const f = document.querySelector('.dci-festival'); return !!f && /Montreux/.test(f.textContent); })()", 40)
+        d = pg.evaluate(FEST)
+        print('D)', d)
+        results.append(bool(d) and d['text'] == 'Festival recording: “Montreux Jazz Festival”. MusicBrainz prefers the event to the place – the event is linked to its place. Add the event with its MBID (“Add entry manually”).'
+                       and d['offers'] == [] and d['n'] == 1)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_pcperson():
+    """Credits Importer 3.37.10: ℗ / © of a person Discogs lists as a label (collected item 160, S057; maintainer: "… soll der an
+    anderer Stelle verknüpfte Martin Davidson auf artist ebene für die Copyrights eingetragen werden mit hinweis darauf, dass
+    Discogs das als label führt und das hier ein vorschlag aus anderen Discogs relationships ist.", "primär bei treffer im release,
+    ansonsten vorschläge. wenn MB ein Label gleichen namens hat muss das auch in die auswahl. dass es sich label oder artist handelt
+    muss in solchen seltenen fällen erkennbar sein.").
+    A) "Copyright © – Martin Davidson", "Phonographic Copyright ℗ – Martin Davidson" (Discogs label 294844, MusicBrainz has no label
+       with its link) and "Producer – Martin Davidson" (Discogs artist): one entry Martin Davidson – his producer row and both ℗ / ©
+       rows as an artist, each saying "Discogs lists it as a label (“Martin Davidson”) – here the artist of the same name of this
+       release (Producer); a suggestion"; no label entry; the log says so.
+    B) "As the label instead": both rows back in a label entry Martin Davidson.
+    C) No producer credit, MusicBrainz links an artist Martin Davidson to this release: the label entry has that artist as its
+       entity (an artist now), with the hint.
+    D) Neither: the label entry's suggestions – the artist and the label of that name, each named as such."""
+    MD_A, MD_L = H.uid('dddddddd', 293), H.uid('eeeeeeee', 294)
+    mode = {'producer': True}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['companies'] += [{'name': 'Martin Davidson', 'entity_type_name': 'Copyright (c)', 'id': 294844, 'catno': ''},
+                           {'name': 'Martin Davidson', 'entity_type_name': 'Phonographic Copyright (p)', 'id': 294844, 'catno': ''}]
+        if mode['producer']:
+            d['extraartists'].append({'name': 'Martin Davidson', 'anv': '', 'role': 'Producer', 'tracks': '', 'id': 293824, 'join': ''})
+        return d
+
+    H.discogs_release = rel
+    ENTRY = """(name) => [...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim() === name)
+      .map(g => [(g.querySelector('.dci-kind-tag') || {}).textContent, [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(),
+        ((r.querySelector('.dci-pcfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim()]),
+        [...g.querySelectorAll('.dci-suggbtn[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()), g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ')])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for run in ('A', 'C', 'D'):
+            mode['producer'] = run == 'A'
+            H.MB_EXTRA.pop(H.REL, None)
+            H.MB_SEARCH.pop('artist', None)
+            H.MB_SEARCH.pop('label', None)
+            if run == 'C':
+                H.MB_EXTRA[H.REL] = [{'target-type': 'artist', 'type': 'producer', 'type-id': 'aaaaaaaa-0000-4000-8000-0000000prod', 'attributes': [],
+                                      'artist': {'id': MD_A, 'name': 'Martin Davidson'}}]
+            if run == 'D':
+                H.MB_SEARCH['artist'] = [{'id': MD_A, 'name': 'Martin Davidson', 'disambiguation': 'producer', 'score': 100}]
+                H.MB_SEARCH['label'] = [{'id': MD_L, 'name': 'Martin Davidson', 'disambiguation': '', 'score': 100}]
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            e = pg.evaluate(ENTRY, 'Martin Davidson')
+            hint = 'Discogs lists it as a label (“Martin Davidson”) – here the artist of the same name of this release'
+            if run == 'A':
+                logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if '℗ / ©' in x]
+                print('A)', e, '\n   Protokoll:', logs)
+                rows = e[0][1] if len(e) == 1 else []
+                results.append(len(e) == 1 and e[0][0] == 'Artist' and len(rows) == 3 and rows[0] == ['Producer', '']
+                               and all(r[1].startswith(f'{hint} (Producer); a suggestion') for r in rows[1:]) and any('given to the artist' in x for x in logs))
+                pg.locator('[data-act=pc-as-label]').first.click()
+                pg.wait_for_timeout(500)
+                e2 = pg.evaluate(ENTRY, 'Martin Davidson')
+                print('B)', e2)
+                results.append(len(e2) == 2 and sorted(x[0] for x in e2) == ['Artist', 'Label']
+                               and [len(x[1]) for x in e2 if x[0] == 'Label'] == [2] and all(r[1] == '' for x in e2 for r in x[1]))
+            elif run == 'C':
+                print('C)', e)
+                results.append(len(e) == 1 and len(e[0][1]) == 2 and all(r[1].startswith(hint) for r in e[0][1]) and 'Martin Davidson' in e[0][3])
+            else:
+                print('D)', e)
+                results.append(len(e) == 1 and sorted(e[0][2]) == ['Martin Davidson (producer) – artist', 'Martin Davidson – label'] and all(r[1] == '' for r in e[0][1]))
+            print('Fehler:', errs)
+            results.append(not errs)
+            pg.close()
+            ctx.close()
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

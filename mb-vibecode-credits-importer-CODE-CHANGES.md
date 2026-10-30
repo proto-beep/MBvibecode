@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.37.6, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.37.12, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,67 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.37.12 · 2026-10-30
+
+A period of the matrix or the pool split into its days (162).
+
+- **New** `splittable(d)` (2 – 31 single days, `singleDaysOf`), **`periodMenuHtml(c)`** (a cell without `lcdOf` whose entry is such a period: ▾ `dm-lcd-menu`, the options `data-act="dm-period"` – `single`: a cell per day with the cell's track groups and studios; `lcd`: `commonDate` through `poolDateFor` – and `dm.periodMenu`); `matrixCellHtml` shows it where `lcdMenuHtml` does not apply. Log `dmChosen`.
+- **Date pool:** the chip of such a period has `data-act="pool-split"` (`pools.split`, `pools.splitTitle`) while one of its days is not in the pool; the click adds them (`singleDaysOf` creating them), log `dateSplit`.
+- **Texts (English only):** `dm.periodMenu`, `pools.split`, `pools.splitTitle`, `log.dateSplit`.
+- **Tests:** `t_notes_dates.py` new case `periodsplit`; `lcdmenu` B) notes the ▾ the period keeps.
+
+## Import 3.37.11 · 2026-10-30
+
+The Discogs spelling shown as the artist credit in MusicBrainz (161).
+
+- **`creditChipHtml`:** when every credit of the entry is the spelling shown in the head (`releaseSpelling`), the chip `.dci-gcredit-anv` "artist credit in MusicBrainz: …" (`group.creditedSpelling`, tooltip `group.creditedSpellingTitle`) – until 3.37.10 no chip then. **`entryNameHtml`:** the tooltip adds `group.anvStar` while the spelling is a credit.
+- **Import:** after the lookups, the log `anvCredits` with these entries ("Kenneth Ansell (Ken Ansell)").
+- **Texts (English only):** `group.creditedSpelling`, `group.creditedSpellingTitle`, `group.anvStar`, `log.anvCredits`.
+- **Tests:** `t_ui_head.py` new case `anvcredit` (the matrix view); `entryhead` B) expects the chip and the tooltip.
+
+## Import 3.37.10 · 2026-10-30
+
+℗ / © of a person Discogs lists as a label (160).
+
+- **New (S057):** `PC_TYPES`, `personCopyright(a)` (a company entry with a person's name, `personLikeName`, and only ℗ / © rows), **`mergePersonCopyrights()`** (after `resolveArtists`; Discogs entries without an MB entity): a person of the dashboard with the same name (`entryNames`, `looseName`) takes the rows (`entityType` artist, the types of `typeOptions.artist` – C001 / C002 –, `pcFromCompany`, `pcWhere` – the person's other roles –, `pcFromKey`); else an artist of `S.linked` with that name becomes the entry's MB entity (`setCompanyEntityType` artist); log `pcOfPerson`. **`pcAsLabel(row)`** (`data-act="pc-as-label"`, log `pcAsLabel`): the rows back to the label entry (`pcBack`).
+- **`suggestByName`:** such a Discogs entry is searched by its name (`pubByName`), MusicBrainz's artists of that name beside its labels (`asArtist`; the suggestions name their kind as before).
+- **Display:** `roleCell` (company rows) the note `.dci-pcfrom` with the button; `emLineHtml` ⓘ (`dci-pcfrom`) and the button; rule chip S057.
+- **Texts (English only):** `role.pcFromCompany`, `role.pcAsLabel`, `role.pcAsLabelTitle`, `log.pcOfPerson`, `log.pcAsLabel`. **Register:** S057.
+- **Tests:** `t_notes_companies.py` new case `pcperson`.
+
+## Import 3.37.9 · 2026-10-30
+
+The date group Artwork; the concert's date for its photographs (159).
+
+- **`DATE_GROUPS`:** `artwork` (Artwork; design/illustration, illustration, design, graphic design, art direction, artwork; `releaseOnly`) – a column of the matrix (`.dci-dm-grid` six columns now). **`DATE_HINTS`** (mapping file): `artwork` (cover painting / art / illustration / drawing / design, painting, illustration, drawing, artwork, Gemälde, Zeichnung, peinture, pintura; not photographs). **D016:** after such a word in its line the year after a title in quotation marks is a date (`single`), otherwise skipped as before.
+- **R078** (mapping file): also "painted by", "cover painting(s)".
+- **New:** `CONCERT_PHOTO`, `concertDate()` (the one day of the Performance cells, else of the pool's Performance dates), **`rowDateSugg(row)`** → `{ entry, title }` (the liner notes as before, `linerDateSugg`; a photography row whose role, attributes or line say concert/live: the concert's date). `dateCell` and the flags of the compact view use it; ✕ sets `dateSuggOff` too.
+- **Texts (English only):** `date.suggConcert`.
+- **Register:** D016 extended, T015/T016 show the new group and words (`register_golden.json` written anew).
+- **Tests:** `t_notes_dates.py` new case `artwork`; `t_textcorpus.py` – "Cover art: “Madison” 1988 by Albert Irvin" gives 1988 now (the artwork's year).
+
+## Import 3.37.8 · 2026-10-30
+
+Dates with a comma after the month, "the" before places, festival recordings and a colour for events (158).
+
+- **`DATE_MATCHERS`:** `${P.M},?\s+…` in D004, D006, D007 (both months), D013. **`placeOf`:** a "the" written small before a name in capitals goes.
+- **Kinds:** `KIND_PALETTE_DEFAULT.event` (#8a4f7d), `groupKindOf` (an "other" entry of an event: `event`), `columnKind`, CSS `.dci-kind-event`; text `kind.event`; `settings.kindColorsTitle` names it (English).
+- **New (S056):** `TEXT_FESTIVAL_WORDS` (mapping file, T055); `festivalName(before, word, after)` (the words in capitals and small particles around the word, up to a comma; an abbreviation such as "Ltd." ends it), `dayKey` / `lsKey`, **`findFestivals(seq)`** (after the import; each festival once, not one with a word of places; the first date of its sentence; `event?query=event:(…)` with every word, offered when the life-span overlaps the date; at most 5; log `festivalFound`), **`festivalHtml()`** (in `srcpanels`, above the lines not recognized), `data-act="festival-add"` (log `festivalAdded`). `S.festivals` reset at each import.
+- **`addEntryByMbid(mbid, roleText)`** (from `addManualEntry`, which calls it): an entry of any kind by its MBID with its row.
+- **Texts (English only):** `kind.event`, `festival.title`, `festival.hint`, `festival.hintNone`, `festival.offers`, `festival.add`, `festival.addTitle`, `log.festivalFound`, `log.festivalAdded`; `settings.kindColorsTitle` (English changed).
+- **Register:** D004 extended, T055, S056 (`register_golden.json` written anew). **Harness:** `/ws/2/event` searched like the others (`MB_SEARCH['event']`).
+- **Tests:** `t_notes_companies.py` new case `festival`; `t_ui_view.py kindcolors` expects the colour Event.
+
+## Import 3.37.7 · 2026-10-30
+
+A side alone after "Track(s)", the place after its city (157).
+
+- **`tracksInText`:** the token after a word for tracks may be a letter A–H alone (`(?![\w])`); in capitals it is the source's position, else the tracks of that side (`sideTracks`); a small letter is left out. **`trackRefsIn`** the same.
+- **`TEXT.parse`:** `SPEC_W` (positions with a letter alone) for `PREFIX` / `SUFFIX` (`NUMBERS` keeps `SPEC`: "(C)" at the end of a line is no side); `LEAD_TRACK_WORD` – a word for tracks before `LEAD_POS` (S053).
+- **`placeIn`:** the first part a place as before; else the last of 2 – 4 parts when it is a place and the parts before it an area ("Tokyo, Zojoji Hall"). **`readClause`:** "VERB <date> in …" (only dates and "on" between, `noDates`) like "VERB in …".
+- **Register:** S053, T051 extended (`register_golden.json` written anew – only these texts).
+- **Tests:** `t_notes_dates.py` new case `trackside`.
 
 ## Import 3.37.6 · 2026-10-30
 

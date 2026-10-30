@@ -610,7 +610,8 @@ def case_kindcolors():
        "Label"; the cells stay neutral.
     B) ⚙ Settings → Appearance: "Colours for the kinds of entries" (on) and a colour per kind (artist, label, place, area,
        other); the artist colour changed to #aa0000 → the bar of Bass Man and the head of Writer W follow, stored as an own
-       colour; off → grey for both; ↺ of the tab → back to the defaults."""
+       colour; off → grey for both; ↺ of the tab → back to the defaults.
+    [3.37.8] Events have their own colour (plum, collected item 158)."""
     HEAD = """(name) => { const th = [...document.querySelectorAll('.dci-matrix th[data-colhead]')].find(t => (t.querySelector('.dci-mblink, strong') || {}).textContent.replace(/^MB/, '').trim() === name);
   if (!th) return null; const card = th.querySelector('.dci-mx-card'); const tag = th.querySelector('.dci-mx-kind');
   const cell = document.querySelector(`.dci-mx-cell[data-col="${th.dataset.colhead}"]`);
@@ -644,7 +645,7 @@ def case_kindcolors():
         pg.wait_for_timeout(500)
         b3 = [pg.evaluate(BAR, 'Bass Man'), pg.evaluate("[localStorage.getItem('dci-kind-colors'), localStorage.getItem('dci-kind-palette')]")]
         print('B) Einstellung:', app, '| eigene Farbe:', b1, '| aus:', b2, '| ↺:', b3)
-        results.append(app == [True, [['artist', '#5b6f8c'], ['label', '#2a8a8a'], ['place', '#4e8a3e'], ['area', '#8a6a3e'], ['other', '#8a8799']]]
+        results.append(app == [True, [['artist', '#5b6f8c'], ['label', '#2a8a8a'], ['place', '#4e8a3e'], ['area', '#8a6a3e'], ['event', '#8a4f7d'], ['other', '#8a8799']]]
                        and b1 == ['rgb(170, 0, 0)', 'rgb(170, 0, 0)', '{"artist":"#aa0000"}']
                        and b2 == ['rgb(138, 135, 153)', 'rgb(138, 135, 153)', 'false'] and b3 == ['rgb(91, 111, 140)', [None, None]])
         print('Fehler:', errs)
