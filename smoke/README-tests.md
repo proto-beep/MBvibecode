@@ -180,13 +180,26 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #   placesearch: 3.31.2: places from the notes looked up in the first part of their area (West Orange) or by name alone
                                 #     (Turtle Tone Studio in Manhattan, similar); "Recorded November 7, 8, 2016, at Loft Köln." – the period
                                 #     2016-11-07 – 08, "Loft" in Cologne (alias Köln) for "Loft Köln", the entry's area "(Köln)"
+                                #   facets: 3.36.7 (150, S053): Discogs 3139201 "Facets" (3 LPs, 13 tracks): "A1 to B2 recorded … in live concert at
+                                #     Goldsmith's College, London" – Discogs's place for the whole release only on A1–B2 (ⓘ), Heiman Recording
+                                #     Studios from the notes on C1–D and E1–F2; after "Apply" one date each (1981 / 1979 / 1980); "li" on A2's new
+                                #     link, its live comment; "1.1 to 1.2 recorded … at …" in a pasted text
+                                #   notescredits: 3.37.0 (E5, S054): the Discogs notes read in full – new names entries, a new role of a Discogs
+                                #     name a row of its entry, "From the Discogs notes" with ⓘ; nothing twice (producer – its two lines merged –, bass, a
+                                #     studio's name; "Executive producer" a role of its own); Discogs's
+                                #     guitar for the whole release gets the notes' tracks; Source ▾ "Leave out the credits of the notes" and back;
+                                #     ⚙ Texts: the rule off and on
+                                #   linkedsugg: 3.37.1 (E5a): a name whose artist MusicBrainz links to this release (mix on the release) – that
+                                #     artist first among the suggestions, solid green and bold, "in this release: …", before a namesake; the log; a label of
+                                #     the same name not offered the artist
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)
                                 #   datewords: 3.28.5: "19 & 20. 01. 2009", "20. 01. 2009", "1973 October 19", issue years left out, the group only from
                                 #     the date's sentence, "mixed and mastered" → Mix and Mastering (Node and the date matrix)
                                 #   facets: 3.28.6: "C1 to D" (side D one track) and the other ranges of "Facets" as dated track groups in the matrix,
-                                #     "in live concert" → "live" for the tracks of that sentence only, no places from the notes
+                                #     "in live concert" → "live" for the tracks of that sentence only; 3.36.7: the places of the notes on their
+                                #     tracks (before: no places from the notes)
                                 #   choose: separate days ("June 16 & 19"): both days and the period in the pool, "Choose" in the matrix
                                 #   trackpool: dates for some tracks: suggestions in the matrix, Apply splits rows, applying again, several days
                                 #   reldate: date matrix "Release level" (3.10.0): applied (recordings March, release June), switching the level
@@ -214,6 +227,7 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
+                                #     [3.37.0] the strings arranger of the notes an entry (E5), nothing of a track list a name;
                                 #     track groups dropped onto a column head (Shift adds), a role, an attribute of the works matrix
                                 #   matrixcols: "Directed By" asked, works matrix columns taken out / back, column dates for MB's dateless relationships
                                 #   fill: dates added to MB's dateless relationships from the works matrix (edit, ×, edit note),
@@ -298,7 +312,8 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
                                 #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
                                 #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
-                                #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update)
+                                #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update);
+                                #     3.36.5: no ⓘ among the symbols
                                 #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), [3.32.2] the
                                 #     release's spelling "B. Man*" in the head (tooltip "Discogs: Bass Man") instead of the chip "as “B. Man”",
                                 #     a row credited otherwise "as “Bassman”", the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
@@ -314,18 +329,19 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   keys: 3.36.3: ⌨ in the head shows all keyboard shortcuts (groups, the keys of this computer, as a Mac ⌥ ⌃ ⌘ ↩),
                                 #     Esc and ✕ close them, the focus back on ⌨
 
-python3 t_ui_settings.py        # Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice
+python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
-                                #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), the ⓘ in the head
-                                #     opens "ⓘ Connections" (ten rows, Harmony with its home page), "↺ Reset all settings …" below the tabs shows
+                                #     Home, the tab remembered after reloading ("Texts" with the web links and "Mapping rules"), "ⓘ Connections"
+                                #     (3.36.5: through ⚙, the ⓘ in the head is gone; Harmony with its home page), "↺ Reset all settings …" below the tabs shows
                                 #     the question in the settings ("Cancel" back to the tab), no "↺ Defaults" in the head, narrow: tabs in a row
                                 #   settings: the menu "Settings" (3.16.0): topics, shared switches both ways, values in steps, a topic's "↺",
                                 #     the works of the artists kept across a reload (IndexedDB), clearing them, switched off
                                 #     3.25.0: the topics as tabs, one shown at a time
-                                #   bridge: 3.30.4: ⚙ pressed with a bridge to the settings (and the rules symbol to the docked rules), the content of
-                                #     every tab joined by the tab (100 % and 90 %), the bridge scrolled away and closed; 3.34.3: the bridge exact in
-                                #     fractions of a pixel, over the head's lower line; the content as high as it can be (ⓘ Connections at the top, its
-                                #     tab in the middle; a short one just low enough), its corner square only where the tab joins at the top
+                                #   pressed (until 3.36.4 "bridge", 3.30.4 – 3.34.3): 3.36.5 (147, 149): ⚙, the rules symbol, the log and ⌨ pressed while
+                                #     open (tinted), no bridge any more, A−, A+, ⤢ never pressed, no ⓘ; the content of every tab joined by the tab
+                                #     (100 % and 90 %), as high as it can be (ⓘ Connections at the top, its tab in the middle; a short one just low
+                                #     enough), its corner square only where the tab joins at the top; switches show their choice filled purple
+                                #     ("Entries: Matrix | Legacy", "by event | by role")
                                 #   settingsscroll: 3.34.3: ⓘ Connections and "Dates & tracks" open, scrolled down and up in small steps – never back
                                 #     down, up to the top; scrolling does not touch the content's margin (until 3.34.2 it jumped back 278px)
                                 #   ui305: 3.30.5: ⚙ below "Import credits …" before any import – only the settings ("Source pages"), no import, the
@@ -401,6 +417,8 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     page is loaded again, staged the same
                                 #   companies: 3.35.5 (AE-4): a place ("Recorded At") and a label (℗) as matrices, publishing on works keeps its
                                 #     rows, compact, staged the same as legacy, a date typed into the place's event
+                                #   flagcols: 3.36.6 (148): add. / guest / solo a column each, every word centred over its checkboxes (±2 px)
+                                #     and not wider than its cell, at 100 % and A+ ×3
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
@@ -572,7 +590,7 @@ python3 t_static.py             # Without a browser: the texts of the script, th
 | t_bcoff.py | t_companion_bandcamp.py | bcoff |
 | t_bctrack.py | t_sources_bandcamp.py | bctrack |
 | t_bcview.py | t_companion_bandcamp.py | bcview |
-| t_bridge.py | t_ui_settings.py | bridge |
+| t_bridge.py | t_ui_settings.py | pressed (until 3.36.4: bridge) |
 | t_choose.py | t_notes_dates.py | choose |
 | t_compact.py | t_ui_view.py | compact |
 | t_connections.py | t_static.py | connections |

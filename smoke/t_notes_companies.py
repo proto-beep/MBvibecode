@@ -1,6 +1,6 @@
 """Discogs notes: places, ℗ / © and publishers named in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: discnotes, pcline, publishers, placesearch – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
+Cases: discnotes, pcline, publishers, personpub, placesearch, facets (3.36.7), notescredits (3.37.0), linkedsugg (3.37.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -479,5 +479,264 @@ All music mastered ... at Turtle Tone Studio in New York City"""
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_facets():
+    """Credits Importer 3.36.7 (collected item 150, S053; maintainer, about Discogs 3139201 "Facets" – MB ad8fe956-…: "warum wird bei
+    dem Facets release … Goldsmiths College 2x angeboten und dann auch noch an den falschen tracks und ohne date? das muss gefixt
+    werden"; "in live concert": "ja das muss dann eine live Work Verknüpfung generieren und als disambiguation übernommen werden").
+    Three LPs, 13 tracks; Discogs lists "Recorded At – Goldsmiths College" for the whole release; the notes: "A1 to B2 recorded 22nd
+    May 1981 in live concert at Goldsmith's College, London / C1 to D recorded 4th October 1979 at Heiman Recording Studios, London /
+    E1 to F2 recorded 2nd May 1980 at Heiman Recording Studios, London".
+    A) Goldsmiths College only on A1–B2 (set, ⓘ shows the line; until 3.36.6 on all 13 tracks), Heiman Recording Studios (London) a
+       place from the notes on C1–D and E1–F2 (until 3.36.6 not read: the date between "recorded" and "at", the positions without
+       "Tracks").
+    B) After "Apply" of the date matrix: Goldsmiths one row with 1981-05-22; Heiman two – 1979-10-04 on C1–D, 1980-05-02 on E1–F2
+       (until 3.36.6 Goldsmiths got all three dates).
+    C) "in live concert": the new work of A2 has "li" preselected (S021), the existing link of A1 offers it; with ⚙ Settings → Staging
+       "live comments" on, A2's comment is "live, 1981‐05‐22: Goldsmiths College".
+    D) Pasted as a text: "1.1 to 1.2 recorded 3rd June 2001 at Abbey Road Studios, London" – the place on these two tracks."""
+    import re
+    POS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D', 'E1', 'E2', 'E3', 'E4', 'F1', 'F2']
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 14)]
+    H.TITLES[:] = ['Song One', 'Song Two', 'Song Three', 'Song Four'] + [f'Piece {i}' for i in range(5, 14)]
+    H.MEDIA = [4, 3, 6]
+    for i, n in [(567, 'cover'), (578, 'live'), (750, 'medley')]:
+        H.attr(i, n, i)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (567, 578, 750))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    NOTES = """A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith's College, London
+C1 to D recorded 4th October 1979 at Heiman Recording Studios, London
+E1 to F2 recorded 2nd May 1980 at Heiman Recording Studios, London"""
+    H.COMPANIES[1013] = ('place', H.uid('eeeeeeee', 13), 'Goldsmiths College')
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        for i, t in enumerate(d['tracklist']):
+            t['position'] = POS[i]
+        d['notes'] = NOTES
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At'] + [
+            {'name': 'Goldsmiths College', 'entity_type_name': 'Recorded At', 'id': 1013, 'catno': ''}]
+        return d
+
+    H.discogs_release = rel
+    PLACES = """(() => [...document.querySelectorAll('section.dci-group')].filter(g => /Goldsmith|Heiman|Abbey/.test(g.querySelector('.dci-gname strong').textContent)).map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+  [...g.querySelectorAll('tr.dci-row')].filter(r => !r.className.includes('dci-lv-skip')).map(r => [(r.querySelector('.dci-drole') || {}).textContent,
+    [...r.querySelectorAll('[data-f=track]:checked, input[data-i]:checked')].length || (r.querySelector('.dci-c-tracks, .dci-tracks') || {textContent: ''}).textContent.replace(/\\s+/g, ' ').trim().slice(0, 40),
+    ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim(), ((r.querySelector('.dci-notesfrom .dci-info') || {}).title || '').slice(0, 80),
+    (r.textContent.match(/Performance \\d · [\\d-]+/) || [''])[0]])]))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        # tracks of a row, from its selection (1.1 … 3.6)
+        TRK = """(name) => [...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim() === name)
+  .flatMap(g => [...g.querySelectorAll('tr.dci-row')]).filter(r => !r.className.includes('dci-lv-skip')).map(r => [(r.querySelector('.dci-trk-sum, .dci-tracks-sum, .dci-c-tracks') || {textContent: ''}).textContent.replace(/\\s+/g, ' ').trim().slice(0, 30),
+    ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim(), ((r.querySelector('.dci-notesfrom .dci-info') || {}).title || ''),
+    (r.textContent.match(/Performance \\d · [\\d-]+/) || [''])[0]])"""
+        a1 = pg.evaluate(TRK, 'Goldsmiths College')
+        a2 = pg.evaluate(TRK, 'Heiman Recording Studios')
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'notes' in x.lower()]
+        print('A) Goldsmiths:', a1, '\n   Heiman:', a2, '\n   Protokoll:', logs)
+        results.append(len(a1) == 1 and 'A1–B2' in a1[0][1] and 'Goldsmith' in a1[0][2] and len(a2) == 1 and 'C1–D, E1–F2' in a2[0][1]
+                       and any('Heiman Recording Studios (Recorded At)' in x for x in logs) and any('Goldsmiths College (1.1–1.4)' in x for x in logs))
+        # B) the date matrix applied
+        pg.locator('[data-act=dm-apply]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(1500)
+        b1 = pg.evaluate(TRK, 'Goldsmiths College')
+        b2 = pg.evaluate(TRK, 'Heiman Recording Studios')
+        n_tracks = pg.evaluate("""(name) => [...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim() === name)
+  .flatMap(g => [...g.querySelectorAll('tr.dci-row')]).filter(r => !r.className.includes('dci-lv-skip')).map(r => ((r.textContent.match(/(\\d+) of 13 tracks/) || [])[1] || '') + ' ' + ((r.textContent.match(/Performance \\d · [\\d-]+/) || [''])[0]))""", 'Heiman Recording Studios')
+        g_tracks = pg.evaluate("""(name) => [...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim() === name)
+  .flatMap(g => [...g.querySelectorAll('tr.dci-row')]).filter(r => !r.className.includes('dci-lv-skip')).map(r => ((r.textContent.match(/(\\d+) of 13 tracks/) || [])[1] || '') + ' ' + ((r.textContent.match(/Performance \\d · [\\d-]+/) || [''])[0]))""", 'Goldsmiths College')
+        print('B) Goldsmiths:', g_tracks, '| Heiman:', n_tracks)
+        results.append(g_tracks == ['4 Performance 1 · 1981-05-22'] and sorted(n_tracks) == ['3 Performance 2 · 1979-10-04', '6 Performance 3 · 1980-05-02'])
+        # C) live: a new work for A2, its link "li"; the comment (⚙ Settings → Staging: live comments on)
+        pg.click('tr[data-work="1"] [data-act=work-pending]')
+        pg.wait_for_timeout(500)
+        H.open_settings(pg, 'staging')
+        pg.check('[data-el=settings] [data-set=live-comments]')
+        pg.wait_for_timeout(300)
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(500)
+        pills = pg.evaluate("""[0, 1].map(i => [...document.querySelectorAll('.dci-matrix tbody tr[data-work="' + i + '"] .dci-wpill-on, .dci-matrix tbody tr[data-work="' + i + '"] .dci-wpill-hint')].map(b => b.textContent.trim()))""")
+        com = pg.evaluate("[...document.querySelectorAll('.dci-livecom-table [data-f=livecom-text]')].map(x => x.value)")
+        print('C) li an A1, A2:', pills, '| Kommentar:', com)
+        results.append(pills[0] == ['li?'] and pills[1] == ['li'] and com == ['live, 1981‐05‐22: Goldsmiths College'])
+        # D) pasted as a text
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', '1.1 to 1.2 recorded 3rd June 2001 at Abbey Road Studios, London')
+        pg.click('[data-act=text-load]')
+        if pg.locator('[data-el=media] [data-mact=ok]').count():
+            H.answer_media(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        d1 = pg.evaluate("""(name) => [...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim().startsWith(name))
+  .flatMap(g => [...g.querySelectorAll('tr.dci-row')]).map(r => [(r.querySelector('.dci-drole') || {}).textContent, ((r.textContent.match(/(\\d+) of 13 tracks/) || [])[1] || '')])""", 'Abbey Road Studios')
+        print('D) Text:', d1)
+        results.append(d1 == [['Recorded At', '2']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_notescredits():
+    """Credits Importer 3.37.0 (E5, rule S054; maintainer: "dann nimm E5 bitte auch in die Sammelliste auf", "gleich als Eintrag mit
+    Transparenzhinweis", "also alle informationen die sonst noch nicht per relationships vorhanden sind sollen abgegriffen werden. (es
+    soll sich nichts doppeln)", "ja bitte mit schalter. und vielleicht auch noch bei der quelle (falls discogs import) ein quick
+    switch?"). The Discogs notes read in full:
+    A) New names an entry each – Ann Blow (saxophone, track 3), Jane Notes (liner notes), Nobody Here (strings arranged, 2, 4) –,
+       a new role of a Discogs name a row of its entry (Bass Man: backing vocals), each "From the Discogs notes" with ⓘ and the
+       line; nothing twice: Bob Producer ("Produced by" = "Produced By" – its two lines give it tracks 1 and 3, ⓘ), Bass Man's bass,
+       Abbey Road Studios ("Recorded … at"; "Mastered by Abbey Road Studios" is no person); "Executive producer: Bob Producer" is a
+       role of its own (3.37.0, after a review: the kinds of roles compared strictly); Guitar Guy's guitar (whole release on Discogs)
+       gets the tracks of the notes (1, 3; ⓘ). The log names them.
+    B) Source ▾ "Leave out the credits of the notes": their rows hidden (also the entries made of them), stored for the release;
+       ticked off: back with what was changed in them.
+    C) ⚙ Settings → Texts "Discogs: read the credits in the notes" off (the rule S054) and imported again: none of them, Guitar Guy
+       on all tracks; on again: back."""
+    import json
+    NOTES = """Recorded March 1–3, 2001 at Abbey Road Studios.
+Strings arranged by Nobody Here (2, 4).
+Produced by Bob Producer (1).
+Produced by Bob Producer (3).
+Executive producer: Bob Producer
+Mastered by Abbey Road Studios
+Bass Man – bass, backing vocals
+Guitar Guy – guitar (tracks 1, 3)
+Saxophone: Ann Blow (3)
+Liner notes by Jane Notes"""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        return d
+
+    H.discogs_release = rel
+    GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].filter(g => !g.classList.contains('dci-about-hidden')).map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+  [...g.querySelectorAll('tr.dci-row')].filter(r => !r.classList.contains('dci-about-hidden')).map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(), (r.textContent.match(/(\\d+) of 4 tracks/) || [])[1] || '',
+    ((r.querySelector('.dci-notesline') || {}).title || '').replace(/^From the Discogs notes: /, ''), /From the Discogs notes/.test(r.textContent),
+    ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim()])]))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def load():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+        load()
+        g = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'notes' in x.lower()]
+        print('A)', json.dumps({k: g.get(k) for k in ('Ann Blow', 'Jane Notes', 'Nobody Here', 'Bass Man', 'Guitar Guy', 'Bob Producer', 'Abbey Road Studios')}, ensure_ascii=False))
+        print('   Protokoll:', logs)
+        ok_a = (g.get('Ann Blow') == [['Saxophone', '1', '“Saxophone: Ann Blow (3)”', True, '']]
+                and g.get('Jane Notes') == [['Liner notes', '', '“Liner notes by Jane Notes”', True, '']]
+                and 'Nobody Here' in g
+                and [r[0] for r in g.get('Bass Man', [])] == ['Bass', 'backing vocals'] and g['Bass Man'][1][3] and not g['Bass Man'][0][3]
+                and g.get('Guitar Guy') == [['Guitar', '2', '', False, 'ⓘ Tracks 1, 3 from the notes']]
+                and g.get('Bob Producer') == [['Produced By', '2', '', False, 'ⓘ Tracks 1, 3 from the notes'],
+                                              ['Executive producer', '', '“Executive producer: Bob Producer”', True, '']]
+                and [r[0] for r in g.get('Abbey Road Studios', [])] == ['Recorded At']
+                and any('credits not listed by Discogs (5)' in x and 'Ann Blow (Saxophone)' in x for x in logs)
+                and any('Guitar Guy – Guitar (1, 3)' in x for x in logs) and not any('Ann Blow' in x and 'only a track group' in x for x in logs))
+        results.append(ok_a)
+        # B) left out for this release, from the menu Source ▾
+        H.src_menu(pg, None)
+        box = pg.locator('[data-f=notes-off]')
+        has = box.count()
+        if has:
+            box.check()
+            pg.wait_for_timeout(500)
+        b1 = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        stored = pg.evaluate(f"localStorage.getItem('dci-notes-off:{H.REL}')")
+        H.src_menu(pg, None)
+        pg.locator('[data-f=notes-off]').uncheck()
+        pg.wait_for_timeout(500)
+        b2 = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        print('B) Menü:', has, '| aus:', sorted(b1), '| Bass Man:', [r[0] for r in b1.get('Bass Man', [])], '| gespeichert:', stored, '| wieder:', 'Ann Blow' in b2, [r[0] for r in b2.get('Bass Man', [])])
+        results.append(has == 1 and 'Ann Blow' not in b1 and 'Jane Notes' not in b1 and [r[0] for r in b1.get('Bass Man', [])] == ['Bass'] and stored == 'true'
+                       and 'Ann Blow' in b2 and [r[0] for r in b2.get('Bass Man', [])] == ['Bass', 'backing vocals'])
+        # C) the rule off in the settings, imported again
+        H.open_settings(pg, 'texts')
+        pg.uncheck('[data-el=settings] [data-set=rule-on][data-rule=S054]')
+        pg.wait_for_timeout(300)
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        load()
+        c1 = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        H.open_settings(pg, 'texts')
+        pg.check('[data-el=settings] [data-set=rule-on][data-rule=S054]')
+        pg.wait_for_timeout(300)
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        load()
+        c2 = {n: rows for n, rows in pg.evaluate(GROUPS)}
+        print('C) Regel aus:', sorted(c1), '| Guitar Guy:', c1.get('Guitar Guy'), '| wieder an:', 'Ann Blow' in c2)
+        results.append('Ann Blow' not in c1 and 'Jane Notes' not in c1 and [r[0] for r in c1.get('Bass Man', [])] == ['Bass'] and c1.get('Guitar Guy', [[0, '']])[0][1] == '4'
+                       and 'Ann Blow' in c2)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_linkedsugg():
+    """Credits Importer 3.37.1 (E5a; maintainer: "wenn der name im text schon an anderer stelle im datensatz verknüpft ist mit
+    musicbrainz soll der vorschlag stärker hervorgehoben werden als andere namensvorschläge", "überall"): a name searched in
+    MusicBrainz (a pasted text, the Discogs notes …) whose artist MusicBrainz links to this release already – Ann Mix mixed the
+    release there – has that artist first among its suggestions, highlighted (solid green, bold) and marked "in this release: mix on
+    the release", before a namesake MusicBrainz's search gives first; the log says so. A name nobody in the release has: its
+    suggestions as before (dashed). A label of the same name ("℗ 2001 Ann Mix") is not offered the artist."""
+    ANN = H.uid('dddddddd', 92)
+    H.MB_EXTRA[H.REL] = H.MB_EXTRA.get(H.REL, []) + [{'target-type': 'artist', 'type': 'mix', 'type-id': 'aaaaaaaa-0000-4000-8000-00000000mix1', 'attributes': [],
+                                                       'artist': {'id': ANN, 'name': 'Ann Mix'}}]
+    H.MB_SEARCH['artist'] = [{'id': H.uid('dddddddd', 90), 'name': 'Ann Mix', 'disambiguation': 'another', 'score': 100},
+                             {'id': ANN, 'name': 'Ann Mix', 'disambiguation': '', 'score': 100},
+                             {'id': H.uid('dddddddd', 91), 'name': 'Sax Lady', 'disambiguation': '', 'score': 100}]
+    SUGG = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? [...g.querySelectorAll('.dci-suggbtn[data-act=name-use]')].map(b => [b.dataset.mbid.slice(-2), b.classList.contains('dci-sugg-linked'), b.textContent.replace(/\\s+/g, ' ').trim(),
+    getComputedStyle(b).borderTopStyle, getComputedStyle(b).fontWeight]) : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Mixed by Ann Mix\nSaxophone: Sax Lady\n℗ 2001 Ann Mix')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        d = pg.evaluate(SUGG, 'Ann Mix')
+        sx = pg.evaluate(SUGG, 'Sax Lady')
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'in this release' in x]
+        # the label "Ann Mix" (℗) gets no artist as its linked suggestion (after a review of 3.37.1: the kind of entry counts)
+        links = pg.evaluate("[...document.querySelectorAll('.dci-suggitem')].filter(i => i.querySelector('.dci-sugg-linked')).map(i => i.querySelector('.dci-sugglink').getAttribute('href'))")
+        print('Ann Mix:', d, '\nSax Lady:', sx, '\nProtokoll:', logs, '\nhervorgehoben:', links)
+        results.append(bool(d) and d[0][0] == '92' and d[0][1] and 'in this release: mix on the release' in d[0][2] and d[0][3] == 'solid' and d[0][4] == '700'
+                       and len(d) == 2 and d[1][0] == '90' and not d[1][1] and d[1][3] == 'dashed'
+                       and sx == [['91', False, 'Sax Lady', 'dashed', '400']] and any('Ann Mix' in x and 'mix on the release' in x for x in logs)
+                       and links == [f'/artist/{ANN}'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())
