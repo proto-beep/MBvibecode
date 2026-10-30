@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore, [3.34.17] ocrremember, [3.34.22] ocrorigin, [3.34.24] ocrentry, [3.37.4] ocrlinepeek, [3.37.5] ocrkeep; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore, [3.34.17] ocrremember, [3.34.22] ocrorigin, [3.34.24] ocrentry, [3.37.4] ocrlinepeek, [3.37.5] ocrkeep, [3.37.6] ocrnonsense; `python3 t_coverart.py <case> …` runs only those."""
 import json
 import re
 
@@ -1808,6 +1808,76 @@ def case_ocrkeep():
         d = [d0, pg.evaluate(TICKS), pg.evaluate("document.querySelectorAll('#dci-ocr [data-ocr-text]').length")]
         print('D) ohne Merken:', d)
         results.append(d[0] is None and d[1] == {'Front': False, 'Back': True, 'Booklet': True, 'Tray': True, 'Medium': False} and d[2] == 0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_ocrnonsense():
+    """[3.37.6] "Remove nonsensical words and signs" (collected item 156; maintainer: "gibt es eine möglichkeit beim textimport aus
+    bildern "delete nonsensical words and signs" (erneuter klick holt text zurück)", "je Bild und unten in der leiste für alle
+    bilder. Eigene Änderungen so wie du vorschlägst.").
+    A) Back and Tray read; the Back's switch: "~" and "|" at the end of a line go, a line of signs only goes, the words read
+       uncertainly without a vowel ("Rrrt", "Qx") go – "Jo" (uncertain, a word), "»", "|" between words, "℗" and "Grmbl" (read
+       surely) stay; "7 removed", the buttons of "Rrrt" and "Qx" struck through; the Tray and the switch for all untouched.
+    B) A word added by hand ("Smith" after "Jo"), the switch again: everything comes back where it was – "Rrrt" after "Jo", the
+       line of signs in its place –, "Smith" stays; no number, nothing struck through.
+    C) The switch in the bar: both images ("8 removed"), both switches pressed; again: all back.
+    D) Imported while on: the text imported has none of it (the producer is "Jo Smith")."""
+    results = []
+    back = 'Mixed by Bob Lee ~ |\nMastered by Ann Lee » Photos: Dirk Glawe\n=- ‘ ~\nProduced by Jo Rrrt and Qx\nDrums | Bass: Ann Blow\n℗ 1998 Grmbl Records\n'
+    texts = [{'text': back, 'words': [{'text': 'Rrrt', 'confidence': 30}, {'text': 'Qx', 'confidence': 20}, {'text': 'Jo', 'confidence': 30}, {'text': 'Grmbl', 'confidence': 90}]},
+             {'text': 'Saxophone - Ann Blow ~\n', 'words': []}]
+    TXT = "[...document.querySelectorAll('#dci-ocr [data-ocr-text]')].map(t => t.value)"
+    SW = """(() => { const el = document.getElementById('dci-ocr'); const st = (b) => b ? b.getAttribute('aria-pressed') : null; const tx = (k) => (el.querySelector(`[data-ocr-cleann="${k}"]`) || {}).textContent || '';
+      return { back: [st(el.querySelector('[data-ocr-clean="0"]')), tx(0)], tray: [st(el.querySelector('[data-ocr-clean="1"]')), tx(1)], all: [st(el.querySelector('[data-ocr=clean-all]')), tx('all')],
+        cut: [...el.querySelectorAll('.dci-ocr-word-cut')].map(b => b.textContent) }; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(texts))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.uncheck('#dci-ocr [data-ocr-sel="2"]')
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text="1:0"]', timeout=20000)
+        pg.wait_for_timeout(300)
+        t0 = pg.evaluate(TXT)
+        pg.click('#dci-ocr [data-ocr-clean="0"]')
+        a = [pg.evaluate(TXT), pg.evaluate(SW)]
+        print('A) vorher:', t0, '\n   an:', a)
+        want = 'Mixed by Bob Lee\nMastered by Ann Lee » Photos: Dirk Glawe\nProduced by Jo and\nDrums | Bass: Ann Blow\n℗ 1998 Grmbl Records'
+        results.append(a[0] == [want, t0[1]] and a[1]['back'] == ['true', '7 removed'] and a[1]['tray'] == ['false', ''] and a[1]['all'] == ['false', '']
+                       and sorted(a[1]['cut']) == ['Qx', 'Rrrt'])
+        # B) changed by hand, then back
+        pg.fill('#dci-ocr [data-ocr-text="0:0"]', want.replace('by Jo and', 'by Jo Smith and'))
+        pg.click('#dci-ocr [data-ocr-clean="0"]')
+        bb = [pg.evaluate(TXT), pg.evaluate(SW)]
+        print('B) zurück:', bb)
+        results.append(bb[0][0] == t0[0].replace('by Jo Rrrt and Qx', 'by Jo Rrrt Smith and Qx') and bb[1]['back'] == ['false', ''] and bb[1]['cut'] == [])
+        # C) all images
+        pg.click('#dci-ocr [data-ocr=clean-all]')
+        c1 = [pg.evaluate(TXT), pg.evaluate(SW)]
+        pg.click('#dci-ocr [data-ocr=clean-all]')
+        c2 = [pg.evaluate(TXT), pg.evaluate(SW)]
+        print('C) alle:', c1, '\n   wieder:', c2)
+        results.append(c1[0][1] == 'Saxophone – Ann Blow' and c1[1]['back'] == ['true', '7 removed'] and c1[1]['tray'] == ['true', '1 removed']
+                       and c1[1]['all'] == ['true', '8 removed'] and c2[0] == bb[0] and c2[1]['all'] == ['false', ''] and c2[1]['back'][0] == 'false' and c2[1]['tray'][0] == 'false')
+        # D) imported while on
+        pg.click('#dci-ocr [data-ocr=clean-all]')
+        pg.click('#dci-ocr [data-ocr=import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(500)
+        names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(e => e.textContent.trim())")
+        print('D) Einträge:', names)
+        results.append('Jo Smith' in names and not any('Rrrt' in n or 'Qx' in n for n in names))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

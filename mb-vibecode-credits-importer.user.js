@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.5
+// @version      3.37.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.6
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.6
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1522,6 +1522,12 @@
       "ocr.fixDash": "dash between a name and a role ({n})",
       "ocr.back": "← Images",
       "ocr.copy": "Copy text",
+      "ocr.clean": "Remove nonsensical words and signs",
+      "ocr.cleanTitle": "Takes out the words read uncertainly (yellow) that are no word – signs among the letters, no vowel, a letter alone, three same letters in a row, digits among letters – and groups of signs without letters (“~ |”, “=-”). : – , ; / & » « ( ) ℗ © stay, and • · | between words. Clicked again, they come back where they were; what you changed by hand stays.",
+      "ocr.cleanAll": "Remove nonsensical words and signs in all images",
+      "ocr.cleanN.one": "{n} removed",
+      "ocr.cleanN.other": "{n} removed",
+      "ocr.cleanNone": "nothing to remove",
       "ocr.copied": "The text is in the clipboard",
       "ocr.supp": "＋ Supplement the import with it",
       "ocr.import": "Import this text",
@@ -11528,12 +11534,16 @@
   function ocrResEntry(r) {
     const c = r.img.canvas;
     // restored, its image not loaded since: as it was stored, with the texts as they are now
-    if (r.stored) return { ...r.stored, k: ocrFrameKey(r.img), parts: r.stored.parts.map((p, j) => ({ ...p, text: r.parts[j] ? r.parts[j].text : p.text })) };
+    if (r.stored) {
+      return { ...r.stored, k: ocrFrameKey(r.img), clean: !!r.clean,
+        parts: r.stored.parts.map((p, j) => ({ ...p, text: r.parts[j] ? r.parts[j].text : p.text, cut: r.parts[j] ? r.parts[j].cut || null : null })) };
+    }
     if (!c || !c.width || !c.height) return null;
     const f = (b) => ocrToFrac(b, c.width, c.height);
     return { k: ocrFrameKey(r.img), small: !!r.small, direct: !!r.direct, fixes: r.fixes,
+      clean: !!r.clean,
       parts: r.parts.map((pt) => ({ b: f(pt.box), text: pt.text, unsure: pt.unsure || [], busy: !!pt.busy, shakyN: pt.shakyN || 0, wordsN: pt.wordsN || 0,
-        fixes: pt.fixes, lines: (pt.lines || []).map((l) => [l.text, f(l.box)]), at: (pt.unsureAt || []).map((w) => [w.text, f(w.box)]) })) };
+        fixes: pt.fixes, lines: (pt.lines || []).map((l) => [l.text, f(l.box)]), at: (pt.unsureAt || []).map((w) => [w.text, f(w.box)]), cut: pt.cut || null })) };
   }
 
   /** The window as it is, stored for the release (only while remembering; nothing chosen or read: nothing stored). */
@@ -11560,8 +11570,9 @@
   /** A text read, from the store: its places on the image once its canvas is there (ocrResBoxes). */
   function ocrResFromEntry(img, e) {
     const parts = (e.parts || []).map((p) => ({ box: null, text: String(p.text || ''), unsure: Array.isArray(p.unsure) ? p.unsure : [], unsureAt: [], lines: [],
-      fixes: p.fixes || { pc: 0, dash: 0 }, busy: !!p.busy, shakyN: p.shakyN || 0, wordsN: p.wordsN || 0, view: null, mark: null }));
-    const r = { img, status: 'done', progress: 1, small: !!e.small, direct: !!e.direct, fixes: e.fixes || { pc: 0, dash: 0 }, parts,
+      fixes: p.fixes || { pc: 0, dash: 0 }, busy: !!p.busy, shakyN: p.shakyN || 0, wordsN: p.wordsN || 0, view: null, mark: null,
+      cut: p.cut && Array.isArray(p.cut.runs) && Array.isArray(p.cut.gone) ? p.cut : null }));
+    const r = { img, status: 'done', progress: 1, small: !!e.small, direct: !!e.direct, fixes: e.fixes || { pc: 0, dash: 0 }, parts, clean: !!e.clean,
       unsure: uniq(parts.flatMap((pt) => pt.unsure)), stored: { ...e, parts: e.parts || [] } };
     ocrResBoxes(r);
     return r;
@@ -12118,14 +12129,175 @@
       <div class="dci-ocr-foot"><span></span><button type="button" class="dci-textbtn" data-ocr="close">${esc(tr('common.cancel'))}</button></div>`;
   }
 
+  // --- [3.37.6] Nonsense taken out (collected item 156; maintainer: "gibt es eine möglichkeit beim textimport aus bildern "delete
+  // nonsensical words and signs" (erneuter klick holt text zurück)", "wie dein vorschlag. je Bild und unten in der leiste für alle
+  // bilder. Eigene Änderungen so wie du vorschlägst."): a switch for each image and one in the bar for all takes out the words
+  // read uncertainly that are no word and the groups of signs without letters; again: they come back where they were, what was
+  // changed by hand in between stays. pt.cut: { runs: [{ n, before, after, text }], gone: [{ n, text }], n }; r.clean: switched on.
+
+  // signs that stay (they part credits, or are ℗ / ©); • · | stay between words (they part credits: T054)
+  const OCR_KEEP_SIGNS = /^[:–—\-,;/&»«()℗©®Ⓟ+]+$/u;
+  const OCR_SEP_SIGNS = /^[•·|]+$/u;
+  const OCR_VOWEL = /[aeiouyäöüàáâãåæéèêëíìîïóòôõøœúùûůýÿ]/iu;
+  // short words and abbreviations of credits without a vowel (or of one letter)
+  const OCR_SHORT_WORDS = new Set(['a', 'à', 'e', 'i', 'o', 'u', 'y', '&', 'mr', 'mrs', 'ms', 'dr', 'st', 'jr', 'sr', 'vs', 'ft', 'pt', 'nr', 'ltd', 'llc', 'gmbh', 'bv',
+    'gtr', 'bs', 'drs', 'vln', 'vc', 'db', 'kb', 'kbd', 'kbds', 'tpt', 'tbn', 'trb', 'fl', 'flt', 'cl', 'bsn', 'hn', 'hrn', 'mx', 'mst', 'cd', 'dvd', 'lp', 'ep', 'bpm', 'nyc', 'uk', 'usa']);
+  const ocrCore = (t) => String(t).replace(/^[,.;:!?()"“”„‘’'«»]+|[,.;:!?()"“”„‘’'«»]+$/gu, '');
+
+  /** A word read uncertainly that is no word: signs or digits among its letters, no vowel, a letter alone, three same letters. */
+  function ocrNonsenseWord(tok) {
+    const core = ocrCore(tok);
+    if (!core || OCR_SHORT_WORDS.has(core.toLowerCase())) return false;
+    // numbers, positions, years ("1998", "A1", "1.2", "70s", "2nd") stay
+    if (/\d/.test(core)) return !/^(?:\d+(?:[.,:/]\d+)*|[A-Za-z]{1,2}\d{1,3}(?:\.\d{1,3})?|\d{2,4}s|\d+(?:st|nd|rd|th))$/i.test(core);
+    if (/[^\p{L}'’.\-&]/u.test(core)) return true;
+    const letters = core.replace(/[^\p{L}]/gu, '');
+    // an initial ("M.") stays
+    if (letters.length <= 1) return !/^\p{Lu}\.$/u.test(tok);
+    return !OCR_VOWEL.test(letters) || /(\p{L})\1\1/u.test(letters.toLowerCase());
+  }
+
+  /** A group of signs without letters or digits ("~", "|", "=-") – not those that stay. */
+  function ocrSignJunk(tok, i, toks) {
+    if (/[\p{L}\p{N}]/u.test(tok) || OCR_KEEP_SIGNS.test(tok)) return false;
+    const word = (x) => !!x && /[\p{L}\p{N}]/u.test(x);
+    return !(OCR_SEP_SIGNS.test(tok) && word(toks[i - 1]) && word(toks[i + 1]));
+  }
+
+  /** A part's text without its nonsense: { text, cut } (cut null: nothing to take out). */
+  function ocrCutText(pt) {
+    const unsure = new Set((pt.unsure || []).map((w) => String(w).trim()).filter(Boolean));
+    const unsureCore = new Set([...unsure].map(ocrCore).filter(Boolean));
+    const runs = [];
+    const gone = [];
+    let n = 0;
+    const out = [];
+    String(pt.text || '').split('\n').forEach((line, k) => {
+      const toks = line.trim().split(/\s+/).filter(Boolean);
+      const drop = toks.map((t, i) => ocrSignJunk(t, i, toks) || ((unsure.has(t) || unsureCore.has(ocrCore(t))) && ocrNonsenseWord(t)));
+      if (!drop.some(Boolean)) {
+        out.push(line);
+        return;
+      }
+      n += drop.filter(Boolean).length;
+      if (drop.every(Boolean)) {
+        gone.push({ n: k, text: line });
+        return;
+      }
+      const keep = [];
+      let run = [];
+      const flush = (after) => {
+        if (run.length) runs.push({ n: k, before: keep.length ? keep[keep.length - 1] : '', after, text: run.join(' ') });
+        run = [];
+      };
+      toks.forEach((t, i) => {
+        if (drop[i]) run.push(t);
+        else {
+          flush(t);
+          keep.push(t);
+        }
+      });
+      flush('');
+      out.push(keep.join(' '));
+    });
+    return { text: out.join('\n'), cut: n ? { runs, gone, n } : null };
+  }
+
+  /** What was taken out put back where it was (by its neighbours; its line changed by hand: at the end of the line). */
+  function ocrUncutText(pt) {
+    const c = pt.cut;
+    if (!c) return pt.text;
+    const lines = String(pt.text || '').split('\n');
+    // the lines first (so the others are where they were), then the words, left to right
+    [...c.gone].sort((a, b) => a.n - b.n).forEach((g) => lines.splice(Math.min(g.n, lines.length), 0, g.text));
+    c.runs.forEach((r) => {
+      const at = (k) => {
+        const toks = lines[k].trim().split(/\s+/).filter(Boolean);
+        let pos = -1;
+        if (r.before && r.after) {
+          for (let i = 0; i < toks.length - 1 && pos < 0; i++) if (toks[i] === r.before && toks[i + 1] === r.after) pos = i + 1;
+        } else if (r.before) {
+          if (toks[toks.length - 1] === r.before) pos = toks.length;
+        } else if (r.after && toks[0] === r.after) pos = 0;
+        if (pos < 0) return false;
+        toks.splice(pos, 0, r.text);
+        lines[k] = toks.join(' ');
+        return true;
+      };
+      const order = [r.n, ...lines.map((x, k) => k).filter((k) => k !== r.n)].filter((k) => k < lines.length);
+      if (order.some(at)) return;
+      if (r.n >= lines.length) {
+        lines.push(r.text);
+        return;
+      }
+      // its neighbours parted by hand: after the word before it, else before the word after it, else at the end of its line
+      const toks = lines[r.n].trim().split(/\s+/).filter(Boolean);
+      const b = r.before ? toks.indexOf(r.before) : -1;
+      const a = r.after ? toks.indexOf(r.after) : -1;
+      toks.splice(b >= 0 ? b + 1 : a >= 0 ? a : toks.length, 0, r.text);
+      lines[r.n] = toks.join(' ');
+    });
+    return lines.join('\n');
+  }
+
+  /** The words taken out of a part (their buttons among the words read uncertainly are struck through). */
+  const ocrCutWords = (pt) => new Set(pt.cut ? [...pt.cut.runs.flatMap((r) => r.text.split(' ')), ...pt.cut.gone.flatMap((g) => g.text.trim().split(/\s+/))] : []);
+
+  /** Switched for the texts of these results (on: taken out; off: put back). */
+  function ocrNonsense(results, on) {
+    results.filter((r) => r.status === 'done').forEach((r) => {
+      r.parts.forEach((pt) => {
+        if (on && !pt.cut) Object.assign(pt, ocrCutText(pt));
+        else if (!on && pt.cut) Object.assign(pt, { text: ocrUncutText(pt), cut: null });
+      });
+      r.clean = on;
+    });
+    ocrCleanSync();
+  }
+
+  const ocrCleanCount = (r) => r.parts.reduce((a, pt) => a + (pt.cut ? pt.cut.n : 0), 0);
+  const ocrCleanNote = (on, n) => (on ? tr(n ? 'ocr.cleanN' : 'ocr.cleanNone', { n }) : '');
+
+  /** The texts, the switches and their numbers in the window as they are now (without drawing it anew: it stays where it is). */
+  function ocrCleanSync() {
+    const el = document.getElementById('dci-ocr');
+    const o = S.ocr;
+    if (!el || !o) return;
+    const done = o.results.filter((r) => r.status === 'done');
+    o.results.forEach((r, i) => {
+      if (r.status !== 'done') return;
+      r.parts.forEach((pt, j) => {
+        const ta = el.querySelector(`[data-ocr-text="${i}:${j}"]`);
+        if (ta && ta.value !== pt.text) {
+          ta.value = pt.text;
+          ocrFitText(ta);
+        }
+        const cut = ocrCutWords(pt);
+        el.querySelectorAll(`[data-ocr-word][data-ocr-in="${i}:${j}"]`).forEach((b) => b.classList.toggle('dci-ocr-word-cut', cut.has(b.dataset.ocrWord)));
+      });
+      const btn = el.querySelector(`[data-ocr-clean="${i}"]`);
+      if (btn) btn.setAttribute('aria-pressed', String(!!r.clean));
+      const num = el.querySelector(`[data-ocr-cleann="${i}"]`);
+      if (num) num.textContent = ocrCleanNote(r.clean, ocrCleanCount(r));
+    });
+    const all = el.querySelector('[data-ocr="clean-all"]');
+    const allOn = done.length > 0 && done.every((r) => r.clean);
+    if (all) all.setAttribute('aria-pressed', String(allOn));
+    const num = el.querySelector('[data-ocr-cleann="all"]');
+    if (num) num.textContent = ocrCleanNote(allOn, done.reduce((a, r) => a + ocrCleanCount(r), 0));
+  }
+
   function ocrResultHtml() {
     const o = S.ocr;
     const canSupp = !!(S.release && S.rows.length);
     const sect = (r, i) => {
       if (r.status !== 'done') return `<section class="dci-ocr-res"><h3>${esc(ocrTypes(r.img))}</h3><p class="dci-sub">${esc(tr(`ocr.state.${r.status}`))}</p></section>`;
       const fixes = [r.fixes.pc ? tr('ocr.fixPc', { n: r.fixes.pc }) : '', r.fixes.dash ? tr('ocr.fixDash', { n: r.fixes.dash }) : ''].filter(Boolean);
+      // [3.37.6] its switch "Remove nonsensical words and signs"
       return `<section class="dci-ocr-res" data-ocr-res="${i}">
         <h3>${esc(ocrTypes(r.img))}${r.img.comment ? ` <span class="dci-sub">“${esc(r.img.comment)}”</span>` : ''}</h3>
+        <div class="dci-ocr-cleanbox"><button type="button" class="dci-small dci-ocr-clean" data-ocr-clean="${i}" aria-pressed="${!!r.clean}" title="${esc(tr('ocr.cleanTitle'))}">${esc(tr('ocr.clean'))}</button>
+          <span class="dci-sub" data-ocr-cleann="${i}">${esc(ocrCleanNote(r.clean, ocrCleanCount(r)))}</span></div>
         ${r.small && r.img.w ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: r.img.w, h: r.img.h }))}</p>` : ''}
         ${r.direct ? `<p class="dci-sub">${esc(tr('ocr.fromPdf'))}</p>` : ''}
         ${r.parts.map((pt, j) => ocrPartHtml(r, i, pt, j)).join('')}
@@ -12143,7 +12315,14 @@
         ${busy.length ? `<div class="dci-ocr-busy" role="note" data-ocr-busy><strong>${esc(tr('ocr.busyTitle'))}</strong> ${busy.join(', ')}<br><span>${esc(tr('ocr.busyHint'))}</span></div>` : ''}
         <p class="dci-sub">${esc(tr('ocr.resultHint'))}</p>${o.results.map(sect).join('')}</div>
       <div class="dci-ocr-foot"><button type="button" class="dci-textbtn" data-ocr="back">${esc(tr('ocr.back'))}</button>
-        <button type="button" class="dci-textbtn" data-ocr="copy">${esc(tr('ocr.copy'))}</button><span></span>
+        <button type="button" class="dci-textbtn" data-ocr="copy">${esc(tr('ocr.copy'))}</button>
+        ${(() => {
+          // [3.37.6] for all images
+          const done = o.results.filter((r) => r.status === 'done');
+          const on = done.length > 0 && done.every((r) => r.clean);
+          return done.length ? `<button type="button" class="dci-small dci-ocr-clean" data-ocr="clean-all" aria-pressed="${on}" title="${esc(tr('ocr.cleanTitle'))}">${esc(tr('ocr.cleanAll'))}</button>
+            <span class="dci-sub" data-ocr-cleann="all">${esc(ocrCleanNote(on, done.reduce((a, r) => a + ocrCleanCount(r), 0)))}</span>` : '';
+        })()}<span></span>
         ${canSupp ? `<button type="button" class="dci-small" data-ocr="supp">${esc(tr('ocr.supp'))}</button>` : ''}
         <button type="button" class="dci-apply dci-small" data-ocr="import">${esc(tr('ocr.import'))}</button></div>`;
   }
@@ -12251,7 +12430,7 @@
         <div class="dci-ocr-parttext">${r.parts.length > 1 ? `<strong class="dci-sub">${esc(tr('ocr.part', { n: j + 1 }))}</strong>` : ''}
           <textarea data-ocr-text="${key}" rows="${Math.min(OCR_TEXT_LINES, Math.max(2, pt.text.split('\n').length))}" spellcheck="false" aria-label="${esc(tr('ocr.textOf', { what }))}">${esc(pt.text)}</textarea>
           ${pt.busy ? `<p class="dci-ocr-busyline">${esc(tr('ocr.busyPart', { n: pt.shakyN, of: pt.wordsN }))}</p>` : ''}
-          ${pt.unsure.length ? `<p class="dci-ocr-unsure"><span class="dci-sub">${esc(tr('ocr.unsure'))}</span> ${pt.unsure.map((w) => `<button type="button" class="dci-ocr-word" data-ocr-word="${esc(w)}" data-ocr-in="${key}">${esc(w)}</button>`).join(' ')}</p>` : ''}</div></div>`;
+          ${pt.unsure.length ? `<p class="dci-ocr-unsure"><span class="dci-sub">${esc(tr('ocr.unsure'))}</span> ${pt.unsure.map((w) => `<button type="button" class="dci-ocr-word${ocrCutWords(pt).has(w) ? ' dci-ocr-word-cut' : ''}" data-ocr-word="${esc(w)}" data-ocr-in="${key}">${esc(w)}</button>`).join(' ')}</p>` : ''}</div></div>`;
   }
 
   const ocrPartOf = (key) => {
@@ -12663,6 +12842,13 @@
       if (part) part.scrollIntoView({ block: 'start' });
       return;
     }
+    // [3.37.6] the switch of an image
+    const cl = t.closest('[data-ocr-clean]');
+    if (cl && S.ocr) {
+      const r = S.ocr.results[Number(cl.dataset.ocrClean)];
+      if (r) ocrNonsense([r], !r.clean);
+      return;
+    }
     const zb = t.closest('[data-ocr-z]');
     if (zb && S.ocr) {
       // [3.34.11] + / − / fit
@@ -12727,6 +12913,12 @@
     if (act === 'morethumbs') {
       S.ocr.thumbsShown = (S.ocr.thumbsShown || OCR_BATCH) + OCR_BATCH;
       renderOcr();
+      return;
+    }
+    if (act === 'clean-all') {
+      // [3.37.6] for all images: on unless all are
+      const done = S.ocr.results.filter((r) => r.status === 'done');
+      ocrNonsense(done, !(done.length && done.every((r) => r.clean)));
       return;
     }
     if (act === 'close') closeOcr();
@@ -28597,6 +28789,10 @@
       #dci-ocr textarea { width: 100%; box-sizing: border-box; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid #c8c5d6; border-radius: 4px;
         font: calc(var(--u, 1px) * 12.5) / 1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
       #dci-ocr .dci-ocr-word { margin: 0 2px 2px 0; padding: 0 6px; border: 1px solid #e3b65a; border-radius: 3px; background: #ffe7a8; color: #262430; }
+      /* [3.37.6] taken out, and the switches */
+      #dci-ocr .dci-ocr-word.dci-ocr-word-cut { text-decoration: line-through; opacity: 0.6; }
+      #dci-ocr .dci-ocr-cleanbox { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 6); margin: 0 0 calc(var(--u, 1px) * 6); }
+      #dci-ocr .dci-ocr-clean[aria-pressed="true"] { background: #736dab; color: #fff; border-color: #736dab; }
       /* [3.34.2] the frames step: the image with its frames, beside it the images and what is read */
       /* [3.34.14] the image takes the room beside the small images (collected item 134); the side scrolls on its own */
       #dci-ocr .dci-ocr-body.dci-ocr-frames { flex-direction: row; flex-wrap: nowrap; align-items: stretch; overflow: hidden; }
