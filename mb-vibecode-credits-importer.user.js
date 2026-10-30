@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.11
+// @version      3.37.12
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.11
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.11
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.12
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.12
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.11';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.12';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2125,6 +2125,10 @@
       "dm.chooseLcdTitle": "Use only what the days have in common (the month, or the year)",
       "dm.lcdMenu": "Instead: the single days (one relationship each) or the whole period",
       "dm.lcdSingle": "{n} single days: {list} – one relationship per day",
+      "dm.periodMenu": "Instead: the single days (one relationship each) or what they have in common",
+      "pools.split": "⇢ {n} days",
+      "pools.splitTitle": "Splits the period into its single days – each a date of the pool of its own (the period stays)",
+      "log.dateSplit": "Period split into its days: {date} → {list}",
       "dm.goto": "To the date matrix",
       "dm.choiceLcd": "common month or year",
       "pools.fold": "fold",
@@ -19956,6 +19960,8 @@
         ${gripHtml('date', d.id, poolLabel(d))}
         <button type="button" class="dci-chip-main" data-act="pool-edit" data-id="${esc(d.id)}" title="${esc(tr('date.chipTitle'))}${sugg ? ` – ${esc(tr('pools.suggested'))}` : ''}">
           ${esc(poolLabel(d))} <span class="dci-chip-count">${esc(tr('date.used', { n: poolUsage(d.id) }))}</span></button>
+        ${!kept && splittable(d) && singleDaysOf(d, { create: false }).some((v) => !S.datePool.some((x) => formatDateValue(x) === formatDateValue(v)))
+    ? `<button type="button" class="dci-textbtn dci-pool-split" data-act="pool-split" data-id="${esc(d.id)}" title="${esc(tr('pools.splitTitle'))}">${esc(tr('pools.split', { n: singleDaysOf(d, { create: false }).length }))}</button>` : ''}
       </span>`;
     }).join('');
     const suggestions = poolSuggestions();
@@ -20139,6 +20145,29 @@
     </div>`;
   }
 
+  /** [3.37.12] A period of 2 – 31 days (its single days can be had instead; collected item 162). */
+  const splittable = (d) => { const n = singleDaysOf(d, { create: false }).length; return n >= 2 && n <= 31; };
+
+  /**
+   * [3.37.12] The ▾ of a cell holding a period of a few days – also one dragged there by hand (collected item 162; maintainer:
+   * "ich habe gerade "2009-01-19 - 2009-01-20" in einen pool gezogen und wollte dann die einzelnen tage haben, das ging aber
+   * nicht."): instead the single days (one relationship per day), or what they have in common (the month or the year).
+   */
+  function periodMenuHtml(c) {
+    const e = cellEntry(c);
+    if (!e || !splittable(e)) return '';
+    const open = S.dmLcdMenu === c.id;
+    const btn = `<button type="button" class="dci-iconbtn dci-dm-lcdbtn" data-act="dm-lcd-menu" data-cell="${esc(c.id)}" aria-expanded="${open}" title="${esc(tr('dm.periodMenu'))}" aria-label="${esc(tr('dm.periodMenu'))}">▾</button>`;
+    if (!open) return btn;
+    const days = singleDaysOf(e, { create: false });
+    const common = commonDate(e.begin, e.end);
+    return `${btn}<div class="dci-dm-lcdmenu" role="group" aria-label="${esc(tr('dm.periodMenu'))}">
+      <button type="button" class="dci-dm-opt" data-act="dm-period" data-cell="${esc(c.id)}" data-pick="single" title="${esc(tr('dm.chooseSingleTitleAny'))}">
+        ${esc(tr('dm.lcdSingle', { n: days.length, list: days.map((d) => formatDateValue(d)).join(' · ') }))}</button>
+      ${common ? `<button type="button" class="dci-dm-opt" data-act="dm-period" data-cell="${esc(c.id)}" data-pick="lcd" title="${esc(tr('dm.chooseLcdTitle'))}">${esc(tr(common.begin.month ? 'dm.chooseMonth' : 'dm.chooseYear', { date: formatDateValue(common) }))}</button>` : ''}
+    </div>`;
+  }
+
   function matrixCellHtml(c) {
     if (c.alt) return matrixChooseHtml(c);
     const e = cellEntry(c);
@@ -20147,7 +20176,7 @@
         ${c.auto ? `title="${esc(tr('dm.autoCell'))}"` : ''}>
       <div class="dci-dm-date">
         <button type="button" class="dci-chip-main" data-act="dm-edit" data-cell="${esc(c.id)}" aria-expanded="${editing}" title="${esc(tr('dm.editTitle'))}">${esc(poolLabel(e))}</button>
-        ${c.lcdOf ? lcdMenuHtml(c) : ''}
+        ${c.lcdOf ? lcdMenuHtml(c) : periodMenuHtml(c)}
         <button type="button" class="dci-dm-x" data-act="dm-remove" data-cell="${esc(c.id)}" title="${esc(tr('dm.removeTitle'))}" aria-label="${esc(tr('dm.removeTitle'))}">×</button>
       </div>
       ${cellTracksHtml(c, (DATE_GROUPS.find((g) => g.key === c.col) || {}).releaseOnly ? '' // [3.15.1] mastering: always the release level
@@ -26139,6 +26168,40 @@
         }
         log('info', 'dmChosen', { date: poolLabel(was || src), choice: tr({ range: 'dm.choiceRange', lcd: 'dm.choiceLcd' }[btn.dataset.pick] || 'dm.choiceSingle') });
         dmChanged();
+        break;
+      }
+      // [3.37.12] the ▾ of a cell with a period (item 162): its single days, or what they have in common
+      case 'dm-period': {
+        const c = dm().cells.find((x) => x.id === btn.dataset.cell);
+        const e = c && cellEntry(c);
+        S.dmLcdMenu = null;
+        if (!c || !e) {
+          renderDates();
+          break;
+        }
+        if (btn.dataset.pick === 'single') {
+          const add = singleDaysOf(e).filter((d) => !dm().cells.some((x) => x.col === c.col && x.date === d.id))
+            .map((d) => ({ id: newCellId(), col: c.col, date: d.id, tgs: [...c.tgs], studios: [...c.studios], auto: false }));
+          dm().cells.splice(dm().cells.indexOf(c), 1, ...add);
+        } else {
+          const v = commonDate(e.begin, e.end);
+          const group = DATE_GROUPS.find((g) => g.key === c.col) || null;
+          if (v) Object.assign(c, { date: poolDateFor(v, group, `${e.found || e.id}:lcd`).id, auto: false });
+        }
+        savePool();
+        log('info', 'dmChosen', { date: poolLabel(e), choice: tr(btn.dataset.pick === 'single' ? 'dm.choiceSingle' : 'dm.choiceLcd') });
+        dmChanged();
+        break;
+      }
+      // [3.37.12] a period of the pool split into its days (item 162)
+      case 'pool-split': {
+        const d = S.datePool.find((x) => x.id === btn.dataset.id);
+        if (d && splittable(d)) {
+          const days = singleDaysOf(d);
+          savePool();
+          log('info', 'dateSplit', { date: poolLabel(d), list: days.map((x) => formatDateValue(x)).join(', ') });
+          renderDates();
+        }
         break;
       }
       case 'dm-confirm': {

@@ -221,6 +221,8 @@ python3 t_notes_dates.py        # Discogs notes: dates and track groups found in
                                 #     illustration (R078), not to the photographer; "Photography By [Live Photos]": the concert's date suggested, ✓
                                 #   lcdmenu: 3.32.7: ▾ at the month D022 placed – single days (a cell each; Apply: a row per day), the period
                                 #     (one cell; opening ▾ adds nothing to the pool), the month
+                                #   periodsplit: 3.37.12: "19 & 20. 01. 2009" – the period chosen keeps a ▾ (2 single days, the month) → two
+                                #     cells; a period of the pool: "⇢ 2 days" adds its days (log)
 
 python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging dates and track groups, the pools
                                 #   matrix: date matrix by hand: drag & drop, grip + "place here", editor, auto apply, stamp, after reload

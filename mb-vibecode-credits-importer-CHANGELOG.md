@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.11 | – |
+| 2026-10-30 | 3.36.4 – 3.37.12 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.12
+
+#### Added
+
+- **A period into its single days** (collected item 162; maintainer: "ich habe gerade "2009-01-19 - 2009-01-20" in einen pool gezogen und wollte dann die einzelnen tage haben, das ging aber nicht."): every cell of the date matrix with a period of 2 – 31 days has a ▾ – the single days (one relationship each) or the month / year – also one dragged there by hand (until 3.37.11 only the cells of a common month or year had it); in the date pool such a period has "⇢ 2 days", which adds its days.
 
 ### Import 3.37.11
 
