@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.0
+// @version      3.37.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -253,6 +253,7 @@
       "log.sourceLoaded.one": "{source} read: {artists} entries, {n} role, {u} lines not recognized",
       "log.sourceLoaded.other": "{source} read: {artists} entries, {n} roles, {u} lines not recognized",
       "log.nameSuggested": "{name}: same name in MusicBrainz (only a suggestion): {list}",
+      "log.linkedSuggested": "{name}: in this release in MusicBrainz already – {list} (first among the suggestions, marked)",
       "log.webSuggested": "{name}: MusicBrainz artist with the web link from the text (only a suggestion): {list}",
       "match.nameSuggest": "Same name in MusicBrainz (a suggestion – check before assigning):",
       "match.linkSuggest": "Found via the {src} link, but spelled differently ({mb}) – a suggestion, check before assigning:",
@@ -260,6 +261,13 @@
       "match.similarName": "similar name",
       "match.markSpelled": "spelled differently",
       "match.markRelease": "release artist",
+      "match.markLinked": "in this release: {where}",
+      "match.linkedTitle": "In this release in MusicBrainz already: {where} – most likely the one meant. Only a suggestion: check before assigning.",
+      "match.inRelease.ac": "release artist",
+      "match.inRelease.label": "label of the release",
+      "match.inRelease.track": "track artist {pos}",
+      "match.inRelease.rel": "{type} on {on}",
+      "match.inRelease.release": "the release",
       "match.markWeb": "via {site}",
       "match.suggMore": "+ {n} more",
       "match.suggLess": "− fewer",
@@ -7417,6 +7425,40 @@
     return existing;
   }
 
+  /**
+   * [E5a] (3.37.1) The entities MusicBrainz links to this release – its artist credit and labels, the artist credits of its tracks,
+   * the relationships of the release, its recordings and their works – each with where (maintainer: "wenn der name im text schon an
+   * anderer stelle im datensatz verknüpft ist mit musicbrainz soll der vorschlag stärker hervorgehoben werden als andere
+   * namensvorschläge", "überall"): mbid → { name, where: [...] }.
+   */
+  function linkedInRelease(ws) {
+    const out = new Map();
+    // with its type: an artist is no label of the same name (and the other way round)
+    const add = (e, type, text) => {
+      if (!e || !e.id) return;
+      const x = out.get(e.id) || { name: e.name || '', type, where: [] };
+      if (!x.where.includes(text)) x.where.push(text);
+      out.set(e.id, x);
+    };
+    const rels = (list, on) => (list || []).forEach((r) => {
+      const et = r['target-type'];
+      if (!et || ['url', 'work', 'recording', 'release', 'release_group', 'release-group'].includes(et)) return;
+      add(r[et] || r[et.replace('_', '-')], et.replace('-', '_'), tr('match.inRelease.rel', { type: r.type || '', on }));
+    });
+    (ws['artist-credit'] || []).forEach((p) => add(p.artist, 'artist', tr('match.inRelease.ac')));
+    (ws['label-info'] || []).forEach((li) => add(li.label, 'label', tr('match.inRelease.label')));
+    rels(ws.relations, tr('match.inRelease.release'));
+    const several = (ws.media || []).length > 1;
+    (ws.media || []).forEach((m) => (m.tracks || []).forEach((t) => {
+      const pos = several ? `${m.position}.${t.number}` : String(t.number);
+      [...(t['artist-credit'] || []), ...((t.recording || {})['artist-credit'] || [])].forEach((p) => add(p.artist, 'artist', tr('match.inRelease.track', { pos })));
+      if (!t.recording) return;
+      rels(t.recording.relations, `“${t.title || t.recording.title}”`);
+      for (const r of t.recording.relations || []) if (r['target-type'] === 'work' && r.work) rels(r.work.relations, `“${r.work.title}”`);
+    }));
+    return out;
+  }
+
   /** Works of a track: already linked in MB plus a link planned in the dashboard. */
   function worksForTrack(i) {
     const t = S.mbTracks[i];
@@ -13109,6 +13151,8 @@
         });
       }));
       S.existing = indexExistingRelationships(ws);
+      // [E5a] (3.37.1) who is linked where in this release in MusicBrainz (their name suggestions come first)
+      S.linked = linkedInRelease(ws);
       // [rule 4] The release's artist credit, as named below its title (names from Bandcamp must match it exactly)
       S.releaseCredit = (ws['artist-credit'] || []).map((p) => ({ mbid: (p.artist && p.artist.id) || '', name: p.name || (p.artist && p.artist.name) || '', join: p.joinphrase || '' }));
       // [3.22.1] the labels of the release (a Bandcamp page of one of them is named so, 46)
@@ -15266,6 +15310,22 @@
           a.nameHits = [...web, ...a.nameHits.filter((h) => !web.some((w) => w.mbid === h.mbid))];
           log('info', 'webSuggested', { name: a.name, list: web.map((h) => `${h.name} (${webShort(h.viaWeb)})`).join(', ') });
         }
+        // [E5a] (3.37.1) one MusicBrainz links to this release already (the same name, or one of the hits): first of all, marked with
+        // where – also one the search did not give (spelled as in this release)
+        const linked = S.linked || new Map();
+        // only of the entry's kind: a person's artists; a company's labels, places … (those it can be)
+        const kinds = a.company ? (a.entityType ? [a.entityType] : companyTypes(a)) : ['artist'];
+        const inRel = [];
+        for (const [mbid, x] of linked) {
+          if (!kinds.includes(x.type)) continue;
+          const had = a.nameHits.find((h) => h.mbid === mbid && !h.similar);
+          if (!had && !(x.name && nameFit(x.name, a.name) === 'same')) continue;
+          inRel.push({ ...(had || { mbid, name: x.name, similar: false, disambiguation: '' }), entityType: x.type, linked: x.where.slice(0, 3) });
+        }
+        if (inRel.length) {
+          a.nameHits = [...inRel, ...a.nameHits.filter((h) => !inRel.some((x) => x.mbid === h.mbid))];
+          log('info', 'linkedSuggested', { name: a.name, list: inRel.map((h) => `${h.name} (${h.linked.join(', ')})`).join('; ') });
+        }
         if (a.nameHits.length) {
           const listed = a.nameHits.slice(0, 5).map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ');
           log('info', 'nameSuggested', { name: a.name, list: listed + (a.nameHits.length > 5 ? ` … (+${a.nameHits.length - 5})` : '') });
@@ -16139,9 +16199,10 @@
       heads.push(head);
       const why = a.strictMiss ? mark('match.markSpelled') : a.releaseMbid ? mark('match.markRelease') : '';
       // [3.21.0] found through a web profile next to the name in the text (T032): first, still only a suggestion
-      const titleOf = (h) => (h.viaWeb ? tr('match.webUseTitle', { url: h.viaWeb }) : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
-      a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn" data-act="name-use" data-mbid="${esc(h.mbid)}"
-        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.similar ? mark('match.similarName') : ''}${h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
+      const titleOf = (h) => (h.linked ? tr('match.linkedTitle', { where: h.linked.join(', ') }) : h.viaWeb ? tr('match.webUseTitle', { url: h.viaWeb }) : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
+      // [E5a] (3.37.1) linked in this release: highlighted, with where (the mark "release artist" is part of it then)
+      a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn${h.linked ? ' dci-sugg-linked' : ''}" data-act="name-use" data-mbid="${esc(h.mbid)}"
+        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.similar ? mark('match.similarName') : ''}${h.linked ? mark('match.markLinked', { where: h.linked.join(', ') }) : h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
         h.entityType || (a.company ? 'label' : 'artist'), h.mbid)));
     }
     if (!items.length) return '';
@@ -28668,6 +28729,9 @@
         border-radius: 0 3px 3px 0; background: var(--sugg-bg); color: var(--sugg-ink); text-decoration: none; font-size: 0.9em; }
       #dci-overlay .dci-sugglink:hover, #dci-overlay .dci-sugglink:focus { background: #fff; }
       #dci-overlay .dci-sugg-stack .dci-suggbtn { text-align: left; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 8); line-height: 1.35; }
+      /* [E5a] (3.37.1) a suggestion linked in this release already: stronger than the others (solid green, bold) */
+      #dci-overlay .dci-suggbtn.dci-sugg-linked { border: 2px solid var(--ok); background: #e3f2e8; color: #1f5a35; font-weight: 700; }
+      #dci-overlay .dci-suggbtn.dci-sugg-linked .dci-similar { font-weight: 600; color: #1f5a35; }
       #dci-overlay .dci-suggmore { border: 2px solid var(--sugg-line); border-radius: 3px; background: #fff; color: var(--sugg-ink);
         font: inherit; font-weight: 700; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); cursor: pointer; }
       #dci-overlay .dci-suggmore:hover { background: var(--sugg-bg); }

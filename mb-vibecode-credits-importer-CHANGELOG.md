@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.0 | – |
+| 2026-10-30 | 3.36.4 – 3.37.1 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.1
+
+#### Added
+
+- **Suggestions linked in this release come first** (collected item E5a; maintainer: "wenn der name im text schon an anderer stelle im datensatz verknüpft ist mit musicbrainz soll der vorschlag stärker hervorgehoben werden als andere namensvorschläge", "überall"): for an entry searched by its name, a MusicBrainz entity of that name that this release already links – its artist credit or labels, a track's artist credit, a relationship of the release, a recording or a work – is the first suggestion, solid green and bold, marked "in this release: mix on the release" (where, also in the tooltip and the log); also when the search did not give it. Everywhere names are searched (texts, Bandcamp, the Discogs notes, the cover art, companies and places). Only a suggestion, as before.
 
 ### Import 3.37.0 (milestone: the Discogs notes read in full)
 
