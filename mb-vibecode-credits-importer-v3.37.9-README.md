@@ -552,7 +552,7 @@ Relationship types without dates in MusicBrainz show "this type has no dates". I
 
 ### Date matrix
 
-The matrix has one column per **date group** (Performance, Mix, Remastering, Mastering, ℗/©, see the table below); each column head shows how many rows belong to the group.
+The matrix has one column per **date group** (Performance, Mix, Remastering, Mastering, ℗/©, from 3.37.9 Artwork, see the table below); each column head shows how many rows belong to the group.
 
 1. **Dates first:** drag a date from the date pool into a column. A date can be in several columns, but only once per column.
 2. **Then the tracks:** drag a track group from the track pool onto a date in the matrix. Several track groups on one date count together. **A date without a track group applies to all tracks.**
@@ -585,6 +585,9 @@ Some dates belong together: the musicians of a session and the studio where it w
 | Mastering | Mastering 1, 2 … | mastering without "re" | mastered at (from Discogs "Mastered At" or by hand) |
 | Remastering | Remastering 1, 2 … | mastering with "re" | mastered at from Discogs "Remastered At" |
 | ℗/© | ℗/© 1, 2 … | phonographic copyright and copyright, labels and artists, release and recordings | – |
+| Artwork (3.37.9) | Artwork 1, 2 … | design/illustration, illustration, design, graphic design, art direction, artwork – release level only (not photography) | – |
+
+**The dates of the artwork** (3.37.9; collected item 159 – Discogs 1565448 "Cascades"; maintainer: "da wir außerdem "Painting [Cover Painting] – Mary Vernon (2)" haben, können wir bei Mary Vernon - illustration das datum hinzufügen. Painting ist übrigens immer illustration.", "manchmal gibt es bei foto-credits sowas wie "at the concert" oder so, dann kann das datum aus der performance gelesen werden. (mit transparenzhinweis)"): a line of the notes with a word of the artwork – "Cover Painting: “View at Nice” (1992)" (also cover art, cover illustration, cover drawing, painting, illustration, drawing, artwork; German, French, Spanish words) – gives its year to the new group **Artwork**, placed in the matrix as a suggestion: applied, "Painting [Cover Painting] – Mary Vernon" (an illustration, R078; also "Cover Painting", "Painted By") gets 1992. Until 3.37.8 a year right after a title in quotation marks was never a date (D016; without such a word it still is none). **Photographs of a concert** – a photography credit with "Live Photos", "Concert Photos", "at the concert", "in concert", "live" … – get the date of the concert as a suggestion in their date cell (when the Performance dates of the matrix, or of the pool, are one day): its tooltip says "The date of the concert (Performance: 1993-06-26) – the photos were taken there (“Photography By [Live Photos]”)", ✓ takes it, ✕ leaves it out.
 
 Nothing is copied automatically while you type, paste, pick from the pool or drag a date onto a row, so you can fill in begin and end date first. Dates you entered yourself are never overwritten by the matrix. A row added by hand gets the date its group currently uses as soon as it has its role.
 
