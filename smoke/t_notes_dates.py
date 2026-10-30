@@ -1,6 +1,6 @@
 """Discogs notes: dates and track groups found in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: datewords, facets, choose, lcdmenu (3.32.7), trackpool, reldate, trackside (3.37.7) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
+Cases: datewords, facets, choose, lcdmenu (3.32.7), trackpool, reldate, trackside (3.37.7), artwork (3.37.9) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -228,6 +228,72 @@ def case_trackside():
             results.append(not errs)
             pg.close()
             ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_artwork():
+    """Credits Importer 3.37.9: the dates of the artwork (collected item 159; maintainer: "da wir außerdem "Painting [Cover Painting]
+    – Mary Vernon (2)" haben, können wir bei Mary Vernon - illustration das datum hinzufügen. Painting ist übrigens immer
+    illustration.", "manchmal gibt es bei foto-credits sowas wie "at the concert" oder so, dann kann das datum aus der performance
+    gelesen werden. (mit transparenzhinweis)"). Discogs 1565448 "Cascades": "Recorded June, 26, 1993 at the Western Front Lodge,
+    Vancouver." / "Cover Painting: "View at Nice" (1992)"; "Painting [Cover Painting] – Mary Vernon (2)", "Photography By [Live
+    Photos] – Photo Guy".
+    A) The matrix: Performance 1993-06-26, the new column Artwork 1992 (until 3.37.8 the year after the title in quotation marks
+       was no date); Mary Vernon an illustration (R078).
+    B) Applied: Mary Vernon's illustration 1992; Photo Guy (photography) not – photographs are not in Artwork.
+    C) Photo Guy's date: the concert's suggested (1993-06-26, its tooltip says why); ✓ takes it. Mary Vernon has no such
+       suggestion."""
+    NOTES = 'Recorded June, 26, 1993 at the Western Front Lodge, Vancouver.\nCover Painting: "View at Nice" (1992)'
+    H.lt(927, H.uid('92792792', 1), 'illustration', 'artist', 'release', (1,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        for e in d['extraartists']:
+            if e['name'] == 'Photo Guy':
+                e['role'] = 'Photography By [Live Photos]'
+        d['extraartists'].append({'name': 'Mary Vernon (2)', 'anv': '', 'role': 'Painting [Cover Painting]', 'tracks': '', 'id': 2961807, 'join': ''})
+        return d
+
+    H.discogs_release = rel
+    ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim().startsWith(name));
+      if (!g) return null; const r = g.querySelector('tr.dci-row'); const t = r.querySelector('[data-f=type]'); const sg = r.querySelector('.dci-datechip-sugg');
+      return { type: t ? (t.selectedOptions[0] || {}).text : (r.querySelector('.dci-drole') || {}).textContent, chip: ((r.querySelector('.dci-datechip:not(.dci-datechip-sugg)') || {}).textContent || '').replace(/\\s+/g, ' ').trim(),
+        sugg: sg ? [sg.querySelector('.dci-datechip-text').textContent.trim(), sg.title] : null, credit: (r.querySelector('[data-f=credit]') || {}).value || '' }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        pool = {d['id']: d for d in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")}
+        mx = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-matrix:{H.REL}') || '{{}}')")
+        cells = sorted((c['col'], pool[c['date']]['begin']['year'], pool[c['date']]['begin'].get('day')) for c in mx.get('cells', []))
+        mary = pg.evaluate(ROW, 'Mary Vernon')
+        print('A) Matrix:', cells, '| Mary Vernon:', mary)
+        results.append(cells == [('artwork', 1992, None), ('performance', 1993, 26)] and mary and mary['type'].strip() == 'illustration')
+        if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') != 'true':
+            pg.click('.dci-pools-toggle'); pg.wait_for_timeout(200)
+        pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(800)
+        mary2, photo = pg.evaluate(ROW, 'Mary Vernon'), pg.evaluate(ROW, 'Photo Guy')
+        print('B) Mary Vernon:', mary2, '| Photo Guy:', photo)
+        results.append(mary2 and '1992' in mary2['chip'] and photo and '1992' not in photo['chip'] and not mary2['sugg'])
+        ok_c = bool(photo and photo['sugg']) and photo['sugg'][0].endswith('1993-06-26') and photo['sugg'][1].startswith('The date of the concert (Performance: 1993-06-26) – the photos were taken there')
+        rid = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Photo Guy/.test(x.querySelector('.dci-gname strong').textContent));
+          return g ? g.querySelector('tr.dci-row').dataset.row : null; })()""")
+        pg.click(f'tr[data-row="{rid}"] .dci-datechip-sugg [data-act=date-take]'); pg.wait_for_timeout(400)
+        photo2 = pg.evaluate(ROW, 'Photo Guy')
+        print('C) Photo Guy danach:', photo2)
+        results.append(ok_c and photo2 and '1993-06-26' in photo2['chip'] and not photo2['sugg'])
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

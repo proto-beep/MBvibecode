@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.8
+// @version      3.37.9
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.8
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.8
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.9
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.9
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.9';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -684,6 +684,7 @@
       "date.copyTitle": "Copy begin date to end date",
       "date.addRow": "+ Date",
       "date.suggLiner": "Suggested from the “about” text (the date by the name of the liner notes) – ✓ takes it, ✕ leaves it out",
+      "date.suggConcert": "The date of the concert (Performance: {date}) – the photos were taken there (“{text}”). ✓ takes it, ✕ leaves it out",
       "date.take": "Take this date",
       "date.dropSugg": "Not this date",
       "date.fromPool": "from pool …",
@@ -3619,6 +3620,10 @@
       only: (n, row) => (n === 'mastering' && row.flags.has('re')) || (n === 'mastered at' && /^remastered/i.test(row.raw || '')), releaseOnly: true },
     { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at'], releaseOnly: true },
     { key: 'copyright', label: '℗/©', types: ['phonographic copyright', 'copyright'] },
+    // [3.37.9] the artwork: "Cover Painting: “View at Nice” (1992)" for "Painting [Cover Painting] – Mary Vernon" (collected item 159;
+    // maintainer: "können wir bei Mary Vernon - illustration das datum hinzufügen. Painting ist übrigens immer illustration.");
+    // photographs are not in it (their date is the concert's, see rowDateSugg)
+    { key: 'artwork', label: 'Artwork', types: ['design/illustration', 'illustration', 'design', 'graphic design', 'art direction', 'artwork'], releaseOnly: true },
   ];
   // test(name of the MB relationship type, row): the first group that takes it wins (Remastering before Mastering)
   DATE_GROUPS.forEach((g) => { g.test = (n, row) => g.types.includes(n) && (!g.only || g.only(n, row)); });
@@ -4106,7 +4111,7 @@
     // hinweg gehen nach meinen regeln auf den kleinsten gemeinsamen nenner gekürzt werden")
     { id: 'D022', note: 'Performance on several days ("December 11 & 12, 2015", "2012-03-01 – 2012-09-30") from the notes: the column Performance of the date matrix gets what they have in common at once (D014) – the month (2015-12) or the year (2012); across years the period stays. The period and the single days stay in the pool, to be used instead (3.32.0)' },
     { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
-    { id: 'D016', note: 'A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0)' },
+    { id: 'D016', note: 'A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0); [3.37.9] after a word of the artwork in its line ("Cover Painting: “View at Nice” (1992)") it is the artwork\'s year (the date group Artwork)' },
     { id: 'D017', note: 'Year, month name, day: 1973 October 19 · 1973, Oct. 19th (3.28.5)' },
     { id: 'D018', note: 'A year of a release or issue is no date of the credits and is left out: "originally issued on LP in 1974", "Released 2003", "veröffentlicht 1999" (3.28.5)' },
     { id: 'D019', note: 'The word naming the group of a date is looked for in its own sentence only ("Mixed May 2001. Released 2003." – 2003 is no mix date); a line ending in ":" counts as part of the next one (3.28.5)' },
@@ -4215,7 +4220,12 @@
       const name = !/\.$/.test(m[0]) && /^[ \t]+\p{Lu}/u.test(m.input.slice(m.index + m[0].length));
       return single(name || m[2] === 'may' ? ymd(m[1]) : ymd(m[1], monthNo(m[2])));
     } },
-    { id: 'D016', re: '(?<=[”"’»\'],?\\s{0,2}\\(?)(1[89]\\d{2}|20\\d{2})(?![\\d/-])', make: () => 'skip' },
+    // ([3.37.9] after a word of the artwork in its line – "Cover Painting: “View at Nice” (1992)" – it is the artwork's year, item 159)
+    { id: 'D016', re: '(?<=[”"’»\'],?\\s{0,2}\\(?)(1[89]\\d{2}|20\\d{2})(?![\\d/-])', make: (m) => {
+      const line = m.input.slice(m.input.lastIndexOf('\n', m.index) + 1, m.index);
+      const art = (DATE_HINTS.find(([k]) => k === 'artwork') || [])[1];
+      return art && new RegExp(art.source, 'i').test(line) ? single(ymd(m[1])) : 'skip';
+    } },
     { id: 'D010', re: '(?<![\\d./-])(1[89]\\d{2}|20\\d{2})(?![\\d/-]|\\.\\d)', make: (m) => single(ymd(m[1])) },
   ].map((x) => ({ ...x, rx: new RegExp(x.re, 'giu') }));
 
@@ -18392,14 +18402,39 @@
     return S.datePool.find((x) => x.liner === liner.name) || null;
   }
 
+  // [3.37.9] photographs of the concert (collected item 159; maintainer: "manchmal gibt es bei foto-credits sowas wie "at the
+  // concert" oder so, dann kann das datum aus der performance gelesen werden. (mit transparenzhinweis)")
+  const CONCERT_PHOTO = /\b(?:at|during|from)\s+the\s+(?:concert|gig|show|performance|festival)s?\b|\bin\s+concert\b|\b(?:live|concert|gig|stage)\s+(?:photos?|photographs?|photography|shots?|pictures?)\b|\bphotographed\s+live\b|\blive\b/i;
+
+  /** The one date of the concert: the Performance dates of the matrix (else of the pool), when there is only one. */
+  function concertDate() {
+    const ids = uniq(dm().cells.filter((c) => c.col === 'performance' && !c.alt).map((c) => c.date));
+    const fromPool = ids.length ? ids.map((id) => S.datePool.find((x) => x.id === id)).filter(Boolean)
+      : S.datePool.filter((x) => /^Performance\b/.test(x.name || '') && x.begin && x.begin.day);
+    const days = uniq(fromPool.map((x) => formatDateValue(x)));
+    return days.length === 1 ? fromPool[0] : null;
+  }
+
+  /** A row's date suggested (✓ takes it, ✕ leaves it out): the liner notes', or the concert's for its photographs. → { entry, title } */
+  function rowDateSugg(row) {
+    const liner = linerDateSugg(row);
+    if (liner) return { entry: liner, title: tr('date.suggLiner') };
+    if (row.dateSuggOff || norm(rowTypeName(row)) !== 'photography') return null;
+    const hit = CONCERT_PHOTO.test([row.raw, ...(row.mods || []), row.dBase, row.notesCredit].filter(Boolean).join(' · '));
+    const d = hit && concertDate();
+    return d ? { entry: d, title: tr('date.suggConcert', { date: formatDateValue(d), text: row.notesCredit || row.raw || [row.dBase, ...(row.mods || [])].join(' ') }) } : null;
+  }
+
   function dateCell(row) {
     if (row.level === 'skip') return '';
     const lt = currentLinkType(row);
     if (lt && lt.has_dates === false) return `<span class="dci-muted">${esc(tr('date.notAllowed'))}</span>`;
     const d = row.date;
     if (!row.dateOpen && !hasDateInput(d)) {
-      const sugg = linerDateSugg(row);
-      return `${sugg ? `<span class="dci-datechip dci-datechip-sugg" title="${esc(tr('date.suggLiner'))}"><span class="dci-datechip-text">${esc(poolLabel(sugg))}</span>
+      // [3.37.9] (also the concert's date of photographs)
+      const sg = rowDateSugg(row);
+      const sugg = sg && sg.entry;
+      return `${sugg ? `<span class="dci-datechip dci-datechip-sugg" title="${esc(sg.title)}"><span class="dci-datechip-text">${esc(poolLabel(sugg))}</span>
           <button type="button" class="dci-iconbtn" data-act="date-take" data-pool="${esc(sugg.id)}" title="${esc(tr('date.take'))}" aria-label="${esc(tr('date.take'))}">✓</button>
           <button type="button" class="dci-iconbtn" data-act="date-sugg-off" title="${esc(tr('date.dropSugg'))}" aria-label="${esc(tr('date.dropSugg'))}">✕</button></span>` : ''}
         <button type="button" class="dci-textbtn dci-date-add" data-act="date-open">${esc(tr('date.addRow'))}</button>`;
@@ -20659,7 +20694,7 @@
       if (isUnmapped(row)) flags.push(['bad', tr('cl.unmapped')]);
       const q = questionRuleFor(row);
       const tq = typeQuestionFor(row);
-      if (!hasDateInput(row.date) && linerDateSugg(row)) flags.push(['sugg', tr('cl.dateSugg')]);
+      if (!hasDateInput(row.date) && rowDateSugg(row)) flags.push(['sugg', tr('cl.dateSugg')]);
       flags.forEach(([kind, text]) => parts.push(open(`dci-cl-flag dci-cl-${kind}`, esc(text), tr('cl.openTitle'))));
       // [3.32.3] the questions whole and to click (item 102)
       if (q && lt && primaryRootOf(lt) && norm(row.primaryText) === q.base) parts.push(clineAskHtml('instr', tr('cl.instrAsk', { name: row.base }), q.options.map((x) => ({ value: x, text: x }))));
@@ -25375,6 +25410,7 @@
       case 'date-sugg-off':
         if (row) {
           row.linerDateOff = true;
+          row.dateSuggOff = true; // [3.37.9]
           rerenderRow(row);
         }
         break;
@@ -29751,7 +29787,7 @@
       /* The date matrix: one column per date group */
       .dci-dm { margin-top: calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 4px; background: #fff; }
       .dci-dm-help { margin: 0 0 calc(var(--u, 1px) * 6); }
-      .dci-dm-grid { display: grid; grid-template-columns: repeat(5, minmax(calc(var(--u, 1px) * 150), 1fr)); gap: calc(var(--u, 1px) * 8); overflow-x: auto; }
+      .dci-dm-grid { display: grid; grid-template-columns: repeat(6, minmax(calc(var(--u, 1px) * 140), 1fr)); gap: calc(var(--u, 1px) * 8); overflow-x: auto; }
       .dci-dm-col { display: flex; flex-direction: column; min-width: 0; border: 1px solid #e7e5ef; border-radius: 4px; background: var(--soft); }
       .dci-dm-colhead { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); font-weight: 600; color: var(--date-d); border-bottom: 1px solid #e7e5ef; }
       .dci-dm-drop { flex: 1; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 6); min-height: calc(var(--u, 1px) * 56); }

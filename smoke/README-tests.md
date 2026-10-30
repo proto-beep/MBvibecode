@@ -75,7 +75,7 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # texts only after the import of the release is complete – before, their end depended on the timing)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
-                                # on purpose, no 1988 in the pool; "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
+                                # on purpose, 1988 in the pool (3.37.9: the artwork's year; before: none); "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
                                 # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
                                 # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                                 # with a studio's profile
@@ -214,6 +214,8 @@ python3 t_notes_dates.py        # Discogs notes: dates and track groups found in
                                 #   trackside: 3.37.7: "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" (A1, A2, A3, B) – the date on
                                 #     track B only, Zojoji Hall (Tokyo) from the notes on B; listed by Discogs: its entry with B; a pasted
                                 #     "Tracks A2 & B:" on tracks 2 and 4
+                                #   artwork: 3.37.9: "Cover Painting: “View at Nice” (1992)" – the column Artwork, applied to Mary Vernon's
+                                #     illustration (R078), not to the photographer; "Photography By [Live Photos]": the concert's date suggested, ✓
                                 #   lcdmenu: 3.32.7: ▾ at the month D022 placed – single days (a cell each; Apply: a row per day), the period
                                 #     (one cell; opening ▾ adds nothing to the pool), the month
 
