@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-31 | 3.38.0 | – |
+| 2026-10-31 | 3.38.0 – 3.38.1 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
@@ -96,6 +96,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-31
+
+### Import 3.38.1
+
+#### Added
+
+- **More statistics** (E8; maintainer: "Setze mal alle Ideen für die Statistik um und erstelle die Statistik."): ⚙ Settings → Statistics also shows the sources, how the entries were found (link of the source, name, by hand, newly created), the dates (share, precision, from the notes or by hand) and the places and studios used most, levels and works linked, the releases by decade, format, country and label, when you work (weekdays, hours, days in a row, the most in a day, the most for a release, the fastest per relationship), the instruments (how many, first used in the last 30 days, used only once), the text from cover art (images, lines, words changed by hand) and your own rules.
 
 ### Import 3.38.0 – milestone "Statistics"
 

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.0, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.1, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.1 · 2026-10-31
+
+The further statistics (E8).
+
+- **New** `statMore(recs)` (per submission in time order: sources, supplements, weekday and hour of the relationships, relationships per day and per release, the fastest per relationship from 5 at once; the release at its first submission: decade, formats, country, labels; text from cover art; own rules – the newest `own`; per relationship: how its entity was found – each `tg` once –, dates, places, levels, works, the first use and the count of each instrument, rules `U…`), `statStreaks(days)` (now – ending today or yesterday –, the longest), **`statsMoreHtml(recs)`** (boxes `.dci-stats-card[data-el=stats-<key>]`: sources, found, dates, levels, releases, when, instruments, ocr, own; bars `.dci-stats-cols`); `statsHtml` shows it below the top lists.
+- **`statSnapshot`:** `own` = `userRules().length`.
+- **CSS:** `.dci-stats-cards`, `.dci-stats-card`, `.dci-stats-kv`, `.dci-stats-cols`, `.dci-stats-col`, `.dci-stats-colbar`, `.dci-stats-collbl`.
+- **Texts (English only):** `stats.more.*`, `stats.withSupp`, `stats.src.*`, `stats.found.*`, `stats.dated`, `stats.prec.*`, `stats.dsrc.*`, `stats.places`, `stats.works`, `stats.decade`, `stats.format`, `stats.country`, `stats.label`, `stats.weekdays`, `stats.hours`, `stats.streak`, `stats.rec.*`, `stats.instrN`, `stats.instrNew`, `stats.instrOnce`, `stats.ocr.*`, `stats.own`.
+- **Tests:** `t_ui_settings.py` new case `statsmore` (records stored in IndexedDB, helpers `STAT_SEED`, `stat_rel`).
 
 ## Import 3.38.0 · 2026-10-31
 

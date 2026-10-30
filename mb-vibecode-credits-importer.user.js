@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.0
+// @version      3.38.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1493,6 +1493,52 @@
       "stats.sec": "{s} s",
       "stats.min": "{m} min {s} s",
       "stats.hour": "{h} h {m} min",
+      "stats.more.sources": "Sources",
+      "stats.more.found": "How the entries were found",
+      "stats.more.dates": "Dates",
+      "stats.more.levels": "Levels and works",
+      "stats.more.releases": "The releases",
+      "stats.more.when": "When you work",
+      "stats.more.instruments": "Instruments",
+      "stats.more.ocr": "Text from cover art",
+      "stats.more.own": "Own rules",
+      "stats.withSupp": "with a supplement: {n}",
+      "stats.src.discogs": "Discogs",
+      "stats.src.bandcamp": "Bandcamp",
+      "stats.src.text": "pasted text",
+      "stats.src.ocr": "text from cover art",
+      "stats.src.other": "other",
+      "stats.found.link": "through the link of the source",
+      "stats.found.search": "by their name",
+      "stats.found.hand": "chosen by hand",
+      "stats.found.created": "newly created",
+      "stats.dated": "{pct} with a date ({n} of {of})",
+      "stats.prec.day": "day",
+      "stats.prec.month": "month only",
+      "stats.prec.year": "year only",
+      "stats.dsrc.notes": "found in the notes or the text",
+      "stats.dsrc.hand": "given by hand",
+      "stats.places": "Places and studios used most",
+      "stats.works": "works linked: {n}",
+      "stats.decade": "By decade",
+      "stats.format": "By format",
+      "stats.country": "By country",
+      "stats.label": "By label",
+      "stats.weekdays": "Relationships by weekday",
+      "stats.hours": "Relationships by hour",
+      "stats.streak": "Days in a row: now {now}, longest {longest}",
+      "stats.rec.day": "Most in a day: {n} relationships ({day})",
+      "stats.rec.release": "Most for a release: {n} relationships ({title})",
+      "stats.rec.fastest": "Fastest: {time} per relationship ({title}, {n} relationships)",
+      "stats.rec.fastestNone": "Fastest: – (from 5 relationships at once)",
+      "stats.instrN": "Different instruments: {n}",
+      "stats.instrNew": "First used in the last 30 days:",
+      "stats.instrOnce": "Used only once ({n}):",
+      "stats.ocr.subs": "submissions with text from cover art: {n}",
+      "stats.ocr.images": "images read: {n}",
+      "stats.ocr.lines": "lines taken over: {n}",
+      "stats.ocr.corrected": "words changed by hand: {n}",
+      "stats.own": "Own rules now: {n} – relationships from them:",
       "settings.betaHint": "Functions to try out before they become a regular part of the script: off until switched on here, and they may still change.",
       "settings.cacheHint": "What the dashboard remembers for a release in this browser. Off (the default), every import starts afresh: nothing of a release is stored or read again – only the list of works created through the dashboard (a safety list) and the status marks of the companion are kept.",
       "settings.remember": "Remember changes and import settings per release",
@@ -28462,7 +28508,7 @@
       rels.push(it);
     }
     const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
-    return { v: 1, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, rels };
+    return { v: 1, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length, rels };
   }
 
   /**
@@ -28636,8 +28682,144 @@
     const tops = `<div class="dci-stats-lists">${list('artists', statTop(a.artists, 3))}${list('instr', statTop(a.instr, 3))}${list('types', statTop(a.types, 5))}</div>`;
     return [...head, tiles,
       `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))} ${seg}</h4>`, table,
-      tops,
+      tops, statsMoreHtml(recs),
       row(`<button type="button" class="dci-small" data-act="stats-delete">${esc(tr('stats.delete'))}</button> <span class="dci-sub">${esc(tr('stats.stored', { n: recs.length }))}</span>`)];
+  }
+
+  /**
+   * [E8] (3.38.1) The further statistics (maintainer: "Setze mal alle Ideen für die Statistik um"): sources, how the entries were
+   * found, dates and places, levels and works, the releases themselves, when you work (days in a row, records), instruments, the
+   * text from cover art, own rules.
+   */
+  function statMore(recs) {
+    const m = { src: new Map(), supp: 0, link: new Map(), seenEnt: new Set(), rels: 0, dated: 0, prec: new Map(), dsrc: new Map(), places: new Map(),
+      lv: new Map(), works: 0, decade: new Map(), format: new Map(), country: new Map(), label: new Map(), weekday: new Array(7).fill(0), hour: new Array(24).fill(0),
+      days: new Map(), relByRelease: new Map(), fastest: null, instrFirst: new Map(), instrN: new Map(), ocr: { subs: 0, images: 0, lines: 0, corrected: 0 },
+      own: 0, ownRels: new Map() };
+    const inc = (map, k, by = 1) => {
+      if (k || k === 0) map.set(k, (map.get(k) || 0) + by);
+    };
+    const seenRelease = new Set();
+    const sorted = [...recs].sort((x, y) => x.at - y.at);
+    for (const r of sorted) {
+      const rels = r.rels || [];
+      inc(m.src, r.src || 'other');
+      if ((r.supp || []).length) m.supp++;
+      const d = new Date(r.at);
+      m.weekday[(d.getDay() + 6) % 7] += rels.length;
+      m.hour[d.getHours()] += rels.length;
+      inc(m.days, statPeriodKey(r.at, 'day'), rels.length);
+      const rr = m.relByRelease.get(r.mbid) || { title: (r.rel && r.rel.title) || r.mbid, n: 0 };
+      rr.n += rels.length;
+      m.relByRelease.set(r.mbid, rr);
+      if (r.ms != null && rels.length >= 5) {
+        const per = r.ms / rels.length;
+        if (!m.fastest || per < m.fastest.per) m.fastest = { per, title: (r.rel && r.rel.title) || r.mbid, n: rels.length };
+      }
+      // the release itself, at its first submission
+      if (!seenRelease.has(r.mbid) && r.rel) {
+        seenRelease.add(r.mbid);
+        if (r.rel.year) inc(m.decade, `${Math.floor(r.rel.year / 10) * 10}s`);
+        (r.rel.formats || []).forEach((f) => inc(m.format, f));
+        inc(m.country, r.rel.country);
+        (r.rel.labels || []).forEach((l) => inc(m.label, l));
+      }
+      if (r.ocr && (r.src === 'ocr' || (r.supp || []).includes('ocr'))) {
+        m.ocr.subs++;
+        m.ocr.images += r.ocr.images || 0;
+        m.ocr.lines += r.ocr.lines || 0;
+        m.ocr.corrected += r.ocr.corrected || 0;
+      }
+      if (r.own != null) m.own = r.own;
+      for (const it of rels) {
+        m.rels++;
+        if (it.tg && !m.seenEnt.has(it.tg) && it.lk) {
+          m.seenEnt.add(it.tg);
+          inc(m.link, it.lk);
+        }
+        if (it.d) {
+          m.dated++;
+          inc(m.prec, it.d);
+          inc(m.dsrc, it.ds || 'hand');
+        }
+        if (it.et === 'place') inc(m.places, it.tn);
+        if (it.et === 'work') m.works++;
+        inc(m.lv, it.lv);
+        for (const n of it.i || []) {
+          if (!m.instrFirst.has(n)) m.instrFirst.set(n, r.at);
+          inc(m.instrN, n);
+        }
+        if (/^U\d+$/.test(it.ru || '')) inc(m.ownRels, it.ru);
+      }
+    }
+    return m;
+  }
+
+  /** [E8] (3.38.1) Days in a row with something counted: now (ending today or yesterday) and the longest. */
+  function statStreaks(days) {
+    const keys = [...days.keys()].filter((k) => days.get(k) > 0).sort();
+    let longest = 0;
+    let run = 0;
+    let prev = null;
+    for (const k of keys) {
+      const t = new Date(`${k}T12:00:00`).getTime();
+      run = prev != null && Math.round((t - prev) / 86400000) === 1 ? run + 1 : 1;
+      longest = Math.max(longest, run);
+      prev = t;
+    }
+    const today = statPeriodKey(Date.now(), 'day');
+    const yesterday = statPeriodKey(Date.now() - 86400000, 'day');
+    const last = keys[keys.length - 1];
+    return { now: last === today || last === yesterday ? run : 0, longest };
+  }
+
+  function statsMoreHtml(recs) {
+    const m = statMore(recs);
+    const top = (map, n = 5) => [...map.entries()].sort((x, y) => y[1] - x[1] || String(x[0]).localeCompare(String(y[0]))).slice(0, n);
+    const kv = (pairs, label = (k) => k) => (pairs.length ? `<ul class="dci-stats-kv">${pairs.map(([k, n]) => `<li><span>${esc(label(k))}</span> <span class="dci-sub">${statNum(n)}</span></li>`).join('')}</ul>`
+      : `<p class="dci-sub">–</p>`);
+    const card = (key, body) => `<div class="dci-stats-card" data-el="stats-${key}"><h4>${esc(tr(`stats.more.${key}`))}</h4>${body}</div>`;
+    const bars = (vals, labels) => {
+      const max = Math.max(1, ...vals);
+      return `<div class="dci-stats-cols" role="img" aria-label="${esc(vals.map((v, i) => `${labels[i]}: ${v}`).join(', '))}">${vals.map((v, i) => `<span class="dci-stats-col" title="${esc(`${labels[i]}: ${statNum(v)}`)}">
+        <span class="dci-stats-colbar" style="height:${Math.round((36 * v) / max)}px"></span><span class="dci-stats-collbl">${esc(labels[i])}</span></span>`).join('')}</div>`;
+    };
+    const wd = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(LANG, { weekday: 'short' }).format(new Date(2024, 0, 1 + i)));
+    const hours = Array.from({ length: 24 }, (_, h) => String(h));
+    const srcName = (k) => tr(`stats.src.${['discogs', 'bandcamp', 'text', 'ocr'].includes(k) ? k : 'other'}`);
+    const pct = (x) => `${statPct(x, m.rels)} %`;
+    const streak = statStreaks(m.days);
+    const bestDay = top(m.days, 1)[0];
+    const biggest = [...m.relByRelease.values()].sort((x, y) => y.n - x.n)[0];
+    const thirty = Date.now() - 30 * 86400000;
+    const firstNew = [...m.instrFirst.entries()].filter(([, at]) => at >= thirty).map(([n]) => n).sort((x, y) => x.localeCompare(y));
+    const once = [...m.instrN.entries()].filter(([, n]) => n === 1).map(([n]) => n).sort((x, y) => x.localeCompare(y));
+    const list10 = (names) => (names.length ? `${esc(names.slice(0, 10).join(', '))}${names.length > 10 ? ' …' : ''}` : '–');
+    return `<div class="dci-stats-cards">
+      ${card('sources', `${kv(top(m.src), srcName)}<p class="dci-sub">${esc(tr('stats.withSupp', { n: m.supp }))}</p>`)}
+      ${card('found', kv(['link', 'search', 'hand', 'created'].map((k) => [k, m.link.get(k) || 0]), (k) => tr(`stats.found.${k}`)))}
+      ${card('dates', `<p>${esc(tr('stats.dated', { pct: pct(m.dated), n: statNum(m.dated), of: statNum(m.rels) }))}</p>
+        ${kv(['day', 'month', 'year'].map((k) => [k, m.prec.get(k) || 0]), (k) => tr(`stats.prec.${k}`))}
+        ${kv(['notes', 'hand'].map((k) => [k, m.dsrc.get(k) || 0]), (k) => tr(`stats.dsrc.${k}`))}
+        <h5>${esc(tr('stats.places'))}</h5>${kv(top(m.places, 3))}`)}
+      ${card('levels', `${kv(['recording', 'release', 'work', 'release_group'].map((k) => [k, m.lv.get(k) || 0]).filter(([, n]) => n), (k) => tr(`level.${k}`))}
+        <p class="dci-sub">${esc(tr('stats.works', { n: statNum(m.works) }))}</p>`)}
+      ${card('releases', `<h5>${esc(tr('stats.decade'))}</h5>${kv(top(m.decade))}<h5>${esc(tr('stats.format'))}</h5>${kv(top(m.format))}
+        <h5>${esc(tr('stats.country'))}</h5>${kv(top(m.country))}<h5>${esc(tr('stats.label'))}</h5>${kv(top(m.label))}`)}
+      ${card('when', `<h5>${esc(tr('stats.weekdays'))}</h5>${bars(m.weekday, wd)}<h5>${esc(tr('stats.hours'))}</h5>${bars(m.hour, hours)}
+        <p data-el="stats-streak">${esc(tr('stats.streak', { now: streak.now, longest: streak.longest }))}</p>
+        <ul class="dci-stats-kv" data-el="stats-records">
+          <li>${esc(tr('stats.rec.day', { day: bestDay ? bestDay[0] : '–', n: bestDay ? statNum(bestDay[1]) : '0' }))}</li>
+          <li>${esc(tr('stats.rec.release', { title: biggest ? biggest.title : '–', n: biggest ? statNum(biggest.n) : '0' }))}</li>
+          <li>${esc(m.fastest ? tr('stats.rec.fastest', { time: statDur(m.fastest.per), title: m.fastest.title, n: statNum(m.fastest.n) }) : tr('stats.rec.fastestNone'))}</li>
+        </ul>`)}
+      ${card('instruments', `<p>${esc(tr('stats.instrN', { n: statNum(m.instrN.size) }))}</p>
+        <p><span class="dci-sub">${esc(tr('stats.instrNew'))}</span> <span data-el="stats-instr-new">${list10(firstNew)}</span></p>
+        <p><span class="dci-sub">${esc(tr('stats.instrOnce', { n: statNum(once.length) }))}</span> <span data-el="stats-instr-once">${list10(once)}</span></p>`)}
+      ${card('ocr', m.ocr.subs ? `<ul class="dci-stats-kv"><li>${esc(tr('stats.ocr.subs', { n: statNum(m.ocr.subs) }))}</li><li>${esc(tr('stats.ocr.images', { n: statNum(m.ocr.images) }))}</li>
+        <li>${esc(tr('stats.ocr.lines', { n: statNum(m.ocr.lines) }))}</li><li>${esc(tr('stats.ocr.corrected', { n: statNum(m.ocr.corrected) }))}</li></ul>` : `<p class="dci-sub">–</p>`)}
+      ${card('own', `<p>${esc(tr('stats.own', { n: statNum(m.own) }))}</p>${kv(top(m.ownRels))}`)}
+    </div>`;
   }
 
   /** Settings the menu shares with switches elsewhere in the dashboard (data-f → the value they show). */
@@ -30759,6 +30941,18 @@
       .dci-stats-list h4 { margin: 0 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 13); }
       .dci-stats-list ol { margin: 0; padding-left: calc(var(--u, 1px) * 20); font-size: calc(var(--u, 1px) * 12); }
       .dci-stats-list li { margin: 1px 0; }
+      /* [E8] (3.38.1) the further statistics */
+      .dci-stats-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 230), 1fr)); gap: calc(var(--u, 1px) * 10); margin: calc(var(--u, 1px) * 10) 0; }
+      .dci-stats-card { border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); font-size: calc(var(--u, 1px) * 12); }
+      .dci-stats-card h4 { margin: 0 0 calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 13); }
+      .dci-stats-card h5 { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 3); font-size: calc(var(--u, 1px) * 12); font-weight: 600; color: var(--muted); }
+      .dci-stats-card p { margin: calc(var(--u, 1px) * 3) 0; }
+      .dci-stats-kv { list-style: none; margin: 0; padding: 0; }
+      .dci-stats-kv li { display: flex; justify-content: space-between; gap: calc(var(--u, 1px) * 8); padding: 1px 0; border-bottom: 1px dotted var(--line); }
+      .dci-stats-cols { display: flex; align-items: flex-end; gap: 2px; height: calc(var(--u, 1px) * 52); }
+      .dci-stats-col { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 0; }
+      .dci-stats-colbar { display: block; width: 100%; max-width: calc(var(--u, 1px) * 18); min-height: 1px; background: var(--purple); border-radius: 2px 2px 0 0; }
+      .dci-stats-collbl { font-size: calc(var(--u, 1px) * 9); color: var(--muted); line-height: 1.3; }
       .dci-set-reset { margin-top: calc(var(--u, 1px) * 6); }
       .dci-dm-pending { color: var(--warn); font-size: calc(var(--u, 1px) * 12); font-weight: 600; }
 

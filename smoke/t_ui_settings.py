@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1033,6 +1033,79 @@ def case_stats():
         print('F2) ohne Nachschlagbares:', [(len(r['rels']), r['rels'][0]['k']) for r in recs_f2])
         results.append(len(recs_f2) == 2 and any(r['rels'][0]['k'] == 's' for r in recs_f2))
         H.WS_JS_RELEASE.clear()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+STAT_SEED = """(recs) => new Promise((res) => { const q = indexedDB.open('dci-stats', 1); q.onupgradeneeded = () => q.result.createObjectStore('subs', { keyPath: 'id' });
+  q.onsuccess = () => { const tx = q.result.transaction('subs', 'readwrite'); const st = tx.objectStore('subs'); st.clear(); recs.forEach((r) => st.put(r));
+    tx.oncomplete = () => res(true); tx.onerror = () => res(false); }; q.onerror = () => res(false); })"""
+
+
+def stat_rel(k, lt, lv, et, tg, tn, i=(), d='', ds='', lk='', ru='', nw=0):
+    return {'k': k, 'lt': lt, 'lv': lv, 'et': et, 'tg': tg, 'tn': tn, 'i': list(i), 'v': [], 'd': d, 'ds': ds, 'rc': 0, 'ac': 0, 'ru': ru, 'lk': lk, 'nw': nw}
+
+
+def case_statsmore():
+    """Credits Importer 3.38.1 (E8; maintainer: "Setze mal alle Ideen für die Statistik um"): the further statistics of the tab,
+    from three stored submissions of two releases (today, yesterday, three days ago).
+    Sources (Discogs, pasted text, text from cover art; with a supplement 1) · how the entries were found (unique: link 2, name 1,
+    hand 1, created 1) · dates (3 of 8 = 38 %, day / month / year 1 each, notes 2, by hand 1; the place Zojoji Hall) · levels
+    (recording 7, release 1; works linked 1) · the releases at their first submission (1980s, 1990s; CD 2, Vinyl 1; JP, CA; ECM,
+    Intakt) · when (7 weekdays, 24 hours; days in a row now 2, longest 2; most in a day 5 yesterday; most for a release 5 "A";
+    fastest 24 s per relationship) · instruments (3; first used in 30 days: all; used once: double bass, taishōgoto) · text from
+    cover art (1 submission, 2 images, 10 lines, 3 words) · own rules (2; U001: 1)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        day = 86400000
+        relA = {'title': 'A', 'year': 1985, 'country': 'JP', 'formats': ['CD'], 'labels': ['ECM'], 'before': 0}
+        relB = {'title': 'B', 'year': 1993, 'country': 'CA', 'formats': ['CD', 'Vinyl'], 'labels': ['Intakt'], 'before': 3}
+        recs = [
+            {'v': 1, 'id': 'a:1', 'mbid': 'm1', 'at': now - day, 'start': now - day - 120000, 'ms': 120000, 'src': 'discogs', 'supp': ['bandcamp'], 'rel': relA, 'own': 2, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g1', 'Jane', ['piano'], 'day', 'notes', 'link', 'R001'),
+                      stat_rel('n', 'instrument', 'recording', 'artist', 'g2', 'Joe', ['taishōgoto'], 'year', 'hand', 'search', 'U001'),
+                      stat_rel('n', 'recorded at', 'recording', 'place', 'p1', 'Zojoji Hall', lk='link'),
+                      stat_rel('s', 'performance', 'recording', 'work', 'w1', 'Song'),
+                      stat_rel('n', 'producer', 'release', 'artist', 'g1', 'Jane', lk='link')]},
+            {'v': 1, 'id': 'b:2', 'mbid': 'm2', 'at': now, 'start': now - 30000, 'ms': 30000, 'src': 'ocr', 'supp': [], 'rel': relB, 'own': 2,
+             'ocr': {'supp': False, 'images': 2, 'lines': 10, 'corrected': 3},
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g3', 'Ann', ['piano'], 'month', 'notes', 'hand'),
+                      stat_rel('n', 'instrument', 'recording', 'artist', 'g4', 'Bob', ['double bass'], lk='created', nw=1)]},
+            {'v': 1, 'id': 'b:3', 'mbid': 'm2', 'at': now - 3 * day, 'start': None, 'ms': None, 'src': 'text', 'supp': [], 'rel': relB, 'own': 1, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g3', 'Ann', ['piano'], lk='hand')]},
+        ]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(600)
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
+          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+        c = pg.evaluate(CARDS)
+        cols = pg.evaluate("[...document.querySelectorAll('[data-el=stats-when] .dci-stats-cols')].map(x => x.querySelectorAll('.dci-stats-col').length)")
+        yday = pg.evaluate("(() => { const d = new Date(Date.now() - 86400000); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })()")
+        for k, v in c.items():
+            print(f'   {k}:', v)
+        print('Gesät:', seeded, '| Balken:', cols)
+        ok = lambda k, *want: all(w in c.get(k, []) for w in want)
+        results.append(seeded and ok('sources', 'Discogs 1', 'pasted text 1', 'text from cover art 1', 'with a supplement: 1')
+                       and c.get('found') == ['through the link of the source 2', 'by their name 1', 'chosen by hand 1', 'newly created 1'])
+        results.append(ok('dates', '38 % with a date (3 of 8)', 'day 1', 'month only 1', 'year only 1', 'found in the notes or the text 2', 'given by hand 1', 'Zojoji Hall 1')
+                       and ok('levels', 'Recording 7', 'Release 1', 'works linked: 1'))
+        results.append(ok('releases', '1980s 1', '1990s 1', 'CD 2', 'Vinyl 1', 'JP 1', 'CA 1', 'ECM 1', 'Intakt 1'))
+        results.append(cols == [7, 24] and ok('when', 'Days in a row: now 2, longest 2', f'Most in a day: 5 relationships ({yday})', 'Most for a release: 5 relationships (A)',
+                                             'Fastest: 24 s per relationship (A, 5 relationships)'))
+        results.append(ok('instruments', 'Different instruments: 3', 'First used in the last 30 days: double bass, piano, taishōgoto', 'Used only once (2): double bass, taishōgoto')
+                       and ok('ocr', 'submissions with text from cover art: 1', 'images read: 2', 'lines taken over: 10', 'words changed by hand: 3')
+                       and ok('own', 'Own rules now: 2 – relationships from them:', 'U001 1'))
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
