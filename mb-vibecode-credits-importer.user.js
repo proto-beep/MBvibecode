@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.3
+// @version      3.37.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -243,6 +243,7 @@
       "ignored.title.one": "{n} line left out on purpose",
       "ignored.title.other": "{n} lines left out on purpose",
       "ignored.hint": "Thanks, endorsements (“plays … strings”) and web addresses give no credit and are left out. If there is a credit after all, add it by hand (“Add entry manually”).",
+      "cover.linePeekHint": "Lines from the cover art: hover over one to see it in the image.",
       "ignored.why.thanks": "thanks",
       "ignored.why.endorsement": "a maker’s note",
       "ignored.why.courtesy": "“appears courtesy of …”",
@@ -11674,18 +11675,22 @@
   // [130c] (3.34.22) the crop of a line at most this large (px)
   const OCR_CROP_W = 640;
   const OCR_CROP_H = 160;
+  // [3.37.4] the line peek (item 154)
+  const OCR_PEEK_LINE_W = 720;
+  const OCR_PEEK_LINE_H = 280;
   const ocrLineKey = (t) => String(t || '').replace(/\s+/g, ' ').trim().toLowerCase();
 
   /** [130c] (3.34.22) A line's place cut out of its image as a small JPEG (data: address); '' if it cannot be. */
-  function ocrCrop(canvas, box) {
+  function ocrCrop(canvas, box, wide = false) {
     try {
-      const pad = Math.max(4, Math.round(box.h * 0.25));
+      // [3.37.4] wide: about a line around it (the line peek of item 154; maintainer: "und ein wenig raum um die zeile herum")
+      const pad = wide ? Math.max(10, Math.round(box.h * 0.9)) : Math.max(4, Math.round(box.h * 0.25));
       const x = Math.max(0, Math.floor(box.x - pad));
       const y = Math.max(0, Math.floor(box.y - pad));
       const w = Math.min(canvas.width - x, Math.ceil(box.w + 2 * pad));
       const h = Math.min(canvas.height - y, Math.ceil(box.h + 2 * pad));
       if (w < 2 || h < 2) return '';
-      const k = Math.min(1, OCR_CROP_W / w, OCR_CROP_H / h);
+      const k = Math.min(1, (wide ? OCR_PEEK_LINE_W : OCR_CROP_W) / w, (wide ? OCR_PEEK_LINE_H : OCR_CROP_H) / h);
       const c = document.createElement('canvas');
       c.width = Math.max(1, Math.round(w * k));
       c.height = Math.max(1, Math.round(h * k));
@@ -11699,7 +11704,8 @@
   /**
    * [130c] (3.34.22) Where each line of the text read is (collected item 130c; maintainer: "was verbirgt sich hinter 130c?"):
    * { text, lines: Map(line in small letters → [{ what: the image, crop, text }]) }, the crops made now while the images are
-   * there – in memory only, for this import (S.ocrLines).
+   * there – in memory only, for this import (S.ocrLines). [3.37.4] With `box` and `canvas`: the wider cut-out of the line peek
+   * (item 154) is made when it is first shown.
    */
   function ocrLineOrigins(text) {
     const lines = new Map();
@@ -11711,7 +11717,7 @@
           if (!key) return;
           const hit = pt.lines && pt.lines.length ? ocrLineFor(pt.lines, t, n) : null;
           const crop = hit && hit.box && r.img.canvas ? ocrCrop(r.img.canvas, hit.box) : '';
-          lines.set(key, [...(lines.get(key) || []), { what, crop, text: t.trim() }]);
+          lines.set(key, [...(lines.get(key) || []), { what, crop, text: t.trim(), box: crop ? hit.box : null, canvas: crop ? r.img.canvas : null }]);
         });
       }
     }
@@ -16087,13 +16093,15 @@
       : rel.url ? `<a href="${esc(rel.url)}" target="_blank" rel="noopener">${esc(label)}</a>` : `<span>${esc(label)}</span>`;
     // [E1] Lines of a text that gave no credit, to add by hand
     const unrec = (rel && rel.unrecognized) || [];
+    // [3.37.4] a line of the cover art: its place in the image while the mouse rests on it (item 154)
+    const peekHint = (lines) => (lines.some((l) => linePeekHits(l).length) ? `<p class="dci-sub dci-linepeek-hint">${esc(tr('cover.linePeekHint'))}</p>` : '');
     const unrecHtml = unrec.length ? `<details class="dci-unrec"><summary>${esc(tr('unrec.title', { n: unrec.length }))}</summary>
-      <ol>${unrec.map((l) => `<li>${esc(l)}</li>`).join('')}</ol><p class="dci-sub">${esc(tr('unrec.hint'))}</p></details>` : '';
+      <ol>${unrec.map((l) => `<li${linePeekAttrs(l)}>${esc(l)}</li>`).join('')}</ol>${peekHint(unrec)}<p class="dci-sub">${esc(tr('unrec.hint'))}</p></details>` : '';
     // [3.21.0] lines left out on purpose (thanks, endorsements, web addresses – T030, T032), apart from those not recognized
     const ign = (rel && rel.ignored) || [];
     const ignHtml = ign.length ? `<details class="dci-ignored"><summary>${esc(tr('ignored.title', { n: ign.length }))}</summary>
-      <ol>${ign.map((l) => `<li><span class="dci-ign-text">${esc(l.text != null ? l.text : l)}</span>${l.why ? ` <span class="dci-sub dci-ign-why">– ${esc(tr(`ignored.why.${l.why}`, l))}</span>` : ''}</li>`).join('')}</ol>
-      <p class="dci-sub">${esc(tr('ignored.hint'))}</p></details>` : '';
+      <ol>${ign.map((l) => `<li${linePeekAttrs(l.text != null ? l.text : l)}><span class="dci-ign-text">${esc(l.text != null ? l.text : l)}</span>${l.why ? ` <span class="dci-sub dci-ign-why">– ${esc(tr(`ignored.why.${l.why}`, l))}</span>` : ''}</li>`).join('')}</ol>
+      ${peekHint(ign.map((l) => (l.text != null ? l.text : l)))}<p class="dci-sub">${esc(tr('ignored.hint'))}</p></details>` : '';
     const f = S.textForm;
     const textForm = f ? `<div class="dci-textsrc${f.supp ? ' dci-textsrc-supp' : ''}" role="group" aria-label="${esc(tr(f.supp ? 'supp.textTitle' : 'textsrc.title'))}">
         ${f.supp ? `<p class="dci-sub">${esc(tr('supp.textTitle'))}</p>` : ''}
@@ -17417,6 +17425,75 @@
     const o = S.ocrLines;
     if (!o || S.source !== TEXT || !S.textInput || S.textInput.text !== o.text) return [];
     return uniq((refs || []).map((r) => ocrLineKey(r.line))).flatMap((k) => o.lines.get(k) || []);
+  }
+
+  // --- [3.37.4] A line of the cover art in the image when the mouse rests on it (collected item 154; maintainer: "kannst du bei den
+  // "3 lines not recognized", sofern sie aus der bilderkennung, stammen jede zeile per mouseover die ausschnitte mit den
+  // betroffenen zeilen … anzeigen lassen? (und ein wenig raum um die zeile herum zusätzlich)"): the lines not recognized and
+  // those left out, each with the cut-outs of its line (about a line around it), beside it.
+
+  let linePeekTimer = 0;
+
+  /** The places of a line of the text read from the cover art (a sentence of it: of the line it is in; "… → ? “x”" without its tail). */
+  function linePeekHits(line) {
+    const o = S.ocrLines;
+    if (!o || S.source !== TEXT || !S.textInput || S.textInput.text !== o.text) return [];
+    const key = ocrLineKey(String(line || '').replace(/\s+→ \?.*$/u, ''));
+    if (!key) return [];
+    let hits = o.lines.get(key);
+    if (!hits && key.length >= 4) hits = [...o.lines].filter(([k]) => k.includes(key)).flatMap(([, v]) => v);
+    return uniq((hits || []).filter((h) => h.box && h.canvas));
+  }
+
+  /** The attributes of a line of these lists that has a peek. */
+  const linePeekAttrs = (line) => (linePeekHits(line).length ? ` data-line-peek="${esc(line)}" tabindex="0"` : '');
+
+  function linePeekHide() {
+    clearTimeout(linePeekTimer);
+    linePeekTimer = 0;
+    const el = document.getElementById('dci-line-peek');
+    if (el) el.hidden = true;
+  }
+
+  /** The cut-outs of a line (three at most) below it, else above; within the window of the browser. */
+  function linePeekShow(li) {
+    const hits = linePeekHits(li.dataset.linePeek).slice(0, 3);
+    if (!hits.length || !li.isConnected) return;
+    let el = document.getElementById('dci-line-peek');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'dci-line-peek';
+      el.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(el);
+    }
+    hits.forEach((h) => { if (h.wide == null) h.wide = ocrCrop(h.canvas, h.box, true) || h.crop; });
+    el.innerHTML = hits.map((h) => `<figure><img src="${esc(h.wide)}" alt=""><figcaption>${esc(h.what)}: ${esc(h.text)}</figcaption></figure>`).join('');
+    el.dataset.for = li.dataset.linePeek;
+    el.style.zIndex = String(topZ + 1);
+    el.hidden = false;
+    const place = () => {
+      const r = li.getBoundingClientRect();
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      const left = Math.max(8, Math.min(r.left, window.innerWidth - 8 - w));
+      const top = r.bottom + 6 + h <= window.innerHeight - 8 ? r.bottom + 6 : Math.max(8, r.top - 6 - h);
+      el.style.left = `${Math.round(left)}px`;
+      el.style.top = `${Math.round(top)}px`;
+    };
+    place();
+    el.querySelectorAll('img').forEach((im) => { im.onload = place; });
+  }
+
+  function linePeekOver(e) {
+    const li = e.target.closest && e.target.closest('[data-line-peek]');
+    if (!li) return;
+    clearTimeout(linePeekTimer);
+    linePeekTimer = setTimeout(() => linePeekShow(li), e.type === 'focusin' ? 0 : 250);
+  }
+
+  function linePeekOut(e) {
+    const li = e.target.closest && e.target.closest('[data-line-peek]');
+    if (li && !(e.relatedTarget && li.contains(e.relatedTarget))) linePeekHide();
   }
 
   /** [130c] "From the cover art · …" with ⓘ (`act`, its crops shown while `key` is in S.cropOpen; at most `most`). */
@@ -26664,6 +26741,12 @@
     overlay.addEventListener('click', onFocusSource);
     overlay.addEventListener('mouseover', onHover);
     overlay.addEventListener('mouseleave', onHoverEnd);
+    // [3.37.4] the line peek of the lines not recognized or left out (item 154)
+    overlay.addEventListener('mouseover', linePeekOver);
+    overlay.addEventListener('mouseout', linePeekOut);
+    overlay.addEventListener('focusin', linePeekOver);
+    overlay.addEventListener('focusout', linePeekOut);
+    overlay.addEventListener('scroll', linePeekHide, true);
   }
 
   /** Re-creates everything that shows text, e.g. after switching the language. */
@@ -28229,6 +28312,12 @@
       #dci-ocr-peek { position: fixed; display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid #b9b5d6; border-radius: 6px; background: #fff;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); pointer-events: none; font: 12px / 1.4 system-ui, sans-serif; color: #5d5a6e; }
       #dci-ocr-peek[hidden] { display: none; }
+      /* [3.37.4] a line of the cover art in the image (item 154) */
+      #dci-line-peek { position: fixed; display: flex; flex-direction: column; gap: 6px; padding: 6px; border: 1px solid #b9b5d6; border-radius: 6px; background: #fff;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); pointer-events: none; font: 12px / 1.4 system-ui, sans-serif; color: #5d5a6e; max-width: min(740px, 92vw); }
+      #dci-line-peek[hidden] { display: none; }
+      #dci-line-peek figure { margin: 0; }
+      #dci-line-peek img { display: block; max-width: min(720px, 90vw); max-height: 30vh; object-fit: contain; background: #eceaf3; }
       #dci-ocr-peek img { display: block; max-width: min(480px, 44vw); max-height: min(480px, 80vh); object-fit: contain; background: #eceaf3; }
       #dci-ocr .dci-ocr-thumb span { color: #5d5a6e; }
       #dci-ocr .dci-ocr-tools { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); }
@@ -28448,6 +28537,7 @@
       .dci-unrec { width: 100%; margin-top: calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 12); }
       .dci-unrec summary { cursor: pointer; color: var(--warn); }
       .dci-unrec ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }
+      .dci-unrec li[data-line-peek], .dci-ignored li[data-line-peek] { cursor: zoom-in; text-decoration: underline dotted #9f9bc0; text-underline-offset: 3px; }
       .dci-ignored { width: 100%; margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); }
       .dci-ignored summary { cursor: pointer; color: var(--muted); }
       .dci-ignored ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }

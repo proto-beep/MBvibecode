@@ -2,7 +2,7 @@
 the images of the Cover Art Archive, the text recognition (a stand-in of Tesseract.js served as from jsDelivr), the text
 corrected and imported.
 
-Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore, [3.34.17] ocrremember, [3.34.22] ocrorigin, [3.34.24] ocrentry; `python3 t_coverart.py <case> …` runs only those."""
+Cases: ocrsetting, ocrpick, ocrrun, ocrerror, [3.34.2] ocrframes, [3.34.5] ocrown, [3.34.6] ocrpdf, [3.34.7] ocrdiscogs, [3.34.8] ocrstart, [3.34.9] ocrpeek, [3.34.10] ocrload, [3.34.11] ocrzoom, [3.34.12] ocrlocate, [3.34.13] ocrthumbs, [3.34.14] ocrwindow, ocrtextfit, [3.34.15] ocrauto, [3.34.16] ocrmore, [3.34.17] ocrremember, [3.34.22] ocrorigin, [3.34.24] ocrentry, [3.37.4] ocrlinepeek; `python3 t_coverart.py <case> …` runs only those."""
 import json
 import re
 
@@ -1563,6 +1563,96 @@ def case_ocrorigin():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_ocrlinepeek():
+    """[3.37.4] The lines not recognized and left out, from the cover art: each in the image while the mouse rests on it
+    (collected item 154; maintainer: "kannst du bei den "3 lines not recognized", sofern sie aus der bilderkennung, stammen jede
+    zeile per mouseover die ausschnitte mit den betroffenen zeilen … anzeigen lassen? (und ein wenig raum um die zeile herum
+    zusätzlich)").
+    A) The Back read whole ("Mixed by Bob Lee", a line not recognized, "Thanks to all our friends") and imported: both lists
+       mark their line (data-line-peek, focusable) and say "hover over one to see it in the image".
+    B) The mouse on the line not recognized: after a moment the cut-out of its line below it – a JPEG, "Back: …", with about a
+       line around it (higher than the crop of ⓘ: 50 px of text → more than 120 px); the mouse away: gone.
+    C) The line left out reached with the keyboard (focus): its cut-out at once; the focus away: gone.
+    D) Another text pasted afterwards: its lines have no cut-out."""
+    results = []
+    TEXT = 'Mixed by Bob Lee\nQqzx Vrrt Plmnk\nThanks to all our friends\n'
+    texts = [{'text': TEXT,
+              'lines': [{'text': 'Mixed by Bob Lee\n', 'bbox': {'x0': 20, 'y0': 30, 'x1': 600, 'y1': 80}},
+                        {'text': 'Qqzx Vrrt Plmnk\n', 'bbox': {'x0': 40, 'y0': 400, 'x1': 700, 'y1': 450}},
+                        {'text': 'Thanks to all our friends\n', 'bbox': {'x0': 40, 'y0': 900, 'x1': 1100, 'y1': 950}}], 'words': []}]
+    LISTS = """(() => ['.dci-unrec', '.dci-ignored'].map(sel => { const d = document.querySelector(sel); if (!d) return null;
+      return { lines: [...d.querySelectorAll('li')].map(li => [li.textContent.replace(/\\s+/g, ' ').trim(), li.dataset.linePeek || '', li.tabIndex]),
+        hint: !!d.querySelector('.dci-linepeek-hint') }; }))()"""
+    PEEK = """(() => { const el = document.getElementById('dci-line-peek'); if (!el || el.hidden) return null; const im = el.querySelector('img');
+      return { n: el.querySelectorAll('figure').length, src: im.src.slice(0, 23), w: im.naturalWidth, h: im.naturalHeight, cap: el.querySelector('figcaption').textContent,
+        top: el.getBoundingClientRect().top }; })()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(texts))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        for k in ('2', '3'):
+            if pg.locator(f'#dci-ocr [data-ocr-sel="{k}"]').count():
+                pg.uncheck(f'#dci-ocr [data-ocr-sel="{k}"]')
+        pg.uncheck('#dci-ocr [data-ocr-framefirst]')
+        pg.click('#dci-ocr [data-ocr=run]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-text="0:0"]', timeout=20000)
+        pg.wait_for_timeout(300)
+        pg.click('#dci-ocr [data-ocr=import]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1000)
+        pg.evaluate("document.querySelectorAll('.dci-unrec, .dci-ignored').forEach(d => { d.open = true; })")
+        pg.wait_for_timeout(200)
+        lists = pg.evaluate(LISTS)
+        print('A)', lists)
+        un, ig = lists[0] or {'lines': [], 'hint': False}, lists[1] or {'lines': [], 'hint': False}
+        ok_a = [x[1] for x in un['lines']] == ['Qqzx Vrrt Plmnk'] and un['lines'][0][2] == 0 and un['hint'] \
+            and [x[1] for x in ig['lines']] == ['Thanks to all our friends'] and ig['hint']
+        # B) the mouse
+        li = pg.locator('.dci-unrec li[data-line-peek]').first
+        before = pg.evaluate(PEEK)
+        li.hover()
+        pg.wait_for_timeout(700)
+        peek = pg.evaluate(PEEK)
+        lib = li.bounding_box()
+        pg.mouse.move(5, 5)
+        pg.wait_for_timeout(300)
+        gone = pg.evaluate(PEEK)
+        print('B) vorher:', before, '| Zeile:', peek, '| unter der Zeile:', lib and peek and peek['top'] >= lib['y'] + lib['height'] - 1, '| weg:', gone)
+        ok_b = before is None and bool(peek) and peek['n'] == 1 and peek['src'] == 'data:image/jpeg;base64,' and peek['cap'] == 'Back: Qqzx Vrrt Plmnk' \
+            and 0 < peek['w'] <= 720 and 120 < peek['h'] <= 280 and peek['top'] >= lib['y'] + lib['height'] - 1 and gone is None
+        # C) the keyboard
+        pg.locator('.dci-ignored li[data-line-peek]').first.focus()
+        pg.wait_for_timeout(200)
+        peek2 = pg.evaluate(PEEK)
+        pg.evaluate("document.activeElement.blur()")
+        pg.wait_for_timeout(200)
+        gone2 = pg.evaluate(PEEK)
+        print('C) Fokus:', peek2, '| weg:', gone2)
+        ok_c = bool(peek2) and peek2['cap'] == 'Back: Thanks to all our friends' and gone2 is None
+        # D) another text
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 90)
+        pg.wait_for_timeout(1000)
+        lists2 = pg.evaluate(LISTS)
+        print('D)', lists2)
+        ok_d = bool(lists2[0]) and all(x[1] == '' for x in lists2[0]['lines']) and not lists2[0]['hint'] and bool(lists2[1]) and all(x[1] == '' for x in lists2[1]['lines'])
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d)
+        results += [ok_a, ok_b, ok_c, ok_d]
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_ocrentry():
     """[3.34.24] The origin from the cover art in the head of an entry (collected item 130d; maintainer: "ja ok").

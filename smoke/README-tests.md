@@ -531,6 +531,9 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #     the crop of the line (JPEG, at most 640 × 160) and hides it again; a line changed: no ⓘ; another text: nothing
                                 #   ocrentry: 3.34.24: Bob Lee on the Back and the Tray – the head of his entry "From the cover art · Back, Tray", ⓘ the
                                 #     crops of both lines, hidden again; an entry of a pasted text afterwards: nothing
+                                #   ocrlinepeek: 3.37.4: lines not recognized / left out of the Back – marked, the hint; the mouse on one: its
+                                #     cut-out below it (JPEG, about a line around it, "Back: …"), away: gone; the keyboard focus the same; a
+                                #     pasted text afterwards: no cut-outs
                                 #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,
                                 #     those set by hand stay; switched on in ⚙ Settings with the window open – ticked at once, and when
                                 #     opened again; 30 booklet pages, loading ahead on: 2 load, 22 wait, 6 not ahead

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.3 | – |
+| 2026-10-30 | 3.36.4 – 3.37.4 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.4
+
+#### Added
+
+- **Lines of the cover art in the image** (collected item 154; maintainer: "kannst du bei den "3 lines not recognized", sofern sie aus der bilderkennung, stammen jede zeile per mouseover die ausschnitte mit den betroffenen zeilen … anzeigen lassen? (und ein wenig raum um die zeile herum zusätzlich)"): in "… lines not recognized" and "… lines left out on purpose" of a text read from the cover art, the mouse on a line (or the keyboard focus) shows its cut-out below it – with about a line of room around it and the image's name. Not for a pasted text.
 
 ### Import 3.37.3
 
