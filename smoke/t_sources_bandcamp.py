@@ -523,7 +523,8 @@ def case_labelpage():
     own link are searched by name.
     A) A Bandcamp album of Yunclas on the page of the label "Grabaciones Autobombo" (its "data-band"): Yunclas gets no
        Bandcamp link (the page is not his), so not "no MB artist with this Bandcamp link" – he is searched by name: the
-       release's artist Yunclas first, marked "release artist", then the other Yunclas; nothing assigned. The entry says
+       release's artist Yunclas first, marked "release artist" ([3.37.1] "in this release: release artist", E5a), then the other
+       Yunclas; nothing assigned. The entry says
        whose page it is (with a link) and names MusicBrainz's label with that page, "a label of this release ✓"; the source
        line says "on the Bandcamp page of Grabaciones Autobombo", the log too. A click on the suggestion assigns it.
     B) In Node: the account's name from "data-band" (else "og:site_name"); the artist's own page ("The Test Band" for Test
@@ -594,7 +595,7 @@ def case_labelpage():
         print('   Hinweis:', yun['page'], yun['pageLink'])
         print('   Quelle:', src, '\n   Protokoll:', logs)
         ok_a = 'Bandcamp' not in yun['head'] and 'not assigned yet (no link)' in yun['match'] and 'dci-st-missing' in yun['cls'] \
-            and yun['sugg'][:2] == ['Yunclas release artist', 'Yunclas (Spanish rapper)'] \
+            and yun['sugg'][:2] == ['Yunclas in this release: release artist', 'Yunclas (Spanish rapper)'] \
             and 'The Bandcamp page of this album belongs to Grabaciones Autobombo – not Yunclas\'s own page' in yun['page'] and yun['pageLink'] == PAGE \
             and 'in MusicBrainz: label Grabaciones Autobombo – a label of this release ✓' in yun['page'] \
             and 'on the Bandcamp page of Grabaciones Autobombo' in src \
@@ -650,7 +651,7 @@ console.log(JSON.stringify({ names, own: id('Test Band', 'The Test Band'), frien
         yd = g.get('Yunclas') or {'sugg': [], 'match': '', 'head': ''}
         others = {k: v['sugg'] for k, v in g.items() if k != 'Yunclas' and v['sugg']}
         print('C) Yunclas (Discogs):', yd['head'], '|', yd['match'], '| Vorschläge:', yd['sugg'], '| andere mit Vorschlägen:', others)
-        ok_c = 'Discogs' in yd['head'] and 'no MB artist with this Discogs link' in yd['match'] and yd['sugg'][:2] == ['Yunclas release artist', 'Yunclas (Spanish rapper)'] \
+        ok_c = 'Discogs' in yd['head'] and 'no MB artist with this Discogs link' in yd['match'] and yd['sugg'][:2] == ['Yunclas in this release: release artist', 'Yunclas (Spanish rapper)'] \
             and not others
         results.append(ok_c)
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)

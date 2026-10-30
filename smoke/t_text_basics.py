@@ -12,7 +12,8 @@ def case_freetext():
     "Mastered by A at Studio", "Tracks 3–4: Strings arranged by Z" (tracks, "Arranged By [Strings]"),
     "Published by X (1, 3)" (a company for tracks 1 and 3), "℗ 2019 Label"; a line without credits is listed as not
     recognized ([3.21.0] thanks: listed apart as left out on purpose). Names have no links: MusicBrainz entries of the same name are only suggested (dashed, yellow), a click
-    assigns one. Track lists are not read again as notes (S022). The edit note names the text's origin."""
+    assigns one ([3.37.1] Writer W, composer of "Song One" in MusicBrainz, marked "in this release: …", E5a). Track lists are not
+    read again as notes (S022). The edit note names the text's origin."""
     import re
 
     H.attr(9120, 'trumpet', 14, 14)
@@ -79,7 +80,7 @@ Thanks to everyone who came."""
         after = pg.evaluate(f"document.querySelector('section[data-group=\"{bm}\"]').className")
         link = pg.evaluate(f"(document.querySelector('section[data-group=\"{bm}\"] .dci-mblink') || {{}}).href || ''")
         print('C) Vorschläge:', sugg, '| Bass Man vorher:', status, '| Stil:', look, '| nach Klick:', after, link)
-        ok_c = sugg.get('Bass Man') == ['Bass Man'] and sugg.get('Writer W') == ['Writer W'] and 'Peter Evans' not in sugg and 'dci-st-missing' in status \
+        ok_c = sugg.get('Bass Man') == ['Bass Man'] and sugg.get('Writer W') == ['Writer W in this release: composer on “Song One”'] and 'Peter Evans' not in sugg and 'dci-st-missing' in status \
             and look == ['dashed', 'rgb(255, 248, 219)'] and 'dci-st-manual' in after and link.endswith(H.ARTISTS[3001][0]) \
             and any('Sony' in k for k in sugg) and any('Abbey Road' in k for k in sugg)
         # D) staging: the edit note names the text's origin

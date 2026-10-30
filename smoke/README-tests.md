@@ -189,6 +189,9 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     studio's name; "Executive producer" a role of its own); Discogs's
                                 #     guitar for the whole release gets the notes' tracks; Source ▾ "Leave out the credits of the notes" and back;
                                 #     ⚙ Texts: the rule off and on
+                                #   linkedsugg: 3.37.1 (E5a): a name whose artist MusicBrainz links to this release (mix on the release) – that
+                                #     artist first among the suggestions, solid green and bold, "in this release: …", before a namesake; the log; a label of
+                                #     the same name not offered the artist
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)

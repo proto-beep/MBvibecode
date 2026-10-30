@@ -1,6 +1,6 @@
 """Discogs notes: places, ℗ / © and publishers named in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: discnotes, pcline, publishers, personpub, placesearch, facets (3.36.7), notescredits (3.37.0) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
+Cases: discnotes, pcline, publishers, personpub, placesearch, facets (3.36.7), notescredits (3.37.0), linkedsugg (3.37.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_companies.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -693,5 +693,50 @@ Liner notes by Jane Notes"""
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_linkedsugg():
+    """Credits Importer 3.37.1 (E5a; maintainer: "wenn der name im text schon an anderer stelle im datensatz verknüpft ist mit
+    musicbrainz soll der vorschlag stärker hervorgehoben werden als andere namensvorschläge", "überall"): a name searched in
+    MusicBrainz (a pasted text, the Discogs notes …) whose artist MusicBrainz links to this release already – Ann Mix mixed the
+    release there – has that artist first among its suggestions, highlighted (solid green, bold) and marked "in this release: mix on
+    the release", before a namesake MusicBrainz's search gives first; the log says so. A name nobody in the release has: its
+    suggestions as before (dashed). A label of the same name ("℗ 2001 Ann Mix") is not offered the artist."""
+    ANN = H.uid('dddddddd', 92)
+    H.MB_EXTRA[H.REL] = H.MB_EXTRA.get(H.REL, []) + [{'target-type': 'artist', 'type': 'mix', 'type-id': 'aaaaaaaa-0000-4000-8000-00000000mix1', 'attributes': [],
+                                                       'artist': {'id': ANN, 'name': 'Ann Mix'}}]
+    H.MB_SEARCH['artist'] = [{'id': H.uid('dddddddd', 90), 'name': 'Ann Mix', 'disambiguation': 'another', 'score': 100},
+                             {'id': ANN, 'name': 'Ann Mix', 'disambiguation': '', 'score': 100},
+                             {'id': H.uid('dddddddd', 91), 'name': 'Sax Lady', 'disambiguation': '', 'score': 100}]
+    SUGG = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+  return g ? [...g.querySelectorAll('.dci-suggbtn[data-act=name-use]')].map(b => [b.dataset.mbid.slice(-2), b.classList.contains('dci-sugg-linked'), b.textContent.replace(/\\s+/g, ' ').trim(),
+    getComputedStyle(b).borderTopStyle, getComputedStyle(b).fontWeight]) : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Mixed by Ann Mix\nSaxophone: Sax Lady\n℗ 2001 Ann Mix')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        d = pg.evaluate(SUGG, 'Ann Mix')
+        sx = pg.evaluate(SUGG, 'Sax Lady')
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'in this release' in x]
+        # the label "Ann Mix" (℗) gets no artist as its linked suggestion (after a review of 3.37.1: the kind of entry counts)
+        links = pg.evaluate("[...document.querySelectorAll('.dci-suggitem')].filter(i => i.querySelector('.dci-sugg-linked')).map(i => i.querySelector('.dci-sugglink').getAttribute('href'))")
+        print('Ann Mix:', d, '\nSax Lady:', sx, '\nProtokoll:', logs, '\nhervorgehoben:', links)
+        results.append(bool(d) and d[0][0] == '92' and d[0][1] and 'in this release: mix on the release' in d[0][2] and d[0][3] == 'solid' and d[0][4] == '700'
+                       and len(d) == 2 and d[1][0] == '90' and not d[1][1] and d[1][3] == 'dashed'
+                       and sx == [['91', False, 'Sax Lady', 'dashed', '400']] and any('Ann Mix' in x and 'mix on the release' in x for x in logs)
+                       and links == [f'/artist/{ANN}'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

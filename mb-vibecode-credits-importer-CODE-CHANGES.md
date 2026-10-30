@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.37.0, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.37.1, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.37.1 · 2026-10-30
+
+Suggestions linked in this release first (E5a).
+
+- **New `linkedInRelease(ws)`** (`S.linked`, made with `S.existing` when the release is read): mbid → `{ name, where }` from the release's artist credit and labels, the artist credits of tracks and recordings, the relationships of the release, its recordings and their works (not urls, works, recordings, releases); `where` as "mix on the release", "composer on “Song One”", "track artist 1.3", "release artist", "label of the release".
+- **`suggestByName`:** after the web hits, the hits linked in this release (and one of the same name the search did not give) first, `linked` (up to three places) – only of the entry's kind (a person: artists; a company: its entity type or the types its rows allow; `linkedInRelease` keeps each one's type – after a review: a label "℗ 2021 Jane Doe" was offered the artist Jane Doe as a label); log `linkedSuggested`.
+- **`suggestStackHtml`:** `dci-sugg-linked` and the mark `match.markLinked` (instead of "release artist"), tooltip `match.linkedTitle`. **CSS:** solid green border, light green, bold.
+- **Texts (English only):** `match.markLinked`, `match.linkedTitle`, `match.inRelease.ac/label/track/rel/release`, `log.linkedSuggested`.
+- **Tests:** `t_notes_companies.py` new case `linkedsugg` (also: the label of the same name gets no linked artist); `t_sources_bandcamp.py labelpage` and `t_text_basics.py freetext` expect the new mark ("in this release: release artist", "… composer on “Song One”").
 
 ## Import 3.37.0 · 2026-10-30
 
