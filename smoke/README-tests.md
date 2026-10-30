@@ -199,6 +199,9 @@ python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers
                                 #     Festival Vancouver" – the day, the place without "the"; the hint, the event of 1993 offered (not 1994),
                                 #     nothing set; its button: an event entry in plum; ⚙ Appearance "Event"; a pasted festival without a
                                 #     date: the hint alone, "Royal Festival Hall" none
+                                #   pcperson: 3.37.10: ℗ / © of the Discogs label "Martin Davidson" (unknown to MB) – the producer Martin Davidson
+                                #     takes them (hint, "As the label instead" gives them back); linked in MB only: the entry is that artist;
+                                #     neither: artist and label of that name offered, each named
 
 python3 t_notes_dates.py        # Discogs notes: dates and track groups found in the notes ([3.32.0] choose, trackpool, reldate without
                                 #   D022 – harness.RULES_OFF –, as they are about periods and "choose"; datewords with D022: the month)

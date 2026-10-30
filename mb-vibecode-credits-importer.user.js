@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.9
+// @version      3.37.10
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.9
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.9
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.10
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.10
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.9';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.10';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1075,6 +1075,11 @@
       "matrix.pubNone": "MusicBrainz knows no artist with this personal publisher – tick its works by hand",
       "matrix.pubUnmatched": "Publisher not found in MusicBrainz – tick its works by hand",
       "role.pubFromCompany": "Discogs lists it as a company (“{name}”) – a person as publisher",
+      "role.pcFromCompany": "Discogs lists it as a label (“{name}”) – here the artist of the same name of this release ({where}); a suggestion",
+      "role.pcAsLabel": "As the label instead",
+      "role.pcAsLabelTitle": "Gives this row back to the label entry of Discogs (to link a label or another artist there)",
+      "log.pcOfPerson": "℗ / © of “{name}”: Discogs lists it as a label, MusicBrainz has no label with its link – given to the artist of the same name ({where})",
+      "log.pcAsLabel": "℗ / © of “{name}” given back to the label entry",
       "matrix.pubSelf": "A person as publisher: suggested on the works {name} writes ({n}) – tick others by hand",
       "matrix.reasonSelf": "Suggested: {publisher} writes this work",
       "matrix.unclear": "Not ticked: no writer of this work has this publisher as personal publisher in MusicBrainz",
@@ -2892,6 +2897,7 @@
     { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
     { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks). [3.37.7] Also after a word for tracks ("Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall"), and a side alone after such a word everywhere – "Tracks A2 & B:", the tracks of a date in the notes ("Track B …": until 3.37.6 the date was for all tracks)' },
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
+    { id: 'S057', where: 'personCopyright, mergePersonCopyrights, suggestByName', note: '℗ / © of a person Discogs lists as a label (3.37.10): a company entry with a person\'s name and only ℗ / © rows ("Copyright © – Martin Davidson", "Phonographic Copyright ℗ – Martin Davidson") whose Discogs link MusicBrainz does not know – a person of that name in the dashboard (another Discogs credit) takes the rows (artist–release copyright, phonographic copyright; the row says so, "As the label instead" gives them back); an artist of that name linked in this release becomes the entry\'s MB entity; otherwise the name is searched: artists and labels of that name, each named as such' },
     { id: 'S056', where: 'findFestivals, festivalHtml', note: 'Festival recordings (3.37.8): a sentence of the text or the notes with a festival (T055) – "… during the du Maurier, Ltd. International Jazz Festival Vancouver" – gives a hint above the entries: MusicBrainz prefers the event to the place (the event is linked to its place); with a date in the sentence, MusicBrainz\'s events of that name whose time holds the date are offered – never set, a click adds one as an entry' },
     { id: 'S055', where: 'TEXT.parse (readClause; TEXT_GUEST_HEAD, TEXT_FEAT_HEAD)', note: 'Texts (3.37.2): "Special Guest: M. Osswald on Sax and Clarinet" – the words before the colon are no person (T053): "Special Guest(s)", "Guest(s)" (and in German, French, Spanish) give the attribute guest to the instruments and voices of the names after it (a name without roles: performer, guest), "featuring", "feat.", "with" give none; "NAME on X and Y" (instruments or voices) gives them to the name, also without such a word. Before: "Special Guest" was read as the name and "M. Osswald on Sax" as a role credit' },
     { id: 'S025', where: 'mapRole, roleCreditFor (FOREIGN_TERMS)', note: 'An instrument or voice in German, Spanish or French (T034: "Schlagzeug", "batería", "batterie") is mapped as its English term and gets no role credit – it is a translation, MusicBrainz\'s own name is used ("Flügel" → grand piano, "batterie" → drums (drum set), not credited "drums"; 3.21.2)' },
@@ -7870,6 +7876,7 @@
     }
     const a = S.artists.get(row.artistKey);
     if (row.pubFromCompany) ids.push('S044');
+    if (row.pcFromCompany) ids.push('S057');
     if (row.perfPositions) ids.push('S046');
     if (a && personPublisher(a)) ids.push('S048');
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
@@ -15639,6 +15646,8 @@
       if (S.artists.size) {
         setBusy('busy.artists');
         await resolveArtists();
+        // [S057] (3.37.10) ℗ / © of a person Discogs lists as a label
+        if (mergePersonCopyrights()) renderGroups();
         if (rel.series.length) {
           await loadSeries(rel.series);
           renderGroups();
@@ -15882,6 +15891,12 @@
           if (a.personHit) for (let k = items.length - 1; k >= 0; k--) if (norm(items[k].type || '') !== 'publisher') items.splice(k, 1);
           [...people].reverse().forEach((x) => items.unshift({ ...x, asArtist: true }));
         }
+        // [S057] (3.37.10) ℗ / © with a person's name: MusicBrainz's artists of that name beside its labels (each named as such)
+        if (type === 'label' && !asPerson && a.dId && personCopyright(a)) {
+          const pw = luceneWords(a.name);
+          const dataP = pw ? await mbWs(`artist?query=${encodeURIComponent(`artist:(${pw}) OR alias:(${pw})`)}&limit=25`) : null;
+          ((dataP && dataP.artists) || []).forEach((x) => items.push({ ...x, asArtist: true }));
+        }
         // [3.31.2] a place in an area the source names (any part: "West Orange", "New Jersey") first; one elsewhere is similar
         const inArea = (x) => !areaParts.length || areaParts.some((p) => nameKey(p) === nameKey((x.area || {}).name || ''));
         const placeFit = (x) => { const f = fitOf(x); return f === 'same' && type === 'place' && areaParts.length && !inArea(x) ? 'similar' : f; };
@@ -16029,7 +16044,9 @@
     // not found through their own link (Discogs, Bandcamp) – the release's artist of that name first (46)
     // [3.30.9] an entry from the Discogs notes (no Discogs link) is looked for by its name, as from a text (S042); [S043]
     // (3.31.0) so is a publisher or rights society not found through its link (labels; T046 also written apart)
-    const pubByName = (a) => a.company && ruleOn('S043') && S.rows.some((r) => r.artistKey === a.key && ['publishing', 'rights society'].includes(norm(rowTypeName(r))));
+    const pubByName = (a) => a.company && ((ruleOn('S043') && S.rows.some((r) => r.artistKey === a.key && ['publishing', 'rights society'].includes(norm(rowTypeName(r)))))
+      // [S057] (3.37.10) ℗ / © of a person's name (MusicBrainz knows no label with its Discogs link): artists and labels of that name
+      || (a.dId && personCopyright(a)));
     await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? (!a.company || pubByName(a)) && !(a.nameHits || []).length : source.nameSearch || a.fromNotes)));
     for (const a of pending) {
       if (a.company) rerenderGroup(a);
@@ -17631,11 +17648,15 @@
     // [S054] (3.37.0) a line from the Discogs notes: ⓘ with its line
     const nLines = uniq(l.rows.filter((x) => x.fromNotes && x.notesCredit).map((x) => x.notesCredit));
     const notesInfo = nLines.length ? ` <span class="dci-info dci-notesline" title="${esc(nLines.map((t) => tr('notes.creditLine', { text: t })).join('\n'))}">ⓘ</span>` : '';
+    // [S057] (3.37.10) ℗ / © of the label of Discogs given to this person: ⓘ with the hint and "As the label instead"
+    const pcRow = l.rows.find((x) => x.pcFromCompany);
+    const pcInfo = pcRow ? ` <span class="dci-info dci-pcfrom" title="${esc(tr('role.pcFromCompany', { name: pcRow.pcFromCompany, where: pcRow.pcWhere || '' }))}">ⓘ</span>${pcRow.pcFromKey
+      ? ` <button type="button" class="dci-textbtn" data-act="pc-as-label" data-row="${esc(pcRow.id)}" title="${esc(tr('role.pcAsLabelTitle'))}">${esc(tr('role.pcAsLabel'))}</button>` : ''}` : '';
     // [AE-2] (3.35.3) ⠿ drags the line to another place in its block (Alt+↑ / Alt+↓ too)
     const grip = b.lines.length > 1 ? `<button type="button" class="dci-em-grip" data-drag="em-line" data-id="${esc(l.id)}" data-block="${esc(b.key)}" draggable="true"
       title="${esc(tr('em.gripTitle'))}" aria-label="${esc(tr('em.gripLabel', { name }))}">⠿</button>` : '';
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
-        <td class="dci-em-c-role">${grip}${role}${notesInfo}</td><td class="dci-em-c-credit">${credit}</td>${flags}${ticks}${b.others.length ? '<td></td>' : ''}${tools}
+        <td class="dci-em-c-role">${grip}${role}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td>${flags}${ticks}${b.others.length ? '<td></td>' : ''}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
   }
@@ -18179,6 +18200,8 @@
     }
     if (row.company) {
       return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}${typoHtml(row)}
+        ${row.pcFromCompany ? `<div class="dci-note dci-pcfrom">${esc(tr('role.pcFromCompany', { name: row.pcFromCompany, where: row.pcWhere || '' }))}${row.pcFromKey
+          ? ` <button type="button" class="dci-textbtn" data-act="pc-as-label" title="${esc(tr('role.pcAsLabelTitle'))}">${esc(tr('role.pcAsLabel'))}</button>` : ''}</div>` : ''}
         <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr(row.notesFrom ? ((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.notesOnly' : 'role.companyNotesTracks') : (S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))}${row.fromNotes && !row.notesFrom ? ` ${notesLineInfo(row)}` : ''} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec && !(row.dSpecTracks && row.notesFrom) ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
@@ -22323,6 +22346,73 @@
   const personPublisher = (a) => ruleOn('S048') && a.company && !a.other && personLikeName(a.name)
     && S.rows.some((r) => r.artistKey === a.key) && S.rows.filter((r) => r.artistKey === a.key).every((r) => r.ruleId === 'C031');
 
+  // --- [S057] (3.37.10) ℗ / © of a person Discogs lists as a label (collected item 160; maintainer: "falls also irgendwo an anderer
+  // stelle Martin Davidson schon als Person verknüpft ist und das label … keinen eigenen Label Eintrag in MB hat, soll der an anderer
+  // Stelle verknüpfte Martin Davidson auf artist ebene für die Copyrights eingetragen werden mit hinweis darauf, dass Discogs das als
+  // label führt und das hier ein vorschlag aus anderen Discogs relationships ist.", "primär bei treffer im release, ansonsten
+  // vorschläge. wenn MB ein Label gleichen namens hat muss das auch in die auswahl. dass es sich label oder artist handelt muss in
+  // solchen seltenen fällen erkennbar sein."): a company entry with a person's name and only ℗ / © rows whose Discogs link
+  // MusicBrainz does not know: a person of that name in the dashboard takes its rows (artist–release copyright, phonographic
+  // copyright); an artist of that name linked in this release becomes its MB entity; otherwise its name is searched – artists
+  // and labels of that name offered, each named as such.
+
+  const PC_TYPES = ['phonographic copyright', 'copyright'];
+  /** A company entry with a person's name and only ℗ / © rows. */
+  const personCopyright = (a) => ruleOn('S057') && a.company && !a.other && personLikeName(a.name)
+    && S.rows.some((r) => r.artistKey === a.key) && S.rows.filter((r) => r.artistKey === a.key).every((r) => r.company && PC_TYPES.includes(norm(rowTypeName(r) || (r.types || [])[0] || '')));
+
+  /** After the entries were looked up: the ℗ / © rows of such entries to the person of the same name (once per import). */
+  function mergePersonCopyrights() {
+    if (!ruleOn('S057')) return 0;
+    const persons = [...S.artists.values()].filter((a) => !a.company && !a.other);
+    let n = 0;
+    for (const c of [...S.artists.values()].filter((x) => x.company && !x.mbid && x.dId && personCopyright(x))) {
+      const keys = new Set(entryNames(c).map((x) => looseName(x)).filter(Boolean));
+      const name = c.rawName || c.name;
+      const pc = S.rows.filter((r) => r.artistKey === c.key);
+      const p = persons.find((x) => entryNames(x).some((y) => keys.has(looseName(y))));
+      if (p) {
+        // the person's other roles, as the hint names them
+        const where = uniq(S.rows.filter((r) => r.artistKey === p.key && !r.company).map((r) => r.raw)).slice(0, 3).join(', ') || p.name;
+        for (const r of pc) {
+          Object.assign(r, { artistKey: p.key, entityType: 'artist', types: (r.typeOptions && r.typeOptions.artist) || r.types, linkTypeId: null,
+            pcFromCompany: name, pcWhere: where, pcFromKey: c.key });
+          if (!r.levelTouched) r.level = r.defaultLevel;
+          resolveRowType(r);
+        }
+        log('info', 'pcOfPerson', { name, where });
+        n++;
+        continue;
+      }
+      // an artist of that name linked in this release (E5a): the entry's MB entity
+      const hit = [...(S.linked || new Map())].find(([, x]) => x.type === 'artist' && keys.has(looseName(x.name)));
+      if (hit) {
+        const [mbid, x] = hit;
+        Object.assign(c, { mbid, mbName: x.name, status: 'manual', matchTouched: false });
+        setCompanyEntityType(c, 'artist');
+        pc.forEach((r) => Object.assign(r, { pcFromCompany: name, pcWhere: x.where }));
+        log('info', 'pcOfPerson', { name, where: x.where });
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /** A row given to the person back to the label entry. */
+  function pcAsLabel(row) {
+    const c = S.artists.get(row.pcFromKey);
+    if (!c) return;
+    const p = S.artists.get(row.artistKey);
+    S.rows.filter((r) => r.pcFromKey === c.key && r.artistKey === row.artistKey).forEach((r) => {
+      Object.assign(r, { artistKey: c.key, entityType: c.entityType || 'label', types: (r.typeOptions && r.typeOptions[c.entityType || 'label']) || r.types, linkTypeId: null,
+        pcFromCompany: '', pcWhere: '', pcFromKey: null, pcBack: true });
+      if (!r.levelTouched) r.level = r.defaultLevel;
+      resolveRowType(r);
+    });
+    log('info', 'pcAsLabel', { name: c.rawName || c.name });
+    if (p) rerenderGroup(p);
+  }
+
   const isPublishingRow = (row) => norm(rowTypeName(row)) === 'publishing';
 
   // [3.32.7] Rows of a credit of poems (R105 "Poems By", R106 read out, R107 "Poems" alone; collected item 104b, maintainer:
@@ -25407,6 +25497,14 @@
         if (entry && applyPoolToRow(row, entry)) refresh();
         break;
       }
+      // [S057] (3.37.10) a ℗ / © row back to the label entry
+      case 'pc-as-label':
+        if (row) {
+          pcAsLabel(row);
+          renderGroups();
+          refresh();
+        }
+        break;
       case 'date-sugg-off':
         if (row) {
           row.linerDateOff = true;
