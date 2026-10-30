@@ -122,6 +122,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   guests: 3.37.2 (151 – 153): "(P) 1998 loudsprecher (c) 1998 loudsprecher" both roles; credits split at » « ("Cover-Photo"
                                 #     = cover photo, cover design); "Special Guest: M. Osswald on Sax and Piano" – guest on both, "Guest: Jane Roe"
                                 #     performer guest, "featuring:" without guest, "NAME on X and Y"
+                                #   typonote: 3.37.13 (164): "Sxaophone" → saxophone a typo (no role credit, note, log), turned round → "sxaophone"
+                                #     and back; "Taischigoto" → taishōgoto credited "taischigoto"; ✕ empties a row's role credit (stays empty when
+                                #     the instrument is set again) and a matrix line's (staged without credit). instrguess / unknownask: chimes "chaims"
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -351,6 +354,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     Esc and ✕ close them, the focus back on ⌨
                                 #   anvcredit: 3.37.11: "Kenneth Ansell*" (Ken Ansell) in the matrix view – the chip "artist credit in MusicBrainz:
                                 #     “Kenneth Ansell” (the Discogs spelling *)", the field, the log; emptied: no chip
+                                #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
+                                #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
+                                #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
@@ -391,7 +397,7 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #     row grey with ✕ (back after reloading), "Full" remembered and in the settings, the jump to an incomplete row
                                 #   fold: 3.29.3: the arrow next to "Artist credit for all roles" – one entry folded to compact lines in the full
                                 #     view (a line opens its row, ▸ back, full again after the next import), its open rows closed in the
-                                #     compact view
+                                #     compact view; 3.37.15 (166): in the full view the arrow first in the head, the same x for two entries
                                 #   levels: 3.29.2: the colours of the levels (full rows and compact line), the level of the compact line by a click
                                 #     (Recording → Release with the June date of the matrix → Skip → Recording with the March dates), the tab
                                 #     "Appearance" (text size, place, view, colours: own colour, off, ↺)
@@ -443,6 +449,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     rows, compact, staged the same as legacy, a date typed into the place's event
                                 #   flagcols: 3.36.6 (148): add. / guest / solo a column each, every word centred over its checkboxes (±2 px)
                                 #     and not wider than its cell, at 100 % and A+ ×3
+                                #   chipask: 3.37.14 (163): compact – "? bass ▾" lists electric bass guitar · double bass · acoustic bass guitar
+                                #     (focus on the first, visible), double bass chosen: "double bass “bass”" without "?"; "? Taischigoto ▾", Esc
+                                #     closes (focus on ▾), taishōgoto chosen; "? Directed By ▾" conductor; the chip's name opens the full matrix
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,

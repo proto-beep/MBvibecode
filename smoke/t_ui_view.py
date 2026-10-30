@@ -156,12 +156,15 @@ def case_fold():
     B) A click on a line of the folded entry opens that row with all its fields; "▴ compact" closes it again.
     C) ▸ shows the rows with their fields again.
     D) Folded, then imported again: every entry full again.
-    E) Compact view: the arrow of an entry with an open row closes its open rows."""
+    E) Compact view: the arrow of an entry with an open row closes its open rows.
+    3.37.15 (collected item 166; maintainer: "der falten knopf soll immer an der gleichen stelle erscheinen"): in the full view
+    the arrow is the first thing of the entry's head, before the name, at the same place in every entry (before: after
+    "Spelling on Discogs: …", next to "Artist credit for all roles")."""
     SEC = "section.dci-group:has(.dci-gname strong:text-is('{name}'))"
     STATE = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
   if (!g) return null; const a = g.querySelector('[data-act=group-fold]'); const v = g.querySelector('.dci-variants');
   return { folded: g.classList.contains('dci-gcompact'), arrow: a ? [a.textContent.trim(), a.getAttribute('aria-expanded'), a.title] : null,
-    arrowNextToCredit: !!(a && a.nextElementSibling && a.nextElementSibling.classList.contains('dci-credit')),
+    front: !!(a && a.parentElement.classList.contains('dci-ghead') && a === a.parentElement.firstElementChild), x: a ? Math.round(a.getBoundingClientRect().left) : null,
     variants: !!(v && v.offsetParent !== null),
     rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const c = tr.querySelector('.dci-c-cline'); const t = tr.querySelector('[data-f=type]');
       return [tr.dataset.row, !!(c && c.offsetParent !== null && c.textContent.trim()), !!(t && t.offsetParent !== null), tr.classList.contains('dci-open')]; }),
@@ -182,7 +185,7 @@ def case_fold():
         pg.wait_for_timeout(400)
         a1, g1 = st('Bass Man'), st('Guitar Guy')
         print('A) vorher:', a0, '\n   eingeklappt:', a1, '\n   Guitar Guy:', g1)
-        results.append(a0['arrow'][:2] == ['▾', 'true'] and a0['arrowNextToCredit'] and not a0['folded'] and all(r[2] and not r[1] for r in a0['rows'])
+        results.append(a0['arrow'][:2] == ['▾', 'true'] and a0['front'] and g1['front'] and a0['x'] == g1['x'] and not a0['folded'] and all(r[2] and not r[1] for r in a0['rows'])
                        and a1['folded'] and a1['arrow'][:2] == ['▸', 'false'] and 'Bass Man' in a1['arrow'][2] and a1['variants'] and a1['focus']
                        and all(r[1] and not r[2] for r in a1['rows']) and not g1['folded'] and all(r[2] for r in g1['rows']))
         # B) a line opens its row

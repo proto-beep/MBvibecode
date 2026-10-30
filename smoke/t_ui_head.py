@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar; `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -684,5 +684,103 @@ def case_anvcredit():
         results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_poolbar():
+    """Credits Importer 3.37.15 (collected items 165, 166; maintainer: ""+ New date"/"+new track" group soll in der leiste oben auch
+    sichtbar sein wenn sie eingefaltet ist.", "der falten knopf soll immer an der gleichen stelle erscheinen", "ich meinte (b)",
+    "Nur oben", "ganz eingefaltet: ja ok").
+    A) "▲ fold" of "Dates & tracks" is in its head, right after the title (no longer at its foot below the matrix); folded it
+       reads "▼ show" at the same place (±1 px); the foot keeps "keep the pools in the bar when folded".
+    B) The date pool folded ("▸ Date pool (n)"): "+ New date" is in its bar; it opens the form below, the pool stays folded; a date
+       saved there is counted. The track pool folded: "+ New track group" in its bar.
+    A0) While suggestions of this import wait ("not applied yet"), the date pool folds at the first click (until 3.37.14 the
+       first click did nothing visible, the second folded it).
+    C) "Dates & tracks" folded with the pools kept in the bar: both pools there with "+ New date" / "+ New track group"; "+ New
+       date" opens "Dates & tracks" with the form, "Cancel" folds it again."""
+    HEAD = """(() => { const h = document.querySelector('.dci-pools-head .dci-pools-fold'); const t = document.querySelector('.dci-pools-toggle');
+      return { head: h ? [h.textContent.trim(), h.getAttribute('aria-expanded'), Math.round(h.getBoundingClientRect().left)] : null,
+        afterTitle: !!(h && h.previousElementSibling === t), foot: document.querySelectorAll('.dci-pools-foot .dci-pools-fold').length,
+        keep: !!document.querySelector('.dci-pools-foot [data-f=pools-keep]'), open: t ? t.getAttribute('aria-expanded') : null }; })()"""
+    BARS = """(() => [...document.querySelectorAll('.dci-dates-bar')].map(b => ({ cls: b.className, label: (b.querySelector('.dci-pool-label') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim(),
+      kept: !!b.closest('.dci-pools-kept'), add: [...b.querySelectorAll('[data-act=pool-new], [data-act=tg-new], [data-f=tg-new-pick]')].map(x => x.dataset.act || x.dataset.f) })))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        if pg.evaluate(HEAD)['open'] != 'true':
+            pg.click('.dci-pools-toggle')
+            pg.wait_for_timeout(300)
+        # A0) the date pool, open for the suggestions of this import, folds at the first click
+        forced = pg.evaluate("document.querySelector('.dci-pools-head').textContent.includes('not applied yet')")
+        pg.click('[data-act=pool-fold][data-pool=dates]')
+        pg.wait_for_timeout(300)
+        f1 = pg.evaluate("!!document.querySelector('.dci-pools-body .dci-pool-dates.dci-pool-folded')")
+        pg.click('[data-act=pool-fold][data-pool=dates]')
+        pg.wait_for_timeout(300)
+        f2 = pg.evaluate("!!document.querySelector('.dci-pools-body .dci-pool-dates.dci-pool-folded')")
+        print('A0) Vorschläge offen:', forced, '| ein Klick eingeklappt:', f1, '| wieder offen:', not f2)
+        results.append(forced and f1 and not f2)
+        a0 = pg.evaluate(HEAD)
+        pg.click('.dci-pools-head .dci-pools-fold')
+        pg.wait_for_timeout(300)
+        a1 = pg.evaluate(HEAD)
+        pg.click('.dci-pools-head .dci-pools-fold')
+        pg.wait_for_timeout(300)
+        a2 = pg.evaluate(HEAD)
+        print('A) offen:', a0, '| eingeklappt:', a1, '| wieder offen:', a2)
+        results.append(bool(a0['head']) and a0['head'][:2] == ['▲ fold', 'true'] and a0['afterTitle'] and a0['foot'] == 0 and a0['keep']
+                       and a1['head'][:2] == ['▼ show', 'false'] and abs(a1['head'][2] - a0['head'][2]) <= 1 and a1['open'] == 'false'
+                       and a2['head'][:2] == ['▲ fold', 'true'])
+        # B) a pool folded
+        n0 = pg.evaluate("document.querySelectorAll('.dci-pools-body .dci-pchip-date').length")
+        pg.click('[data-act=pool-fold][data-pool=dates]')
+        pg.wait_for_timeout(300)
+        b0 = [x for x in pg.evaluate(BARS) if not x['kept']]
+        pg.click('.dci-pools-body .dci-pool-folded [data-act=pool-new]')
+        pg.wait_for_timeout(300)
+        form = pg.locator('[data-f=pf-by]').count()
+        still = pg.evaluate("!!document.querySelector('.dci-pools-body .dci-pool-dates.dci-pool-folded')")
+        pg.fill('[data-f=pf-by]', '1999')
+        pg.click('[data-act=pool-save]')
+        pg.wait_for_timeout(300)
+        b1 = [x for x in pg.evaluate(BARS) if not x['kept']]
+        pg.click('[data-act=pool-fold][data-pool=tracks]')
+        pg.wait_for_timeout(300)
+        b2 = [x for x in pg.evaluate(BARS) if not x['kept']]
+        print('B) Daten eingeklappt:', b0, '| Formular:', form, still, '| gespeichert:', b1, '| Tracks eingeklappt:', b2)
+        dates = lambda bars: next((x for x in bars if 'dci-pool-dates' in x['cls']), {})
+        tracks = lambda bars: next((x for x in bars if 'dci-tracks-bar' in x['cls']), {})
+        results.append('dci-pool-folded' in dates(b0).get('cls', '') and dates(b0).get('add') == ['pool-new'] and form == 1 and still
+                       and dates(b1).get('label') == f'▸ Date pool ({n0 + 1})' and 'dci-pool-folded' in tracks(b2).get('cls', '')
+                       and tracks(b2).get('add') in (['tg-new'], ['tg-new-pick']))
+        pg.click('[data-act=pool-fold][data-pool=dates]')
+        pg.click('[data-act=pool-fold][data-pool=tracks]')
+        pg.wait_for_timeout(300)
+        # C) all folded, the pools kept in the bar
+        if not pg.is_checked('[data-f=pools-keep]'):
+            pg.check('[data-f=pools-keep]')
+        pg.click('.dci-pools-head .dci-pools-fold')
+        pg.wait_for_timeout(300)
+        c0 = [x for x in pg.evaluate(BARS) if x['kept']]
+        pg.click('.dci-pools-kept .dci-pool-dates [data-act=pool-new]')
+        pg.wait_for_timeout(300)
+        c1 = pg.evaluate("[!!document.querySelector('.dci-pools-body'), document.querySelectorAll('[data-f=pf-by]').length, document.activeElement && document.activeElement.dataset.f]")
+        pg.click('[data-act=pool-cancel]')
+        pg.wait_for_timeout(300)
+        c2 = pg.evaluate("[!!document.querySelector('.dci-pools-body'), !!document.querySelector('.dci-pools-kept')]")
+        print('C) Leiste:', c0, '| + New date:', c1, '| Cancel:', c2)
+        results.append(dates(c0).get('add') == ['pool-new'] and tracks(c0).get('add') in (['tg-new'], ['tg-new-pick'])
+                       and c1 == [True, 1, 'pf-by'] and c2 == [False, True])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())
