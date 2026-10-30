@@ -1,6 +1,6 @@
-"""Settings: tabs, the menu, the bridge to ⚙, settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
+"""Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, bridge, ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -69,8 +69,8 @@ def case_settabs():
         print('C) gespeichert, Links-Einstellung, Regeln-Knopf:', c1, '| nach Neuladen gewählt:', c2)
         results.append(c1 == ['"texts"', True, True] and c2 == ['texts'])
         pg.click(gear)
-        # D) the ⓘ in the head
-        pg.click('.dci-head [data-act=connections-open]')
+        # D) the connections ([3.36.5] the ⓘ in the head is gone, collected item 147c: ⚙ → ⓘ Connections)
+        H.open_settings(pg, 'connections')
         pg.wait_for_timeout(300)
         d1 = pg.evaluate(f"""(() => {{ const rows = [...{SET}.querySelectorAll('.dci-conn tbody tr')];
       const h = rows.find(r => r.dataset.conn === 'X005');
@@ -248,39 +248,42 @@ def case_settings():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
-def case_bridge():
-    """Credits Importer 3.30.4: the settings join their tabs, a bridge from ⚙ and "Mapping rules" to what they opened
-    (collected item 87; the maintainer's screenshots of 2026-10-25 01:59).
-    A) ⚙ Settings open: ⚙ pressed (tinted), a bridge from it to the box of the settings – below the symbol down to the head's
-       lower edge, from there to the box, as wide as the symbol. [3.34.3] (collected item 126) exactly, in fractions of a pixel
-       (until 3.34.2 rounded: up to a pixel beside the symbol with a larger text or a scaled screen), and the part at the symbol
-       ends 1px below the head, over its lower line.
-    B) Every tab: the tab joins the side of the content and reaches into its frame – at 100 % and at 90 % text size (until
-       3.30.3 the tabs below the content had nothing to join, at 90 % the tab stood out). [3.34.3] (collected item 127) the
-       content as high as it can be: at the top of the tabs, or (too short for that) just low enough that the tab joins it with
-       a little side below it; its upper left corner square only where the tab joins at the top (until 3.34.2 the content always
-       started at the height of the tab – at ⓘ Connections 278px of empty space above the long list).
-    C) "Mapping rules" in the dashboard: their symbol has the bridge, ⚙ not.
-    D) The box scrolled away: only the part at the symbol stays; back: the whole bridge.
-    E) Both closed: no bridge, nothing pressed."""
+def case_pressed():
+    """Credits Importer 3.36.5 (until 3.36.4 the case "bridge", 3.30.4): the symbols of the head show what is open, without a bridge
+    (collected items 147, 149; maintainer: "dass das symbol im oberen bereich lila dunkler wird wenn die "keyboard shortcuts"
+    geklickt werden finde ich ganz gut. können wir das bei allen anderen symbolen auch einführen? dann also auch auf die visuelle
+    verbindung bei den einstellung verzichten", "Brücke weg", "Alle Umschalter dieser Art bitte").
+    A) ⚙ Settings open: ⚙ pressed (tinted), no bridge (until 3.36.4: a strip from the symbol to the box of the settings).
+    B) Every tab: the tab joins the side of the content and reaches into its frame – at 100 % and at 90 % text size; [3.34.3]
+       the content as high as it can be: at the top of the tabs, or (too short for that) just low enough that the tab joins it
+       with a little side below it; its upper left corner square only where the tab joins at the top.
+    C) "Mapping rules" in the dashboard: their symbol pressed, no bridge; ⚙ not pressed.
+    D) The log: its symbol pressed while it is shown, not when hidden; ⌨ pressed while the shortcuts are open; A−, A+, ⤢ and ✕
+       never.
+    E) Both closed: nothing pressed.
+    F) Switches show their choice: "Entries: Matrix | Legacy" in the settings and "by event | by role" at an entry – the chosen
+       button filled purple with white text, the other white."""
     BR = """(act) => { const btn = document.querySelector('.dci-head [data-act=' + act + ']'); const box = act === 'rules' ? document.querySelector('[data-el=rules-dock]') : document.querySelector('[data-el=settings]');
-  const head = document.querySelector('.dci-head').getBoundingClientRect(); const b = btn.getBoundingClientRect(); const p = box.getBoundingClientRect(); const cs = getComputedStyle(box);
-  const v = (k) => parseFloat(cs.getPropertyValue(k)) || 0;
-  return { expanded: btn.getAttribute('aria-expanded'), bg: getComputedStyle(btn).backgroundColor, btnBridge: btn.classList.contains('dci-bridged'),
-    down: parseFloat(getComputedStyle(btn).getPropertyValue('--dci-bridge-down')) || 0, downOk: Math.abs(b.bottom - 2 + (parseFloat(getComputedStyle(btn).getPropertyValue('--dci-bridge-down')) || 0) - head.bottom - 1) <= 0.01,
-    boxBridge: box.classList.contains('dci-bridged-box'), xOk: Math.abs(p.left + parseFloat(cs.borderLeftWidth) + v('--dci-bridge-x') - b.left) <= 0.01, wOk: Math.abs(v('--dci-bridge-w') - b.width) <= 0.01,
-    hOk: Math.abs(p.top - v('--dci-bridge-h') - head.bottom) <= 0.01, frac: [b.left % 1, b.width % 1, head.bottom % 1].some((x) => x > 0.001) }; }"""
+  return { expanded: btn.getAttribute('aria-expanded'), bg: getComputedStyle(btn).backgroundColor, after: getComputedStyle(btn, '::after').content,
+    before: box ? getComputedStyle(box, '::before').content : 'none', bridgeClass: btn.className.includes('bridge') || (!!box && box.className.includes('bridge')) }; }"""
     TABS = """(() => { const el = document.querySelector('[data-el=settings]'); const paneEl = el.querySelector('.dci-set-pane'); const pane = paneEl.getBoundingClientRect();
   const sel = el.querySelector('.dci-set-tab[aria-selected=true]').getBoundingClientRect(); const first = el.querySelector('.dci-set-tab').getBoundingClientRect();
   return { above: Math.round((pane.top - sel.top) * 10) / 10, below: Math.round((pane.bottom - sel.bottom) * 10) / 10, into: Math.round(sel.right - pane.left),
     margin: parseFloat(paneEl.style.marginTop) || 0, atTabsTop: Math.abs(pane.top - first.top) <= 1, joinedTop: paneEl.classList.contains('dci-set-joined-top'),
     corner: getComputedStyle(paneEl).borderTopLeftRadius }; })()"""
+    HEAD = """(() => [...document.querySelectorAll('.dci-head .dci-headbtn')].map(b => [b.dataset.act || b.textContent.trim(), b.getAttribute('aria-pressed') || b.getAttribute('aria-expanded') || '',
+  getComputedStyle(b).backgroundColor]))()"""
+    SEG = """(sel) => [...document.querySelectorAll(sel)].slice(0, 2).map(b => [b.textContent.trim(), b.getAttribute('aria-pressed'), getComputedStyle(b).backgroundColor, getComputedStyle(b).color])"""
+    TINT, WHITE, PURPLE = 'rgb(236, 235, 246)', 'rgb(255, 255, 255)', 'rgb(115, 109, 171)'
     def tab_ok(t):
         # the tab within the side of the content, a little side below it; as high as can be; the corner square only at a join at the top
         return (t['above'] <= 1 and t['below'] >= 4.5 and 0 <= t['into'] <= 3 and (t['atTabsTop'] or abs(t['below'] - 6) <= 1)
                 and t['joinedTop'] == (abs(t['above']) <= 1) and (t['corner'] == '0px') == t['joinedTop'])
+    no_bridge = lambda x: x['after'] in ('none', 'normal') and x['before'] in ('none', 'normal') and not x['bridgeClass']
     TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
     results = []
+    # (the matrix of the entries, for "by event | by role")
+    H.ENTRIES_VIEW = 'matrix'
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
@@ -296,8 +299,7 @@ def case_bridge():
         pg.wait_for_timeout(300)
         a1 = pg.evaluate(BR, 'settings-open')
         print('A) ⚙:', a1)
-        results.append(a1['expanded'] == 'true' and a1['bg'] == 'rgb(236, 235, 246)' and a1['btnBridge'] and a1['down'] > 0 and a1['downOk']
-                       and a1['boxBridge'] and a1['xOk'] and a1['wOk'] and a1['hOk'])
+        results.append(a1['expanded'] == 'true' and a1['bg'] == TINT and no_bridge(a1))
         # B)
         b1 = {}
         for t in TOPICS:
@@ -311,38 +313,58 @@ def case_bridge():
             H.open_settings(pg, t)
             pg.wait_for_timeout(150)
             b2[t] = pg.evaluate(TABS)
-        a2 = pg.evaluate(BR, 'settings-open')
         pg.click('[data-act=zoom-in]')
         pg.wait_for_timeout(300)
-        print('B) Inhalt und Reiter (100 %):', b1, '\n   90 %:', b2, '| Brücke 90 %:', [a2['xOk'], a2['wOk'], a2['hOk'], a2['downOk'], a2['frac']])
-        results.append(all(tab_ok(t) for t in list(b1.values()) + list(b2.values())) and a2['xOk'] and a2['wOk'] and a2['hOk'] and a2['downOk'] and a2['frac']
+        print('B) Inhalt und Reiter (100 %):', b1, '\n   90 %:', b2)
+        results.append(all(tab_ok(t) for t in list(b1.values()) + list(b2.values()))
                        # the list of the connections from the top, its tab in the middle; the first tab joins at the top; a short one lower
                        and b1['connections']['margin'] == 0 and b1['connections']['above'] < -100 and b1['connections']['below'] > 100
                        and b1['general']['joinedTop'] and b1['discogs']['margin'] > 0 and not b1['discogs']['joinedTop'])
+        # F) the switch "Entries" in the settings (Appearance)
+        H.open_settings(pg, 'appearance')
+        pg.wait_for_timeout(200)
+        f1 = pg.evaluate(SEG, '[data-el=settings] [data-act=entries-view]')
         # C)
         pg.click('.dci-head [data-act=rules]')
         pg.wait_for_timeout(400)
         c1, c2 = pg.evaluate(BR, 'rules'), pg.evaluate(BR, 'settings-open')
-        print('C) Regeln:', c1, '| ⚙:', [c2['expanded'], c2['btnBridge']])
-        results.append(c1['expanded'] == 'true' and c1['btnBridge'] and c1['boxBridge'] and c1['xOk'] and c1['hOk'] and c2['expanded'] == 'false' and not c2['btnBridge'])
-        # D) scrolled away
-        pg.evaluate("document.querySelector('#dci-overlay .dci-body').scrollTop = 400")
+        print('C) Regeln:', c1, '| ⚙:', c2)
+        results.append(c1['expanded'] == 'true' and c1['bg'] == TINT and no_bridge(c1) and c2['expanded'] == 'false' and c2['bg'] == WHITE)
+        # D) the log (shown when the dashboard opens), ⌨ and the symbols that only do something
+        if pg.evaluate("document.getElementById('dci-log').hidden"):
+            pg.click('.dci-head [data-act=log]')
+            pg.wait_for_timeout(300)
+        d1 = {x[0]: x[1:] for x in pg.evaluate(HEAD)}
+        shown = pg.evaluate("!document.getElementById('dci-log').hidden")
+        pg.click('.dci-head [data-act=log]')
         pg.wait_for_timeout(300)
-        d1 = pg.evaluate(BR, 'rules')
-        pg.evaluate("document.querySelector('#dci-overlay .dci-body').scrollTop = 0")
+        d2 = {x[0]: x[1:] for x in pg.evaluate(HEAD)}
+        hidden = pg.evaluate("document.getElementById('dci-log').hidden")
+        pg.click('.dci-head [data-act=keys-open]')
         pg.wait_for_timeout(300)
-        d2 = pg.evaluate(BR, 'rules')
-        print('D) weggescrollt:', [d1['btnBridge'], d1['boxBridge']], '| zurück:', [d2['btnBridge'], d2['boxBridge'], d2['hOk']])
-        results.append(d1['btnBridge'] and not d1['boxBridge'] and d2['btnBridge'] and d2['boxBridge'] and d2['hOk'])
+        d3 = {x[0]: x[1:] for x in pg.evaluate(HEAD)}
+        pg.click('.dci-head [data-act=keys-open]')
+        pg.wait_for_timeout(200)
+        print('D) Log an:', shown, d1.get('log'), '| zu:', hidden, d2.get('log'), '| ⌨:', d3.get('keys-open'), '| A−, A+, ⤢:', [d3.get(k) for k in ('zoom-out', 'zoom-in', 'window-reset')])
+        results.append(shown and hidden and d1['log'] == ['true', TINT] and d2['log'] == ['false', WHITE] and d3['keys-open'] == ['true', TINT]
+                       and all(d3[k][0] == '' for k in ('zoom-out', 'zoom-in', 'window-reset')) and 'connections-open' not in d3)
         # E)
         pg.click('.dci-head [data-act=rules]')
         pg.wait_for_timeout(300)
         e1, e2 = pg.evaluate(BR, 'rules'), pg.evaluate(BR, 'settings-open')
-        print('E) zu:', [e1['expanded'], e1['btnBridge'], e2['expanded'], e2['btnBridge'], e1['bg']])
-        results.append(e1['expanded'] == 'false' and not e1['btnBridge'] and not e2['btnBridge'] and e1['bg'] == 'rgb(255, 255, 255)')
+        print('E) zu:', [e1['expanded'], e2['expanded'], e1['bg']])
+        results.append(e1['expanded'] == 'false' and e2['expanded'] == 'false' and e1['bg'] == WHITE)
+        # F) "by event | by role" at an entry of the compact matrix
+        pg.click('.dci-head [data-act=view-toggle]')
+        pg.wait_for_timeout(500)
+        f2 = pg.evaluate(SEG, '.dci-em-by button')
+        print('F) Entries:', f1, '| by event / by role:', f2)
+        seg_ok = lambda f: len(f) == 2 and [x[1] for x in f].count('true') == 1 and all((x[2], x[3]) == ((PURPLE, WHITE) if x[1] == 'true' else (WHITE, 'rgb(38, 36, 48)')) for x in f)
+        results.append(seg_ok(f1) and seg_ok(f2))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    H.ENTRIES_VIEW = 'legacy'
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

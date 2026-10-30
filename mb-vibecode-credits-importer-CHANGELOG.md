@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 | – |
+| 2026-10-30 | 3.36.4 – 3.36.5 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -93,6 +93,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.36.5
+
+#### Changed
+
+- **The symbols in the head show what is open** (collected item 147; maintainer: "dass das symbol im oberen bereich lila dunkler wird wenn die "keyboard shortcuts" geklickt werden finde ich ganz gut. können wir das bei allen anderen symbolen auch einführen? dann also auch auf die visuelle verbindung bei den einstellung verzichten. das (I) in der leiste oben brauchen wir auch nicht, das reicht wirklich in den einstellungen."): the **Log** symbol is pressed (tinted purple) while the log is shown, wherever it stands – like ⚙, Mapping rules, ⌨ and ☰; A−, A+, ⤢ and ✕ only do something and stay as they are. The **strip bridging ⚙ (and Mapping rules in the dashboard) with their box** below the head is gone ("Brücke weg"). **ⓘ is no longer in the head**: the connections are in ⚙ Settings → ⓘ Connections.
+- **Every switch shows its choice** (collected item 149; maintainer: "die "by event / by role" müssen visuell auch hervorgehoben werden je nach zustand", "Alle Umschalter dieser Art bitte"): the chosen button filled purple with white text – "by event | by role" at an entry, "Entries: Matrix | Legacy", "Mapping rules: in the dashboard | as a window", the rule ids at rows, "Place: window | page", "Compact | Full", the works of the media choice; the levels keep their own colours.
 
 ### Import 3.36.4
 

@@ -8,7 +8,7 @@ from caserun import run_cases, sync_playwright  # noqa: F401 – the shared brow
 def case_head():
     """Credits Importer 3.26.0: the head of the dashboard in one line (collected item 30).
     A) One line: title · the source (link) · "Source ▾" · "+ Supplement" · the status of the view · text size · ⚙, Mapping
-       rules, Log, ⓘ, ⤢, ✕ with own symbols (aria-label and tooltip); no language, no window/page switch, no switches of
+       rules, Log, ⌨, ⤢, ✕ with own symbols ([3.36.5] no ⓘ) (aria-label and tooltip); no language, no window/page switch, no switches of
        the navigation in the head; the words next to the symbols only in a wide dashboard.
     B) "Source ▾": a menu with another source, "Paste text …", order of the sources, Bandcamp, "Delete stored import …";
        Escape and a click elsewhere close it (the dashboard stays open); "Paste text …" closes it and opens the text below
@@ -67,8 +67,9 @@ def case_head():
         pg.wait_for_timeout(300)
         a2 = pg.evaluate(HEAD)
         print('A) Kopf:', {k: v for k, v in a1.items() if k != 'btns'}, '\n   Knöpfe:', a1['btns'], '\n   breit:', a2['spread'], a2['label'])
-        # [3.27.2] the symbol of the compact view first, left of the text size (item 60); [3.36.3] ⌨ the keyboard shortcuts before ⓘ
-        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'settings-open', 'rules', 'log', 'keys-open', 'connections-open', 'window-reset', 'close']
+        # [3.27.2] the symbol of the compact view first, left of the text size (item 60); [3.36.3] ⌨ the keyboard shortcuts;
+        # [3.36.5] no ⓘ any more (collected item 147c: ⚙ → ⓘ Connections)
+        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'settings-open', 'rules', 'log', 'keys-open', 'window-reset', 'close']
                        and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][1][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
                        and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
                        and a2['spread'] <= 6 and a2['label'] != 'none')
@@ -582,7 +583,7 @@ def case_compacthint():
 def case_keys():
     """Credits Importer 3.36.3 (maintainer: "Bitte einen neuen Infoknopf oben in der Leiste der die aktuelle Tastaturbelegung aller
     shortcuts zeigt."): ⌨ in the head.
-    A) ⌨ (before ⓘ) opens the shortcuts below the head: the groups (the pages, the release editor, the dashboard, the media
+    A) ⌨ (before ⤢; until 3.36.4 before ⓘ) opens the shortcuts below the head: the groups (the pages, the release editor, the dashboard, the media
        choice, the window "Text from cover art"), Alt+⇧ Shift+D, Esc, Ctrl+Alt+Enter, Alt+↑ / Alt+↓ … – the keys of this
        computer (Linux here: "Windows, Linux").
     B) Esc closes them (the dashboard stays open), the focus back on ⌨; ⌨ opens them again, ✕ closes them.
