@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.12
+// @version      3.37.13
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.12
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.12
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.13
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.13
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.12';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.13';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -372,6 +372,7 @@
       "mark.unknown": "unknown",
       "roleCredit.label": "Role credit",
       "roleCredit.placeholder": "none",
+      "roleCredit.clear": "Empty the role credit (it stays empty)",
       "artistCredit.label": "Artist credit",
       "credit.placeholder": "empty = MB name",
       "dest.credit": "stored as credit for “{name}”",
@@ -1793,6 +1794,10 @@
       "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{credit}”.",
       "instrGuess.misc": "miscellaneous support (task “{word}”)",
       "instrGuess.noneOr": "“{word}” is no instrument of MusicBrainz, and none is like it:",
+      "instrGuess.typo": "Probably a typo of “{name}”: no role credit.",
+      "instrGuess.keepWord": "credit “{word}” as written",
+      "instrGuess.own": "A spelling of its own: credited “{word}”.",
+      "instrGuess.isTypo": "a typo: no role credit",
       "caseNote.small": "Written small – unknown to MusicBrainz:",
       "caseNote.word": "{word} → {small}",
       "caseNote.keep": "keep “{word}”",
@@ -1885,6 +1890,8 @@
       "instrAsk.otherwise": "(otherwise it stays “{credit}”, without a role credit; with another choice the role credit is “{credit}”)",
       "instrAsk.otherwiseTr": "(otherwise it stays “{credit}”; “{word}” is a translation, so there is no role credit)",
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
+      "log.instrTypo": "“{word}” is probably a typo of {instrument}: no role credit.",
+      "log.instrOwn": "“{word}” as a spelling of its own: {instrument}, role credit “{credit}”.",
       "log.caseAlways": "“{word}” added to the proper names (T052): it keeps its capitals in role credits",
       "log.emOut": "{name}: {role} taken out of an event",
       "log.emIn": "{name}: {role} into an event",
@@ -7752,8 +7759,13 @@
     const wr = wordingRuleFor(row);
     if (wr) return wr.credit;
     // [137d] (3.34.20) a word MusicBrainz does not know: "other instruments" credited as written, a similar instrument without
-    // [S052] (3.34.27) in lower case ("Chaims" → chaims)
-    if (row.instrGuess && row.instrGuess.chose !== 'misc') return norm(row.primaryText) === norm(row.instrGuess.other || 'other instruments') ? guessCredit(row.instrGuess) : '';
+    // [S052] (3.34.27) in lower case ("Chaims" → chaims); [164] (3.37.13) a similar instrument too, unless the word is one
+    // slip off it (a typo) or the same word ("Taischigoto" → taishōgoto credited "taischigoto"; "Sxaophone" → saxophone without)
+    if (row.instrGuess && row.instrGuess.chose !== 'misc') {
+      const g = row.instrGuess;
+      if (norm(row.primaryText) === norm(g.other || 'other instruments')) return guessCredit(g);
+      return norm(row.primaryText) && primaryIsValid(row) && guessSpelling(g, row.primaryText) === 'own' ? guessCredit(g) : '';
+    }
     // [137f] (3.34.25) an instrument technician with its instrument: MusicBrainz says "guitar technician" – no role credit but
     // "tuner" ("Piano Tuner": piano, credited "piano tuner")
     if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole, { quiet: true })) : '';
@@ -14308,6 +14320,45 @@
     return withoutBy(lowerCredit(g.word));
   }
 
+  /** [164] (3.37.13) Optimal string alignment: letters wrong, missing or too many, two neighbours swapped counting as one. */
+  function slipDistance(a, b) {
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...new Array(b.length).fill(0)]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        const c = a[i - 1] === b[j - 1] ? 0 : 1;
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+    return d[a.length][b.length];
+  }
+
+  /**
+   * [164] (3.37.13) The word of a guess against the instrument chosen for it (collected item 164; maintainer: "bei reinen
+   * Tippfehlern soll die korrekte rolle gesetzt werden. eine info kann ausgegeben werden, dass es sich wahrscheinlich um einen
+   * tippfehler handelte", "Nur 1 Buchstabe"): 'same' – only case or accents apart; 'typo' – one slip off ("Sxaophone",
+   * "Violn"): the instrument without a role credit; 'own' – two letters off or more ("Taischigoto" → taishōgoto, "Chaims" →
+   * chimes): a spelling of its own, credited as written in lower case. The note of the row turns it round (typoAs).
+   */
+  function guessSpelling(g, name) {
+    const w = foldWord(g.word);
+    const n = foldWord(name);
+    if (!n || w === n) return 'same';
+    if (g.typoAs && norm(g.typoAs.name) === norm(name)) return g.typoAs.typo ? 'typo' : 'own';
+    return slipDistance(w, n) <= 1 ? 'typo' : 'own';
+  }
+
+  /** [164] (3.37.13) The note "Probably a typo …" / "A spelling of its own …" turned round: the role credit follows. */
+  function guessTypoSet(row, typo) {
+    const g = row.instrGuess;
+    if (!g || !norm(row.primaryText)) return;
+    g.typoAs = { name: row.primaryText, typo };
+    row.roleCreditTouched = false;
+    refreshRowDetails(row);
+    log('info', typo ? 'instrTypo' : 'instrOwn', { word: g.word, instrument: row.primaryText, credit: row.roleCredit || '' });
+  }
+
   /** [137d] (3.34.26) "miscellaneous support (task “…”)" chosen in the question of a word MusicBrainz does not know. */
   function guessMisc(row) {
     const g = row.instrGuess;
@@ -17651,7 +17702,7 @@
       role = `<span class="dci-em-role">${esc(r.raw || rowTypeName(r) || '–')}</span> <span class="dci-sub">→ ${esc(rowTypeName(r) || tr('cl.noType'))}</span>`;
     }
     const credit = lt && canRoleCredit(lt)
-      ? `<input type="text" data-f="em-credit" value="${esc(r.roleCredit)}" placeholder="${esc(tr('em.noCredit'))}" aria-label="${esc(tr('em.creditLabel', { name }))}">` : '';
+      ? `<input type="text" data-f="em-credit" value="${esc(r.roleCredit)}" placeholder="${esc(tr('em.noCredit'))}" aria-label="${esc(tr('em.creditLabel', { name }))}">${rcClearHtml()}` : '';
     const allowed = new Set(lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : []);
     // [3.36.6] a cell per attribute, below its word in the head (collected item 148)
     const flags = (flagNames.length ? flagNames : ['']).map((f) => `<td class="dci-em-c-flag">${f && allowed.has(f) ? `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">` : ''}</td>`).join('');
@@ -17976,6 +18027,7 @@
     'type-pick': (r, btn) => pickType(r, Number(btn.dataset.opt)),
     'instr-pick': (r, btn) => (btn.dataset.instr === '\u0000misc' ? guessMisc(r) : pickInstrument(r, btn.dataset.instr)),
     'instr-misc': (r) => guessMisc(r),
+    'instr-typo': (r, btn) => guessTypoSet(r, btn.dataset.typo === '1'), // [164] (3.37.13)
     'voice-credit': (r) => Object.assign(r, { roleCredit: norm(r.base), roleCreditTouched: true }),
     'case-keep': (r, btn) => caseKeep(r, btn.dataset.word || '', true),
     'case-small': (r, btn) => caseKeep(r, btn.dataset.word || '', false),
@@ -18299,7 +18351,7 @@
       const free = allowedRoots(lt).filter((r) => r.attr.free_text).map((r) => r.attr)[0];
       if (free) {
         parts.push(`<label class="dci-credit">${esc(free.name)}
-          <input type="text" data-f="role-credit" value="${esc(row.roleCredit)}" aria-label="${esc(free.name)}" title="${esc(attrHelp(free))}">
+          <input type="text" data-f="role-credit" value="${esc(row.roleCredit)}" aria-label="${esc(free.name)}" title="${esc(attrHelp(free))}">${rcClearHtml()}
         </label>`);
       }
     }
@@ -18321,7 +18373,7 @@
     const options = roleCreditOptions(row.raw, row.base, row.mods, row.roleCreditSuggest, lt ? lt.name : '', ruleOn('S052') ? creditCasing(lt) : undefined);
     const fromDiscogs = !row.manual && !!norm(row.roleCredit) && norm(row.roleCredit) === norm(row.roleCreditSuggest);
     parts.push(`<label class="dci-credit"><span class="dci-credit-name">${esc(tr('roleCredit.label'))}${fromDiscogs ? ` <span class="dci-src dci-src-dg" title="${esc(trSrc('roleCredit.fromDiscogs'))}">${esc(trSrc('roleCredit.fromTag'))}</span>` : ''}</span>
-        <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(tr('roleCredit.fromDiscogs')) : ''}">
+        <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(tr('roleCredit.fromDiscogs')) : ''}">${rcClearHtml()}
       </label>
       <datalist id="dci-rc-${row.id}">${options.map((o) => `<option value="${esc(o)}"></option>`).join('')}</datalist>
       <div class="dci-dest" data-dest="${row.id}">${esc(roleCreditHint(row))}</div>
@@ -18330,6 +18382,11 @@
         <input type="text" data-f="credit" list="dci-ac-${row.artistKey}" value="${esc(row.credit)}" placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('artistCredit.label'))}">
       </label>`);
     return parts.join('');
+  }
+
+  /** [164] (3.37.13) The small ✕ next to a role credit (maintainer: "neben role credit soll generell ein kleines x sein womit es geleert werden kann"). */
+  function rcClearHtml() {
+    return `<button type="button" class="dci-iconbtn dci-rc-clear" data-act="rc-clear" title="${esc(tr('roleCredit.clear'))}" aria-label="${esc(tr('roleCredit.clear'))}">✕</button>`;
   }
 
   function canRoleCredit(lt) {
@@ -20543,7 +20600,22 @@
     }
     const chosen = misc || (primaryIsValid(row) && !!norm(row.primaryText));
     const opts = [...g.options.map((n) => pick(n, n)), ...otherBtn, ...(miscBtn ? [miscBtn] : [])];
-    return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(chosen ? 'instrGuess.chosen' : 'instrGuess.ask', { word: g.word }))} ${opts.join(' · ')}</div>`;
+    return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(chosen ? 'instrGuess.chosen' : 'instrGuess.ask', { word: g.word }))} ${opts.join(' · ')}${chosen && !misc ? guessNoteHtml(row) : ''}</div>`;
+  }
+
+  /**
+   * [164] (3.37.13) Below an instrument chosen for a word MusicBrainz does not know: "Probably a typo of “saxophone”: no role
+   * credit. · credit “sxaophone” as written" or "A spelling of its own: credited “taischigoto”. · a typo: no role credit".
+   */
+  function guessNoteHtml(row) {
+    const g = row.instrGuess;
+    const name = row.primaryText;
+    if (!g || !norm(name) || norm(name) === norm(g.other || 'other instruments')) return '';
+    const sp = guessSpelling(g, name);
+    if (sp === 'same') return '';
+    const typo = sp === 'typo';
+    const btn = `<button type="button" class="dci-textbtn" data-act="instr-typo" data-typo="${typo ? '0' : '1'}">${esc(tr(typo ? 'instrGuess.keepWord' : 'instrGuess.isTypo', { word: guessCredit(g) }))}</button>`;
+    return `<div class="dci-sub dci-guess-spell" data-spell-as="${sp}">${esc(tr(typo ? 'instrGuess.typo' : 'instrGuess.own', { name, word: guessCredit(g) }))} ${btn}</div>`;
   }
 
   /**
@@ -20620,6 +20692,10 @@
     row.primaryTouched = true;
     refreshRowDetails(row);
     log('info', 'instrPicked', { name: (artist && (artist.mbName || artist.name)) || '', instrument: name, credit: row.roleCredit || '' });
+    // [164] (3.37.13) a word one slip off the instrument: said once in the log too
+    if (row.instrGuess && norm(name) !== norm(row.instrGuess.other || 'other instruments') && guessSpelling(row.instrGuess, name) === 'typo') {
+      log('info', 'instrTypo', { word: row.instrGuess.word, instrument: name, credit: row.roleCredit || '' });
+    }
     rerenderRow(row);
     refresh();
   }
@@ -25876,6 +25952,24 @@
       case 'instr-misc':
         guessMisc(row); // [137d] (3.34.26)
         break;
+      case 'instr-typo':
+        // [164] (3.37.13) a typo, or a spelling of its own credited as written
+        guessTypoSet(row, btn.dataset.typo === '1');
+        rerenderRow(row);
+        refresh();
+        break;
+      case 'rc-clear': {
+        // [164] (3.37.13) ✕ at a role credit: empty, and kept empty (made by hand); in an entry's matrix for all rows of the line
+        const line = btn.closest('tr.dci-em-line[data-rows]');
+        const rows = line ? lineRows(btn) : row ? [row] : [];
+        rows.forEach((r) => Object.assign(r, { roleCredit: '', roleCreditTouched: true }));
+        if (line && artist) rerenderGroup(artist);
+        else if (row) rerenderRow(row);
+        refresh();
+        const f = S.overlay.querySelector(line ? `tr.dci-em-line[data-line="${line.dataset.line}"] [data-f="em-credit"]` : `tr[data-row="${row && row.id}"] [data-f="role-credit"]`);
+        if (f) f.focus({ preventScroll: true });
+        break;
+      }
       case 'cover-crop':
         // [130c] (3.34.22) the crops of the row's lines, shown or hidden
         if (S.cropOpen.has(row.id)) S.cropOpen.delete(row.id);
@@ -30084,6 +30178,12 @@
       .dci-em-grid .dci-em-c-role { position: sticky; left: 0; background: #fff; min-width: calc(var(--u, 1px) * 200); z-index: 1; }
       .dci-em-c-role input { width: calc(var(--u, 1px) * 190); }
       .dci-em-c-credit input { width: calc(var(--u, 1px) * 130); }
+      /* [164] (3.37.13) the small ✕ of a role credit */
+      .dci-rc-clear { border: 0; background: none; color: var(--muted); padding: 0 calc(var(--u, 1px) * 3); font-size: calc(var(--u, 1px) * 11); line-height: 1.4; cursor: pointer; flex: none; }
+      .dci-rc-clear:hover, .dci-rc-clear:focus-visible { color: var(--err); }
+      .dci-em-c-credit { white-space: nowrap; }
+      .dci-c-attr .dci-credit:has(.dci-rc-clear) { grid-template-columns: calc(var(--u, 1px) * 92) 1fr auto; }
+      .dci-guess-spell { margin-top: calc(var(--u, 1px) * 3); }
       /* [3.36.6] a column per attribute: the word centred over its checkbox (collected item 148) */
       .dci-em-grid th.dci-em-c-flag, .dci-em-grid td.dci-em-c-flag { text-align: center; white-space: nowrap; min-width: calc(var(--u, 1px) * 22);
         padding-left: calc(var(--u, 1px) * 4); padding-right: calc(var(--u, 1px) * 4); }

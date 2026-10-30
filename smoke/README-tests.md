@@ -122,6 +122,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   guests: 3.37.2 (151 – 153): "(P) 1998 loudsprecher (c) 1998 loudsprecher" both roles; credits split at » « ("Cover-Photo"
                                 #     = cover photo, cover design); "Special Guest: M. Osswald on Sax and Piano" – guest on both, "Guest: Jane Roe"
                                 #     performer guest, "featuring:" without guest, "NAME on X and Y"
+                                #   typonote: 3.37.13 (164): "Sxaophone" → saxophone a typo (no role credit, note, log), turned round → "sxaophone"
+                                #     and back; "Taischigoto" → taishōgoto credited "taischigoto"; ✕ empties a row's role credit (stays empty when
+                                #     the instrument is set again) and a matrix line's (staged without credit). instrguess / unknownask: chimes "chaims"
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
