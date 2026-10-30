@@ -335,6 +335,7 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   entryhead: the head of an entry and the bar below the button (3.28.0): only the tag links to the source (↗), [3.32.2] the
                                 #     release's spelling "B. Man*" in the head (tooltip "Discogs: Bass Man") instead of the chip "as “B. Man”",
                                 #     a row credited otherwise "as “Bassman”", the credits in the compact lines; the bar: status and ⚙ only, ⚙ → the settings
+                                #     3.37.11: the chip "artist credit in MusicBrainz: “B. Man” (the Discogs spelling *)", the * explained
                                 #   manualtop: "Add entry manually" as one line above the date pool (3.18.0): tooltip, "?", in view when scrolled (window and
                                 #     page), an entry added from there is shown
                                 #   msgs: messages (3.27.3): ✕ on each, "▾ n messages" folds them, a new error unfolds, a fresh import shows them again
@@ -346,6 +347,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     the compact view stored before – no arrow
                                 #   keys: 3.36.3: ⌨ in the head shows all keyboard shortcuts (groups, the keys of this computer, as a Mac ⌥ ⌃ ⌘ ↩),
                                 #     Esc and ✕ close them, the focus back on ⌨
+                                #   anvcredit: 3.37.11: "Kenneth Ansell*" (Ken Ansell) in the matrix view – the chip "artist credit in MusicBrainz:
+                                #     “Kenneth Ansell” (the Discogs spelling *)", the field, the log; emptied: no chip
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /

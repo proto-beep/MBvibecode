@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.10
+// @version      3.37.11
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.10
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.10
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.11
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.11
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.10';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.11';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -840,6 +840,10 @@
       "group.otherSpellings": "Also on this release as: {list}",
       "group.creditedAsMore": "as {name} (+{n})",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
+      "group.creditedSpelling": "artist credit in MusicBrainz: {name} (the Discogs spelling *)",
+      "group.creditedSpellingTitle": "Discogs credits {base} on this release as {name} (marked * on Discogs). The dashboard enters {name} as the artist credit of the relationships in MusicBrainz – change it in the rows (“credited as” / “Artist credit for all roles”); empty: the MusicBrainz name.",
+      "group.anvStar": "* – credited so on Discogs (a name variation); MusicBrainz gets it as the artist credit",
+      "log.anvCredits": "Artist credits from the Discogs spellings (*): {list}",
       "nav.settings": "⚙",
       "nav.settingsTitle": "⚙ Settings → Source pages: the switches of the navigation (opens only the settings, the import does not start)",
       "log.viewSet": "View of the entries: {view}",
@@ -15648,6 +15652,10 @@
         await resolveArtists();
         // [S057] (3.37.10) ℗ / © of a person Discogs lists as a label
         if (mergePersonCopyrights()) renderGroups();
+        // [3.37.11] the artist credits taken from the Discogs spellings (item 161)
+        const anv = [...S.artists.values()].map((a) => [a, releaseSpelling(a)]).filter(([a, sp]) => sp && entryCredits(a).some((c) => typo(c) === typo(sp.shown)))
+          .map(([a, sp]) => `${sp.shown} (${sp.base})`);
+        if (anv.length) log('info', 'anvCredits', { list: anv.join(', ') });
         if (rel.series.length) {
           await loadSeries(rel.series);
           renderGroups();
@@ -17088,14 +17096,23 @@
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
     if (!sp) return `<strong>${esc(a.name)}</strong>`;
-    const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : [])].join('\n');
+    // [3.37.11] the * says what it means (collected item 161)
+    const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
+      ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [tr('group.anvStar')] : [])].join('\n');
     return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>`;
   }
 
   function creditChipHtml(a) {
-    // [3.32.2] the spelling already shown in the head (as "Marc D. Rusch*") is not repeated as "as …"
+    // [3.32.2] the spelling already shown in the head (as "Marc D. Rusch*") is not repeated as "as …" – [3.37.11] it says that
+    // MusicBrainz gets it as the artist credit (collected item 161; maintainer: "es war aber nicht ersichtlich, dass das Dashboard
+    // diesen Artist Credit auch für MB übernimmt (obwohl es das gemacht hat)")
     const sp = releaseSpelling(a);
-    const credits = entryCredits(a).filter((c) => !sp || typo(c) !== typo(sp.shown));
+    const all = entryCredits(a);
+    const credits = all.filter((c) => !sp || typo(c) !== typo(sp.shown));
+    if (sp && credits.length === 0 && all.length) {
+      const name = tr('common.quoted', { text: sp.shown });
+      return `<span class="dci-gcredit dci-gcredit-anv" title="${esc(tr('group.creditedSpellingTitle', { name, base: tr('common.quoted', { text: sp.base }) }))}">${esc(tr('group.creditedSpelling', { name }))}</span>`;
+    }
     if (!credits.length) return '<span class="dci-gcredit" hidden></span>';
     const name = tr('common.quoted', { text: credits[0] });
     const text = credits.length > 1 ? tr('group.creditedAsMore', { name, n: credits.length - 1 }) : tr('group.creditedAs', { name });

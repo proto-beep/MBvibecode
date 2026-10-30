@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit; `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -156,7 +156,8 @@ def case_entryhead():
     A) Only the tag of the source links to it (with ↗; its tooltip names the source's name) – the name is not repeated.
     B) How the dashboard credits the entry: [3.32.2] the head shows the release's spelling "B. Man*" (Discogs credits Bass
        Man as "B. Man" on this release; collected item 100), its tooltip "Discogs: Bass Man", no chip "as “B. Man”" (until
-       3.32.1: the name "Bass Man" and the chip); the MusicBrainz name (no "credited as") – no chip. A row credited otherwise:
+       3.32.1: the name "Bass Man" and the chip) – [3.37.11] the chip "artist credit in MusicBrainz: “B. Man” (the Discogs
+       spelling *)" instead, and the tooltip says what * means (collected item 161); the MusicBrainz name (no "credited as") – no chip. A row credited otherwise:
        "as “Bassman”" at the head (the spelling of the head not again), the compact line of each row names its own credit.
     C) The bar below "Import credits …" (with the companion): the status as a badge (source link, "open in background")
        and ⚙ – no switches of the navigation any more; ⚙ opens the settings of the dashboard at "Discogs and Bandcamp view" ([3.30.5] "Source pages")."""
@@ -208,7 +209,9 @@ def case_entryhead():
         lines = pg.evaluate(f"document.querySelector(\"{sec}\").querySelectorAll('.dci-cl-as').length")
         pg.click('.dci-head [data-act=view-toggle]')
         print('   anders credited:', b2, '| Zeilen mit eigenem Credit (kompakt):', lines)
-        results.append(b1['shown'] == ['B. Man*', 'Discogs: Bass Man'] and b1['chip'] is None
+        results.append(b1['shown'][0] == 'B. Man*' and b1['shown'][1].startswith('Discogs: Bass Man\n* – credited so on Discogs')
+                       and b1['chip'] and b1['chip'][0] == 'artist credit in MusicBrainz: “B. Man” (the Discogs spelling *)'
+                       and b1['chip'][1].startswith('Discogs credits “Bass Man” on this release as “B. Man”')
                        and b2['chip'] and b2['chip'][0] == 'as “Bassman”' and lines == 2)
         # C) the bar below "Import credits …"
         pg.click('.dci-head [data-act=close]')
@@ -635,5 +638,51 @@ def case_keys():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_anvcredit():
+    """Credits Importer 3.37.11: the Discogs spelling as the artist credit in MusicBrainz, in the matrix view (collected item 161;
+    maintainer, Discogs 3139201 "Facets": "Kenneth Ansell* wurde so im Dashboard dargestellt, es war aber nicht ersichtlich, dass das
+    Dashboard diesen Artist Credit auch für MB übernimmt (obwohl es das gemacht hat)").
+    A) "Ken Ansell" credited "Kenneth Ansell" on the release: the head "Kenneth Ansell*" with the chip "artist credit in MusicBrainz:
+       “Kenneth Ansell” (the Discogs spelling *)"; the field "Artist credit for all roles" has it; the log names it.
+    B) The credit emptied in that field: the chip goes (the MusicBrainz name), the * stays (the spelling of the release)."""
+    H.ENTRIES_VIEW = 'matrix'
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'].append({'name': 'Ken Ansell', 'anv': 'Kenneth Ansell', 'role': 'Engineer', 'tracks': '', 'id': 1373157, 'join': ''})
+        return d
+
+    H.discogs_release = rel
+    HEAD = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || '') === 'Ken Ansell');
+      if (!g) return null; const c = g.querySelector('.dci-gcredit'); const st = g.querySelector('.dci-gname strong');
+      return { shown: st.textContent.trim(), chip: c && !c.hidden ? c.textContent.trim() : null, field: (g.querySelector('[data-f=artist-credit-all]') || {}).value }; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(600)
+        a = pg.evaluate(HEAD)
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Discogs spellings' in x]
+        print('A)', a, '| Protokoll:', logs)
+        results.append(a == {'shown': 'Kenneth Ansell*', 'chip': 'artist credit in MusicBrainz: “Kenneth Ansell” (the Discogs spelling *)', 'field': 'Kenneth Ansell'}
+                       and logs == ['Artist credits from the Discogs spellings (*): Kenneth Ansell (Ken Ansell)'])
+        sec = "section.dci-group:has(.dci-gname strong[data-name='Ken Ansell'])"
+        pg.fill(f'{sec} [data-f=artist-credit-all]', '')
+        pg.click(f'{sec} [data-act=artist-credit-all]')
+        pg.wait_for_timeout(500)
+        b2 = pg.evaluate(HEAD)
+        print('B)', b2)
+        results.append(b2 and b2['shown'] == 'Kenneth Ansell*' and b2['chip'] is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())
