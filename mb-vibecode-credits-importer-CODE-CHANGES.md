@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.36.6, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.36.7, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.36.7 · 2026-10-30
+
+Places of the Discogs notes on their tracks (150, S053).
+
+- **TEXT:** new `LEAD_POS` (`LEAD_POS_ONE`: "A1", "D", "AA", "12", "1.2"; joined by "to", "–", ",", "&", "and") – positions in front of a sentence before its verb ("… recorded …"); `readLine` tries it after `PREFIX`, `SUFFIX`, `NUMBERS` (rule S053), `useScope` only when the positions name tracks.
+- **`addNotesCompanies`:** the notes are parsed with `resolveTracks` / `resolveTitles` against the Discogs tracks (`rel.tracks`; before: MusicBrainz's numbers – "A1" named nothing); with S053 a company Discogs lists for the whole release (same name, same role) gets the tracks of a line of the notes (`notesLine`, set, ⓘ) – before only publishers below a heading (S043); a company only in the notes keeps its line too. Its own log line: `notesCompanyTracks` (publishers: `notesPubTracks` as before).
+- **Row:** with tracks from the notes `role.companyNotesTracks` ("Companies, etc. (the tracks from the notes)") or `role.notesOnly` instead of "(whole release)".
+- **Register:** S053 (in the window "Mapping rules", can be switched off there).
+- **Texts (English only):** `role.companyNotesTracks`, `role.notesOnly`, `log.notesCompanyTracks`.
+- **Tests:** `t_notes_companies.py` new case `facets` (13 tracks on three LPs, Discogs's place and one from the notes, the dates after "Apply", "li" and the live comment, a pasted text); `register_golden.json` written anew (only S053 added – no result of the corpus changed); `t_notes_dates.py facets` C: the places of the notes with their tracks (before: none expected).
 
 ## Import 3.36.6 · 2026-10-30
 
