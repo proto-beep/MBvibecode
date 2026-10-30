@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.36.4",
+  "version": "3.37.1",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -636,7 +636,6 @@
     "settings.t.connections": "ⓘ Verbindungen",
     "settings.textsHint": "Eingefügte Texte und die Credits-Texte von Bandcamp. Was die Texterkennung liest (Regeln T020 – T038), steht in",
     "settings.resetAll": "↺ Alle Einstellungen zurücksetzen …",
-    "connections.open": "Verbindungen zu anderen Seiten, Werkzeugen und Skripten (⚙ Einstellungen → ⓘ Verbindungen)",
     "srcmenu.button": "Quelle",
     "srcmenu.title": "Andere Quelle, eingefügter Text, Reihenfolge der Quellen, Bandcamp, gespeicherten Import löschen",
     "supp.open": "Ergänzen",
@@ -2328,7 +2327,6 @@
     "settings.t.connections": "ⓘ Conexiones",
     "settings.textsHint": "Textos pegados y los textos de créditos de Bandcamp. Lo que lee el reconocimiento de texto (reglas T020 – T038) está en",
     "settings.resetAll": "↺ Restablecer todos los ajustes…",
-    "connections.open": "Conexiones con otros sitios, herramientas y scripts (⚙ Ajustes → ⓘ Conexiones)",
     "srcmenu.button": "Fuente",
     "srcmenu.title": "Otra fuente, un texto pegado, el orden de las fuentes, Bandcamp, borrar la importación guardada",
     "supp.open": "Completar",
@@ -4020,7 +4018,6 @@
     "settings.t.connections": "ⓘ Connexions",
     "settings.textsHint": "Textes collés et textes de crédits de Bandcamp. Ce que lit la reconnaissance du texte (règles T020 – T038) figure dans",
     "settings.resetAll": "↺ Réinitialiser tous les réglages…",
-    "connections.open": "Connexions avec d’autres sites, outils et scripts (⚙ Réglages → ⓘ Connexions)",
     "srcmenu.button": "Source",
     "srcmenu.title": "Autre source, texte collé, ordre des sources, Bandcamp, supprimer l’import enregistré",
     "supp.open": "Compléter",

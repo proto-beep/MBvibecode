@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.36.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.37.1, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,60 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.37.1 · 2026-10-30
+
+Suggestions linked in this release first (E5a).
+
+- **New `linkedInRelease(ws)`** (`S.linked`, made with `S.existing` when the release is read): mbid → `{ name, where }` from the release's artist credit and labels, the artist credits of tracks and recordings, the relationships of the release, its recordings and their works (not urls, works, recordings, releases); `where` as "mix on the release", "composer on “Song One”", "track artist 1.3", "release artist", "label of the release".
+- **`suggestByName`:** after the web hits, the hits linked in this release (and one of the same name the search did not give) first, `linked` (up to three places) – only of the entry's kind (a person: artists; a company: its entity type or the types its rows allow; `linkedInRelease` keeps each one's type – after a review: a label "℗ 2021 Jane Doe" was offered the artist Jane Doe as a label); log `linkedSuggested`.
+- **`suggestStackHtml`:** `dci-sugg-linked` and the mark `match.markLinked` (instead of "release artist"), tooltip `match.linkedTitle`. **CSS:** solid green border, light green, bold.
+- **Texts (English only):** `match.markLinked`, `match.linkedTitle`, `match.inRelease.ac/label/track/rel/release`, `log.linkedSuggested`.
+- **Tests:** `t_notes_companies.py` new case `linkedsugg` (also: the label of the same name gets no linked artist); `t_sources_bandcamp.py labelpage` and `t_text_basics.py freetext` expect the new mark ("in this release: release artist", "… composer on “Song One”").
+
+## Import 3.37.0 · 2026-10-30
+
+Milestone: the Discogs notes read in full (E5, S054).
+
+- **New `addNotesPersons(rel, res)`** (from `addNotesCompanies`, which now runs with S042 or S054): the credits of `TEXT.parse` of the notes (not those without a name); `kindOf` / `sameKind` (`mapRole`: the same first type, the same attributes – "Executive Producer" is no "Producer" – and the same instrument or voice – "Instruments" is no "Piano") and the names of Discogs's credits (name, raw name, as credited, `looseName`) decide: a twin is left out – Discogs's credit for the whole release gets the notes' tracks, of all lines of the notes (`tracks`, `notesIdx`, `notesLine`); the same credit in two lines of the notes is one, with the tracks of both; a name of a company of the release ("Mastered by Sterling Sound" with "Mastered At – Sterling Sound") is no person; the same name with another role takes Discogs's `who` (joins its entry); a new name `who.id` 0; pushed with `fromNotes`, `notesLine`. Logs `notesCredits`, `notesCreditTracks`. With S054 `addNotesCompanies` takes every company of the notes (`wanted`), each with its `line`; **`plainNotesName`**: no name with brackets or of numbers only, as a track list of the notes leaves them ("Pub Co (1" of "Published by Pub Co (1, 3); Ghostpub (4)" – S022 reads those lines).
+- **`groupCredits`:** `group.fromNotes` (only while every credit is from the notes and has no Discogs id), per role `fromNotes`, `notesLine`. **Entries:** `fromNotes` → searched by name (as S042). **Rows:** `fromNotes`, `notesCredit` (its line); Discogs's credit with tracks from the notes: `notesTracks` (only the tracks of the notes, `notesIdx`), `notesFrom` (ⓘ as S043). **Companion:** rows from the notes are not sent as Discogs credits in `status-map` (their mark would land on another role of the name). **`groupCompanies`:** per role `fromNotes` → company rows `fromNotes`, `notesCredit`.
+- **Display:** `notesLineInfo(row)` (ⓘ with the line, class `dci-notesline`); `roleCell` – a person's row "From the Discogs notes" instead of "Discogs: whole release" / its tracks, a company's ⓘ after its source; `emLineHtml` ⓘ next to the role of a line from the notes.
+- **Per release:** `NOTES_OFF_KEY` (`dci-notes-off:<MBID>`, in `REL_PREFIXES`), `S.notesOff`; **`setNotesRowsHidden(hide)`** (`notesHidden`, `notesLevel`; works skipped: `notesLevel` work), **`setNotesOff(off)`**; the menu Source ▾ `data-f="notes-off"` for a Discogs import whose notes gave rows; at the import hidden again; "Delete stored import" sets it back. Hidden like the "about" text (`dci-about-hidden`).
+- **S022:** no "only a track group" when the entry's row from the notes (or with tracks from the notes) has these tracks.
+- **Settings:** ⚙ Texts `data-set="rule-on" data-rule="S054"`; ↺ of Texts switches S054 on again. **Register:** S054. **Milestone** 3.37.0 (`MILESTONES`, `ms.3.37.0`).
+- **Texts (English only):** `notes.credit`, `notes.creditLine`, `notes.off`, `notes.offTitle`, `log.notesCredits`, `log.notesCreditTracks`, `log.notesOff`, `log.notesOn`, `settings.notesCredits`, `settings.notesCreditsTitle`, `ms.3.37.0`.
+- **Checked by an independent review before the commit** (three findings fixed: lines of the notes merged, kinds of roles compared strictly, the type of a linked suggestion – that one in 3.37.1 – and smaller ones).
+- **Tests:** `t_notes_companies.py` new case `notescredits` (new entries and rows marked, nothing twice – also two lines, "Executive producer", a studio's name –, tracks onto Discogs's credit, Source ▾ left out and back, the rule off and on); `t_ui_settings.py notice` the three newest milestones 3.37.0, 3.36.0, 3.35.0; `t_works_matrix.py mxdrop`: Nobody Here an entry from the notes (strings arranger, 2, 4), no name from a track list; `register_golden.json` written anew (only S054 added).
+
+## Import 3.36.7 · 2026-10-30
+
+Places of the Discogs notes on their tracks (150, S053).
+
+- **TEXT:** new `LEAD_POS` (`LEAD_POS_ONE`: "A1", "D", "AA", "12", "1.2"; joined by "to", "–", ",", "&", "and") – positions in front of a sentence before its verb ("… recorded …"); `readLine` tries it after `PREFIX`, `SUFFIX`, `NUMBERS` (rule S053), `useScope` only when the positions name tracks.
+- **`addNotesCompanies`:** the notes are parsed with `resolveTracks` / `resolveTitles` against the Discogs tracks (`rel.tracks`; before: MusicBrainz's numbers – "A1" named nothing); with S053 a company Discogs lists for the whole release (same name, same role) gets the tracks of a line of the notes (`notesLine`, set, ⓘ) – before only publishers below a heading (S043); a company only in the notes keeps its line too. Its own log line: `notesCompanyTracks` (publishers: `notesPubTracks` as before).
+- **Row:** with tracks from the notes `role.companyNotesTracks` ("Companies, etc. (the tracks from the notes)") or `role.notesOnly` instead of "(whole release)".
+- **Register:** S053 (in the window "Mapping rules", can be switched off there).
+- **Texts (English only):** `role.companyNotesTracks`, `role.notesOnly`, `log.notesCompanyTracks`.
+- **Tests:** `t_notes_companies.py` new case `facets` (13 tracks on three LPs, Discogs's place and one from the notes, the dates after "Apply", "li" and the live comment, a pasted text); `register_golden.json` written anew (only S053 added – no result of the corpus changed); `t_notes_dates.py facets` C: the places of the notes with their tracks (before: none expected).
+
+## Import 3.36.6 · 2026-10-30
+
+The attributes of the matrix lines a column each (148).
+
+- **`emBlockHtml`:** the head has a `th.dci-em-c-flag` per attribute (`flagNames`; none: one empty cell) instead of one `th.dci-em-c-flags` with spans; `cols` = 2 + max(1, attributes) + events (+ 1 for "＋ Event") + 1.
+- **`emLineHtml`:** a `td.dci-em-c-flag` per attribute (its checkbox, or empty where the type has no such attribute) instead of one `td.dci-em-c-flags`.
+- **CSS:** `.dci-em-c-flags` (inline blocks of 34 units) → `.dci-em-grid th/td.dci-em-c-flag` centred, no wrapping, at least 22 units; `.dci-em-c-flag input { margin: 0 }`.
+- **Tests:** `t_entries.py` new case `flagcols` (every word's centre over its checkboxes' within 2 px, not wider than its cell, at 100 % and A+ ×3).
+
+## Import 3.36.5 · 2026-10-30
+
+The symbols of the head and the switches show their state; no bridge, no ⓘ in the head (147, 149).
+
+- **New `syncLogBtn()`** (in `setLogVisible` and `renderAll`): `aria-pressed` of the head's log symbol (`headBtn('log', …, 'aria-pressed="false"')`), styled by the existing `.dci-headbtn[aria-pressed="true"]`.
+- **Bridge removed** (3.30.4): `placeBridges` → **`alignPanes()`** (only `alignSettingsPane`); `setVar`, the classes `dci-bridged` / `dci-bridged-box`, the custom properties `--dci-bridge-*` and their CSS gone; the scroll listener and the ResizeObserver of the head gone (those of the body and the settings stay, for the pane).
+- **ⓘ removed:** `headBtn('connections-open', 'info', …)`, the case `connections-open`, `ICONS.info` and the text `connections.open` (all languages, `i18n_del.py`).
+- **CSS:** `.dci-seg button[aria-pressed="true"]` (also `:hover`, `:disabled`) `#736dab` with white text; the rules with `[data-level]` and `[data-sync-mode]` (more specific) keep theirs.
+- **Tests:** `t_ui_settings.py` case `bridge` → **`pressed`** (⚙ and rules pressed without a bridge, the log pressed while shown, ⌨, A−/A+/⤢ never, the tabs joined as before, "Entries" and "by event | by role" filled); `settabs` D through ⚙ → Connections; `t_ui_head.py head` without `connections-open`.
 
 ## Import 3.36.4 · 2026-10-30
 

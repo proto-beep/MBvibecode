@@ -85,7 +85,8 @@ def case_facets():
        end of the range), E1–F1 (6–7).
     B) "in live concert" names tracks: "live" is offered for the existing link of track 1 (its sentence names A1–B1) with
        that reason – not for the whole release.
-    C) No places or areas from the notes (no entry for Goldsmith's College, Heiman Recording Studios or London)."""
+    C) [3.36.7] (collected item 150, S053) the places of the notes with their tracks – Goldsmith's College on A1–B1, Heiman Recording
+       Studios on C1–D and E1–F1 ("C1–F1") –, no area London (until 3.36.6 no places from these sentences at all)."""
     POS = ['A1', 'B1', 'C1', 'C2', 'D', 'E1', 'F1']
     H.TITLES[:] = ['Part One', 'Part Two', 'Organic', 'Trisect', 'Ontology', 'Part Six', 'Part Seven']
     H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 8)]
@@ -132,10 +133,14 @@ def case_facets():
         live = pg.evaluate("""[...document.querySelectorAll('.dci-wpill[data-attr=live]')].map(x => [x.textContent.trim(), x.title])""")
         print('B) live:', live)
         results.append(any('li?' in t and 'these tracks were recorded live' in title and 'Live recording' in title for t, title in live))
-        # C) no places or areas from the notes
+        # C) [3.36.7] the places of the notes with their tracks, no area
         names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim())")
-        print('C) Einträge:', names)
-        results.append(not any(n in names for n in ("Goldsmith's College", 'Heiman Recording Studios', 'London')))
+        places = pg.evaluate("""[...document.querySelectorAll('section.dci-group')].filter(g => /Goldsmith|Heiman/.test(g.querySelector('.dci-gname strong').textContent))
+      .map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(),
+        ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim()])])""")
+        print('C) Einträge:', names, '\n   Orte:', places)
+        results.append('London' not in names and places == [["Goldsmith's College", [['Recorded At', 'ⓘ Tracks A1–B1 from the notes']]],
+                                                            ['Heiman Recording Studios', [['Recorded At', 'ⓘ Tracks C1–F1 from the notes']]]])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
