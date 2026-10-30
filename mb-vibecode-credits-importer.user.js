@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.4
+// @version      3.37.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.4
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.4
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.5
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.5
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1528,6 +1528,16 @@
       "ocr.errNoLib": "The text recognition could not be loaded ({url}) – the page or the browser may not allow it.",
       "ocr.errImage": "The image could not be read.",
       "log.ocrOpen": "Text from cover art: the images of release {mbid}",
+      "ocr.restart": "↺ Start over",
+      "ocr.restartTitle": "Starts again with the images of the release: the images chosen, the texts read and your own images are discarded – also what is remembered of them for this release. The frames drawn on the images stay.",
+      "ocr.restartAsk": "Start over?\n\nThe images chosen, the texts read and your own images are discarded. The frames drawn on the images stay.",
+      "ocr.missing.one": "An own file was used: {names} – add it again (choose it or drop it here): its frames, tick and text come back.",
+      "ocr.missing.other": "{n} own files were used: {names} – add them again (choose them or drop them here): their frames, ticks and texts come back.",
+      "ocr.missingCard": "Add the file again",
+      "ocr.toResult": "To the texts read",
+      "log.ocrBack": "Text from cover art: opened again as it was left",
+      "log.ocrRestored": "Text from cover art: as left for this release – {n} images chosen, {m} texts read",
+      "log.ocrRestart": "Text from cover art: started over",
       "log.ocrDone.one": "Text from cover art: {n} image read ({langs})",
       "log.ocrDone.other": "Text from cover art: {n} images read ({langs})",
       "log.ocrFailed": "Text from cover art: {why}",
@@ -8442,7 +8452,8 @@
   // [3.36.1] whether this tab read the stores of the release when it was opened (switched on later: they were not read)
   S.rememberRead = remembering();
   // the stores of one release (the key ends with its MBID), and those of all releases in one (keyed by the MBID)
-  const REL_PREFIXES = ['date-pool', 'track-pool', 'date-matrix', 'about-off', 'notes-off', 'bc-off', 'src-off', 'works-skip', 'remember'];
+  // [3.37.5] 'ocr': the window "Text from cover art" as it was left (item 155)
+  const REL_PREFIXES = ['date-pool', 'track-pool', 'date-matrix', 'about-off', 'notes-off', 'bc-off', 'src-off', 'works-skip', 'remember', 'ocr'];
   const REL_KEY_RE = new RegExp(`^dci-(${REL_PREFIXES.join('|')}):([0-9a-f-]{36})$`);
   const REL_MAPS = ['dci-source-pick', 'dci-media-sel', 'dci-ocr-frames'];
   // the maps while nothing is remembered: the choices hold in this tab only
@@ -10616,7 +10627,8 @@
     const base = { id: `own${++ocrOwnN}`, src, types: [], comment: '', sel: true, mode: 'frames', frames: [], canvas: null };
     if (src === 'file') {
       const u = URL.createObjectURL(value);
-      return { ...base, name: pasted || !value.name ? tr('ocr.pastedImage', { n: ++ocrPastedN }) : value.name, blob: value, local: u, thumb: u, big: u, orig: u };
+      return { ...base, name: pasted || !value.name ? tr('ocr.pastedImage', { n: ++ocrPastedN }) : value.name, blob: value, local: u, thumb: u, big: u, orig: u,
+        pasted: !!(pasted || !value.name) };
     }
     return { ...base, name: ocrUrlName(value), url: value, thumb: value, big: value, orig: value };
   }
@@ -10628,7 +10640,9 @@
     const o = S.ocr;
     if (!o || o.step === 'run') return;
     const list = [...(files || [])];
-    const images = list.filter((f) => OCR_IMAGE_FILE.test(f.type || '')).map((f) => ocrOwnImage('file', f, pasted));
+    const all = list.filter((f) => OCR_IMAGE_FILE.test(f.type || '')).map((f) => ocrOwnImage('file', f, pasted));
+    // [3.37.5] a file of a card waiting for it: its frames, tick and text come back
+    const images = ocrTakeBack(all);
     // [3.34.16] the first OCR_BATCH of them shown; [3.34.17] what was stored for them
     images.forEach((im, i) => { im.shown = i < OCR_BATCH; });
     ocrTakeSaved(images);
@@ -10637,8 +10651,9 @@
     o.error = other.length ? tr('ocr.notImage', { names: other.join(', ') }) : '';
     // [3.34.6] a PDF: its pages
     list.filter((f) => !OCR_IMAGE_FILE.test(f.type || '') && isPdfFile(f)).forEach((f) => ocrAddPdf(f, f.name || 'PDF'));
-    if (images.length) log('info', 'ocrOwnAdded', { n: images.length, what: images.map((im) => im.name).join(', ') });
-    if (o.step !== 'list') o.step = 'pick';
+    if (all.length) log('info', 'ocrOwnAdded', { n: all.length, what: all.map((im) => im.name).join(', ') });
+    // [3.37.5] only files of cards waiting for them: the step stays (the texts read)
+    if (o.step !== 'list' && (images.length || other.length || o.step === 'frames')) o.step = 'pick';
     renderOcr();
   }
 
@@ -10649,7 +10664,7 @@
     const u = String(text || '').trim();
     if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(u)) {
       o.error = tr('ocr.badUrl', { url: u || '–' });
-    } else if (o.images.some((im) => im.url === u || (im.from && im.from === u))) {
+    } else if (o.images.some((im) => !im.missing && (im.url === u || (im.from && im.from === u)))) {
       o.error = tr('ocr.urlTwice');
     } else if (DISCOGS.releaseIdInUrl(u)) {
       // [3.34.7] a Discogs release: its images
@@ -10794,6 +10809,8 @@
     renderOcr();
     const local = URL.createObjectURL(blob);
     let kept = false;
+    // [3.37.5] only pages of cards waiting for them: the step stays
+    let back = false;
     try {
       const lib = await loadPdfJs();
       const doc = await lib.getDocument({ url: local, cMapUrl: `${PDFJS_ROOT}cmaps/`, cMapPacked: true, standardFontDataUrl: `${PDFJS_ROOT}standard_fonts/`,
@@ -10806,6 +10823,7 @@
       kept = true;
       const n = Math.min(doc.numPages, OCR_PDF_PAGES);
       let withText = 0;
+      let added = 0;
       for (let p = 1; p <= n; p++) {
         // [3.34.10] page by page
         ocrPdfStatus(tr('ocr.pdfPages', { name, n: p, of: n }));
@@ -10819,20 +10837,25 @@
         if (letters >= OCR_PDF_TEXT) withText++;
         const pg = { id: `own${++ocrOwnN}`, src: 'pdf', name: tr('ocr.pdfPage', { name, n: p }), file: name, from, page: p, pdfPage: page, textLayer: letters >= OCR_PDF_TEXT,
           pdfText, types: [], comment: '', sel: false, mode: 'frames', frames: [], canvas: null, thumb, shown: p <= OCR_BATCH };
-        if (S.ocrAuto) ocrAutoApply([pg]);
-        ocrTakeSaved([pg]);
-        o.images.push(pg);
+        // [3.37.5] a page of a card waiting for it: its frames, tick and text come back
+        if (ocrTakeBack([pg]).length) {
+          if (S.ocrAuto) ocrAutoApply([pg]);
+          ocrTakeSaved([pg]);
+          o.images.push(pg);
+          added++;
+        }
         renderOcr();
       }
       if (doc.numPages > n) o.error = tr('ocr.pdfLong', { name, n, of: doc.numPages });
       log('info', 'ocrPdfAdded', { name, n, text: withText });
+      if (!added) back = true;
     } catch (e) {
       if (S.ocr === o) o.error = tr('ocr.errPdf', { name, why: (e && e.message) || String(e) });
     } finally {
       if (!kept) URL.revokeObjectURL(local);
       if (S.ocr === o) {
         o.pdfLoading--;
-        if (o.step !== 'list' && o.step !== 'run') o.step = 'pick';
+        if (o.step !== 'list' && o.step !== 'run' && !(back && o.step === 'result')) o.step = 'pick';
         renderOcr();
       }
     }
@@ -11007,8 +11030,9 @@
     if (img.src === 'pdf') {
       const c = await ocrPdfRender(img.pdfPage, OCR_PDF_PX);
       Object.assign(img, { canvas: c, pdfScale: c.dciScale, w: c.width, h: c.height, frames: [], turn: 0 });
-      // [3.34.17] as left last time
+      // [3.34.17] as left last time; [3.37.5] the places of its text from the store
       ocrRestoreFrames(img);
+      (S.ocr ? S.ocr.results : []).filter((r) => r.img === img).forEach(ocrResBoxes);
       return img.canvas;
     }
     const size = S.ocr.size;
@@ -11037,8 +11061,9 @@
     c.height = Math.round(h * k);
     c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
     Object.assign(img, { canvas: c, canvasSize: size, w, h, frames: [], turn: 0 });
-    // [3.34.17] as left last time
+    // [3.34.17] as left last time; [3.37.5] the places of its text from the store
     ocrRestoreFrames(img);
+    (S.ocr ? S.ocr.results : []).filter((r) => r.img === img).forEach(ocrResBoxes);
     return img.canvas;
   }
 
@@ -11072,7 +11097,7 @@
     return [];
   }
   /** [3.34.15] An image of the queue still to be loaded (PDF pages are drawn in this browser, not loaded). */
-  const ocrToLoad = (im) => im.src !== 'pdf' && !im.filePromise && !im.loadPromise && !im.loadError && !ocrHasFile(im) && !ocrHasCanvas(im);
+  const ocrToLoad = (im) => !im.missing && im.src !== 'pdf' && !im.filePromise && !im.loadPromise && !im.loadError && !ocrHasFile(im) && !ocrHasCanvas(im);
 
   const mb = (n) => (n / 1048576).toFixed(n < 10485760 ? 1 : 0);
   /** The state of an image's loading as a short text: "45 % · 2.1 / 4.7 MB", "loaded", "waiting to load" … */
@@ -11116,7 +11141,8 @@
    */
   function ocrPreloadPump() {
     const o = S.ocr;
-    if (!o) return;
+    // ([3.37.5] nothing new while the window is hidden)
+    if (!o || o.hidden) return;
     const busy = o.images.filter((im) => im.filePromise || im.loadPromise).length;
     ocrLoadQueue().filter(ocrToLoad).slice(0, Math.max(0, OCR_PRELOAD_AT_ONCE - busy))
       .forEach((im) => ocrFile(im, { ahead: true }).catch(() => {}));
@@ -11239,7 +11265,8 @@
 
   const ocrTypes = (img) => (img.name || (img.types.length ? img.types.join(', ') : tr('ocr.noType')));
   /** [3.34.2] The images ticked (also those left out in the frames step) and those that are read. */
-  const ocrChosen = () => S.ocr.images.filter((im) => im.sel);
+  // [3.37.5] not the cards waiting for their files
+  const ocrChosen = () => S.ocr.images.filter((im) => im.sel && !im.missing);
   const ocrToRead = () => ocrChosen().filter((im) => im.mode !== 'skip');
 
   // --- [3.34.2] Frames around the credits (maintainer: "Rahmen Standardmäßig aber mit Option auf komplettes Bild lesen") -------
@@ -11409,7 +11436,8 @@
   function ocrFrameKey(img) {
     if (ocrIsCaa(img)) return `caa:${img.id}`;
     if (img.src === 'pdf') return `pdf:${img.from || img.file}:${img.page}`;
-    if (img.src === 'file') return `file:${img.name}:${(img.blob && img.blob.size) || 0}`;
+    // ([3.37.5] a card waiting for its file: the size it had)
+    if (img.src === 'file') return `file:${img.name}:${(img.blob && img.blob.size) || img.size0 || 0}`;
     return `url:${img.url || img.orig}`;
   }
 
@@ -11463,6 +11491,225 @@
     if (sv.mode === 'whole') img.mode = 'whole';
   }
 
+  // --- [3.37.5] The window kept (collected item 155; maintainer: "falls ich übrigens immernoch im dashboard bin, nachdem ich from
+  // image importiert habe soll alles im cache bleiben was ich im bildimport eingestellt habe (also heruntergeladene bilder,
+  // textauswahl etc.)", "wenn das release gemerkt soll je nach cache einstellungen es auch ein neuladen überstehen. ansonsten nur bis
+  // zum neuladen", "nicht mitspeichern bitte. aber anmerken, dass bilder hochgeladen wurden. vielleicht lassen sich ausschnitte
+  // merken sofern der dateiname (nur lokal im browser gespeichert) übereinstimmt?"): ✕, Esc, "Cancel" and the import only hide
+  // the window – opened again it is as it was left (the images loaded, chosen and framed, the texts read and changed), until the
+  // page is loaded again. With ⚙ Settings → Cache "Remember …" on it is stored for the release too (OCR_STATE_KEY), without the
+  // images: those of the release and of addresses are loaded anew; own files (and PDFs) are named – added again, a file of that
+  // name gets its frames, tick and text back. "↺ Start over" discards it.
+
+  const OCR_STATE_KEY = `dci-ocr:${releaseMbid}`;
+  const OCR_STATE_V = 1;
+  const ocrR4 = (x) => Math.round(x * 10000) / 10000;
+  /** A box on a canvas as parts of it (0 … 1: as the frames, for any size of the image), and back. */
+  const ocrToFrac = (b, cw, ch) => (b ? [ocrR4(b.x / cw), ocrR4(b.y / ch), ocrR4(b.w / cw), ocrR4(b.h / ch)] : null);
+  const ocrFromFrac = (f, cw, ch) => (Array.isArray(f) && f.length === 4 && f.every(Number.isFinite)
+    ? { x: f[0] * cw, y: f[1] * ch, w: Math.max(1, f[2] * cw), h: Math.max(1, f[3] * ch) } : null);
+  // the page left (reloaded, closed): stored as it is
+  window.addEventListener('pagehide', () => { if (S.ocr) ocrStateSave(); });
+
+  /** An image as stored: its name in the store, ticked, how it is read, its frames and turn; what is needed to add it again. */
+  function ocrImgEntry(im) {
+    const c = im.canvas;
+    const e = { k: ocrFrameKey(im), src: im.src || 'caa', sel: !!im.sel, mode: ['whole', 'skip'].includes(im.mode) ? im.mode : 'frames' };
+    if (im.src === 'url') e.url = im.url;
+    else if (im.src === 'discogs') Object.assign(e, { url: im.url, discogs: im.discogs, name: im.name });
+    else if (im.src === 'file') Object.assign(e, { name: im.name, size: (im.blob && im.blob.size) || im.size0 || 0 });
+    else if (im.src === 'pdf') Object.assign(e, { name: im.name, file: im.file, from: im.from || '', page: im.page });
+    if (c && c.width && c.height) Object.assign(e, { f: im.frames.map((b) => ocrToFrac(b, c.width, c.height)), turn: im.turn || 0 });
+    else if (im.saved) Object.assign(e, { f: im.saved.f || [], turn: im.saved.turn || 0 });
+    return e;
+  }
+
+  /** A text read as stored: its parts with their places (parts of the image), texts, lines and words read uncertainly. */
+  function ocrResEntry(r) {
+    const c = r.img.canvas;
+    // restored, its image not loaded since: as it was stored, with the texts as they are now
+    if (r.stored) return { ...r.stored, k: ocrFrameKey(r.img), parts: r.stored.parts.map((p, j) => ({ ...p, text: r.parts[j] ? r.parts[j].text : p.text })) };
+    if (!c || !c.width || !c.height) return null;
+    const f = (b) => ocrToFrac(b, c.width, c.height);
+    return { k: ocrFrameKey(r.img), small: !!r.small, direct: !!r.direct, fixes: r.fixes,
+      parts: r.parts.map((pt) => ({ b: f(pt.box), text: pt.text, unsure: pt.unsure || [], busy: !!pt.busy, shakyN: pt.shakyN || 0, wordsN: pt.wordsN || 0,
+        fixes: pt.fixes, lines: (pt.lines || []).map((l) => [l.text, f(l.box)]), at: (pt.unsureAt || []).map((w) => [w.text, f(w.box)]) })) };
+  }
+
+  /** The window as it is, stored for the release (only while remembering; nothing chosen or read: nothing stored). */
+  function ocrStateSave() {
+    const o = S.ocr;
+    // (not before the stored window was taken over: a list of the release that failed would erase it)
+    if (!o || o.step === 'list' || !releaseMbid || !o.restoreTried) return;
+    // (not pasted images: nothing names them)
+    const imgs = o.images.filter((im) => !im.pasted && (!ocrIsCaa(im) || im.sel)).map(ocrImgEntry);
+    const res = o.results.filter((r) => r.status === 'done' && !r.img.pasted).map(ocrResEntry).filter(Boolean);
+    const step = o.step === 'run' ? (res.length ? 'result' : 'pick') : o.step;
+    relWrite(OCR_STATE_KEY, !imgs.length && !res.length ? null
+      : { v: OCR_STATE_V, t: Date.now(), step, langs: [...o.langs], size: o.size, frameFirst: !!o.frameFirst, cur: o.cur || 0, imgs, res });
+  }
+
+  /** What was stored for an image: ticked, how it is read, its frames and turn (put back when its canvas is made). */
+  function ocrTakeEntry(im, e) {
+    im.sel = !!e.sel;
+    im.autoSel = false;
+    im.mode = ['whole', 'skip'].includes(e.mode) ? e.mode : 'frames';
+    if (Array.isArray(e.f) || e.turn) im.saved = { f: e.f || [], turn: Number(e.turn) || 0, mode: im.mode === 'whole' ? 'whole' : 'frames' };
+  }
+
+  /** A text read, from the store: its places on the image once its canvas is there (ocrResBoxes). */
+  function ocrResFromEntry(img, e) {
+    const parts = (e.parts || []).map((p) => ({ box: null, text: String(p.text || ''), unsure: Array.isArray(p.unsure) ? p.unsure : [], unsureAt: [], lines: [],
+      fixes: p.fixes || { pc: 0, dash: 0 }, busy: !!p.busy, shakyN: p.shakyN || 0, wordsN: p.wordsN || 0, view: null, mark: null }));
+    const r = { img, status: 'done', progress: 1, small: !!e.small, direct: !!e.direct, fixes: e.fixes || { pc: 0, dash: 0 }, parts,
+      unsure: uniq(parts.flatMap((pt) => pt.unsure)), stored: { ...e, parts: e.parts || [] } };
+    ocrResBoxes(r);
+    return r;
+  }
+
+  /** The places of a text from the store put on its image's canvas (made now). */
+  function ocrResBoxes(r) {
+    const c = r.img.canvas;
+    if (!r.stored || !c || !c.width || !c.height) return;
+    const f = (b) => ocrFromFrac(b, c.width, c.height);
+    r.stored.parts.forEach((p, j) => {
+      const pt = r.parts[j];
+      if (!pt) return;
+      Object.assign(pt, { box: f(p.b) || { x: 0, y: 0, w: c.width, h: c.height }, view: null,
+        lines: (p.lines || []).map(([text, b]) => ({ text, box: f(b) })).filter((l) => l.text && l.box),
+        unsureAt: (p.at || []).map(([text, b]) => ({ text, box: f(b) })).filter((w) => w.box) });
+    });
+    r.stored = null;
+  }
+
+  /**
+   * The window as stored for the release, after a reload (only while remembering): the release's images ticked as then, own
+   * images by address added again, own files and PDFs as cards to add again (missing), the texts read, the step. → the images.
+   */
+  function ocrStateRestore(images) {
+    // (not while remembering waits for a reload: S.rememberHold)
+    const st = S.rememberHold ? null : relRead(OCR_STATE_KEY, null);
+    const o = S.ocr;
+    if (!st || st.v !== OCR_STATE_V || !Array.isArray(st.imgs)) return images;
+    const stored = new Map(st.imgs.filter((e) => e && e.k).map((e) => [e.k, e]));
+    // none of its images there any more (the cover art changed) and no own ones: left aside
+    if (!images.some((im) => stored.has(ocrFrameKey(im))) && !st.imgs.some((e) => e && e.src && e.src !== 'caa')) return images;
+    const byKey = new Map();
+    images.forEach((im) => {
+      const e = stored.get(ocrFrameKey(im));
+      im.sel = false;
+      im.autoSel = false;
+      if (e) ocrTakeEntry(im, e);
+      byKey.set(ocrFrameKey(im), im);
+    });
+    const own = [];
+    st.imgs.filter((e) => e && e.src && e.src !== 'caa').forEach((e) => {
+      let im = null;
+      if (e.src === 'url' && e.url) im = ocrOwnImage('url', e.url);
+      else if (e.src === 'discogs' && e.url) im = { ...ocrOwnImage('url', e.url), src: 'discogs', discogs: e.discogs, name: e.name || ocrUrlName(e.url) };
+      else if (e.src === 'file' || e.src === 'pdf') {
+        im = { id: `own${++ocrOwnN}`, src: e.src, name: String(e.name || '?'), file: e.file, from: e.from || '', page: e.page, size0: e.size || 0,
+          types: [], comment: '', frames: [], canvas: null, thumb: '', missing: true };
+      }
+      if (!im) return;
+      im.shown = true;
+      ocrTakeEntry(im, e);
+      byKey.set(e.k, im);
+      own.push(im);
+    });
+    o.langs = new Set((st.langs || []).filter((c) => OCR_LANGS[c]));
+    if (!o.langs.size) o.langs.add('en');
+    o.size = st.size === '1200' ? '1200' : 'orig';
+    o.frameFirst = st.frameFirst !== false;
+    o.results = (Array.isArray(st.res) ? st.res : []).map((e) => (e && byKey.get(e.k) ? ocrResFromEntry(byKey.get(e.k), e) : null)).filter(Boolean);
+    const all = [...images, ...own];
+    const chosen = all.filter((im) => im.sel && !im.missing).length;
+    o.restoredStep = st.step === 'result' && o.results.length ? 'result' : st.step === 'frames' && chosen ? 'frames' : 'pick';
+    o.cur = Math.max(0, Math.min(Number(st.cur) || 0, chosen - 1));
+    log('info', 'ocrRestored', { n: all.filter((im) => im.sel).length, m: o.results.length });
+    return all;
+  }
+
+  /** Own files added again: a card waiting for a file of that name takes it (its frames, tick and text come back). → the others. */
+  function ocrTakeBack(images) {
+    const o = S.ocr;
+    return images.filter((im) => {
+      const ph = o.images.find((p) => p.missing && p.src === im.src && (im.src === 'pdf' ? p.file === im.file && Number(p.page) === Number(im.page) : p.name === im.name));
+      if (!ph) return true;
+      ['blob', 'local', 'thumb', 'big', 'orig', 'pdfPage', 'textLayer', 'pdfText', 'from'].forEach((k) => { if (im[k] !== undefined) ph[k] = im[k]; });
+      Object.assign(ph, { missing: false, shown: true, load: null, loadError: '' });
+      return false;
+    });
+  }
+
+  /** The texts read of an image keep their places as parts of it while its canvas is made anew (another size). */
+  function ocrResToFrac(img) {
+    (S.ocr ? S.ocr.results : []).filter((r) => r.img === img && r.status === 'done' && !r.stored && img.canvas).forEach((r) => {
+      const e = ocrResEntry(r);
+      if (e) r.stored = e;
+    });
+  }
+
+  /** An image turned after reading: its texts keep no places (the whole image beside them). */
+  function ocrResUnplace(img) {
+    const c = img.canvas;
+    if (!c) return;
+    (S.ocr ? S.ocr.results : []).filter((r) => r.img === img && r.status === 'done').forEach((r) => {
+      r.stored = null;
+      r.parts.forEach((pt) => Object.assign(pt, { box: { x: 0, y: 0, w: c.width, h: c.height }, lines: [], unsureAt: [], view: null, mark: null }));
+    });
+  }
+
+  /** The images of the texts read loaded one after the other (then drawn beside them). */
+  function ocrResultLoad(o) {
+    if (S.ocr !== o || o.hidden || o.step !== 'result' || o.results.some((r) => r.img.viewWait)) return;
+    const r = o.results.find((x) => x.status === 'done' && !x.img.missing && !x.img.loadError && !ocrHasCanvas(x.img));
+    if (!r) return;
+    const im = r.img;
+    im.viewWait = true;
+    ocrCanvas(im).catch(() => {}).finally(() => {
+      im.viewWait = false;
+      if (S.ocr === o && !o.hidden && o.step === 'result') {
+        ocrZoomAll();
+        ocrResultLoad(o);
+      }
+    });
+  }
+
+  /** The cards waiting for their files, named above the images and the texts. */
+  function ocrMissingHtml() {
+    const gone = S.ocr.images.filter((im) => im.missing);
+    if (!gone.length) return '';
+    const names = uniq(gone.map((im) => (im.src === 'pdf' ? im.from || im.file : im.name)));
+    return `<div class="dci-ocr-warn dci-ocr-missing" role="note" data-ocr-missing>${esc(tr('ocr.missing', { n: names.length, names: names.join(', ') }))}
+      <button type="button" class="dci-small" data-ocr="files">${esc(tr('ocr.chooseFiles'))}</button>
+      <input type="file" data-ocr-files multiple accept="image/*,application/pdf,.pdf" hidden></div>`;
+  }
+
+  /** "↺ Start over" (after asking when something would be lost; maintainer: "frag mich in zukunft ob ich wirklich einen reset machen möchte"). */
+  function ocrRestart() {
+    const o = S.ocr;
+    if (!o) return;
+    const lose = o.results.some((r) => r.status === 'done') || o.images.some((im) => im.sel || !ocrIsCaa(im));
+    if (lose && !confirm(tr('ocr.restartAsk'))) return;
+    closeOcr(true);
+    relWrite(OCR_STATE_KEY, null);
+    log('info', 'ocrRestart');
+    openOcr();
+  }
+
+  /** ⚙ Settings → Beta → Reset, "Reset all settings": what was stored of the window for every release goes. */
+  function ocrStateDropAll() {
+    try {
+      const keys = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = String(window.localStorage.key(i) || '');
+        if (/^dci-ocr:[0-9a-f-]{36}$/.test(k)) keys.push(k);
+      }
+      keys.forEach((k) => window.localStorage.removeItem(k));
+    } catch (e) { /* storage blocked */ }
+  }
+
   function ocrFramesHtml() {
     const o = S.ocr;
     const chosen = ocrChosen();
@@ -11502,6 +11749,15 @@
 
   /** "Source ▾ → Text from cover art …": the window, and the images of the release. */
   function openOcr() {
+    // [3.37.5] kept (hidden): as it was left
+    if (S.ocr) {
+      if (S.ocr.hidden) {
+        S.ocr.hidden = false;
+        log('info', 'ocrBack');
+      }
+      renderOcr();
+      return;
+    }
     S.ocr = { step: 'list', images: [], langs: new Set(['en', ...(LANG !== 'en' && OCR_LANGS[LANG] ? [LANG] : [])]), size: 'orig', error: '', results: [], run: 0,
       frameFirst: true, cur: 0, drag: null };
     renderOcr();
@@ -11513,7 +11769,13 @@
       // [3.34.16] the first OCR_BATCH shown; [3.34.17] what was stored for them
       images.forEach((im, i) => { im.shown = i < OCR_BATCH; });
       ocrTakeSaved(images);
-      Object.assign(S.ocr, { images: [...images, ...S.ocr.images.filter((im) => !ocrIsCaa(im))], step: 'pick' });
+      // [3.37.5] as left for this release (stored while remembering); own files added meanwhile fill their cards
+      const all = ocrStateRestore(images);
+      const early = S.ocr.images.filter((im) => !ocrIsCaa(im));
+      S.ocr.images = all;
+      const rest = ocrTakeBack(early);
+      Object.assign(S.ocr, { images: [...all, ...rest], step: S.ocr.restoredStep || 'pick', restoreTried: true });
+      delete S.ocr.restoredStep;
       renderOcr();
     }, (e) => {
       if (!S.ocr) return;
@@ -11524,22 +11786,34 @@
 
   let ocrResize = null;
 
-  function closeOcr() {
-    if (S.ocr) {
-      S.ocr.run++;
-      // [3.34.5] the local addresses of own files; [3.34.6] the PDFs opened; [3.34.10] images still loading stop
-      S.ocr.images.forEach((im) => {
-        if (im.local) URL.revokeObjectURL(im.local);
-        if (im.ctl && im.ctl.abort) im.ctl.abort();
-      });
-      (S.ocr.pdfDocs || []).forEach(({ doc, local }) => {
-        try {
-          doc.destroy();
-        } catch (e) { /* gone already */ }
-        URL.revokeObjectURL(local);
-      });
+  /** [3.37.5] Hidden (kept as it is, stored while remembering); `discard`: gone (the beta switched off, reset, "Start over"). */
+  function closeOcr(discard = false) {
+    const o = S.ocr;
+    if (o) {
+      o.run++;
+      // [3.37.5] stopped while reading: the texts read so far stay
+      if (o.step === 'run') {
+        o.results = o.results.filter((r) => r.status === 'done');
+        o.step = o.results.length ? 'result' : 'pick';
+      }
+      if (discard) {
+        // [3.34.5] the local addresses of own files; [3.34.6] the PDFs opened; [3.34.10] images still loading stop
+        o.images.forEach((im) => {
+          if (im.local) URL.revokeObjectURL(im.local);
+          if (im.ctl && im.ctl.abort) im.ctl.abort();
+        });
+        (o.pdfDocs || []).forEach(({ doc, local }) => {
+          try {
+            doc.destroy();
+          } catch (e) { /* gone already */ }
+          URL.revokeObjectURL(local);
+        });
+        S.ocr = null;
+      } else {
+        o.hidden = true;
+        ocrStateSave();
+      }
     }
-    S.ocr = null;
     if (ocrResize) ocrResize.disconnect();
     ocrResize = null;
     document.removeEventListener('paste', ocrPaste);
@@ -11635,6 +11909,8 @@
       }
       o.step = 'result';
       log('info', 'ocrDone', { n: o.results.length, langs: (langs.length ? langs : ['eng']).join('+') });
+      // [3.37.5] stored for the release (while remembering)
+      ocrStateSave();
     } catch (e) {
       if (!alive()) return;
       o.error = (e && e.message) || String(e);
@@ -11781,7 +12057,7 @@
 
   function ocrPickHtml() {
     const o = S.ocr;
-    const n = o.images.filter((im) => im.sel).length;
+    const n = ocrChosen().length;
     // [3.34.16] an image ticked stays shown; the others in batches
     o.images.forEach((im) => { if (im.sel) im.shown = true; });
     const shown = o.images.filter((im) => im.shown);
@@ -11789,16 +12065,17 @@
     // [3.34.2] back from the frames: an image left out there is read again when ticked here
     o.images.forEach((im) => { if (im.mode === 'skip') im.mode = 'frames'; });
     const caa = o.images.filter(ocrIsCaa).length;
-    const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}${ocrIsCaa(im) ? '' : ' dci-ocr-owncard'}" data-ocr-card="${i}">
-        <img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" data-ocr-peek="${esc(im.id)}" data-ocr-preview>
-        <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''}> <span>${esc(ocrTypes(im))}</span></span>
-        ${ocrLoadHtml(im, true)}
+    // [3.37.5] a card waiting for its file (no image; its tick as it was)
+    const card = (im, i) => `<label class="dci-ocr-card${im.sel ? ' dci-on' : ''}${ocrIsCaa(im) ? '' : ' dci-ocr-owncard'}${im.missing ? ' dci-ocr-gone' : ''}" data-ocr-card="${i}">
+        ${im.missing ? '<span class="dci-ocr-goneimg" aria-hidden="true">?</span>' : `<img src="${esc(im.thumb)}" alt="${esc(ocrTypes(im))}" data-ocr-peek="${esc(im.id)}" data-ocr-preview>`}
+        <span class="dci-ocr-type"><input type="checkbox" data-ocr-sel="${i}" ${im.sel ? 'checked' : ''} ${im.missing ? 'disabled' : ''}> <span>${esc(ocrTypes(im))}</span></span>
+        ${im.missing ? '' : ocrLoadHtml(im, true)}
         ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
         ${ocrIsCaa(im) ? (im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`)
-          : `<span class="dci-sub">${esc(tr(im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : im.src === 'discogs' ? 'ocr.ownDiscogs' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
+          : `<span class="dci-sub">${esc(tr(im.missing ? 'ocr.missingCard' : im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : im.src === 'discogs' ? 'ocr.ownDiscogs' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
     // [3.34.5] "All images" (collected item 125; maintainer: "wir brauchen einen knopf im bilderkennungsmenü, der alles abwählt
     // oder alles anwählt. viele bookletseiten haben nur bilder oder songtexte"): on – all, off – none, half – some
-    const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
+    const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.filter((im) => !im.missing).length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
     // [3.34.15] "Auto-select": a switch (the same as in ⚙ Settings → Beta)
     const auto = o.images.length ? `<button type="button" class="dci-small dci-ocr-auto" data-ocr="auto" aria-pressed="${S.ocrAuto}" title="${esc(tr('ocr.autoTitle'))}">${esc(tr('ocr.auto'))}</button>` : '';
     // [3.34.16] "All shown" while some are not shown
@@ -11807,6 +12084,7 @@
     return `<div class="dci-ocr-body">
         ${o.error ? `<p class="dci-ocr-err" role="alert">${esc(o.error)}</p>` : ''}
         ${o.listError ? `<p class="dci-ocr-err">${esc(tr('ocr.listFailed', { why: o.listError }))}</p>` : !caa ? `<p>${esc(tr('ocr.none'))}</p>` : `<p class="dci-sub">${esc(tr('ocr.pickHint'))}</p>`}
+        ${ocrMissingHtml()}
         <p class="dci-sub" data-ocr-plain>${esc(tr('ocr.plainHint'))}</p>
         <div class="dci-ocr-pickhead">${auto}${all}${allShown}<span class="dci-sub" data-ocr-previews role="status" hidden></span></div>
         ${o.images.length ? `<div class="dci-ocr-grid">${o.images.map((im, i) => (im.shown ? card(im, i) : '')).join('')}</div>${more}` : ''}
@@ -11825,6 +12103,7 @@
         </div></div>
       <div class="dci-ocr-foot"><span class="dci-sub">${esc(tr('ocr.chosen', { n, of: o.images.length }))}</span>
         <button type="button" class="dci-textbtn" data-ocr="close">${esc(tr('common.cancel'))}</button>
+        ${o.results.some((r) => r.status === 'done') ? `<button type="button" class="dci-textbtn" data-ocr="toresult">${esc(tr('ocr.toResult'))} →</button>` : ''}
         ${o.frameFirst ? `<button type="button" class="dci-apply dci-small" data-ocr="frames" ${n ? '' : 'disabled'}>${esc(tr('ocr.toFrames', { n }))}</button>`
           : `<button type="button" class="dci-apply dci-small" data-ocr="run" ${n ? '' : 'disabled'}>${esc(tr('ocr.run', { n }))}</button>`}</div>`;
   }
@@ -11847,7 +12126,7 @@
       const fixes = [r.fixes.pc ? tr('ocr.fixPc', { n: r.fixes.pc }) : '', r.fixes.dash ? tr('ocr.fixDash', { n: r.fixes.dash }) : ''].filter(Boolean);
       return `<section class="dci-ocr-res" data-ocr-res="${i}">
         <h3>${esc(ocrTypes(r.img))}${r.img.comment ? ` <span class="dci-sub">“${esc(r.img.comment)}”</span>` : ''}</h3>
-        ${r.small ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: r.img.w, h: r.img.h }))}</p>` : ''}
+        ${r.small && r.img.w ? `<p class="dci-ocr-warn">${esc(tr('ocr.small', { w: r.img.w, h: r.img.h }))}</p>` : ''}
         ${r.direct ? `<p class="dci-sub">${esc(tr('ocr.fromPdf'))}</p>` : ''}
         ${r.parts.map((pt, j) => ocrPartHtml(r, i, pt, j)).join('')}
         ${fixes.length ? `<p class="dci-sub">${esc(tr('ocr.fixed'))} ${esc(fixes.join(' · '))}</p>` : ''}</section>`;
@@ -11860,6 +12139,7 @@
     }));
     return `<div class="dci-ocr-body">
         ${o.error ? `<p class="dci-ocr-err" role="alert">${esc(o.error)}</p>` : ''}
+        ${ocrMissingHtml()}
         ${busy.length ? `<div class="dci-ocr-busy" role="note" data-ocr-busy><strong>${esc(tr('ocr.busyTitle'))}</strong> ${busy.join(', ')}<br><span>${esc(tr('ocr.busyHint'))}</span></div>` : ''}
         <p class="dci-sub">${esc(tr('ocr.resultHint'))}</p>${o.results.map(sect).join('')}</div>
       <div class="dci-ocr-foot"><button type="button" class="dci-textbtn" data-ocr="back">${esc(tr('ocr.back'))}</button>
@@ -11999,7 +12279,7 @@
   function ocrZoomDraw(key) {
     const c = document.querySelector(`#dci-ocr [data-ocr-zoom="${key}"]`);
     const { r, pt } = ocrPartOf(key);
-    if (!c || !pt || !r.img.canvas) return;
+    if (!c || !pt || !r.img.canvas || !pt.box) return;
     const W = Math.max(120, c.parentElement.clientWidth);
     const H = Math.round(Math.max(90, Math.min(OCR_ZOOM_H * (S.scale || 1), (W * pt.box.h) / pt.box.w)));
     const dpr = window.devicePixelRatio || 1;
@@ -12201,7 +12481,8 @@
   /** The window "Text from cover art" (drawn anew for each step). */
   function renderOcr() {
     const o = S.ocr;
-    if (!o) return;
+    // [3.37.5] kept while hidden
+    if (!o || o.hidden) return;
     let el = document.getElementById('dci-ocr');
     if (!el) {
       el = document.createElement('section');
@@ -12303,6 +12584,7 @@
     el.innerHTML = `<div class="dci-ocr-head"><h2 id="dci-ocr-title">${esc(tr('ocr.title'))} <span class="dci-beta-tag">beta</span></h2>
         <span class="dci-sub">${esc(tr(`ocr.step.${o.step}`, { n: o.step === 'frames' ? ocrChosen().length : o.images.filter(ocrIsCaa).length, i: o.cur + 1, what: cur ? ocrTypes(cur) : '' }))}</span>
         <a href="https://musicbrainz.org/release/${esc(releaseMbid)}/cover-art" target="_blank" rel="noopener">${esc(tr('ocr.caaLink'))}</a>
+        ${o.step === 'list' ? '' : `<button type="button" class="dci-textbtn dci-ocr-restart" data-ocr="restart" title="${esc(tr('ocr.restartTitle'))}">${esc(tr('ocr.restart'))}</button>`}
         <button type="button" class="dci-iconbtn" data-ocr="close" aria-label="${esc(tr('common.close'))}" title="${esc(tr('common.close'))}">✕</button></div>${body}`;
     if (peekFor != null) {
       const again = el.querySelector(`[data-ocr-peek="${CSS.escape(peekFor)}"]`);
@@ -12310,11 +12592,14 @@
     }
     // [3.34.11] each part drawn beside its text; [3.34.14] each text field as high as its text
     if (o.step === 'result') ocrZoomAll();
+    // [3.37.5] texts from the store: their images loaded, one after the other (then drawn beside them)
+    if (o.step === 'result') ocrResultLoad(o);
     // [3.34.5] "All images" half ticked while only some are
     const all = el.querySelector('[data-ocr-all]');
     if (all) {
-      const n = o.images.filter((im) => im.sel).length;
-      all.indeterminate = n > 0 && n < o.images.length;
+      const there = o.images.filter((im) => !im.missing);
+      const n = there.filter((im) => im.sel).length;
+      all.indeterminate = n > 0 && n < there.length;
     }
     // [3.34.16] "All shown" half ticked too
     const allShown = el.querySelector('[data-ocr-shown]');
@@ -12399,6 +12684,8 @@
       e.preventDefault();
       const [im] = S.ocr.images.splice(Number(rm.dataset.ocrRemove), 1);
       if (im && im.local) URL.revokeObjectURL(im.local);
+      // [3.37.5] and its text read
+      S.ocr.results = S.ocr.results.filter((r) => r.img !== im);
       S.ocr.error = '';
       renderOcr();
       return;
@@ -12443,7 +12730,12 @@
       return;
     }
     if (act === 'close') closeOcr();
-    else if (act === 'run') ocrRun();
+    // [3.37.5] "↺ Start over"; back to the texts read
+    else if (act === 'restart') ocrRestart();
+    else if (act === 'toresult') {
+      Object.assign(S.ocr, { step: 'result', error: '' });
+      renderOcr();
+    } else if (act === 'run') ocrRun();
     else if (act === 'frames') {
       Object.assign(S.ocr, { step: 'frames', cur: 0, error: '' });
       renderOcr();
@@ -12458,6 +12750,8 @@
       renderOcr();
     } else if ((act === 'rotl' || act === 'rotr') && img) {
       ocrRotate(img, act === 'rotl' ? -1 : 1);
+      // [3.37.5] its texts read keep no places
+      ocrResUnplace(img);
       ocrSaveFrames(img);
       renderOcr();
     } else if (act === 'back') {
@@ -12486,12 +12780,12 @@
       if (!im.sel) ocrPreloadDrop(im);
     } else if (t.dataset.ocrShown != null) {
       // [3.34.16] the images shown
-      o.images.filter((im) => im.shown).forEach((im) => {
+      o.images.filter((im) => im.shown && !im.missing).forEach((im) => {
         Object.assign(im, { sel: t.checked, autoSel: false });
         if (!im.sel) ocrPreloadDrop(im);
       });
     } else if (t.dataset.ocrAll != null) {
-      o.images.forEach((im) => {
+      o.images.filter((im) => !im.missing).forEach((im) => {
         Object.assign(im, { sel: t.checked, autoSel: false });
         if (!im.sel) ocrPreloadDrop(im);
       });
@@ -12510,6 +12804,8 @@
       // [3.34.2] another size: the images are loaded anew ([3.34.5] the release's images; own ones keep theirs); [3.34.17] their
       // frames come back from the store
       o.images.filter(ocrIsCaa).forEach((im) => {
+        // [3.37.5] its texts read keep their places as parts of it
+        ocrResToFrac(im);
         if (im.ctl && im.ctl.abort) im.ctl.abort();
         Object.assign(im, { canvas: null, frames: [], load: null, loadError: '', fileBlob: null });
       });
@@ -13455,8 +13751,9 @@
     };
     dropEntry(SOURCE_PICK_KEY);
     dropEntry(MEDIA_SEL_KEY);
-    // [3.34.17] the frames drawn on its images
+    // [3.34.17] the frames drawn on its images; [3.37.5] the window "Text from cover art" kept (its store: forgetRelease)
     dropEntry(OCR_FRAMES_KEY);
+    closeOcr(true);
     S.datePool = [];
     S.trackPool = [];
     S.poolForm = null;
@@ -27369,7 +27666,7 @@
       S.betaOcr = el.checked;
       writeJson('localStorage', BETA_OCR_KEY, el.checked || null);
       log('info', 'settingValue', { what: tr('settings.betaOcr'), value: tr(el.checked ? 'common.on' : 'common.off') });
-      if (!el.checked) closeOcr();
+      if (!el.checked) closeOcr(true);
       renderSource();
       renderLauncher();
       renderSettings();
@@ -27578,7 +27875,9 @@
       S.ocrPreload = false;
       S.ocrAuto = false;
       S.ocrFront = true;
-      closeOcr();
+      // [3.37.5] the window kept and stored goes too
+      closeOcr(true);
+      ocrStateDropAll();
       renderSource();
       renderLauncher();
     }
@@ -27630,7 +27929,9 @@
     // [3.36.2] a diagnosis running stops, its button goes
     if (DIAG.timer) stopDiag();
     renderLog();
-    closeOcr();
+    // [3.37.5] the window kept and stored goes too
+    closeOcr(true);
+    ocrStateDropAll();
     renderLauncher();
     applyKindColors();
     // [3.16.0] the works settings and the stored works of the artists too
@@ -27714,8 +28015,8 @@
   async function openFromCoverArt() {
     if (!S.betaOcr) return;
     await openDashboard({ ocrFirst: true });
-    if (!S.ocr) openOcr();
-    else renderOcr();
+    // [3.37.5] (kept: as it was left)
+    openOcr();
   }
 
   /** [3.30.5] The import, started once (also from the message of the dashboard opened for its settings only). */
@@ -28229,6 +28530,11 @@
       #dci-ocr .dci-ocr-card.dci-on { border: 2px solid #5b55a0; padding: calc(var(--u, 1px) * 7); background: #f7f6fd; }
       /* [3.34.9] tiles alike, each image whole in them (collected item 129) */
       #dci-ocr .dci-ocr-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; border-radius: 3px; background: #eceaf3; }
+      /* [3.37.5] a card waiting for its file */
+      #dci-ocr .dci-ocr-goneimg { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1 / 1; border-radius: 3px; background: #eceaf3; color: #8f8aa8; font-size: 2em; }
+      #dci-ocr .dci-ocr-gone { border-style: dashed; }
+      #dci-ocr .dci-ocr-missing { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 4) 0; }
+      #dci-ocr .dci-ocr-restart { margin-left: auto; }
       #dci-ocr .dci-ocr-type { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); font-weight: 600; min-width: 0; }
       #dci-ocr .dci-ocr-type > span { overflow-wrap: anywhere; }
       /* [3.34.5] own images: a dashed card, the box to add them, the window while something is dragged onto it */

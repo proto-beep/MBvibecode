@@ -508,6 +508,7 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrpdf: 3.34.6: a PDF with the real pdf.js (a local copy, PDFJS_DIR): pages as cards (own text / an image),
                                 #     a frame around one column, read – own text in order and by frame, a scanned page recognized –, the
                                 #     source; a PDF by its address; a broken one named
+                                #     3.37.5: E) opened again as it was left (the three texts), "↺ Start over" first
                                 #   ocrdiscogs: 3.34.7: "Load Discogs images" (nothing fetched before), the release's page: its images once at
                                 #     600 px, not another release's; a Discogs address typed (twice refused); read ×3, the source
                                 #   ocrstart: 3.34.8: "… from cover art" only with the beta, joined to "Import credits …"; the dashboard without the
@@ -517,6 +518,7 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrload: 3.34.10: previews counted; the ticked images loaded ahead two at a time (held requests), the third
                                 #     waiting; unticked: out of the queue, one loading ahead stopped; "loaded"; loading ahead off (stored):
                                 #     nothing ahead, the frames step shows its own loading
+                                #     3.37.5: C) opened again as it was left – "↺ Start over" first
                                 #   ocrlocate: 3.34.12: an uncertain word clicked – selected, marked, zoomed in on (again: its next place);
                                 #     the caret in a line marks it (brought into sight), ⤢ keeps the mark, a line replaced: none; a Tray read
                                 #     ×3 – its place on the canvas; a PDF page's own text – the place of its line on the page drawn
@@ -525,8 +527,10 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrremember: 3.34.17: two frames on the Back, the Booklet turned and whole – stored; opened again:
                                 #     "Back 2 frames", read as left; the 1200 px copy: the frames fit (×0.8); forgotten with "Delete stored
                                 #     import …" and the reset of Beta
+                                #     3.37.5: B) "↺ Start over" first – the frames stored stay
                                 #   ocrmore: 3.34.16: 30 images – 12 shown (12 previews), "Load 12 more", "All shown (24)"; 12 small images
                                 #     beside the frames, then 24; Auto-select with 30 booklet pages – all shown; a PDF of 15 pages – 12
+                                #     3.37.5: E) "↺ Start over" before each PDF; a store of other images (D) left aside
                                 #   ocrorigin: 3.34.22: Back and Tray read and imported – "From the cover art · Back" / "… · Tray" at the rows, ⓘ shows
                                 #     the crop of the line (JPEG, at most 640 × 160) and hides it again; a line changed: no ⓘ; another text: nothing
                                 #   ocrentry: 3.34.24: Bob Lee on the Back and the Tray – the head of his entry "From the cover art · Back, Tray", ⓘ the
@@ -534,9 +538,15 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrlinepeek: 3.37.4: lines not recognized / left out of the Back – marked, the hint; the mouse on one: its
                                 #     cut-out below it (JPEG, about a line around it, "Back: …"), away: gone; the keyboard focus the same; a
                                 #     pasted text afterwards: no cut-outs
+                                #   ocrkeep: 3.37.5: the window kept – read (Back, an own file), a text changed, imported, opened again: as left
+                                #     (nothing read again, both drawn); the page loaded again (remembering on): the texts, the Back drawn,
+                                #     "An own file was used: credits.png – add it again", added: its card back, ticked; "To the texts read";
+                                #     1200 px: the places fit; the list of the release failing after a reload erases nothing;
+                                #     "↺ Start over": as at first, nothing stored; remembering off: kept only until the reload
                                 #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,
                                 #     those set by hand stay; switched on in ⚙ Settings with the window open – ticked at once, and when
                                 #     opened again; 30 booklet pages, loading ahead on: 2 load, 22 wait, 6 not ahead
+                                #     3.37.5: D) the window as it was left (the Front ticked by hand stays), opened again: the same
                                 #   (from 3.34.15 beta_on also switches "Auto-select" on – as before, the images with credits are ticked)
                                 #   ocrwindow: 3.34.14: the window the same size in every step (its foot bar in place, "Next image →" greyed
                                 #     out at the end); the image beside the frames takes the room; smaller at its corner (remembered);
