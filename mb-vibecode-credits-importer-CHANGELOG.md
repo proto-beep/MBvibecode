@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-30 | 3.36.4 – 3.37.12 | – |
+| 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
 | 2026-10-27 | 3.31.2 – 3.33.1 | 1.9.1 |
@@ -94,6 +94,37 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-30
+
+### Import 3.37.15
+
+#### Changed
+
+- **"+ New date" and "+ New track group" also folded** (collected item 165; maintainer: ""+ New date"/"+new track" group soll in der leiste oben auch sichtbar sein wenn sie eingefaltet ist.", "ganz eingefaltet: ja ok"): a folded pool keeps its button in its bar (the form opens below it, the pool stays folded), and so does the bar of the pools kept while "Dates & tracks" is folded (the form opens "Dates & tracks" until it is saved or cancelled).
+- **The fold buttons at the same place** (collected item 166; maintainer: "der falten knopf soll immer an der gleichen stelle erscheinen", "ich meinte (b) aber wenn (a) auch nicht immer stimmt, dann kann beides verbessert werden", "Nur oben"): "▲ fold" of "Dates & tracks" is in its head right after the title and reads "▼ show" when folded – until 3.37.14 it stood at the bottom of the block and moved with the length of the matrix; the arrow of an entry in the full view is the first thing of its head, before the name – until 3.37.14 after "Spelling on Discogs: …", which moved it from entry to entry.
+
+#### Fixed
+
+- A pool opened for the suggestions of an import and not folded before folds at the first click; until 3.37.14 the first click changed nothing visible.
+
+### Import 3.37.14
+
+#### Added
+
+- **The answers of a question at its chip** (collected item 163; maintainer, with a screenshot of the chips "? bass ✕": "kann man die rollenabfragen nicht auch direkt auf dieser ebene durchführen? per drop down menü?", "ja das passt"): in an entry compact as a matrix a chip with a question ("? bass", "? Taischigoto", "? Directed By") has ▾ – its answers below it, chosen for all rows of the line as in the full matrix; Esc closes the list. The chip's name still opens the full matrix.
+
+#### Changed
+
+- The "?" of a chip stays only while a question is open; notes whose answer is already applied (written small, "use “voice”", "none is like it") no longer give one. Until 3.37.13 a chip kept its "?" as long as the full matrix showed a note, also after the answer.
+
+### Import 3.37.13
+
+#### Changed
+
+- **A typo or a spelling of its own** (collected item 164; maintainer: "bei "“Taischigoto” is no instrument of MusicBrainz – chosen:" soll nach der Auswahl "taischigoto" im role credit sein", "bei reinen Tippfehlern soll die korrekte rolle gesetzt werden. eine info kann ausgegeben werden, dass es sich wahrscheinlich um einen tippfehler handelte", "Nur 1 Buchstabe"): a similar instrument chosen for a word MusicBrainz does not know is credited with the word as written, in lower case ("Taischigoto" → taishōgoto credited "taischigoto", "Chaims" → chimes credited "chaims"); until 3.37.12 it had no role credit. A word only one slip off the instrument ("Sxaophone" → saxophone) is taken for a typo: no role credit, the note "Probably a typo of “saxophone”: no role credit." and a line in the log. The note turns it round with one click.
+
+#### Added
+
+- **✕ next to the role credit** (164; maintainer: "neben role credit soll generell ein kleines x sein womit es geleert werden kann"): empties the role credit of a row, or of a line of an entry's matrix for all its rows; it stays empty when the rules run again.
 
 ### Import 3.37.12
 

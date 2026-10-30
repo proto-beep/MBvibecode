@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -484,7 +484,8 @@ def case_instrguess():
        Drums → drums (drum set) – each credited as written (Woodblock not: only the space differs).
     B) "Chaims" (no instrument of MusicBrainz): an instrument row asking "did you mean: chimes · wind chimes · tubular bells ·
        other instruments “Chaims”" (tubular bells by its other name "orchestral chimes"), nothing chosen – incomplete; in the
-       compact line too. "chimes" chosen: no role credit; "other instruments …": credited "chaims" (3.34.27, S052: in lower
+       compact line too. "chimes" chosen: credited "chaims" (3.37.13, collected item 164: two letters off – a spelling of its
+       own, credited as written; before: no role credit); "other instruments …": credited "chaims" (3.34.27, S052: in lower
        case; before "Chaims"). "Buddha machine" (none like it): other instruments credited "Buddha machine" at once ("Buddha" a
        proper name of the register, T052, from 3.34.28). Nothing is listed as not recognized.
     C) "Voice" asks (Q011): vocals · other vocals “voice” · lead vocals “voice”, until then vocals without role credit;
@@ -546,7 +547,7 @@ def case_instrguess():
         pg.wait_for_timeout(300)
         r2 = rows().get('Chaims')
         print('   chimes gewählt:', r1, '| other instruments:', r2)
-        ok_b = ok_b1 and 'did you mean' in cl and r1[1:4] == ['instrument', 'chimes', ''] and r2[1:4] == ['instrument', 'other instruments', 'chaims']
+        ok_b = ok_b1 and 'did you mean' in cl and r1[1:4] == ['instrument', 'chimes', 'chaims'] and r2[1:4] == ['instrument', 'other instruments', 'chaims']
         results.append(ok_b)
         # C) Voice
         VO = """(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === 'Voice'); const q = tr && tr.querySelector('.dci-type-ask'); const v = tr && tr.querySelector('.dci-voice-credit');
@@ -658,7 +659,8 @@ def case_unknownask():
     als letzte Antwort bei. auch bei discogs other instruments. aber miscellaneous support auch anbieten", "passt").
     A) Discogs "Chaims" (before: miscellaneous support at once) asks chimes · wind chimes · tubular bells · other instruments
        “Chaims” · miscellaneous support (task “Chaims”), nothing chosen; "miscellaneous support" chosen – type miscellaneous
-       support with the task "chaims" (in small letters, as before); then "chimes" – an instrument row again (recording), chimes, no role credit.
+       support with the task "chaims" (in small letters, as before); then "chimes" – an instrument row again (recording), chimes,
+       credited "chaims" (3.37.13, item 164: a spelling of its own; before: no role credit).
     B) Discogs "Sticks-And-Stones" (none like it): other instruments credited "Sticks-And-Stones" at once, "miscellaneous support"
        offered.
     C) A pasted text "Barry Guy – double bass, sticks-and-stones": double bass and other instruments “sticks-and-stones” (before:
@@ -722,7 +724,7 @@ def case_unknownask():
         results.append(bool(a0) and [o[0] for o in a0['opts']] == ['chimes', 'wind chimes', 'tubular bells', 'other instruments “chaims”', 'miscellaneous support (task “chaims”)']
                        and all(o[1] == 'false' for o in a0['opts']) and a0['type'] == 'instrument'
                        and a1['type'] == 'misc' and a1['credit'] == 'chaims' and a1['opts'][-1] == ['miscellaneous support (task “chaims”)', 'true']
-                       and a2['type'] == 'instrument' and a2['instr'] == 'chimes' and a2['credit'] == '' and a2['level'] == 'recording')
+                       and a2['type'] == 'instrument' and a2['instr'] == 'chimes' and a2['credit'] == 'chaims' and a2['level'] == 'recording')
         b0 = pg.evaluate(Q, 'Stick Man')
         print('B) Sticks-And-Stones:', b0)
         results.append(bool(b0) and b0['type'] == 'instrument' and b0['instr'] == 'other instruments' and b0['credit'] == 'sticks-and-stones'
@@ -1012,6 +1014,131 @@ Bob Blue on Piano and Saxophone"""
                        and [r[3] for r in g.get('Bob Blue') or []] == ['piano', 'saxophone'] and not unrec)
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_typonote():
+    """Credits Importer 3.37.13 (collected item 164; maintainer: "bei "“Taischigoto” is no instrument of MusicBrainz – chosen:"
+    soll nach der Auswahl "taischigoto" im role credit sein. neben role credit soll generell ein kleines x sein womit es geleert
+    werden kann", "bei reinen Tippfehlern soll die korrekte rolle gesetzt werden. eine info kann ausgegeben werden, dass es sich
+    wahrscheinlich um einen tippfehler handelte", "Nur 1 Buchstabe").
+    A) Discogs "Sxaophone" (one slip off: two letters swapped) – saxophone chosen: no role credit, the note "Probably a typo of
+       “saxophone”: no role credit." and a line in the log; "credit “sxaophone” as written" – credited "sxaophone", the note "A
+       spelling of its own …"; "a typo: no role credit" – empty again.
+    B) Discogs "Taischigoto" (two letters off) – taishōgoto chosen: credited "taischigoto" (before: no role credit), the note "A
+       spelling of its own: credited “taischigoto”.".
+    C) ✕ next to the role credit of a row ("Tambourine [Toy]", credited "toy"): empty; it stays empty when the instrument is set
+       again (made by hand).
+    D) The entries as a matrix: ✕ in the line of drums (credited "drums") empties it for the line; staged without a credit."""
+    H.attr(9150, 'saxophone', 14, 14)
+    H.attr(9151, 'taishōgoto', 14, 14)
+    H.attr(9152, 'tambourine', 14, 14)
+    H.attr(9124, 'other instruments', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CREDITS = [('Sax Man', 'Sxaophone', 3061), ('Koto Man', 'Taischigoto', 3062), ('Tam Man', 'Tambourine [Toy]', 3063),
+               ('Multi Man', 'Electric Guitar, Acoustic Guitar, Drums', 3064)]
+    for n, r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    Q = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const tr = g && g.querySelector('tr.dci-row'); const q = tr && tr.querySelector('.dci-instr-guess'); const n = q && q.querySelector('.dci-guess-spell');
+      const p = tr && tr.querySelector('[data-f=primary]'); const c = tr && tr.querySelector('[data-f=role-credit]');
+      return tr ? { row: tr.dataset.row, instr: p ? p.value : '', credit: c ? c.value : '-', x: !!(tr.querySelector('.dci-rc-clear')),
+        opts: q ? [...q.querySelectorAll('[data-act=instr-pick]')].map(b => b.dataset.instr) : null,
+        note: n ? n.textContent.replace(/\\s+/g, ' ').trim() : '', as: n ? n.dataset.spellAs : '' } : null; }"""
+    LOG = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /typo|spelling of its own/.test(t))"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        # A) Sxaophone
+        a0 = pg.evaluate(Q, 'Sax Man')
+        sec = f'tr.dci-row[data-row="{a0["row"]}"]' if a0 else 'tr.none'
+        pg.click(f'{sec} .dci-instr-guess [data-act=instr-pick][data-instr="saxophone"]')
+        pg.wait_for_timeout(400)
+        a1 = pg.evaluate(Q, 'Sax Man')
+        log1 = pg.evaluate(LOG)
+        pg.click(f'{sec} .dci-guess-spell [data-act=instr-typo]')
+        pg.wait_for_timeout(400)
+        a2 = pg.evaluate(Q, 'Sax Man')
+        pg.click(f'{sec} .dci-guess-spell [data-act=instr-typo]')
+        pg.wait_for_timeout(400)
+        a3 = pg.evaluate(Q, 'Sax Man')
+        print('A) Sxaophone:', a0, '| saxophone:', a1, '| Log:', log1, '| as written:', a2, '| typo again:', a3)
+        results.append(bool(a0) and 'saxophone' in (a0['opts'] or []) and a0['note'] == ''
+                       and a1['instr'] == 'saxophone' and a1['credit'] == '' and a1['as'] == 'typo'
+                       and a1['note'].startswith('Probably a typo of “saxophone”: no role credit.') and 'credit “sxaophone” as written' in a1['note']
+                       and any('“Sxaophone” is probably a typo of saxophone' in t for t in log1)
+                       and a2['credit'] == 'sxaophone' and a2['as'] == 'own' and a2['note'].startswith('A spelling of its own: credited “sxaophone”.')
+                       and a3['credit'] == '' and a3['as'] == 'typo')
+        # B) Taischigoto
+        b0 = pg.evaluate(Q, 'Koto Man')
+        ksec = f'tr.dci-row[data-row="{b0["row"]}"]' if b0 else 'tr.none'
+        pg.click(f'{ksec} .dci-instr-guess [data-act=instr-pick][data-instr="taishōgoto"]')
+        pg.wait_for_timeout(400)
+        b1 = pg.evaluate(Q, 'Koto Man')
+        print('B) Taischigoto:', b0, '| taishōgoto:', b1)
+        results.append(bool(b0) and 'taishōgoto' in (b0['opts'] or []) and b1['instr'] == 'taishōgoto' and b1['credit'] == 'taischigoto'
+                       and b1['as'] == 'own' and b1['note'].startswith('A spelling of its own: credited “taischigoto”.'))
+        # C) ✕ at the role credit of a row
+        c0 = pg.evaluate(Q, 'Tam Man')
+        tsec = f'tr.dci-row[data-row="{c0["row"]}"]' if c0 else 'tr.none'
+        pg.click(f'{tsec} [data-act=rc-clear]')
+        pg.wait_for_timeout(400)
+        c1 = pg.evaluate(Q, 'Tam Man')
+        focus = pg.evaluate("(document.activeElement || {}).dataset ? document.activeElement.dataset.f : ''")
+        pg.fill(f'{tsec} [data-f=primary]', 'tambourine')
+        pg.press(f'{tsec} [data-f=primary]', 'Tab')
+        pg.wait_for_timeout(400)
+        c2 = pg.evaluate(Q, 'Tam Man')
+        print('C) Tambourine [Toy]:', c0, '| ✕:', c1, focus, '| instrument again:', c2)
+        results.append(bool(c0) and c0['credit'] == 'toy' and c0['x'] and c1['credit'] == '' and focus == 'role-credit' and c2['credit'] == '')
+        print('Fehler:', errs)
+        results.append(not errs)
+        # D) the entries as a matrix
+        H.ENTRIES_VIEW = 'matrix'
+        try:
+            ctx2 = H.new_context(b)
+            pg2, errs2 = H.open_mb_edit(ctx2, companion=False)
+            pg2.on('dialog', lambda d: d.accept())
+            pg2.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg2)
+            H.wait_for(pg2, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg2.wait_for_timeout(1500)
+            LINE = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Multi Man');
+              const tr = g && [...g.querySelectorAll('tr.dci-em-line')].find(t => /^drums/.test((t.querySelector('[data-f=em-primary]') || {}).value || ''));
+              return tr ? { line: tr.dataset.line, credit: (tr.querySelector('[data-f=em-credit]') || { value: '-' }).value, x: !!tr.querySelector('[data-act=rc-clear]') } : null; })()"""
+            d0 = pg2.evaluate(LINE)
+            if d0:
+                pg2.click(f'tr.dci-em-line[data-line="{d0["line"]}"] [data-act=rc-clear]')
+                pg2.wait_for_timeout(500)
+            d1 = pg2.evaluate(LINE)
+            pg2.click('[data-act=apply]')
+            pg2.wait_for_timeout(1500)
+            added = pg2.evaluate("""MB.relationshipEditor.state.added.map((r) => ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName + (x.credited_as ? ' [' + x.credited_as + ']' : '')))""")
+            drums = [a for attrs in added for a in attrs if a.startswith('drums')]
+            print('D) Matrix drums:', d0, '| ✕:', d1, '| staged:', sorted(set(drums)), '| Fehler:', errs2)
+            results.append(bool(d0) and d0['credit'] == 'drums' and d0['x'] and d1['credit'] == '' and drums and all('[' not in a for a in drums) and not errs2)
+            ctx2.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
