@@ -119,6 +119,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   casephrase: 3.35.2 (item 144): "Gibson Les Paul" from T052 as a whole, "Les Paul Junior" → "Les Paul junior" (only
                                 #     "Junior" noted), "Paul Reed Smith" offered as a whole first (note and compact line), keep / small again / always
                                 #     (stored, a second row follows), a "Les" in a text stays small
+                                #   guests: 3.37.2 (151 – 153): "(P) 1998 loudsprecher (c) 1998 loudsprecher" both roles; credits split at » « ("Cover-Photo"
+                                #     = cover photo, cover design); "Special Guest: M. Osswald on Sax and Piano" – guest on both, "Guest: Jane Roe"
+                                #     performer guest, "featuring:" without guest, "NAME on X and Y"
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -248,12 +251,15 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     no works level, kept across a reload, no lookups), taken again (3.36.4: the new works planned before come
                                 #     back with it, nothing looked up), the question from N tracks ("Not now", later);
                                 #     3.19.3: the tooltips of what is counted, the setting for the skipped rows
-                                #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off), the list above "Stage …": live
+                                #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off; 3.37.3 the offer), the list above "Stage …": live
                                 #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),
                                 #     another comment of MB not tickable, changed by hand, unticked
                                 #   livecomrun: 3.32.10: the job at staging (with the seed line in the note), "Enter edit" → once MB has the
                                 #     relationships one POST to /ws/js/edit/create (type 72, the credit changed in the editor: red log, the new
                                 #     credit), done; the release page enters an armed job (hand-made comment, another comment of MB in red)
+                                #   liveoffer: 3.37.3: the setting off – the offer above "Stage …" (tracks, the first proposal, the tooltip naming
+                                #     the setting), ✓ the list for the release (setting not stored, the job at staging), loaded again: the offer
+                                #     back, ✕ hides it (log, the job gone)
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
@@ -502,6 +508,7 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrpdf: 3.34.6: a PDF with the real pdf.js (a local copy, PDFJS_DIR): pages as cards (own text / an image),
                                 #     a frame around one column, read – own text in order and by frame, a scanned page recognized –, the
                                 #     source; a PDF by its address; a broken one named
+                                #     3.37.5: E) opened again as it was left (the three texts), "↺ Start over" first
                                 #   ocrdiscogs: 3.34.7: "Load Discogs images" (nothing fetched before), the release's page: its images once at
                                 #     600 px, not another release's; a Discogs address typed (twice refused); read ×3, the source
                                 #   ocrstart: 3.34.8: "… from cover art" only with the beta, joined to "Import credits …"; the dashboard without the
@@ -511,6 +518,7 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrload: 3.34.10: previews counted; the ticked images loaded ahead two at a time (held requests), the third
                                 #     waiting; unticked: out of the queue, one loading ahead stopped; "loaded"; loading ahead off (stored):
                                 #     nothing ahead, the frames step shows its own loading
+                                #     3.37.5: C) opened again as it was left – "↺ Start over" first
                                 #   ocrlocate: 3.34.12: an uncertain word clicked – selected, marked, zoomed in on (again: its next place);
                                 #     the caret in a line marks it (brought into sight), ⤢ keeps the mark, a line replaced: none; a Tray read
                                 #     ×3 – its place on the canvas; a PDF page's own text – the place of its line on the page drawn
@@ -519,15 +527,29 @@ python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): �
                                 #   ocrremember: 3.34.17: two frames on the Back, the Booklet turned and whole – stored; opened again:
                                 #     "Back 2 frames", read as left; the 1200 px copy: the frames fit (×0.8); forgotten with "Delete stored
                                 #     import …" and the reset of Beta
+                                #     3.37.5: B) "↺ Start over" first – the frames stored stay
                                 #   ocrmore: 3.34.16: 30 images – 12 shown (12 previews), "Load 12 more", "All shown (24)"; 12 small images
                                 #     beside the frames, then 24; Auto-select with 30 booklet pages – all shown; a PDF of 15 pages – 12
+                                #     3.37.5: E) "↺ Start over" before each PDF; a store of other images (D) left aside
                                 #   ocrorigin: 3.34.22: Back and Tray read and imported – "From the cover art · Back" / "… · Tray" at the rows, ⓘ shows
                                 #     the crop of the line (JPEG, at most 640 × 160) and hides it again; a line changed: no ⓘ; another text: nothing
                                 #   ocrentry: 3.34.24: Bob Lee on the Back and the Tray – the head of his entry "From the cover art · Back, Tray", ⓘ the
                                 #     crops of both lines, hidden again; an entry of a pasted text afterwards: nothing
+                                #   ocrlinepeek: 3.37.4: lines not recognized / left out of the Back – marked, the hint; the mouse on one: its
+                                #     cut-out below it (JPEG, about a line around it, "Back: …"), away: gone; the keyboard focus the same; a
+                                #     pasted text afterwards: no cut-outs
+                                #   ocrkeep: 3.37.5: the window kept – read (Back, an own file), a text changed, imported, opened again: as left
+                                #     (nothing read again, both drawn); the page loaded again (remembering on): the texts, the Back drawn,
+                                #     "An own file was used: credits.png – add it again", added: its card back, ticked; "To the texts read";
+                                #     1200 px: the places fit; the list of the release failing after a reload erases nothing;
+                                #     "↺ Start over": as at first, nothing stored; remembering off: kept only until the reload
+                                #   ocrnonsense: 3.37.6: "Remove nonsensical words and signs" – the Back's switch: "~", "|" at a line's end, a
+                                #     line of signs, uncertain words without a vowel go ("7 removed", struck), » | between words, ℗, sure words
+                                #     stay; a word added by hand, off: all back in place, the word stays; the switch for all (8); imported on
                                 #   ocrauto: 3.34.15: nothing ticked at first; "Auto-select" ticks Back, Booklet, Tray; off – its ticks go,
                                 #     those set by hand stay; switched on in ⚙ Settings with the window open – ticked at once, and when
                                 #     opened again; 30 booklet pages, loading ahead on: 2 load, 22 wait, 6 not ahead
+                                #     3.37.5: D) the window as it was left (the Front ticked by hand stays), opened again: the same
                                 #   (from 3.34.15 beta_on also switches "Auto-select" on – as before, the images with credits are ticked)
                                 #   ocrwindow: 3.34.14: the window the same size in every step (its foot bar in place, "Next image →" greyed
                                 #     out at the end); the image beside the frames takes the room; smaller at its corner (remembered);

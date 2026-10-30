@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.37.1, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.37.6, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,57 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.37.6 · 2026-10-30
+
+"Remove nonsensical words and signs" in the window "Text from cover art" (156).
+
+- **New** `OCR_KEEP_SIGNS`, `OCR_SEP_SIGNS`, `OCR_VOWEL`, `OCR_SHORT_WORDS`, `ocrCore`; **`ocrNonsenseWord(tok)`** (a word read uncertainly – in `pt.unsure` – that is no word: signs among its letters, digits among letters except numbers, positions, years, "2nd"; one letter except an initial; no vowel; three same letters), **`ocrSignJunk(tok, i, toks)`** (signs without letters or digits, not those kept; • · | only between two words).
+- **`ocrCutText(pt)`** → `{ text, cut }`: per line the tokens dropped, as runs `{ n, before, after, text }` (the kept neighbours) and whole lines `gone: [{ n, text }]`; `cut.n` the number. **`ocrUncutText(pt)`**: the lines put back first, then each run between its neighbours (line n first, then the others), else after the word before it, before the word after it, at the end of line n. **`ocrNonsense(results, on)`** (`r.clean`, `pt.cut`; named so beside the corrector `ocrClean`), **`ocrCleanSync()`** (the text fields, the switches, "n removed", the struck buttons `dci-ocr-word-cut`, without drawing the window anew), `ocrCutWords`, `ocrCleanCount`, `ocrCleanNote`.
+- **`ocrResultHtml`:** below each image's name `.dci-ocr-cleanbox` with `data-ocr-clean="i"` (aria-pressed) and `data-ocr-cleann="i"`; in the foot `data-ocr="clean-all"` with `data-ocr-cleann="all"`. **`ocrPartHtml`:** a word taken out struck through. **`ocrClick`:** both switches. **Store of the window** (3.37.5): `clean` per result, `cut` per part.
+- **CSS:** `.dci-ocr-word-cut`, `.dci-ocr-cleanbox`, `.dci-ocr-clean[aria-pressed="true"]`.
+- **Texts (English only):** `ocr.clean`, `ocr.cleanTitle`, `ocr.cleanAll`, `ocr.cleanN.one/other`, `ocr.cleanNone`.
+- **Tests:** `t_coverart.py` new case `ocrnonsense`.
+
+## Import 3.37.5 · 2026-10-30
+
+The window "Text from cover art" kept, and stored while remembering (155).
+
+- **`closeOcr(discard)`:** without `discard` (✕, Esc, "Cancel", the import) `S.ocr` stays, `hidden`, and is stored (`ocrStateSave`); stopped while reading, the results done stay (step result, else pick). With `discard` (the beta off, its reset, resetting all settings, "Start over", "Delete stored import") as before: the local addresses revoked, the PDFs destroyed, `S.ocr` null. **`openOcr`:** a kept window shown again (log `ocrBack`); **`renderOcr`** draws nothing while hidden. **`openFromCoverArt`** calls `openOcr` alone.
+- **New store** `OCR_STATE_KEY` (`dci-ocr:<MBID>`, prefix `ocr` in `REL_PREFIXES`: counted, forgotten with the release; written only while remembering, via `relWrite`): `{ v, t, step, langs, size, frameFirst, cur, imgs, res }` – `ocrImgEntry` (key `ocrFrameKey`, tick, mode, frames and turn as parts of the image; what adds it again: an address, a Discogs image, the name and size of a file, the file / address and page of a PDF page), `ocrResEntry` (the parts with their places, texts, lines and words read uncertainly, places as parts of the image: `ocrToFrac` / `ocrFromFrac`). Written when the window is hidden, after reading, on `pagehide`; nothing chosen or read: removed. Not pasted images (`pasted` on own files now).
+- **`ocrStateRestore(images)`** (in `openOcr` after `ocrList`; a store none of whose images are there and without own ones is left aside): the release's images ticked as then (`ocrTakeEntry` → `saved`, put back by `ocrRestoreFrames` with the canvas), images by address and Discogs images made again, own files and PDF pages as cards `missing` (no image, `ocrChosen` leaves them out, the card disabled: `ocr.missingCard`), the results (`ocrResFromEntry`; their places on the canvas once it is made: `ocrResBoxes`, called in `ocrCanvasLoad`), the step (`restoredStep`); log `ocrRestored`. In the result step the images of the texts are loaded and drawn. **`ocrTakeBack(images)`** (`ocrAddFiles`, `ocrAddPdf`): a file of the same name (a PDF page: file and page) fills its waiting card; only such files: the step stays. **`ocrMissingHtml`** (pick and result step: the names, a button and its own file field). **`ocrFrameKey`** of a file: `size0` while its card waits.
+- **"↺ Start over"** (`data-ocr="restart"`, `ocrRestart`: `confirm` when something would be lost; `closeOcr(true)`, the store removed, `openOcr`; log `ocrRestart`), **"To the texts read →"** (`data-ocr="toresult"`); an own image removed takes its results; `ocrZoomDraw` waits for a part's place. **`ocrStateDropAll`** at ⚙ Beta → Reset and "Reset all settings". **CSS:** `.dci-ocr-goneimg`, `.dci-ocr-gone`, `.dci-ocr-missing`, `.dci-ocr-restart`.
+- **After a review** (an agent that had not seen the work): nothing is stored before the stored window was taken over (`restoreTried` – a list of the release that failed would have erased it); own files added while the list loads fill their cards; nothing taken over while remembering waits for a reload (`S.rememberHold`); a PDF by its address can be added again (its cards are no duplicate); cards waiting for their files are not loaded ahead (`ocrToLoad`), filled their load state starts anew; nothing new is loaded ahead while the window is hidden; another image size keeps the places of the texts read (`ocrResToFrac`), an image turned after reading keeps none (`ocrResUnplace`); the images of the texts are loaded one after the other (`ocrResultLoad`); "All images" / "All shown" leave the waiting cards alone; "read small" waits for the image's size.
+- **Texts (English only):** `ocr.restart`, `ocr.restartTitle`, `ocr.restartAsk`, `ocr.missing.one/other`, `ocr.missingCard`, `ocr.toResult`, `log.ocrBack`, `log.ocrRestored`, `log.ocrRestart`.
+- **Tests:** `t_coverart.py` new case `ocrkeep`; `ocrpdf` E, `ocrload` C, `ocrmore` E and `ocrremember` B start over first (the frames stored stay), `ocrauto` D expects the window as left.
+
+## Import 3.37.4 · 2026-10-30
+
+The lines not recognized and left out, from the cover art: their cut-outs on hover (154).
+
+- **`ocrCrop(canvas, box, wide)`:** `wide` – a margin of 0.9 × the line's height (at least 10 px), at most `OCR_PEEK_LINE_W` × `OCR_PEEK_LINE_H` (720 × 280). **`ocrLineOrigins`:** each hit with a crop keeps `box` and `canvas` (in memory, as the crops); the wide cut-out is made when first shown (`hit.wide`).
+- **New `linePeekHits(line)`** (only while the text of `S.ocrLines` is the source; "… → ? “x”" without its tail; a sentence: the lines that contain it), `linePeekAttrs`, `linePeekShow` / `linePeekHide` / `linePeekOver` / `linePeekOut` (one `#dci-line-peek` on the page, below the line or above it, within the window; 250 ms on hover, at once on focus; hidden on scroll). **`renderSource`:** the `li` of `.dci-unrec` and `.dci-ignored` with `data-line-peek` and `tabindex="0"`, the hint `cover.linePeekHint`. Listeners on the overlay (mouseover/out, focusin/out, scroll). **CSS:** `#dci-line-peek`, the dotted underline of such lines.
+- **Texts (English only):** `cover.linePeekHint`.
+- **Tests:** `t_coverart.py` new case `ocrlinepeek`.
+
+## Import 3.37.3 · 2026-10-30
+
+Comments of live recordings offered while the setting is off (150b).
+
+- **`S.liveComOffer`** (null / 'yes' / 'no', for the page; "Delete stored import" sets it back) and **`liveComOn()`** (`S.liveCom` or 'yes'): `saveLiveJob` takes the comments with `liveComOn()`; the area lookups re-render while the setting is on or the offer is not declined.
+- **`renderLiveComments`:** proposals unless declined; without `liveComOn()` the line `.dci-livecom-offer` (`livecom.offer` with the positions and the first proposal, tooltip `livecom.offerTitle`) and the buttons `data-act="livecom-yes"` / `"livecom-no"` (log `liveOfferYes` / `liveOfferNo`; a waiting job is saved anew). **CSS:** `.dci-livecom-offer`.
+- **Texts (English only):** `livecom.offer.one/other`, `livecom.offerYes`, `livecom.offerNo`, `livecom.offerTitle`, `log.liveOfferYes`, `log.liveOfferNo`.
+- **Tests:** `t_works_more.py` new case `liveoffer`; `livecom` A) expects the offer while the setting is off.
+
+## Import 3.37.2 · 2026-10-30
+
+The text reader: ℗ / © twice on a line, credits between » «, guests (151 – 153).
+
+- **`sentencesOf`:** a line split at `TEXT_CREDIT_SEPS` (T054, » « • · |) when every part is a credit ("Role: …", "… by …"); a line starting with ℗ / © split before a sign again after a name (`PC_START`, `PC_AGAIN`, T033).
+- **`readClause`:** new (S055) "HEAD: …" with `TEXT_GUEST_HEAD` / `TEXT_FEAT_HEAD` (T053): the items after the colon ("NAME on X and Y", "NAME – X", "NAME (X)", names only), the roles of a guest head with the mod "Guest" (`Saxophone [Guest]` – the attribute guest via the rules as a Discogs bracket), a name without roles "Guest" (performer, guest); and "NAME on X and Y" when every role is an instrument or a voice (`playable`).
+- **`mapRole`:** a hyphen between two letters read as a space when only so a rule knows the role ("Cover-Photo" → R068, photography "cover photo").
+- **Mapping file:** `TEXT_GUEST_HEAD`, `TEXT_FEAT_HEAD`, `TEXT_CREDIT_SEPS` (after `TEXT_AUX_WORDS`). **Register:** S055, T053, T054; T033 extended.
+- **Tests:** `t_text_basics.py` new case `guests`; `register_golden.json` written anew (only the register's texts – no result of the corpus changed).
 
 ## Import 3.37.1 · 2026-10-30
 

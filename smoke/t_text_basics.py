@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -954,6 +954,62 @@ def case_casephrase():
         jane = pg.evaluate(RQ, 'Jane Roe')
         print('F) Jane Roe:', jane)
         results.append(jane == [['guitar', '', []], ['other instruments', 'les machine', ['Written small – unknown to MusicBrainz: Les → les keep “Les” · always write “Les”']]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_guests():
+    """Credits Importer 3.37.2 (collected items 151 – 153): lines a pasted text (a booklet, the cover art) did not give before.
+    A) "(P) 1998 loudsprecher (c) 1998 loudsprecher" – one entry with phonographic copyright and copyright (T033; until 3.37.1
+       not recognized).
+    B) "Cover-Photo: Photorama International » Photos: Dirk Glawe « Cover Design: Payola « Layout: Bernd Struckmeyer" – four
+       credits (T054); "Cover-Photo" as "Cover Photo": photography "cover photo"; cover design: design "cover design".
+    C) "Special Guest: M. Osswald on Sax and Piano" – M. Osswald (not "Special Guest") with saxophone ("sax") and piano, both with
+       the attribute guest (S055, T053); "Guest: Jane Roe" – performer, guest; "featuring: Ann Blow on Saxophone" – saxophone,
+       no guest; "Bob Blue on Piano and Saxophone" – both instruments."""
+    TEXT = """(P) 1998 loudsprecher (c) 1998 loudsprecher
+Cover-Photo: Photorama International » Photos: Dirk Glawe « Cover Design: Payola « Layout: Bernd Struckmeyer
+Special Guest: M. Osswald on Sax and Piano
+Guest: Jane Roe
+featuring: Ann Blow on Saxophone
+Bob Blue on Piano and Saxophone"""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+  [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
+    (r.querySelector('[data-f=role-credit]') || {}).value || '', (r.querySelector('[data-f=primary]') || {}).value || '',
+    [...r.querySelectorAll('input[data-f=flag]:checked')].map(x => x.value).join(',')])])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        # the row's attributes are in its open details
+        pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+        pg.wait_for_timeout(500)
+        g = pg.evaluate(GROUPS)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+        for k in ('loudsprecher', 'Photorama International', 'Dirk Glawe', 'Payola', 'Bernd Struckmeyer', 'M. Osswald', 'Jane Roe', 'Ann Blow', 'Bob Blue', 'Special Guest'):
+            print(f'  {k}:', g.get(k))
+        print('nicht erkannt:', unrec)
+        results.append(g.get('loudsprecher') and [r[1] for r in g['loudsprecher']] == ['phonographic copyright', 'copyright'])
+        results.append(g.get('Photorama International', [[0, '', '']])[0][1:3] == ['photography', 'cover photo'] and g.get('Dirk Glawe', [[0, '']])[0][1] == 'photography'
+                       and g.get('Payola', [[0, '', '']])[0][1:3] == ['design', 'cover design'] and g.get('Bernd Struckmeyer', [[0, '']])[0][1] == 'design')
+        osw = g.get('M. Osswald') or []
+        results.append('Special Guest' not in g and [(r[3], r[2]) for r in osw] == [('saxophone', 'sax'), ('piano', '')]
+                       and all('guest' in r[4].split(',') for r in osw)
+                       and (g.get('Jane Roe') or [[0, '']])[0][1] == 'performer' and 'guest' in (g.get('Jane Roe') or [[0, 0, 0, 0, '']])[0][4]
+                       and [(r[3], 'guest' in r[4]) for r in g.get('Ann Blow') or []] == [('saxophone', False)]
+                       and [r[3] for r in g.get('Bob Blue') or []] == ['piano', 'saxophone'] and not unrec)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
