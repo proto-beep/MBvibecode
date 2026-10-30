@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -37,7 +37,7 @@ def case_settabs():
         pg.wait_for_timeout(200)
         a.append(pg.evaluate(f"{SET}.hidden"))
         print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
-        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections']
                        and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
         # B) keys
         pg.click(gear)
@@ -180,7 +180,7 @@ def case_settings():
         vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
         print('A) Themen:', topics, '| Werke:', vals)
-        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections']
                        and [t for t, e in topics if e == 'true'] == ['general']
                        and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
         # B) shared switches
@@ -280,7 +280,7 @@ def case_pressed():
         return (t['above'] <= 1 and t['below'] >= 4.5 and 0 <= t['into'] <= 3 and (t['atTabsTop'] or abs(t['below'] - 6) <= 1)
                 and t['joinedTop'] == (abs(t['above']) <= 1) and (t['corner'] == '0px') == t['joinedTop'])
     no_bridge = lambda x: x['after'] in ('none', 'normal') and x['before'] in ('none', 'normal') and not x['bridgeClass']
-    TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+    TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections']
     results = []
     # (the matrix of the entries, for "by event | by role")
     H.ENTRIES_VIEW = 'matrix'
@@ -687,7 +687,7 @@ def case_cache():
             H.open_settings(pg, 'cache')
             a = pg.evaluate(CACHE)
             print('A) Cache:', a)
-            results.append(a['tabs'][-3:] == ['Beta', 'Cache', 'ⓘ Connections'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
+            results.append(a['tabs'][-4:] == ['Beta', 'Cache', 'Statistics', 'ⓘ Connections'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
                            and re.match(r'^0 releases · 0\.0 KB · all data of the script in this browser: \d+\.\d KB$', a['size']) is not None)
             change()
             b0 = state()
@@ -873,6 +873,166 @@ def case_logdiag():
         results.append(a == [False, False] and b1 == [True, 'true'] and c0 == 'Stop diagnosis' and c1 == [False, True, None] and d1 == [False, False, None])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# [E8] (3.38.0) the statistics: helpers
+ENTER_EDIT = """(() => { if (document.getElementById('test-enter-edit')) return; const ta = document.getElementById('edit-note-text'); const f = document.createElement('form');
+  f.addEventListener('submit', (e) => e.preventDefault()); ta.parentNode.insertBefore(f, ta); f.appendChild(ta); const btn = document.createElement('button');
+  btn.type = 'submit'; btn.className = 'submit positive'; btn.textContent = 'Enter edit'; btn.id = 'test-enter-edit'; f.appendChild(btn); })()"""
+STAT_COUNT = """() => new Promise((res) => { const q = indexedDB.open('dci-stats', 1); q.onupgradeneeded = () => q.result.createObjectStore('subs', { keyPath: 'id' });
+  q.onsuccess = () => { const tx = q.result.transaction('subs', 'readonly'); const g = tx.objectStore('subs').getAll(); g.onsuccess = () => res(g.result); g.onerror = () => res(null); };
+  q.onerror = () => res(null); })"""
+
+
+def js_release_of(added):
+    """/ws/js/release of the test release with the relationships staged in the editor (as MusicBrainz has them after "Enter edit")."""
+    recs = {g: [] for g in H.REC}
+    rel = []
+    for r in added:
+        for a, b in ((r['e0'], r['e1']), (r['e1'], r['e0'])):
+            if a in recs:
+                recs[a].append({'linkTypeID': r['lt'], 'target': {'gid': b}})
+                break
+            if a == H.REL:
+                rel.append({'linkTypeID': r['lt'], 'target': {'gid': b}})
+                break
+    return {'gid': H.REL, 'relationships': rel, 'releaseGroup': {'secondaryTypeIDs': []},
+            'mediums': [{'position': 1, 'tracks': [{'number': str(i + 1), 'recording': {'gid': g, 'comment': '', 'relationships': recs[g]}} for i, g in enumerate(H.REC)]}]}
+
+
+def case_stats():
+    """Credits Importer 3.38.0 (E8, milestone "Statistics"; maintainer: "die statistiken sollen erstmal in den einstellung sein",
+    "von Musicbrainz bestätigt", "Nein das Sammeln soll an sein (und natürlich ausschaltbar). Bei den Resetfunktionen soll es geben:
+    "keep statistics"", "der erste Import zählt, sofern die seite nicht neu geladen wurde", "ja soll angehakt sein", "ich glaube
+    einen export brauchen wir nicht", "Setze mal alle Ideen für die Statistik um und erstelle die Statistik.").
+    A) ⚙ Settings → "Statistics" (after "Cache"): "Collect statistics" on, nothing counted yet.
+    B) Everything staged, "Enter edit": the relationships in MusicBrainz's /ws/js/release – counted once (log "Statistics: n
+       relationships confirmed by MusicBrainz and counted"; the job gone; one record in the database dci-stats with the time from
+       the first import).
+    C) The tab: 1 release, n relationships, 100 % new, the release had relationships before or was empty, the times; over months
+       (this month), over days (today); the most frequent artists, instruments, types.
+    D) "Reset all settings" with "keep statistics" (ticked): kept; unticked: deleted.
+    E) Switched off: "Enter edit" makes no job.
+    F) The release page MusicBrainz shows after "Enter edit": a job waiting there is counted – a relationship not in MusicBrainz is
+       left out, and so is one MusicBrainz had before ("n0": no more of its kind than before); the time until the page began to load.
+       F2) A job with nothing to look up there (a supplement): counted at once on the release page shown right after "Enter edit"."""
+    import re
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(400)
+        tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(t => t.dataset.topic)")
+        a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-set=stats-on]') || {}).checked]")
+        print('A) Reiter:', tabs, '| leer, an:', a)
+        results.append(tabs[-3:] == ['cache', 'statistics', 'connections'] and a == [True, True])
+        # B) staged, "Enter edit"
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        logs = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Statistics/.test(t))")
+        job = pg.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')")
+        recs = pg.evaluate(STAT_COUNT)
+        n = len(added)
+        print('B) gestagt:', n, '| Protokoll:', logs, '| Auftrag:', job, '| Datensätze:', [(r['mbid'], len(r['rels']), r['ms'] is not None, r['src']) for r in recs or []])
+        results.append(n > 0 and any(f'Statistics: {n} relationships confirmed by MusicBrainz and counted' in t for t in logs) and job is None
+                       and recs is not None and len(recs) == 1 and len(recs[0]['rels']) == n and recs[0]['ms'] is not None and recs[0]['ms'] > 0 and recs[0]['src'] == 'discogs'
+                       and recs[0]['rel'] is not None and 'before' in recs[0]['rel'])
+        # C) the tab
+        H.open_settings(pg, 'cache')
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(500)
+        TILES = "Object.fromEntries([...document.querySelectorAll('.dci-stats-tile')].map(t => [t.dataset.stat, t.querySelector('.dci-stats-num').textContent.trim()]))"
+        tiles = pg.evaluate(TILES)
+        month = pg.evaluate("(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })()")
+        day = pg.evaluate("(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })()")
+        rows_m = pg.evaluate("[...document.querySelectorAll('[data-el=stats-periods] tbody tr')].map(t => [...t.children].map(c => c.textContent.trim()))")
+        pg.click('[data-act=stats-period][data-period=day]')
+        pg.wait_for_timeout(300)
+        rows_d = pg.evaluate("[...document.querySelectorAll('[data-el=stats-periods] tbody tr')].map(t => [...t.children].map(c => c.textContent.trim()))")
+        tops = pg.evaluate("Object.fromEntries(['artists', 'instr', 'types'].map(k => [k, [...document.querySelectorAll(`[data-el=stats-top-${k}] li`)].map(li => li.textContent.replace(/\\s+/g, ' ').trim())]))")
+        stored = pg.evaluate("localStorage.getItem('dci-stats-period')")
+        print('C) Kacheln:', tiles, '\n   Monate:', rows_m, '| Tage:', rows_d, stored, '\n   Top:', tops)
+        results.append(tiles.get('releases') == '1' and tiles.get('rels') == str(n) and tiles.get('newSupp') == '100 % / 0 %' and tiles.get('before') in ('100 % / 0 %', '0 % / 100 %')
+                       and tiles.get('created') == '0' and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRelease', ''))) and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRel', '')))
+                       and len(rows_m) == 1 and rows_m[0][0] == month and rows_m[0][1] == '1' and rows_m[0][2] == str(n) and rows_m[0][3] == '100 %'
+                       and len(rows_d) == 1 and rows_d[0][0] == day and stored == '"day"'
+                       and bool(tops['artists'] and tops['instr'] and tops['types']))
+        # D) reset all settings: kept, then deleted
+        H.open_reset(pg)
+        pg.wait_for_timeout(150)
+        keep = pg.is_checked('[data-f=reset-keepstats]')
+        pg.click('[data-act=reset-do]')
+        pg.wait_for_timeout(1200)
+        d1 = len(pg.evaluate(STAT_COUNT) or [])
+        H.open_reset(pg)
+        pg.wait_for_timeout(150)
+        pg.uncheck('[data-f=reset-keepstats]')
+        pg.click('[data-act=reset-do]')
+        pg.wait_for_timeout(1200)
+        d2 = len(pg.evaluate(STAT_COUNT) or [])
+        print('D) behalten angehakt:', keep, '| danach:', d1, '| ohne Haken:', d2)
+        results.append(keep and d1 == 1 and d2 == 0)
+        # E) off: no job
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(300)
+        pg.uncheck('[data-set=stats-on]')
+        pg.wait_for_timeout(200)
+        off = pg.evaluate("localStorage.getItem('dci-stats-on')")
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(800)
+        job_e = pg.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')")
+        print('E) aus:', off, '| Auftrag:', job_e)
+        results.append(off == 'false' and job_e is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        pg.close()
+        # F) the release page
+        rec_gid = H.REC[1]
+        found = next((x for x in js_release_of(added)['mediums'][0]['tracks'] if x['recording']['gid'] == rec_gid), None)
+        tgt = found['recording']['relationships'][0] if found and found['recording']['relationships'] else {'linkTypeID': 148, 'target': {'gid': H.uid('dddddddd', 1)}}
+        job = {'armedAt': 0, 'rec': {'v': 1, 'mbid': H.REL, 'start': 0, 'rel': {'before': 0}, 'src': 'discogs', 'supp': [], 'ocr': None, 'rels': [
+            {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': tgt['target']['gid'], 'tn': 'X', 'i': ['guitar'], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0,
+             'c': {'on': 'recording', 'src': rec_gid, 'lt': tgt['linkTypeID'], 'tgt': tgt['target']['gid']}},
+            {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': 'nope', 'tn': 'Y', 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0,
+             'c': {'on': 'recording', 'src': rec_gid, 'lt': 1, 'tgt': 'nope'}},
+            {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': tgt['target']['gid'], 'tn': 'Z', 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0,
+             'c': {'on': 'recording', 'src': rec_gid, 'lt': tgt['linkTypeID'], 'tgt': tgt['target']['gid'], 'n0': 1}}]}}
+        rp, errs2 = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{H.REL}')
+        rp.evaluate("(job) => { job.armedAt = Date.now(); job.rec.start = Date.now() - 60000; localStorage.setItem('dci-stat-job:%s', JSON.stringify(job)); }" % H.REL, job)
+        rp.reload()
+        rp.wait_for_timeout(16000)
+        recs_f = rp.evaluate(STAT_COUNT) or []
+        job_f = rp.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')")
+        print('F) Release-Seite:', [(len(r['rels']), r['ms']) for r in recs_f], '| Auftrag:', job_f, '| Fehler:', errs2)
+        results.append(len(recs_f) == 1 and len(recs_f[0]['rels']) == 1 and recs_f[0]['rels'][0]['tn'] == 'X' and 'c' not in recs_f[0]['rels'][0]
+                       and 60000 <= recs_f[0]['ms'] < 75000 and job_f is None and not errs2)
+        # F2) nothing to look up: at once
+        job2 = {'armedAt': 0, 'rec': {'v': 1, 'mbid': H.REL, 'start': 0, 'rel': {'before': 1}, 'src': 'discogs', 'supp': [], 'ocr': None, 'rels': [
+            {'k': 's', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': 'g', 'tn': 'S', 'i': [], 'v': [], 'd': 'year', 'ds': 'hand', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0}]}}
+        rp.evaluate("(job) => { job.armedAt = Date.now(); job.rec.start = Date.now() - 1000; localStorage.setItem('dci-stat-job:%s', JSON.stringify(job)); }" % H.REL, job2)
+        rp.reload()
+        rp.wait_for_timeout(2500)
+        recs_f2 = rp.evaluate(STAT_COUNT) or []
+        print('F2) ohne Nachschlagbares:', [(len(r['rels']), r['rels'][0]['k']) for r in recs_f2])
+        results.append(len(recs_f2) == 2 and any(r['rels'][0]['k'] == 's' for r in recs_f2))
+        H.WS_JS_RELEASE.clear()
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

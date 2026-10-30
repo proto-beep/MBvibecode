@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.37.15
+// @version      3.38.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.37.15
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.37.15
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.37.15';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1460,6 +1460,39 @@
       "log.languagesMissing": "The languages file ({file}) is missing – the dashboard speaks English",
       "settings.t.beta": "Beta",
       "settings.t.cache": "Cache",
+      "settings.t.statistics": "Statistics",
+      "stats.hint": "Counted once MusicBrainz has the relationships after “Enter edit” – those the dashboard staged (new) and those it supplemented (a credit or a date added to a relationship MusicBrainz had). Kept only in this browser (its storage for musicbrainz.org); nothing leaves it.",
+      "stats.on": "Collect statistics",
+      "stats.onTitle": "After “Enter edit” the script looks in MusicBrainz whether the relationships are saved and counts what is there. Off: nothing is counted; what was counted stays.",
+      "stats.loading": "Reading the statistics …",
+      "stats.empty": "Nothing counted yet – the statistics begin with the next “Enter edit” of relationships staged with the dashboard.",
+      "stats.t.releases": "releases",
+      "stats.t.rels": "relationships",
+      "stats.t.newSupp": "new / supplemented",
+      "stats.t.before": "releases with relationships before / empty",
+      "stats.t.created": "artists newly created in MusicBrainz",
+      "stats.t.perRelease": "time per release",
+      "stats.t.perRel": "time per relationship",
+      "stats.subs": "{n} × “Enter edit”",
+      "stats.newSuppN": "{n} new, {s} supplemented",
+      "stats.beforeN": "{f} had relationships, {e} were empty",
+      "stats.overTime": "Over time",
+      "stats.period": "Statistics by",
+      "stats.period.day": "Days",
+      "stats.period.week": "Weeks",
+      "stats.period.month": "Months",
+      "stats.period.year": "Years",
+      "stats.col.new": "new",
+      "stats.col.supp": "supplemented",
+      "stats.top.artists": "Artists with the most relationships",
+      "stats.top.instr": "Instruments used most",
+      "stats.top.types": "Most frequent relationship types",
+      "stats.delete": "Delete statistics …",
+      "stats.deleteAsk": "Delete all statistics (submissions counted: {n})? This cannot be undone.",
+      "stats.stored": "Submissions counted: {n}",
+      "stats.sec": "{s} s",
+      "stats.min": "{m} min {s} s",
+      "stats.hour": "{h} h {m} min",
       "settings.betaHint": "Functions to try out before they become a regular part of the script: off until switched on here, and they may still change.",
       "settings.cacheHint": "What the dashboard remembers for a release in this browser. Off (the default), every import starts afresh: nothing of a release is stored or read again – only the list of works created through the dashboard (a safety list) and the status marks of the companion are kept.",
       "settings.remember": "Remember changes and import settings per release",
@@ -1893,6 +1926,10 @@
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
       "log.instrTypo": "“{word}” is probably a typo of {instrument}: no role credit.",
       "log.instrOwn": "“{word}” as a spelling of its own: {instrument}, role credit “{credit}”.",
+      "log.statsKept": "Statistics: {n} relationships confirmed by MusicBrainz and counted",
+      "log.statsFailed": "Statistics: {n} relationships confirmed by MusicBrainz, but this browser did not store them",
+      "log.statsDeleted": "Statistics deleted",
+      "log.statsJobFailed": "Statistics: this submission ({n} relationships) is not counted – the browser could not store it until MusicBrainz confirms it",
       "log.caseAlways": "“{word}” added to the proper names (T052): it keeps its capitals in role credits",
       "log.emOut": "{name}: {role} taken out of an event",
       "log.emIn": "{name}: {role} into an event",
@@ -2191,6 +2228,7 @@
       "reset.what": "Language (English), text size, the dashboard as a window, positions and sizes of the windows, the switches of the navigation (Discogs status, MB release page, cover, hover, click/hover), the options of the footer, “apply automatically”, the folding of “Dates & tracks”, role codes, the log window – and, with the companion, place and folding of the cover on Discogs.",
       "reset.rules": "also delete own mapping rules ({n}) and your changes of built-in rules ({c}), and switch all rules on again ({off} switched off)",
       "reset.pools": "also delete the stored date pools, track pools and matrices of all releases",
+      "reset.keepStats": "keep statistics",
       "reset.never": "The safety list of works created by the script is never deleted.",
       "reset.do": "Reset",
       "reset.done": "All settings are back to their defaults.",
@@ -6588,6 +6626,8 @@
     const mbid = (location.pathname.match(MBID_RE) || [])[0];
     // [3.32.10] comments of live recordings waiting for the relationships of this release (item 113)
     if (mbid) runLiveJob(mbid, { tries: 5 });
+    // [E8] (3.38.0) the statistics of a submission waiting for MusicBrainz's confirmation
+    if (mbid) runStatJob(mbid, { tries: 5, final: true });
     const go = readJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
     if (!go || !mbid) return;
     writeJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
@@ -6839,6 +6879,187 @@
       writeJson('localStorage', key, { ...job, armedAt: Date.now() });
       liveLog(mbid, 'info', 'liveArmed', { n: job.items.length }, logFn);
       runLiveJob(mbid, { tries: 30, logFn });
+    };
+    document.addEventListener('submit', arm, true);
+    document.addEventListener('click', arm, true);
+  }
+
+  // --- [E8] (3.38.0) Statistics: what MusicBrainz confirmed, kept in this browser --------------------------------------
+  // At "Enter edit" the dashboard writes what is submitted as a job of the release (STAT_JOB_PREFIX); the editor's page – or
+  // the release page MusicBrainz shows next – looks in /ws/js/release for the relationships, and what is there goes into the
+  // database dci-stats (IndexedDB of musicbrainz.org). Nothing leaves the browser (maintainer: "von Musicbrainz bestätigt",
+  // "ich glaube einen export brauchen wir nicht").
+
+  const STATS_ON_KEY = 'dci-stats-on';
+  const STATS_PERIOD_KEY = 'dci-stats-period';
+  const STAT_JOB_PREFIX = 'dci-stat-job:';
+  const STAT_JOB_MAX_MS = 30 * 60 * 1000;
+  // what cannot be looked up counts on the release page shown within 2 minutes of "Enter edit" (MusicBrainz shows it after a successful one)
+  const STAT_FRESH_MS = 2 * 60 * 1000;
+  const STATS_DB = 'dci-stats';
+  /** [E8] Collecting is on unless switched off (maintainer: "Nein das Sammeln soll an sein (und natürlich ausschaltbar).") */
+  const statsOn = () => readJson('localStorage', STATS_ON_KEY, true) !== false;
+  let statDbPromise = null;
+  /** [E8] The database of the statistics (one record per submission MusicBrainz confirmed), or null where the browser does not allow it. */
+  function statDb() {
+    if (!statDbPromise) {
+      statDbPromise = new Promise((resolve) => {
+        try {
+          const req = window.indexedDB.open(STATS_DB, 1);
+          req.onupgradeneeded = () => req.result.createObjectStore('subs', { keyPath: 'id' });
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+          req.onblocked = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+    return statDbPromise;
+  }
+  /** [E8] One request to the store of submissions; its result, or null. */
+  async function statStore(mode, fn) {
+    const db = await statDb();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('subs', mode);
+        const req = fn(tx.objectStore('subs'));
+        tx.oncomplete = () => resolve(req ? req.result : true);
+        tx.onerror = () => resolve(null);
+        tx.onabort = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+  const statPut = (rec) => statStore('readwrite', (st) => st.put(rec));
+  const statAll = () => statStore('readonly', (st) => st.getAll());
+  const statClear = () => statStore('readwrite', (st) => st.clear());
+
+  /** [E8] How many relationships of a job's type to its target MusicBrainz has on its release or recording. */
+  function statCount(c, data, recs) {
+    const rels = c.on === 'release' ? data.relationships : (recs.get(c.src) || {}).relationships;
+    if (!Array.isArray(rels)) return 0;
+    return rels.filter((r) => r.linkTypeID === c.lt && r.target && r.target.gid === c.tgt).length;
+  }
+
+  /**
+   * [E8] Which relationships of a job are in MusicBrainz's data of the release: true / false for a new one on the release or a
+   * recording – there only when MusicBrainz has more of its type to its target than before (n0: those it had, counted in the editor
+   * at "Enter edit"; several new ones of the same kind each need one more) –; null where it cannot be looked up here (works, the
+   * release group, credits or dates added to relationships MusicBrainz had) – those count with the submission.
+   */
+  function statSeenAll(rels, data, recs) {
+    const groups = new Map();
+    rels.forEach((it, i) => {
+      if (!it.c) return;
+      const k = `${it.c.on}|${it.c.src}|${it.c.lt}|${it.c.tgt}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(i);
+    });
+    const seen = rels.map((it) => (it.c ? false : null));
+    for (const idxs of groups.values()) {
+      const c = rels[idxs[0]].c;
+      let more = statCount(c, data, recs) - (c.n0 || 0);
+      for (const i of idxs) {
+        if (more > 0) seen[i] = true;
+        more--;
+      }
+    }
+    return seen;
+  }
+
+  /** [E8] Jobs older than 30 minutes go (also those of other releases: a submission given up or failed). */
+  function statJobsSweep() {
+    try {
+      for (let i = window.localStorage.length - 1; i >= 0; i--) {
+        const k = window.localStorage.key(i);
+        if (!k || !k.startsWith(STAT_JOB_PREFIX)) continue;
+        const j = readJson('localStorage', k, null);
+        if (!j || !j.armedAt || Date.now() - j.armedAt > STAT_JOB_MAX_MS) window.localStorage.removeItem(k);
+      }
+    } catch (e) { /* storage blocked */ }
+  }
+
+  /**
+   * [E8] Looks for the relationships of the job of this release (tries: how often, 3 s apart). Kept when every one that can be
+   * looked up is there; at the last try what is there – or, with none to look up, on the release page MusicBrainz shows after
+   * a successful "Enter edit" (final). Returns true once the job is done.
+   */
+  async function runStatJob(mbid, { tries = 1, final = false, logFn = null } = {}) {
+    statJobsSweep();
+    const key = `${STAT_JOB_PREFIX}${String(mbid).toLowerCase()}`;
+    const job = readJson('localStorage', key, null);
+    if (!job || !job.armedAt || !job.rec) return false;
+    const fresh = final && Date.now() - job.armedAt < STAT_FRESH_MS;
+    for (let t = 0; t < tries; t++) {
+      if (t) await sleep(3000);
+      let data = null;
+      try {
+        const res = await fetch(`${location.origin}/ws/js/release/${mbid}?inc=rels%20recordings`, { credentials: 'same-origin' });
+        data = res.ok ? await res.json() : null;
+      } catch (e) {
+        data = null;
+      }
+      if (!data) continue;
+      const recs = new Map();
+      (data.mediums || []).forEach((m) => (m.tracks || []).forEach((tr0) => {
+        if (tr0.recording && tr0.recording.gid) recs.set(tr0.recording.gid, tr0.recording);
+      }));
+      const seen = statSeenAll(job.rec.rels, data, recs);
+      const checked = seen.filter((x) => x !== null).length;
+      const found = seen.filter((x) => x === true).length;
+      const last = t === tries - 1;
+      if (!((checked && found === checked) || (!checked && fresh) || (last && found))) continue;
+      // (the same record from the editor's page and from the release page: the same id, kept once)
+      const again = readJson('localStorage', key, null);
+      if (!again || again.armedAt !== job.armedAt) return false;
+      const at = Date.now();
+      // the time until MusicBrainz confirmed: now on the editor's page; on the release page shown right after "Enter edit" when it
+      // began to load; counted later, the time of "Enter edit"
+      const origin = (window.performance && window.performance.timeOrigin) || 0;
+      const conf = !final ? at : origin >= job.armedAt && origin - job.armedAt < STAT_FRESH_MS ? origin : job.armedAt;
+      // (without how they were looked up)
+      const rels = job.rec.rels.filter((it, i) => seen[i] !== false).map((it) => Object.fromEntries(Object.entries(it).filter(([k]) => k !== 'c')));
+      const rec = { ...job.rec, rels, id: `${String(mbid).toLowerCase()}:${job.armedAt}`, at, ms: job.rec.start ? Math.max(0, Math.round(conf - job.rec.start)) : null };
+      const ok = rels.length ? await statPut(rec) : true;
+      writeJson('localStorage', key, null);
+      if (rels.length) liveLog(mbid, ok ? 'info' : 'warn', ok ? 'statsKept' : 'statsFailed', { n: rels.length }, logFn);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * [E8] "Enter edit" in the relationship editor (the submission of its form with the edit note, or a click on its submit
+   * button): the dashboard's snapshot of what is submitted becomes the job of the release; then the page looks for it.
+   */
+  function initStatJobArm(mbid, snapshot, logFn = null) {
+    const key = `${STAT_JOB_PREFIX}${String(mbid).toLowerCase()}`;
+    const arm = (e) => {
+      const t = e.target;
+      const form = t && (t.tagName === 'FORM' ? t : t.closest && t.closest('form'));
+      if (!form || !form.querySelector('#edit-note-text, textarea[name$="edit_note"]')) return;
+      if (e.type === 'click' && !(t.closest('button[type=submit], input[type=submit]'))) return;
+      if (!statsOn()) return;
+      const prev = readJson('localStorage', key, null);
+      if (prev && prev.armedAt && Date.now() - prev.armedAt < 5000) return;
+      let rec = null;
+      try {
+        rec = snapshot();
+      } catch (err) {
+        rec = null;
+      }
+      if (!rec || !rec.rels.length) return;
+      statJobsSweep();
+      writeJson('localStorage', key, { armedAt: Date.now(), rec });
+      // (the browser's storage full or blocked: said, not counted)
+      if (!readJson('localStorage', key, null)) {
+        liveLog(mbid, 'warn', 'statsJobFailed', { n: rec.rels.length }, logFn);
+        return;
+      }
+      runStatJob(mbid, { tries: 30, logFn });
     };
     document.addEventListener('submit', arm, true);
     document.addEventListener('click', arm, true);
@@ -7440,6 +7661,8 @@
     // [stage 2] The second source supplementing the loaded one (its list of suggestions), and the sources that did
     supp: null,
     suppSources: new Map(),
+    // [E8] (3.38.0) the relationships the dashboard supplemented in the editor (state id → row, source), for the statistics
+    statFills: new Map(),
     // Preference of the linked sources (physical / digital media), whether this release is digital, the settings panels
     sourceOrder: { physical: ['discogs', 'bandcamp'], digital: ['bandcamp', 'discogs'] },
     digital: false,
@@ -8703,6 +8926,8 @@
   S.log = readJson('sessionStorage', LOG_KEY, []);
   // [3.32.10] "Enter edit" arms the comments of live recordings waiting for this release (item 113)
   initLiveJobArm(releaseMbid, (level, key, params) => log(level, key, params));
+  // [E8] (3.38.0) "Enter edit": what is submitted, for the statistics once MusicBrainz has it
+  initStatJobArm(releaseMbid, () => statSnapshot(), (level, key, params) => log(level, key, params));
   // [3.19.0] Started from the release editor ([3.23.0] "Enter edit & import credits"): the links of its tab
   // "External links" (also those not in MusicBrainz yet); the dashboard opens by itself. Read once.
   S.autostartFrom = 'editor';
@@ -8773,6 +8998,9 @@
   S.poolFold = readJson('localStorage', POOL_FOLD_KEY, null) || {};
   // Folded, the date pool stays in the bar (on by default)
   S.poolsKeep = readJson('localStorage', 'dci-pools-keep', true) !== false;
+  // [E8] (3.38.0) the statistics: their period over time; the records once the tab is shown
+  S.statsPeriod = readJson('localStorage', STATS_PERIOD_KEY, 'month');
+  S.statsData = null;
 
   const pad2 = (n) => String(n).padStart(2, '0');
   const clock = (ts) => {
@@ -12087,6 +12315,8 @@
       return;
     }
     log('info', 'ocrImported', { origin, how: tr(supp ? 'ocr.supp' : 'ocr.import') });
+    // [E8] (3.38.0) for the statistics
+    S.statOcr = statOcrInfo(text, supp);
     // [130c] (3.34.22) the image and the place of each line, for the rows of this text (not of a supplement)
     if (!supp) S.ocrLines = ocrLineOrigins(text);
     closeOcr();
@@ -13780,6 +14010,8 @@
         });
       }));
       S.existing = indexExistingRelationships(ws);
+      // [E8] (3.38.0) the release for the statistics (its relationships before the import)
+      S.statRel = statReleaseInfo(ws);
       // [E5a] (3.37.1) who is linked where in this release in MusicBrainz (their name suggestions come first)
       S.linked = linkedInRelease(ws);
       // [rule 4] The release's artist credit, as named below its title (names from Bandcamp must match it exactly)
@@ -16437,6 +16669,7 @@
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.linkAttrStaged.set(it.attrFill, it.attrSig);
+          statFill(newState, null, sourceEntity); // [E8] (3.38.0)
           S.noteStats.linkAttrs = (S.noteStats.linkAttrs || 0) + 1;
           linkAttrN++;
           log('ok', 'linkAttrsAdded', { text, list: it.attrs.map((a) => a.type.name).join(', ') });
@@ -16469,6 +16702,7 @@
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.filledDates.add(it.fillDate);
+          statFill(newState, it.row || null, sourceEntity); // [E8] (3.38.0)
           dateFillIds.push(newState.id);
           stagedDates.push({ id: newState.id, date: it.date, text });
           const fd = S.dateFills.get(it.fillDate);
@@ -16516,6 +16750,7 @@
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.filled.add(it.key);
+          statFill(newState, it.row || null, sourceEntity); // [E8] (3.38.0)
           fillIds.push(newState.id);
           log('ok', 'creditFilled', { text });
         } catch (e) {
@@ -26480,6 +26715,7 @@
       case 'settings-open':
         S.settingsOpen = !S.settingsOpen;
         S.resetOpen = false;
+        S.statsData = null; // [E8] (3.38.0)
         // [3.30.0] the mapping rules in the dashboard close (only one of both is open there, item 75)
         if (S.settingsOpen && rulesDocked() && rulesShown()) closeRules();
         if (S.settingsOpen) {
@@ -26495,6 +26731,8 @@
         // [3.25.0] a tab: its topic (remembered)
         S.settingsTab = btn.dataset.topic;
         S.resetOpen = false;
+        // [E8] (3.38.0) the statistics read again
+        if (S.settingsTab === 'statistics') S.statsData = null;
         writeJson('localStorage', SETTINGS_TAB_KEY, S.settingsTab === 'general' ? null : S.settingsTab);
         renderSettings();
         const tabBtn = $('settings').querySelector(`[data-act="settings-topic"][data-topic="${S.settingsTab}"]`);
@@ -26512,6 +26750,21 @@
         // [3.36.1] the page loaded again: what is remembered for the release comes back
         saveRememberNow();
         window.location.reload();
+        break;
+      case 'stats-period':
+        // [E8] (3.38.0) the statistics over days, weeks, months or years
+        S.statsPeriod = btn.dataset.period;
+        writeJson('localStorage', STATS_PERIOD_KEY, S.statsPeriod === 'month' ? null : S.statsPeriod);
+        renderSettings();
+        break;
+      case 'stats-delete':
+        // [E8] (3.38.0) all statistics deleted (asked first)
+        if (!confirm(tr('stats.deleteAsk', { n: (S.statsData || []).length }))) break;
+        statClear().then(() => {
+          S.statsData = [];
+          log('info', 'statsDeleted', {});
+          renderSettings();
+        });
         break;
       case 'remember-forget': {
         // [146] (3.36.0) all releases forgotten (asked first)
@@ -26539,6 +26792,7 @@
         S.resetOpen = !S.resetOpen;
         S.resetRules = false;
         S.resetPools = false;
+        S.resetKeepStats = true; // [E8] (3.38.0)
         renderReset();
         const cancel = S.resetOpen && $('settings').querySelector('[data-act="reset-cancel"]');
         if (cancel) cancel.focus();
@@ -26553,7 +26807,7 @@
       }
       case 'reset-do': {
         const box = (f) => { const el = S.overlay.querySelector(`[data-f="${f}"]`); return !!(el && el.checked); };
-        resetSettings({ rules: box('reset-rules'), pools: box('reset-pools') });
+        resetSettings({ rules: box('reset-rules'), pools: box('reset-pools'), stats: !box('reset-keepstats') });
         break;
       }
       case 'add-role': {
@@ -27935,7 +28189,7 @@
   // [3.29.2] "Appearance" new (item 79): text size, the place of the dashboard, the view and the colours of the levels
   // [3.34.1] "Beta" new (item E3): functions to try out, off until switched on
   // [146] (3.36.0) "Cache" new: what is remembered per release (maintainer: "setting -> Cache vielleicht besser")
-  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections'];
+  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
@@ -27983,6 +28237,8 @@
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …")
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY],
+    // [E8] (3.38.0) the switch and the period (the statistics stay: "Delete statistics …")
+    statistics: [STATS_ON_KEY, STATS_PERIOD_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -28063,6 +28319,327 @@
     const own = Object.fromEntries(Object.entries(S.levelPalette).filter(([k, c]) => c !== LEVEL_PALETTE_DEFAULT[k]));
     writeJson('localStorage', LEVEL_PALETTE_KEY, Object.keys(own).length ? own : null);
   }
+  // --- [E8] (3.38.0) Statistics: the dashboard's part (milestone "Statistics"; the maintainer's wishes of 2026-10-29 – 30) -----
+
+  /** [E8] The root of an attribute type by MusicBrainz's types ("instrument", "vocal" …), in small letters. */
+  function statAttrRoot(typeId) {
+    const at = idx().atById;
+    let a = at.get(typeId);
+    if (a && a.root_id != null && at.get(a.root_id)) a = at.get(a.root_id);
+    const seen = new Set();
+    while (a && a.parent_id != null && !seen.has(a.id)) {
+      seen.add(a.id);
+      a = at.get(a.parent_id);
+    }
+    return a ? norm(a.name) : '';
+  }
+
+  /** [E8] How an entry got its MusicBrainz entity: 'link' (the source's link), 'search' (by its name), 'hand', 'created'. */
+  function statLinkOf(a) {
+    if (!a) return '';
+    if (a.status === 'created') return 'created';
+    if (a.status === 'manual' || a.matchTouched || a.manual) return 'hand';
+    if (a.status === 'linked') return a.dId ? 'link' : 'search';
+    return '';
+  }
+
+  /** [E8] The precision of a date of the editor: 'day', 'month', 'year' or ''. */
+  const statDatePrec = (d) => (!d || !d.year ? '' : d.day ? 'day' : d.month ? 'month' : 'year');
+
+  /** [E8] Where a row's date comes from: 'notes' (found in the notes or the text, in the pool) or 'hand'. */
+  function statDateSrc(row) {
+    const d = row && row.date;
+    if (!d) return '';
+    const pool = d.poolId && S.datePool.find((x) => x.id === d.poolId);
+    return pool && pool.found ? 'notes' : 'hand';
+  }
+
+  /** [E8] The kind of the source: 'discogs', 'bandcamp', 'text' – or 'ocr' for a text from the cover art. */
+  function statSourceKind() {
+    if (!S.source) return '';
+    if (S.source.id === 'text' && S.statOcr && !S.statOcr.supp && S.textInput && S.textInput.text === S.statOcr.text) return 'ocr';
+    return S.source.id || '';
+  }
+
+  /** [E8] The kinds of the supplements of this import. */
+  function statSuppKinds() {
+    const by = { DG: 'discogs', BC: 'bandcamp', TXT: 'text' };
+    return [...S.suppSources.keys()].map((k) => (k === 'TXT' && S.statOcr && S.statOcr.supp ? 'ocr' : by[k] || String(k).toLowerCase()));
+  }
+
+  /**
+   * [E8] What a text from the cover art was (collected for the statistics): the images read, the lines taken over, the words
+   * not as read (changed by hand).
+   */
+  function statOcrInfo(text, supp) {
+    const done = ((S.ocr && S.ocr.results) || []).filter((r) => r.status === 'done');
+    const read = done.flatMap((r) => (r.parts || []).flatMap((pt) => (pt.lines || []).map((l) => String(l.text || '')))).join('\n');
+    const words = (t) => String(t || '').split(/\s+/).filter(Boolean);
+    const pool = new Map();
+    words(read).forEach((w) => pool.set(w, (pool.get(w) || 0) + 1));
+    let changed = 0;
+    if (read.trim()) {
+      for (const w of words(text)) {
+        const n = pool.get(w) || 0;
+        if (n) pool.set(w, n - 1);
+        else changed++;
+      }
+    }
+    return { text, supp: !!supp, images: done.length, lines: String(text || '').split('\n').filter((l) => l.trim()).length, corrected: changed };
+  }
+
+  /** [E8] The release as MusicBrainz has it at the import: year, country, formats, labels, and its relationships before. */
+  function statReleaseInfo(ws) {
+    const nonUrl = (list) => (list || []).filter((r) => r['target-type'] !== 'url').length;
+    const recs = new Map();
+    (ws.media || []).forEach((m) => (m.tracks || []).forEach((t) => {
+      if (t.recording && t.recording.id) recs.set(t.recording.id, t.recording);
+    }));
+    return {
+      title: ws.title || '',
+      year: Number(String(ws.date || '').slice(0, 4)) || null,
+      country: ws.country || '',
+      formats: uniq((ws.media || []).map((m) => m.format || '').filter(Boolean)),
+      labels: uniq((ws['label-info'] || []).map((li) => li && li.label && li.label.name).filter(Boolean)),
+      before: nonUrl(ws.relations) + [...recs.values()].reduce((n, r) => n + nonUrl(r.relations), 0),
+    };
+  }
+
+  /** [E8] A relationship the dashboard supplemented in the editor (a credit, a date, attributes of a work link). */
+  function statFill(state, row, source) {
+    if (!state || typeof state.id !== 'number') return;
+    S.statFills.set(state.id, { rowId: row ? row.id : null, source: source ? { gid: source.gid, entityType: source.entityType } : null });
+  }
+
+  /**
+   * [E8] At "Enter edit": the relationships of the dashboard still in the editor – those it staged (new) and those it supplemented –
+   * each in short, with how it can be looked up in MusicBrainz afterwards (c); the release, the source, the time of the first
+   * import of this page (maintainer: "der erste Import zählt, sofern die seite nicht neu geladen wurde").
+   */
+  function statSnapshot() {
+    const mb = getMB();
+    const re = mb && mb.relationshipEditor;
+    if (!re || !re.state || !S.initialized) return null;
+    const byId = new Map();
+    for (const st of S.staged.values()) {
+      const id = st && st.state && st.state.id;
+      if (typeof id !== 'number') continue;
+      if (!byId.has(id)) byId.set(id, { k: 'n', source: st.source, rows: [] });
+      if (st.rowId) byId.get(id).rows.push(st.rowId);
+    }
+    for (const [id, f] of S.statFills) if (!byId.has(id)) byId.set(id, { k: 's', source: f.source, rows: f.rowId ? [f.rowId] : [] });
+    if (!byId.size) return null;
+    const cur = findRelationshipStates(re.state, new Set(byId.keys()));
+    const had = statExisting(re.state);
+    const rels = [];
+    for (const [id, state] of cur) {
+      const x = byId.get(id);
+      // taken out in the editor (3), or a supplement undone there (0): not submitted
+      if (state._status === 3 || (x.k === 's' && state._status === 0)) continue;
+      const e0 = state.entity0 || {};
+      const e1 = state.entity1 || {};
+      const srcGid = x.source && x.source.gid;
+      const first = srcGid ? e0.gid === srcGid : ['release', 'recording', 'work', 'release_group'].includes(e0.entityType);
+      const src = first ? e0 : e1;
+      const tgt = first ? e1 : e0;
+      const lt = idx().ltById.get(state.linkTypeID);
+      const attrs = treeValues(state.attributes).map((a) => {
+        const tid = a.typeID || (a.type && a.type.id);
+        return { name: a.typeName || (a.type && a.type.name) || (idx().atById.get(tid) || {}).name || '', root: statAttrRoot(tid), credit: a.credited_as || '' };
+      });
+      const row = x.rows.map((rid) => S.rows.find((r) => r.id === rid)).find(Boolean) || null;
+      const entry = row && S.artists.get(row.artistKey);
+      const it = {
+        k: x.k, lt: lt ? lt.name : '', lv: src.entityType || '', et: tgt.entityType || '', tg: tgt.gid || '', tn: tgt.name || '',
+        i: attrs.filter((a) => a.root === 'instrument').map((a) => a.name), v: attrs.filter((a) => a.root === 'vocal').map((a) => a.name),
+        d: statDatePrec(state.begin_date), ds: statDatePrec(state.begin_date) ? statDateSrc(row) : '',
+        rc: attrs.some((a) => a.credit) ? 1 : 0, ac: (first ? state.entity1_credit : state.entity0_credit) ? 1 : 0,
+        ru: (row && row.ruleId) || '', lk: statLinkOf(entry), nw: entry && entry.status === 'created' ? 1 : 0,
+      };
+      if (x.k === 'n' && (src.entityType === 'release' || src.entityType === 'recording') && src.gid && tgt.gid) {
+        it.c = { on: src.entityType, src: src.gid, lt: state.linkTypeID, tgt: tgt.gid, n0: had.get(`${src.gid}|${state.linkTypeID}|${tgt.gid}`) || 0 };
+      }
+      rels.push(it);
+    }
+    const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
+    return { v: 1, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, rels };
+  }
+
+  /**
+   * [E8] The relationships MusicBrainz had, as the editor shows them (not new ones: their ids are positive): how many per
+   * "<source gid>|<type>|<target gid>", in both directions – so that a relationship it had is not taken for a new one.
+   */
+  function statExisting(root, maxSteps = 400000) {
+    const out = new Map();
+    const counted = new Set();
+    const seen = new Set();
+    const stack = [root];
+    let steps = 0;
+    while (stack.length && steps < maxSteps) {
+      const v = stack.pop();
+      steps++;
+      if (!v || typeof v !== 'object' || seen.has(v)) continue;
+      seen.add(v);
+      if ('linkTypeID' in v && v.entity0 && v.entity1 && typeof v.id === 'number') {
+        if (v.id > 0 && !counted.has(v.id)) {
+          counted.add(v.id);
+          [[v.entity0, v.entity1], [v.entity1, v.entity0]].forEach(([a, b]) => {
+            const k = `${a.gid}|${v.linkTypeID}|${b.gid}`;
+            out.set(k, (out.get(k) || 0) + 1);
+          });
+        }
+        continue;
+      }
+      if (v instanceof Map || v instanceof Set) v.forEach((x) => stack.push(x));
+      else if (Array.isArray(v)) v.forEach((x) => stack.push(x));
+      else Object.keys(v).forEach((k) => stack.push(v[k]));
+    }
+    return out;
+  }
+
+  /** [E8] The key of a time's period: day "2026-10-30", week "2026-W44" (ISO), month "2026-10", year "2026" (local time). */
+  function statPeriodKey(ms, period) {
+    const d = new Date(ms);
+    const p2 = (n) => String(n).padStart(2, '0');
+    if (period === 'year') return String(d.getFullYear());
+    if (period === 'month') return `${d.getFullYear()}-${p2(d.getMonth() + 1)}`;
+    if (period === 'week') {
+      const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const wd = (t.getDay() + 6) % 7;
+      t.setDate(t.getDate() - wd + 3);
+      const y = t.getFullYear();
+      const w1 = new Date(y, 0, 4);
+      const wk = 1 + Math.round(((t - w1) / 86400000 - 3 + ((w1.getDay() + 6) % 7)) / 7);
+      return `${y}-W${p2(wk)}`;
+    }
+    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+  }
+
+  /** [E8] The sums of submissions (records of dci-stats). */
+  function statAgg(recs) {
+    const a = { subs: recs.length, releases: new Set(), rels: 0, n: 0, s: 0, filled: new Set(), empty: new Set(), created: new Set(), msSum: 0, msN: 0, msRels: 0,
+      artists: new Map(), instr: new Map(), types: new Map() };
+    const add = (m, k, name = k) => {
+      if (!k) return;
+      const x = m.get(k) || { name, n: 0 };
+      x.n++;
+      m.set(k, x);
+    };
+    const seenRel = new Set();
+    const relMs = new Map();
+    for (const r of [...recs].sort((x, y) => x.at - y.at)) {
+      a.releases.add(r.mbid);
+      // a release counts as it was at its first submission (before: its relationships in MusicBrainz then)
+      if (!seenRel.has(r.mbid) && r.rel) {
+        seenRel.add(r.mbid);
+        (r.rel.before ? a.filled : a.empty).add(r.mbid);
+      }
+      const rels = r.rels || [];
+      a.rels += rels.length;
+      if (r.ms != null && rels.length) {
+        a.msSum += r.ms;
+        a.msN++;
+        a.msRels += rels.length;
+        relMs.set(r.mbid, (relMs.get(r.mbid) || 0) + r.ms);
+      }
+      for (const it of rels) {
+        if (it.k === 's') a.s++;
+        else a.n++;
+        if (it.et === 'artist') add(a.artists, it.tg, it.tn);
+        (it.i || []).forEach((n) => add(a.instr, n));
+        add(a.types, it.lt);
+        if (it.nw && it.et === 'artist') a.created.add(it.tg);
+      }
+    }
+    // the time per release: all its submissions together
+    a.perRelease = relMs.size ? [...relMs.values()].reduce((x, y) => x + y, 0) / relMs.size : null;
+    return a;
+  }
+
+  const statTop = (m, n) => [...m.values()].sort((x, y) => y.n - x.n || x.name.localeCompare(y.name)).slice(0, n);
+  const statPct = (x, of) => (of ? Math.round((100 * x) / of) : 0);
+  /** [E8] A duration: "45 s", "3 min 20 s", "1 h 5 min". */
+  function statDur(ms) {
+    if (ms == null || !Number.isFinite(ms)) return '–';
+    // under 10 s with a tenth (a relationship often takes less than a second)
+    if (ms < 9950) return tr('stats.sec', { s: new Intl.NumberFormat(LANG, { maximumFractionDigits: 1 }).format(Math.max(0, ms) / 1000) });
+    const sec = Math.round(ms / 1000);
+    if (sec < 60) return tr('stats.sec', { s: sec });
+    const min = Math.floor(sec / 60);
+    if (min < 60) return tr('stats.min', { m: min, s: sec % 60 });
+    return tr('stats.hour', { h: Math.floor(min / 60), m: min % 60 });
+  }
+  const statNum = (n) => new Intl.NumberFormat(LANG).format(n);
+
+  /** [E8] The records, read once the tab is shown (drawn again when they are there). */
+  async function statsLoad() {
+    if (S.statsLoading) return;
+    S.statsLoading = true;
+    const all = await statAll();
+    S.statsData = Array.isArray(all) ? all : [];
+    S.statsLoading = false;
+    if (S.settingsOpen && S.settingsTab === 'statistics' && !S.resetOpen) renderSettings();
+  }
+
+  /**
+   * [E8] The tab "Statistics" in ⚙ Settings (maintainer: "die statistiken sollen erstmal in den einstellung sein"): collecting
+   * on or off, the sums, over days / weeks / months / years, the most frequent artists, instruments and types.
+   */
+  function statsHtml() {
+    const row = (html) => `<div class="dci-set-row">${html}</div>`;
+    const on = statsOn();
+    const head = [
+      `<p class="dci-sub">${esc(tr('stats.hint'))}</p>`,
+      row(`<label class="dci-check" title="${esc(tr('stats.onTitle'))}"><input type="checkbox" data-set="stats-on" ${on ? 'checked' : ''}> ${esc(tr('stats.on'))}</label>`),
+    ];
+    if (S.statsData == null) {
+      statsLoad();
+      return [...head, `<p class="dci-sub" data-el="stats-loading">${esc(tr('stats.loading'))}</p>`];
+    }
+    const recs = S.statsData;
+    if (!recs.length) return [...head, `<p class="dci-sub" data-el="stats-empty">${esc(tr('stats.empty'))}</p>`];
+    const a = statAgg(recs);
+    const tile = (key, value, sub = '') => `<div class="dci-stats-tile" data-stat="${key}"><span class="dci-stats-num">${esc(value)}</span>
+      <span class="dci-stats-lbl">${esc(tr(`stats.t.${key}`))}</span>${sub ? `<span class="dci-sub">${esc(sub)}</span>` : ''}</div>`;
+    const relsAll = a.n + a.s;
+    const nRel = a.releases.size;
+    const tiles = `<div class="dci-stats-tiles">
+      ${tile('releases', statNum(nRel), tr('stats.subs', { n: a.subs }))}
+      ${tile('rels', statNum(a.rels))}
+      ${tile('newSupp', `${statPct(a.n, relsAll)} % / ${statPct(a.s, relsAll)} %`, tr('stats.newSuppN', { n: a.n, s: a.s }))}
+      ${tile('before', `${statPct(a.filled.size, nRel)} % / ${statPct(a.empty.size, nRel)} %`, tr('stats.beforeN', { f: a.filled.size, e: a.empty.size }))}
+      ${tile('created', statNum(a.created.size))}
+      ${tile('perRelease', statDur(a.perRelease))}
+      ${tile('perRel', statDur(a.msRels ? a.msSum / a.msRels : null))}
+    </div>`;
+    // over time
+    const period = ['day', 'week', 'month', 'year'].includes(S.statsPeriod) ? S.statsPeriod : 'month';
+    const groups = new Map();
+    for (const r of recs) {
+      const k = statPeriodKey(r.at, period);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(r);
+    }
+    const keys = [...groups.keys()].sort().reverse().slice(0, 12);
+    const per = keys.map((k) => [k, statAgg(groups.get(k))]);
+    const max = Math.max(1, ...per.map(([, g]) => g.rels));
+    const seg = `<span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('stats.period'))}">${['day', 'week', 'month', 'year'].map((v) => `<button type="button"
+      data-act="stats-period" data-period="${v}" aria-pressed="${period === v}">${esc(tr(`stats.period.${v}`))}</button>`).join('')}</span>`;
+    const table = `<div class="dci-tablewrap"><table class="dci-stats-table" data-el="stats-periods">
+      <thead><tr><th scope="col">${esc(tr(`stats.period.${period}`))}</th><th scope="col">${esc(tr('stats.t.releases'))}</th><th scope="col">${esc(tr('stats.t.rels'))}</th>
+        <th scope="col">${esc(tr('stats.col.new'))}</th><th scope="col">${esc(tr('stats.col.supp'))}</th><th scope="col">${esc(tr('stats.t.perRel'))}</th></tr></thead>
+      <tbody>${per.map(([k, g]) => `<tr data-period-key="${esc(k)}"><th scope="row">${esc(k)}</th><td>${statNum(g.releases.size)}</td>
+        <td><span class="dci-stats-bar" style="width:${Math.max(2, Math.round((60 * g.rels) / max))}px" aria-hidden="true"></span> ${statNum(g.rels)}</td>
+        <td>${statPct(g.n, g.n + g.s)} %</td><td>${statPct(g.s, g.n + g.s)} %</td><td>${esc(statDur(g.msRels ? g.msSum / g.msRels : null))}</td></tr>`).join('')}</tbody></table></div>`;
+    const list = (key, items) => `<div class="dci-stats-list" data-el="stats-top-${key}"><h4>${esc(tr(`stats.top.${key}`))}</h4>${items.length
+      ? `<ol>${items.map((x) => `<li><span>${esc(x.name)}</span> <span class="dci-sub">${statNum(x.n)}</span></li>`).join('')}</ol>` : `<p class="dci-sub">–</p>`}</div>`;
+    const tops = `<div class="dci-stats-lists">${list('artists', statTop(a.artists, 3))}${list('instr', statTop(a.instr, 3))}${list('types', statTop(a.types, 5))}</div>`;
+    return [...head, tiles,
+      `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))} ${seg}</h4>`, table,
+      tops,
+      row(`<button type="button" class="dci-small" data-act="stats-delete">${esc(tr('stats.delete'))}</button> <span class="dci-sub">${esc(tr('stats.stored', { n: recs.length }))}</span>`)];
+  }
+
   /** Settings the menu shares with switches elsewhere in the dashboard (data-f → the value they show). */
   const SHARED_SWITCHES = {
     'fill-credits': () => S.fillCredits, 'stage-cap': () => S.capOn, 'bc-tracks': () => S.bcTracks, 'dm-auto': () => S.dmAuto,
@@ -28192,6 +28769,8 @@
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
         ];
       },
+      // [E8] (3.38.0) the statistics (maintainer: "Statistiken sollen in den EInstellungen aufgeführt werden.")
+      statistics: () => statsHtml(),
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
     const tab = SETTING_TOPICS.includes(S.settingsTab) ? S.settingsTab : 'general';
@@ -28219,6 +28798,7 @@
       <p class="dci-sub">${esc(tr('reset.what'))}</p>
       <label class="dci-check"><input type="checkbox" data-f="reset-rules" ${S.resetRules ? 'checked' : ''}> ${esc(tr('reset.rules', { n: userRules().length, c: Object.keys(mappingChanges.rules).length + Object.keys(mappingChanges.lists).length, off: [...rulesOff()].filter((id) => !id.startsWith('+')).length }))}</label>
       <label class="dci-check"><input type="checkbox" data-f="reset-pools" ${S.resetPools ? 'checked' : ''}> ${esc(tr('reset.pools'))}</label>
+      <label class="dci-check"><input type="checkbox" data-f="reset-keepstats" ${S.resetKeepStats === false ? '' : 'checked'}> ${esc(tr('reset.keepStats'))}</label>
       <p class="dci-sub">${esc(tr('reset.never'))}</p>
       <div class="dci-mbdate-tools">
         <button type="button" class="dci-small" data-act="reset-do">${esc(tr('reset.do'))}</button>
@@ -28328,6 +28908,7 @@
     // [3.25.0] the two boxes of "Reset all settings" are kept when the settings are drawn anew
     if (e.type === 'change' && e.target.dataset && e.target.dataset.f === 'reset-rules') S.resetRules = e.target.checked;
     if (e.type === 'change' && e.target.dataset && e.target.dataset.f === 'reset-pools') S.resetPools = e.target.checked;
+    if (e.type === 'change' && e.target.dataset && e.target.dataset.f === 'reset-keepstats') S.resetKeepStats = e.target.checked; // [E8] (3.38.0)
     if (e.type === 'click' && e.target.closest && e.target.closest('input, select, textarea')) return;
     setTimeout(() => {
       syncSharedSwitches();
@@ -28393,6 +28974,10 @@
       if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_BTN_KEY, el.checked ? null : false);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'stats-on') {
+      // [E8] (3.38.0) collecting the statistics (on unless switched off)
+      writeJson('localStorage', STATS_ON_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('stats.on'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'live-comments') {
       // [3.32.9] the comments of live recordings (item 113)
       S.liveCom = el.checked;
@@ -28605,6 +29190,9 @@
       Object.assign(S, { dmAuto: false, poolsKeep: true, workGroupsOn: true });
       if (S.mbTracks && S.mbTracks.length) applyWorkGroups();
       renderDates();
+    } else if (t === 'statistics') {
+      // [E8] (3.38.0) collecting on, months – the statistics stay
+      S.statsPeriod = 'month';
     } else if (t === 'cache') {
       // [146] (3.36.0) off again, 50 releases – what is remembered stays (forgotten with its own button)
       Object.assign(S, { rememberOn: false, rememberMax: 50 });
@@ -28631,6 +29219,8 @@
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
+    // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
+    STATS_ON_KEY, STATS_PERIOD_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
     BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
@@ -28653,7 +29243,7 @@
    * options of the footer and of the date pool, and (through the companion) the cover box on Discogs.
    * Own mapping rules and the stored pools only when ticked; the list of created works never.
    */
-  function resetSettings({ rules = false, pools = false } = {}) {
+  function resetSettings({ rules = false, pools = false, stats = false } = {}) {
     [...SETTINGS_KEYS, ...Object.values(GEOM_KEYS)].forEach((k) => writeJson('localStorage', k, null));
     Object.assign(S, {
       scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, clickToggle: true, keepMarks: false, fillCredits: false,
@@ -28696,6 +29286,14 @@
       S.dm = { cells: [], found: '', dirty: false };
       // [146] (3.36.0) those of this release too, also while it is not remembered
       [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY].forEach((k) => writeJson('localStorage', k, null));
+    }
+    // [E8] (3.38.0) the statistics only when "keep statistics" was unticked (maintainer: "Bei den Resetfunktionen soll es geben:
+    // "keep statistics"", "ja soll angehakt sein")
+    S.statsPeriod = 'month';
+    if (stats) {
+      statClear();
+      S.statsData = [];
+      log('info', 'statsDeleted', {});
     }
     toDiscogs({ type: 'reset-settings' });
     log('info', 'settingsReset', { rules: tr(rules ? 'common.on' : 'common.off'), pools: tr(pools ? 'common.on' : 'common.off') });
@@ -28761,6 +29359,8 @@
   async function initOnce() {
     if (S.initialized || S.importStarting) return;
     S.importStarting = true;
+    // [E8] (3.38.0) the first import of this page: the start of the time of the statistics
+    if (!S.statStart) S.statStart = Date.now();
     try {
       await init();
     } finally {
@@ -30144,6 +30744,21 @@
       .dci-conn code { font-size: calc(var(--u, 1px) * 11); white-space: normal; }
       .dci-set-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 5) 0; }
       .dci-set-row input[type="number"] { width: calc(var(--u, 1px) * 80); }
+      /* [E8] (3.38.0) the statistics */
+      .dci-stats-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 132), 1fr)); gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; }
+      .dci-stats-tile { display: flex; flex-direction: column; gap: 2px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border: 1px solid var(--line); border-radius: 4px; background: var(--soft); }
+      .dci-stats-num { font-size: calc(var(--u, 1px) * 18); font-weight: 700; color: var(--purple-d); font-variant-numeric: tabular-nums; }
+      .dci-stats-lbl { font-size: calc(var(--u, 1px) * 12); color: var(--ink); }
+      .dci-stats-tile .dci-sub { font-size: calc(var(--u, 1px) * 11); }
+      .dci-stats-h { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 10); margin: calc(var(--u, 1px) * 12) 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 13); }
+      .dci-stats-table { border-collapse: collapse; font-size: calc(var(--u, 1px) * 12); font-variant-numeric: tabular-nums; }
+      .dci-stats-table th, .dci-stats-table td { text-align: left; padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 3) 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+      .dci-stats-table thead th { font-weight: 600; color: var(--muted); }
+      .dci-stats-bar { display: inline-block; height: calc(var(--u, 1px) * 8); border-radius: 2px; background: var(--purple); vertical-align: middle; margin-right: calc(var(--u, 1px) * 4); }
+      .dci-stats-lists { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 28); margin: calc(var(--u, 1px) * 8) 0; }
+      .dci-stats-list h4 { margin: 0 0 calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 13); }
+      .dci-stats-list ol { margin: 0; padding-left: calc(var(--u, 1px) * 20); font-size: calc(var(--u, 1px) * 12); }
+      .dci-stats-list li { margin: 1px 0; }
       .dci-set-reset { margin-top: calc(var(--u, 1px) * 6); }
       .dci-dm-pending { color: var(--warn); font-size: calc(var(--u, 1px) * 12); font-weight: 600; }
 
