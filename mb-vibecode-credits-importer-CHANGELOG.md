@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-31 | 3.38.0 – 3.38.3 | – |
+| 2026-10-31 | 3.38.0 – 3.38.4 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
@@ -96,6 +96,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-31
+
+### Import 3.38.4
+
+#### Changed
+
+- **The footer compact** (collected item 169; maintainer: "die untere leiste nimmt noch zu viel platz weg (siehe screenshot). kann man das nicht etwas mehr und smart nebeneinander anordnen. so dass es sich aber passend verschiebt, falls die bildschirmauflösung in der breite oder die größe des dashboard fensters "zu klein" für die anzeige ist?", "Häkchen ins Menü: schon bei mittlerer breite"): one line where there is room – ▲ ▼, the summary in one line ("25 new relationships · ‹ 1 row incomplete › · 1 already on MB"; the levels in the tooltip of the number), the messages as chips ("2 tracks without a work", "round 1 of 3", "✓ 30 in the editor (12:03:11)"; the whole message in the tooltip, a click shows it below), **Preview**, the checkboxes **edit note**, **fill role credits**, **≤ 500 per staging** (the full texts in the tooltips), **Stage in the relationship editor** at the right and **ⓘ** for "Nothing is submitted …". It follows the width of the dashboard, not of the screen: narrower than about 1,100 px the checkboxes are in **⚙ Options ▾** (opens above; a click elsewhere or Esc closes it) and the actions go below the summary. About 50 px high in one line, 80 px in two – until 3.38.3 about 200 px in five lines. The live comments are the first line of the footer.
 
 ### Import 3.38.3
 

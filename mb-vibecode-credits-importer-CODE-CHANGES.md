@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.3, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.4, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.4 · 2026-10-31
+
+The footer compact (collected item 169).
+
+- **Markup** (`buildOverlay`): `footer.dci-foot` holds `[data-el=livecom]` (first), `.dci-foot-bar` (`.dci-jump`, `[data-el=sum]`, new `[data-el=foot-chips]` with `role="status"`, `.dci-foot-actions`: panic, `[data-act=preview]` with `footer.previewShort` and the old text as tooltip, new `.dci-foot-opts[data-el=foot-opts]` – button `[data-act=foot-opts]` "⚙ Options ▾" and `#dci-foot-optlist` with the three checkboxes (short labels `footer.editNoteShort`, `footer.fillShort`, `footer.capShort`; the long texts in `title`, the cap's label `[data-el=cap-check]`) –, `[data-act=apply]`, new `.dci-foot-info` ⓘ with `footer.hint`), then `[data-el=rounds]`, `[data-el=waiting]`, `[data-el=stage-done]` (no `role="status"` any more – the chips have it); `p.dci-hint` removed.
+- **New** `FOOT_MSGS`, **`renderFootChips()`** (`S.footMsgs` – `rounds`, `waiting`, `stage-done`: `{ text, chip }` –, the chips `button.dci-foot-chip.dci-foot-chip-info|warn|ok[data-act=foot-msg][data-msg]` with the text as `title`; the paragraph of `S.footMsgOpen` shown with its text, the others hidden), **`setFootOpts(open)`** (`S.footOptsOpen`, `.dci-open`, `aria-expanded`).
+- **`refresh`:** the rounds and the waiting tracks into `S.footMsgs` (`footer.chipRounds`, `footer.chipWaiting`), then `renderFootChips()`; the summary in one line – `strong.dci-sum-new` with the levels as `title` (and `tabindex="0"`), the parts joined by `span.dci-sum-sep` " · " (was `<br>`). **`applyPlan`:** what was staged into `S.footMsgs['stage-done']` (`footer.chipDone`, the time of `msg.stageDone`). **`syncSharedSwitches`:** `footer.capShort` and the cap's tooltip.
+- **Handlers:** `onClick` closes "⚙ Options ▾" on a click outside `.dci-foot-opts`; cases `foot-opts`, `foot-msg`; Escape closes "⚙ Options ▾" first (focus back on its button); `S.footOptsOpen = false` when the overlay is built.
+- **CSS:** `.dci-foot` a column with `container-type: inline-size`; `.dci-foot-bar` (flex, wrap), `.dci-sum-new[title]`, `.dci-sum-sep`, `.dci-foot-chips`, `.dci-foot-chip` (`-warn`, `-info`, `-ok`), `.dci-foot-actions` (`margin-left: auto`), `.dci-foot-opts`, `.dci-foot-optbtn` (hidden), `.dci-foot-optlist`, `.dci-foot-info`; `@container (max-width: 1099px)`: the button shown, the list a box above it (`.dci-open`); `.dci-rounds`, `.dci-waiting`, `.dci-stage-done`, `.dci-livecom` without margins; `.dci-hint` and `.dci-livecom-full` (3.38.3) removed – `renderLiveComments` no longer sets it.
+- **Texts (English):** `footer.previewShort`, `footer.editNoteShort`, `footer.fillShort`, `footer.capShort`, `footer.options`, `footer.optionsTitle`, `footer.chipRounds`, `footer.chipWaiting.one/.other`, `footer.chipDone.one/.other`.
+- **Tests:** `t_ui_view.py` new case `foot` (1500 px one line ≤ 60 px, the summary, the levels, the chip and its message, the short checkboxes and their tooltips, Stage and ⓘ at the right; 900 px two lines, "⚙ Options ▾" above, ticked there, closed by a click elsewhere and Esc; 600 px Stage whole; staged: the chip "✓ 30 in the editor"; in the page one line at the bottom); `t_dates_matrix.py` `dragdates`: the date dropped onto Keys Guy with `drag` (from the middle) – with the lower footer its field lay near the bottom edge, where the dashboard scrolls while dragging; `t_rules_window.py` `rowrules` and `t_notes_companies.py` `facets` click the rule id and "new work" in the page – the row and the button may now lie below the log window of the test, and Playwright would scroll before its click.
 
 ## Import 3.38.3 · 2026-10-31
 
