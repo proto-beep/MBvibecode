@@ -401,7 +401,7 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     an answer is none) and the answers (Q002); the switch off by default; on: taken over / changed by hand, the
                                 #     rules changed most, not recognized (once per release), the answers, duplicates avoided
 
-python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
+python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
                                 #     a line per row, marks in colour, fields hidden,
                                 #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered ([3.32.3] in the
@@ -423,6 +423,10 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   kindcolors: 3.32.4: the heads of the works matrix in the colours of their kinds (Writer W artist, Pub Co label,
                                 #     with the tag), ⚙ Settings → Appearance: own artist colour (entry and head follow, stored), off → grey, ↺
                                 #     3.37.8: the colour Event (plum) among them
+                                #   foot: 3.38.4: the footer – 1500 px one line (≤ 60 px: ▲▼, the summary with the levels as tooltip, the chip
+                                #     "2 tracks without a work" and its message on a click, Preview, the short checkboxes with their tooltips,
+                                #     Stage and ⓘ at the right), 900 px two lines with "⚙ Options ▾" (above, ticked there, closed by a click
+                                #     elsewhere and Esc), 600 px Stage whole, staged: "✓ 30 in the editor", in the page one line at the bottom
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset

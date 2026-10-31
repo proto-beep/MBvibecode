@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.3
+// @version      3.38.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -429,6 +429,17 @@
       "footer.bottom": "To the bottom of the dashboard",
       "footer.editNote": "Write source and summary to the edit note",
       "footer.apply": "Stage in the relationship editor",
+      "footer.previewShort": "Preview",
+      "footer.editNoteShort": "edit note",
+      "footer.fillShort": "fill role credits",
+      "footer.capShort": "≤ {n} per staging",
+      "footer.options": "⚙ Options",
+      "footer.optionsTitle": "Edit note, role credits of existing relationships, rounds of staging",
+      "footer.chipRounds": "round {k} of {x}",
+      "footer.chipWaiting.one": "{n} track without a work",
+      "footer.chipWaiting.other": "{n} tracks without a work",
+      "footer.chipDone.one": "{n} in the editor ({time})",
+      "footer.chipDone.other": "{n} in the editor ({time})",
       "livecom.title": "Live disambiguation comments: {n} of {m}",
       "livecom.medium": "Medium",
       "livecom.tracksPart.one": "track {list}",
@@ -17020,10 +17031,13 @@
 
     setBusy('');
 
-    const doneEl = $('stage-done');
-    doneEl.hidden = !(added + updated);
-    doneEl.textContent = added + updated
-      ? `✓ ${round ? `${tr('msg.roundDone', round)} ` : ''}${tr('msg.stageDone', { n: added + updated, time: new Date().toLocaleTimeString() })}` : '';
+    // [169] (3.38.4) a chip in the line of the summary, the whole text in its tooltip
+    if (!S.footMsgs) S.footMsgs = {};
+    const nDone = added + updated;
+    const doneAt = new Date().toLocaleTimeString();
+    S.footMsgs['stage-done'] = nDone
+      ? { text: `✓ ${round ? `${tr('msg.roundDone', round)} ` : ''}${tr('msg.stageDone', { n: nDone, time: doneAt })}`, chip: `✓ ${tr('footer.chipDone', { n: nDone, time: doneAt })}` } : null;
+    renderFootChips();
     if (updated) showMessage('ok', 'msg.stagedUpdated', { n: updated });
     if (fillIds.length) {
       // Check that MB took them as changed relationships (they are submitted with "Enter edit");
@@ -21487,6 +21501,42 @@
     }
   }
 
+  /**
+   * [169] (3.38.4) The messages of the footer as short chips in the line of the summary (collected item 169; maintainer: "die untere
+   * leiste nimmt noch zu viel platz weg … smart nebeneinander anordnen"): the rounds of staging, the tracks waiting for a work, what
+   * was staged – the whole text in the tooltip; a click shows it below the line (again: hides it).
+   */
+  const FOOT_MSGS = [['rounds', 'info'], ['waiting', 'warn'], ['stage-done', 'ok']];
+  function renderFootChips() {
+    const box = S.overlay && $('foot-chips');
+    if (!box) return;
+    const m = S.footMsgs || {};
+    if (S.footMsgOpen && !m[S.footMsgOpen]) S.footMsgOpen = null;
+    const html = FOOT_MSGS.filter(([k]) => m[k]).map(([k, kind]) => `<button type="button" class="dci-foot-chip dci-foot-chip-${kind}" data-act="foot-msg" data-msg="${k}"
+      aria-expanded="${S.footMsgOpen === k}" aria-controls="dci-foot-msg-${k}" title="${esc(m[k].text)}">${esc(m[k].chip)}</button>`).join('');
+    if (box.dataset.html !== html) {
+      box.innerHTML = html;
+      box.dataset.html = html;
+    }
+    for (const [k] of FOOT_MSGS) {
+      const el = $(k);
+      if (!el) continue;
+      el.id = `dci-foot-msg-${k}`;
+      el.textContent = m[k] ? m[k].text : '';
+      el.hidden = !m[k] || S.footMsgOpen !== k;
+    }
+  }
+
+  /** [169] (3.38.4) "⚙ Options ▾" of the footer (narrower than about 1,100 px): its checkboxes shown or not. */
+  function setFootOpts(open) {
+    S.footOptsOpen = !!open;
+    const box = S.overlay && $('foot-opts');
+    if (!box) return;
+    box.classList.toggle('dci-open', S.footOptsOpen);
+    const b = box.querySelector('[data-act="foot-opts"]');
+    if (b) b.setAttribute('aria-expanded', String(S.footOptsOpen));
+  }
+
   function refresh() {
     if (!S.overlay) return;
     // [146] (3.36.0) the rows remembered soon after a change
@@ -21499,18 +21549,18 @@
     S.rowInfo = rowInfo;
     sendDiscogsStatus(rowInfo);
     S.waiting = waiting;
-    const roundsEl = $('rounds');
+    // [169] (3.38.4) the rounds and the tracks waiting for a work: chips in the line of the summary (renderFootChips)
+    if (!S.footMsgs) S.footMsgs = {};
     const needRounds = S.capOn && (items.length > S.capLimit || S.capRun);
-    roundsEl.hidden = !needRounds;
     if (needRounds) {
       const done = S.capRun ? S.capRun.done : 0;
-      roundsEl.textContent = tr('msg.roundsHint', { n: items.length, cap: S.capLimit, x: done + Math.max(1, Math.ceil(items.length / S.capLimit)), k: done + 1 });
-    }
+      const x = done + Math.max(1, Math.ceil(items.length / S.capLimit));
+      S.footMsgs.rounds = { text: tr('msg.roundsHint', { n: items.length, cap: S.capLimit, x, k: done + 1 }), chip: tr('footer.chipRounds', { k: done + 1, x }) };
+    } else S.footMsgs.rounds = null;
     // [3.32.9] the disambiguation comments of live recordings (item 113)
     renderLiveComments();
-    const waitEl = $('waiting');
-    waitEl.hidden = !waiting.size;
-    waitEl.textContent = waiting.size ? tr('msg.waitingHint', { n: waiting.size }) : '';
+    S.footMsgs.waiting = waiting.size ? { text: tr('msg.waitingHint', { n: waiting.size }), chip: tr('footer.chipWaiting', { n: waiting.size }) } : null;
+    renderFootChips();
     S.plan = items;
     let incomplete = 0;
     let existing = 0;
@@ -21574,7 +21624,8 @@
       ['kind.work', count((i) => i.target.kind === 'work')],
       ['kind.workLink', count((i) => i.kind === 'work-link')],
     ].filter(([, n]) => n).map(([key, n]) => tr(key, { n }));
-    const sum = [`<strong>${esc(tr('sum.new', { n: items.length }))}</strong>${kinds.length ? ` (${esc(kinds.join(', '))})` : ''}`];
+    // [169] (3.38.4) in one line: the levels in the tooltip
+    const sum = [`<strong class="dci-sum-new"${kinds.length ? ` title="${esc(kinds.join(', '))}" tabindex="0"` : ''}>${esc(tr('sum.new', { n: items.length }))}</strong>`];
     // [E4] (3.35.0) joined: how many a relationship per instrument would be
     const apart = items.reduce((n, it) => n + (it.joinedItems ? it.joinedItems.length : 1), 0);
     if (apart > items.length) sum.push(`<span class="dci-sub" data-el="sum-joined">${esc(tr('sum.joined', { n: apart }))}</span>`);
@@ -21588,7 +21639,7 @@
         <button type="button" class="dci-iconbtn" data-act="inc-next" title="${esc(tr('sum.incNext'))}" aria-label="${esc(tr('sum.incNext'))}">›</button></span>`);
     }
     if (existing) sum.push(`<span class="dci-muted">${esc(tr('sum.existing', { n: existing }))}</span>`);
-    $('sum').innerHTML = sum.join('<br>');
+    $('sum').innerHTML = sum.join('<span class="dci-sum-sep" aria-hidden="true"> · </span>');
     S.overlay.querySelectorAll('[data-group]').forEach((section) => {
       const rows = S.rows.filter((r) => r.artistKey === section.dataset.group);
       section.classList.toggle('dci-all-skip', rows.length > 0 && rows.every((r) => r.level === 'skip'));
@@ -22695,8 +22746,7 @@
     if (!el) return;
     const list = (S.liveCom || S.liveComOffer !== 'no') && S.rows.length ? liveProposals() : [];
     el.hidden = !list.length;
-    // (a line of its own, open or not: the heading stays at the same place – bottom right)
-    el.classList.toggle('dci-livecom-full', !!list.length && liveComOn());
+    // ([169] 3.38.4: a line of its own above the line of the footer – open or not, the heading stays at the bottom right)
     if (!list.length) {
       el.innerHTML = '';
       el.dataset.html = '';
@@ -25942,6 +25992,8 @@
   }
 
   function onClick(e) {
+    // [169] (3.38.4) "⚙ Options ▾" of the footer closes with a click anywhere else
+    if (S.footOptsOpen && e.target.closest && !e.target.closest('.dci-foot-opts')) setFootOpts(false);
     // An open ▾ menu of a column head closes with a click anywhere else
     if (S.mxColMenu && e.target.closest && !e.target.closest('.dci-mx-colmenu, [data-act="mx-colmenu"]')) {
       S.mxColMenu = null;
@@ -27200,6 +27252,13 @@
         loadRelease(textSig(text), { source: TEXT });
         break;
       }
+      case 'foot-opts':
+        setFootOpts(!S.footOptsOpen);
+        break;
+      case 'foot-msg':
+        S.footMsgOpen = S.footMsgOpen === btn.dataset.msg ? null : btn.dataset.msg;
+        renderFootChips();
+        break;
       case 'preview':
         S.previewOpen = !S.previewOpen;
         btn.setAttribute('aria-expanded', String(S.previewOpen));
@@ -28145,24 +28204,32 @@
         </div>
         <div class="dci-preview" data-el="preview" hidden></div>
         <footer class="dci-foot">
-          <span class="dci-jump" role="group" aria-label="${esc(tr('footer.jump'))}">
-            <button type="button" class="dci-iconbtn" data-act="jump-top" title="${esc(tr('footer.top'))}" aria-label="${esc(tr('footer.top'))}">▲</button>
-            <button type="button" class="dci-iconbtn" data-act="jump-bottom" title="${esc(tr('footer.bottom'))}" aria-label="${esc(tr('footer.bottom'))}">▼</button>
-          </span>
-          <div class="dci-sum" data-el="sum"></div>
           <div class="dci-livecom" data-el="livecom" hidden></div>
-          <div class="dci-foot-actions">
-            <button type="button" class="dci-panic" data-act="panic" hidden title="${esc(tr('panic.title'))}"></button>
-            <button type="button" class="dci-textbtn" data-act="preview" aria-expanded="${S.previewOpen}">${esc(tr('footer.preview'))}</button>
-            <label class="dci-check"><input type="checkbox" data-f="editnote" ${S.editNote ? 'checked' : ''}> ${esc(tr('footer.editNote'))}</label>
-            <label class="dci-check" title="${esc(tr('footer.fillTitle'))}"><input type="checkbox" data-f="fill-credits" ${S.fillCredits ? 'checked' : ''}> ${esc(tr('footer.fill'))}</label>
-            <label class="dci-check" title="${esc(tr('footer.capTitle'))}"><input type="checkbox" data-f="stage-cap" ${S.capOn ? 'checked' : ''}> <span data-el="cap-label">${esc(tr('footer.cap', { n: S.capLimit }))}</span></label>
-            <button type="button" class="dci-apply" data-act="apply" disabled>${esc(tr('footer.apply'))}</button>
+          <div class="dci-foot-bar">
+            <span class="dci-jump" role="group" aria-label="${esc(tr('footer.jump'))}">
+              <button type="button" class="dci-iconbtn" data-act="jump-top" title="${esc(tr('footer.top'))}" aria-label="${esc(tr('footer.top'))}">▲</button>
+              <button type="button" class="dci-iconbtn" data-act="jump-bottom" title="${esc(tr('footer.bottom'))}" aria-label="${esc(tr('footer.bottom'))}">▼</button>
+            </span>
+            <div class="dci-sum" data-el="sum"></div>
+            <span class="dci-foot-chips" data-el="foot-chips" role="status" aria-live="polite"></span>
+            <div class="dci-foot-actions">
+              <button type="button" class="dci-panic" data-act="panic" hidden title="${esc(tr('panic.title'))}"></button>
+              <button type="button" class="dci-textbtn" data-act="preview" aria-expanded="${S.previewOpen}" title="${esc(tr('footer.preview'))}">${esc(tr('footer.previewShort'))}</button>
+              <span class="dci-foot-opts" data-el="foot-opts">
+                <button type="button" class="dci-textbtn dci-foot-optbtn" data-act="foot-opts" aria-expanded="false" aria-controls="dci-foot-optlist" title="${esc(tr('footer.optionsTitle'))}">${esc(tr('footer.options'))} ▾</button>
+                <span class="dci-foot-optlist" id="dci-foot-optlist">
+                  <label class="dci-check" title="${esc(tr('footer.editNote'))}"><input type="checkbox" data-f="editnote" ${S.editNote ? 'checked' : ''}> ${esc(tr('footer.editNoteShort'))}</label>
+                  <label class="dci-check" title="${esc(`${tr('footer.fill')} – ${tr('footer.fillTitle')}`)}"><input type="checkbox" data-f="fill-credits" ${S.fillCredits ? 'checked' : ''}> ${esc(tr('footer.fillShort'))}</label>
+                  <label class="dci-check" data-el="cap-check" title="${esc(`${tr('footer.cap', { n: S.capLimit })} – ${tr('footer.capTitle')}`)}"><input type="checkbox" data-f="stage-cap" ${S.capOn ? 'checked' : ''}> <span data-el="cap-label">${esc(tr('footer.capShort', { n: S.capLimit }))}</span></label>
+                </span>
+              </span>
+              <button type="button" class="dci-apply" data-act="apply" disabled>${esc(tr('footer.apply'))}</button>
+              <span class="dci-info dci-foot-info" tabindex="0" role="note" title="${esc(tr('footer.hint'))}" aria-label="${esc(tr('footer.hint'))}">ⓘ</span>
+            </div>
           </div>
           <p class="dci-rounds" data-el="rounds" hidden></p>
           <p class="dci-waiting" data-el="waiting" hidden></p>
-          <p class="dci-stage-done" data-el="stage-done" role="status" aria-live="polite" hidden></p>
-          <p class="dci-hint">${esc(tr('footer.hint'))}</p>
+          <p class="dci-stage-done" data-el="stage-done" hidden></p>
         </footer>
       </div>
       <div class="dci-subdlg" data-el="sub" hidden>
@@ -28193,6 +28260,7 @@
     overlay.addEventListener('drop', onDrop);
     overlay.addEventListener('dragend', dmDragEnd);
     S.overlay = overlay;
+    S.footOptsOpen = false;
     applyView();
     applyScale();
     renderCompactHint(); // [143] (3.34.23)
@@ -29362,7 +29430,10 @@
     }
     S.overlay.querySelectorAll('select[data-f="mx-codes"]').forEach((x) => { if (x !== document.activeElement) x.value = S.roleCodes; });
     const cap = S.overlay.querySelector('[data-el="cap-label"]');
-    if (cap) cap.textContent = tr('footer.cap', { n: S.capLimit });
+    if (cap) cap.textContent = tr('footer.capShort', { n: S.capLimit });
+    // [169] (3.38.4) the long text in the tooltip
+    const capCheck = S.overlay.querySelector('[data-el="cap-check"]');
+    if (capCheck) capCheck.title = `${tr('footer.cap', { n: S.capLimit })} – ${tr('footer.capTitle')}`;
   }
 
   /** After a click or a change anywhere in the dashboard: the menu and the shared switches follow (after all handlers ran). */
@@ -30229,6 +30300,14 @@
       if (b) b.focus({ preventScroll: true });
       return;
     }
+    // [169] (3.38.4) "⚙ Options ▾" of the footer
+    if (S.footOptsOpen) {
+      e.preventDefault();
+      setFootOpts(false);
+      const b = S.overlay.querySelector('[data-act="foot-opts"]');
+      if (b) b.focus({ preventScroll: true });
+      return;
+    }
     // [3.26.0] the menu "Source ▾" first
     if (S.srcMenuOpen) {
       e.preventDefault();
@@ -31010,13 +31089,12 @@
       .dci-datefind-list li { padding: calc(var(--u, 1px) * 4) 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
       .dci-ruleinfo { color: var(--muted); font-size: calc(var(--u, 1px) * 11); }
       /* [3.32.9] the comments of live recordings above "Stage …" (item 113) */
-      .dci-livecom { margin: calc(var(--u, 1px) * 6) 0; }
+      .dci-livecom { margin: 0; }
       .dci-livecom-box { border: 1px solid #c8c5d6; border-radius: 4px; background: #fff; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-livecom-offer { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 4px; background: #f7f6fb; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); cursor: help; }
       .dci-livecom-offer span { flex: 1 1 calc(var(--u, 1px) * 300); }
       .dci-livecom-offer button { cursor: pointer; }
       /* [168] (3.38.3) the list above, its heading at the bottom right; at most a third of the dashboard's height */
-      .dci-livecom-full { flex-basis: 100%; }
       .dci-livecom-box { display: flex; flex-direction: column; }
       .dci-livecom-box:not(.dci-livecom-boxopen) { width: fit-content; margin-left: auto; }
       .dci-livecom-body { overflow: auto; margin-bottom: calc(var(--u, 1px) * 4); }
@@ -31073,8 +31151,8 @@
       .dci-mbdate-grid .dci-dsep { color: var(--muted); }
       .dci-bass-ask { margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); border: 1px solid #b9b5d6; border-radius: 3px; background: #f4f3fb; font-size: calc(var(--u, 1px) * 12); }
       .dci-medium-filter { margin-left: calc(var(--u, 1px) * 10); }
-      .dci-rounds { margin: calc(var(--u, 1px) * 6) 0 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #eef4ff; color: #2b3f73; }
-      .dci-waiting { margin: calc(var(--u, 1px) * 6) 0 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #fff8db; color: #7a5a00; }
+      .dci-rounds { margin: 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #eef4ff; color: #2b3f73; }
+      .dci-waiting { margin: 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #fff8db; color: #7a5a00; }
       .dci-series-label { margin: calc(var(--u, 1px) * 4) 0; display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
       .dci-scope { margin-left: calc(var(--u, 1px) * 10); }
       /* [3.30.1] "only works" apart from the levels (it is no level), "Stage:" on the line of its buttons (item 92) */
@@ -31085,7 +31163,7 @@
       .dci-matrix tr.dci-mx-hover > th, .dci-matrix tr.dci-mx-hover > td { background-color: #fff3c4 !important; }
       .dci-dgstatus-toggle { margin-left: calc(var(--u, 1px) * 6); background: #fff; color: #262430; border: 1px solid #c8c5d6; border-radius: 3px; cursor: pointer; font: inherit; }
       .dci-dgstatus-toggle[aria-pressed="true"] { background: #4b4585; color: #fff; border-color: #3b3570; }
-      .dci-stage-done { margin: calc(var(--u, 1px) * 6) 0 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #e6f3ea; color: #1d5b36; font-weight: 600; }
+      .dci-stage-done { margin: 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #e6f3ea; color: #1d5b36; font-weight: 600; }
       .dci-row.dci-unmapped > td { background: #fff8db; }
       .dci-row.dci-unmapped > td:first-child { box-shadow: inset 4px 0 0 #e0a800; }
       .dci-unmapped-box { margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); border: 1px solid #e8c547; border-radius: 3px; background: #fffbe8; font-size: calc(var(--u, 1px) * 12); }
@@ -31558,12 +31636,36 @@
       .dci-pv-target { margin-bottom: calc(var(--u, 1px) * 8); }
       .dci-pv-target ul { margin: 2px 0 0; padding-left: calc(var(--u, 1px) * 18); }
 
-      .dci-foot { display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 20); flex-wrap: wrap; padding: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 20); border-top: 1px solid var(--line); }
-      .dci-foot-actions { display: flex; align-items: center; gap: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 18); flex-wrap: wrap; }
+      /* [169] (3.38.4) the footer: the live comments, then one line – ▲▼, the summary, its chips, the actions with "Stage …" at the
+         right –, wrapped by the width of the dashboard (not of the screen); narrower than about 1,100 px the checkboxes are in
+         "⚙ Options ▾" */
+      .dci-foot { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 20); border-top: 1px solid var(--line); container-type: inline-size; }
+      .dci-foot-bar { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
+      .dci-sum { min-width: 0; }
+      .dci-sum-new[title] { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+      .dci-sum-sep { color: var(--muted); }
+      .dci-sum .dci-incomplete { white-space: nowrap; }
+      .dci-foot-chips { display: inline-flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4); }
+      .dci-foot-chips:empty { display: none; }
+      .dci-foot-chip { border: 1px solid; border-radius: 999px; padding: 1px calc(var(--u, 1px) * 8); font: inherit; font-size: calc(var(--u, 1px) * 12); line-height: 1.5; white-space: nowrap; cursor: pointer; }
+      .dci-foot-chip-warn { background: #fff8db; color: #7a5a00; border-color: #e8d48a; }
+      .dci-foot-chip-info { background: #eef4ff; color: #2b3f73; border-color: #c3d3f2; }
+      .dci-foot-chip-ok { background: #e6f3ea; color: #1d5b36; border-color: #b5dbc2; font-weight: 600; }
+      .dci-foot-chip[aria-expanded=true] { box-shadow: inset 0 0 0 1px currentColor; }
+      .dci-foot-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); margin-left: auto; }
+      .dci-foot-opts { position: relative; display: inline-flex; align-items: center; }
+      .dci-foot-optbtn { display: none; white-space: nowrap; }
+      .dci-foot-optlist { display: inline-flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); }
+      .dci-foot-info { font-size: calc(var(--u, 1px) * 15); line-height: 1; }
+      @container (max-width: 1099px) {
+        .dci-foot-optbtn { display: inline; }
+        .dci-foot-optlist { display: none; position: absolute; right: 0; bottom: calc(100% + calc(var(--u, 1px) * 6)); z-index: 8; flex-direction: column; align-items: flex-start;
+          gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); background: #fff; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(38, 36, 48, 0.18); }
+        .dci-foot-opts.dci-open .dci-foot-optlist { display: flex; }
+      }
       .dci-apply { border: 0; border-radius: 3px; padding: calc(var(--u, 1px) * 7) calc(var(--u, 1px) * 16); background: var(--orange); color: #fff; font-weight: 600; }
       .dci-apply:hover:not(:disabled) { background: var(--orange-d); }
       .dci-apply:disabled { background: #d9d6e3; color: #fff; cursor: not-allowed; }
-      .dci-hint { flex-basis: 100%; margin: 0; color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
 
       /* The dashboard in the page (below the import button) instead of a window */
       #dci-overlay.dci-inline { position: relative; inset: auto; z-index: auto !important; pointer-events: auto; margin: 0 0 calc(var(--u, 1px) * 24); }
@@ -31580,7 +31682,7 @@
       #dci-overlay.dci-inline .dci-preview { max-height: 60vh; overflow: auto; }
       /* Both stay in view while the page scrolls, so they take less room there */
       #dci-overlay.dci-inline .dci-pools-body { max-height: 32vh; }
-      #dci-overlay.dci-inline .dci-foot { padding-top: calc(var(--u, 1px) * 6); padding-bottom: calc(var(--u, 1px) * 6); row-gap: calc(var(--u, 1px) * 4); }
+      #dci-overlay.dci-inline .dci-foot { padding-top: calc(var(--u, 1px) * 6); padding-bottom: calc(var(--u, 1px) * 6); }
 
       @media (max-width: 700px) {
         #dci-overlay { padding: 0; }

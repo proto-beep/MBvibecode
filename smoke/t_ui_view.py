@@ -1,6 +1,6 @@
 """View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: compact, fold, levels, ui301, suggstack, rows – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_view.py <case> …` runs only those."""
+Cases: compact, fold, levels, ui301, suggstack, rows – each the former smoke/t_<case>.py, unchanged –, clineask, kindcolors, foot (3.38.4); `python3 t_ui_view.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -653,6 +653,112 @@ def case_kindcolors():
                        and b2 == ['rgb(138, 135, 153)', 'rgb(138, 135, 153)', 'false'] and b3 == ['rgb(91, 111, 140)', [None, None]])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_foot():
+    """Credits Importer 3.38.4: the footer compact (collected item 169; maintainer: "die untere leiste nimmt noch zu viel platz weg
+    (siehe screenshot). kann man das nicht etwas mehr und smart nebeneinander anordnen. so dass es sich aber passend verschiebt,
+    falls die bildschirmauflösung in der breite oder die größe des dashboard fensters "zu klein" für die anzeige ist?", "Häkchen ins
+    Menü: schon bei mittlerer breite").
+    A) 1500 px (window): one line, at most 60 px high (until 3.38.3 about 200) – ▲▼, the summary in one line ("25 new relationships ·
+       ‹ 1 row incomplete › · 1 already on MB"; the levels in the tooltip), the chip "2 tracks without a work" (the whole message in
+       its tooltip; clicked: shown below, again: hidden), "Preview", the short checkboxes (the long texts in their tooltips),
+       "Stage …" at the right, ⓘ "Nothing is submitted …"; no "⚙ Options".
+    B) 900 px: two lines (at most 90 px) – the checkboxes in "⚙ Options ▾": it opens above, inside the dashboard, a box ticked there
+       counts; a click elsewhere and Esc close it.
+    C) 600 px: "Stage …" whole and inside the dashboard, at most 120 px.
+    D) Staged: the chip "✓ 30 in the editor (…)", its tooltip "… Check them there and click “Enter edit”." (at most 120 px).
+    E) In the page (1500 px): one line, stuck to the bottom."""
+    M = """(() => { const f = document.querySelector('.dci-foot'); const r = (e) => { const x = e.getBoundingClientRect(); return [Math.round(x.left), Math.round(x.top), Math.round(x.right), Math.round(x.bottom)]; };
+      const vis = (e) => !!e && e.getClientRects().length > 0; const panel = document.querySelector('.dci-panel');
+      return { h: Math.round(f.getBoundingClientRect().height), foot: r(f), panel: r(panel), stage: r(f.querySelector('[data-act=apply]')), info: r(f.querySelector('.dci-foot-info')),
+        infoTitle: f.querySelector('.dci-foot-info').title, optbtn: vis(f.querySelector('[data-act=foot-opts]')), boxes: [...f.querySelectorAll('.dci-foot-optlist label')].map(l => [l.textContent.trim(), vis(l), l.title.slice(0, 40)]),
+        sum: f.querySelector('[data-el=sum]').textContent.replace(/\\s+/g, ' ').trim(), levels: (f.querySelector('.dci-sum-new') || {}).title || '',
+        preview: f.querySelector('[data-act=preview]').textContent.trim(), chips: [...f.querySelectorAll('.dci-foot-chip')].map(c => [c.textContent.trim(), c.title]),
+        tops: [...new Set([...f.querySelectorAll('.dci-foot-bar > *')].filter(vis).map(e => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2)))],
+        msg: [...f.querySelectorAll('.dci-waiting, .dci-rounds, .dci-stage-done')].filter(vis).map(e => e.textContent.trim()) }; })()"""
+    LIST = "(() => { const l = document.querySelector('.dci-foot-optlist'); const x = l.getBoundingClientRect(); return l.getClientRects().length ? [Math.round(x.left), Math.round(x.top), Math.round(x.right), Math.round(x.bottom)] : null; })()"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.add_style_tag(content='#dci-log { display: none !important; }')
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1500)
+        # A) wide
+        a = pg.evaluate(M)
+        pg.click('.dci-foot-chip[data-msg=waiting]'); pg.wait_for_timeout(200)
+        a_open = pg.evaluate(M)['msg']
+        pg.click('.dci-foot-chip[data-msg=waiting]'); pg.wait_for_timeout(200)
+        a_shut = pg.evaluate(M)['msg']
+        print('A) 1500:', a, '\n   Meldung:', a_open, a_shut)
+        spread = max(a['tops']) - min(a['tops'])
+        ok_a = a['h'] <= 60 and spread <= 6 and a['sum'] == '25 new relationships · ‹ 1 row incomplete › · 1 already on MB' and 'on recordings' in a['levels'] \
+            and a['chips'] == [['2 tracks without a work', '2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.']] \
+            and a_open == ['2 tracks have writing credits but no work yet. “Stage” offers to mark them as new works.'] and a_shut == [] \
+            and a['preview'] == 'Preview' and not a['optbtn'] and [x[:2] for x in a['boxes']] == [['edit note', True], ['fill role credits', True], ['≤ 500 per staging', True]] \
+            and a['boxes'][0][2].startswith('Write source and summary') and a['boxes'][1][2].startswith('add role credits') and a['boxes'][2][2].startswith('at most 500 per staging') \
+            and a['infoTitle'].startswith('Nothing is submitted.') and a['stage'][2] < a['info'][0] and a['foot'][2] - a['info'][2] <= 30
+        # B) medium
+        pg.set_viewport_size({'width': 900, 'height': 1000}); pg.wait_for_timeout(500)
+        b1 = pg.evaluate(M)
+        note0 = pg.locator('[data-f=editnote]').is_checked()
+        pg.click('[data-act=foot-opts]'); pg.wait_for_timeout(200)
+        lst = pg.evaluate(LIST)
+        pg.click('.dci-foot-optlist [data-f=editnote]'); pg.wait_for_timeout(200)
+        note1 = pg.locator('[data-f=editnote]').is_checked()
+        still = pg.evaluate(LIST)
+        pg.click('.dci-foot [data-el=sum] strong'); pg.wait_for_timeout(200)
+        shut1 = pg.evaluate(LIST)
+        pg.click('[data-act=foot-opts]'); pg.wait_for_timeout(200)
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
+        shut2, open_dash = pg.evaluate(LIST), pg.evaluate("!document.getElementById('dci-overlay').hidden")
+        pg.click('[data-act=foot-opts]'); pg.click('.dci-foot-optlist [data-f=editnote]'); pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
+        print('B) 900:', b1, '\n   Menü:', lst, '| edit note:', note0, '→', note1, '| bleibt:', bool(still), '| Klick daneben:', shut1, '| Esc:', shut2, open_dash)
+        ok_b = b1['h'] <= 90 and len(b1['tops']) == 2 and b1['optbtn'] and all(not x[1] for x in b1['boxes']) and lst is not None \
+            and lst[3] <= b1['stage'][1] and lst[0] >= b1['panel'][0] and lst[2] <= b1['panel'][2] and note1 is (not note0) and still is not None \
+            and shut1 is None and shut2 is None and open_dash
+        # C) narrow
+        pg.set_viewport_size({'width': 600, 'height': 1000}); pg.wait_for_timeout(500)
+        c = pg.evaluate(M)
+        print('C) 600:', c)
+        ok_c = c['h'] <= 120 and c['stage'][0] >= c['panel'][0] and c['stage'][2] <= c['panel'][2] and c['info'][2] <= c['panel'][2]
+        # D) staged (the dashboard stays as narrow as the window was)
+        pg.set_viewport_size({'width': 1500, 'height': 1000}); pg.wait_for_timeout(400)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(1500)
+        d = pg.evaluate(M)
+        done = [x for x in d['chips'] if x[0].startswith('✓')]
+        print('D) gestagt:', d['chips'], '| Höhe:', d['h'], d['tops'])
+        ok_d = len(done) == 1 and ' in the editor (' in done[0][0] and done[0][1].startswith('✓ ') and done[0][1].endswith('Check them there and click “Enter edit”.') and d['h'] <= 120
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d)
+        results += [ok_a, ok_b, ok_c, ok_d]
+        b.close()
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs2 = H.open_mb_edit(ctx, companion=False)
+        pg.add_style_tag(content='#dci-log { display: none !important; }')
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.click('#dci-launcher [data-place=page]'); pg.wait_for_timeout(200)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1500)
+        pg.evaluate("window.scrollTo(0, document.querySelector('[data-el=companies]').getBoundingClientRect().top + window.scrollY - 200)")
+        pg.wait_for_timeout(300)
+        e = pg.evaluate(M)
+        bottom = pg.evaluate("Math.round(window.innerHeight - document.querySelector('.dci-foot').getBoundingClientRect().bottom)")
+        print('E) in der Seite:', e['h'], e['tops'], '| Abstand unten:', bottom)
+        ok_e = e['h'] <= 60 and max(e['tops']) - min(e['tops']) <= 6 and bottom == 0
+        print('E)', ok_e)
+        results.append(ok_e)
+        print('Fehler:', errs, errs2)
+        results.append(not errs and not errs2)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
