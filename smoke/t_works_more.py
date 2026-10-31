@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged; `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3); `python3 t_works_more.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -359,6 +359,8 @@ def case_livecom():
        MusicBrainz without "live") is not; "live: Abbey Road Studios, New York, NY, USA" (the place of "recorded at", its area
        from MusicBrainz: city, US state code, "USA"); track 3 has "live" in MusicBrainz (ticked), track 4 another comment (not
        tickable, red note).
+       [3.38.3] Tracks 2 and 3 are one line "2–3 · ▸ 2 tracks" (the same comment, item 168), ▸ shows them; the heading "▾ Live
+       disambiguation comments: 2 of 3" (item 170).
     C) The place credited as "Iridium" and the matrix applied (the date 2001-03 on the place): "live, 2001‐03: Iridium, New
        York, NY, USA"; a comment changed by hand stays and says so; unticked stays unticked."""
     PLACE = H.COMPANIES[1002][1]
@@ -383,6 +385,12 @@ def case_livecom():
     LIST = """(() => { const el = document.querySelector('[data-el=livecom]'); if (!el || el.hidden) return null;
       return [...el.querySelectorAll('tr[data-livecom]')].map(tr => [tr.querySelector('.dci-livecom-pos').textContent.trim(), tr.querySelector('[data-f=livecom-text]').value,
         tr.querySelector('[data-f=livecom-on]').checked, tr.querySelector('[data-f=livecom-on]').disabled, tr.lastElementChild.textContent.replace(/\\s+/g, ' ').trim()]); })()"""
+    EXPAND = """(() => { for (let k = 0; k < 20; k++) { const b = document.querySelector('[data-el=livecom] [data-act=livecom-group][aria-expanded=false]');
+      if (!b) return k; b.click(); } return -1; })()"""
+    GROUPS = """[...document.querySelectorAll('[data-el=livecom] tr[data-livecom-group]')].map(tr => [tr.querySelector('.dci-livecom-pos').textContent.trim(),
+      tr.querySelector('[data-act=livecom-group]').textContent.trim(), tr.querySelector('[data-f=livecom-text]').value, tr.querySelector('[data-f=livecom-on]').checked])"""
+    ALONE = "[...document.querySelectorAll('[data-el=livecom] tr[data-livecom]:not(.dci-livecom-sub) .dci-livecom-pos')].map(x => x.textContent.trim())"
+    HEAD = "(document.querySelector('[data-el=livecom] .dci-livecom-head') || {textContent: ''}).textContent.trim()"
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -400,14 +408,17 @@ def case_livecom():
         sw.check()
         pg.wait_for_timeout(2500)
         stored = pg.evaluate("localStorage.getItem('dci-live-comments')")
+        b0 = pg.evaluate(GROUPS), pg.evaluate(ALONE), pg.evaluate(HEAD)
+        pg.evaluate(EXPAND); pg.wait_for_timeout(200)
         b1 = pg.evaluate(LIST)
         print('A) vorher:', a0, '| Angebot:', offer0, '| Schalter an?', off0, '| gespeichert:', stored)
-        print('B)', b1)
+        print('B) Gruppen:', b0, '\n  ', b1)
         ok_a = a0 == [] and offer0 and off0 is False and stored == 'true'
         base = 'live: Abbey Road Studios, New York, NY, USA'
         ok_b = b1 is not None and [x[0] for x in b1] == ['2', '3', '4'] and all(x[1] == base for x in b1) \
             and [x[2] for x in b1] == [True, True, False] and [x[3] for x in b1] == [False, False, True] and 'demo version' in b1[2][4] \
-            and not pg.evaluate("!!document.querySelector('[data-el=livecom] .dci-livecom-offer')")
+            and not pg.evaluate("!!document.querySelector('[data-el=livecom] .dci-livecom-offer')") \
+            and b0[0] == [['2–3', '▸ 2 tracks', base, True]] and b0[1] == ['4'] and b0[2] == '▾ Live disambiguation comments: 2 of 3'
         # C)
         rid = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => /Abbey Road Studios/.test(s.querySelector('.dci-gname').textContent));
           return g ? g.querySelector('tr.dci-row').dataset.row : null; })()""")
@@ -555,10 +566,11 @@ def case_livecomrun():
 def case_liveoffer():
     """Credits Importer 3.37.3: the comments of live recordings offered while the setting is off (collected item 150b; maintainer:
     "so als abfrage/angebot für den jeweiligen fall. per mouseover tooltip wo das standardmäßig eingestellt werden kann").
-    A) The setting off, the release group Live: above "Stage …" the offer "Tracks 2, 3, 4 are live recordings. Propose
+    A) The setting off, the release group Live: above "Stage …" the offer "Tracks 2–4 are live recordings. Propose
        disambiguation comments for them (“live: Abbey Road Studios, New York, NY, USA”)?" – no list; its tooltip names
        ⚙ Settings → Staging → “Live recordings: add a disambiguation comment”.
-    B) ✓: the list as with the setting on (tracks 2–4, 2 and 3 ticked), the setting stays off (not stored); the log says so;
+    B) ✓: the list as with the setting on (tracks 2–4, 2 and 3 ticked – [3.38.3] one line, ▸ shows them), the setting stays off
+       (not stored); the log says so;
        staged: the job of the release holds tracks 2 and 3.
     C) The page loaded again: the offer is back (for the case, not stored); ✕: no offer, no list, the log says so; the job is
        gone."""
@@ -584,6 +596,8 @@ def case_liveoffer():
     LIST = """(() => { const el = document.querySelector('[data-el=livecom]'); if (!el || el.hidden) return null;
       return [...el.querySelectorAll('tr[data-livecom]')].map(tr => [tr.querySelector('.dci-livecom-pos').textContent.trim(), tr.querySelector('[data-f=livecom-text]').value,
         tr.querySelector('[data-f=livecom-on]').checked]); })()"""
+    EXPAND = """(() => { for (let k = 0; k < 20; k++) { const b = document.querySelector('[data-el=livecom] [data-act=livecom-group][aria-expanded=false]');
+      if (!b) return k; b.click(); } return -1; })()"""
     OFFER = """(() => { const o = document.querySelector('[data-el=livecom]:not([hidden]) .dci-livecom-offer'); return o ? [o.querySelector('span').textContent.replace(/\\s+/g, ' ').trim(), o.title,
       [...o.querySelectorAll('button')].map(b => b.textContent.trim())] : null; })()"""
     LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Comments of live recordings/.test(t))"
@@ -606,11 +620,12 @@ def case_liveoffer():
         pg.wait_for_timeout(2500)
         a_offer, a_list = pg.evaluate(OFFER), pg.evaluate(LIST)
         print('A) Angebot:', a_offer, '| Liste:', a_list)
-        ok_a = bool(a_offer) and a_offer[0] == f'Tracks 2, 3, 4 are live recordings. Propose disambiguation comments for them (“{base}”)?' \
+        ok_a = bool(a_offer) and a_offer[0] == f'Tracks 2–4 are live recordings. Propose disambiguation comments for them (“{base}”)?' \
             and '⚙ Settings → Staging → “Live recordings: add a disambiguation comment”' in a_offer[1] and a_offer[2] == ['✓ Propose comments', '✕ Not for this release'] \
             and a_list == []
         # B) ✓
         pg.click('[data-act=livecom-yes]'); pg.wait_for_timeout(500)
+        pg.evaluate(EXPAND); pg.wait_for_timeout(200)
         b_list, b_offer = pg.evaluate(LIST), pg.evaluate(OFFER)
         stored = pg.evaluate("localStorage.getItem('dci-live-comments')")
         H.open_settings(pg, 'staging')
@@ -633,6 +648,81 @@ def case_liveoffer():
         c_offer2, c_list, c_logs, c_job = pg.evaluate(OFFER), pg.evaluate(LIST), pg.evaluate(LOGS), pg.evaluate(JOB)
         print('C) Angebot wieder:', bool(c_offer), '| nach ✕:', c_offer2, c_list, '\n   Protokoll:', c_logs, '| Auftrag:', c_job)
         ok_c = bool(c_offer) and c_offer2 is None and c_list is None and any('not for this release' in t for t in c_logs) and c_job is None
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
+        results += [ok_a, ok_b, ok_c]
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_livegroup():
+    """Credits Importer 3.38.3: the comments of live recordings in short (collected items 168, 170; maintainer: ""Tracks 1, 2, 3, 4,
+    5 are live recordings." -> kanns du die tracks gruppieren? "1-5"? kannst du medien erwähnen, falls sie komplett live sind?",
+    "bei einem release mit nur einem medium nur die tracks. es kann auch mediengruppen geben bspw. CD 1-5", "da viele tracks die
+    gleichen live-Disambiguation notes bekommen", "rechts unten im kasten soll immer die Überschrift stehen", "Live disambiguation
+    comments: 5 of 5").
+    A) Two media of two tracks, the release group Live, the setting off: the offer names the whole medium and the other track –
+       "Live recordings: CD 2, track 1.2. Propose disambiguation comments for them (“live: Abbey Road Studios”)?" (the positions
+       as in the list).
+    B) ✓: one line for the three (the same comment) – "CD 2, 1.2", "▸ 3 tracks"; ▸ shows the three; its text changed: all three
+       have it (each "changed by you"); unticked: all three unticked – "0 of 3".
+    C) The heading "▾ Live disambiguation comments: …" is the last line of the box, at its right edge, below the list; the list at
+       most a third of the dashboard's height; the heading clicked: only the heading, at the same place (bottom right), ▸."""
+    H.MEDIA = [2, 2]
+    orig = H.ws_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['release-group']['secondary-types'] = ['Live']
+        return d
+
+    H.ws_release = ws
+    OFFER = """(() => { const o = document.querySelector('[data-el=livecom]:not([hidden]) .dci-livecom-offer'); return o ? o.querySelector('span').textContent.replace(/\\s+/g, ' ').trim() : null; })()"""
+    GROUPS = """[...document.querySelectorAll('[data-el=livecom] tr[data-livecom-group]')].map(tr => [tr.querySelector('.dci-livecom-pos').textContent.trim(),
+      tr.querySelector('[data-act=livecom-group]').textContent.trim(), tr.querySelector('[data-f=livecom-text]').value, tr.querySelector('[data-f=livecom-on]').checked])"""
+    SUBS = """[...document.querySelectorAll('[data-el=livecom] tr.dci-livecom-sub')].map(tr => [tr.querySelector('.dci-livecom-pos').textContent.trim(),
+      tr.querySelector('[data-f=livecom-text]').value, tr.querySelector('[data-f=livecom-on]').checked, tr.lastElementChild.textContent.replace(/\\s+/g, ' ').trim()])"""
+    BOX = """(() => { const box = document.querySelector('[data-el=livecom] .dci-livecom-box'); if (!box) return null; const h = box.querySelector('.dci-livecom-head');
+      const body = box.querySelector('.dci-livecom-body'); const r = (e) => { const x = e.getBoundingClientRect(); return [Math.round(x.left), Math.round(x.top), Math.round(x.right), Math.round(x.bottom)]; };
+      return { last: box.lastElementChild.contains(h), head: h.textContent.trim(), h: r(h), box: r(box), body: body ? r(body) : null,
+        max: body ? parseFloat(body.style.maxHeight) : null, dash: Math.round(document.getElementById('dci-overlay').getBoundingClientRect().height) }; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(2500)
+        a = pg.evaluate(OFFER)
+        print('A) Angebot:', a)
+        ok_a = a == 'Live recordings: CD 2, track 1.2. Propose disambiguation comments for them (“live: Abbey Road Studios”)?'
+        # B)
+        pg.click('[data-act=livecom-yes]'); pg.wait_for_timeout(500)
+        g0 = pg.evaluate(GROUPS)
+        pg.click('[data-el=livecom] [data-act=livecom-group]'); pg.wait_for_timeout(200)
+        s0 = pg.evaluate(SUBS)
+        pg.fill('tr[data-livecom-group] [data-f=livecom-text]', 'live (all three)')
+        pg.press('tr[data-livecom-group] [data-f=livecom-text]', 'Tab')
+        pg.wait_for_timeout(300)
+        s1 = pg.evaluate(SUBS)
+        pg.locator('tr[data-livecom-group] [data-f=livecom-on]').uncheck()
+        pg.wait_for_timeout(300)
+        s2, g2 = pg.evaluate(SUBS), pg.evaluate(GROUPS)
+        print('B) Gruppe:', g0, '\n   ▸:', s0, '\n   Text:', s1, '\n   aus:', g2, s2)
+        ok_b = len(g0) == 1 and g0[0][0] == 'CD 2, 1.2' and g0[0][1] == '▸ 3 tracks' and g0[0][3] is True and [x[0] for x in s0] == ['1.2', '2.1', '2.2'] \
+            and all(x[1] == g0[0][2] for x in s0) and all(x[1] == 'live (all three)' and 'changed by you' in x[3] for x in s1) \
+            and len(g2) == 1 and g2[0][3] is False and all(x[2] is False for x in s2)
+        # C) the heading
+        c1 = pg.evaluate(BOX)
+        pg.click('[data-el=livecom] .dci-livecom-head'); pg.wait_for_timeout(300)
+        c2 = pg.evaluate(BOX)
+        print('C) offen:', c1, '\n   zu:', c2)
+        ok_c = bool(c1 and c2) and c1['last'] and c1['head'].startswith('▾ Live disambiguation comments: 0 of 3') and abs(c1['h'][2] - c1['box'][2]) <= 12 \
+            and c1['body'] and c1['h'][1] >= c1['body'][3] - 1 and c1['max'] <= max(120, c1['dash'] / 3) + 2 \
+            and c2['body'] is None and c2['head'].startswith('▸ Live disambiguation comments') and abs(c2['h'][2] - c1['h'][2]) <= 2 and abs(c2['h'][3] - c1['h'][3]) <= 2
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
         results += [ok_a, ok_b, ok_c]
         print('Fehler:', errs)

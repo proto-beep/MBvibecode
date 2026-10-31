@@ -125,6 +125,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   typonote: 3.37.13 (164): "Sxaophone" → saxophone a typo (no role credit, note, log), turned round → "sxaophone"
                                 #     and back; "Taischigoto" → taishōgoto credited "taischigoto"; ✕ empties a row's role credit (stays empty when
                                 #     the instrument is set again) and a matrix line's (staged without credit). instrguess / unknownask: chimes "chaims"
+                                #   stacked: 3.38.7 (167, S058, S059): "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO / Barry
+                                #     GUY / DOUBLE BASS" – three entries in normal case; the instruments above; "Jane Roe / PIANO / John Doe" not
+                                #     clear: the note, the log, ⇅ (John Doe), another text (Jane Roe again); one line with capitals; the Discogs notes
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -270,13 +273,15 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     3.19.3: the tooltips of what is counted, the setting for the skipped rows
                                 #   livecom: 3.32.9: comments of live recordings – the setting (Staging, off; 3.37.3 the offer), the list above "Stage …": live
                                 #     tracks of a Live release group, "live, 2001‐03: Iridium, New York, NY, USA" (credited as, area, date),
-                                #     another comment of MB not tickable, changed by hand, unticked
+                                #     another comment of MB not tickable, changed by hand, unticked; 3.38.3: tracks 2–3 one group line, the heading
                                 #   livecomrun: 3.32.10: the job at staging (with the seed line in the note), "Enter edit" → once MB has the
                                 #     relationships one POST to /ws/js/edit/create (type 72, the credit changed in the editor: red log, the new
                                 #     credit), done; the release page enters an armed job (hand-made comment, another comment of MB in red)
                                 #   liveoffer: 3.37.3: the setting off – the offer above "Stage …" (tracks, the first proposal, the tooltip naming
                                 #     the setting), ✓ the list for the release (setting not stored, the job at staging), loaded again: the offer
-                                #     back, ✕ hides it (log, the job gone)
+                                #     back, ✕ hides it (log, the job gone); 3.38.3: "Tracks 2–4"
+                                #   livegroup: 3.38.3: two media – "Live recordings: CD 2, track 1.2", one group line of three (▸ the tracks, its
+                                #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
@@ -387,7 +392,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   cache2: 3.36.1: a row removed with ✕ stays removed, a pasted text keeps its own state (the Discogs one stays),
                                 #     switched on in a tab opened while off: the message "Load the page again", nothing written over, back after it
                                 #   logdiag: 3.36.2: "Start diagnosis" only with ⚙ General "Diagnosis in the log" (off by default); a running one
-                                #     stops when switched off; ↺ of General
+                                #     stops when switched off; ↺ of General; 3.38.5: "Developer mode" (dci-dev), taken over from dci-stats-dev or
+                                #     dci-log-diag on (the old keys gone)
                                 #   stats: 3.38.0 (E8): tab "Statistics" after "Cache" (on, empty); staged + "Enter edit" with the relationships in
                                 #     /ws/js/release: counted once (log, job gone, one record in IndexedDB dci-stats with the time); the tiles, months
                                 #     and days, the top lists; "Reset all" keeps them with "keep statistics", unticked deletes; off: no job; the
@@ -396,10 +402,10 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   statsmore: 3.38.1: three stored submissions → the boxes: sources, how found, dates and places, levels and
                                 #     works, the releases, when (7 + 24 bars, days in a row, records), instruments, text from cover art, own rules
                                 #   statsdev: 3.38.2: a real submission records per relationship what was changed by hand (a role credit typed;
-                                #     an answer is none) and the answers (Q002); the switch off by default; on: taken over / changed by hand, the
-                                #     rules changed most, not recognized (once per release), the answers, duplicates avoided
+                                #     an answer is none) and the answers (Q002); not shown by default; in Developer mode (3.38.5): taken over /
+                                #     changed by hand, the rules changed most, not recognized (once per release), the answers, duplicates avoided
 
-python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
+python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
                                 #     a line per row, marks in colour, fields hidden,
                                 #     open / "▴ compact", a track group and a pool date dropped onto the line, the question answered ([3.32.3] in the
@@ -421,6 +427,10 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   kindcolors: 3.32.4: the heads of the works matrix in the colours of their kinds (Writer W artist, Pub Co label,
                                 #     with the tag), ⚙ Settings → Appearance: own artist colour (entry and head follow, stored), off → grey, ↺
                                 #     3.37.8: the colour Event (plum) among them
+                                #   foot: 3.38.4: the footer – 1500 px one line (≤ 60 px: ▲▼, the summary with the levels as tooltip, the chip
+                                #     "2 tracks without a work" and its message on a click, Preview, the short checkboxes with their tooltips,
+                                #     Stage and ⓘ at the right), 900 px two lines with "⚙ Options ▾" (above, ticked there, closed by a click
+                                #     elsewhere and Esc), 600 px Stage whole, staged: "✓ 30 in the editor", in the page one line at the bottom
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
@@ -462,6 +472,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   chipask: 3.37.14 (163): compact – "? bass ▾" lists electric bass guitar · double bass · acoustic bass guitar
                                 #     (focus on the first, visible), double bass chosen: "double bass “bass”" without "?"; "? Taischigoto ▾", Esc
                                 #     closes (focus on ▾), taishōgoto chosen; "? Directed By ▾" conductor; the chip's name opens the full matrix
+                                #   chipinfo: 3.38.6 (163b): ⓘ after a chip's name with its applied notes as tooltip – none while "?"; "Buddha
+                                #     Machine" (none is like it); taishōgoto chosen (chosen, a spelling of its own, written small); double bass
+                                #     none; "Directed By" – chosen: conductor
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,

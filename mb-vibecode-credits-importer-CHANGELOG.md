@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-31 | 3.38.0 – 3.38.2 | – |
+| 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
@@ -96,6 +96,44 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-31
+
+### Import 3.38.7
+
+#### Added
+
+- **Names above (or below) the line with their instruments** (collected item 167, rule S058; maintainer: "folgendes muss insbesondere bei der Bilderkennung erkannt werden: "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO / Barry GUY / DOUBLE BASS" also die Artists stehen über der Zeile mit ihnen betreffenden instrumenten", "umgekehrte Reihenfolge: ja bitte", "Behelfsknopf: passt", "mach erstmal nur eindeutiges"): a line like a name and a line of instruments MusicBrainz knows pair up – each instrument a row of that name. Decided per block: wholly with the names above, or wholly with the instruments above, it is read so; otherwise (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, **⇅ Instruments above the names** reads the text again the other way round, the log says so. In pasted texts, text from cover art and the Discogs notes.
+- **Names with a word in capitals in normal case** (rule S059; maintainer: "Großbuchstaben: immer in normale Schreibweise bringen"): "Torben SNEKKESTAD" → "Torben Snekkestad" for the search and a new artist (persons only; "ABBA", "DJ Shadow", "BMS Illustration" stay).
+
+#### Fixed
+
+- A line only of instruments with "&" ("SAXOPHONES & TRUMPET") was read as "role & name" – an entry "& TRUMPET" (item 167).
+
+### Import 3.38.6
+
+#### Added
+
+- **ⓘ at a chip** (collected item 163b; maintainer: "ja dezentes zeichen mit Tooltip", "ja nimm das ⓘ"): in an entry compact as a matrix, a chip whose notes have their answer applied – the instrument chosen for a word MusicBrainz does not know, a typo or a spelling of its own, "none is like it", written small, the type chosen, "voice" offered as role credit – has a small grey ⓘ after its name with the notes as its tooltip ("“Taischigoto” is no instrument of MusicBrainz – chosen: taishōgoto" …); none while a question is open ("?").
+
+### Import 3.38.5
+
+#### Changed
+
+- **Developer mode** (collected item 171; maintainer: "wirklich immer sammeln. nur der schalter kann es auslösen. lass uns doch einfach einen zentralen developer schalter einführen. der dann auch im log den Diagnose button ermöglicht (den schalter gibt es ja schon)", "Ort und Name: ja passt", "Übernahme: ja", "bleibt bei den beiden"): ⚙ Settings → General → **Developer mode** (off) shows "Start diagnosis" in the log and the developer statistics in ⚙ Settings → Statistics. It replaces **Diagnosis in the log** (3.36.2, General) and **Developer statistics (to improve the script)** (3.38.2, Statistics); when one of them was on, Developer mode is on. The developer statistics are collected always, as before.
+
+### Import 3.38.4
+
+#### Changed
+
+- **The footer compact** (collected item 169; maintainer: "die untere leiste nimmt noch zu viel platz weg (siehe screenshot). kann man das nicht etwas mehr und smart nebeneinander anordnen. so dass es sich aber passend verschiebt, falls die bildschirmauflösung in der breite oder die größe des dashboard fensters "zu klein" für die anzeige ist?", "Häkchen ins Menü: schon bei mittlerer breite"): one line where there is room – ▲ ▼, the summary in one line ("25 new relationships · ‹ 1 row incomplete › · 1 already on MB"; the levels in the tooltip of the number), the messages as chips ("2 tracks without a work", "round 1 of 3", "✓ 30 in the editor (12:03:11)"; the whole message in the tooltip, a click shows it below), **Preview**, the checkboxes **edit note**, **fill role credits**, **≤ 500 per staging** (the full texts in the tooltips), **Stage in the relationship editor** at the right and **ⓘ** for "Nothing is submitted …". It follows the width of the dashboard, not of the screen: narrower than about 1,100 px the checkboxes are in **⚙ Options ▾** (opens above; a click elsewhere or Esc closes it) and the actions go below the summary. About 50 px high in one line, 80 px in two – until 3.38.3 about 200 px in five lines. The live comments are the first line of the footer.
+
+### Import 3.38.3
+
+#### Changed
+
+- **Live recordings in short** (collected item 168; maintainer: ""Tracks 1, 2, 3, 4, 5 are live recordings." -> kanns du die tracks gruppieren? "1-5"? kannst du medien erwähnen, falls sie komplett live sind? "Medium 1" "CD 1"", "bei einem release mit nur einem medium nur die tracks. es kann auch mediengruppen geben bspw. CD 1-5"): the offer names tracks one after another as a range – "Tracks 1–5 are live recordings. …" – and, with several media, a whole medium by its format and number ("Live recordings: CD 1–5, tracks 6.1–6.3. …"; without a format "Medium 3").
+- **The list of live comments in groups** (item 168; maintainer: "bei releases mit vielen tracks ein sehr großes feld. man kann das ja gruppieren, da viele tracks die gleichen live-Disambiguation notes bekommen"): recordings with the same comment are one line ("2–5 · ▸ 4 tracks" and the comment) – its tick and its text are for all of them, ▸ shows them one by one; a recording with a note stands alone.
+- **The list at most a third of the dashboard's height** (item 168; maintainer: "das fenster ist zu groß und kann sich so überschneiden, dass der track/datepool nicht mehr einklappbar ist"): it scrolls on its own.
+- **Its heading at the bottom right** (item 168; maintainer: "rechts unten im kasten soll immer die Überschrift stehen"): clicked, it folds the list and stays at the same place; shorter (item 170; maintainer: "kann etwas kürzer lauten "Live disambiguation comments: 5 of 5"") – until 3.38.2 "Disambiguation comments of live recordings: 5 of 5 ticked" at the top.
 
 ### Import 3.38.2
 
