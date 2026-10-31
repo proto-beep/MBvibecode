@@ -838,11 +838,14 @@ def case_cache2():
 
 def case_logdiag():
     """Credits Importer 3.36.2 (maintainer: "Bitte eine Option, die die Diagnose Funktion im Log ermöglicht oder den Button
-    ausblendet. Standardmäßig aus."): the diagnosis in the log as a setting.
-    A) The log open: no "Start diagnosis"; ⚙ Settings → General "Diagnosis in the log" off.
-    B) On: the button in the log, stored.
+    ausblendet. Standardmäßig aus."): the diagnosis in the log as a setting – [171] (3.38.5) "Developer mode" (maintainer: "lass uns
+    doch einfach einen zentralen developer schalter einführen. der dann auch im log den Diagnose button ermöglicht", "Übernahme: ja").
+    A) The log open: no "Start diagnosis"; ⚙ Settings → General "Developer mode" off (until 3.38.4 "Diagnosis in the log").
+    B) On: the button in the log, stored (dci-dev).
     C) Diagnosis started, the setting off: it stops (the log says so), the button goes.
-    D) On again, "↺ Defaults" of General: off, no button."""
+    D) On again, "↺ Defaults" of General: off, no button.
+    E) [3.38.5] Taken over: with "Developer statistics" (dci-stats-dev, 3.38.2) or "Diagnosis in the log" (dci-log-diag) on before,
+       "Developer mode" is on – the button in the log –, the old keys are gone; both off before: off."""
     DIAGBTN = "!!document.querySelector('#dci-log [data-log-act=diag]')"
     results = []
     with sync_playwright() as p:
@@ -854,26 +857,44 @@ def case_logdiag():
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         H.open_settings(pg, 'general')
-        a = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=log-diag]').is_checked()]
-        pg.click('.dci-set-pane [data-set=log-diag]')
+        a = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(),
+             pg.evaluate("document.querySelector('.dci-set-pane [data-set=dev-mode]').closest('label').textContent.trim()")]
+        pg.click('.dci-set-pane [data-set=dev-mode]')
         pg.wait_for_timeout(300)
-        b1 = [pg.evaluate(DIAGBTN), pg.evaluate("localStorage.getItem('dci-log-diag')")]
+        b1 = [pg.evaluate(DIAGBTN), pg.evaluate("localStorage.getItem('dci-dev')")]
         pg.evaluate("document.querySelector('#dci-log [data-log-act=diag]').click()")  # the log window may lie below the dashboard
         pg.wait_for_timeout(700)
         c0 = pg.evaluate("(document.querySelector('#dci-log [data-log-act=diag]') || {}).textContent || ''")
-        pg.click('.dci-set-pane [data-set=log-diag]')
+        pg.click('.dci-set-pane [data-set=dev-mode]')
         pg.wait_for_timeout(300)
-        c1 = [pg.evaluate(DIAGBTN), pg.evaluate("[...document.querySelectorAll('#dci-log li')].some(li => /Diagnosis stopped/.test(li.textContent))"), pg.evaluate("localStorage.getItem('dci-log-diag')")]
-        pg.click('.dci-set-pane [data-set=log-diag]')
+        c1 = [pg.evaluate(DIAGBTN), pg.evaluate("[...document.querySelectorAll('#dci-log li')].some(li => /Diagnosis stopped/.test(li.textContent))"), pg.evaluate("localStorage.getItem('dci-dev')")]
+        pg.click('.dci-set-pane [data-set=dev-mode]')
         pg.wait_for_timeout(300)
         pg.click('.dci-set-pane [data-act=settings-reset][data-topic=general]')
         pg.wait_for_timeout(500)
-        d1 = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=log-diag]').is_checked(), pg.evaluate("localStorage.getItem('dci-log-diag')")]
+        d1 = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(), pg.evaluate("localStorage.getItem('dci-dev')")]
         print('A) Standard:', a, '| B) an:', b1, '| C) gestartet:', c0, '→ aus:', c1, '| D) zurückgesetzt:', d1)
-        results.append(a == [False, False] and b1 == [True, 'true'] and c0 == 'Stop diagnosis' and c1 == [False, True, None] and d1 == [False, False, None])
+        results.append(a == [False, False, 'Developer mode'] and b1 == [True, 'true'] and c0 == 'Stop diagnosis' and c1 == [False, True, None] and d1 == [False, False, None])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    # E) the old switches taken over
+    for old, want in ((('dci-stats-dev', 'true'),), True), ((('dci-log-diag', 'true'), ('dci-stats-dev', 'false')), True), ((('dci-log-diag', 'false'),), False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            ctx.add_init_script("try { if (!sessionStorage.getItem('t-seeded')) { %s sessionStorage.setItem('t-seeded', '1'); } } catch (e) {}"
+                                % ' '.join(f"localStorage.setItem('{k}', '{v}');" for k, v in old))
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.open_settings(pg, 'general')
+            e = [pg.evaluate(DIAGBTN), pg.locator('.dci-set-pane [data-set=dev-mode]').is_checked(),
+                 pg.evaluate("[localStorage.getItem('dci-dev'), localStorage.getItem('dci-log-diag'), localStorage.getItem('dci-stats-dev')]")]
+            print('E) vorher', old, '→', e)
+            results.append(e == [want, want, ['true' if want else None, None, None]] and not errs)
+            b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
@@ -1117,7 +1138,7 @@ def case_statsdev():
     A) A real submission: "Guitar" answered (electric guitar, Q002), a role credit typed by hand (Bass Man) – its record has, per
        relationship, what was changed by hand ("roleCredit" for Bass Man, none for the others – an answer is no change) and the answers;
        and for the import what was not recognized and the duplicates avoided.
-    B) "Developer statistics (to improve the script)" off by default: not shown; on: from stored submissions – taken over 57 % /
+    B) [3.38.5] "Developer mode" (⚙ Settings → General) off by default: not shown, no switch of their own; on: from stored submissions – taken over 57 % /
        changed 43 % of 7 (role credit, tracks, date, row added by hand); the rules whose suggestion was changed most (R096 1 of 2,
        R001 1 of 3; a row added by hand is no change of a rule); not recognized (kalimba 2 – once per release –, buddha machine 1);
        the answers (Q002: electric guitar 2 (67 %), acoustic guitar 1 (33 %); no instrument of MusicBrainz: typo 1); duplicates
@@ -1178,10 +1199,14 @@ def case_statsdev():
         H.open_settings(pg, 'cache')
         H.open_settings(pg, 'statistics')
         pg.wait_for_timeout(500)
-        b0 = pg.evaluate("[!!document.querySelector('.dci-stats-dev'), (document.querySelector('[data-set=stats-dev]') || {}).checked]")
-        pg.check('[data-set=stats-dev]')
+        # [171] (3.38.5) shown in "Developer mode" (⚙ Settings → General; until 3.38.4 a switch of its own here)
+        b0 = pg.evaluate("[!!document.querySelector('.dci-stats-dev'), !!document.querySelector('[data-set=stats-dev]')]")
+        H.open_settings(pg, 'general')
+        pg.check('.dci-set-pane [data-set=dev-mode]')
+        pg.wait_for_timeout(300)
+        H.open_settings(pg, 'statistics')
         pg.wait_for_timeout(500)
-        stored = pg.evaluate("localStorage.getItem('dci-stats-dev')")
+        stored = pg.evaluate("localStorage.getItem('dci-dev')")
         CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-dev .dci-stats-card')].map(c => [c.dataset.el.replace('stats-dev-', ''),
           [...c.querySelectorAll('li, p, h5')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
         c = pg.evaluate(CARDS)
