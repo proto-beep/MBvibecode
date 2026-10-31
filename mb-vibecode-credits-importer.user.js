@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.5
+// @version      3.38.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.6
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.6
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1991,6 +1991,7 @@
       "em.chipTitle": "Opens the full matrix of this entry at this role – drag the chip onto another event's line to move it there (⇧ Shift: in both)",
       "em.chipAskTitle": "A question to answer: opens the full matrix of this entry at this role",
       "em.chipAsk": "Answer the question of {name} here",
+      "em.chipNoteType": "“{role}” – chosen: {type}",
       "em.chipOut": "Take {name} out of this event",
       "em.by.event": "by event",
       "em.by.role": "by role",
@@ -18189,6 +18190,40 @@
   }
 
   /**
+   * [163b] (3.38.6) The notes of a chip whose answer is already applied – the instrument chosen for a word MusicBrainz does not
+   * know (and whether it was a typo), "none is like it", written small, the type chosen, "voice" offered as role credit – for the
+   * tooltip of a small grey ⓘ after its name (collected item 163; maintainer: "ja dezentes zeichen mit Tooltip", "ja nimm das ⓘ");
+   * changed in the full matrix. Lines, one note each; empty when there is none.
+   */
+  function chipNoteText(r) {
+    if (!r || r.level === 'skip') return '';
+    const out = [];
+    const g = r.instrGuess;
+    if (g) {
+      const misc = g.chose === 'misc';
+      const name = norm(r.primaryText);
+      const chosen = misc ? tr('instrGuess.misc', { word: guessTask(g) })
+        : name && g.other && name === norm(g.other) ? tr('instrGuess.other', { other: g.other, word: guessCredit(g) })
+          : name && primaryIsValid(r) ? r.primaryText : '';
+      if (!g.options.length && !g.misc) out.push(tr('instrGuess.none', { word: g.word, other: g.other, credit: guessCredit(g) }));
+      else if (chosen) out.push(`${tr(g.options.length ? 'instrGuess.chosen' : 'instrGuess.noneOr', { word: g.word })} ${chosen}`);
+      // [164] a typo, or a spelling of its own
+      if (!misc && guessNoteHtml(r)) out.push(tr(guessSpelling(g, r.primaryText) === 'typo' ? 'instrGuess.typo' : 'instrGuess.own', { name: r.primaryText, word: guessCredit(g) }));
+    }
+    if (caseNoteHtml(r)) {
+      const low = [...(r.creditPhrases || []), ...(r.creditLowered || [])];
+      if (low.length) out.push(`${tr('caseNote.small')} ${low.map((w) => tr('caseNote.word', { word: w, small: w.toLowerCase() })).join(', ')}`);
+      const kept = Object.values(r.keepCase || {});
+      if (kept.length) out.push(`${tr('caseNote.kept')} ${kept.join(', ')}`);
+    }
+    const tq = typeQuestionFor(r);
+    const opt = tq && r.typeAnswer != null ? tq.options[r.typeAnswer] : null;
+    if (opt) out.push(tr('em.chipNoteType', { role: r.raw || r.base, type: opt.label || opt.type }));
+    if (voiceCreditHtml(r)) out.push(`${tr('voiceCredit.from')} ${tr('voiceCredit.use', { word: norm(r.base) })}`);
+    return out.join('\n');
+  }
+
+  /**
    * [E4] (3.35.0) A role as a chip of a compact line: its name, its role credit, add. / guest / solo; a question "? Chaims".
    * [163] (3.37.14) A question with fixed answers has ▾ at the chip: its answers below it, chosen for all rows of the line; the
    * "?" only while a question is open (chipAnswers, chipNotesOpen) – until 3.37.13 as long as the full matrix showed any note.
@@ -18207,9 +18242,12 @@
     const key = `${a ? a.key : ''}|${l.id}|${e ? e.key : ''}`;
     const open = !!answers.length && S.emChipAsk === key;
     const q = answers.length ? `<button type="button" class="dci-em-chipq" data-act="em-chipask" data-ask="${esc(key)}" aria-expanded="${open}" title="${esc(tr('em.chipAsk', { name }))}" aria-label="${esc(tr('em.chipAsk', { name }))}">▾</button>` : '';
+    // [163b] (3.38.6) the notes whose answer is applied: ⓘ with them as tooltip
+    const note = ask ? '' : chipNoteText(r);
+    const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
     const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
     return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : ''}>
-      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}</button>${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
   /**
@@ -31498,6 +31536,9 @@
       .dci-em-chip-ask { border-color: var(--sugg-line); background: var(--sugg-bg); }
       .dci-em-chip-ask > button { color: var(--sugg-ink); font-weight: 600; }
       .dci-em-chip[draggable="true"] { cursor: grab; }
+      /* [163b] (3.38.6) ⓘ at a chip: its notes whose answer is applied, as tooltip */
+      .dci-em-chipinfo { color: var(--muted); font-size: calc(var(--u, 1px) * 12); cursor: help; padding: 0 calc(var(--u, 1px) * 2); }
+      .dci-em-chipinfo:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; border-radius: 2px; }
       /* [163] (3.37.14) ▾ at a chip with a question and its answers below it */
       .dci-em-chip { position: relative; }
       .dci-em-chip .dci-em-chipq { border-left: 1px solid var(--sugg-line); padding: 0 calc(var(--u, 1px) * 4); font-weight: 400; }
