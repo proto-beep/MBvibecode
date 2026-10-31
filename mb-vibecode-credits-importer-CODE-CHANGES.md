@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.1, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.2 · 2026-10-31
+
+The developer statistics (E8).
+
+- **New** `STATS_DEV_KEY` (`dci-stats-dev`, off), **`statHand(row)`** (compared with `S.freshRows` / `rowFieldsOf`: `type` – only after `row.statTypeHand` –, `instrument` / `level` – touched and no answer –, `roleCredit`, `artistCredit` – touched –, `tracks` – not with a date of the matrix –, `attributes` (`flags`), `date` – by hand, not of the matrix –; `added` for `row.manual` or a row not in `S.freshRows`), **`statAnswers(row)`** (`{ q: 'guess', a: 'similar' | 'typo' | 'same' | 'other' | 'misc' }`; `{ q: Q…, a: the instrument }` when `primaryText` is one of the question's options; `{ q: Q…, a: the type }` with `typeAnswer`), **`statUnrec()`** (the words in “…” of `unrecognized`, else the line – of the source and the supplement –, roles with `unknownRole`, `instrGuess.word`; in small letters, 200 at most), **`statDev(recs)`** (per relationship with `h`; `unrec` and `dupes` once per release), **`statsDevHtml(recs)`** (`.dci-stats-dev`, boxes `stats-dev-auto`, `-rules`, `-unrec`, `-answers`, `-dupes`).
+- **`statSnapshot`:** per relationship `h`, `q`; the record `dev: { unrec, dupes }` (`dupes`: rows with `existingAll`).
+- **Handlers:** `case 'type'` sets `row.statTypeHand`; `data-set="stats-dev"`. `TOPIC_KEYS.statistics` and `SETTINGS_KEYS` with `STATS_DEV_KEY`.
+- **Texts (English only):** `stats.dev`, `stats.devTitle`, `stats.dev.*`.
+- **Tests:** `t_ui_settings.py` new case `statsdev`.
 
 ## Import 3.38.1 · 2026-10-31
 
