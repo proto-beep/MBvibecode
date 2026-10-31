@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.3, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.3 · 2026-10-31
+
+The comments of live recordings in short and in groups (collected items 168, 170).
+
+- **New** `liveWhatText(idxs)` (with `multiMedium()`: whole media – every chosen track with a recording live – in runs of the same format from `S.mediaInfo` ("CD 1–5"; without a format `livecom.medium`); the other tracks as ranges of the list's positions (`medium.number` with several media); returns `{ media, tracks, n }`), **`liveWhatLabel(idxs, { prefix })`** (media, then `livecom.tracksPart` or the bare ranges), **`liveGroups(list)`** (key `1|rec` for a proposal with `warn`, `other`, `same` or `pending`, else `g|on|text`; in the order of the tracks).
+- **`renderLiveComments`:** the offer `livecom.offerMedia` when media are named, else `livecom.offer` with the ranges; the list is a `div.dci-livecom-box` (no `<details>` any more) – `.dci-livecom-body` (`max-height` a third of `S.overlay`'s height, at least 120 px) above `.dci-livecom-headrow` with the button `.dci-livecom-head` (`data-act="livecom-toggle"`, `aria-expanded`); a group is `tr[data-livecom-group=recs]` (checkbox and text with `data-recs`, button `data-act="livecom-group"`), its tracks `tr.dci-livecom-sub[data-livecom]` while `S.liveComGroupOpen` (Set, first recording) has it; the element gets `.dci-livecom-full` whenever the list is shown (a line of its own, open or folded).
+- **Handlers:** `livecom-on` / `livecom-text` set each recording of `data-recs` (or `data-rec`); new cases `livecom-toggle` (`S.liveComOpen`, focus back on the heading) and `livecom-group`; the `toggle` listener of the old `<details>` removed.
+- **CSS:** `.dci-livecom-full`, `.dci-livecom-box` (flex column; folded: `width: fit-content; margin-left: auto`), `.dci-livecom-body` (`overflow: auto`), `.dci-livecom-headrow`, `.dci-livecom-head`, `.dci-livecom-sub`, `.dci-livecom-gbtn`; `.dci-livecom-box > summary` removed.
+- **Texts (English):** `livecom.title` "Live disambiguation comments: {n} of {m}" (de/es/fr of the old wording removed), new `livecom.medium`, `livecom.tracksPart.one/.other`, `livecom.offerMedia`, `livecom.groupN.one/.other`, `livecom.groupOnAria`, `livecom.groupTextAria`.
+- **Tests:** `t_works_more.py` new case `livegroup` (two media: "CD 2, track 1.2"; one group of three, its text and tick for all; the heading last, at the right, below the list, at the same place folded; the list ≤ a third of the dashboard); `livecom` (the group "2–3 · ▸ 2 tracks", the heading) and `liveoffer` ("Tracks 2–4") adapted.
 
 ## Import 3.38.2 · 2026-10-31
 

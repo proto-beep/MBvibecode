@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.2
+// @version      3.38.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -429,7 +429,15 @@
       "footer.bottom": "To the bottom of the dashboard",
       "footer.editNote": "Write source and summary to the edit note",
       "footer.apply": "Stage in the relationship editor",
-      "livecom.title": "Disambiguation comments of live recordings: {n} of {m} ticked",
+      "livecom.title": "Live disambiguation comments: {n} of {m}",
+      "livecom.medium": "Medium",
+      "livecom.tracksPart.one": "track {list}",
+      "livecom.tracksPart.other": "tracks {list}",
+      "livecom.offerMedia": "Live recordings: {list}. Propose disambiguation comments for them (“{example}”)?",
+      "livecom.groupN.one": "{n} track",
+      "livecom.groupN.other": "{n} tracks",
+      "livecom.groupOnAria": "Comment for {list}",
+      "livecom.groupTextAria": "The comment of {list}",
       "livecom.hint": "Entered as edits of the recordings after “Enter edit” in the relationship editor, once the relationships are saved (⚙ Settings → Staging). Tick, or change a comment; a comment MusicBrainz has already is not overwritten.",
       "livecom.onAria": "Comment for track {pos}",
       "livecom.textAria": "The comment of track {pos}",
@@ -22610,22 +22618,96 @@
   }
 
   /**
+   * [168] (3.38.3) Live recordings named in short (collected item 168; maintainer: ""Tracks 1, 2, 3, 4, 5 are live recordings." ->
+   * kanns du die tracks gruppieren? "1-5"? kannst du medien erwähnen, falls sie komplett live sind?", "bei einem release mit nur
+   * einem medium nur die tracks. es kann auch mediengruppen geben bspw. CD 1-5"): with several media, whole media by their format
+   * and number ("CD 1", one after another of the same format "CD 1–5", without a format "Medium 3"); the other tracks as ranges.
+   */
+  function liveWhatText(idxs) {
+    const set = new Set(idxs);
+    let rest = [...set].sort((a, b) => a - b);
+    const media = [];
+    if (multiMedium()) {
+      const fmt = (md) => ((S.mediaInfo && S.mediaInfo.get(md)) || {}).format || '';
+      const whole = uniq(S.mbTracks.map((t) => t.medium)).filter((md) => {
+        const ts = S.mbTracks.filter((t) => t.medium === md && t.recordingGid && inSelection(t.idx));
+        return ts.length && ts.every((t) => set.has(t.idx));
+      });
+      const runs = [];
+      for (const md of whole) {
+        const last = runs[runs.length - 1];
+        if (last && md === last.to + 1 && fmt(md) === last.f) last.to = md;
+        else runs.push({ from: md, to: md, f: fmt(md) });
+      }
+      runs.forEach((r) => media.push(`${r.f || tr('livecom.medium')} ${r.from === r.to ? r.from : `${r.from}–${r.to}`}`));
+      const inWhole = new Set(whole);
+      rest = rest.filter((i) => !inWhole.has(S.mbTracks[i].medium));
+    }
+    // (the positions as in the list: "2", with several media "1.2")
+    const pos = (i) => (multiMedium() ? `${S.mbTracks[i].medium}.${S.mbTracks[i].number}` : String(S.mbTracks[i].number));
+    const runs = [];
+    for (const i of rest) {
+      const last = runs[runs.length - 1];
+      if (last && i === last[1] + 1 && S.mbTracks[i].medium === S.mbTracks[last[1]].medium) last[1] = i;
+      else runs.push([i, i]);
+    }
+    return { media: media.join(', '), tracks: runs.map(([a, b]) => (a === b ? pos(a) : `${pos(a)}–${pos(b)}`)).join(', '), n: rest.length };
+  }
+
+  /** [168] (3.38.3) The offer's or a group's name: "CD 1–5, tracks 6.1–6.3" or "1–5". */
+  function liveWhatLabel(idxs, { prefix = true } = {}) {
+    const w = liveWhatText(idxs);
+    if (!w.media) return w.tracks;
+    return [w.media, w.tracks ? (prefix ? tr('livecom.tracksPart', { n: w.n, list: w.tracks }) : w.tracks) : ''].filter(Boolean).join(', ');
+  }
+
+  /**
+   * [168] (3.38.3) The proposals in groups: those with the same comment (ticked alike, no note) are one line – "1–5 · 5 tracks ▸ ·
+   * “live, 2004‐03‐23: Iridium …”" –, ▸ shows their tracks; one with a note (another comment in MusicBrainz, different places or
+   * dates, this comment already, the area being looked up) stands alone. Returns [{ key, items }] in the order of the tracks.
+   */
+  function liveGroups(list) {
+    const groups = [];
+    const byKey = new Map();
+    for (const p of list) {
+      const c = liveChoice(p);
+      const alone = p.warn.length || p.other || p.same || p.pending;
+      const key = alone ? `1|${p.rec}` : `g|${c.on ? 1 : 0}|${c.text}`;
+      if (!byKey.has(key)) {
+        const g = { key, items: [] };
+        byKey.set(key, g);
+        groups.push(g);
+      }
+      byKey.get(key).items.push(p);
+    }
+    return groups;
+  }
+
+  /**
    * [3.32.9] The list of live recordings with their comments above "Stage …" (setting "Live recordings: add a disambiguation
-   * comment"). [3.37.3] With the setting off: an offer for the release – ✓ shows the list, ✕ hides it (item 150b).
+   * comment"). [3.37.3] With the setting off: an offer for the release – ✓ shows the list, ✕ hides it (item 150b). [168] (3.38.3)
+   * The tracks as ranges and media, the list in groups, at most a third of the dashboard's height (its own scroll bar), and its
+   * heading always at the bottom right of the box – the list opens above it (maintainer: "rechts unten im kasten soll immer die
+   * Überschrift stehen"); [170] the heading shorter ("Live disambiguation comments: 5 of 5").
    */
   function renderLiveComments() {
     const el = S.overlay && $('livecom');
     if (!el) return;
     const list = (S.liveCom || S.liveComOffer !== 'no') && S.rows.length ? liveProposals() : [];
     el.hidden = !list.length;
+    // (a line of its own, open or not: the heading stays at the same place – bottom right)
+    el.classList.toggle('dci-livecom-full', !!list.length && liveComOn());
     if (!list.length) {
       el.innerHTML = '';
       el.dataset.html = '';
       return;
     }
     if (!liveComOn()) {
-      const offer = `<div class="dci-livecom-offer" title="${esc(tr('livecom.offerTitle'))}"><span>${esc(tr('livecom.offer', {
-        n: list.length, list: list.map((p) => p.pos).join(', '), example: list[0].auto }))}</span>
+      const w = liveWhatText(list.map((p) => p.i));
+      const text = w.media
+        ? tr('livecom.offerMedia', { list: liveWhatLabel(list.map((p) => p.i)), example: list[0].auto })
+        : tr('livecom.offer', { n: list.length, list: w.tracks, example: list[0].auto });
+      const offer = `<div class="dci-livecom-offer" title="${esc(tr('livecom.offerTitle'))}"><span>${esc(text)}</span>
         <button type="button" class="dci-small" data-act="livecom-yes">${esc(tr('livecom.offerYes'))}</button>
         <button type="button" class="dci-small" data-act="livecom-no">${esc(tr('livecom.offerNo'))}</button></div>`;
       if (el.dataset.html !== offer) {
@@ -22636,18 +22718,38 @@
     }
     // (not while a comment is being typed in it)
     if (el.contains(document.activeElement) && document.activeElement.dataset.f === 'livecom-text') return;
+    const open = S.liveComOpen !== false;
     const n = list.filter((p) => liveChoice(p).on).length;
-    const rows = list.map((p) => {
+    if (!S.liveComGroupOpen) S.liveComGroupOpen = new Set();
+    const rowOf = (p, sub = false) => {
       const c = liveChoice(p);
       const notes = [...p.warn, ...(p.same ? [tr('livecom.same')] : []), ...(p.pending ? [tr('livecom.pending')] : []), ...(c.manual ? [tr('livecom.manual')] : [])];
-      return `<tr data-livecom="${esc(p.rec)}"><td><input type="checkbox" data-f="livecom-on" data-rec="${esc(p.rec)}" ${c.on ? 'checked' : ''} ${p.other ? 'disabled' : ''} aria-label="${esc(tr('livecom.onAria', { pos: p.pos }))}"></td>
+      return `<tr data-livecom="${esc(p.rec)}"${sub ? ' class="dci-livecom-sub"' : ''}><td><input type="checkbox" data-f="livecom-on" data-rec="${esc(p.rec)}" ${c.on ? 'checked' : ''} ${p.other ? 'disabled' : ''} aria-label="${esc(tr('livecom.onAria', { pos: p.pos }))}"></td>
         <td class="dci-livecom-pos">${esc(p.pos)}</td><td class="dci-livecom-title">${esc(p.title)}</td>
         <td><input type="text" data-f="livecom-text" data-rec="${esc(p.rec)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.textAria', { pos: p.pos }))}"></td>
         <td>${notes.map((x) => `<div class="dci-sub${p.warn.includes(x) ? ' dci-livecom-warn' : ''}">${esc(x)}</div>`).join('')}</td></tr>`;
+    };
+    const rows = liveGroups(list).map((g) => {
+      if (g.items.length < 2) return rowOf(g.items[0]);
+      const c = liveChoice(g.items[0]);
+      const recs = g.items.map((p) => p.rec).join(',');
+      const label = liveWhatLabel(g.items.map((p) => p.i), { prefix: false });
+      const gOpen = S.liveComGroupOpen.has(g.items[0].rec);
+      const notes = g.items.every((p) => liveChoice(p).manual) ? [tr('livecom.manual')] : [];
+      return `<tr data-livecom-group="${esc(recs)}"><td><input type="checkbox" data-f="livecom-on" data-recs="${esc(recs)}" ${c.on ? 'checked' : ''} aria-label="${esc(tr('livecom.groupOnAria', { list: label }))}"></td>
+        <td class="dci-livecom-pos">${esc(label)}</td>
+        <td class="dci-livecom-title"><button type="button" class="dci-textbtn dci-livecom-gbtn" data-act="livecom-group" data-rec="${esc(g.items[0].rec)}" aria-expanded="${gOpen}">${gOpen ? '▾' : '▸'} ${esc(tr('livecom.groupN', { n: g.items.length }))}</button></td>
+        <td><input type="text" data-f="livecom-text" data-recs="${esc(recs)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.groupTextAria', { list: label }))}"></td>
+        <td>${notes.map((x) => `<div class="dci-sub">${esc(x)}</div>`).join('')}</td></tr>${gOpen ? g.items.map((p) => rowOf(p, true)).join('') : ''}`;
     }).join('');
-    const html = `<details class="dci-livecom-box" ${S.liveComOpen === false ? '' : 'open'}><summary>${esc(tr('livecom.title', { n, m: list.length }))}</summary>
+    // at most a third of the dashboard's height
+    const h = S.overlay.getBoundingClientRect().height;
+    const max = h ? `${Math.max(120, Math.round(h / 3))}px` : '33vh';
+    const head = `<button type="button" class="dci-livecom-head" data-act="livecom-toggle" aria-expanded="${open}" aria-controls="dci-livecom-body">${open ? '▾' : '▸'} ${esc(tr('livecom.title', { n, m: list.length }))}</button>`;
+    const html = `<div class="dci-livecom-box${open ? ' dci-livecom-boxopen' : ''}">${open ? `<div class="dci-livecom-body" id="dci-livecom-body" style="max-height:${max}">
       <p class="dci-sub">${esc(tr('livecom.hint'))}</p>
-      <div class="dci-tablewrap"><table class="dci-livecom-table"><tbody>${rows}</tbody></table></div></details>`;
+      <div class="dci-tablewrap"><table class="dci-livecom-table"><tbody>${rows}</tbody></table></div></div>` : ''}
+      <div class="dci-livecom-headrow">${head}</div></div>`;
     if (el.dataset.html === html) return;
     el.innerHTML = html;
     el.dataset.html = html;
@@ -25900,6 +26002,23 @@
         break;
       }
       // [3.37.3] the offer of comments of live recordings (item 150b): for this release
+      case 'livecom-toggle': {
+        // [168] (3.38.3) the list folded or not – its heading stays at the bottom right
+        S.liveComOpen = S.liveComOpen === false;
+        renderLiveComments();
+        const h = S.overlay.querySelector('[data-act="livecom-toggle"]');
+        if (h) h.focus({ preventScroll: true });
+        break;
+      }
+      case 'livecom-group': {
+        // [168] (3.38.3) the tracks of a group shown or not
+        if (!S.liveComGroupOpen) S.liveComGroupOpen = new Set();
+        const k = btn.dataset.rec;
+        if (S.liveComGroupOpen.has(k)) S.liveComGroupOpen.delete(k);
+        else S.liveComGroupOpen.add(k);
+        renderLiveComments();
+        break;
+      }
       case 'livecom-yes':
       case 'livecom-no':
         S.liveComOffer = act === 'livecom-yes' ? 'yes' : 'no';
@@ -27424,16 +27543,21 @@
       // [3.32.9] a live recording ticked or not for its comment (item 113)
       case 'livecom-on': {
         if (!S.liveComChoice) S.liveComChoice = new Map();
-        const c = S.liveComChoice.get(el.dataset.rec) || {};
-        S.liveComChoice.set(el.dataset.rec, { ...c, on: el.checked });
+        // [168] (3.38.3) a group: all its recordings
+        for (const rec of (el.dataset.recs || el.dataset.rec || '').split(',').filter(Boolean)) {
+          const c = S.liveComChoice.get(rec) || {};
+          S.liveComChoice.set(rec, { ...c, on: el.checked });
+        }
         renderLiveComments();
         if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
         break;
       }
       case 'livecom-text': {
         if (!S.liveComChoice) S.liveComChoice = new Map();
-        const c = S.liveComChoice.get(el.dataset.rec) || {};
-        S.liveComChoice.set(el.dataset.rec, { ...c, text: el.value.trim() });
+        for (const rec of (el.dataset.recs || el.dataset.rec || '').split(',').filter(Boolean)) {
+          const c = S.liveComChoice.get(rec) || {};
+          S.liveComChoice.set(rec, { ...c, text: el.value.trim() });
+        }
         renderLiveComments();
         if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
         break;
@@ -27541,12 +27665,7 @@
   let manualTypeTimer = null;
   document.addEventListener('toggle', (e) => {
     if (e.target && e.target.dataset && e.target.dataset.el === 'datefind') S.dateFindOpen = e.target.open;
-    // [3.32.9] the list of live comments folded or not (while the dashboard is open)
-    if (e.target && e.target.classList && e.target.classList.contains('dci-livecom-box')) {
-      S.liveComOpen = e.target.open;
-      const box = S.overlay && $('livecom');
-      if (box) box.dataset.html = '';
-    }
+    // ([168] 3.38.3: the list of live comments is folded by its heading button – 'livecom-toggle')
   }, true);
 
   function onInput(e) {
@@ -30896,7 +31015,16 @@
       .dci-livecom-offer { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 4px; background: #f7f6fb; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); cursor: help; }
       .dci-livecom-offer span { flex: 1 1 calc(var(--u, 1px) * 300); }
       .dci-livecom-offer button { cursor: pointer; }
-      .dci-livecom-box > summary { cursor: pointer; font-weight: 600; }
+      /* [168] (3.38.3) the list above, its heading at the bottom right; at most a third of the dashboard's height */
+      .dci-livecom-full { flex-basis: 100%; }
+      .dci-livecom-box { display: flex; flex-direction: column; }
+      .dci-livecom-box:not(.dci-livecom-boxopen) { width: fit-content; margin-left: auto; }
+      .dci-livecom-body { overflow: auto; margin-bottom: calc(var(--u, 1px) * 4); }
+      .dci-livecom-headrow { display: flex; justify-content: flex-end; }
+      .dci-livecom-head { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; cursor: pointer; color: var(--ink); }
+      .dci-livecom-head:hover { text-decoration: underline; }
+      .dci-livecom-sub td:first-child { padding-left: calc(var(--u, 1px) * 18); }
+      .dci-livecom-gbtn { white-space: nowrap; }
       .dci-livecom-table td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4); vertical-align: top; }
       .dci-livecom-table input[type=text] { width: 100%; min-width: calc(var(--u, 1px) * 240); }
       .dci-livecom-pos { white-space: nowrap; color: var(--muted); }

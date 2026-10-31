@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.38.2",
+  "version": "3.38.3",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -305,7 +305,6 @@
     "footer.bottom": "Zum Ende des Dashboards",
     "footer.editNote": "Quelle und Zusammenfassung in die Edit-Notiz schreiben",
     "footer.apply": "In den Beziehungseditor übernehmen",
-    "livecom.title": "Begriffsklärungskommentare der Live-Aufnahmen: {n} von {m} angehakt",
     "livecom.hint": "Werden nach „Enter edit“ im Beziehungseditor als Bearbeitungen der Aufnahmen eingetragen, sobald die Beziehungen gespeichert sind (⚙ Einstellungen → Stagen). Anhaken oder einen Kommentar ändern; ein Kommentar, den MusicBrainz schon hat, wird nicht überschrieben.",
     "livecom.onAria": "Kommentar für Track {pos}",
     "livecom.textAria": "Der Kommentar von Track {pos}",
@@ -1996,7 +1995,6 @@
     "footer.bottom": "Al final del panel",
     "footer.editNote": "Escribir el origen y un resumen en la nota de edición",
     "footer.apply": "Preparar en el editor de relaciones",
-    "livecom.title": "Comentarios de desambiguación de grabaciones en directo: {n} de {m} marcados",
     "livecom.hint": "Se introducen como ediciones de las grabaciones tras «Enter edit» en el editor de relaciones, una vez guardadas las relaciones (⚙ Ajustes → Preparar). Marca o cambia un comentario; un comentario que MusicBrainz ya tiene no se sobrescribe.",
     "livecom.onAria": "Comentario para la pista {pos}",
     "livecom.textAria": "El comentario de la pista {pos}",
@@ -3687,7 +3685,6 @@
     "footer.bottom": "En bas du tableau",
     "footer.editNote": "Écrire la source et un résumé dans la note de modification",
     "footer.apply": "Préparer dans l’éditeur de relations",
-    "livecom.title": "Commentaires de désambiguïsation des enregistrements live : {n} sur {m} cochés",
     "livecom.hint": "Saisis comme modifications des enregistrements après « Enter edit » dans l’éditeur de relations, une fois les relations enregistrées (⚙ Réglages → Préparation). Cochez ou modifiez un commentaire ; un commentaire que MusicBrainz a déjà n’est pas écrasé.",
     "livecom.onAria": "Commentaire pour la piste {pos}",
     "livecom.textAria": "Le commentaire de la piste {pos}",
