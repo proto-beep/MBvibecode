@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1140,6 +1140,121 @@ def case_typonote():
         finally:
             H.ENTRIES_VIEW = 'legacy'
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_stacked():
+    """Credits Importer 3.38.7: names above (or below) the line with their instruments (collected item 167, rules S058, S059;
+    maintainer: "folgendes muss insbesondere bei der Bilderkennung erkannt werden: "Torben SNEKKESTAD / SAXOPHONES & TRUMPET /
+    Agusti FERNANDEZ / PIANO / Barry GUY / DOUBLE BASS" also die Artists stehen über der Zeile mit ihnen betreffenden
+    instrumenten", "Großbuchstaben: immer in normale Schreibweise bringen", "umgekehrte Reihenfolge: ja bitte", "Behelfsknopf:
+    passt", "mach erstmal nur eindeutiges").
+    A) The example pasted: Torben Snekkestad – saxophone (“saxophones”), trumpet –, Agusti Fernandez – piano –, Barry Guy – double
+       bass (the names in normal case; until 3.38.6 an entry "& TRUMPET" with saxophone and five lines not recognized); nothing not
+       recognized, no note, nothing in the log.
+    B) The instruments above: "PIANO / Agusti Fernandez / DOUBLE BASS / Barry Guy" – the same.
+    C) Not clear ("Jane Roe / PIANO / John Doe"): Jane Roe piano with the note "Read from lines with the name above its
+       instruments – …" and "⇅ Instruments above the names"; the log says so; John Doe not recognized. "⇅" clicked: read again –
+       John Doe piano, the note "… the instruments above the name …", "⇅ Names above the instruments"; Jane Roe not recognized;
+       the log says so. Another text: the names above again.
+    D) In one line, S059: "Torben SNEKKESTAD – SAXOPHONES & TRUMPET" → Torben Snekkestad, "KUROSAWA Go – piano" → Kurosawa Go;
+       "DJ Shadow – piano", "ABBA – piano", "BMS Illustration – piano" stay.
+    E) The Discogs notes (S054): "Torben SNEKKESTAD" above "SAXOPHONES & TRUMPET" – an entry Torben Snekkestad from the notes,
+       saxophone and trumpet."""
+    H.attr(9160, 'trumpet', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    EX = 'Torben SNEKKESTAD\nSAXOPHONES & TRUMPET\nAgusti FERNANDEZ\nPIANO\nBarry GUY\nDOUBLE BASS'
+    NOTE = "[...document.querySelectorAll('.dci-stack-note')].map(n => [n.closest('section.dci-group').querySelector('.dci-gname strong').textContent.trim(), n.textContent.replace(/\\s+/g, ' ').trim()])"
+    LOGS = "[...document.querySelectorAll('#dci-log li')].filter(li => /one above the other/.test(li.textContent)).map(li => [li.className, li.textContent.replace(/^\\S+\\s/, '').trim()])"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        IMP = "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length"
+
+        def wait_import(n):
+            H.wait_for(pg, f"{IMP} > {n}", 90)
+            pg.wait_for_timeout(1200)
+
+        def load(text):
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', text)
+            n = pg.evaluate(IMP)
+            pg.click('[data-act=text-load]')
+            wait_import(n)
+            g = pg.evaluate(GK_ROWS)
+            return {k: [(r[0], r[2], r[3]) for r in v['rows']] for k, v in g.items()}, pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+
+        a, a_unrec = load(EX)
+        a_note, a_log = pg.evaluate(NOTE), pg.evaluate(LOGS)
+        print('A)', a, '| nicht erkannt:', a_unrec, '| Hinweis:', a_note, a_log)
+        want = {'Torben Snekkestad': [('SAXOPHONES', 'saxophone', 'saxophones'), ('TRUMPET', 'trumpet', '')], 'Agusti Fernandez': [('PIANO', 'piano', '')],
+                'Barry Guy': [('DOUBLE BASS', 'double bass', '')]}
+        ok_a = all(a.get(k) == v for k, v in want.items()) and not any('TRUMPET' in k for k in a) and not a_unrec and not a_note and not a_log
+        bb, b_unrec = load('PIANO\nAgusti Fernandez\nDOUBLE BASS\nBarry Guy')
+        print('B)', bb, b_unrec)
+        ok_b = bb.get('Agusti Fernandez') == [('PIANO', 'piano', '')] and bb.get('Barry Guy') == [('DOUBLE BASS', 'double bass', '')] and not b_unrec and not pg.evaluate(NOTE)
+        # C) not clear
+        c, c_unrec = load('Jane Roe\nPIANO\nJohn Doe')
+        c_note, c_log = pg.evaluate(NOTE), pg.evaluate(LOGS)
+        btn = pg.evaluate("(document.querySelector('.dci-stack-note [data-act=stack-flip]') || {}).textContent")
+        print('C)', c, c_unrec, '\n   Hinweis:', c_note, btn, '\n   Protokoll:', c_log)
+        n = pg.evaluate(IMP)
+        pg.click('.dci-stack-note [data-act=stack-flip]')
+        wait_import(n)
+        c2 = {k: [(r[0], r[2], r[3]) for r in v['rows']] for k, v in pg.evaluate(GK_ROWS).items()}
+        c2_unrec, c2_note, c2_log = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)"), pg.evaluate(NOTE), pg.evaluate(LOGS)
+        btn2 = pg.evaluate("(document.querySelector('.dci-stack-note [data-act=stack-flip]') || {}).textContent")
+        print('   ⇅:', c2, c2_unrec, '\n   Hinweis:', c2_note, btn2, '\n   Protokoll:', c2_log)
+        c3, _u = load('Jane Roe\nPIANO\nJohn Doe\n')
+        print('   neuer Text:', c3)
+        ok_c = c.get('Jane Roe') == [('PIANO', 'piano', '')] and 'John Doe' not in c and any('John Doe' in u for u in c_unrec) \
+            and c_note == [['Jane Roe', 'Read from lines with the name above its instruments – their order was not clear. ⇅ Instruments above the names S058']] \
+            and btn == '⇅ Instruments above the names' and any(cl == 'dci-log-warn' and 'read with the name above its instruments' in t and '(Jane Roe)' in t for cl, t in c_log) \
+            and c2.get('John Doe') == [('PIANO', 'piano', '')] and 'Jane Roe' not in c2 and any('Jane Roe' in u for u in c2_unrec) \
+            and c2_note == [['John Doe', 'Read from lines with the instruments above the name – their order was not clear. ⇅ Names above the instruments S058']] \
+            and btn2 == '⇅ Names above the instruments' and any('read again with the instruments above the names' in t for cl, t in c2_log) \
+            and c3.get('Jane Roe') == [('PIANO', 'piano', '')]
+        # D) one line
+        d, d_unrec = load('Torben SNEKKESTAD – SAXOPHONES & TRUMPET\nKUROSAWA Go – piano\nDJ Shadow – piano\nABBA – piano\nBMS Illustration – piano')
+        print('D)', d, d_unrec)
+        ok_d = d.get('Torben Snekkestad') == want['Torben Snekkestad'] and all(k in d for k in ('Kurosawa Go', 'DJ Shadow', 'ABBA', 'BMS Illustration'))
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d)
+        results += [ok_a, ok_b, ok_c, ok_d]
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    # E) the Discogs notes
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = 'Torben SNEKKESTAD\nSAXOPHONES & TRUMPET\n\n' + d['notes']
+        return d
+
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            g = pg.evaluate(GK_ROWS)
+            e = g.get('Torben Snekkestad')
+            notes = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Torben Snekkestad').map(g => g.textContent.includes('From the Discogs notes'))")
+            print('E) Notizen:', e and [(r[0], r[2], r[3]) for r in e['rows']], notes)
+            results.append(bool(e) and [(r[0], r[2]) for r in e['rows']] == [('SAXOPHONES', 'saxophone'), ('TRUMPET', 'trumpet')] and notes == [True] and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

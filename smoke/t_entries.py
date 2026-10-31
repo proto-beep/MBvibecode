@@ -1,6 +1,6 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0), flagcols (3.36.6), chipask (3.37.14) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0), flagcols (3.36.6), chipask (3.37.14), chipinfo (3.38.6) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -1115,6 +1115,91 @@ def case_chipask():
             wide = pg.evaluate("(sel) => !!document.querySelector(sel + ' tr.dci-em-line')", low)
             print('D) volle Matrix:', wide)
             results.append(wide)
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        finally:
+            H.ENTRIES_VIEW = 'legacy'
+            H.discogs_release = orig
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_chipinfo():
+    """Credits Importer 3.38.6 (collected item 163b; maintainer: "ja dezentes zeichen mit Tooltip", "ja nimm das ⓘ"): a chip whose
+    note has its answer applied has a small grey ⓘ after its name, the note as its tooltip – none while a question is open ("?").
+    A) Before answering: "? bass", "? Taischigoto", "? Directed By" without ⓘ; "Buddha Machine" (none is like it, set to other
+       instruments) with ⓘ – "“Buddha Machine” is no instrument of MusicBrainz, and none is like it: other instruments “Buddha
+       machine”" (grey, right after the name).
+    B) taishōgoto chosen: ⓘ "“Taischigoto” is no instrument of MusicBrainz – chosen: taishōgoto", "A spelling of its own: credited
+       “taischigoto”." and "Written small – unknown to MusicBrainz: Taischigoto → taischigoto", a line each; double bass (Q001): no ⓘ
+       (no note).
+    C) conductor chosen for "Directed By": ⓘ "“Directed By” – chosen: conductor"."""
+    H.ENTRIES_VIEW = 'matrix'
+    H.attr(9151, 'taishōgoto', 14, 14)
+    H.attr(9124, 'other instruments', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CREDITS = [('Low Man', 'Bass, Taischigoto, Buddha Machine', 3081), ('Drum Guy', 'Directed By', 3082)]
+    for n, _r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 2990), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    CHIPS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('.dci-em-cl .dci-em-chip')].map(c => { const i = c.querySelector('.dci-em-chipinfo');
+        return { name: c.querySelector('.dci-em-chipname').textContent.replace(/\\s+/g, ' ').trim(), line: c.dataset.line,
+          info: i ? i.title : null, color: i ? getComputedStyle(i).color : null, after: i ? i.previousElementSibling.classList.contains('dci-em-chipname') : null }; }) : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        try:
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            pg.click('.dci-head [data-act=view-toggle]')
+            pg.wait_for_timeout(600)
+            low, dg = sec_sel(pg, 'Low Man'), sec_sel(pg, 'Drum Guy')
+            a = pg.evaluate(CHIPS, 'Low Man') + pg.evaluate(CHIPS, 'Drum Guy')
+            for c in a:
+                print('A)', c)
+            by = lambda cs, start: next((c for c in cs if c['name'].startswith(start)), None)
+            bud = by(a, 'other instruments') or by(a, 'Buddha') or by(a, 'buddha')
+            ok_a = all(by(a, x) and by(a, x)['info'] is None for x in ('? bass', '? Taischigoto', '? ')) and bool(bud) and bool(bud['info']) \
+                and bud['info'] == '“Buddha Machine” is no instrument of MusicBrainz, and none is like it: other instruments “Buddha machine”' \
+                and bud['color'] == 'rgb(109, 106, 124)' and bud['after']
+            # B)
+            tai = by(a, '? Taischigoto')
+            bass = by(a, '? bass')
+            for c, instr in ((tai, 'taishōgoto'), (bass, 'double bass')):
+                if c:
+                    pg.click(f'{low} .dci-em-chip[data-line="{c["line"]}"] [data-act=em-chipask]'); pg.wait_for_timeout(400)
+                    pg.click(f'{low} .dci-em-chipmenu [data-act=instr-pick][data-instr="{instr}"]'); pg.wait_for_timeout(500)
+            b1 = pg.evaluate(CHIPS, 'Low Man')
+            print('B)', b1)
+            t2, b2 = by(b1, 'taishōgoto'), by(b1, 'double bass')
+            ok_b = bool(t2) and t2['info'] == ('“Taischigoto” is no instrument of MusicBrainz – chosen: taishōgoto\nA spelling of its own: credited “taischigoto”.\n'
+                                               'Written small – unknown to MusicBrainz: Taischigoto → taischigoto') \
+                and bool(b2) and b2['info'] is None
+            # C)
+            pg.click(f'{dg} .dci-em-chip [data-act=em-chipask]'); pg.wait_for_timeout(400)
+            pg.click(f'{dg} .dci-em-chipmenu [data-act=type-pick][data-opt="0"]'); pg.wait_for_timeout(500)
+            c1 = pg.evaluate(CHIPS, 'Drum Guy')
+            print('C)', c1)
+            ok_c = bool(c1) and c1[0]['info'] == '“Directed By” – chosen: conductor'
+            print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
+            results += [ok_a, ok_b, ok_c]
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()

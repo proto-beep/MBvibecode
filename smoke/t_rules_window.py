@@ -191,7 +191,9 @@ def case_rowrules():
         btn.scroll_into_view_if_needed()
         rid = btn.get_attribute('data-rule')
         y0 = btn.evaluate('b => Math.round(b.getBoundingClientRect().top)')
-        btn.click()
+        # ([3.38.4] clicked in the page: with the lower footer the row may lie below the log window, and Playwright would scroll it
+        # elsewhere before its click)
+        btn.evaluate('b => b.click()')
         pg.wait_for_timeout(500)
         a1 = st()
         y1 = pg.locator(ROWID).first.evaluate('b => Math.round(b.getBoundingClientRect().top)')

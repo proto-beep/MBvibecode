@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.2, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.7, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,59 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.7 · 2026-10-31
+
+Names above (or below) their instruments, names in capitals (collected item 167; rules S058, S059).
+
+- **`TEXT`:** new `normalCaseName(n)` (S059: an all-caps word of three letters or more with a vowel beside a word with small letters, first in the name from four letters – `-` and `'` parts each capitalized); `addCredit` gives it to the credits of persons (not to companies). `parse` takes `stackUp`; new `STACK_PARTICLE`, `stackInstr(raw)` (no digit, `:`, brackets, `by`/`at`/…; every part of `splitRoles` `playable`), `stackName(raw)` (2 – 4 words starting in capitals or a particle between them, `looksLikeName`, no sign, no word `playable` or a role, no `TEXT_PLACE_WORDS`, not `creditLike`, not `TEXT_IGNORE_LINE`), `stackPairs(lines)` (S058: runs of N/I lines with both kinds; `pair('N','I')` and `pair('I','N')`; wholly paired one way → that way, else ambiguous → `stackUp` decides; → Map index → `{ name, instr, up, ambig, lines }` and the other line → null), `readStacked(pr)` (`startLine` with "line / line", a credit per part with `stacked` and `stackAmbig`). The main loop goes through `allLines` with their indexes: a line of a pair flushes the block of S051 and is read with its pair.
+- **Core:** `sourceContext().stackUp` (`S.stackUp`); `groupCredits` carries `stackAmbig` to the role, the row gets `row.stackAmbig`; after "Import complete" the log `stackAmbig` / `stackAmbigUp` (warn) with the names; new `stackNoteHtml(rows)` (`.dci-stack-note` in `groupHtml` after `coverFromEntryHtml`: `stack.noteDown` / `stack.noteUp`, button `data-act="stack-flip"`, rule id S058); case `stack-flip` (`S.stackUp` toggled, log `stackFlipUp` / `stackFlipDown`, `loadRelease` of the same release – with its question); `loadRelease` sets `S.stackUp` false for another release or text.
+- **Register:** S058, S059.
+- **Texts (English):** `log.stackAmbig`, `log.stackAmbigUp`, `log.stackFlipUp`, `log.stackFlipDown`, `stack.noteDown`, `stack.noteUp`, `stack.flipUp`, `stack.flipDown`, `stack.flipTitle`.
+- **Tests:** `t_text_basics.py` new case `stacked` (the example; the instruments above; not clear – the note, the log, ⇅ and back to another text; one line with S059 – "KUROSAWA Go", "DJ Shadow", "ABBA", "BMS Illustration"; the Discogs notes); `register_golden.json` written anew (UPDATE=1): only the section "Special handling" gained S058 and S059.
+
+## Import 3.38.6 · 2026-10-31
+
+ⓘ at a chip (collected item 163b).
+
+- **New** `chipNoteText(r)`: the notes of a row whose answer is applied, a line each – `instrGuess` (`instrGuess.none`; `instrGuess.chosen` / `instrGuess.noneOr` with the instrument, `instrGuess.other` or `instrGuess.misc` chosen; with `guessNoteHtml` the spelling `instrGuess.typo` / `instrGuess.own`), `caseNoteHtml` (`caseNote.small` with `caseNote.word`, `caseNote.kept`), the type answered (`typeQuestionFor`, new text `em.chipNoteType`), `voiceCreditHtml` (`voiceCredit.from` + `voiceCredit.use`).
+- **`emChipHtml`:** without a question (`ask`), `span.dci-em-chipinfo` "ⓘ" (`role="img"`, `tabindex="0"`, the notes as `title` and `aria-label`) right after `.dci-em-chipname`.
+- **CSS:** `.dci-em-chipinfo` (grey, `cursor: help`), its `:focus-visible`.
+- **Texts (English):** `em.chipNoteType`.
+- **Tests:** `t_entries.py` new case `chipinfo` (no ⓘ while asking; "Buddha Machine" none is like it; taishōgoto chosen – three notes; double bass none; "Directed By" conductor).
+
+## Import 3.38.5 · 2026-10-31
+
+"Developer mode" (collected item 171).
+
+- **New** `DEV_KEY` (`dci-dev`, off), `DEV_OLD_KEYS` (`dci-log-diag`, `dci-stats-dev`: when one is stored, `DEV_KEY` is set to true if one of them was true and `DEV_KEY` was not stored; both removed), `S.devMode` – in place of `LOG_DIAG_KEY` / `S.logDiag` (3.36.2) and `STATS_DEV_KEY` (3.38.2), both removed.
+- **`renderLog`:** "Start diagnosis" with `S.devMode`. **`statsHtml`:** the switch `stats-dev` removed; `statsDevHtml` with `S.devMode`. **Settings → General:** `data-set="dev-mode"` (`settings.dev`, `settings.devTitle`) in place of `log-diag`. **`settingsChange`:** `dev-mode` (stored, a running diagnosis stops when off, the log redrawn) in place of `log-diag` and `stats-dev`.
+- **Reset:** `TOPIC_KEYS.general` with `DEV_KEY`, `TOPIC_KEYS.statistics` without `STATS_DEV_KEY`; `resetTopic('general')` and `resetSettings` set `S.devMode` false; `SETTINGS_KEYS` with `DEV_KEY` in place of the two.
+- **Texts (English):** new `settings.dev`, `settings.devTitle`; removed `settings.logDiag`, `settings.logDiagTitle`, `stats.dev`, `stats.devTitle` (all languages).
+- **Tests:** `t_ui_settings.py` `logdiag` ("Developer mode", `dci-dev`; new E: taken over from `dci-stats-dev` or `dci-log-diag` true, not from false; the old keys gone) and `statsdev` (shown in Developer mode, no switch of its own) adapted.
+
+## Import 3.38.4 · 2026-10-31
+
+The footer compact (collected item 169).
+
+- **Markup** (`buildOverlay`): `footer.dci-foot` holds `[data-el=livecom]` (first), `.dci-foot-bar` (`.dci-jump`, `[data-el=sum]`, new `[data-el=foot-chips]` with `role="status"`, `.dci-foot-actions`: panic, `[data-act=preview]` with `footer.previewShort` and the old text as tooltip, new `.dci-foot-opts[data-el=foot-opts]` – button `[data-act=foot-opts]` "⚙ Options ▾" and `#dci-foot-optlist` with the three checkboxes (short labels `footer.editNoteShort`, `footer.fillShort`, `footer.capShort`; the long texts in `title`, the cap's label `[data-el=cap-check]`) –, `[data-act=apply]`, new `.dci-foot-info` ⓘ with `footer.hint`), then `[data-el=rounds]`, `[data-el=waiting]`, `[data-el=stage-done]` (no `role="status"` any more – the chips have it); `p.dci-hint` removed.
+- **New** `FOOT_MSGS`, **`renderFootChips()`** (`S.footMsgs` – `rounds`, `waiting`, `stage-done`: `{ text, chip }` –, the chips `button.dci-foot-chip.dci-foot-chip-info|warn|ok[data-act=foot-msg][data-msg]` with the text as `title`; the paragraph of `S.footMsgOpen` shown with its text, the others hidden), **`setFootOpts(open)`** (`S.footOptsOpen`, `.dci-open`, `aria-expanded`).
+- **`refresh`:** the rounds and the waiting tracks into `S.footMsgs` (`footer.chipRounds`, `footer.chipWaiting`), then `renderFootChips()`; the summary in one line – `strong.dci-sum-new` with the levels as `title` (and `tabindex="0"`), the parts joined by `span.dci-sum-sep` " · " (was `<br>`). **`applyPlan`:** what was staged into `S.footMsgs['stage-done']` (`footer.chipDone`, the time of `msg.stageDone`). **`syncSharedSwitches`:** `footer.capShort` and the cap's tooltip.
+- **Handlers:** `onClick` closes "⚙ Options ▾" on a click outside `.dci-foot-opts`; cases `foot-opts`, `foot-msg`; Escape closes "⚙ Options ▾" first (focus back on its button); `S.footOptsOpen = false` when the overlay is built.
+- **CSS:** `.dci-foot` a column with `container-type: inline-size`; `.dci-foot-bar` (flex, wrap), `.dci-sum-new[title]`, `.dci-sum-sep`, `.dci-foot-chips`, `.dci-foot-chip` (`-warn`, `-info`, `-ok`), `.dci-foot-actions` (`margin-left: auto`), `.dci-foot-opts`, `.dci-foot-optbtn` (hidden), `.dci-foot-optlist`, `.dci-foot-info`; `@container (max-width: 1099px)`: the button shown, the list a box above it (`.dci-open`); `.dci-rounds`, `.dci-waiting`, `.dci-stage-done`, `.dci-livecom` without margins; `.dci-hint` and `.dci-livecom-full` (3.38.3) removed – `renderLiveComments` no longer sets it.
+- **Texts (English):** `footer.previewShort`, `footer.editNoteShort`, `footer.fillShort`, `footer.capShort`, `footer.options`, `footer.optionsTitle`, `footer.chipRounds`, `footer.chipWaiting.one/.other`, `footer.chipDone.one/.other`.
+- **Tests:** `t_ui_view.py` new case `foot` (1500 px one line ≤ 60 px, the summary, the levels, the chip and its message, the short checkboxes and their tooltips, Stage and ⓘ at the right; 900 px two lines, "⚙ Options ▾" above, ticked there, closed by a click elsewhere and Esc; 600 px Stage whole; staged: the chip "✓ 30 in the editor"; in the page one line at the bottom); `t_dates_matrix.py` `dragdates`: the date dropped onto Keys Guy with `drag` (from the middle) – with the lower footer its field lay near the bottom edge, where the dashboard scrolls while dragging; `t_rules_window.py` `rowrules` and `t_notes_companies.py` `facets` click the rule id and "new work" in the page – the row and the button may now lie below the log window of the test, and Playwright would scroll before its click.
+
+## Import 3.38.3 · 2026-10-31
+
+The comments of live recordings in short and in groups (collected items 168, 170).
+
+- **New** `liveWhatText(idxs)` (with `multiMedium()`: whole media – every chosen track with a recording live – in runs of the same format from `S.mediaInfo` ("CD 1–5"; without a format `livecom.medium`); the other tracks as ranges of the list's positions (`medium.number` with several media); returns `{ media, tracks, n }`), **`liveWhatLabel(idxs, { prefix })`** (media, then `livecom.tracksPart` or the bare ranges), **`liveGroups(list)`** (key `1|rec` for a proposal with `warn`, `other`, `same` or `pending`, else `g|on|text`; in the order of the tracks).
+- **`renderLiveComments`:** the offer `livecom.offerMedia` when media are named, else `livecom.offer` with the ranges; the list is a `div.dci-livecom-box` (no `<details>` any more) – `.dci-livecom-body` (`max-height` a third of `S.overlay`'s height, at least 120 px) above `.dci-livecom-headrow` with the button `.dci-livecom-head` (`data-act="livecom-toggle"`, `aria-expanded`); a group is `tr[data-livecom-group=recs]` (checkbox and text with `data-recs`, button `data-act="livecom-group"`), its tracks `tr.dci-livecom-sub[data-livecom]` while `S.liveComGroupOpen` (Set, first recording) has it; the element gets `.dci-livecom-full` whenever the list is shown (a line of its own, open or folded).
+- **Handlers:** `livecom-on` / `livecom-text` set each recording of `data-recs` (or `data-rec`); new cases `livecom-toggle` (`S.liveComOpen`, focus back on the heading) and `livecom-group`; the `toggle` listener of the old `<details>` removed.
+- **CSS:** `.dci-livecom-full`, `.dci-livecom-box` (flex column; folded: `width: fit-content; margin-left: auto`), `.dci-livecom-body` (`overflow: auto`), `.dci-livecom-headrow`, `.dci-livecom-head`, `.dci-livecom-sub`, `.dci-livecom-gbtn`; `.dci-livecom-box > summary` removed.
+- **Texts (English):** `livecom.title` "Live disambiguation comments: {n} of {m}" (de/es/fr of the old wording removed), new `livecom.medium`, `livecom.tracksPart.one/.other`, `livecom.offerMedia`, `livecom.groupN.one/.other`, `livecom.groupOnAria`, `livecom.groupTextAria`.
+- **Tests:** `t_works_more.py` new case `livegroup` (two media: "CD 2, track 1.2"; one group of three, its text and tick for all; the heading last, at the right, below the list, at the same place folded; the list ≤ a third of the dashboard); `livecom` (the group "2–3 · ▸ 2 tracks", the heading) and `liveoffer` ("Tracks 2–4") adapted.
 
 ## Import 3.38.2 · 2026-10-31
 

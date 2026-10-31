@@ -143,7 +143,9 @@ def case_dragdates():
         row('Guitar Guy').locator('[data-act=date-open]').click(); pg.keyboard.type('1999'); pg.wait_for_timeout(300)
         perf = idof('Performance 1 ·')
         drag(pg, f'.dci-pchip-date[data-id="{perf}"] .dci-chip-main', dcell('Guitar Guy'))
-        pg.drag_and_drop(f'.dci-pchip-date[data-id="{perf}"]', dcell('Keys Guy')); pg.wait_for_timeout(300)
+        # ([3.38.4] the footer lower: the field of Keys Guy lay near the bottom edge, where the dashboard scrolls while dragging –
+        # dragged as above, from the middle)
+        drag(pg, f'.dci-pchip-date[data-id="{perf}"] .dci-chip-main', dcell('Keys Guy')); pg.wait_for_timeout(300)
         print('2) Guitar Guy:', val('Guitar Guy', 'rd-by'), val('Guitar Guy', 'rd-bm'), val('Guitar Guy', 'rd-bd'), '| Keys Guy:', val('Keys Guy', 'rd-by'), val('Keys Guy', 'rd-bm'))
         ok2 = (val('Guitar Guy', 'rd-by'), val('Guitar Guy', 'rd-bm'), val('Guitar Guy', 'rd-bd')) == ('2001', '03', '01') and val('Keys Guy', 'rd-bm') == '03'
         # 3) works matrix: column date and the date of a cell

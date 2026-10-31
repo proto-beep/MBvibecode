@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.2
+// @version      3.38.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.7
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.7
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -429,7 +429,26 @@
       "footer.bottom": "To the bottom of the dashboard",
       "footer.editNote": "Write source and summary to the edit note",
       "footer.apply": "Stage in the relationship editor",
-      "livecom.title": "Disambiguation comments of live recordings: {n} of {m} ticked",
+      "footer.previewShort": "Preview",
+      "footer.editNoteShort": "edit note",
+      "footer.fillShort": "fill role credits",
+      "footer.capShort": "≤ {n} per staging",
+      "footer.options": "⚙ Options",
+      "footer.optionsTitle": "Edit note, role credits of existing relationships, rounds of staging",
+      "footer.chipRounds": "round {k} of {x}",
+      "footer.chipWaiting.one": "{n} track without a work",
+      "footer.chipWaiting.other": "{n} tracks without a work",
+      "footer.chipDone.one": "{n} in the editor ({time})",
+      "footer.chipDone.other": "{n} in the editor ({time})",
+      "livecom.title": "Live disambiguation comments: {n} of {m}",
+      "livecom.medium": "Medium",
+      "livecom.tracksPart.one": "track {list}",
+      "livecom.tracksPart.other": "tracks {list}",
+      "livecom.offerMedia": "Live recordings: {list}. Propose disambiguation comments for them (“{example}”)?",
+      "livecom.groupN.one": "{n} track",
+      "livecom.groupN.other": "{n} tracks",
+      "livecom.groupOnAria": "Comment for {list}",
+      "livecom.groupTextAria": "The comment of {list}",
       "livecom.hint": "Entered as edits of the recordings after “Enter edit” in the relationship editor, once the relationships are saved (⚙ Settings → Staging). Tick, or change a comment; a comment MusicBrainz has already is not overwritten.",
       "livecom.onAria": "Comment for track {pos}",
       "livecom.textAria": "The comment of track {pos}",
@@ -875,8 +894,8 @@
       "settings.place.window": "as a window",
       "settings.place.page": "in the page",
       "settings.logOpen": "Show the log",
-      "settings.logDiag": "Diagnosis in the log (“Start diagnosis”)",
-      "settings.logDiagTitle": "Shows “Start diagnosis” in the log: it records what MusicBrainz’s relationship editor does while you use its own tools (e.g. “Batch-create new works”), for reporting an issue. Only observes, changes nothing. Off: the button is not shown.",
+      "settings.dev": "Developer mode",
+      "settings.devTitle": "For reporting issues and improving the script: “Start diagnosis” in the log (records what MusicBrainz’s relationship editor does while you use its own tools, e.g. “Batch-create new works” – only observes, changes nothing) and the developer statistics in ⚙ Settings → Statistics (taken over as suggested or changed by hand, what was not recognized, the answers to the script’s questions, duplicates avoided – collected with the other statistics, in this browser only).",
       "settings.logPlace": "Place of the log",
       "settings.discogsHint": "With the companion script in a Discogs or Bandcamp tab: when the view follows the dashboard and what it shows (the cover only on Discogs). It shows the source that is loaded.",
       "settings.awOn": "Compare the tracks without a work with the works of the release's artists, writers and musicians",
@@ -1023,6 +1042,11 @@
       "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
       "role.notesTracks": "Tracks {list} from the notes",
       "role.typoRead": "Read as “{read}” (written “{written}”)",
+      "stack.noteDown": "Read from lines with the name above its instruments – their order was not clear.",
+      "stack.noteUp": "Read from lines with the instruments above the name – their order was not clear.",
+      "stack.flipUp": "⇅ Instruments above the names",
+      "stack.flipDown": "⇅ Names above the instruments",
+      "stack.flipTitle": "Reads the text again (changes in the dashboard are lost), the lines whose order was not clear the other way round",
       "cover.from": "From the cover art · {what}",
       "cover.cropTitle": "Where this line is in the image (read from the cover art)",
       "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
@@ -1240,6 +1264,10 @@
       "scope.title": "Sets everything else to Skip (links to works included); “all relationships” brings it back.",
       "log.scope": "Stage: {mode}",
       "log.importDone": "Import complete: {rows} roles of {entries} entries in the dashboard, {existing} already in MusicBrainz",
+      "log.stackAmbig": "Names and instruments one above the other, their order not clear ({list}): read with the name above its instruments – “⇅ Instruments above the names” at the entry reads them the other way round",
+      "log.stackAmbigUp": "Names and instruments one above the other, their order not clear ({list}): read with the instruments above the name – “⇅ Names above the instruments” at the entry reads them as before",
+      "log.stackFlipUp": "Names and instruments one above the other: read again with the instruments above the names",
+      "log.stackFlipDown": "Names and instruments one above the other: read again with the names above the instruments",
       "log.checksDone.one": "Checks complete: same-named works looked up for {n} track",
       "log.checksDone.other": "Checks complete: same-named works looked up for {n} tracks",
       "log.worksAsk.one": "{n} track without a work: the works section asks before the work lookups",
@@ -1539,8 +1567,6 @@
       "stats.ocr.lines": "lines taken over: {n}",
       "stats.ocr.corrected": "words changed by hand: {n}",
       "stats.own": "Own rules now: {n} – relationships from them:",
-      "stats.dev": "Developer statistics (to improve the script)",
-      "stats.devTitle": "Shows what helps to improve the script: how much was taken over as suggested or changed by hand (and after which rules), what was not recognized, how the script's questions were answered, the duplicates avoided. Collected with the other statistics, in this browser only.",
       "stats.dev.title": "Developer statistics",
       "stats.dev.auto": "Taken over or changed by hand",
       "stats.dev.rules": "Rules whose suggestion was changed most",
@@ -1974,6 +2000,7 @@
       "em.chipTitle": "Opens the full matrix of this entry at this role – drag the chip onto another event's line to move it there (⇧ Shift: in both)",
       "em.chipAskTitle": "A question to answer: opens the full matrix of this entry at this role",
       "em.chipAsk": "Answer the question of {name} here",
+      "em.chipNoteType": "“{role}” – chosen: {type}",
       "em.chipOut": "Take {name} out of this event",
       "em.by.event": "by event",
       "em.by.role": "by role",
@@ -3024,6 +3051,9 @@
     { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
     { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks). [3.37.7] Also after a word for tracks ("Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall"), and a side alone after such a word everywhere – "Tracks A2 & B:", the tracks of a date in the notes ("Track B …": until 3.37.6 the date was for all tracks)' },
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
+    // [167] (3.38.7) maintainer: "die Artists stehen über der Zeile mit ihnen betreffenden instrumenten", "Großbuchstaben: immer in normale Schreibweise bringen"
+    { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S059', where: 'TEXT.parse (normalCaseName, addCredit)', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S057', where: 'personCopyright, mergePersonCopyrights, suggestByName', note: '℗ / © of a person Discogs lists as a label (3.37.10): a company entry with a person\'s name and only ℗ / © rows ("Copyright © – Martin Davidson", "Phonographic Copyright ℗ – Martin Davidson") whose Discogs link MusicBrainz does not know – a person of that name in the dashboard (another Discogs credit) takes the rows (artist–release copyright, phonographic copyright; the row says so, "As the label instead" gives them back); an artist of that name linked in this release becomes the entry\'s MB entity; otherwise the name is searched: artists and labels of that name, each named as such' },
     { id: 'S056', where: 'findFestivals, festivalHtml', note: 'Festival recordings (3.37.8): a sentence of the text or the notes with a festival (T055) – "… during the du Maurier, Ltd. International Jazz Festival Vancouver" – gives a hint above the entries: MusicBrainz prefers the event to the place (the event is linked to its place); with a date in the sentence, MusicBrainz\'s events of that name whose time holds the date are offered – never set, a click adds one as an entry' },
     { id: 'S055', where: 'TEXT.parse (readClause; TEXT_GUEST_HEAD, TEXT_FEAT_HEAD)', note: 'Texts (3.37.2): "Special Guest: M. Osswald on Sax and Clarinet" – the words before the colon are no person (T053): "Special Guest(s)", "Guest(s)" (and in German, French, Spanish) give the attribute guest to the instruments and voices of the names after it (a name without roles: performer, guest), "featuring", "feat.", "with" give none; "NAME on X and Y" (instruments or voices) gives them to the name, also without such a word. Before: "Special Guest" was read as the name and "M. Osswald on Sax" as a role credit' },
@@ -4824,6 +4854,20 @@
       return parts.every(placeLike) ? { name: parts[0], area: parts.slice(1).join(', ') } : null;
     }
 
+    /**
+     * [S059] (3.38.7) A person's name with a word in capitals beside words in normal case – "Torben SNEKKESTAD", "Agusti FERNANDEZ"
+     * – in normal case: "Torben Snekkestad" (collected item 167; maintainer: "Großbuchstaben: immer in normale Schreibweise
+     * bringen"): a word of three letters or more with a vowel (also with - or '), first in the name only from four letters ("KUROSAWA
+     * Go"); never a name all in capitals ("ABBA", "RZA"), short words ("DJ Shadow", "AC Williams") nor letters first ("BMS
+     * Illustration"). MusicBrainz's spelling ("Agustí Fernández") counts once the name is linked.
+     */
+    const normalCaseName = (n) => {
+      const words = String(n || '').split(' ');
+      if (!words.some((w) => /\p{Ll}/u.test(w))) return n;
+      const caps = (w, i) => /^\p{Lu}[\p{Lu}'’-]{2,}$/u.test(w) && /[AEIOUYÀ-ÆÈ-ÏÒ-ÖØ-Ý]/u.test(w) && (i > 0 || w.replace(/[^\p{L}]/gu, '').length >= 4);
+      return words.map((w, i) => (caps(w, i) ? w.toLowerCase().replace(/(^|[-'’])(\p{L})/gu, (all, sep, c) => sep + c.toUpperCase()) : w)).join(' ');
+    };
+
     /** Clauses of a line: "Written by A, mixed by B" → two; other commas stay inside their clause. */
     function clauses(line) {
       const out = [];
@@ -4965,7 +5009,7 @@
       return { text: clean(text), links, cut: true };
     }
 
-    function parse(text, { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames = [] }) {
+    function parse(text, { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames = [], stackUp = false }) {
       const credits = [];
       const companies = [];
       const unrecognized = [];
@@ -5022,7 +5066,7 @@
         const p = parseRoleNotation(role)[0];
         if (!p || !looksLikeName(name)) return false;
         if (isCompanyRoleKnown(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra });
-        else credits.push({ who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
+        else credits.push({ who: who(ruleOn('S059') ? normalCaseName(name) : name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
         return true;
       };
       // [S041] (3.30.7) the release's artist as the band, or "the band", "we" (collected item 96)
@@ -5752,6 +5796,76 @@
         }
       };
 
+      /**
+       * [S058] (3.38.7) Names above (or below) the line with their instruments (collected item 167; maintainer: "folgendes muss
+       * insbesondere bei der Bilderkennung erkannt werden: "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO /
+       * Barry GUY / DOUBLE BASS" also die Artists stehen über der Zeile mit ihnen betreffenden instrumenten", "umgekehrte
+       * Reihenfolge: ja bitte", "mach erstmal nur eindeutiges"): a line that looks like a name (2 – 4 words in capitals, a
+       * particle between them, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows
+       * ("SAXOPHONES & TRUMPET": never "role & name") pair up within a block (the lines between empty or other ones). A block that
+       * pairs up wholly with the names above – or wholly with the instruments above – is read so; any other (an odd number of
+       * lines, one missing, two columns read into each other) is ambiguous: the names above (with `stackUp` the instruments),
+       * its credits marked `stackAmbig` (the entry says so, "⇅" reads the text the other way round). Lines left over are read as
+       * usual. → Map of a line's index to its pair { name, instr, up, ambig }, and the other line's index to null.
+       */
+      const STACK_PARTICLE = /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|bin|al|el|y|zu|ten|ter|of)$/i;
+      const stackInstr = (raw) => {
+        const l = clean(raw);
+        if (!l || /\d|:|[()[\]@]|https?:|www\./i.test(l) || /\s(?:by|at|in|on|for|with|von|par|por)\s/i.test(` ${l} `)) return false;
+        const parts = splitRoles(l);
+        return parts.length > 0 && parts.every(playable);
+      };
+      const stackName = (raw) => {
+        const l = clean(raw);
+        if (!l || /[\d:()[\]@,;/&+|"“”]|https?:|www\./i.test(l) || /\s[–—-]\s/.test(l) || !looksLikeName(l)) return false;
+        const words = l.split(' ');
+        if (words.length < 2 || words.length > 4) return false;
+        if (!words.every((w, i) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || (i > 0 && i < words.length - 1 && STACK_PARTICLE.test(w)))) return false;
+        return !words.some((w) => playable(w) || isRole(cap(w.toLowerCase())) || isRole(`${cap(w.toLowerCase())} By`)) && !TEXT_PLACE_WORDS.test(l) && !creditLike(l) && !TEXT_IGNORE_LINE.test(l);
+      };
+      const stackPairs = (lines) => {
+        const out = new Map();
+        if (!ruleOn('S058')) return out;
+        const kind = lines.map((raw) => (stackInstr(raw) ? 'I' : stackName(raw) ? 'N' : ''));
+        for (let i = 0; i < lines.length;) {
+          if (!kind[i]) {
+            i++;
+            continue;
+          }
+          let j = i;
+          while (j < lines.length && kind[j]) j++;
+          const run = kind.slice(i, j);
+          if (j - i >= 2 && run.includes('N') && run.includes('I')) {
+            const pair = (top, bottom) => {
+              const ps = [];
+              for (let k = i; k < j - 1; k++) {
+                if (kind[k] === top && kind[k + 1] === bottom) {
+                  ps.push(k);
+                  k++;
+                }
+              }
+              return ps;
+            };
+            const down = pair('N', 'I');
+            const upP = pair('I', 'N');
+            const ambig = down.length * 2 !== j - i && upP.length * 2 !== j - i;
+            const up = upP.length * 2 === j - i || (ambig && stackUp);
+            for (const k of up ? upP : down) {
+              out.set(k, { name: lines[up ? k + 1 : k], instr: lines[up ? k : k + 1], up, ambig, lines: `${clean(lines[k])} / ${clean(lines[k + 1])}` });
+              out.set(k + 1, null);
+            }
+          }
+          i = j;
+        }
+        return out;
+      };
+      /** [S058] A pair of lines: each instrument of the one a credit of the name of the other. */
+      const readStacked = (pr) => {
+        startLine(pr.lines);
+        const extra = { stacked: pr.up ? 'up' : 'down', ...(pr.ambig ? { stackAmbig: true } : {}) };
+        splitRoles(clean(pr.instr)).forEach((x) => addCredit(clean(pr.name), x, null, extra));
+      };
+
       // [S051] (3.34.19) Lines that are only instruments or voices ("Electric guitar", "Drums", …, empty lines between them) are
       // held back until a line links them to a name ("are played, mixed and produced by Go Kurosawa"); any other line reads them
       // as usual first (collected item 137a)
@@ -5761,7 +5875,15 @@
         roleBlock = [];
         held.forEach(readLine);
       };
-      for (const raw of String(text || '').split(/\r?\n/)) {
+      const allLines = String(text || '').split(/\r?\n/);
+      const stacks = stackPairs(allLines);
+      for (const [li, raw] of allLines.entries()) {
+        // [S058] (3.38.7) a line of a pair: read with the other one
+        if (stacks.has(li)) {
+          flushBlock();
+          if (stacks.get(li)) readStacked(stacks.get(li));
+          continue;
+        }
         if (ruleOn('S051')) {
           if (roleBlock.length && !clean(raw)) {
             roleBlock.push(raw);
@@ -6141,6 +6263,8 @@
         (c.typos || []).forEach((t) => { entry.typos = entry.typos || []; if (!entry.typos.some((x) => x.written === t.written)) entry.typos.push(t); });
         // [137d] (3.34.20) a word of a list of instruments MusicBrainz does not know
         if (c.guess) entry.guess = true;
+        // [S058] (3.38.7) from lines whose order of names and instruments is not clear
+        if (c.stackAmbig) entry.stackAmbig = true;
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
@@ -6964,9 +7088,7 @@
 
   const STATS_ON_KEY = 'dci-stats-on';
   const STATS_PERIOD_KEY = 'dci-stats-period';
-  // [E8] (3.38.2) the developer statistics shown (maintainer: "Die zur Verbesserung sollen gesammelt aber extra einschaltbar sein wegen
-  // Developer Interessen.") – collected with the others, off by default
-  const STATS_DEV_KEY = 'dci-stats-dev';
+  // ([E8] 3.38.2: the developer statistics are collected with the others; shown in "Developer mode" – DEV_KEY, 3.38.5)
   const STAT_JOB_PREFIX = 'dci-stat-job:';
   const STAT_JOB_MAX_MS = 30 * 60 * 1000;
   // what cannot be looked up counts on the release page shown within 2 minutes of "Enter edit" (MusicBrainz shows it after a successful one)
@@ -9107,10 +9229,19 @@
   // works"), so the dashboard can later use the same internal steps. It only observes; nothing changes.
 
   const DIAG = { timer: null, last: null, lastDialog: '', step: 0, origDispatch: null };
-  // [3.36.2] "Start diagnosis" in the log only with ⚙ Settings → General → "Diagnosis in the log" (off; maintainer: "Bitte eine
-  // Option, die die Diagnose Funktion im Log ermöglicht oder den Button ausblendet. Standardmäßig aus.")
-  const LOG_DIAG_KEY = 'dci-log-diag';
-  S.logDiag = readJson('localStorage', LOG_DIAG_KEY, false) === true;
+  // [3.36.2] "Start diagnosis" in the log only with a setting (off; maintainer: "Bitte eine Option, die die Diagnose Funktion im Log
+  // ermöglicht oder den Button ausblendet. Standardmäßig aus."). [171] (3.38.5) One switch for developers: ⚙ Settings → General →
+  // "Developer mode" (off) – "Start diagnosis" in the log and the developer statistics (3.38.2; collected always) – in place of
+  // "Diagnosis in the log" (dci-log-diag) and "Developer statistics" (dci-stats-dev); on when one of them was on (maintainer: "lass uns
+  // doch einfach einen zentralen developer schalter einführen. der dann auch im log den Diagnose button ermöglicht", "Übernahme: ja",
+  // "bleibt bei den beiden").
+  const DEV_KEY = 'dci-dev';
+  const DEV_OLD_KEYS = ['dci-log-diag', 'dci-stats-dev'];
+  if (DEV_OLD_KEYS.some((k) => readJson('localStorage', k, null) != null)) {
+    if (DEV_OLD_KEYS.some((k) => readJson('localStorage', k, false) === true) && readJson('localStorage', DEV_KEY, null) == null) writeJson('localStorage', DEV_KEY, true);
+    DEV_OLD_KEYS.forEach((k) => writeJson('localStorage', k, null));
+  }
+  S.devMode = readJson('localStorage', DEV_KEY, false) === true;
 
   /** A compact, size-limited picture of any value for the log. */
   function diagShape(value, depth = 0, seen = new WeakSet(), max = 2) {
@@ -13577,7 +13708,7 @@
         <h2 id="dci-log-title">${esc(tr('log.title'))}</h2>
         <label class="dci-log-place">${esc(tr('log.place'))} <select data-log-f="place">${LOG_PLACES.map((p) => `<option value="${p}">${esc(tr(`log.place.${p}`))}</option>`).join('')}</select></label>
         <button type="button" data-log-act="dashboard" class="dci-log-dash" title="${esc(tr('log.dashboardTitle'))}">${esc(tr('log.dashboard'))}</button>
-        ${S.logDiag || DIAG.timer ? `<button type="button" data-log-act="diag" aria-pressed="${!!DIAG.timer}" title="${esc(tr('log.diagTitle'))}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>` : ''}
+        ${S.devMode || DIAG.timer ? `<button type="button" data-log-act="diag" aria-pressed="${!!DIAG.timer}" title="${esc(tr('log.diagTitle'))}">${esc(tr(DIAG.timer ? 'log.diagStopBtn' : 'log.diagStartBtn'))}</button>` : ''}
         <button type="button" data-log-act="copy">${esc(tr('log.copy'))}</button>
         <button type="button" data-log-act="clear">${esc(tr('log.clear'))}</button>
         <button type="button" data-log-act="hide">${esc(tr('log.hide'))}</button>
@@ -15239,6 +15370,8 @@
       resolveTitles: (titles, srcTracks = tracks) => tracksByTitles(titles, srcTracks),
       // [3.30.7] the names of the release's artist (S041: "<artist> are A, B and C")
       artistNames: uniq((S.releaseCredit || []).map((p) => p.name).filter(Boolean)),
+      // [S058] (3.38.7) ambiguous names and instruments one above the other: the instruments above ("⇅" at the entry)
+      stackUp: !!S.stackUp,
     };
   }
 
@@ -15776,6 +15909,8 @@
       renderSource();
       return;
     }
+    // [S058] (3.38.7) "⇅" holds for the text (or release) it was chosen for
+    if (!S.release || S.source !== source || String(S.release.id) !== String(id)) S.stackUp = false;
     const choice = await chooseMedia();
     if (!choice) {
       log('info', 'mediaCancelled');
@@ -15867,6 +16002,7 @@
           // [S054] (3.37.0) a credit from the Discogs notes (its line shown at the row)
           if (c.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: c.notesLine || '' });
           if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
+          if (c.stackAmbig) row.stackAmbig = true; // [S058] (3.38.7)
           row.dSpec = c.specs.join(', ');
           row.dPositions = c.positions;
           row.unresolved = c.unresolved;
@@ -16032,6 +16168,9 @@
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
+        // [S058] (3.38.7) names and instruments one above the other in an order that is not clear: said in red, "⇅" at the entries
+        const stackNames = uniq(S.rows.filter((r) => r.stackAmbig).map((r) => (S.artists.get(r.artistKey) || {}).name).filter(Boolean));
+        if (stackNames.length) log('warn', S.stackUp ? 'stackAmbigUp' : 'stackAmbig', { n: stackNames.length, list: stackNames.join(', ') });
         // [S056] (3.37.8) festival recordings in the text: a hint, events offered
         findFestivals(seq);
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
@@ -17012,10 +17151,13 @@
 
     setBusy('');
 
-    const doneEl = $('stage-done');
-    doneEl.hidden = !(added + updated);
-    doneEl.textContent = added + updated
-      ? `✓ ${round ? `${tr('msg.roundDone', round)} ` : ''}${tr('msg.stageDone', { n: added + updated, time: new Date().toLocaleTimeString() })}` : '';
+    // [169] (3.38.4) a chip in the line of the summary, the whole text in its tooltip
+    if (!S.footMsgs) S.footMsgs = {};
+    const nDone = added + updated;
+    const doneAt = new Date().toLocaleTimeString();
+    S.footMsgs['stage-done'] = nDone
+      ? { text: `✓ ${round ? `${tr('msg.roundDone', round)} ` : ''}${tr('msg.stageDone', { n: nDone, time: doneAt })}`, chip: `✓ ${tr('footer.chipDone', { n: nDone, time: doneAt })}` } : null;
+    renderFootChips();
     if (updated) showMessage('ok', 'msg.stagedUpdated', { n: updated });
     if (fillIds.length) {
       // Check that MB took them as changed relationships (they are submitted with "Enter edit");
@@ -18162,6 +18304,40 @@
   }
 
   /**
+   * [163b] (3.38.6) The notes of a chip whose answer is already applied – the instrument chosen for a word MusicBrainz does not
+   * know (and whether it was a typo), "none is like it", written small, the type chosen, "voice" offered as role credit – for the
+   * tooltip of a small grey ⓘ after its name (collected item 163; maintainer: "ja dezentes zeichen mit Tooltip", "ja nimm das ⓘ");
+   * changed in the full matrix. Lines, one note each; empty when there is none.
+   */
+  function chipNoteText(r) {
+    if (!r || r.level === 'skip') return '';
+    const out = [];
+    const g = r.instrGuess;
+    if (g) {
+      const misc = g.chose === 'misc';
+      const name = norm(r.primaryText);
+      const chosen = misc ? tr('instrGuess.misc', { word: guessTask(g) })
+        : name && g.other && name === norm(g.other) ? tr('instrGuess.other', { other: g.other, word: guessCredit(g) })
+          : name && primaryIsValid(r) ? r.primaryText : '';
+      if (!g.options.length && !g.misc) out.push(tr('instrGuess.none', { word: g.word, other: g.other, credit: guessCredit(g) }));
+      else if (chosen) out.push(`${tr(g.options.length ? 'instrGuess.chosen' : 'instrGuess.noneOr', { word: g.word })} ${chosen}`);
+      // [164] a typo, or a spelling of its own
+      if (!misc && guessNoteHtml(r)) out.push(tr(guessSpelling(g, r.primaryText) === 'typo' ? 'instrGuess.typo' : 'instrGuess.own', { name: r.primaryText, word: guessCredit(g) }));
+    }
+    if (caseNoteHtml(r)) {
+      const low = [...(r.creditPhrases || []), ...(r.creditLowered || [])];
+      if (low.length) out.push(`${tr('caseNote.small')} ${low.map((w) => tr('caseNote.word', { word: w, small: w.toLowerCase() })).join(', ')}`);
+      const kept = Object.values(r.keepCase || {});
+      if (kept.length) out.push(`${tr('caseNote.kept')} ${kept.join(', ')}`);
+    }
+    const tq = typeQuestionFor(r);
+    const opt = tq && r.typeAnswer != null ? tq.options[r.typeAnswer] : null;
+    if (opt) out.push(tr('em.chipNoteType', { role: r.raw || r.base, type: opt.label || opt.type }));
+    if (voiceCreditHtml(r)) out.push(`${tr('voiceCredit.from')} ${tr('voiceCredit.use', { word: norm(r.base) })}`);
+    return out.join('\n');
+  }
+
+  /**
    * [E4] (3.35.0) A role as a chip of a compact line: its name, its role credit, add. / guest / solo; a question "? Chaims".
    * [163] (3.37.14) A question with fixed answers has ▾ at the chip: its answers below it, chosen for all rows of the line; the
    * "?" only while a question is open (chipAnswers, chipNotesOpen) – until 3.37.13 as long as the full matrix showed any note.
@@ -18180,9 +18356,12 @@
     const key = `${a ? a.key : ''}|${l.id}|${e ? e.key : ''}`;
     const open = !!answers.length && S.emChipAsk === key;
     const q = answers.length ? `<button type="button" class="dci-em-chipq" data-act="em-chipask" data-ask="${esc(key)}" aria-expanded="${open}" title="${esc(tr('em.chipAsk', { name }))}" aria-label="${esc(tr('em.chipAsk', { name }))}">▾</button>` : '';
+    // [163b] (3.38.6) the notes whose answer is applied: ⓘ with them as tooltip
+    const note = ask ? '' : chipNoteText(r);
+    const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
     const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
     return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : ''}>
-      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}</button>${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
   /**
@@ -18473,6 +18652,7 @@
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${coverFromEntryHtml(a, rows)}
+        ${stackNoteHtml(rows)}
         ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
         ${mxEntry(a) ? entryMatrixHtml(a, rows) : mxCompact(a) ? entryCompactHtml(a, rows) : `<div class="dci-tablewrap dci-rowswrap">
@@ -18484,6 +18664,19 @@
         ${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}
         <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>
       </section>`;
+  }
+
+  /**
+   * [S058] (3.38.7) An entry from names and instruments one above the other whose order was not clear (collected item 167;
+   * maintainer: "kann man sicher sein immer den Artist korrekt zuzuordnen oder braucht man irgendwo einen behelfsknopf, der die
+   * unten/oben Logik ändert?", "passt, passiert wahrscheinlich eher bei bilderkennung und freitexten als bei discogs"): how it was
+   * read, and "⇅ Instruments above the names" – the text read again the other way round (and back).
+   */
+  function stackNoteHtml(rows) {
+    if (!rows.some((r) => r.stackAmbig)) return '';
+    return `<div class="dci-note dci-stack-note">${esc(tr(S.stackUp ? 'stack.noteUp' : 'stack.noteDown'))}
+      <button type="button" class="dci-textbtn" data-act="stack-flip" title="${esc(tr('stack.flipTitle'))}">${esc(tr(S.stackUp ? 'stack.flipDown' : 'stack.flipUp'))}</button>
+      <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S058" title="${esc(tr('rules.gotoTitle'))}">S058</button></div>`;
   }
 
   /**
@@ -21479,6 +21672,42 @@
     }
   }
 
+  /**
+   * [169] (3.38.4) The messages of the footer as short chips in the line of the summary (collected item 169; maintainer: "die untere
+   * leiste nimmt noch zu viel platz weg … smart nebeneinander anordnen"): the rounds of staging, the tracks waiting for a work, what
+   * was staged – the whole text in the tooltip; a click shows it below the line (again: hides it).
+   */
+  const FOOT_MSGS = [['rounds', 'info'], ['waiting', 'warn'], ['stage-done', 'ok']];
+  function renderFootChips() {
+    const box = S.overlay && $('foot-chips');
+    if (!box) return;
+    const m = S.footMsgs || {};
+    if (S.footMsgOpen && !m[S.footMsgOpen]) S.footMsgOpen = null;
+    const html = FOOT_MSGS.filter(([k]) => m[k]).map(([k, kind]) => `<button type="button" class="dci-foot-chip dci-foot-chip-${kind}" data-act="foot-msg" data-msg="${k}"
+      aria-expanded="${S.footMsgOpen === k}" aria-controls="dci-foot-msg-${k}" title="${esc(m[k].text)}">${esc(m[k].chip)}</button>`).join('');
+    if (box.dataset.html !== html) {
+      box.innerHTML = html;
+      box.dataset.html = html;
+    }
+    for (const [k] of FOOT_MSGS) {
+      const el = $(k);
+      if (!el) continue;
+      el.id = `dci-foot-msg-${k}`;
+      el.textContent = m[k] ? m[k].text : '';
+      el.hidden = !m[k] || S.footMsgOpen !== k;
+    }
+  }
+
+  /** [169] (3.38.4) "⚙ Options ▾" of the footer (narrower than about 1,100 px): its checkboxes shown or not. */
+  function setFootOpts(open) {
+    S.footOptsOpen = !!open;
+    const box = S.overlay && $('foot-opts');
+    if (!box) return;
+    box.classList.toggle('dci-open', S.footOptsOpen);
+    const b = box.querySelector('[data-act="foot-opts"]');
+    if (b) b.setAttribute('aria-expanded', String(S.footOptsOpen));
+  }
+
   function refresh() {
     if (!S.overlay) return;
     // [146] (3.36.0) the rows remembered soon after a change
@@ -21491,18 +21720,18 @@
     S.rowInfo = rowInfo;
     sendDiscogsStatus(rowInfo);
     S.waiting = waiting;
-    const roundsEl = $('rounds');
+    // [169] (3.38.4) the rounds and the tracks waiting for a work: chips in the line of the summary (renderFootChips)
+    if (!S.footMsgs) S.footMsgs = {};
     const needRounds = S.capOn && (items.length > S.capLimit || S.capRun);
-    roundsEl.hidden = !needRounds;
     if (needRounds) {
       const done = S.capRun ? S.capRun.done : 0;
-      roundsEl.textContent = tr('msg.roundsHint', { n: items.length, cap: S.capLimit, x: done + Math.max(1, Math.ceil(items.length / S.capLimit)), k: done + 1 });
-    }
+      const x = done + Math.max(1, Math.ceil(items.length / S.capLimit));
+      S.footMsgs.rounds = { text: tr('msg.roundsHint', { n: items.length, cap: S.capLimit, x, k: done + 1 }), chip: tr('footer.chipRounds', { k: done + 1, x }) };
+    } else S.footMsgs.rounds = null;
     // [3.32.9] the disambiguation comments of live recordings (item 113)
     renderLiveComments();
-    const waitEl = $('waiting');
-    waitEl.hidden = !waiting.size;
-    waitEl.textContent = waiting.size ? tr('msg.waitingHint', { n: waiting.size }) : '';
+    S.footMsgs.waiting = waiting.size ? { text: tr('msg.waitingHint', { n: waiting.size }), chip: tr('footer.chipWaiting', { n: waiting.size }) } : null;
+    renderFootChips();
     S.plan = items;
     let incomplete = 0;
     let existing = 0;
@@ -21566,7 +21795,8 @@
       ['kind.work', count((i) => i.target.kind === 'work')],
       ['kind.workLink', count((i) => i.kind === 'work-link')],
     ].filter(([, n]) => n).map(([key, n]) => tr(key, { n }));
-    const sum = [`<strong>${esc(tr('sum.new', { n: items.length }))}</strong>${kinds.length ? ` (${esc(kinds.join(', '))})` : ''}`];
+    // [169] (3.38.4) in one line: the levels in the tooltip
+    const sum = [`<strong class="dci-sum-new"${kinds.length ? ` title="${esc(kinds.join(', '))}" tabindex="0"` : ''}>${esc(tr('sum.new', { n: items.length }))}</strong>`];
     // [E4] (3.35.0) joined: how many a relationship per instrument would be
     const apart = items.reduce((n, it) => n + (it.joinedItems ? it.joinedItems.length : 1), 0);
     if (apart > items.length) sum.push(`<span class="dci-sub" data-el="sum-joined">${esc(tr('sum.joined', { n: apart }))}</span>`);
@@ -21580,7 +21810,7 @@
         <button type="button" class="dci-iconbtn" data-act="inc-next" title="${esc(tr('sum.incNext'))}" aria-label="${esc(tr('sum.incNext'))}">›</button></span>`);
     }
     if (existing) sum.push(`<span class="dci-muted">${esc(tr('sum.existing', { n: existing }))}</span>`);
-    $('sum').innerHTML = sum.join('<br>');
+    $('sum').innerHTML = sum.join('<span class="dci-sum-sep" aria-hidden="true"> · </span>');
     S.overlay.querySelectorAll('[data-group]').forEach((section) => {
       const rows = S.rows.filter((r) => r.artistKey === section.dataset.group);
       section.classList.toggle('dci-all-skip', rows.length > 0 && rows.every((r) => r.level === 'skip'));
@@ -22610,22 +22840,95 @@
   }
 
   /**
+   * [168] (3.38.3) Live recordings named in short (collected item 168; maintainer: ""Tracks 1, 2, 3, 4, 5 are live recordings." ->
+   * kanns du die tracks gruppieren? "1-5"? kannst du medien erwähnen, falls sie komplett live sind?", "bei einem release mit nur
+   * einem medium nur die tracks. es kann auch mediengruppen geben bspw. CD 1-5"): with several media, whole media by their format
+   * and number ("CD 1", one after another of the same format "CD 1–5", without a format "Medium 3"); the other tracks as ranges.
+   */
+  function liveWhatText(idxs) {
+    const set = new Set(idxs);
+    let rest = [...set].sort((a, b) => a - b);
+    const media = [];
+    if (multiMedium()) {
+      const fmt = (md) => ((S.mediaInfo && S.mediaInfo.get(md)) || {}).format || '';
+      const whole = uniq(S.mbTracks.map((t) => t.medium)).filter((md) => {
+        const ts = S.mbTracks.filter((t) => t.medium === md && t.recordingGid && inSelection(t.idx));
+        return ts.length && ts.every((t) => set.has(t.idx));
+      });
+      const runs = [];
+      for (const md of whole) {
+        const last = runs[runs.length - 1];
+        if (last && md === last.to + 1 && fmt(md) === last.f) last.to = md;
+        else runs.push({ from: md, to: md, f: fmt(md) });
+      }
+      runs.forEach((r) => media.push(`${r.f || tr('livecom.medium')} ${r.from === r.to ? r.from : `${r.from}–${r.to}`}`));
+      const inWhole = new Set(whole);
+      rest = rest.filter((i) => !inWhole.has(S.mbTracks[i].medium));
+    }
+    // (the positions as in the list: "2", with several media "1.2")
+    const pos = (i) => (multiMedium() ? `${S.mbTracks[i].medium}.${S.mbTracks[i].number}` : String(S.mbTracks[i].number));
+    const runs = [];
+    for (const i of rest) {
+      const last = runs[runs.length - 1];
+      if (last && i === last[1] + 1 && S.mbTracks[i].medium === S.mbTracks[last[1]].medium) last[1] = i;
+      else runs.push([i, i]);
+    }
+    return { media: media.join(', '), tracks: runs.map(([a, b]) => (a === b ? pos(a) : `${pos(a)}–${pos(b)}`)).join(', '), n: rest.length };
+  }
+
+  /** [168] (3.38.3) The offer's or a group's name: "CD 1–5, tracks 6.1–6.3" or "1–5". */
+  function liveWhatLabel(idxs, { prefix = true } = {}) {
+    const w = liveWhatText(idxs);
+    if (!w.media) return w.tracks;
+    return [w.media, w.tracks ? (prefix ? tr('livecom.tracksPart', { n: w.n, list: w.tracks }) : w.tracks) : ''].filter(Boolean).join(', ');
+  }
+
+  /**
+   * [168] (3.38.3) The proposals in groups: those with the same comment (ticked alike, no note) are one line – "1–5 · 5 tracks ▸ ·
+   * “live, 2004‐03‐23: Iridium …”" –, ▸ shows their tracks; one with a note (another comment in MusicBrainz, different places or
+   * dates, this comment already, the area being looked up) stands alone. Returns [{ key, items }] in the order of the tracks.
+   */
+  function liveGroups(list) {
+    const groups = [];
+    const byKey = new Map();
+    for (const p of list) {
+      const c = liveChoice(p);
+      const alone = p.warn.length || p.other || p.same || p.pending;
+      const key = alone ? `1|${p.rec}` : `g|${c.on ? 1 : 0}|${c.text}`;
+      if (!byKey.has(key)) {
+        const g = { key, items: [] };
+        byKey.set(key, g);
+        groups.push(g);
+      }
+      byKey.get(key).items.push(p);
+    }
+    return groups;
+  }
+
+  /**
    * [3.32.9] The list of live recordings with their comments above "Stage …" (setting "Live recordings: add a disambiguation
-   * comment"). [3.37.3] With the setting off: an offer for the release – ✓ shows the list, ✕ hides it (item 150b).
+   * comment"). [3.37.3] With the setting off: an offer for the release – ✓ shows the list, ✕ hides it (item 150b). [168] (3.38.3)
+   * The tracks as ranges and media, the list in groups, at most a third of the dashboard's height (its own scroll bar), and its
+   * heading always at the bottom right of the box – the list opens above it (maintainer: "rechts unten im kasten soll immer die
+   * Überschrift stehen"); [170] the heading shorter ("Live disambiguation comments: 5 of 5").
    */
   function renderLiveComments() {
     const el = S.overlay && $('livecom');
     if (!el) return;
     const list = (S.liveCom || S.liveComOffer !== 'no') && S.rows.length ? liveProposals() : [];
     el.hidden = !list.length;
+    // ([169] 3.38.4: a line of its own above the line of the footer – open or not, the heading stays at the bottom right)
     if (!list.length) {
       el.innerHTML = '';
       el.dataset.html = '';
       return;
     }
     if (!liveComOn()) {
-      const offer = `<div class="dci-livecom-offer" title="${esc(tr('livecom.offerTitle'))}"><span>${esc(tr('livecom.offer', {
-        n: list.length, list: list.map((p) => p.pos).join(', '), example: list[0].auto }))}</span>
+      const w = liveWhatText(list.map((p) => p.i));
+      const text = w.media
+        ? tr('livecom.offerMedia', { list: liveWhatLabel(list.map((p) => p.i)), example: list[0].auto })
+        : tr('livecom.offer', { n: list.length, list: w.tracks, example: list[0].auto });
+      const offer = `<div class="dci-livecom-offer" title="${esc(tr('livecom.offerTitle'))}"><span>${esc(text)}</span>
         <button type="button" class="dci-small" data-act="livecom-yes">${esc(tr('livecom.offerYes'))}</button>
         <button type="button" class="dci-small" data-act="livecom-no">${esc(tr('livecom.offerNo'))}</button></div>`;
       if (el.dataset.html !== offer) {
@@ -22636,18 +22939,38 @@
     }
     // (not while a comment is being typed in it)
     if (el.contains(document.activeElement) && document.activeElement.dataset.f === 'livecom-text') return;
+    const open = S.liveComOpen !== false;
     const n = list.filter((p) => liveChoice(p).on).length;
-    const rows = list.map((p) => {
+    if (!S.liveComGroupOpen) S.liveComGroupOpen = new Set();
+    const rowOf = (p, sub = false) => {
       const c = liveChoice(p);
       const notes = [...p.warn, ...(p.same ? [tr('livecom.same')] : []), ...(p.pending ? [tr('livecom.pending')] : []), ...(c.manual ? [tr('livecom.manual')] : [])];
-      return `<tr data-livecom="${esc(p.rec)}"><td><input type="checkbox" data-f="livecom-on" data-rec="${esc(p.rec)}" ${c.on ? 'checked' : ''} ${p.other ? 'disabled' : ''} aria-label="${esc(tr('livecom.onAria', { pos: p.pos }))}"></td>
+      return `<tr data-livecom="${esc(p.rec)}"${sub ? ' class="dci-livecom-sub"' : ''}><td><input type="checkbox" data-f="livecom-on" data-rec="${esc(p.rec)}" ${c.on ? 'checked' : ''} ${p.other ? 'disabled' : ''} aria-label="${esc(tr('livecom.onAria', { pos: p.pos }))}"></td>
         <td class="dci-livecom-pos">${esc(p.pos)}</td><td class="dci-livecom-title">${esc(p.title)}</td>
         <td><input type="text" data-f="livecom-text" data-rec="${esc(p.rec)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.textAria', { pos: p.pos }))}"></td>
         <td>${notes.map((x) => `<div class="dci-sub${p.warn.includes(x) ? ' dci-livecom-warn' : ''}">${esc(x)}</div>`).join('')}</td></tr>`;
+    };
+    const rows = liveGroups(list).map((g) => {
+      if (g.items.length < 2) return rowOf(g.items[0]);
+      const c = liveChoice(g.items[0]);
+      const recs = g.items.map((p) => p.rec).join(',');
+      const label = liveWhatLabel(g.items.map((p) => p.i), { prefix: false });
+      const gOpen = S.liveComGroupOpen.has(g.items[0].rec);
+      const notes = g.items.every((p) => liveChoice(p).manual) ? [tr('livecom.manual')] : [];
+      return `<tr data-livecom-group="${esc(recs)}"><td><input type="checkbox" data-f="livecom-on" data-recs="${esc(recs)}" ${c.on ? 'checked' : ''} aria-label="${esc(tr('livecom.groupOnAria', { list: label }))}"></td>
+        <td class="dci-livecom-pos">${esc(label)}</td>
+        <td class="dci-livecom-title"><button type="button" class="dci-textbtn dci-livecom-gbtn" data-act="livecom-group" data-rec="${esc(g.items[0].rec)}" aria-expanded="${gOpen}">${gOpen ? '▾' : '▸'} ${esc(tr('livecom.groupN', { n: g.items.length }))}</button></td>
+        <td><input type="text" data-f="livecom-text" data-recs="${esc(recs)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.groupTextAria', { list: label }))}"></td>
+        <td>${notes.map((x) => `<div class="dci-sub">${esc(x)}</div>`).join('')}</td></tr>${gOpen ? g.items.map((p) => rowOf(p, true)).join('') : ''}`;
     }).join('');
-    const html = `<details class="dci-livecom-box" ${S.liveComOpen === false ? '' : 'open'}><summary>${esc(tr('livecom.title', { n, m: list.length }))}</summary>
+    // at most a third of the dashboard's height
+    const h = S.overlay.getBoundingClientRect().height;
+    const max = h ? `${Math.max(120, Math.round(h / 3))}px` : '33vh';
+    const head = `<button type="button" class="dci-livecom-head" data-act="livecom-toggle" aria-expanded="${open}" aria-controls="dci-livecom-body">${open ? '▾' : '▸'} ${esc(tr('livecom.title', { n, m: list.length }))}</button>`;
+    const html = `<div class="dci-livecom-box${open ? ' dci-livecom-boxopen' : ''}">${open ? `<div class="dci-livecom-body" id="dci-livecom-body" style="max-height:${max}">
       <p class="dci-sub">${esc(tr('livecom.hint'))}</p>
-      <div class="dci-tablewrap"><table class="dci-livecom-table"><tbody>${rows}</tbody></table></div></details>`;
+      <div class="dci-tablewrap"><table class="dci-livecom-table"><tbody>${rows}</tbody></table></div></div>` : ''}
+      <div class="dci-livecom-headrow">${head}</div></div>`;
     if (el.dataset.html === html) return;
     el.innerHTML = html;
     el.dataset.html = html;
@@ -25840,6 +26163,8 @@
   }
 
   function onClick(e) {
+    // [169] (3.38.4) "⚙ Options ▾" of the footer closes with a click anywhere else
+    if (S.footOptsOpen && e.target.closest && !e.target.closest('.dci-foot-opts')) setFootOpts(false);
     // An open ▾ menu of a column head closes with a click anywhere else
     if (S.mxColMenu && e.target.closest && !e.target.closest('.dci-mx-colmenu, [data-act="mx-colmenu"]')) {
       S.mxColMenu = null;
@@ -25900,6 +26225,23 @@
         break;
       }
       // [3.37.3] the offer of comments of live recordings (item 150b): for this release
+      case 'livecom-toggle': {
+        // [168] (3.38.3) the list folded or not – its heading stays at the bottom right
+        S.liveComOpen = S.liveComOpen === false;
+        renderLiveComments();
+        const h = S.overlay.querySelector('[data-act="livecom-toggle"]');
+        if (h) h.focus({ preventScroll: true });
+        break;
+      }
+      case 'livecom-group': {
+        // [168] (3.38.3) the tracks of a group shown or not
+        if (!S.liveComGroupOpen) S.liveComGroupOpen = new Set();
+        const k = btn.dataset.rec;
+        if (S.liveComGroupOpen.has(k)) S.liveComGroupOpen.delete(k);
+        else S.liveComGroupOpen.add(k);
+        renderLiveComments();
+        break;
+      }
       case 'livecom-yes':
       case 'livecom-no':
         S.liveComOffer = act === 'livecom-yes' ? 'yes' : 'no';
@@ -27069,6 +27411,12 @@
       case 'ocr-open':
         openOcr();
         break;
+      case 'stack-flip':
+        // [S058] (3.38.7) the text (or the notes) read again, the ambiguous lines the other way round
+        S.stackUp = !S.stackUp;
+        log('info', S.stackUp ? 'stackFlipUp' : 'stackFlipDown');
+        if (S.release) loadRelease(S.release.id, { source: S.source });
+        break;
       case 'text-load': {
         const text = S.overlay.querySelector('[data-f="text-src"]').value;
         const origin = S.overlay.querySelector('[data-f="text-origin"]').value.trim();
@@ -27081,6 +27429,13 @@
         loadRelease(textSig(text), { source: TEXT });
         break;
       }
+      case 'foot-opts':
+        setFootOpts(!S.footOptsOpen);
+        break;
+      case 'foot-msg':
+        S.footMsgOpen = S.footMsgOpen === btn.dataset.msg ? null : btn.dataset.msg;
+        renderFootChips();
+        break;
       case 'preview':
         S.previewOpen = !S.previewOpen;
         btn.setAttribute('aria-expanded', String(S.previewOpen));
@@ -27424,16 +27779,21 @@
       // [3.32.9] a live recording ticked or not for its comment (item 113)
       case 'livecom-on': {
         if (!S.liveComChoice) S.liveComChoice = new Map();
-        const c = S.liveComChoice.get(el.dataset.rec) || {};
-        S.liveComChoice.set(el.dataset.rec, { ...c, on: el.checked });
+        // [168] (3.38.3) a group: all its recordings
+        for (const rec of (el.dataset.recs || el.dataset.rec || '').split(',').filter(Boolean)) {
+          const c = S.liveComChoice.get(rec) || {};
+          S.liveComChoice.set(rec, { ...c, on: el.checked });
+        }
         renderLiveComments();
         if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
         break;
       }
       case 'livecom-text': {
         if (!S.liveComChoice) S.liveComChoice = new Map();
-        const c = S.liveComChoice.get(el.dataset.rec) || {};
-        S.liveComChoice.set(el.dataset.rec, { ...c, text: el.value.trim() });
+        for (const rec of (el.dataset.recs || el.dataset.rec || '').split(',').filter(Boolean)) {
+          const c = S.liveComChoice.get(rec) || {};
+          S.liveComChoice.set(rec, { ...c, text: el.value.trim() });
+        }
         renderLiveComments();
         if (readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null)) saveLiveJob({ quiet: true });
         break;
@@ -27541,12 +27901,7 @@
   let manualTypeTimer = null;
   document.addEventListener('toggle', (e) => {
     if (e.target && e.target.dataset && e.target.dataset.el === 'datefind') S.dateFindOpen = e.target.open;
-    // [3.32.9] the list of live comments folded or not (while the dashboard is open)
-    if (e.target && e.target.classList && e.target.classList.contains('dci-livecom-box')) {
-      S.liveComOpen = e.target.open;
-      const box = S.overlay && $('livecom');
-      if (box) box.dataset.html = '';
-    }
+    // ([168] 3.38.3: the list of live comments is folded by its heading button – 'livecom-toggle')
   }, true);
 
   function onInput(e) {
@@ -28026,24 +28381,32 @@
         </div>
         <div class="dci-preview" data-el="preview" hidden></div>
         <footer class="dci-foot">
-          <span class="dci-jump" role="group" aria-label="${esc(tr('footer.jump'))}">
-            <button type="button" class="dci-iconbtn" data-act="jump-top" title="${esc(tr('footer.top'))}" aria-label="${esc(tr('footer.top'))}">▲</button>
-            <button type="button" class="dci-iconbtn" data-act="jump-bottom" title="${esc(tr('footer.bottom'))}" aria-label="${esc(tr('footer.bottom'))}">▼</button>
-          </span>
-          <div class="dci-sum" data-el="sum"></div>
           <div class="dci-livecom" data-el="livecom" hidden></div>
-          <div class="dci-foot-actions">
-            <button type="button" class="dci-panic" data-act="panic" hidden title="${esc(tr('panic.title'))}"></button>
-            <button type="button" class="dci-textbtn" data-act="preview" aria-expanded="${S.previewOpen}">${esc(tr('footer.preview'))}</button>
-            <label class="dci-check"><input type="checkbox" data-f="editnote" ${S.editNote ? 'checked' : ''}> ${esc(tr('footer.editNote'))}</label>
-            <label class="dci-check" title="${esc(tr('footer.fillTitle'))}"><input type="checkbox" data-f="fill-credits" ${S.fillCredits ? 'checked' : ''}> ${esc(tr('footer.fill'))}</label>
-            <label class="dci-check" title="${esc(tr('footer.capTitle'))}"><input type="checkbox" data-f="stage-cap" ${S.capOn ? 'checked' : ''}> <span data-el="cap-label">${esc(tr('footer.cap', { n: S.capLimit }))}</span></label>
-            <button type="button" class="dci-apply" data-act="apply" disabled>${esc(tr('footer.apply'))}</button>
+          <div class="dci-foot-bar">
+            <span class="dci-jump" role="group" aria-label="${esc(tr('footer.jump'))}">
+              <button type="button" class="dci-iconbtn" data-act="jump-top" title="${esc(tr('footer.top'))}" aria-label="${esc(tr('footer.top'))}">▲</button>
+              <button type="button" class="dci-iconbtn" data-act="jump-bottom" title="${esc(tr('footer.bottom'))}" aria-label="${esc(tr('footer.bottom'))}">▼</button>
+            </span>
+            <div class="dci-sum" data-el="sum"></div>
+            <span class="dci-foot-chips" data-el="foot-chips" role="status" aria-live="polite"></span>
+            <div class="dci-foot-actions">
+              <button type="button" class="dci-panic" data-act="panic" hidden title="${esc(tr('panic.title'))}"></button>
+              <button type="button" class="dci-textbtn" data-act="preview" aria-expanded="${S.previewOpen}" title="${esc(tr('footer.preview'))}">${esc(tr('footer.previewShort'))}</button>
+              <span class="dci-foot-opts" data-el="foot-opts">
+                <button type="button" class="dci-textbtn dci-foot-optbtn" data-act="foot-opts" aria-expanded="false" aria-controls="dci-foot-optlist" title="${esc(tr('footer.optionsTitle'))}">${esc(tr('footer.options'))} ▾</button>
+                <span class="dci-foot-optlist" id="dci-foot-optlist">
+                  <label class="dci-check" title="${esc(tr('footer.editNote'))}"><input type="checkbox" data-f="editnote" ${S.editNote ? 'checked' : ''}> ${esc(tr('footer.editNoteShort'))}</label>
+                  <label class="dci-check" title="${esc(`${tr('footer.fill')} – ${tr('footer.fillTitle')}`)}"><input type="checkbox" data-f="fill-credits" ${S.fillCredits ? 'checked' : ''}> ${esc(tr('footer.fillShort'))}</label>
+                  <label class="dci-check" data-el="cap-check" title="${esc(`${tr('footer.cap', { n: S.capLimit })} – ${tr('footer.capTitle')}`)}"><input type="checkbox" data-f="stage-cap" ${S.capOn ? 'checked' : ''}> <span data-el="cap-label">${esc(tr('footer.capShort', { n: S.capLimit }))}</span></label>
+                </span>
+              </span>
+              <button type="button" class="dci-apply" data-act="apply" disabled>${esc(tr('footer.apply'))}</button>
+              <span class="dci-info dci-foot-info" tabindex="0" role="note" title="${esc(tr('footer.hint'))}" aria-label="${esc(tr('footer.hint'))}">ⓘ</span>
+            </div>
           </div>
           <p class="dci-rounds" data-el="rounds" hidden></p>
           <p class="dci-waiting" data-el="waiting" hidden></p>
-          <p class="dci-stage-done" data-el="stage-done" role="status" aria-live="polite" hidden></p>
-          <p class="dci-hint">${esc(tr('footer.hint'))}</p>
+          <p class="dci-stage-done" data-el="stage-done" hidden></p>
         </footer>
       </div>
       <div class="dci-subdlg" data-el="sub" hidden>
@@ -28074,6 +28437,7 @@
     overlay.addEventListener('drop', onDrop);
     overlay.addEventListener('dragend', dmDragEnd);
     S.overlay = overlay;
+    S.footOptsOpen = false;
     applyView();
     applyScale();
     renderCompactHint(); // [143] (3.34.23)
@@ -28301,7 +28665,7 @@
   const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', event: '#8a4f7d', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
-    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', LOG_DIAG_KEY],
+    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
     texts: ['dci-weblinks-show'],
@@ -28314,7 +28678,7 @@
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …")
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY],
     // [E8] (3.38.0) the switch and the period (the statistics stay: "Delete statistics …")
-    statistics: [STATS_ON_KEY, STATS_PERIOD_KEY, STATS_DEV_KEY],
+    statistics: [STATS_ON_KEY, STATS_PERIOD_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -28670,8 +29034,6 @@
     const head = [
       `<p class="dci-sub">${esc(tr('stats.hint'))}</p>`,
       row(`<label class="dci-check" title="${esc(tr('stats.onTitle'))}"><input type="checkbox" data-set="stats-on" ${on ? 'checked' : ''}> ${esc(tr('stats.on'))}</label>`),
-      // [E8] (3.38.2) the developer statistics shown
-      row(`<label class="dci-check" title="${esc(tr('stats.devTitle'))}"><input type="checkbox" data-set="stats-dev" ${readJson('localStorage', STATS_DEV_KEY, false) === true ? 'checked' : ''}> ${esc(tr('stats.dev'))}</label>`),
     ];
     if (S.statsData == null) {
       statsLoad();
@@ -28717,7 +29079,8 @@
     const tops = `<div class="dci-stats-lists">${list('artists', statTop(a.artists, 3))}${list('instr', statTop(a.instr, 3))}${list('types', statTop(a.types, 5))}</div>`;
     return [...head, tiles,
       `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))} ${seg}</h4>`, table,
-      tops, statsMoreHtml(recs), readJson('localStorage', STATS_DEV_KEY, false) === true ? statsDevHtml(recs) : '',
+      // [E8] (3.38.2) the developer statistics – [171] (3.38.5) in "Developer mode"
+      tops, statsMoreHtml(recs), S.devMode ? statsDevHtml(recs) : '',
       row(`<button type="button" class="dci-small" data-act="stats-delete">${esc(tr('stats.delete'))}</button> <span class="dci-sub">${esc(tr('stats.stored', { n: recs.length }))}</span>`)];
   }
 
@@ -29002,8 +29365,9 @@
         row(`<label>${esc(tr('lang.label'))} <select data-f="lang">${Object.entries(LANGS).map(([code, name]) => `<option value="${code}" ${code === LANG ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`),
         row(check('data-set="log-open"', !!(S.logEl && !S.logEl.hidden), tr('settings.logOpen'))),
         row(`<label>${esc(tr('settings.logPlace'))} <select data-set="log-place">${LOG_PLACES.map((pl) => `<option value="${pl}" ${S.logPlace === pl ? 'selected' : ''}>${esc(tr(`log.place.${pl}`))}</option>`).join('')}</select></label>`),
-        // [3.36.2] the diagnosis of the relationship editor in the log (off: its button is not shown)
-        row(check('data-set="log-diag"', S.logDiag, tr('settings.logDiag'), tr('settings.logDiagTitle'))),
+        // [3.36.2] the diagnosis of the relationship editor in the log (off: its button is not shown); [171] (3.38.5) "Developer mode":
+        // also the developer statistics
+        row(check('data-set="dev-mode"', S.devMode, tr('settings.dev'), tr('settings.devTitle'))),
       ],
       // [3.29.2] how the dashboard looks (item 79; text size, place and view came from "General")
       appearance: () => [
@@ -29243,7 +29607,10 @@
     }
     S.overlay.querySelectorAll('select[data-f="mx-codes"]').forEach((x) => { if (x !== document.activeElement) x.value = S.roleCodes; });
     const cap = S.overlay.querySelector('[data-el="cap-label"]');
-    if (cap) cap.textContent = tr('footer.cap', { n: S.capLimit });
+    if (cap) cap.textContent = tr('footer.capShort', { n: S.capLimit });
+    // [169] (3.38.4) the long text in the tooltip
+    const capCheck = S.overlay.querySelector('[data-el="cap-check"]');
+    if (capCheck) capCheck.title = `${tr('footer.cap', { n: S.capLimit })} – ${tr('footer.capTitle')}`;
   }
 
   /** After a click or a change anywhere in the dashboard: the menu and the shared switches follow (after all handlers ran). */
@@ -29317,10 +29684,6 @@
       if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_BTN_KEY, el.checked ? null : false);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
-    } else if (k === 'stats-dev') {
-      // [E8] (3.38.2) the developer statistics shown (collected with the others)
-      writeJson('localStorage', STATS_DEV_KEY, el.checked || null);
-      log('info', 'settingValue', { what: tr('stats.dev'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'stats-on') {
       // [E8] (3.38.0) collecting the statistics (on unless switched off)
       writeJson('localStorage', STATS_ON_KEY, el.checked ? null : false);
@@ -29352,12 +29715,12 @@
       log('info', 'settingValue', { what: tr(k === 'ev-shared' ? 'settings.evShared' : 'settings.emShow'), value: String(v) });
       if (S.overlay) renderGroups();
       refresh();
-    } else if (k === 'log-diag') {
-      // [3.36.2] off: a diagnosis running stops, its button goes
-      S.logDiag = el.checked;
-      writeJson('localStorage', LOG_DIAG_KEY, el.checked ? true : null);
+    } else if (k === 'dev-mode') {
+      // [3.36.2] off: a diagnosis running stops, its button goes; [171] (3.38.5) the developer statistics shown or not
+      S.devMode = el.checked;
+      writeJson('localStorage', DEV_KEY, el.checked ? true : null);
       if (!el.checked && DIAG.timer) stopDiag();
-      log('info', 'settingValue', { what: tr('settings.logDiag'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      log('info', 'settingValue', { what: tr('settings.dev'), value: tr(el.checked ? 'common.on' : 'common.off') });
       renderLog();
     } else if (k === 'remember') {
       // [146] (3.36.0) remembered per release, or not
@@ -29483,8 +29846,8 @@
     if (t === 'general') {
       if (S.logEl) setLogVisible(true);
       setLogPlace('window');
-      // [3.36.2] the diagnosis off again
-      S.logDiag = false;
+      // [3.36.2] the diagnosis off again – [171] (3.38.5) "Developer mode"
+      S.devMode = false;
       if (DIAG.timer) stopDiag();
       renderLog();
       if (LANG !== 'en') setLanguage('en');
@@ -29567,7 +29930,7 @@
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
-    STATS_ON_KEY, STATS_PERIOD_KEY, STATS_DEV_KEY,
+    STATS_ON_KEY, STATS_PERIOD_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
     BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
@@ -29576,8 +29939,8 @@
     ENTRIES_VIEW_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
-    // [3.36.2] the diagnosis in the log
-    LOG_DIAG_KEY];
+    // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
+    DEV_KEY];
 
   /** [3.25.0] The question to reset all settings is part of the settings (their pane). */
   function renderReset() {
@@ -29599,9 +29962,9 @@
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'full',
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
-      workGroupsOn: true, rememberOn: false, rememberMax: 50, logDiag: false,
+      workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false,
     });
-    // [3.36.2] a diagnosis running stops, its button goes
+    // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)
     if (DIAG.timer) stopDiag();
     renderLog();
     // [3.37.5] the window kept and stored goes too
@@ -30107,6 +30470,14 @@
       e.preventDefault();
       setKeysOpen(false);
       const b = S.overlay.querySelector('.dci-head [data-act="keys-open"]');
+      if (b) b.focus({ preventScroll: true });
+      return;
+    }
+    // [169] (3.38.4) "⚙ Options ▾" of the footer
+    if (S.footOptsOpen) {
+      e.preventDefault();
+      setFootOpts(false);
+      const b = S.overlay.querySelector('[data-act="foot-opts"]');
       if (b) b.focus({ preventScroll: true });
       return;
     }
@@ -30891,12 +31262,20 @@
       .dci-datefind-list li { padding: calc(var(--u, 1px) * 4) 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
       .dci-ruleinfo { color: var(--muted); font-size: calc(var(--u, 1px) * 11); }
       /* [3.32.9] the comments of live recordings above "Stage …" (item 113) */
-      .dci-livecom { margin: calc(var(--u, 1px) * 6) 0; }
+      .dci-livecom { margin: 0; }
       .dci-livecom-box { border: 1px solid #c8c5d6; border-radius: 4px; background: #fff; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-livecom-offer { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 4px; background: #f7f6fb; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); cursor: help; }
       .dci-livecom-offer span { flex: 1 1 calc(var(--u, 1px) * 300); }
       .dci-livecom-offer button { cursor: pointer; }
-      .dci-livecom-box > summary { cursor: pointer; font-weight: 600; }
+      /* [168] (3.38.3) the list above, its heading at the bottom right; at most a third of the dashboard's height */
+      .dci-livecom-box { display: flex; flex-direction: column; }
+      .dci-livecom-box:not(.dci-livecom-boxopen) { width: fit-content; margin-left: auto; }
+      .dci-livecom-body { overflow: auto; margin-bottom: calc(var(--u, 1px) * 4); }
+      .dci-livecom-headrow { display: flex; justify-content: flex-end; }
+      .dci-livecom-head { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; cursor: pointer; color: var(--ink); }
+      .dci-livecom-head:hover { text-decoration: underline; }
+      .dci-livecom-sub td:first-child { padding-left: calc(var(--u, 1px) * 18); }
+      .dci-livecom-gbtn { white-space: nowrap; }
       .dci-livecom-table td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4); vertical-align: top; }
       .dci-livecom-table input[type=text] { width: 100%; min-width: calc(var(--u, 1px) * 240); }
       .dci-livecom-pos { white-space: nowrap; color: var(--muted); }
@@ -30945,8 +31324,8 @@
       .dci-mbdate-grid .dci-dsep { color: var(--muted); }
       .dci-bass-ask { margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); border: 1px solid #b9b5d6; border-radius: 3px; background: #f4f3fb; font-size: calc(var(--u, 1px) * 12); }
       .dci-medium-filter { margin-left: calc(var(--u, 1px) * 10); }
-      .dci-rounds { margin: calc(var(--u, 1px) * 6) 0 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #eef4ff; color: #2b3f73; }
-      .dci-waiting { margin: calc(var(--u, 1px) * 6) 0 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #fff8db; color: #7a5a00; }
+      .dci-rounds { margin: 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #eef4ff; color: #2b3f73; }
+      .dci-waiting { margin: 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #fff8db; color: #7a5a00; }
       .dci-series-label { margin: calc(var(--u, 1px) * 4) 0; display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); align-items: center; }
       .dci-scope { margin-left: calc(var(--u, 1px) * 10); }
       /* [3.30.1] "only works" apart from the levels (it is no level), "Stage:" on the line of its buttons (item 92) */
@@ -30957,7 +31336,7 @@
       .dci-matrix tr.dci-mx-hover > th, .dci-matrix tr.dci-mx-hover > td { background-color: #fff3c4 !important; }
       .dci-dgstatus-toggle { margin-left: calc(var(--u, 1px) * 6); background: #fff; color: #262430; border: 1px solid #c8c5d6; border-radius: 3px; cursor: pointer; font: inherit; }
       .dci-dgstatus-toggle[aria-pressed="true"] { background: #4b4585; color: #fff; border-color: #3b3570; }
-      .dci-stage-done { margin: calc(var(--u, 1px) * 6) 0 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #e6f3ea; color: #1d5b36; font-weight: 600; }
+      .dci-stage-done { margin: 0; padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); border-radius: 4px; background: #e6f3ea; color: #1d5b36; font-weight: 600; }
       .dci-row.dci-unmapped > td { background: #fff8db; }
       .dci-row.dci-unmapped > td:first-child { box-shadow: inset 4px 0 0 #e0a800; }
       .dci-unmapped-box { margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 6); border: 1px solid #e8c547; border-radius: 3px; background: #fffbe8; font-size: calc(var(--u, 1px) * 12); }
@@ -31291,6 +31670,9 @@
       .dci-em-chip-ask { border-color: var(--sugg-line); background: var(--sugg-bg); }
       .dci-em-chip-ask > button { color: var(--sugg-ink); font-weight: 600; }
       .dci-em-chip[draggable="true"] { cursor: grab; }
+      /* [163b] (3.38.6) ⓘ at a chip: its notes whose answer is applied, as tooltip */
+      .dci-em-chipinfo { color: var(--muted); font-size: calc(var(--u, 1px) * 12); cursor: help; padding: 0 calc(var(--u, 1px) * 2); }
+      .dci-em-chipinfo:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; border-radius: 2px; }
       /* [163] (3.37.14) ▾ at a chip with a question and its answers below it */
       .dci-em-chip { position: relative; }
       .dci-em-chip .dci-em-chipq { border-left: 1px solid var(--sugg-line); padding: 0 calc(var(--u, 1px) * 4); font-weight: 400; }
@@ -31430,12 +31812,36 @@
       .dci-pv-target { margin-bottom: calc(var(--u, 1px) * 8); }
       .dci-pv-target ul { margin: 2px 0 0; padding-left: calc(var(--u, 1px) * 18); }
 
-      .dci-foot { display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 20); flex-wrap: wrap; padding: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 20); border-top: 1px solid var(--line); }
-      .dci-foot-actions { display: flex; align-items: center; gap: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 18); flex-wrap: wrap; }
+      /* [169] (3.38.4) the footer: the live comments, then one line – ▲▼, the summary, its chips, the actions with "Stage …" at the
+         right –, wrapped by the width of the dashboard (not of the screen); narrower than about 1,100 px the checkboxes are in
+         "⚙ Options ▾" */
+      .dci-foot { display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 20); border-top: 1px solid var(--line); container-type: inline-size; }
+      .dci-foot-bar { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
+      .dci-sum { min-width: 0; }
+      .dci-sum-new[title] { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+      .dci-sum-sep { color: var(--muted); }
+      .dci-sum .dci-incomplete { white-space: nowrap; }
+      .dci-foot-chips { display: inline-flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4); }
+      .dci-foot-chips:empty { display: none; }
+      .dci-foot-chip { border: 1px solid; border-radius: 999px; padding: 1px calc(var(--u, 1px) * 8); font: inherit; font-size: calc(var(--u, 1px) * 12); line-height: 1.5; white-space: nowrap; cursor: pointer; }
+      .dci-foot-chip-warn { background: #fff8db; color: #7a5a00; border-color: #e8d48a; }
+      .dci-foot-chip-info { background: #eef4ff; color: #2b3f73; border-color: #c3d3f2; }
+      .dci-foot-chip-ok { background: #e6f3ea; color: #1d5b36; border-color: #b5dbc2; font-weight: 600; }
+      .dci-foot-chip[aria-expanded=true] { box-shadow: inset 0 0 0 1px currentColor; }
+      .dci-foot-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); margin-left: auto; }
+      .dci-foot-opts { position: relative; display: inline-flex; align-items: center; }
+      .dci-foot-optbtn { display: none; white-space: nowrap; }
+      .dci-foot-optlist { display: inline-flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 14); }
+      .dci-foot-info { font-size: calc(var(--u, 1px) * 15); line-height: 1; }
+      @container (max-width: 1099px) {
+        .dci-foot-optbtn { display: inline; }
+        .dci-foot-optlist { display: none; position: absolute; right: 0; bottom: calc(100% + calc(var(--u, 1px) * 6)); z-index: 8; flex-direction: column; align-items: flex-start;
+          gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); background: #fff; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(38, 36, 48, 0.18); }
+        .dci-foot-opts.dci-open .dci-foot-optlist { display: flex; }
+      }
       .dci-apply { border: 0; border-radius: 3px; padding: calc(var(--u, 1px) * 7) calc(var(--u, 1px) * 16); background: var(--orange); color: #fff; font-weight: 600; }
       .dci-apply:hover:not(:disabled) { background: var(--orange-d); }
       .dci-apply:disabled { background: #d9d6e3; color: #fff; cursor: not-allowed; }
-      .dci-hint { flex-basis: 100%; margin: 0; color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
 
       /* The dashboard in the page (below the import button) instead of a window */
       #dci-overlay.dci-inline { position: relative; inset: auto; z-index: auto !important; pointer-events: auto; margin: 0 0 calc(var(--u, 1px) * 24); }
@@ -31452,7 +31858,7 @@
       #dci-overlay.dci-inline .dci-preview { max-height: 60vh; overflow: auto; }
       /* Both stay in view while the page scrolls, so they take less room there */
       #dci-overlay.dci-inline .dci-pools-body { max-height: 32vh; }
-      #dci-overlay.dci-inline .dci-foot { padding-top: calc(var(--u, 1px) * 6); padding-bottom: calc(var(--u, 1px) * 6); row-gap: calc(var(--u, 1px) * 4); }
+      #dci-overlay.dci-inline .dci-foot { padding-top: calc(var(--u, 1px) * 6); padding-bottom: calc(var(--u, 1px) * 6); }
 
       @media (max-width: 700px) {
         #dci-overlay { padding: 0; }
