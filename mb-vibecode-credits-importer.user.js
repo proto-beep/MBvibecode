@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.6
+// @version      3.38.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.6
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.6
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.7
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.7
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1042,6 +1042,11 @@
       "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
       "role.notesTracks": "Tracks {list} from the notes",
       "role.typoRead": "Read as “{read}” (written “{written}”)",
+      "stack.noteDown": "Read from lines with the name above its instruments – their order was not clear.",
+      "stack.noteUp": "Read from lines with the instruments above the name – their order was not clear.",
+      "stack.flipUp": "⇅ Instruments above the names",
+      "stack.flipDown": "⇅ Names above the instruments",
+      "stack.flipTitle": "Reads the text again (changes in the dashboard are lost), the lines whose order was not clear the other way round",
       "cover.from": "From the cover art · {what}",
       "cover.cropTitle": "Where this line is in the image (read from the cover art)",
       "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
@@ -1259,6 +1264,10 @@
       "scope.title": "Sets everything else to Skip (links to works included); “all relationships” brings it back.",
       "log.scope": "Stage: {mode}",
       "log.importDone": "Import complete: {rows} roles of {entries} entries in the dashboard, {existing} already in MusicBrainz",
+      "log.stackAmbig": "Names and instruments one above the other, their order not clear ({list}): read with the name above its instruments – “⇅ Instruments above the names” at the entry reads them the other way round",
+      "log.stackAmbigUp": "Names and instruments one above the other, their order not clear ({list}): read with the instruments above the name – “⇅ Names above the instruments” at the entry reads them as before",
+      "log.stackFlipUp": "Names and instruments one above the other: read again with the instruments above the names",
+      "log.stackFlipDown": "Names and instruments one above the other: read again with the names above the instruments",
       "log.checksDone.one": "Checks complete: same-named works looked up for {n} track",
       "log.checksDone.other": "Checks complete: same-named works looked up for {n} tracks",
       "log.worksAsk.one": "{n} track without a work: the works section asks before the work lookups",
@@ -3042,6 +3051,9 @@
     { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
     { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks). [3.37.7] Also after a word for tracks ("Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall"), and a side alone after such a word everywhere – "Tracks A2 & B:", the tracks of a date in the notes ("Track B …": until 3.37.6 the date was for all tracks)' },
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
+    // [167] (3.38.7) maintainer: "die Artists stehen über der Zeile mit ihnen betreffenden instrumenten", "Großbuchstaben: immer in normale Schreibweise bringen"
+    { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S059', where: 'TEXT.parse (normalCaseName, addCredit)', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S057', where: 'personCopyright, mergePersonCopyrights, suggestByName', note: '℗ / © of a person Discogs lists as a label (3.37.10): a company entry with a person\'s name and only ℗ / © rows ("Copyright © – Martin Davidson", "Phonographic Copyright ℗ – Martin Davidson") whose Discogs link MusicBrainz does not know – a person of that name in the dashboard (another Discogs credit) takes the rows (artist–release copyright, phonographic copyright; the row says so, "As the label instead" gives them back); an artist of that name linked in this release becomes the entry\'s MB entity; otherwise the name is searched: artists and labels of that name, each named as such' },
     { id: 'S056', where: 'findFestivals, festivalHtml', note: 'Festival recordings (3.37.8): a sentence of the text or the notes with a festival (T055) – "… during the du Maurier, Ltd. International Jazz Festival Vancouver" – gives a hint above the entries: MusicBrainz prefers the event to the place (the event is linked to its place); with a date in the sentence, MusicBrainz\'s events of that name whose time holds the date are offered – never set, a click adds one as an entry' },
     { id: 'S055', where: 'TEXT.parse (readClause; TEXT_GUEST_HEAD, TEXT_FEAT_HEAD)', note: 'Texts (3.37.2): "Special Guest: M. Osswald on Sax and Clarinet" – the words before the colon are no person (T053): "Special Guest(s)", "Guest(s)" (and in German, French, Spanish) give the attribute guest to the instruments and voices of the names after it (a name without roles: performer, guest), "featuring", "feat.", "with" give none; "NAME on X and Y" (instruments or voices) gives them to the name, also without such a word. Before: "Special Guest" was read as the name and "M. Osswald on Sax" as a role credit' },
@@ -4842,6 +4854,20 @@
       return parts.every(placeLike) ? { name: parts[0], area: parts.slice(1).join(', ') } : null;
     }
 
+    /**
+     * [S059] (3.38.7) A person's name with a word in capitals beside words in normal case – "Torben SNEKKESTAD", "Agusti FERNANDEZ"
+     * – in normal case: "Torben Snekkestad" (collected item 167; maintainer: "Großbuchstaben: immer in normale Schreibweise
+     * bringen"): a word of three letters or more with a vowel (also with - or '), first in the name only from four letters ("KUROSAWA
+     * Go"); never a name all in capitals ("ABBA", "RZA"), short words ("DJ Shadow", "AC Williams") nor letters first ("BMS
+     * Illustration"). MusicBrainz's spelling ("Agustí Fernández") counts once the name is linked.
+     */
+    const normalCaseName = (n) => {
+      const words = String(n || '').split(' ');
+      if (!words.some((w) => /\p{Ll}/u.test(w))) return n;
+      const caps = (w, i) => /^\p{Lu}[\p{Lu}'’-]{2,}$/u.test(w) && /[AEIOUYÀ-ÆÈ-ÏÒ-ÖØ-Ý]/u.test(w) && (i > 0 || w.replace(/[^\p{L}]/gu, '').length >= 4);
+      return words.map((w, i) => (caps(w, i) ? w.toLowerCase().replace(/(^|[-'’])(\p{L})/gu, (all, sep, c) => sep + c.toUpperCase()) : w)).join(' ');
+    };
+
     /** Clauses of a line: "Written by A, mixed by B" → two; other commas stay inside their clause. */
     function clauses(line) {
       const out = [];
@@ -4983,7 +5009,7 @@
       return { text: clean(text), links, cut: true };
     }
 
-    function parse(text, { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames = [] }) {
+    function parse(text, { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames = [], stackUp = false }) {
       const credits = [];
       const companies = [];
       const unrecognized = [];
@@ -5040,7 +5066,7 @@
         const p = parseRoleNotation(role)[0];
         if (!p || !looksLikeName(name)) return false;
         if (isCompanyRoleKnown(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra });
-        else credits.push({ who: who(name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
+        else credits.push({ who: who(ruleOn('S059') ? normalCaseName(name) : name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
         return true;
       };
       // [S041] (3.30.7) the release's artist as the band, or "the band", "we" (collected item 96)
@@ -5770,6 +5796,76 @@
         }
       };
 
+      /**
+       * [S058] (3.38.7) Names above (or below) the line with their instruments (collected item 167; maintainer: "folgendes muss
+       * insbesondere bei der Bilderkennung erkannt werden: "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO /
+       * Barry GUY / DOUBLE BASS" also die Artists stehen über der Zeile mit ihnen betreffenden instrumenten", "umgekehrte
+       * Reihenfolge: ja bitte", "mach erstmal nur eindeutiges"): a line that looks like a name (2 – 4 words in capitals, a
+       * particle between them, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows
+       * ("SAXOPHONES & TRUMPET": never "role & name") pair up within a block (the lines between empty or other ones). A block that
+       * pairs up wholly with the names above – or wholly with the instruments above – is read so; any other (an odd number of
+       * lines, one missing, two columns read into each other) is ambiguous: the names above (with `stackUp` the instruments),
+       * its credits marked `stackAmbig` (the entry says so, "⇅" reads the text the other way round). Lines left over are read as
+       * usual. → Map of a line's index to its pair { name, instr, up, ambig }, and the other line's index to null.
+       */
+      const STACK_PARTICLE = /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|bin|al|el|y|zu|ten|ter|of)$/i;
+      const stackInstr = (raw) => {
+        const l = clean(raw);
+        if (!l || /\d|:|[()[\]@]|https?:|www\./i.test(l) || /\s(?:by|at|in|on|for|with|von|par|por)\s/i.test(` ${l} `)) return false;
+        const parts = splitRoles(l);
+        return parts.length > 0 && parts.every(playable);
+      };
+      const stackName = (raw) => {
+        const l = clean(raw);
+        if (!l || /[\d:()[\]@,;/&+|"“”]|https?:|www\./i.test(l) || /\s[–—-]\s/.test(l) || !looksLikeName(l)) return false;
+        const words = l.split(' ');
+        if (words.length < 2 || words.length > 4) return false;
+        if (!words.every((w, i) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || (i > 0 && i < words.length - 1 && STACK_PARTICLE.test(w)))) return false;
+        return !words.some((w) => playable(w) || isRole(cap(w.toLowerCase())) || isRole(`${cap(w.toLowerCase())} By`)) && !TEXT_PLACE_WORDS.test(l) && !creditLike(l) && !TEXT_IGNORE_LINE.test(l);
+      };
+      const stackPairs = (lines) => {
+        const out = new Map();
+        if (!ruleOn('S058')) return out;
+        const kind = lines.map((raw) => (stackInstr(raw) ? 'I' : stackName(raw) ? 'N' : ''));
+        for (let i = 0; i < lines.length;) {
+          if (!kind[i]) {
+            i++;
+            continue;
+          }
+          let j = i;
+          while (j < lines.length && kind[j]) j++;
+          const run = kind.slice(i, j);
+          if (j - i >= 2 && run.includes('N') && run.includes('I')) {
+            const pair = (top, bottom) => {
+              const ps = [];
+              for (let k = i; k < j - 1; k++) {
+                if (kind[k] === top && kind[k + 1] === bottom) {
+                  ps.push(k);
+                  k++;
+                }
+              }
+              return ps;
+            };
+            const down = pair('N', 'I');
+            const upP = pair('I', 'N');
+            const ambig = down.length * 2 !== j - i && upP.length * 2 !== j - i;
+            const up = upP.length * 2 === j - i || (ambig && stackUp);
+            for (const k of up ? upP : down) {
+              out.set(k, { name: lines[up ? k + 1 : k], instr: lines[up ? k : k + 1], up, ambig, lines: `${clean(lines[k])} / ${clean(lines[k + 1])}` });
+              out.set(k + 1, null);
+            }
+          }
+          i = j;
+        }
+        return out;
+      };
+      /** [S058] A pair of lines: each instrument of the one a credit of the name of the other. */
+      const readStacked = (pr) => {
+        startLine(pr.lines);
+        const extra = { stacked: pr.up ? 'up' : 'down', ...(pr.ambig ? { stackAmbig: true } : {}) };
+        splitRoles(clean(pr.instr)).forEach((x) => addCredit(clean(pr.name), x, null, extra));
+      };
+
       // [S051] (3.34.19) Lines that are only instruments or voices ("Electric guitar", "Drums", …, empty lines between them) are
       // held back until a line links them to a name ("are played, mixed and produced by Go Kurosawa"); any other line reads them
       // as usual first (collected item 137a)
@@ -5779,7 +5875,15 @@
         roleBlock = [];
         held.forEach(readLine);
       };
-      for (const raw of String(text || '').split(/\r?\n/)) {
+      const allLines = String(text || '').split(/\r?\n/);
+      const stacks = stackPairs(allLines);
+      for (const [li, raw] of allLines.entries()) {
+        // [S058] (3.38.7) a line of a pair: read with the other one
+        if (stacks.has(li)) {
+          flushBlock();
+          if (stacks.get(li)) readStacked(stacks.get(li));
+          continue;
+        }
         if (ruleOn('S051')) {
           if (roleBlock.length && !clean(raw)) {
             roleBlock.push(raw);
@@ -6159,6 +6263,8 @@
         (c.typos || []).forEach((t) => { entry.typos = entry.typos || []; if (!entry.typos.some((x) => x.written === t.written)) entry.typos.push(t); });
         // [137d] (3.34.20) a word of a list of instruments MusicBrainz does not know
         if (c.guess) entry.guess = true;
+        // [S058] (3.38.7) from lines whose order of names and instruments is not clear
+        if (c.stackAmbig) entry.stackAmbig = true;
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
@@ -15264,6 +15370,8 @@
       resolveTitles: (titles, srcTracks = tracks) => tracksByTitles(titles, srcTracks),
       // [3.30.7] the names of the release's artist (S041: "<artist> are A, B and C")
       artistNames: uniq((S.releaseCredit || []).map((p) => p.name).filter(Boolean)),
+      // [S058] (3.38.7) ambiguous names and instruments one above the other: the instruments above ("⇅" at the entry)
+      stackUp: !!S.stackUp,
     };
   }
 
@@ -15801,6 +15909,8 @@
       renderSource();
       return;
     }
+    // [S058] (3.38.7) "⇅" holds for the text (or release) it was chosen for
+    if (!S.release || S.source !== source || String(S.release.id) !== String(id)) S.stackUp = false;
     const choice = await chooseMedia();
     if (!choice) {
       log('info', 'mediaCancelled');
@@ -15892,6 +16002,7 @@
           // [S054] (3.37.0) a credit from the Discogs notes (its line shown at the row)
           if (c.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: c.notesLine || '' });
           if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
+          if (c.stackAmbig) row.stackAmbig = true; // [S058] (3.38.7)
           row.dSpec = c.specs.join(', ');
           row.dPositions = c.positions;
           row.unresolved = c.unresolved;
@@ -16057,6 +16168,9 @@
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
+        // [S058] (3.38.7) names and instruments one above the other in an order that is not clear: said in red, "⇅" at the entries
+        const stackNames = uniq(S.rows.filter((r) => r.stackAmbig).map((r) => (S.artists.get(r.artistKey) || {}).name).filter(Boolean));
+        if (stackNames.length) log('warn', S.stackUp ? 'stackAmbigUp' : 'stackAmbig', { n: stackNames.length, list: stackNames.join(', ') });
         // [S056] (3.37.8) festival recordings in the text: a hint, events offered
         findFestivals(seq);
         if (S.mediumAuto) showMessage('info', 'msg.mediumAuto', S.mediumAuto);
@@ -18538,6 +18652,7 @@
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${coverFromEntryHtml(a, rows)}
+        ${stackNoteHtml(rows)}
         ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
         ${mxEntry(a) ? entryMatrixHtml(a, rows) : mxCompact(a) ? entryCompactHtml(a, rows) : `<div class="dci-tablewrap dci-rowswrap">
@@ -18549,6 +18664,19 @@
         ${mxHidden ? `<p class="dci-sub dci-work-note">${esc(tr('group.mxHidden', { n: mxHidden }))}</p>` : ''}
         <button type="button" class="dci-textbtn" data-act="add-role">${esc(tr('group.addRole', { name: a.name }))}</button>
       </section>`;
+  }
+
+  /**
+   * [S058] (3.38.7) An entry from names and instruments one above the other whose order was not clear (collected item 167;
+   * maintainer: "kann man sicher sein immer den Artist korrekt zuzuordnen oder braucht man irgendwo einen behelfsknopf, der die
+   * unten/oben Logik ändert?", "passt, passiert wahrscheinlich eher bei bilderkennung und freitexten als bei discogs"): how it was
+   * read, and "⇅ Instruments above the names" – the text read again the other way round (and back).
+   */
+  function stackNoteHtml(rows) {
+    if (!rows.some((r) => r.stackAmbig)) return '';
+    return `<div class="dci-note dci-stack-note">${esc(tr(S.stackUp ? 'stack.noteUp' : 'stack.noteDown'))}
+      <button type="button" class="dci-textbtn" data-act="stack-flip" title="${esc(tr('stack.flipTitle'))}">${esc(tr(S.stackUp ? 'stack.flipDown' : 'stack.flipUp'))}</button>
+      <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S058" title="${esc(tr('rules.gotoTitle'))}">S058</button></div>`;
   }
 
   /**
@@ -27282,6 +27410,12 @@
       // [3.34.1] text from cover art (beta, item E3)
       case 'ocr-open':
         openOcr();
+        break;
+      case 'stack-flip':
+        // [S058] (3.38.7) the text (or the notes) read again, the ambiguous lines the other way round
+        S.stackUp = !S.stackUp;
+        log('info', S.stackUp ? 'stackFlipUp' : 'stackFlipDown');
+        if (S.release) loadRelease(S.release.id, { source: S.source });
         break;
       case 'text-load': {
         const text = S.overlay.querySelector('[data-f="text-src"]').value;
