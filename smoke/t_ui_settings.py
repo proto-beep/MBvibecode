@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -37,7 +37,7 @@ def case_settabs():
         pg.wait_for_timeout(200)
         a.append(pg.evaluate(f"{SET}.hidden"))
         print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
-        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections']
                        and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
         # B) keys
         pg.click(gear)
@@ -180,7 +180,7 @@ def case_settings():
         vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
         print('A) Themen:', topics, '| Werke:', vals)
-        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections']
                        and [t for t, e in topics if e == 'true'] == ['general']
                        and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
         # B) shared switches
@@ -280,7 +280,7 @@ def case_pressed():
         return (t['above'] <= 1 and t['below'] >= 4.5 and 0 <= t['into'] <= 3 and (t['atTabsTop'] or abs(t['below'] - 6) <= 1)
                 and t['joinedTop'] == (abs(t['above']) <= 1) and (t['corner'] == '0px') == t['joinedTop'])
     no_bridge = lambda x: x['after'] in ('none', 'normal') and x['before'] in ('none', 'normal') and not x['bridgeClass']
-    TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
+    TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections']
     results = []
     # (the matrix of the entries, for "by event | by role")
     H.ENTRIES_VIEW = 'matrix'
@@ -687,7 +687,7 @@ def case_cache():
             H.open_settings(pg, 'cache')
             a = pg.evaluate(CACHE)
             print('A) Cache:', a)
-            results.append(a['tabs'][-3:] == ['Beta', 'Cache', 'ⓘ Connections'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
+            results.append(a['tabs'][-4:] == ['Beta', 'Cache', 'Statistics', 'ⓘ Connections'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
                            and re.match(r'^0 releases · 0\.0 KB · all data of the script in this browser: \d+\.\d KB$', a['size']) is not None)
             change()
             b0 = state()
@@ -873,6 +873,330 @@ def case_logdiag():
         results.append(a == [False, False] and b1 == [True, 'true'] and c0 == 'Stop diagnosis' and c1 == [False, True, None] and d1 == [False, False, None])
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# [E8] (3.38.0) the statistics: helpers
+ENTER_EDIT = """(() => { if (document.getElementById('test-enter-edit')) return; const ta = document.getElementById('edit-note-text'); const f = document.createElement('form');
+  f.addEventListener('submit', (e) => e.preventDefault()); ta.parentNode.insertBefore(f, ta); f.appendChild(ta); const btn = document.createElement('button');
+  btn.type = 'submit'; btn.className = 'submit positive'; btn.textContent = 'Enter edit'; btn.id = 'test-enter-edit'; f.appendChild(btn); })()"""
+STAT_COUNT = """() => new Promise((res) => { const q = indexedDB.open('dci-stats', 1); q.onupgradeneeded = () => q.result.createObjectStore('subs', { keyPath: 'id' });
+  q.onsuccess = () => { const tx = q.result.transaction('subs', 'readonly'); const g = tx.objectStore('subs').getAll(); g.onsuccess = () => res(g.result); g.onerror = () => res(null); };
+  q.onerror = () => res(null); })"""
+
+
+def js_release_of(added):
+    """/ws/js/release of the test release with the relationships staged in the editor (as MusicBrainz has them after "Enter edit")."""
+    recs = {g: [] for g in H.REC}
+    rel = []
+    for r in added:
+        for a, b in ((r['e0'], r['e1']), (r['e1'], r['e0'])):
+            if a in recs:
+                recs[a].append({'linkTypeID': r['lt'], 'target': {'gid': b}})
+                break
+            if a == H.REL:
+                rel.append({'linkTypeID': r['lt'], 'target': {'gid': b}})
+                break
+    return {'gid': H.REL, 'relationships': rel, 'releaseGroup': {'secondaryTypeIDs': []},
+            'mediums': [{'position': 1, 'tracks': [{'number': str(i + 1), 'recording': {'gid': g, 'comment': '', 'relationships': recs[g]}} for i, g in enumerate(H.REC)]}]}
+
+
+def case_stats():
+    """Credits Importer 3.38.0 (E8, milestone "Statistics"; maintainer: "die statistiken sollen erstmal in den einstellung sein",
+    "von Musicbrainz bestätigt", "Nein das Sammeln soll an sein (und natürlich ausschaltbar). Bei den Resetfunktionen soll es geben:
+    "keep statistics"", "der erste Import zählt, sofern die seite nicht neu geladen wurde", "ja soll angehakt sein", "ich glaube
+    einen export brauchen wir nicht", "Setze mal alle Ideen für die Statistik um und erstelle die Statistik.").
+    A) ⚙ Settings → "Statistics" (after "Cache"): "Collect statistics" on, nothing counted yet.
+    B) Everything staged, "Enter edit": the relationships in MusicBrainz's /ws/js/release – counted once (log "Statistics: n
+       relationships confirmed by MusicBrainz and counted"; the job gone; one record in the database dci-stats with the time from
+       the first import).
+    C) The tab: 1 release, n relationships, 100 % new, the release had relationships before or was empty, the times; over months
+       (this month), over days (today); the most frequent artists, instruments, types.
+    D) "Reset all settings" with "keep statistics" (ticked): kept; unticked: deleted.
+    E) Switched off: "Enter edit" makes no job.
+    F) The release page MusicBrainz shows after "Enter edit": a job waiting there is counted – a relationship not in MusicBrainz is
+       left out, and so is one MusicBrainz had before ("n0": no more of its kind than before); the time until the page began to load.
+       F2) A job with nothing to look up there (a supplement): counted at once on the release page shown right after "Enter edit"."""
+    import re
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(400)
+        tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(t => t.dataset.topic)")
+        a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-set=stats-on]') || {}).checked]")
+        print('A) Reiter:', tabs, '| leer, an:', a)
+        results.append(tabs[-3:] == ['cache', 'statistics', 'connections'] and a == [True, True])
+        # B) staged, "Enter edit"
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        logs = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Statistics/.test(t))")
+        job = pg.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')")
+        recs = pg.evaluate(STAT_COUNT)
+        n = len(added)
+        print('B) gestagt:', n, '| Protokoll:', logs, '| Auftrag:', job, '| Datensätze:', [(r['mbid'], len(r['rels']), r['ms'] is not None, r['src']) for r in recs or []])
+        results.append(n > 0 and any(f'Statistics: {n} relationships confirmed by MusicBrainz and counted' in t for t in logs) and job is None
+                       and recs is not None and len(recs) == 1 and len(recs[0]['rels']) == n and recs[0]['ms'] is not None and recs[0]['ms'] > 0 and recs[0]['src'] == 'discogs'
+                       and recs[0]['rel'] is not None and 'before' in recs[0]['rel'])
+        # C) the tab
+        H.open_settings(pg, 'cache')
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(500)
+        TILES = "Object.fromEntries([...document.querySelectorAll('.dci-stats-tile')].map(t => [t.dataset.stat, t.querySelector('.dci-stats-num').textContent.trim()]))"
+        tiles = pg.evaluate(TILES)
+        month = pg.evaluate("(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })()")
+        day = pg.evaluate("(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })()")
+        rows_m = pg.evaluate("[...document.querySelectorAll('[data-el=stats-periods] tbody tr')].map(t => [...t.children].map(c => c.textContent.trim()))")
+        pg.click('[data-act=stats-period][data-period=day]')
+        pg.wait_for_timeout(300)
+        rows_d = pg.evaluate("[...document.querySelectorAll('[data-el=stats-periods] tbody tr')].map(t => [...t.children].map(c => c.textContent.trim()))")
+        tops = pg.evaluate("Object.fromEntries(['artists', 'instr', 'types'].map(k => [k, [...document.querySelectorAll(`[data-el=stats-top-${k}] li`)].map(li => li.textContent.replace(/\\s+/g, ' ').trim())]))")
+        stored = pg.evaluate("localStorage.getItem('dci-stats-period')")
+        print('C) Kacheln:', tiles, '\n   Monate:', rows_m, '| Tage:', rows_d, stored, '\n   Top:', tops)
+        results.append(tiles.get('releases') == '1' and tiles.get('rels') == str(n) and tiles.get('newSupp') == '100 % / 0 %' and tiles.get('before') in ('100 % / 0 %', '0 % / 100 %')
+                       and tiles.get('created') == '0' and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRelease', ''))) and bool(re.match(r'^[\d.,]+ (s|min)', tiles.get('perRel', '')))
+                       and len(rows_m) == 1 and rows_m[0][0] == month and rows_m[0][1] == '1' and rows_m[0][2] == str(n) and rows_m[0][3] == '100 %'
+                       and len(rows_d) == 1 and rows_d[0][0] == day and stored == '"day"'
+                       and bool(tops['artists'] and tops['instr'] and tops['types']))
+        # D) reset all settings: kept, then deleted
+        H.open_reset(pg)
+        pg.wait_for_timeout(150)
+        keep = pg.is_checked('[data-f=reset-keepstats]')
+        pg.click('[data-act=reset-do]')
+        pg.wait_for_timeout(1200)
+        d1 = len(pg.evaluate(STAT_COUNT) or [])
+        H.open_reset(pg)
+        pg.wait_for_timeout(150)
+        pg.uncheck('[data-f=reset-keepstats]')
+        pg.click('[data-act=reset-do]')
+        pg.wait_for_timeout(1200)
+        d2 = len(pg.evaluate(STAT_COUNT) or [])
+        print('D) behalten angehakt:', keep, '| danach:', d1, '| ohne Haken:', d2)
+        results.append(keep and d1 == 1 and d2 == 0)
+        # E) off: no job
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(300)
+        pg.uncheck('[data-set=stats-on]')
+        pg.wait_for_timeout(200)
+        off = pg.evaluate("localStorage.getItem('dci-stats-on')")
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(800)
+        job_e = pg.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')")
+        print('E) aus:', off, '| Auftrag:', job_e)
+        results.append(off == 'false' and job_e is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        pg.close()
+        # F) the release page
+        rec_gid = H.REC[1]
+        found = next((x for x in js_release_of(added)['mediums'][0]['tracks'] if x['recording']['gid'] == rec_gid), None)
+        tgt = found['recording']['relationships'][0] if found and found['recording']['relationships'] else {'linkTypeID': 148, 'target': {'gid': H.uid('dddddddd', 1)}}
+        job = {'armedAt': 0, 'rec': {'v': 1, 'mbid': H.REL, 'start': 0, 'rel': {'before': 0}, 'src': 'discogs', 'supp': [], 'ocr': None, 'rels': [
+            {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': tgt['target']['gid'], 'tn': 'X', 'i': ['guitar'], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0,
+             'c': {'on': 'recording', 'src': rec_gid, 'lt': tgt['linkTypeID'], 'tgt': tgt['target']['gid']}},
+            {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': 'nope', 'tn': 'Y', 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0,
+             'c': {'on': 'recording', 'src': rec_gid, 'lt': 1, 'tgt': 'nope'}},
+            {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': tgt['target']['gid'], 'tn': 'Z', 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0,
+             'c': {'on': 'recording', 'src': rec_gid, 'lt': tgt['linkTypeID'], 'tgt': tgt['target']['gid'], 'n0': 1}}]}}
+        rp, errs2 = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{H.REL}')
+        rp.evaluate("(job) => { job.armedAt = Date.now(); job.rec.start = Date.now() - 60000; localStorage.setItem('dci-stat-job:%s', JSON.stringify(job)); }" % H.REL, job)
+        rp.reload()
+        rp.wait_for_timeout(16000)
+        recs_f = rp.evaluate(STAT_COUNT) or []
+        job_f = rp.evaluate(f"localStorage.getItem('dci-stat-job:{H.REL}')")
+        print('F) Release-Seite:', [(len(r['rels']), r['ms']) for r in recs_f], '| Auftrag:', job_f, '| Fehler:', errs2)
+        results.append(len(recs_f) == 1 and len(recs_f[0]['rels']) == 1 and recs_f[0]['rels'][0]['tn'] == 'X' and 'c' not in recs_f[0]['rels'][0]
+                       and 60000 <= recs_f[0]['ms'] < 75000 and job_f is None and not errs2)
+        # F2) nothing to look up: at once
+        job2 = {'armedAt': 0, 'rec': {'v': 1, 'mbid': H.REL, 'start': 0, 'rel': {'before': 1}, 'src': 'discogs', 'supp': [], 'ocr': None, 'rels': [
+            {'k': 's', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': 'g', 'tn': 'S', 'i': [], 'v': [], 'd': 'year', 'ds': 'hand', 'rc': 0, 'ac': 0, 'ru': '', 'lk': 'link', 'nw': 0}]}}
+        rp.evaluate("(job) => { job.armedAt = Date.now(); job.rec.start = Date.now() - 1000; localStorage.setItem('dci-stat-job:%s', JSON.stringify(job)); }" % H.REL, job2)
+        rp.reload()
+        rp.wait_for_timeout(2500)
+        recs_f2 = rp.evaluate(STAT_COUNT) or []
+        print('F2) ohne Nachschlagbares:', [(len(r['rels']), r['rels'][0]['k']) for r in recs_f2])
+        results.append(len(recs_f2) == 2 and any(r['rels'][0]['k'] == 's' for r in recs_f2))
+        H.WS_JS_RELEASE.clear()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+STAT_SEED = """(recs) => new Promise((res) => { const q = indexedDB.open('dci-stats', 1); q.onupgradeneeded = () => q.result.createObjectStore('subs', { keyPath: 'id' });
+  q.onsuccess = () => { const tx = q.result.transaction('subs', 'readwrite'); const st = tx.objectStore('subs'); st.clear(); recs.forEach((r) => st.put(r));
+    tx.oncomplete = () => res(true); tx.onerror = () => res(false); }; q.onerror = () => res(false); })"""
+
+
+def stat_rel(k, lt, lv, et, tg, tn, i=(), d='', ds='', lk='', ru='', nw=0):
+    return {'k': k, 'lt': lt, 'lv': lv, 'et': et, 'tg': tg, 'tn': tn, 'i': list(i), 'v': [], 'd': d, 'ds': ds, 'rc': 0, 'ac': 0, 'ru': ru, 'lk': lk, 'nw': nw}
+
+
+def case_statsmore():
+    """Credits Importer 3.38.1 (E8; maintainer: "Setze mal alle Ideen für die Statistik um"): the further statistics of the tab,
+    from three stored submissions of two releases (today, yesterday, three days ago).
+    Sources (Discogs, pasted text, text from cover art; with a supplement 1) · how the entries were found (unique: link 2, name 1,
+    hand 1, created 1) · dates (3 of 8 = 38 %, day / month / year 1 each, notes 2, by hand 1; the place Zojoji Hall) · levels
+    (recording 7, release 1; works linked 1) · the releases at their first submission (1980s, 1990s; CD 2, Vinyl 1; JP, CA; ECM,
+    Intakt) · when (7 weekdays, 24 hours; days in a row now 2, longest 2; most in a day 5 yesterday; most for a release 5 "A";
+    fastest 24 s per relationship) · instruments (3; first used in 30 days: all; used once: double bass, taishōgoto) · text from
+    cover art (1 submission, 2 images, 10 lines, 3 words) · own rules (2; U001: 1)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        day = 86400000
+        relA = {'title': 'A', 'year': 1985, 'country': 'JP', 'formats': ['CD'], 'labels': ['ECM'], 'before': 0}
+        relB = {'title': 'B', 'year': 1993, 'country': 'CA', 'formats': ['CD', 'Vinyl'], 'labels': ['Intakt'], 'before': 3}
+        recs = [
+            {'v': 1, 'id': 'a:1', 'mbid': 'm1', 'at': now - day, 'start': now - day - 120000, 'ms': 120000, 'src': 'discogs', 'supp': ['bandcamp'], 'rel': relA, 'own': 2, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g1', 'Jane', ['piano'], 'day', 'notes', 'link', 'R001'),
+                      stat_rel('n', 'instrument', 'recording', 'artist', 'g2', 'Joe', ['taishōgoto'], 'year', 'hand', 'search', 'U001'),
+                      stat_rel('n', 'recorded at', 'recording', 'place', 'p1', 'Zojoji Hall', lk='link'),
+                      stat_rel('s', 'performance', 'recording', 'work', 'w1', 'Song'),
+                      stat_rel('n', 'producer', 'release', 'artist', 'g1', 'Jane', lk='link')]},
+            {'v': 1, 'id': 'b:2', 'mbid': 'm2', 'at': now, 'start': now - 30000, 'ms': 30000, 'src': 'ocr', 'supp': [], 'rel': relB, 'own': 2,
+             'ocr': {'supp': False, 'images': 2, 'lines': 10, 'corrected': 3},
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g3', 'Ann', ['piano'], 'month', 'notes', 'hand'),
+                      stat_rel('n', 'instrument', 'recording', 'artist', 'g4', 'Bob', ['double bass'], lk='created', nw=1)]},
+            {'v': 1, 'id': 'b:3', 'mbid': 'm2', 'at': now - 3 * day, 'start': None, 'ms': None, 'src': 'text', 'supp': [], 'rel': relB, 'own': 1, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g3', 'Ann', ['piano'], lk='hand')]},
+        ]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(600)
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
+          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+        c = pg.evaluate(CARDS)
+        cols = pg.evaluate("[...document.querySelectorAll('[data-el=stats-when] .dci-stats-cols')].map(x => x.querySelectorAll('.dci-stats-col').length)")
+        yday = pg.evaluate("(() => { const d = new Date(Date.now() - 86400000); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })()")
+        for k, v in c.items():
+            print(f'   {k}:', v)
+        print('Gesät:', seeded, '| Balken:', cols)
+        ok = lambda k, *want: all(w in c.get(k, []) for w in want)
+        results.append(seeded and ok('sources', 'Discogs 1', 'pasted text 1', 'text from cover art 1', 'with a supplement: 1')
+                       and c.get('found') == ['through the link of the source 2', 'by their name 1', 'chosen by hand 1', 'newly created 1'])
+        results.append(ok('dates', '38 % with a date (3 of 8)', 'day 1', 'month only 1', 'year only 1', 'found in the notes or the text 2', 'given by hand 1', 'Zojoji Hall 1')
+                       and ok('levels', 'Recording 7', 'Release 1', 'works linked: 1'))
+        results.append(ok('releases', '1980s 1', '1990s 1', 'CD 2', 'Vinyl 1', 'JP 1', 'CA 1', 'ECM 1', 'Intakt 1'))
+        results.append(cols == [7, 24] and ok('when', 'Days in a row: now 2, longest 2', f'Most in a day: 5 relationships ({yday})', 'Most for a release: 5 relationships (A)',
+                                             'Fastest: 24 s per relationship (A, 5 relationships)'))
+        results.append(ok('instruments', 'Different instruments: 3', 'First used in the last 30 days: double bass, piano, taishōgoto', 'Used only once (2): double bass, taishōgoto')
+                       and ok('ocr', 'submissions with text from cover art: 1', 'images read: 2', 'lines taken over: 10', 'words changed by hand: 3')
+                       and ok('own', 'Own rules now: 2 – relationships from them:', 'U001 1'))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_statsdev():
+    """Credits Importer 3.38.2 (E8; maintainer: "Die zur Verbesserung sollen gesammelt aber extra einschaltbar sein wegen Developer
+    Interessen."): the developer statistics.
+    A) A real submission: "Guitar" answered (electric guitar, Q002), a role credit typed by hand (Bass Man) – its record has, per
+       relationship, what was changed by hand ("roleCredit" for Bass Man, none for the others – an answer is no change) and the answers;
+       and for the import what was not recognized and the duplicates avoided.
+    B) "Developer statistics (to improve the script)" off by default: not shown; on: from stored submissions – taken over 57 % /
+       changed 43 % of 7 (role credit, tracks, date, row added by hand); the rules whose suggestion was changed most (R096 1 of 2,
+       R001 1 of 3; a row added by hand is no change of a rule); not recognized (kalimba 2 – once per release –, buddha machine 1);
+       the answers (Q002: electric guitar 2 (67 %), acoustic guitar 1 (33 %); no instrument of MusicBrainz: typo 1); duplicates
+       avoided 3 (once per release)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+          const tr = g && g.querySelector('tr.dci-row'); return tr ? tr.dataset.row : null; }"""
+        gid = pg.evaluate(ROW, 'Guitar Guy')
+        pg.locator(f'tr[data-row="{gid}"] [data-act=instr-pick][data-instr="electric guitar"]').first.click()
+        pg.wait_for_timeout(300)
+        bid = pg.evaluate(ROW, 'Bass Man')
+        pg.fill(f'tr[data-row="{bid}"] [data-f=role-credit]', 'four-string')
+        pg.press(f'tr[data-row="{bid}"] [data-f=role-credit]', 'Tab')
+        pg.wait_for_timeout(300)
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs = pg.evaluate(STAT_COUNT) or []
+        rels = recs[0]['rels'] if recs else []
+        gg = [r for r in rels if r['tn'] == 'Guitar Guy' and r['lt'] == 'instrument']
+        bm = [r for r in rels if r['tn'] == 'Bass Man' and r['lt'] == 'instrument']
+        others = [r for r in rels if r not in gg and r not in bm]
+        dev = recs[0].get('dev') if recs else None
+        print('A) Guitar Guy:', [(r['h'], r['q']) for r in gg], '| Bass Man:', [(r['h'], r['q']) for r in bm], '| andere h:', sorted({tuple(r['h']) for r in others}), '| dev:', dev)
+        results.append(bool(gg) and all(r['h'] == [] and r['q'] == [{'q': 'Q002', 'a': 'electric guitar'}] for r in gg)
+                       and bool(bm) and all('roleCredit' in r['h'] for r in bm) and all(r['h'] == [] for r in others)
+                       and dev is not None and isinstance(dev.get('unrec'), list) and isinstance(dev.get('dupes'), int))
+        # B) the switch and the display
+        rel = lambda h, ru='', q=(): {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': 'g', 'tn': 'X', 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0,
+                                       'ru': ru, 'lk': 'link', 'nw': 0, 'h': list(h), 'q': list(q)}
+        now = pg.evaluate("Date.now()")
+        seed = [
+            {'v': 1, 'id': 'a:1', 'mbid': 'm1', 'at': now - 3000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'dev': {'unrec': ['kalimba', 'buddha machine'], 'dupes': 2},
+             'rels': [rel([], 'R001'), rel(['roleCredit'], 'R001'), rel(['added']), rel([], 'R096', [{'q': 'Q002', 'a': 'electric guitar'}]), rel([], '', [{'q': 'guess', 'a': 'typo'}])]},
+            {'v': 1, 'id': 'a:2', 'mbid': 'm1', 'at': now - 2000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'dev': {'unrec': ['kalimba'], 'dupes': 5}, 'rels': [rel(['tracks', 'date'], 'R096', [{'q': 'Q002', 'a': 'acoustic guitar'}])]},
+            {'v': 1, 'id': 'c:3', 'mbid': 'm3', 'at': now - 1000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'dev': {'unrec': ['kalimba'], 'dupes': 1}, 'rels': [rel([], 'R001', [{'q': 'Q002', 'a': 'electric guitar'}])]},
+        ]
+        pg.evaluate(STAT_SEED, seed)
+        H.open_settings(pg, 'cache')
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(500)
+        b0 = pg.evaluate("[!!document.querySelector('.dci-stats-dev'), (document.querySelector('[data-set=stats-dev]') || {}).checked]")
+        pg.check('[data-set=stats-dev]')
+        pg.wait_for_timeout(500)
+        stored = pg.evaluate("localStorage.getItem('dci-stats-dev')")
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-dev .dci-stats-card')].map(c => [c.dataset.el.replace('stats-dev-', ''),
+          [...c.querySelectorAll('li, p, h5')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+        c = pg.evaluate(CARDS)
+        for k, v in c.items():
+            print(f'   {k}:', v)
+        print('B) vorher (Abschnitt, Schalter):', b0, '| gespeichert:', stored)
+        results.append(b0 == [False, False] and stored == 'true'
+                       and c.get('auto') == ['57 % as suggested, 43 % changed by hand (of 7 relationships)', 'role credit 1', 'tracks 1', 'date 1', 'row added by hand 1']
+                       and c.get('rules') == ['R096 1 of 2 changed (50 %)', 'R001 1 of 3 changed (33 %)']
+                       and c.get('unrec') == ['kalimba 2', 'buddha machine 1']
+                       and c.get('answers') == ['No instrument of MusicBrainz', 'a similar instrument (typo) 1 (100 %)', 'Q002', 'electric guitar 2 (67 %)', 'acoustic guitar 1 (33 %)']
+                       and c.get('dupes') == ['Relationships MusicBrainz had already, not staged again: 3'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        H.WS_JS_RELEASE.clear()
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

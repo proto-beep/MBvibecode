@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-10-31 | 3.38.0 – 3.38.2 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
@@ -44,6 +45,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-10-31 | Import 3.38.0 | Statistics, in ⚙ Settings → Statistics (collecting on, switchable): what MusicBrainz confirmed after “Enter edit” – releases, relationships, new / supplemented, releases with relationships before / empty, artists newly created, the time per release and per relationship, over days, weeks, months and years, and the artists, instruments and types used most; kept only in this browser, “keep statistics” in “Reset all settings …”. |
 | 2026-10-30 | Import 3.37.0 | The Discogs notes read in full (⚙ Settings → Texts, on): every credit line of them – people and companies, with or without tracks – becomes an entry or a row, marked “From the Discogs notes” (ⓘ shows the line); nothing twice – what Discogs lists already is left out, and gets the tracks of the notes when Discogs gives it for the whole release; “Leave out the credits of the notes” in the menu Source ▾ for one release. Since 3.36.5 also: the symbols of the head pressed while open (the log too; no bridge, no ⓘ – the connections are in ⚙ Settings), every switch shows its choice, add. / guest / solo over their checkboxes, a place of the notes only on its tracks (“A1 to B2 recorded … at …”). |
 | 2026-10-29 | Import 3.36.0 | Remember per release, in ⚙ Settings → Cache (off by default): on, a release imported again from the same source comes back as you left it – its rows with what you changed, its entries, the pools and the date matrix, the source and media chosen, “Skip works”, the credits switched off on the source pages; up to 100 releases (50), the space they take is shown, one button forgets them all. Off, every import starts afresh – until 3.35 the pools, the matrix and these choices were always kept. Since 3.35.0 also: names of several words as proper names (“Gibson Les Paul”), lines of the matrix dragged, an event opened with its level, date and tracks, companies and places as a matrix, the works of index tracks as track groups. |
 | 2026-10-29 | Import 3.35.0 | Entries as a matrix (E4), the new default: the instruments and voices of a person are one block, each role a line, the events – level, date, tracks, the same as in the date pool – the columns; a tick puts a role into an event. Dates typed into the head of an event or dragged onto a line, a block or an event; when staged, the instruments of a recording and event go into one relationship, each with its own role credit. Compact: a line per event (or per role) with the roles as chips. ⚙ Settings → Appearance → Entries: Legacy shows the dashboard as before. |
@@ -92,6 +94,26 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-10-31
+
+### Import 3.38.2
+
+#### Added
+
+- **Developer statistics** (E8; maintainer: "Die zur Verbesserung sollen gesammelt aber extra einschaltbar sein wegen Developer Interessen."): ⚙ Settings → Statistics → **Developer statistics (to improve the script)** (off) – collected with the others, shown only while on: how much was taken over as suggested or changed by hand (type, instrument, role credit, artist credit, level, tracks, add. / guest / solo, date, rows added by hand), the rules of the register whose suggestion was changed most, what was not recognized most often, the answers to the script's questions, the duplicates avoided (relationships MusicBrainz had already).
+
+### Import 3.38.1
+
+#### Added
+
+- **More statistics** (E8; maintainer: "Setze mal alle Ideen für die Statistik um und erstelle die Statistik."): ⚙ Settings → Statistics also shows the sources, how the entries were found (link of the source, name, by hand, newly created), the dates (share, precision, from the notes or by hand) and the places and studios used most, levels and works linked, the releases by decade, format, country and label, when you work (weekdays, hours, days in a row, the most in a day, the most for a release, the fastest per relationship), the instruments (how many, first used in the last 30 days, used only once), the text from cover art (images, lines, words changed by hand) and your own rules.
+
+### Import 3.38.0 – milestone "Statistics"
+
+#### Added
+
+- **Statistics** (collected item E8; maintainer: "Statistiken", "die statistiken sollen erstmal in den einstellung sein", "von Musicbrainz bestätigt", "Nein das Sammeln soll an sein (und natürlich ausschaltbar). Bei den Resetfunktionen soll es geben: "keep statistics"", "der erste Import zählt, sofern die seite nicht neu geladen wurde. ja bis das bestätigt wurde von MB", "ich glaube einen export brauchen wir nicht", "Setze mal alle Ideen für die Statistik um und erstelle die Statistik."): ⚙ Settings → **Statistics**. At "Enter edit" the dashboard notes the relationships it staged (new) or supplemented that are submitted; once MusicBrainz has them (looked up in /ws/js/release from the editor or the release page shown next) they are counted – only in this browser (IndexedDB `dci-stats`), nothing leaves it. The tab shows releases, relationships, new / supplemented in %, the releases that had relationships before / were empty, the artists newly created in MusicBrainz, the time per release and per relationship (from the first "Import credits …" of the page until MusicBrainz confirmed), over days, weeks, months or years, and the artists, instruments and relationship types used most. **Collect statistics** (on), **Delete statistics …**; "↺ Reset all settings …" has **keep statistics** (ticked).
 
 ## 2026-10-30
 

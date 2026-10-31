@@ -388,6 +388,16 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     switched on in a tab opened while off: the message "Load the page again", nothing written over, back after it
                                 #   logdiag: 3.36.2: "Start diagnosis" only with ⚙ General "Diagnosis in the log" (off by default); a running one
                                 #     stops when switched off; ↺ of General
+                                #   stats: 3.38.0 (E8): tab "Statistics" after "Cache" (on, empty); staged + "Enter edit" with the relationships in
+                                #     /ws/js/release: counted once (log, job gone, one record in IndexedDB dci-stats with the time); the tiles, months
+                                #     and days, the top lists; "Reset all" keeps them with "keep statistics", unticked deletes; off: no job; the
+                                #     release page counts a waiting job (a relationship not in MusicBrainz left out, and one it had before – n0);
+                                #     F2: a job with nothing to look up counts at once on the release page
+                                #   statsmore: 3.38.1: three stored submissions → the boxes: sources, how found, dates and places, levels and
+                                #     works, the releases, when (7 + 24 bars, days in a row, records), instruments, text from cover art, own rules
+                                #   statsdev: 3.38.2: a real submission records per relationship what was changed by hand (a role credit typed;
+                                #     an answer is none) and the answers (Q002); the switch off by default; on: taken over / changed by hand, the
+                                #     rules changed most, not recognized (once per release), the answers, duplicates avoided
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
@@ -523,7 +533,7 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
 
 python3 t_coverart.py           # Text from cover art (beta, 3.34.1, item E3): ⚙ Settings → Beta, the Cover Art Archive, Tesseract.js (stand-in)
                                 #   ocrsetting: the tab "Beta" before "ⓘ Connections", the switch off by default, "Source ▾" gets the item only
-                                #     while it is on (stored); the connections X013, X014
+                                #     while it is on (stored); the connections X013, X014; [3.38.0] the tabs from "Beta": Cache, Statistics, ⓘ Connections
                                 #   ocrpick: the images of the release – Back, Booklet, Tray ticked, Front and Medium not ("rarely has credits"),
                                 #     English (German too with a German dashboard), the count on the button, Escape; a release without images
                                 #   ocrrun: Tesseract.js loaded once, one worker; the 500 px image read ×3 with a warning; ℗, dashes and empty lines
