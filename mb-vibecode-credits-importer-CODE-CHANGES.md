@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.6, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.7, Companion 1.6.0 – 1.9.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.7 · 2026-10-31
+
+Names above (or below) their instruments, names in capitals (collected item 167; rules S058, S059).
+
+- **`TEXT`:** new `normalCaseName(n)` (S059: an all-caps word of three letters or more with a vowel beside a word with small letters, first in the name from four letters – `-` and `'` parts each capitalized); `addCredit` gives it to the credits of persons (not to companies). `parse` takes `stackUp`; new `STACK_PARTICLE`, `stackInstr(raw)` (no digit, `:`, brackets, `by`/`at`/…; every part of `splitRoles` `playable`), `stackName(raw)` (2 – 4 words starting in capitals or a particle between them, `looksLikeName`, no sign, no word `playable` or a role, no `TEXT_PLACE_WORDS`, not `creditLike`, not `TEXT_IGNORE_LINE`), `stackPairs(lines)` (S058: runs of N/I lines with both kinds; `pair('N','I')` and `pair('I','N')`; wholly paired one way → that way, else ambiguous → `stackUp` decides; → Map index → `{ name, instr, up, ambig, lines }` and the other line → null), `readStacked(pr)` (`startLine` with "line / line", a credit per part with `stacked` and `stackAmbig`). The main loop goes through `allLines` with their indexes: a line of a pair flushes the block of S051 and is read with its pair.
+- **Core:** `sourceContext().stackUp` (`S.stackUp`); `groupCredits` carries `stackAmbig` to the role, the row gets `row.stackAmbig`; after "Import complete" the log `stackAmbig` / `stackAmbigUp` (warn) with the names; new `stackNoteHtml(rows)` (`.dci-stack-note` in `groupHtml` after `coverFromEntryHtml`: `stack.noteDown` / `stack.noteUp`, button `data-act="stack-flip"`, rule id S058); case `stack-flip` (`S.stackUp` toggled, log `stackFlipUp` / `stackFlipDown`, `loadRelease` of the same release – with its question); `loadRelease` sets `S.stackUp` false for another release or text.
+- **Register:** S058, S059.
+- **Texts (English):** `log.stackAmbig`, `log.stackAmbigUp`, `log.stackFlipUp`, `log.stackFlipDown`, `stack.noteDown`, `stack.noteUp`, `stack.flipUp`, `stack.flipDown`, `stack.flipTitle`.
+- **Tests:** `t_text_basics.py` new case `stacked` (the example; the instruments above; not clear – the note, the log, ⇅ and back to another text; one line with S059 – "KUROSAWA Go", "DJ Shadow", "ABBA", "BMS Illustration"; the Discogs notes); `register_golden.json` written anew (UPDATE=1): only the section "Special handling" gained S058 and S059.
 
 ## Import 3.38.6 · 2026-10-31
 

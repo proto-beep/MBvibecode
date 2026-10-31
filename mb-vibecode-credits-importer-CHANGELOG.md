@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-31 | 3.38.0 – 3.38.6 | – |
+| 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
@@ -96,6 +96,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-31
+
+### Import 3.38.7
+
+#### Added
+
+- **Names above (or below) the line with their instruments** (collected item 167, rule S058; maintainer: "folgendes muss insbesondere bei der Bilderkennung erkannt werden: "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO / Barry GUY / DOUBLE BASS" also die Artists stehen über der Zeile mit ihnen betreffenden instrumenten", "umgekehrte Reihenfolge: ja bitte", "Behelfsknopf: passt", "mach erstmal nur eindeutiges"): a line like a name and a line of instruments MusicBrainz knows pair up – each instrument a row of that name. Decided per block: wholly with the names above, or wholly with the instruments above, it is read so; otherwise (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, **⇅ Instruments above the names** reads the text again the other way round, the log says so. In pasted texts, text from cover art and the Discogs notes.
+- **Names with a word in capitals in normal case** (rule S059; maintainer: "Großbuchstaben: immer in normale Schreibweise bringen"): "Torben SNEKKESTAD" → "Torben Snekkestad" for the search and a new artist (persons only; "ABBA", "DJ Shadow", "BMS Illustration" stay).
+
+#### Fixed
+
+- A line only of instruments with "&" ("SAXOPHONES & TRUMPET") was read as "role & name" – an entry "& TRUMPET" (item 167).
 
 ### Import 3.38.6
 

@@ -125,6 +125,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   typonote: 3.37.13 (164): "Sxaophone" → saxophone a typo (no role credit, note, log), turned round → "sxaophone"
                                 #     and back; "Taischigoto" → taishōgoto credited "taischigoto"; ✕ empties a row's role credit (stays empty when
                                 #     the instrument is set again) and a matrix line's (staged without credit). instrguess / unknownask: chimes "chaims"
+                                #   stacked: 3.38.7 (167, S058, S059): "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO / Barry
+                                #     GUY / DOUBLE BASS" – three entries in normal case; the instruments above; "Jane Roe / PIANO / John Doe" not
+                                #     clear: the note, the log, ⇅ (John Doe), another text (Jane Roe again); one line with capitals; the Discogs notes
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
