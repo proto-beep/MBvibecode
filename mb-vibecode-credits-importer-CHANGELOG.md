@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-31 | 3.38.0 – 3.38.2 | – |
+| 2026-10-31 | 3.38.0 – 3.38.3 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
@@ -96,6 +96,15 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-31
+
+### Import 3.38.3
+
+#### Changed
+
+- **Live recordings in short** (collected item 168; maintainer: ""Tracks 1, 2, 3, 4, 5 are live recordings." -> kanns du die tracks gruppieren? "1-5"? kannst du medien erwähnen, falls sie komplett live sind? "Medium 1" "CD 1"", "bei einem release mit nur einem medium nur die tracks. es kann auch mediengruppen geben bspw. CD 1-5"): the offer names tracks one after another as a range – "Tracks 1–5 are live recordings. …" – and, with several media, a whole medium by its format and number ("Live recordings: CD 1–5, tracks 6.1–6.3. …"; without a format "Medium 3").
+- **The list of live comments in groups** (item 168; maintainer: "bei releases mit vielen tracks ein sehr großes feld. man kann das ja gruppieren, da viele tracks die gleichen live-Disambiguation notes bekommen"): recordings with the same comment are one line ("2–5 · ▸ 4 tracks" and the comment) – its tick and its text are for all of them, ▸ shows them one by one; a recording with a note stands alone.
+- **The list at most a third of the dashboard's height** (item 168; maintainer: "das fenster ist zu groß und kann sich so überschneiden, dass der track/datepool nicht mehr einklappbar ist"): it scrolls on its own.
+- **Its heading at the bottom right** (item 168; maintainer: "rechts unten im kasten soll immer die Überschrift stehen"): clicked, it folds the list and stays at the same place; shorter (item 170; maintainer: "kann etwas kürzer lauten "Live disambiguation comments: 5 of 5"") – until 3.38.2 "Disambiguation comments of live recordings: 5 of 5 ticked" at the top.
 
 ### Import 3.38.2
 
