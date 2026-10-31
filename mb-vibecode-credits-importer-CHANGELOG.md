@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-31 | 3.38.0 – 3.38.5 | – |
+| 2026-10-31 | 3.38.0 – 3.38.6 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
@@ -96,6 +96,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-31
+
+### Import 3.38.6
+
+#### Added
+
+- **ⓘ at a chip** (collected item 163b; maintainer: "ja dezentes zeichen mit Tooltip", "ja nimm das ⓘ"): in an entry compact as a matrix, a chip whose notes have their answer applied – the instrument chosen for a word MusicBrainz does not know, a typo or a spelling of its own, "none is like it", written small, the type chosen, "voice" offered as role credit – has a small grey ⓘ after its name with the notes as its tooltip ("“Taischigoto” is no instrument of MusicBrainz – chosen: taishōgoto" …); none while a question is open ("?").
 
 ### Import 3.38.5
 

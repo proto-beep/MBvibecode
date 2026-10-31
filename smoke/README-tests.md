@@ -469,6 +469,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #   chipask: 3.37.14 (163): compact – "? bass ▾" lists electric bass guitar · double bass · acoustic bass guitar
                                 #     (focus on the first, visible), double bass chosen: "double bass “bass”" without "?"; "? Taischigoto ▾", Esc
                                 #     closes (focus on ▾), taishōgoto chosen; "? Directed By ▾" conductor; the chip's name opens the full matrix
+                                #   chipinfo: 3.38.6 (163b): ⓘ after a chip's name with its applied notes as tooltip – none while "?"; "Buddha
+                                #     Machine" (none is like it); taishōgoto chosen (chosen, a spelling of its own, written small); double bass
+                                #     none; "Directed By" – chosen: conductor
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
