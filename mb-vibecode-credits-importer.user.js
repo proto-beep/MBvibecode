@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.1
+// @version      3.38.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1539,6 +1539,32 @@
       "stats.ocr.lines": "lines taken over: {n}",
       "stats.ocr.corrected": "words changed by hand: {n}",
       "stats.own": "Own rules now: {n} – relationships from them:",
+      "stats.dev": "Developer statistics (to improve the script)",
+      "stats.devTitle": "Shows what helps to improve the script: how much was taken over as suggested or changed by hand (and after which rules), what was not recognized, how the script's questions were answered, the duplicates avoided. Collected with the other statistics, in this browser only.",
+      "stats.dev.title": "Developer statistics",
+      "stats.dev.auto": "Taken over or changed by hand",
+      "stats.dev.rules": "Rules whose suggestion was changed most",
+      "stats.dev.unrec": "Not recognized most often",
+      "stats.dev.answers": "Answers to the questions",
+      "stats.dev.dupes": "Duplicates avoided",
+      "stats.dev.autoShare": "{auto} as suggested, {hand} changed by hand (of {n} relationships)",
+      "stats.dev.aspect.type": "type",
+      "stats.dev.aspect.instrument": "instrument",
+      "stats.dev.aspect.roleCredit": "role credit",
+      "stats.dev.aspect.artistCredit": "artist credit",
+      "stats.dev.aspect.level": "level",
+      "stats.dev.aspect.tracks": "tracks",
+      "stats.dev.aspect.attributes": "add. / guest / solo …",
+      "stats.dev.aspect.date": "date",
+      "stats.dev.aspect.added": "row added by hand",
+      "stats.dev.ruleChanged": "{c} of {n} changed ({pct} %)",
+      "stats.dev.qGuess": "No instrument of MusicBrainz",
+      "stats.dev.guess.similar": "a similar instrument",
+      "stats.dev.guess.typo": "a similar instrument (typo)",
+      "stats.dev.guess.same": "the same instrument",
+      "stats.dev.guess.other": "other instruments",
+      "stats.dev.guess.misc": "miscellaneous support",
+      "stats.dev.dupesN": "Relationships MusicBrainz had already, not staged again: {n}",
       "settings.betaHint": "Functions to try out before they become a regular part of the script: off until switched on here, and they may still change.",
       "settings.cacheHint": "What the dashboard remembers for a release in this browser. Off (the default), every import starts afresh: nothing of a release is stored or read again – only the list of works created through the dashboard (a safety list) and the status marks of the companion are kept.",
       "settings.remember": "Remember changes and import settings per release",
@@ -6938,6 +6964,9 @@
 
   const STATS_ON_KEY = 'dci-stats-on';
   const STATS_PERIOD_KEY = 'dci-stats-period';
+  // [E8] (3.38.2) the developer statistics shown (maintainer: "Die zur Verbesserung sollen gesammelt aber extra einschaltbar sein wegen
+  // Developer Interessen.") – collected with the others, off by default
+  const STATS_DEV_KEY = 'dci-stats-dev';
   const STAT_JOB_PREFIX = 'dci-stat-job:';
   const STAT_JOB_MAX_MS = 30 * 60 * 1000;
   // what cannot be looked up counts on the release page shown within 2 minutes of "Enter edit" (MusicBrainz shows it after a successful one)
@@ -27252,6 +27281,7 @@
         break;
       case 'type':
         setType(row, Number(el.value));
+        row.statTypeHand = true; // [E8] (3.38.2) the type chosen by hand
         break;
       case 'flag':
         if (el.checked) row.flags.add(el.value);
@@ -28284,7 +28314,7 @@
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …")
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY],
     // [E8] (3.38.0) the switch and the period (the statistics stay: "Delete statistics …")
-    statistics: [STATS_ON_KEY, STATS_PERIOD_KEY],
+    statistics: [STATS_ON_KEY, STATS_PERIOD_KEY, STATS_DEV_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -28501,6 +28531,8 @@
         d: statDatePrec(state.begin_date), ds: statDatePrec(state.begin_date) ? statDateSrc(row) : '',
         rc: attrs.some((a) => a.credit) ? 1 : 0, ac: (first ? state.entity1_credit : state.entity0_credit) ? 1 : 0,
         ru: (row && row.ruleId) || '', lk: statLinkOf(entry), nw: entry && entry.status === 'created' ? 1 : 0,
+        // [E8] (3.38.2) for the developer statistics: what was changed by hand, the answers to the questions of the script
+        h: statHand(row), q: row ? statAnswers(row) : [],
       };
       if (x.k === 'n' && (src.entityType === 'release' || src.entityType === 'recording') && src.gid && tgt.gid) {
         it.c = { on: src.entityType, src: src.gid, lt: state.linkTypeID, tgt: tgt.gid, n0: had.get(`${src.gid}|${state.linkTypeID}|${tgt.gid}`) || 0 };
@@ -28508,7 +28540,8 @@
       rels.push(it);
     }
     const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
-    return { v: 1, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length, rels };
+    return { v: 1, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
+      dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, rels };
   }
 
   /**
@@ -28637,6 +28670,8 @@
     const head = [
       `<p class="dci-sub">${esc(tr('stats.hint'))}</p>`,
       row(`<label class="dci-check" title="${esc(tr('stats.onTitle'))}"><input type="checkbox" data-set="stats-on" ${on ? 'checked' : ''}> ${esc(tr('stats.on'))}</label>`),
+      // [E8] (3.38.2) the developer statistics shown
+      row(`<label class="dci-check" title="${esc(tr('stats.devTitle'))}"><input type="checkbox" data-set="stats-dev" ${readJson('localStorage', STATS_DEV_KEY, false) === true ? 'checked' : ''}> ${esc(tr('stats.dev'))}</label>`),
     ];
     if (S.statsData == null) {
       statsLoad();
@@ -28682,7 +28717,7 @@
     const tops = `<div class="dci-stats-lists">${list('artists', statTop(a.artists, 3))}${list('instr', statTop(a.instr, 3))}${list('types', statTop(a.types, 5))}</div>`;
     return [...head, tiles,
       `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))} ${seg}</h4>`, table,
-      tops, statsMoreHtml(recs),
+      tops, statsMoreHtml(recs), readJson('localStorage', STATS_DEV_KEY, false) === true ? statsDevHtml(recs) : '',
       row(`<button type="button" class="dci-small" data-act="stats-delete">${esc(tr('stats.delete'))}</button> <span class="dci-sub">${esc(tr('stats.stored', { n: recs.length }))}</span>`)];
   }
 
@@ -28819,6 +28854,132 @@
       ${card('ocr', m.ocr.subs ? `<ul class="dci-stats-kv"><li>${esc(tr('stats.ocr.subs', { n: statNum(m.ocr.subs) }))}</li><li>${esc(tr('stats.ocr.images', { n: statNum(m.ocr.images) }))}</li>
         <li>${esc(tr('stats.ocr.lines', { n: statNum(m.ocr.lines) }))}</li><li>${esc(tr('stats.ocr.corrected', { n: statNum(m.ocr.corrected) }))}</li></ul>` : `<p class="dci-sub">–</p>`)}
       ${card('own', `<p>${esc(tr('stats.own', { n: statNum(m.own) }))}</p>${kv(top(m.ownRels))}`)}
+    </div>`;
+  }
+
+  /**
+   * [E8] (3.38.2) What of a row was changed by hand, compared with the rows as the source gave them at the end of the import (the
+   * baseline of "remember", S.freshRows): 'type', 'instrument', 'roleCredit', 'artistCredit', 'level', 'tracks', 'attributes',
+   * 'date'; 'added' for a row added by hand. Answers to the script's questions and dates placed by the date matrix do not count.
+   */
+  function statHand(row) {
+    if (!row) return [];
+    const f = S.freshRows && S.freshRows.get(row.id);
+    if (row.manual || !f) return ['added'];
+    const cur = rowFieldsOf(row);
+    const diff = (k) => (cur[k] || '') !== (f.f[k] || '');
+    const answered = statAnswers(row).length > 0;
+    const mx = !!(row.date && row.date.mx);
+    const out = [];
+    if (row.statTypeHand && diff('linkTypeId')) out.push('type');
+    if (row.primaryTouched && !answered && diff('primaryText')) out.push('instrument');
+    if (row.roleCreditTouched && diff('roleCredit')) out.push('roleCredit');
+    if (row.creditTouched && diff('credit')) out.push('artistCredit');
+    if (row.levelTouched && !answered && diff('level')) out.push('level');
+    if (!mx && diff('tracks')) out.push('tracks');
+    if (diff('flags')) out.push('attributes');
+    if (row.date && !mx && statDateSrc(row) === 'hand' && diff('date')) out.push('date');
+    return out;
+  }
+
+  /**
+   * [E8] (3.38.2) The answers of a row to the script's questions: the instrument question (Q001 …, the instrument chosen), a word
+   * MusicBrainz does not know ('guess': similar / typo / other / misc), the type question (Q003 …, the type chosen).
+   */
+  function statAnswers(row) {
+    const out = [];
+    const g = row.instrGuess;
+    if (g && g.chose === 'misc') out.push({ q: 'guess', a: 'misc' });
+    else if (g && primaryIsValid(row) && norm(row.primaryText)) {
+      const other = norm(row.primaryText) === norm(g.other || 'other instruments');
+      const sp = other ? '' : guessSpelling(g, row.primaryText);
+      out.push({ q: 'guess', a: other ? 'other' : sp === 'typo' ? 'typo' : sp === 'same' ? 'same' : 'similar' });
+    }
+    const q = questionRuleFor(row);
+    if (q && norm(row.primaryText) && norm(row.primaryText) !== q.base && (q.options || []).some((o) => norm(o) === norm(row.primaryText))) out.push({ q: q.id, a: row.primaryText });
+    const tq = typeQuestionFor(row);
+    if (tq && row.typeAnswer != null) {
+      const o = tq.options[row.typeAnswer];
+      out.push({ q: tq.id, a: o ? o.label || o.type : String(row.typeAnswer) });
+    }
+    return out;
+  }
+
+  /**
+   * [E8] (3.38.2) What the script did not recognize in this import: the words of "lines not recognized" (those in “…”, else the
+   * line), roles of the source the register does not know, words that are no instrument of MusicBrainz – in small letters.
+   */
+  function statUnrec() {
+    const out = [];
+    const lines = [...((S.release && S.release.unrecognized) || []), ...((S.supp && S.supp.rel && S.supp.rel.unrecognized) || [])];
+    for (const l of lines) {
+      const quoted = [...String(l).matchAll(/“([^”]+)”/g)].map((m) => m[1]);
+      if (quoted.length) out.push(...quoted);
+      else out.push(String(l).slice(0, 60));
+    }
+    for (const r of S.rows) {
+      if ((r.notes || []).includes('unknownRole')) out.push(r.base || r.raw || '');
+      if (r.instrGuess) out.push(r.instrGuess.word);
+    }
+    return uniq(out.map((x) => norm(x)).filter(Boolean)).slice(0, 200);
+  }
+
+  /**
+   * [E8] (3.38.2) The developer statistics (⚙ Settings → Statistics, "Developer statistics", off): automatic vs. changed by hand,
+   * the rules whose suggestion was changed most, what was not recognized, the answers to the questions, the duplicates avoided.
+   */
+  function statDev(recs) {
+    const d = { rels: 0, hand: 0, aspects: new Map(), rules: new Map(), unrec: new Map(), answers: new Map(), dupes: 0 };
+    const inc = (map, k, by = 1) => map.set(k, (map.get(k) || 0) + by);
+    const seen = new Set();
+    for (const r of [...recs].sort((x, y) => x.at - y.at)) {
+      // what belongs to the import: once per release (its first submission)
+      if (!seen.has(r.mbid) && r.dev) {
+        seen.add(r.mbid);
+        (r.dev.unrec || []).forEach((w) => inc(d.unrec, w));
+        d.dupes += r.dev.dupes || 0;
+      }
+      for (const it of r.rels || []) {
+        if (!Array.isArray(it.h)) continue;
+        d.rels++;
+        if (it.h.length) d.hand++;
+        it.h.forEach((x) => inc(d.aspects, x));
+        if (it.ru) {
+          const x = d.rules.get(it.ru) || { n: 0, changed: 0 };
+          x.n++;
+          if (it.h.some((h) => h !== 'added')) x.changed++;
+          d.rules.set(it.ru, x);
+        }
+        for (const a of it.q || []) {
+          if (!d.answers.has(a.q)) d.answers.set(a.q, new Map());
+          inc(d.answers.get(a.q), a.a);
+        }
+      }
+    }
+    return d;
+  }
+
+  function statsDevHtml(recs) {
+    const d = statDev(recs);
+    const card = (key, body) => `<div class="dci-stats-card" data-el="stats-dev-${key}"><h4>${esc(tr(`stats.dev.${key}`))}</h4>${body}</div>`;
+    const kv = (pairs, label = (k) => k) => (pairs.length ? `<ul class="dci-stats-kv">${pairs.map(([k, n]) => `<li><span>${esc(label(k))}</span> <span class="dci-sub">${esc(String(n))}</span></li>`).join('')}</ul>`
+      : `<p class="dci-sub">–</p>`);
+    const top = (map, n) => [...map.entries()].sort((x, y) => y[1] - x[1] || String(x[0]).localeCompare(String(y[0]))).slice(0, n);
+    const rules = [...d.rules.entries()].filter(([, x]) => x.changed).sort((x, y) => y[1].changed / y[1].n - x[1].changed / x[1].n || y[1].changed - x[1].changed || x[0].localeCompare(y[0])).slice(0, 10);
+    const qName = (q) => (q === 'guess' ? tr('stats.dev.qGuess') : q);
+    const aName = (q, a) => (q === 'guess' ? tr(`stats.dev.guess.${a}`) : a);
+    const answers = [...d.answers.entries()].sort((x, y) => x[0].localeCompare(y[0])).map(([q, m]) => {
+      const all = [...m.values()].reduce((x, y) => x + y, 0);
+      return `<h5>${esc(qName(q))}</h5>${kv(top(m, 8).map(([a, n]) => [aName(q, a), `${statNum(n)} (${statPct(n, all)} %)`]))}`;
+    }).join('');
+    return `<h4 class="dci-stats-h">${esc(tr('stats.dev.title'))}</h4><div class="dci-stats-cards dci-stats-dev">
+      ${card('auto', `<p>${esc(tr('stats.dev.autoShare', { auto: `${statPct(d.rels - d.hand, d.rels)} %`, hand: `${statPct(d.hand, d.rels)} %`, n: statNum(d.rels) }))}</p>
+        ${kv(['type', 'instrument', 'roleCredit', 'artistCredit', 'level', 'tracks', 'attributes', 'date', 'added'].map((k) => [k, d.aspects.get(k) || 0]).filter(([, n]) => n),
+    (k) => tr(`stats.dev.aspect.${k}`))}`)}
+      ${card('rules', rules.length ? `<ul class="dci-stats-kv">${rules.map(([id, x]) => `<li><span>${esc(id)}</span> <span class="dci-sub">${esc(tr('stats.dev.ruleChanged', { c: statNum(x.changed), n: statNum(x.n), pct: statPct(x.changed, x.n) }))}</span></li>`).join('')}</ul>` : `<p class="dci-sub">–</p>`)}
+      ${card('unrec', kv(top(d.unrec, 15)))}
+      ${card('answers', answers || `<p class="dci-sub">–</p>`)}
+      ${card('dupes', `<p>${esc(tr('stats.dev.dupesN', { n: statNum(d.dupes) }))}</p>`)}
     </div>`;
   }
 
@@ -29156,6 +29317,10 @@
       if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_BTN_KEY, el.checked ? null : false);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'stats-dev') {
+      // [E8] (3.38.2) the developer statistics shown (collected with the others)
+      writeJson('localStorage', STATS_DEV_KEY, el.checked || null);
+      log('info', 'settingValue', { what: tr('stats.dev'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'stats-on') {
       // [E8] (3.38.0) collecting the statistics (on unless switched off)
       writeJson('localStorage', STATS_ON_KEY, el.checked ? null : false);
@@ -29402,7 +29567,7 @@
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
-    STATS_ON_KEY, STATS_PERIOD_KEY,
+    STATS_ON_KEY, STATS_PERIOD_KEY, STATS_DEV_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
     BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)

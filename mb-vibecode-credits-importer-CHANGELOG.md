@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-10-31 | 3.38.0 – 3.38.1 | – |
+| 2026-10-31 | 3.38.0 – 3.38.2 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
 | 2026-10-28 | 3.34.0 – 3.34.17 | – |
@@ -96,6 +96,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-10-31
+
+### Import 3.38.2
+
+#### Added
+
+- **Developer statistics** (E8; maintainer: "Die zur Verbesserung sollen gesammelt aber extra einschaltbar sein wegen Developer Interessen."): ⚙ Settings → Statistics → **Developer statistics (to improve the script)** (off) – collected with the others, shown only while on: how much was taken over as suggested or changed by hand (type, instrument, role credit, artist credit, level, tracks, add. / guest / solo, date, rows added by hand), the rules of the register whose suggestion was changed most, what was not recognized most often, the answers to the script's questions, the duplicates avoided (relationships MusicBrainz had already).
 
 ### Import 3.38.1
 

@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1106,6 +1106,97 @@ def case_statsmore():
                        and ok('own', 'Own rules now: 2 – relationships from them:', 'U001 1'))
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+
+def case_statsdev():
+    """Credits Importer 3.38.2 (E8; maintainer: "Die zur Verbesserung sollen gesammelt aber extra einschaltbar sein wegen Developer
+    Interessen."): the developer statistics.
+    A) A real submission: "Guitar" answered (electric guitar, Q002), a role credit typed by hand (Bass Man) – its record has, per
+       relationship, what was changed by hand ("roleCredit" for Bass Man, none for the others – an answer is no change) and the answers;
+       and for the import what was not recognized and the duplicates avoided.
+    B) "Developer statistics (to improve the script)" off by default: not shown; on: from stored submissions – taken over 57 % /
+       changed 43 % of 7 (role credit, tracks, date, row added by hand); the rules whose suggestion was changed most (R096 1 of 2,
+       R001 1 of 3; a row added by hand is no change of a rule); not recognized (kalimba 2 – once per release –, buddha machine 1);
+       the answers (Q002: electric guitar 2 (67 %), acoustic guitar 1 (33 %); no instrument of MusicBrainz: typo 1); duplicates
+       avoided 3 (once per release)."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+          const tr = g && g.querySelector('tr.dci-row'); return tr ? tr.dataset.row : null; }"""
+        gid = pg.evaluate(ROW, 'Guitar Guy')
+        pg.locator(f'tr[data-row="{gid}"] [data-act=instr-pick][data-instr="electric guitar"]').first.click()
+        pg.wait_for_timeout(300)
+        bid = pg.evaluate(ROW, 'Bass Man')
+        pg.fill(f'tr[data-row="{bid}"] [data-f=role-credit]', 'four-string')
+        pg.press(f'tr[data-row="{bid}"] [data-f=role-credit]', 'Tab')
+        pg.wait_for_timeout(300)
+        pg.click('[data-act=apply]')
+        pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs = pg.evaluate(STAT_COUNT) or []
+        rels = recs[0]['rels'] if recs else []
+        gg = [r for r in rels if r['tn'] == 'Guitar Guy' and r['lt'] == 'instrument']
+        bm = [r for r in rels if r['tn'] == 'Bass Man' and r['lt'] == 'instrument']
+        others = [r for r in rels if r not in gg and r not in bm]
+        dev = recs[0].get('dev') if recs else None
+        print('A) Guitar Guy:', [(r['h'], r['q']) for r in gg], '| Bass Man:', [(r['h'], r['q']) for r in bm], '| andere h:', sorted({tuple(r['h']) for r in others}), '| dev:', dev)
+        results.append(bool(gg) and all(r['h'] == [] and r['q'] == [{'q': 'Q002', 'a': 'electric guitar'}] for r in gg)
+                       and bool(bm) and all('roleCredit' in r['h'] for r in bm) and all(r['h'] == [] for r in others)
+                       and dev is not None and isinstance(dev.get('unrec'), list) and isinstance(dev.get('dupes'), int))
+        # B) the switch and the display
+        rel = lambda h, ru='', q=(): {'k': 'n', 'lt': 'instrument', 'lv': 'recording', 'et': 'artist', 'tg': 'g', 'tn': 'X', 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0,
+                                       'ru': ru, 'lk': 'link', 'nw': 0, 'h': list(h), 'q': list(q)}
+        now = pg.evaluate("Date.now()")
+        seed = [
+            {'v': 1, 'id': 'a:1', 'mbid': 'm1', 'at': now - 3000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'dev': {'unrec': ['kalimba', 'buddha machine'], 'dupes': 2},
+             'rels': [rel([], 'R001'), rel(['roleCredit'], 'R001'), rel(['added']), rel([], 'R096', [{'q': 'Q002', 'a': 'electric guitar'}]), rel([], '', [{'q': 'guess', 'a': 'typo'}])]},
+            {'v': 1, 'id': 'a:2', 'mbid': 'm1', 'at': now - 2000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'dev': {'unrec': ['kalimba'], 'dupes': 5}, 'rels': [rel(['tracks', 'date'], 'R096', [{'q': 'Q002', 'a': 'acoustic guitar'}])]},
+            {'v': 1, 'id': 'c:3', 'mbid': 'm3', 'at': now - 1000, 'start': None, 'ms': None, 'src': 'discogs', 'supp': [], 'rel': None, 'own': 0, 'ocr': None,
+             'dev': {'unrec': ['kalimba'], 'dupes': 1}, 'rels': [rel([], 'R001', [{'q': 'Q002', 'a': 'electric guitar'}])]},
+        ]
+        pg.evaluate(STAT_SEED, seed)
+        H.open_settings(pg, 'cache')
+        H.open_settings(pg, 'statistics')
+        pg.wait_for_timeout(500)
+        b0 = pg.evaluate("[!!document.querySelector('.dci-stats-dev'), (document.querySelector('[data-set=stats-dev]') || {}).checked]")
+        pg.check('[data-set=stats-dev]')
+        pg.wait_for_timeout(500)
+        stored = pg.evaluate("localStorage.getItem('dci-stats-dev')")
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-dev .dci-stats-card')].map(c => [c.dataset.el.replace('stats-dev-', ''),
+          [...c.querySelectorAll('li, p, h5')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+        c = pg.evaluate(CARDS)
+        for k, v in c.items():
+            print(f'   {k}:', v)
+        print('B) vorher (Abschnitt, Schalter):', b0, '| gespeichert:', stored)
+        results.append(b0 == [False, False] and stored == 'true'
+                       and c.get('auto') == ['57 % as suggested, 43 % changed by hand (of 7 relationships)', 'role credit 1', 'tracks 1', 'date 1', 'row added by hand 1']
+                       and c.get('rules') == ['R096 1 of 2 changed (50 %)', 'R001 1 of 3 changed (33 %)']
+                       and c.get('unrec') == ['kalimba 2', 'buddha machine 1']
+                       and c.get('answers') == ['No instrument of MusicBrainz', 'a similar instrument (typo) 1 (100 %)', 'Q002', 'electric guitar 2 (67 %)', 'acoustic guitar 1 (33 %)']
+                       and c.get('dupes') == ['Relationships MusicBrainz had already, not staged again: 3'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        H.WS_JS_RELEASE.clear()
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
