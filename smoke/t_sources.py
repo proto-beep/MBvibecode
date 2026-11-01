@@ -461,7 +461,7 @@ def case_supp():
     SUPP = """[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.querySelector('.dci-supp-kind').textContent.trim(),
   (tr.children[2].querySelector('strong') || tr.children[2]).textContent.trim(), tr.querySelector('input').checked, tr.children[5].textContent.replace(/\\s+/g, ' ').trim()])"""
     MARKS = """(name, role) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
-  if (!g) return null; const tr = [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === role);
+  if (!g) return null; const tr = [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === role);
   return tr ? [...tr.querySelectorAll('.dci-srcmark')].map(m => m.textContent.trim()) : 'no row'; }"""
     results = []
     with sync_playwright() as p:

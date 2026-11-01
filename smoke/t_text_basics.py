@@ -31,7 +31,7 @@ Published by Pub Co (1, 3)
 Thanks to everyone who came."""
     ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
-    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '',
+    return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '',
       (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim()]; }),
   [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.trim())]))()"""
     results = []
@@ -123,7 +123,7 @@ A Northern Echo release.
 We had a great time together
 Thanks to the cat for keeping us company"""
     GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
-  [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()),
+  [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.dataset.raw),
   // 3.15.2: the explanation of the suggestions is the stack's tooltip
   (g.querySelector('.dci-sugg-stack') || {}).title || '',
   [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid), g.className.match(/dci-st-(\\w+)/)[1]]))()"""
@@ -193,7 +193,7 @@ Barry Guy – double bass, sticks-and-stones
 Gene Pick – acoustic & electric guitar
 Bo Strum – bass & electric guitar"""
     ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
-  [[...g.querySelectorAll('tr.dci-row')].map(tr => { const p = tr.querySelector('[data-f=primary]'); return p ? p.value : tr.querySelector('.dci-drole').textContent.trim(); }),
+  [[...g.querySelectorAll('tr.dci-row')].map(tr => { const p = tr.querySelector('[data-f=primary]'); return p ? p.value : tr.querySelector('.dci-drole').dataset.raw.trim(); }),
    [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()), g.className.match(/dci-st-(\\w+)/)[1]]])))()"""
     results = []
     with sync_playwright() as p:
@@ -271,7 +271,7 @@ def case_textcredit():
     ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   { all: (g.querySelector('[data-f=artist-credit-all]') || {}).value, rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]');
     const c = tr.querySelector('[data-f=role-credit]'); const cr = tr.querySelector('[data-f=credit]');
-    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '-', cr ? cr.value : '-',
+    return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '-', cr ? cr.value : '-',
       [...tr.querySelectorAll('.dci-ruleid')].map(b => b.textContent.trim())]; }) }])))()"""
     results = []
     with sync_playwright() as p:
@@ -363,7 +363,7 @@ console.log(JSON.stringify(out));
     LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
     ENTRY = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || s.querySelector('.dci-gname strong').textContent.trim()) === '!K7');
   if (!g) return null; const tr = g.querySelector('tr.dci-row'); const sel = tr.querySelector('[data-f=type]'); const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
-  return [tr.querySelector('.dci-drole').textContent.trim(), sel ? sel.options[sel.selectedIndex].textContent.trim() : '', lv ? lv.dataset.level : '',
+  return [tr.querySelector('.dci-drole').dataset.raw.trim(), sel ? sel.options[sel.selectedIndex].textContent.trim() : '', lv ? lv.dataset.level : '',
     g.className.match(/dci-st-(\\w+)/)[1], g.querySelectorAll('[data-act=name-use]').length]; })()"""
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -418,7 +418,7 @@ GK_ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dc
   kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1], head: g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(),
   rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const i = tr.querySelector('[data-f=primary]');
     const c = tr.querySelector('[data-f=role-credit]');
-    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', i ? (i.value || (i.options && i.options[i.selectedIndex] || {}).text || '') : '', c ? c.value : '-',
+    return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', i ? (i.value || (i.options && i.options[i.selectedIndex] || {}).text || '') : '', c ? c.value : '-',
       (tr.querySelector('.dci-type-ask') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim()]; }) }])))()"""
 
 
@@ -523,11 +523,11 @@ def case_instrguess():
         results.append(a == [['instrument', 'bongos', 'bongo'], ['instrument', 'wood block', ''], ['instrument', 'keyboard', 'keyboards'],
                              ['instrument', 'electric bass guitar', 'electric bass'], ['instrument', 'drums (drum set)', 'drums']])
         # B) Chaims and Buddha machine
-        CH = """(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === %s); const q = tr && tr.querySelector('.dci-instr-guess');
+        CH = """(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === %s); const q = tr && tr.querySelector('.dci-instr-guess');
           return tr ? [q ? q.textContent.replace(/\\s+/g, ' ').trim() : '', q ? [...q.querySelectorAll('[data-act=instr-pick]')].map(b => [b.dataset.instr, b.getAttribute('aria-pressed')]) : [], tr.dataset.row] : null; })()"""
         ch = pg.evaluate(CH % '"Chaims"')
         bm = pg.evaluate(CH % '"Buddha machine"')
-        issue = pg.evaluate("(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === 'Chaims'); return tr ? tr.textContent.includes('unknown') : null; })()")
+        issue = pg.evaluate("(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === 'Chaims'); return tr ? tr.textContent.includes('unknown') : null; })()")
         print('B) Chaims:', ch, '| unbekannt markiert:', issue, '| Buddha machine:', r.get('Buddha machine'), bm, '| nicht erkannt:', unrec)
         ok_b1 = bool(ch) and ch[0].startswith('“Chaims” is no instrument of MusicBrainz – did you mean:') \
             and [x[0] for x in ch[1]] == ['chimes', 'wind chimes', 'tubular bells', 'other instruments'] and all(x[1] == 'false' for x in ch[1]) \
@@ -550,7 +550,7 @@ def case_instrguess():
         ok_b = ok_b1 and 'did you mean' in cl and r1[1:4] == ['instrument', 'chimes', 'chaims'] and r2[1:4] == ['instrument', 'other instruments', 'chaims']
         results.append(ok_b)
         # C) Voice
-        VO = """(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === 'Voice'); const q = tr && tr.querySelector('.dci-type-ask'); const v = tr && tr.querySelector('.dci-voice-credit');
+        VO = """(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === 'Voice'); const q = tr && tr.querySelector('.dci-type-ask'); const v = tr && tr.querySelector('.dci-voice-credit');
           return tr ? [q ? q.textContent.replace(/\\s+/g, ' ').trim() : '', tr.dataset.row, v ? v.textContent.replace(/\\s+/g, ' ').trim() : ''] : null; })()"""
         v0 = pg.evaluate(VO)
         c0 = rows().get('Voice')
@@ -978,7 +978,7 @@ Guest: Jane Roe
 featuring: Ann Blow on Saxophone
 Bob Blue on Piano and Saxophone"""
     GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
-  [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
+  [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
     (r.querySelector('[data-f=role-credit]') || {}).value || '', (r.querySelector('[data-f=primary]') || {}).value || '',
     [...r.querySelectorAll('input[data-f=flag]:checked')].map(x => x.value).join(',')])])))()"""
     results = []

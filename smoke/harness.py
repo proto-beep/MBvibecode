@@ -148,10 +148,18 @@ attr(1150, 'task', 1150, free=True)
 LTS = {}
 
 
+# [3.38.10] Instruments and voices with MusicBrainz's phrase ("{additional} {guest} {solo} {instrument:%|instruments}"): a row
+# is named by its instrument ("bass", "guest saxophone", as on musicbrainz.org); only the bare form keeps the type's name
+# ("instrument", not "instruments"), so that the list of types reads as before. The other types: their name (t_mapping.py
+# mbnames and t_register.py use all of MusicBrainz's phrases: mb_link_types.json).
+PHRASE_OF = {'instrument': '{additional} {guest} {solo} {instrument:%|instrument}', 'vocal': '{additional} {guest} {solo} {vocal:%|vocal}'}
+
+
 def lt(i, gid, name, t0, t1, attrs=(), dates=True, deprecated=False):
+    ph = PHRASE_OF.get(name, name) if t0 == 'artist' else name
     LTS[i] = {'id': i, 'gid': gid, 'name': name, 'type0': t0, 'type1': t1, 'has_dates': dates, 'description': name,
               'deprecated': deprecated, 'attributes': {str(a): {'min': 0, 'max': None} for a in attrs},
-              'link_phrase': name, 'reverse_link_phrase': name, 'long_link_phrase': name}
+              'link_phrase': ph, 'reverse_link_phrase': ph, 'long_link_phrase': ph}
 
 
 lt(148, '59054b12-01ac-43ee-a618-285fd397e461', 'instrument', 'artist', 'recording', (14, 1, 194, 596))

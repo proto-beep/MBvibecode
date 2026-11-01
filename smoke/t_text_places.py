@@ -40,10 +40,10 @@ Ana Ruiz – trumpet on 'Song Three' and 'Missing Song'"""
   name: g.querySelector('.dci-gname strong').textContent.trim(), head: g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(),
   sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()),
   create: g.querySelectorAll('[data-act=company-create]').length, text: g.textContent.replace(/\\s+/g, ' '),
-  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const v = (s) => { const e = tr.querySelector(s); return e ? (e.value !== undefined ? e.value : e.textContent.trim()) : ''; };
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const v = (s) => { const e = tr.querySelector(s); return e ? (e.dataset && e.dataset.raw !== undefined ? e.dataset.raw : e.value !== undefined ? e.value : e.textContent.trim()) : ''; };
     const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); const t = tr.querySelector('[data-f=type]');
     return [v('.dci-drole'), t ? (t.options[t.selectedIndex] || {}).text : '', v('[data-f=primary]'), lv ? lv.dataset.level : '', v('[data-tcount]') || v('.dci-c-tracks .dci-muted'),
-      tr.querySelector('.dci-drole').parentElement.textContent.replace(/\\s+/g, ' ').trim()].map(x => String(x).replace(/\\s+/g, ' ').trim()); }) })))()"""
+      ((d) => d.parentElement.textContent.replace(d.textContent, d.dataset.raw))(tr.querySelector('.dci-drole')).replace(/\\s+/g, ' ').trim()].map(x => String(x).replace(/\\s+/g, ' ').trim()); }) })))()"""
     results = []
 
 
@@ -185,7 +185,7 @@ Recorded, mixed and mastered by Pat Six"""
   { sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()),
     rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
       const c = tr.querySelector('[data-f=role-credit]');
-      return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '-']; }) }])))()"""
+      return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '-']; }) }])))()"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -298,7 +298,7 @@ Thanks Mom."""
     ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const c = tr.querySelector('[data-f=role-credit]');
     const lv = tr.querySelector('.dci-c-level [aria-pressed=true]');
-    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '',
+    return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '',
       (tr.querySelector('.dci-type-ask') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim(), lv ? lv.textContent.trim() : '']; })])))()"""
     IGN = "[...document.querySelectorAll('.dci-ignored li')].map(li => [li.querySelector('.dci-ign-text').textContent, (li.querySelector('.dci-ign-why') || {}).textContent || ''])"
     results = []
@@ -420,7 +420,7 @@ Muisc and cover art by Jo Vaman"""
     GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
   head: g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(), kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1],
   rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]');
-    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', (tr.querySelector('.dci-typo') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim()]; }) }])))()"""
+    return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', (tr.querySelector('.dci-typo') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim()]; }) }])))()"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)

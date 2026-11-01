@@ -58,7 +58,7 @@ def case_bandcamp():
 
     H.ws_release = ws
     GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
-  [g.className.match(/dci-st-(\\w+)/)[1], [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-drole').textContent.trim() + ' · ' + ((tr.querySelector('[data-tcount]') || {}).textContent || '').trim()),
+  [g.className.match(/dci-st-(\\w+)/)[1], [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-drole').dataset.raw.trim() + ' · ' + ((tr.querySelector('[data-tcount]') || {}).textContent || '').trim()),
    // 3.15.2: the name of a suggestion without its mark ("spelled differently")
    [...g.querySelectorAll('[data-act=name-use]')].map(b => [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim())]])))()"""
     done = lambda pg, n: H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= {n}", 90)
@@ -236,7 +236,7 @@ def case_about():
 
     H.ws_release = ws
     GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(),
-  [[...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()), [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim())]])))()"""
+  [[...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.dataset.raw), [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim())]])))()"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -450,7 +450,7 @@ console.log(JSON.stringify(out));
     LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
     ENTRY = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Jane Roe');
   if (!g) return null; const tr = g.querySelector('tr.dci-row'); const lv = tr && tr.querySelector('[data-act=level][aria-pressed=true]');
-  return [g.className.match(/dci-st-(\\w+)/)[1], tr ? tr.querySelector('.dci-drole').textContent.trim() : '', tr ? (tr.querySelector('[data-f=type]') || {}).value : '',
+  return [g.className.match(/dci-st-(\\w+)/)[1], tr ? tr.querySelector('.dci-drole').dataset.raw.trim() : '', tr ? (tr.querySelector('[data-f=type]') || {}).value : '',
     lv ? lv.dataset.level : '', [...g.querySelectorAll('.dci-sub')].map(x => x.textContent.trim()).filter(t => /about/.test(t)),
     [...g.querySelectorAll('[data-act=name-use]')].length, !!(tr && tr.offsetParent)]; })()"""
     POOL = f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.name, d.begin && [d.begin.year, d.begin.month]])"
@@ -718,7 +718,7 @@ def case_bctrack():
     LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
     SYNC = "document.querySelector('[data-el=sync] .dci-syncstatus').textContent.replace(/\\s+/g, ' ').trim()"
     ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => g.querySelector('.dci-gname strong').textContent.trim() + ': '
-  + [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-drole').textContent.trim()).join(', ')))()"""
+  + [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-drole').dataset.raw.trim()).join(', ')))()"""
     SOURCE = "(() => { const a = document.querySelector('[data-el=source] a[href*=bandcamp]'); return a ? [a.textContent.trim(), a.href] : null; })()"
     results = []
 
@@ -876,7 +876,7 @@ console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role, 
     H.ws_release = ws
     GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
   sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()), cls: g.className,
-  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-drole').parentElement.textContent.replace(/\\s+/g, ' ').trim()) }])))()"""
+  rows: [...g.querySelectorAll('tr.dci-row')].map(tr => ((d) => d.parentElement.textContent.replace(d.textContent, d.dataset.raw))(tr.querySelector('.dci-drole')).replace(/\\s+/g, ' ').trim()) }])))()"""
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)

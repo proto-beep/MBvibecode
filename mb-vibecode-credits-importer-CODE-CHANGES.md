@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.9, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.10, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,21 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.10 · 2026-11-01
+
+The names of MusicBrainz everywhere (collected item 177).
+
+- **New `linkPhraseOf(lt, level, values, enteredFirst, plain)`** (main level; exported for Node): the reverse link phrase when the level is the type's second entity (artist → recording), else the forward one (of one kind on both sides: the reverse one when the page's entity was entered first; `plain`: the reverse one), its placeholders `{name}`, `{name:text}`, `{name:text|otherwise}` and `%` filled from `values` (root attribute name → values; several "a, b and c"), spaces squeezed.
+- **New `mbPhraseOf(lt, row, attrs)`:** the staged attributes (`{ type, text_value }`) by the name of their root attribute → `linkPhraseOf`. **New `rowPhrase(row)`:** `buildAttrs` of its current type (on Skip: the type it had, on the level of that type); when that fails (an instrument or voice MusicBrainz does not know, a flag not allowed), the typed instrument as the value of the type's root attribute and the flags the type allows. **New `roleLabel(row)`:** `{ text, title }` – the phrase, the title "from {source}: {raw}" (`role.fromSource`; the supplement's source for its rows); without a type the source's role and "→ no type".
+- **`roleCell`:** `.dci-drole` with the phrase, `data-raw` the source's role, the title; the refresh of a row keeps text and title in step. **`typeCell`:** options `mbPhraseOf(l, row) || l.name`, `data-name` the type's name.
+- **E4:** `.dci-em-role` the phrase (`data-raw`, title; "→ no type" only without a type); `emChipHtml` names a row that is not of a root attribute by `rowPhrase`; the head of a block "→ mixer", "→ instruments" (`mbPhraseOf(lt0)`); compact by role: the chip only ("→ no type" without a type; until 3.38.9 "→ type" after each chip).
+- **Compact line (`clineHtml`):** `.dci-cl-role` the phrase (`data-raw`, title; until 3.38.9 the source's role, then "→ type · instrument"); `.dci-cl-type` only "→ no type" (`ltOf`: a row on Skip keeps its type) and the role credit.
+- **`renderPreview`, `describeItem`** (log "Staged: …", "Date added …", the lists of the result): the phrase with the item's attributes (a joined relationship with all its instruments: "piano and organ"; a link recording → work "recording of").
+- **Works matrix:** `roleCode(typeName, sub, label)` – with "names" the label (" (sub)" added only when it does not say so); new `workTypePhrase(name, entityType, attrNames)` for the relationships already in MusicBrainz and the dates added to them; the chips' tooltips, the column head and its tooltip by `rowPhrase`; the cell menu's roles by `mbPhraseOf`, "sub" by `linkPhraseOf` with `sub` ("sub-publisher").
+- **Log:** `emOut`, `emIn`, `emOrder`, `matrixColumn`, `manualAdded` name the row by `rowPhrase`. Messages and questions about a credit of the source (`srcOff`, `dgFocus`, `typeAsk.*`, `matrix.liveWhy.*` …) keep the source's role.
+- **Texts (English):** `role.fromSource`.
+- **Tests:** new `tools/mb_link_types.py` writes `smoke/mb_link_types.json` – MusicBrainz's 698 relationship types (names and phrases from `po/relationships.pot`, entity types and parents from `t/sql/initial.sql` – 427 of them; the newer ones without), 126 attributes; from metabrainz/musicbrainz-server bade3a5 (2026-10-21). `t_register.py` D): every corpus role's name by the first of its types MusicBrainz has between an artist and its level (golden `node.phrases`: type, ids, name; a type without known entity types lists all of that name). `harness.py`: instrument and vocal with MusicBrainz's phrase, the bare form the type's name (`PHRASE_OF`: "{additional} {guest} {solo} {instrument:%|instrument}" – rows are named by their instrument, the list of types reads as before); `t_ui_view.py` compact, ui301, clineask read the new compact line (clineask with MusicBrainz's conductor type); `t_mapping.py` new case `mbnames` (MusicBrainz's phrases for all types of the test page from that file, the attribute "re"; rows, tooltip, types, compact line, preview, entry matrix, works matrix and its menu, log). 13 more test files read the source's role from `data-raw` of `.dci-drole` instead of its text.
 
 ## Import 3.38.9 · Companion 1.10.0 · 2026-11-01
 
