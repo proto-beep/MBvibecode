@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.9.1
-// @date         2026-10-24
+// @version      1.9.2
+// @date         2026-11-01
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
 // @description:es Complemento de «MB x Vibecode: Credits Importer»: conecta el panel de importación con una pestaña de Discogs o Bandcamp (p. ej. la otra mitad de una vista dividida), carga allí la publicación y resalta de dónde viene cada crédito.
@@ -484,16 +484,21 @@
     return rows;
   }
 
-  /** Smallest ancestor (up to 5 levels) whose text also contains the role; otherwise the list item or row. */
+  /**
+   * Smallest ancestor (up to 5 levels) whose text also contains the role; otherwise the list item. [1.9.2] Never beyond the
+   * cell of a table (nor the item of a list): the row of a track is no line of a credit (collected item 174).
+   */
   function lineOf(el, role) {
+    const stop = el.closest('td, th, li');
     let cur = el;
     for (let i = 0; i < 5 && cur && cur !== document.body; i++) {
       const text = norm(cur.textContent);
       if (text.length > 400) break; // do not climb into whole sections
       if (role && text.includes(role)) return cur;
+      if (cur === stop) break;
       cur = cur.parentElement;
     }
-    return el.closest('li, tr') || el;
+    return stop || el;
   }
 
   const inTracklist = (el) => !!el.closest('[data-track-position], #release-tracklist, [id*="tracklist" i]');
@@ -685,6 +690,9 @@
       if (pos) mark.dataset.pos = pos;
       mark.textContent = MARK_SYMBOL[status] || '?';
       mark.title = markTitle(map, item, status, note, pos);
+      // [1.9.2] never into a table row or the table itself: there the mark is a cell of its own and shifts the columns (the
+      // title and its credits in the narrow column of the duration, written letter by letter downwards; collected item 174)
+      if (found.el.matches && found.el.matches('tr, tbody, thead, tfoot, table')) return;
       found.el.insertBefore(mark, found.el.firstChild);
       if (item.unmapped) found.el.classList.add('dci-dg-unmapped-line');
       // (the credit's list item; the element found may be only the name inside it)
@@ -723,6 +731,9 @@
         if (!re.test(a.getAttribute('href') || '')) continue;
         const line = lineOf(a, role);
         const score = role && norm(line.textContent).includes(role) ? 3 : 1;
+        // [1.9.2] in a track's line only the credit with the role ("Flute – Oliver Lake", not "Written-By – Lake*"); without
+        // one the credit gets no mark there (its line in the credits keeps its own; collected item 174)
+        if (role && score < 3) continue;
         if (!best || score > best.score) best = { el: line, score };
       }
     }

@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-01 | 3.38.8 | 1.9.2 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
@@ -94,6 +95,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-01
+
+### Import 3.38.8 · COMPANION 1.9.2
+
+#### Fixed
+
+- **COMPANION: the tracklist on Discogs stays readable with credits on tracks** (collected item 174; maintainer, Discogs 2631299 "Boston Duets": "sobald an den einzelnen tracks auf Discogs relationships hängen … die schrift verschiebt sich und wird vertikal angezeigt. dadurch lässt sich die discogs nicht mehr lesen … und alles zieht sich sehr lange runter"): a credit whose role was not on the line of its artist in a track put its status mark into the table row itself – a cell of its own, the title and its credits in the narrow column of the duration. A mark in a track's line now goes only before the credit with that role, inside the line; otherwise that track's line gets none (the credit's line in the credits keeps its mark). Import 3.38.8 only says so (needs the companion 1.9.2).
 
 ## 2026-10-31
 
