@@ -863,8 +863,10 @@ def case_poolbar():
     """Credits Importer 3.37.15 (collected items 165, 166; maintainer: ""+ New date"/"+new track" group soll in der leiste oben auch
     sichtbar sein wenn sie eingefaltet ist.", "der falten knopf soll immer an der gleichen stelle erscheinen", "ich meinte (b)",
     "Nur oben", "ganz eingefaltet: ja ok").
-    A) "▲ fold" of "Dates & tracks" is in its head, right after the title (no longer at its foot below the matrix); folded it
-       reads "▼ show" at the same place (±1 px); the foot keeps "keep the pools in the bar when folded".
+    A) "▲ fold" of "Dates & tracks" is in its head (no longer at its foot below the matrix); folded it reads "▼ show" at the same
+       place (±1 px); the foot keeps "keep the pools in the bar when folded". [178] (3.38.13) The head is the last line of the block
+       (open and folded), "▲ fold" / "▼ show" in its middle (±2 px), the arrow at the title ▲ open, ▼ folded (until 3.38.12 the head
+       at the top, the fold right after the title, the arrow ▶ turned); after a click on it the focus is on it again.
     B) The date pool folded ("▸ Date pool (n)"): "+ New date" is in its bar; it opens the form below, the pool stays folded; a date
        saved there is counted. The track pool folded: "+ New track group" in its bar.
     A0) While suggestions of this import wait ("not applied yet"), the date pool folds at the first click (until 3.37.14 the
@@ -872,9 +874,12 @@ def case_poolbar():
     C) "Dates & tracks" folded with the pools kept in the bar: both pools there with "+ New date" / "+ New track group"; "+ New
        date" opens "Dates & tracks" with the form, "Cancel" folds it again."""
     HEAD = """(() => { const h = document.querySelector('.dci-pools-head .dci-pools-fold'); const t = document.querySelector('.dci-pools-toggle');
+      const line = document.querySelector('.dci-pools-head'); const c = (e) => { const x = e.getBoundingClientRect(); return Math.round(x.left + x.width / 2); };
       return { head: h ? [h.textContent.trim(), h.getAttribute('aria-expanded'), Math.round(h.getBoundingClientRect().left)] : null,
-        afterTitle: !!(h && h.previousElementSibling === t), foot: document.querySelectorAll('.dci-pools-foot .dci-pools-fold').length,
-        keep: !!document.querySelector('.dci-pools-foot [data-f=pools-keep]'), open: t ? t.getAttribute('aria-expanded') : null }; })()"""
+        middle: h && line ? Math.abs(c(h) - c(line)) : null, last: !!(line && line === line.parentElement.lastElementChild),
+        chev: t ? t.querySelector('.dci-chev').textContent.trim() : null, foot: document.querySelectorAll('.dci-pools-foot .dci-pools-fold').length,
+        keep: !!document.querySelector('.dci-pools-foot [data-f=pools-keep]'), open: t ? t.getAttribute('aria-expanded') : null,
+        focus: !!(document.activeElement && document.activeElement.classList.contains('dci-pools-fold')) }; })()"""
     BARS = """(() => [...document.querySelectorAll('.dci-dates-bar')].map(b => ({ cls: b.className, label: (b.querySelector('.dci-pool-label') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim(),
       kept: !!b.closest('.dci-pools-kept'), add: [...b.querySelectorAll('[data-act=pool-new], [data-act=tg-new], [data-f=tg-new-pick]')].map(x => x.dataset.act || x.dataset.f) })))()"""
     results = []
@@ -908,9 +913,10 @@ def case_poolbar():
         pg.wait_for_timeout(300)
         a2 = pg.evaluate(HEAD)
         print('A) offen:', a0, '| eingeklappt:', a1, '| wieder offen:', a2)
-        results.append(bool(a0['head']) and a0['head'][:2] == ['▲ fold', 'true'] and a0['afterTitle'] and a0['foot'] == 0 and a0['keep']
-                       and a1['head'][:2] == ['▼ show', 'false'] and abs(a1['head'][2] - a0['head'][2]) <= 1 and a1['open'] == 'false'
-                       and a2['head'][:2] == ['▲ fold', 'true'])
+        # [178] (3.38.13) the line at the bottom of the block, "▲ fold" / "▼ show" in its middle, the arrow ▲ open, ▼ folded
+        results.append(bool(a0['head']) and a0['head'][:2] == ['▲ fold', 'true'] and a0['last'] and a0['middle'] <= 2 and a0['chev'] == '▲' and a0['foot'] == 0 and a0['keep']
+                       and a1['head'][:2] == ['▼ show', 'false'] and abs(a1['head'][2] - a0['head'][2]) <= 1 and a1['last'] and a1['middle'] <= 2 and a1['chev'] == '▼'
+                       and a1['open'] == 'false' and a2['head'][:2] == ['▲ fold', 'true'] and a1['focus'] and a2['focus'])
         # B) a pool folded
         n0 = pg.evaluate("document.querySelectorAll('.dci-pools-body .dci-pchip-date').length")
         pg.click('[data-act=pool-fold][data-pool=dates]')

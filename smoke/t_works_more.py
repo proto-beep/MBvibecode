@@ -663,12 +663,13 @@ def case_livegroup():
     gleichen live-Disambiguation notes bekommen", "rechts unten im kasten soll immer die Überschrift stehen", "Live disambiguation
     comments: 5 of 5").
     A) Two media of two tracks, the release group Live, the setting off: the offer names the whole medium and the other track –
-       "Live recordings: CD 2, track 1.2. Propose disambiguation comments for them (“live: Abbey Road Studios”)?" (the positions
-       as in the list).
-    B) ✓: one line for the three (the same comment) – "CD 2, 1.2", "▸ 3 tracks"; ▸ shows the three; its text changed: all three
+       "Live recordings: track 1.2, CD 2. Propose disambiguation comments for them (“live: Abbey Road Studios”)?" (the positions
+       as in the list; [3.38.13] F-2: in their order, until 3.38.12 "CD 2, track 1.2").
+    B) ✓: one line for the three (the same comment) – "1.2, CD 2", "▸ 3 tracks"; ▸ shows the three; its text changed: all three
        have it (each "changed by you"); unticked: all three unticked – "0 of 3".
     C) The heading "▾ Live disambiguation comments: …" is the last line of the box, at its right edge, below the list; the list at
-       most a third of the dashboard's height; the heading clicked: only the heading, at the same place (bottom right), ▸."""
+       most a third of the dashboard's height; the heading clicked: only the heading, at the same place (bottom right), ▸;
+       [3.38.13] (F-1) the heading purple with white text, open and closed (darker under the pointer)."""
     H.MEDIA = [2, 2]
     orig = H.ws_release
 
@@ -685,7 +686,7 @@ def case_livegroup():
       tr.querySelector('[data-f=livecom-text]').value, tr.querySelector('[data-f=livecom-on]').checked, tr.lastElementChild.textContent.replace(/\\s+/g, ' ').trim()])"""
     BOX = """(() => { const box = document.querySelector('[data-el=livecom] .dci-livecom-box'); if (!box) return null; const h = box.querySelector('.dci-livecom-head');
       const body = box.querySelector('.dci-livecom-body'); const r = (e) => { const x = e.getBoundingClientRect(); return [Math.round(x.left), Math.round(x.top), Math.round(x.right), Math.round(x.bottom)]; };
-      return { last: box.lastElementChild.contains(h), head: h.textContent.trim(), h: r(h), box: r(box), body: body ? r(body) : null,
+      return { last: box.lastElementChild.contains(h), head: h.textContent.trim(), h: r(h), box: r(box), body: body ? r(body) : null, bg: getComputedStyle(h).backgroundColor, color: getComputedStyle(h).color,
         max: body ? parseFloat(body.style.maxHeight) : null, dash: Math.round(document.getElementById('dci-overlay').getBoundingClientRect().height) }; })()"""
     results = []
     with sync_playwright() as p:
@@ -698,7 +699,8 @@ def case_livegroup():
         pg.wait_for_timeout(2500)
         a = pg.evaluate(OFFER)
         print('A) Angebot:', a)
-        ok_a = a == 'Live recordings: CD 2, track 1.2. Propose disambiguation comments for them (“live: Abbey Road Studios”)?'
+        # [3.38.13] (F-2) in the order of the positions (until 3.38.12 "CD 2, track 1.2")
+        ok_a = a == 'Live recordings: track 1.2, CD 2. Propose disambiguation comments for them (“live: Abbey Road Studios”)?'
         # B)
         pg.click('[data-act=livecom-yes]'); pg.wait_for_timeout(500)
         g0 = pg.evaluate(GROUPS)
@@ -712,7 +714,7 @@ def case_livegroup():
         pg.wait_for_timeout(300)
         s2, g2 = pg.evaluate(SUBS), pg.evaluate(GROUPS)
         print('B) Gruppe:', g0, '\n   ▸:', s0, '\n   Text:', s1, '\n   aus:', g2, s2)
-        ok_b = len(g0) == 1 and g0[0][0] == 'CD 2, 1.2' and g0[0][1] == '▸ 3 tracks' and g0[0][3] is True and [x[0] for x in s0] == ['1.2', '2.1', '2.2'] \
+        ok_b = len(g0) == 1 and g0[0][0] == '1.2, CD 2' and g0[0][1] == '▸ 3 tracks' and g0[0][3] is True and [x[0] for x in s0] == ['1.2', '2.1', '2.2'] \
             and all(x[1] == g0[0][2] for x in s0) and all(x[1] == 'live (all three)' and 'changed by you' in x[3] for x in s1) \
             and len(g2) == 1 and g2[0][3] is False and all(x[2] is False for x in s2)
         # C) the heading
@@ -722,7 +724,8 @@ def case_livegroup():
         print('C) offen:', c1, '\n   zu:', c2)
         ok_c = bool(c1 and c2) and c1['last'] and c1['head'].startswith('▾ Live disambiguation comments: 0 of 3') and abs(c1['h'][2] - c1['box'][2]) <= 12 \
             and c1['body'] and c1['h'][1] >= c1['body'][3] - 1 and c1['max'] <= max(120, c1['dash'] / 3) + 2 \
-            and c2['body'] is None and c2['head'].startswith('▸ Live disambiguation comments') and abs(c2['h'][2] - c1['h'][2]) <= 2 and abs(c2['h'][3] - c1['h'][3]) <= 2
+            and c2['body'] is None and c2['head'].startswith('▸ Live disambiguation comments') and abs(c2['h'][2] - c1['h'][2]) <= 2 and abs(c2['h'][3] - c1['h'][3]) <= 2 \
+            and c1['bg'] == 'rgb(115, 109, 171)' and c1['color'] == 'rgb(255, 255, 255)' and c2['bg'] in ('rgb(115, 109, 171)', 'rgb(75, 69, 133)')
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
         results += [ok_a, ok_b, ok_c]
         print('Fehler:', errs)

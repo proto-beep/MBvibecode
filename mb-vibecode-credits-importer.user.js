@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.12
+// @version      3.38.13
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.12
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.12
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.13
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.13
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.12';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.13';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -20892,21 +20892,25 @@
       tr('pools.nTracks', { n: S.trackPool.length }),
       tr('pools.nCells', { n: m.cells.length }),
     ].join(' · ');
-    el.innerHTML = `<div class="dci-pools-head">
-        <button type="button" class="dci-pools-toggle" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">
-          <span class="dci-chev" aria-hidden="true">▶</span><span class="dci-pools-title">${esc(tr('pools.title'))}</span></button>
-        <button type="button" class="dci-pools-fold" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">${open ? `▲ ${esc(tr('pools.fold'))}` : `▼ ${esc(tr('pools.show'))}`}</button>
+    // [178] (3.38.13) the whole line at the bottom of the block (collected item 178; maintainer: "kannst du die "▶Dates & tracks ▼ show
+    // 1 date · 0 track groups · 1 in the matrix" ans untere ende setzen? und den fold button in die mitte? dann auch das dreieck in die
+    // andere richtung deuten lassen?", "die ganze zeile", "ja"): the title with its arrow – ▲ open (the pools above it), ▼ folded –
+    // and the counts on the left, "▲ fold" / "▼ show" in the middle, the tools on the right; folded, only this line stays (until
+    // 3.38.12 at the top, the arrow ▶ / turned ▼)
+    const head = `<div class="dci-pools-head">
+        <span class="dci-pools-l"><button type="button" class="dci-pools-toggle" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">
+          <span class="dci-chev" aria-hidden="true">${open ? '▲' : '▼'}</span><span class="dci-pools-title">${esc(tr('pools.title'))}</span></button>
         <span class="dci-sub">${esc(summary)}</span>
         ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
-        ${choose ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: choose }))}</span>` : ''}
-        ${open ? `<span class="dci-pools-tools">
+        ${choose ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: choose }))}</span>` : ''}</span>
+        <span class="dci-pools-c"><button type="button" class="dci-pools-fold" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">${open ? `▲ ${esc(tr('pools.fold'))}` : `▼ ${esc(tr('pools.show'))}`}</button></span>
+        <span class="dci-pools-r">${open ? `<span class="dci-pools-tools">
           ${S.release ? `<button type="button" class="dci-textbtn" data-act="pool-clear" data-what="reload" title="${esc(tr('pools.reloadTitle'))}">${esc(trSrc('pools.reload'))}</button>` : ''}
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="dates" ${S.datePool.length ? '' : 'disabled'}>${esc(tr('pools.clearDates'))}</button>
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="tracks" ${S.trackPool.length ? '' : 'disabled'}>${esc(tr('pools.clearTracks'))}</button>
-        </span>` : ''}
-      </div>
-      ${S.poolClear ? poolClearHtml() : ''}
-      ${open ? `<div class="dci-pools-body">
+        </span>` : ''}</span>
+      </div>`;
+    el.innerHTML = `${open ? `<div class="dci-pools-body">
         ${datePoolHtml()}
         ${S.poolForm ? poolFormHtml() : ''}
         ${trackPoolHtml()}
@@ -20917,7 +20921,9 @@
       <div class="dci-pools-foot">
         <label class="dci-check" title="${esc(tr('pools.keepTitle'))}"><input type="checkbox" data-f="pools-keep" ${S.poolsKeep ? 'checked' : ''}> ${esc(tr('pools.keep'))}</label>
       </div>` : S.poolsKeep && (S.datePool.length || S.trackPool.length)
-        ? `<div class="dci-pools-kept">${datePoolHtml(true)}${trackPoolHtml(true)}</div>` : ''}`;
+        ? `<div class="dci-pools-kept">${datePoolHtml(true)}${trackPoolHtml(true)}</div>` : ''}
+      ${S.poolClear ? poolClearHtml() : ''}
+      ${head}`;
     refreshPoolSelects();
   }
 
@@ -22060,11 +22066,27 @@
     if (!box) return;
     const m = S.footMsgs || {};
     if (S.footMsgOpen && !m[S.footMsgOpen]) S.footMsgOpen = null;
-    const html = FOOT_MSGS.filter(([k]) => m[k]).map(([k, kind]) => `<button type="button" class="dci-foot-chip dci-foot-chip-${kind}" data-act="foot-msg" data-msg="${k}"
+    // [F-3] (3.38.13) what was staged: its chip flashes once when it comes (maintainer: "so wie Vorschlag")
+    const done = m['stage-done'] ? m['stage-done'].chip : '';
+    const flash = !!done && done !== S.footFlashed;
+    const html = FOOT_MSGS.filter(([k]) => m[k]).map(([k, kind]) => `<button type="button" class="dci-foot-chip dci-foot-chip-${kind}${flash && k === 'stage-done' ? ' dci-foot-chip-flash' : ''}" data-act="foot-msg" data-msg="${k}"
       aria-expanded="${S.footMsgOpen === k}" aria-controls="dci-foot-msg-${k}" title="${esc(m[k].text)}">${esc(m[k].chip)}</button>`).join('');
-    if (box.dataset.html !== html) {
+    if (flash) S.footFlashed = done;
+    // (drawn again while it flashes – the footer is drawn often –, the chip keeps its element: only the class differs)
+    const cur = box.dataset.html || '';
+    if (cur !== html && cur.replace(' dci-foot-chip-flash', '') !== html) {
       box.innerHTML = html;
       box.dataset.html = html;
+    }
+    // (the class goes when the flash is over – shown again, e.g. the dashboard reopened, the chip does not flash again)
+    const chip = flash && box.querySelector('.dci-foot-chip-flash');
+    if (chip) {
+      const end = () => {
+        chip.classList.remove('dci-foot-chip-flash');
+        if (box.dataset.html) box.dataset.html = box.dataset.html.replace(' dci-foot-chip-flash', '');
+      };
+      chip.addEventListener('animationend', end, { once: true });
+      setTimeout(end, 1200);
     }
     for (const [k] of FOOT_MSGS) {
       const el = $(k);
@@ -23251,6 +23273,8 @@
     const set = new Set(idxs);
     let rest = [...set].sort((a, b) => a - b);
     const media = [];
+    // [F-2] (3.38.13) the parts in the order of their positions: { at: [medium, track], media | tracks } (liveWhatLabel)
+    const parts = [];
     if (multiMedium()) {
       const fmt = (md) => ((S.mediaInfo && S.mediaInfo.get(md)) || {}).format || '';
       const whole = uniq(S.mbTracks.map((t) => t.medium)).filter((md) => {
@@ -23263,7 +23287,11 @@
         if (last && md === last.to + 1 && fmt(md) === last.f) last.to = md;
         else runs.push({ from: md, to: md, f: fmt(md) });
       }
-      runs.forEach((r) => media.push(`${r.f || tr('livecom.medium')} ${r.from === r.to ? r.from : `${r.from}–${r.to}`}`));
+      runs.forEach((r) => {
+        const text = `${r.f || tr('livecom.medium')} ${r.from === r.to ? r.from : `${r.from}–${r.to}`}`;
+        media.push(text);
+        parts.push({ at: [r.from, -1], media: text });
+      });
       const inWhole = new Set(whole);
       rest = rest.filter((i) => !inWhole.has(S.mbTracks[i].medium));
     }
@@ -23275,14 +23303,33 @@
       if (last && i === last[1] + 1 && S.mbTracks[i].medium === S.mbTracks[last[1]].medium) last[1] = i;
       else runs.push([i, i]);
     }
-    return { media: media.join(', '), tracks: runs.map(([a, b]) => (a === b ? pos(a) : `${pos(a)}–${pos(b)}`)).join(', '), n: rest.length };
+    runs.forEach(([a, b]) => parts.push({ at: [S.mbTracks[a].medium, a], tracks: a === b ? pos(a) : `${pos(a)}–${pos(b)}`, n: b - a + 1 }));
+    parts.sort((x, y) => (x.at[0] - y.at[0]) || (x.at[1] - y.at[1]));
+    return { media: media.join(', '), tracks: runs.map(([a, b]) => (a === b ? pos(a) : `${pos(a)}–${pos(b)}`)).join(', '), n: rest.length, parts };
   }
 
   /** [168] (3.38.3) The offer's or a group's name: "CD 1–5, tracks 6.1–6.3" or "1–5". */
+  // [F-2] (3.38.13) in the order of the positions (maintainer: "nach Positionen"): "track 1.2, CD 2" (until 3.38.12 the media
+  // first: "CD 2, track 1.2"); tracks one after another between media as one part ("tracks 3.1–3.4, 3.6")
   function liveWhatLabel(idxs, { prefix = true } = {}) {
     const w = liveWhatText(idxs);
     if (!w.media) return w.tracks;
-    return [w.media, w.tracks ? (prefix ? tr('livecom.tracksPart', { n: w.n, list: w.tracks }) : w.tracks) : ''].filter(Boolean).join(', ');
+    const out = [];
+    let run = [];
+    const flush = () => {
+      if (!run.length) return;
+      const list = run.map((x) => x.tracks).join(', ');
+      out.push(prefix ? tr('livecom.tracksPart', { n: run.reduce((k, x) => k + x.n, 0), list }) : list);
+      run = [];
+    };
+    for (const x of w.parts) {
+      if (x.media) {
+        flush();
+        out.push(x.media);
+      } else run.push(x);
+    }
+    flush();
+    return out.join(', ');
   }
 
   /**
@@ -27305,6 +27352,14 @@
         S.poolClear = null;
         writeJson('localStorage', 'dci-pools-open', S.poolsOpen);
         renderDates();
+        {
+          // [178] (3.38.13) the line moved (it is at the bottom of the block): the focus on the same button again, in view
+          const again = S.overlay.querySelector(btn.classList.contains('dci-pools-toggle') ? '.dci-pools-toggle' : '.dci-pools-fold');
+          if (again) {
+            again.focus({ preventScroll: true });
+            again.scrollIntoView({ block: 'nearest' });
+          }
+        }
         break;
       case 'pool-clear':
         S.poolClear = btn.dataset.what;
@@ -31708,8 +31763,10 @@
       .dci-livecom-box:not(.dci-livecom-boxopen) { width: fit-content; margin-left: auto; }
       .dci-livecom-body { overflow: auto; margin-bottom: calc(var(--u, 1px) * 4); }
       .dci-livecom-headrow { display: flex; justify-content: flex-end; }
-      .dci-livecom-head { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; cursor: pointer; color: var(--ink); }
-      .dci-livecom-head:hover { text-decoration: underline; }
+      /* [F-1] (3.38.13) a colour that stands out (maintainer: "der button "▸ Live disambiguation comments: 0 of 9" kann aber eine noch präsentere farbe haben") */
+      .dci-livecom-head { border: 1px solid var(--purple-d); border-radius: 10px; background: var(--purple); color: #fff; padding: 1px calc(var(--u, 1px) * 10); font: inherit; font-weight: 600; cursor: pointer; }
+      .dci-livecom-head:hover { background: var(--purple-d); }
+      .dci-livecom-head:focus-visible { outline: 2px solid var(--purple-d); outline-offset: 2px; }
       .dci-livecom-sub td:first-child { padding-left: calc(var(--u, 1px) * 18); }
       .dci-livecom-gbtn { white-space: nowrap; }
       .dci-livecom-table td { padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4); vertical-align: top; }
@@ -31830,26 +31887,30 @@
 
       /* Dates & tracks: one block that folds; open, its body scrolls on its own */
       /* The head of "Dates & tracks" stands out: a bar from date purple to track orange */
-      .dci-pools-head { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12);
+      /* [178] (3.38.13) at the bottom of the block: left the title and the counts, in the middle "▲ fold" / "▼ show", right the tools */
+      .dci-pools-head { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12);
         padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 10); border-radius: 5px; border: 1px solid var(--date-line); border-left: 5px solid var(--date);
         background: linear-gradient(90deg, #e7e5f6 0%, var(--date-bg) 45%, var(--track-bg) 100%); box-shadow: 0 1px 2px rgba(38, 36, 48, 0.08); }
       .dci-pools-toggle { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 7); border: 0; background: none; padding: 2px 0; font-weight: 700; color: var(--date-d); cursor: pointer; font-size: calc(var(--u, 1px) * 15); letter-spacing: 0.01em; }
-      .dci-pools-toggle .dci-chev { display: inline-grid; place-items: center; width: calc(var(--u, 1px) * 20); height: calc(var(--u, 1px) * 20); border-radius: 50%; background: var(--date); color: #fff; font-size: calc(var(--u, 1px) * 10); line-height: 1; transition: transform 0.15s; }
-      .dci-pools-toggle[aria-expanded="true"] .dci-chev { transform: rotate(90deg); }
+      .dci-pools-toggle .dci-chev { display: inline-grid; place-items: center; width: calc(var(--u, 1px) * 20); height: calc(var(--u, 1px) * 20); border-radius: 50%; background: var(--date); color: #fff; font-size: calc(var(--u, 1px) * 10); line-height: 1; }
+      .dci-pools-l { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); min-width: 0; }
+      .dci-pools-c { justify-self: center; }
+      .dci-pools-r { justify-self: end; min-width: 0; }
+      .dci-pools-body + .dci-pools-foot + .dci-pools-head, .dci-pools-kept + .dci-pools-head { margin-top: calc(var(--u, 1px) * 6); }
       .dci-pools-toggle:hover .dci-chev { background: var(--date-d); }
       .dci-pools-toggle:hover .dci-pools-title { text-decoration: underline; }
-      .dci-pools-tools { display: inline-flex; gap: calc(var(--u, 1px) * 12); margin-left: auto; font-size: calc(var(--u, 1px) * 12); }
+      .dci-pools-tools { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 12); font-size: calc(var(--u, 1px) * 12); }
       .dci-pools-tools button:disabled { color: var(--muted); text-decoration: none; cursor: default; }
       .dci-pools-foot { display: flex; align-items: center; justify-content: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 18); flex-wrap: wrap;
         margin-top: calc(var(--u, 1px) * 4); padding-top: calc(var(--u, 1px) * 4); border-top: 1px dashed var(--date-line); font-size: calc(var(--u, 1px) * 12); }
       .dci-pools-fold { border: 1px solid var(--date-line); border-radius: 10px; background: var(--date-bg); color: var(--date-d); padding: 1px calc(var(--u, 1px) * 12); font-weight: 600; }
       .dci-pools-fold:hover { border-color: var(--date); }
-      /* [166] (3.37.15) in the head, at the same place open and folded */
+      /* [166] (3.37.15) in the head, at the same place open and folded; [178] (3.38.13) in its middle */
       .dci-pools-head .dci-pools-fold { min-width: calc(var(--u, 1px) * 70); font-size: calc(var(--u, 1px) * 12); text-align: center; }
-      .dci-pools-kept { margin-top: calc(var(--u, 1px) * 6); }
+      .dci-pools-kept { margin-top: 0; }
       .dci-pools-kept .dci-date-chip { font-size: calc(var(--u, 1px) * 12); }
       .dci-drag-hint { color: var(--muted); font-size: calc(var(--u, 1px) * 11); font-style: italic; cursor: help; }
-      .dci-pools-body { max-height: 42vh; overflow: auto; margin-top: calc(var(--u, 1px) * 6); padding-right: calc(var(--u, 1px) * 4); }
+      .dci-pools-body { max-height: 42vh; overflow: auto; padding-right: calc(var(--u, 1px) * 4); }
       .dci-pool-clear, .dci-reset { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border: 1px solid var(--warn); border-left-width: 4px; border-radius: 3px; background: #fffaf0; max-width: 80ch; }
       .dci-pool-clear p, .dci-reset p { margin: calc(var(--u, 1px) * 4) 0; }
       .dci-reset .dci-check { display: flex; margin: calc(var(--u, 1px) * 4) 0; }
@@ -32266,6 +32327,10 @@
       .dci-foot-chip-warn { background: #fff8db; color: #7a5a00; border-color: #e8d48a; }
       .dci-foot-chip-info { background: #eef4ff; color: #2b3f73; border-color: #c3d3f2; }
       .dci-foot-chip-ok { background: #e6f3ea; color: #1d5b36; border-color: #b5dbc2; font-weight: 600; }
+      /* [F-3] (3.38.13) once, when it comes: green, brighter, back */
+      .dci-foot-chip-flash { animation: dci-chip-flash 0.9s ease-in-out 1; }
+      @keyframes dci-chip-flash { 0%, 100% { background: #e6f3ea; box-shadow: none; } 50% { background: #7fcf98; box-shadow: 0 0 0 3px rgba(46, 160, 90, 0.35); } }
+      @media (prefers-reduced-motion: reduce) { .dci-foot-chip-flash { animation: none; } }
       .dci-foot-chip[aria-expanded=true] { box-shadow: inset 0 0 0 1px currentColor; }
       .dci-foot-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); margin-left: auto; }
       .dci-foot-opts { position: relative; display: inline-flex; align-items: center; }
