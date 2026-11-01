@@ -105,7 +105,7 @@ Recorded at Studio Sol instagram.com/studiosol"""
 GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => ({ name: g.querySelector('.dci-gname strong').textContent.trim(),
   key: g.dataset.group, status: g.className.match(/dci-st-(\\w+)/)[1],
   rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const c = tr.querySelector('[data-f=role-credit]');
-    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '',
+    return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '',
       (tr.querySelector('.dci-type-ask') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim()]; }),
   web: [...g.querySelectorAll('.dci-weblink')].map(a => [a.textContent, a.href]),
   sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => [b.dataset.mbid, (b.querySelector('.dci-similar') || { textContent: '' }).textContent]) })))()"""

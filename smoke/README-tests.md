@@ -21,7 +21,11 @@ MBvibecode/ (this repository)
   mb-vibecode-credits-importer-languages.json   German, Spanish, French (3.34.0, @resource languages; English in the script)
   tools/i18n_add.py                   adds or replaces texts: English in the script, de / es / fr in the languages file (3.34.0)
   tools/i18n_del.py                   removes texts in all languages (script and languages file, with plural forms)
-  smoke/harness.py                    mock MusicBrainz, Discogs and Bandcamp, shared GM storage, helpers
+  tools/mb_link_types.py              [3.38.10] writes smoke/mb_link_types.json from a checkout of metabrainz/musicbrainz-server
+                                      (po/relationships.pot and t/sql/initial.sql are enough: git sparse-checkout)
+  smoke/harness.py                    mock MusicBrainz, Discogs and Bandcamp, shared GM storage, helpers; [3.38.10] link phrases: the
+                                      type's name, instrument and vocal with MusicBrainz's phrase ("{additional} {guest} {solo}
+                                      {instrument:%|instrument}": rows named "bass", "guest saxophone"; the bare form the type's name)
   smoke/zooid.py                      scenario after Discogs release 38282688 (10 tracks, two sessions, two studios)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
@@ -35,9 +39,12 @@ MBvibecode/ (this repository)
                                       harness set back after it, one result per case and one for the file
   smoke/t_*.py                        tests: topic files with cases (case_<name>, each the former t_<name>.py), and seven
                                       files of their own (golden tests, comparisons with older logs); each ends with
-                                      "Ergebnis: OK/FEHLER"
+                                      "Ergebnis: OK/FEHLER"; [3.38.10] a row's role as the source wrote it is `data-raw` of
+                                      `.dci-drole` (its text is MusicBrainz's name)
   smoke/register_corpus.json          frozen input of the register's golden test (t_register.py)
   smoke/register_golden.json          its expected results (written with UPDATE=1)
+  smoke/mb_link_types.json            [3.38.10] MusicBrainz's relationship types: names and link phrases (all 698), entity types and
+                                      parents (427: those of the server's test database; newer ones without), attributes, the commit
   smoke/text_corpus.json              credits lines from real releases and cases around them, with their stored reading
                                       ('expect', written with UPDATE=1 by t_textcorpus.py; 'later': still read wrong, planned)
 ```
@@ -72,7 +79,10 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
                                 # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
                                 # (3.33.1: ✎, "code" and the forms of the window are hidden before its sections are read; 3.36.0: the
-                                # texts only after the import of the release is complete – before, their end depended on the timing)
+                                # texts only after the import of the release is complete – before, their end depended on the timing;
+                                # 3.38.10: D) every role's name as MusicBrainz shows it – the first of its types MusicBrainz has between an
+                                # artist and its level, the link phrase with flags and instrument or voice from mb_link_types.json, golden
+                                # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                                 # on purpose, 1988 in the pool (3.37.9: the artwork's year; before: none); "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
@@ -308,6 +318,10 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   poemlevels: 3.32.7: the type of poems follows the level – works lyricist, recordings spoken vocals, release the
                                 #     question Q010 (lyricist · spoken vocals · liner notes, kept); the compact line goes works → recordings →
                                 #     release → skip; "Poems" alone: Q009, then the level decides
+                                #   mbnames: 3.38.10 (177): MusicBrainz's names – the phrases of all types of the test page from mb_link_types.json:
+                                #     rows ("recording engineer", "guest saxophone", "remastering"), tooltip "from Discogs: …", types, "additional"
+                                #     ticked, compact line, preview, entry matrix and chip, works matrix ("additional composer", menu
+                                #     "sub-publisher"), the log "Staged: …"
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎, export and import
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once

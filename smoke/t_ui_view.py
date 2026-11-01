@@ -56,7 +56,7 @@ def case_compact():
               pg.evaluate("localStorage.getItem('dci-view')")]
         bass = line('Bass Man')
         print('A) zuerst voll:', a_full, '| nach dem Symbol:', a0, '\n   Bass Man:', bass)
-        results.append(a_full == [False, 'false', 0, True] and a0 == [True, 'true', 0, '"compact"'] and bass and bass[0]['text'].startswith('▸ Bass → instrument · bass Recording all 4 tracks no date')
+        results.append(a_full == [False, 'false', 0, True] and a0 == [True, 'true', 0, '"compact"'] and bass and ' '.join(bass[0]['text'].split()).startswith('▸ bass Recording all 4 tracks no date')
                        # [3.32.3] the question whole, its possibilities to click (item 102)
                        and bass[0]['flags'] == [['dci-cl-ask dci-cl-askq', 'Bass: which instrument? electric bass guitar · double bass · acoustic bass guitar']] and not bass[0]['typeVisible'])
         # B) open, close
@@ -92,7 +92,8 @@ def case_compact():
         pg.wait_for_timeout(400)
         d1 = line('Bass Man')[0]
         print('D) beantwortet:', d1['text'], d1['flags'], '| offen:', d1['open'])
-        results.append('→ instrument · double bass' in d1['text'] and d1['flags'] == [] and not d1['open'])
+        # [3.38.10] the line says MusicBrainz's name of the relationship (collected item 177): the instrument
+        results.append(' '.join(d1['text'].split()).startswith('▸ double bass “bass” Recording') and d1['flags'] == [] and not d1['open'])
         # E) a skipped row: grey with ✕
         pg.click(f'tr[data-row="{guitar}"] .dci-cl-role')
         pg.click(f'tr[data-row="{guitar}"] [data-act=level][data-level=skip]')
@@ -104,7 +105,7 @@ def case_compact():
         pg.wait_for_timeout(300)
         e2 = [line('Guitar Guy'), [m for m in pg.locator('.dci-msg').all_inner_texts() if 'Guitar Guy' in m][:1]]
         print('E) Skip:', e1['text'], e1['x'], e1['bg'], '| ✕:', e2)
-        results.append(e1['text'].startswith('▸ Guitar → instrument · guitar Skip') and e1['x'] and e1['bg'] != 'rgb(255, 255, 255)' and e2[0] is None and bool(e2[1]))
+        results.append(' '.join(e1['text'].split()).startswith('▸ guitar Skip') and e1['x'] and e1['bg'] != 'rgb(255, 255, 255)' and e2[0] is None and bool(e2[1]))
         # F) compact remembered, full in the settings
         f1 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), line('Bass Man')[0]['typeVisible'], pg.evaluate("localStorage.getItem('dci-view')")]
         pg.reload()
@@ -416,7 +417,7 @@ def case_ui301():
                 break
         print('C) Ebene, x, Typ:', seq)
         results.append([x[0] for x in seq] == ['recording', 'release', 'skip', 'recording'] and len({x[1] for x in seq}) == 1
-                       and seq[2][2] == '→ instrument · bass')
+                       and seq[2][2] == '')
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(300)
         # D)
@@ -579,10 +580,13 @@ def case_clineask():
         return d
 
     H.discogs_release = rel
+    # [3.38.10] conductor as on MusicBrainz (the line names the type chosen by MusicBrainz's relationship type)
+    H.lt(151, '234670ce-5f22-4fd0-921b-ef1662695c5d', 'conductor', 'artist', 'recording', (1,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     LINE = """() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Drum Guy');
-  const tr = [...g.querySelectorAll('tr.dci-row')].find(r => /Directed By/.test(r.querySelector('.dci-cl-role').textContent));
+  const tr = [...g.querySelectorAll('tr.dci-row')].find(r => /Directed By/.test(r.querySelector('.dci-cl-role').dataset.raw));
   const q = tr.querySelector('.dci-cl-askq');
-  return { id: tr.dataset.row, open: tr.classList.contains('dci-open'), type: (tr.querySelector('.dci-cl-type') || {}).textContent.replace(/\\s+/g, ' ').trim(),
+  return { id: tr.dataset.row, open: tr.classList.contains('dci-open'), type: (tr.querySelector('.dci-cl-role').textContent + ' ' + (tr.querySelector('.dci-cl-type') || {}).textContent).replace(/\\s+/g, ' ').trim(),
     ask: q ? [...q.querySelectorAll('[data-act=type-pick]')].map(b => b.textContent.trim()) : null }; }"""
     results = []
     with sync_playwright() as p:

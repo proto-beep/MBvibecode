@@ -1,6 +1,8 @@
 """Mapping: roles, questions, suggestions, mastering, special artists, fixes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
+Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
+import json
+import os
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -41,7 +43,7 @@ def case_rules():
         pg.wait_for_timeout(400)
         rows = pg.evaluate("""[...document.querySelectorAll('[data-group] tr.dci-row')].filter(tr => tr.closest('[data-group]').querySelector('.dci-gname').textContent.includes('Keys Guy'))
       .map(tr => { const v = (f) => { const e = tr.querySelector('[data-f=' + f + ']'); return e ? (e.tagName === 'SELECT' ? (e.options[e.selectedIndex] || {}).text : e.value) : '-'; };
-        return [tr.querySelector('.dci-drole').textContent.trim(), v('type'), v('primary'), v('role-credit'),
+        return [tr.querySelector('.dci-drole').dataset.raw.trim(), v('type'), v('primary'), v('role-credit'),
           [...tr.querySelectorAll('input[data-f=flag]:checked')].map(c => c.value).join(','), tr.querySelector('.dci-c-role').textContent.replace(/\\s+/g, ' ').trim()]; })""")
         for r in rows:
             print('  ', r[:5], '|', r[5][:110])
@@ -60,7 +62,7 @@ def case_rules():
         pg.click('[data-act=rules]'); pg.wait_for_timeout(200)
         pg.fill('#dci-rules [data-rf=search]', 'pocket'); pg.wait_for_timeout(150)
         pg.click('#dci-rules [data-rules-close]')
-        tr = pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole', has_text='Engineer [Mix, Assistant]')).first
+        tr = pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole[data-raw="Engineer [Mix, Assistant]"]')).first
         ids = tr.locator('.dci-ruleid').all_inner_texts()
         tr.locator('.dci-ruleid', has_text='W006').click(); pg.wait_for_timeout(400)
         hit = pg.evaluate("""(() => { const r = document.querySelector('#dci-rules tr.dci-rule-hit'); if (!r) return null;
@@ -139,7 +141,7 @@ def case_v217():
     H.discogs_release = rel
     ROWS = """[...document.querySelectorAll('section.dci-group tr.dci-row')].map(tr => { const v = (f) => { const e = tr.querySelector('[data-f=' + f + ']');
   return e ? (e.tagName === 'SELECT' ? (e.options[e.selectedIndex] || {}).text : e.value) : '-'; };
-  return [tr.querySelector('.dci-drole').textContent.trim(), v('type'), v('primary'), v('role-credit'),
+  return [tr.querySelector('.dci-drole').dataset.raw.trim(), v('type'), v('primary'), v('role-credit'),
     [...tr.querySelectorAll('input[data-f=flag]:checked')].map(c => c.value).join(','), [...tr.querySelectorAll('.dci-ruleid')].map(x => x.textContent).join(' '),
     (tr.querySelector('.dci-bass-ask:not(.dci-type-ask)') || {}).innerText || '']; })"""
     results = []
@@ -159,7 +161,7 @@ def case_v217():
             and tb and tb[2] == 'trombone' and 'additional' in tb[4] and 'S002' in tb[5] \
             and bass and bass[2] == 'bass' and bass[3] == '' and 'Q001' in bass[5]
         # a choice: electric bass guitar, credited as "bass guitar"
-        row = pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole', has_text='Bass Guitar')).first
+        row = pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole[data-raw="Bass Guitar"]')).first
         row.locator('[data-act=instr-pick]', has_text='electric bass guitar').click(); pg.wait_for_timeout(300)
         bg2 = {r[0]: r for r in pg.evaluate(ROWS)}['Bass Guitar']
         print('1b) gewählt:', bg2[:4])
@@ -186,7 +188,7 @@ def case_v217():
         for _ in range(3):
             pg.evaluate("document.querySelectorAll('.dci-flash').forEach(e => e.classList.remove('dci-flash'))")
             pg.click('[data-el=sum] [data-act=inc-next] >> nth=-1'); pg.wait_for_timeout(300)
-            fl = pg.evaluate("""[...document.querySelectorAll('.dci-flash')].map(e => e.matches('tr.dci-row') ? 'row:' + e.querySelector('.dci-drole').textContent.trim()
+            fl = pg.evaluate("""[...document.querySelectorAll('.dci-flash')].map(e => e.matches('tr.dci-row') ? 'row:' + e.querySelector('.dci-drole').dataset.raw.trim()
           : e.matches('[data-match]') ? 'artist' : e.className.split(' ').find(c => c.startsWith('dci-c-')) || e.tagName)""")
             seen.append((re.search(r'\d/\d', s()).group(0) if re.search(r'\d/\d', s()) else '', sorted(fl)))
         print('   ›, ›, ›:', seen)
@@ -823,7 +825,7 @@ def case_perftracks():
 
     H.discogs_release = rel
     ROLES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
-  return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').textContent.trim(), ((tr.querySelector('.dci-perftracks') || {}).textContent || '').trim()]) : null; }"""
+  return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').dataset.raw.trim(), ((tr.querySelector('.dci-perftracks') || {}).textContent || '').trim()]) : null; }"""
     state = lambda pg: {n: [pg.evaluate(ROLES, n), tracks_of_rows(pg, n)] for n in ('Bass Man', 'Solo Perf', 'Guitar Guy')}
     results = []
     with sync_playwright() as p:
@@ -865,6 +867,154 @@ def case_perftracks():
         print('Fehler:', errs, errs2)
         results.append(not errs and not errs2)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_mbnames():
+    """Credits Importer 3.38.10 (collected item 177; maintainer: "es soll IMMER der Name des MB relationships dastehen und nicht des
+    discogs relationships. bspw habe ich … "Engineer [Recording]" als relationship gesehen dabei lautet das relationship "recording
+    engineer for / recording engineer" … bitte prüfe da alle rollen mit discogs ab und siehe zu, dass das dashboard das anzeigt, was in
+    MB ankommt. ich wäre aber damit einverstanden, dass beim tooltip … "from Discogs: Engineer [Recording]"", "Auch in der
+    Typ-Auswahl? ja", "Zusätze im Namen? ja genau").
+    A) Rows: "Engineer [Recording]" → "recording engineer", "Recorded By" → "recording engineer", "Mixed By" → "mixer",
+       "Additional Producer" → "additional producer", "Piano" → "piano", "Saxophone [Guest]" → "guest saxophone", "Lead Vocals" →
+       "lead vocals", "Remastered By" → "remastering" (MusicBrainz's attribute "re"); the tooltip "from Discogs:
+       …"; the list of types: "recording engineer", "mixer", "instruments" …
+    B) Ticked "additional" on the piano: "additional piano" at once.
+    C) Compact: the line says "recording engineer"; the preview "Eng Man: recording engineer".
+    D) Matrix view: the line of the engineer "recording engineer" (tooltip), its chip "recording engineer".
+    E) Works matrix (role names, the default): "Composed By [Additional]" → the column's role "additional composer" (also its
+       tooltip and the cell's chip); the roles of a cell's menu "composer", "lyricist", "writer", "publisher", "sub-publisher".
+    F) The log of what is staged: "Staged: Eng Man: recording engineer → …", "… additional composer …", "… remastering …", "…
+       guest saxophone …".
+    [3.38.10] The phrases of all types of the test page are MusicBrainz's (mb_link_types.json)."""
+    # [3.38.10] MusicBrainz's phrases of every type of the test page: the type of the same name and entities in mb_link_types.json
+    # (tools/mb_link_types.py, from MusicBrainz's repository)
+    MBT = [t for t in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mb_link_types.json')))['types'].values() if t.get('link_phrase') is not None]
+    PH = {}
+    for i, lt in H.LTS.items():
+        m = [t for t in MBT if t['name'] == lt['name'] and t['type0'] == lt['type0'] and t['type1'] == lt['type1']]
+        if m:
+            PH[i] = (m[0]['link_phrase'], m[0]['reverse_link_phrase'])
+    saved = {i: (H.LTS[i]['link_phrase'], H.LTS[i]['reverse_link_phrase']) for i in PH}
+    for i, (f, r) in PH.items():
+        H.LTS[i]['link_phrase'], H.LTS[i]['reverse_link_phrase'] = f, r
+    # mastering on the release with MusicBrainz's attribute "re" (remastering)
+    H.attr(952, 're', 952)
+    H.LTS[42]['attributes']['952'] = {'min': 0, 'max': None}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    CREDITS = [('Eng Man', 'Engineer [Recording]', 3201), ('Rec Man', 'Recorded By', 3202), ('Mix Man', 'Mixed By', 3203), ('Prod Man', 'Additional Producer', 3204),
+               ('Keys Man', 'Piano', 3205), ('Sax Man', 'Saxophone [Guest]', 3206), ('Voc Man', 'Lead Vocals', 3207), ('Comp Man', 'Composed By [Additional]', 3208),
+               ('Remaster Man', 'Remastered By', 3209)]
+    for n, _r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3100), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => { const tr = g.querySelector('tr.dci-row'); const d = tr && tr.querySelector('.dci-drole');
+      const t = tr && tr.querySelector('[data-f=type]'); return [g.querySelector('.dci-gname strong').textContent.trim(), d ? [d.textContent.trim(), d.title, d.dataset.raw,
+      t ? (t.options[t.selectedIndex] || {}).text : ''] : null]; })))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            a = pg.evaluate(ROWS)
+            for k, v in a.items():
+                print('  ', k, v)
+            opts = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Eng Man');
+              return [...g.querySelector('[data-f=type]').options].map(o => o.text); })()""")
+            iopts = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Keys Man');
+              return [...g.querySelector('[data-f=type]').options].map(o => o.text); })()""")
+            print('   Typen (Eng Man):', opts, '| (Keys Man):', iopts)
+            want = {'Eng Man': 'recording engineer', 'Rec Man': 'recording engineer', 'Mix Man': 'mixer', 'Prod Man': 'additional producer', 'Keys Man': 'piano',
+                    'Sax Man': 'guest saxophone', 'Voc Man': 'lead vocals', 'Remaster Man': 'remastering'}
+            ok_a = all(a.get(k) and a[k][0] == v for k, v in want.items()) and a['Eng Man'][1] == 'from Discogs: Engineer [Recording]' and a['Eng Man'][2] == 'Engineer [Recording]' \
+                and a['Eng Man'][3] == 'recording engineer' and 'mixer' in opts and 'producer' in opts and 'instruments' in iopts and 'vocals' in iopts
+            # B) "additional" on the piano
+            rid = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Keys Man').querySelector('tr.dci-row').dataset.row")
+            pg.locator(f'tr[data-row="{rid}"] [data-f=flag][value=additional]').check()
+            pg.wait_for_timeout(400)
+            b1 = pg.evaluate(ROWS)['Keys Man'][0]
+            print('B) additional:', b1)
+            ok_b = b1 == 'additional piano'
+            # C) compact, preview
+            pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+            cl = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Eng Man');
+              const b = g.querySelector('.dci-cl-role'); return b ? [b.textContent.trim(), b.title.split('\\n')[0]] : null; })()""")
+            pg.click('[data-act=preview]'); pg.wait_for_timeout(500)
+            pv = pg.evaluate("[...document.querySelectorAll('[data-el=preview] li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Eng Man|Keys Man/.test(t))")
+            print('C) kompakt:', cl, '| Vorschau:', pv)
+            ok_c = cl == ['recording engineer', 'from Discogs: Engineer [Recording]'] and any(t.startswith('Eng Man: recording engineer') for t in pv) \
+                and any(t.startswith('Keys Man: additional piano') for t in pv)
+            pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+            # E) works matrix ("names", the default): the head of Comp Man's column, a cell, the roles of a cell's menu
+            colkey = pg.evaluate("[...document.querySelectorAll('.dci-matrix th[data-colhead]')].find(th => th.textContent.includes('Comp Man')).dataset.colhead")
+            head = pg.evaluate(f"[...document.querySelectorAll('[data-colhead=\"{colkey}\"] .dci-mx-role')].map(x => [x.textContent.trim(), x.title])")
+            cell = f'.dci-matrix tr[data-work="0"] .dci-mx-cell[data-col="{colkey}"]'
+            ctitle = pg.evaluate(f"(document.querySelector('{cell} .dci-mxchip') || {{}}).title || ''")
+            pg.click(f'{cell} [data-act=mx-menu]'); pg.wait_for_timeout(300)
+            menu = pg.evaluate("[...document.querySelectorAll('.dci-mx-menu label.dci-check')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())")
+            pg.click('[data-act=mx-menu-close]'); pg.wait_for_timeout(200)
+            print('E) Werkmatrix – Kopf:', head, '| Zelle:', ctitle, '| Menü:', menu)
+            ok_e = head == [['additional composer', 'additional composer – drop a track group here: this role only for the works of its tracks']] \
+                and ctitle.startswith('additional composer') and 'composer' in menu and 'lyricist' in menu and 'writer' in menu and 'publisher' in menu \
+                and 'sub-publisher' in menu
+            # F) the log of what is staged
+            pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+            staged = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(t => /^Staged: (Eng Man|Comp Man|Remaster Man|Sax Man)/.test(t))")
+            print('F) Protokoll:', sorted(set(t.split(' → ')[0] for t in staged)))
+            ok_f = any(t.startswith('Staged: Eng Man: recording engineer → ') for t in staged) and any(t.startswith('Staged: Comp Man: additional composer → ') for t in staged) \
+                and any(t.startswith('Staged: Remaster Man: remastering → ') for t in staged) and any(t.startswith('Staged: Sax Man: guest saxophone → ') for t in staged)
+            print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| E)', ok_e, '| F)', ok_f)
+            print('Fehler:', errs)
+            results += [ok_a, ok_b, ok_c, ok_e, ok_f, not errs]
+            b.close()
+        H.ENTRIES_VIEW = 'matrix'
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            d = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Eng Man');
+              const r = g.querySelector('.dci-em-role'); return r ? [r.textContent.trim(), r.title] : null; })()""")
+            pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+            chip = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Eng Man');
+              const c = g.querySelector('.dci-em-chipname'); return c ? c.textContent.replace(/\\s+/g, ' ').trim() : null; })()""")
+            print('D) Matrix:', d, '| Chip:', chip)
+            ok_d = d == ['recording engineer', 'from Discogs: Engineer [Recording]'] and chip == 'recording engineer'
+            print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d)
+            print('Fehler:', errs)
+            results += [ok_d, not errs]
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.discogs_release = orig
+        for i, (f, r) in saved.items():
+            H.LTS[i]['link_phrase'], H.LTS[i]['reverse_link_phrase'] = f, r
+        H.LTS[42]['attributes'].pop('952', None)
+        H.ATTRS.pop(952, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+        H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

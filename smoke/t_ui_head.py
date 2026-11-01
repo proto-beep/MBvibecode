@@ -455,7 +455,7 @@ def case_bar():
         print('   „oben behalten“ aus → Pool eingeklappt weg:', pg.locator('.dci-pools-kept').count() == 0)
         # 4) instruments and producer
         def rowinfo(raw):
-            tr = pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole', has_text=raw)).first
+            tr = pg.locator('tr.dci-row').filter(has=pg.locator(f'.dci-drole[data-raw="{raw}"]')).first
             typ = tr.locator('[data-f=type]').evaluate("s => s.options[s.selectedIndex] ? s.options[s.selectedIndex].text : ''")
             prim = tr.locator('[data-f=primary]').input_value() if tr.locator('[data-f=primary]').count() else ''
             rc = tr.locator('[data-f=role-credit]').input_value() if tr.locator('[data-f=role-credit]').count() else ''

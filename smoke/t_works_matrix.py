@@ -171,7 +171,7 @@ def case_matrixcols():
         pg.wait_for_timeout(500)
 
         # A) "Directed By": please choose; nothing staged until then
-        row = lambda: pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole', has_text='Directed By')).first
+        row = lambda: pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole[data-raw="Directed By"]')).first
         typ = lambda: row().locator('[data-f=type]').evaluate("s => s.options[s.selectedIndex] ? s.options[s.selectedIndex].text : ''")
         ask = re.sub(r'\s+', ' ', row().locator('.dci-type-ask').inner_text())
         planned = lambda: pg.evaluate("[...document.querySelectorAll('[data-status]')].length") and row().locator('.dci-status').inner_text()

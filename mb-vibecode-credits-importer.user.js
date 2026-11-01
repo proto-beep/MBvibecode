@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.9
+// @version      3.38.10
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.9
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.9
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.10
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.10
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.9';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.10';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1044,6 +1044,7 @@
       "matrix.notesFrom": "Tracks from the {src} notes: “{text}”",
       "role.notesTracks": "Tracks {list} from the notes",
       "role.typoRead": "Read as “{read}” (written “{written}”)",
+      "role.fromSource": "from {source}: {raw}",
       "stack.noteDown": "Read from lines with the name above its instruments – their order was not clear.",
       "stack.noteUp": "Read from lines with the instruments above the name – their order was not clear.",
       "stack.flipUp": "⇅ Instruments above the names",
@@ -6589,6 +6590,26 @@
       perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF in the beta)', since: '3.34.6' },
   ];
 
+  /**
+   * [177] (3.38.10) The name MusicBrainz gives a relationship on the page of its recording, release or work: the link phrase of
+   * its type – the reverse one when that entity is the second one of the type (artist → recording: "recording engineer"), else
+   * the forward one (release → series: "part of"; of two entities of one kind, the reverse one when the page's entity was
+   * entered first) – with the values of its attributes: "additional recording engineer", "co-producer", "guest piano", "lead
+   * vocals"; without attributes the bare phrase ("instruments", "recording engineer"). MusicBrainz's placeholders: {name},
+   * {name:text}, {name:text|otherwise}, % = the values ("piano and organ"). values: Map of a root attribute's name → its values.
+   */
+  function linkPhraseOf(lt, level, values, enteredFirst = true, plain = false) {
+    if (!lt) return '';
+    const reverse = plain ? true : lt.type0 === lt.type1 ? !!enteredFirst : lt.type1 === level;
+    const raw = String((reverse ? lt.reverse_link_phrase : lt.link_phrase) || lt.link_phrase || lt.name || '');
+    const list = (vs) => (vs.length < 2 ? vs[0] || '' : `${vs.slice(0, -1).join(', ')} and ${vs[vs.length - 1]}`);
+    return raw.replace(/\{([^{}:|]+)(?::([^{}|]*))?(?:\|([^{}]*))?\}/g, (all, name, yes, no) => {
+      const vs = (values && values.get(norm(name))) || [];
+      if (vs.length) return yes != null ? yes.replace(/%/g, list(vs)) : list(vs);
+      return no != null ? no : '';
+    }).replace(/\s+/g, ' ').trim();
+  }
+
   if (IS_NODE_TEST) {
     module.exports = {
       splitTopLevel, parseRoles, parseRoleNotation, positionIndex, DISCOGS, SOURCES, groupCredits, groupCompanies,
@@ -6600,7 +6621,7 @@
       isPlaceholderTitle: (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || '')),
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
-      titleWordsOf, titlesFit, trackFit, CONNECTIONS,
+      titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf,
     };
     return;
   }
@@ -7739,6 +7760,52 @@
       }
     }
     return { attrs, noteText: target && target.kind === 'note' ? credit : '' };
+  }
+
+  /**
+   * [177] (3.38.10) A relationship as MusicBrainz names it on the page of the recording, release or work (collected item 177;
+   * maintainer: "es soll IMMER der Name des MB relationships dastehen und nicht des discogs relationships … bitte prüfe da alle
+   * rollen mit discogs ab und siehe zu, dass das dashboard das anzeigt, was in MB ankommt", "Zusätze im Namen? ja genau"): the
+   * link phrase of its type (linkPhraseOf) with the attributes that are staged, each under the name of its root attribute
+   * ("additional", "instrument", "vocal" …).
+   */
+  function mbPhraseOf(lt, row = null, attrs = []) {
+    if (!lt) return '';
+    const values = new Map();
+    for (const a of attrs || []) {
+      const t = a.type || {};
+      const root = t.root_id && t.root_id !== t.id ? idx().atById.get(t.root_id) : null;
+      const key = norm((root || t).name);
+      values.set(key, [...(values.get(key) || []), a.text_value != null ? String(a.text_value) : String(t.name || '')]);
+    }
+    return linkPhraseOf(lt, row ? row.level : '', values, row ? !!row.enteredFirst : true, !row);
+  }
+
+  /**
+   * [177] (3.38.10) The attributes of a row as they are staged (buildAttrs), for its name – an instrument or voice not known yet
+   * as typed, so the name says what is meant ("taischigoto", not "instruments").
+   */
+  function rowPhrase(row) {
+    // a row on Skip: the type it had (on the level that type is for)
+    const lt = currentLinkType(row) || (row.level === 'skip' && row.linkTypeId ? idx().ltById.get(row.linkTypeId) || null : null);
+    if (!lt) return '';
+    const on = row.level === 'skip' ? { level: lt.type0 === (row.entityType || 'artist') ? lt.type1 : lt.type0, enteredFirst: row.enteredFirst } : row;
+    const b = buildAttrs(row, lt);
+    if (!b.error) return mbPhraseOf(lt, on, b.attrs);
+    const root = primaryRootOf(lt);
+    const attrs = [];
+    if (root && norm(row.primaryText)) attrs.push({ type: { id: -1, name: String(row.primaryText).trim(), root_id: root.id } });
+    for (const { attr, hasChildren } of allowedRoots(lt)) if (!hasChildren && !attr.free_text && row.flags.has(norm(attr.name))) attrs.push({ type: attr });
+    return mbPhraseOf(lt, on, attrs);
+  }
+
+  /** [177] (3.38.10) A row's name for the dashboard: MusicBrainz's (rowPhrase), the source's role in the tooltip; without a type the source's. */
+  function roleLabel(row) {
+    const phrase = rowPhrase(row);
+    const raw = String(row.raw || '').trim();
+    const src = (row.supp && row.suppSource ? row.suppSource : S.source || {}).name || '';
+    const from = raw ? tr('role.fromSource', { source: src, raw }) : '';
+    return phrase ? { text: phrase, title: from } : { text: raw || '–', title: raw ? `${from} – ${tr('cl.noType')}` : '' };
   }
 
   // --- Relationship editor internals -------------------------------------------
@@ -16714,7 +16781,7 @@
     row.suggested = new Set(row.tracks);
     S.rows.push(row);
     renderGroups();
-    log('info', 'manualAdded', { name: e.name, role: row.raw || '–' });
+    log('info', 'manualAdded', { name: e.name, role: rowPhrase(row) || row.raw || '–' });
     $('toolbar').hidden = false;
     revealRow(row);
     refresh();
@@ -16751,10 +16818,11 @@
 
   function describeItem(it) {
     const date = it.date ? ` [${formatDateValue(it.date) || tr('date.endedOnly')}]` : '';
-    if (it.kind === 'work-link') return `${it.target.label} → ${it.workTitle} (${it.lt.name})${date}`;
-    // [E4] (3.34.29) a joined relationship names its instruments or voices
-    if (it.joinedItems) return `${it.artist.mbName || it.artist.name}: ${it.lt.name} (${it.joinedItems.flatMap(primaryAttrsOf).map((a) => a.type.name).join(', ')}) → ${it.target.label}${date}`;
-    return `${it.artist.mbName || it.artist.name}: ${it.lt.name} → ${it.target.label}${date}`;
+    // [177] (3.38.10) the relationship as MusicBrainz names it ("recording of", "guest piano", "co-producer")
+    if (it.kind === 'work-link') return `${it.target.label} → ${it.workTitle} (${mbPhraseOf(it.lt, { level: it.target.kind }, it.attrs || []) || it.lt.name})${date}`;
+    // [E4] (3.34.29) a joined relationship names its instruments or voices: its attributes are those of all of them ("piano
+    // and organ")
+    return `${it.artist.mbName || it.artist.name}: ${mbPhraseOf(it.lt, it.row, it.attrs || []) || it.lt.name} → ${it.target.label}${date}`;
   }
 
   /**
@@ -18167,7 +18235,9 @@
       role = `<input type="text" data-f="em-primary" list="dci-dl-${root.id}" value="${esc(r.primaryText)}" class="${valid ? '' : 'dci-invalid'}"
         aria-label="${esc(root.name)}" placeholder="${esc(root.name)}">${valid ? '' : `<span class="dci-mark dci-bad">${esc(markText(r))}</span>`}${wrote}`;
     } else {
-      role = `<span class="dci-em-role">${esc(r.raw || rowTypeName(r) || '–')}</span> <span class="dci-sub">→ ${esc(rowTypeName(r) || tr('cl.noType'))}</span>`;
+      // [177] (3.38.10) MusicBrainz's name, the source's role in the tooltip
+      const label = roleLabel(r);
+      role = `<span class="dci-em-role" data-raw="${esc(r.raw)}" title="${esc(label.title)}">${esc(label.text)}</span>${lt ? '' : ` <span class="dci-sub">→ ${esc(tr('cl.noType'))}</span>`}`;
     }
     const credit = lt && canRoleCredit(lt)
       ? `<input type="text" data-f="em-credit" value="${esc(r.roleCredit)}" placeholder="${esc(tr('em.noCredit'))}" aria-label="${esc(tr('em.creditLabel', { name }))}">${rcClearHtml()}` : '';
@@ -18213,7 +18283,8 @@
     const folded = !m.shared && S.emFold.has(fk);
     const fold = m.shared ? '' : `<button type="button" class="dci-textbtn dci-em-fold" data-act="em-fold" data-block="${esc(b.key)}" aria-expanded="${!folded}" title="${esc(tr(folded ? 'em.unfold' : 'em.fold'))}">${folded ? '▸' : '▾'}</button> `;
     const split = many && (b.kind === 'instrument' || b.kind === 'vocal') ? ` <button type="button" class="dci-textbtn" data-act="em-split" title="${esc(tr('em.splitTitle'))}">${esc(tr('em.split'))}</button>` : '';
-    const head = `<div class="dci-em-bhead">${fold}<strong>${esc(title)}</strong> <span class="dci-sub">→ ${esc((lt0 && lt0.name) || rowTypeName(r0) || tr('cl.noType'))}${many || nRows > 1 ? ` · ${esc(tr('em.joinedFrom', { n: nRows }))}` : ''}${!m.shared ? ` · ${esc(tr('em.evCount', { n: b.events.length }))}` : ''}</span>${split}</div>`;
+    // [177] (3.38.10) the type as MusicBrainz names it ("instruments", "mixer")
+    const head = `<div class="dci-em-bhead">${fold}<strong>${esc(title)}</strong> <span class="dci-sub">→ ${esc((lt0 && (mbPhraseOf(lt0) || lt0.name)) || rowTypeName(r0) || tr('cl.noType'))}${many || nRows > 1 ? ` · ${esc(tr('em.joinedFrom', { n: nRows }))}` : ''}${!m.shared ? ` · ${esc(tr('em.evCount', { n: b.events.length }))}` : ''}</span>${split}</div>`;
     if (folded) return `<div class="dci-em-block dci-em-folded" data-block="${esc(b.key)}">${head}</div>`;
     const flagNames = uniq(b.lines.flatMap((l) => {
       const lt = ltOf(l.rows[0]);
@@ -18352,7 +18423,8 @@
     const answers = chipAnswers(r);
     const ask = !!answers.length || chipNotesOpen(l);
     // a word MusicBrainz does not know: as written ("? Chaims")
-    const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || r.raw : rowTypeName(r) || r.raw) || '–';
+    // [177] (3.38.10) not an instrument: MusicBrainz's name of the relationship
+    const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || r.raw : rowPhrase(r) || r.raw) || '–';
     const flags = [...r.flags].filter((f) => ['additional', 'guest', 'solo'].includes(f)).map((f) => tr(`em.flag.${f}`));
     const credit = String(r.roleCredit || '').trim();
     const ids = l.rows.map((x) => x.id).join(',');
@@ -18384,8 +18456,9 @@
     if (by === 'role') {
       body = m.lines.map((l) => {
         const evs = m.events.filter((e) => l.ev.has(e.key));
+        // [177] (3.38.10) the chip names the relationship as MusicBrainz does: "→ type" only without one
         return `<div class="dci-em-cl dci-em-clrole${evs.length ? '' : ' dci-em-skip'}" data-rows="${l.rows.map((x) => x.id).join(',')}" data-line="${esc(l.id)}">${emChipHtml(l, null, a)}
-          <span class="dci-sub">→ ${esc(rowTypeName(l.rows[0]) || tr('cl.noType'))}</span>
+          ${ltOf(l.rows[0]) ? '' : `<span class="dci-sub">→ ${esc(tr('cl.noType'))}</span>`}
           ${evs.map((e) => `<span class="dci-em-evchip">${evShortHtml(e)}</span>`).join('') || `<span class="dci-sub">${esc(tr('em.noEvent'))}</span>`}
           <span class="dci-status" data-emrows="${l.rows.map((x) => x.id).join(',')}"></span></div>`;
       }).join('');
@@ -18456,7 +18529,7 @@
     const moved = at.map((i) => S.rows[i]).map((r, i) => ({ r, i })).sort((x, y) => rank.get(x.r) - rank.get(y.r) || x.i - y.i).map((x) => x.r);
     at.forEach((p, i) => { S.rows[p] = moved[i]; });
     const line = m.lines.find((l) => l.id === lineId);
-    log('info', 'emOrder', { name: a.mbName || a.name, role: line.rows[0].primaryText || line.rows[0].raw, n: to + 1 });
+    log('info', 'emOrder', { name: a.mbName || a.name, role: rowPhrase(line.rows[0]) || line.rows[0].primaryText || line.rows[0].raw, n: to + 1 });
     return true;
   }
 
@@ -18489,7 +18562,8 @@
    */
   function emTick(a, rows, evKey, on) {
     const inEv = rows.filter((r) => r.level !== 'skip' && eventKeyOf(r) === evKey);
-    const name = rows[0].primaryText || rows[0].raw;
+    // [177] (3.38.10) the line as MusicBrainz names it
+    const name = rowPhrase(rows[0]) || rows[0].primaryText || rows[0].raw;
     if (!on) {
       inEv.forEach((r) => Object.assign(r, { level: 'skip', levelTouched: true }));
       log('info', 'emOut', { name: a.mbName || a.name, role: name });
@@ -18831,8 +18905,11 @@
       return `<input type="text" data-f="role-text" list="dci-dl-roles-${esc(row.entityType)}" value="${esc(row.raw)}" placeholder="${esc(tr(row.company ? 'role.companyPlaceholder' : 'role.placeholder'))}" aria-label="${esc(tr('role.aria'))}">
         <button type="button" class="dci-textbtn" data-act="remove-row">${esc(tr('role.remove'))}</button>${asType}${notes}`;
     }
+    // [177] (3.38.10) MusicBrainz's name of the relationship, the source's role in the tooltip
+    const label = roleLabel(row);
+    const drole = `<div class="dci-drole" data-raw="${esc(row.raw)}" title="${esc(label.title)}">${esc(label.text)}</div>`;
     if (row.company) {
-      return `<div class="dci-drole">${esc(row.raw)}</div>${srcMarksHtml(row)}${typoHtml(row)}
+      return `${drole}${srcMarksHtml(row)}${typoHtml(row)}
         ${row.pcFromCompany ? `<div class="dci-note dci-pcfrom">${esc(tr('role.pcFromCompany', { name: row.pcFromCompany, where: row.pcWhere || '' }))}${row.pcFromKey
           ? ` <button type="button" class="dci-textbtn" data-act="pc-as-label" title="${esc(tr('role.pcAsLabelTitle'))}">${esc(tr('role.pcAsLabel'))}</button>` : ''}</div>` : ''}
         <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr(row.notesFrom ? ((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.notesOnly' : 'role.companyNotesTracks') : (S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))}${row.fromNotes && !row.notesFrom ? ` ${notesLineInfo(row)}` : ''} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
@@ -18842,8 +18919,7 @@
     const where = [];
     if (row.dSpec) where.push(row.dSpec);
     if (row.dPositions.length) where.push(tr('role.tracks', { list: row.dPositions.join(', ') }));
-    const roleHtml = esc(row.raw).replace(/\[[^\]]*\]/g, (m) => `<span class="dci-bracket">${m}</span>`);
-    return `<div class="dci-drole">${roleHtml}</div>${srcMarksHtml(row)}${typoHtml(row)}
+    return `${drole}${srcMarksHtml(row)}${typoHtml(row)}
       ${row.dSplitFrom ? `<div class="dci-sub">${esc(tr('role.splitFrom', { raw: row.dSplitFrom }))}</div>` : ''}
       ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
       <div class="dci-sub">${row.fromNotes ? `${notesLineInfo(row)} ${esc(tr('notes.credit'))}${where.length ? ` (${esc(where.join('; '))})` : ''}`
@@ -18877,7 +18953,8 @@
 
   function typeCell(row) {
     if (row.level === 'skip') return `<span class="dci-muted">${esc(tr('type.skipped'))}</span>`;
-    const options = typesFor(row.level, row.entityType).map((l) => `<option value="${l.id}" ${l.id === row.linkTypeId ? 'selected' : ''}>${esc(l.name)}</option>`).join('');
+    // [177] (3.38.10) as MusicBrainz names them ("recording engineer", not "recording"; data-name: the type's name)
+    const options = typesFor(row.level, row.entityType).map((l) => `<option value="${l.id}" data-name="${esc(l.name)}" ${l.id === row.linkTypeId ? 'selected' : ''}>${esc(mbPhraseOf(l, row) || l.name)}</option>`).join('');
     return `<select data-f="type" aria-label="${esc(tr('type.aria'))}">
         <option value="">${esc(tr('type.choose'))}</option>${options}
       </select>${directionHtml(row, currentLinkType(row))}`;
@@ -21373,11 +21450,11 @@
     const lt = currentLinkType(row);
     const open = (cls, text, title = '') => `<button type="button" class="${cls}" data-act="row-open"${title ? ` title="${esc(title)}"` : ''}>${text}</button>`;
     const parts = [`<button type="button" class="dci-cl-tgl" data-act="row-open" aria-expanded="false" title="${esc(tr('cl.openTitle'))}" aria-label="${esc(tr('cl.openTitle'))}">▸</button>`,
-      open('dci-cl-role', esc(row.raw || (lt && lt.name) || '–'), tr('cl.openTitle'))];
+      // [177] (3.38.10) MusicBrainz's name of the relationship ("recording engineer"), the source's role in the tooltip
+      `<button type="button" class="dci-cl-role" data-act="row-open" data-raw="${esc(row.raw)}" title="${esc([roleLabel(row).title, tr('cl.openTitle')].filter(Boolean).join('\n'))}">${esc(roleLabel(row).text)}</button>`];
     // [3.30.1] also on Skip (grey): the level stays where it is when it is switched by a click (item 91)
     {
-      const what = [rowTypeName(row), row.primaryText].filter(Boolean).map(esc).join(' · ');
-      parts.push(`<span class="dci-cl-type"><span aria-hidden="true">→</span> ${what || `<span class="dci-cl-none">${esc(tr('cl.noType'))}</span>`}${row.roleCredit
+      parts.push(`<span class="dci-cl-type">${ltOf(row) ? '' : `<span aria-hidden="true">→</span> <span class="dci-cl-none">${esc(tr('cl.noType'))}</span>`}${row.roleCredit
         ? ` <span class="dci-cl-credit">${esc(tr('common.quoted', { text: row.roleCredit }))}</span>` : ''}</span>`);
       // [3.28.0] the artist credit of this row when the entry is credited in more than one way (item 61; the head has the rest)
       const a = S.artists.get(row.artistKey);
@@ -21749,6 +21826,13 @@
         const allThere = row.existingAll || (info.existing > 0 && !info.ready && !info.noWork && !info.issues.length);
         rowEl.classList.toggle('dci-exists', allThere);
         rowEl.classList.toggle('dci-exists-some', !allThere && (info.existing > 0 || info.loose > 0) && info.ready > 0);
+        // [177] (3.38.10) the name follows the type, the instrument and the attributes
+        const dr = rowEl.querySelector('.dci-drole');
+        if (dr) {
+          const lb = roleLabel(row);
+          if (dr.textContent !== lb.text) dr.textContent = lb.text;
+          if (dr.title !== lb.title) dr.title = lb.title;
+        }
         // [3.27.0] the compact line follows every change of its row
         const cl = rowEl.querySelector('.dci-c-cline');
         if (cl && compactFor(row)) {
@@ -21854,11 +21938,14 @@
         if (a.text_value != null) return `${a.type.name}: ${tr('common.quoted', { text: a.text_value })}`;
         return a.type.name;
       }).join(', ');
+      // (the phrase names the attributes already: only credited names in brackets)
+      const credText = it.attrs.filter((a) => a.credited_as).map((a) => tr('preview.attrCredit', { name: a.type.name, credit: a.credited_as })).join(', ');
       const line = it.kind === 'work-link'
         ? [tr('preview.linkWork', { title: it.workTitle }) + (attrText ? ` (${attrText})` : '')]
         : [it.lt.type0 === it.lt.type1
           ? phraseSentence(it.lt, ...(it.row.enteredFirst ? [it.artist.mbName, label] : [label, it.artist.mbName])) + (attrText ? ` (${attrText})` : '')
-          : `${it.artist.mbName}: ${it.lt.name}${attrText ? ` (${attrText})` : ''}`];
+          // [177] (3.38.10) as MusicBrainz names it, with its attributes; credited names and texts in brackets
+          : `${it.artist.mbName}: ${mbPhraseOf(it.lt, it.row, it.attrs) || it.lt.name}${credText ? ` (${credText})` : ''}`];
       if (it.credit) line.push(tr('preview.artistCredit', { credit: it.credit }));
       if (it.date) line.push(tr('preview.date', { date: formatDateValue(it.date) || tr('date.endedOnly') }));
       if (it.noteText) line.push(tr('preview.noteOnly', { text: it.noteText }));
@@ -22493,13 +22580,26 @@
   S.mxAddCol = null;
   S.mxColDate = new Map();
 
-  function roleCode(typeName, sub = false) {
+  // [177] (3.38.10) label: the relationship as MusicBrainz names it, with its attributes ("sub-publisher"; shown with "names"
+  // instead of the codes)
+  function roleCode(typeName, sub = false, label = '') {
     const n = norm(typeName);
-    if (S.roleCodes === 'names') return n === 'publishing' && sub ? `${typeName} (sub)` : typeName;
-    return (ROLE_CODES[S.roleCodes] || {})[n === 'publishing' && sub ? 'publishing+sub' : n] || typeName;
+    if (S.roleCodes === 'names') {
+      const t = label || typeName;
+      return n === 'publishing' && sub && !/\bsub/i.test(t) ? `${t} (sub)` : t;
+    }
+    return (ROLE_CODES[S.roleCodes] || {})[n === 'publishing' && sub ? 'publishing+sub' : n] || label || typeName;
   }
 
   const rowTypeName = (row) => (currentLinkType(row) || {}).name || row.types[0] || '';
+  /**
+   * [177] (3.38.10) A work relationship known by its type's name (one in MusicBrainz, a date to add to it) as MusicBrainz names it,
+   * with the attributes it has ("additional composer").
+   */
+  const workTypePhrase = (name, entityType, attrNames = []) => {
+    const lt = typesFor('work', entityType || 'artist').find((t) => norm(t.name) === norm(name));
+    return lt ? linkPhraseOf(lt, 'work', new Map(attrNames.map((a) => [norm(a), [String(a)]]))) : '';
+  };
 
   /** Work rows of the matrix: each existing work, the planned work, or "no work yet" per track. */
   // --- Attributes of the link recording → work (live, cover, medley …) --------------------------------
@@ -24207,15 +24307,19 @@
     const sugg = st.active.filter((r) => isSuggestedCell(r, mrow.i));
     const chip = (kind, text, title) => `<span class="dci-mxchip dci-mxchip-${kind}" title="${esc(title)}">${text}</span>`;
     const codes = [
-      ...st.existing.map((r) => chip('mb', `${esc(roleCode(r.type, (r.attrs || []).includes('sub')))}${LOCK_SVG}`, tr('matrix.inMb', { type: r.type }))),
+      ...st.existing.map((r) => {
+        const label = workTypePhrase(r.type, col.entityType, r.attrs || []) || r.type;
+        return chip('mb', `${esc(roleCode(r.type, (r.attrs || []).includes('sub'), label))}${LOCK_SVG}`, tr('matrix.inMb', { type: label }));
+      }),
       ...st.active.map((r) => {
         const kind = !mrow.work ? 'wait' : sugg.includes(r) ? 'sugg' : 'on';
         const date = r.date && hasDateInput(r.date) ? ` · ${formatDateValue(validateDateFields(r.date).value) || ''}` : '';
         const why = !sugg.includes(r) ? (r.notesFrom && r.notesTracks && r.notesTracks.has(mrow.i) ? ` – ${tr('matrix.notesReason', { text: r.notesFrom })}` : '')
           : r.suggest.text ? ` – ${tr('matrix.notesReason', { text: r.suggest.text })}`
           : r.suggest.source === 'commissioned' ? ` – ${tr('matrix.commissionedReason')}` : '';
-        return chip(kind, `${esc(roleCode(rowTypeName(r), r.flags.has('sub')))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
-          `${rowTypeName(r)}${date}${why}`);
+        const label = rowPhrase(r) || rowTypeName(r);
+        return chip(kind, `${esc(roleCode(rowTypeName(r), r.flags.has('sub'), label))}${r.ownDate ? '<sup>⌚</sup>' : ''}${kind === 'wait' ? ` <span class="dci-mxwait">${esc(tr('matrix.waiting'))}</span>` : ''}`,
+          `${label}${date}${why}`);
       }),
     ].join('');
     const title = st.reason ? tr(col.entityType === 'artist' ? 'matrix.reasonSelf' : 'matrix.reason', { names: st.reason, publisher: col.name })
@@ -24228,7 +24332,8 @@
     // Dates for the relationships already in MusicBrainz (an edit of each), with × to take them back until staged
     const fills = fillsOfCell(col, mrow).map(([key, f]) => {
       const staged = S.filledDates.has(key);
-      return `<span class="dci-mx-fill" title="${esc(tr(staged ? 'matrix.fillStaged' : 'matrix.fillTitle', { type: f.type }))}">⌚ ${esc(roleCode(f.type, false))} ${esc(formatDateValue(validateDateFields(f.date).value) || '')}${staged ? ' ✓'
+      const label = workTypePhrase(f.type, col.entityType) || f.type;
+      return `<span class="dci-mx-fill" title="${esc(tr(staged ? 'matrix.fillStaged' : 'matrix.fillTitle', { type: label }))}">⌚ ${esc(roleCode(f.type, false, label))} ${esc(formatDateValue(validateDateFields(f.date).value) || '')}${staged ? ' ✓'
         : `<button type="button" class="dci-iconbtn" data-act="mx-fill-remove" data-key="${esc(key)}" aria-label="${esc(tr('matrix.fillRemove'))}" title="${esc(tr('matrix.fillRemove'))}">×</button>`}</span>`;
     }).join('');
     const fillable = datelessExisting(col, mrow, st).length ? ' data-fill="1"' : '';
@@ -24243,8 +24348,14 @@
   function cellMenuHtml(col, mrow, st) {
     const types = typesFor('work', col.entityType);
     const activeKeys = new Set(st.active.map((r) => `${rowTypeName(r)}|${r.flags.has('sub')}`));
+    // [177] (3.38.10) each role as MusicBrainz names it ("publisher", "sub-publisher")
+    const label = (lt, sub) => {
+      const plain = mbPhraseOf(lt) || lt.name;
+      const withSub = sub ? linkPhraseOf(lt, 'work', new Map([['sub', ['sub']]])) : plain;
+      return sub && withSub === plain ? `${plain} (sub)` : withSub;
+    };
     const option = (lt, sub) => `<label class="dci-check"><input type="checkbox" data-f="mx-role" value="${lt.id}${sub ? ':sub' : ''}" ${activeKeys.has(`${lt.name}|${sub}`) ? 'checked' : ''}>
-      ${S.roleCodes === 'names' ? '' : `<span class="dci-code">${esc(roleCode(lt.name, sub))}</span> `}${esc(lt.name)}${sub ? ' (sub)' : ''}</label>`;
+      ${S.roleCodes === 'names' ? '' : `<span class="dci-code">${esc(roleCode(lt.name, sub))}</span> `}${esc(label(lt, sub))}</label>`;
     return `<div class="dci-mx-menu" role="group" aria-label="${esc(tr('matrix.menuTitle'))}">
       ${types.map((lt) => option(lt, false) + (norm(lt.name) === 'publishing' ? option(lt, true) : '')).join('')}
       <div class="dci-mbdate dci-mx-date"><span class="dci-sub">${esc(tr('matrix.ownDate'))}</span>${mbDateFields('xd', S.mxMenu.date || emptyDate(), true)}
@@ -24301,7 +24412,7 @@
     }
     const nWorks = matrixRows().filter((m) => { const st = cellState(col, m); return st.active.length || st.existing.length; }).length;
     const roles = defaultRowsOf(col).filter((r, k, all) => all.findIndex((x) => rowTypeName(x) === rowTypeName(r) && x.flags.has('sub') === r.flags.has('sub')) === k)
-      .map((r) => `<span class="dci-mx-role" data-tgrole="${esc(r.id)}" title="${esc(tr('matrix.roleDropTitle', { role: rowTypeName(r) }))}">${esc(roleCode(rowTypeName(r), r.flags.has('sub')))}</span>`).join('');
+      .map((r) => `<span class="dci-mx-role" data-tgrole="${esc(r.id)}" title="${esc(tr('matrix.roleDropTitle', { role: rowPhrase(r) || rowTypeName(r) }))}">${esc(roleCode(rowTypeName(r), r.flags.has('sub'), rowPhrase(r)))}</span>`).join('');
     // Suggested cells (publisher evidence, Discogs notes, "Commissioned By" without a track list)
     const nSugg = col.rows.some((r) => r.suggest) ? matrixRows().filter((m) => cellState(col, m).active.some((r) => isSuggestedCell(r, m.i))).length : 0;
     let pub = nSugg ? `<span class="dci-sub dci-mx-suggn">${esc(tr('matrix.suggCount', { n: nSugg }))}</span>` : '';
@@ -24641,7 +24752,7 @@
         resolveRowType(row);
         S.rows.push(row);
         S.mxAddCol = null;
-        log('info', 'matrixColumn', { name: a.mbName || a.name, role: lt.name });
+        log('info', 'matrixColumn', { name: a.mbName || a.name, role: rowPhrase(row) || lt.name });
         renderGroups();
         break;
       }

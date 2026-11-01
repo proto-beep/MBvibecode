@@ -333,7 +333,7 @@ def case_quickswitch():
         pg.click('[data-act=text-load]')
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
         pg.wait_for_timeout(1200)
-        groups = pg.evaluate("[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim())])")
+        groups = pg.evaluate("[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.dataset.raw)])")
         # [3.32.4] the name only (the head has the tag of its kind before it)
         cols = pg.evaluate("[...document.querySelectorAll('.dci-matrix th[data-colhead] .dci-mx-colname')].map(x => (x.querySelector('.dci-mblink, strong') || x).textContent.replace(/^MB/, '').trim().split(/\\s/).slice(0, 2).join(' '))")
         print('E) Einträge:', groups, '| Spalten:', cols)
@@ -348,7 +348,7 @@ def case_quickswitch():
 
 
 # [3.33.1] a row of the dashboard by its role: [type, role credit, rule ids]
-ROW = """(role) => { const tr = [...document.querySelectorAll('tr.dci-row')].find(r => (r.querySelector('.dci-drole') || {}).textContent.trim() === role);
+ROW = """(role) => { const tr = [...document.querySelectorAll('tr.dci-row')].find(r => (r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim() === role);
   if (!tr) return null; const t = tr.querySelector('[data-f=type]'); const c = tr.querySelector('[data-f=role-credit]');
   return [t ? (t.selectedOptions && t.selectedOptions[0] ? t.selectedOptions[0].textContent.trim() : t.value) : '', c ? c.value : '', [...tr.querySelectorAll('.dci-ruleid')].map(x => x.textContent.trim()).join(' ')]; }"""
 TEST = """(text) => { const t = document.querySelector('#dci-rules [data-rf=test]'); t.value = text; t.dispatchEvent(new Event('input', { bubbles: true }));
@@ -683,7 +683,7 @@ def case_wqnew():
         if b2:
             pg.locator('.dci-bass-ask[data-question=Q901] [data-act=instr-pick][data-instr=piano]').first.evaluate('b => b.click()')
             pg.wait_for_timeout(400)
-        b3 = pg.evaluate("""(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === 'keys');
+        b3 = pg.evaluate("""(() => { const tr = [...document.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === 'keys');
           return tr ? [(tr.querySelector('[data-f=type]').selectedOptions[0] || {}).text, tr.querySelector('[data-f=primary]').value, tr.querySelector('[data-f=role-credit]').value] : null; })()""")
         print('B) ohne Instrumente:', b0, '| gespeichert:', b1, '| Frage:', b2, '| piano:', b3)
         results.append(b0.startswith('Q901: the field “options”') and b1 == {'set': {'base': 'keys', 'credit': 'keys', 'options': ['keyboard', 'synthesizer', 'piano']}, 'was': {}, 'add': 'question'}

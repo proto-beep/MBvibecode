@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-01 | 3.38.8 – 3.38.9 | 1.9.2 – 1.10.0 |
+| 2026-11-01 | 3.38.8 – 3.38.10 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
@@ -97,6 +97,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-01
+
+### Import 3.38.10
+
+#### Changed
+
+- **Every relationship as MusicBrainz names it** (collected item 177; maintainer: "es soll IMMER der Name des MB relationships dastehen und nicht des discogs relationships. bspw habe ich … "Engineer [Recording]" als relationship gesehen dabei lautet das relationship "recording engineer for / recording engineer" … bitte prüfe da alle rollen mit discogs ab und siehe zu, dass das dashboard das anzeigt, was in MB ankommt", "Auch in der Typ-Auswahl? ja", "Zusätze im Namen? ja genau"): the rows, the list of types, the matrix of an entry and its chips, the compact lines, the works matrix (with role names), the preview and the log of what is staged show the name MusicBrainz gives the relationship on the page of the recording, release or work – "Engineer [Recording]" and "Recorded By" → recording engineer, "Mixed By" → mixer, "Additional Producer" → additional producer, "Saxophone [Guest]" → guest saxophone, "Remastered By" → remastering, "Composed By [Additional]" → additional composer, "publisher" and "sub-publisher" in the works matrix –, with the attributes ticked. The pointer on the name shows the source's role: "from Discogs: Engineer [Recording]". The compact line says only that name ("▸ double bass", until now "▸ Bass → instrument · double bass"; a row on Skip keeps it), the head of a block of the matrix "Mixed By → mixer". Messages and questions about a credit of the source keep its wording.
+- **Checked for every role of the register:** the ~1,200 Discogs roles of the test corpus against MusicBrainz's relationship types and their phrases (taken from MusicBrainz's own repository).
 
 ### Import 3.38.9 · COMPANION 1.10.0
 

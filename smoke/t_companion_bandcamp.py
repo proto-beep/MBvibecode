@@ -77,7 +77,7 @@ def case_bcview():
 
     def row_of(pg, name, role):
         return pg.evaluate("""([n, r]) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === n);
-      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === r); return tr ? tr.dataset.row : null; }""", [name, role])
+      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === r); return tr ? tr.dataset.row : null; }""", [name, role])
 
 
     def poll(pg, js, timeout=20):
@@ -147,7 +147,7 @@ def case_bcview():
         bc.locator('.tralbum-credits .dci-dg-mark').nth(1).click()
         H.wait_for(pg, f"{LOGS}.some(x => /From Bandcamp: Bob Mix/.test(x))", 15)
         d1 = [x for x in pg.evaluate(LOGS) if 'From Bandcamp' in x]
-        flash = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').textContent.trim())")
+        flash = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').dataset.raw.trim())")
         print('D) Protokoll:', d1, '| hervorgehoben:', flash)
         results.append(d1 == ['From Bandcamp: Bob Mix – Mixed By'] and flash == ['Mixed By'])
         H.nav_switch(pg, 'data-click-toggle')
@@ -175,7 +175,7 @@ def case_bcview():
         links = pg.evaluate("""(() => [...document.querySelectorAll('.dci-bcpages')].map(d => [d.closest('section').querySelector('.dci-gname strong').textContent.trim(),
       d.textContent.replace(/\\s+/g, ' ').trim(), [...d.querySelectorAll('a')].map(a => a.href)]))()""")
         studio = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Studio X');
-      return g ? [...g.querySelectorAll('tr.dci-row')].map(t => t.querySelector('.dci-drole').textContent.trim() + ' · ' + t.querySelector('[data-tcount]').textContent.trim()) : null; })()""")
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(t => t.querySelector('.dci-drole').dataset.raw.trim() + ' · ' + t.querySelector('[data-tcount]').textContent.trim()) : null; })()""")
         print('F) Track-Seiten:', links, '| Studio X:', studio)
         f1 = jump(pg, bc, 'Anna Viola', 'Viola', "location.pathname === '/track/song-2' && !!document.querySelector('.dci-bc-hl')")
         poll(bc, "document.querySelectorAll('.tralbum-credits .dci-dg-mark').length >= 1")
@@ -291,7 +291,7 @@ def case_bcoff():
 
     def row(pg, name, role):
         return pg.evaluate("""([n, r]) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === n);
-      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === r);
+      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === r);
       if (!tr) return null; const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
       return [tr.dataset.row, lv ? lv.dataset.level : '', !!tr.querySelector('.dci-srcoff')]; }""", [name, role])
 
@@ -322,7 +322,7 @@ def case_bcoff():
         # A) the pointer resting on a mark shows its row; a click switches the credit off
         bc.locator('.tralbum-credits .dci-dg-mark').nth(1).hover()
         H.wait_for(pg, "document.querySelectorAll('tr.dci-flash').length > 0", 10)
-        hidden = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').textContent.trim())")
+        hidden = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').dataset.raw.trim())")
         shown = [x for x in pg.evaluate(LOGS) if 'From Bandcamp' in x]
         bc.mouse.move(5, 5)
         level0 = row(pg, 'Bob Mix', 'Mixed By')[1]
