@@ -619,6 +619,8 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #   relcheck: the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
                                 #     retried, a background page's beat counts 75 s ([Companion 1.9.1] ten minutes: one 5 min old keeps the marks)
                                 #   trackmarks: a status mark on each Discogs track line, checked per track on the release page
+                                #   trackcells: 3.38.8 / companion 1.9.2 (174): a tracklist as a table with credits on tracks – marks inside the
+                                #     cell before the line with the role, none where the role is not on the line, no mark in a row (three cells)
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
