@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-01 | 3.38.8 – 3.38.10 | 1.9.2 – 1.10.0 |
+| 2026-11-01 | 3.38.8 – 3.38.11 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
@@ -97,6 +97,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-01
+
+### Import 3.38.11
+
+#### Changed
+
+- **The head of an entry names it as the source does only when all its roles carry that spelling** (collected item 175; maintainer, Discogs 2631299 "Boston Duets": "die artistnamen in den instrumentenfeldern werden als "Lake*" bei Discgos angezeigt, dabei ist das nur der name, der in den writing credits steckt", "nein ich meinte das Lake* das von Discogs gezogen wurde und im Kopf des Eintrags stand."): Oliver Lake, credited "Lake*" only in the writing credits, keeps "Oliver Lake" in the head; the chip says which roles carry the other spelling ("as “Lake” for writer"). "Artist credit for all roles" is prefilled only with a spelling all roles carry (until now with the one spelling of some of them – "Set for all" then credited the flute "Lake" too).
+- **"Credited as" for every entry** (collected item 176; maintainer: "ich weiß nicht, wo ich eintragen soll bzw. wo steht, falls ein artist etc. auf den jeweiligen releases/recordings anders genannt wird", "es fehlt noch die möglichkeit alle entities, also artists, labels, places mit artist etc. credits zu benennen"): labels, places and areas have "Credited as for all roles" in their head too; the matrix of an entry has a column **Credited as** next to "Role credit" (the source's spelling, empty = the MusicBrainz name); a role credited otherwise on some tracks is a line of its own ("flute" and "flute" as “O. Lake”); compact, its chip says "as “O. Lake”".
+
+#### Fixed
+
+- **"Set for all" of an entry linked to MusicBrainz** was taken back at the next check (the spelling of the source came back).
 
 ### Import 3.38.10
 

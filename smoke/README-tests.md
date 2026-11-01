@@ -373,6 +373,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     Esc and ✕ close them, the focus back on ⌨
                                 #   anvcredit: 3.37.11: "Kenneth Ansell*" (Ken Ansell) in the matrix view – the chip "artist credit in MusicBrainz:
                                 #     “Kenneth Ansell” (the Discogs spelling *)", the field, the log; emptied: no chip
+                                #   spellings: 3.38.11 (175, 176): Oliver Lake "Lake*" only in the writing credits – head "Oliver Lake", chip
+                                #     "as “Lake” (+1)" / "for writer", field empty; "C. Allen*" in all roles; matrix column "Credited as", a line
+                                #     per spelling, compact "as “O. Lake”", lines joined; a place: "Credited as for all roles", set for all
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
                                 #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds
