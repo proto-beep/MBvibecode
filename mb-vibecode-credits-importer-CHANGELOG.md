@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-01 | 3.38.8 | 1.9.2 |
+| 2026-11-01 | 3.38.8 – 3.38.9 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
@@ -97,6 +97,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-01
+
+### Import 3.38.9 · COMPANION 1.10.0
+
+#### Changed
+
+- **Several imports at once** (collected item 173; maintainer: "sobald ich zwei geteilte tabs offen habe … fängt der companion an in kurzen intervallen sich ein und auszuschalten und dadurch die datenherkünfte bei den quellen an und abzuschalten. wäre es möglich mehrere imports (gerne eine beliebige anzahl und falls das nicht möglich ist zumindest 3) gleichzeitig offen zu haben ohne dass das passiert?"): the companion keeps the status of the credits and the sign that an editor is open per MusicBrainz release – any number of imports may be open, each Discogs or Bandcamp tab shows the marks and underlines of its own release. Until companion 1.9.2 two imports overwrote each other's status every 2 seconds, and the marks went off and on. The same release imported in two tabs: the marks of the one used last, and a note "2 imports of this release are open – the marks are those of the one used last"; a click on a mark reaches only that import; the Discogs tab follows the import worked with at once. The dashboard names an older companion once (log and message): the two belong together from 3.38.9 on.
+
+#### Fixed
+
+- **COMPANION: a credit of an artist who also has another role on the track** ("Written-By – Bass*" beside "Flute – Bass Man") put its mark before the title of the track (item 174 again).
 
 ### Import 3.38.8 · COMPANION 1.9.2
 

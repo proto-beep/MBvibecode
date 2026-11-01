@@ -24,7 +24,7 @@ with sync_playwright() as p:
     print('2) Release-Seite:', marks(dg))
     t = dg.evaluate("[...document.querySelectorAll('.dci-dg-pending')].map(m => m.title)")
     print('   Tooltip ✗:', t[:1])
-    items = H.STORE.data['statusMap']['items']
+    items = H.STORE.data[f'statusMap:{H.REL}']['items']  # [companion 1.10.0] per release
     print('   Einträge Bass Man:', [(i['role'], i['status'], i.get('note')) for i in items if i['artistId'] == 3001])
     pg.close()
     dg.wait_for_timeout(12000)

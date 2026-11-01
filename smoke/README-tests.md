@@ -620,7 +620,12 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #     retried, a background page's beat counts 75 s ([Companion 1.9.1] ten minutes: one 5 min old keeps the marks)
                                 #   trackmarks: a status mark on each Discogs track line, checked per track on the release page
                                 #   trackcells: 3.38.8 / companion 1.9.2 (174): a tracklist as a table with credits on tracks – marks inside the
-                                #     cell before the line with the role, none where the role is not on the line, no mark in a row (three cells)
+                                #     cell before the line with the role, none where the role is not on the line, no mark in a row (three cells);
+                                #     [1.10.0] "Written-By – Bass*" of an artist also in "Flute – Bass Man": its own line, not before the title
+                                #   multi: 3.38.9 / companion 1.10.0 (173): two other imports send their status – the marks on the Discogs tab stay;
+                                #     the dashboard opened late: no "older companion"; the same release in another import used later: its marks
+                                #     and the note "2 imports …", a click there does not reach the first; the first used again: its marks, a
+                                #     click reaches it; closed: no note
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
@@ -632,6 +637,8 @@ python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, cred
                                 #   textmarks: used dates and track groups underlined at the source (3.28.3 / companion 1.9.0): Discogs notes (matrix,
                                 #     a row, not the pool), status off/on, Bandcamp credits (a year also in "released …") and "about";
                                 #     two "Vocals [...]" lines of one artist
+                                #   multibc: 3.38.9 / companion 1.10.0 (173): three imports, two sources (a Bandcamp album here, a Discogs release
+                                #     and another one in two other editors) – for 10 s the marks on the Bandcamp tab and the Discogs tab stay
 
 python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file, the languages file
                                 #   i18n: the texts (3.27.1; 3.34.0: English from the script, de / es / fr from the languages file): every key

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.8
+// @version      3.38.9
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.8
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.8
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.9
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.9
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.9';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -989,6 +989,8 @@
       "msg.openedTabs.other": "{n} works opened in background tabs.",
       "msg.tabsNeedCompanion": "Opening background tabs needs the companion script “MB x Vibecode: Credits Importer Companion”, which has the browser permission for it. Without it, middle-click the work links in the Works section.",
       "msg.tabsCompanionOld": "The companion script did not respond. Please update “MB x Vibecode: Credits Importer Companion” to version 0.3.0 or later.",
+      "log.companionOld": "The companion is older than {version}: with several imports open at once, its marks on Discogs and Bandcamp go off and on – please update “MB x Vibecode: Credits Importer Companion”",
+      "msg.companionOld": "The companion script is older than {version}: with several imports open at once, its marks on Discogs and Bandcamp go off and on. Please update “MB x Vibecode: Credits Importer Companion”.",
       "log.openedTabs.one": "Opened {n} work in a background tab",
       "log.openedTabs.other": "Opened {n} works in background tabs",
       "log.workRunDone.one": "Works created one by one: {n} new work",
@@ -2060,6 +2062,7 @@
       "sync.keepMarks": "Keep marks",
       "sync.keepMarksTitle": "Show the import marks on Discogs and Bandcamp also after the relationship editor is closed – the last state of the release",
       "dgStatus.hover": "rest the pointer on it: its row in the dashboard",
+      "dgStatus.multi": "{n} imports of this release are open – the marks are those of the one used last",
       "textMark.dateMatrix": "Credits Importer: “{date}” is in the date matrix",
       "textMark.dateRow": "Credits Importer: “{date}” is the date of a row",
       "textMark.tracks": "Credits Importer: the track group “{name}” is in the date matrix",
@@ -25053,8 +25056,9 @@
             positions: row.dPositions || [], status, unmapped: isUnmapped(row), mb, byPos, ...(row.srcOff ? { off: true } : {}) });
         }
       }
+      // [173] (3.38.9) "multi": two imports of the same release open (companion 1.10.0)
       const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow',
-        'off', 'on', 'isOff', 'hover']
+        'off', 'on', 'isOff', 'hover', 'multi']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
       // [3.17.5] toggle: a click on a mark switches its credit; keepAfterClose: the marks stay after the editor is closed
       // [3.28.3] the dates and track groups used, underlined by the companion (1.9.0) in the notes and texts
@@ -25234,6 +25238,9 @@
     renderSync();
   }
 
+  /** [173] (3.38.9) The companion needed for several imports at once (status and beat per release). */
+  const COMPANION_NEEDED = '1.10.0';
+
   function onFromDiscogs(e) {
     let msg;
     try {
@@ -25245,6 +25252,18 @@
       // [3.17.0] Companion 1.8.0 reports the tabs of each site ("sites"); before, only Discogs tabs
       Object.assign(S.sync, { installed: true, tabs: msg.tabs, target: msg.target, releases: msg.releases || (msg.target && msg.target.releaseId ? [String(msg.target.releaseId)] : []),
         sites: msg.sites && typeof msg.sites === 'object' ? msg.sites : null });
+      // [173] (3.38.9) companion 1.10.0 and later say their version with each status
+      if (msg.version) S.sync.companionVersion = String(msg.version);
+      // [173] (3.38.9) an older companion (no version a few seconds after it answered): several imports at once switch its marks
+      // off and on – said once
+      if (!S.sync.versionCheck) {
+        S.sync.versionCheck = setTimeout(() => {
+          if (!S.sync.companionVersion) {
+            log('warn', 'companionOld', { version: COMPANION_NEEDED });
+            showMessage('info', 'msg.companionOld', { version: COMPANION_NEEDED });
+          }
+        }, 6000);
+      }
     } else if (msg.type === 'focus-row') {
       const row = S.rows.find((r) => r.id === msg.row);
       if (!row) return;
