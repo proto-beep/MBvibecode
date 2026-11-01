@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.10, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.11, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.11 · 2026-11-01
+
+Spellings and "credited as" (collected items 175, 176).
+
+- **New `commonSpelling(a)`:** the name variation all rows of an entry from the source carry ("*" left out), else ''. **`releaseSpelling(a)`** shows only that one (until 3.38.10 the most frequent one of its rows; `others` stays empty).
+- **New `creditAllHtml(a)`** (from `variantsHtml`): the field for all roles, prefilled with `commonSpelling` (until 3.38.10 `anvs[0]` when the entry had one name variation); persons `group.creditAll`, companies (labels, places, areas) `group.creditAllOther` – their head gets `.dci-variants.dci-variants-co` with it (until 3.38.10 none); the list: its names (companies) or `artistVariants`.
+- **`creditChipHtml`:** one credit not on all rows that are not on Skip: `group.creditedAsFor` with the names of those rows (`rowPhrase`; two, then "…").
+- **`artist-credit-all`:** the rows `creditTouched` (until 3.38.10 `syncSourceCredits` set a linked entry's rows back to the source's spelling).
+- **E4:** a column `.dci-em-c-ac` "Credited as" (`em.colAc`) after the role credit – `data-f="em-ac"` (the line's `credit`, `creditTouched`; on input and on change; the list `dci-ac-<entry>`); `cols` + 1. A spelling of its own is a line of its own already (`lineKeyOf` has `credit`). `emChipHtml`: `.dci-em-chipas` "as “…”" with the line's credit.
+- **Texts (English):** `group.creditAllOther`, `group.creditAllOtherAria`, `group.creditedAsFor`, `em.colAc`, `em.acLabel`.
+- **Tests:** `t_ui_head.py` new case `spellings` (Oliver Lake as on "Boston Duets": head, chip, field, column, own line, compact chip, lines joined, "for writer"; Carl Allen "C. Allen*" in all roles; the place Abbey Road Studios: "Credited as for all roles", set for all); `entryhead` reads "as “Bassman” for bass" (one row of two).
 
 ## Import 3.38.10 · 2026-11-01
 

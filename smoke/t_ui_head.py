@@ -158,7 +158,8 @@ def case_entryhead():
        Man as "B. Man" on this release; collected item 100), its tooltip "Discogs: Bass Man", no chip "as “B. Man”" (until
        3.32.1: the name "Bass Man" and the chip) – [3.37.11] the chip "artist credit in MusicBrainz: “B. Man” (the Discogs
        spelling *)" instead, and the tooltip says what * means (collected item 161); the MusicBrainz name (no "credited as") – no chip. A row credited otherwise:
-       "as “Bassman”" at the head (the spelling of the head not again), the compact line of each row names its own credit.
+       "as “Bassman”" at the head (the spelling of the head not again; [3.38.11] "… for bass": only that row), the compact line of
+       each row names its own credit.
     C) The bar below "Import credits …" (with the companion): the status as a badge (source link, "open in background")
        and ⚙ – no switches of the navigation any more; ⚙ opens the settings of the dashboard at "Discogs and Bandcamp view" ([3.30.5] "Source pages")."""
     orig = H.discogs_release
@@ -212,7 +213,7 @@ def case_entryhead():
         results.append(b1['shown'][0] == 'B. Man*' and b1['shown'][1].startswith('Discogs: Bass Man\n* – credited so on Discogs')
                        and b1['chip'] and b1['chip'][0] == 'artist credit in MusicBrainz: “B. Man” (the Discogs spelling *)'
                        and b1['chip'][1].startswith('Discogs credits “Bass Man” on this release as “B. Man”')
-                       and b2['chip'] and b2['chip'][0] == 'as “Bassman”' and lines == 2)
+                       and b2['chip'] and b2['chip'][0] == 'as “Bassman” for bass' and lines == 2)
         # C) the bar below "Import credits …"
         pg.click('.dci-head [data-act=close]')
         pg.wait_for_timeout(300)
@@ -680,6 +681,93 @@ def case_anvcredit():
         b2 = pg.evaluate(HEAD)
         print('B)', b2)
         results.append(b2 and b2['shown'] == 'Kenneth Ansell*' and b2['chip'] is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_spellings():
+    """Credits Importer 3.38.11 (collected items 175, 176; maintainer, Discogs 2631299 "Boston Duets": "die artistnamen in den
+    instrumentenfeldern werden als "Lake*" bei Discgos angezeigt, dabei ist das nur der name, der in den writing credits steckt", "nein
+    ich meinte das Lake* das von Discogs gezogen wurde und im Kopf des Eintrags stand.", "es fehlt noch die möglichkeit alle entities,
+    also artists, labels, places mit artist etc. credits zu benennen", F-176a "erst mal wie vorschlag", F-176b "ja eigene Zeile").
+    A) Oliver Lake – Written-By "Lake*" on tracks 1–2, Flute and Soprano Saxophone as "Oliver Lake", Flute on track 3 as "O. Lake*":
+       the head "Oliver Lake" (no "Lake*"), the chip "as “Lake” (+1)"; "Artist credit for all roles" empty.
+    B) Carl Allen credited "C. Allen*" in all his roles: the head "C. Allen*", the field "C. Allen" (as before).
+    C) The matrix of Oliver Lake: a column "Credited as"; flute (empty, the MusicBrainz name), soprano saxophone (empty), flute
+       "O. Lake" – a line of its own.
+    D) Compact: the chip of that flute "flute as “O. Lake”".
+    E) "O. Lake" emptied in its line: the two flute lines join; the chip in the head "as “Lake” for writer" (only the works carry it).
+    F) The place Abbey Road Studios: "Credited as for all roles"; "Abbey Road" set for all: its rows credit "Abbey Road" (until 3.38.10
+       "Set for all" was taken back at the next check for a linked entry: syncSourceCredits)."""
+    H.ENTRIES_VIEW = 'matrix'
+    orig = H.discogs_release
+    H.ARTISTS[3301] = (H.uid('dddddddd', 3301), 'Oliver Lake')
+    H.ARTISTS[3302] = (H.uid('dddddddd', 3302), 'Carl Allen')
+    H.attr(9201, 'flute', 14, 14)
+    H.attr(9202, 'soprano saxophone', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    ex = lambda name, role, i, anv='', tracks='': {'name': name, 'anv': anv, 'role': role, 'tracks': tracks, 'id': i, 'join': ''}
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [ex('Oliver Lake', 'Flute', 3301), ex('Oliver Lake', 'Soprano Saxophone', 3301), ex('Carl Allen', 'Drums', 3302, 'C. Allen'),
+                              ex('Carl Allen', 'Producer', 3302, 'C. Allen')]
+        for i in (0, 1):
+            d['tracklist'][i]['extraartists'].append(ex('Oliver Lake', 'Written-By', 3301, 'Lake'))
+        d['tracklist'][2]['extraartists'].append(ex('Oliver Lake', 'Flute', 3301, 'O. Lake'))
+        return d
+
+    H.discogs_release = rel
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(s => { const st = s.querySelector('.dci-gname strong'); return (st.dataset.name || st.textContent.trim()) === name; })"
+    HEAD = """(name) => { const g = (%s)(name); if (!g) return null; const c = g.querySelector('.dci-gcredit'); const st = g.querySelector('.dci-gname strong');
+      const f = g.querySelector('[data-f=artist-credit-all]'); return { shown: st.textContent.trim(), chip: c && !c.hidden ? c.textContent.trim() : null,
+      field: f ? f.value : null, label: f ? f.closest('label').textContent.replace(/\\s+/g, ' ').trim() : null }; }""" % SEC
+    LINES = """(name) => { const g = (%s)(name); if (!g) return null; return { head: [...g.querySelectorAll('.dci-em-grid thead th')].map(t => t.textContent.trim()).filter(Boolean).slice(0, 3),
+      lines: [...g.querySelectorAll('tr.dci-em-line')].map(tr => [(tr.querySelector('[data-f=em-primary]') || {}).value, (tr.querySelector('[data-f=em-ac]') || {}).value]) }; }""" % SEC
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(600)
+        a, b_ = pg.evaluate(HEAD, 'Oliver Lake'), pg.evaluate(HEAD, 'Carl Allen')
+        print('A)', a, '\nB)', b_)
+        results.append(a and a['shown'] == 'Oliver Lake' and a['chip'] == 'as “Lake” (+1)' and a['field'] == '' and a['label'] == 'Artist credit for all roles')
+        results.append(b_ and b_['shown'] == 'C. Allen*' and b_['field'] == 'C. Allen')
+        c = pg.evaluate(LINES, 'Oliver Lake')
+        print('C)', c)
+        results.append(c and c['head'][1:3] == ['Role credit', 'Credited as'] and sorted(c['lines']) == [['flute', ''], ['flute', 'O. Lake'], ['soprano saxophone', '']])
+        # D) compact
+        pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+        chips = pg.evaluate("(name) => { const g = (%s)(name); return g ? [...g.querySelectorAll('.dci-em-chipname')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null; }" % SEC, 'Oliver Lake')
+        pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+        print('D) kompakt:', chips)
+        results.append(bool(chips) and 'flute as “O. Lake”' in chips and 'flute' in chips)
+        # E) emptied: the lines join
+        sec = "section.dci-group:has(.dci-gname strong:text-is('Oliver Lake'))"
+        target = pg.evaluate("(name) => { const g = (%s)(name); return [...g.querySelectorAll('tr.dci-em-line [data-f=em-ac]')].findIndex(x => x.value === 'O. Lake'); }" % SEC, 'Oliver Lake')
+        f = pg.locator(f'{sec} tr.dci-em-line [data-f=em-ac]').nth(target)
+        f.fill('')
+        f.press('Tab')
+        pg.wait_for_timeout(600)
+        e = pg.evaluate(LINES, 'Oliver Lake')
+        e2 = pg.evaluate(HEAD, 'Oliver Lake')
+        print('E) geleert:', e, '| Kopf:', e2)
+        results.append(e and sorted(e['lines']) == [['flute', ''], ['soprano saxophone', '']] and e2['shown'] == 'Oliver Lake' and e2['chip'] == 'as “Lake” for writer')
+        # F) the place
+        fa = pg.evaluate(HEAD, 'Abbey Road Studios')
+        psec = "section.dci-group:has(.dci-gname strong:text-is('Abbey Road Studios'))"
+        pg.fill(f'{psec} [data-f=artist-credit-all]', 'Abbey Road')
+        pg.click(f'{psec} [data-act=artist-credit-all]')
+        pg.wait_for_timeout(500)
+        fb = pg.evaluate("(name) => { const g = (%s)(name); return [...g.querySelectorAll('[data-f=em-ac], [data-f=credit]')].map(x => x.value); }" % SEC, 'Abbey Road Studios')
+        print('F) Ort:', fa, '→', fb)
+        results.append(fa and fa['label'] == 'Credited as for all roles' and fa['field'] == '' and fb and set(fb) == {'Abbey Road'})
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

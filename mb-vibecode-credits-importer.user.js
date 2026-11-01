@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.10
+// @version      3.38.11
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.10
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.10
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.11
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.11
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.10';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.11';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -321,6 +321,8 @@
       "group.openAll": "Open all roles of {name}",
       "group.closeAll": "Close all roles of {name}",
       "group.creditAllAria": "Artist credit for all roles of {name}",
+      "group.creditAllOther": "Credited as for all roles",
+      "group.creditAllOtherAria": "Credited as for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
       "match.searching": "Looking up MB artist …",
@@ -859,6 +861,7 @@
       "group.discogsName": "Discogs: {name}",
       "group.otherSpellings": "Also on this release as: {list}",
       "group.creditedAsMore": "as {name} (+{n})",
+      "group.creditedAsFor": "as {name} for {roles}",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
       "group.creditedSpelling": "artist credit in MusicBrainz: {name} (the Discogs spelling *)",
       "group.creditedSpellingTitle": "Discogs credits {base} on this release as {name} (marked * on Discogs). The dashboard enters {name} as the artist credit of the relationships in MusicBrainz – change it in the rows (“credited as” / “Artist credit for all roles”); empty: the MusicBrainz name.",
@@ -1957,6 +1960,8 @@
       "em.flag.solo": "solo",
       "em.noCredit": "none",
       "em.creditLabel": "Role credit of {name}",
+      "em.colAc": "Credited as",
+      "em.acLabel": "Credited as – {name}",
       "em.flagLabel": "{flag}: {name}",
       "em.tickLabel": "{name} in event {n}",
       "em.tickNo": "MusicBrainz has no “{type}” on the level {level}",
@@ -17621,12 +17626,37 @@
     // the front of the entry's head (groupFoldHtml)
     const fold = S.view === 'compact' ? groupFoldHtml(a) : '';
     return `<span data-spell="${a.key}">${spellHtml(a)}</span>${spelled ? `<span>${spelled}</span>` : ''}
-      ${fold}<label class="dci-credit">${esc(tr('group.creditAll'))}
-        <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(anvs.length === 1 && !caseOnlyAnv(a, anvs[0]) ? anvs[0] : '')}"
-          placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr('group.creditAllAria', { name: a.name }))}">
+      ${fold}${creditAllHtml(a)}`;
+  }
+
+  /**
+   * [176] (3.38.11) "Credited as" for all roles of an entry (collected item 176; maintainer: "es fehlt noch die möglichkeit alle
+   * entities, also artists, labels, places mit artist etc. credits zu benennen"): persons "Artist credit for all roles", labels,
+   * places and areas "Credited as for all roles" (until 3.38.10 persons only). [175] Prefilled only with the spelling all its rows
+   * carry (item 175; maintainer: "die artistnamen in den instrumentenfeldern werden als "Lake*" bei Discgos angezeigt, dabei ist
+   * das nur der name, der in den writing credits steckt") – until 3.38.10 with its one name variation, also when only some rows
+   * had it ("Set for all" then credited the flute "Lake" too).
+   */
+  function creditAllHtml(a) {
+    const common = commonSpelling(a);
+    const label = a.company ? 'group.creditAllOther' : 'group.creditAll';
+    const names = a.company ? uniq([a.name, a.mbName, a.rawName, ...(a.anvs || [])].filter(Boolean)) : artistVariants(a);
+    return `<label class="dci-credit">${esc(tr(label))}
+        <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(common && !caseOnlyAnv(a, common) ? common : '')}"
+          placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr(`${label}Aria`, { name: a.name }))}">
       </label>
       <button type="button" data-act="artist-credit-all">${esc(tr('group.setAll'))}</button>
-      <datalist id="dci-ac-${a.key}">${artistVariants(a).map((v) => `<option value="${esc(v)}"></option>`).join('')}</datalist>`;
+      <datalist id="dci-ac-${a.key}">${names.map((v) => `<option value="${esc(v)}"></option>`).join('')}</datalist>`;
+  }
+
+  /**
+   * [175] (3.38.11) The spelling all rows of an entry from the source carry – its name variation ("*" left out) –, or '' when a
+   * row has none or another one ("Lake" only on the Written-By credits of Oliver Lake: '').
+   */
+  function commonSpelling(a) {
+    const rows = S.rows.filter((r) => r.artistKey === a.key && !r.manual);
+    const vs = rows.map((r) => String(r.anv || '').replace(/\*$/, '').trim());
+    return vs.length && vs[0] && vs.every((v) => typo(v) === typo(vs[0])) ? vs[0] : '';
   }
 
   /** Kind of an entry for its colour and label: artist, label, place or another entity (series, event …). */
@@ -17670,17 +17700,14 @@
    * des entries angezeigt werden."): the name variation of its rows (the most frequent one), with "*" as Discogs writes it,
    * when it differs from the name of the entry; null otherwise.
    */
+  // [175] (3.38.11) only the spelling all its rows carry (commonSpelling): "Lake" of the Written-By credits alone leaves the head
+  // "Oliver Lake" (maintainer: "nein ich meinte das Lake* das von Discogs gezogen wurde und im Kopf des Eintrags stand.") – until
+  // 3.38.10 the most frequent one of its rows; the rows with another spelling say theirs ("as “Lake” for writer")
   function releaseSpelling(a) {
     if (!a || a.company || a.other || !a.dId) return null;
-    const count = new Map();
-    for (const r of S.rows) {
-      if (r.artistKey !== a.key) continue;
-      const v = String(r.anv || '').replace(/\*$/, '').trim();
-      if (v) count.set(v, (count.get(v) || 0) + 1);
-    }
+    const v = commonSpelling(a);
     const base = String(a.name || '').replace(/\s*\(\d+\)$/, '').trim();
-    const list = [...count.entries()].filter(([v]) => typo(v) !== typo(base)).sort((x, y) => y[1] - x[1]).map(([v]) => v);
-    return list.length ? { shown: list[0], others: list.slice(1), base } : null;
+    return v && typo(v) !== typo(base) ? { shown: v, others: [], base } : null;
   }
 
   /** [3.32.2] The name in the head of an entry: the release's spelling with "*" (the entry's name in the tooltip), or the name. */
@@ -17706,7 +17733,13 @@
     }
     if (!credits.length) return '<span class="dci-gcredit" hidden></span>';
     const name = tr('common.quoted', { text: credits[0] });
-    const text = credits.length > 1 ? tr('group.creditedAsMore', { name, n: credits.length - 1 }) : tr('group.creditedAs', { name });
+    // [175] (3.38.11) a spelling of some roles only: which ones ("as “Lake” for writer")
+    const live = S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip');
+    const on = live.filter((r) => typo(String(r.credit || '').trim()) === typo(credits[0]));
+    const roles = uniq(on.map((r) => rowPhrase(r) || String(r.raw || '').trim()).filter(Boolean));
+    const text = credits.length > 1 ? tr('group.creditedAsMore', { name, n: credits.length - 1 })
+      : on.length < live.length && roles.length ? tr('group.creditedAsFor', { name, roles: `${roles.slice(0, 2).join(', ')}${roles.length > 2 ? ' …' : ''}` })
+      : tr('group.creditedAs', { name });
     const title = tr('group.creditedAsTitle', { list: credits.map((c) => tr('common.quoted', { text: c })).join(', ') });
     return `<span class="dci-gcredit" title="${esc(title)}">${esc(text)}</span>`;
   }
@@ -18241,6 +18274,11 @@
     }
     const credit = lt && canRoleCredit(lt)
       ? `<input type="text" data-f="em-credit" value="${esc(r.roleCredit)}" placeholder="${esc(tr('em.noCredit'))}" aria-label="${esc(tr('em.creditLabel', { name }))}">${rcClearHtml()}` : '';
+    // [176] (3.38.11) credited as (F-176a; maintainer: "ich weiß nicht, wo ich eintragen soll bzw. wo steht, falls ein artist etc. auf
+    // den jeweiligen releases/recordings anders genannt wird"): the spelling of the source, empty = the MusicBrainz name; another
+    // spelling on some tracks is a line of its own (lineKeyOf; F-176b: "ja eigene Zeile")
+    const ac = `<input type="text" data-f="em-ac" list="dci-ac-${esc(a.key)}" value="${esc(r.credit || '')}" placeholder="${esc(tr('credit.placeholder'))}"
+      aria-label="${esc(tr('em.acLabel', { name }))}" title="${esc(tr('credit.placeholder'))}: ${esc(a.mbName || a.name)}">`;
     const allowed = new Set(lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : []);
     // [3.36.6] a cell per attribute, below its word in the head (collected item 148)
     const flags = (flagNames.length ? flagNames : ['']).map((f) => `<td class="dci-em-c-flag">${f && allowed.has(f) ? `<input type="checkbox" data-f="em-flag" value="${esc(f)}" ${r.flags.has(f) ? 'checked' : ''} aria-label="${esc(tr('em.flagLabel', { flag: f, name }))}">` : ''}</td>`).join('');
@@ -18266,7 +18304,7 @@
     const grip = b.lines.length > 1 ? `<button type="button" class="dci-em-grip" data-drag="em-line" data-id="${esc(l.id)}" data-block="${esc(b.key)}" draggable="true"
       title="${esc(tr('em.gripTitle'))}" aria-label="${esc(tr('em.gripLabel', { name }))}">⠿</button>` : '';
     return `<tr class="dci-em-line${skip ? ' dci-em-skip' : ''}" data-rows="${ids}" data-line="${esc(l.id)}">
-        <td class="dci-em-c-role">${grip}${role}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td>${flags}${ticks}${b.others.length ? '<td></td>' : ''}${tools}
+        <td class="dci-em-c-role">${grip}${role}${notesInfo}${pcInfo}</td><td class="dci-em-c-credit">${credit}</td><td class="dci-em-c-ac">${ac}</td>${flags}${ticks}${b.others.length ? '<td></td>' : ''}${tools}
       </tr>${ask ? `<tr class="dci-em-ask" data-rows="${ids}" data-row="${r.id}"><td colspan="${cols}">${ask}</td></tr>` : ''}${open ? `<tr class="dci-em-detail-row" data-rows="${ids}"><td colspan="${cols}">
         <table class="dci-table dci-rows"><tbody>${l.rows.map(rowHtml).join('')}</tbody></table></td></tr>` : ''}`;
   }
@@ -18293,7 +18331,7 @@
     // [3.36.6] additional / guest / solo a column each (until 3.36.5 one cell with fixed widths – the words in the head stood
     // beside their checkboxes: their margins pushed them to the right, 4, 11 and 18 px, and "guest" ran into "solo"; collected item
     // 148, maintainer: "die anzeige hier ist noch nicht gut abgestimmt. solo muss über der rechten checkbox stehen.")
-    const cols = 2 + Math.max(1, flagNames.length) + b.events.length + (b.others.length ? 1 : 0) + 1;
+    const cols = 3 + Math.max(1, flagNames.length) + b.events.length + (b.others.length ? 1 : 0) + 1;
     const more = S.emMore.has(fk);
     const max = Math.max(1, S.emShow);
     // lines with a question or without a type are always shown
@@ -18306,7 +18344,7 @@
     const addEv = b.others.length ? `<th class="dci-em-addev"><select data-f="em-addev" data-block="${esc(b.key)}" aria-label="${esc(tr('em.addEv'))}"><option value="">${esc(tr('em.addEv'))}</option>${b.others.map((e) => `<option value="${esc(e.key)}">${esc(`${circled(e.n)} ${tr(`level.${e.level}`)}`)}</option>`).join('')}</select></th>` : '';
     return `<div class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
       <div class="dci-em-scroll"><table class="dci-em-grid">
-        <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr(b.kind === 'role' ? 'em.colRoleOther' : 'em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th>
+        <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr(b.kind === 'role' ? 'em.colRoleOther' : 'em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th><th class="dci-em-c-ac" scope="col">${esc(tr('em.colAc'))}</th>
           ${(flagNames.length ? flagNames : ['']).map((f) => `<th class="dci-em-c-flag" scope="col">${f ? esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f) : ''}</th>`).join('')}${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key)).join('')}${addEv}<th scope="col"></th></tr></thead>
         <tbody>${shown.map((l) => emLineHtml(a, b, l, flagNames, cols)).join('')}</tbody>
       </table></div>${openEv ? emEventHtml(a, openEv) : ''}
@@ -18427,6 +18465,8 @@
     const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || r.raw : rowPhrase(r) || r.raw) || '–';
     const flags = [...r.flags].filter((f) => ['additional', 'guest', 'solo'].includes(f)).map((f) => tr(`em.flag.${f}`));
     const credit = String(r.roleCredit || '').trim();
+    // [176] (3.38.11) its credited as ("as “Lake”"; item 176)
+    const as = String(r.credit || '').trim();
     const ids = l.rows.map((x) => x.id).join(',');
     const key = `${a ? a.key : ''}|${l.id}|${e ? e.key : ''}`;
     const open = !!answers.length && S.emChipAsk === key;
@@ -18436,7 +18476,7 @@
     const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
     const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
     return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : ''}>
-      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
   /**
@@ -18629,6 +18669,9 @@
       });
     } else if (f === 'em-credit') {
       rows.forEach((r) => Object.assign(r, { roleCredit: el.value, roleCreditTouched: true }));
+    } else if (f === 'em-ac') {
+      // [176] (3.38.11) the line's credited as (lines of the same role and spelling join)
+      rows.forEach((r) => Object.assign(r, { credit: el.value.trim(), creditTouched: true }));
     } else return false;
     rerenderGroup(a);
     refresh();
@@ -18640,6 +18683,7 @@
     const rows = lineRows(el);
     if (f === 'em-primary') rows.forEach((r) => Object.assign(r, { primaryText: el.value, primaryTouched: true }));
     else if (f === 'em-credit') rows.forEach((r) => Object.assign(r, { roleCredit: el.value, roleCreditTouched: true }));
+    else if (f === 'em-ac') rows.forEach((r) => Object.assign(r, { credit: el.value, creditTouched: true }));
   }
 
   /** [E4] The answers of a line's questions, for all its rows (the question is drawn for the first). */
@@ -18730,7 +18774,7 @@
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${coverFromEntryHtml(a, rows)}
         ${stackNoteHtml(rows)}
-        ${a.company ? '' : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
+        ${a.company ? `<div class="dci-variants dci-variants-co" data-variants="${a.key}">${creditAllHtml(a)}</div>` : `<div class="dci-variants" data-variants="${a.key}">${variantsHtml(a)}</div>`}
         ${a.srcSeries ? seriesLabelHtml(a) : ''}
         ${mxEntry(a) ? entryMatrixHtml(a, rows) : mxCompact(a) ? entryCompactHtml(a, rows) : `<div class="dci-tablewrap dci-rowswrap">
           <table class="dci-table dci-rows">
@@ -27391,8 +27435,11 @@
       case 'artist-credit-all': {
         const input = S.overlay.querySelector(`[data-variants="${artist.key}"] [data-f="artist-credit-all"]`);
         const value = input ? input.value.trim() : '';
+        // [176] (3.38.11) as typed by hand (until 3.38.10 the spelling of the source came back for a linked entry at the next
+        // check, syncSourceCredits – "Set for all" seemed to do nothing)
         S.rows.filter((r) => r.artistKey === artist.key).forEach((r) => {
           r.credit = value;
+          r.creditTouched = true;
           rerenderRow(r);
         });
         refresh();
@@ -28050,7 +28097,7 @@
       return;
     }
     // [E4] (3.34.30) typing in a line of an entry's matrix
-    if (f === 'em-primary' || f === 'em-credit') {
+    if (f === 'em-primary' || f === 'em-credit' || f === 'em-ac') {
       entryMatrixInput(f, el);
       clearTimeout(inputTimer);
       inputTimer = setTimeout(refresh, 250);
@@ -31752,6 +31799,8 @@
       .dci-em-grid .dci-em-c-role { position: sticky; left: 0; background: #fff; min-width: calc(var(--u, 1px) * 200); z-index: 1; }
       .dci-em-c-role input { width: calc(var(--u, 1px) * 190); }
       .dci-em-c-credit input { width: calc(var(--u, 1px) * 130); }
+      .dci-em-c-ac input { width: calc(var(--u, 1px) * 120); }
+      .dci-em-c-ac { white-space: nowrap; }
       /* [164] (3.37.13) the small ✕ of a role credit */
       .dci-rc-clear { border: 0; background: none; color: var(--muted); padding: 0 calc(var(--u, 1px) * 3); font-size: calc(var(--u, 1px) * 11); line-height: 1.4; cursor: pointer; flex: none; }
       .dci-rc-clear:hover, .dci-rc-clear:focus-visible { color: var(--err); }
@@ -31802,6 +31851,7 @@
       .dci-em-chip[draggable="true"] { cursor: grab; }
       /* [163b] (3.38.6) ⓘ at a chip: its notes whose answer is applied, as tooltip */
       .dci-em-chipinfo { color: var(--muted); font-size: calc(var(--u, 1px) * 12); cursor: help; padding: 0 calc(var(--u, 1px) * 2); }
+      .dci-em-chipas { color: var(--muted); font-style: italic; }
       .dci-em-chipinfo:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; border-radius: 2px; }
       /* [163] (3.37.14) ▾ at a chip with a question and its answers below it */
       .dci-em-chip { position: relative; }
