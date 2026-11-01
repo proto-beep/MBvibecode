@@ -773,6 +773,92 @@ def case_spellings():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_capsnames():
+    """Credits Importer 3.38.12 (F-4, rule S060; maintainer: "bitte schreibe Großbuchstaben immer Klein, es sei denn, der Artistname
+    auf MB ist ebenfalls komplett capslock … anbieten alles in großbuchstaben zu setzen", "ja normale schreibweise … ja überall",
+    "Wörter aus zwei Buchstaben bleiben").
+    A) Discogs credits "TORBEN SNEKKESTAD" (Saxophone), "DJ SHADOW" (Scratches), "ABBA" (linked: MusicBrainz "ABBA"), Oliver Lake
+       credited "LAKE": the heads "Torben Snekkestad" with "↺ in capitals", "DJ Shadow", "ABBA" (MusicBrainz's spelling, no button),
+       "Lake*" credited "Lake" (all its roles carry it); the log "Names in capitals written in normal case (5): …" (the spellings too).
+    B) "↺ in capitals" at Torben Snekkestad: the head "TORBEN SNEKKESTAD", "↺ normal case", its line credited "TORBEN SNEKKESTAD"; once
+       more: "Torben Snekkestad", credited as empty again (the MusicBrainz name).
+    C) Oliver Lake credited "LAKE" (head "Lake*"): "↺ in capitals" too – "LAKE*", credited "LAKE"; "DOOM" linked to MusicBrainz "MF
+       DOOM" (all in capitals): the head "MF DOOM", no ↺, credited "DOOM"; a "credited as" typed by hand ("T. S.") stays at "↺ in
+       capitals"."""
+    H.ENTRIES_VIEW = 'matrix'
+    orig = H.discogs_release
+    H.ARTISTS[3401] = (H.uid('dddddddd', 3401), 'ABBA')
+    H.ARTISTS[3405] = (H.uid('dddddddd', 3405), 'MF DOOM')
+    H.attr(9203, 'scratches', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    ex = lambda name, role, i, anv='': {'name': name, 'anv': anv, 'role': role, 'tracks': '', 'id': i, 'join': ''}
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [ex('TORBEN SNEKKESTAD', 'Saxophone', 3402), ex('DJ SHADOW', 'Scratches', 3403), ex('ABBA', 'Vocals', 3401),
+                              ex('Oliver Lake', 'Saxophone', 3404, 'LAKE'), ex('DOOM', 'Vocals', 3405)]
+        return d
+
+    H.discogs_release = rel
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(s => { const st = s.querySelector('.dci-gname strong'); return [st.dataset.name, st.textContent.trim()].includes(name); })"
+    HEAD = """(name) => { const g = (%s)(name); if (!g) return null; const b = g.querySelector('[data-act=case-back]');
+      return { shown: g.querySelector('.dci-gname strong').textContent.trim(), btn: b ? b.textContent.trim() : null, title: b ? b.title : null,
+        ac: [...g.querySelectorAll('[data-f=em-ac]')].map(x => x.value) }; }""" % SEC
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        a = {n: pg.evaluate(HEAD, n) for n in ('Torben Snekkestad', 'DJ Shadow', 'ABBA', 'Oliver Lake')}
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'normal case' in x]
+        for k, v in a.items():
+            print('A)', k, v)
+        print('   Protokoll:', logs)
+        ok_a = a['Torben Snekkestad'] and a['Torben Snekkestad']['shown'] == 'Torben Snekkestad' and a['Torben Snekkestad']['btn'] == '↺ in capitals' \
+            and a['Torben Snekkestad']['title'].startswith('The source writes “TORBEN SNEKKESTAD”') and a['Torben Snekkestad']['ac'] == [''] \
+            and a['DJ Shadow'] and a['DJ Shadow']['shown'] == 'DJ Shadow' and a['ABBA'] and a['ABBA']['shown'] == 'ABBA' and a['ABBA']['btn'] is None and a['ABBA']['ac'] == [''] \
+            and a['Oliver Lake'] and a['Oliver Lake']['ac'] == ['Lake'] \
+            and logs == ['Names in capitals written in normal case (5): TORBEN SNEKKESTAD → Torben Snekkestad, DJ SHADOW → DJ Shadow, ABBA → Abba, LAKE → Lake, DOOM → Doom – “↺ in capitals” at the entry takes the spelling of the source']
+        results.append(bool(ok_a))
+        sec = "section.dci-group:has(.dci-gname strong:text-is('Torben Snekkestad'))"
+        pg.click(f'{sec} [data-act=case-back]')
+        pg.wait_for_timeout(600)
+        b1 = pg.evaluate(HEAD, 'TORBEN SNEKKESTAD')
+        sec2 = "section.dci-group:has(.dci-gname strong:text-is('TORBEN SNEKKESTAD'))"
+        pg.click(f'{sec2} [data-act=case-back]')
+        pg.wait_for_timeout(600)
+        b2 = pg.evaluate(HEAD, 'Torben Snekkestad')
+        print('B) in Großbuchstaben:', b1, '| zurück:', b2)
+        results.append(b1 and b1['shown'] == 'TORBEN SNEKKESTAD' and b1['btn'] == '↺ normal case' and b1['ac'] == ['TORBEN SNEKKESTAD']
+                       and b2 and b2['shown'] == 'Torben Snekkestad' and b2['btn'] == '↺ in capitals' and b2['ac'] == [''])
+        # C) [3.38.12] (review) a spelling in capitals ("LAKE"): ↺ too; "DOOM" linked to MusicBrainz "MF DOOM": its spelling, credited
+        #    "DOOM"; a "credited as" typed by hand stays at "↺ in capitals"
+        lsec = "section.dci-group:has(.dci-gname strong[data-name='Oliver Lake'])"
+        c0 = pg.evaluate(HEAD, 'Oliver Lake')
+        pg.click(f'{lsec} [data-act=case-back]'); pg.wait_for_timeout(600)
+        c1 = pg.evaluate(HEAD, 'Oliver Lake')
+        pg.click(f'{lsec} [data-act=case-back]'); pg.wait_for_timeout(600)
+        doom = pg.evaluate(HEAD, 'MF DOOM')
+        acf = pg.locator(f'{sec} [data-f=em-ac]').first
+        acf.fill('T. S.'); acf.press('Tab'); pg.wait_for_timeout(500)
+        pg.click(f'{sec} [data-act=case-back]'); pg.wait_for_timeout(600)
+        c2 = pg.evaluate(HEAD, 'TORBEN SNEKKESTAD')
+        pg.click(f"section.dci-group:has(.dci-gname strong:text-is('TORBEN SNEKKESTAD')) [data-act=case-back]"); pg.wait_for_timeout(600)
+        print('C) LAKE:', c0, '→', c1, '| DOOM:', doom, '| von Hand:', c2)
+        results.append(c0 and c0['btn'] == '↺ in capitals' and c0['title'].startswith('The source writes “LAKE”') and c0['ac'] == ['Lake']
+                       and c1 and c1['shown'] == 'LAKE*' and c1['ac'] == ['LAKE'] and c1['btn'] == '↺ normal case' and c1['title'] == 'Back to normal case: “Lake”'
+                       and doom and doom['shown'] == 'MF DOOM' and doom['btn'] is None and doom['ac'] == ['DOOM']
+                       and c2 and c2['ac'] == ['T. S.'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_poolbar():
     """Credits Importer 3.37.15 (collected items 165, 166; maintainer: ""+ New date"/"+new track" group soll in der leiste oben auch
     sichtbar sein wenn sie eingefaltet ist.", "der falten knopf soll immer an der gleichen stelle erscheinen", "ich meinte (b)",
