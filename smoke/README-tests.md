@@ -294,7 +294,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     the setting), ✓ the list for the release (setting not stored, the job at staging), loaded again: the offer
                                 #     back, ✕ hides it (log, the job gone); 3.38.3: "Tracks 2–4"
                                 #   livegroup: 3.38.3: two media – "Live recordings: CD 2, track 1.2", one group line of three (▸ the tracks, its
-                                #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third
+                                #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third;
+                                #     3.38.13: "track 1.2, CD 2" (F-2, by positions – the track's index, not its number), the heading purple (F-1)
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
@@ -384,7 +385,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     "LAKE" with ↺, "DOOM" linked to "MF DOOM" credited "DOOM", a credit typed by hand stays
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
-                                #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds
+                                #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds;
+                                #     3.38.13 (178): the head the last line of the block, "▲ fold" / "▼ show" in its middle, the arrow ▲ / ▼,
+                                #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
@@ -453,7 +456,9 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   foot: 3.38.4: the footer – 1500 px one line (≤ 60 px: ▲▼, the summary with the levels as tooltip, the chip
                                 #     "2 tracks without a work" and its message on a click, Preview, the short checkboxes with their tooltips,
                                 #     Stage and ⓘ at the right), 900 px two lines with "⚙ Options ▾" (above, ticked there, closed by a click
-                                #     elsewhere and Esc), 600 px Stage whole, staged: "✓ 30 in the editor", in the page one line at the bottom
+                                #     elsewhere and Esc), 600 px Stage whole, staged: "✓ 30 in the editor", in the page one line at the bottom;
+                                #     3.38.13 (F-3): the green chip flashes once (not again when its text is opened and closed or the
+                                #     dashboard closed and opened again: one animationstart; the class gone after the flash)
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset

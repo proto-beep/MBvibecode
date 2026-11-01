@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-02 | 3.38.13 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -95,6 +96,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-02
+
+### Import 3.38.13
+
+#### Changed
+
+- **"Dates & tracks": its line at the bottom of the block** (collected item 178; maintainer: "kannst du die "▶Dates & tracks ▼ show 1 date · 0 track groups · 1 in the matrix" ans untere ende setzen? und den fold button in die mitte? dann auch das dreieck in die andere richtung deuten lassen?", "die ganze zeile", "ja"): the title with the counts on the left, "▲ fold" / "▼ show" in the middle, the tools on the right; the arrow at the title points up when open (the pools are above it), down when folded. Folded, only this line stays (with the pools kept in the bar above it). The question "Clear dates?" / "Clear track groups?" opens just above the line (until now below the head); after a click on the title or on the button, the focus stays on it.
+- **"Live disambiguation comments" stands out** (F-1; maintainer: "der button "▸ Live disambiguation comments: 0 of 9" kann aber eine noch präsentere farbe haben"): a purple button with white text.
+- **Live comments in the order of the positions** (F-2; maintainer: "nach Positionen"): "track 1.2, CD 2" (until now the media first: "CD 2, track 1.2"); the groups of the same comment stay.
+- **The green chip "✓ … in the editor" flashes once** when it comes (F-3) – not again when the dashboard is closed and opened again; not at all with "reduce motion" in the system.
 
 ## 2026-11-01
 

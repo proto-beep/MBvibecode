@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.12, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.13, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,21 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.13 · 2026-11-02
+
+The surface (collected item 178, F-1, F-2, F-3).
+
+- **`renderDates`:** the head (`.dci-pools-head`) is drawn last, after the body and the foot (or the pools kept in the bar) and the question of "Clear …" (`poolClearHtml`, until 3.38.12 below the head), in three parts – `.dci-pools-l` (the title button with `.dci-chev` ▲ open / ▼ folded – until 3.38.12 ▶ turned by CSS –, the counts, what is pending), `.dci-pools-c` ("▲ fold" / "▼ show"), `.dci-pools-r` (the tools); CSS grid `minmax(0, 1fr) auto minmax(0, 1fr)` (the fold in the middle), the rotation and the transition of `.dci-chev` gone; `.dci-pools-body` and `.dci-pools-kept` without their top margin (they open the block now).
+- **Live comments:** `.dci-livecom-head` purple with white text (hover: darker, `:focus-visible`); `liveWhatText` returns `parts` in the order of medium and track (`{ at, media | tracks, n }`), `liveWhatLabel` joins them so – tracks one after another between media one part with "track(s)".
+- **Footer:** `renderFootChips` gives the chip "stage-done" the class `dci-foot-chip-flash` once per text (`S.footFlashed`); `@keyframes dci-chip-flash` (0.9 s, once; none with `prefers-reduced-motion`).
+- **After the independent review of block AQ:**
+  - The flash class is taken off the chip at `animationend` (and after 1.2 s, for `prefers-reduced-motion`, where no animation runs), and out of `box.dataset.html` – drawn again (the dashboard closed and opened again, `display` back), the chip no longer flashes again; while it flashes, a footer drawn again keeps the chip's element (only the class differs).
+  - `pools-toggle`: after `renderDates` the focus goes back to the same button (`.dci-pools-toggle` or `.dci-pools-fold`, `preventScroll`, then `scrollIntoView({ block: 'nearest' })`) – the line moved with the body.
+  - `liveWhatText`: the parts sorted by medium and the index of the first track (`[medium, a]`; until now its `number`, which is "A1" on vinyl), a medium named whole first (`[from, -1]`).
+  - README: the sentence of 3.37.15 ("▲ fold … right after the title") as history; the place of "keep the pools …" and of the question "Clear …?"; CHANGELOG likewise.
+- **README:** its head names the version and the day again (it stayed at 3.34.2 · 2026-10-28).
+- **Tests:** `t_ui_head.py` poolbar (the head the last line, the fold in its middle ±2 px, the arrow ▲ / ▼); `t_works_more.py` livegroup ("track 1.2, CD 2", "1.2, CD 2", the heading purple); `t_ui_view.py` foot (the chip flashes once: one `animationstart`, none after the dashboard is closed and opened again, the class gone after it).
 
 ## Import 3.38.12 · 2026-11-01
 
