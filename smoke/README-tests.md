@@ -137,7 +137,10 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     the instrument is set again) and a matrix line's (staged without credit). instrguess / unknownask: chimes "chaims"
                                 #   stacked: 3.38.7 (167, S058, S059): "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO / Barry
                                 #     GUY / DOUBLE BASS" – three entries in normal case; the instruments above; "Jane Roe / PIANO / John Doe" not
-                                #     clear: the note, the log, ⇅ (John Doe), another text (Jane Roe again); one line with capitals; the Discogs notes
+                                #     clear: the note, the log, ⇅ (John Doe), another text (Jane Roe again); one line with capitals; the Discogs notes;
+                                #     3.38.12 (F-5): ⇅ in the dashboard – no new import, Max Mix put on Skip stays; "ABBA – piano" → Abba (S060)
+                                #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
+                                #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -376,6 +379,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   spellings: 3.38.11 (175, 176): Oliver Lake "Lake*" only in the writing credits – head "Oliver Lake", chip
                                 #     "as “Lake” (+1)" / "for writer", field empty; "C. Allen*" in all roles; matrix column "Credited as", a line
                                 #     per spelling, compact "as “O. Lake”", lines joined; a place: "Credited as for all roles", set for all
+                                #   capsnames: 3.38.12 (F-4, S060): Discogs names in capitals in normal case ("TORBEN SNEKKESTAD", "DJ SHADOW"),
+                                #     ABBA linked to "ABBA" as MusicBrainz writes it, "LAKE" → credited "Lake", the log; "↺ in capitals" and back;
+                                #     "LAKE" with ↺, "DOOM" linked to "MF DOOM" credited "DOOM", a credit typed by hand stays
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
                                 #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds

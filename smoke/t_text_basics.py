@@ -244,7 +244,8 @@ def case_textcredit():
     C) The field "Artist credit for all roles": empty for "VALFAR" (only the case differs from Valfar), "M. Mann" for Master
        Mann.
     D) A pasted text: "Produced by Jane Roe" linked to the suggestion Jane A. Roe → credited "Jane Roe" (as in the text,
-       S036); "Mixed by JOHN DOE" linked to John Doe → no "credited as" (only the case differs, S031); the row names S036."""
+       S036); "Mixed by JOHN DOE" linked to John Doe → no "credited as" (only the case differs, S031); the row names S036.
+       [3.38.12] (F-4, S060) "JOHN DOE" is "John Doe" from the start (the row names S060)."""
     H.lt(1202, '1d4c0b5b-0000-4000-8000-000000001202', 'artwork', 'artist', 'release', (1, 1150))
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     CREDITS = [('Cover Guy', 'Cover Design', 3031, ''), ('Sleeve Guy', 'Design [Sleeve]', 3032, ''), ('Art Guy', 'Artwork [Cover Design]', 3033, ''),
@@ -307,16 +308,16 @@ def case_textcredit():
         pg.click('[data-act=text-load]')
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
         pg.wait_for_timeout(1500)
-        for name, mbid in [('Jane Roe', JANE), ('JOHN DOE', JOHN)]:
-            # [3.32.2] an entry with a name variation shows it in its head ("VALFAR*"); its name is in data-name
+        for name, mbid in [('Jane Roe', JANE), ('John Doe', JOHN)]:
+            # [3.32.2] an entry with a name variation shows it in its head ("C. Allen*"); its name is in data-name
             key = pg.evaluate("(n) => [...document.querySelectorAll('section.dci-group')].find(s => { const x = s.querySelector('.dci-gname strong'); return (x.dataset.name || x.textContent.trim()) === n; }).dataset.group", name)
             sec = f'section.dci-group[data-group="{key}"]'
             pg.locator(f'{sec} [data-act=name-use][data-mbid="{mbid}"]').first.click()
             pg.wait_for_timeout(800)
         e = pg.evaluate(ROWS)
-        d1 = [(e.get('Jane Roe') or {'rows': [[]]})['rows'][0], (e.get('JOHN DOE') or {'rows': [[]]})['rows'][0]]
+        d1 = [(e.get('Jane Roe') or {'rows': [[]]})['rows'][0], (e.get('John Doe') or {'rows': [[]]})['rows'][0]]
         print('D) Text:', d1)
-        results.append(d1[0][3] == 'Jane Roe' and 'S036' in d1[0][4] and d1[1][3] == '')
+        results.append(d1[0][3] == 'Jane Roe' and 'S036' in d1[0][4] and d1[1][3] == '' and 'S060' in d1[1][4])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -1156,9 +1157,10 @@ def case_stacked():
     C) Not clear ("Jane Roe / PIANO / John Doe"): Jane Roe piano with the note "Read from lines with the name above its
        instruments – …" and "⇅ Instruments above the names"; the log says so; John Doe not recognized. "⇅" clicked: read again –
        John Doe piano, the note "… the instruments above the name …", "⇅ Names above the instruments"; Jane Roe not recognized;
-       the log says so. Another text: the names above again.
+       the log says so. [3.38.12] (F-5) In the dashboard, the source not read again: Max Mix, put on Skip before, stays on Skip.
+       Another text: the names above again.
     D) In one line, S059: "Torben SNEKKESTAD – SAXOPHONES & TRUMPET" → Torben Snekkestad, "KUROSAWA Go – piano" → Kurosawa Go;
-       "DJ Shadow – piano", "ABBA – piano", "BMS Illustration – piano" stay.
+       "DJ Shadow – piano", "BMS Illustration – piano" stay; [3.38.12] (S060) "ABBA – piano" → Abba.
     E) The Discogs notes (S054): "Torben SNEKKESTAD" above "SAXOPHONES & TRUMPET" – an entry Torben Snekkestad from the notes,
        saxophone and trumpet."""
     H.attr(9160, 'trumpet', 14, 14)
@@ -1199,17 +1201,23 @@ def case_stacked():
         print('B)', bb, b_unrec)
         ok_b = bb.get('Agusti Fernandez') == [('PIANO', 'piano', '')] and bb.get('Barry Guy') == [('DOUBLE BASS', 'double bass', '')] and not b_unrec and not pg.evaluate(NOTE)
         # C) not clear
-        c, c_unrec = load('Jane Roe\nPIANO\nJohn Doe')
+        c, c_unrec = load('Jane Roe\nPIANO\nJohn Doe\n\nMixed by Max Mix')
         c_note, c_log = pg.evaluate(NOTE), pg.evaluate(LOGS)
         btn = pg.evaluate("(document.querySelector('.dci-stack-note [data-act=stack-flip]') || {}).textContent")
         print('C)', c, c_unrec, '\n   Hinweis:', c_note, btn, '\n   Protokoll:', c_log)
+        # [3.38.12] (F-5) a change in another row: Max Mix on Skip – it stays; the source is not read again
+        mix = "section.dci-group:has(.dci-gname strong:text-is('Max Mix')) tr.dci-row"
+        pg.locator(f'{mix} [data-act=level][data-level=skip]').first.click()
+        pg.wait_for_timeout(300)
         n = pg.evaluate(IMP)
         pg.click('.dci-stack-note [data-act=stack-flip]')
-        wait_import(n)
+        pg.wait_for_timeout(1500)
+        c2_imports = pg.evaluate(IMP) - n
+        c2_mix = pg.locator(f'{mix} [data-act=level][aria-pressed=true]').first.get_attribute('data-level')
         c2 = {k: [(r[0], r[2], r[3]) for r in v['rows']] for k, v in pg.evaluate(GK_ROWS).items()}
         c2_unrec, c2_note, c2_log = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)"), pg.evaluate(NOTE), pg.evaluate(LOGS)
         btn2 = pg.evaluate("(document.querySelector('.dci-stack-note [data-act=stack-flip]') || {}).textContent")
-        print('   ⇅:', c2, c2_unrec, '\n   Hinweis:', c2_note, btn2, '\n   Protokoll:', c2_log)
+        print('   ⇅:', c2, c2_unrec, '\n   Hinweis:', c2_note, btn2, '\n   Protokoll:', c2_log, '| neu eingelesen:', c2_imports, '| Max Mix:', c2_mix)
         c3, _u = load('Jane Roe\nPIANO\nJohn Doe\n')
         print('   neuer Text:', c3)
         ok_c = c.get('Jane Roe') == [('PIANO', 'piano', '')] and 'John Doe' not in c and any('John Doe' in u for u in c_unrec) \
@@ -1217,12 +1225,13 @@ def case_stacked():
             and btn == '⇅ Instruments above the names' and any(cl == 'dci-log-warn' and 'read with the name above its instruments' in t and '(Jane Roe)' in t for cl, t in c_log) \
             and c2.get('John Doe') == [('PIANO', 'piano', '')] and 'Jane Roe' not in c2 and any('Jane Roe' in u for u in c2_unrec) \
             and c2_note == [['John Doe', 'Read from lines with the instruments above the name – their order was not clear. ⇅ Names above the instruments S058']] \
-            and btn2 == '⇅ Names above the instruments' and any('read again with the instruments above the names' in t for cl, t in c2_log) \
-            and c3.get('Jane Roe') == [('PIANO', 'piano', '')]
+            and btn2 == '⇅ Names above the instruments' and any('now with the instruments above the names' in t for cl, t in c2_log) \
+            and c2_imports == 0 and c2_mix == 'skip' and c3.get('Jane Roe') == [('PIANO', 'piano', '')]
         # D) one line
         d, d_unrec = load('Torben SNEKKESTAD – SAXOPHONES & TRUMPET\nKUROSAWA Go – piano\nDJ Shadow – piano\nABBA – piano\nBMS Illustration – piano')
         print('D)', d, d_unrec)
-        ok_d = d.get('Torben Snekkestad') == want['Torben Snekkestad'] and all(k in d for k in ('Kurosawa Go', 'DJ Shadow', 'ABBA', 'BMS Illustration'))
+        # [3.38.12] (S060) a name all in capitals in normal case too: "ABBA" → "Abba" (MusicBrainz's spelling once linked)
+        ok_d = d.get('Torben Snekkestad') == want['Torben Snekkestad'] and all(k in d for k in ('Kurosawa Go', 'DJ Shadow', 'Abba', 'BMS Illustration'))
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d)
         results += [ok_a, ok_b, ok_c, ok_d]
         print('Fehler:', errs)
@@ -1252,6 +1261,90 @@ def case_stacked():
             notes = pg.evaluate("[...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Torben Snekkestad').map(g => g.textContent.includes('From the Discogs notes'))")
             print('E) Notizen:', e and [(r[0], r[2], r[3]) for r in e['rows']], notes)
             results.append(bool(e) and [(r[0], r[2]) for r in e['rows']] == [('SAXOPHONES', 'saxophone'), ('TRUMPET', 'trumpet')] and notes == [True] and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_stackflip():
+    """Credits Importer 3.38.12 (F-5; maintainer: "wie vorschlag, gezielt"; the independent review of block AP): ⇅ in the dashboard.
+    A) "Jane Roe – piano" (clear) and "Jane Roe / PIANO / John Doe" (not clear): Jane Roe has two piano rows – the clear one and
+       the one of the lines not clear; ⇅: John Doe piano, Jane Roe keeps her clear row; ⇅ again: as at first (John Doe gone).
+    B) ⇅, then the same text imported again (remembered for the release): John Doe piano once, Jane Roe her clear row once.
+    C) The Discogs notes "Jane Roe / PIANO / JOHN DOE", Discogs lists "Piano – John Doe": ⇅ gives no second piano row for
+       John Doe (Discogs has it), Jane Roe – only from the lines not clear – is gone."""
+    TEXT = 'Jane Roe – piano\n\nJane Roe\nPIANO\nJohn Doe'
+    IMP = "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length"
+    rows = lambda pg: {k: [(r[0], r[2]) for r in v['rows']] for k, v in pg.evaluate(GK_ROWS).items()}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{IMP} > 0", 60)
+
+        def load(text):
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', text)
+            n = pg.evaluate(IMP)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, f"{IMP} > {n}", 90)
+            pg.wait_for_timeout(1200)
+
+        def flip():
+            pg.click('.dci-stack-note [data-act=stack-flip]')
+            pg.wait_for_timeout(1500)
+
+        load(TEXT)
+        a0 = rows(pg)
+        flip()
+        a1 = rows(pg)
+        flip()
+        a2 = rows(pg)
+        print('A) zuerst:', a0, '\n   ⇅:', a1, '\n   ⇅ zurück:', a2)
+        results.append(a0.get('Jane Roe') == [('piano', 'piano'), ('PIANO', 'piano')] and 'John Doe' not in a0
+                       and a1.get('Jane Roe') == [('piano', 'piano')] and a1.get('John Doe') == [('PIANO', 'piano')]
+                       and a2.get('Jane Roe') == [('piano', 'piano'), ('PIANO', 'piano')] and 'John Doe' not in a2)
+        # B) ⇅, imported again
+        flip()
+        load(TEXT)
+        b1 = rows(pg)
+        print('B) ⇅ und neu eingelesen:', b1)
+        results.append(b1.get('Jane Roe') == [('piano', 'piano')] and b1.get('John Doe') == [('PIANO', 'piano')])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    # C) the Discogs notes
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = 'Jane Roe\nPIANO\nJOHN DOE\n\n' + d['notes']
+        d['extraartists'].append({'name': 'John Doe', 'anv': '', 'role': 'Piano', 'tracks': '', 'id': 3501, 'join': ''})
+        return d
+
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            c0 = rows(pg)
+            pg.click('.dci-stack-note [data-act=stack-flip]')
+            pg.wait_for_timeout(1500)
+            c1 = rows(pg)
+            print('C) Notizen:', {k: v for k, v in c0.items() if k in ('Jane Roe', 'John Doe')}, '→ ⇅:', {k: v for k, v in c1.items() if k in ('Jane Roe', 'John Doe')})
+            results.append(c0.get('Jane Roe') == [('PIANO', 'piano')] and c0.get('John Doe') == [('Piano', 'piano')]
+                           and 'Jane Roe' not in c1 and c1.get('John Doe') == [('Piano', 'piano')] and not errs)
             b.close()
     finally:
         H.discogs_release = orig

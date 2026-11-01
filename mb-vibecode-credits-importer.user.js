@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.11
+// @version      3.38.12
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.11
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.11
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.12
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.12
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.11';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.12';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1052,7 +1052,11 @@
       "stack.noteUp": "Read from lines with the instruments above the name – their order was not clear.",
       "stack.flipUp": "⇅ Instruments above the names",
       "stack.flipDown": "⇅ Names above the instruments",
-      "stack.flipTitle": "Reads the text again (changes in the dashboard are lost), the lines whose order was not clear the other way round",
+      "stack.flipTitle": "Reads the lines whose order was not clear the other way round – in the dashboard: what was changed in the other rows stays",
+      "case.back": "↺ in capitals",
+      "case.backTitle": "The source writes “{name}”; the dashboard in normal case (rule S060). A click takes the capitals – also as the “credited as” of its roles.",
+      "case.normal": "↺ normal case",
+      "case.normalTitle": "Back to normal case: “{name}”",
       "cover.from": "From the cover art · {what}",
       "cover.cropTitle": "Where this line is in the image (read from the cover art)",
       "matrix.commissionedReason": "{src} names “Commissioned By” without tracks: a suggestion for every work (✓ keeps it, × takes it out)",
@@ -1272,8 +1276,11 @@
       "log.importDone": "Import complete: {rows} roles of {entries} entries in the dashboard, {existing} already in MusicBrainz",
       "log.stackAmbig": "Names and instruments one above the other, their order not clear ({list}): read with the name above its instruments – “⇅ Instruments above the names” at the entry reads them the other way round",
       "log.stackAmbigUp": "Names and instruments one above the other, their order not clear ({list}): read with the instruments above the name – “⇅ Names above the instruments” at the entry reads them as before",
-      "log.stackFlipUp": "Names and instruments one above the other: read again with the instruments above the names",
-      "log.stackFlipDown": "Names and instruments one above the other: read again with the names above the instruments",
+      "log.stackFlipUp": "Names and instruments one above the other: the lines whose order was not clear now with the instruments above the names",
+      "log.stackFlipDown": "Names and instruments one above the other: the lines whose order was not clear now with the names above the instruments",
+      "log.caseNormal": "Names in capitals written in normal case ({n}): {list} – “↺ in capitals” at the entry takes the spelling of the source",
+      "log.caseUp": "{name}: in capitals, as the source writes it",
+      "log.caseDown": "{name}: in normal case",
       "log.checksDone.one": "Checks complete: same-named works looked up for {n} track",
       "log.checksDone.other": "Checks complete: same-named works looked up for {n} tracks",
       "log.worksAsk.one": "{n} track without a work: the works section asks before the work lookups",
@@ -3062,7 +3069,8 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     // [167] (3.38.7) maintainer: "die Artists stehen über der Zeile mit ihnen betreffenden instrumenten", "Großbuchstaben: immer in normale Schreibweise bringen"
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
-    { id: 'S059', where: 'TEXT.parse (normalCaseName, addCredit)', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S060', where: 'personCase, personCaseOf, groupCredits, entryNameHtml, caseBackHtml, setCaseUp, sourceCreditFor', note: 'A person\'s name all in capitals ("TORBEN SNEKKESTAD", "ABBA") and a name variation in capitals ("LAKE") in normal case – "Torben Snekkestad" – from every source (Discogs names and their spellings, texts, text from cover art, the Discogs notes, Bandcamp): a word of three letters or more with a vowel (also Cyrillic, Greek); two letters ("DJ", "MC"), letters without a vowel ("BMS") and initials stay, a particle between the names is small ("Paco de Lucía"). "↺ in capitals" in the head of the entry takes the spelling of the source again, also as the "credited as" of its roles (one typed by hand stays), and back. Linked to a MusicBrainz name all in capitals ("ABBA", "MF DOOM"): that name is shown, the source\'s capitals are the "credited as" ("DOOM"; none for "ABBA"). Persons only (3.38.12)' },
     { id: 'S057', where: 'personCopyright, mergePersonCopyrights, suggestByName', note: '℗ / © of a person Discogs lists as a label (3.37.10): a company entry with a person\'s name and only ℗ / © rows ("Copyright © – Martin Davidson", "Phonographic Copyright ℗ – Martin Davidson") whose Discogs link MusicBrainz does not know – a person of that name in the dashboard (another Discogs credit) takes the rows (artist–release copyright, phonographic copyright; the row says so, "As the label instead" gives them back); an artist of that name linked in this release becomes the entry\'s MB entity; otherwise the name is searched: artists and labels of that name, each named as such' },
     { id: 'S056', where: 'findFestivals, festivalHtml', note: 'Festival recordings (3.37.8): a sentence of the text or the notes with a festival (T055) – "… during the du Maurier, Ltd. International Jazz Festival Vancouver" – gives a hint above the entries: MusicBrainz prefers the event to the place (the event is linked to its place); with a date in the sentence, MusicBrainz\'s events of that name whose time holds the date are offered – never set, a click adds one as an entry' },
     { id: 'S055', where: 'TEXT.parse (readClause; TEXT_GUEST_HEAD, TEXT_FEAT_HEAD)', note: 'Texts (3.37.2): "Special Guest: M. Osswald on Sax and Clarinet" – the words before the colon are no person (T053): "Special Guest(s)", "Guest(s)" (and in German, French, Spanish) give the attribute guest to the instruments and voices of the names after it (a name without roles: performer, guest), "featuring", "feat.", "with" give none; "NAME on X and Y" (instruments or voices) gives them to the name, also without such a word. Before: "Special Guest" was read as the name and "M. Osswald on Sax" as a role credit' },
@@ -4870,12 +4878,8 @@
      * Go"); never a name all in capitals ("ABBA", "RZA"), short words ("DJ Shadow", "AC Williams") nor letters first ("BMS
      * Illustration"). MusicBrainz's spelling ("Agustí Fernández") counts once the name is linked.
      */
-    const normalCaseName = (n) => {
-      const words = String(n || '').split(' ');
-      if (!words.some((w) => /\p{Ll}/u.test(w))) return n;
-      const caps = (w, i) => /^\p{Lu}[\p{Lu}'’-]{2,}$/u.test(w) && /[AEIOUYÀ-ÆÈ-ÏÒ-ÖØ-Ý]/u.test(w) && (i > 0 || w.replace(/[^\p{L}]/gu, '').length >= 4);
-      return words.map((w, i) => (caps(w, i) ? w.toLowerCase().replace(/(^|[-'’])(\p{L})/gu, (all, sep, c) => sep + c.toUpperCase()) : w)).join(' ');
-    };
+    // [S060] (3.38.12) the same for every source: personCase (a name all in capitals there, S060, in groupCredits)
+    const normalCaseName = (n) => personCase(n, { mixed: true, all: false });
 
     /** Clauses of a line: "Written by A, mixed by B" → two; other commas stay inside their clause. */
     function clauses(line) {
@@ -5018,7 +5022,8 @@
       return { text: clean(text), links, cut: true };
     }
 
-    function parse(text, { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames = [], stackUp = false }) {
+    function parse(text, ctx0) {
+      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames = [], stackUp = false } = ctx0;
       const credits = [];
       const companies = [];
       const unrecognized = [];
@@ -5075,7 +5080,11 @@
         const p = parseRoleNotation(role)[0];
         if (!p || !looksLikeName(name)) return false;
         if (isCompanyRoleKnown(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra });
-        else credits.push({ who: who(ruleOn('S059') ? normalCaseName(name) : name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
+        else {
+          // [S060] (3.38.12) as written kept for "↺ in capitals" in the head
+          const nc = ruleOn('S059') ? normalCaseName(name) : name;
+          credits.push({ who: { ...who(nc), ...(nc !== name ? { caseFrom: name } : {}) }, role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
+        }
         return true;
       };
       // [S041] (3.30.7) the release's artist as the band, or "the band", "we" (collected item 96)
@@ -5911,7 +5920,14 @@
         readLine(raw);
       }
       flushBlock();
-      return { credits, companies, unrecognized, ignored };
+      // [S058] (3.38.12) blocks whose order was not clear: the text read the other way round too – its credits of those blocks and
+      // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5; maintainer: "wie
+      // vorschlag, gezielt"), the changes made there stay
+      if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
+        const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
+        return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized };
+      }
+      return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null };
     }
 
     /** The neutral release of a pasted text (ctx: the MB tracks and the core's helpers, see sourceContext). */
@@ -5934,6 +5950,8 @@
         series: [],
         unrecognized: res.unrecognized,
         ignored: res.ignored,
+        stackAlt: res.stackAlt || [], // [S058] (3.38.12)
+        stackAltUnrec: res.stackAltUnrec || null,
       };
     }
 
@@ -6096,6 +6114,8 @@
       const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
       const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
       const credits = [...album.credits];
+      // [S058] (3.38.12) the other reading of lines whose order was not clear ("⇅")
+      const stackAlt = [...(album.stackAlt || [])];
       const companies = [...album.companies];
       // [3.7.0] The "about" text is mostly prose: only its places ("recorded at Loft in Cologne, june 16/17 2018");
       // its dates are found in the notes like those of the credits
@@ -6107,10 +6127,15 @@
       // listed (mostly prose)
       const aboutAll = ruleOn('S049');
       credits.push(...aboutRes.credits.filter((c) => aboutAll || c.members).map((c) => (c.members ? c : { ...c, fromAbout: true })));
+      // [S058] (3.38.12) the other reading of the "about" text too, taken the same way
+      stackAlt.push(...(aboutRes.stackAlt || []).filter((c) => aboutAll || c.members).map((c) => (c.members ? c : { ...c, fromAbout: true })));
       companies.push(...aboutRes.companies.filter((c) => aboutAll || /\b(?:at|in)$/i.test(c.role))
         .map((c) => ({ ...c, fromAbout: true }))); // [3.16.1] can be left out ("Leave out the about text")
       const unrecognized = [...album.unrecognized];
       const ignored = [...(album.ignored || [])];
+      // [S058] (3.38.12) the lines not recognized of each track page, in both readings
+      const trackUnrec = new Map();
+      const trackAltUnrec = new Map();
       (trackCredits || []).forEach((text, i) => {
         if (!text || !tracks[i]) return;
         const res = TEXT.parse(text, { ...ctx, resolveTracks, resolveTitles });
@@ -6118,8 +6143,12 @@
         // [3.17.0] the track page a credit is on (its path), for the companion and the hint in the dashboard
         const page = { page: String(((data.trackinfo || [])[i] || {}).title_link || ''), pos: tracks[i].position };
         res.credits.forEach((c) => credits.push({ ...c, ...page, tracks: c.tracks.all ? on : c.tracks }));
+        // [S058] (3.38.12) the other reading of a track page, on its track
+        (res.stackAlt || []).forEach((c) => stackAlt.push({ ...c, ...page, tracks: c.tracks.all ? on : c.tracks }));
+        if (res.stackAltUnrec) trackAltUnrec.set(i, res.stackAltUnrec.map((l) => `${tracks[i].position}: ${l}`));
         res.companies.forEach((c) => companies.push({ ...c, ...page, tracks: c.tracks || on }));
         res.unrecognized.forEach((l) => unrecognized.push(`${tracks[i].position}: ${l}`));
+        trackUnrec.set(i, res.unrecognized.map((l) => `${tracks[i].position}: ${l}`));
         (res.ignored || []).forEach((l) => ignored.push({ ...l, text: `${tracks[i].position}: ${l.text}` }));
       });
       // [3.17.2] Liner notes at the end of the "about" text: a credit "Liner Notes" of the name below it – a name like any
@@ -6151,6 +6180,10 @@
         tracks,
         credits: credits.map((c) => ({ ...c, who: linkBand(c.who) })),
         companies: companies.map((c) => ({ ...c, who: linkBand(c.who) })),
+        stackAlt: stackAlt.map((c) => ({ ...c, who: linkBand(c.who) })),
+        // (the album's lines and those of each track page, in the other reading where it has one)
+        stackAltUnrec: album.stackAltUnrec || trackAltUnrec.size ? [...(album.stackAltUnrec || album.unrecognized),
+          ...[...trackUnrec.keys()].flatMap((i) => trackAltUnrec.get(i) || trackUnrec.get(i))] : null,
         series: [],
         unrecognized,
         ignored,
@@ -6223,6 +6256,45 @@
   // --- From the neutral release to the dashboard's entries (core) ---------------------------------------
 
   /**
+   * [S059] (3.38.7) / [S060] (3.38.12) A person's name in normal case (F-4; maintainer: "Großbuchstaben: immer in normale
+   * Schreibweise bringen", "bitte schreibe Großbuchstaben immer Klein, es sei denn, der Artistname auf MB ist ebenfalls komplett
+   * capslock … anbieten alles in großbuchstaben zu setzen", "ja normale schreibweise … ja überall", "Wörter aus zwei Buchstaben
+   * bleiben"): a word of three letters or more in capitals with a vowel (also with - or ') – "SNEKKESTAD" → "Snekkestad",
+   * "O'BRIEN" → "O'Brien", "JEAN-LUC" → "Jean-Luc". mixed (S059): a name with words in normal case beside it ("Torben SNEKKESTAD"),
+   * its first word only from four letters ("KUROSAWA Go"); all (S060): a name all in capitals ("TORBEN SNEKKESTAD", "ABBA").
+   * Two letters ("DJ Shadow", "MC Solaar"), letters without a vowel ("BMS") and initials ("J.") stay. MusicBrainz's spelling
+   * counts once the name is linked (an all-capitals name of MusicBrainz too: no "credited as", S031).
+   */
+  // [S060] (3.38.12) a particle between the names of a name all in capitals: small ("PACO DE LUCÍA" → "Paco de Lucía")
+  const PERSON_PARTICLE = /^(?:de|di|da|do|dos|das|del|della|dei|degli|van|von|der|den|ter|ten|du|la|le|y|af|zu|bin|ibn)$/i;
+  const PERSON_VOWEL = /[AEIOUYÀ-ÆÈ-ÏÒ-ÖØ-ÝĀ-ſАЕЁИОУЫЭЮЯІЇЄΑΕΗΙΟΥΩΆΈΉΊΌΎΏ]/u;
+  function personCase(n, { mixed = true, all = true } = {}) {
+    const words = String(n || '').split(' ');
+    const isMixed = words.some((w) => /\p{Ll}/u.test(w));
+    if (isMixed ? !mixed : !all) return n;
+    return words.map((w, i) => {
+      // (signs before or after a word stay: "SMITH," → "Smith,")
+      const m = /^([^\p{L}]*)(\p{L}[\p{L}'’-]*)([^\p{L}]*)$/u.exec(w);
+      if (!m || !/^\p{Lu}[\p{Lu}'’-]*$/u.test(m[2])) return w;
+      const [, lead, core, trail] = m;
+      if (!isMixed && words.length > 1 && PERSON_PARTICLE.test(core)) {
+        // (first: "DE LA SOUL" → "De la Soul"; last: as any word)
+        if (i === 0) return lead + core.charAt(0) + core.slice(1).toLowerCase() + trail;
+        if (i < words.length - 1) return lead + core.toLowerCase() + trail;
+      }
+      const letters = core.replace(/[^\p{L}]/gu, '').length;
+      if (letters < 3 || !PERSON_VOWEL.test(core) || (isMixed && i === 0 && letters < 4)) return w;
+      return lead + core.toLowerCase().replace(/(^|[-'’])(\p{L})/gu, (x, sep, c) => sep + c.toUpperCase()) + trail;
+    }).join(' ');
+  }
+  /** [S060] (3.38.12) The name of a person as the dashboard writes it (S059, S060), and as the source wrote it when that differs. */
+  function personCaseOf(n) {
+    const name = String(n || '');
+    const out = ruleOn('S059') || ruleOn('S060') ? personCase(name, { mixed: ruleOn('S059'), all: ruleOn('S060') }) : name;
+    return { name: out, from: out !== name ? name : '' };
+  }
+
+  /**
    * The credits of a neutral release grouped by person (its source id, else its name), identical roles of a
    * person merged across tracks; engineer tasks are split here (S018).
    */
@@ -6241,7 +6313,10 @@
       // [3.14.0] a credit without a name stays its own entry (a suggestion), also next to the same artist by name
       const gKey = who.id ? `id:${who.id}` : who.placeholder ? `ph:${norm(who.name)}` : `name:${norm(who.name)}`;
       if (!groups.has(gKey)) {
-        groups.set(gKey, { dId: who.id || 0, name: who.name, rawName: who.rawName, links: who.links || [], roles: new Map(),
+        // [S060] (3.38.12) a name in capitals in normal case (F-4), the source's spelling kept ("in capitals" in the head)
+        const nc = who.placeholder ? { name: who.name, from: '' } : personCaseOf(who.name);
+        if (!nc.from && who.caseFrom) nc.from = who.caseFrom;
+        groups.set(gKey, { dId: who.id || 0, name: nc.name, ...(nc.from ? { caseFrom: nc.from } : {}), rawName: who.rawName, links: who.links || [], roles: new Map(),
           // [3.14.0] a credit without a name, given to one of the release's artists (placeholderCredits)
           ...(who.placeholder ? { placeholder: who.placeholder, releaseMbid: who.releaseMbid || '' } : {}),
           // [3.22.1] the name of a Bandcamp album on a label's page: whose page it is (46)
@@ -6254,12 +6329,16 @@
       // [3.21.0] a name without an id: the web profiles found next to it anywhere in the text (T032)
       if (!who.id && (who.links || []).length) group.links = uniq([...group.links, ...who.links]);
       if (!c.role) continue;
-      const anv = c.credited || '';
+      // [S060] (3.38.12) a name variation in capitals too ("LAKE" → "Lake")
+      const ac = personCaseOf(c.credited || '');
+      const anv = ac.name;
       const at = c.tracks || { all: true };
       for (const role of splitEngineerTasks({ raw: c.role, base: c.base, mods: [...(c.details || [])] }).flatMap(splitArtTasks)) {
-        const rKey = `${norm(role.raw)}|${norm(anv)}`;
+        // [S058] (3.38.12) a credit of lines whose order was not clear is a row of its own: "⇅" swaps it without taking a clear
+        // credit of the same role with it (the same relationship of both is staged once)
+        const rKey = `${norm(role.raw)}|${norm(anv)}${c.stackAmbig ? '|stack' : ''}`;
         if (!group.roles.has(rKey)) {
-          group.roles.set(rKey, { role, anv, allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
+          group.roles.set(rKey, { role, anv, ...(ac.from ? { anvFrom: ac.from } : {}), allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
             fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes });
         }
         const entry = group.roles.get(rKey);
@@ -6626,7 +6705,7 @@
       isPlaceholderTitle: (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || '')),
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
-      titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf,
+      titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase,
     };
     return;
   }
@@ -7808,9 +7887,10 @@
   function roleLabel(row) {
     const phrase = rowPhrase(row);
     const raw = String(row.raw || '').trim();
-    const src = (row.supp && row.suppSource ? row.suppSource : S.source || {}).name || '';
-    const from = raw ? tr('role.fromSource', { source: src, raw }) : '';
-    return phrase ? { text: phrase, title: from } : { text: raw || '–', title: raw ? `${from} – ${tr('cl.noType')}` : '' };
+    // [177] (3.38.12) a row of a supplement: its source; a row added by hand: none
+    const src = row.supp ? row.suppName || '' : (S.source || {}).name || '';
+    const from = raw && !row.manual && src ? tr('role.fromSource', { source: src, raw }) : '';
+    return phrase ? { text: phrase, title: from } : { text: raw || '–', title: raw ? [from, tr('cl.noType')].filter(Boolean).join(' – ') : '' };
   }
 
   // --- Relationship editor internals -------------------------------------------
@@ -8399,6 +8479,8 @@
     if (a && a.mbid && norm(row.credit) && !row.creditTouched && !row.manual) ids.push(a.dId ? 'S008' : 'S036');
     // [3.28.3] no "credited as", because only the case differs (S031)
     if (a && a.mbid && !norm(row.credit) && !row.creditTouched && !row.manual && caseOnlyName(row, a)) ids.push('S031');
+    // [S060] (3.38.12) its name or its spelling written in capitals at the source, here in normal case
+    if (a && !a.company && !a.caseUp && !mbCaps(a) && (a.caseFrom || row.anvFrom)) ids.push('S060');
     return uniq(ids).filter((id) => /^U/.test(id) || ruleOn(id));
   }
 
@@ -14963,6 +15045,7 @@
       : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask, artCredit: info.c.role.artCredit || '', guess: !!info.c.guess });
     row.dAllTracks = !!info.all;
     if (!company) {
+      if (info.c.anvFrom) row.anvFrom = info.c.anvFrom; // [S060] (3.38.12)
       row.dSpec = info.c.specs.join(', ');
       row.dPositions = info.c.positions;
       row.unresolved = info.c.unresolved;
@@ -15010,7 +15093,7 @@
           ? { key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true, entityType: null,
             mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], src: sp.source, area: g.area || '' }
           : { key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', mbid: null, mbName: '',
-            candidates: [], editing: false, error: '', anvs: [], src: sp.source };
+            candidates: [], editing: false, error: '', anvs: [], src: sp.source, ...(g.caseFrom ? { caseFrom: g.caseFrom } : {}) };
         S.artists.set(entry.key, entry);
         const rows = it.roles.map((info) => suppRow(entry.key, info, it.company ? entry : null)).filter(Boolean);
         if (!rows.length) {
@@ -15510,6 +15593,15 @@
     }
     if (added.length) log('info', 'notesCompanies', { n: added.length, list: added.join(', ') });
     if (ruleOn('S054')) addNotesPersons(rel, res);
+    // [S058] (3.38.12) the other reading of the notes' lines whose order was not clear, for "⇅": through the same rules as the
+    // notes' credits (one Discogs lists already, the same credit in two lines, a company's name, Discogs's entry of the name) – on
+    // a copy of the release's credits without those of the reading shown
+    if (ruleOn('S054') && (res.stackAlt || []).length) {
+      const copy = (c) => ({ ...c, tracks: c.tracks ? { ...c.tracks, ...(c.tracks.indexes ? { indexes: [...c.tracks.indexes] } : {}) } : c.tracks });
+      const relAlt = { ...rel, credits: (rel.credits || []).filter((c) => !(c.fromNotes && c.stackAmbig)).map(copy) };
+      addNotesPersons(relAlt, { credits: res.stackAlt }, { quiet: true });
+      rel.stackAlt = [...(rel.stackAlt || []), ...relAlt.credits.filter((c) => c.fromNotes && c.stackAmbig)];
+    }
     if (joined.length) log('info', 'notesPubTracks', { list: joined.join(', ') });
     if (joinedOther.length) log('info', 'notesCompanyTracks', { list: joinedOther.join(', ') });
   }
@@ -15527,7 +15619,7 @@
    * the same name with another role joins Discogs's entry; a new name is an entry of its own, searched by its name. What
    * MusicBrainz has already is skipped at the import as always.
    */
-  function addNotesPersons(rel, res) {
+  function addNotesPersons(rel, res, { quiet = false } = {}) {
     const someTracks = (t) => !!(t && !t.all && (t.indexes || []).length);
     const kindOf = (x) => {
       const p = parseRoleNotation(x.role)[0] || { base: x.role, mods: [] };
@@ -15576,6 +15668,7 @@
       rel.credits.push({ ...c, who, fromNotes: true, notesLine: c.line });
       added.push(`${c.who.name} (${c.role})`);
     }
+    if (quiet) return;
     if (added.length) log('info', 'notesCredits', { n: added.length, list: added.join(', ') });
     if (tracksTo.length) log('info', 'notesCreditTracks', { list: tracksTo.join(', ') });
   }
@@ -15701,10 +15794,12 @@
       if (a.join !== undefined) x.join = a.join;
       if (S.emBy.has(a.key)) x.by = S.emBy.get(a.key);
       if (a.matchTouched) x.match = { mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '', status: a.status, entityType: a.entityType || null };
+      if (a.caseUp) x.caseUp = true; // [S060] (3.38.12) "↺ in capitals" taken
       return x;
     }).filter((x) => Object.keys(x).length > 1);
     const manual = used.filter((a) => a.manual).map((a) => ({ e: entryIdOf(a), a: { name: a.name, company: !!a.company, other: !!a.other, entityType: a.entityType || null, mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '' } }));
-    return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual, works: worksSnapshot() };
+    // [S058] (3.38.12) the reading of "⇅" (the import reads the lines so again, its rows are remembered so)
+    return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual, works: worksSnapshot(), ...(S.stackUp ? { stackUp: true } : {}) };
   }
 
   /**
@@ -15850,6 +15945,13 @@
    * of the source gets what was changed in it, the rows of their own come back (of a line that is still there, or added by
    * hand), entries added by hand too; the order is the remembered one, new lines of the source after the rows of their entry.
    */
+  /** [S058] (3.38.12) Whether the import remembered for this source was read with "⇅" (the instruments above the names). */
+  function rememberedStackUp(src) {
+    const stored = relRead(REMEMBER_ROWS_KEY, null);
+    const snap = stored && stored.v === 2 && stored.by ? stored.by[src || ''] : null;
+    return !!(snap && snap.stackUp === true);
+  }
+
   function restoreRemembered() {
     const stored = relRead(REMEMBER_ROWS_KEY, null);
     const snap = stored && stored.v === 2 && stored.by ? stored.by[S.importSrc || ''] : stored && stored.v === 1 ? stored : null;
@@ -15962,6 +16064,8 @@
       if (!a) continue;
       if ('join' in e) a.join = e.join;
       if (e.by) S.emBy.set(a.key, e.by);
+      // [S060] (3.38.12) in capitals as taken (its rows came back with their credits)
+      if (e.caseUp && caseSpellingOf(a) && !a.caseUp) setCaseUp(a, true, false);
       if (e.match && e.match.mbid) {
         Object.assign(a, { mbid: e.match.mbid, mbName: e.match.mbName || '', mbComment: e.match.mbComment || '', status: e.match.status || 'manual', matchTouched: true });
         // [3.36.1] the entity type only: its rows came back with their types (setCompanyEntityType would set them anew)
@@ -15979,13 +16083,151 @@
     }
   }
 
+  /**
+   * [S058] (3.38.12) "⇅": the lines whose order was not clear read the other way round – in the dashboard (F-5; maintainer: "wie
+   * vorschlag, gezielt"): the rows of the reading shown go, those of the other one come (into the entry of the same name, else a
+   * new entry, looked up as at the import); every other row keeps what was changed in it. Until 3.38.11 the source was read again
+   * and the changes were lost. Without the other reading (a source of before): read again, as then.
+   */
+  async function flipStacks() {
+    const next = S.stackAlt || [];
+    S.stackUp = !S.stackUp;
+    log('info', S.stackUp ? 'stackFlipUp' : 'stackFlipDown');
+    if (!next.length) {
+      if (S.release) loadRelease(S.release.id, { source: S.source });
+      return;
+    }
+    const gone = S.rows.filter((r) => r.stackAmbig);
+    const touched = new Set(gone.map((r) => r.artistKey));
+    S.rows = S.rows.filter((r) => !r.stackAmbig);
+    // (remembered for the release: the rows of the other reading count as the source's – the import reads them so again)
+    if (S.freshRows) gone.forEach((r) => S.freshRows.delete(r.id));
+    const before = new Set(S.rows.map((r) => r.id));
+    const added = [];
+    const leftOutKeys = new Set();
+    for (const g of groupCredits(placeholderCredits(next))) {
+      const k = nameKey(g.name);
+      let a = [...S.artists.values()].find((x) => !x.company && !x.other && ((g.dId && x.dId === g.dId)
+        || (!g.dId && [x.name, x.caseFrom, x.caseNormal, x.rawName].some((n) => n && nameKey(n) === k))));
+      if (!a) {
+        a = newPersonEntry(g);
+        S.artists.set(a.key, a);
+        added.push(a);
+      }
+      touched.add(a.key);
+      addCreditRows(a, g, S.release, S.source, leftOutKeys);
+    }
+    for (const key of touched) if (!S.rows.some((r) => r.artistKey === key)) S.artists.delete(key);
+    const fresh = S.rows.filter((r) => !before.has(r.id));
+    // what the import does with new rows: the "about" text or the notes left out, credits switched off at the source (performers
+    // on tracks, S046, not: it would set the tracks of the other rows anew)
+    if (S.aboutOff) setAboutRowsHidden(true);
+    if (S.notesOff) setNotesRowsHidden(true);
+    if (S.source.companion && S.srcOff.size) {
+      fresh.forEach((r) => {
+        if (S.srcOff.has(srcOffKey(r))) Object.assign(r, { srcOff: true, srcOffLevel: r.level, level: 'skip' });
+      });
+    }
+    if (S.freshRows) {
+      fresh.forEach((r) => {
+        const base = rowBaseKey(r);
+        const i = [...S.freshRows.values()].filter((f) => f.b === base).length + 1;
+        S.freshRows.set(r.id, { k: `${base}#${i}`, b: base, f: rowFieldsOf(r) });
+      });
+    }
+    S.stackAlt = S.stackCur || [];
+    S.stackCur = next;
+    // the lines not recognized of the other reading
+    if (S.stackAltUnrec && S.release) [S.release.unrecognized, S.stackAltUnrec] = [S.stackAltUnrec, S.release.unrecognized || []];
+    renderSource();
+    renderGroups();
+    renderWorks();
+    refresh();
+    if (added.length) {
+      await resolveArtists({ source: S.source, only: added });
+      renderGroups();
+      refresh();
+    }
+  }
+
+  /** [S058] (3.38.12) A person's entry of a group of credits (groupCredits), as the import makes it. */
+  function newPersonEntry(g) {
+    return {
+      key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending',
+      ...(g.caseFrom ? { caseFrom: g.caseFrom } : {}), // [S060] (3.38.12)
+      ...(g.placeholder ? { placeholder: g.placeholder, releaseMbid: g.releaseMbid } : {}),
+      ...(g.pageOf ? { pageOf: g.pageOf } : {}),
+      ...(g.fromNotes ? { fromNotes: true } : {}),
+      mbid: null, mbName: '', candidates: [], editing: false, error: '',
+      anvs: uniq([...g.roles.values()].map((c) => c.anv).filter(Boolean)),
+    };
+  }
+
+  /**
+   * [S058] (3.38.12) The rows of a group of credits for its entry, as the import makes them (moved out of loadRelease for "⇅", which
+   * adds the credits of the other reading without reading the source again): left out for a medium the release does not have
+   * (the entry's key into leftOutKeys), for media not chosen, for a level not chosen.
+   */
+  function addCreditRows(artist, g, rel, source, leftOutKeys) {
+    for (const c of g.roles.values()) {
+      const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '', guess: !!c.guess });
+      if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
+      if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
+      row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
+      // [3.21.4] "Translated By" in Bandcamp credits asks (Q007); [S026] a credit for a medium the release does not have
+      if (source === BANDCAMP) askTranslation(row);
+      // [137d] (3.34.20) "Voice" asks (Q011; [137e] 3.34.25 from every source); a word MusicBrainz does not know as an instrument
+      // asks for similar ones; [137f] so does the instrument of an instrument technician
+      askVoice(row);
+      if (c.guess) guessInstrument(row);
+      askTechnician(row);
+      if (leftOutForMedium(row, rel, (c.lines || [])[0] || `${g.name} – ${c.role.raw}`, !!source.nameSearch)) {
+        leftOutKeys.add(artist.key);
+        continue;
+      }
+      if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
+      // [S054] (3.37.0) a credit from the Discogs notes (its line shown at the row)
+      if (c.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: c.notesLine || '' });
+      if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
+      if (c.stackAmbig) row.stackAmbig = true; // [S058] (3.38.7)
+      if (c.anvFrom) row.anvFrom = c.anvFrom; // [S060] (3.38.12) the spelling in capitals at the source
+      row.dSpec = c.specs.join(', ');
+      row.dPositions = c.positions;
+      row.unresolved = c.unresolved;
+      // The source names no tracks for this credit (the whole release)
+      row.dAllTracks = !!c.allTracks;
+      // Credits without track information go onto the tracks of the chosen media (media choice)
+      const suggested = c.allTracks
+        ? selIdx()
+        : [...c.indexes].filter((i) => i < S.mbTracks.length && inSelection(i));
+      // Media choice: credits only for tracks of media not chosen are not imported
+      if (S.mediaSel && !c.allTracks && c.indexes.size && !suggested.length) continue;
+      row.suggested = new Set(suggested);
+      row.tracks = new Set(suggested);
+      // [S054] (3.37.0) Discogs's credit for the whole release, its tracks from the notes: set, ⓘ shows the line
+      if (c.notesLine && !c.fromNotes && !c.allTracks && suggested.length) {
+        const fromNotesIdx = (c.notesIdx || []).filter((i) => suggested.includes(i));
+        if (fromNotesIdx.length) Object.assign(row, { notesTracks: new Set(fromNotesIdx), notesFrom: c.notesLine });
+      }
+      // A producer role meant for the release stays on the recordings Discogs names it for.
+      if (row.level === 'release' && !c.allTracks && suggested.length && row.types.includes('producer')) {
+        row.level = 'recording';
+        resolveRowType(row);
+      }
+      if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
+      suggestCommissioned(row);
+      S.rows.push(row);
+    }
+  }
+
   async function loadRelease(id, { confirmed = false, source = S.source } = {}) {
     if (!confirmed && S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
       renderSource();
       return;
     }
     // [S058] (3.38.7) "⇅" holds for the text (or release) it was chosen for
-    if (!S.release || S.source !== source || String(S.release.id) !== String(id)) S.stackUp = false;
+    // [S058] (3.38.12) another release: the names above – or the reading "⇅" took when it was remembered
+    if (!S.release || S.source !== source || String(S.release.id) !== String(id)) S.stackUp = rememberedStackUp(`${source.id}:${id}`);
     const choice = await chooseMedia();
     if (!choice) {
       log('info', 'mediaCancelled');
@@ -16048,64 +16290,14 @@
       // [S026] entries whose credits were all left out for a medium the release does not have
       const leftOutKeys = new Set();
       for (const g of groupCredits(placeholderCredits(rel.credits))) {
-        const artist = {
-          key: nextId('a'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending',
-          ...(g.placeholder ? { placeholder: g.placeholder, releaseMbid: g.releaseMbid } : {}),
-          ...(g.pageOf ? { pageOf: g.pageOf } : {}),
-          ...(g.fromNotes ? { fromNotes: true } : {}),
-          mbid: null, mbName: '', candidates: [], editing: false, error: '',
-          anvs: uniq([...g.roles.values()].map((c) => c.anv).filter(Boolean)),
-        };
+        const artist = newPersonEntry(g);
         S.artists.set(artist.key, artist);
-        for (const c of g.roles.values()) {
-          const row = makeRow(artist.key, { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '', guess: !!c.guess });
-          if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
-          if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
-          row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
-          // [3.21.4] "Translated By" in Bandcamp credits asks (Q007); [S026] a credit for a medium the release does not have
-          if (source === BANDCAMP) askTranslation(row);
-          // [137d] (3.34.20) "Voice" asks (Q011; [137e] 3.34.25 from every source); a word MusicBrainz does not know as an instrument
-          // asks for similar ones; [137f] so does the instrument of an instrument technician
-          askVoice(row);
-          if (c.guess) guessInstrument(row);
-          askTechnician(row);
-          if (leftOutForMedium(row, rel, (c.lines || [])[0] || `${g.name} – ${c.role.raw}`, !!source.nameSearch)) {
-            leftOutKeys.add(artist.key);
-            continue;
-          }
-          if (c.fromAbout) row.fromAbout = true; // [3.17.2] liner notes from the "about" text
-          // [S054] (3.37.0) a credit from the Discogs notes (its line shown at the row)
-          if (c.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: c.notesLine || '' });
-          if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
-          if (c.stackAmbig) row.stackAmbig = true; // [S058] (3.38.7)
-          row.dSpec = c.specs.join(', ');
-          row.dPositions = c.positions;
-          row.unresolved = c.unresolved;
-          // The source names no tracks for this credit (the whole release)
-          row.dAllTracks = !!c.allTracks;
-          // Credits without track information go onto the tracks of the chosen media (media choice)
-          const suggested = c.allTracks
-            ? selIdx()
-            : [...c.indexes].filter((i) => i < S.mbTracks.length && inSelection(i));
-          // Media choice: credits only for tracks of media not chosen are not imported
-          if (S.mediaSel && !c.allTracks && c.indexes.size && !suggested.length) continue;
-          row.suggested = new Set(suggested);
-          row.tracks = new Set(suggested);
-          // [S054] (3.37.0) Discogs's credit for the whole release, its tracks from the notes: set, ⓘ shows the line
-          if (c.notesLine && !c.fromNotes && !c.allTracks && suggested.length) {
-            const fromNotesIdx = (c.notesIdx || []).filter((i) => suggested.includes(i));
-            if (fromNotesIdx.length) Object.assign(row, { notesTracks: new Set(fromNotesIdx), notesFrom: c.notesLine });
-          }
-          // A producer role meant for the release stays on the recordings Discogs names it for.
-          if (row.level === 'release' && !c.allTracks && suggested.length && row.types.includes('producer')) {
-            row.level = 'recording';
-            resolveRowType(row);
-          }
-          if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
-          suggestCommissioned(row);
-          S.rows.push(row);
-        }
+        addCreditRows(artist, g, rel, source, leftOutKeys);
       }
+      // [S058] (3.38.12) both readings of the lines whose order was not clear, for "⇅" (flipStacks)
+      S.stackCur = (rel.credits || []).filter((c) => c.stackAmbig);
+      S.stackAlt = rel.stackAlt || [];
+      S.stackAltUnrec = rel.stackAltUnrec || null;
       for (const g of groupCompanies(rel.companies)) {
         // [S007]
         if (ruleOn('S007') && (/festival/i.test(g.name || '') || /festival/i.test(g.rawName || ''))) {
@@ -16244,6 +16436,11 @@
         finishRemember(seq);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         // [S058] (3.38.7) names and instruments one above the other in an order that is not clear: said in red, "⇅" at the entries
+        // [S060] (3.38.12) names in capitals written in normal case
+        const caseNames = [...S.artists.values()].filter((a) => !a.company && S.rows.some((r) => r.artistKey === a.key)).flatMap((a) => [
+          ...(a.caseFrom ? [`${a.caseFrom} → ${a.name}`] : []),
+          ...uniq(S.rows.filter((r) => r.artistKey === a.key && r.anvFrom).map((r) => `${r.anvFrom} → ${r.anv}`))]);
+        if (caseNames.length) log('info', 'caseNormal', { n: caseNames.length, list: caseNames.join(', ') });
         const stackNames = uniq(S.rows.filter((r) => r.stackAmbig).map((r) => (S.artists.get(r.artistKey) || {}).name).filter(Boolean));
         if (stackNames.length) log('warn', S.stackUp ? 'stackAmbigUp' : 'stackAmbig', { n: stackNames.length, list: stackNames.join(', ') });
         // [S056] (3.37.8) festival recordings in the text: a hint, events offered
@@ -16596,9 +16793,11 @@
       // it so. Otherwise it is only a suggestion.
       if (source.strictNames && a.candidates.length) {
         const spelled = (c) => (a.company ? c.name : releaseCreditName(c.mbid));
-        const exact = a.candidates.filter((c) => spelled(c) === a.name);
+        // [S060] (3.38.12) as the source writes it (a name in capitals before it was written in normal case: "KOKOROKO")
+        const srcName = a.caseFrom || a.name;
+        const exact = a.candidates.filter((c) => spelled(c) === srcName);
         // Shown in the entry to check by eye: the name at the source, in the release's artist credit, in MusicBrainz
-        if (!a.company) a.spell = { src: a.name, srcName: source.name, release: spelled(exact[0] || a.candidates[0]), mb: (exact[0] || a.candidates[0]).name };
+        if (!a.company) a.spell = { src: srcName, srcName: source.name, release: spelled(exact[0] || a.candidates[0]), mb: (exact[0] || a.candidates[0]).name };
         if (exact.length) {
           a.candidates = exact;
         } else {
@@ -17457,8 +17656,10 @@
   }
 
   function sourceCreditFor(row, a) {
-    const shown = String(row.anv || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim();
     const mb = String(a.mbName || '').trim();
+    // [S060] (3.38.12) MusicBrainz's name in capitals too: the source's capitals ("DOOM" for MF DOOM, not "Doom")
+    const caps = !!mb && !/\p{Ll}/u.test(mb);
+    const shown = String((caps && row.anvFrom) || row.anv || (caps && a.caseFrom) || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim();
     // [S031] (3.28.2) only the case differs ("Voices Of Wonder" for Voices of Wonder, "VALFAR" for Valfar): MusicBrainz's
     // spelling, no "credited as" (typed in by hand it stays)
     if (shown && mb && ruleOn('S031') && typo(shown).toLocaleLowerCase() === typo(mb).toLocaleLowerCase()) return '';
@@ -17639,7 +17840,7 @@
    */
   function creditAllHtml(a) {
     const common = commonSpelling(a);
-    const label = a.company ? 'group.creditAllOther' : 'group.creditAll';
+    const label = a.company || a.other ? 'group.creditAllOther' : 'group.creditAll';
     const names = a.company ? uniq([a.name, a.mbName, a.rawName, ...(a.anvs || [])].filter(Boolean)) : artistVariants(a);
     return `<label class="dci-credit">${esc(tr(label))}
         <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(common && !caseOnlyAnv(a, common) ? common : '')}"
@@ -17710,14 +17911,65 @@
     return v && typo(v) !== typo(base) ? { shown: v, others: [], base } : null;
   }
 
+  /**
+   * [S060] (3.38.12) Linked to a name of MusicBrainz all in capitals ("ABBA", "MF DOOM") while the source wrote it, or a spelling of
+   * it, in capitals too: MusicBrainz's spelling – the head shows it, the "credited as" keeps the source's capitals (maintainer: "es
+   * sei denn, der Artistname auf MB ist ebenfalls komplett capslock").
+   */
+  const mbCaps = (a) => !!(a && a.mbName && !/\p{Ll}/u.test(a.mbName) && caseSpellingOf(a));
+  /** [S060] (3.38.12) Whether an entry has a name or a spelling the dashboard wrote in normal case (the source's in capitals). */
+  const caseSpellingOf = (a) => !!(a && !a.company && (a.caseFrom || S.rows.some((r) => r.artistKey === a.key && r.anvFrom)));
+  /** [S060] (3.38.12) "↺ in capitals" at a name the dashboard wrote in normal case ("↺ normal case" once taken). */
+  function caseBackHtml(a) {
+    if (!caseSpellingOf(a) || mbCaps(a)) return '';
+    const up = !!a.caseUp;
+    const row = S.rows.find((r) => r.artistKey === a.key && r.anvFrom) || {};
+    const from = a.caseFrom || row.anvFrom || '';
+    const normal = a.caseFrom ? a.caseNormal || a.name : row.anvNormal || row.anv || '';
+    const title = up ? tr('case.normalTitle', { name: normal }) : tr('case.backTitle', { name: from });
+    return ` <button type="button" class="dci-textbtn dci-caseback" data-act="case-back" aria-pressed="${up}" title="${esc(title)}">${esc(tr(up ? 'case.normal' : 'case.back'))}</button>`;
+  }
+  /**
+   * [S060] (3.38.12) The spelling of the source in capitals for an entry and its roles, or normal case again: the name (search, a
+   * new artist), the name variations of its rows and their "credited as" – taken as typed (also for a linked entry: S031 would
+   * leave a difference only of case out); a "credited as" typed by hand (or "Set for all") stays. rows: false – only the entry
+   * (its rows came back remembered).
+   */
+  function setCaseUp(a, up, rows = true) {
+    if (!a || !caseSpellingOf(a)) return;
+    if (a.caseFrom && !a.caseNormal) a.caseNormal = a.name;
+    a.caseUp = up;
+    if (a.caseFrom) a.name = up ? a.caseFrom : a.caseNormal;
+    if (!rows) return;
+    for (const r of S.rows.filter((x) => x.artistKey === a.key)) {
+      if (r.anvFrom) {
+        if (r.anvNormal == null) r.anvNormal = r.anv;
+        r.anv = up ? r.anvFrom : r.anvNormal;
+      }
+      if (r.creditTouched && !r.caseCredit) continue;
+      if (up) Object.assign(r, { credit: typo(r.anv || a.caseFrom || a.name), creditTouched: true, caseCredit: true });
+      else {
+        Object.assign(r, { creditTouched: false, caseCredit: false });
+        r.credit = a.mbid ? sourceCreditFor(r, a) : r.anv;
+      }
+    }
+    a.anvs = uniq(S.rows.filter((x) => x.artistKey === a.key).map((x) => x.anv).filter(Boolean));
+  }
+  function toggleCase(a) {
+    if (!caseSpellingOf(a)) return;
+    setCaseUp(a, !a.caseUp);
+    log('info', a.caseUp ? 'caseUp' : 'caseDown', { name: a.name });
+    rerenderGroup(a);
+  }
+
   /** [3.32.2] The name in the head of an entry: the release's spelling with "*" (the entry's name in the tooltip), or the name. */
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
-    if (!sp) return `<strong>${esc(a.name)}</strong>`;
+    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}`;
     // [3.37.11] the * says what it means (collected item 161)
     const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
       ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [tr('group.anvStar')] : [])].join('\n');
-    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>`;
+    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${caseBackHtml(a)}`;
   }
 
   function creditChipHtml(a) {
@@ -18249,7 +18501,7 @@
   function levelKeptHtml(l) {
     const r = l.rows.find((x) => x.emLevelKept && x.level !== 'skip');
     if (!r) return '';
-    return `<div class="dci-bass-ask dci-em-kept">${esc(tr('em.levelKept', { name: r.raw || rowTypeName(r), level: tr(`level.${r.level}`), type: rowTypeName(r), to: tr(`level.${r.emLevelKept}`) }))}
+    return `<div class="dci-bass-ask dci-em-kept">${esc(tr('em.levelKept', { name: r.raw || rowTypeName(r), level: tr(`level.${r.level}`), type: mbPhraseOf(ltOf(r)) || rowTypeName(r), to: tr(`level.${r.emLevelKept}`) }))}
       <button type="button" class="dci-textbtn" data-act="em-keptok" data-row="${r.id}">${esc(tr('em.keptOk'))}</button></div>`;
   }
 
@@ -18285,7 +18537,7 @@
     const ticks = b.events.map((e) => {
       const on = l.ev.has(e.key);
       const ok = on || typeOnLevel(r, e.level);
-      return `<td class="dci-em-c-ev"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''}${ok ? '' : ` disabled title="${esc(tr('em.tickNo', { type: rowTypeName(r), level: tr(`level.${e.level}`) }))}"`}
+      return `<td class="dci-em-c-ev"><input type="checkbox" data-f="em-tick" data-ev="${esc(e.key)}" ${on ? 'checked' : ''}${ok ? '' : ` disabled title="${esc(tr('em.tickNo', { type: mbPhraseOf(ltOf(r)) || rowTypeName(r), level: tr(`level.${e.level}`) }))}"`}
         aria-label="${esc(tr('em.tickLabel', { name, n: e.n }))}"></td>`;
     }).join('');
     const open = S.emOpen.has(l.id);
@@ -18462,7 +18714,7 @@
     const ask = !!answers.length || chipNotesOpen(l);
     // a word MusicBrainz does not know: as written ("? Chaims")
     // [177] (3.38.10) not an instrument: MusicBrainz's name of the relationship
-    const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || r.raw : rowPhrase(r) || r.raw) || '–';
+    const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || rowPhrase(r) || r.raw : rowPhrase(r) || r.raw) || '–';
     const flags = [...r.flags].filter((f) => ['additional', 'guest', 'solo'].includes(f)).map((f) => tr(`em.flag.${f}`));
     const credit = String(r.roleCredit || '').trim();
     // [176] (3.38.11) its credited as ("as “Lake”"; item 176)
@@ -18476,7 +18728,7 @@
     const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
     const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
     return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : ''}>
-      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc(tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'em.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
   /**
@@ -20127,7 +20379,8 @@
   const newPoolId = () => `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   const rowShort = (r) => {
     const a = S.artists.get(r.artistKey);
-    return `${a ? a.mbName || a.name : ''}: ${r.raw || (currentLinkType(r) || {}).name || ''}`;
+    // [177] (3.38.12) as MusicBrainz names it
+    return `${a ? a.mbName || a.name : ''}: ${rowPhrase(r) || r.raw || (currentLinkType(r) || {}).name || ''}`;
   };
 
   // --- Date matrix: columns are the date groups, pool dates go in, track groups go onto the dates ----------
@@ -21982,14 +22235,16 @@
         if (a.text_value != null) return `${a.type.name}: ${tr('common.quoted', { text: a.text_value })}`;
         return a.type.name;
       }).join(', ');
-      // (the phrase names the attributes already: only credited names in brackets)
-      const credText = it.attrs.filter((a) => a.credited_as).map((a) => tr('preview.attrCredit', { name: a.type.name, credit: a.credited_as })).join(', ');
+      // (the phrase names the attributes already: in brackets only credited names and texts it does not have – a task "cover")
+      const phrase = it.kind === 'work-link' ? '' : mbPhraseOf(it.lt, it.row, it.attrs) || it.lt.name;
+      const credText = [...it.attrs.filter((a) => a.credited_as).map((a) => tr('preview.attrCredit', { name: a.type.name, credit: a.credited_as })),
+        ...it.attrs.filter((a) => a.text_value != null && !norm(phrase).includes(norm(a.text_value))).map((a) => `${a.type.name}: ${tr('common.quoted', { text: a.text_value })}`)].join(', ');
       const line = it.kind === 'work-link'
         ? [tr('preview.linkWork', { title: it.workTitle }) + (attrText ? ` (${attrText})` : '')]
         : [it.lt.type0 === it.lt.type1
           ? phraseSentence(it.lt, ...(it.row.enteredFirst ? [it.artist.mbName, label] : [label, it.artist.mbName])) + (attrText ? ` (${attrText})` : '')
           // [177] (3.38.10) as MusicBrainz names it, with its attributes; credited names and texts in brackets
-          : `${it.artist.mbName}: ${mbPhraseOf(it.lt, it.row, it.attrs) || it.lt.name}${credText ? ` (${credText})` : ''}`];
+          : `${it.artist.mbName}: ${phrase}${credText ? ` (${credText})` : ''}`];
       if (it.credit) line.push(tr('preview.artistCredit', { credit: it.credit }));
       if (it.date) line.push(tr('preview.date', { date: formatDateValue(it.date) || tr('date.endedOnly') }));
       if (it.noteText) line.push(tr('preview.noteOnly', { text: it.noteText }));
@@ -25905,7 +26160,8 @@
       S.overlay.querySelectorAll(`tr[data-row="${row.id}"], tr[data-tracksrow="${row.id}"]`).forEach((n) => n.remove());
     }
     S.removedRows = [...(S.removedRows || []).slice(-29), { row, index, artist: removedArtist }];
-    const text = artist ? `${artist.mbName || artist.name}: ${row.raw || (currentLinkType(row) || {}).name || ''}` : row.raw || '';
+    // [177] (3.38.12) the row as MusicBrainz names it
+    const text = artist ? `${artist.mbName || artist.name}: ${rowPhrase(row) || row.raw || (currentLinkType(row) || {}).name || ''}` : rowPhrase(row) || row.raw || '';
     log('info', 'rowRemoved', { text });
     showMessage('info', 'msg.rowRemoved', { text }, { action: { act: 'row-restore', arg: row.id, label: 'msg.rowRestore' } });
     if (row.level === 'work') renderWorks();
@@ -27588,11 +27844,14 @@
       case 'ocr-open':
         openOcr();
         break;
+      case 'case-back':
+        // [S060] (3.38.12) the capitals of the source (and back)
+        toggleCase(artist);
+        refresh();
+        break;
       case 'stack-flip':
-        // [S058] (3.38.7) the text (or the notes) read again, the ambiguous lines the other way round
-        S.stackUp = !S.stackUp;
-        log('info', S.stackUp ? 'stackFlipUp' : 'stackFlipDown');
-        if (S.release) loadRelease(S.release.id, { source: S.source });
+        // [S058] (3.38.7) the ambiguous lines the other way round; [3.38.12] in the dashboard (F-5), the source not read again
+        flipStacks();
         break;
       case 'text-load': {
         const text = S.overlay.querySelector('[data-f="text-src"]').value;

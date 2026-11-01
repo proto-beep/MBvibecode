@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-01 | 3.38.8 – 3.38.11 | 1.9.2 – 1.10.0 |
+| 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
@@ -97,6 +97,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-01
+
+### Import 3.38.12
+
+#### Changed
+
+- **Names in capitals in normal case, from every source** (F-4, rule S060; maintainer: "bitte schreibe Großbuchstaben immer Klein, es sei denn, der Artistname auf MB ist ebenfalls komplett capslock … anbieten alles in großbuchstaben zu setzen", "ja normale schreibweise … ja überall", "Wörter aus zwei Buchstaben bleiben"): a person's name all in capitals – "TORBEN SNEKKESTAD" → Torben Snekkestad, "DJ SHADOW" → DJ Shadow, "ABBA" → Abba – and a name variation in capitals ("LAKE" → Lake), from Discogs, pasted texts, text from cover art, the Discogs notes and Bandcamp (until now only a word in capitals beside words in normal case, in texts). Two letters, letters without a vowel and initials stay. Linked to a MusicBrainz name all in capitals too: MusicBrainz's spelling, no "credited as". **↺ in capitals** in the head of the entry takes the source's spelling again (also as the "credited as" of its roles; one typed by hand stays), **↺ normal case** goes back; the log names the names and spellings written in normal case. A particle between the names in lower case ("PACO DE LUCÍA" → Paco de Lucía), also Cyrillic and Greek names. Linked to a MusicBrainz name all in capitals ("MF DOOM"), the source's capitals are kept as "credited as" ("DOOM").
+- **⇅ swaps the lines whose order was not clear in the dashboard** (F-5; maintainer: "wie vorschlag, gezielt"): only the rows of those lines change (a name only in the other reading gets an entry of its own, looked up in MusicBrainz), every other row keeps what was changed in it, and the lines not recognized follow. Until now the source was read again and the changes were lost. Remembered for the release, the next import reads them the same way; a clear credit of the same role is never taken with them; from the Discogs notes, a credit Discogs lists already gives no second row; on Bandcamp also the "about" text and the track pages.
+
+#### Fixed
+
+- **Preview:** a text attribute is named again ("task: “cover”" – left out in 3.38.10).
+- **The tooltip of a row** names the source of a supplement ("from Bandcamp: …"), and nothing for a row added by hand (3.38.10 named the main source).
+- **Bandcamp:** an artist written in capitals there ("KOKOROKO") is assigned by its link again when the release credits it so.
 
 ### Import 3.38.11
 
