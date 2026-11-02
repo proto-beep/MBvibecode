@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.39.5, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.39.6, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.39.6 · 2026-11-02
+
+Roles of companies at a person, table words, the Bandcamp tag, the test `mxdrop` (collected items K-6, K-7, K-13; Q-i).
+
+- **`mapRole`:** rule **S066** – a person's role that is no rule's: `PERSON_AT_ROLE` ("Mixed At" …) → the mapping of "<verb> By" with the note `atPerson`; `PERSON_COMPANY_SKIP` ("Pressed By", "Distributed By", "Licensed To" …) → level `skip`, note `companyPerson`, rule S066 (both patterns may be missing in an older mapping file: nothing then).
+- **Mapping:** new patterns `PERSON_AT_ROLE`, `PERSON_COMPANY_SKIP` (T060).
+- **`applyMappingChanges`:** a table of shape `map` (T001, T058) with its words in lower case (`norm`), as the code looks them up.
+- **CSS:** `.dci-src-bc` `#3a7a89` with an inner rim `#629aa9`.
+- **Register:** rule S066, table T060.
+- **After the independent review of block AV (3.39.4 – 3.39.6):** a role typed by hand as a type's name (`applyRoleText`) drops the `prefix` (until then "Assistant Engineer" typed again as "engineer" ticked "assistant" anew); the role credit of the word (`roleCreditForInner`) comes before the rules that give none (an instrument technician, creative direction – "Assistant Creative Director" into the edit note as the row says), of the task after an answered type question ("co-director"), without a final "by" (`prefixCredit(p, rest)`); `prefixNoteHtml` says "credited" or "edit note" by where the role credit really goes (`roleCreditTarget`); the word also after an en dash ("Co–Arranger"); Q003 (Directed By) answered creative direction goes to the release group (MusicBrainz has no such type on the release); `TEXT_COMPANY_RE` with "printed by" (a pasted text's "Printed by X" a company, not a person S066 would leave out).
+- **Texts (English):** `note.atPerson`, `note.companyPerson`.
+- **Tests:** `t_mapping.py` new cases `companyperson` (mix, recording, mastering on the release, the note, no place; pressed / distributed left out; licensor) and `listkeys` (T001 changed with "Lap Steel2", in Node); `t_sources_bandcamp.py` `bcspell` the tag's colours; `t_works_matrix.py` `mxdrop` waits for the import and reads a drop again until it is drawn (K-7: under load it read too early); `register_golden.json` anew; after the review: `assistants` a row added by hand and typed again, `voices` "Assistant Creative Director" and "Directed By" answered creative direction, `text_corpus.json` "Printed by Druckerei Fischer" (a company; the corpus's company roles with "printed"); `t_works_matrix.py` `matrixcols` creative direction of the test page on the release group, as on MusicBrainz (Q003 answers it there).
 
 ## Import 3.39.5 · 2026-11-02
 

@@ -1812,6 +1812,20 @@
         "unrecognized": [],
         "ignored": []
       }
+    },
+    {
+      "text": "Printed by Druckerei Fischer",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Druckerei Fischer",
+            "Printed By"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
     }
   ]
 }
