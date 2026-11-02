@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.38.16 | – |
+| 2026-11-02 | 3.38.13 – 3.38.17 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.38.17
+
+#### Changed
+
+- **A line "With …" of a text** (collected item 181, rule S061): "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" gives the release's artist his instruments (several artists: offered to each), "objects" asks; a name in it is a guest ("with Oliver Lake" – guest performer, F-181a; "with Oliver Lake on saxophone and flute" – guest saxophone and flute, "with Kenny Wheeler, trumpet" – his trumpet, also in a mixed line, F-181d). Until now such a line was not recognized.
+- **Music software is left out** (F-181b, new list T056 with ✎): Apple Logic, Logic Pro, Ableton Live, Pro Tools, Cubase, Reaper, FL Studio, Bitwig, Max/MSP … – named in the lines left out ("music software"); "computer" and "laptop" stay instruments.
+- **"Sequential PX"** (Sequential Prophet X): that instrument when MusicBrainz has it, else synthesizer, credited "Sequential PX" (F-181c).
 
 ### Import 3.38.16
 

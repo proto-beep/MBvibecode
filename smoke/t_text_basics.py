@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7), withline (3.38.17) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1007,6 +1007,71 @@ Bob Blue on Piano and Saxophone"""
                        and (g.get('Jane Roe') or [[0, '']])[0][1] == 'performer' and 'guest' in (g.get('Jane Roe') or [[0, 0, 0, 0, '']])[0][4]
                        and [(r[3], 'guest' in r[4]) for r in g.get('Ann Blow') or []] == [('saxophone', False)]
                        and [r[3] for r in g.get('Bob Blue') or []] == ['piano', 'saxophone'] and not unrec)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_withline():
+    """Credits Importer 3.38.17 (collected item 181, F-181a – F-181d, rule S061, list T056): a line "With …" of a pasted text.
+    A) "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" (Robert Rich, Bandcamp "Cloud Pond Sky River"),
+       the release's artist Robert Rich: his instruments – "Sequential PX" a synthesizer credited "Sequential PX" (MusicBrainz has
+       no Prophet X here), flute, lap steel guitar, bells; "objects" asked like a word of a list (other instruments “objects”);
+       "Apple Logic" left out as music software (the list of lines left out: "software").
+    B) "with Oliver Lake": a guest performer; "With piano and Jane Roe on saxophone": piano for Robert Rich, Jane Roe guest saxophone;
+       nothing not recognized. (Review) "with Ann Blow on alto saxophone and flute": both hers, as a guest; "with Kenny Wheeler, flute":
+       his flute; "With Apple Logic Pro": left out as software (no artist)."""
+    H.RELEASE_AC[:] = [(H.uid('dddddddd', 3420), 'Robert Rich', 'Robert Rich', '')]
+    H.attr(9301, 'flute', 14)
+    H.attr(9302, 'lap steel guitar', 14, aliases=['lap steel'])
+    H.attr(9303, 'bells', 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    TEXT = """With Apple Logic, Sequential PX, flutes, lap steel, bells and objects
+with Oliver Lake
+With piano and Jane Roe on saxophone
+with Ann Blow on alto saxophone and flute
+with Kenny Wheeler, flute
+With Apple Logic Pro"""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+  [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
+    (r.querySelector('[data-f=role-credit]') || {}).value || '', (r.querySelector('[data-f=primary]') || {}).value || '',
+    [...r.querySelectorAll('input[data-f=flag]:checked')].map(x => x.value).join(',')])])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+        pg.wait_for_timeout(500)
+        g = pg.evaluate(GROUPS)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+        ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())")
+        for k in ('Robert Rich', 'Oliver Lake', 'Jane Roe', 'Ann Blow', 'Kenny Wheeler', 'With Apple Logic'):
+            print(f'  {k}:', g.get(k))
+        print('nicht erkannt:', unrec, '| weggelassen:', ign)
+        rr = g.get('Robert Rich') or []
+        prim = [r[3] for r in rr]
+        results.append(('synthesizer', 'Sequential PX') in [(r[3], r[2]) for r in rr] and 'flute' in prim and 'lap steel guitar' in prim and 'bells' in prim
+                       and 'piano' in prim and any('objects' in (r[0] + r[2]).lower() for r in rr)
+                       and not any('logic' in (r[0] + r[2]).lower() for r in rr) and 'With Apple Logic' not in g
+                       and any('Apple Logic' in x and 'software' in x for x in ign))
+        ol, jr = g.get('Oliver Lake') or [], g.get('Jane Roe') or []
+        ab, kw = g.get('Ann Blow') or [], g.get('Kenny Wheeler') or []
+        results.append([r[1] for r in ol] == ['performer'] and 'guest' in ol[0][4] and [r[3] for r in jr] == ['saxophone'] and 'guest' in jr[0][4] and not unrec
+                       # (3.38.17, review) a guest's instruments are his: "on alto saxophone and flute", "Kenny Wheeler, flute"
+                       and sorted(r[3] for r in ab) == ['alto saxophone', 'flute'] and all('guest' in r[4] for r in ab)
+                       and [r[3] for r in kw] == ['flute'] and 'guest' in kw[0][4] and prim.count('flute') == 1
+                       and any(x.startswith('Apple Logic Pro') and 'software' in x for x in ign) and 'Apple Logic Pro' not in g)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

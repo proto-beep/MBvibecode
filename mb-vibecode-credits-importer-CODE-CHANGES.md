@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.16, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.17, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.17 · 2026-11-02
+
+A line "With …" of a text (collected item 181).
+
+- **`TEXT.parse` (readClause):** new rule **S061** before S055 – a clause "With …" split at commas and and / & / und / et / y; music software (`isSoftware`, list T056) left out (`ignored`, why `software`); "Name on X" / "Name (X)" with instruments a guest (the roles with the detail Guest); an instrument or voice (`playable`) the release's artist's (`artistNames`: one – `addCredit`, several – `addPlaceholder`, offered to each); a name of two to four words in capitals a guest performer; words that may be instruments (`maybePlayable`) with `guess` when there are no more of them than instruments; the rest not recognized. Only when an instrument or a guest was found (else the clause is read as before).
+- **Mapping:** new list `TEXT_SOFTWARE` (T056, editable: `EDITABLE_LISTS`); `INSTRUMENT_ALIASES` "sequential px", "sequential prophet x" → Sequential Prophet X, Prophet X, synthesizer; `PROPER_WORDS` "Sequential PX", "Sequential Prophet X".
+- **Register:** rule S061, list T056.
+- **Texts (English):** `ignored.why.software`.
+- **After the independent review of block AT:** the parts of the line at commas outside brackets – a part "Name on A and B" or "Name (A, B)" one guest with all its instruments (until then the instruments after "and" went to the release's artist), the instruments right after a name his ("with Kenny Wheeler, trumpet"); software also by its start ("Apple Logic Pro"), a line only of software left out; no guest with a make of T052 before the name, no rule for a line with a colon; with several release artists words that may be instruments are not recognized (until then they were lost). (The clause is split at semicolons before, by `clauses`.)
+- **Tests:** `t_text_basics.py` new case `withline` (after the review: a guest's two instruments, "Name, instrument", software by its start); `register_golden.json` anew (S061, T056, the aliases and proper words).
 
 ## Import 3.38.16 · 2026-11-02
 
