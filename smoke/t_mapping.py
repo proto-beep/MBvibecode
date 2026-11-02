@@ -1,6 +1,6 @@
 """Mapping: roles, questions, suggestions, mastering, special artists, fixes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10), oldfile (3.39.2), assistants (3.39.4) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
+Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10), oldfile (3.39.2), assistants (3.39.4), voices (3.39.5) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
 import json
 import os
 import harness as H  # noqa: F401 – used by the cases
@@ -1076,6 +1076,77 @@ def case_assistants():
             print('C)', ph)
             results.append(ph.get('type') == 'photography' and ph.get('flags') == [] and ph.get('credit') == 'assistant photographer'
                            and ph.get('note') == 'MusicBrainz has no “assistant” for this type: credited “assistant photographer”.')
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_voices():
+    """Credits Importer 3.39.5 (collected items K-3 – K-5).
+    A) "Countertenor" → vocal "countertenor vocals" without role credit (until 3.39.4 an unknown instrument); "Vocals [Tenor]" →
+       "tenor vocals", no role credit "tenor".
+    B) "Liner Notes [Translation]" → liner notes with "translator" ticked, no role credit.
+    C) "Creative Direction" for the release → the release group, creative direction (until 3.39.4 art direction on the release);
+       for track 2 only → creative direction on that recording; no role credit (also not in the edit note)."""
+    H.attr(9601, 'countertenor vocals', 3, 3)
+    H.attr(9602, 'tenor vocals', 3, 3)
+    H.attr(1018, 'translator', 1018)
+    H.LTS[24]['attributes']['1018'] = {'min': 0, 'max': None}
+    H.lt(9511, H.uid('1a1a1a1a', 9511), 'creative direction', 'artist', 'recording', (1,))
+    H.lt(9512, H.uid('1a1a1a1a', 9512), 'creative direction', 'artist', 'release_group', (1,))
+    H.lt(9513, H.uid('1a1a1a1a', 9513), 'art direction', 'artist', 'release', (1, 526))
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    CREDITS = [('Counter Man', 'Countertenor', 3401, ''), ('Voc Ten', 'Vocals [Tenor]', 3402, ''), ('Liner Tr', 'Liner Notes [Translation]', 3403, ''),
+               ('Cre Dir', 'Creative Direction', 3404, ''), ('Cre Trk', 'Creative Direction', 3405, '2')]
+    for n, _r, i, _t in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3100), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': t, 'id': i, 'join': ''} for n, r, i, t in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => ({ type: ((r.querySelector('[data-f=type]') || {}).selectedOptions || [])[0]?.dataset.name || '',
+        level: ([...r.querySelectorAll('[data-act=level][aria-pressed=true]')][0] || { dataset: {} }).dataset.level || '',
+        flags: [...r.querySelectorAll('input[data-f=flag]:checked')].map(x => x.value), credit: (r.querySelector('[data-f=role-credit]') || {}).value ?? null,
+        prim: (r.querySelector('[data-f=primary]') || {}).value || '' }))])))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+            pg.wait_for_timeout(400)
+            g = pg.evaluate(ROWS)
+            for k in [c[0] for c in CREDITS]:
+                print('  ', k, g.get(k))
+            one = lambda k: (g.get(k) or [{}])[0]
+            results.append(one('Counter Man').get('type') == 'vocal' and one('Counter Man').get('prim') == 'countertenor vocals' and not one('Counter Man').get('credit')
+                           and one('Voc Ten').get('prim') == 'tenor vocals' and not one('Voc Ten').get('credit'))
+            results.append(one('Liner Tr').get('type') == 'liner notes' and one('Liner Tr').get('flags') == ['translator'] and not one('Liner Tr').get('credit'))
+            pg.click('[data-act=preview]') if pg.locator('[data-act=preview]').count() else None
+            pg.wait_for_timeout(500)
+            prev = pg.evaluate("[...document.querySelectorAll('.dci-preview li, [data-el=preview] li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Cre /.test(t))")
+            print('C) Vorschau:', prev)
+            results.append(one('Cre Dir').get('type') == 'creative direction' and one('Cre Dir').get('level') == 'release_group'
+                           and one('Cre Trk').get('type') == 'creative direction' and one('Cre Trk').get('level') == 'recording'
+                           and prev and not any('edit note' in x for x in prev))
             print('Fehler:', errs)
             results.append(not errs)
             b.close()

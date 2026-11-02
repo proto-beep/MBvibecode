@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.4
+// @version      3.39.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.4
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.4
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.5
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.5
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3178,7 +3178,12 @@
       ...(has('co') ? ['co'] : []),
       ...(has('executive') ? ['executive'] : []),
     );
-    const range = b.match(/^(soprano|mezzo-soprano|alto|contralto|countertenor|tenor|baritone|bass-baritone|bass|treble) vocals?$/);
+    // [3.39.5] "Counter-tenor", "Mezzo Soprano" written so too; a voice no instrument is named after also alone – "Countertenor",
+    // "Contralto", "Mezzo-Soprano", "Bass-Baritone" (collected item K-3); "Tenor", "Bass" … alone stay instruments
+    const voiceWord = (x) => x.replace(/^counter[- ]?tenor\b/, 'countertenor').replace(/^mezzo[- ]?soprano\b/, 'mezzo-soprano').replace(/^bass[- ]baritone\b/, 'bass-baritone');
+    const VOICE_RANGES = /^(soprano|mezzo-soprano|alto|contralto|countertenor|tenor|baritone|bass-baritone|bass|treble)$/;
+    const range = voiceWord(b).match(/^(soprano|mezzo-soprano|alto|contralto|countertenor|tenor|baritone|bass-baritone|bass|treble) vocals?$/)
+      || voiceWord(b).match(/^(countertenor|contralto|mezzo-soprano|bass-baritone)$/);
     const engineer = is(/^(engineer|engineered by|engineering)$/);
     const textEditor = ms.find((x) => /publication|liner|text|copy|magazine|journal|\bbook\b/.test(x));
     const rel = { level: 'release' };
@@ -3208,9 +3213,15 @@
     } },
       R018: { run: () => {
       let cands = [];
+      // [3.39.5] "Vocals [Countertenor]", "Vocals [Tenor]": the voice of MusicBrainz (collected item K-3)
+      const voice = ms.find((x) => VOICE_RANGES.test(voiceWord(x)));
       if (has('lead')) cands = ['lead vocals'];
       else if (has('backing', 'background', 'harmony')) cands = ['background vocals'];
       else if (has('choir')) cands = ['choir vocals'];
+      else if (voice) {
+        consumed.add(voice);
+        cands = [`${voiceWord(voice)} vocals`];
+      }
       return out(['vocal'], { primaryCands: cands });
     } },
       R019: { run: () => {
@@ -8770,6 +8781,10 @@
     // [137f] (3.34.25) an instrument technician with its instrument: MusicBrainz says "guitar technician" – no role credit but
     // "tuner" ("Piano Tuner": piano, credited "piano tuner")
     if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole, { quiet: true })) : '';
+    // [3.39.5] a voice alone ("Countertenor", "Mezzo Soprano"): MusicBrainz's voice without a role credit, as "Vocals [Tenor]" (K-3)
+    if (row.ruleId === 'R009' && `${norm(row.base).replace(/[^a-z]/g, '')}vocals` === norm(row.primaryText).replace(/[^a-z]/g, '')) return '';
+    // [3.39.5] "Creative Direction" as MusicBrainz's creative direction: no role credit (it is for art direction on a release; K-5)
+    if (row.ruleId === 'R081' && norm((currentLinkType(row) || {}).name || '') === 'creative direction') return '';
     // [Q011] (3.34.20) "Voice": plain vocals take no role credit (also until it is answered)
     if (row.askVoice) {
       const tq = typeQuestionFor(row);
@@ -16616,8 +16631,10 @@
         const fromNotesIdx = (c.notesIdx || []).filter((i) => suggested.includes(i));
         if (fromNotesIdx.length) Object.assign(row, { notesTracks: new Set(fromNotesIdx), notesFrom: c.notesLine });
       }
-      // A producer role meant for the release stays on the recordings Discogs names it for.
-      if (row.level === 'release' && !c.allTracks && suggested.length && row.types.includes('producer')) {
+      // A producer role meant for the release stays on the recordings Discogs names it for; [3.39.5] creative direction too (meant
+      // for the release group, MusicBrainz has it on recordings; collected item K-5)
+      if ((row.level === 'release' || (row.level === 'release_group' && row.types.includes('creative direction'))) && !c.allTracks && suggested.length
+        && (row.types.includes('producer') || row.types.includes('creative direction'))) {
         row.level = 'recording';
         resolveRowType(row);
       }

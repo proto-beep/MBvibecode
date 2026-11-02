@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.39.4",
+  "version": "3.39.5",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
   "CHECKBOX_DETAILS": [
@@ -186,7 +186,7 @@
     {"id":"R078","kind":"simple","note":"","re":{"$re":"^(illustration|illustrated by|illustrations|drawings|painting|paintings|painted by|cover painting|cover paintings|cover illustration)$","$flags":""},"types":["illustration","design/illustration"],"level":"release"},
     {"id":"R079","kind":"simple","note":"","re":{"$re":"^(artwork|artwork by|art)$","$flags":""},"types":["artwork","design/illustration"],"level":"release"},
     {"id":"R080","kind":"simple","note":"","re":{"$re":"^(art direction|art director|art directed by)$","$flags":""},"types":["art direction"],"level":"release"},
-    {"id":"R081","kind":"simple","note":"","re":{"$re":"^(creative direction|creative director)$","$flags":""},"types":["creative direction","art direction"],"level":"release","credit":true},
+    {"id":"R081","kind":"simple","note":"Creative direction: on the release group (3.39.5; MusicBrainz has it on recordings and release groups only, on the release art direction)","re":{"$re":"^(creative direction|creative director)$","$flags":""},"types":["creative direction","art direction"],"level":"release_group","credit":true},
     {"id":"R082","kind":"simple","note":"","re":{"$re":"^(liner notes|sleeve notes|notes|linernotes|text by)$","$flags":""},"types":["liner notes"],"level":"release"},
     {"id":"R083","kind":"simple","note":"","re":{"$re":"^(booklet editor|booklet)$","$flags":""},"types":["booklet editor"],"level":"release"},
     {"id":"R084","kind":"simple","note":"","re":{"$re":"^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\\s+(.+))?$","$flags":""},"types":["artists and repertoire","misc"],"level":"release_group"},
