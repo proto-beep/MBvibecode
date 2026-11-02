@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.39.9 | – |
+| 2026-11-02 | 3.38.13 – 3.40.0 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,19 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.40.0
+
+#### Added
+
+- **"Count exactly"** on the line of the release page (block AY, Q-n): the relationship editor opens in a tab in the background, the dashboard counts the new relationships, the line shows the number and the tab closes again.
+- **Bandcamp on the release page** (Q-o): a release without a Discogs link but with a Bandcamp album gets the line too – a rough estimate from the album page's credits.
+- **Setting "Also when nothing seems to be missing"** (⚙ Settings → Sources, off): the line also when MusicBrainz seems to have everything.
+
+#### Changed
+
+- **The line of the release page only when something is missing** (Q-x): no line when the source has no credits, nor when nothing seems to be missing. Names the dashboard has no MusicBrainz entry for yet count as missing; after a count the line names those rows. The credits of the Discogs notes are still not counted there (Q-g).
+- **The estimate counts two roles of one person on the same tracks twice** (until now once).
 
 ### Import 3.39.9
 

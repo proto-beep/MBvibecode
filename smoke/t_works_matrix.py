@@ -54,8 +54,9 @@ def case_mxdrop():
         pg.wait_for_timeout(800)
         cols = lambda: pg.evaluate(COLS)
 
-        def settle(read, want, ms=4000):
-            # (3.39.6, K-7) after a drop: read again until it is as expected or the time is up (the drop is drawn later under load)
+        def settle(read, want, ms=10000):
+            # (3.39.6, K-7) after a drop: read again until it is as expected or the time is up (the drop is drawn later under load;
+            # 3.40.0: 10 s instead of 4 – a full run missed a row once)
             got = read()
             for _ in range(ms // 200):
                 if got == want:
