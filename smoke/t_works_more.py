@@ -1,6 +1,7 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
 Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), workpick (3.38.15), coverworks (3.38.16); `python3 t_works_more.py <case> …` runs only those."""
+import re
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -805,6 +806,8 @@ def case_coverworks():
     B) "Link" of Monk's work for track 1.4: the link offers "co?" (dashed; Monk is none of the performers), a click sets "cover";
        the credited writer's own work of the same title ("Epistrophy By Monk" by Writer W) gets no "co?"; the works of the artists are
        compared once (the name in the title looked up within the same run).
+    D) (3.39.9, collected item K-9) no "co?" when Monk performs the track: a member of the release's band ("member of band" in
+       MusicBrainz), the pianist of the recording in MusicBrainz, or the track's artist.
     C) In Node: titleComposerNames – "(Thelonious Monk cover)" → Thelonious Monk (full), "By Monk" → Monk (surname), "(Live)",
        "(Theme)", "Stand By Me", "(Part 2)" → none; (3.38.16, review) "(Prod. By Metro Boomin)", "(Main Title)", "(Dub)", "Stand By Your
        Man", "(Act II)" → none, "Theme By Monk For Piano" → Monk, "(Ludwig van Beethoven cover)" → the full name, "BY MONK" → MONK; similarWorkTitle – the composer's names and brackets left out, a work's title
@@ -866,6 +869,8 @@ def case_coverworks():
                                                    'Track 1.4: the title names “Monk” – the works of Thelonious Monk are compared']))
         pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
         pg.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W6}"]').click(); pg.wait_for_timeout(500)
+        # [3.39.9] "co?" once MusicBrainz said who is a member of whom (looked up in the background)
+        H.wait_for(pg, f"!!({PILL})(3)", 20)
         b0 = pg.evaluate(f"({PILL})(3)")
         pg.locator('tr[data-work="3"] .dci-wpill[data-attr=cover]').click(); pg.wait_for_timeout(300)
         b1 = pg.evaluate(f"({PILL})(3)")
@@ -878,6 +883,48 @@ def case_coverworks():
                        and b1 and b1[0] == 'on' and (b2 is None or b2[0] != 'hint'))
         print('Fehler:', errs)
         results.append(not errs)
+
+        # D) (3.39.9, K-9, Q-m, Q-w) no "co?" when Monk performs: a member of the release's band, MusicBrainz's pianist of the
+        # recording, or the track's artist
+        def pill_with(setup):
+            setup()
+            c2 = H.new_context(b)
+            # (3.39.9, review) the lookups of "member of band": the composer's only
+            looked = []
+            c2.on('request', lambda r: looked.append(re.search(r'/ws/2/artist/([0-9a-f-]{36})', r.url).group(1)) if re.search(r'/ws/2/artist/[0-9a-f-]{36}\?inc=artist-rels', r.url) else None)
+            p2, e2 = H.open_mb_edit(c2, companion=False)
+            p2.on('dialog', lambda d: d.accept())
+            p2.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(p2)
+            H.wait_for(p2, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 90)
+            p2.add_style_tag(content='#dci-log { display: none !important; }')
+            p2.wait_for_timeout(400)
+            p2.locator('tr[data-work="3"] [data-act=mx-works]').click(); p2.wait_for_timeout(300)
+            p2.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W6}"]').click()
+            p2.wait_for_timeout(6000)
+            out = p2.evaluate(f"({PILL})(3)")
+            c2.close()
+            return out, e2 + ([] if looked == [MONK] else [f'lookups: {looked}'])
+        d0, e0 = pill_with(lambda: None)  # the same page without any of them: "co?" (so the three below say something)
+        d1, e1 = pill_with(lambda: H.BAND_MEMBERS.update({TB: [MONK]}))
+        H.BAND_MEMBERS.clear()
+        # (review) the other direction: the band of the composer, the release's artist a member of it
+        d1b, e1b = pill_with(lambda: H.BAND_MEMBERS.update({MONK: [TB]}))
+        H.BAND_MEMBERS.clear()
+        d2, e2 = pill_with(lambda: H.MB_EXTRA.setdefault(H.REC[3], []).append({'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[148]['gid'],
+                                                                                 'attributes': ['piano'], 'attribute-values': {}, 'artist': {'id': MONK, 'name': 'Thelonious Monk'}}))
+        H.MB_EXTRA.pop(H.REC[3], None)
+        d3, e3 = pill_with(lambda: H.TRACK_AC.update({3: [(MONK, 'Thelonious Monk')]}))
+        H.TRACK_AC.clear()
+        # (review) MusicBrainz's pianist of the whole release
+        d4, e4 = pill_with(lambda: H.MB_EXTRA.setdefault(H.REL, []).append({'target-type': 'artist', 'type': 'instrument', 'type-id': '67555849-61e5-455b-96e3-29733f0115f5',
+                                                                               'attributes': ['piano'], 'attribute-values': {}, 'artist': {'id': MONK, 'name': 'Thelonious Monk'}}))
+        H.MB_EXTRA.pop(H.REL, None)
+        print('D) ohne:', d0, '| Mitglied der Band:', d1, '| Band des Komponisten:', d1b, '| Pianist in MB:', d2, '| Track-Artist:', d3, '| Pianist des Release:', d4, '| Fehler:', e0, e1, e1b, e2, e3, e4)
+        no_co = lambda x: x is None or x[0] != 'hint'
+        # d2, d3: performers known without a lookup – none asked then (the lookups list says [MONK] only where one is made)
+        results.append(d0 is not None and d0[0] == 'hint' and no_co(d1) and no_co(d1b) and no_co(d2) and no_co(d3) and no_co(d4)
+                       and not (e0 or e1 or e1b) and all(not [x for x in e if not x.startswith('lookups')] for e in (e2, e3, e4)))
         b.close()
     TITLES = ['Round Midnight (Thelonious Monk cover)', 'Epistrophy By Monk', 'Song (Live)', 'Song (Theme)', 'Stand By Me', 'Song (Part 2)',
               'Money (Prod. By Metro Boomin)', 'Song (Main Title)', 'Song (Dub)', 'Theme By Monk For Piano', 'Ode (Ludwig van Beethoven cover)',
