@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.3
+// @version      3.40.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -17701,19 +17701,25 @@
     }
     // Each entry by the URL of its page at the source (people: MB artists; companies: labels, places …)
     const urlOf = (a) => (a.links || [])[0] || '';
-    const byUrl = new Map(pending.filter((a) => a.dId && urlOf(a)).map((a) => [urlOf(a), a]));
-    const found = new Map();
+    // [Z-LU] (3.40.4) the entries of each address – several can share one (Robert Rich and "©2026 Robert Rich" of his own Bandcamp
+    // page: until 3.40.3 the second took the place of the first, which stayed "Looking up MB artist …"); what is found, by kind
+    const byUrl = new Map();
+    pending.filter((a) => a.dId && urlOf(a)).forEach((a) => {
+      if (!byUrl.has(urlOf(a))) byUrl.set(urlOf(a), []);
+      byUrl.get(urlOf(a)).push(a);
+    });
+    const found = { artist: new Map(), label: new Map() };
     for (const kind of ['artist', 'label']) {
-      const urls = [...byUrl.entries()].filter(([, a]) => (kind === 'label') === !!a.company).map(([u]) => u);
+      const urls = [...byUrl.entries()].filter(([, list]) => list.some((a) => (kind === 'label') === !!a.company)).map(([u]) => u);
       for (let i = 0; i < urls.length; i += 50) {
         const chunk = urls.slice(i, i + 50);
         try {
-          (await lookupUrls(chunk, kind, source.urlKey)).forEach((v, k) => found.set(k, v));
+          (await lookupUrls(chunk, kind, source.urlKey)).forEach((v, k) => found[kind].set(k, v));
         } catch (e) {
           // If the batch lookup fails, look up URLs one by one
           for (const u of chunk) {
             try {
-              (await lookupUrls([u], kind, source.urlKey)).forEach((v, k) => found.set(k, v));
+              (await lookupUrls([u], kind, source.urlKey)).forEach((v, k) => found[kind].set(k, v));
             } catch (e2) {
               console.warn('[Discogs-Credits]', u, e2);
             }
@@ -17721,8 +17727,8 @@
         }
       }
     }
-    for (const [url, a] of byUrl) {
-      a.candidates = found.get(url) || [];
+    for (const [url, a] of [...byUrl].flatMap(([u, list]) => list.map((x) => [u, x]))) {
+      a.candidates = found[a.company ? 'label' : 'artist'].get(url) || [];
       if (a.company) {
         // Only MB labels or places that fit at least one of this company's roles
         const usable = new Set(S.rows.filter((r) => r.artistKey === a.key).flatMap((r) => Object.keys(r.typeOptions || {})));
