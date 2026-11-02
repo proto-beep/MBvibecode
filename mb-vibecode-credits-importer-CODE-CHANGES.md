@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.39.7, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.39.8, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.39.8 · 2026-11-02
+
+Several names below a heading, the release's artist as a title line (collected item Z-1; Q-y).
+
+- **`TEXT.parse`:** new `headingOf(raw)` (a line of instruments or voices – `stackInstr` –, or a role ending in "by" of four words at most, a colon at the end allowed), `headingLists(lines)` (rule **S067**: a heading and two or more `stackName` lines below it – a role heading one or more –, single empty lines between them) and `readHeading(h)`; the lines of a heading are blanked for `stackPairs` (S058) and read first. Rule **S068** in `readLine`: a line that is only a release artist's name → `ignored` (why `releaseArtist`).
+- **Register:** rules S067, S068.
+- **Texts (English):** `ignored.why.releaseArtist`.
+- **After the independent review of block AW (3.39.7 – 3.39.8):** S067 – no heading right below a name (names above their instruments stay pairs of S058, which could be read the other way round with ⇅; until then the heading took the names of the next instrument), below a role heading only the names right below it, no track title and – after an empty line – no release artist as a name (`notListName`), a role with a colon as heading ("Producer:"); S068 not within a block of publishers (S043; until then "Publishers: / Robert Rich" lost him). `initialsUse` – the works matrix drawn again, a credit typed by hand kept, `matchTouched` reset when the entry becomes the name, a row taken out before and brought back goes to the entry chosen (`S.entryMoved`, `restoreRow`), the choice remembered with the release (`rememberSnapshot` `initials`, chosen again first in `restoreRemembered`; `S.initialsChosen`).
+- **Tests:** `t_text_basics.py` new case `booklets` (two booklet pages built for the test – stacked and in one line –, read with Tesseract 5.3, the text as read: the same entries, the title left out); `register_golden.json` anew; after the review: new case `initialsmemo` (the name chosen remembered over a reload), `text_corpus.json` the cases of the review (names above with two players, a role heading followed by titles or the release's artist, "Producer:", a block of publishers with the release's artist).
 
 ## Import 3.39.7 · 2026-11-02
 

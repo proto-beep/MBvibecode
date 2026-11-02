@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.39.7 | – |
+| 2026-11-02 | 3.38.13 – 3.39.8 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.39.8
+
+#### Changed
+
+- **A heading with several names below it** (collected item Z-1, rule S067): "VIOLIN / Anna Berg / Clara Stein / Ben Holt", "RECORDED BY / Jonas Kerr" – as booklets have them – each name the heading's instrument or role (until now only one name below an instrument was read). Checked with two booklet pages built for it and read with Tesseract (the engine of "Text from cover art").
+- **The release's artist as a line of its own** (rule S068): a booklet's title line is left out, not named as not recognized.
+- **After the independent review:** names above their instruments are not taken by the heading below them; below a role heading only the names right below it, no track titles and no release artist after an empty line; "Producer:" is a heading too; a block of publishers keeps the release's artist; the name chosen for initials is remembered with the release, a credit typed by hand stays.
 
 ### Import 3.39.7
 

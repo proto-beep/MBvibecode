@@ -148,6 +148,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     "Pacific coast" the area Pacific Coast (3.39.2, 188, T059); RR = Robert Rich (initials, credited "RR"), "Recorded Mixed and Mastered";
                                 #     3.39.7 (K-8, K-11): "JR" – Jane Roe clicked, the liner notes hers credited "JR"; "R.R." with its dot
                                 #     "Cover © X" artwork "cover", "Photos © X" photography "photo", the permission left out; "JR" of two names
+                                #   booklets: 3.39.8 (Z-1, S067, S068): two booklet pages read with Tesseract 5.3 – "VIOLIN / Anna Berg / Clara Stein /
+                                #     Ben Holt" stacked and "Violins: …" in one line give the same entries; the title (the release's artist) left out
+                                #   initialsmemo: 3.39.8 (K-8, review): "JR" → Jane Roe chosen, remembered: after a reload and the same text at once
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
 
