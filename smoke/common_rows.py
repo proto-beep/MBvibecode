@@ -46,9 +46,17 @@ def drag(pg, src, dst, steps=10):
     a = pg.locator(src).first
     b = pg.locator(dst).first
     # In the middle of the list: near its edges the dashboard scrolls while dragging (after 0.2 s, as browsers do)
-    b.evaluate("e => e.scrollIntoView({ block: 'center', inline: 'center' })")
-    sa = a.bounding_box()
-    sb = b.bounding_box()
+    # (3.40.0, K-7) a matrix drawn anew by a result of the background takes the elements for a moment: asked again (3 s at most)
+    sa = sb = None
+    for _ in range(15):
+        try:
+            b.evaluate("e => e.scrollIntoView({ block: 'center', inline: 'center' })", timeout=2000)
+            sa, sb = a.bounding_box(timeout=2000), b.bounding_box(timeout=2000)
+        except Exception:
+            sa = sb = None
+        if sa and sb:
+            break
+        pg.wait_for_timeout(200)
     x0, y0 = sa['x'] + min(20, sa['width'] / 2), sa['y'] + sa['height'] / 2
     x1, y1 = sb['x'] + sb['width'] / 2, sb['y'] + sb['height'] / 2
     pg.mouse.move(x0, y0)

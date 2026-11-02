@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.9
+// @version      3.40.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.9
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.9
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.9';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -225,6 +225,7 @@
       "log.sourceFromEditor": "Source entered in the release editor, not in MusicBrainz yet: {src}",
       "log.fromLink": "Started from a link (“Edit relationships with Credits Importer”, e.g. on Harmony) – links in it: {links}",
       "log.sourceFromLink": "Source handed over by the link, not in MusicBrainz yet: {src}",
+      "log.fromCount": "Started from the release page (“Count exactly”) – links there: {links}",
       "log.sourceOrder": "Order of the sources for {kind}: {list}",
       "log.bcTest": "Bandcamp test: {text}",
       "source.text": "Paste text …",
@@ -268,6 +269,18 @@
       "gap.how": "Each credit counted on each of its tracks, by the names MusicBrainz has there; the credits of the Discogs notes are counted by the dashboard only.",
       "gap.import": "Import credits …",
       "gap.closeTitle": "Hide this line for this release until the number changes",
+      "gap.bc.missing.one": "Bandcamp: about {n} relationship of its credits is not on MusicBrainz yet (a rough estimate).",
+      "gap.bc.missing.other": "Bandcamp: about {n} relationships of its credits are not on MusicBrainz yet (a rough estimate).",
+      "gap.bc.none": "Bandcamp: its credits seem to be on MusicBrainz (a rough estimate, counted by names).",
+      "gap.bc.incomplete": "Bandcamp: MusicBrainz does not give all relationships of this large release at once – the dashboard counts them.",
+      "gap.bc.how": "A rough estimate: the credits of the album page (not those of its track pages) read as a text – instruments known by their names (all of MusicBrainz's once its relationship editor was opened) –, each counted on each of its tracks by the names MusicBrainz has there.",
+      "gap.count": "Count exactly",
+      "gap.countTitle": "The dashboard counts the new relationships in a tab in the background (the relationship editor of this release, closed again when it is done)",
+      "gap.counting": "Counting in a tab in the background …",
+      "gap.countLate": "The count did not come back – the dashboard counts them when the relationship editor is opened.",
+      "gap.countFailed": "The count failed – the dashboard in the relationship editor says why.",
+      "gap.exactOpen.one": "{n} of its rows still needs a MusicBrainz entry or a type.",
+      "gap.exactOpen.other": "{n} of its rows still need a MusicBrainz entry or a type.",
       "ignored.why.medium": "for {medium} – this release: {release}",
       "msg.textEmpty": "The text is empty.",
       "busy.source": "Reading {source} …",
@@ -1286,8 +1299,10 @@
       "afterEdit.keysMac": "Control+Option+Return",
       "settings.afterEdit": "Release editor: the button “Enter edit & import credits” next to “Enter edit” (Ctrl+Alt+Enter) – submits, then opens the relationship editor with the import",
       "settings.afterEditBg": "Imported with Harmony (Bandcamp, Discogs): open it in a background tab, Harmony’s page stays in front",
-      "settings.gapOn": "On the page of a release with a Discogs link, say how many of its relationships are missing",
-      "settings.gapOnTitle": "A line at the top of the release page: about how many relationships of the Discogs credits MusicBrainz does not have yet (the Discogs credits are kept a week). ✕ hides it for the release until the number changes.",
+      "settings.gapLine": "On the page of a release with a Discogs or Bandcamp link, say how many of its relationships are missing",
+      "settings.gapLineTitle": "A line at the top of the release page: about how many relationships of the credits MusicBrainz does not have yet – Discogs, else Bandcamp (a rough estimate); the credits are kept a week. No line without credits, nor when nothing seems to be missing. ✕ hides it for the release until the number changes; “Count exactly” lets the dashboard count them in a tab in the background.",
+      "settings.gapNone": "Also when nothing seems to be missing",
+      "settings.gapNoneTitle": "The line of the release page also when MusicBrainz seems to have the relationships of all credits (off: only when some are missing).",
       "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
       "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
       "settings.aboutCredits": "Bandcamp: read the credits in the “about” text",
@@ -7315,10 +7330,20 @@
   // names on each level (recordings, release, works, labels and places); with the exact number of the dashboard's last check of
   // this release, when it was made. ▸ the parts; "Import credits …" opens the relationship editor with the dashboard; ✕ hides the
   // line for this release until the number changes. The Discogs credits are kept a week (GAP_PREFIX), MusicBrainz is asked each time.
+  // [AY] (3.40.0) No line without credits or when nothing seems to be missing (Q-x; a setting shows it then, off); without a Discogs
+  // link the album page of Bandcamp, a rough estimate (Q-o); "Count exactly": the dashboard counts in a tab in the background (Q-n);
+  // the credits of the Discogs notes are still not counted here (Q-g).
   const GAP_ON_KEY = 'dci-gap-on';
+  const GAP_NONE_KEY = 'dci-gap-none';
   const GAP_PREFIX = 'dci-gap:';
   const GAP_EXACT_PREFIX = 'dci-gap-exact:';
+  // [AY] (3.40.0) "Count exactly": { links, at } for the relationship editor opened in the background (every tab sees it)
+  const GAP_COUNT_PREFIX = 'dci-gap-count:';
+  const GAP_COUNT_HASH = 'dci-count';
+  const GAP_COUNT_MAX_MS = 5 * 60 * 1000;
   const GAP_KEEP_MS = 7 * 24 * 3600 * 1000;
+  // (3.40.0, review) MusicBrainz's instruments and voices, kept by the relationship editor for the release page (a month)
+  const GAP_INSTR_KEY = 'dci-gap-instruments';
   const gapName = (n) => norm(String(n || '').replace(/\s\(\d+\)$/, '').replace(/\*$/, '')).replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
   /** The Discogs credits of a release in short: [{ names, level, tracks: [index] | null (all), kind }] and the number of tracks. */
@@ -7334,19 +7359,20 @@
         const m = pr ? mapRole(pr.base, pr.mods) : null;
         const level = (m && m.level) || 'recording';
         if (level === 'skip') continue;
-        out.push({ names: uniq([gapName(c.who.name), gapName(c.credited)].filter(Boolean)), level, tracks: tracksOf(c.tracks), kind: 'person' });
+        out.push({ names: uniq([gapName(c.who.name), gapName(c.credited)].filter(Boolean)), level, tracks: tracksOf(c.tracks), kind: 'person', role: norm(part) });
       }
     }
     for (const c of rel.companies || []) {
       if (!c.who || !c.role) continue;
       const m = mapCompanyRole(c.role);
       if (!m || m.level === 'skip') continue;
-      out.push({ names: [gapName(c.who.name)].filter(Boolean), level: m.level || 'release', tracks: tracksOf(c.tracks), kind: m.prefer === 'place' ? 'place' : 'label' });
+      out.push({ names: [gapName(c.who.name)].filter(Boolean), level: m.level || 'release', tracks: tracksOf(c.tracks), kind: m.prefer === 'place' ? 'place' : 'label', role: norm(c.role) });
     }
-    // the same name, role level and tracks once (a credit listed for the release and for a track)
+    // the same name, role, level and tracks once (a credit listed for the release and for a track); (3.40.0) two roles of one
+    // person on the same tracks are two relationships (until then counted once)
     const seen = new Set();
     const credits = out.filter((c) => {
-      const k = JSON.stringify([c.names, c.level, c.tracks, c.kind]);
+      const k = JSON.stringify([c.names, c.level, c.tracks, c.kind, c.role]);
       if (seen.has(k)) return false;
       seen.add(k);
       return true;
@@ -7394,6 +7420,12 @@
       const list = [];
       for (let k = 0; k < localStorage.length; k++) {
         const key = localStorage.key(k);
+        if (key && key.startsWith(GAP_COUNT_PREFIX)) {
+          // [AY] (3.40.0) a flag of "Count exactly" no tab took
+          const c = readJson('localStorage', key, null);
+          if (!c || Date.now() - (Number(c.at) || 0) > GAP_COUNT_MAX_MS) localStorage.removeItem(key);
+          continue;
+        }
         if (!key || (!key.startsWith(GAP_PREFIX) && !key.startsWith(GAP_EXACT_PREFIX))) continue;
         const v = readJson('localStorage', key, null);
         list.push([key, (v && (v.at || v.failAt)) || 0]);
@@ -7407,78 +7439,195 @@
     }
   }
 
+  /** [AY] (3.40.0) The exact number of the dashboard for this source (one of 3.39.x: Discogs, with or without its id). */
+  const gapExactOf = (exact, src) => !!exact && (src.kind === 'discogs'
+    ? (!exact.src || exact.src === 'discogs') && (!exact.dId || exact.dId === src.id)
+    : exact.src === src.kind && exact.id === src.id);
+
+  /**
+   * [AY] (3.40.0) The dashboard's number of new relationships for the line of the release page (Discogs or Bandcamp); (review) open:
+   * its rows that cannot be staged yet (no MusicBrainz entry, no type …) – relationships missing all the same.
+   */
+  function gapExactWrite(mbid, p, n, open) {
+    writeJson('localStorage', `${GAP_EXACT_PREFIX}${mbid.toLowerCase()}`, { n, open, at: Date.now(), src: p.src, id: p.id, ...(p.src === 'discogs' ? { dId: p.id } : {}) });
+  }
+
+  /** Discogs allows about 25 requests a minute without a login: at least 2.5 s between those of the line (in every tab). */
+  async function gapDiscogs(dId) {
+    const wait = 2500 - (Date.now() - (Number(readJson('localStorage', 'dci-gap-last', 0)) || 0));
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    writeJson('localStorage', 'dci-gap-last', Date.now());
+    return DISCOGS.release(dId);
+  }
+
+  /**
+   * (3.40.0, review) The words of instruments the release page knows: MusicBrainz's instruments and voices (kept by the relationship
+   * editor, GAP_INSTR_KEY), the register's role words (T048), its spellings of instruments (T001) and the words it asks about (T058).
+   */
+  function gapInstrumentWords() {
+    if (gapInstrumentWords.set) return gapInstrumentWords.set;
+    const kept = readJson('localStorage', GAP_INSTR_KEY, null);
+    gapInstrumentWords.set = new Set([...((kept && Array.isArray(kept.names)) ? kept.names : []), ...(ROLE_WORDS || []),
+      ...Object.keys(INSTRUMENT_ALIASES || {}), ...Object.keys(INSTRUMENT_ASK || {})].map(norm).filter(Boolean));
+    return gapInstrumentWords.set;
+  }
+
+  /**
+   * [AY] (3.40.0) A role of a Bandcamp text on the release page: one the register knows, or (review) an instrument by its name –
+   * a known instrument ("Electric Guitar", "guitars"), or kinds before one ("tenor saxophone") – never a word only because it
+   * looks like one ("Jane", "Stream", "Length"). Good enough for a rough estimate.
+   */
+  function gapIsRole(phrase) {
+    const p = parseRoleNotation(phrase)[0];
+    if (!p || !p.base || /\d/.test(p.base) || p.base.split(' ').length > 6) return false;
+    if (splitArtTasks(p).length > 1) return true;
+    const m = mapRole(p.base, p.mods);
+    if (m.rule && m.rule !== 'R096' && !m.fallback) return true;
+    const words = norm(p.base).split(' ').filter(Boolean);
+    if (!words.length || words.length > 4) return false;
+    const known = gapInstrumentWords();
+    const has = (w) => known.has(w) || (w.length > 3 && w.endsWith('s') && known.has(w.slice(0, -1)));
+    if (has(words.join(' '))) return true;
+    return words.length > 1 && has(words[words.length - 1]) && words.slice(0, -1).every((w) => INSTRUMENT_MODIFIER.test(w) || known.has(w));
+  }
+
+  /** (3.40.0, review) Tracks of a Bandcamp text by their titles ("on “Song Two”"): as tracksByTitles, without its helpers. */
+  function gapTracksByTitles(titles, srcTracks) {
+    const key = (t) => norm(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const keys = (srcTracks || []).map((t) => key((t && t.title) || ''));
+    const indexes = new Set();
+    const unresolved = [];
+    for (const title of titles) {
+      const k = key(title);
+      const hits = k ? keys.flatMap((x, i) => (x === k ? [i] : [])) : [];
+      if (hits.length) hits.forEach((i) => indexes.add(i));
+      else unresolved.push(`“${title}”`);
+    }
+    return { indexes, unresolved };
+  }
+
+  /** [AY] (3.40.0) Tracks of a Bandcamp text by their numbers ("1-3, 5"): their indexes, or null. */
+  function gapTracksIn(spec, srcTracks) {
+    const pos = (srcTracks || []).map((t) => String(t.position));
+    const out = new Set();
+    for (const part of String(spec).split(/\s*(?:,|&|\band\b)\s*/i).filter(Boolean)) {
+      const m = part.match(/^(\d+)\s*(?:-|–|—|to|thru|through)\s*(\d+)$/i);
+      const ends = m ? [Number(m[1]), Number(m[2])] : /^\d+$/.test(part) ? [Number(part), Number(part)] : null;
+      if (!ends) return null;
+      for (let k = Math.min(...ends); k <= Math.max(...ends); k++) {
+        const i = pos.indexOf(String(k));
+        if (i >= 0) out.add(i);
+      }
+    }
+    return out.size ? out : null;
+  }
+
+  /** [AY] (3.40.0) What the Bandcamp adapter needs on the release page (without the dashboard): its album page only. */
+  function gapBandcampCtx(ws) {
+    return {
+      tracks: [], input: null, sig: (t) => String(t || ''), httpGet,
+      isRole: gapIsRole, isCompanyRole: (role) => TEXT_COMPANY_RE.test(norm(role)) && !!mapCompanyRole(role).rule,
+      settings: { bandcampTracks: false },
+      resolveTracks: (spec, srcTracks) => gapTracksIn(spec, srcTracks),
+      resolveTitles: (titles, srcTracks) => gapTracksByTitles(titles, srcTracks),
+      artistNames: uniq((ws['artist-credit'] || []).map((c) => c.name || (c.artist && c.artist.name)).filter(Boolean)),
+      stackUp: false,
+    };
+  }
+
   async function initReleaseGap(mbid) {
     if (readJson('localStorage', GAP_ON_KEY, true) === false || !/^\/release\/[0-9a-f-]{36}\/?$/i.test(location.pathname)) return;
-    // the page's own links first: a release page without a Discogs link asks nothing
+    // the page's own links first: a release page without a Discogs or Bandcamp link asks nothing
     // (the links read by the adapters: what is Discogs stays in DISCOGS)
     const box = document.querySelector('ul.external_links');
-    if (box && !sourceLinksOf([...box.querySelectorAll('a[href]')].map((x) => x.href)).some((l) => l.source === 'discogs')) return;
+    if (box && !sourceLinksOf([...box.querySelectorAll('a[href]')].map((x) => x.href)).some((l) => l.source === 'discogs' || l.source === 'bandcamp')) return;
     gapSweep();
     const res = await fetch(`${location.origin}/ws/2/release/${mbid}?inc=url-rels+artist-rels+label-rels+place-rels+recordings+recording-level-rels+work-rels+work-level-rels`
-      + '+release-groups+release-group-level-rels&fmt=json', { credentials: 'same-origin' });
+      + '+release-groups+release-group-level-rels+artist-credits&fmt=json', { credentials: 'same-origin' });
     if (!res.ok) return;
     const ws = await res.json();
-    const dLink = sourceLinksOf((ws.relations || []).filter((r) => r.url).map((r) => r.url.resource)).find((l) => l.source === 'discogs');
-    if (!dLink) return;
-    const link = { resource: dLink.url };
-    const dId = String(dLink.id);
+    const links = sourceLinksOf((ws.relations || []).filter((r) => r.url).map((r) => r.url.resource));
+    const dLink = links.find((l) => l.source === 'discogs');
+    // [AY] (3.40.0) without a Discogs link: one album page of Bandcamp (Q-o)
+    const bLinks = links.filter((l) => l.source === 'bandcamp');
+    const src = dLink ? { kind: 'discogs', id: String(dLink.id), url: dLink.url } : bLinks.length === 1 ? { kind: 'bandcamp', id: String(bLinks[0].id), url: bLinks[0].url } : null;
+    if (!src) return;
+    const idKey = src.kind === 'discogs' ? 'dId' : 'bId';
     const key = `${GAP_PREFIX}${mbid.toLowerCase()}`;
     let kept = readJson('localStorage', key, null);
-    if (kept && kept.dId === dId && kept.failAt && Date.now() - kept.failAt < (kept.failStatus === 404 ? GAP_KEEP_MS : 3600 * 1000)) return;
-    if (!kept || kept.dId !== dId || !kept.credits || Date.now() - (kept.at || 0) > GAP_KEEP_MS) {
-      // Discogs allows about 25 requests a minute without a login: at least 2.5 s between those of the line (in every tab)
-      const wait = 2500 - (Date.now() - (Number(readJson('localStorage', 'dci-gap-last', 0)) || 0));
-      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-      writeJson('localStorage', 'dci-gap-last', Date.now());
+    const mine = !!kept && kept[idKey] === src.id;
+    if (mine && kept.failAt && Date.now() - kept.failAt < (kept.failStatus === 404 ? GAP_KEEP_MS : 3600 * 1000)) return;
+    if (!mine || !kept.credits || Date.now() - (kept.at || 0) > GAP_KEEP_MS) {
       let rel;
       try {
-        rel = await DISCOGS.release(dId);
+        rel = src.kind === 'discogs' ? await gapDiscogs(src.id) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
       } catch (e) {
-        // an answer of Discogs that says no (429, 404, 5xx) is kept; a request broken off (the page left, no network) is not
+        // an answer that says no (429, 404, 5xx) is kept; a request broken off (the page left, no network) is not
         if (!e || e.name === 'TypeError' || e.name === 'AbortError') return;
         const status = /404|not found|missing|does not exist/i.test(String(e.message)) ? 404 : 0;
-        writeJson('localStorage', key, { ...(kept && kept.dId === dId ? kept : { dId }), failAt: Date.now(), failStatus: status });
+        console.warn('[Discogs-Credits] release gap', src.kind, e);
+        writeJson('localStorage', key, { ...(mine ? kept : { [idKey]: src.id }), failAt: Date.now(), failStatus: status });
         return;
       }
-      kept = { ...(kept && kept.dId === dId ? { dismissed: kept.dismissed } : {}), dId, at: Date.now(), ...gapCreditsOf(rel) };
+      // Bandcamp's page has no notes apart from its credits (its "about" text is read with them)
+      const read = { ...gapCreditsOf(rel), ...(src.kind === 'bandcamp' ? { notes: false } : {}) };
+      // (review) since: when the credits were first read like this – the same credits a week later keep it (a count of the dashboard
+      // since then still holds)
+      const same = mine && kept.credits && JSON.stringify(kept.credits) === JSON.stringify(read.credits);
+      kept = { ...(mine ? { dismissed: kept.dismissed } : {}), [idKey]: src.id, at: Date.now(), since: same ? (kept.since || kept.at) : Date.now(), ...read };
       writeJson('localStorage', key, kept);
     }
+    // [AY] (3.40.0) nothing in it: no line (Q-o, Q-x)
+    if (!(kept.credits || []).length) return;
     const mb = gapMbNames(ws);
     const est = mb.incomplete ? null : gapEstimate(kept, mb);
     let exact = readJson('localStorage', `${GAP_EXACT_PREFIX}${mbid.toLowerCase()}`, null);
-    if (exact && exact.dId && exact.dId !== dId) exact = null;
+    if (!gapExactOf(exact, src)) exact = null;
+    // [AY] (3.40.0) nothing missing – about none, or the dashboard counted none since the credits were read (review: and none of
+    // its rows open – a name without a MusicBrainz entry is missing all the same): no line (Q-x), unless the setting says so
+    const none = (est && est.total === 0) || !!(exact && exact.n === 0 && exact.open === 0 && (exact.at || 0) >= (kept.since || kept.at || 0));
+    if (none && readJson('localStorage', GAP_NONE_KEY, false) !== true) return;
     // ✕: hidden until the number changes
     if (est && kept.dismissed != null && kept.dismissed === est.total) return;
-    showReleaseGap(mbid, link.resource, est, exact, key, kept.notes);
+    showReleaseGap({ mbid, src, est, exact, key, notes: kept.notes });
   }
 
-  function showReleaseGap(mbid, url, est, exact, key, notes) {
+  function showReleaseGap(opts) {
+    const { mbid, src, est, exact, key, notes } = opts;
     const host = document.querySelector('#content') || document.body;
     host.querySelectorAll('.dci-gapline').forEach((x) => x.remove());
     const box = document.createElement('div');
     box.className = 'dci-gapline';
     box.setAttribute('role', 'note');
+    box.dataset.src = src.kind;
     const style = 'margin:6px 0 10px;padding:6px 10px;border:1px solid #c9c2e8;border-left:4px solid #6b4bbf;border-radius:4px;background:#f7f5ff;color:#222;font-size:13px;line-height:1.5;';
     box.setAttribute('style', style);
     // a release of many tracks MusicBrainz does not answer in full: no number; the credits of the Discogs notes are not read here
-    const text = !est ? tr('gap.incomplete') : est.total ? tr(notes ? 'gap.missingNotes' : 'gap.missing', { n: est.total }) : tr(notes ? 'gap.noneNotes' : 'gap.none');
-    const exactText = exact && exact.n != null ? ` ${tr('gap.exact', { n: exact.n, date: new Date(exact.at).toLocaleDateString() })}` : '';
+    // [AY] (3.40.0) Bandcamp: a rough estimate, said so
+    const bc = src.kind === 'bandcamp';
+    const text = !est ? tr(bc ? 'gap.bc.incomplete' : 'gap.incomplete')
+      : est.total ? tr(bc ? 'gap.bc.missing' : notes ? 'gap.missingNotes' : 'gap.missing', { n: est.total })
+        : tr(bc ? 'gap.bc.none' : notes ? 'gap.noneNotes' : 'gap.none');
+    const exactText = exact && exact.n != null ? ` ${tr('gap.exact', { n: exact.n, date: new Date(exact.at).toLocaleDateString() })}`
+      + (exact.open ? ` ${tr('gap.exactOpen', { n: exact.open })}` : '') : '';
     const parts = est ? [['recordings', 'gap.recordings'], ['release', 'gap.release'], ['works', 'gap.works'], ['companies', 'gap.companies']]
       .map(([k, t]) => `<li>${esc(tr(t, { n: est[k] }))}</li>`).join('') : '';
     const btn = 'background:none;border:0;padding:0 4px;color:#4a2f99;cursor:pointer;font:inherit;';
     box.innerHTML = `<button type="button" data-gap="parts" aria-expanded="false" aria-controls="dci-gap-parts" aria-label="${esc(tr('gap.partsLabel'))}" style="${btn}">▸</button>
-      <span>${esc(text)}${esc(exactText)}</span>
+      <span data-gap-text>${esc(text)}${esc(exactText)}</span>
+      <button type="button" data-gap="count" title="${esc(tr('gap.countTitle'))}" style="${btn}text-decoration:underline;">${esc(tr('gap.count'))}</button>
       <button type="button" data-gap="import" style="${btn}text-decoration:underline;">${esc(tr('gap.import'))}</button>
       <button type="button" data-gap="close" title="${esc(tr('gap.closeTitle'))}" aria-label="${esc(tr('gap.closeTitle'))}" style="${btn}float:right;">✕</button>
-      <ul data-gap-parts id="dci-gap-parts" hidden style="margin:4px 0 0 18px;padding:0;">${parts}<li>${esc(tr('gap.how'))}</li></ul>`;
+      <ul data-gap-parts id="dci-gap-parts" hidden style="margin:4px 0 0 18px;padding:0;">${parts}<li>${esc(tr(bc ? 'gap.bc.how' : 'gap.how'))}</li></ul>`;
     box.querySelector('[data-gap=parts]').addEventListener('click', (e) => {
       const ul = box.querySelector('[data-gap-parts]');
       ul.hidden = !ul.hidden;
       e.currentTarget.textContent = ul.hidden ? '▸' : '▾';
       e.currentTarget.setAttribute('aria-expanded', String(!ul.hidden));
     });
+    box.querySelector('[data-gap=count]').addEventListener('click', () => gapCount(opts, box));
     box.querySelector('[data-gap=import]').addEventListener('click', () => {
-      writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: sourceLinksOf([url]), at: Date.now() });
+      writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: sourceLinksOf([src.url]), at: Date.now() });
       location.assign(`/release/${mbid}/edit-relationships`);
     });
     box.querySelector('[data-gap=close]').addEventListener('click', () => {
@@ -7490,6 +7639,89 @@
     const head = host.querySelector('.releaseheader') || host.querySelector('h1');
     if (head && head.parentNode) head.parentNode.insertBefore(box, head.nextSibling);
     else host.prepend(box);
+  }
+
+  /**
+   * [AY] (3.40.0) "Count exactly" (Q-n): the relationship editor of this release in a tab in the background (GM_openInTab); its
+   * dashboard imports the source of the line by itself (GAP_COUNT_PREFIX, a flag every tab sees) and writes its number of new
+   * relationships (GAP_EXACT_PREFIX) – the line takes it (the event "storage" of the other tab) and closes the tab. Five minutes
+   * without a number: said so.
+   */
+  function gapCount(opts, box) {
+    const { mbid, src } = opts;
+    const exactKey = `${GAP_EXACT_PREFIX}${mbid.toLowerCase()}`;
+    const countKey = `${GAP_COUNT_PREFIX}${mbid.toLowerCase()}`;
+    const say = (k) => {
+      const t = box.querySelector('[data-gap-text]');
+      if (t) t.textContent = tr(k);
+    };
+    const btn = box.querySelector('[data-gap=count]');
+    writeJson('localStorage', countKey, { links: sourceLinksOf([src.url]), at: Date.now() });
+    const url = `${location.origin}/release/${mbid}/edit-relationships#${GAP_COUNT_HASH}`;
+    let tab = null;
+    try {
+      tab = typeof GM_openInTab === 'function' ? GM_openInTab(url, { active: false, insert: true, setParent: true }) : window.open(url, '_blank');
+    } catch {
+      tab = null;
+    }
+    btn.disabled = true;
+    say('gap.counting');
+    let settle = null;
+    let late = null;
+    let last = null;
+    // (review) the tab closed also when no number comes, and when this page is left
+    const closeTab = () => {
+      try {
+        if (tab && typeof tab.close === 'function') tab.close();
+      } catch { /* the tab stays */ }
+      tab = null;
+    };
+    const stop = () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('pagehide', closeTab);
+      clearTimeout(late);
+      clearTimeout(settle);
+      closeTab();
+    };
+    const done = () => {
+      stop();
+      // (review) ✕ while it counted: the line stays away
+      if (box.isConnected) showReleaseGap({ ...opts, exact: last });
+    };
+    const failed = (k) => {
+      stop();
+      writeJson('localStorage', countKey, null);
+      say(k);
+      btn.disabled = false;
+    };
+    // the dashboard writes its number at the end of the import and once more with its next summary: the last one, a moment after;
+    // (review) an import that failed: said on its flag
+    function onStorage(e) {
+      if (e.key === countKey && e.newValue) {
+        let c = null;
+        try {
+          c = JSON.parse(e.newValue);
+        } catch {
+          return;
+        }
+        if (c && c.failed) failed('gap.countFailed');
+        return;
+      }
+      if (e.key !== exactKey || !e.newValue) return;
+      let v = null;
+      try {
+        v = JSON.parse(e.newValue);
+      } catch {
+        return;
+      }
+      if (!gapExactOf(v, src)) return;
+      last = v;
+      clearTimeout(settle);
+      settle = setTimeout(done, 2500);
+    }
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('pagehide', closeTab);
+    late = setTimeout(() => failed('gap.countLate'), GAP_COUNT_MAX_MS);
   }
 
   // --- [3.32.10] Comments of live recordings: entered after "Enter edit" (collected item 113) -------------------------
@@ -8285,6 +8517,16 @@
         if (!children.get(root).has(key)) children.get(root).set(key, a);
       }
     }
+    // [AY] (3.40.0, review) the names of MusicBrainz's instruments and voices for the line of the release page (Bandcamp's roles by
+    // their names – the release page has no relationship editor); kept a month
+    try {
+      const keptNames = readJson('localStorage', GAP_INSTR_KEY, null);
+      if (!keptNames || Date.now() - (keptNames.at || 0) > 30 * 24 * 3600 * 1000) {
+        const roots = ats.filter((a) => rootIdOf(a) === a.id && ['instrument', 'vocal'].includes(norm(a.name)));
+        const names = uniq(roots.flatMap((r) => [...(children.get(r.id) || new Map()).keys()]));
+        if (names.length) writeJson('localStorage', GAP_INSTR_KEY, { at: Date.now(), names });
+      }
+    } catch { /* storage not reachable */ }
     // Relationship types per "<entity type>:<level>", e.g. "artist:recording", "place:release", "series:release"
     // or "recording:recording". MB orders entity0/entity1 alphabetically, so the level can be on either side.
     // Grouping entries (e.g. artist "performance", which has no description) cannot be chosen; URLs are
@@ -9861,6 +10103,25 @@
       } catch (e) { /* the # stays */ }
       S.autostartFrom = 'link';
       return sourceLinksOf(new URLSearchParams(hash.slice(IMPORT_HASH.length + 1)).getAll('src'));
+    }
+    // [AY] (3.40.0) opened by "Count exactly" of the release page (the # taken off): the source of its line, imported by itself
+    if (hash === `#${GAP_COUNT_HASH}`) {
+      try {
+        history.replaceState(history.state, '', location.pathname + location.search);
+      } catch { /* the # stays */ }
+      const countKey = `${GAP_COUNT_PREFIX}${releaseMbid.toLowerCase()}`;
+      const c = readJson('localStorage', countKey, null);
+      writeJson('localStorage', countKey, null);
+      const links = c && Date.now() - (Number(c.at) || 0) < GAP_COUNT_MAX_MS
+        ? (Array.isArray(c.links) ? c.links : []).filter((l) => l && LINKED_SOURCES.includes(l.source) && l.id) : [];
+      if (links.length) {
+        S.autostartFrom = 'count';
+        S.gapCountLink = links[0];
+        // (review) this tab only counts: it neither restores nor writes what is remembered of the release (another tab of the
+        // release keeps its changes)
+        S.rememberHold = true;
+        return links;
+      }
     }
     const a = readJson('sessionStorage', AUTOSTART_KEY, null);
     if (!a) return null;
@@ -14730,6 +14991,15 @@
    * source of the preference list (physical or digital media) that is linked – one link: load it; several: ask.
    */
   function startSource() {
+    // [AY] (3.40.0) "Count exactly" of the release page: the source of its line (also when the release has others)
+    if (S.gapCountLink) {
+      const same = (a, b) => a.source === b.source && String(a.id) === String(b.id);
+      const l = S.gapCountLink;
+      S.gapCountLink = null;
+      S.editorLinks = null;
+      if (!S.sourceLinks.some((x) => same(x, l))) S.sourceLinks = [...S.sourceLinks, l];
+      return { link: S.sourceLinks.find((x) => same(x, l)) };
+    }
     // [3.19.0] started from the release editor: its links count as linked too (they may not be in MusicBrainz yet, e.g.
     // while the edit is open); a single one of them that MusicBrainz does not have yet is loaded at once
     if (S.editorLinks) {
@@ -14875,7 +15145,9 @@
       if (nChanges) log('info', 'mappingChangesOn', { n: nChanges });
       const conflicts = Object.keys(mappingChanges.rules).filter((id) => ruleConflicts(id).length);
       if (conflicts.length) log('warn', 'mappingConflicts', { n: conflicts.length, ids: conflicts.join(', ') });
-      if (S.autostart && S.editorLinks) log('info', S.autostartFrom === 'link' ? 'fromLink' : 'fromEditor', { links: S.editorLinks.map(afterEditLinkLabel).join(', ') || '–' });
+      if (S.autostart && S.editorLinks) {
+        log('info', S.autostartFrom === 'link' ? 'fromLink' : S.autostartFrom === 'count' ? 'fromCount' : 'fromEditor', { links: S.editorLinks.map(afterEditLinkLabel).join(', ') || '–' });
+      }
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels`
         + '+instrument-rels+recording-rels+release-rels+release-group-rels+work-rels+recording-level-rels+work-level-rels+url-rels+release-groups+artist-credits+labels');
       if (!ws) throw new Error(tr('err.releaseMissing'));
@@ -15849,7 +16121,8 @@
    */
   function chooseMedia() {
     const media = uniq(S.mbTracks.map((t) => t.medium));
-    if (media.length < 2 || !S.overlay) return Promise.resolve({ media: new Set(media), release: true, all: true });
+    // [AY] (3.40.0, review) the tab of "Count exactly" (in the background, nobody to answer): all media
+    if (media.length < 2 || !S.overlay || S.autostartFrom === 'count') return Promise.resolve({ media: new Set(media), release: true, all: true });
     // [3.21.1] media without a tracklist in MusicBrainz cannot be chosen: named below the intro
     const empty = [...((S.mediaInfo && S.mediaInfo.keys()) || [])].filter((m) => !media.includes(m)).sort((a, b) => a - b);
     const store = relMapRead(MEDIA_SEL_KEY);
@@ -17000,11 +17273,10 @@
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
-        // [172] (3.39.0) the number of new relationships for the line of the release page (the next summary)
-        S.gapExactPending = source === DISCOGS ? String(id) : null;
-        if (S.gapExactPending && releaseMbid && typeof S.lastSumCount === 'number') {
-          writeJson('localStorage', `${GAP_EXACT_PREFIX}${releaseMbid.toLowerCase()}`, { n: S.lastSumCount, at: Date.now(), dId: S.gapExactPending });
-        }
+        // [172] (3.39.0) the number of new relationships for the line of the release page (the next summary); [AY] (3.40.0) of
+        // Bandcamp too
+        S.gapExactPending = source === DISCOGS || source === BANDCAMP ? { src: source === DISCOGS ? 'discogs' : 'bandcamp', id: String(id) } : null;
+        if (S.gapExactPending && releaseMbid && typeof S.lastSumCount === 'number') gapExactWrite(releaseMbid, S.gapExactPending, S.lastSumCount, S.lastSumOpen || 0);
         // [S058] (3.38.7) names and instruments one above the other in an order that is not clear: said in red, "⇅" at the entries
         // [S060] (3.38.12) names in capitals written in normal case
         const caseNames = [...S.artists.values()].filter((a) => !a.company && S.rows.some((r) => r.artistKey === a.key)).flatMap((a) => [
@@ -17022,11 +17294,17 @@
         // [3.36.1] also a release without credits at the source (rows added by hand)
         finishRemember(seq);
         findFestivals(seq);
+        // [AY] (3.40.0, review) nothing to import from Discogs or Bandcamp: none new for the line of the release page
+        if ((source === DISCOGS || source === BANDCAMP) && releaseMbid) {
+          gapExactWrite(releaseMbid, { src: source === DISCOGS ? 'discogs' : 'bandcamp', id: String(id) }, 0, 0);
+        }
       }
       setBusy('');
     } catch (e) {
       setBusy('');
       showError(e);
+      // [AY] (3.40.0, review) the tab of "Count exactly": the release page is told (on the flag of the release)
+      if (S.autostartFrom === 'count' && releaseMbid) writeJson('localStorage', `${GAP_COUNT_PREFIX}${releaseMbid.toLowerCase()}`, { failed: true, at: Date.now() });
     }
   }
 
@@ -22817,11 +23095,16 @@
       ['kind.work', count((i) => i.target.kind === 'work')],
       ['kind.workLink', count((i) => i.kind === 'work-link')],
     ].filter(([, n]) => n).map(([key, n]) => tr(key, { n }));
-    // [172] (3.39.0) the exact number for the line of the release page (a release from Discogs only)
+    // [172] (3.39.0) the exact number for the line of the release page (a release from Discogs; [AY] (3.40.0) or Bandcamp)
     // – once per import, when it is complete (not after staging or changes by hand)
     S.lastSumCount = items.length;
-    if (S.gapExactPending && S.source === DISCOGS && releaseMbid) {
-      writeJson('localStorage', `${GAP_EXACT_PREFIX}${releaseMbid.toLowerCase()}`, { n: items.length, at: Date.now(), dId: S.gapExactPending });
+    // (3.40.0, review) the rows that cannot be staged yet (no MusicBrainz entry, no type …; not those of the skipped works matrix)
+    S.lastSumOpen = S.rows.filter((r) => {
+      const i = rowInfo.get(r.id);
+      return i && i.issues.length && !(r.level === 'work' && S.worksSkip);
+    }).length;
+    if (S.gapExactPending && SOURCES[S.gapExactPending.src] === S.source && releaseMbid) {
+      gapExactWrite(releaseMbid, S.gapExactPending, items.length, S.lastSumOpen);
       S.gapExactPending = null;
     }
     // [169] (3.38.4) in one line: the levels in the tooltip
@@ -30098,7 +30381,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
@@ -30833,8 +31116,9 @@
         // [3.19.2] the release editor and, imported with Harmony, the background tab; [3.23.0] the button instead of the tick
         row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false, tr('settings.afterEdit'))),
         row(check('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'))),
-        // [172] (3.39.0) the line of the release page (Discogs only)
-        row(check('data-set="gap-on"', readJson('localStorage', GAP_ON_KEY, true) !== false, tr('settings.gapOn'), tr('settings.gapOnTitle'))),
+        // [172] (3.39.0) the line of the release page; [AY] (3.40.0) of Bandcamp too, and when nothing seems to be missing (off, Q-x)
+        row(check('data-set="gap-on"', readJson('localStorage', GAP_ON_KEY, true) !== false, tr('settings.gapLine'), tr('settings.gapLineTitle'))),
+        row(check('data-set="gap-none"', readJson('localStorage', GAP_NONE_KEY, false) === true, tr('settings.gapNone'), tr('settings.gapNoneTitle'))),
       ],
       // [3.25.0] pasted texts and the credits texts of Bandcamp
       texts: () => [
@@ -31139,7 +31423,11 @@
     } else if (k === 'gap-on') {
       // [172] (3.39.0) the line of the release page (on unless switched off)
       writeJson('localStorage', GAP_ON_KEY, el.checked ? null : false);
-      log('info', 'settingValue', { what: tr('settings.gapOn'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      log('info', 'settingValue', { what: tr('settings.gapLine'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'gap-none') {
+      // [AY] (3.40.0) the line also when nothing seems to be missing (off unless switched on)
+      writeJson('localStorage', GAP_NONE_KEY, el.checked ? true : null);
+      log('info', 'settingValue', { what: tr('settings.gapNone'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'stats-on') {
       // [E8] (3.38.0) collecting the statistics (on unless switched off)
       writeJson('localStorage', STATS_ON_KEY, el.checked ? null : false);
@@ -31387,8 +31675,8 @@
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
     STATS_ON_KEY, STATS_PERIOD_KEY,
-    // [172] (3.39.0) the line of the release page
-    GAP_ON_KEY,
+    // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
+    GAP_ON_KEY, GAP_NONE_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
     BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
