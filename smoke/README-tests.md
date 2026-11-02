@@ -338,6 +338,9 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     rows ("recording engineer", "guest saxophone", "remastering"), tooltip "from Discogs: …", types, "additional"
                                 #     ticked, compact line, preview, entry matrix and chip, works matrix ("additional composer", menu
                                 #     "sub-publisher"), the log "Staged: …"
+                                #   assistants: 3.39.4 (K-1, K-2, S065): "Assistant Engineer" engineer + assistant, "Asst. Mixing Engineer", "Co-Arranger",
+                                #     "Arranged By [Co]" arranger + co; "Assistant Arranger" edit note only (row note, preview); "Assistant
+                                #     Photographer" credited "assistant photographer"
                                 #   oldfile: 3.39.2 (review): a mapping file without T058 / T059 and changes of your own (Node, files copied):
                                 #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again
 

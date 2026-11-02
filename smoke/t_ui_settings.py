@@ -659,9 +659,15 @@ def case_cache():
                 pg.wait_for_timeout(1200)
 
             def again():
+                # (3.39.6) the log of the tab survives the reload: wait for one more "Import complete" (until then the old line was
+                # enough, and the rows were read before the import had taken over what was remembered)
+                n0 = pg.evaluate("[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length")
                 pg.reload()
                 pg.add_script_tag(content=H.MAIN)
-                load()
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length > {n0}", 60)
+                pg.wait_for_timeout(1200)
 
             def change():
                 bass = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man'); return g.querySelector('tr.dci-row').dataset.row; })()")

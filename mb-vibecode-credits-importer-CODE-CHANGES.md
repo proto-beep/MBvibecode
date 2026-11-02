@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.39.3, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.39.4, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.39.4 · 2026-11-02
+
+A word before the role: "Assistant Engineer", "Co-Arranger" (collected items K-1, K-2; Q-s, Q-u).
+
+- **`mapRole`:** rule **S065** – a role that is no rule's (fallback / R096) beginning with "Assistant", "Asst.", "Associate" or "Co-": the rest mapped (`mapRole`), its `flags` with assistant / associate / co, `prefix` { flag, word, rest }. New `prefixCredit(p)` ("assistant arranger", "co-composer").
+- **Rows:** `makeRow` and the role changed by hand keep `prefix` (`prefixCredit` false); `applyDetailFlags` – with a type: the flag where the type has the attribute, else `row.prefixCredit` (the flag removed); `roleCreditForInner` – `prefixCredit` gives the role credit (details before it); `REMAP_FIELDS` with `prefix`, `prefixCredit`.
+- **New `prefixNoteHtml(row)`** in `roleCell` (both forms): `note.prefixCredit` (the type has a role credit) or `note.prefixNote` (edit note only; `canRoleCredit`), with the rule id S065.
+- **R051** (arranger): the details "co" / "associate" are its attributes (`has`), no instrument candidates of them.
+- **Register:** rule S065.
+- **Texts (English):** `note.prefixCredit`, `note.prefixNote`.
+- **Tests:** `t_mapping.py` new case `assistants` (engineer, mix, arranger with co, "Arranged By [Co]", "Assistant Producer"; "Assistant Arranger" edit note only with the preview; "Assistant Photographer" credited); `register_golden.json` anew ("Assistant Engineer" engineer with assistant, rule S065); `t_ui_settings.py` `cache` waits for the import after a reload (the tab's log kept the old "Import complete", so the rows were now and then read before what was remembered had been taken over – a race of the test).
 
 ## Import 3.39.3 · 2026-11-02
 
