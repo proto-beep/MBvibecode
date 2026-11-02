@@ -445,6 +445,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   statsdev: 3.38.2: a real submission records per relationship what was changed by hand (a role credit typed;
                                 #     an answer is none) and the answers (Q002); not shown by default; in Developer mode (3.38.5): taken over /
                                 #     changed by hand, the rules changed most, not recognized (once per release), the answers, duplicates avoided
+                                #   statsbutton: 3.39.3 (189): the statistics' own button after ⚙ (bar chart), pressed while open; one of ⚙, the
+                                #     docked rules and the statistics open; their heading folds them in; only "Collect statistics"; no tab
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):

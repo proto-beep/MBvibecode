@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.2
+// @version      3.39.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1537,6 +1537,9 @@
       "stats.onTitle": "After “Enter edit” the script looks in MusicBrainz whether the relationships are saved and counts what is there. Off: nothing is counted; what was counted stays.",
       "stats.loading": "Reading the statistics …",
       "stats.empty": "Nothing counted yet – the statistics begin with the next “Enter edit” of relationships staged with the dashboard.",
+      "stats.title": "Statistics",
+      "stats.buttonTitle": "Statistics: what you entered into MusicBrainz with the dashboard",
+      "stats.foldTitle": "Fold the statistics in (as their button does)",
       "stats.t.releases": "releases",
       "stats.t.rels": "relationships",
       "stats.t.newSupp": "new / supplemented",
@@ -11443,6 +11446,11 @@
       S.settingsOpen = false;
       S.resetOpen = false;
       renderSettings();
+    }
+    // [189] (3.39.3) and the statistics
+    if (rulesDocked() && S.statsOpen) {
+      S.statsOpen = false;
+      renderStats();
     }
     // As a window above the dashboard and the log, which come to the front when used
     placeRules();
@@ -28217,9 +28225,12 @@
       case 'settings-open':
         S.settingsOpen = !S.settingsOpen;
         S.resetOpen = false;
-        S.statsData = null; // [E8] (3.38.0)
-        // [3.30.0] the mapping rules in the dashboard close (only one of both is open there, item 75)
+        // [3.30.0] the mapping rules in the dashboard close (only one of both is open there, item 75); [189] (3.39.3) the statistics too
         if (S.settingsOpen && rulesDocked() && rulesShown()) closeRules();
+        if (S.settingsOpen && S.statsOpen) {
+          S.statsOpen = false;
+          renderStats();
+        }
         if (S.settingsOpen) {
           awCount().then((n) => {
             S.awStoreCount = n || 0;
@@ -28233,14 +28244,31 @@
         // [3.25.0] a tab: its topic (remembered)
         S.settingsTab = btn.dataset.topic;
         S.resetOpen = false;
-        // [E8] (3.38.0) the statistics read again
-        if (S.settingsTab === 'statistics') S.statsData = null;
         writeJson('localStorage', SETTINGS_TAB_KEY, S.settingsTab === 'general' ? null : S.settingsTab);
         renderSettings();
         const tabBtn = $('settings').querySelector(`[data-act="settings-topic"][data-topic="${S.settingsTab}"]`);
         if (tabBtn) tabBtn.focus();
         break;
       }
+      case 'stats-open':
+        // [189] (3.39.3) the statistics below the head, read anew; ⚙ Settings and the rules in the dashboard close (one of the three)
+        S.statsOpen = !S.statsOpen;
+        S.statsData = null;
+        if (S.statsOpen && (S.settingsOpen || S.resetOpen)) {
+          S.settingsOpen = false;
+          S.resetOpen = false;
+          renderSettings();
+        }
+        if (S.statsOpen && rulesDocked() && rulesShown()) closeRules();
+        renderStats();
+        if (S.statsOpen) $('stats').scrollIntoView({ block: 'nearest' });
+        break;
+      case 'stats-fold':
+        // [189] (3.39.3) the heading folds the statistics in, as the one of ⚙ Settings does
+        S.statsOpen = false;
+        renderStats();
+        S.overlay.querySelector('.dci-head [data-act="stats-open"]').focus();
+        break;
       case 'keys-open':
         // [3.36.3] the keyboard shortcuts below the head
         setKeysOpen(!S.keysOpen);
@@ -28257,7 +28285,7 @@
         // [E8] (3.38.0) the statistics over days, weeks, months or years
         S.statsPeriod = btn.dataset.period;
         writeJson('localStorage', STATS_PERIOD_KEY, S.statsPeriod === 'month' ? null : S.statsPeriod);
-        renderSettings();
+        renderStats();
         break;
       case 'stats-delete':
         // [E8] (3.38.0) all statistics deleted (asked first)
@@ -28265,7 +28293,7 @@
         statClear().then(() => {
           S.statsData = [];
           log('info', 'statsDeleted', {});
-          renderSettings();
+          renderStats();
         });
         break;
       case 'remember-forget': {
@@ -29398,6 +29426,8 @@
     down: '<path d="M4 6l4 4 4-4"/>',
     compact: '<path d="M2 3.5h12M2 8h12M2 12.5h12"/>',
     plus: '<path d="M8 3v10M3 8h10"/>',
+    // [189] (3.39.3) the statistics: a small bar chart
+    stats: '<path d="M2.5 13.5h11M4.5 11V8M8 11V4M11.5 11V6.5"/>',
   };
   const ico = (name) => `<svg class="dci-ico" viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
   /** A button of the head: its symbol, the word only in a wide dashboard (the tooltip and aria-label always). */
@@ -29423,6 +29453,7 @@
               <button type="button" class="dci-headbtn" data-act="zoom-in" title="${esc(tr('zoom.larger'))}" aria-label="${esc(tr('zoom.larger'))}">A+</button>
             </span>
             ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
+            ${headBtn('stats-open', 'stats', tr('stats.title'), tr('stats.buttonTitle'), 'aria-expanded="false"')}
             ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'), 'aria-expanded="false"')}
             ${headBtn('log', 'log', tr('log.title'), tr('log.title'), 'aria-pressed="false"')}
             ${headBtn('keys-open', 'keys', '', tr('keys.open'), 'aria-expanded="false" aria-controls="dci-keys"')}
@@ -29432,6 +29463,7 @@
         </header>
         <div class="dci-body" data-el="body">
           <div class="dci-settings" data-el="settings" role="region" aria-label="${esc(tr('settings.title'))}" hidden></div>
+          <div class="dci-settings dci-stats-dock" data-el="stats" role="region" aria-label="${esc(tr('stats.title'))}" hidden></div>
           <div class="dci-keys" id="dci-keys" data-el="keys" role="region" aria-label="${esc(tr('keys.title'))}" hidden></div>
           <div class="dci-rules-dock" data-el="rules-dock" hidden></div>
           <div class="dci-srcpanels" data-el="srcpanels"></div>
@@ -29621,6 +29653,7 @@
     renderLog();
     renderLauncher();
     renderControls();
+    renderStats(); // [189] (3.39.3)
     if (rules) {
       rules.hidden = !rulesOpen;
       placeRules();
@@ -29734,7 +29767,8 @@
   // [3.29.2] "Appearance" new (item 79): text size, the place of the dashboard, the view and the colours of the levels
   // [3.34.1] "Beta" new (item E3): functions to try out, off until switched on
   // [146] (3.36.0) "Cache" new: what is remembered per release
-  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections'];
+  // [189] (3.39.3) the statistics with a button of their own in the head (until 3.39.2 the tab "Statistics" after "Cache")
+  const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
   const VIEW_KEY = 'dci-view';
@@ -30125,7 +30159,7 @@
     const all = await statAll();
     S.statsData = Array.isArray(all) ? all : [];
     S.statsLoading = false;
-    if (S.settingsOpen && S.settingsTab === 'statistics' && !S.resetOpen) renderSettings();
+    if (S.statsOpen) renderStats();
   }
 
   /**
@@ -30581,8 +30615,6 @@
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
         ];
       },
-      // [E8] (3.38.0) the statistics
-      statistics: () => statsHtml(),
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
     const tab = SETTING_TOPICS.includes(S.settingsTab) ? S.settingsTab : 'general';
@@ -30701,6 +30733,29 @@
     const again = key && el.querySelector(key);
     if (again) again.focus();
     alignPanes();
+  }
+
+  /**
+   * [189] (3.39.3) The statistics below the head (collected item 189): their own button next to ⚙, one of ⚙ Settings, the rules in
+   * the dashboard and these open at a time; the heading folds them in. Until 3.39.2 the tab "Statistics" of ⚙ Settings.
+   */
+  function renderStats() {
+    if (!S.overlay) return;
+    const el = $('stats');
+    if (!el) return;
+    S.overlay.querySelectorAll('.dci-head [data-act="stats-open"]').forEach((b) => b.setAttribute('aria-expanded', String(!!S.statsOpen)));
+    el.hidden = !S.statsOpen;
+    if (!S.statsOpen) {
+      el.innerHTML = '';
+      return;
+    }
+    const active = document.activeElement;
+    const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]`
+      : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.period ? `[data-period="${active.dataset.period}"]` : ''}` : '') : '';
+    el.innerHTML = `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button></div>
+      <div class="dci-stats-pane">${statsHtml().join('')}</div>`;
+    const again = key && el.querySelector(key);
+    if (again) again.focus();
   }
 
   /** The switches elsewhere in the dashboard show what was set in the menu (and the other way round). */

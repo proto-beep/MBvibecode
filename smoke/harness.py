@@ -1137,6 +1137,13 @@ def open_settings(pg, tab=None):
         pg.wait_for_timeout(150)
 
 
+def open_stats(pg):
+    """[189] (3.39.3) The statistics opened below the head (their own button next to ⚙; until 3.39.2 a tab of ⚙ Settings)."""
+    if pg.evaluate("!document.querySelector('[data-el=stats]') || document.querySelector('[data-el=stats]').hidden"):
+        pg.locator('.dci-head [data-act=stats-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
+
+
 def nav_switch(pg, attr):
     """[3.28.0] A switch of the navigation (data-dg-artwork, data-click-toggle, data-keep-marks …): only in ⚙ Settings →
     Discogs and Bandcamp view now (the bar below "Import credits …" has the status only)."""
