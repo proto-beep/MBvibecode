@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.16
+// @version      3.38.17
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.16
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.16
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.17
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.17
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.16';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.17';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -248,6 +248,7 @@
       "ignored.why.endorsement": "a maker’s note",
       "ignored.why.courtesy": "“appears courtesy of …”",
       "ignored.why.web": "only web addresses",
+      "ignored.why.software": "music software – no instrument and no relationship of MusicBrainz (T056)",
       "ignored.why.medium": "for {medium} – this release: {release}",
       "msg.textEmpty": "The text is empty.",
       "busy.source": "Reading {source} …",
@@ -2659,6 +2660,8 @@
     T045: { key: 'RIGHTS_SOCIETIES', shape: 'pairs', reload: true },
     T048: { key: 'ROLE_WORDS', shape: 'words' },
     T052: { key: 'PROPER_WORDS', shape: 'words' },
+    // [S061] (3.38.17) music software left out of a line "With …"
+    T056: { key: 'TEXT_SOFTWARE', shape: 'words' },
   };
   const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
@@ -3069,6 +3072,7 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S061', where: 'TEXT.parse (readClause; TEXT_SOFTWARE)', note: 'Texts (3.38.17): a line "With …" names what the release\'s artist plays – "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects": its instruments and voices the release\'s artist\'s (several artists: offered to each), words that may be instruments asked as in a list (S051); a name in it a guest ("with Oliver Lake": guest performer; "with Oliver Lake on saxophone" / "(saxophone)": guest saxophone); music software (T056) is left out ("software"). A line with a colon ("With Strings: …") and a make before a name ("Gibson Les Paul") are no such guests. Off: such a line is read as before (mostly not recognized)' },
     { id: 'S060', where: 'personCase, personCaseOf, groupCredits, entryNameHtml, caseBackHtml, setCaseUp, sourceCreditFor', note: 'A person\'s name all in capitals ("TORBEN SNEKKESTAD", "ABBA") and a name variation in capitals ("LAKE") in normal case – "Torben Snekkestad" – from every source (Discogs names and their spellings, texts, text from cover art, the Discogs notes, Bandcamp): a word of three letters or more with a vowel (also Cyrillic, Greek); two letters ("DJ", "MC"), letters without a vowel ("BMS") and initials stay, a particle between the names is small ("Paco de Lucía"). "↺ in capitals" in the head of the entry takes the spelling of the source again, also as the "credited as" of its roles (one typed by hand stays), and back. Linked to a MusicBrainz name all in capitals ("ABBA", "MF DOOM"): that name is shown, the source\'s capitals are the "credited as" ("DOOM"; none for "ABBA"). Persons only (3.38.12)' },
     { id: 'S057', where: 'personCopyright, mergePersonCopyrights, suggestByName', note: '℗ / © of a person Discogs lists as a label (3.37.10): a company entry with a person\'s name and only ℗ / © rows ("Copyright © – Martin Davidson", "Phonographic Copyright ℗ – Martin Davidson") whose Discogs link MusicBrainz does not know – a person of that name in the dashboard (another Discogs credit) takes the rows (artist–release copyright, phonographic copyright; the row says so, "As the label instead" gives them back); an artist of that name linked in this release becomes the entry\'s MB entity; otherwise the name is searched: artists and labels of that name, each named as such' },
     { id: 'S056', where: 'findFestivals, festivalHtml', note: 'Festival recordings (3.37.8): a sentence of the text or the notes with a festival (T055) – "… during the du Maurier, Ltd. International Jazz Festival Vancouver" – gives a hint above the entries: MusicBrainz prefers the event to the place (the event is linked to its place); with a date in the sentence, MusicBrainz\'s events of that name whose time holds the date are offered – never set, a click adds one as an entry' },
@@ -3376,6 +3380,8 @@
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T056', where: 'TEXT_SOFTWARE, readClause', note: 'Texts (3.38.17): music software – left out of a line "With …" (S061) and named as left out ("software"): "Apple Logic", "Logic Pro", "Ableton Live", "Pro Tools", "Cubase", "Reaper", "FL Studio", "Bitwig", "Max/MSP" … – no instrument and no relationship of MusicBrainz ("computer" and "laptop" stay instruments)',
+      show: () => ({ pairs: [['words', TEXT_SOFTWARE.join(' · ')]] }) },
     { id: 'T055', where: 'TEXT_FESTIVAL_WORDS, findFestivals', note: 'Texts (3.37.8): the words of festivals – "Festival", "Jazzfestival", "Festspiele", "Jazzfest" – for S056', show: () => ({ pattern: TEXT_FESTIVAL_WORDS }) },
     { id: 'T054', where: 'TEXT_CREDIT_SEPS, sentencesOf', note: 'Texts (3.37.2): signs between the credits of one line – » « • · | ("Cover-Photo: Photorama International » Photos: Dirk Glawe « Cover Design: Payola « Layout: Bernd Struckmeyer"); only when every part is a credit ("Role: Name", "… by Name"), so a « in a title or "℗ 2019 X · CAT 1" stays as it is',
       show: () => ({ pattern: TEXT_CREDIT_SEPS }) },
@@ -3526,6 +3532,9 @@
   const TEXT_CREDIT_SEPS = MAP.TEXT_CREDIT_SEPS;
   // [T055] (3.37.8) words of festivals ("Festival", "Jazzfestival", "Festspiele", "Jazzfest"; item 158)
   const TEXT_FESTIVAL_WORDS = MAP.TEXT_FESTIVAL_WORDS;
+  // [S061] (3.38.17) music software (T056; ✎ – the list is changed in place)
+  const TEXT_SOFTWARE = MAP.TEXT_SOFTWARE;
+  const isSoftware = (x) => { const k = norm(x).replace(/\s*\/\s*/g, '/'); return TEXT_SOFTWARE.some((w) => norm(w).replace(/\s*\/\s*/g, '/') === k); };
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
@@ -5482,6 +5491,84 @@
               return;
             }
           }
+          // [S061] (3.38.17) "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" (collected item 181): what the
+          // release's artist plays (one artist: his; several: offered to each), a name a guest ("with Oliver Lake" – guest performer;
+          // "with Oliver Lake on saxophone" / "(saxophone)" – guest saxophone), music software (T056) left out ("software")
+          if (ruleOn('S061') && (m = clause.match(/^with\s+([^:]+)$/i))) {
+            // the parts at commas outside brackets; a part "Name on A and B" or "Name (A, B)" is one guest with his instruments
+            const chunks = [];
+            let depth = 0;
+            let cur = '';
+            for (const ch of m[1]) {
+              if (ch === '(') depth++;
+              if (ch === ')') depth = Math.max(0, depth - 1);
+              if (ch === ',' && !depth) {
+                chunks.push(clean(cur));
+                cur = '';
+              } else cur += ch;
+            }
+            chunks.push(clean(cur));
+            const makeWord = (n) => PROPER_WORDS.some((w) => norm(w) === norm(n.split(' ')[0]));
+            const soft = [];
+            const band = [];
+            const guests = [];
+            const guess = [];
+            const unknown = [];
+            const person = (n) => looksLikeName(n) && n.split(' ').length >= 2 && n.split(' ').length <= 4 && !isRole(n) && !TEXT_NOT_NAME.test(n) && !makeWord(n)
+              && n.split(' ').every((w) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || /^(?:van|von|de|der|den|da|di|del|la|le|du)$/i.test(w));
+            let last = null;
+            for (const chunk of chunks.filter(Boolean)) {
+              const it = chunk.match(/^(.+?)\s+on\s+(.+)$/i) || chunk.match(/^(.+?)\s*\(([^)]+)\)$/);
+              const roles = it ? listRoles(clean(it[2])) : null;
+              if (it && roles && roles.every(playable) && person(clean(it[1]))) {
+                guests.push([clean(it[1]), roles]);
+                last = null;
+                continue;
+              }
+              for (const item of chunk.split(/\s+(?:and|&|und|et|y)\s+/i).map(clean).filter(Boolean)) {
+                const iit = item.match(/^(.+?)\s+on\s+(.+)$/i) || item.match(/^(.+?)\s*\(([^)]+)\)$/);
+                const iroles = iit ? listRoles(clean(iit[2])) : null;
+                if (iit && iroles && iroles.every(playable) && person(clean(iit[1]))) {
+                  guests.push([clean(iit[1]), iroles]);
+                  last = null;
+                  continue;
+                }
+                if (isSoftware(item) || TEXT_SOFTWARE.some((w) => norm(item).startsWith(`${norm(w)} `))) soft.push(item);
+                // "with Kenny Wheeler, trumpet": the instruments right after a name are his
+                else if (playable(item) && last) last[1].push(item);
+                else if (playable(item)) band.push(item);
+                else if (person(item)) {
+                  last = [item, []];
+                  guests.push(last);
+                  continue;
+                } else if (maybePlayable(item)) guess.push(item);
+                else unknown.push(item);
+                if (!playable(item)) last = null;
+              }
+            }
+            if (band.length || guests.length) {
+              const ours = artistNames.filter(Boolean);
+              const toBand = (r) => (ours.length === 1 ? addCredit(ours[0], r, cScope) : addPlaceholder(clean(clause), r, cScope));
+              band.forEach((r) => { if (toBand(r)) found++; });
+              // words that may be instruments ask like those of a list (137d) – one release artist, no more of them than known ones
+              if (ours.length === 1 && guess.length <= band.length) guess.forEach((r) => { if (addCredit(ours[0], r, cScope, { guess: true })) found++; });
+              else unknown.push(...guess);
+              const asGuest = (r) => {
+                const p = parseRoleNotation(r)[0];
+                return p ? `${p.base} [${[...p.mods, 'Guest'].join(', ')}]` : r;
+              };
+              guests.forEach(([n, roles]) => (roles && roles.length ? roles.map(asGuest) : ['Guest']).forEach((r) => { if (addCredit(n, r, cScope)) found++; }));
+              if (soft.length) ignored.push({ text: soft.join(', '), why: 'software' });
+              unknownParts.push(...unknown);
+              return;
+            }
+            // only software: left out as such
+            if (soft.length && !unknown.length && !guess.length) {
+              ignored.push({ text: soft.join(', '), why: 'software' });
+              found++;
+              return;
+            }
+          }
           // [S055] (3.37.2) "Special Guest: M. Osswald on Sax and Clarinet" (T053): the words before the colon are no person;
           // "Special Guest(s)", "Guest(s)" … give the attribute guest, "featuring", "with" … none (collected item 153)
           if (ruleOn('S055') && (m = clause.match(/^([^:–—]{2,25}?)\s*[:–—]\s*(.+)$/u)) && (TEXT_GUEST_HEAD.test(clean(m[1])) || TEXT_FEAT_HEAD.test(clean(m[1])))) {
@@ -6300,7 +6387,7 @@
       const gKey = who.id ? `id:${who.id}` : who.placeholder ? `ph:${norm(who.name)}` : `name:${norm(who.name)}`;
       if (!groups.has(gKey)) {
         // [S060] (3.38.12) a name in capitals in normal case (F-4), the source's spelling kept ("in capitals" in the head)
-        const nc = who.placeholder ? { name: who.name, from: '' } : personCaseOf(who.name);
+        const nc = who.placeholder || c.initialsFor ? { name: who.name, from: '' } : personCaseOf(who.name);
         if (!nc.from && who.caseFrom) nc.from = who.caseFrom;
         groups.set(gKey, { dId: who.id || 0, name: nc.name, ...(nc.from ? { caseFrom: nc.from } : {}), rawName: who.rawName, links: who.links || [], roles: new Map(),
           // [3.14.0] a credit without a name, given to one of the release's artists (placeholderCredits)
@@ -6316,7 +6403,8 @@
       if (!who.id && (who.links || []).length) group.links = uniq([...group.links, ...who.links]);
       if (!c.role) continue;
       // [S060] (3.38.12) a name variation in capitals too ("LAKE" → "Lake")
-      const ac = personCaseOf(c.credited || '');
+      // [S063] (3.38.18) initials stay as written ("AJ", not "Aj")
+      const ac = c.initials ? { name: c.credited, from: '' } : personCaseOf(c.credited || '');
       const anv = ac.name;
       const at = c.tracks || { all: true };
       for (const role of splitEngineerTasks({ raw: c.role, base: c.base, mods: [...(c.details || [])] }).flatMap(splitArtTasks)) {

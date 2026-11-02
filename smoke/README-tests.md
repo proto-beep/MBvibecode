@@ -139,6 +139,8 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     GUY / DOUBLE BASS" – three entries in normal case; the instruments above; "Jane Roe / PIANO / John Doe" not
                                 #     clear: the note, the log, ⇅ (John Doe), another text (Jane Roe again); one line with capitals; the Discogs notes;
                                 #     3.38.12 (F-5): ⇅ in the dashboard – no new import, Max Mix put on Skip stays; "ABBA – piano" → Abba (S060)
+                                #   withline: 3.38.17 (181, S061): "With Apple Logic, Sequential PX, flutes …" – the release artist's instruments,
+                                #     "objects" asked, software left out; "with Oliver Lake" guest, "Jane Roe on saxophone" guest saxophone
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
 
