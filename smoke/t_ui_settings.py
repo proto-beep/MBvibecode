@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -37,7 +37,7 @@ def case_settabs():
         pg.wait_for_timeout(200)
         a.append(pg.evaluate(f"{SET}.hidden"))
         print('A) Tabs:', [(t, s) for t, s, _ in t1], '| offen, Schließen innen, aria, wieder zu:', a)
-        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections']
+        results.append([t for t, _, _ in t1] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
                        and [t for t, s, _ in t1 if s == 'true'] == ['general'] and a == [True, 0, 'true', True])
         # B) keys
         pg.click(gear)
@@ -180,7 +180,7 @@ def case_settings():
         vals = pg.evaluate(f"""(() => {{ const s = {SET}; const v = (k) => s.querySelector('[data-set=' + k + ']');
       return [v('aw-on').checked, v('awMax').value, v('awSlowSec').value, v('awSlowN').value, v('awDays').value, s.querySelector('[data-el=aw-cost]').textContent]; }})()""")
         print('A) Themen:', topics, '| Werke:', vals)
-        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections']
+        results.append([t for t, _ in topics] == ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
                        and [t for t, e in topics if e == 'true'] == ['general']
                        and vals == [True, '4000', '10', '900', '7', '= 40 requests, about 44 s per artist'])
         # B) shared switches
@@ -278,7 +278,7 @@ def case_pressed():
         return (t['above'] <= 1 and t['below'] >= 4.5 and 0 <= t['into'] <= 3 and (t['atTabsTop'] or abs(t['below'] - 6) <= 1)
                 and t['joinedTop'] == (abs(t['above']) <= 1) and (t['corner'] == '0px') == t['joinedTop'])
     no_bridge = lambda x: x['after'] in ('none', 'normal') and x['before'] in ('none', 'normal') and not x['bridgeClass']
-    TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections']
+    TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'connections']
     results = []
     # (the matrix of the entries, for "by event | by role")
     H.ENTRIES_VIEW = 'matrix'
@@ -540,7 +540,7 @@ def case_reset():
               '| automatisch anwenden:', pg.locator('[data-f=dm-auto]').is_checked() if pg.locator('[data-f=dm-auto]').count() else '–')
         # [3.36.0] what is remembered for a release (its rows, the index of the releases) is no setting either
         # [3.39.0] the line of the release page: the dashboard's number of a release is no setting either
-        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index')]  # [3.26.0] the question of the language is no setting
+        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index', 'dci-gap-instruments')]  # [3.26.0] the question of the language is no setting; (3.40.0) MusicBrainz's instruments for the release page: data
         ok1 = set(settings) <= {'dci-log-open'} and 'dci-date-pool:other' in after and 'dci-created-works:other' in after \
             and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
             and art == [None, None]
@@ -659,9 +659,15 @@ def case_cache():
                 pg.wait_for_timeout(1200)
 
             def again():
+                # (3.39.6) the log of the tab survives the reload: wait for one more "Import complete" (until then the old line was
+                # enough, and the rows were read before the import had taken over what was remembered)
+                n0 = pg.evaluate("[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length")
                 pg.reload()
                 pg.add_script_tag(content=H.MAIN)
-                load()
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length > {n0}", 60)
+                pg.wait_for_timeout(1200)
 
             def change():
                 bass = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man'); return g.querySelector('tr.dci-row').dataset.row; })()")
@@ -682,7 +688,8 @@ def case_cache():
             H.open_settings(pg, 'cache')
             a = pg.evaluate(CACHE)
             print('A) Cache:', a)
-            results.append(a['tabs'][-4:] == ['Beta', 'Cache', 'Statistics', 'ⓘ Connections'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
+            # [189] (3.39.3) no tab "Statistics" any more (their own button)
+            results.append(a['tabs'][-3:] == ['Beta', 'Cache', 'ⓘ Connections'] and a['on'] is False and a['max'] == '50' and a['forget'] is False
                            and re.match(r'^0 releases · 0\.0 KB · all data of the script in this browser: \d+\.\d KB$', a['size']) is not None)
             change()
             b0 = state()
@@ -918,7 +925,8 @@ def js_release_of(added):
 
 def case_stats():
     """Credits Importer 3.38.0 (E8, milestone "Statistics").
-    A) ⚙ Settings → "Statistics" (after "Cache"): "Collect statistics" on, nothing counted yet.
+    A) ⚙ Settings → "Statistics" (after "Cache"): "Collect statistics" on, nothing counted yet. [189] (3.39.3) the statistics' own
+       button next to ⚙, no tab "Statistics" any more.
     B) Everything staged, "Enter edit": the relationships in MusicBrainz's /ws/js/release – counted once (log "Statistics: n
        relationships confirmed by MusicBrainz and counted"; the job gone; one record in the database dci-stats with the time from
        the first import).
@@ -940,12 +948,14 @@ def case_stats():
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         pg.wait_for_timeout(800)
-        H.open_settings(pg, 'statistics')
-        pg.wait_for_timeout(400)
+        # [189] (3.39.3) the statistics with their own button: no tab of ⚙ Settings any more
+        H.open_settings(pg)
         tabs = pg.evaluate("[...document.querySelectorAll('[data-el=settings] .dci-set-tab')].map(t => t.dataset.topic)")
+        H.open_stats(pg)
+        pg.wait_for_timeout(400)
         a = pg.evaluate("[!!document.querySelector('[data-el=stats-empty]'), (document.querySelector('[data-set=stats-on]') || {}).checked]")
         print('A) Reiter:', tabs, '| leer, an:', a)
-        results.append(tabs[-3:] == ['cache', 'statistics', 'connections'] and a == [True, True])
+        results.append(tabs[-2:] == ['cache', 'connections'] and 'statistics' not in tabs and a == [True, True])
         # B) staged, "Enter edit"
         pg.click('[data-act=apply]')
         pg.wait_for_timeout(2500)
@@ -967,7 +977,7 @@ def case_stats():
                        and recs[0]['rel'] is not None and 'before' in recs[0]['rel'])
         # C) the tab
         H.open_settings(pg, 'cache')
-        H.open_settings(pg, 'statistics')
+        H.open_stats(pg)
         pg.wait_for_timeout(500)
         TILES = "Object.fromEntries([...document.querySelectorAll('.dci-stats-tile')].map(t => [t.dataset.stat, t.querySelector('.dci-stats-num').textContent.trim()]))"
         tiles = pg.evaluate(TILES)
@@ -1001,7 +1011,7 @@ def case_stats():
         print('D) behalten angehakt:', keep, '| danach:', d1, '| ohne Haken:', d2)
         results.append(keep and d1 == 1 and d2 == 0)
         # E) off: no job
-        H.open_settings(pg, 'statistics')
+        H.open_stats(pg)
         pg.wait_for_timeout(300)
         pg.uncheck('[data-set=stats-on]')
         pg.wait_for_timeout(200)
@@ -1057,6 +1067,80 @@ def stat_rel(k, lt, lv, et, tg, tn, i=(), d='', ds='', lk='', ru='', nw=0):
     return {'k': k, 'lt': lt, 'lv': lv, 'et': et, 'tg': tg, 'tn': tn, 'i': list(i), 'v': [], 'd': d, 'ds': ds, 'rc': 0, 'ac': 0, 'ru': ru, 'lk': lk, 'nw': nw}
 
 
+def case_statsbutton():
+    """Credits Importer 3.39.3 (collected item 189): the statistics with their own button in the head.
+    A) The button (a bar chart, "Statistics") right after ⚙ Settings, not pressed; no tab "Statistics" in ⚙ Settings any more – a tab
+       "statistics" remembered from before shows "General".
+    B) A click: the statistics below the head (their heading, "Collect statistics" – no switch of the developer mode there), the button
+       pressed (tinted).
+    C) ⚙ Settings opened: the statistics close; the statistics opened again: ⚙ closes. The mapping rules in the dashboard opened: the
+       statistics close; the statistics opened: the rules close.
+    D) The heading folds them in, the focus on the button."""
+    HEAD = """(() => [...document.querySelectorAll('.dci-head .dci-headbtn')].map(b => b.dataset.act))()"""
+    STATE = """(() => { const st = document.querySelector('[data-el=stats]'), se = document.querySelector('[data-el=settings]'), r = document.querySelector('[data-el=rules-dock]');
+      const btn = document.querySelector('.dci-head [data-act=stats-open]');
+      return { stats: !st.hidden, settings: !se.hidden, rules: !!document.querySelector('#dci-rules.dci-rules-docked:not([hidden])'), pressed: btn.getAttribute('aria-expanded'),
+        bg: getComputedStyle(btn).backgroundColor, title: btn.title, label: btn.getAttribute('aria-label'), svg: !!btn.querySelector('svg'),
+        heading: (st.querySelector('.dci-set-title') || { textContent: '' }).textContent.trim(), switches: [...st.querySelectorAll('[data-set]')].map(x => x.dataset.set),
+        tabs: [...se.querySelectorAll('.dci-set-tab')].map(t => t.dataset.topic), tab: (se.querySelector('.dci-set-tab[aria-selected=true]') || { dataset: {} }).dataset.topic }; })()"""
+    TINT = 'rgb(236, 235, 246)'
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("localStorage.setItem('dci-settings-tab', JSON.stringify('statistics'))")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(600)
+        head = pg.evaluate(HEAD)
+        a0 = pg.evaluate(STATE)
+        H.open_settings(pg)
+        a1 = pg.evaluate(STATE)
+        print('A) Kopf:', head, '| zu:', {k: a0[k] for k in ('stats', 'pressed', 'title', 'label', 'svg')}, '| Reiter:', a1['tabs'], a1['tab'])
+        i = head.index('settings-open') if 'settings-open' in head else -9
+        results.append(head[i + 1:i + 2] == ['stats-open'] and not a0['stats'] and a0['pressed'] == 'false' and a0['svg'] and a0['label'] == 'Statistics'
+                       and a0['title'].startswith('Statistics:') and 'statistics' not in a1['tabs'] and a1['tab'] == 'general')
+        # B) and C) – ⚙ is open now: the statistics close it
+        pg.click('.dci-head [data-act=stats-open]')
+        pg.wait_for_timeout(500)
+        b1 = pg.evaluate(STATE)
+        print('B) offen:', b1)
+        results.append(b1['stats'] and not b1['settings'] and b1['pressed'] == 'true' and b1['bg'] == TINT and b1['heading'] == 'Statistics'
+                       and b1['switches'] == ['stats-on'])
+        pg.click('.dci-head [data-act=settings-open]')
+        pg.wait_for_timeout(300)
+        c1 = pg.evaluate(STATE)
+        pg.click('.dci-head [data-act=rules]')
+        pg.wait_for_timeout(400)
+        c2 = pg.evaluate(STATE)
+        pg.click('.dci-head [data-act=stats-open]')
+        pg.wait_for_timeout(400)
+        c3 = pg.evaluate(STATE)
+        pg.click('.dci-head [data-act=rules]')
+        pg.wait_for_timeout(400)
+        c4 = pg.evaluate(STATE)
+        print('C) ⚙:', [c1[k] for k in ('stats', 'settings', 'pressed')], '| Regeln:', [c2[k] for k in ('stats', 'settings', 'rules')],
+              '| Statistik:', [c3[k] for k in ('stats', 'rules')], '| Regeln wieder:', [c4[k] for k in ('stats', 'rules', 'pressed')])
+        results.append(not c1['stats'] and c1['settings'] and c1['pressed'] == 'false' and c2['rules'] and not c2['stats'] and not c2['settings']
+                       and c3['stats'] and not c3['rules'] and c4['rules'] and not c4['stats'] and c4['pressed'] == 'false')
+        # D)
+        pg.click('.dci-head [data-act=stats-open]')
+        pg.wait_for_timeout(300)
+        pg.click('[data-el=stats] [data-act=stats-fold]')
+        pg.wait_for_timeout(300)
+        d1 = pg.evaluate(STATE)
+        focus = pg.evaluate("document.activeElement && document.activeElement.dataset.act")
+        print('D) gefaltet:', d1['stats'], d1['pressed'], '| Fokus:', focus)
+        results.append(not d1['stats'] and d1['pressed'] == 'false' and focus == 'stats-open')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_statsmore():
     """Credits Importer 3.38.1 (E8): the further statistics of the tab,
     from three stored submissions of two releases (today, yesterday, three days ago).
@@ -1094,7 +1178,7 @@ def case_statsmore():
         seeded = pg.evaluate(STAT_SEED, recs)
         H.open_dashboard(pg)
         pg.wait_for_timeout(600)
-        H.open_settings(pg, 'statistics')
+        H.open_stats(pg)
         pg.wait_for_timeout(600)
         CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
           [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
@@ -1186,14 +1270,14 @@ def case_statsdev():
         ]
         pg.evaluate(STAT_SEED, seed)
         H.open_settings(pg, 'cache')
-        H.open_settings(pg, 'statistics')
+        H.open_stats(pg)
         pg.wait_for_timeout(500)
         # [171] (3.38.5) shown in "Developer mode" (⚙ Settings → General; until 3.38.4 a switch of its own here)
         b0 = pg.evaluate("[!!document.querySelector('.dci-stats-dev'), !!document.querySelector('[data-set=stats-dev]')]")
         H.open_settings(pg, 'general')
         pg.check('.dci-set-pane [data-set=dev-mode]')
         pg.wait_for_timeout(300)
-        H.open_settings(pg, 'statistics')
+        H.open_stats(pg)
         pg.wait_for_timeout(500)
         stored = pg.evaluate("localStorage.getItem('dci-dev')")
         CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-dev .dci-stats-card')].map(c => [c.dataset.el.replace('stats-dev-', ''),

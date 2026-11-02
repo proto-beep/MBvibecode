@@ -146,7 +146,11 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     a file would ("Objects", with other instruments): other instruments once
                                 #   cloudpond: 3.38.18 (182 – 184): "Ambisonic recordings by RR 2022-2025 …" field recordist with the period,
                                 #     "Pacific coast" the area Pacific Coast (3.39.2, 188, T059); RR = Robert Rich (initials, credited "RR"), "Recorded Mixed and Mastered";
+                                #     3.39.7 (K-8, K-11): "JR" – Jane Roe clicked, the liner notes hers credited "JR"; "R.R." with its dot
                                 #     "Cover © X" artwork "cover", "Photos © X" photography "photo", the permission left out; "JR" of two names
+                                #   booklets: 3.39.8 (Z-1, S067, S068): two booklet pages read with Tesseract 5.3 – "VIOLIN / Anna Berg / Clara Stein /
+                                #     Ben Holt" stacked and "Violins: …" in one line give the same entries; the title (the release's artist) left out
+                                #   initialsmemo: 3.39.8 (K-8, review): "JR" → Jane Roe chosen, remembered: after a reload and the same text at once
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
 
@@ -308,6 +312,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     click elsewhere and Esc (focus back), one at a time; "1 work ▾" not set; Link plans the work
                                 #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
                                 #     name of the title looked up, a surname only of an artist of the release, the log; "co?" and its click; Node
+                                #     3.39.9 (K-9): no "co?" when Monk is a member of the release's band (or the release's artist a member of his), the
+                                #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
@@ -338,6 +344,15 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     rows ("recording engineer", "guest saxophone", "remastering"), tooltip "from Discogs: …", types, "additional"
                                 #     ticked, compact line, preview, entry matrix and chip, works matrix ("additional composer", menu
                                 #     "sub-publisher"), the log "Staged: …"
+                                #   assistants: 3.39.4 (K-1, K-2, S065): "Assistant Engineer" engineer + assistant, "Asst. Mixing Engineer", "Co-Arranger",
+                                #     "Arranged By [Co]" arranger + co; "Assistant Arranger" edit note only (row note, preview); "Assistant
+                                #     Photographer" credited "assistant photographer"
+                                #   voices: 3.39.5 (K-3 – K-5): "Countertenor" countertenor vocals, "Vocals [Tenor]"; "Liner Notes [Translation]"
+                                #     with translator; "Creative Direction" on the release group, for one track on its recording, no edit note
+                                #   companyperson: 3.39.6 (K-6, S066): "Mixed At" / "Recorded At" / "Mastered At" at a person – what the person did, the
+                                #     note, no place; "Pressed By", "Distributed By" left out (Skip, note); "Licensed From" licensor
+                                #   listkeys: 3.39.6 (K-13): T001 changed with "Lap Steel2" (as an imported file writes it) is found (Node)
+                                #   toys: 3.39.7 (T058): "Toys" asks percussion · electronic instruments · other instruments “toys”; "Found Objects"
                                 #   oldfile: 3.39.2 (review): a mapping file without T058 / T059 and changes of your own (Node, files copied):
                                 #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again
 
@@ -445,6 +460,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #   statsdev: 3.38.2: a real submission records per relationship what was changed by hand (a role credit typed;
                                 #     an answer is none) and the answers (Q002); not shown by default; in Developer mode (3.38.5): taken over /
                                 #     changed by hand, the rules changed most, not recognized (once per release), the answers, duplicates avoided
+                                #   statsbutton: 3.39.3 (189): the statistics' own button after ⚙ (bar chart), pressed while open; one of ⚙, the
+                                #     docked rules and the statistics open; their heading folds them in; only "Collect statistics"; no tab
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
@@ -590,6 +607,10 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     message with "Update script"
                                 #   gapline: 3.39.0 (172): the line of the release page (estimate, parts, the dashboard's number), Discogs kept,
                                 #     ✕ until the number changes, the setting off, "Import credits …" → the dashboard (its number kept)
+                                #   gapmore: 3.40.0 (AY): no line without credits or when nothing is missing (setting dci-gap-none, one missing, the
+                                #     dashboard counted none – rows open: the line –, the same credits a week later); "Count exactly" (Discogs with two
+                                #     media, Bandcamp): the tab #dci-count imports and counts, the line takes the number, the tab is closed; an import
+                                #     that fails; Bandcamp's rough estimate, its parts, instruments in capitals; a page without credits ("Stream: …")
                                 #   languagesload: 3.34.0: the languages file from the manager (German); fetched from GitHub (kept, one reload);
                                 #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
 

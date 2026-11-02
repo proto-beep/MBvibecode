@@ -922,7 +922,7 @@ def case_bcspell():
        "The source (Bandcamp) credits …", the name's tooltip "Bandcamp: Robert Rich" and "* – credited so in the source (Bandcamp)";
        the log "Artist credits from the spellings of the source (Bandcamp, *)"; the word "Discogs" nowhere in the head.
     B) The tag "Bandcamp" (the link to his Bandcamp page) in Bandcamp's blue (#629aa9, white letters) – Discogs' tag stays dark;
-       its tooltip "Open on Bandcamp: Robert Rich".
+       its tooltip "Open on Bandcamp: Robert Rich". 3.39.6 (Q-i): a darker blue #3a7a89 (legible), #629aa9 its rim.
     C) 3.39.2 (collected items 186, 187): "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" from Bandcamp –
        its album's artist is the release's (one name, not two): his instruments, lap steel guitar (T001), "objects" asked as
        percussion “objects” · other instruments “objects” (T058); no entry for the line, nothing not recognized."""
@@ -959,7 +959,7 @@ def case_bcspell():
       const tag = n.querySelector('.dci-dglink .dci-src'); const chip = n.querySelector('.dci-gcredit-anv');
       const name = n.querySelector('strong');
       return { name: name.textContent.trim(), nameTitle: name.title, chip: chip ? chip.textContent.trim() : '', chipTitle: chip ? chip.title : '',
-        tag: tag ? [tag.textContent.trim(), tag.className, getComputedStyle(tag).backgroundColor, getComputedStyle(tag).color, tag.closest('a').title] : null,
+        tag: tag ? [tag.textContent.trim(), tag.className, getComputedStyle(tag).backgroundColor, getComputedStyle(tag).color, tag.closest('a').title, getComputedStyle(tag).boxShadow] : null,
         text: n.textContent + ' ' + [...n.querySelectorAll('[title]')].map(x => x.title).join(' ') }; }))()"""
     results = []
     with sync_playwright() as p:
@@ -982,10 +982,11 @@ def case_bcspell():
                        and rr.get('nameTitle', '').startswith('Bandcamp: Robert Rich') and '* – credited so in the source (Bandcamp)' in rr.get('nameTitle', '')
                        and logs == ['Artist credits from the spellings of the source (Bandcamp, *): RR (Robert Rich)']
                        and 'Discogs' not in rr.get('text', 'Discogs'))
-        t = rr.get('tag') or ['', '', '', '', '']
+        t = rr.get('tag') or ['', '', '', '', '', '']
         print('B) Marke:', t)
-        results.append(t[0] == 'Bandcamp' and 'dci-src-bc' in t[1] and t[2] == 'rgb(98, 154, 169)' and t[3] == 'rgb(255, 255, 255)'
-                       and t[4] == 'Open on Bandcamp: Robert Rich')
+        # (3.39.6, Q-i) a darker blue, legible, the logo's blue as its rim
+        results.append(t[0] == 'Bandcamp' and 'dci-src-bc' in t[1] and t[2] == 'rgb(58, 122, 137)' and t[3] == 'rgb(255, 255, 255)'
+                       and t[4] == 'Open on Bandcamp: Robert Rich' and 'rgb(98, 154, 169)' in t[5])
         # C) the line "With …" (a page of its own: the head of A has a spelling of all roles)
         album('With Apple Logic, Sequential PX, flutes, lap steel, bells and objects')
         pg, errs2 = H.open_mb_edit(H.new_context(b), companion=False, gm_xhr=True)

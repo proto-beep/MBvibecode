@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7), withline (3.38.17, 3.39.2), cloudpond (3.38.18, 3.39.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7), withline (3.38.17, 3.39.2), cloudpond (3.38.18, 3.39.2), booklets (3.39.8), initialsmemo (3.39.8) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1111,10 +1111,12 @@ def case_cloudpond():
        engineer. 3.39.2 (collected item 188, list T059): "Pacific coast" the area Pacific Coast (recorded in), not found in MusicBrainz
        – nothing not recognized.
     B) "Recorded Mixed and Mastered by RR at Soundscape, Carmel CA": Robert Rich (RR) recording engineer, mixer, mastering; the place
-       Soundscape; the entry says "RR = Robert Rich (initials)".
+       Soundscape; the entry says "RR = Robert Rich (initials)" – 3.39.7 with "Layout by R.R." too: "RR, R.R. = Robert Rich (initials)".
     C) "Cover © Maksimillian Novak-Zemplinski, detail used with permission.": artwork credited "cover" (no ℗/© of a label), "detail
        used with permission" left out; "Photos © Ann Blow": photography credited "photo"; "©2026 Robert Rich" as before.
-    D) Initials of two names ("JR" for Jane Roe and Jim Rye): not set by themselves – the entry "JR" names both.
+    D) Initials of two names ("JR" for Jane Roe and Jim Rye): not set by themselves – the entry "JR" names both; 3.39.7 (collected item
+       K-8) to click: "Jane Roe" – the liner notes go to Jane Roe, credited "JR", the entry "JR" is gone. (K-11) "Design by R.R."
+       credited "R.R." with its last dot (until 3.39.6 "R.R").
     E) (Review) "Field recordings by Kim Lowe": the whole name; "Photo © Focused Pictures": no permission in "Focused"; "Artwork © Ann
        Jones, all rights reserved": no artist "all rights reserved"; "Design by AJ": Ann Jones credited "AJ" (not "Aj")."""
     H.RELEASE_AC[:] = [(H.uid('dddddddd', 3420), 'Robert Rich', 'Robert Rich', '')]
@@ -1138,7 +1140,8 @@ Liner notes by JR
 Field recordings by Kim Lowe
 Photo © Focused Pictures
 Artwork © Ann Jones, all rights reserved
-Design by AJ"""
+Design by AJ
+Layout by R.R."""
     GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim() + (g.querySelector('.dci-gname').textContent.includes('Label') ? ' (label)' : ''),
   { hint: (g.querySelector('.dci-initials') || { textContent: '' }).textContent.trim(), ac: [...g.querySelectorAll('[data-f=credit], [data-f=em-ac]')].map(x => x.value).filter(Boolean),
     rows: [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
@@ -1171,13 +1174,25 @@ Design by AJ"""
         pc = g.get('Pacific Coast') or {'rows': []}
         results.append(fr is not None and fr[3] == '2022-2025' and [r[1] for r in pc['rows']] == ['recorded in'] and not any('Pacific' in u for u in unrec)
                        and 'Ambisonic' not in ''.join(g) and [r[1] for r in (g.get('Jane Roe') or {'rows': []})['rows']] == ['recording'])
-        results.append(all(t in rows for t in ('recording', 'mix', 'mastering')) and rr['hint'] == 'RR = Robert Rich (initials)' and 'RR' not in g
+        results.append(all(t in rows for t in ('recording', 'mix', 'mastering')) and rr['hint'] == 'RR, R.R. = Robert Rich (initials)' and 'RR' not in g
                        and 'RR' in rr['ac'] and [r[1] for r in (g.get('Soundscape') or {'rows': []})['rows']] == ['recorded at'])
         mk, ab, lab = g.get('Maksimillian Novak-Zemplinski') or {'rows': []}, g.get('Ann Blow') or {'rows': []}, g.get('Robert Rich (label)') or {'rows': []}
         results.append([r[1:3] for r in mk['rows']] == [['artwork', 'cover']] and [r[1:3] for r in ab['rows']] == [['photography', 'photo']]
                        and [r[1] for r in lab['rows']] == ['copyright'] and any(x.startswith('detail used with permission') for x in ign))
         jr = g.get('JR') or {'hint': '', 'rows': []}
-        results.append(jr['hint'] == 'JR: the initials of Jane Roe, Jim Rye – not set; choose the artist')
+        # (3.39.7, K-8) the names to click; Jane Roe clicked: the liner notes are hers, credited "JR"
+        btns = pg.evaluate("[...document.querySelectorAll('[data-act=initials-use]')].map(b => b.textContent.trim())")
+        pg.locator('[data-act=initials-use]', has_text='Jane Roe').first.click()
+        pg.wait_for_timeout(800)
+        g2 = pg.evaluate(GROUPS)
+        jane = g2.get('Jane Roe') or {'rows': [], 'ac': []}
+        print('D) JR:', jr['hint'], btns, '| danach Jane Roe:', jane, '| JR noch da:', 'JR' in g2)
+        results.append(jr['hint'].startswith('JR: the initials of') and btns == ['Jane Roe', 'Jim Rye'] and 'JR' not in g2
+                       and sorted(r[1] for r in jane['rows']) == ['liner notes', 'recording'] and 'JR' in jane['ac'])
+        # (3.39.7, K-11) "R.R." keeps its last dot
+        rr_ac = (g.get('Robert Rich') or {}).get('ac', [])
+        print('K-11) Robert Rich credited:', rr_ac)
+        results.append('R.R.' in rr_ac)
         # (3.38.18, review) a name of two words without a year; "Focused" no permission; the rights out; initials with a vowel stay
         kl, fp, aj = g.get('Kim Lowe') or {'rows': []}, g.get('Focused Pictures') or {'rows': []}, g.get('Ann Jones') or {'rows': [], 'ac': [], 'hint': ''}
         results.append([r[1] for r in kl['rows']] == ['field recordist'] and [r[1:3] for r in fp['rows']] == [['photography', 'photo']]
@@ -1185,6 +1200,102 @@ Design by AJ"""
                        and not any('rights' in k for k in g) and 'Aj' not in g)
         print('Fehler:', errs)
         results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_booklets():
+    """Credits Importer 3.39.8 (collected item Z-1; rules S067, S068): two booklet pages built for the test and read with Tesseract 5.3
+    (the engine of Tesseract.js, as "Text from cover art" reads them) – the text exactly as read, empty lines included.
+    A) Stacked: "VIOLIN / Anna Berg / Clara Stein / (empty) / Ben Holt", "VIOLA / Dora Weiss", "CELLO / Emil Brandt / Frida Lang",
+       "RECORDED BY / Jonas Kerr" – each name its heading's instrument or role (until 3.39.7 only Dora Weiss, the rest not
+       recognized); the title "Nordlicht Quartett" (the release's artist) left out as such.
+    B) In one line: "Violins: Anna Berg, Clara Stein, Ben Holt", "Cellos: Emil Brandt and Frida Lang", "Recorded at Studio Nord,
+       Bremen, May 2024" – as before; the title left out."""
+    H.RELEASE_AC[:] = [(H.uid('dddddddd', 3801), 'Nordlicht Quartett', 'Nordlicht Quartett', '')]
+    for i, n in ((9801, 'violin'), (9802, 'viola'), (9803, 'cello')):
+        H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    STACKED = 'Nordlicht Quartett\n\nVIOLIN\nAnna Berg\nClara Stein\n\nBen Holt\n\nVIOLA\nDora Weiss\n\nCELLO\nEmil Brandt\nFrida Lang\n\nRECORDED BY\nJonas Kerr\n\n'
+    ONELINE = 'Nordlicht Quartett\n\nViolins: Anna Berg, Clara Stein, Ben Holt\nViola: Dora Weiss\n\nCellos: Emil Brandt and Frida Lang\n\nRecorded by Jonas Kerr\nRecorded at Studio Nord, Bremen, May 2024\n\n'
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => ((r.querySelector('[data-f=primary]') || {}).value || ((r.querySelector('[data-f=type]') || {}).selectedOptions || [])[0]?.dataset.name || ''))])))()"""
+    WANT = {'Anna Berg': ['violin'], 'Clara Stein': ['violin'], 'Ben Holt': ['violin'], 'Dora Weiss': ['viola'], 'Emil Brandt': ['cello'],
+            'Frida Lang': ['cello'], 'Jonas Kerr': ['recording']}
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for name, text in (('A', STACKED), ('B', ONELINE)):
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', text)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+            pg.wait_for_timeout(1200)
+            pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+            pg.wait_for_timeout(500)
+            g = pg.evaluate(GROUPS)
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(l => l.textContent.replace(/\s+/g, ' ').trim())")
+            got = {k: v for k, v in g.items() if k in WANT}
+            print(name + ')', got, '| nicht erkannt:', unrec, '| weggelassen:', ign, '| Fehler:', errs)
+            results.append(got == WANT and not unrec and any(x.startswith('Nordlicht Quartett') and 'artist' in x for x in ign) and not errs)
+            ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_initialsmemo():
+    """Credits Importer 3.39.8 (collected item K-8, after the review of block AW): the name chosen for initials of several names is
+    remembered with the release ("Remember changes …" on): "JR" → Jane Roe chosen, the page loaded again and the same text read – the
+    liner notes are Jane Roe's at once, credited "JR"; a credit typed by hand into a row of "JR" stays."""
+    H.RELEASE_AC[:] = [(H.uid('dddddddd', 3420), 'Robert Rich', 'Robert Rich', '')]
+    H.REMEMBER = False
+    H.attr(9301, 'flute', 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    TEXT = "Recorded by Jane Roe\nFlute: Jim Rye\nLiner notes by JR"
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('[data-f=credit], [data-f=em-ac]')].map(x => x.value)])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def load_text():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            n0 = pg.evaluate("[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length")
+            H.open_dashboard(pg)
+            H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length > {n0}", 60)
+            n1 = pg.evaluate("[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length")
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length > {n1}", 90)
+            pg.wait_for_timeout(1500)
+
+        load_text()
+        H.open_settings(pg, 'cache')
+        pg.click('.dci-set-pane [data-set=remember]')
+        pg.wait_for_timeout(400)
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        print('Knöpfe:', pg.evaluate("[...document.querySelectorAll('[data-act=initials-use]')].map(b => b.textContent.trim())"), pg.evaluate(GROUPS))
+        pg.locator('[data-act=initials-use]', has_text='Jane Roe').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(1800)
+        g1 = pg.evaluate(GROUPS)
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        load_text()
+        g2 = pg.evaluate(GROUPS)
+        print('vorher:', g1, '| neu geladen:', g2, '| Fehler:', errs)
+        results.append('JR' not in g1 and 'JR' in g1.get('Jane Roe', []) and 'JR' not in g2 and 'JR' in g2.get('Jane Roe', []) and not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

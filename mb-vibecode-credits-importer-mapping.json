@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.39.2",
+  "version": "3.40.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
   "CHECKBOX_DETAILS": [
@@ -25,7 +25,7 @@
     {"id":"Q004","base":"bass guitar","credit":"bass guitar","options":["bass guitar","electric bass guitar","acoustic bass guitar"],"note":"Plain \"Bass Guitar\": which bass guitar? Without a choice it stays bass guitar"}
   ],
   "TYPE_QUESTIONS": [
-    {"id":"Q003","base":"directed by","rule":"R097","note":"\"Directed By\": conductor, chorus master, creative direction or miscellaneous support (task \"director\")? Nothing is assumed","options":[{"type":"conductor","level":"recording"},{"type":"chorus master","level":"recording"},{"type":"creative direction","level":"release"},{"type":"misc","level":"recording","task":"director","label":"miscellaneous support (task “director”)"}]},
+    {"id":"Q003","base":"directed by","rule":"R097","note":"\"Directed By\": conductor, chorus master, creative direction or miscellaneous support (task \"director\")? Nothing is assumed","options":[{"type":"conductor","level":"recording"},{"type":"chorus master","level":"recording"},{"type":"creative direction","level":"release_group"},{"type":"misc","level":"recording","task":"director","label":"miscellaneous support (task “director”)"}]},
     {"id":"Q006","base":"alto","rule":"R102","ask":"typeAsk.askAlto","note":"\"Alto\" alone (3.21.2): the viola (Spanish, French), an alto saxophone or an alto voice? Nothing is assumed, no role credit","options":[{"type":"instrument","level":"recording","instrument":"viola","label":"viola"},{"type":"instrument","level":"recording","instrument":"alto saxophone","label":"alto saxophone"},{"type":"vocal","level":"recording","instrument":"alto vocals","label":"alto vocals"}]},
     {"id":"Q007","base":"translated by","rule":"R004","flag":"askTranslation","ask":"typeAsk.askTranslation","note":"\"Translated By\", \"Translation\", \"Translator\" in Bandcamp credits (3.21.4): mostly the liner notes (suggested), sometimes the lyrics – nothing is assumed; elsewhere it stays translator (R004)","options":[{"type":"liner notes","level":"release","label":"liner notes","suggested":true,"task":"translation"},{"type":"translator","level":"work","label":"translator (lyrics)"}]},
     {"id":"Q008","base":"sounds","rule":"R104","ask":"typeAsk.askSounds","pending":"typeAsk.pendingSounds","note":"\"Sounds\" (3.30.6): performer (without role credit) or the instrument effects credited \"sounds\"? Until answered it stays performer","options":[{"type":"performer","level":"recording","label":"performer"},{"type":"instrument","level":"recording","instrument":"effects","label":"effects (credited “sounds”)"}]},
@@ -186,7 +186,7 @@
     {"id":"R078","kind":"simple","note":"","re":{"$re":"^(illustration|illustrated by|illustrations|drawings|painting|paintings|painted by|cover painting|cover paintings|cover illustration)$","$flags":""},"types":["illustration","design/illustration"],"level":"release"},
     {"id":"R079","kind":"simple","note":"","re":{"$re":"^(artwork|artwork by|art)$","$flags":""},"types":["artwork","design/illustration"],"level":"release"},
     {"id":"R080","kind":"simple","note":"","re":{"$re":"^(art direction|art director|art directed by)$","$flags":""},"types":["art direction"],"level":"release"},
-    {"id":"R081","kind":"simple","note":"","re":{"$re":"^(creative direction|creative director)$","$flags":""},"types":["creative direction","art direction"],"level":"release","credit":true},
+    {"id":"R081","kind":"simple","note":"Creative direction: on the release group (3.39.5; MusicBrainz has it on recordings and release groups only, on the release art direction)","re":{"$re":"^(creative direction|creative director)$","$flags":""},"types":["creative direction","art direction"],"level":"release_group","credit":true},
     {"id":"R082","kind":"simple","note":"","re":{"$re":"^(liner notes|sleeve notes|notes|linernotes|text by)$","$flags":""},"types":["liner notes"],"level":"release"},
     {"id":"R083","kind":"simple","note":"","re":{"$re":"^(booklet editor|booklet)$","$flags":""},"types":["booklet editor"],"level":"release"},
     {"id":"R084","kind":"simple","note":"","re":{"$re":"^(?:a ?& ?r|artists? (?:and|&) repertoire)(?:\\s+(.+))?$","$flags":""},"types":["artists and repertoire","misc"],"level":"release_group"},
@@ -265,7 +265,11 @@
     "twelve-string guitar": ["12 string guitar","12-string guitar"]
   },
   "INSTRUMENT_ASK": {
-    "objects": ["percussion"]
+    "objects": ["percussion"],
+    "found objects": ["percussion"],
+    "household objects": ["percussion"],
+    "toys": ["percussion","electronic instruments"],
+    "toy instruments": ["percussion","electronic instruments"]
   },
   "GENERIC_WORDS": {"$set":["brushes","mallets","sticks","bow","bowed","plucked","muted","effects","fx","loops","samples","noise","noises","electronics","sounds","sampler","programming","overdubs","synth","synths","keys","keyboard","keyboards","vox","sax","perc","gtr","lead","rhythm","backing","solo","additional","tour","live","intro","outro","harmony","harmonies","chorus","choir","strings","horns","brass","woodwinds","tenor","alto","soprano","baritone","bass","acoustic","electric","fretless","slide","steel","pedal","lap","12-string","6-string","7-string","5-string","4-string","upright","double","grand","prepared","toy","analog","digital","modular","drum","drums","machine","kit","snare","kick","cymbals","hi-hat","tambourine","shaker","claps","handclaps","whistle","whistling","voice","vocals","spoken","word","guitar","guitars","piano","organ","synthesizer","synthesizers","saxes","bari","tpt","tbn","flgh","vibes","gtrs","bs","dr","kbd","kbds","clar","fl","horn","reeds","winds"]},
   "PROPER_WORDS": [
@@ -463,8 +467,12 @@
     "environmental"
   ],
   "TEXT_REGIONS": [
-    "Pacific Coast"
+    "Pacific Coast",
+    "West Coast",
+    "East Coast"
   ],
+  "PERSON_AT_ROLE": {"$re":"^(recorded|mixed|mastered|engineered|produced|remixed) at$","$flags":"i"},
+  "PERSON_COMPANY_SKIP": {"$re":"^((pressed|manufactured|distributed|printed) by|licensed to)$","$flags":"i"},
   "TEXT_SOFTWARE": [
     "Apple Logic",
     "Logic Pro",
@@ -793,7 +801,7 @@
     ["7e84f845-ac16-41fe-9ff8-df12eb32af55","MusicBrainz Test Artist"]
   ],
   "SPECIAL_ARTIST_NAME": {"$re":"^\\[[^\\]]+\\]$","$flags":""},
-  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered) in|pressed by|manufactured by|distributed by|licensed (from|to)|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
+  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(recorded|overdubbed|mixed|remixed|mastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|produced|remixed|engineered) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to)|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
   "MONTH_NAMES": {
     "1": ["january","jan","januar","jänner","jän","enero","ene","janvier","janv"],
     "2": ["february","feb","februar","febrero","février","fevrier","févr","fevr","fév"],

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.39.2, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.0, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,103 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.0 · 2026-11-02
+
+The line of the release page: only when something is missing, Bandcamp, "Count exactly" (block AY: Q-g, Q-n, Q-o, Q-x).
+
+- **Release page (before the dispatch of `PAGE_KIND`; only what is defined before it or hoisted is used there):**
+  - New constants `GAP_NONE_KEY` (`dci-gap-none`), `GAP_COUNT_PREFIX` (`dci-gap-count:`), `GAP_COUNT_HASH` (`dci-count`), `GAP_COUNT_MAX_MS` (five minutes).
+  - **`initReleaseGap`** – the page's links and MusicBrainz's: Discogs, else exactly one Bandcamp page (`src = { kind, id, url }`); the kept credits by `dId` or `bId` (one key `dci-gap:<MBID>` as before); the release lookup asks `artist-credits` too. No line without credits (`kept.credits` empty) nor when nothing is missing – `est.total` 0, or an exact number 0 not older than the credits (`exact.at >= kept.at`) –, unless `dci-gap-none` is true. A failed request of the source is also written to the console.
+  - New **`gapDiscogs(dId)`** (the 2.5 s between the line's Discogs requests, as before inline), **`gapBandcampCtx(ws)`** (the context of `BANDCAMP.release` on the release page: `httpGet`, `isRole` `gapIsRole`, `isCompanyRole` inline, `resolveTracks` `gapTracksIn`, no `resolveTitles`, `bandcampTracks` false, `artistNames` of the release's artist credit), **`gapIsRole(phrase)`** (the register's roles; an instrument by its looks – `typesFor`/`isKnownRole` are in their temporal dead zone there), **`gapTracksIn(spec, srcTracks)`** (numbers and ranges), **`gapExactOf(exact, src)`** (the dashboard's number for this source; a number of 3.39.x without `src` counts for Discogs), **`gapExactWrite(mbid, pending, n)`**.
+  - **`showReleaseGap(opts)`** – one object (`{ mbid, src, est, exact, key, notes }`); `data-src` on the line, the text in `[data-gap-text]`; the texts of Bandcamp; new button **Count exactly** (`data-gap="count"`).
+  - New **`gapCount(opts, box)`** – writes `dci-gap-count:<MBID>` (`{ links, at }`), opens `/release/<MBID>/edit-relationships#dci-count` with `GM_openInTab` (`active: false, insert: true, setParent: true`; without it `window.open`), listens to `storage` of `dci-gap-exact:<MBID>`: the last number of the source, 2.5 s after it (the dashboard writes at the end of the import and again with its next summary) → `close()` of the tab, the line drawn again with it; five minutes without: `gap.countLate`, the flag removed.
+  - **`gapSweep`:** flags of "Count exactly" older than five minutes.
+- **Relationship editor:** `S.editorLinks` – the address `#dci-count` (taken off): the flag of the release (taken, at most five minutes old) → `S.autostartFrom = 'count'`, `S.gapCountLink`; **`startSource`** takes `S.gapCountLink` first (also when the release has other sources); the log `fromCount`. **`S.gapExactPending`** is `{ src, id }` for Discogs and Bandcamp (was the Discogs id); written with `gapExactWrite` (the summary: when `SOURCES[pending.src]` is the current source).
+- **Settings:** ⚙ Sources – the row of `dci-gap-on` with the new texts, new row `gap-none` (`data-set`); `TOPIC_KEYS.sources`, `SETTINGS_KEYS` with `GAP_NONE_KEY`.
+- **Texts (English):** `gap.bc.missing`, `gap.bc.none`, `gap.bc.incomplete`, `gap.bc.how`, `gap.count`, `gap.countTitle`, `gap.counting`, `gap.countLate`, `gap.countFailed`, `gap.exactOpen`, `log.fromCount`, `settings.gapLine`, `settings.gapLineTitle`, `settings.gapNone`, `settings.gapNoneTitle`; removed `settings.gapOn`, `settings.gapOnTitle`.
+- **After the independent review of block AY:** the tab of "Count exactly" without the dialog of the media (`chooseMedia`: all media when `S.autostartFrom === 'count'`; until then a release of two media never came back) and with `S.rememberHold` (it neither restores nor writes `dci-remember:<MBID>`); the dashboard writes `open` with its number (`S.lastSumOpen`: rows with issues – no MusicBrainz entry, no type …; `gapExactWrite(mbid, p, n, open)`) and "nothing missing" needs `open === 0` (a count of 0 with names not chosen yet hid the line), the line names them (`gap.exactOpen`); an import without entries writes 0 / 0, an import that fails in that tab writes `{ failed }` on the flag (`gap.countFailed`); `gapCount` closes the tab also on failure, after five minutes and on `pagehide`, ✕ while it counts keeps the line away; kept credits have `since` (the same credits read again keep it – the dashboard's count of 0 held only a week); `gapIsRole` by names – new `gapInstrumentWords()` (MusicBrainz's instruments and voices kept by `idx()` in `dci-gap-instruments`, `GAP_INSTR_KEY`, a month; T048, T001, T058) and kinds (`INSTRUMENT_MODIFIER`) – no longer by looks ("Jane Roe – Electric Guitar" read "Jane" as the role; "Stream: …", "Length: …" were credits); new `gapTracksByTitles` (`resolveTitles` of the Bandcamp context). `gapCreditsOf` keeps the role (`role`): two roles of one person on the same tracks count twice (until then once).
+- **Tests:** `t_start.py` new case `gapmore` (no credits; nothing missing, the setting, one missing, the dashboard counted none – with rows open: the line, the same credits a week later; "Count exactly" for Discogs (two media) and Bandcamp, an import that fails – the tab opened as a page of its own, as a popup of `window.open` keeps the window of its about:blank without the script –; Bandcamp's rough estimate and its parts; an album page without credits); `common_rows.drag` asks for the elements again for up to 3 s (a matrix drawn anew by a result of the background took them for a moment – `mxdrop` failed once in the full run, K-7); `mxdrop` waits up to 10 s for a drop to be drawn (4 s before); `t_ui_settings.py` `reset`: `dci-gap-instruments` is data, no setting (kept by "Reset all settings").
+
+## Import 3.39.9 · 2026-11-02
+
+"co?" and who performs a track (collected item K-9; Q-e, Q-m, Q-w).
+
+- **New `PERFORMING_TYPES`** (instrument, vocal, performer, conductor, performing orchestra, orchestra, chorus master, concertmaster).
+- **The import:** `S.mbTracks[i].trackArtists` (the track's artist credit) and `mbPerformers` (MusicBrainz's performers of the recording, `PERFORMING_TYPES`).
+- **`performersOf(i)`:** also the track's artists and MusicBrainz's performers; the dashboard's rows of all `PERFORMING_TYPES`.
+- **New `bandLinks(ids)`:** "member of band" of each artist (`artist/<mbid>?inc=artist-rels`, `mbWsIdle`), once (`S.bandOf`: mbid → Set or 'wait'); the works matrix drawn again when they are there.
+- **`coverComposers`:** no "co?" while a lookup waits, nor when the composer is linked by "member of band" with a performer (either way).
+- **Tests:** `harness.BAND_MEMBERS` (group → members, both directions in `/ws/2/artist/`), `harness.TRACK_AC` (a track's artist credit); `t_works_more.py` `coverworks` D (without them "co?"; a member of the release's band, the pianist of the recording in MusicBrainz, the track's artist: none), B waits for the lookups.
+- **After the independent review of block AX:** `bandLinks` – one lookup, the composer's own (the relationship "member of band" is one of both artists: its bands and its members), one loop for all lookups (`S.bandQueue`, `S.bandRunning`), the matrix drawn again with `renderWorksBackground` (not while typing in it or dragging; until then `renderWorks`), an answer that failed asked again after five minutes (`{ failAt }`); new `S.mbReleasePerformers` – MusicBrainz's performers of the whole release count too (`performersOf`). Test: `coverworks` D the lookups counted (the composer's only), the other direction (the composer's band, the release's artist a member of it), MusicBrainz's pianist of the release.
+
+## Import 3.39.8 · 2026-11-02
+
+Several names below a heading, the release's artist as a title line (collected item Z-1; Q-y).
+
+- **`TEXT.parse`:** new `headingOf(raw)` (a line of instruments or voices – `stackInstr` –, or a role ending in "by" of four words at most, a colon at the end allowed), `headingLists(lines)` (rule **S067**: a heading and two or more `stackName` lines below it – a role heading one or more –, single empty lines between them) and `readHeading(h)`; the lines of a heading are blanked for `stackPairs` (S058) and read first. Rule **S068** in `readLine`: a line that is only a release artist's name → `ignored` (why `releaseArtist`).
+- **Register:** rules S067, S068.
+- **Texts (English):** `ignored.why.releaseArtist`.
+- **After the independent review of block AW (3.39.7 – 3.39.8):** S067 – no heading right below a name (names above their instruments stay pairs of S058, which could be read the other way round with ⇅; until then the heading took the names of the next instrument), below a role heading only the names right below it, no track title and – after an empty line – no release artist as a name (`notListName`), a role with a colon as heading ("Producer:"); S068 not within a block of publishers (S043; until then "Publishers: / Robert Rich" lost him). `initialsUse` – the works matrix drawn again, a credit typed by hand kept, `matchTouched` reset when the entry becomes the name, a row taken out before and brought back goes to the entry chosen (`S.entryMoved`, `restoreRow`), the choice remembered with the release (`rememberSnapshot` `initials`, chosen again first in `restoreRemembered`; `S.initialsChosen`).
+- **Tests:** `t_text_basics.py` new case `booklets` (two booklet pages built for the test – stacked and in one line –, read with Tesseract 5.3, the text as read: the same entries, the title left out); `register_golden.json` anew; after the review: new case `initialsmemo` (the name chosen remembered over a reload), `text_corpus.json` the cases of the review (names above with two players, a role heading followed by titles or the release's artist, "Producer:", a block of publishers with the release's artist).
+
+## Import 3.39.7 · 2026-11-02
+
+Initials to click, "R.R.", more words and regions (collected items K-8, K-11; Q-j, Q-ac).
+
+- **`initialsOf`:** initials with dots between the letters get their last dot back ("R.R" → "R.R."), also as the name of an entry of several names.
+- **`groupCredits`:** `group.initials` every spelling once, joined ("RR, R.R.").
+- **`initialsHtml`:** `group.initialsOf` and a button per name (`data-act="initials-use"`, `group.initialsUseTitle`); new **`initialsUse(a, name)`** – the rows go to the entry of that name (credited and `anv` the initials; the entry of the initials removed) or the entry becomes that name (`initials`, `status` pending, `resolveArtists({ only })`); log `initialsUsed`.
+- **Mapping:** `INSTRUMENT_ASK` (T058) "found objects", "household objects" → percussion; "toys", "toy instruments" → percussion, electronic instruments; `TEXT_REGIONS` (T059) "West Coast", "East Coast".
+- **Texts (English):** `group.initialsOf`, `group.initialsUseTitle`, `log.initialsUsed`; removed `group.initialsMany`.
+- **Tests:** `t_text_basics.py` `cloudpond` (D: "Jane Roe" clicked; K-11 "Layout by R.R."); `t_mapping.py` new case `toys`; `text_corpus.json` "… 2020 East coast"; `register_golden.json` anew; `t_rules_window.py` `wqedit` Q003 with creative direction on the release group (the change of 3.39.6).
+
+## Import 3.39.6 · 2026-11-02
+
+Roles of companies at a person, table words, the Bandcamp tag, the test `mxdrop` (collected items K-6, K-7, K-13; Q-i).
+
+- **`mapRole`:** rule **S066** – a person's role that is no rule's: `PERSON_AT_ROLE` ("Mixed At" …) → the mapping of "<verb> By" with the note `atPerson`; `PERSON_COMPANY_SKIP` ("Pressed By", "Distributed By", "Licensed To" …) → level `skip`, note `companyPerson`, rule S066 (both patterns may be missing in an older mapping file: nothing then).
+- **Mapping:** new patterns `PERSON_AT_ROLE`, `PERSON_COMPANY_SKIP` (T060).
+- **`applyMappingChanges`:** a table of shape `map` (T001, T058) with its words in lower case (`norm`), as the code looks them up.
+- **CSS:** `.dci-src-bc` `#3a7a89` with an inner rim `#629aa9`.
+- **Register:** rule S066, table T060.
+- **After the independent review of block AV (3.39.4 – 3.39.6):** a role typed by hand as a type's name (`applyRoleText`) drops the `prefix` (until then "Assistant Engineer" typed again as "engineer" ticked "assistant" anew); the role credit of the word (`roleCreditForInner`) comes before the rules that give none (an instrument technician, creative direction – "Assistant Creative Director" into the edit note as the row says), of the task after an answered type question ("co-director"), without a final "by" (`prefixCredit(p, rest)`); `prefixNoteHtml` says "credited" or "edit note" by where the role credit really goes (`roleCreditTarget`); the word also after an en dash ("Co–Arranger"); Q003 (Directed By) answered creative direction goes to the release group (MusicBrainz has no such type on the release); `TEXT_COMPANY_RE` with "printed by" (a pasted text's "Printed by X" a company, not a person S066 would leave out).
+- **Texts (English):** `note.atPerson`, `note.companyPerson`.
+- **Tests:** `t_mapping.py` new cases `companyperson` (mix, recording, mastering on the release, the note, no place; pressed / distributed left out; licensor) and `listkeys` (T001 changed with "Lap Steel2", in Node); `t_sources_bandcamp.py` `bcspell` the tag's colours; `t_works_matrix.py` `mxdrop` waits for the import and reads a drop again until it is drawn (K-7: under load it read too early); `register_golden.json` anew; after the review: `assistants` a row added by hand and typed again, `voices` "Assistant Creative Director" and "Directed By" answered creative direction, `text_corpus.json` "Printed by Druckerei Fischer" (a company; the corpus's company roles with "printed"); `t_works_matrix.py` `matrixcols` creative direction of the test page on the release group, as on MusicBrainz (Q003 answers it there).
+
+## Import 3.39.5 · 2026-11-02
+
+Countertenor, liner notes translated, creative direction (collected items K-3 – K-5).
+
+- **`roleRules`:** new `voiceWord` ("Counter-tenor" → countertenor, "Mezzo Soprano", "Bass Baritone") and `VOICE_RANGES`; **R009** also a voice alone that no instrument is named after (countertenor, contralto, mezzo-soprano, bass-baritone); **R018** a voice as detail ("Vocals [Tenor]") → `primaryCands` "tenor vocals", the detail consumed.
+- **`roleCreditForInner`:** no role credit for R009 when the role is the voice without "vocals"; none for R081 on MusicBrainz's creative direction.
+- **Mapping:** R081 level `release_group` (with a note).
+- **Import (`addCreditRows`):** creative direction for single tracks goes onto those recordings, as a producer role does.
+- **K-4:** "Liner Notes [Translation]" ticks translator through `applyDetailFlags` already; only a test.
+- **Tests:** `t_mapping.py` new case `voices` (countertenor, "Vocals [Tenor]", liner notes with translator, creative direction on the release group and on a recording, no edit note); `register_golden.json` anew (Countertenor, "Vocals [Soprano]", Creative Direction / Director).
+
+## Import 3.39.4 · 2026-11-02
+
+A word before the role: "Assistant Engineer", "Co-Arranger" (collected items K-1, K-2; Q-s, Q-u).
+
+- **`mapRole`:** rule **S065** – a role that is no rule's (fallback / R096) beginning with "Assistant", "Asst.", "Associate" or "Co-": the rest mapped (`mapRole`), its `flags` with assistant / associate / co, `prefix` { flag, word, rest }. New `prefixCredit(p)` ("assistant arranger", "co-composer").
+- **Rows:** `makeRow` and the role changed by hand keep `prefix` (`prefixCredit` false); `applyDetailFlags` – with a type: the flag where the type has the attribute, else `row.prefixCredit` (the flag removed); `roleCreditForInner` – `prefixCredit` gives the role credit (details before it); `REMAP_FIELDS` with `prefix`, `prefixCredit`.
+- **New `prefixNoteHtml(row)`** in `roleCell` (both forms): `note.prefixCredit` (the type has a role credit) or `note.prefixNote` (edit note only; `canRoleCredit`), with the rule id S065.
+- **R051** (arranger): the details "co" / "associate" are its attributes (`has`), no instrument candidates of them.
+- **Register:** rule S065.
+- **Texts (English):** `note.prefixCredit`, `note.prefixNote`.
+- **Tests:** `t_mapping.py` new case `assistants` (engineer, mix, arranger with co, "Arranged By [Co]", "Assistant Producer"; "Assistant Arranger" edit note only with the preview; "Assistant Photographer" credited); `register_golden.json` anew ("Assistant Engineer" engineer with assistant, rule S065); `t_ui_settings.py` `cache` waits for the import after a reload (the tab's log kept the old "Import complete", so the rows were now and then read before what was remembered had been taken over – a race of the test).
+
+## Import 3.39.3 · 2026-11-02
+
+The statistics with their own button in the head (collected item 189).
+
+- **Head:** `headBtn('stats-open', 'stats', …)` after ⚙ (new symbol `ICONS.stats`, a bar chart); the body a new `.dci-settings.dci-stats-dock` `data-el="stats"` after the settings.
+- **New `renderStats()`** (after `renderSettings`): `S.statsOpen`, `aria-expanded` of the button, the heading (`data-act="stats-fold"`) and `statsHtml()`; the focus kept. Called by `rebuildDashboard`, `statsLoad` (instead of `renderSettings` with the tab "statistics"), `stats-period`, `stats-delete`.
+- **Handlers:** `stats-open` (toggles, reads the records anew, closes ⚙ / "Reset all settings" and the docked rules), `stats-fold`; `settings-open` and `openRules` (docked) close the statistics.
+- **Settings:** `SETTING_TOPICS` without `statistics`, its body gone (a remembered tab "statistics" shows "General"); `TOPIC_KEYS.statistics` stays for "Reset all settings"; `settings-open` and `settings-topic` no longer empty `S.statsData`.
+- **Texts (English):** `stats.title`, `stats.buttonTitle`, `stats.foldTitle`.
+- **Tests:** `harness.open_stats(pg)`; `t_ui_settings.py` new case `statsbutton` (the button after ⚙, pressed, one of the three open, the heading, only "Collect statistics", no tab), `stats`, `statsmore`, `statsdev` through the button, the lists of the topics without "statistics" (also `cache`); `t_coverart.py` the tabs; `t_ui_head.py` `head` the buttons of the head.
 
 ## Import 3.39.2 · 2026-11-02
 
