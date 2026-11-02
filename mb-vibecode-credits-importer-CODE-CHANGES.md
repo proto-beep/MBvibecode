@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.39.0, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.39.2, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,30 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.39.2 · 2026-11-02
+
+"lap steel", "objects", "Pacific coast", a line "With …" from Bandcamp (collected items 186 – 188).
+
+- **`TEXT.parse`:** `artistNames` each name once (by `norm`; Bandcamp passes its album's artist besides the release's – S061's `ours.length === 1` failed and the guesses went to `unknownParts`).
+- **`areaOf`:** a first part that is a region of `TEXT_REGIONS` (T059), in any case, gives that region's spelling as the area (`{ name: region, area }`), also when it would not read as a place ("Pacific coast").
+- **`guessInstrument`:** the instruments of `INSTRUMENT_ASK` (T058) for the word first (`findChildAttr` of the root; those MusicBrainz has), then `similarInstruments`; `row.instrGuess.offered` (kept by `copyRowForEvent`). New `guessOffered(g, name)`, `guessLabel(g, name)` (an offered instrument as "percussion “objects”"); `guessSpelling` 'own' for an offered one (credited as written), `guessNoteHtml` none for it; `instrGuessHtml` asks `instrGuess.askAs`; the answers of a chip (`chipAnswers`), its note (`chipNoteText`) and the compact line's question (`clineHtml`, `cl.instrGuessAs`) with `guessLabel`.
+- **Mapping:** `INSTRUMENT_ALIASES` "lap steel" → lap steel guitar; new map `INSTRUMENT_ASK` (T058, editable: `EDITABLE_LISTS`, shape map) "objects" → percussion; new list `TEXT_REGIONS` (T059, editable) "Pacific Coast".
+- **Register:** lists T058, T059.
+- **Texts (English):** `instrGuess.askAs`, `cl.instrGuessAs`.
+- **After the independent review of block AU (3.39.1 and 3.39.2):** `areaOf` looks for a region before `TEXT_NOT_AREA` and without a leading "the" ("2021 the Pacific coast"); `guessInstrument` finds the key of T058 in any case (a changes file imported as written) and offers "other instruments" only once (its own answer); the badge of the match (`matchHtml`: `match.linked`, `match.noLink`, `match.noLinkCompany`) and the tag of a role credit taken from the source (`attrCell`) name the entry's source (a supplement's entry its own); a mapping file of an older version without a list of `EDITABLE_LISTS` (the script installed before its file): the list empty (after `MAP`), `applyMappingChanges` and `rawListItems` skip it – until now an error on loading with changes of your own.
+- **Tests:** `t_text_basics.py` `withline` ("lap steel" without an other name of MusicBrainz's; "objects" asked with percussion first, percussion chosen: credited "objects", no note), `cloudpond` ("Pacific coast" the area Pacific Coast, recorded in, nothing not recognized); `t_sources_bandcamp.py` `bcspell` C (the line "With …" from Bandcamp: the release's artist's, "objects" asked, nothing not recognized); `t_rules_window.py` the editable lists with T058, T059; `register_golden.json` anew; `t_mapping.py` new case `oldfile` (a mapping file without T058 / T059 and changes of your own, in Node); `text_corpus.json` two lines ("… 2022-2025 Pacific coast", "… 2021 the Pacific coast"); `t_text_basics.py` `withline` with T058 changed as a file would ("Objects", with other instruments); `t_static.py` also checks the keys of `trSrcOf` (and their …Any form) and both keys of `log(level, a ? 'k1' : 'k2')`; `t_start.py` `gapline` counts the requests to Discogs of the whole browser context (under load the first one came before the page's listener: a race of the test, seen once in the full suite).
+
+## Import 3.39.1 · 2026-11-02
+
+The spelling and the tag of an entry's source (collected item 185).
+
+- **New (after `trSrc`):** `entrySource(a)` (`a.src` of a supplement's entry, else `S.source`), `sourceLabel(src)` ("pasted text" for `TEXT`), `trSrcOf(src, key, params)` (`trSrc` for a given source: the text as it is for Discogs, else its `…Any` form with `{src}`), `srcTagClass(src)` (`dci-src-dg` / `dci-src-bc` / `dci-src-tx`).
+- **`entryNameHtml`, `creditChipHtml`:** `group.discogsName`, `group.anvStar`, `group.creditedSpelling`, `group.creditedSpellingTitle` through `trSrcOf` with the entry's source; **the import** logs `anvCreditsAny` (with `src`) unless all those entries are Discogs'.
+- **The head of an entry (`groupHtml`):** the tag of the source link `srcTagClass` of the entry's source, its tooltip `link.discogsTitle` with that source's name (until now `SOURCE_NAME`); **`attrCell`:** the tag "from the source" of a role credit and the tooltip of its field through `trSrc` / `srcTagClass(S.source)` (the field's tooltip said "Taken from Discogs" with every source); **`seriesLabelHtml`:** the tag `srcTagClass(S.source)`.
+- **CSS:** `.dci-src-bc` (Bandcamp's blue `#629aa9`), `.dci-src-tx` (grey), the ↗ after a Bandcamp tag in a darker blue.
+- **Texts (English):** `group.discogsNameAny`, `group.creditedSpellingAny`, `group.creditedSpellingTitleAny`, `group.anvStarAny`, `log.anvCreditsAny`.
+- **Tests:** `t_sources_bandcamp.py` new case `bcspell` (Robert Rich credited "RR" from Bandcamp: the chip, the tooltips, the log, the tag's colours and tooltip, no "Discogs" in the head).
 
 ## Import 3.39.0 · 2026-11-02
 
