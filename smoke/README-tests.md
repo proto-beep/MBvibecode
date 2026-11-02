@@ -341,6 +341,8 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   assistants: 3.39.4 (K-1, K-2, S065): "Assistant Engineer" engineer + assistant, "Asst. Mixing Engineer", "Co-Arranger",
                                 #     "Arranged By [Co]" arranger + co; "Assistant Arranger" edit note only (row note, preview); "Assistant
                                 #     Photographer" credited "assistant photographer"
+                                #   voices: 3.39.5 (K-3 – K-5): "Countertenor" countertenor vocals, "Vocals [Tenor]"; "Liner Notes [Translation]"
+                                #     with translator; "Creative Direction" on the release group, for one track on its recording, no edit note
                                 #   oldfile: 3.39.2 (review): a mapping file without T058 / T059 and changes of your own (Node, files copied):
                                 #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again
 

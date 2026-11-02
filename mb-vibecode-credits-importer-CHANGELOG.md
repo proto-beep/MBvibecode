@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.39.4 | – |
+| 2026-11-02 | 3.38.13 – 3.39.5 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.39.5
+
+#### Changed
+
+- **Creative direction** (collected item K-5): "Creative Direction" for the release goes to the release group – MusicBrainz has creative direction there and on recordings, not on releases (until now art direction on the release, credited "creative direction"); for single tracks onto those recordings; no role credit.
+- **Voices** (collected item K-3): "Countertenor", "Contralto", "Mezzo-Soprano", "Bass-Baritone" alone are those voices ("countertenor vocals") without role credit (until now unknown instruments); "Vocals [Tenor]" and the like give "tenor vocals" without role credit.
+
+#### Checked
+
+- **"Liner Notes [Translation]"** (collected item K-4): liner notes with "translator" ticked – already so in the dashboard (the check of 3.38.10 looked at the mapping without MusicBrainz's types); now with a test.
 
 ### Import 3.39.4
 
