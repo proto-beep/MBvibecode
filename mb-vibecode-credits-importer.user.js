@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.4
+// @version      3.40.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.4
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.4
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.5
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.5
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -295,10 +295,12 @@
       "log.nameSuggested": "{name}: same name in MusicBrainz (only a suggestion): {list}",
       "log.linkedSuggested": "{name}: in this release in MusicBrainz already – {list} (first among the suggestions, marked)",
       "log.webSuggested": "{name}: MusicBrainz artist with the web link from the text (only a suggestion): {list}",
+      "log.regionSuggested": "{name}: a region – {area} suggested (T059)",
       "match.nameSuggest": "Same name in MusicBrainz (a suggestion – check before assigning):",
       "match.linkSuggest": "Found via the {src} link, but spelled differently ({mb}) – a suggestion, check before assigning:",
       "match.nameUseTitle": "Assign this MusicBrainz entry",
       "match.similarName": "similar name",
+      "match.markRegion": "region (T059)",
       "match.markSpelled": "spelled differently",
       "match.markRelease": "release artist",
       "match.markLinked": "in this release: {where}",
@@ -910,6 +912,7 @@
       "group.otherSpellings": "Also on this release as: {list}",
       "group.creditedAsMore": "as {name} (+{n})",
       "group.creditedAsFor": "as {name} for {roles}",
+      "area.regionHit": "the area the region “{region}” lies in (T059) – a suggestion; credited as “{region}”",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
       "group.creditedSpelling": "artist credit in MusicBrainz: {name} (the Discogs spelling *)",
       "group.creditedSpellingTitle": "Discogs credits {base} on this release as {name} (marked * on Discogs). The dashboard enters {name} as the artist credit of the relationships in MusicBrainz – change it in the rows (“credited as” / “Artist credit for all roles”); empty: the MusicBrainz name.",
@@ -2734,8 +2737,9 @@
     T057: { key: 'TEXT_FIELD_KINDS', shape: 'words' },
     // [137d] (3.39.2) the instruments a word MusicBrainz does not know is offered as first ("objects" → percussion)
     T058: { key: 'INSTRUMENT_ASK', shape: 'map' },
-    // [3.39.2] regions read as an area in any case, also those MusicBrainz does not know ("Pacific coast" → Pacific Coast)
-    T059: { key: 'TEXT_REGIONS', shape: 'words' },
+    // [3.39.2] regions read as an area in any case, also those MusicBrainz does not know ("Pacific coast" → Pacific Coast);
+    // [Z-RG] (3.40.5) with the area each one lies in, offered as a suggestion ("Pacific Coast = United States")
+    T059: { key: 'TEXT_REGIONS', shape: 'pairs' },
   };
   const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
@@ -2805,7 +2809,13 @@
     if (v == null) return []; // [3.39.2] (review) not in a mapping file of an older version
     if (L.shape === 'set') return [...v.$set];
     if (L.shape === 'map') return Object.entries(v);
+    // [Z-RG] (3.40.5) a list of words become pairs (T059): its words of an older file with an empty value
+    if (L.shape === 'pairs') return v.map(asPair);
     return [...v];
+  }
+  /** [Z-RG] (3.40.5) An entry of a list of pairs – also a word of a list that was one of words before (T059 until 3.40.4). */
+  function asPair(x) {
+    return Array.isArray(x) ? x : [String(x), ''];
   }
 
   /** Your changes applied to a copy of the file's data (as in the file) → the effective register. */
@@ -2848,7 +2858,9 @@
       if (!L || !c) continue;
       const out = new Set((c.remove || []).map((x) => listKey(L.shape === 'pairs' || L.shape === 'map' ? 'words' : L.shape, x)));
       let items = rawListItems(raw, tid).filter((x) => !out.has(listKey(L.shape, x)));
-      for (const a of c.add || []) {
+      for (const a0 of c.add || []) {
+        // [Z-RG] (3.40.5) a word added to T059 before it had pairs
+        const a = L.shape === 'pairs' ? asPair(a0) : a0;
         const k = listKey(L.shape, a);
         items = items.filter((x) => listKey(L.shape, x) !== k);
         items.push(a);
@@ -3483,8 +3495,8 @@
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
     { id: 'T060', where: 'PERSON_AT_ROLE, PERSON_COMPANY_SKIP, mapRole', note: 'Roles (3.39.6): the roles of companies Discogs may give a person (S066) – read as what the person did, or left out',
       show: () => ({ pairs: [['… At → … By', PERSON_AT_ROLE], ['left out', PERSON_COMPANY_SKIP]] }) },
-    { id: 'T059', where: 'TEXT_REGIONS, areaOf', note: 'Texts (3.39.2): regions read as an area however they are written – "Ambisonic recordings by RR 2022-2025 Pacific coast": the area "Pacific Coast" (recorded in), also when MusicBrainz has no such area (the entry then stays to be linked by hand); first only "Pacific Coast"',
-      show: () => ({ pairs: [['words', TEXT_REGIONS.join(' · ')]] }) },
+    { id: 'T059', where: 'TEXT_REGIONS, areaOf, regionOf, suggestByName', note: 'Texts (3.39.2): regions read as an area however they are written – "Ambisonic recordings by RR 2022-2025 Pacific coast": the area "Pacific Coast" (recorded in), also when MusicBrainz has no such area; first only "Pacific Coast". (3.40.5) Each with the area it lies in ("Pacific Coast = United States"): MusicBrainz\'s area of that name is offered first – only a suggestion, the coast of another country can be meant –, credited as the region of the list',
+      show: () => ({ pairs: (TEXT_REGIONS || []).map(asPair).map(([r, area]) => [r, area || '–']) }) },
     { id: 'T058', where: 'INSTRUMENT_ASK, guessInstrument', note: 'Words that are no instrument of MusicBrainz and the instruments they are offered as first (137d), each credited as written – "objects": percussion “objects” · other instruments “objects”',
       show: () => ({ pairs: Object.entries(INSTRUMENT_ASK).map(([k, v]) => [k, v.join(' / ')]) }) },
     { id: 'T057', where: 'TEXT_FIELD_KINDS, readClause', note: 'Texts (3.38.18): the kinds of recordings of a field recordist (S062) – ambisonic, binaural, field, hydrophone, location, nature, environmental',
@@ -3652,6 +3664,8 @@
   const TEXT_FIELD_KINDS = MAP.TEXT_FIELD_KINDS;
   // [T059] (3.39.2) regions read as an area in any case (✎)
   const TEXT_REGIONS = MAP.TEXT_REGIONS;
+  /** [Z-RG] (3.40.5) The region of T059 of a name, however written: [region, the area it lies in ('' unknown)], or null. */
+  const regionOf = (name) => (TEXT_REGIONS || []).map((x) => (Array.isArray(x) ? x : [String(x), ''])).find(([r]) => norm(r) === norm(name)) || null;
   const isSoftware = (x) => { const k = norm(x).replace(/\s*\/\s*/g, '/'); return TEXT_SOFTWARE.some((w) => norm(w).replace(/\s*\/\s*/g, '/') === k); };
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
@@ -5026,8 +5040,8 @@
       // [T059] (3.39.2) a region of the list however it is written – "Pacific coast", "the Pacific coast" → the area Pacific Coast
       // (collected item 188); before the words that are no area (review: a region "Mid-Atlantic" or with "the")
       const head = parts[0].replace(/^the\s+/i, '');
-      const region = TEXT_REGIONS.find((r) => norm(r) === norm(head));
-      if (region && parts.slice(1).every(placeLike)) return { name: region, area: parts.slice(1).join(', ') };
+      const region = regionOf(head);
+      if (region && parts.slice(1).every(placeLike)) return { name: region[0], area: parts.slice(1).join(', ') };
       if (TEXT_NOT_AREA.test(parts[0])) return null;
       return parts.every(placeLike) ? { name: parts[0], area: parts.slice(1).join(', ') } : null;
     }
@@ -17637,6 +17651,19 @@
             if (parent && !h.disambiguation.split(', ').includes(parent)) h.disambiguation = [h.disambiguation, parent].filter(Boolean).join(', ');
           }
         }
+        // [Z-RG] (3.40.5) a region of T059 ("Pacific Coast"): the area it lies in (United States) first – only a suggestion (the coast
+        // of another country is one too; Q-az), credited as the region of the list once chosen (S036; Q-ba)
+        const region = type === 'area' ? regionOf(a.name) : null;
+        if (region && region[1]) {
+          const cw = luceneWords(region[1]);
+          const dataR = cw ? await mbWs(`area?query=${encodeURIComponent(`area:(${cw}) OR alias:(${cw})`)}&limit=10`) : null;
+          const hit = ((dataR && dataR.areas) || []).find((x) => [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(n, region[1]) === 'same'));
+          if (hit) {
+            a.nameHits = [{ mbid: hit.id, name: hit.name, entityType: 'area', similar: true, region: region[0],
+              disambiguation: tr('area.regionHit', { region: region[0] }) }, ...a.nameHits.filter((h) => h.mbid !== hit.id)];
+            log('info', 'regionSuggested', { name: a.name, area: hit.name });
+          }
+        }
         // [3.22.1] an artist of the release's artist credit with this name: first, marked "release artist" (46)
         if (!a.company) {
           // [3.32.6] also one at most two letters off ("j4vavaman" signing for j4vaman, collected item 115b): first, marked similar
@@ -17670,9 +17697,11 @@
           a.nameHits = [...inRel, ...a.nameHits.filter((h) => !inRel.some((x) => x.mbid === h.mbid))];
           log('info', 'linkedSuggested', { name: a.name, list: inRel.map((h) => `${h.name} (${h.linked.join(', ')})`).join('; ') });
         }
-        if (a.nameHits.length) {
-          const listed = a.nameHits.slice(0, 5).map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ');
-          log('info', 'nameSuggested', { name: a.name, list: listed + (a.nameHits.length > 5 ? ` … (+${a.nameHits.length - 5})` : '') });
+        // [Z-RG] (3.40.5) the area of a region has its own line in the log
+        const named = a.nameHits.filter((h) => !h.region);
+        if (named.length) {
+          const listed = named.slice(0, 5).map((h) => h.name + (h.disambiguation ? ` (${h.disambiguation})` : '') + (h.similar ? ` – ${tr('match.similarName')}` : '')).join(', ');
+          log('info', 'nameSuggested', { name: a.name, list: listed + (named.length > 5 ? ` … (+${named.length - 5})` : '') });
         }
       } catch (e) {
         console.warn('[Credits-Importer] name search', a.name, e);
@@ -18664,7 +18693,7 @@
       const titleOf = (h) => (h.linked ? tr('match.linkedTitle', { where: h.linked.join(', ') }) : h.viaWeb ? tr('match.webUseTitle', { url: h.viaWeb }) : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
       // [E5a] (3.37.1) linked in this release: highlighted, with where (the mark "release artist" is part of it then)
       a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn${h.linked ? ' dci-sugg-linked' : ''}" data-act="name-use" data-mbid="${esc(h.mbid)}"
-        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.similar ? mark('match.similarName') : ''}${h.linked ? mark('match.markLinked', { where: h.linked.join(', ') }) : h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
+        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.region ? mark('match.markRegion') : h.similar ? mark('match.similarName') : ''}${h.linked ? mark('match.markLinked', { where: h.linked.join(', ') }) : h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
         h.entityType || (a.company ? 'label' : 'artist'), h.mbid)));
     }
     if (!items.length) return '';
@@ -28563,6 +28592,8 @@
         if (!h) break;
         Object.assign(artist, { status: 'manual', mbid: h.mbid, mbName: h.name, mbComment: h.disambiguation || '', candidates: [h], editing: false, error: '', matchTouched: true });
         if (artist.company) setCompanyEntityType(artist, h.entityType);
+        // [Z-RG] (3.40.5) the area of a region (T059): credited as the region of the list (Q-ba) – a credit typed by hand stays
+        if (h.region) S.rows.filter((r) => r.artistKey === artist.key && !r.creditTouched).forEach((r) => { r.credit = h.region; });
         log('ok', 'artistManual', { name: artist.name, mb: h.name });
         if (artist.company) rerenderGroup(artist);
         // [3.31.5] a publisher matched with an artist (S048): its column in the works matrix follows

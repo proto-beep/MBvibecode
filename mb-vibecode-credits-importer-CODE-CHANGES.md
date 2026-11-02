@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.4, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.5, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.5 · 2026-11-03
+
+Regions suggest the area they lie in (collected item Z-RG; Q-az, Q-ba).
+
+- **Mapping:** `TEXT_REGIONS` (T059) pairs `[region, area]` – Pacific Coast, West Coast, East Coast → United States (until 3.40.4 words); `EDITABLE_LISTS.T059` shape `pairs`.
+- **New `regionOf(name)`** (the region of T059 however written, `[region, area]`, also from a list of words of an older file) and **`asPair(x)`** (`rawListItems` and `effectiveRaw`: a word of a list become pairs – your changes to T059 of 3.39.x – gets an empty area). **`areaOf`** uses `regionOf`.
+- **`suggestByName`:** an area entry that is a region of T059 – MusicBrainz's area of its area's name (`area:(…) OR alias:(…)`, the same name) first among `nameHits` (`region`, `similar`, disambiguation `area.regionHit`), log `regionSuggested`; the log `nameSuggested` without it. Only suggested (Q-az).
+- **`name-use`:** a hit with `region` credits the entry's rows as the region of the list (a credit typed by hand stays; Q-ba). The mark of the suggestion `match.markRegion`.
+- **Register:** T059 – its note and its pairs shown.
+- **Texts (English):** `area.regionHit`, `log.regionSuggested`, `match.markRegion`.
+- **Tests:** `t_sources_bandcamp.py` `cloudpondbc` B ("Pacific coast": United States first among the suggestions, not set; chosen: "as “Pacific Coast”"); `t_mapping.py` `oldfile` C (a file whose T059 is a list of words: the region read); `register_golden.json` anew.
 
 ## Import 3.40.4 · 2026-11-03
 
