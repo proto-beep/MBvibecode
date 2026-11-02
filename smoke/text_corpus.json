@@ -1771,6 +1771,47 @@
         ],
         "ignored": []
       }
+    },
+    {
+      "text": "Ambisonic recordings by RR 2022-2025 Pacific coast",
+      "artists": [
+        "Robert Rich"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Robert Rich",
+            "Field Recordings By"
+          ]
+        ],
+        "companies": [
+          [
+            "Pacific Coast",
+            "Recorded In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Field recordings by Kim Lowe 2021 the Pacific coast",
+      "expect": {
+        "credits": [
+          [
+            "Kim Lowe",
+            "Field Recordings By"
+          ]
+        ],
+        "companies": [
+          [
+            "Pacific Coast",
+            "Recorded In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
     }
   ]
 }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.0
+// @version      3.39.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -903,6 +903,7 @@
       "cl.unmapped": "no MusicBrainz type",
       "cl.instrAsk": "{name}: which instrument?",
       "cl.instrGuess": "“{word}”: did you mean",
+      "cl.instrGuessAs": "“{word}”: as",
       "cl.caseSmall": "written small: {words}",
       "cl.typeAsk": "type to choose",
       "cl.pickList": "choose …",
@@ -1971,6 +1972,7 @@
       "instrGuess.keepWord": "credit “{word}” as written",
       "instrGuess.own": "A spelling of its own: credited “{word}”.",
       "instrGuess.isTypo": "a typo: no role credit",
+      "instrGuess.askAs": "“{word}” is no instrument of MusicBrainz – as which one?",
       "caseNote.small": "Written small – unknown to MusicBrainz:",
       "caseNote.word": "{word} → {small}",
       "caseNote.keep": "keep “{word}”",
@@ -2059,6 +2061,11 @@
       "matrix.noWritersAny": "The source ({src}) names no writers for this track, so no works are suggested.",
       "roleCredit.fromDiscogsAny": "Taken from the source ({src})",
       "roleCredit.fromTagAny": "from the source",
+      "group.discogsNameAny": "{src}: {name}",
+      "group.creditedSpellingAny": "artist credit in MusicBrainz: {name} (the {src} spelling *)",
+      "group.creditedSpellingTitleAny": "The source ({src}) credits {base} on this release as {name}. The dashboard enters {name} as the artist credit of the relationships in MusicBrainz – change it in the rows (“credited as” / “Artist credit for all roles”); empty: the MusicBrainz name.",
+      "group.anvStarAny": "* – credited so in the source ({src}); MusicBrainz gets it as the artist credit",
+      "log.anvCreditsAny": "Artist credits from the spellings of the source ({src}, *): {list}",
       "media.nowTitleAny": "What was imported from the source ({src})",
       "dm.chooseSingleAny": "{n} dates as in the source: {list}",
       "dm.chooseSingleTitleAny": "Use the days as the source gives them: one relationship per day",
@@ -2686,6 +2693,10 @@
     T056: { key: 'TEXT_SOFTWARE', shape: 'words' },
     // [S062] (3.38.18) the kinds of field recordings
     T057: { key: 'TEXT_FIELD_KINDS', shape: 'words' },
+    // [137d] (3.39.2) the instruments a word MusicBrainz does not know is offered as first ("objects" → percussion)
+    T058: { key: 'INSTRUMENT_ASK', shape: 'map' },
+    // [3.39.2] regions read as an area in any case, also those MusicBrainz does not know ("Pacific coast" → Pacific Coast)
+    T059: { key: 'TEXT_REGIONS', shape: 'words' },
   };
   const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
@@ -2752,6 +2763,7 @@
   function rawListItems(raw, tid) {
     const L = EDITABLE_LISTS[tid];
     const v = raw[L.key];
+    if (v == null) return []; // [3.39.2] (review) not in a mapping file of an older version
     if (L.shape === 'set') return [...v.$set];
     if (L.shape === 'map') return Object.entries(v);
     return [...v];
@@ -2844,6 +2856,7 @@
     for (const L of Object.values(EDITABLE_LISTS)) {
       const now = MAP[L.key];
       const to = eff[L.key];
+      if (to == null) continue; // [3.39.2] (review) not in an older mapping file
       if (now instanceof Set) {
         now.clear();
         to.forEach((x) => now.add(x));
@@ -2851,6 +2864,8 @@
       else refill(now, to);
     }
   }
+  // [3.39.2] (review) a list a mapping file of an older version does not have yet (the script installed before its file): empty
+  for (const L of Object.values(EDITABLE_LISTS)) if (MAP[L.key] == null) MAP[L.key] = L.shape === 'map' ? {} : L.shape === 'set' ? new Set() : [];
   if (Object.keys(mappingChanges.rules).length || Object.keys(mappingChanges.lists).length) applyMappingChanges();
 
 
@@ -3407,6 +3422,10 @@
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T059', where: 'TEXT_REGIONS, areaOf', note: 'Texts (3.39.2): regions read as an area however they are written – "Ambisonic recordings by RR 2022-2025 Pacific coast": the area "Pacific Coast" (recorded in), also when MusicBrainz has no such area (the entry then stays to be linked by hand); first only "Pacific Coast"',
+      show: () => ({ pairs: [['words', TEXT_REGIONS.join(' · ')]] }) },
+    { id: 'T058', where: 'INSTRUMENT_ASK, guessInstrument', note: 'Words that are no instrument of MusicBrainz and the instruments they are offered as first (137d), each credited as written – "objects": percussion “objects” · other instruments “objects”',
+      show: () => ({ pairs: Object.entries(INSTRUMENT_ASK).map(([k, v]) => [k, v.join(' / ')]) }) },
     { id: 'T057', where: 'TEXT_FIELD_KINDS, readClause', note: 'Texts (3.38.18): the kinds of recordings of a field recordist (S062) – ambisonic, binaural, field, hydrophone, location, nature, environmental',
       show: () => ({ pairs: [['words', TEXT_FIELD_KINDS.join(' · ')]] }) },
     { id: 'T056', where: 'TEXT_SOFTWARE, readClause', note: 'Texts (3.38.17): music software – left out of a line "With …" (S061) and named as left out ("software"): "Apple Logic", "Logic Pro", "Ableton Live", "Pro Tools", "Cubase", "Reaper", "FL Studio", "Bitwig", "Max/MSP" … – no instrument and no relationship of MusicBrainz ("computer" and "laptop" stay instruments)',
@@ -3425,6 +3444,8 @@
   /** Discogs spelling → possible MB instrument names (tried in this order). */
   // [T001] instrument spellings
   const INSTRUMENT_ALIASES = MAP.INSTRUMENT_ALIASES;
+  // [T058] (3.39.2) words MusicBrainz does not know and the instruments they are offered as first (✎ – changed in place)
+  const INSTRUMENT_ASK = MAP.INSTRUMENT_ASK;
 
   // [T002] (S011)
   const GENERIC_WORDS = MAP.GENERIC_WORDS;
@@ -3565,6 +3586,8 @@
   const TEXT_SOFTWARE = MAP.TEXT_SOFTWARE;
   // [S062] (3.38.18) the kinds of field recordings (T057; ✎)
   const TEXT_FIELD_KINDS = MAP.TEXT_FIELD_KINDS;
+  // [T059] (3.39.2) regions read as an area in any case (✎)
+  const TEXT_REGIONS = MAP.TEXT_REGIONS;
   const isSoftware = (x) => { const k = norm(x).replace(/\s*\/\s*/g, '/'); return TEXT_SOFTWARE.some((w) => norm(w).replace(/\s*\/\s*/g, '/') === k); };
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
@@ -4895,11 +4918,17 @@
      */
     function areaOf(text) {
       const parts = String(text || '').split(/\s*,\s*/).map(clean).filter((x) => x && !/\d/.test(x));
-      if (!parts.length || parts.length > 4 || TEXT_NOT_AREA.test(parts[0])) return null;
+      if (!parts.length || parts.length > 4) return null;
       const placeLike = (x) => {
         const words = x.split(' ');
         return words.length <= 4 && noDates(x) === x && words.every((w, i) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || (i > 0 && i < words.length - 1 && TEXT_AREA_PARTICLE.test(w)));
       };
+      // [T059] (3.39.2) a region of the list however it is written – "Pacific coast", "the Pacific coast" → the area Pacific Coast
+      // (collected item 188); before the words that are no area (review: a region "Mid-Atlantic" or with "the")
+      const head = parts[0].replace(/^the\s+/i, '');
+      const region = TEXT_REGIONS.find((r) => norm(r) === norm(head));
+      if (region && parts.slice(1).every(placeLike)) return { name: region, area: parts.slice(1).join(', ') };
+      if (TEXT_NOT_AREA.test(parts[0])) return null;
       return parts.every(placeLike) ? { name: parts[0], area: parts.slice(1).join(', ') } : null;
     }
 
@@ -5081,7 +5110,10 @@
     }
 
     function parse(text, ctx0) {
-      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames = [], stackUp = false } = ctx0;
+      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false } = ctx0;
+      // [3.39.2] each name once: Bandcamp adds its album's artist to the release's, mostly the same – a line "With …" (S061) then
+      // went to "one of the release's artists" and its words to ask were not recognized (collected item 187)
+      const artistNames = artistNames0.filter((n, i, all) => n && all.findIndex((x) => norm(x) === norm(n)) === i);
       const credits = [];
       const companies = [];
       const unrecognized = [];
@@ -5397,7 +5429,8 @@
               const [y1, y2] = [t[2], t[3] || t[2]].sort();
               const date = t[2] ? { ...emptyDateFields(), by: y1, ey: y2 } : null;
               names(who0).forEach((x) => { if (addCredit(x, 'Field Recordings By', cScope, date ? { date } : {})) found++; });
-              // what follows: an area ("Big Sur, California") recorded in, else not recognized ("Pacific coast")
+              // what follows: an area ("Big Sur, California"; [T059] 3.39.2 "Pacific coast" → Pacific Coast) recorded in, else not
+              // recognized
               const where = t[4] ? areaOf(clean(t[4])) : null;
               if (where && looksLikeName(where.name) && isCompanyRole('Recorded In')) {
                 companies.push({ who: { ...who(where.name), area: where.area || '' }, role: 'Recorded In', catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at() });
@@ -10965,6 +10998,14 @@
    * "…Any" form, which says "the source" ({src}: its name).
    */
   const trSrc = (key, params = {}) => (S.release && S.source === DISCOGS ? tr(key, params) : tr(`${key}Any`, { ...params, src: srcLabel() }));
+  /** [3.39.1] The source of an entry: a supplement's entries keep theirs (collected item 185). */
+  const entrySource = (a) => (a && a.src) || S.source;
+  /** [3.39.1] A source as texts name it: "Bandcamp", "pasted text". */
+  const sourceLabel = (src) => (src === TEXT ? tr('src.textLabel') : (src && src.name) || '');
+  /** [3.39.1] trSrc for a given source, an entry's: "the Bandcamp spelling", not "the Discogs spelling" (collected item 185). */
+  const trSrcOf = (src, key, params = {}) => (src === DISCOGS ? tr(key, params) : tr(`${key}Any`, { ...params, src: sourceLabel(src) }));
+  /** [3.39.1] The tag of a source in its colours: Discogs dark, Bandcamp its blue, a pasted text grey (collected item 185). */
+  const srcTagClass = (src) => (src === BANDCAMP ? 'dci-src-bc' : src === TEXT ? 'dci-src-tx' : 'dci-src-dg');
 
   /** [3.13.2] Another source was loaded: the open rules window follows. */
   function refreshRulesWindow() {
@@ -15208,8 +15249,13 @@
     const lt = currentLinkType(row);
     const root = lt ? primaryRootOf(lt) : null;
     if (!root || !word || primaryIsValid(row)) return;
-    const options = similarInstruments(word);
     const other = findChildAttr(root.id, 'other instruments');
+    // [T058] (3.39.2) the instruments the word is offered as first ("objects": percussion, credited "objects"; collected item 187) –
+    // the key in any case (a file imported as written), "other instruments" with its own answer only
+    const ask = Object.entries(INSTRUMENT_ASK).find(([k]) => norm(k) === norm(word));
+    const offered = (ask ? ask[1] : []).map((n) => findChildAttr(root.id, n)).filter((x) => x && x !== other).map((x) => x.name)
+      .filter((n, i, all) => all.findIndex((x) => norm(x) === norm(n)) === i);
+    const options = [...offered, ...similarInstruments(word).filter((n) => !offered.some((o) => norm(o) === norm(n)))].slice(0, Math.max(5, offered.length));
     if (!options.length && !other) {
       if (!misc) return;
       makeMiscRow(row, word);
@@ -15217,7 +15263,7 @@
       return;
     }
     // [137d] (3.34.26) "miscellaneous support (task “…”)" as the last answer; the level kept for an instrument chosen after it
-    row.instrGuess = { word, options, other: other ? other.name : '', misc, level: row.level, chose: '' };
+    row.instrGuess = { word, options, other: other ? other.name : '', misc, level: row.level, chose: '', ...(offered.length ? { offered } : {}) };
     if (!options.length) Object.assign(row, { primaryText: other.name, primaryTouched: true });
     refreshRowDetails(row);
   }
@@ -15231,6 +15277,11 @@
   function guessTask(g) {
     return withoutBy(lowerCredit(g.word));
   }
+
+  /** [T058] (3.39.2) Whether an instrument is one the word is offered as (T058): credited as written, no note about a spelling. */
+  const guessOffered = (g, name) => !!(g && g.offered && g.offered.some((o) => norm(o) === norm(name)));
+  /** [T058] (3.39.2) The label of an answer: an offered instrument with the word it is credited as ("percussion “objects”"). */
+  const guessLabel = (g, name) => (guessOffered(g, name) ? tr('instrGuess.other', { other: name, word: guessCredit(g) }) : name);
 
   /** [164] (3.37.13) Optimal string alignment: letters wrong, missing or too many, two neighbours swapped counting as one. */
   function slipDistance(a, b) {
@@ -15256,6 +15307,7 @@
     const w = foldWord(g.word);
     const n = foldWord(name);
     if (!n || w === n) return 'same';
+    if (guessOffered(g, name)) return 'own';
     if (g.typoAs && norm(g.typoAs.name) === norm(name)) return g.typoAs.typo ? 'typo' : 'own';
     return slipDistance(w, n) <= 1 ? 'typo' : 'own';
   }
@@ -16735,10 +16787,13 @@
         await resolveArtists();
         // [S057] (3.37.10) ℗ / © of a person Discogs lists as a label
         if (mergePersonCopyrights()) renderGroups();
-        // [3.37.11] the artist credits taken from the Discogs spellings (item 161)
-        const anv = [...S.artists.values()].map((a) => [a, releaseSpelling(a)]).filter(([a, sp]) => sp && entryCredits(a).some((c) => typo(c) === typo(sp.shown)))
-          .map(([a, sp]) => `${sp.shown} (${sp.base})`);
-        if (anv.length) log('info', 'anvCredits', { list: anv.join(', ') });
+        // [3.37.11] the artist credits taken from the Discogs spellings (item 161); [3.39.1] those of the entries' sources (item 185)
+        const anvOf = [...S.artists.values()].map((a) => [a, releaseSpelling(a)]).filter(([a, sp]) => sp && entryCredits(a).some((c) => typo(c) === typo(sp.shown)));
+        const anv = anvOf.map(([a, sp]) => `${sp.shown} (${sp.base})`);
+        const anvSrcs = [...new Set(anvOf.map(([a]) => entrySource(a)))];
+        if (anv.length) {
+          log('info', anvSrcs.length === 1 && anvSrcs[0] === DISCOGS ? 'anvCredits' : 'anvCreditsAny', { list: anv.join(', '), src: anvSrcs.map(sourceLabel).join(', ') });
+        }
         if (rel.series.length) {
           await loadSeries(rel.series);
           renderGroups();
@@ -18067,7 +18122,7 @@
         + (companyTypes(a).includes('area') ? `<span class="dci-sub">${esc(tr('match.areaNoCreate'))}</span>` : '')
       : `<button type="button" data-act="artist-create">${esc(tr('match.create'))}</button>`;
     const editor = (labelKey) => `
-      <span class="dci-badge dci-badge-bad">${esc(tr(labelKey))}</span>
+      <span class="dci-badge dci-badge-bad">${esc(tr(labelKey, { src: sourceLabel(entrySource(a)) }))}</span>
       <input type="text" data-f="artist-input" placeholder="${esc(a.other ? tr('match.placeholderOther', { type: tr(`entity.${a.entityType}`) }) : tr(a.company ? 'match.placeholderCompany' : 'match.placeholder'))}" aria-label="${esc(tr('match.inputAria', { name: a.name }))}">
       <button type="button" data-act="artist-set">${esc(tr('match.apply'))}</button>
       <a href="${esc(searchUrl)}" target="_blank" rel="noopener">${esc(tr('match.search'))}</a>
@@ -18080,7 +18135,8 @@
     if (a.editing) return editor('match.changeLabel');
     if (a.status === 'linked' || a.status === 'manual' || a.status === 'created') {
       const path = entityPath(a.company || a.other ? a.entityType : 'artist');
-      return `<span class="dci-badge dci-badge-ok">${esc(a.viaAlias ? tr('match.viaAlias', { alias: a.viaAlias }) : tr(`match.${a.status}`))}</span>
+      // [3.39.1] (review) "found via Bandcamp link" for an entry of a Bandcamp supplement too
+      return `<span class="dci-badge dci-badge-ok">${esc(a.viaAlias ? tr('match.viaAlias', { alias: a.viaAlias }) : tr(`match.${a.status}`, { src: sourceLabel(entrySource(a)) }))}</span>
         ${a.company || a.other ? `<span class="dci-sub">${esc(tr(`entity.${a.entityType}`))}</span>` : ''}
         <a class="dci-mblink" href="/${esc(path)}/${esc(a.mbid)}" target="_blank" rel="noopener" title="${esc(tr('link.mbTitle'))}"><span class="dci-src dci-src-mb">MB</span>${esc(a.mbName)}</a>
         ${a.mbComment ? `<span class="dci-disamb">(${esc(a.mbComment)})</span>` : ''}
@@ -18280,9 +18336,10 @@
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
     if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
-    // [3.37.11] the * says what it means (collected item 161)
-    const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
-      ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [tr('group.anvStar')] : [])].join('\n');
+    // [3.37.11] the * says what it means (collected item 161); [3.39.1] in the words of the entry's source (collected item 185)
+    const src = entrySource(a);
+    const title = [trSrcOf(src, 'group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
+      ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [trSrcOf(src, 'group.anvStar')] : [])].join('\n');
     return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
   }
 
@@ -18294,7 +18351,9 @@
     const credits = all.filter((c) => !sp || typo(c) !== typo(sp.shown));
     if (sp && credits.length === 0 && all.length) {
       const name = tr('common.quoted', { text: sp.shown });
-      return `<span class="dci-gcredit dci-gcredit-anv" title="${esc(tr('group.creditedSpellingTitle', { name, base: tr('common.quoted', { text: sp.base }) }))}">${esc(tr('group.creditedSpelling', { name }))}</span>`;
+      // [3.39.1] "the Bandcamp spelling" with an entry of Bandcamp (collected item 185)
+      const src = entrySource(a);
+      return `<span class="dci-gcredit dci-gcredit-anv" title="${esc(trSrcOf(src, 'group.creditedSpellingTitle', { name, base: tr('common.quoted', { text: sp.base }) }))}">${esc(trSrcOf(src, 'group.creditedSpelling', { name }))}</span>`;
     }
     if (!credits.length) return '<span class="dci-gcredit" hidden></span>';
     const name = tr('common.quoted', { text: credits[0] });
@@ -18963,7 +19022,7 @@
     if (q && lt && primaryRootOf(lt) && norm(r.primaryText) === q.base) return q.options.map((x) => instr(x));
     const g = r.instrGuess;
     if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(r) && norm(r.primaryText))) {
-      return [...g.options.map((x) => instr(x)), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
+      return [...g.options.map((x) => instr(x, guessLabel(g, x))), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
         ...(g.misc ? [{ act: 'instr-misc', attr: '', value: '', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])];
     }
     const tq = typeQuestionFor(r);
@@ -18996,7 +19055,7 @@
       const name = norm(r.primaryText);
       const chosen = misc ? tr('instrGuess.misc', { word: guessTask(g) })
         : name && g.other && name === norm(g.other) ? tr('instrGuess.other', { other: g.other, word: guessCredit(g) })
-          : name && primaryIsValid(r) ? r.primaryText : '';
+          : name && primaryIsValid(r) ? guessLabel(g, r.primaryText) : '';
       if (!g.options.length && !g.misc) out.push(tr('instrGuess.none', { word: g.word, other: g.other, credit: guessCredit(g) }));
       else if (chosen) out.push(`${tr(g.options.length ? 'instrGuess.chosen' : 'instrGuess.noneOr', { word: g.word })} ${chosen}`);
       // [164] a typo, or a spelling of its own
@@ -19154,7 +19213,7 @@
       else if (Array.isArray(v)) c[k] = [...v];
     }
     if (row.date) c.date = { ...row.date };
-    if (row.instrGuess) c.instrGuess = { ...row.instrGuess, options: [...row.instrGuess.options] };
+    if (row.instrGuess) c.instrGuess = { ...row.instrGuess, options: [...row.instrGuess.options], ...(row.instrGuess.offered ? { offered: [...row.instrGuess.offered] } : {}) };
     if (row.keepCase) c.keepCase = { ...row.keepCase };
     delete c.mxOrigin;
     delete c.splitFrom;
@@ -19325,9 +19384,11 @@
     const rows = allRows.filter((r) => inEntry(r) && !r.s046Out && (S.mxSkipRows || !r.mxSkipped));
     const mxHidden = allRows.filter((r) => r.mxSkipped && !S.mxSkipRows).length;
     const hidden = rows.length && rows.every((r) => r.aboutHidden || r.notesHidden) ? ' dci-about-hidden' : '';
-    // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again)
+    // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again); [3.39.1] the tag in the
+    // colours of its source, the tooltip names it (collected item 185)
+    const aSrc = entrySource(a);
     const sourceLink = a.dId && (a.links || [])[0]
-      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle')}: ${a.rawName || a.name}`)}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
+      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle', { src: sourceLabel(aSrc) })}: ${a.rawName || a.name}`)}"><span class="dci-src ${srcTagClass(aSrc)}">${esc(aSrc.name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
       // [3.21.0] a name from a text: the web profiles found next to it (T032); [3.21.3] only with the setting (off)
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
@@ -19615,8 +19676,10 @@
     // [S052] (3.34.27) the suggestions written like the role credit
     const options = roleCreditOptions(row.raw, row.base, row.mods, row.roleCreditSuggest, lt ? lt.name : '', ruleOn('S052') ? creditCasing(lt) : undefined);
     const fromDiscogs = !row.manual && !!norm(row.roleCredit) && norm(row.roleCredit) === norm(row.roleCreditSuggest);
-    parts.push(`<label class="dci-credit"><span class="dci-credit-name">${esc(tr('roleCredit.label'))}${fromDiscogs ? ` <span class="dci-src dci-src-dg" title="${esc(trSrc('roleCredit.fromDiscogs'))}">${esc(trSrc('roleCredit.fromTag'))}</span>` : ''}</span>
-        <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(tr('roleCredit.fromDiscogs')) : ''}">${rcClearHtml()}
+    // [3.39.1] the tag in the colours and words of the row's source (a supplement's entry: its own)
+    const rowSrc = entrySource(S.artists.get(row.artistKey));
+    parts.push(`<label class="dci-credit"><span class="dci-credit-name">${esc(tr('roleCredit.label'))}${fromDiscogs ? ` <span class="dci-src ${srcTagClass(rowSrc)}" title="${esc(trSrcOf(rowSrc, 'roleCredit.fromDiscogs'))}">${esc(trSrcOf(rowSrc, 'roleCredit.fromTag'))}</span>` : ''}</span>
+        <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(trSrcOf(rowSrc, 'roleCredit.fromDiscogs')) : ''}">${rcClearHtml()}
       </label>
       <datalist id="dci-rc-${row.id}">${options.map((o) => `<option value="${esc(o)}"></option>`).join('')}</datalist>
       <div class="dci-dest" data-dest="${row.id}">${esc(roleCreditHint(row))}</div>
@@ -21845,8 +21908,10 @@
       return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.noneOr', { word: g.word }))} ${[...otherBtn, miscBtn].join(' · ')}</div>`;
     }
     const chosen = misc || (primaryIsValid(row) && !!norm(row.primaryText));
-    const opts = [...g.options.map((n) => pick(n, n)), ...otherBtn, ...(miscBtn ? [miscBtn] : [])];
-    return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(chosen ? 'instrGuess.chosen' : 'instrGuess.ask', { word: g.word }))} ${opts.join(' · ')}${chosen && !misc ? guessNoteHtml(row) : ''}</div>`;
+    const opts = [...g.options.map((n) => pick(n, guessLabel(g, n))), ...otherBtn, ...(miscBtn ? [miscBtn] : [])];
+    // [T058] (3.39.2) with instruments offered for the word: "as which instrument?" (not "did you mean")
+    const ask = chosen ? 'instrGuess.chosen' : g.offered ? 'instrGuess.askAs' : 'instrGuess.ask';
+    return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(ask, { word: g.word }))} ${opts.join(' · ')}${chosen && !misc ? guessNoteHtml(row) : ''}</div>`;
   }
 
   /**
@@ -21856,7 +21921,7 @@
   function guessNoteHtml(row) {
     const g = row.instrGuess;
     const name = row.primaryText;
-    if (!g || !norm(name) || norm(name) === norm(g.other || 'other instruments')) return '';
+    if (!g || !norm(name) || norm(name) === norm(g.other || 'other instruments') || guessOffered(g, name)) return '';
     const sp = guessSpelling(g, name);
     if (sp === 'same') return '';
     const typo = sp === 'typo';
@@ -22091,7 +22156,7 @@
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
       const g = row.instrGuess;
       if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(row) && norm(row.primaryText))) {
-        parts.push(clineAskHtml('instr', tr('cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: x })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: guessCredit(g) }) }] : []),
+        parts.push(clineAskHtml('instr', tr(g.offered ? 'cl.instrGuessAs' : 'cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: guessLabel(g, x) })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: guessCredit(g) }) }] : []),
           ...(g.misc ? [{ value: '\u0000misc', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])]));
       }
       // [S052] (3.34.28) words of the role credit written small that MusicBrainz does not know
@@ -23104,7 +23169,7 @@
   function seriesLabelHtml(a) {
     const info = a.seriesLabel;
     if (!info || a.mbid) return '';
-    const dg = `<a class="dci-dglink" href="${esc(info.links[0])}" target="_blank" rel="noopener"><span class="dci-src dci-src-dg">${esc(S.source.name)}</span>${esc(info.name)}</a>`;
+    const dg = `<a class="dci-dglink" href="${esc(info.links[0])}" target="_blank" rel="noopener"><span class="dci-src ${srcTagClass(S.source)}">${esc(S.source.name)}</span>${esc(info.name)}</a>`;
     const mb = info.mbid ? `<a class="dci-mblink" href="/label/${esc(info.mbid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(info.mbName)}</a>` : '';
     return `<div class="dci-series-label"><span class="dci-sub">${esc(tr('seriesLabel.title'))}</span> ${dg} ${mb}
       <span class="dci-sub">${esc(tr(info.mbid ? 'seriesLabel.onCreate' : 'seriesLabel.noMb'))}</span></div>`;
@@ -32295,6 +32360,10 @@
       /* Links to the two databases look different: Discogs neutral dark, MusicBrainz in MB purple */
       .dci-src { display: inline-block; margin-right: 0.35em; padding: 0 0.4em; border-radius: 3px; font-size: 0.8em; font-weight: 700; letter-spacing: 0.02em; line-height: 1.5; vertical-align: 0.1em; color: #fff; text-decoration: none; }
       .dci-src-dg { background: #333; }
+      /* [3.39.1] Bandcamp's blue (its logo), a pasted text grey – the dark one is Discogs' (collected item 185) */
+      .dci-src-bc { background: #629aa9; }
+      .dci-src-tx { background: #6b6b6b; }
+      a.dci-dglink .dci-src-bc + .dci-dglink-ico { color: #4f8794; }
       .dci-src-mb { background: var(--purple); }
       a.dci-dglink { color: #333; text-decoration-color: #999; }
       /* [3.28.0] only the tag links to the source (↗), the credit of the entry as a chip (item 61) */

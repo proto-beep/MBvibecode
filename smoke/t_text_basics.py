@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7), withline (3.38.17), cloudpond (3.38.18) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7), withline (3.38.17, 3.39.2), cloudpond (3.38.18, 3.39.2) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1018,14 +1018,20 @@ def case_withline():
     A) "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" (Robert Rich, Bandcamp "Cloud Pond Sky River"),
        the release's artist Robert Rich: his instruments – "Sequential PX" a synthesizer credited "Sequential PX" (MusicBrainz has
        no Prophet X here), flute, lap steel guitar, bells; "objects" asked like a word of a list (other instruments “objects”);
-       "Apple Logic" left out as music software (the list of lines left out: "software").
+       "Apple Logic" left out as music software (the list of lines left out: "software"). 3.39.2 (collected items 186, 187): "lap
+       steel" lap steel guitar by the mapping (T001; MusicBrainz has no such other name), "objects" asked "as which one?" –
+       percussion “objects” (T058) · other instruments “objects”; percussion chosen: credited "objects", no note of a spelling.
+       (Review) T058 changed as an imported file would ("Objects" in capitals, with "other instruments" too): the same question,
+       "other instruments" once.
     B) "with Oliver Lake": a guest performer; "With piano and Jane Roe on saxophone": piano for Robert Rich, Jane Roe guest saxophone;
        nothing not recognized. (Review) "with Ann Blow on alto saxophone and flute": both hers, as a guest; "with Kenny Wheeler, flute":
        his flute; "With Apple Logic Pro": left out as software (no artist)."""
     H.RELEASE_AC[:] = [(H.uid('dddddddd', 3420), 'Robert Rich', 'Robert Rich', '')]
     H.attr(9301, 'flute', 14)
-    H.attr(9302, 'lap steel guitar', 14, aliases=['lap steel'])
+    H.attr(9302, 'lap steel guitar', 14)
     H.attr(9303, 'bells', 14)
+    H.attr(9304, 'percussion', 14)
+    H.attr(9305, 'other instruments', 14)
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     TEXT = """With Apple Logic, Sequential PX, flutes, lap steel, bells and objects
 with Oliver Lake
@@ -1041,6 +1047,8 @@ With Apple Logic Pro"""
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
+        # (3.39.2, review) T058 as an imported file would change it: the key in capitals, "other instruments" among the instruments
+        ctx.add_init_script("""localStorage.setItem('dci-mapping-changes', JSON.stringify({ rules: {}, lists: { T058: { add: [['Objects', ['percussion', 'other instruments']]] } } }))""")
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
@@ -1059,6 +1067,12 @@ With Apple Logic Pro"""
         for k in ('Robert Rich', 'Oliver Lake', 'Jane Roe', 'Ann Blow', 'Kenny Wheeler', 'With Apple Logic'):
             print(f'  {k}:', g.get(k))
         print('nicht erkannt:', unrec, '| weggelassen:', ign)
+        # (3.39.2) "objects": as which one? percussion “objects” · other instruments “objects”
+        OBJ = """(() => { const r = [...document.querySelectorAll('tr.dci-row')].find(x => (x.querySelector('.dci-drole') || { dataset: {} }).dataset.raw === 'objects');
+          const d = r && (r.nextElementSibling && r.nextElementSibling.querySelector('.dci-instr-guess') || r.querySelector('.dci-instr-guess'));
+          return d ? { text: d.textContent.replace(/\\s+/g, ' ').trim(), btns: [...d.querySelectorAll('button')].map(b => b.textContent.trim()) } : null; })()"""
+        obj = pg.evaluate(OBJ)
+        print('objects:', obj)
         rr = g.get('Robert Rich') or []
         prim = [r[3] for r in rr]
         results.append(('synthesizer', 'Sequential PX') in [(r[3], r[2]) for r in rr] and 'flute' in prim and 'lap steel guitar' in prim and 'bells' in prim
@@ -1072,6 +1086,17 @@ With Apple Logic Pro"""
                        and sorted(r[3] for r in ab) == ['alto saxophone', 'flute'] and all('guest' in r[4] for r in ab)
                        and [r[3] for r in kw] == ['flute'] and 'guest' in kw[0][4] and prim.count('flute') == 1
                        and any(x.startswith('Apple Logic Pro') and 'software' in x for x in ign) and 'Apple Logic Pro' not in g)
+        ok_obj = bool(obj) and obj['text'].startswith('“objects” is no instrument of MusicBrainz – as which one?') \
+            and obj['btns'] == ['percussion “objects”', 'other instruments “objects”', 'miscellaneous support (task “objects”)']
+        if ok_obj:
+            pg.evaluate("""[...document.querySelectorAll('.dci-instr-guess [data-act=instr-pick]')].find(b => b.dataset.instr === 'percussion').click()""")
+            pg.wait_for_timeout(500)
+            rr2 = pg.evaluate(GROUPS).get('Robert Rich') or []
+            after = pg.evaluate(OBJ)
+            print('percussion gewählt:', [r for r in rr2 if r[0] == 'objects'], after)
+            ok_obj = ['objects', 'percussion', 'objects'] in [[r[0], r[3], r[2]] for r in rr2] and after and after['text'].startswith('“objects” is no instrument of MusicBrainz – chosen:') \
+                and 'spelling of its own' not in after['text'] and 'typo' not in after['text']
+        results.append(ok_obj)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -1083,7 +1108,8 @@ def case_cloudpond():
     Robert Rich "Cloud Pond Sky River" (Bandcamp) as a pasted text, Robert Rich the release's artist.
     A) "Ambisonic recordings by RR 2022-2025 Pacific coast": Robert Rich (initials RR) field recordist, credited "RR", the period
        2022 – 2025 at the row; "Pacific coast" (no area of MusicBrainz) named as not recognized. "Recorded by Jane Roe" stays recording
-       engineer.
+       engineer. 3.39.2 (collected item 188, list T059): "Pacific coast" the area Pacific Coast (recorded in), not found in MusicBrainz
+       – nothing not recognized.
     B) "Recorded Mixed and Mastered by RR at Soundscape, Carmel CA": Robert Rich (RR) recording engineer, mixer, mastering; the place
        Soundscape; the entry says "RR = Robert Rich (initials)".
     C) "Cover © Maksimillian Novak-Zemplinski, detail used with permission.": artwork credited "cover" (no ℗/© of a label), "detail
@@ -1093,9 +1119,10 @@ def case_cloudpond():
        Jones, all rights reserved": no artist "all rights reserved"; "Design by AJ": Ann Jones credited "AJ" (not "Aj")."""
     H.RELEASE_AC[:] = [(H.uid('dddddddd', 3420), 'Robert Rich', 'Robert Rich', '')]
     H.attr(9301, 'flute', 14)
-    H.attr(9302, 'lap steel guitar', 14, aliases=['lap steel'])
+    H.attr(9302, 'lap steel guitar', 14)
     H.attr(9303, 'bells', 14)
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.lt(698, '37ef3a0c-cac3-4172-b09a-4ca98d2857fc', 'recorded in', 'area', 'recording', ())
     H.lt(9993, H.uid('1a1a1a1a', 9993), 'artwork', 'artist', 'release', (1150,))
     H.lt(9994, H.uid('1a1a1a1a', 9994), 'field recordist', 'artist', 'recording', ())
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
@@ -1141,8 +1168,9 @@ Design by AJ"""
         rr = g.get('Robert Rich') or {'rows': [], 'hint': ''}
         rows = {r[1]: r for r in rr['rows']}
         fr = rows.get('field recordist')
-        results.append(fr is not None and fr[3] == '2022-2025' and any('Pacific coast' in u for u in unrec) and 'Ambisonic' not in ''.join(g)
-                       and [r[1] for r in (g.get('Jane Roe') or {'rows': []})['rows']] == ['recording'])
+        pc = g.get('Pacific Coast') or {'rows': []}
+        results.append(fr is not None and fr[3] == '2022-2025' and [r[1] for r in pc['rows']] == ['recorded in'] and not any('Pacific' in u for u in unrec)
+                       and 'Ambisonic' not in ''.join(g) and [r[1] for r in (g.get('Jane Roe') or {'rows': []})['rows']] == ['recording'])
         results.append(all(t in rows for t in ('recording', 'mix', 'mastering')) and rr['hint'] == 'RR = Robert Rich (initials)' and 'RR' not in g
                        and 'RR' in rr['ac'] and [r[1] for r in (g.get('Soundscape') or {'rows': []})['rows']] == ['recorded at'])
         mk, ab, lab = g.get('Maksimillian Novak-Zemplinski') or {'rows': []}, g.get('Ann Blow') or {'rows': []}, g.get('Robert Rich (label)') or {'rows': []}

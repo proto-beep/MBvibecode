@@ -47,6 +47,11 @@ def case_i18n():
     used |= set(re.findall(r"\btrIn\([^,]+,\s*'([\w.]+)'", code))
     used |= {'log.' + k for k in re.findall(r"\b(?:log|logView)\(\s*'(?:info|warn|error|ok)'\s*,\s*'([\w.]+)'", code)}
     used |= set(re.findall(r"\bshowMessage\(\s*'(?:info|warn|error|ok)'\s*,\s*'([\w.]+)'", code))
+    # (3.39.2, review) trSrcOf(src, 'key'): the text and its …Any form; log(level, a ? 'k1' : 'k2', …): both
+    src_of = set(re.findall(r"\btrSrcOf\([^,]+,\s*'([\w.]+)'", code))
+    used |= src_of | {k + 'Any' for k in src_of}
+    for k1, k2 in re.findall(r"\blog\(\s*'(?:info|warn|error|ok)'\s*,\s*[^,'()]+\?\s*'([\w.]+)'\s*:\s*'([\w.]+)'", code):
+        used |= {'log.' + k1, 'log.' + k2}
     missing_en = sorted(k for k in used if k not in en and f'{k}.other' not in en and f'{k}Any' not in en)
     print('A) Schlüssel im Code:', len(used), '| ohne englischen Text:', missing_en or 'keiner')
     results.append(not missing_en)

@@ -1,6 +1,6 @@
 """Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources_bandcamp.py <case> …` runs only those."""
+Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6), bcspell (3.39.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources_bandcamp.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -909,6 +909,104 @@ console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role, 
         ok_c = on0 and 'S049' in off
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
         results += [ok_b, ok_c]
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_bcspell():
+    """Credits Importer 3.39.1 (collected item 185): Robert Rich, "Cloud Pond Sky River" from Bandcamp – "Ambisonic recordings by RR
+    2022-2025" and "Recorded Mixed and Mastered by RR …" give Robert Rich credited "RR" (his initials).
+    A) The head of his entry names the source: the chip "artist credit in MusicBrainz: “RR” (the Bandcamp spelling *)", its tooltip
+       "The source (Bandcamp) credits …", the name's tooltip "Bandcamp: Robert Rich" and "* – credited so in the source (Bandcamp)";
+       the log "Artist credits from the spellings of the source (Bandcamp, *)"; the word "Discogs" nowhere in the head.
+    B) The tag "Bandcamp" (the link to his Bandcamp page) in Bandcamp's blue (#629aa9, white letters) – Discogs' tag stays dark;
+       its tooltip "Open on Bandcamp: Robert Rich".
+    C) 3.39.2 (collected items 186, 187): "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" from Bandcamp –
+       its album's artist is the release's (one name, not two): his instruments, lap steel guitar (T001), "objects" asked as
+       percussion “objects” · other instruments “objects” (T058); no entry for the line, nothing not recognized."""
+    PAGE = 'https://robertrich.bandcamp.com/'
+    ALBUM = PAGE + 'album/cloud-pond-sky-river'
+    RR = H.uid('dddddddd', 3420)
+    H.RELEASE_AC[:] = [(RR, 'Robert Rich', 'Robert Rich', '')]
+    H.MB_SEARCH['artist'] = [{'id': RR, 'name': 'Robert Rich', 'disambiguation': '', 'score': 100}]
+    H.lt(9994, H.uid('1a1a1a1a', 9994), 'field recordist', 'artist', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    for i, n in ((9301, 'flute'), (9302, 'lap steel guitar'), (9303, 'bells'), (9304, 'percussion'), (9305, 'other instruments')):
+        H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CREDITS = 'Ambisonic recordings by RR 2022-2025\nRecorded Mixed and Mastered by RR at Soundscape, Carmel CA'
+
+    def album(credits):
+        H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Robert Rich', 'current': {'title': 'Cloud Pond Sky River', 'credits': credits, 'about': '',
+                                                                            'release_date': '23 Oct 2026 00:00:00 GMT'},
+                                       'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 180.0} for i, t in enumerate(H.TITLES)]},
+                                      band='Robert Rich')
+
+    album(CREDITS)
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+
+    H.ws_release = ws
+    HEAD = """(() => [...document.querySelectorAll('section.dci-group')].map(g => { const n = g.querySelector('.dci-gname');
+      const tag = n.querySelector('.dci-dglink .dci-src'); const chip = n.querySelector('.dci-gcredit-anv');
+      const name = n.querySelector('strong');
+      return { name: name.textContent.trim(), nameTitle: name.title, chip: chip ? chip.textContent.trim() : '', chipTitle: chip ? chip.title : '',
+        tag: tag ? [tag.textContent.trim(), tag.className, getComputedStyle(tag).backgroundColor, getComputedStyle(tag).color, tag.closest('a').title] : null,
+        text: n.textContent + ' ' + [...n.querySelectorAll('[title]')].map(x => x.title).join(' ') }; }))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1500)
+        heads = pg.evaluate(HEAD)
+        for h in heads:
+            print('   ', {k: v for k, v in h.items() if k != 'text'})
+        rr = next((h for h in heads if h['name'].startswith('RR')), None) or {}
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'spellings' in x]
+        print('A) Log:', logs)
+        results.append(rr.get('chip') == 'artist credit in MusicBrainz: “RR” (the Bandcamp spelling *)'
+                       and rr.get('chipTitle', '').startswith('The source (Bandcamp) credits “Robert Rich” on this release as “RR”.')
+                       and rr.get('nameTitle', '').startswith('Bandcamp: Robert Rich') and '* – credited so in the source (Bandcamp)' in rr.get('nameTitle', '')
+                       and logs == ['Artist credits from the spellings of the source (Bandcamp, *): RR (Robert Rich)']
+                       and 'Discogs' not in rr.get('text', 'Discogs'))
+        t = rr.get('tag') or ['', '', '', '', '']
+        print('B) Marke:', t)
+        results.append(t[0] == 'Bandcamp' and 'dci-src-bc' in t[1] and t[2] == 'rgb(98, 154, 169)' and t[3] == 'rgb(255, 255, 255)'
+                       and t[4] == 'Open on Bandcamp: Robert Rich')
+        # C) the line "With …" (a page of its own: the head of A has a spelling of all roles)
+        album('With Apple Logic, Sequential PX, flutes, lap steel, bells and objects')
+        pg, errs2 = H.open_mb_edit(H.new_context(b), companion=False, gm_xhr=True)
+        errs += errs2
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1500)
+        heads = pg.evaluate(HEAD)
+        pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+        pg.wait_for_timeout(500)
+        rows = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /^Robert Rich/.test(x.querySelector('.dci-gname strong').textContent));
+          return g ? [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
+            (r.querySelector('[data-f=primary]') || {}).value || '']) : []; })()""")
+        ask = pg.evaluate("[...document.querySelectorAll('.dci-instr-guess button')].map(b => b.textContent.trim())")
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+        names = [h['name'] for h in heads]
+        print('C)', rows, '| Frage:', ask, '| nicht erkannt:', unrec, '| Einträge:', names)
+        results.append(['lap steel', 'lap steel guitar'] in rows and ['flutes', 'flute'] in rows and ['objects', 'objects'] in rows
+                       and ask[:2] == ['percussion “objects”', 'other instruments “objects”'] and not unrec and not any(n.startswith('With') for n in names))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
