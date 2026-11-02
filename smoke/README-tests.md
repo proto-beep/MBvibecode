@@ -140,9 +140,12 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     clear: the note, the log, ⇅ (John Doe), another text (Jane Roe again); one line with capitals; the Discogs notes;
                                 #     3.38.12 (F-5): ⇅ in the dashboard – no new import, Max Mix put on Skip stays; "ABBA – piano" → Abba (S060)
                                 #   withline: 3.38.17 (181, S061): "With Apple Logic, Sequential PX, flutes …" – the release artist's instruments,
-                                #     "objects" asked, software left out; "with Oliver Lake" guest, "Jane Roe on saxophone" guest saxophone
+                                #     "objects" asked, software left out; "with Oliver Lake" guest, "Jane Roe on saxophone" guest saxophone;
+                                #     3.39.2 (186, 187): "lap steel" lap steel guitar (T001), "objects" asked "as which one?" – percussion
+                                #     “objects” (T058) first; percussion chosen: credited "objects", no note of a spelling; T058 changed as
+                                #     a file would ("Objects", with other instruments): other instruments once
                                 #   cloudpond: 3.38.18 (182 – 184): "Ambisonic recordings by RR 2022-2025 …" field recordist with the period,
-                                #     "Pacific coast" not recognized; RR = Robert Rich (initials, credited "RR"), "Recorded Mixed and Mastered";
+                                #     "Pacific coast" the area Pacific Coast (3.39.2, 188, T059); RR = Robert Rich (initials, credited "RR"), "Recorded Mixed and Mastered";
                                 #     "Cover © X" artwork "cover", "Photos © X" photography "photo", the permission left out; "JR" of two names
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
@@ -335,6 +338,8 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     rows ("recording engineer", "guest saxophone", "remastering"), tooltip "from Discogs: …", types, "additional"
                                 #     ticked, compact line, preview, entry matrix and chip, works matrix ("additional composer", menu
                                 #     "sub-publisher"), the log "Staged: …"
+                                #   oldfile: 3.39.2 (review): a mapping file without T058 / T059 and changes of your own (Node, files copied):
+                                #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎, export and import
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
@@ -559,7 +564,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     cover art and the liner notes "-j4vavaman" above the credit line, all "from the about text"; S049 off
                                 #     → only the liner notes; the release artist j4vaman first suggestion for j4vavaman; ⚙ → Texts switch
                                 #   bcspell: 3.39.1 (185): Robert Rich credited "RR" from Bandcamp – "(the Bandcamp spelling *)", the tooltips
-                                #     and the log name Bandcamp, no "Discogs" in the head; the tag "Bandcamp" in Bandcamp's blue (#629aa9)
+                                #     and the log name Bandcamp, no "Discogs" in the head; the tag "Bandcamp" in Bandcamp's blue (#629aa9);
+                                #     3.39.2 (187): the line "With …" from Bandcamp – the release's artist's, "objects" asked, nothing not recognized
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
@@ -686,7 +692,8 @@ python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, cred
 python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file, the languages file
                                 #   i18n: the texts (3.27.1; 3.34.0: English from the script, de / es / fr from the languages file): every key
                                 #     the code names in English, no left-over translations, no foreign
-                                #     placeholders, French no-break spaces, the English fallback (Node); reports the missing translations
+                                #     placeholders, French no-break spaces, the English fallback (Node); reports the missing translations;
+                                #     3.39.2: also the keys of trSrcOf (with their …Any form) and both keys of log(level, a ? 'k1' : 'k2')
                                 #     per language (LIST=1: all keys) – not an error
                                 #   connections: the connections (3.25.0, Node): every address of @match / @connect and of the code belongs to an entry of
                                 #     CONNECTIONS, the ids are unique, every entry has its texts in English (3.27.1; before: four languages)

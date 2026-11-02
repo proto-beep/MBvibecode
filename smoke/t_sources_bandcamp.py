@@ -922,7 +922,10 @@ def case_bcspell():
        "The source (Bandcamp) credits …", the name's tooltip "Bandcamp: Robert Rich" and "* – credited so in the source (Bandcamp)";
        the log "Artist credits from the spellings of the source (Bandcamp, *)"; the word "Discogs" nowhere in the head.
     B) The tag "Bandcamp" (the link to his Bandcamp page) in Bandcamp's blue (#629aa9, white letters) – Discogs' tag stays dark;
-       its tooltip "Open on Bandcamp: Robert Rich"."""
+       its tooltip "Open on Bandcamp: Robert Rich".
+    C) 3.39.2 (collected items 186, 187): "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" from Bandcamp –
+       its album's artist is the release's (one name, not two): his instruments, lap steel guitar (T001), "objects" asked as
+       percussion “objects” · other instruments “objects” (T058); no entry for the line, nothing not recognized."""
     PAGE = 'https://robertrich.bandcamp.com/'
     ALBUM = PAGE + 'album/cloud-pond-sky-river'
     RR = H.uid('dddddddd', 3420)
@@ -930,11 +933,18 @@ def case_bcspell():
     H.MB_SEARCH['artist'] = [{'id': RR, 'name': 'Robert Rich', 'disambiguation': '', 'score': 100}]
     H.lt(9994, H.uid('1a1a1a1a', 9994), 'field recordist', 'artist', 'recording', ())
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    for i, n in ((9301, 'flute'), (9302, 'lap steel guitar'), (9303, 'bells'), (9304, 'percussion'), (9305, 'other instruments')):
+        H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     CREDITS = 'Ambisonic recordings by RR 2022-2025\nRecorded Mixed and Mastered by RR at Soundscape, Carmel CA'
-    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Robert Rich', 'current': {'title': 'Cloud Pond Sky River', 'credits': CREDITS, 'about': '',
-                                                                        'release_date': '23 Oct 2026 00:00:00 GMT'},
-                                   'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 180.0} for i, t in enumerate(H.TITLES)]},
-                                  band='Robert Rich')
+
+    def album(credits):
+        H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Robert Rich', 'current': {'title': 'Cloud Pond Sky River', 'credits': credits, 'about': '',
+                                                                            'release_date': '23 Oct 2026 00:00:00 GMT'},
+                                       'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 180.0} for i, t in enumerate(H.TITLES)]},
+                                      band='Robert Rich')
+
+    album(CREDITS)
     orig_ws = H.ws_release
 
     def ws(full=False):
@@ -976,6 +986,27 @@ def case_bcspell():
         print('B) Marke:', t)
         results.append(t[0] == 'Bandcamp' and 'dci-src-bc' in t[1] and t[2] == 'rgb(98, 154, 169)' and t[3] == 'rgb(255, 255, 255)'
                        and t[4] == 'Open on Bandcamp: Robert Rich')
+        # C) the line "With …" (a page of its own: the head of A has a spelling of all roles)
+        album('With Apple Logic, Sequential PX, flutes, lap steel, bells and objects')
+        pg, errs2 = H.open_mb_edit(H.new_context(b), companion=False, gm_xhr=True)
+        errs += errs2
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1500)
+        heads = pg.evaluate(HEAD)
+        pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+        pg.wait_for_timeout(500)
+        rows = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /^Robert Rich/.test(x.querySelector('.dci-gname strong').textContent));
+          return g ? [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
+            (r.querySelector('[data-f=primary]') || {}).value || '']) : []; })()""")
+        ask = pg.evaluate("[...document.querySelectorAll('.dci-instr-guess button')].map(b => b.textContent.trim())")
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+        names = [h['name'] for h in heads]
+        print('C)', rows, '| Frage:', ask, '| nicht erkannt:', unrec, '| Einträge:', names)
+        results.append(['lap steel', 'lap steel guitar'] in rows and ['flutes', 'flute'] in rows and ['objects', 'objects'] in rows
+                       and ask[:2] == ['percussion “objects”', 'other instruments “objects”'] and not unrec and not any(n.startswith('With') for n in names))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
