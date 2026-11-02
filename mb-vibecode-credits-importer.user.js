@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.7
+// @version      3.39.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.7
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.7
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.8
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.8
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.7';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -250,6 +250,7 @@
       "ignored.why.web": "only web addresses",
       "ignored.why.software": "music software – no instrument and no relationship of MusicBrainz (T056)",
       "ignored.why.permission": "a permission – no credit",
+      "ignored.why.releaseArtist": "the release’s artist – a title line, no credit",
       "gap.none": "Discogs: its credits seem to be on MusicBrainz (counted by names).",
       "gap.missing.one": "Discogs: about {n} relationship of its credits is not on MusicBrainz yet.",
       "gap.missing.other": "Discogs: about {n} relationships of its credits are not on MusicBrainz yet.",
@@ -3121,6 +3122,8 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S068', where: 'TEXT.parse (readLine)', note: 'Texts (3.39.8): a line that is only the name of the release\'s artist (the title line of a booklet, "Nordlicht Quartett") is left out ("the release\'s artist") – no credit, not named as not recognized' },
+    { id: 'S067', where: 'TEXT.parse (headingLists, readHeading)', note: 'Texts (3.39.8): a heading with several names below it – "VIOLIN / Anna Berg / Clara Stein / Ben Holt" (instruments or voices; a role ending in "by" or with a colon: "RECORDED BY / Jonas Kerr", "Strings:") – each name gets the heading\'s roles; empty lines between the names allowed (as text read from a booklet has them); one name below an instrument stays a pair of lines (S058)' },
     { id: 'S066', where: 'mapRole (PERSON_AT_ROLE, PERSON_COMPANY_SKIP)', note: 'Roles (3.39.6): a role of "Companies, etc." Discogs gives a person – "Recorded At", "Mixed At", "Mastered At", "Engineered At", "Produced At", "Remixed At": what the person did ("Mixed By"; a person linked on Discogs is always a person, no place); "Pressed By", "Manufactured By", "Distributed By", "Printed By", "Licensed To": no relationship of MusicBrainz for a person – left out (Skip), the row says so ("Licensed From" stays licensor, R093)' },
     { id: 'S065', where: 'mapRole, applyDetailFlags, roleCreditForInner', note: 'Roles (3.39.4): a word before a role – "Assistant Engineer", "Asst. Mixing Engineer", "Associate Producer", "Co-Arranger": the role after it with MusicBrainz\'s attribute assistant, associate or co where its type has it; else the word with the role as role credit ("assistant arranger"), only in the edit note where the type has no role credit (the row says so). Roles the register knows with the word ("Assistant Producer", "Co-Producer") keep their rule' },
     { id: 'S064', where: 'TEXT.parse (readClause)', note: 'Texts (3.38.18): "Cover © X", "Cover art © X", "Cover image © X", "Artwork © X" – X\'s artwork credited "cover", no ℗ / © of a label; "Photo © X", "Photos © X" – photography credited "photo"; "detail used with permission" and the like after it are left out. Off: as before ("© X" a name, the line not recognized)' },
@@ -6009,6 +6012,11 @@
           return;
         }
         startLine(raw);
+        // [S068] (3.39.8) a line only of the name of the release's artist (a booklet's title): no credit, left out as such
+        if (ruleOn('S068') && !pubBlock && artistNames.some((n) => norm(n) === norm(line.replace(/[.:]$/, '')))) {
+          ignored.push({ text: line, why: 'releaseArtist' });
+          return;
+        }
         // A track list for the line (only when it names tracks of this release)
         let scope = null;
         let m;
@@ -6151,6 +6159,63 @@
         }
         return out;
       };
+      /**
+       * [S067] (3.39.8) A heading with several names below it (collected item Z-1; booklets read from the cover art): a line only of
+       * instruments or voices ("VIOLIN") – or a role ending in "by" or with a colon ("RECORDED BY", "Strings:") – and two or more lines
+       * below it that look like names (a role heading: one or more), empty lines between them allowed; each name the heading's roles.
+       * → Map of the heading's index to { roles, names, lines }, the names' indexes to null.
+       */
+      const headingOf = (raw) => {
+        const l0 = clean(raw);
+        if (!l0 || /:./.test(l0)) return null;
+        const l = l0.replace(/\s*:$/, '');
+        const colon = /:\s*$/.test(String(raw || ''));
+        if (stackInstr(l)) return { roles: splitRoles(l), role: false };
+        const by = l.match(/^(\p{L}[\p{L} ]*?)\s+by$/iu);
+        if (by && !/\d/.test(l) && l.split(' ').length <= 4 && isRole(cap(l.toLowerCase()))) return { roles: [l.split(' ').map((w) => cap(w.toLowerCase())).join(' ')], role: true };
+        // (3.39.8, review) a role with a colon: "Producer:", "Mastering Engineer:"
+        if (colon && !/\d/.test(l) && l.split(' ').length <= 3 && isRole(cap(l.toLowerCase()))) return { roles: [l], role: true };
+        return null;
+      };
+      // (3.39.8, review) no name of the list: a track's title, or – after an empty line – the release's artist (a booklet's title)
+      const notListName = (raw, afterGap) => {
+        const l = clean(raw);
+        if (afterGap && artistNames.some((n) => norm(n) === norm(l))) return true;
+        const t = resolveTitles ? resolveTitles([l]) : null;
+        return !!(t && t.indexes && t.indexes.size);
+      };
+      const headingLists = (lines) => {
+        const out = new Map();
+        if (!ruleOn('S067')) return out;
+        for (let i = 0; i < lines.length; i++) {
+          const h = headingOf(lines[i]);
+          if (!h) continue;
+          // (3.39.8, review) a name right above the heading: names above their instruments (S058), no heading
+          if (i > 0 && stackName(lines[i - 1])) continue;
+          const names = [];
+          let empties = 0;
+          for (let j = i + 1; j < lines.length; j++) {
+            if (!clean(lines[j])) {
+              // (3.39.8, review) a role heading: only the names right below it; an instrument's: single empty lines between them
+              if (h.role || ++empties > 1) break;
+              continue;
+            }
+            if (!stackName(lines[j]) || notListName(lines[j], empties > 0)) break;
+            empties = 0;
+            names.push(j);
+          }
+          if (names.length < (h.role ? 1 : 2)) continue;
+          out.set(i, { roles: h.roles, names: names.map((k) => clean(lines[k])), lines: [i, ...names].map((k) => clean(lines[k])).join(' / ') });
+          names.forEach((k) => out.set(k, null));
+          i = names[names.length - 1];
+        }
+        return out;
+      };
+      /** [S067] (3.39.8) A heading and its names: each name the heading's roles. */
+      const readHeading = (h) => {
+        startLine(h.lines);
+        h.names.forEach((n) => h.roles.forEach((r) => addCredit(n, r, null)));
+      };
       /** [S058] A pair of lines: each instrument of the one a credit of the name of the other. */
       const readStacked = (pr) => {
         startLine(pr.lines);
@@ -6168,8 +6233,15 @@
         held.forEach(readLine);
       };
       const allLines = String(text || '').split(/\r?\n/);
-      const stacks = stackPairs(allLines);
+      // [S067] (3.39.8) headings with several names first; their lines are no pairs of S058
+      const heads = headingLists(allLines);
+      const stacks = stackPairs(allLines.map((l, i) => (heads.has(i) ? '' : l)));
       for (const [li, raw] of allLines.entries()) {
+        if (heads.has(li)) {
+          flushBlock();
+          if (heads.get(li)) readHeading(heads.get(li));
+          continue;
+        }
         // [S058] (3.38.7) a line of a pair: read with the other one
         if (stacks.has(li)) {
           flushBlock();
@@ -16262,7 +16334,9 @@
     }).filter((x) => Object.keys(x).length > 1);
     const manual = used.filter((a) => a.manual).map((a) => ({ e: entryIdOf(a), a: { name: a.name, company: !!a.company, other: !!a.other, entityType: a.entityType || null, mbid: a.mbid, mbName: a.mbName, mbComment: a.mbComment || '' } }));
     // [S058] (3.38.12) the reading of "⇅" (the import reads the lines so again, its rows are remembered so)
-    return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual, works: worksSnapshot(), ...(S.stackUp ? { stackUp: true } : {}) };
+    return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual, works: worksSnapshot(), ...(S.stackUp ? { stackUp: true } : {}),
+      // (3.39.8, review) the names chosen for initials of several names ("JR" → Jane Roe)
+      ...(S.initialsChosen && S.initialsChosen.size ? { initials: [...S.initialsChosen] } : {}) };
   }
 
   /**
@@ -16434,6 +16508,11 @@
       byKey.set(f.k, r);
       bases.add(f.b);
     });
+    // (3.39.8, review) initials of several names chosen then: chosen again first (their rows keep their ids)
+    for (const [said, name] of snap.initials || []) {
+      const a = [...S.artists.values()].find((x) => x.initialsFor && x.name === said && x.initialsFor.some((n) => norm(n) === norm(name)));
+      if (a) initialsUse(a, name, { quiet: true });
+    }
     const entries = new Map([...S.artists.values()].map((a) => [entryIdOf(a), a]));
     for (const m of snap.manual || []) {
       if (entries.has(m.e) || !m.a || !m.a.mbid) continue;
@@ -18445,29 +18524,38 @@
    * [3.39.7] Initials of several names (collected item K-8): the name clicked – its rows go to its entry (one of that name already
    * there) or this entry becomes it, looked up in MusicBrainz by that name; credited as the initials.
    */
-  function initialsUse(a, name) {
+  function initialsUse(a, name, { quiet = false } = {}) {
     const said = a.name;
     const rows = S.rows.filter((r) => r.artistKey === a.key);
+    // (3.39.8, review) a credit typed by hand stays; the choice is remembered with the release (rememberSnapshot)
+    const credited = (r) => Object.assign(r, { anv: said, ...(r.creditTouched ? {} : { credit: said }) });
+    S.initialsChosen = S.initialsChosen || new Map();
+    S.initialsChosen.set(said, name);
     const target = [...S.artists.values()].find((x) => x !== a && !x.company && !x.other && norm(x.name) === norm(name));
     if (target) {
-      rows.forEach((r) => Object.assign(r, { artistKey: target.key, anv: said, credit: said }));
+      rows.forEach((r) => credited(Object.assign(r, { artistKey: target.key })));
       S.artists.delete(a.key);
+      // (review) a row of it taken out before and brought back later goes to the entry chosen (restoreRow)
+      S.entryMoved = S.entryMoved || new Map();
+      S.entryMoved.set(a.key, target.key);
       target.anvs = uniq(S.rows.filter((x) => x.artistKey === target.key).map((x) => x.anv).filter(Boolean));
-      log('ok', 'initialsUsed', { said, name });
-      renderGroups();
-      refresh();
-      return;
+    } else {
+      Object.assign(a, { name, rawName: name, initials: said, status: 'pending', mbid: null, mbName: '', mbComment: '', candidates: [], nameHits: null, error: '', matchTouched: false });
+      delete a.initialsFor;
+      rows.forEach(credited);
+      a.anvs = [said];
     }
-    Object.assign(a, { name, rawName: name, initials: said, status: 'pending', mbid: null, mbName: '', mbComment: '', candidates: [], nameHits: null, error: '' });
-    delete a.initialsFor;
-    rows.forEach((r) => Object.assign(r, { anv: said, credit: said }));
-    a.anvs = [said];
-    log('ok', 'initialsUsed', { said, name });
+    if (!quiet) log('ok', 'initialsUsed', { said, name });
     renderGroups();
-    resolveArtists({ only: [a] }).then(() => {
-      renderGroups();
-      refresh();
-    });
+    renderWorks();
+    refresh();
+    if (!target) {
+      resolveArtists({ only: [a] }).then(() => {
+        renderGroups();
+        renderWorks();
+        refresh();
+      });
+    }
   }
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
@@ -26970,6 +27058,9 @@
     if (k < 0) return;
     const { row, index, artist } = S.removedRows.splice(k, 1)[0];
     if (artist) S.artists.set(artist.key, artist);
+    // (3.39.8, review) its entry merged into another meanwhile (initials chosen): the row goes there
+    const moved = S.entryMoved && S.entryMoved.get(row.artistKey);
+    if (moved && !S.artists.has(row.artistKey)) row.artistKey = moved;
     S.rows.splice(Math.min(Math.max(index, 0), S.rows.length), 0, row);
     S.messages = S.messages.filter((m) => !(m.action && m.action.act === 'row-restore' && m.action.arg === id));
     renderMessages();
