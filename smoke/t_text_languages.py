@@ -31,7 +31,7 @@ Alto: Pierre Leroux"""
     ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
     const c = tr.querySelector('[data-f=role-credit]');
-    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '',
+    return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '',
       (tr.querySelector('.dci-bass-ask') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim()]; })])))()"""
     results = []
     with sync_playwright() as p:
@@ -99,7 +99,8 @@ def case_nordic():
        credit "art"; each says the role as written on Discogs (S033). On the Discogs page (companion) its line has two marks.
     C) Only the case differs from MusicBrainz: "VALFAR" (credited as, ANV) for Valfar, "KUNST MANN" for Kunst Mann, the
        label "Voices Of Wonder" (Distributed By) for Voices of Wonder – no "credited as" (S031); "M. Mann" for Master Mann
-       stays. Typed in by hand, "VALFAR" stays.
+       stays. Typed in by hand, "VALFAR" stays. [3.38.12] (F-4, S060) "VALFAR" and "KUNST MANN" are in normal case from the start
+       (the rows name S060 instead of S031).
     D) "Wood Flute" (Discogs) is the instrument flute with the role credit "wood flute" (S035).
     E) A pasted text: "Drums, percussion, and wood flutes" – flute credited "wood flutes" (S035); "Miksa av: X" mix without
        role credit (S032); "Logo og kunst: Y" design "logo" and artwork "art" (S033).
@@ -148,7 +149,7 @@ Logo og kunst: Kari Nordmann"""
     ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
     const c = tr.querySelector('[data-f=role-credit]'); const cr = tr.querySelector('[data-f=credit]'); const sp = [...tr.querySelectorAll('.dci-sub')].find(x => /one row per task/.test(x.textContent));
-    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '-', cr ? cr.value : '-',
+    return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '-', cr ? cr.value : '-',
       sp ? sp.textContent.trim() : '']; })])))()"""
     results = []
     with sync_playwright() as p:
@@ -167,7 +168,8 @@ Logo og kunst: Kari Nordmann"""
         row = lambda name, i=0: ((g.get(name) or []) + [['', '', '', '', '', '']] * (i + 1))[i]
         RULES = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || s.querySelector('.dci-gname strong').textContent.trim()) === name);
       return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [...tr.querySelectorAll('.dci-ruleid')].map(b => b.textContent.trim())) : null; }"""
-        f1 = {n: pg.evaluate(RULES, n) for n in ('Grafik Mann', 'KUNST MANN', 'Valfar', 'Flute Frau')}
+        # [3.38.12] (F-4, S060) "KUNST MANN" is "Kunst Mann"
+        f1 = {n: pg.evaluate(RULES, n) for n in ('Grafik Mann', 'Kunst Mann', 'Valfar', 'Flute Frau')}
         # A)
         a = [row('Grafik Mann'), row('Master Mann'), row('Mix Mann'), row('Bob Producer'), row('Valfar', 0), row('Valfar', 1)]
         print('A) nordisch:', [x[:4] for x in a])
@@ -185,8 +187,8 @@ Logo og kunst: Kari Nordmann"""
         # C) case only
         vow = g.get('Voices Of Wonder') or g.get('Voices of Wonder') or []
         c1 = [row('Valfar', 0)[4], row('Valfar', 1)[4], [x[4] for x in k], [x[4] for x in vow], row('Master Mann')[4]]
-        # [3.32.2] the head shows "VALFAR*" (the release's spelling), the name is in data-name
-        sec = "section.dci-group:has(.dci-gname strong[data-name='Valfar'])"
+        # [3.32.2] the head showed "VALFAR*" (the release's spelling); [3.38.12] (S060) "Valfar" – its spelling in normal case
+        sec = "section.dci-group:has(.dci-gname strong:text-is('Valfar'))"
         f = pg.locator(f'{sec} tr.dci-row').nth(0).locator('[data-f=credit]')
         f.fill('VALFAR')
         f.dispatch_event('change')
@@ -200,8 +202,8 @@ Logo og kunst: Kari Nordmann"""
         results.append(d1[:4] == ['Wood Flute', 'instrument', 'flute', 'wood flute'])
         # F) [3.28.3] the rules named at the rows (read before C)
         print('F) Regeln an den Zeilen:', f1)
-        results.append('S032' in f1['Grafik Mann'][0] and all('S033' in r and 'S018' not in r for r in f1['KUNST MANN'])
-                       and all('S034' in r and 'S031' in r for r in f1['Valfar']) and 'S035' in f1['Flute Frau'][0])
+        results.append('S032' in f1['Grafik Mann'][0] and all('S033' in r and 'S018' not in r and 'S060' in r for r in f1['Kunst Mann'])
+                       and all('S034' in r and 'S060' in r for r in f1['Valfar']) and 'S035' in f1['Flute Frau'][0])
         # E) a pasted text
         H.src_menu(pg, 'text-open')
         pg.fill('[data-f=text-src]', TEXT)
@@ -257,7 +259,7 @@ Assembled by Kai Lurk (noises, electronics) & Fen Field (field recordings)."""
     ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
   [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const p = tr.querySelector('[data-f=primary]');
     const c = tr.querySelector('[data-f=role-credit]');
-    return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '-']; })])))()"""
+    return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', p ? p.value : '', c ? c.value : '-']; })])))()"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -334,9 +336,9 @@ def case_sounds():
 
     H.discogs_release = rel
     ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || s.querySelector('.dci-gname strong').textContent.trim()) === name);
-  if (!g) return null; const tr = [...g.querySelectorAll('tr.dci-row')].find(r => /sounds/i.test(r.querySelector('.dci-drole').textContent)) || g.querySelector('tr.dci-row');
+  if (!g) return null; const tr = [...g.querySelectorAll('tr.dci-row')].find(r => /sounds/i.test(r.querySelector('.dci-drole').dataset.raw)) || g.querySelector('tr.dci-row');
   const t = tr.querySelector('[data-f=type]'); const ask = tr.querySelector('.dci-type-ask'); const p = tr.querySelector('[data-f=primary]'); const c = tr.querySelector('[data-f=role-credit]');
-  return { id: tr.dataset.row, role: tr.querySelector('.dci-drole').textContent.trim(), type: t ? (t.options[t.selectedIndex] || {}).text : '', primary: p ? p.value : '', credit: c ? c.value : '',
+  return { id: tr.dataset.row, role: tr.querySelector('.dci-drole').dataset.raw.trim(), type: t ? (t.options[t.selectedIndex] || {}).text : '', primary: p ? p.value : '', credit: c ? c.value : '',
     ask: ask ? ask.textContent.replace(/\\s+/g, ' ').trim() : null, opts: ask ? [...ask.querySelectorAll('[data-act=type-pick]')].map(b => b.textContent.trim()) : [],
     rules: [...tr.querySelectorAll('.dci-ruleid')].map(b => b.textContent.trim()) }; }"""
     results = []
@@ -385,7 +387,7 @@ def case_members():
     B) Bandcamp, the sentence in the "about" text (which otherwise gives only places): the three performers again; "Vision
        Fortune is back with a new album." there neither."""
     ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
-  [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return [tr.querySelector('.dci-drole').textContent.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', (tr.querySelector('[data-tcount]') || {}).textContent]; })])))()"""
+  [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return [tr.querySelector('.dci-drole').dataset.raw.trim(), t ? (t.options[t.selectedIndex] || {}).text : '', (tr.querySelector('[data-tcount]') || {}).textContent]; })])))()"""
     MEMBERS = ['AC Williams', 'Alex Townend', 'Andres Ayerbe']
     VF = (H.uid('dddddddd', 60), 'Vision Fortune')
     H.ARTISTS[3060] = VF

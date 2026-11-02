@@ -21,7 +21,11 @@ MBvibecode/ (this repository)
   mb-vibecode-credits-importer-languages.json   German, Spanish, French (3.34.0, @resource languages; English in the script)
   tools/i18n_add.py                   adds or replaces texts: English in the script, de / es / fr in the languages file (3.34.0)
   tools/i18n_del.py                   removes texts in all languages (script and languages file, with plural forms)
-  smoke/harness.py                    mock MusicBrainz, Discogs and Bandcamp, shared GM storage, helpers
+  tools/mb_link_types.py              [3.38.10] writes smoke/mb_link_types.json from a checkout of metabrainz/musicbrainz-server
+                                      (po/relationships.pot and t/sql/initial.sql are enough: git sparse-checkout)
+  smoke/harness.py                    mock MusicBrainz, Discogs and Bandcamp, shared GM storage, helpers; [3.38.10] link phrases: the
+                                      type's name, instrument and vocal with MusicBrainz's phrase ("{additional} {guest} {solo}
+                                      {instrument:%|instrument}": rows named "bass", "guest saxophone"; the bare form the type's name)
   smoke/zooid.py                      scenario after Discogs release 38282688 (10 tracks, two sessions, two studios)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
@@ -35,9 +39,12 @@ MBvibecode/ (this repository)
                                       harness set back after it, one result per case and one for the file
   smoke/t_*.py                        tests: topic files with cases (case_<name>, each the former t_<name>.py), and seven
                                       files of their own (golden tests, comparisons with older logs); each ends with
-                                      "Ergebnis: OK/FEHLER"
+                                      "Ergebnis: OK/FEHLER"; [3.38.10] a row's role as the source wrote it is `data-raw` of
+                                      `.dci-drole` (its text is MusicBrainz's name)
   smoke/register_corpus.json          frozen input of the register's golden test (t_register.py)
   smoke/register_golden.json          its expected results (written with UPDATE=1)
+  smoke/mb_link_types.json            [3.38.10] MusicBrainz's relationship types: names and link phrases (all 698), entity types and
+                                      parents (427: those of the server's test database; newer ones without), attributes, the commit
   smoke/text_corpus.json              credits lines from real releases and cases around them, with their stored reading
                                       ('expect', written with UPDATE=1 by t_textcorpus.py; 'later': still read wrong, planned)
 ```
@@ -72,7 +79,10 @@ python3 t_register.py           # the mapping register stays the same (3.11.0, g
                                 # texts in the dashboard and the window "Mapping rules" – compared with register_golden.json;
                                 # UPDATE=1 python3 t_register.py writes the golden file anew after a change of the register that is meant
                                 # (3.33.1: ✎, "code" and the forms of the window are hidden before its sections are read; 3.36.0: the
-                                # texts only after the import of the release is complete – before, their end depended on the timing)
+                                # texts only after the import of the release is complete – before, their end depended on the timing;
+                                # 3.38.10: D) every role's name as MusicBrainz shows it – the first of its types MusicBrainz has between an
+                                # artist and its level, the link phrase with flags and instrument or voice from mb_link_types.json, golden
+                                # "phrases": "Engineer [Recording]" → recording engineer, "Co-producer" → co-producer)
 python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus text_corpus.json through the text adapter (golden), then the
                                 # Maya Recordings credits in the dashboard – four sentences in one line, "P + ©", thanks and strings left out
                                 # on purpose, 1988 in the pool (3.37.9: the artwork's year; before: none); "Logo by … instagram.com/…" (design, "logo", the profile, a suggestion via
@@ -127,7 +137,10 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     the instrument is set again) and a matrix line's (staged without credit). instrguess / unknownask: chimes "chaims"
                                 #   stacked: 3.38.7 (167, S058, S059): "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO / Barry
                                 #     GUY / DOUBLE BASS" – three entries in normal case; the instruments above; "Jane Roe / PIANO / John Doe" not
-                                #     clear: the note, the log, ⇅ (John Doe), another text (Jane Roe again); one line with capitals; the Discogs notes
+                                #     clear: the note, the log, ⇅ (John Doe), another text (Jane Roe again); one line with capitals; the Discogs notes;
+                                #     3.38.12 (F-5): ⇅ in the dashboard – no new import, Max Mix put on Skip stays; "ABBA – piano" → Abba (S060)
+                                #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
+                                #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -281,7 +294,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     the setting), ✓ the list for the release (setting not stored, the job at staging), loaded again: the offer
                                 #     back, ✕ hides it (log, the job gone); 3.38.3: "Tracks 2–4"
                                 #   livegroup: 3.38.3: two media – "Live recordings: CD 2, track 1.2", one group line of three (▸ the tracks, its
-                                #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third
+                                #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third;
+                                #     3.38.13: "track 1.2, CD 2" (F-2, by positions – the track's index, not its number), the heading purple (F-1)
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
@@ -308,6 +322,10 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   poemlevels: 3.32.7: the type of poems follows the level – works lyricist, recordings spoken vocals, release the
                                 #     question Q010 (lyricist · spoken vocals · liner notes, kept); the compact line goes works → recordings →
                                 #     release → skip; "Poems" alone: Q009, then the level decides
+                                #   mbnames: 3.38.10 (177): MusicBrainz's names – the phrases of all types of the test page from mb_link_types.json:
+                                #     rows ("recording engineer", "guest saxophone", "remastering"), tooltip "from Discogs: …", types, "additional"
+                                #     ticked, compact line, preview, entry matrix and chip, works matrix ("additional composer", menu
+                                #     "sub-publisher"), the log "Staged: …"
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎, export and import
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
@@ -359,9 +377,17 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     Esc and ✕ close them, the focus back on ⌨
                                 #   anvcredit: 3.37.11: "Kenneth Ansell*" (Ken Ansell) in the matrix view – the chip "artist credit in MusicBrainz:
                                 #     “Kenneth Ansell” (the Discogs spelling *)", the field, the log; emptied: no chip
+                                #   spellings: 3.38.11 (175, 176): Oliver Lake "Lake*" only in the writing credits – head "Oliver Lake", chip
+                                #     "as “Lake” (+1)" / "for writer", field empty; "C. Allen*" in all roles; matrix column "Credited as", a line
+                                #     per spelling, compact "as “O. Lake”", lines joined; a place: "Credited as for all roles", set for all
+                                #   capsnames: 3.38.12 (F-4, S060): Discogs names in capitals in normal case ("TORBEN SNEKKESTAD", "DJ SHADOW"),
+                                #     ABBA linked to "ABBA" as MusicBrainz writes it, "LAKE" → credited "Lake", the log; "↺ in capitals" and back;
+                                #     "LAKE" with ↺, "DOOM" linked to "MF DOOM" credited "DOOM", a credit typed by hand stays
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
-                                #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds
+                                #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds;
+                                #     3.38.13 (178): the head the last line of the block, "▲ fold" / "▼ show" in its middle, the arrow ▲ / ▼,
+                                #     the focus on the button again after a click
 
 python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pressed (until 3.36.4 the bridge to ⚙), settings without an import, reset, the update notice
                                 #   settabs: the settings as tabs (3.25.0; 3.27.2: the heading folds them in): only the gear folds them out and in, eight tabs (3.29.2: nine, "Appearance" after General; General chosen), ↓ / End /
@@ -430,7 +456,9 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #   foot: 3.38.4: the footer – 1500 px one line (≤ 60 px: ▲▼, the summary with the levels as tooltip, the chip
                                 #     "2 tracks without a work" and its message on a click, Preview, the short checkboxes with their tooltips,
                                 #     Stage and ⓘ at the right), 900 px two lines with "⚙ Options ▾" (above, ticked there, closed by a click
-                                #     elsewhere and Esc), 600 px Stage whole, staged: "✓ 30 in the editor", in the page one line at the bottom
+                                #     elsewhere and Esc), 600 px Stage whole, staged: "✓ 30 in the editor", in the page one line at the bottom;
+                                #     3.38.13 (F-3): the green chip flashes once (not again when its text is opened and closed or the
+                                #     dashboard closed and opened again: one animationstart; the class gone after the flash)
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset
@@ -619,6 +647,13 @@ python3 t_companion_discogs.py  # Companion on Discogs: marks switched by a clic
                                 #   relcheck: the release page keeps its check (1.8.2): ✓ after "Enter edit", a check without answer keeps ✓ and is
                                 #     retried, a background page's beat counts 75 s ([Companion 1.9.1] ten minutes: one 5 min old keeps the marks)
                                 #   trackmarks: a status mark on each Discogs track line, checked per track on the release page
+                                #   trackcells: 3.38.8 / companion 1.9.2 (174): a tracklist as a table with credits on tracks – marks inside the
+                                #     cell before the line with the role, none where the role is not on the line, no mark in a row (three cells);
+                                #     [1.10.0] "Written-By – Bass*" of an artist also in "Flute – Bass Man": its own line, not before the title
+                                #   multi: 3.38.9 / companion 1.10.0 (173): two other imports send their status – the marks on the Discogs tab stay;
+                                #     the dashboard opened late: no "older companion"; the same release in another import used later: its marks
+                                #     and the note "2 imports …", a click there does not reach the first; the first used again: its marks, a
+                                #     click reaches it; closed: no note
 
 python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, credits switched off, dates and track groups underlined
                                 #   bcview: the Bandcamp view of the companion (3.17.0 / 1.8.0): "no Bandcamp tab" → open in background, another page →
@@ -630,6 +665,8 @@ python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, cred
                                 #   textmarks: used dates and track groups underlined at the source (3.28.3 / companion 1.9.0): Discogs notes (matrix,
                                 #     a row, not the pool), status off/on, Bandcamp credits (a year also in "released …") and "about";
                                 #     two "Vocals [...]" lines of one artist
+                                #   multibc: 3.38.9 / companion 1.10.0 (173): three imports, two sources (a Bandcamp album here, a Discogs release
+                                #     and another one in two other editors) – for 10 s the marks on the Bandcamp tab and the Discogs tab stay
 
 python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file, the languages file
                                 #   i18n: the texts (3.27.1; 3.34.0: English from the script, de / es / fr from the languages file): every key

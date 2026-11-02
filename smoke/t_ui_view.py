@@ -56,7 +56,7 @@ def case_compact():
               pg.evaluate("localStorage.getItem('dci-view')")]
         bass = line('Bass Man')
         print('A) zuerst voll:', a_full, '| nach dem Symbol:', a0, '\n   Bass Man:', bass)
-        results.append(a_full == [False, 'false', 0, True] and a0 == [True, 'true', 0, '"compact"'] and bass and bass[0]['text'].startswith('▸ Bass → instrument · bass Recording all 4 tracks no date')
+        results.append(a_full == [False, 'false', 0, True] and a0 == [True, 'true', 0, '"compact"'] and bass and ' '.join(bass[0]['text'].split()).startswith('▸ bass Recording all 4 tracks no date')
                        # [3.32.3] the question whole, its possibilities to click (item 102)
                        and bass[0]['flags'] == [['dci-cl-ask dci-cl-askq', 'Bass: which instrument? electric bass guitar · double bass · acoustic bass guitar']] and not bass[0]['typeVisible'])
         # B) open, close
@@ -92,7 +92,8 @@ def case_compact():
         pg.wait_for_timeout(400)
         d1 = line('Bass Man')[0]
         print('D) beantwortet:', d1['text'], d1['flags'], '| offen:', d1['open'])
-        results.append('→ instrument · double bass' in d1['text'] and d1['flags'] == [] and not d1['open'])
+        # [3.38.10] the line says MusicBrainz's name of the relationship (collected item 177): the instrument
+        results.append(' '.join(d1['text'].split()).startswith('▸ double bass “bass” Recording') and d1['flags'] == [] and not d1['open'])
         # E) a skipped row: grey with ✕
         pg.click(f'tr[data-row="{guitar}"] .dci-cl-role')
         pg.click(f'tr[data-row="{guitar}"] [data-act=level][data-level=skip]')
@@ -104,7 +105,7 @@ def case_compact():
         pg.wait_for_timeout(300)
         e2 = [line('Guitar Guy'), [m for m in pg.locator('.dci-msg').all_inner_texts() if 'Guitar Guy' in m][:1]]
         print('E) Skip:', e1['text'], e1['x'], e1['bg'], '| ✕:', e2)
-        results.append(e1['text'].startswith('▸ Guitar → instrument · guitar Skip') and e1['x'] and e1['bg'] != 'rgb(255, 255, 255)' and e2[0] is None and bool(e2[1]))
+        results.append(' '.join(e1['text'].split()).startswith('▸ guitar Skip') and e1['x'] and e1['bg'] != 'rgb(255, 255, 255)' and e2[0] is None and bool(e2[1]))
         # F) compact remembered, full in the settings
         f1 = [pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-compact')"), line('Bass Man')[0]['typeVisible'], pg.evaluate("localStorage.getItem('dci-view')")]
         pg.reload()
@@ -416,7 +417,7 @@ def case_ui301():
                 break
         print('C) Ebene, x, Typ:', seq)
         results.append([x[0] for x in seq] == ['recording', 'release', 'skip', 'recording'] and len({x[1] for x in seq}) == 1
-                       and seq[2][2] == '→ instrument · bass')
+                       and seq[2][2] == '')
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(300)
         # D)
@@ -579,10 +580,13 @@ def case_clineask():
         return d
 
     H.discogs_release = rel
+    # [3.38.10] conductor as on MusicBrainz (the line names the type chosen by MusicBrainz's relationship type)
+    H.lt(151, '234670ce-5f22-4fd0-921b-ef1662695c5d', 'conductor', 'artist', 'recording', (1,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     LINE = """() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Drum Guy');
-  const tr = [...g.querySelectorAll('tr.dci-row')].find(r => /Directed By/.test(r.querySelector('.dci-cl-role').textContent));
+  const tr = [...g.querySelectorAll('tr.dci-row')].find(r => /Directed By/.test(r.querySelector('.dci-cl-role').dataset.raw));
   const q = tr.querySelector('.dci-cl-askq');
-  return { id: tr.dataset.row, open: tr.classList.contains('dci-open'), type: (tr.querySelector('.dci-cl-type') || {}).textContent.replace(/\\s+/g, ' ').trim(),
+  return { id: tr.dataset.row, open: tr.classList.contains('dci-open'), type: (tr.querySelector('.dci-cl-role').textContent + ' ' + (tr.querySelector('.dci-cl-type') || {}).textContent).replace(/\\s+/g, ' ').trim(),
     ask: q ? [...q.querySelectorAll('[data-act=type-pick]')].map(b => b.textContent.trim()) : null }; }"""
     results = []
     with sync_playwright() as p:
@@ -669,7 +673,9 @@ def case_foot():
     B) 900 px: two lines (at most 90 px) – the checkboxes in "⚙ Options ▾": it opens above, inside the dashboard, a box ticked there
        counts; a click elsewhere and Esc close it.
     C) 600 px: "Stage …" whole and inside the dashboard, at most 120 px.
-    D) Staged: the chip "✓ 30 in the editor (…)", its tooltip "… Check them there and click “Enter edit”." (at most 120 px).
+    D) Staged: the chip "✓ 30 in the editor (…)", its tooltip "… Check them there and click “Enter edit”." (at most 120 px);
+       [3.38.13] (F-3) it flashes once when it comes (its text opened and closed, the dashboard closed and opened again: not again;
+       the class gone after the flash).
     E) In the page (1500 px): one line, stuck to the bottom."""
     M = """(() => { const f = document.querySelector('.dci-foot'); const r = (e) => { const x = e.getBoundingClientRect(); return [Math.round(x.left), Math.round(x.top), Math.round(x.right), Math.round(x.bottom)]; };
       const vis = (e) => !!e && e.getClientRects().length > 0; const panel = document.querySelector('.dci-panel');
@@ -730,13 +736,28 @@ def case_foot():
         ok_c = c['h'] <= 120 and c['stage'][0] >= c['panel'][0] and c['stage'][2] <= c['panel'][2] and c['info'][2] <= c['panel'][2]
         # D) staged (the dashboard stays as narrow as the window was)
         pg.set_viewport_size({'width': 1500, 'height': 1000}); pg.wait_for_timeout(400)
+        # [3.38.13] (F-3) the chip of what was staged flashes once: count the chips that come with the class (and their animation)
+        pg.evaluate("""(() => { window.__flash = []; new MutationObserver(() => document.querySelectorAll('.dci-foot-chip-flash').forEach(c => {
+          if (!c.__seen) { c.__seen = 1; window.__flash.push(getComputedStyle(c).animationName); } })).observe(document.querySelector('.dci-foot'), { childList: true, subtree: true });
+          window.__anim = 0; document.addEventListener('animationstart', (e) => { if (e.animationName === 'dci-chip-flash') window.__anim++; }, true); })()""")
         pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         pg.wait_for_timeout(1500)
         d = pg.evaluate(M)
         done = [x for x in d['chips'] if x[0].startswith('✓')]
-        print('D) gestagt:', d['chips'], '| Höhe:', d['h'], d['tops'])
-        ok_d = len(done) == 1 and ' in the editor (' in done[0][0] and done[0][1].startswith('✓ ') and done[0][1].endswith('Check them there and click “Enter edit”.') and d['h'] <= 120
+        # (clicked: its text below; again: hidden – no second flash)
+        pg.click('.dci-foot-chip[data-msg=stage-done]'); pg.wait_for_timeout(300)
+        pg.click('.dci-foot-chip[data-msg=stage-done]'); pg.wait_for_timeout(300)
+        flash = pg.evaluate('window.__flash')
+        pg.wait_for_timeout(1000)
+        cls_gone = pg.evaluate("!document.querySelector('.dci-foot-chip-flash')")
+        # (the dashboard closed and opened again: the chip is still there, it does not flash again)
+        pg.click('.dci-head [data-act=close]'); pg.wait_for_timeout(400)
+        pg.click('#dci-open'); pg.wait_for_timeout(1500)
+        again = pg.evaluate("[!document.getElementById('dci-overlay').hidden, !!document.querySelector('.dci-foot-chip[data-msg=stage-done]'), window.__anim]")
+        print('D) gestagt:', d['chips'], '| Höhe:', d['h'], d['tops'], '| aufgeblinkt:', flash, '| Klasse weg:', cls_gone, '| wieder geöffnet [offen, Chip, animationstart]:', again)
+        ok_d = len(done) == 1 and ' in the editor (' in done[0][0] and done[0][1].startswith('✓ ') and done[0][1].endswith('Check them there and click “Enter edit”.') and d['h'] <= 120 \
+            and flash == ['dci-chip-flash'] and cls_gone and again == [True, True, 1]
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d)
         results += [ok_a, ok_b, ok_c, ok_d]
         b.close()

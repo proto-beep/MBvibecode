@@ -136,7 +136,7 @@ def case_facets():
         # C) [3.36.7] the places of the notes with their tracks, no area
         names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent.trim())")
         places = pg.evaluate("""[...document.querySelectorAll('section.dci-group')].filter(g => /Goldsmith|Heiman/.test(g.querySelector('.dci-gname strong').textContent))
-      .map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(),
+      .map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
         ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim()])])""")
         print('C) Einträge:', names, '\n   Orte:', places)
         results.append('London' not in names and places == [["Goldsmith's College", [['Recorded At', 'ⓘ Tracks A1–B1 from the notes']]],
@@ -185,7 +185,7 @@ def case_trackside():
     H.ws_release = ws
     H.COMPANIES[1020] = ('place', H.uid('eeeeeeee', 20), 'Zojoji Hall')
     PLACES = """[...document.querySelectorAll('section.dci-group')].filter(g => /Zojoji/.test(g.querySelector('.dci-gname strong').textContent))
-      .map(g => [g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(),
+      .map(g => [g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
         ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim(), (r.querySelector('.dci-role') || r).textContent.includes('from the notes')])])"""
     results = []
     with sync_playwright() as p:
@@ -261,7 +261,7 @@ def case_artwork():
     H.discogs_release = rel
     ROW = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim().startsWith(name));
       if (!g) return null; const r = g.querySelector('tr.dci-row'); const t = r.querySelector('[data-f=type]'); const sg = r.querySelector('.dci-datechip-sugg');
-      return { type: t ? (t.selectedOptions[0] || {}).text : (r.querySelector('.dci-drole') || {}).textContent, chip: ((r.querySelector('.dci-datechip:not(.dci-datechip-sugg)') || {}).textContent || '').replace(/\\s+/g, ' ').trim(),
+      return { type: t ? (t.selectedOptions[0] || {}).text : (r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw, chip: ((r.querySelector('.dci-datechip:not(.dci-datechip-sugg)') || {}).textContent || '').replace(/\\s+/g, ' ').trim(),
         sugg: sg ? [sg.querySelector('.dci-datechip-text').textContent.trim(), sg.title] : null, credit: (r.querySelector('[data-f=credit]') || {}).value || '' }; }"""
     results = []
     with sync_playwright() as p:

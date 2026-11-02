@@ -1,6 +1,6 @@
 """Companion on Discogs: marks switched by a click, the check on the release page, marks on track lines (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged; `python3 t_companion_discogs.py <case> …` runs only those."""
+Cases: keepmarks, relcheck, trackmarks – each the former smoke/t_<case>.py, unchanged –, trackcells (3.38.8), multi (3.38.9); `python3 t_companion_discogs.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -148,7 +148,7 @@ def case_relcheck():
         # A) checked: ✓
         poll(dg, f"(() => {{ const m = {MARKS}; return m.includes('✓') && !m.includes('●'); }})()", 30)
         a = dg.evaluate(MARKS)
-        checked0 = H.STORE.data['statusMap'].get('checked')
+        checked0 = H.STORE.data[f'statusMap:{H.REL}'].get('checked')  # [companion 1.10.0] per release
         print('A) nach „Enter edit“:', a, '| vorgemerkt waren', staged)
         results.append(a.count('✓') >= 1 and '●' not in a)
         # B) the check after 20 s cannot read MusicBrainz
@@ -159,18 +159,19 @@ def case_relcheck():
         dg.wait_for_timeout(2500)
         b1 = dg.evaluate(MARKS)
         print('B) Prüfung ohne Antwort:', b1, '| nach', round(time.time() - t0), 's')
-        poll(dg, f"(() => {{ const m = GM_getValue('statusMap'); return m && m.checked > {checked0}; }})()", 30)
+        poll(dg, f"(() => {{ const m = GM_getValue('statusMap:{H.REL}'); return m && m.checked > {checked0}; }})()", 30)
         b2 = dg.evaluate(MARKS)
         print('   erneut versucht:', b2)
         results.append(H.WS_FAIL.get('release') == 0 and b1 == a and b2 == a)
-        # C) a page in the background: its last beat counts for 75 s; [Companion 1.9.1] ten minutes (collected item 105)
+        # C) a page in the background: its last beat counts for 75 s; [Companion 1.9.1] ten minutes (collected item 105);
+        #    [companion 1.10.0] a beat per page (statusBeat:<release>:<page>)
         pg.close()
         poll(dg, f"{MARKS}.length === 0", 15)
         now = int(time.time() * 1000)
-        H.STORE.set('statusBeat', {'pageId': f'release-{H.REL}', 'release': H.REL, 'ts': now - 300000, 'hidden': True})
+        H.STORE.set(f'statusBeat:{H.REL}:release-{H.REL}', {'pageId': f'release-{H.REL}', 'release': H.REL, 'ts': now - 300000, 'hidden': True})
         poll(dg, f"{MARKS}.length > 0", 10)
         c1 = len(dg.evaluate(MARKS))
-        H.STORE.set('statusBeat', {'pageId': f'release-{H.REL}', 'release': H.REL, 'ts': now - 30000, 'hidden': False})
+        H.STORE.set(f'statusBeat:{H.REL}:release-{H.REL}', {'pageId': f'release-{H.REL}', 'release': H.REL, 'ts': now - 30000, 'hidden': False})
         poll(dg, f"{MARKS}.length === 0", 10)
         print('C) Hintergrund-Seite vor 5 min:', c1, 'Marken | sichtbare Seite vor 30 s: keine')
         results.append(c1 == len(a))
@@ -234,6 +235,163 @@ def case_trackmarks():
         print('4) Werk verknüpft:', m3)
         results.append(m2 == {'1': '✓', '2': '✗'} and m3 == {'1': '✓', '2': '✓'})
         print('Fehler:', errs, dgerr)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_trackcells():
+    """Companion 1.9.2 (Credits Importer 3.38.8; collected item 174, Discogs 2631299 "Boston Duets" – maintainer: "sobald an den
+    einzelnen tracks auf Discogs relationships hängen … die schrift verschiebt sich und wird vertikal angezeigt"): the tracklist
+    is a table, tracks have credits of their own.
+    A) Track 3 "Flute – Bass Man", "Composed By – Writer Z" and "Written-By – Bass*" (the same artist again): each mark on its own
+       line, inside the title's cell – [companion 1.10.0] Written-By not before the title (the cell has every credit of the track).
+    B) Track 1 has "Written-By – Writer W" on the page, Discogs (its data) also "Lyrics By" for Writer W there: no mark for it in
+       the line of "Written-By" (until 1.9.1 a mark as the first child of the table row – a cell of its own, the columns shifted).
+    C) No mark is a child of a table row; every row keeps its three cells, the title in the second."""
+    orig_rel, orig_page = H.discogs_release, H.discogs_page
+
+    def rel():
+        d = orig_rel()
+        ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+        d['tracklist'][0]['extraartists'].append(ex('Writer W', 'Lyrics By', 3007))
+        d['tracklist'][2]['extraartists'].append(ex('Bass Man', 'Flute', 3001))
+        d['tracklist'][2]['extraartists'].append(dict(ex('Bass Man', 'Written-By', 3001), anv='Bass'))
+        return d
+
+    def page():
+        rows = ''
+        for i, t in enumerate(H.TITLES):
+            lines = []
+            if i < 2:
+                lines.append('<div>Written-By – <a href="/artist/3007-Writer-W">Writer W</a></div>')
+            if i == 2:
+                lines += ['<div>Flute – <a href="/artist/3001-Bass-Man">Bass Man</a></div>', '<div>Composed By – <a href="/artist/3009-Writer-Z">Writer Z</a></div>',
+                          '<div>Written-By – <a href="/artist/3001-Bass-Man">Bass</a>*</div>']
+            rows += f'<tr data-track-position="{i + 1}"><td>{i + 1}</td><td><span>{t}</span>{"".join(lines)}</td><td>3:00</td></tr>'
+        html = orig_page()
+        return html[:html.index('<section id="release-tracklist">')] + f'<section id="release-tracklist"><table>{rows}</table></section>' + html[html.index('<section id="release-credits">'):]
+
+    H.discogs_release, H.discogs_page = rel, page
+    TRACKS = """[...document.querySelectorAll('#release-tracklist tr')].map(tr => ({ pos: tr.dataset.trackPosition, cells: tr.children.length,
+      tds: [...tr.children].every(c => c.tagName === 'TD'), second: tr.children[1] ? tr.children[1].querySelector('span') && tr.children[1].querySelector('span').textContent : '',
+      marks: [...tr.querySelectorAll('.dci-dg-mark')].map(m => [m.parentElement.tagName, m.parentElement.textContent.replace(m.textContent, '').replace(/\\s+/g, ' ').trim()]) }))"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            dg, dgerr = H.open_discogs(ctx)
+            pg, errs = H.open_mb_edit(ctx)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+            dg.wait_for_timeout(2500)
+            t = dg.evaluate(TRACKS)
+            for x in t:
+                print('  ', x)
+            in_row = dg.evaluate("[...document.querySelectorAll('.dci-dg-mark')].filter(m => m.parentElement.tagName === 'TR').length")
+            t3 = next(x for x in t if x['pos'] == '3')
+            t1 = next(x for x in t if x['pos'] == '1')
+            ok_a = sorted(x[1] for x in t3['marks']) == ['Composed By – Writer Z', 'Flute – Bass Man', 'Written-By – Bass*'] and all(x[0] == 'DIV' for x in t3['marks'])
+            ok_b = [x[1] for x in t1['marks']] == ['Written-By – Writer W']
+            ok_c = in_row == 0 and all(x['cells'] == 3 and x['tds'] and x['second'] == H.TITLES[int(x['pos']) - 1] for x in t)
+            print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| Marken in Zeilen:', in_row)
+            results += [ok_a, ok_b, ok_c]
+            print('Fehler:', errs, dgerr)
+            results.append(not errs and not dgerr)
+            b.close()
+    finally:
+        H.discogs_release, H.discogs_page = orig_rel, orig_page
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_multi():
+    """Companion 1.10.0 (Credits Importer 3.38.9; collected item 173; maintainer: "sobald ich zwei geteilte tabs offen habe … fängt
+    der companion an in kurzen intervallen sich ein und auszuschalten … wäre es möglich mehrere imports (gerne eine beliebige anzahl
+    und falls das nicht möglich ist zumindest 3) gleichzeitig offen zu haben ohne dass das passiert?"): status and beat per release.
+    A) The dashboard (its Discogs release in a tab): the marks there.
+    B) Two more imports of other releases open (their editors send their status every 2 s, as a dashboard does): the marks on the
+       Discogs tab stay for 10 s – never gone, never another number (until 1.9.2 they went off and on).
+    C) Another import of the same Discogs release, used later: its marks (✓) and the note "2 imports of this release are open –
+       …"; a click on a mark there does not reach the first dashboard; the first one used again (a click into it): its marks at
+       once, a click on a mark reaches it (Skip); the other closed: no note (at once in a browser; in the test after its last
+       beat ran out).
+    D) The dashboard, opened 8 s after the page, says nothing about an old companion (1.10.0 sends its version with each status)."""
+    OTHER = [H.uid('dededede', 1), H.uid('dededede', 2), H.uid('dededede', 3)]
+    MARKS = "[...document.querySelectorAll('.dci-dg-mark')].map(m => m.textContent)"
+    SEND = """(m) => { const send = (x) => document.dispatchEvent(new CustomEvent('dci:to-discogs', { detail: JSON.stringify(x) }));
+      send(m); window.__t = setInterval(() => { send({ type: 'ping' }); send(Object.assign({}, m)); }, 2000); }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg, dgerr = H.open_discogs(ctx)
+        pg, errs = H.open_mb_edit(ctx)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        # (the dashboard opened only after 8 s: the companion's version came with its status – no "older companion")
+        pg.wait_for_timeout(8000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "document.querySelector('[data-el=sync]').textContent.includes('connected')", 20)
+        dg.wait_for_timeout(2500)
+        a = dg.evaluate(MARKS)
+        print('A) Marken:', len(a), sorted(set(a)))
+        ok_a = len(a) > 3
+
+        def fake(mbid, map_):
+            fp = ctx.new_page()
+            fp.route(f'https://musicbrainz.org/release/{mbid}/edit-relationships', lambda r: r.fulfill(body='<!doctype html><html><body><p>other import</p></body></html>', content_type='text/html'))
+            fp.goto(f'https://musicbrainz.org/release/{mbid}/edit-relationships')
+            H.with_companion(fp)
+            fp.evaluate(SEND, map_)
+            return fp
+
+        base = {'type': 'status-map', 'enabled': True, 'artwork': True, 'labels': {}, 'texts': [], 'targets': [], 'keepOnRelease': False, 'toggle': True, 'keepAfterClose': False}
+        f1 = fake(OTHER[0], dict(base, site='discogs', releaseId='4242', mbRelease=OTHER[0], items=[{'row': 'r1', 'artistId': 3001, 'role': 'Bass', 'base': 'Bass', 'positions': [], 'status': 'mb'}]))
+        f2 = fake(OTHER[1], dict(base, site='bandcamp', releaseId='https://band.bandcamp.com/album/x', mbRelease=OTHER[1], items=[]))
+        seen = []
+        for _ in range(40):
+            dg.wait_for_timeout(250)
+            seen.append(len(dg.evaluate(MARKS)))
+        print('B) Anzahl der Marken in 10 s:', sorted(set(seen)))
+        ok_b = set(seen) == {len(a)}
+        # C) the same Discogs release in another import, used later
+        same = H.STORE.data[f'statusMap:{H.REL}']
+        items = [dict(i, status='mb', byPos=[dict(x, status='mb') for x in (i.get('byPos') or [])] or None) for i in same['items']]
+        f3 = fake(OTHER[2], dict(base, site='discogs', releaseId=str(same['releaseId']), mbRelease=OTHER[2], items=items, labels=same.get('labels', {})))
+        dg.wait_for_timeout(4500)
+        c1, note1 = dg.evaluate(MARKS), dg.evaluate("(document.getElementById('dci-multi') || {}).textContent || ''")
+        LEVEL = "(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man'); const lv = g && g.querySelector('tr.dci-row [data-act=level][aria-pressed=true]'); return lv ? lv.dataset.level : null; })()"
+        lv0 = pg.evaluate(LEVEL)
+        # a click on a mark of the other import (Bass Man's): not this dashboard's
+        dg.evaluate("[...document.querySelectorAll('#release-credits li')].find(l => l.textContent.includes('Bass Man')).querySelector('.dci-dg-mark').click()")
+        dg.wait_for_timeout(1500)
+        lv1 = pg.evaluate(LEVEL)
+        pg.bring_to_front()
+        pg.mouse.click(5, 5)
+        dg.wait_for_timeout(2500)
+        c2 = dg.evaluate(MARKS)
+        # its own marks: a click reaches it (Bass Man to "Skip"), again: back
+        dg.evaluate("[...document.querySelectorAll('#release-credits li')].find(l => l.textContent.includes('Bass Man')).querySelector('.dci-dg-mark').click()")
+        dg.wait_for_timeout(1500)
+        lv2 = pg.evaluate(LEVEL)
+        dg.evaluate("[...document.querySelectorAll('#release-credits li')].find(l => l.textContent.includes('Bass Man')).querySelector('.dci-dg-mark').click()")
+        dg.wait_for_timeout(1500)
+        f3.close()
+        # (in the test the page's last words while closing are lost – a synchronous request then is refused –: its beat runs out
+        # after 8 s)
+        dg.wait_for_timeout(11000)
+        note3 = dg.evaluate("(document.getElementById('dci-multi') || {}).textContent || ''")
+        print('C) anderer Import:', sorted(set(c1)), '|', note1, '| Klick dort, Bass Man hier:', lv0, '→', lv1, '\n   erster wieder benutzt:', sorted(set(c2)), '| Klick:', lv2,
+              '| geschlossen, Hinweis:', repr(note3))
+        ok_c = set(c1) == {'✓'} and len(c1) == len(a) and note1 == 'MB x Vibecode: 2 imports of this release are open – the marks are those of the one used last' \
+            and lv1 == lv0 and sorted(c2) == sorted(a) and lv2 == 'skip' and note3 == ''
+        old = pg.evaluate("[...document.querySelectorAll('#dci-log li')].some(li => /companion is older/.test(li.textContent))")
+        ok_d = not old
+        print('A)', ok_a, '| B)', ok_b, '| C)', ok_c, '| D)', ok_d)
+        results += [ok_a, ok_b, ok_c, ok_d]
+        f1.close(); f2.close()
+        print('Fehler:', errs, dgerr)
+        results.append(not errs and not dgerr)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

@@ -77,7 +77,7 @@ def case_bcview():
 
     def row_of(pg, name, role):
         return pg.evaluate("""([n, r]) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === n);
-      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === r); return tr ? tr.dataset.row : null; }""", [name, role])
+      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === r); return tr ? tr.dataset.row : null; }""", [name, role])
 
 
     def poll(pg, js, timeout=20):
@@ -147,7 +147,7 @@ def case_bcview():
         bc.locator('.tralbum-credits .dci-dg-mark').nth(1).click()
         H.wait_for(pg, f"{LOGS}.some(x => /From Bandcamp: Bob Mix/.test(x))", 15)
         d1 = [x for x in pg.evaluate(LOGS) if 'From Bandcamp' in x]
-        flash = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').textContent.trim())")
+        flash = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').dataset.raw.trim())")
         print('D) Protokoll:', d1, '| hervorgehoben:', flash)
         results.append(d1 == ['From Bandcamp: Bob Mix – Mixed By'] and flash == ['Mixed By'])
         H.nav_switch(pg, 'data-click-toggle')
@@ -175,7 +175,7 @@ def case_bcview():
         links = pg.evaluate("""(() => [...document.querySelectorAll('.dci-bcpages')].map(d => [d.closest('section').querySelector('.dci-gname strong').textContent.trim(),
       d.textContent.replace(/\\s+/g, ' ').trim(), [...d.querySelectorAll('a')].map(a => a.href)]))()""")
         studio = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Studio X');
-      return g ? [...g.querySelectorAll('tr.dci-row')].map(t => t.querySelector('.dci-drole').textContent.trim() + ' · ' + t.querySelector('[data-tcount]').textContent.trim()) : null; })()""")
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(t => t.querySelector('.dci-drole').dataset.raw.trim() + ' · ' + t.querySelector('[data-tcount]').textContent.trim()) : null; })()""")
         print('F) Track-Seiten:', links, '| Studio X:', studio)
         f1 = jump(pg, bc, 'Anna Viola', 'Viola', "location.pathname === '/track/song-2' && !!document.querySelector('.dci-bc-hl')")
         poll(bc, "document.querySelectorAll('.tralbum-credits .dci-dg-mark').length >= 1")
@@ -291,7 +291,7 @@ def case_bcoff():
 
     def row(pg, name, role):
         return pg.evaluate("""([n, r]) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === n);
-      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').textContent.trim() === r);
+      const tr = g && [...g.querySelectorAll('tr.dci-row')].find(t => t.querySelector('.dci-drole').dataset.raw.trim() === r);
       if (!tr) return null; const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
       return [tr.dataset.row, lv ? lv.dataset.level : '', !!tr.querySelector('.dci-srcoff')]; }""", [name, role])
 
@@ -322,7 +322,7 @@ def case_bcoff():
         # A) the pointer resting on a mark shows its row; a click switches the credit off
         bc.locator('.tralbum-credits .dci-dg-mark').nth(1).hover()
         H.wait_for(pg, "document.querySelectorAll('tr.dci-flash').length > 0", 10)
-        hidden = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').textContent.trim())")
+        hidden = pg.evaluate("[...document.querySelectorAll('tr.dci-flash')].map(t => t.querySelector('.dci-drole').dataset.raw.trim())")
         shown = [x for x in pg.evaluate(LOGS) if 'From Bandcamp' in x]
         bc.mouse.move(5, 5)
         level0 = row(pg, 'Bob Mix', 'Mixed By')[1]
@@ -540,6 +540,87 @@ def case_textmarks():
         bcerr = [e for e in bcerr if 'page dismissal' not in e]
         print('Fehler:', errs, bcerr)
         results.append(not errs and not bcerr)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_multibc():
+    """Companion 1.10.0 (Credits Importer 3.38.9; collected item 173): three imports at once, two sources – this dashboard
+    imports a Bandcamp album (its tab open), another import a Discogs release (its tab open), a third one another Discogs
+    release; the two other editors send their status every 2 s. For 10 s the marks on the Bandcamp tab and on the Discogs tab
+    stay as they are (never gone, never another number; until companion 1.9.2 they went off and on)."""
+    BAND = 'https://testband.bandcamp.com'
+    ALBUM = f'{BAND}/album/testalbum'
+    H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
+    H.BC_ARTISTS[BAND + '/'] = H.ARTISTS[3040]
+    H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
+    CREDITS = 'Written by Jane Roe, mixed by Bob Mix\nMixed and mastered by Mark Master\nTest Band – guitar\nTrumpet: Peter Evans'
+    TRACKS = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, t in enumerate(H.TITLES)]
+    H.BC_PAGES[ALBUM] = H.bc_html({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': CREDITS}, 'trackinfo': TRACKS}, ALBUM)
+    orig_ws = H.ws_release
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+
+    H.ws_release = ws
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    BCMARKS = "[...document.querySelectorAll('.tralbum-credits .dci-dg-mark')].map(m => m.textContent).join('')"
+    DGMARKS = "[...document.querySelectorAll('.dci-dg-mark')].map(m => m.textContent).join('')"
+    SEND = """(m) => { const send = (x) => document.dispatchEvent(new CustomEvent('dci:to-discogs', { detail: JSON.stringify(x) }));
+      send(m); window.__t = setInterval(() => { send({ type: 'ping' }); send(Object.assign({}, m)); }, 2000); }"""
+    OTHER = [H.uid('dededede', 11), H.uid('dededede', 12)]
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=True, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        bc, bcerr = H.open_bandcamp(ctx, ALBUM)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+        for _ in range(100):
+            if len(bc.evaluate(BCMARKS)) >= 5:
+                break
+            bc.wait_for_timeout(200)
+        bc.wait_for_timeout(1000)
+        a_bc = bc.evaluate(BCMARKS)
+        dg, dgerr = H.open_discogs(ctx)
+
+        def fake(mbid, map_):
+            fp = ctx.new_page()
+            fp.route(f'https://musicbrainz.org/release/{mbid}/edit-relationships', lambda r: r.fulfill(body='<!doctype html><html><body><p>other import</p></body></html>', content_type='text/html'))
+            fp.goto(f'https://musicbrainz.org/release/{mbid}/edit-relationships')
+            H.with_companion(fp)
+            fp.evaluate(SEND, map_)
+            return fp
+
+        base = {'type': 'status-map', 'enabled': True, 'artwork': True, 'labels': {}, 'texts': [], 'targets': [], 'keepOnRelease': False, 'toggle': True, 'keepAfterClose': False}
+        f1 = fake(OTHER[0], dict(base, site='discogs', releaseId=str(H.DISCOGS_ID), mbRelease=OTHER[0],
+                                 items=[{'row': 'r1', 'artistId': 3001, 'role': 'Bass', 'base': 'Bass', 'positions': [], 'status': 'mb'}]))
+        f2 = fake(OTHER[1], dict(base, site='discogs', releaseId='4242', mbRelease=OTHER[1], items=[]))
+        for _ in range(50):
+            if dg.evaluate(DGMARKS):
+                break
+            dg.wait_for_timeout(200)
+        a_dg = dg.evaluate(DGMARKS)
+        seen_bc, seen_dg = [], []
+        for _ in range(40):
+            dg.wait_for_timeout(250)
+            seen_bc.append(bc.evaluate(BCMARKS))
+            seen_dg.append(dg.evaluate(DGMARKS))
+        print('Bandcamp-Marken:', repr(a_bc), '| in 10 s:', sorted(set(seen_bc)))
+        print('Discogs-Marken (anderer Import):', repr(a_dg), '| in 10 s:', sorted(set(seen_dg)))
+        results.append(len(a_bc) >= 5 and set(seen_bc) == {a_bc})
+        results.append(a_dg == '✓' and set(seen_dg) == {a_dg})
+        f1.close(); f2.close()
+        real = lambda es: [e for e in es if 'Synchronous XHR in page dismissal' not in e]
+        print('Fehler:', real(errs), real(bcerr), real(dgerr))
+        results.append(not real(errs) and not real(bcerr) and not real(dgerr))
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
