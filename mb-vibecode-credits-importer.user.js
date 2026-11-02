@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.14
+// @version      3.38.15
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.14
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.14
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.15
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.15
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.14';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.15';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1134,6 +1134,8 @@
       "matrix.same.other": "{n} works with the same title by these writers exist:",
       "matrix.sameArtists.one": "{n} work with the same title exists (of the writers, the release's artists or its musicians):",
       "matrix.sameArtists.other": "{n} works with the same title exist (of the writers, the release's artists or its musicians):",
+      "matrix.worksPick.one": "{n} work",
+      "matrix.worksPick.other": "{n} works",
       "works.viaLinked": "work of {name}",
       "works.viaRecorded": "recorded by {name} (“{recording}”)",
       "msg.artistWorksSlow": "Comparing the tracks with the works of {name} takes a while: a large catalogue ({n} recordings, {done} read so far). It goes on in the background.",
@@ -22793,6 +22795,8 @@
   // [3.21.3] the web profiles found next to names in a text are shown at their entries only with this setting (off)
   S.webLinksShow = readJson('localStorage', 'dci-weblinks-show', false) === true;
   S.mxMenu = null;
+  // [180] (3.38.15) the track whose list "n works ▾" is open (one at a time)
+  S.mxWorksOpen = null;
   S.pubRels = new Map();
   S.workRowOpts = new Map();
   S.mxAddCol = null;
@@ -24506,13 +24510,22 @@
     else if (search && search.state === 'error') state = `<span class="dci-bad" title="${esc(search.error)}">!</span>`;
     else if (search && search.state === 'done' && !same.length) state = info(tr('matrix.noSame'));
     // [3.15.0] works of the artists are shown also when the writers gave nothing (or there are none)
+    // [180] (3.38.15) all works found for the track – same title by its writers, works of the artists, the search – are a choice
+    // "n works ▾" in the track's line (until 3.38.14 a list below it); open, the list below the line, one track at a time; a single
+    // work is offered the same way, never set by itself
+    let pick = '';
     if (same.length) {
-      found = `<div class="dci-same"><strong>${esc(tr(same.some((w) => w.artistWork) ? 'matrix.sameArtists' : 'matrix.same', { n: same.length }))}</strong><ul class="dci-candidates">${same.map((w) => `<li>
+      const open = S.mxWorksOpen === i;
+      const listId = `dci-mx-wlist-${i}`;
+      const what = tr(same.some((w) => w.artistWork) ? 'matrix.sameArtists' : 'matrix.same', { n: same.length });
+      pick = ` <button type="button" class="dci-small dci-mx-wpickbtn" data-act="mx-works" aria-expanded="${open}" aria-controls="${listId}"
+        title="${esc(what)}">${esc(tr('matrix.worksPick', { n: same.length }))} ${open ? '▴' : '▾'}</button>`;
+      found = `<div class="dci-same dci-mx-wlist" id="${listId}"${open ? '' : ' hidden'}><strong>${esc(what)}</strong><ul class="dci-candidates">${same.map((w) => `<li>
           <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}">${esc(tr('works.link'))}</button>
           <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
           <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span></li>`).join('')}</ul></div>`;
     }
-    return `${head}<div class="dci-mx-line"><span class="dci-badge">${esc(tr('matrix.noWork'))}</span>
+    return `${head}<div class="dci-mx-line"><span class="dci-badge">${esc(tr('matrix.noWork'))}</span>${pick}
         <button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pending'))}</button>
         <button type="button" class="dci-small" data-act="work-search">${esc(tr('works.search'))}</button>
         <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button>${state} ${o.btn}</div>
@@ -26534,6 +26547,13 @@
       }
       renderWorks();
     }
+    // [180] (3.38.15) the list "n works ▾" closes with a click anywhere else
+    if (S.mxWorksOpen !== null && e.target.closest && !e.target.closest('.dci-mx-wlist, [data-act="mx-works"]')) {
+      S.mxWorksOpen = null;
+      const out = e.target.closest('[data-act]');
+      renderWorks();
+      if (!out || !S.overlay.contains(out)) return;
+    }
     const btn = e.target.closest('[data-act]');
     if (!btn || !S.overlay.contains(btn)) return;
     S.lastActEl = btn;
@@ -27864,8 +27884,18 @@
         renderWorks();
         break;
       }
+      case 'mx-works': {
+        // [180] (3.38.15) "n works ▾" opens the works found for the track (another one open closes)
+        const i = workIndexOf(btn);
+        S.mxWorksOpen = S.mxWorksOpen === i ? null : i;
+        renderWorks();
+        const again = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="mx-works"]`);
+        if (again) again.focus({ preventScroll: true });
+        break;
+      }
       case 'work-pick': {
         const i = workIndexOf(btn);
+        S.mxWorksOpen = null;
         S.workPlan.set(i, { gid: btn.dataset.gid, title: btn.dataset.title, origin: 'search', flags: new Set() });
         log('info', 'workPicked', { track: trackLabel(S.mbTracks[i]), title: btn.dataset.title });
         rememberArtistWork(i, btn.dataset.gid, btn.dataset.title);
@@ -30859,6 +30889,16 @@
       renderDates();
       return;
     }
+    // [180] (3.38.15) the list "n works ▾" of a track
+    if (S.mxWorksOpen !== null) {
+      e.preventDefault();
+      const i = S.mxWorksOpen;
+      S.mxWorksOpen = null;
+      renderWorks();
+      const b = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="mx-works"]`);
+      if (b) b.focus({ preventScroll: true });
+      return;
+    }
     // [163] (3.37.14) the answers open at a chip
     if (S.emChipAsk) {
       e.preventDefault();
@@ -31518,6 +31558,11 @@
       #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-dm-over.dci-drop-add::after, #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-mx-cardover.dci-drop-add::after { content: var(--dci-mx-add); }
       button.dci-primary { background: var(--purple); color: #fff; border-color: var(--purple-d); font-weight: 600; }
       .dci-same { margin-top: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 4); border-left: 3px solid #e0a800; background: #fffbe8; }
+      /* [180] (3.38.15) "n works ▾": yellow like the choice it opens; the list below the line like a menu */
+      .dci-mx-wpickbtn { border-color: #e0a800; background: #fffbe8; color: #6b5200; font-weight: 600; }
+      .dci-mx-wpickbtn[aria-expanded="true"] { background: #ffe69c; }
+      .dci-mx-wlist { box-shadow: 0 2px 6px rgba(38, 36, 48, 0.12); border-radius: 0 4px 4px 0; }
+      .dci-mx-wlist[hidden] { display: none; }
       .dci-work-note { margin: calc(var(--u, 1px) * 4) 0 0; font-style: italic; }
       .dci-table th { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); text-align: left; font-size: calc(var(--u, 1px) * 12); font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); }
       .dci-table td { padding: calc(var(--u, 1px) * 7) calc(var(--u, 1px) * 8); vertical-align: top; border-bottom: 1px solid var(--row); }

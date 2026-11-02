@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.38.14 | – |
+| 2026-11-02 | 3.38.13 – 3.38.15 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.38.15
+
+#### Changed
+
+- **The works found for a track are a choice "n works ▾" in its line** (collected item 180): the same-named works of its writers, the works of the artists and the search – a click opens the list below the line (title, disambiguation, type, writers, **Link**), a click elsewhere or Esc closes it; until now a list below every such track. A single work found is offered the same way ("1 work ▾"), never linked by itself (F-180).
 
 ### Import 3.38.14
 
