@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.3
+// @version      3.39.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -385,6 +385,8 @@
       "log.perfTracks": "{name}: “Performer” on {list} – the instruments for the whole release go onto these tracks (S046)",
       "role.unresolved": "Not matched: {list}",
       "note.uncredited": "According to {src} not named on the release (Uncredited).",
+      "note.prefixCredit": "MusicBrainz has no “{word}” for this type: credited “{credit}”.",
+      "note.prefixNote": "MusicBrainz has no “{word}” and no role credit for this type: “{credit}” goes into the edit note.",
       "note.featuring": "“Featuring” is usually part of the artist credit already. Please check.",
       "note.misc": "MusicBrainz has no specific relationship for this role. It is added as “miscellaneous support” with the {src} role as task; set it to Skip if you do not want it.",
       "type.skipped": "not applied",
@@ -3114,6 +3116,7 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S065', where: 'mapRole, applyDetailFlags, roleCreditForInner', note: 'Roles (3.39.4): a word before a role – "Assistant Engineer", "Asst. Mixing Engineer", "Associate Producer", "Co-Arranger": the role after it with MusicBrainz\'s attribute assistant, associate or co where its type has it; else the word with the role as role credit ("assistant arranger"), only in the edit note where the type has no role credit (the row says so). Roles the register knows with the word ("Assistant Producer", "Co-Producer") keep their rule' },
     { id: 'S064', where: 'TEXT.parse (readClause)', note: 'Texts (3.38.18): "Cover © X", "Cover art © X", "Cover image © X", "Artwork © X" – X\'s artwork credited "cover", no ℗ / © of a label; "Photo © X", "Photos © X" – photography credited "photo"; "detail used with permission" and the like after it are left out. Off: as before ("© X" a name, the line not recognized)' },
     { id: 'S063', where: 'TEXT.parse (initialsOf), groupCredits, entryNameHtml', note: 'Texts (3.38.18): initials as a name – two to four capitals ("RR", "R.R.", "HRG") that are the initials of one release artist or of one name of the text: that artist, credited as the initials, and the head of the entry says "RR = Robert Rich (initials)"; the initials of several names: not set, the head names them. Off: the initials are a name of their own (looked up in MusicBrainz)' },
     { id: 'S062', where: 'TEXT.parse (readClause; TEXT_FIELD_KINDS)', note: 'Texts (3.38.18): "<kind> recordings by X" with a kind of T057 ("Ambisonic recordings by RR 2022-2025 Pacific coast") – X field recordist, a year or two after the name the period of the relationship; what follows that is an area ("Big Sur, California") is "recorded in", anything else ("Pacific coast") is named as not recognized. "Recorded by X" stays recording engineer. Off: "Field recordings by X" by its role rule (R085), other kinds not recognized' },
@@ -3254,13 +3257,17 @@
       return out(['miscellaneous support'], { level: 'release', credit: textEditor });
     } },
       R051: { run: () => {
-      if (has('vocals', 'vocal', 'choir', 'backing vocals')) return out(['vocal arranger']);
-      if (ms.length) {
+      // [3.39.4] "Arranged By [Co]" / "[Associate]": MusicBrainz's attribute, no instrument "co" (collected item K-2)
+      const arrFlags = withFlags(...(has('co', 'co-') ? ['co'] : []), ...(has('associate') ? ['associate'] : []));
+      const left = ms.filter((m) => !consumed.has(m));
+      if (has('vocals', 'vocal', 'choir', 'backing vocals')) return out(['vocal arranger'], { flags: arrFlags });
+      if (left.length) {
         return out(['instrument arranger', 'arranger'], {
-          primaryCands: uniq(ms.flatMap((m) => instrumentCandidates(m, []))),
+          flags: arrFlags,
+          primaryCands: uniq(left.flatMap((m) => instrumentCandidates(m, []))),
         });
       }
-      return out(['arranger']);
+      return out(['arranger'], { flags: arrFlags });
     } },
       R097: { run: () => out([], { notes: ['askType'] }) },
       R102: { run: () => ({ ...out([], { notes: ['askType'] }), translated: 'alto' }) },
@@ -3997,6 +4004,18 @@
       return res;
     }
     const res = mapRoleInner(baseIn, modsIn);
+    // [S065] (3.39.4) "Assistant Engineer", "Asst. Mixing Engineer", "Associate Producer", "Co-Arranger" (collected items K-1, K-2): the
+    // role after the word, with MusicBrainz's attribute where its type has it (applyDetailFlags), else the word as role credit;
+    // a role the register knows with the word ("Assistant Producer" R023, "Co-Producer" R020) keeps its rule
+    const pre = ruleOn('S065') && (res.fallback || res.rule === 'R096') && String(baseIn || '').match(/^\s*(assistant|asst\.?|associate|co-)\s*(\S.*)$/i);
+    if (pre) {
+      const rest = mapRole(pre[2], modsIn, { noTranslation });
+      if (rest.rule && rest.rule !== 'R096' && !rest.fallback) {
+        const flag = /^asst/i.test(pre[1]) ? 'assistant' : norm(pre[1]).replace(/-$/, '');
+        const word = /^asst/i.test(pre[1]) ? 'assistant' : pre[1].toLowerCase();
+        return { ...rest, base: String(baseIn).trim(), flags: uniq([...(rest.flags || []), flag]), prefix: { flag, word, rest: pre[2].trim() } };
+      }
+    }
     // [3.37.2] a hyphen between two words as a space, when only so a rule knows the role ("Cover-Photo" = "Cover Photo"; item 152)
     if ((res.fallback || res.rule === 'R096') && /\p{L}-\p{L}/u.test(String(baseIn || ''))) {
       const alt = mapRoleInner(String(baseIn).replace(/(\p{L})-(?=\p{L})/gu, '$1 '), modsIn);
@@ -4004,6 +4023,9 @@
     }
     return res;
   }
+
+  /** [S065] (3.39.4) The role credit of a word before a role whose type has no attribute for it: "assistant arranger", "co-composer". */
+  const prefixCredit = (p) => (p.word.endsWith('-') ? `${p.word}${p.rest}` : `${p.word} ${p.rest}`).toLowerCase();
 
   function mapRoleInner(baseIn, modsIn0) {
     let b = norm(baseIn).replace(/[‐‑–]/g, '-');
@@ -8625,8 +8647,14 @@
   function applyDetailFlags(row) {
     const lt = currentLinkType(row);
     row.flagMods = new Set();
+    const allowed = new Set(lt ? allowedRoots(lt).filter((r) => !r.hasChildren && !r.attr.free_text).map((r) => norm(r.attr.name)) : []);
+    // [S065] (3.39.4) "Assistant Arranger": MusicBrainz's attribute where the type has it, else the word with the role as role credit
+    if (row.prefix && lt) {
+      row.prefixCredit = !allowed.has(row.prefix.flag);
+      if (row.prefixCredit) row.flags.delete(row.prefix.flag);
+      else row.flags.add(row.prefix.flag);
+    }
     if (!lt || !row.mods || !row.mods.length) return;
-    const allowed = new Set(allowedRoots(lt).filter((r) => !r.hasChildren && !r.attr.free_text).map((r) => norm(r.attr.name)));
     for (const m of row.mods) {
       const flag = flagForDetail(m);
       if (flag && allowed.has(flag)) {
@@ -8752,6 +8780,8 @@
     const raw = suggestRoleCredit(row.mods, [...(row.consumed || []), ...(row.flagMods || []), ...repeatedDetails(row)], row.primaryText);
     // [S011]; [S034] (3.28.2) the kind of a voice is written in lower case ("Vocals [Screams]" → screams, "[Clean]" → clean)
     const details = raw ? creditCasing(currentLinkType(row))(raw) : '';
+    // [S065] (3.39.4) the word before the role where the type has no attribute for it: "assistant arranger" (collected item K-1)
+    if (row.prefix && row.prefixCredit) return details ? `${details} ${prefixCredit(row.prefix)}` : prefixCredit(row.prefix);
     // [S052] (3.34.27) the task in lower case, proper names of MusicBrainz's instruments and models kept; (3.34.28) noted at the row
     // only for a role the register does not know (miscellaneous support)
     const task = row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole, { quiet: !(row.notes || []).includes('unknownRole') })) : '';
@@ -8906,7 +8936,8 @@
       m = mapRole(row.dBase, row.mods);
     }
     Object.assign(row, { types: m.types, notes: m.notes || [], work: m.work, primaryCands: m.primaryCands || [], consumed: m.consumed || [], defaultLevel: m.level,
-      creditFromRole: row.artCredit || m.credit || '', ruleId: m.rule || '', linkTypeId: null, translated: m.translated || '', translatedBase: m.translatedBase || '' });
+      creditFromRole: row.artCredit || m.credit || '', ruleId: m.rule || '', linkTypeId: null, translated: m.translated || '', translatedBase: m.translatedBase || '',
+      prefix: m.prefix || null, prefixCredit: false });
     if (!row.company && m.base) row.base = m.base;
     row.flags = new Set((m.flags || []).map(norm));
     if (!row.levelTouched) row.level = m.level;
@@ -9026,6 +9057,8 @@
       tracksOpen: false,
     };
     row.creditFromRole = m.credit || '';
+    // [S065] (3.39.4) the word before the role ("Assistant Arranger"): attribute or role credit, as the type has it
+    if (m.prefix) Object.assign(row, { prefix: m.prefix, prefixCredit: false });
     // [S033] (3.28.4) tasks of one type joined: their credit ("design and layout")
     if (artCredit) Object.assign(row, { artCredit, creditFromRole: artCredit });
     row.ruleId = m.rule || '';
@@ -16123,7 +16156,7 @@
    * or role credit set by hand stays a change.
    */
   const REMAP_FIELDS = ['types', 'notes', 'work', 'primaryCands', 'consumed', 'defaultLevel', 'creditFromRole', 'ruleId', 'linkTypeId', 'translated',
-    'translatedBase', 'base', 'flags', 'typeOptions', 'roleCreditSuggest', 'instrGuess', 'creditLowered', 'creditPhrases'];
+    'translatedBase', 'base', 'flags', 'typeOptions', 'roleCreditSuggest', 'instrGuess', 'creditLowered', 'creditPhrases', 'prefix', 'prefixCredit'];
   function rebaseFresh(row) {
     const f = S.freshRows && S.freshRows.get(row.id);
     if (!f) return;
@@ -19569,6 +19602,20 @@
   const typoHtml = (row) => ((row.typos || []).length ? `<div class="dci-sub dci-typo">${esc(row.typos.map((t) => tr('role.typoRead', { read: t.read, written: t.written })).join(' · '))}
     <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S050" title="${esc(tr('rules.gotoTitle'))}">S050</button></div>` : '');
 
+  /**
+   * [S065] (3.39.4) A word before the role the type has no attribute for: "MusicBrainz has no “assistant” for this type: credited
+   * “assistant arranger”." – or, without a role credit for the type, "… in the edit note" (Q-u).
+   */
+  function prefixNoteHtml(row) {
+    if (!row.prefix || !row.prefixCredit || row.level === 'skip') return '';
+    const lt = currentLinkType(row);
+    if (!lt) return '';
+    const credit = prefixCredit(row.prefix);
+    const key = canRoleCredit(lt) ? 'note.prefixCredit' : 'note.prefixNote';
+    return `<div class="dci-note dci-prefix-note" data-prefix="${esc(row.prefix.flag)}">${esc(tr(key, { word: row.prefix.flag, credit }))}
+      <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S065" title="${esc(tr('rules.gotoTitle'))}">S065</button></div>`;
+  }
+
   /** [3.17.1] A credit switched off on Bandcamp says so. */
   const srcOffHtml = (row) => (row.srcOff ? `<div class="dci-note dci-srcoff">${esc(tr('bc.offNote', { site: VIEW_NAMES[viewSite()] }))}</div>` : '');
 
@@ -19587,7 +19634,7 @@
       return `${drole}${srcMarksHtml(row)}${typoHtml(row)}
         ${row.pcFromCompany ? `<div class="dci-note dci-pcfrom">${esc(tr('role.pcFromCompany', { name: row.pcFromCompany, where: row.pcWhere || '' }))}${row.pcFromKey
           ? ` <button type="button" class="dci-textbtn" data-act="pc-as-label" title="${esc(tr('role.pcAsLabelTitle'))}">${esc(tr('role.pcAsLabel'))}</button>` : ''}</div>` : ''}
-        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr(row.notesFrom ? ((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.notesOnly' : 'role.companyNotesTracks') : (S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))}${row.fromNotes && !row.notesFrom ? ` ${notesLineInfo(row)}` : ''} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
+        <div class="dci-sub">${esc(row.pubFromCompany ? tr('role.pubFromCompany', { name: row.pubFromCompany }) : tr(row.notesFrom ? ((S.artists.get(row.artistKey) || {}).fromNotes ? 'role.notesOnly' : 'role.companyNotesTracks') : (S.artists.get(row.artistKey) || {}).fromNotes ? 'role.companyNotes' : 'role.companyWhole'))}${row.fromNotes && !row.notesFrom ? ` ${notesLineInfo(row)}` : ''} ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${prefixNoteHtml(row)}${notesFromHtml(row)}
         <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
         ${row.dSpec && !(row.dSpecTracks && row.notesFrom) ? `<div class="dci-sub">${esc(row.dSpecTracks ? tr('role.source', { where: tr('role.tracks', { list: row.dSpec }) }) : tr('role.catno', { catno: row.dSpec }))}</div>` : ''}${asType}${notes}`;
     }
@@ -19599,7 +19646,7 @@
       ${row.perfPositions ? `<div class="dci-sub dci-perftracks">${esc(tr('role.perfTracks', { list: row.perfPositions.join(', ') }))}</div>` : ''}
       <div class="dci-sub">${row.fromNotes ? `${notesLineInfo(row)} ${esc(tr('notes.credit'))}${where.length ? ` (${esc(where.join('; '))})` : ''}`
     : esc(where.length ? tr('role.source', { where: where.join('; ') }) : tr('role.wholeRelease'))}
-        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${notesFromHtml(row)}
+        ${ruleInfoHtml(row)}</div>${srcRefsHtml(row)}${coverFromHtml(row)}${srcOffHtml(row)}${prefixNoteHtml(row)}${notesFromHtml(row)}
       ${row.unresolved.length ? `<div class="dci-note dci-warn">${esc(tr('role.unresolved', { list: row.unresolved.join(', ') }))}</div>` : ''}
       <button type="button" class="dci-textbtn dci-row-remove" data-act="remove-row" title="${esc(tr('role.removeTitle'))}">${esc(tr('role.remove'))}</button>
       ${notes}`;
@@ -26776,7 +26823,7 @@
       Object.assign(row, {
         raw, base: parsed.base, mods: parsed.mods, consumed: m.consumed, types: m.types, notes: m.notes, work: m.work,
         primaryCands: m.primaryCands, flags: new Set(m.flags.map(norm)), creditFromRole: m.credit || '', defaultLevel: m.level,
-        translated: m.translated || '', translatedBase: m.translatedBase || '',
+        translated: m.translated || '', translatedBase: m.translatedBase || '', prefix: m.prefix || null, prefixCredit: false,
       });
       if (!row.levelTouched) row.level = m.level;
     }

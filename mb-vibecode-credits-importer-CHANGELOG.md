@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.39.3 | – |
+| 2026-11-02 | 3.38.13 – 3.39.4 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.39.4
+
+#### Changed
+
+- **A word before the role** (collected items K-1, K-2, rule S065): "Assistant Engineer" → engineer with "assistant", "Asst. Mixing Engineer" → mix with "assistant", "Co-Arranger" → arranger with "co" (until now unknown instruments). Where the type has no such checkbox, the word goes into the role credit ("assistant photographer"), and where it has no role credit either, into the edit note – the row says so ("Assistant Arranger").
+
+#### Fixed
+
+- **"Arranged By [Co]"**: arranger with "co" (until now an instrument arranger of the instrument "co").
 
 ### Import 3.39.3
 
