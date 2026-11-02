@@ -75,7 +75,7 @@ def case_ocrsetting():
         H.open_settings(pg, 'connections')
         conn = pg.evaluate("[...document.querySelectorAll('[data-conn=X013], [data-conn=X014]')].map(r => r.innerText.replace(/\\s+/g, ' ').slice(0, 60))")
         print('A) Reiter:', a, '| an:', b1, '| aus:', c1, '| Verbindungen:', conn)
-        results.append(a == [['beta', 'cache', 'statistics', 'connections'], False, None] and b1 == ['true', 'Text from cover art …beta'] and c1[0] is None and c1[1] is None
+        results.append(a == [['beta', 'cache', 'connections'], False, None] and b1 == ['true', 'Text from cover art …beta'] and c1[0] is None and c1[1] is None
                        and len(conn) == 2 and conn[0].startswith('Cover Art Archive') and conn[1].startswith('Tesseract.js'))
         print('Fehler:', errs)
         results.append(not errs)
