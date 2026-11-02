@@ -1,6 +1,6 @@
 """Mapping: roles, questions, suggestions, mastering, special artists, fixes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
+Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10), oldfile (3.39.2) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
 import json
 import os
 import harness as H  # noqa: F401 – used by the cases
@@ -1004,6 +1004,45 @@ def case_mbnames():
         H.ATTRS.pop(952, None)
         H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
         H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_oldfile():
+    """Credits Importer 3.39.2 (review of block AU): a mapping file of an older version – without the lists T058 (INSTRUMENT_ASK)
+    and T059 (TEXT_REGIONS), as when the script is installed before its file – with changes of your own to lists (also to T058 and
+    T059): the script loads (the lists empty), "Ambisonic recordings by RR 2022-2025 Pacific coast" reads the field recordist and
+    names "Pacific coast" as not recognized (no region); a change to T059 brings the region back. In Node, with the files copied."""
+    import shutil
+    import subprocess
+    import tempfile
+    node = r"""
+const changes = process.argv[2];
+global.localStorage = { getItem: (k) => (k === 'dci-mapping-changes' ? changes : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback); };
+const r = m.SOURCES.text.parse('Ambisonic recordings by RR 2022-2025 Pacific coast', { isRole, isCompanyRole: (x) => /recorded in/i.test(x), resolveTracks: () => null, artistNames: ['Robert Rich'] });
+console.log(JSON.stringify({ credits: r.credits.map((c) => [c.who.name, c.role]), companies: r.companies.map((c) => [c.who.name, c.role]), unrec: r.unrecognized }));
+"""
+    results = []
+    with tempfile.TemporaryDirectory() as d:
+        root = H.ROOT
+        for f in ('mb-vibecode-credits-importer.user.js', 'mb-vibecode-credits-importer-languages.json'):
+            shutil.copy(root / f, os.path.join(d, f))
+        mp = json.load(open(root / 'mb-vibecode-credits-importer-mapping.json', encoding='utf-8'))
+        del mp['INSTRUMENT_ASK'], mp['TEXT_REGIONS']
+        json.dump(mp, open(os.path.join(d, 'mb-vibecode-credits-importer-mapping.json'), 'w', encoding='utf-8'), ensure_ascii=False)
+        run = lambda ch: subprocess.run(['node', '-e', node, os.path.join(d, 'mb-vibecode-credits-importer.user.js'), json.dumps(ch)], capture_output=True, text=True)
+        own = {'rules': {}, 'lists': {'T001': {'add': [['lapsteel', ['lap steel guitar']]]}, 'T058': {'add': [['Toys', ['percussion']]]}}}
+        a = run(own)
+        print('A) ohne T058/T059, eigene Listen:', a.returncode, a.stdout.strip()[:300], a.stderr.strip()[-300:])
+        ra = json.loads(a.stdout) if a.returncode == 0 else {}
+        results.append(ra.get('credits') == [['Robert Rich', 'Field Recordings By']] and not ra.get('companies')
+                       and any('Pacific coast' in u for u in ra.get('unrec', [])))
+        own['lists']['T059'] = {'add': ['Pacific Coast']}
+        b = run(own)
+        rb = json.loads(b.stdout) if b.returncode == 0 else {}
+        print('B) T059 selbst ergänzt:', b.returncode, b.stdout.strip()[:300], b.stderr.strip()[-300:])
+        results.append(rb.get('companies') == [['Pacific Coast', 'Recorded In']] and not rb.get('unrec'))
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

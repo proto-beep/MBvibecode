@@ -623,8 +623,9 @@ def case_gapline():
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
         dg = []
+        # (3.39.2) the requests of the context from the start: the first one came before the page's listener under load
+        ctx.on('request', lambda r: dg.append(r.url) if 'api.discogs.com' in r.url else None)
         pr, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
-        pr.on('request', lambda r: dg.append(r.url) if 'api.discogs.com' in r.url else None)
         pr.evaluate(f"localStorage.setItem('dci-gap-exact:{REL}', JSON.stringify({{ n: 25, at: Date.parse('2026-11-02T10:00:00Z') }}))")
         pr.reload(); pr.wait_for_timeout(500)
         H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
