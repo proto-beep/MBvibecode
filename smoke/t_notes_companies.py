@@ -49,7 +49,7 @@ Including a 52 p. booklet.
 
     H.discogs_release = rel
     GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
-  [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()), ((g.querySelector('.dci-gname .dci-sub') || {}).textContent || '').trim()]))()"""
+  [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.dataset.raw), ((g.querySelector('.dci-gname .dci-sub') || {}).textContent || '').trim()]))()"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -139,7 +139,7 @@ def case_pcline():
 
     H.discogs_release = rel
     GROUP = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === name);
-  return g ? { roles: [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()), sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid) } : null; }"""
+  return g ? { roles: [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.dataset.raw), sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid) } : null; }"""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -245,7 +245,7 @@ Barcode: 786497575220"""
 
     H.discogs_release = rel
     GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
-  [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.textContent.trim()), [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid),
+  [...g.querySelectorAll('tr.dci-row .dci-drole')].map(x => x.dataset.raw), [...g.querySelectorAll('[data-act=name-use]')].map(b => b.dataset.mbid),
   [...g.querySelectorAll('[data-act=company-create]')].map(b => b.dataset.et), [...g.querySelectorAll('tr.dci-row .dci-sub')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()).join(' | ')]))()"""
     COLS = """(() => [...document.querySelectorAll('.dci-matrix th[data-colhead]')].map((th) => {
   const name = ((th.querySelector('.dci-mx-colname .dci-mblink, .dci-mx-colname strong') || {}).textContent || '').replace(/^MB/, '').trim();
@@ -522,7 +522,7 @@ E1 to F2 recorded 2nd May 1980 at Heiman Recording Studios, London"""
 
     H.discogs_release = rel
     PLACES = """(() => [...document.querySelectorAll('section.dci-group')].filter(g => /Goldsmith|Heiman|Abbey/.test(g.querySelector('.dci-gname strong').textContent)).map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
-  [...g.querySelectorAll('tr.dci-row')].filter(r => !r.className.includes('dci-lv-skip')).map(r => [(r.querySelector('.dci-drole') || {}).textContent,
+  [...g.querySelectorAll('tr.dci-row')].filter(r => !r.className.includes('dci-lv-skip')).map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw,
     [...r.querySelectorAll('[data-f=track]:checked, input[data-i]:checked')].length || (r.querySelector('.dci-c-tracks, .dci-tracks') || {textContent: ''}).textContent.replace(/\\s+/g, ' ').trim().slice(0, 40),
     ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim(), ((r.querySelector('.dci-notesfrom .dci-info') || {}).title || '').slice(0, 80),
     (r.textContent.match(/Performance \\d · [\\d-]+/) || [''])[0]])]))()"""
@@ -580,7 +580,7 @@ E1 to F2 recorded 2nd May 1980 at Heiman Recording Studios, London"""
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
         pg.wait_for_timeout(1200)
         d1 = pg.evaluate("""(name) => [...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim().startsWith(name))
-  .flatMap(g => [...g.querySelectorAll('tr.dci-row')]).map(r => [(r.querySelector('.dci-drole') || {}).textContent, ((r.textContent.match(/(\\d+) of 13 tracks/) || [])[1] || '')])""", 'Abbey Road Studios')
+  .flatMap(g => [...g.querySelectorAll('tr.dci-row')]).map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw, ((r.textContent.match(/(\\d+) of 13 tracks/) || [])[1] || '')])""", 'Abbey Road Studios')
         print('D) Text:', d1)
         results.append(d1 == [['Recorded At', '2']])
         print('Fehler:', errs)
@@ -624,7 +624,7 @@ Liner notes by Jane Notes"""
 
     H.discogs_release = rel
     GROUPS = """(() => [...document.querySelectorAll('section.dci-group')].filter(g => !g.classList.contains('dci-about-hidden')).map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
-  [...g.querySelectorAll('tr.dci-row')].filter(r => !r.classList.contains('dci-about-hidden')).map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(), (r.textContent.match(/(\\d+) of 4 tracks/) || [])[1] || '',
+  [...g.querySelectorAll('tr.dci-row')].filter(r => !r.classList.contains('dci-about-hidden')).map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(), (r.textContent.match(/(\\d+) of 4 tracks/) || [])[1] || '',
     ((r.querySelector('.dci-notesline') || {}).title || '').replace(/^From the Discogs notes: /, ''), /From the Discogs notes/.test(r.textContent),
     ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim()])]))()"""
     results = []
@@ -850,7 +850,7 @@ def case_pcperson():
 
     H.discogs_release = rel
     ENTRY = """(name) => [...document.querySelectorAll('section.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim() === name)
-      .map(g => [(g.querySelector('.dci-kind-tag') || {}).textContent, [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(),
+      .map(g => [(g.querySelector('.dci-kind-tag') || {}).textContent, [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
         ((r.querySelector('.dci-pcfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim()]),
         [...g.querySelectorAll('.dci-suggbtn[data-act=name-use]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim()), g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ')])"""
     results = []

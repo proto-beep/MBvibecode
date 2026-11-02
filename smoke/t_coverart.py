@@ -1513,7 +1513,7 @@ def case_ocrorigin():
     D) Another text pasted afterwards: its rows say nothing of the cover art."""
     results = []
     ROWS = """(() => [...document.querySelectorAll('tr.dci-row')].map(tr => { const g = tr.closest('section.dci-group'); const f = tr.querySelector('.dci-coverfrom');
-      return [g ? g.querySelector('.dci-gname strong').textContent.trim() : '', tr.querySelector('.dci-drole').textContent.trim(), f ? [...f.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').replace(/\\s+/g, ' ').trim() : '',
+      return [g ? g.querySelector('.dci-gname strong').textContent.trim() : '', tr.querySelector('.dci-drole').dataset.raw.trim(), f ? [...f.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').replace(/\\s+/g, ' ').trim() : '',
         !!(f && f.querySelector('[data-act=cover-crop]')), tr.dataset.row]; }))()"""
     texts = [{'text': 'Mixed by Bob Lee\nMastered by Bob Producer\n',
               'lines': [{'text': 'Mixed by Bob Lee\n', 'bbox': {'x0': 20, 'y0': 30, 'x1': 600, 'y1': 80}},

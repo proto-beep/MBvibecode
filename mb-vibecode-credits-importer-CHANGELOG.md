@@ -13,6 +13,8 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-02 | 3.38.13 | – |
+| 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
 | 2026-10-29 | 3.34.18 – 3.36.3 | – |
@@ -94,6 +96,66 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-02
+
+### Import 3.38.13
+
+#### Changed
+
+- **"Dates & tracks": its line at the bottom of the block** (collected item 178; maintainer: "kannst du die "▶Dates & tracks ▼ show 1 date · 0 track groups · 1 in the matrix" ans untere ende setzen? und den fold button in die mitte? dann auch das dreieck in die andere richtung deuten lassen?", "die ganze zeile", "ja"): the title with the counts on the left, "▲ fold" / "▼ show" in the middle, the tools on the right; the arrow at the title points up when open (the pools are above it), down when folded. Folded, only this line stays (with the pools kept in the bar above it). The question "Clear dates?" / "Clear track groups?" opens just above the line (until now below the head); after a click on the title or on the button, the focus stays on it.
+- **"Live disambiguation comments" stands out** (F-1; maintainer: "der button "▸ Live disambiguation comments: 0 of 9" kann aber eine noch präsentere farbe haben"): a purple button with white text.
+- **Live comments in the order of the positions** (F-2; maintainer: "nach Positionen"): "track 1.2, CD 2" (until now the media first: "CD 2, track 1.2"); the groups of the same comment stay.
+- **The green chip "✓ … in the editor" flashes once** when it comes (F-3) – not again when the dashboard is closed and opened again; not at all with "reduce motion" in the system.
+
+## 2026-11-01
+
+### Import 3.38.12
+
+#### Changed
+
+- **Names in capitals in normal case, from every source** (F-4, rule S060; maintainer: "bitte schreibe Großbuchstaben immer Klein, es sei denn, der Artistname auf MB ist ebenfalls komplett capslock … anbieten alles in großbuchstaben zu setzen", "ja normale schreibweise … ja überall", "Wörter aus zwei Buchstaben bleiben"): a person's name all in capitals – "TORBEN SNEKKESTAD" → Torben Snekkestad, "DJ SHADOW" → DJ Shadow, "ABBA" → Abba – and a name variation in capitals ("LAKE" → Lake), from Discogs, pasted texts, text from cover art, the Discogs notes and Bandcamp (until now only a word in capitals beside words in normal case, in texts). Two letters, letters without a vowel and initials stay. Linked to a MusicBrainz name all in capitals too: MusicBrainz's spelling, no "credited as". **↺ in capitals** in the head of the entry takes the source's spelling again (also as the "credited as" of its roles; one typed by hand stays), **↺ normal case** goes back; the log names the names and spellings written in normal case. A particle between the names in lower case ("PACO DE LUCÍA" → Paco de Lucía), also Cyrillic and Greek names. Linked to a MusicBrainz name all in capitals ("MF DOOM"), the source's capitals are kept as "credited as" ("DOOM").
+- **⇅ swaps the lines whose order was not clear in the dashboard** (F-5; maintainer: "wie vorschlag, gezielt"): only the rows of those lines change (a name only in the other reading gets an entry of its own, looked up in MusicBrainz), every other row keeps what was changed in it, and the lines not recognized follow. Until now the source was read again and the changes were lost. Remembered for the release, the next import reads them the same way; a clear credit of the same role is never taken with them; from the Discogs notes, a credit Discogs lists already gives no second row; on Bandcamp also the "about" text and the track pages.
+
+#### Fixed
+
+- **Preview:** a text attribute is named again ("task: “cover”" – left out in 3.38.10).
+- **The tooltip of a row** names the source of a supplement ("from Bandcamp: …"), and nothing for a row added by hand (3.38.10 named the main source).
+- **Bandcamp:** an artist written in capitals there ("KOKOROKO") is assigned by its link again when the release credits it so.
+
+### Import 3.38.11
+
+#### Changed
+
+- **The head of an entry names it as the source does only when all its roles carry that spelling** (collected item 175; maintainer, Discogs 2631299 "Boston Duets": "die artistnamen in den instrumentenfeldern werden als "Lake*" bei Discgos angezeigt, dabei ist das nur der name, der in den writing credits steckt", "nein ich meinte das Lake* das von Discogs gezogen wurde und im Kopf des Eintrags stand."): Oliver Lake, credited "Lake*" only in the writing credits, keeps "Oliver Lake" in the head; the chip says which roles carry the other spelling ("as “Lake” for writer"). "Artist credit for all roles" is prefilled only with a spelling all roles carry (until now with the one spelling of some of them – "Set for all" then credited the flute "Lake" too).
+- **"Credited as" for every entry** (collected item 176; maintainer: "ich weiß nicht, wo ich eintragen soll bzw. wo steht, falls ein artist etc. auf den jeweiligen releases/recordings anders genannt wird", "es fehlt noch die möglichkeit alle entities, also artists, labels, places mit artist etc. credits zu benennen"): labels, places and areas have "Credited as for all roles" in their head too; the matrix of an entry has a column **Credited as** next to "Role credit" (the source's spelling, empty = the MusicBrainz name); a role credited otherwise on some tracks is a line of its own ("flute" and "flute" as “O. Lake”); compact, its chip says "as “O. Lake”".
+
+#### Fixed
+
+- **"Set for all" of an entry linked to MusicBrainz** was taken back at the next check (the spelling of the source came back).
+
+### Import 3.38.10
+
+#### Changed
+
+- **Every relationship as MusicBrainz names it** (collected item 177; maintainer: "es soll IMMER der Name des MB relationships dastehen und nicht des discogs relationships. bspw habe ich … "Engineer [Recording]" als relationship gesehen dabei lautet das relationship "recording engineer for / recording engineer" … bitte prüfe da alle rollen mit discogs ab und siehe zu, dass das dashboard das anzeigt, was in MB ankommt", "Auch in der Typ-Auswahl? ja", "Zusätze im Namen? ja genau"): the rows, the list of types, the matrix of an entry and its chips, the compact lines, the works matrix (with role names), the preview and the log of what is staged show the name MusicBrainz gives the relationship on the page of the recording, release or work – "Engineer [Recording]" and "Recorded By" → recording engineer, "Mixed By" → mixer, "Additional Producer" → additional producer, "Saxophone [Guest]" → guest saxophone, "Remastered By" → remastering, "Composed By [Additional]" → additional composer, "publisher" and "sub-publisher" in the works matrix –, with the attributes ticked. The pointer on the name shows the source's role: "from Discogs: Engineer [Recording]". The compact line says only that name ("▸ double bass", until now "▸ Bass → instrument · double bass"; a row on Skip keeps it), the head of a block of the matrix "Mixed By → mixer". Messages and questions about a credit of the source keep its wording.
+- **Checked for every role of the register:** the ~1,200 Discogs roles of the test corpus against MusicBrainz's relationship types and their phrases (taken from MusicBrainz's own repository).
+
+### Import 3.38.9 · COMPANION 1.10.0
+
+#### Changed
+
+- **Several imports at once** (collected item 173; maintainer: "sobald ich zwei geteilte tabs offen habe … fängt der companion an in kurzen intervallen sich ein und auszuschalten und dadurch die datenherkünfte bei den quellen an und abzuschalten. wäre es möglich mehrere imports (gerne eine beliebige anzahl und falls das nicht möglich ist zumindest 3) gleichzeitig offen zu haben ohne dass das passiert?"): the companion keeps the status of the credits and the sign that an editor is open per MusicBrainz release – any number of imports may be open, each Discogs or Bandcamp tab shows the marks and underlines of its own release. Until companion 1.9.2 two imports overwrote each other's status every 2 seconds, and the marks went off and on. The same release imported in two tabs: the marks of the one used last, and a note "2 imports of this release are open – the marks are those of the one used last"; a click on a mark reaches only that import; the Discogs tab follows the import worked with at once. The dashboard names an older companion once (log and message): the two belong together from 3.38.9 on.
+
+#### Fixed
+
+- **COMPANION: a credit of an artist who also has another role on the track** ("Written-By – Bass*" beside "Flute – Bass Man") put its mark before the title of the track (item 174 again).
+
+### Import 3.38.8 · COMPANION 1.9.2
+
+#### Fixed
+
+- **COMPANION: the tracklist on Discogs stays readable with credits on tracks** (collected item 174; maintainer, Discogs 2631299 "Boston Duets": "sobald an den einzelnen tracks auf Discogs relationships hängen … die schrift verschiebt sich und wird vertikal angezeigt. dadurch lässt sich die discogs nicht mehr lesen … und alles zieht sich sehr lange runter"): a credit whose role was not on the line of its artist in a track put its status mark into the table row itself – a cell of its own, the title and its credits in the narrow column of the duration. A mark in a track's line now goes only before the credit with that role, inside the line; otherwise that track's line gets none (the credit's line in the credits keeps its mark). Import 3.38.8 only says so (needs the companion 1.9.2).
 
 ## 2026-10-31
 

@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.9.1
-// @date         2026-10-24
+// @version      1.10.0
+// @date         2026-11-01
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs or Bandcamp tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs- oder Bandcamp-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
 // @description:es Complemento de «MB x Vibecode: Credits Importer»: conecta el panel de importación con una pestaña de Discogs o Bandcamp (p. ej. la otra mitad de una vista dividida), carga allí la publicación y resalta de dónde viene cada crédito.
@@ -43,6 +43,8 @@
   //   recently seen.
   // The main script never needs special permissions; only this companion does.
 
+  // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
+  const COMPANION_VERSION = '1.10.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -87,14 +89,34 @@
   // MusicBrainz side
   // ---------------------------------------------------------------------------
 
-  /** The last status map of each release (at most 30 releases), for its MusicBrainz release page. */
+  /**
+   * The last status map of each release (at most 30 releases), for its MusicBrainz release page. [1.10.0] Also the one shown
+   * on Discogs and Bandcamp: a map **per release** and a beat **per page** (`statusMap:<id>`, `statusBeat:<id>:<page>`) instead
+   * of one for all –
+   * with two imports open, both wrote the same `statusMap` and `statusBeat` every 2 s and a Discogs or Bandcamp tab saw its
+   * release's status and the other one's by turns: marks and underlines went off and on (collected item 173; maintainer: "wäre
+   * es möglich mehrere imports (gerne eine beliebige anzahl …) gleichzeitig offen zu haben ohne dass das passiert?").
+   * `statusPing` tells the Discogs and Bandcamp tabs that a map changed.
+   */
   const PER_RELEASE_MAX = 30;
-  function keepPerRelease(map) {
-    GM_setValue(`statusMap:${map.mbRelease}`, map);
-    const index = [map.mbRelease, ...(GM_getValue('statusMapIndex') || []).filter((x) => x !== map.mbRelease)];
-    index.slice(PER_RELEASE_MAX).forEach((x) => GM_deleteValue(`statusMap:${x}`));
+  const mapKey = (map, pageId) => String((map && map.mbRelease) || `page-${pageId}`);
+  const pingStatus = (key) => GM_setValue('statusPing', { key, ts: Date.now() });
+  /** [1.10.0] The beats of the pages of a release (an editor, its release page, a second editor …): one key each, no page overwrites another. */
+  const beatKeys = (key) => GM_listValues().filter((k) => String(k).startsWith(`statusBeat:${key}:`));
+  const dropBeats = (key) => beatKeys(key).forEach((k) => GM_deleteValue(k));
+  function keepPerRelease(map, key = map.mbRelease) {
+    GM_setValue(`statusMap:${key}`, map);
+    const index = [key, ...(GM_getValue('statusMapIndex') || []).filter((x) => x !== key)];
+    index.slice(PER_RELEASE_MAX).forEach((x) => {
+      GM_deleteValue(`statusMap:${x}`);
+      dropBeats(x);
+    });
     GM_setValue('statusMapIndex', index.slice(0, PER_RELEASE_MAX));
   }
+  // [1.10.0] the one map and beat of all releases (until 1.9.2) are no longer read
+  try {
+    ['statusMap', 'statusBeat'].forEach((k) => { if (GM_getValue(k) !== undefined) GM_deleteValue(k); });
+  } catch (e) { /* storage not available */ }
 
   function initMusicBrainzSide() {
     const send = (msg) => document.dispatchEvent(new CustomEvent('dci:from-discogs', { detail: JSON.stringify(msg) }));
@@ -105,17 +127,38 @@
     // [1.8.2] "hidden": a page in the background beats more slowly (the browser slows its timers down to once a minute)
     // [1.9.1] once the page is left, no beat any more: "hidden" while it closes would keep the marks for ten minutes
     let leaving = false;
-    const statusBeat = () => { if (!leaving) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden' }); };
+    // [1.10.0] the beat of this release; "used": when this page was last in front – of two imports of the same Discogs or
+    // Bandcamp release, that tab shows the one used last
+    const key = mapKey({ mbRelease }, pageId);
+    // (in front and worked with: focused, clicked or typed in – two tabs of a split view are both visible)
+    let used = document.visibilityState === 'visible' ? Date.now() : 0;
+    // the site and release of its map, in the beat: a Discogs or Bandcamp tab reads only the maps of its own release
+    let beatSite = '';
+    let beatRel = '';
+    const beatKey = `statusBeat:${key}:${pageId}`;
+    const statusBeat = () => {
+      if (!leaving) GM_setValue(beatKey, { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden', used, site: beatSite, releaseId: beatRel });
+    };
+    // worked with: said at once (once a second at most), so the tabs switch to this import without waiting for the next beat
+    const markUsed = () => {
+      if (document.visibilityState !== 'visible') return;
+      const now = Date.now();
+      const again = now - used > 1000;
+      used = now;
+      if (again && beatTimer) {
+        statusBeat();
+        pingStatus(key);
+      }
+    };
+    ['focus', 'pointerdown', 'keydown'].forEach((t) => window.addEventListener(t, markUsed, true));
+    document.addEventListener('visibilitychange', markUsed);
     document.addEventListener('visibilitychange', () => { if (beatTimer) statusBeat(); });
     window.addEventListener('pagehide', () => {
       leaving = true;
-      // With "status on the release page" the release page (where "Enter edit" leads) keeps the marks;
-      // otherwise they go now. Either way they disappear once no page of the release reports any more.
-      const map = GM_getValue('statusMap');
-      if (map && map.pageId === pageId && !map.keepOnRelease) GM_setValue('statusMap', { pageId, enabled: false, items: [], ts: Date.now() });
-      // [1.8.2] closed: its last beat (maybe from going into the background) does not keep the marks for another 75 s
-      const beat = GM_getValue('statusBeat');
-      if (beat && beat.pageId === pageId) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: 0 });
+      // [1.8.2] closed: its last beat (maybe from going into the background) does not keep the marks; [1.10.0] the marks of
+      // this release go at once unless its release page (where "Enter edit" leads, "status on the release page") beats for it
+      GM_deleteValue(beatKey);
+      pingStatus(key);
     });
 
     const liveTabs = () => {
@@ -155,7 +198,8 @@
       };
       const sites = Object.fromEntries(SITES.map((site) => [site, ofSite(site)]));
       // The Discogs tabs as before 1.8.0 (for older main scripts), and the tabs of each site
-      send({ type: 'status', ...sites.discogs, sites });
+      // [1.10.0] with the companion's version (the dashboard names an older one)
+      send({ type: 'status', ...sites.discogs, sites, version: COMPANION_VERSION });
     };
 
     // Other scripts on the page could send these events too, so only MusicBrainz, Discogs and Bandcamp pages are opened.
@@ -186,22 +230,24 @@
         const target = pickTab(liveTabs(), msg.releaseId, siteOf(msg));
         if (target) GM_setValue('cmd', { type: 'reload', target: target.id, id: Date.now(), sent: Date.now() });
       } else if (msg.type === 'status-map') {
-        // Status of every Discogs credit, shown on the Discogs page (all tabs of that release)
+        // Status of every Discogs credit, shown on the Discogs page (all tabs of that release); [1.10.0] kept per release
         const map = { ...msg, pageId, ts: Date.now() };
         // [1.8.3] the dashboard's switch "Keep marks", for the Discogs and Bandcamp tabs when no editor is open
         if (GM_getValue('keepMarks') !== !!msg.keepAfterClose) GM_setValue('keepMarks', !!msg.keepAfterClose);
-        GM_setValue('statusMap', map);
-        if (msg.mbRelease) keepPerRelease(map);
+        keepPerRelease(map, key);
+        beatSite = siteOf(map);
+        beatRel = String(map.releaseId || '');
         statusBeat();
+        pingStatus(key);
         if (!beatTimer) beatTimer = setInterval(statusBeat, 2000);
       } else if (msg.type === 'forget-release') {
         // "Delete stored import" in the dashboard (Credits Importer 3.4.0): the kept status of this release goes
         const id = String(msg.mbRelease || '');
         if (!id) return;
         GM_deleteValue(`statusMap:${id}`);
+        dropBeats(id);
         GM_setValue('statusMapIndex', (GM_getValue('statusMapIndex') || []).filter((x) => x !== id));
-        const map = GM_getValue('statusMap');
-        if (map && map.mbRelease === id) GM_setValue('statusMap', { pageId, enabled: false, items: [], ts: Date.now() });
+        pingStatus(id);
       } else if (msg.type === 'reset-settings') {
         // "Defaults" in the dashboard: every Discogs tab (now or when opened next) forgets the cover's place and folding
         GM_setValue('artReset', Date.now());
@@ -220,6 +266,8 @@
     });
     // From the Discogs page back to the dashboard: a click on a status mark, a track under the mouse
     GM_addValueChangeListener('fromDiscogs', (name, oldValue, newValue) => {
+      // [1.10.0] only to the import whose marks were clicked (with several imports open, each has its rows r1, r2 …)
+      if (newValue && newValue.mbRelease && mbRelease && String(newValue.mbRelease) !== mbRelease) return;
       // [1.8.1] ⊘ on Bandcamp: a credit off or on again
       if (newValue && ['focus-row', 'hover-track', 'toggle-credit'].includes(newValue.type)) send(newValue);
     });
@@ -289,18 +337,62 @@
     // Status marks of the dashboard
     let lastMap = null;
     let shown = false;
-    // The edit page that sent the status is still open (it reports every 3 seconds)
-    const senderAlive = (map) => {
-      const beat = GM_getValue('statusBeat');
-      const same = beat && (beat.release && map && map.mbRelease ? beat.release === map.mbRelease : beat.pageId === (map && map.pageId));
-      // [1.8.2] a page in the background may beat only once a minute
-      return !!(map && same && Date.now() - beat.ts < (beat.hidden ? BEAT_HIDDEN_MS : BEAT_VISIBLE_MS));
+    // The edit page that sent the status is still open (it reports every 3 seconds); [1.10.0] the beat of its release
+    const alive = (beat) => !!(beat && Date.now() - beat.ts < (beat.hidden ? BEAT_HIDDEN_MS : BEAT_VISIBLE_MS));
+    /**
+     * [1.10.0] The live pages of each release, for this page's site and release: { key → { ts, used } } (the newest beat, the
+     * latest use); beats long gone are removed.
+     */
+    const liveReleases = () => {
+      const out = new Map();
+      const here = releaseIds();
+      const now = Date.now();
+      for (const k of GM_listValues()) {
+        const m = String(k).match(/^statusBeat:(.+):([^:]+)$/);
+        if (!m) continue;
+        const b = GM_getValue(k);
+        if (!b || now - b.ts > BEAT_HIDDEN_MS + 60000) {
+          GM_deleteValue(k);
+          continue;
+        }
+        if (!alive(b) || (b.site && b.site !== side.id) || (b.releaseId && !here.includes(String(b.releaseId)))) continue;
+        const cur = out.get(m[1]) || { ts: 0, used: 0 };
+        out.set(m[1], { ts: Math.max(cur.ts, b.ts), used: Math.max(cur.used, b.used || 0) });
+      }
+      return out;
     };
     // A status map of this site and of the release this page shows
     const forHere = (map) => !!(map && siteOf(map) === side.id && releaseIds().includes(String(map.releaseId)));
     // [1.8.4] the release a message back to the dashboard is about: the one whose marks are shown (the album or the track)
     const currentReleaseId = () => (forHere(lastMap) ? String(lastMap.releaseId) : side.releaseId());
-    const isHere = (map) => forHere(map) && senderAlive(map);
+    /**
+     * [1.10.0] The imports open for this page's release (an editor or release page beating for it), the one used last first –
+     * any number of imports of other releases may be open meanwhile.
+     */
+    const liveMaps = () => {
+      if (!releaseIds().length) return [];
+      return [...liveReleases()].map(([key, beat]) => ({ key, beat, map: GM_getValue(`statusMap:${key}`) })).filter((x) => forHere(x.map))
+        .sort((a, b) => (b.beat.used - a.beat.used) || (b.beat.ts - a.beat.ts));
+    };
+    // [1.10.0] two imports of this release open: a small note says which one the marks are
+    let multiEl = null;
+    const showMulti = (n, map) => {
+      if (n < 2) {
+        if (multiEl) multiEl.remove();
+        multiEl = null;
+        return;
+      }
+      if (!multiEl) {
+        multiEl = document.createElement('div');
+        multiEl.id = 'dci-multi';
+        multiEl.setAttribute('role', 'status');
+        multiEl.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:2147483000;max-width:360px;padding:4px 10px;border-radius:4px;'
+          + 'background:#fff8db;color:#7a5a00;border:1px solid #e8d48a;font:12px/1.4 sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.15)';
+        document.body.appendChild(multiEl);
+      }
+      const label = ((map && map.labels) || {}).multi || '{n} imports of this release are open – the marks are those of the one used last';
+      multiEl.textContent = `MB x Vibecode: ${label.replace('{n}', n)}`;
+    };
     /**
      * [1.8.3] "Keep marks" (switched on in the dashboard): with no editor or release page of the release open, its last
      * status as kept for its release page (the last 30 releases).
@@ -318,39 +410,43 @@
     let shownMap = null;
     let live = false;
     let shownSig = '';
-    const showMap = (map) => {
-      lastMap = map;
-      const here = isHere(map);
-      const use = here ? map : keptMap();
-      shown = !!(use && use.enabled);
-      live = here;
-      shownMap = shown ? use : null;
-      shownSig = shownMap ? `${here}|${shownMap.ts}|${shownMap.pageId}` : '';
-      artShown = here && !!map.artwork && !!side.artwork;
+    /** [1.10.0] What to show now: the import of this release used last, else the kept marks; drawn only when it changed. */
+    const current = () => {
+      // (an import whose marks are switched off shows none – not another one's)
+      const lives = liveMaps();
+      const map = lives.length ? lives[0].map : null;
+      const use = map || keptMap();
+      const sig = use && use.enabled ? `${!!map}|${use.ts}|${use.pageId}|${use.mbRelease || ''}` : '';
+      return { lives, map, use, sig, art: !!map && !!map.artwork && !!side.artwork };
+    };
+    const showMap = (force = false) => {
+      const c = current();
+      showMulti(c.lives.length, c.map);
+      if (!force && c.sig === shownSig && c.art === artShown) return;
+      lastMap = c.map;
+      shown = !!(c.use && c.use.enabled);
+      live = !!c.map;
+      shownMap = shown ? c.use : null;
+      shownSig = c.sig;
+      artShown = c.art;
       // [1.9.0] the underlines go first and come back after the marks (they are in the same texts)
       Object.values(TXT_MARK).forEach(bcUnwrap);
       side.renderStatus(shownMap);
       renderTextMarks(shownMap, side);
-      if (side.artwork) renderArtwork(artShown ? map : null);
+      if (side.artwork) renderArtwork(artShown ? c.map : null);
     };
-    GM_addValueChangeListener('statusMap', (name, oldValue, map) => showMap(map || null));
+    // [1.10.0] a map of any release changed (or a page of MusicBrainz closed)
+    GM_addValueChangeListener('statusPing', () => showMap());
     if (side.artwork) {
       GM_addValueChangeListener('artReset', (name, oldValue, ts) => resetArt(ts));
       resetArt(GM_getValue('artReset'));
     }
-    // [1.8.0] the newest map then (one that arrived meanwhile is not replaced by the one stored when the page opened)
-    if (GM_getValue('statusMap')) setTimeout(() => showMap(lastMap || GM_getValue('statusMap') || null), 1500);
+    setTimeout(() => showMap(), 1500);
     // Discogs renders parts of the page later: mark again once the credits are there
-    setTimeout(() => { if (lastMap) showMap(lastMap); }, 4000);
+    setTimeout(() => showMap(true), 4000);
     // The edit page was closed (or crashed): remove the marks; they come back when it reports again ([1.8.3] or the kept
-    // ones are shown)
-    setInterval(() => {
-      if (!lastMap && !GM_getValue('keepMarks')) return;
-      const here = isHere(lastMap);
-      const use = here ? lastMap : keptMap();
-      const sig = use && use.enabled ? `${here}|${use.ts}|${use.pageId}` : '';
-      if (sig !== shownSig || artShown !== (here && !!lastMap.artwork && !!side.artwork)) showMap(lastMap);
-    }, 3000);
+    // ones are shown); [1.10.0] another import of this release in front: its marks
+    setInterval(() => showMap(), 3000);
     document.addEventListener('click', (e) => {
       const mark = e.target.closest && e.target.closest('.dci-dg-mark');
       if (!mark) return;
@@ -360,9 +456,9 @@
       if (!live) return;
       // [1.8.3] "Click switches" (dashboard): the credit off (its row "Skip") or on again; else its row in the dashboard
       if (shownMap && shownMap.toggle) {
-        GM_setValue('fromDiscogs', { type: 'toggle-credit', row: mark.dataset.row, off: !mark.classList.contains('dci-mark-off'), releaseId: currentReleaseId(), ts: Date.now() });
+        GM_setValue('fromDiscogs', { type: 'toggle-credit', row: mark.dataset.row, off: !mark.classList.contains('dci-mark-off'), releaseId: currentReleaseId(), mbRelease: (shownMap && shownMap.mbRelease) || '', ts: Date.now() });
       } else {
-        GM_setValue('fromDiscogs', { type: 'focus-row', row: mark.dataset.row, releaseId: currentReleaseId(), ts: Date.now() });
+        GM_setValue('fromDiscogs', { type: 'focus-row', row: mark.dataset.row, releaseId: currentReleaseId(), mbRelease: (shownMap && shownMap.mbRelease) || '', ts: Date.now() });
       }
     }, true);
     // [1.8.3] the pointer resting on a mark: its row in the dashboard
@@ -375,7 +471,7 @@
       clearTimeout(markTimer);
       if (mark && live && shownMap && shownMap.toggle) {
         markTimer = setTimeout(() => {
-          if (markEl === mark) GM_setValue('fromDiscogs', { type: 'focus-row', hover: true, row: mark.dataset.row, releaseId: currentReleaseId(), ts: Date.now() });
+          if (markEl === mark) GM_setValue('fromDiscogs', { type: 'focus-row', hover: true, row: mark.dataset.row, releaseId: currentReleaseId(), mbRelease: (shownMap && shownMap.mbRelease) || '', ts: Date.now() });
         }, MARK_HOVER_MS);
       }
     });
@@ -386,7 +482,7 @@
       if (!pos || pos === lastPos) return;
       lastPos = pos;
       clearTimeout(hoverTimer);
-      hoverTimer = setTimeout(() => GM_setValue('fromDiscogs', { type: 'hover-track', position: pos, releaseId: currentReleaseId(), ts: Date.now() }), 250);
+      hoverTimer = setTimeout(() => GM_setValue('fromDiscogs', { type: 'hover-track', position: pos, releaseId: currentReleaseId(), mbRelease: (lastMap && lastMap.mbRelease) || '', ts: Date.now() }), 250);
     });
 
     const pending = sessionStorage.getItem('dci-pending');
@@ -484,16 +580,24 @@
     return rows;
   }
 
-  /** Smallest ancestor (up to 5 levels) whose text also contains the role; otherwise the list item or row. */
+  /**
+   * Smallest ancestor (up to 5 levels) whose text also contains the role; otherwise the list item. [1.9.2] Never beyond the
+   * cell of a table (nor the item of a list): the row of a track is no line of a credit (collected item 174).
+   */
   function lineOf(el, role) {
+    const cell = el.closest('td, th');
+    const stop = el.closest('td, th, li');
     let cur = el;
     for (let i = 0; i < 5 && cur && cur !== document.body; i++) {
+      // [1.10.0] nor the cell itself: its text has every credit of the track ("Flute – Oliver Lake" and "Written-By – Lake*")
+      if (cur === cell) break;
       const text = norm(cur.textContent);
       if (text.length > 400) break; // do not climb into whole sections
       if (role && text.includes(role)) return cur;
+      if (cur === stop) break;
       cur = cur.parentElement;
     }
-    return el.closest('li, tr') || el;
+    return el.closest('li') || el;
   }
 
   const inTracklist = (el) => !!el.closest('[data-track-position], #release-tracklist, [id*="tracklist" i]');
@@ -685,6 +789,9 @@
       if (pos) mark.dataset.pos = pos;
       mark.textContent = MARK_SYMBOL[status] || '?';
       mark.title = markTitle(map, item, status, note, pos);
+      // [1.9.2] never into a table row or the table itself: there the mark is a cell of its own and shifts the columns (the
+      // title and its credits in the narrow column of the duration, written letter by letter downwards; collected item 174)
+      if (found.el.matches && found.el.matches('tr, tbody, thead, tfoot, table')) return;
       found.el.insertBefore(mark, found.el.firstChild);
       if (item.unmapped) found.el.classList.add('dci-dg-unmapped-line');
       // (the credit's list item; the element found may be only the name inside it)
@@ -723,6 +830,9 @@
         if (!re.test(a.getAttribute('href') || '')) continue;
         const line = lineOf(a, role);
         const score = role && norm(line.textContent).includes(role) ? 3 : 1;
+        // [1.9.2] in a track's line only the credit with the role ("Flute – Oliver Lake", not "Written-By – Lake*"); without
+        // one the credit gets no mark there (its line in the credits keeps its own; collected item 174)
+        if (role && score < 3) continue;
         if (!best || score > best.score) best = { el: line, score };
       }
     }
@@ -1186,16 +1296,22 @@
     const mbRelease = (location.pathname.match(/[0-9a-f-]{36}/) || [])[0] || '';
     if (!mbRelease) return;
     const pageId = `release-${mbRelease}`;
+    // [1.10.0] the map and the beat of this release (see keepPerRelease)
     const stored = () => {
-      const own = GM_getValue(`statusMap:${mbRelease}`);
-      const current = GM_getValue('statusMap');
-      const map = own || (current && current.mbRelease === mbRelease ? current : null);
+      const map = GM_getValue(`statusMap:${mbRelease}`);
       return map && map.enabled && map.keepOnRelease ? map : null;
     };
     // [1.9.1] once the page is left, no beat any more (see the edit page)
     let leaving = false;
+    let used = document.visibilityState === 'visible' ? Date.now() : 0;
+    const markUsed = () => { if (document.visibilityState === 'visible') used = Date.now(); };
+    ['focus', 'pointerdown', 'keydown'].forEach((t) => window.addEventListener(t, markUsed, true));
+    document.addEventListener('visibilitychange', markUsed);
+    // (its own key: an editor of this release open too beats beside it)
+    const beatKey = `statusBeat:${mbRelease}:${pageId}`;
     const beat = () => {
-      if (!leaving && stored()) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden' });
+      const map = stored();
+      if (!leaving && map) GM_setValue(beatKey, { pageId, release: mbRelease, ts: Date.now(), hidden: document.visibilityState === 'hidden', used, site: siteOf(map), releaseId: String(map.releaseId || '') });
     };
     /**
      * "target|entry|type" of relationships; "seen" holds every entity the lookups returned, "works" the works
@@ -1327,9 +1443,10 @@
       const now = stored();
       if (now && now.ts === map.ts) {
         const checkedMap = { ...map, items, pageId, checked: Date.now(), ts: Date.now() };
-        GM_setValue('statusMap', checkedMap);
-        // [1.8.3] kept for the release too: "Keep marks" shows the checked state after the release page is closed
+        // [1.8.3] kept for the release: "Keep marks" shows the checked state after the release page is closed; [1.10.0] it is
+        // also the map shown while this page is open
         GM_setValue(`statusMap:${mbRelease}`, checkedMap);
+        pingStatus(mbRelease);
       }
       return true;
     };
@@ -1343,8 +1460,8 @@
     // Closed: the marks on Discogs go at once (unless the edit page of this release is still open)
     window.addEventListener('pagehide', () => {
       leaving = true;
-      const b = GM_getValue('statusBeat');
-      if (b && b.pageId === pageId) GM_setValue('statusBeat', { pageId, release: mbRelease, ts: 0 });
+      GM_deleteValue(beatKey);
+      pingStatus(mbRelease);
     });
   }
 

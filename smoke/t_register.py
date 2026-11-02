@@ -7,6 +7,9 @@ A) In Node: parseRoles, mapRole, instrument candidates, role credit suggestions 
 B) In the dashboard: the texts pasted as one source – entries, rows (role, MB type, instrument, level, tracks), not
    recognized, date pool.
 C) The window "Mapping rules": every section as stored; the list of tables may only gain rows, new sections are named.
+D) [3.38.10] (collected item 177) Each role's name as MusicBrainz shows it: the link phrase of its type from MusicBrainz's
+   relationship types (mb_link_types.json, written by tools/mb_link_types.py from the server's repository) with its flags and
+   instrument or voice – "recording engineer", "co-producer", "guest soprano saxophone".
 UPDATE=1 writes the results as the new golden file (after a change of the register that is meant)."""
 import json
 import os
@@ -17,6 +20,8 @@ import harness as H
 HERE = os.path.dirname(os.path.abspath(__file__))
 CORPUS = os.path.join(HERE, 'register_corpus.json')
 GOLDEN = os.path.join(HERE, 'register_golden.json')
+# [3.38.10] MusicBrainz's relationship types with their link phrases (tools/mb_link_types.py)
+LINK_TYPES = os.path.join(HERE, 'mb_link_types.json')
 UPDATE = os.environ.get('UPDATE') == '1'
 
 NODE = r"""
@@ -67,19 +72,47 @@ const texts = corpus.texts.map((t) => {
   const res = m.SOURCES.text.parse(t, { isRole, isCompanyRole, resolveTracks });
   return ser({ ...res, credits: res.credits.map(noPlace), companies: res.companies.map(noPlace) });
 });
-console.log(JSON.stringify({ roles, rules, companies, dates, texts }));
+// [3.38.10] (177) each role's name as MusicBrainz shows it (mb_link_types.json: MusicBrainz's relationship types with their
+// phrases, tools/mb_link_types.py): the first of its types MusicBrainz has between an artist and its level (as the dashboard
+// takes it), its link phrase with the flags and the instrument or voice; a type whose entity types are not known (added to
+// MusicBrainz after 2014): all types of that name – their names, if they differ (ids "928,1171,…")
+const LT = Object.values(JSON.parse(require('fs').readFileSync(process.argv[3], 'utf8')).types).filter((t) => t.link_phrase !== undefined);
+const typesFor = (names, level) => {
+  for (const n of names) {
+    const typed = LT.filter((t) => norm(t.name) === norm(n) && t.type0 === 'artist' && t.type1 === level);
+    if (typed.length) return [n, typed];
+    const open = LT.filter((t) => norm(t.name) === norm(n) && !t.type0);
+    if (open.length) return [n, open.map((t) => ({ ...t, type0: 'artist', type1: level }))];
+  }
+  return [names[0], []];
+};
+const phrases = {};
+for (const raw of corpus.roles) {
+  phrases[raw] = m.parseRoles(raw).map((p) => {
+    const r = m.mapRole(p.base, p.mods);
+    if (!(r.types || []).length) return { type: '', ids: '', name: '' };
+    const [name, cands] = typesFor(r.types, r.level);
+    const values = new Map((r.flags || []).map((f) => [norm(f), [f]]));
+    const prim = (r.primaryCands || [])[0];
+    const ph = cands.length ? String(cands[0].reverse_link_phrase || '') : '';
+    if (prim) for (const root of ['instrument', 'vocal']) if (ph.includes(`{${root}`)) values.set(root, [prim]);
+    const names = [...new Set(cands.map((t) => m.linkPhraseOf(t, r.level, values)))];
+    return { type: `${name}@${r.level}`, ids: cands.map((t) => t.id).join(','), name: names.join(' | ') };
+  });
+}
+console.log(JSON.stringify({ roles, rules, companies, dates, texts, phrases }));
 """
 
 ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(),
   [...g.querySelectorAll('tr.dci-row')].map(tr => {
-    const v = (s) => { const e = tr.querySelector(s); return e ? (e.value !== undefined ? e.value : e.textContent.trim()) : ''; };
+    const v = (s) => { const e = tr.querySelector(s); return e ? (e.dataset && e.dataset.raw !== undefined ? e.dataset.raw : e.value !== undefined ? e.value : e.textContent.trim()) : ''; };
     const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
     return [v('.dci-drole'), v('[data-f=type]'), v('[data-f=primary]'), lv ? lv.dataset.level : '', v('[data-tcount]') || v('.dci-c-tracks .dci-muted')].map(x => String(x).replace(/\\s+/g, ' ').trim());
   })]))()"""
 
 
 def node_part():
-    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), CORPUS], capture_output=True, text=True)
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), CORPUS, LINK_TYPES], capture_output=True, text=True)
     if js.returncode:
         print(js.stderr[-2000:])
         raise SystemExit(1)
@@ -156,6 +189,13 @@ ok_a = all([diff_dict('Rolle', gold['node']['roles'], a['roles']),
             diff_dict('Text', dict(enumerate(gold['node']['texts'])), dict(enumerate(a['texts'])))])
 print('A) Node – Rollen', len(a['roles']), '| Regeln', len(a['rules']), '| Firmenrollen', len(a['companies']), '| Daten', len(a['dates']), '| Texte', len(a['texts']), '→', ok_a)
 results.append(ok_a)
+# D) [3.38.10] (177) the names as MusicBrainz shows them
+parts = [x for v in a['phrases'].values() for x in v]
+ok_d = diff_dict('Name', gold['node'].get('phrases', {}), a['phrases'])
+print('D) Namen wie bei MusicBrainz – Teile', len(parts), '| mit Typ von MB', sum(1 for x in parts if x['ids'] and ',' not in x['ids']),
+      '| Typ ohne bekannte Entitäten', sum(1 for x in parts if ',' in x['ids']), '| Typ nicht bei MB', sum(1 for x in parts if x['type'] and not x['ids']),
+      '| ohne Typ', sum(1 for x in parts if not x['type']), '→', ok_d)
+results.append(ok_d)
 # B) dashboard
 ok_b = diff_dict('Dashboard', gold['page'], bpart)
 print('B) Dashboard – Einträge', len(bpart['rows']), '| nicht erkannt', len(bpart['unrec']), '| Pool', len(bpart['pool']), '→', ok_b)

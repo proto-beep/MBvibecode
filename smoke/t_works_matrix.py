@@ -171,7 +171,7 @@ def case_matrixcols():
         pg.wait_for_timeout(500)
 
         # A) "Directed By": please choose; nothing staged until then
-        row = lambda: pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole', has_text='Directed By')).first
+        row = lambda: pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole[data-raw="Directed By"]')).first
         typ = lambda: row().locator('[data-f=type]').evaluate("s => s.options[s.selectedIndex] ? s.options[s.selectedIndex].text : ''")
         ask = re.sub(r'\s+', ' ', row().locator('.dci-type-ask').inner_text())
         planned = lambda: pg.evaluate("[...document.querySelectorAll('[data-status]')].length") and row().locator('.dci-status').inner_text()
@@ -349,7 +349,7 @@ def case_fill():
     pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
     pg.wait_for_timeout(1500)
     # (the Discogs page of the test has no line for Writer Z, so the status the companion keeps is looked at)
-    z = lambda: [(i['status'], i.get('note')) for i in (H.STORE.data.get('statusMap') or {}).get('items', []) if i['artistId'] == 3009]
+    z = lambda: [(i['status'], i.get('note')) for i in (H.STORE.data.get(f'statusMap:{H.REL}') or {}).get('items', []) if i['artistId'] == 3009]
     print('D1) nach Übernehmen – Writer Z:', z())
     H.submit_staged(pg)
     NEW = H.uid('cccccccc', 33)
@@ -370,7 +370,7 @@ def case_fill():
     pr, _ = H.open_mb_release(dg.context)
     dg.wait_for_timeout(6000)
     done = z()
-    items = [(i['role'], i['status'], i.get('note'), i.get('mb')) for i in H.STORE.data['statusMap']['items'] if i['artistId'] == 3009]
+    items = [(i['role'], i['status'], i.get('note'), i.get('mb')) for i in H.STORE.data[f'statusMap:{H.REL}']['items'] if i['artistId'] == 3009]
     print('D3) Werk angelegt – Writer Z:', done, '| Einträge:', items)
     results.append(open_edit == [('pending', '0/1')] and done == [('mb', '')] and items and items[0][3].get('r') and not items[0][3].get('t'))
     print('Fehler D:', errs)

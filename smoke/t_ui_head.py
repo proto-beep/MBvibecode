@@ -158,7 +158,8 @@ def case_entryhead():
        Man as "B. Man" on this release; collected item 100), its tooltip "Discogs: Bass Man", no chip "as “B. Man”" (until
        3.32.1: the name "Bass Man" and the chip) – [3.37.11] the chip "artist credit in MusicBrainz: “B. Man” (the Discogs
        spelling *)" instead, and the tooltip says what * means (collected item 161); the MusicBrainz name (no "credited as") – no chip. A row credited otherwise:
-       "as “Bassman”" at the head (the spelling of the head not again), the compact line of each row names its own credit.
+       "as “Bassman”" at the head (the spelling of the head not again; [3.38.11] "… for bass": only that row), the compact line of
+       each row names its own credit.
     C) The bar below "Import credits …" (with the companion): the status as a badge (source link, "open in background")
        and ⚙ – no switches of the navigation any more; ⚙ opens the settings of the dashboard at "Discogs and Bandcamp view" ([3.30.5] "Source pages")."""
     orig = H.discogs_release
@@ -212,7 +213,7 @@ def case_entryhead():
         results.append(b1['shown'][0] == 'B. Man*' and b1['shown'][1].startswith('Discogs: Bass Man\n* – credited so on Discogs')
                        and b1['chip'] and b1['chip'][0] == 'artist credit in MusicBrainz: “B. Man” (the Discogs spelling *)'
                        and b1['chip'][1].startswith('Discogs credits “Bass Man” on this release as “B. Man”')
-                       and b2['chip'] and b2['chip'][0] == 'as “Bassman”' and lines == 2)
+                       and b2['chip'] and b2['chip'][0] == 'as “Bassman” for bass' and lines == 2)
         # C) the bar below "Import credits …"
         pg.click('.dci-head [data-act=close]')
         pg.wait_for_timeout(300)
@@ -455,7 +456,7 @@ def case_bar():
         print('   „oben behalten“ aus → Pool eingeklappt weg:', pg.locator('.dci-pools-kept').count() == 0)
         # 4) instruments and producer
         def rowinfo(raw):
-            tr = pg.locator('tr.dci-row').filter(has=pg.locator('.dci-drole', has_text=raw)).first
+            tr = pg.locator('tr.dci-row').filter(has=pg.locator(f'.dci-drole[data-raw="{raw}"]')).first
             typ = tr.locator('[data-f=type]').evaluate("s => s.options[s.selectedIndex] ? s.options[s.selectedIndex].text : ''")
             prim = tr.locator('[data-f=primary]').input_value() if tr.locator('[data-f=primary]').count() else ''
             rc = tr.locator('[data-f=role-credit]').input_value() if tr.locator('[data-f=role-credit]').count() else ''
@@ -685,12 +686,187 @@ def case_anvcredit():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_spellings():
+    """Credits Importer 3.38.11 (collected items 175, 176; maintainer, Discogs 2631299 "Boston Duets": "die artistnamen in den
+    instrumentenfeldern werden als "Lake*" bei Discgos angezeigt, dabei ist das nur der name, der in den writing credits steckt", "nein
+    ich meinte das Lake* das von Discogs gezogen wurde und im Kopf des Eintrags stand.", "es fehlt noch die möglichkeit alle entities,
+    also artists, labels, places mit artist etc. credits zu benennen", F-176a "erst mal wie vorschlag", F-176b "ja eigene Zeile").
+    A) Oliver Lake – Written-By "Lake*" on tracks 1–2, Flute and Soprano Saxophone as "Oliver Lake", Flute on track 3 as "O. Lake*":
+       the head "Oliver Lake" (no "Lake*"), the chip "as “Lake” (+1)"; "Artist credit for all roles" empty.
+    B) Carl Allen credited "C. Allen*" in all his roles: the head "C. Allen*", the field "C. Allen" (as before).
+    C) The matrix of Oliver Lake: a column "Credited as"; flute (empty, the MusicBrainz name), soprano saxophone (empty), flute
+       "O. Lake" – a line of its own.
+    D) Compact: the chip of that flute "flute as “O. Lake”".
+    E) "O. Lake" emptied in its line: the two flute lines join; the chip in the head "as “Lake” for writer" (only the works carry it).
+    F) The place Abbey Road Studios: "Credited as for all roles"; "Abbey Road" set for all: its rows credit "Abbey Road" (until 3.38.10
+       "Set for all" was taken back at the next check for a linked entry: syncSourceCredits)."""
+    H.ENTRIES_VIEW = 'matrix'
+    orig = H.discogs_release
+    H.ARTISTS[3301] = (H.uid('dddddddd', 3301), 'Oliver Lake')
+    H.ARTISTS[3302] = (H.uid('dddddddd', 3302), 'Carl Allen')
+    H.attr(9201, 'flute', 14, 14)
+    H.attr(9202, 'soprano saxophone', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    ex = lambda name, role, i, anv='', tracks='': {'name': name, 'anv': anv, 'role': role, 'tracks': tracks, 'id': i, 'join': ''}
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [ex('Oliver Lake', 'Flute', 3301), ex('Oliver Lake', 'Soprano Saxophone', 3301), ex('Carl Allen', 'Drums', 3302, 'C. Allen'),
+                              ex('Carl Allen', 'Producer', 3302, 'C. Allen')]
+        for i in (0, 1):
+            d['tracklist'][i]['extraartists'].append(ex('Oliver Lake', 'Written-By', 3301, 'Lake'))
+        d['tracklist'][2]['extraartists'].append(ex('Oliver Lake', 'Flute', 3301, 'O. Lake'))
+        return d
+
+    H.discogs_release = rel
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(s => { const st = s.querySelector('.dci-gname strong'); return (st.dataset.name || st.textContent.trim()) === name; })"
+    HEAD = """(name) => { const g = (%s)(name); if (!g) return null; const c = g.querySelector('.dci-gcredit'); const st = g.querySelector('.dci-gname strong');
+      const f = g.querySelector('[data-f=artist-credit-all]'); return { shown: st.textContent.trim(), chip: c && !c.hidden ? c.textContent.trim() : null,
+      field: f ? f.value : null, label: f ? f.closest('label').textContent.replace(/\\s+/g, ' ').trim() : null }; }""" % SEC
+    LINES = """(name) => { const g = (%s)(name); if (!g) return null; return { head: [...g.querySelectorAll('.dci-em-grid thead th')].map(t => t.textContent.trim()).filter(Boolean).slice(0, 3),
+      lines: [...g.querySelectorAll('tr.dci-em-line')].map(tr => [(tr.querySelector('[data-f=em-primary]') || {}).value, (tr.querySelector('[data-f=em-ac]') || {}).value]) }; }""" % SEC
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(600)
+        a, b_ = pg.evaluate(HEAD, 'Oliver Lake'), pg.evaluate(HEAD, 'Carl Allen')
+        print('A)', a, '\nB)', b_)
+        results.append(a and a['shown'] == 'Oliver Lake' and a['chip'] == 'as “Lake” (+1)' and a['field'] == '' and a['label'] == 'Artist credit for all roles')
+        results.append(b_ and b_['shown'] == 'C. Allen*' and b_['field'] == 'C. Allen')
+        c = pg.evaluate(LINES, 'Oliver Lake')
+        print('C)', c)
+        results.append(c and c['head'][1:3] == ['Role credit', 'Credited as'] and sorted(c['lines']) == [['flute', ''], ['flute', 'O. Lake'], ['soprano saxophone', '']])
+        # D) compact
+        pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+        chips = pg.evaluate("(name) => { const g = (%s)(name); return g ? [...g.querySelectorAll('.dci-em-chipname')].map(x => x.textContent.replace(/\\s+/g, ' ').trim()) : null; }" % SEC, 'Oliver Lake')
+        pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+        print('D) kompakt:', chips)
+        results.append(bool(chips) and 'flute as “O. Lake”' in chips and 'flute' in chips)
+        # E) emptied: the lines join
+        sec = "section.dci-group:has(.dci-gname strong:text-is('Oliver Lake'))"
+        target = pg.evaluate("(name) => { const g = (%s)(name); return [...g.querySelectorAll('tr.dci-em-line [data-f=em-ac]')].findIndex(x => x.value === 'O. Lake'); }" % SEC, 'Oliver Lake')
+        f = pg.locator(f'{sec} tr.dci-em-line [data-f=em-ac]').nth(target)
+        f.fill('')
+        f.press('Tab')
+        pg.wait_for_timeout(600)
+        e = pg.evaluate(LINES, 'Oliver Lake')
+        e2 = pg.evaluate(HEAD, 'Oliver Lake')
+        print('E) geleert:', e, '| Kopf:', e2)
+        results.append(e and sorted(e['lines']) == [['flute', ''], ['soprano saxophone', '']] and e2['shown'] == 'Oliver Lake' and e2['chip'] == 'as “Lake” for writer')
+        # F) the place
+        fa = pg.evaluate(HEAD, 'Abbey Road Studios')
+        psec = "section.dci-group:has(.dci-gname strong:text-is('Abbey Road Studios'))"
+        pg.fill(f'{psec} [data-f=artist-credit-all]', 'Abbey Road')
+        pg.click(f'{psec} [data-act=artist-credit-all]')
+        pg.wait_for_timeout(500)
+        fb = pg.evaluate("(name) => { const g = (%s)(name); return [...g.querySelectorAll('[data-f=em-ac], [data-f=credit]')].map(x => x.value); }" % SEC, 'Abbey Road Studios')
+        print('F) Ort:', fa, '→', fb)
+        results.append(fa and fa['label'] == 'Credited as for all roles' and fa['field'] == '' and fb and set(fb) == {'Abbey Road'})
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_capsnames():
+    """Credits Importer 3.38.12 (F-4, rule S060; maintainer: "bitte schreibe Großbuchstaben immer Klein, es sei denn, der Artistname
+    auf MB ist ebenfalls komplett capslock … anbieten alles in großbuchstaben zu setzen", "ja normale schreibweise … ja überall",
+    "Wörter aus zwei Buchstaben bleiben").
+    A) Discogs credits "TORBEN SNEKKESTAD" (Saxophone), "DJ SHADOW" (Scratches), "ABBA" (linked: MusicBrainz "ABBA"), Oliver Lake
+       credited "LAKE": the heads "Torben Snekkestad" with "↺ in capitals", "DJ Shadow", "ABBA" (MusicBrainz's spelling, no button),
+       "Lake*" credited "Lake" (all its roles carry it); the log "Names in capitals written in normal case (5): …" (the spellings too).
+    B) "↺ in capitals" at Torben Snekkestad: the head "TORBEN SNEKKESTAD", "↺ normal case", its line credited "TORBEN SNEKKESTAD"; once
+       more: "Torben Snekkestad", credited as empty again (the MusicBrainz name).
+    C) Oliver Lake credited "LAKE" (head "Lake*"): "↺ in capitals" too – "LAKE*", credited "LAKE"; "DOOM" linked to MusicBrainz "MF
+       DOOM" (all in capitals): the head "MF DOOM", no ↺, credited "DOOM"; a "credited as" typed by hand ("T. S.") stays at "↺ in
+       capitals"."""
+    H.ENTRIES_VIEW = 'matrix'
+    orig = H.discogs_release
+    H.ARTISTS[3401] = (H.uid('dddddddd', 3401), 'ABBA')
+    H.ARTISTS[3405] = (H.uid('dddddddd', 3405), 'MF DOOM')
+    H.attr(9203, 'scratches', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    ex = lambda name, role, i, anv='': {'name': name, 'anv': anv, 'role': role, 'tracks': '', 'id': i, 'join': ''}
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [ex('TORBEN SNEKKESTAD', 'Saxophone', 3402), ex('DJ SHADOW', 'Scratches', 3403), ex('ABBA', 'Vocals', 3401),
+                              ex('Oliver Lake', 'Saxophone', 3404, 'LAKE'), ex('DOOM', 'Vocals', 3405)]
+        return d
+
+    H.discogs_release = rel
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(s => { const st = s.querySelector('.dci-gname strong'); return [st.dataset.name, st.textContent.trim()].includes(name); })"
+    HEAD = """(name) => { const g = (%s)(name); if (!g) return null; const b = g.querySelector('[data-act=case-back]');
+      return { shown: g.querySelector('.dci-gname strong').textContent.trim(), btn: b ? b.textContent.trim() : null, title: b ? b.title : null,
+        ac: [...g.querySelectorAll('[data-f=em-ac]')].map(x => x.value) }; }""" % SEC
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        a = {n: pg.evaluate(HEAD, n) for n in ('Torben Snekkestad', 'DJ Shadow', 'ABBA', 'Oliver Lake')}
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'normal case' in x]
+        for k, v in a.items():
+            print('A)', k, v)
+        print('   Protokoll:', logs)
+        ok_a = a['Torben Snekkestad'] and a['Torben Snekkestad']['shown'] == 'Torben Snekkestad' and a['Torben Snekkestad']['btn'] == '↺ in capitals' \
+            and a['Torben Snekkestad']['title'].startswith('The source writes “TORBEN SNEKKESTAD”') and a['Torben Snekkestad']['ac'] == [''] \
+            and a['DJ Shadow'] and a['DJ Shadow']['shown'] == 'DJ Shadow' and a['ABBA'] and a['ABBA']['shown'] == 'ABBA' and a['ABBA']['btn'] is None and a['ABBA']['ac'] == [''] \
+            and a['Oliver Lake'] and a['Oliver Lake']['ac'] == ['Lake'] \
+            and logs == ['Names in capitals written in normal case (5): TORBEN SNEKKESTAD → Torben Snekkestad, DJ SHADOW → DJ Shadow, ABBA → Abba, LAKE → Lake, DOOM → Doom – “↺ in capitals” at the entry takes the spelling of the source']
+        results.append(bool(ok_a))
+        sec = "section.dci-group:has(.dci-gname strong:text-is('Torben Snekkestad'))"
+        pg.click(f'{sec} [data-act=case-back]')
+        pg.wait_for_timeout(600)
+        b1 = pg.evaluate(HEAD, 'TORBEN SNEKKESTAD')
+        sec2 = "section.dci-group:has(.dci-gname strong:text-is('TORBEN SNEKKESTAD'))"
+        pg.click(f'{sec2} [data-act=case-back]')
+        pg.wait_for_timeout(600)
+        b2 = pg.evaluate(HEAD, 'Torben Snekkestad')
+        print('B) in Großbuchstaben:', b1, '| zurück:', b2)
+        results.append(b1 and b1['shown'] == 'TORBEN SNEKKESTAD' and b1['btn'] == '↺ normal case' and b1['ac'] == ['TORBEN SNEKKESTAD']
+                       and b2 and b2['shown'] == 'Torben Snekkestad' and b2['btn'] == '↺ in capitals' and b2['ac'] == [''])
+        # C) [3.38.12] (review) a spelling in capitals ("LAKE"): ↺ too; "DOOM" linked to MusicBrainz "MF DOOM": its spelling, credited
+        #    "DOOM"; a "credited as" typed by hand stays at "↺ in capitals"
+        lsec = "section.dci-group:has(.dci-gname strong[data-name='Oliver Lake'])"
+        c0 = pg.evaluate(HEAD, 'Oliver Lake')
+        pg.click(f'{lsec} [data-act=case-back]'); pg.wait_for_timeout(600)
+        c1 = pg.evaluate(HEAD, 'Oliver Lake')
+        pg.click(f'{lsec} [data-act=case-back]'); pg.wait_for_timeout(600)
+        doom = pg.evaluate(HEAD, 'MF DOOM')
+        acf = pg.locator(f'{sec} [data-f=em-ac]').first
+        acf.fill('T. S.'); acf.press('Tab'); pg.wait_for_timeout(500)
+        pg.click(f'{sec} [data-act=case-back]'); pg.wait_for_timeout(600)
+        c2 = pg.evaluate(HEAD, 'TORBEN SNEKKESTAD')
+        pg.click(f"section.dci-group:has(.dci-gname strong:text-is('TORBEN SNEKKESTAD')) [data-act=case-back]"); pg.wait_for_timeout(600)
+        print('C) LAKE:', c0, '→', c1, '| DOOM:', doom, '| von Hand:', c2)
+        results.append(c0 and c0['btn'] == '↺ in capitals' and c0['title'].startswith('The source writes “LAKE”') and c0['ac'] == ['Lake']
+                       and c1 and c1['shown'] == 'LAKE*' and c1['ac'] == ['LAKE'] and c1['btn'] == '↺ normal case' and c1['title'] == 'Back to normal case: “Lake”'
+                       and doom and doom['shown'] == 'MF DOOM' and doom['btn'] is None and doom['ac'] == ['DOOM']
+                       and c2 and c2['ac'] == ['T. S.'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_poolbar():
     """Credits Importer 3.37.15 (collected items 165, 166; maintainer: ""+ New date"/"+new track" group soll in der leiste oben auch
     sichtbar sein wenn sie eingefaltet ist.", "der falten knopf soll immer an der gleichen stelle erscheinen", "ich meinte (b)",
     "Nur oben", "ganz eingefaltet: ja ok").
-    A) "▲ fold" of "Dates & tracks" is in its head, right after the title (no longer at its foot below the matrix); folded it
-       reads "▼ show" at the same place (±1 px); the foot keeps "keep the pools in the bar when folded".
+    A) "▲ fold" of "Dates & tracks" is in its head (no longer at its foot below the matrix); folded it reads "▼ show" at the same
+       place (±1 px); the foot keeps "keep the pools in the bar when folded". [178] (3.38.13) The head is the last line of the block
+       (open and folded), "▲ fold" / "▼ show" in its middle (±2 px), the arrow at the title ▲ open, ▼ folded (until 3.38.12 the head
+       at the top, the fold right after the title, the arrow ▶ turned); after a click on it the focus is on it again.
     B) The date pool folded ("▸ Date pool (n)"): "+ New date" is in its bar; it opens the form below, the pool stays folded; a date
        saved there is counted. The track pool folded: "+ New track group" in its bar.
     A0) While suggestions of this import wait ("not applied yet"), the date pool folds at the first click (until 3.37.14 the
@@ -698,9 +874,12 @@ def case_poolbar():
     C) "Dates & tracks" folded with the pools kept in the bar: both pools there with "+ New date" / "+ New track group"; "+ New
        date" opens "Dates & tracks" with the form, "Cancel" folds it again."""
     HEAD = """(() => { const h = document.querySelector('.dci-pools-head .dci-pools-fold'); const t = document.querySelector('.dci-pools-toggle');
+      const line = document.querySelector('.dci-pools-head'); const c = (e) => { const x = e.getBoundingClientRect(); return Math.round(x.left + x.width / 2); };
       return { head: h ? [h.textContent.trim(), h.getAttribute('aria-expanded'), Math.round(h.getBoundingClientRect().left)] : null,
-        afterTitle: !!(h && h.previousElementSibling === t), foot: document.querySelectorAll('.dci-pools-foot .dci-pools-fold').length,
-        keep: !!document.querySelector('.dci-pools-foot [data-f=pools-keep]'), open: t ? t.getAttribute('aria-expanded') : null }; })()"""
+        middle: h && line ? Math.abs(c(h) - c(line)) : null, last: !!(line && line === line.parentElement.lastElementChild),
+        chev: t ? t.querySelector('.dci-chev').textContent.trim() : null, foot: document.querySelectorAll('.dci-pools-foot .dci-pools-fold').length,
+        keep: !!document.querySelector('.dci-pools-foot [data-f=pools-keep]'), open: t ? t.getAttribute('aria-expanded') : null,
+        focus: !!(document.activeElement && document.activeElement.classList.contains('dci-pools-fold')) }; })()"""
     BARS = """(() => [...document.querySelectorAll('.dci-dates-bar')].map(b => ({ cls: b.className, label: (b.querySelector('.dci-pool-label') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim(),
       kept: !!b.closest('.dci-pools-kept'), add: [...b.querySelectorAll('[data-act=pool-new], [data-act=tg-new], [data-f=tg-new-pick]')].map(x => x.dataset.act || x.dataset.f) })))()"""
     results = []
@@ -734,9 +913,10 @@ def case_poolbar():
         pg.wait_for_timeout(300)
         a2 = pg.evaluate(HEAD)
         print('A) offen:', a0, '| eingeklappt:', a1, '| wieder offen:', a2)
-        results.append(bool(a0['head']) and a0['head'][:2] == ['▲ fold', 'true'] and a0['afterTitle'] and a0['foot'] == 0 and a0['keep']
-                       and a1['head'][:2] == ['▼ show', 'false'] and abs(a1['head'][2] - a0['head'][2]) <= 1 and a1['open'] == 'false'
-                       and a2['head'][:2] == ['▲ fold', 'true'])
+        # [178] (3.38.13) the line at the bottom of the block, "▲ fold" / "▼ show" in its middle, the arrow ▲ open, ▼ folded
+        results.append(bool(a0['head']) and a0['head'][:2] == ['▲ fold', 'true'] and a0['last'] and a0['middle'] <= 2 and a0['chev'] == '▲' and a0['foot'] == 0 and a0['keep']
+                       and a1['head'][:2] == ['▼ show', 'false'] and abs(a1['head'][2] - a0['head'][2]) <= 1 and a1['last'] and a1['middle'] <= 2 and a1['chev'] == '▼'
+                       and a1['open'] == 'false' and a2['head'][:2] == ['▲ fold', 'true'] and a1['focus'] and a2['focus'])
         # B) a pool folded
         n0 = pg.evaluate("document.querySelectorAll('.dci-pools-body .dci-pchip-date').length")
         pg.click('[data-act=pool-fold][data-pool=dates]')
