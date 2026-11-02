@@ -560,7 +560,7 @@ def case_pub():
 
 
 def case_remember():
-    """Credits Importer 3.36.4 (146; maintainer: "ja bitte dazu"): the choices of the works matrix of a remembered release after the
+    """Credits Importer 3.36.4 (146): the choices of the works matrix of a remembered release after the
     page is loaded again (⚙ Settings → Cache on): an attribute set on the link in MusicBrainz ("co"), a new work planned for
     track 2, the column Writer W taken out (its rows still on "Skip"; brought back, they are not), a column date, the type of
     new works – all as before."""

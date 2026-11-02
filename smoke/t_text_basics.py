@@ -586,8 +586,7 @@ def case_instrguess():
 
 def case_voicetech():
     """Credits Importer 3.34.25: "Voice" asks from every source with four answers, instrument technicians get their instrument
-    (collected items 137e, 137f; maintainer: "generell soll das mapping wirklich gleich behandelt werden", "alle vier rollen sollen
-    angeboten werden", "wenn vocals da steht, dann immer vocals ohne credit", "ja genau").
+    (collected items 137e, 137f).
     A) Discogs "Voice": asks vocals · other vocals “voice” · lead vocals “voice” · spoken vocals “voice” – until then vocal without
        voice and role credit (before: spoken vocals at once); "spoken vocals “voice”" → spoken vocals credited "voice".
        "Vocals": vocal without a question and without role credit.
@@ -655,9 +654,7 @@ def case_voicetech():
 
 
 def case_unknownask():
-    """Credits Importer 3.34.26: words that are no instrument ask in every source (collected item 137d, (c); maintainer: "also c.
-    sticks-and-stones bspw. könnte auch einfach "other instruments" werden. wir wollen das auf keinen fall verlieren", "behalte das
-    als letzte Antwort bei. auch bei discogs other instruments. aber miscellaneous support auch anbieten", "passt").
+    """Credits Importer 3.34.26: words that are no instrument ask in every source (collected item 137d, (c)).
     A) Discogs "Chaims" (before: miscellaneous support at once) asks chimes · wind chimes · tubular bells · other instruments
        “Chaims” · miscellaneous support (task “Chaims”), nothing chosen; "miscellaneous support" chosen – type miscellaneous
        support with the task "chaims" (in small letters, as before); then "chimes" – an instrument row again (recording), chimes,
@@ -667,7 +664,7 @@ def case_unknownask():
     C) A pasted text "Barry Guy – double bass, sticks-and-stones": double bass and other instruments “sticks-and-stones” (before:
        "→ ? “sticks-and-stones”" not recognized); "Jane Roe – guitar, kalimba, buddha machine" (more unknown words than
        instruments): guitar, the rest not recognized as before.
-    3.34.27 (S052; maintainer: "instrumente und role credits immer kleinschreiben außer bei eigennamen"): the credit and the task
+    3.34.27 (S052): the credit and the task
     of such a word in lower case – "other instruments “chaims”", "miscellaneous support (task “chaims”)", Sticks-And-Stones
     credited "sticks-and-stones" (before: as written); D) "Tambourine [Additional, Toy]": the suggestions of the role credit
     field written like the credit (toy · additional, toy · additional · additional tambourine · toy tambourine; before: "Additional,
@@ -762,9 +759,7 @@ def case_unknownask():
 
 
 def case_casenote():
-    """Credits Importer 3.34.28 (S052a/b; maintainer: ""Buddha" ist natürlich ein eigenname also großgeschrieben. generell müssen
-    instrumente kleingeschrieben werden. also vielleicht deutlich machen, dass gerade etwas lowercased wurde wenn die rolle oder das
-    instrument nicht bekannt ist", "S052b, Discogs-Klammern (S011): klein schreiben").
+    """Credits Importer 3.34.28 (S052a/b).
     A) Discogs "Guitar [Gretsch Duo Jet]" (until 3.35.2 "Gibson Les Paul", now a proper name of the register itself, item 144):
        guitar credited "Gretsch duo jet" (Gretsch a proper name of the register, T052), the row says "Written small – unknown to
        MusicBrainz: Duo Jet → duo jet · keep “Duo Jet” · always write “Duo Jet” · Duo → duo · keep “Duo” · … · Jet → jet …" (the
@@ -866,8 +861,7 @@ def case_casenote():
 
 
 def case_casephrase():
-    """Credits Importer 3.35.2 (item 144; maintainer: ""Gibson Les Paul" in dieser Groß- und Kleinschreibung bitte zu Ausnahmen
-    hinzufügen, das ist ja der korrekte name.", on the hint offering the whole: "ja bitte").
+    """Credits Importer 3.35.2 (item 144, on the hint offering the whole).
     A) Discogs "Guitar [Gibson Les Paul]": the credit "Gibson Les Paul" (a proper name of several words in T052), no note.
     B) "Guitar [Les Paul Junior]": "Les Paul junior" – the name as a whole, "Junior" written small with its own note (a name of
        the register ends the words one after another). C) "Guitar [Paul Reed Smith]": "paul reed smith", the note offers the three
@@ -1020,10 +1014,7 @@ Bob Blue on Piano and Saxophone"""
 
 
 def case_typonote():
-    """Credits Importer 3.37.13 (collected item 164; maintainer: "bei "“Taischigoto” is no instrument of MusicBrainz – chosen:"
-    soll nach der Auswahl "taischigoto" im role credit sein. neben role credit soll generell ein kleines x sein womit es geleert
-    werden kann", "bei reinen Tippfehlern soll die korrekte rolle gesetzt werden. eine info kann ausgegeben werden, dass es sich
-    wahrscheinlich um einen tippfehler handelte", "Nur 1 Buchstabe").
+    """Credits Importer 3.37.13 (collected item 164).
     A) Discogs "Sxaophone" (one slip off: two letters swapped) – saxophone chosen: no role credit, the note "Probably a typo of
        “saxophone”: no role credit." and a line in the log; "credit “sxaophone” as written" – credited "sxaophone", the note "A
        spelling of its own …"; "a typo: no role credit" – empty again.
@@ -1145,11 +1136,7 @@ def case_typonote():
 
 
 def case_stacked():
-    """Credits Importer 3.38.7: names above (or below) the line with their instruments (collected item 167, rules S058, S059;
-    maintainer: "folgendes muss insbesondere bei der Bilderkennung erkannt werden: "Torben SNEKKESTAD / SAXOPHONES & TRUMPET /
-    Agusti FERNANDEZ / PIANO / Barry GUY / DOUBLE BASS" also die Artists stehen über der Zeile mit ihnen betreffenden
-    instrumenten", "Großbuchstaben: immer in normale Schreibweise bringen", "umgekehrte Reihenfolge: ja bitte", "Behelfsknopf:
-    passt", "mach erstmal nur eindeutiges").
+    """Credits Importer 3.38.7: names above (or below) the line with their instruments (collected item 167, rules S058, S059).
     A) The example pasted: Torben Snekkestad – saxophone (“saxophones”), trumpet –, Agusti Fernandez – piano –, Barry Guy – double
        bass (the names in normal case; until 3.38.6 an entry "& TRUMPET" with saxophone and five lines not recognized); nothing not
        recognized, no note, nothing in the log.
@@ -1268,7 +1255,7 @@ def case_stacked():
 
 
 def case_stackflip():
-    """Credits Importer 3.38.12 (F-5; maintainer: "wie vorschlag, gezielt"; the independent review of block AP): ⇅ in the dashboard.
+    """Credits Importer 3.38.12 (F-5; the independent review of block AP): ⇅ in the dashboard.
     A) "Jane Roe – piano" (clear) and "Jane Roe / PIANO / John Doe" (not clear): Jane Roe has two piano rows – the clear one and
        the one of the lines not clear; ⇅: John Doe piano, Jane Roe keeps her clear row; ⇅ again: as at first (John Doe gone).
     B) ⇅, then the same text imported again (remembered for the release): John Doe piano once, Jane Roe her clear row once.

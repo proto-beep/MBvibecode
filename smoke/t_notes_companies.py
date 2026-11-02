@@ -110,8 +110,7 @@ Including a 52 p. booklet.
 
 def case_pcline():
     """Credits Importer 3.30.9: "© & ℗ TUM Records Oy 2021" – the label for ℗ and © (collected item 99; answers of
-    2026-10-25 08:55: "nur wenn P und C auch erwähnt sind. falls nur P oder nur C einzeln erwähnt sind soll jeweils nur das
-    angeboten werden").
+    2026-10-25 08:55).
     A) Discogs notes "© & ℗ TUM Records Oy 2021", Discogs lists no ℗/©: the entry TUM Records Oy with phonographic copyright
        and copyright (the year stays a date of the pool); MusicBrainz's TUM Records Oy and TUM Records are both suggested
        (T044: without the legal form "Oy"), another label not.
@@ -320,10 +319,7 @@ Barcode: 786497575220"""
 
 
 def case_personpub():
-    """Credits Importer 3.31.5: a publisher's level, a publisher with a person's name (collected items 112 and 97b; maintainer:
-    "bei publishing relationships von Labeln muss auch angeboten werden, dass sie auf release oder work ebene stattfinden
-    können. wir haben ja bereits die möglichkeit in der kompakt info das durchzuklicken. so soll das laufen.", "ja bitte. es
-    ist ja einfach ihn nicht zu verwenden"; "bitte nicht create label für personen anbieten!").
+    """Credits Importer 3.31.5: a publisher's level, a publisher with a person's name (collected items 112 and 97b).
     A) Full view: the label Pub Co ("Published By") shows its row in its entry too, on "Works" (default); its level buttons
        offer the release; "Release" → the label–release "published", the column of Pub Co leaves the works matrix; "Works"
        again → back.
@@ -415,9 +411,7 @@ def case_personpub():
 
 def case_placesearch():
     """Credits Importer 3.31.2: places from the notes and from texts get MusicBrainz's suggestions (collected items 98b and
-    114; maintainer, Discogs 18973900: "die orte kommen als vorschläge in "Companies, etc.". allerdings werden sie wohl
-    nicht mit den places abgeglichen? … die places liegen in MB vor."; "daten wie "Recorded November 7, 8, 2016, at Loft
-    Köln." müssen erkannt werden").
+    114).
     A) Discogs notes "… at Orange Music Sound Studios in West Orange, New Jersey …" and "… at Turtle Tone Studio in New York
        City": MusicBrainz's place in West Orange is suggested (the first part of the area); Turtle Tone Studio, in
        Manhattan, is found by its name alone and offered as similar; the log says "looking for the same name" (before: "no
@@ -481,9 +475,7 @@ All music mastered ... at Turtle Tone Studio in New York City"""
 
 
 def case_facets():
-    """Credits Importer 3.36.7 (collected item 150, S053; maintainer, about Discogs 3139201 "Facets" – MB ad8fe956-…: "warum wird bei
-    dem Facets release … Goldsmiths College 2x angeboten und dann auch noch an den falschen tracks und ohne date? das muss gefixt
-    werden"; "in live concert": "ja das muss dann eine live Work Verknüpfung generieren und als disambiguation übernommen werden").
+    """Credits Importer 3.36.7 (collected item 150, S053).
     Three LPs, 13 tracks; Discogs lists "Recorded At – Goldsmiths College" for the whole release; the notes: "A1 to B2 recorded 22nd
     May 1981 in live concert at Goldsmith's College, London / C1 to D recorded 4th October 1979 at Heiman Recording Studios, London /
     E1 to F2 recorded 2nd May 1980 at Heiman Recording Studios, London".
@@ -590,10 +582,7 @@ E1 to F2 recorded 2nd May 1980 at Heiman Recording Studios, London"""
 
 
 def case_notescredits():
-    """Credits Importer 3.37.0 (E5, rule S054; maintainer: "dann nimm E5 bitte auch in die Sammelliste auf", "gleich als Eintrag mit
-    Transparenzhinweis", "also alle informationen die sonst noch nicht per relationships vorhanden sind sollen abgegriffen werden. (es
-    soll sich nichts doppeln)", "ja bitte mit schalter. und vielleicht auch noch bei der quelle (falls discogs import) ein quick
-    switch?"). The Discogs notes read in full:
+    """Credits Importer 3.37.0 (E5, rule S054). The Discogs notes read in full:
     A) New names an entry each – Ann Blow (saxophone, track 3), Jane Notes (liner notes), Nobody Here (strings arranged, 2, 4) –,
        a new role of a Discogs name a row of its entry (Bass Man: backing vocals), each "From the Discogs notes" with ⓘ and the
        line; nothing twice: Bob Producer ("Produced by" = "Produced By" – its two lines give it tracks 1 and 3, ⓘ), Bass Man's bass,
@@ -696,8 +685,7 @@ Liner notes by Jane Notes"""
 
 
 def case_linkedsugg():
-    """Credits Importer 3.37.1 (E5a; maintainer: "wenn der name im text schon an anderer stelle im datensatz verknüpft ist mit
-    musicbrainz soll der vorschlag stärker hervorgehoben werden als andere namensvorschläge", "überall"): a name searched in
+    """Credits Importer 3.37.1 (E5a): a name searched in
     MusicBrainz (a pasted text, the Discogs notes …) whose artist MusicBrainz links to this release already – Ann Mix mixed the
     release there – has that artist first among its suggestions, highlighted (solid green, bold) and marked "in this release: mix on
     the release", before a namesake MusicBrainz's search gives first; the log says so. A name nobody in the release has: its
@@ -742,10 +730,7 @@ def case_linkedsugg():
 
 def case_festival():
     """Credits Importer 3.37.8: "Recorded June, 26, 1993 at the Western Front Lodge, Vancouver, B.C., Canada during the du Maurier,
-    Ltd. International Jazz Festival Vancouver" as on Discogs 1565448 "Cascades" (collected item 158; maintainer: "aus "Recorded
-    June, 26, 1993" wird nur 1993 als Datum ausgegeben", "aus texteinträgen kann bei freitext und dann auch discogs text zumindest
-    ein hinweis ausgegeben werden …", "vielleicht dann wirklich nur bei festivals, wo der name passt und die sich im Zeitraum (Date
-    period) befinden. und immer nur als angebot, nie vorbelegt.", "also brauchen wir dafür auch eine farbe").
+    Ltd. International Jazz Festival Vancouver" as on Discogs 1565448 "Cascades" (collected item 158).
     A) The date 1993-06-26 (until 3.37.7: 1993); the place from the notes "Western Front Lodge" (Vancouver) – without "the".
     B) Above the entries: "Festival recording: “International Jazz Festival Vancouver” (1993-06-26). MusicBrainz prefers the event
        to the place …"; offered: the event of that name whose time holds the date (1993-06-25 – 1993-07-04) – not the one of
@@ -823,11 +808,7 @@ def case_festival():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_pcperson():
-    """Credits Importer 3.37.10: ℗ / © of a person Discogs lists as a label (collected item 160, S057; maintainer: "… soll der an
-    anderer Stelle verknüpfte Martin Davidson auf artist ebene für die Copyrights eingetragen werden mit hinweis darauf, dass
-    Discogs das als label führt und das hier ein vorschlag aus anderen Discogs relationships ist.", "primär bei treffer im release,
-    ansonsten vorschläge. wenn MB ein Label gleichen namens hat muss das auch in die auswahl. dass es sich label oder artist handelt
-    muss in solchen seltenen fällen erkennbar sein.").
+    """Credits Importer 3.37.10: ℗ / © of a person Discogs lists as a label (collected item 160, S057).
     A) "Copyright © – Martin Davidson", "Phonographic Copyright ℗ – Martin Davidson" (Discogs label 294844, MusicBrainz has no label
        with its link) and "Producer – Martin Davidson" (Discogs artist): one entry Martin Davidson – his producer row and both ℗ / ©
        rows as an artist, each saying "Discogs lists it as a label (“Martin Davidson”) – here the artist of the same name of this

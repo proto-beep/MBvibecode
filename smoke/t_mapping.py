@@ -573,9 +573,7 @@ see you all next time"""
 
 
 def case_engineers():
-    """Credits Importer 3.31.3: the kind of engineer said twice (collected item 101; maintainer: "ich habe einen Fall gefunden
-    wo "Recording Engineer" in der Discogs note zu engineer stand. das muss natürlich einfach nur nach relationship
-    recording engineer und nicht mit der Role Credit "Recording Engineer" die auch noch groß geschrieben ist.").
+    """Credits Importer 3.31.3: the kind of engineer said twice (collected item 101).
     Discogs: "Engineer [Recording Engineer]", "Engineer [Mix Engineer]", "Engineer [Mastering Engineer]", "Engineer
     [Assistant Engineer]" → recording, mix, mastering and engineer with "assistant" – each without role credit (S047; before:
     engineer with the role credit "Recording Engineer" …)."""
@@ -616,8 +614,7 @@ def case_engineers():
 
 
 def case_poems():
-    """Credits Importer 3.31.4: poems and poetry (collected item 104; maintainer: "bitte Dichter immer zu lyricist", "ja das
-    nachfragen kann man machen").
+    """Credits Importer 3.31.4: poems and poetry (collected item 104).
     A) Discogs "Poems By" → lyricist on the works (a column of the works matrix, R105); "Poetry [Read By]" and "Recitation"
        → vocal spoken vocals with the role credit "poetry" / "recitation" (R106).
     B) "Poems" alone: no type until chosen, the question (Q009) with lyricist · liner notes · spoken vocals; liner notes →
@@ -693,9 +690,7 @@ def case_poems():
 
 
 def case_poemlevels():
-    """Credits Importer 3.32.7: the type of a credit of poems follows its level (collected item 104b; maintainer: "kannst du bei
-    all den poetry credits auch es ermöglichen durchzuschalten? also works (lyrics) -> recording (vocals) -> release (auswahl
-    lyrics/vocals)?", "ja liner notes ist auch eine möglichkeit").
+    """Credits Importer 3.32.7: the type of a credit of poems follows its level (collected item 104b).
     A) "Poems By" (R105): lyricist on the works – the row stays in its entry (and in the works matrix), with all levels; the
        click on the level in the compact line goes works → recordings → release → skip → works.
     B) Recordings: vocal with spoken vocals, the role credit "poems" kept; release: no type, the question Q010 with lyricist ·
@@ -803,9 +798,7 @@ def case_poemlevels():
 
 
 def case_perftracks():
-    """Credits Importer 3.31.8: performers on tracks, instruments for the release (collected item 111; maintainer, Discogs
-    8613662: "führt unter den tracks die performer aber die instrumente erst in den relationships. gäbe es eine möglichkeit
-    beides zu verknüpfen? mit quick switch. standardeinstellung = aus").
+    """Credits Importer 3.31.8: performers on tracks, instruments for the release (collected item 111).
     Bass Man: "Bass" for the release, "Performer" on tracks 3 and 4; Solo Perf: "Performer" on track 2 only; Guitar Guy:
     "Guitar" for the release, no "Performer".
     A) S046 is off by default: Bass Man has Bass on all tracks and Performer on 3, 4.
@@ -871,11 +864,7 @@ def case_perftracks():
 
 
 def case_mbnames():
-    """Credits Importer 3.38.10 (collected item 177; maintainer: "es soll IMMER der Name des MB relationships dastehen und nicht des
-    discogs relationships. bspw habe ich … "Engineer [Recording]" als relationship gesehen dabei lautet das relationship "recording
-    engineer for / recording engineer" … bitte prüfe da alle rollen mit discogs ab und siehe zu, dass das dashboard das anzeigt, was in
-    MB ankommt. ich wäre aber damit einverstanden, dass beim tooltip … "from Discogs: Engineer [Recording]"", "Auch in der
-    Typ-Auswahl? ja", "Zusätze im Namen? ja genau").
+    """Credits Importer 3.38.10 (collected item 177).
     A) Rows: "Engineer [Recording]" → "recording engineer", "Recorded By" → "recording engineer", "Mixed By" → "mixer",
        "Additional Producer" → "additional producer", "Piano" → "piano", "Saxophone [Guest]" → "guest saxophone", "Lead Vocals" →
        "lead vocals", "Remastered By" → "remastering" (MusicBrainz's attribute "re"); the tooltip "from Discogs:

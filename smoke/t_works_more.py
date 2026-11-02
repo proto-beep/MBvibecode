@@ -349,10 +349,7 @@ def case_worksskip():
 
 
 def case_livecom():
-    """Credits Importer 3.32.9: disambiguation comments of live recordings – the proposals (collected item 113; maintainer: "kannst
-    du das feature bei live recordings als abfrage das disambiguation comment zu ergänzen in die optionen mit einbinden?
-    standardmäßig aus. die infos kommen aus dem im dashboard eingegebenen alias des recording places und des datums.", "ja bitte
-    mit Kommentar. unter staging. nur "live"").
+    """Credits Importer 3.32.9: disambiguation comments of live recordings – the proposals (collected item 113).
     A) ⚙ Settings → Staging: "Live recordings: add a disambiguation comment" is off – no list above "Stage …" ([3.37.3] the offer
        instead, case liveoffer); switched on (stored).
     B) The release group is Live: tracks 2–4 (planned links with "live" preselected, S021) are listed – track 1 (a link in
@@ -447,9 +444,7 @@ def case_livecom():
 
 
 def case_livecomrun():
-    """Credits Importer 3.32.10: disambiguation comments of live recordings – entered after "Enter edit" (collected item 113;
-    maintainer: "es soll mit einem klick auf enter edit aus dem relationship editor erst ausgeführt werden", "falls nachträglich im
-    relationship editor das alias verändert wird bitte rote nachricht im log ausgeben", "ja bitte mit Kommentar").
+    """Credits Importer 3.32.10: disambiguation comments of live recordings – entered after "Enter edit" (collected item 113).
     A) Staged with the setting on: the job of the release holds the ticked comments (tracks 2 and 3) and the edit note – the
        script's block and "MB: QoL: Seed the batch recording comments script v2022.6.13: Seed live comments"; nothing is sent.
     B) "Enter edit" (the form of the edit note submitted): MusicBrainz has the relationships – the place credited "The Iridium"
@@ -564,8 +559,7 @@ def case_livecomrun():
 
 
 def case_liveoffer():
-    """Credits Importer 3.37.3: the comments of live recordings offered while the setting is off (collected item 150b; maintainer:
-    "so als abfrage/angebot für den jeweiligen fall. per mouseover tooltip wo das standardmäßig eingestellt werden kann").
+    """Credits Importer 3.37.3: the comments of live recordings offered while the setting is off (collected item 150b).
     A) The setting off, the release group Live: above "Stage …" the offer "Tracks 2–4 are live recordings. Propose
        disambiguation comments for them (“live: Abbey Road Studios, New York, NY, USA”)?" – no list; its tooltip names
        ⚙ Settings → Staging → “Live recordings: add a disambiguation comment”.
@@ -657,11 +651,7 @@ def case_liveoffer():
 
 
 def case_livegroup():
-    """Credits Importer 3.38.3: the comments of live recordings in short (collected items 168, 170; maintainer: ""Tracks 1, 2, 3, 4,
-    5 are live recordings." -> kanns du die tracks gruppieren? "1-5"? kannst du medien erwähnen, falls sie komplett live sind?",
-    "bei einem release mit nur einem medium nur die tracks. es kann auch mediengruppen geben bspw. CD 1-5", "da viele tracks die
-    gleichen live-Disambiguation notes bekommen", "rechts unten im kasten soll immer die Überschrift stehen", "Live disambiguation
-    comments: 5 of 5").
+    """Credits Importer 3.38.3: the comments of live recordings in short (collected items 168, 170).
     A) Two media of two tracks, the release group Live, the setting off: the offer names the whole medium and the other track –
        "Live recordings: track 1.2, CD 2. Propose disambiguation comments for them (“live: Abbey Road Studios”)?" (the positions
        as in the list; [3.38.13] F-2: in their order, until 3.38.12 "CD 2, track 1.2").

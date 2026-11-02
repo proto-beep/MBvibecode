@@ -55,9 +55,7 @@ def case_rulesname():
 
 
 def case_rulesdock():
-    """Credits Importer 3.30.0: "Mapping rules" in the dashboard (collected item 75; the maintainer's answer of
-    2026-10-24 17:42: "ja standardmäßig im Dashboard und ja soll sich die Einstellung merken. ja nur eines öffnen und das
-    andere schließen").
+    """Credits Importer 3.30.0: "Mapping rules" in the dashboard (collected item 75).
     A) By default the symbol "Mapping rules" in the head opens them in the dashboard below its head (not a window of their
        own; the symbol pressed, the test field focused, "⧉ As window" in their head).
     B) ⚙ Settings opened: the rules close; "Mapping rules" again: the settings close.
@@ -273,10 +271,7 @@ def case_rowrules():
 
 
 def case_quickswitch():
-    """Credits Importer 3.32.0 (milestone "Quick switches"): quick switches at the top of "Mapping rules" (collected item 97d;
-    maintainer: "bitte lass das aber an- und abstellen. im mapping ganz oben evtl. (mit klickbarem verweis dann wo es verwendet
-    wird)", "auf jeden fall noch die regel, dass performance dates die über mehrere tage hinweg gehen nach meinen regeln auf
-    den kleinsten gemeinsamen nenner gekürzt werden").
+    """Credits Importer 3.32.0 (milestone "Quick switches"): quick switches at the top of "Mapping rules" (collected item 97d).
     A) Seven switches in this order – S045, D022, S021, S031, S007 on, D023 and S046 off – each with its id. [3.32.8] In a box
        of their own (head, frame with round corners of 4 px), each switch a button (pressed = on; collected item 116).
     B) A click on an id shows that rule in the list below (highlighted).
@@ -362,7 +357,7 @@ def open_rules(pg):
 
 
 def case_ruleedit():
-    """Credits Importer 3.33.1: ✎ at the built-in rules (collected item E7; maintainer: "auch direkt an der Regel").
+    """Credits Importer 3.33.1: ✎ at the built-in rules (collected item E7).
     A) ✎ at role rules without code (R071) and at company rules (C023), "code" at rules with code (R031, no ✎); ✎ at the lists
        T001, T002, T003, T038, T045, T048, at no other list.
     B) ✎ R071: the form shows the rule as built in – the pattern as role words, the type, the level, no role credit.
@@ -471,8 +466,7 @@ def case_ruleedit():
 
 
 def case_wqedit():
-    """Credits Importer 3.34.4: ✎ at the wording rules and the questions (collected item 121; maintainer: "bitte gib W und Q auch
-    eine edit funktion", "passt so").
+    """Credits Importer 3.34.4: ✎ at the wording rules and the questions (collected item 121).
     A) ✎ at every wording rule (W…) and every question (Q…, instruments and types); none of them "code".
     B) ✎ W001: its words a line each, its role credit; saved with "stand-up bass" / "bass stand-up" and the credit "stand-up
        bass": "Bass [Stand-Up]" in the test field gets W001 and that credit, "Bass [Upright]" the new credit too; "Your changes"
@@ -618,8 +612,7 @@ def case_wqedit():
 
 
 def case_wqnew():
-    """Credits Importer 3.34.21: wording rules and questions of your own – "＋ New rule" (collected item 121b; maintainer: "so wie
-    du schreibst").
+    """Credits Importer 3.34.21: wording rules and questions of your own – "＋ New rule" (collected item 121b).
     A) "＋ New rule" at the wording rules: an empty form (a role credit as text); "fretless bass" / "bass fretless" with the
        credit "fretless bass" saved as W901 – the table has it first, marked "yours" ("your rule" as its note); "Bass
        [Fretless]" in the test field gets W901 and that credit; stored with your changes as { set, was: {}, add: wording }.
