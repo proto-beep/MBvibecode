@@ -1826,6 +1826,25 @@
         "unrecognized": [],
         "ignored": []
       }
+    },
+    {
+      "text": "Hydrophone recordings by Kim Lowe 2020 East coast",
+      "expect": {
+        "credits": [
+          [
+            "Kim Lowe",
+            "Field Recordings By"
+          ]
+        ],
+        "companies": [
+          [
+            "East Coast",
+            "Recorded In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
     }
   ]
 }

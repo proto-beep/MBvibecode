@@ -146,6 +146,7 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     a file would ("Objects", with other instruments): other instruments once
                                 #   cloudpond: 3.38.18 (182 – 184): "Ambisonic recordings by RR 2022-2025 …" field recordist with the period,
                                 #     "Pacific coast" the area Pacific Coast (3.39.2, 188, T059); RR = Robert Rich (initials, credited "RR"), "Recorded Mixed and Mastered";
+                                #     3.39.7 (K-8, K-11): "JR" – Jane Roe clicked, the liner notes hers credited "JR"; "R.R." with its dot
                                 #     "Cover © X" artwork "cover", "Photos © X" photography "photo", the permission left out; "JR" of two names
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
@@ -346,6 +347,7 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   companyperson: 3.39.6 (K-6, S066): "Mixed At" / "Recorded At" / "Mastered At" at a person – what the person did, the
                                 #     note, no place; "Pressed By", "Distributed By" left out (Skip, note); "Licensed From" licensor
                                 #   listkeys: 3.39.6 (K-13): T001 changed with "Lap Steel2" (as an imported file writes it) is found (Node)
+                                #   toys: 3.39.7 (T058): "Toys" asks percussion · electronic instruments · other instruments “toys”; "Found Objects"
                                 #   oldfile: 3.39.2 (review): a mapping file without T058 / T059 and changes of your own (Node, files copied):
                                 #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again
 

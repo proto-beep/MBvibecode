@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.39.6 | – |
+| 2026-11-02 | 3.38.13 – 3.39.7 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.39.7
+
+#### Changed
+
+- **Initials of several names to click** (collected item K-8): "JR: the initials of Jane Roe · Jim Rye" – a click gives the rows to the one chosen, credited "JR".
+- **T058** (Q-j, Q-ac): "toys" and "toy instruments" ask percussion · electronic instruments · other instruments, "found objects" and "household objects" percussion · other instruments, each credited as written. **T059**: "West Coast", "East Coast".
+
+#### Fixed
+
+- **"R.R."** keeps its last dot (collected item K-11); several spellings of one person's initials are named together ("RR, R.R. = Robert Rich").
 
 ### Import 3.39.6
 

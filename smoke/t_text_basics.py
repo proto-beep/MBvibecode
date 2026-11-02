@@ -1111,10 +1111,12 @@ def case_cloudpond():
        engineer. 3.39.2 (collected item 188, list T059): "Pacific coast" the area Pacific Coast (recorded in), not found in MusicBrainz
        – nothing not recognized.
     B) "Recorded Mixed and Mastered by RR at Soundscape, Carmel CA": Robert Rich (RR) recording engineer, mixer, mastering; the place
-       Soundscape; the entry says "RR = Robert Rich (initials)".
+       Soundscape; the entry says "RR = Robert Rich (initials)" – 3.39.7 with "Layout by R.R." too: "RR, R.R. = Robert Rich (initials)".
     C) "Cover © Maksimillian Novak-Zemplinski, detail used with permission.": artwork credited "cover" (no ℗/© of a label), "detail
        used with permission" left out; "Photos © Ann Blow": photography credited "photo"; "©2026 Robert Rich" as before.
-    D) Initials of two names ("JR" for Jane Roe and Jim Rye): not set by themselves – the entry "JR" names both.
+    D) Initials of two names ("JR" for Jane Roe and Jim Rye): not set by themselves – the entry "JR" names both; 3.39.7 (collected item
+       K-8) to click: "Jane Roe" – the liner notes go to Jane Roe, credited "JR", the entry "JR" is gone. (K-11) "Design by R.R."
+       credited "R.R." with its last dot (until 3.39.6 "R.R").
     E) (Review) "Field recordings by Kim Lowe": the whole name; "Photo © Focused Pictures": no permission in "Focused"; "Artwork © Ann
        Jones, all rights reserved": no artist "all rights reserved"; "Design by AJ": Ann Jones credited "AJ" (not "Aj")."""
     H.RELEASE_AC[:] = [(H.uid('dddddddd', 3420), 'Robert Rich', 'Robert Rich', '')]
@@ -1138,7 +1140,8 @@ Liner notes by JR
 Field recordings by Kim Lowe
 Photo © Focused Pictures
 Artwork © Ann Jones, all rights reserved
-Design by AJ"""
+Design by AJ
+Layout by R.R."""
     GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim() + (g.querySelector('.dci-gname').textContent.includes('Label') ? ' (label)' : ''),
   { hint: (g.querySelector('.dci-initials') || { textContent: '' }).textContent.trim(), ac: [...g.querySelectorAll('[data-f=credit], [data-f=em-ac]')].map(x => x.value).filter(Boolean),
     rows: [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
@@ -1171,13 +1174,25 @@ Design by AJ"""
         pc = g.get('Pacific Coast') or {'rows': []}
         results.append(fr is not None and fr[3] == '2022-2025' and [r[1] for r in pc['rows']] == ['recorded in'] and not any('Pacific' in u for u in unrec)
                        and 'Ambisonic' not in ''.join(g) and [r[1] for r in (g.get('Jane Roe') or {'rows': []})['rows']] == ['recording'])
-        results.append(all(t in rows for t in ('recording', 'mix', 'mastering')) and rr['hint'] == 'RR = Robert Rich (initials)' and 'RR' not in g
+        results.append(all(t in rows for t in ('recording', 'mix', 'mastering')) and rr['hint'] == 'RR, R.R. = Robert Rich (initials)' and 'RR' not in g
                        and 'RR' in rr['ac'] and [r[1] for r in (g.get('Soundscape') or {'rows': []})['rows']] == ['recorded at'])
         mk, ab, lab = g.get('Maksimillian Novak-Zemplinski') or {'rows': []}, g.get('Ann Blow') or {'rows': []}, g.get('Robert Rich (label)') or {'rows': []}
         results.append([r[1:3] for r in mk['rows']] == [['artwork', 'cover']] and [r[1:3] for r in ab['rows']] == [['photography', 'photo']]
                        and [r[1] for r in lab['rows']] == ['copyright'] and any(x.startswith('detail used with permission') for x in ign))
         jr = g.get('JR') or {'hint': '', 'rows': []}
-        results.append(jr['hint'] == 'JR: the initials of Jane Roe, Jim Rye – not set; choose the artist')
+        # (3.39.7, K-8) the names to click; Jane Roe clicked: the liner notes are hers, credited "JR"
+        btns = pg.evaluate("[...document.querySelectorAll('[data-act=initials-use]')].map(b => b.textContent.trim())")
+        pg.locator('[data-act=initials-use]', has_text='Jane Roe').first.click()
+        pg.wait_for_timeout(800)
+        g2 = pg.evaluate(GROUPS)
+        jane = g2.get('Jane Roe') or {'rows': [], 'ac': []}
+        print('D) JR:', jr['hint'], btns, '| danach Jane Roe:', jane, '| JR noch da:', 'JR' in g2)
+        results.append(jr['hint'].startswith('JR: the initials of') and btns == ['Jane Roe', 'Jim Rye'] and 'JR' not in g2
+                       and sorted(r[1] for r in jane['rows']) == ['liner notes', 'recording'] and 'JR' in jane['ac'])
+        # (3.39.7, K-11) "R.R." keeps its last dot
+        rr_ac = (g.get('Robert Rich') or {}).get('ac', [])
+        print('K-11) Robert Rich credited:', rr_ac)
+        results.append('R.R.' in rr_ac)
         # (3.38.18, review) a name of two words without a year; "Focused" no permission; the rights out; initials with a vowel stay
         kl, fp, aj = g.get('Kim Lowe') or {'rows': []}, g.get('Focused Pictures') or {'rows': []}, g.get('Ann Jones') or {'rows': [], 'ac': [], 'hint': ''}
         results.append([r[1] for r in kl['rows']] == ['field recordist'] and [r[1:3] for r in fp['rows']] == [['photography', 'photo']]
