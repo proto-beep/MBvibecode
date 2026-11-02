@@ -378,6 +378,8 @@ def js_tracks(medium_id, page):
 MB_EXTRA = {}
 # [3.39.9] "member of band": group mbid → [member mbids]; the artists of a track (its index → [(mbid, name)])
 BAND_MEMBERS = {}
+# [3.40.1] "is person" (IS_PERSON: legal name → [performance names]) in both directions
+IS_PERSON = {}
 TRACK_AC = {}
 # True: submitted relationships of the work are missing in the release lookup (e.g. its link is still an open
 # edit) and only a lookup of the work itself has them. WORK_LOOKUPS records those lookups.
@@ -799,6 +801,9 @@ def install_routes(ctx):
             a = m.group(1)
             band = [{'target-type': 'artist', 'type': 'member of band', 'direction': 'backward', 'artist': {'id': x, 'name': x}} for x in BAND_MEMBERS.get(a, [])]
             band += [{'target-type': 'artist', 'type': 'member of band', 'direction': 'forward', 'artist': {'id': g, 'name': g}} for g, ms in BAND_MEMBERS.items() if a in ms]
+            # [3.40.1] "is person" (IS_PERSON: legal name → [performance names]) in both directions
+            band += [{'target-type': 'artist', 'type': 'is person', 'direction': 'backward', 'artist': {'id': x, 'name': x}} for x in IS_PERSON.get(a, [])]
+            band += [{'target-type': 'artist', 'type': 'is person', 'direction': 'forward', 'artist': {'id': p, 'name': p}} for p, xs in IS_PERSON.items() if a in xs]
             return json_route(route, {'id': a, 'relations': [
                 {'target-type': 'label', 'type': PP_TYPE, 'direction': 'forward', 'label': {'id': r['label'], 'name': r['lname']}}
                 for r in PERSONAL_PUBLISHERS if r['artist'] == a] + band})
