@@ -446,7 +446,7 @@ def case_navlink():
 
 
 def case_mappingload():
-    """Credits Importer 3.33.0 (milestone "Mapping file"): where the mapping file comes from (maintainer: Block W, "erst b dann a").
+    """Credits Importer 3.33.0 (milestone "Mapping file"): where the mapping file comes from (Block W).
     A) Loaded by the userscript manager (GM_getResourceText): the dashboard works; "Mapping rules" says where the data comes from
        ("version <the script's>, loaded by the userscript manager"), the log "Mapping file <version> (loaded by the userscript manager)".
     B) The manager did not load it: the script fetches it from GitHub (…/main/mb-vibecode-credits-importer-mapping.json?v=…),
@@ -511,7 +511,7 @@ def case_mappingload():
 
 
 def case_languagesload():
-    """Credits Importer 3.34.0 (milestone "Languages file", item E6; maintainer: "erst b dann a"): where the texts in German,
+    """Credits Importer 3.34.0 (milestone "Languages file", item E6): where the texts in German,
     Spanish and French come from.
     A) Loaded by the userscript manager, German chosen: the dashboard speaks German; the log notes the file (key
        languagesLoaded, "loaded by the userscript manager", its version the script's).

@@ -149,8 +149,7 @@ def case_facets():
 
 def case_trackside():
     """Credits Importer 3.37.7: "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" as on Discogs 3749161 "Assist"
-    (collected item 157; maintainer: "das wird nicht zum korrekten track "B" zugeordnet", "ja, solche Orte sollen auch erkannt
-    werden, sofern sie nicht schon durch Companies etc. verknüpft sind").
+    (collected item 157).
     A) Sides A1, A2, A3, B (B one track without a number): the date 1985-11-12 under Performance with the track group of B only
        (until 3.37.6: for all tracks – "Track B" was not read).
     B) Zojoji Hall is a place from the notes – its area Tokyo (the city before it) –, recorded at on track B.
@@ -232,11 +231,9 @@ def case_trackside():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_artwork():
-    """Credits Importer 3.37.9: the dates of the artwork (collected item 159; maintainer: "da wir außerdem "Painting [Cover Painting]
-    – Mary Vernon (2)" haben, können wir bei Mary Vernon - illustration das datum hinzufügen. Painting ist übrigens immer
-    illustration.", "manchmal gibt es bei foto-credits sowas wie "at the concert" oder so, dann kann das datum aus der performance
-    gelesen werden. (mit transparenzhinweis)"). Discogs 1565448 "Cascades": "Recorded June, 26, 1993 at the Western Front Lodge,
-    Vancouver." / "Cover Painting: "View at Nice" (1992)"; "Painting [Cover Painting] – Mary Vernon (2)", "Photography By [Live
+    """Credits Importer 3.37.9: the dates of the artwork (collected item 159). Discogs 1565448 "Cascades": "Recorded June, 26, 1993 at
+    the Western Front Lodge, Vancouver." / "Cover Painting: "View at Nice" (1992)"; "Painting [Cover Painting] – Mary Vernon (2)",
+    "Photography By [Live
     Photos] – Photo Guy".
     A) The matrix: Performance 1993-06-26, the new column Artwork 1992 (until 3.37.8 the year after the title in quotation marks
        was no date); Mary Vernon an illustration (R078).
@@ -357,9 +354,7 @@ def case_choose():
 
 
 def case_lcdmenu():
-    """Credits Importer 3.32.7: the ▾ of a cell with what several days have in common (D022; collected item 118, maintainer:
-    "gibt es eigentlich eine möglichkeit auch zwei daten also bspw. 2016-11-07, 2016-11-08 als jeweilige relationships zu
-    führen?", "keine Einstellung nur das ▾ je Zelle").
+    """Credits Importer 3.32.7: the ▾ of a cell with what several days have in common (D022; collected item 118).
     A) "Recorded June 16 & 19, 1980 at …": Performance has the month 1980-06 (D022) with ▾; it offers "2 single days: 1980-06-16
        · 1980-06-19 – one relationship per day", the period and the month. Single days → two cells (the days of the pool); Apply →
        each row twice, one with each day.
@@ -415,9 +410,7 @@ def case_lcdmenu():
 
 
 def case_periodsplit():
-    """Credits Importer 3.37.12: a period in the matrix or the pool split into its days (collected item 162; maintainer: "bei "19 &
-    20. 01. 2009." haben wir ja schon die möglichkeit das auf drei verschiedene weisen zu interpretieren. ich habe gerade
-    "2009-01-19 - 2009-01-20" in einen pool gezogen und wollte dann die einzelnen tage haben, das ging aber nicht.").
+    """Credits Importer 3.37.12: a period in the matrix or the pool split into its days (collected item 162).
     A) "Recorded 19 & 20. 01. 2009 at …": the month in the matrix (D022) with ▾; the period chosen – the cell keeps a ▾ now
        (until 3.37.11 none): "2 single days: 2009-01-19 · 2009-01-20 – one relationship per day", "month only: 2009-01"; the
        single days → two cells.

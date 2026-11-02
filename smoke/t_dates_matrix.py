@@ -512,9 +512,7 @@ def case_tracksdrop():
 
 
 def case_titledates():
-    """Credits Importer 3.31.7: dates in the titles of the tracks (collected item 110; maintainer, Bandcamp "At Iridium 2004":
-    "wir brauchen eine option um daten von tracknamen in den datums/trackpool aufzunehmen. die Tracknummern hat man dann ja
-    direkt. diese option soll im mapping ebenfalls an und abstellbar sein (Quick Switches). standardeinstellung = aus").
+    """Credits Importer 3.31.7: dates in the titles of the tracks (collected item 110).
     Titles "March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)", "March 24, 2004 (Set 1)", "March 24, 2004 (Set 2)".
     A) D023 is off by default: no date from the titles.
     B) Switched on in "Mapping rules": the date pool gets March 23 and 24, 2004, the track pool "March 23, 2004 · 1–2" and
@@ -577,10 +575,8 @@ def case_titledates():
 
 
 def case_poolsopen():
-    """Credits Importer 3.32.1: "Dates & tracks" opens for suggestions that wait for "Apply" (collected item 109; maintainer:
-    "automatisch dashboard aufklappen sofern daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das
-    dashboard muss doch auf sein, damit Dates & Tracks sichtbar ist?"); the track group form with "Tracks:" right of "Name:"
-    (item 90b).
+    """Credits Importer 3.32.1: "Dates & tracks" opens for suggestions that wait for "Apply" (collected item 109); the track group form
+    with "Tracks:" right of "Name:" (item 90b).
     A) The notes' dates are placed as suggestions: "Dates & tracks" is open. Folded by hand, and the date pool folded too –
        remembered.
     B) Loaded again (a new import, the suggestions still wait): "Dates & tracks" and the date pool are open – for this import;
@@ -633,7 +629,7 @@ def case_poolsopen():
 
 
 def case_dmgoto():
-    """Credits Importer 3.32.8: "To the date matrix" in the message of dates placed (collected item 109b; maintainer: "ja ok").
+    """Credits Importer 3.32.8: "To the date matrix" in the message of dates placed (collected item 109b).
     The Discogs notes "Recorded March 1–3, 2001 … Mixed May 2001." place two dates in the matrix: the message "2 dates from the notes were placed …"
     has the button "To the date matrix". "Dates & tracks" folded by hand, the button opens it again, the matrix is in view and
     lit up briefly; the folding by hand stays stored as it was."""
@@ -665,10 +661,7 @@ def case_dmgoto():
 
 
 def case_workgroups():
-    """Credits Importer 3.35.6 (collected item 145b; maintainer: "ja lass das mal anbieten, aber mit der option das auch
-    auszuschalten. und mit der option im date track pool auf die interpretation von werken als group hier zu verzichten. an und
-    abschaltbar jeweils holt es die daten wieder oder schließt sie aus.", "B", "der schalter im track pool gilt nur bis zum
-    nächsten import"): the works of the source as track groups.
+    """Credits Importer 3.35.6 (collected item 145b): the works of the source as track groups.
     A) The test release as two index tracks of Discogs, "Work One" (A1, A2) and "Work Two" (B1, B2): both in the track pool as
        suggestions (2 tracks each), the box "2 works as track groups" ticked.
     B) A date "Session A" into the column Performance, "Work One" onto it: the date of the matrix on Work One.

@@ -382,7 +382,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     per spelling, compact "as “O. Lake”", lines joined; a place: "Credited as for all roles", set for all
                                 #   capsnames: 3.38.12 (F-4, S060): Discogs names in capitals in normal case ("TORBEN SNEKKESTAD", "DJ SHADOW"),
                                 #     ABBA linked to "ABBA" as MusicBrainz writes it, "LAKE" → credited "Lake", the log; "↺ in capitals" and back;
-                                #     "LAKE" with ↺, "DOOM" linked to "MF DOOM" credited "DOOM", a credit typed by hand stays
+                                #     "LAKE" with ↺, "DOOM" linked to "MF DOOM" credited "DOOM", a credit typed by hand stays;
+                                #     3.38.14 (Q-a, Q-b): personCase in Node – "AL DI MEOLA" → "Al di Meola", "DJ SHADOW" stays "DJ", particles
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
                                 #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds;
@@ -493,7 +494,8 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     ✕, staged together with the date
                                 #   remember: 3.36.0: a remembered release – the order dragged, an opened event's tracks, one row each: back after the
                                 #     page is loaded again, staged the same
-                                #   companies: 3.35.5 (AE-4): a place ("Recorded At") and a label (℗) as matrices, publishing on works keeps its
+                                #   companies: 3.35.5 (AE-4): a place ("Recorded At") and a label (℗) as matrices (3.38.14, Q-c: the block
+                                #     "recorded at", "from Discogs: Recorded At" in its tooltip), publishing on works keeps its
                                 #     rows, compact, staged the same as legacy, a date typed into the place's event
                                 #   flagcols: 3.36.6 (148): add. / guest / solo a column each, every word centred over its checkboxes (±2 px)
                                 #     and not wider than its cell, at 100 % and A+ ×3

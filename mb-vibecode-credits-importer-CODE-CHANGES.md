@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.13, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.14, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.14 · 2026-11-02
+
+Names in capitals (Q-a) and the head of a block (Q-c).
+
+- **`personCase`:** in a name all in capitals (S060) a word of two letters with a vowel is written in normal case too (the minimum is 2 letters there, 3 in a name with words in normal case, S059, as until now); without a vowel it stays.
+- **`emBlockHtml`:** the head is the block as MusicBrainz names it – one line: `roleLabel(r0)` (its text, its tooltip "from …: …"); several lines of instruments or voices: "n instruments" / "n voices"; several lines of another type: `mbPhraseOf(lt0)` with the source's roles of all its rows (not added by hand) in the tooltip (`role.fromSource`); then "· from n rows · n events" (until 3.38.13 "<source's role> → <MusicBrainz's>").
+- **Tests:** `t_ui_head.py` capsnames D (personCase in Node: "AL DI MEOLA" → "Al di Meola", "DJ SHADOW", "MC SOLAAR", "MF DOOM", particles, "ED O'BRIEN", "J. DOE", "BMS", "Go KUROSAWA"); `t_entries.py` matrix ("3 instruments · from 3 rows", the tooltip) and companies ("recorded at", its tooltip "from Discogs: Recorded At").
 
 ## Import 3.38.13 · 2026-11-02
 
@@ -1968,7 +1976,7 @@ The role rules as data (collect item 4, step 2). Milestone.
 
 ## Import 3.11.0 · 2026-10-17
 
-The mapping register in one section (collect item 4, step 1; the maintainer: "vor den Punkten 1-3").
+The mapping register in one section (collect item 4, step 1).
 
 - **Sections:** new **2. Mapping register** before the sources (the sources are **3** now, the date and MusicBrainz form helpers that stayed behind them **3b**), with 2a role notation (`splitTopLevel`, `parseRoleNotation`, `parseRoles`, `splitEngineerTasks` – from the old section 2), 2b own rules and switches, 2c rule lists, 2d tables and word lists, 2e functions that apply the rules (`mapRole`, `mapCompanyRole`, wording, role credits …), 2f dates in free text (`DATE_MATCHERS`, `findDates`). Everything of the old sections 3/3a moved there unchanged; orphaned doc comments went to their functions (`mapRole`, `suggestRoleCredit`, `caseWord`, `COMPANY_ROLES`, `lucenePhrase`).
 - **Moved into 2d:** from the text adapter `NAME_SEP`, `ROLE_SEP`, `AND_SEP`, `TRACK_WORDS`, `MONTHS` (renamed `TEXT_NAME_SEP`, `TEXT_ROLE_SEP`, `TEXT_AND_SEP`, `TEXT_TRACK_WORDS`, `TEXT_MONTHS`), `INSTRUMENT_MODIFIER`, `PRIVATE_PLACE`; `ENGINEER_TASK_RE` (from section 2); `TEXT_COMPANY_RE` (from the core; `isTextCompanyRole` stays there); `DATE_GROUPS` (from the date matrix); `LIVE_TITLE` (was local in `applyLiveDefault`); `NOTE_ROLES` (from the notes' track lists). The adapters read these directly (the register is defined before them); `isRole`/`isCompanyRole` still come through the context, as they need MusicBrainz.

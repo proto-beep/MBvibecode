@@ -240,8 +240,7 @@ def case_trackmarks():
 
 
 def case_trackcells():
-    """Companion 1.9.2 (Credits Importer 3.38.8; collected item 174, Discogs 2631299 "Boston Duets" – maintainer: "sobald an den
-    einzelnen tracks auf Discogs relationships hängen … die schrift verschiebt sich und wird vertikal angezeigt"): the tracklist
+    """Companion 1.9.2 (Credits Importer 3.38.8; collected item 174, Discogs 2631299 "Boston Duets"): the tracklist
     is a table, tracks have credits of their own.
     A) Track 3 "Flute – Bass Man", "Composed By – Writer Z" and "Written-By – Bass*" (the same artist again): each mark on its own
        line, inside the title's cell – [companion 1.10.0] Written-By not before the title (the cell has every credit of the track).
@@ -306,9 +305,7 @@ def case_trackcells():
 
 
 def case_multi():
-    """Companion 1.10.0 (Credits Importer 3.38.9; collected item 173; maintainer: "sobald ich zwei geteilte tabs offen habe … fängt
-    der companion an in kurzen intervallen sich ein und auszuschalten … wäre es möglich mehrere imports (gerne eine beliebige anzahl
-    und falls das nicht möglich ist zumindest 3) gleichzeitig offen zu haben ohne dass das passiert?"): status and beat per release.
+    """Companion 1.10.0 (Credits Importer 3.38.9; collected item 173): status and beat per release.
     A) The dashboard (its Discogs release in a tab): the marks there.
     B) Two more imports of other releases open (their editors send their status every 2 s, as a dashboard does): the marks on the
        Discogs tab stay for 10 s – never gone, never another number (until 1.9.2 they went off and on).

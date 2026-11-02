@@ -697,9 +697,7 @@ def case_tracksfit():
 
 
 def case_indextracks():
-    """Credits Importer 3.35.1 (collected item 145; maintainer, about Discogs release 3139201 – MusicBrainz ad8fe956-…: "da werden
-    immer noch nicht die vinyl tracks erkannt", "wahrscheinlich wird es nicht erkannt weil Discogs alle Tracks unter Werken
-    gruppiert … kann das Dashboard alle tracks abnehmen?"): index tracks of Discogs whose sub-tracks are on tracks of their own.
+    """Credits Importer 3.35.1 (collected item 145): index tracks of Discogs whose sub-tracks are on tracks of their own.
     A) The release as on Discogs: three index tracks "First Encounter" (A1, A2, B1, B2), "Organic" (C1, C2, D – a whole side),
        "Trisect" (E1 … F2) – 13 tracks (before: 3), each with its work; the index's credit on its four tracks, a sub-track's on
        its own, "C1 to D, F2" on 5–7 and 13.
