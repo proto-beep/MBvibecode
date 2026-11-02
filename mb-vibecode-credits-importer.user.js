@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.0
+// @version      3.39.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2059,6 +2059,11 @@
       "matrix.noWritersAny": "The source ({src}) names no writers for this track, so no works are suggested.",
       "roleCredit.fromDiscogsAny": "Taken from the source ({src})",
       "roleCredit.fromTagAny": "from the source",
+      "group.discogsNameAny": "{src}: {name}",
+      "group.creditedSpellingAny": "artist credit in MusicBrainz: {name} (the {src} spelling *)",
+      "group.creditedSpellingTitleAny": "The source ({src}) credits {base} on this release as {name}. The dashboard enters {name} as the artist credit of the relationships in MusicBrainz – change it in the rows (“credited as” / “Artist credit for all roles”); empty: the MusicBrainz name.",
+      "group.anvStarAny": "* – credited so in the source ({src}); MusicBrainz gets it as the artist credit",
+      "log.anvCreditsAny": "Artist credits from the spellings of the source ({src}, *): {list}",
       "media.nowTitleAny": "What was imported from the source ({src})",
       "dm.chooseSingleAny": "{n} dates as in the source: {list}",
       "dm.chooseSingleTitleAny": "Use the days as the source gives them: one relationship per day",
@@ -10965,6 +10970,14 @@
    * "…Any" form, which says "the source" ({src}: its name).
    */
   const trSrc = (key, params = {}) => (S.release && S.source === DISCOGS ? tr(key, params) : tr(`${key}Any`, { ...params, src: srcLabel() }));
+  /** [3.39.1] The source of an entry: a supplement's entries keep theirs (collected item 185). */
+  const entrySource = (a) => (a && a.src) || S.source;
+  /** [3.39.1] A source as texts name it: "Bandcamp", "pasted text". */
+  const sourceLabel = (src) => (src === TEXT ? tr('src.textLabel') : (src && src.name) || '');
+  /** [3.39.1] trSrc for a given source, an entry's: "the Bandcamp spelling", not "the Discogs spelling" (collected item 185). */
+  const trSrcOf = (src, key, params = {}) => (src === DISCOGS ? tr(key, params) : tr(`${key}Any`, { ...params, src: sourceLabel(src) }));
+  /** [3.39.1] The tag of a source in its colours: Discogs dark, Bandcamp its blue, a pasted text grey (collected item 185). */
+  const srcTagClass = (src) => (src === BANDCAMP ? 'dci-src-bc' : src === TEXT ? 'dci-src-tx' : 'dci-src-dg');
 
   /** [3.13.2] Another source was loaded: the open rules window follows. */
   function refreshRulesWindow() {
@@ -16735,10 +16748,13 @@
         await resolveArtists();
         // [S057] (3.37.10) ℗ / © of a person Discogs lists as a label
         if (mergePersonCopyrights()) renderGroups();
-        // [3.37.11] the artist credits taken from the Discogs spellings (item 161)
-        const anv = [...S.artists.values()].map((a) => [a, releaseSpelling(a)]).filter(([a, sp]) => sp && entryCredits(a).some((c) => typo(c) === typo(sp.shown)))
-          .map(([a, sp]) => `${sp.shown} (${sp.base})`);
-        if (anv.length) log('info', 'anvCredits', { list: anv.join(', ') });
+        // [3.37.11] the artist credits taken from the Discogs spellings (item 161); [3.39.1] those of the entries' sources (item 185)
+        const anvOf = [...S.artists.values()].map((a) => [a, releaseSpelling(a)]).filter(([a, sp]) => sp && entryCredits(a).some((c) => typo(c) === typo(sp.shown)));
+        const anv = anvOf.map(([a, sp]) => `${sp.shown} (${sp.base})`);
+        const anvSrcs = [...new Set(anvOf.map(([a]) => entrySource(a)))];
+        if (anv.length) {
+          log('info', anvSrcs.length === 1 && anvSrcs[0] === DISCOGS ? 'anvCredits' : 'anvCreditsAny', { list: anv.join(', '), src: anvSrcs.map(sourceLabel).join(', ') });
+        }
         if (rel.series.length) {
           await loadSeries(rel.series);
           renderGroups();
@@ -18280,9 +18296,10 @@
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
     if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
-    // [3.37.11] the * says what it means (collected item 161)
-    const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
-      ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [tr('group.anvStar')] : [])].join('\n');
+    // [3.37.11] the * says what it means (collected item 161); [3.39.1] in the words of the entry's source (collected item 185)
+    const src = entrySource(a);
+    const title = [trSrcOf(src, 'group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
+      ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [trSrcOf(src, 'group.anvStar')] : [])].join('\n');
     return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
   }
 
@@ -18294,7 +18311,9 @@
     const credits = all.filter((c) => !sp || typo(c) !== typo(sp.shown));
     if (sp && credits.length === 0 && all.length) {
       const name = tr('common.quoted', { text: sp.shown });
-      return `<span class="dci-gcredit dci-gcredit-anv" title="${esc(tr('group.creditedSpellingTitle', { name, base: tr('common.quoted', { text: sp.base }) }))}">${esc(tr('group.creditedSpelling', { name }))}</span>`;
+      // [3.39.1] "the Bandcamp spelling" with an entry of Bandcamp (collected item 185)
+      const src = entrySource(a);
+      return `<span class="dci-gcredit dci-gcredit-anv" title="${esc(trSrcOf(src, 'group.creditedSpellingTitle', { name, base: tr('common.quoted', { text: sp.base }) }))}">${esc(trSrcOf(src, 'group.creditedSpelling', { name }))}</span>`;
     }
     if (!credits.length) return '<span class="dci-gcredit" hidden></span>';
     const name = tr('common.quoted', { text: credits[0] });
@@ -19325,9 +19344,11 @@
     const rows = allRows.filter((r) => inEntry(r) && !r.s046Out && (S.mxSkipRows || !r.mxSkipped));
     const mxHidden = allRows.filter((r) => r.mxSkipped && !S.mxSkipRows).length;
     const hidden = rows.length && rows.every((r) => r.aboutHidden || r.notesHidden) ? ' dci-about-hidden' : '';
-    // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again)
+    // [3.28.0] only the tag of the source is the link, with ↗ (item 61; before: the tag and the name again); [3.39.1] the tag in the
+    // colours of its source, the tooltip names it (collected item 185)
+    const aSrc = entrySource(a);
     const sourceLink = a.dId && (a.links || [])[0]
-      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle')}: ${a.rawName || a.name}`)}"><span class="dci-src dci-src-dg">${esc((a.src || S.source).name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
+      ? `<a class="dci-dglink" href="${esc(a.links[0])}" target="_blank" rel="noopener" title="${esc(`${tr('link.discogsTitle', { src: sourceLabel(aSrc) })}: ${a.rawName || a.name}`)}"><span class="dci-src ${srcTagClass(aSrc)}">${esc(aSrc.name)}</span><span class="dci-dglink-ico" aria-hidden="true">↗</span></a>`
       // [3.21.0] a name from a text: the web profiles found next to it (T032); [3.21.3] only with the setting (off)
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
@@ -19615,8 +19636,8 @@
     // [S052] (3.34.27) the suggestions written like the role credit
     const options = roleCreditOptions(row.raw, row.base, row.mods, row.roleCreditSuggest, lt ? lt.name : '', ruleOn('S052') ? creditCasing(lt) : undefined);
     const fromDiscogs = !row.manual && !!norm(row.roleCredit) && norm(row.roleCredit) === norm(row.roleCreditSuggest);
-    parts.push(`<label class="dci-credit"><span class="dci-credit-name">${esc(tr('roleCredit.label'))}${fromDiscogs ? ` <span class="dci-src dci-src-dg" title="${esc(trSrc('roleCredit.fromDiscogs'))}">${esc(trSrc('roleCredit.fromTag'))}</span>` : ''}</span>
-        <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(tr('roleCredit.fromDiscogs')) : ''}">${rcClearHtml()}
+    parts.push(`<label class="dci-credit"><span class="dci-credit-name">${esc(tr('roleCredit.label'))}${fromDiscogs ? ` <span class="dci-src ${srcTagClass(S.source)}" title="${esc(trSrc('roleCredit.fromDiscogs'))}">${esc(trSrc('roleCredit.fromTag'))}</span>` : ''}</span>
+        <input type="text" data-f="role-credit" class="${fromDiscogs ? 'dci-from-dg' : ''}" list="dci-rc-${row.id}" value="${esc(row.roleCredit)}" placeholder="${esc(tr('roleCredit.placeholder'))}" aria-label="${esc(tr('roleCredit.label'))}" title="${fromDiscogs ? esc(trSrc('roleCredit.fromDiscogs')) : ''}">${rcClearHtml()}
       </label>
       <datalist id="dci-rc-${row.id}">${options.map((o) => `<option value="${esc(o)}"></option>`).join('')}</datalist>
       <div class="dci-dest" data-dest="${row.id}">${esc(roleCreditHint(row))}</div>
@@ -23104,7 +23125,7 @@
   function seriesLabelHtml(a) {
     const info = a.seriesLabel;
     if (!info || a.mbid) return '';
-    const dg = `<a class="dci-dglink" href="${esc(info.links[0])}" target="_blank" rel="noopener"><span class="dci-src dci-src-dg">${esc(S.source.name)}</span>${esc(info.name)}</a>`;
+    const dg = `<a class="dci-dglink" href="${esc(info.links[0])}" target="_blank" rel="noopener"><span class="dci-src ${srcTagClass(S.source)}">${esc(S.source.name)}</span>${esc(info.name)}</a>`;
     const mb = info.mbid ? `<a class="dci-mblink" href="/label/${esc(info.mbid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(info.mbName)}</a>` : '';
     return `<div class="dci-series-label"><span class="dci-sub">${esc(tr('seriesLabel.title'))}</span> ${dg} ${mb}
       <span class="dci-sub">${esc(tr(info.mbid ? 'seriesLabel.onCreate' : 'seriesLabel.noMb'))}</span></div>`;
@@ -32295,6 +32316,10 @@
       /* Links to the two databases look different: Discogs neutral dark, MusicBrainz in MB purple */
       .dci-src { display: inline-block; margin-right: 0.35em; padding: 0 0.4em; border-radius: 3px; font-size: 0.8em; font-weight: 700; letter-spacing: 0.02em; line-height: 1.5; vertical-align: 0.1em; color: #fff; text-decoration: none; }
       .dci-src-dg { background: #333; }
+      /* [3.39.1] Bandcamp's blue (its logo), a pasted text grey – the dark one is Discogs' (collected item 185) */
+      .dci-src-bc { background: #629aa9; }
+      .dci-src-tx { background: #6b6b6b; }
+      a.dci-dglink .dci-src-bc + .dci-dglink-ico { color: #4f8794; }
       .dci-src-mb { background: var(--purple); }
       a.dci-dglink { color: #333; text-decoration-color: #999; }
       /* [3.28.0] only the tag links to the source (↗), the credit of the entry as a chip (item 61) */

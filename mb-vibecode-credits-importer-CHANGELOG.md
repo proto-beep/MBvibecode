@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.39.0 | – |
+| 2026-11-02 | 3.38.13 – 3.39.1 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,16 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.39.1
+
+#### Fixed
+
+- **The spelling of the source** (collected item 185): an entry from Bandcamp or a pasted text credited with a spelling of its own says so in the words of its source – "artist credit in MusicBrainz: “RR” (the Bandcamp spelling *)", the tooltips "Bandcamp: Robert Rich" and "* – credited so in the source (Bandcamp)", the log "Artist credits from the spellings of the source (Bandcamp, *)"; until 3.39.0 "the Discogs spelling" with every source. The tooltip of the source's link names its source ("Open on Bandcamp: …"), as does the tooltip of a role credit taken from it.
+
+#### Changed
+
+- **Each source in its colours** (collected item 185): the tag "Bandcamp" in the head of an entry (the link to the artist's Bandcamp page) in Bandcamp's blue; the dark tag stays Discogs'; the tag of a role credit taken from a pasted text grey.
 
 ### Import 3.39.0
 
