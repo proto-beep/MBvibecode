@@ -298,6 +298,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     3.38.13: "track 1.2, CD 2" (F-2, by positions – the track's index, not its number), the heading purple (F-1)
                                 #   workpick: 3.38.15 (180): "n works ▾" in the track's line, the list hidden; opened below the line, closed by a
                                 #     click elsewhere and Esc (focus back), one at a time; "1 work ▾" not set; Link plans the work
+                                #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
+                                #     name of the title looked up, a surname only of an artist of the release, the log; "co?" and its click; Node
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,

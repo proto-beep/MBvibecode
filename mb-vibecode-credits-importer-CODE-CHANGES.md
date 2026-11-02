@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.15, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.16, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,23 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.16 · 2026-11-02
+
+Works of a track's composer (collected item 179, 179b, F-179b – F-179d).
+
+- **New (main level, exported for Node):** `titleComposerNames(title)` (names in brackets – also "… cover" – or after "by" / "after", one to four words in capitals, version words left out; `{ name, full }`), `similarWorkTitle(trackTitle, workTitles, names)` (via `titleWithoutComposer`: the names – in brackets, after by / of / after, after a dash at the end – and all brackets out; equal within one letter, or the work's title whole in the track's title from two words or six letters). `normTitle` is a function now (until 3.38.15 a const – not reachable in Node before it).
+- **New:** `titleComposersOf(i)` (a full name from `S.titleComposerCache`, a surname only when one artist of the release has it; logs `titleComposer` once per track and artist), `resolveTitleComposers()` (looks the full names up, `artist?query=artist:"…"`, an exact name or alias; at the start of `runArtistWorks`). `artistWorkTargets` adds them (`why: 'title'`).
+- **`matchArtistWorks`:** per track its composers (`creditedWritersOf` and `titleComposersOf`); their works also by `similarWorkTitle` (names: theirs and their surnames); the hit's text `works.viaComposer` / `works.viaTitleComposer`, and `composer` / `composerName`, which `work-pick` keeps in the plan (`data-composer`, `data-composer-name`).
+- **"co?":** new `performersOf(i)` (the release's artists, instrument / vocal / performer rows on the track) and `coverComposers(i, work)` (a planned work chosen with a composer who is none of them, "cover" not set, not a new work); `linkAttrsOpen` and `linkAttrsHtml` offer the pill (state `hint`, `matrix.coverOffer`); a click sets it as any attribute.
+- **Texts (English):** `works.viaComposer`, `works.viaTitleComposer`, `log.titleComposer`, `matrix.coverOffer`.
+- **After the independent review of block AR:**
+  - "co?" only for a work found through its composer – a song by a similar title, or the composer named in the title (until then also a writer's work of the track's own title); the composers of a track are its writing roles only (`composersOfTrack`: composer, lyricist, writer, librettist – not arrangers); a work the search found too gets what the works of the artists know of it (`sameNamed`).
+  - A similar title only when none of the composer's works has the track's title (`exact`); the cleaned titles once per names (`namePatterns` – the patterns of a set of names, a cache on the function, reachable in Node –, `similarCleaned`, `S.wtCache`, emptied with each import): a release of 50 tracks against 4,000 works no longer takes seconds each time.
+  - `runArtistWorks`: the look-up of names in titles runs as part of the run (`S.artistWorksRunning` set before it; a refresh meanwhile runs it again after) – until then the works were read several times at once; `resolveTitleComposers`: `artist:"…" OR alias:"…"`, exactly one hit (two of the same name: none), an artist of the release of that name without a request, a failed request not kept, stopped when the works matrix rests; `titleComposersOf` logs only from the run (`logIt`), surnames only of writers, musicians and the release's artists; `S.titleComposerLogged` anew with each import.
+  - `titleComposerNames`: more words that are no names (by, after, for, to, from, vs, ft, prod, session, title, credits, act, tribute, dub, skit, medley, prelude …, Roman numerals); no name after "produced / prod. / remix / mixed / arranged / edited / conducted / performed … by"; after "by" the words in capitals up to the first that is none ("Theme By Monk For Piano" → Monk); particles inside a name ("Ludwig van Beethoven"); "BY" in capitals too.
+  - From 3.38.15: `setWorksList(i, open)`, `closeWorksList()` open and close the list in the page (no redraw: a click elsewhere closes it and does what it was on – until then the first click on "＋ New work" or the fold only closed the list); Esc only while a list is shown and no dialog is open; `S.mxWorksOpen` anew with each import; after **Link** the focus on the track's "remove" button.
+- **Tests:** `t_works_more.py` new case `coverworks` (the three tracks, the log, "co?" and a click, Node: titleComposerNames and similarWorkTitle; after the review: a writer's own work without "co?", one comparison only, the titles that are no names); `workpick`: a click on "＋ New work" with a list open acts at once.
 
 ## Import 3.38.15 · 2026-11-02
 

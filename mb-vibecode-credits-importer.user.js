@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.15
+// @version      3.38.16
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.15
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.15
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.16
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.16
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.15';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.16';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -626,6 +626,7 @@
       "log.workSearch.one": "Work search for track {track}: {n} result",
       "log.workSearch.other": "Work search for track {track}: {n} results",
       "log.workPicked": "Track {track}: work “{title}” chosen for linking",
+      "log.titleComposer": "Track {track}: the title names “{said}” – the works of {name} are compared",
       "log.workUnplanned": "Track {track}: planned work link removed",
       "log.applyStart.one": "Staging {n} relationship in the editor …",
       "log.applyStart.other": "Staging {n} relationships in the editor …",
@@ -1034,6 +1035,7 @@
       "matrix.attrsShort": "Attributes",
       "matrix.attrsNone": "none",
       "matrix.liveOffer": "Live release ({reason}): click to add “live” to this link that exists in MusicBrainz (an edit). It is not set by itself, so a studio track stays as it is.",
+      "matrix.coverOffer": "Cover? The composer ({names}) is none of the performers of this track: a click adds “cover” to the link. It is not set by itself.",
       "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "matrix.attrShort": "abbreviate",
       "matrix.attrLong": "spell out",
@@ -1138,6 +1140,8 @@
       "matrix.worksPick.other": "{n} works",
       "works.viaLinked": "work of {name}",
       "works.viaRecorded": "recorded by {name} (“{recording}”)",
+      "works.viaComposer": "work of {name}, the composer of the track (similar title)",
+      "works.viaTitleComposer": "work of {name} – the title names “{said}”",
       "msg.artistWorksSlow": "Comparing the tracks with the works of {name} takes a while: a large catalogue ({n} recordings, {done} read so far). It goes on in the background.",
       "msg.artistWorksCapped": "{name} has {n} works and recordings; only the first {max} were compared with the tracks.",
       "log.artistWorksSlow": "Works of {name}: a large catalogue ({n} recordings, {done} read so far)",
@@ -6687,7 +6691,7 @@
       isPlaceholderTitle: (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || '')),
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
-      titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase,
+      titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle,
     };
     return;
   }
@@ -16202,6 +16206,10 @@
       S.artistWorkHits = new Map();
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
+      // [179] (3.38.16) the composers of titles logged anew; [180] (3.38.15) no list "n works ▾" open
+      S.titleComposerLogged = new Set();
+      S.wtCache = new Map();
+      S.mxWorksOpen = null;
       if (S.artistWorksRunning) S.artistWorksAgain = true;
       renderSource();
       renderSupp();
@@ -22578,6 +22586,16 @@
     finishWorkRun();
   }
 
+  /** [179] (3.38.16) The composers of a track: the people credited with a writing role for it (not arrangers). */
+  function composersOfTrack(i) {
+    const out = new Map();
+    for (const r of S.rows) {
+      const a = S.artists.get(r.artistKey);
+      if (r.level === 'work' && r.tracks.has(i) && a && a.mbid && !a.company && !a.other && WRITER_TYPES.includes(norm(rowTypeName(r)))) out.set(a.mbid, a.mbName || a.name);
+    }
+    return out;
+  }
+
   /** The people the source credits for writing this track (MB artists, no publishers). */
   function creditedWritersOf(i) {
     const out = new Map();
@@ -22797,6 +22815,7 @@
   S.mxMenu = null;
   // [180] (3.38.15) the track whose list "n works ▾" is open (one at a time)
   S.mxWorksOpen = null;
+  S.wtCache = new Map();
   S.pubRels = new Map();
   S.workRowOpts = new Map();
   S.mxAddCol = null;
@@ -22869,6 +22888,30 @@
   }
   /** [S021] An existing link of a live release without "live": offered ("li?"), never set by itself. */
   const liveHint = (i, work) => !!(work && !work.planned && liveReason(i) && !linkAttrsOf(i, work).has('live'));
+  /** [179] (3.38.16) The performers of a track with a MusicBrainz entry: the release's artists, instruments, voices, performers. */
+  function performersOf(i) {
+    const out = new Set((S.releaseCredit || []).map((p) => p.mbid).filter(Boolean));
+    for (const r of S.rows) {
+      const a = S.artists.get(r.artistKey);
+      if (!a || !a.mbid || r.level === 'skip' || !['instrument', 'vocal', 'performer'].includes(norm(rowTypeName(r)))) continue;
+      if (r.level === 'recording' && !(r.tracks && r.tracks.has(i))) continue;
+      out.add(a.mbid);
+    }
+    return out;
+  }
+  /**
+   * [179] (3.38.16) "cover?" at the link of a work (F-179b): a work chosen among the works of the track's composer (credited for
+   * the track or named in its title) who is none of the track's performers. Offered (dashed, "co?"), never set by itself; not
+   * for a new work, nor for the works found otherwise (a songwriter's own song is no cover).
+   */
+  function coverComposers(i, work) {
+    if (!work || !work.planned || work.origin === 'pending' || linkAttrsOf(i, work).has('cover')) return [];
+    const plan = S.workPlan.get(i);
+    if (!plan || !plan.composer || !linkAttrTypes().some((a) => norm(a.name) === 'cover')) return [];
+    if (performersOf(i).has(plan.composer)) return [];
+    return [plan.composerName || plan.composer];
+  }
+  const coverHint = (i, work) => coverComposers(i, work).length > 0;
   /** Switches an attribute of one link on or off (MusicBrainz's own stay). */
   function setLinkAttr(i, work, name, on) {
     const key = linkKey(i, work.gid);
@@ -22891,7 +22934,7 @@
   /** A work's attribute row is open when the link has (or is offered) an attribute, or when opened by hand. */
   function linkAttrsOpen(mrow) {
     if (!mrow.work) return false;
-    const has = linkAttrsOf(mrow.i, mrow.work).size > 0 || liveHint(mrow.i, mrow.work);
+    const has = linkAttrsOf(mrow.i, mrow.work).size > 0 || liveHint(mrow.i, mrow.work) || coverHint(mrow.i, mrow.work);
     return { has, open: has || S.wattrOpenAll || S.wattrOpen.has(mrow.key) };
   }
 
@@ -22924,6 +22967,10 @@
       }
       if (n === 'live' && liveHint(mrow.i, mrow.work)) {
         return attrPillHtml(a, { state: 'hint', act: 'mx-wattr', title: liveOfferText(mrow.i) });
+      }
+      // [179] (3.38.16) "co?": the composer is none of the performers
+      if (n === 'cover' && coverHint(mrow.i, mrow.work)) {
+        return attrPillHtml(a, { state: 'hint', act: 'mx-wattr', title: tr('matrix.coverOffer', { names: coverComposers(mrow.i, mrow.work).join(', ') }) });
       }
       return attrPillHtml(a, { state: 'off', act: 'mx-wattr', title: a.name });
     }).join('');
@@ -23983,9 +24030,12 @@
 
   // --- Same-named works of the writers (against duplicates) -------------------------------
 
-  const normTitle = (t) => norm(t).replace(/&/g, ' and ')
-    .replace(/[([][^)\]]*(remaster|live|mono|stereo|version|edit|mix|demo|single|instrumental)[^)\]]*[)\]]/g, ' ')
-    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  // [179] (3.38.16) a function (also for the Node test of similarWorkTitle)
+  function normTitle(t) {
+    return norm(t).replace(/&/g, ' and ')
+      .replace(/[([][^)\]]*(remaster|live|mono|stereo|version|edit|mix|demo|single|instrumental)[^)\]]*[)\]]/g, ' ')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  }
 
   /**
    * Equal, or one letter inserted, missing or different ("Trak 1" = "Track 1"). Digits must match,
@@ -24001,14 +24051,90 @@
     return a.length > b.length ? letter(a[i]) && a.slice(i + 1) === b.slice(i) : letter(b[i]) && a.slice(i) === b.slice(i + 1);
   }
 
+  // [179] (3.38.16) A composer the title of a track names – "Round Midnight (Thelonious Monk cover)", "Variants On A Theme By Monk":
+  // a name of one to four words in capitals in brackets (also "… cover") or after "by" / "after"; words of versions ("Live",
+  // "Remastered", "Theme" …) are no names. full: two words or more (looked up in MusicBrainz), else a surname (only when an
+  // artist of the release has it).
+  function titleComposerNames(title) {
+    // words of versions, credits and titles that are no names (also before or after "by")
+    const STOP = /^(?:live|remaster(?:ed)?|demo|edit|version|mix|remix|reprise|intro|outro|interlude|theme|take|part|pt|bonus|single|mono|stereo|instrumental|acoustic|radio|extended|original|cover|alternate|alt|unreleased|feat|featuring|ft|vs|prod|with|and|the|a|an|of|in|on|by|after|for|to|from|me|you|us|them|him|her|it|your|my|our|their|his|love|time|session|sessions|title|titles|credits|act|tribute|dub|skit|clean|explicit|medley|prelude|main|end|en|vivo|bbc|japan|suite|movement|op|no|allegro|andante|adagio|presto|con|brio|minor|major)\.?$/i;
+    const ROMAN = /^[IVXLC]+\.?$/;
+    const PARTICLE = /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|y)$/i;
+    const nameOf = (words) => {
+      const w = words.filter(Boolean);
+      if (!w.length || w.length > 4 || PARTICLE.test(w[0]) || PARTICLE.test(w[w.length - 1])) return '';
+      return w.every((y) => (PARTICLE.test(y) || (/^\p{Lu}[\p{L}'’.-]*$/u.test(y) && !STOP.test(y) && !ROMAN.test(y)))) ? w.join(' ') : '';
+    };
+    const t = String(title || '');
+    const out = [];
+    // in brackets, the whole bracket (also "… cover")
+    for (const m of t.matchAll(/\(([^()]+?)(?:\s+cover)?\)/giu)) out.push(nameOf(m[1].trim().split(/\s+/)));
+    // after "by" / "after" (not "produced by", "remix by" …): the words in capitals up to the first word that is none
+    for (const m of t.matchAll(/(?:^|\s|\()((?:\p{L}+\.?\s+)?)(?:by|after)\s+(\S+(?:\s+\S+){0,5})/giu)) {
+      if (/^(?:prod\.?|produced|re-?mix(?:ed)?|mix(?:ed)?|arranged|arr\.?|edit(?:ed)?|conducted|performed|played|sung|covered)\s+$/i.test(m[1])) continue;
+      const words = [];
+      for (const w of m[2].replace(/[),;:!?]+.*$/u, '').split(/\s+/)) {
+        if (PARTICLE.test(w) && words.length) words.push(w);
+        else if (/^\p{Lu}[\p{L}'’.-]*$/u.test(w) && !STOP.test(w) && !ROMAN.test(w)) words.push(w);
+        else break;
+      }
+      while (words.length && PARTICLE.test(words[words.length - 1])) words.pop();
+      out.push(nameOf(words));
+    }
+    return uniq(out.filter(Boolean)).map((n) => ({ name: n, full: n.split(' ').length >= 2 }));
+  }
+  /** [179] (3.38.16) A title without the composer's names ("(Thelonious Monk)", "(… cover)", "by Monk") and without brackets. */
+  // (the patterns of a set of names once – they are used for every work of a composer)
+  function namePatterns(names) {
+    // (a property of the function: reachable in Node before the consts further down)
+    const cache = namePatterns.cache || (namePatterns.cache = new Map());
+    const key = names.join('\u0001');
+    if (!cache.has(key)) {
+      if (cache.size > 200) cache.clear();
+      cache.set(key, uniq(names.filter(Boolean)).sort((a, b) => b.length - a.length).map((n) => {
+        const e = String(n).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return [new RegExp(`\\(\\s*${e}(?:\\s+cover)?\\s*\\)`, 'giu'), new RegExp(`(^|\\s)(?:by|of|after)\\s+${e}(?=$|[\\s,.;:!?)])`, 'giu'),
+          new RegExp(`\\s[-–—:]\\s*${e}\\s*$`, 'giu')];
+      }));
+    }
+    return cache.get(key);
+  }
+  function titleWithoutComposer(title, names) {
+    let t = String(title || '');
+    for (const [a, b, c] of namePatterns(names)) t = t.replace(a, ' ').replace(b, ' ').replace(c, ' ');
+    return normTitle(t.replace(/\([^)]*\)|\[[^\]]*\]/g, ' '));
+  }
+  /** [179] Two titles cleaned as above: equal within one letter, or the work's whole in the track's (two words or six letters). */
+  function similarCleaned(tt, wt) {
+    if (!tt || !wt) return false;
+    if (withinOne(wt, tt)) return true;
+    return (wt.includes(' ') || wt.length >= 6) && ` ${tt} `.includes(` ${wt} `);
+  }
+  /**
+   * [179] (3.38.16) A work of the track's composer with a similar title (F-179c): equal without the composer's names and without
+   * brackets ("(Live)", "(Theme)"), or the work's title whole in the track's title – from two words or six letters.
+   */
+  function similarWorkTitle(trackTitle, workTitles, names) {
+    const tt = titleWithoutComposer(trackTitle, names);
+    return !!tt && workTitles.some((x) => similarCleaned(tt, titleWithoutComposer(x, names)));
+  }
+  /** "Thelonious Monk" → ["Thelonious Monk", "Monk"]. */
+  const nameAndSurname = (names) => uniq(names.filter(Boolean).flatMap((n) => [n, String(n).trim().split(/\s+/).pop()]));
+
   function sameNamed(i) {
     const search = S.workSearch.get(i);
     const track = S.mbTracks[i];
     if (!track) return [];
     const own = search && search.state === 'done' ? search.results : [];
     // [3.15.0] and works of the release's artists, its writers and performers with this title
-    const more = (S.artistWorkHits.get(i) || []).filter((w) => !own.some((x) => x.gid === w.gid));
-    return [...own, ...more];
+    const hits = S.artistWorkHits.get(i) || [];
+    const more = hits.filter((w) => !own.some((x) => x.gid === w.gid));
+    // [179] (3.38.16) a work both found: why the works of the artists found it, and its composer, with the search's entry
+    const merged = own.map((x) => {
+      const h = hits.find((w) => w.gid === x.gid);
+      return h ? { ...x, writers: uniq([...x.writers, ...h.writers]), ...(h.composer ? { composer: h.composer, composerName: h.composerName } : {}) } : x;
+    });
+    return [...merged, ...more];
   }
 
   // --- [3.15.0] Works of the artists: release artists, writers, performers --------------------------------
@@ -24034,8 +24160,71 @@
       if (why) found.push([a.mbid, { name: a.mbName || a.name, why }, a.mbName, a.name]);
     }
     found.sort((x, y) => rank[x[1].why] - rank[y[1].why]).forEach(([id, info, ...names]) => add(id, info, ...names));
+    // [179] (3.38.16) the composers named in the titles of tracks without a work
+    for (const t of tracksWithoutWork()) titleComposersOf(t.idx).forEach((c) => add(c.mbid, { name: c.name, why: 'title' }, c.name));
     out.special = special;
     return out;
+  }
+
+  /**
+   * [179] (3.38.16) The composers named in the title of a track (179b, F-179d): a full name as MusicBrainz has it (looked up once,
+   * resolveTitleComposers); a surname alone only when exactly one artist of the release has it. [{ mbid, name, said }]
+   */
+  function titleComposersOf(i, { logIt = false } = {}) {
+    const t = S.mbTracks[i];
+    if (!t) return [];
+    const cache = S.titleComposerCache || new Map();
+    const playing = new Set(S.rows.filter((r) => r.level !== 'skip' && [...WRITER_TYPES, 'instrument', 'vocal', 'performer'].includes(norm(rowTypeName(r)))).map((r) => r.artistKey));
+    const ours = [...(S.releaseCredit || []).filter((p) => p.mbid).map((p) => ({ mbid: p.mbid, names: [p.name] })),
+      ...[...S.artists.values()].filter((a) => a.mbid && !a.company && !a.other && playing.has(a.key)).map((a) => ({ mbid: a.mbid, names: [a.mbName, a.name] }))];
+    const out = [];
+    for (const c of titleComposerNames(workTitleOf(t.title))) {
+      const key = norm(c.name);
+      let hit = null;
+      if (c.full) hit = cache.get(key) || null;
+      else {
+        const same = uniq(ours.filter((o) => o.names.some((n) => n && norm(String(n).trim().split(/\s+/).pop()) === key)).map((o) => o.mbid));
+        if (same.length === 1) {
+          const o = ours.find((x) => x.mbid === same[0]);
+          hit = { mbid: o.mbid, name: o.names.find(Boolean) };
+        }
+      }
+      if (!hit || out.some((x) => x.mbid === hit.mbid)) continue;
+      out.push({ mbid: hit.mbid, name: hit.name, said: c.name });
+      S.titleComposerLogged = S.titleComposerLogged || new Set();
+      const lk = `${i}|${hit.mbid}`;
+      if (logIt && !S.titleComposerLogged.has(lk)) {
+        S.titleComposerLogged.add(lk);
+        log('info', 'titleComposer', { track: trackLabel(t), name: hit.name, said: c.name });
+      }
+    }
+    return out;
+  }
+  /** [179] (3.38.16) Looks up the full names the titles of the tracks without a work name (an artist of that name or alias). */
+  async function resolveTitleComposers() {
+    S.titleComposerCache = S.titleComposerCache || new Map();
+    const names = uniq(tracksWithoutWork().flatMap((t) => titleComposerNames(workTitleOf(t.title)).filter((c) => c.full).map((c) => c.name)));
+    const ours = [...(S.releaseCredit || []).filter((p) => p.mbid).map((p) => ({ mbid: p.mbid, name: p.name })),
+      ...[...S.artists.values()].filter((a) => a.mbid && !a.company && !a.other).map((a) => ({ mbid: a.mbid, name: a.mbName || a.name }))];
+    for (const name of names) {
+      const key = norm(name);
+      if (S.titleComposerCache.has(key) || worksResting()) continue;
+      // an artist of the release of that name: no request
+      const own = ours.find((o) => norm(o.name) === key);
+      if (own) {
+        S.titleComposerCache.set(key, { mbid: own.mbid, name: own.name });
+        continue;
+      }
+      try {
+        const q = name.replace(/"/g, '');
+        const d = await mbWsIdle(`artist?query=${encodeURIComponent(`artist:"${q}" OR alias:"${q}"`)}&limit=5`);
+        const same = ((d && d.artists) || []).filter((a) => norm(a.name) === key || (a.aliases || []).some((x) => norm(x.name) === key));
+        // only one artist of exactly that name or alias (two "John Williams": none)
+        S.titleComposerCache.set(key, same.length === 1 ? { mbid: same[0].id, name: same[0].name } : null);
+      } catch {
+        // not kept: asked again with the next comparison
+      }
+    }
   }
 
   /** Tracks still without a work (those the comparison is for). */
@@ -24106,14 +24295,38 @@
     for (const t of tracksWithoutWork()) {
       const title = normTitle(workTitleOf(t.title));
       const found = new Map();
+      // [179] (3.38.16) the track's composers: its writers (credited for it) and those its title names
+      const composers = new Map([...composersOfTrack(t.idx)].map(([id, n]) => [id, { names: [n], named: false }]));
+      for (const c of titleComposersOf(t.idx)) {
+        const x = composers.get(c.mbid) || { names: [], named: true };
+        x.names.push(c.name, c.said);
+        composers.set(c.mbid, x);
+      }
       for (const [mbid, info] of S.artistWorkTargets) {
         const e = S.artistWorks.get(mbid);
         if (!e) continue;
+        const comp = composers.get(mbid);
+        const names = comp ? nameAndSurname([...comp.names, info.name]) : [];
+        const tt = comp ? titleWithoutComposer(workTitleOf(t.title), names) : '';
+        const exact = comp ? [...e.works.values()].some((w) => [w.title, ...w.aliases].some((x) => withinOne(normTitle(x), title))) : false;
         for (const w of e.works.values()) {
-          if (![w.title, ...w.aliases].some((x) => withinOne(normTitle(x), title))) continue;
-          const via = tr(w.via === 'recorded' ? 'works.viaRecorded' : 'works.viaLinked', { name: info.name, recording: w.recording || '' });
+          const titles = [w.title, ...w.aliases];
+          const same = titles.some((x) => withinOne(normTitle(x), title));
+          // only the works of the track's composer with a similar title, never all of them (F-179c) – and only when none of his has
+          // the track's title
+          const similar = !same && !!comp && !exact && titles.some((x) => {
+            const k = `${names.join('|')}\u0001${x}`;
+            if (!S.wtCache.has(k)) S.wtCache.set(k, titleWithoutComposer(x, names));
+            return similarCleaned(tt, S.wtCache.get(k));
+          });
+          if (!same && !similar) continue;
+          const via = comp && comp.named ? tr('works.viaTitleComposer', { name: info.name, said: comp.names[comp.names.length - 1] })
+            : similar ? tr('works.viaComposer', { name: info.name })
+            : tr(w.via === 'recorded' ? 'works.viaRecorded' : 'works.viaLinked', { name: info.name, recording: w.recording || '' });
           const hit = found.get(w.gid) || { gid: w.gid, title: w.title, type: w.type, disambiguation: w.disambiguation, aliases: w.aliases, writerIds: [], writers: [], artistWork: true };
           if (!hit.writers.includes(via)) hit.writers.push(via);
+          // "co?" only for a work found through its composer: by a similar title of a song, or named in the track's title
+          if (comp && !hit.composer && (comp.named || (similar && /^song$/i.test(w.type || '')))) Object.assign(hit, { composer: mbid, composerName: info.name });
           found.set(w.gid, hit);
         }
       }
@@ -24343,6 +24556,16 @@
     }
     // [3.18.0] the works matrix skipped, "Not now" or the question for many tracks open: no lookups
     if (!worksLookupsAllowed()) return;
+    // [179] (3.38.16) the composers the titles name, first – as part of the run (no second run meanwhile)
+    S.artistWorksRunning = true;
+    await resolveTitleComposers().catch(() => null);
+    S.artistWorksRunning = false;
+    if (S.artistWorksAgain || worksResting()) {
+      S.artistWorksAgain = false;
+      if (!worksResting()) runArtistWorks();
+      return;
+    }
+    tracksWithoutWork().forEach((t) => titleComposersOf(t.idx, { logIt: true }));
     const targets = artistWorkTargets();
     S.artistWorkTargets = targets;
     for (const [id, info] of targets.special || []) {
@@ -24521,7 +24744,7 @@
       pick = ` <button type="button" class="dci-small dci-mx-wpickbtn" data-act="mx-works" aria-expanded="${open}" aria-controls="${listId}"
         title="${esc(what)}">${esc(tr('matrix.worksPick', { n: same.length }))} ${open ? '▴' : '▾'}</button>`;
       found = `<div class="dci-same dci-mx-wlist" id="${listId}"${open ? '' : ' hidden'}><strong>${esc(what)}</strong><ul class="dci-candidates">${same.map((w) => `<li>
-          <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}">${esc(tr('works.link'))}</button>
+          <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}"${w.composer ? ` data-composer="${esc(w.composer)}" data-composer-name="${esc(w.composerName || '')}"` : ''}>${esc(tr('works.link'))}</button>
           <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
           <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span></li>`).join('')}</ul></div>`;
     }
@@ -24531,6 +24754,22 @@
         <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button>${state} ${o.btn}</div>
       ${found}${o.panel}`;
   }
+
+  /** [180] (3.38.15) Opens or closes the list "n works ▾" of a track in the page (the matrix is not drawn anew). */
+  function setWorksList(i, open) {
+    const tr = S.overlay && S.overlay.querySelector(`tr[data-work="${i}"]`);
+    const b = tr && tr.querySelector('[data-act="mx-works"]');
+    const l = tr && tr.querySelector('.dci-mx-wlist');
+    if (l) l.hidden = !open;
+    if (b) {
+      b.setAttribute('aria-expanded', String(open));
+      b.textContent = b.textContent.replace(open ? '▾' : '▴', open ? '▴' : '▾');
+    }
+    S.mxWorksOpen = open && l ? i : null;
+    return b;
+  }
+  /** [180] (3.38.15) Closes the open list; its button (or null). */
+  const closeWorksList = () => (S.mxWorksOpen === null ? null : setWorksList(S.mxWorksOpen, false));
 
   /** [S020] A small mark next to a work type preselected by a rule. */
   const typeAutoHtml = (opts) => (opts && opts.typeAuto && opts.typeId
@@ -26547,13 +26786,8 @@
       }
       renderWorks();
     }
-    // [180] (3.38.15) the list "n works ▾" closes with a click anywhere else
-    if (S.mxWorksOpen !== null && e.target.closest && !e.target.closest('.dci-mx-wlist, [data-act="mx-works"]')) {
-      S.mxWorksOpen = null;
-      const out = e.target.closest('[data-act]');
-      renderWorks();
-      if (!out || !S.overlay.contains(out)) return;
-    }
+    // [180] (3.38.15) the list "n works ▾" closes with a click anywhere else – in the page, the click goes on to what it was on
+    if (S.mxWorksOpen !== null && e.target.closest && !e.target.closest('.dci-mx-wlist, [data-act="mx-works"]')) closeWorksList();
     const btn = e.target.closest('[data-act]');
     if (!btn || !S.overlay.contains(btn)) return;
     S.lastActEl = btn;
@@ -27885,22 +28119,26 @@
         break;
       }
       case 'mx-works': {
-        // [180] (3.38.15) "n works ▾" opens the works found for the track (another one open closes)
+        // [180] (3.38.15) "n works ▾" opens the works found for the track (another one open closes); in the page, no redraw
         const i = workIndexOf(btn);
-        S.mxWorksOpen = S.mxWorksOpen === i ? null : i;
-        renderWorks();
-        const again = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="mx-works"]`);
-        if (again) again.focus({ preventScroll: true });
-        break;
+        const was = S.mxWorksOpen;
+        closeWorksList();
+        if (was !== i) setWorksList(i, true);
+        return true;
       }
       case 'work-pick': {
         const i = workIndexOf(btn);
         S.mxWorksOpen = null;
-        S.workPlan.set(i, { gid: btn.dataset.gid, title: btn.dataset.title, origin: 'search', flags: new Set() });
+        S.workPlan.set(i, { gid: btn.dataset.gid, title: btn.dataset.title, origin: 'search', flags: new Set(), composer: btn.dataset.composer || '', composerName: btn.dataset.composerName || '' });
         log('info', 'workPicked', { track: trackLabel(S.mbTracks[i]), title: btn.dataset.title });
         rememberArtistWork(i, btn.dataset.gid, btn.dataset.title);
         renderWorks();
         refresh();
+        // [180] (3.38.16) the focus on the track's work (its button was drawn anew)
+        {
+          const u = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="work-unplan"]`);
+          if (u) u.focus({ preventScroll: true });
+        }
         break;
       }
       case 'work-unplan': {
@@ -30889,13 +31127,10 @@
       renderDates();
       return;
     }
-    // [180] (3.38.15) the list "n works ▾" of a track
-    if (S.mxWorksOpen !== null) {
+    // [180] (3.38.15) the list "n works ▾" of a track (only while it is shown; a dialog of the dashboard first)
+    if (S.mxWorksOpen !== null && !S.subDialog && S.overlay.querySelector('.dci-mx-wlist:not([hidden])')) {
       e.preventDefault();
-      const i = S.mxWorksOpen;
-      S.mxWorksOpen = null;
-      renderWorks();
-      const b = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="mx-works"]`);
+      const b = closeWorksList();
       if (b) b.focus({ preventScroll: true });
       return;
     }

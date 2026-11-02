@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.38.15 | – |
+| 2026-11-02 | 3.38.13 – 3.38.16 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.38.16
+
+#### Changed
+
+- **Works of a track's composer by a similar title** (collected item 179): the composer credited for a track, or named in its title, has only his works with a similar title offered – without his names ("(Thelonious Monk cover)", "by Monk") and brackets ("(Live)", "(Theme)"), or a work's title whole in the track's title (two words or six letters): "Variants On A Theme By Monk" → "Variants on a Theme of Thelonious Monk (Criss-Cross)", not all of Monk's works (F-179c).
+- **A composer named only in the title** (179b, F-179d): a full name ("Round Midnight (Thelonious Monk cover)") is looked up in MusicBrainz, a surname alone ("Epistrophy By Monk") only when an artist of the release has it; the log names them.
+- **"co?" at the link of such a work** (F-179b): when the composer is none of the track's performers – offered (dashed), a click sets "cover"; never by itself, not for a writer's own song of the track's title.
+
+#### Fixed
+
+- **"n works ▾" (3.38.15):** with the list open, a click on another button of the works matrix ("＋ New work", the fold) acted only at the second click; after **Link** the focus stays in the matrix.
 
 ### Import 3.38.15
 
