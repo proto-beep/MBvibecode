@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.14, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.15, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.15 · 2026-11-02
+
+The works found for a track as a choice (collected item 180).
+
+- **`workFrontCell`:** with works found (`sameNamed(i)`: the search, the works of the artists) a button `[data-act=mx-works]` ("n works ▾", `matrix.worksPick`, `aria-expanded`, `aria-controls`) in the line of the track, right after the badge; the list (`.dci-same.dci-mx-wlist`, its id `dci-mx-wlist-<i>`) below the line, `hidden` while closed (until 3.38.14 always shown). New state `S.mxWorksOpen` (one track at a time).
+- **`onClick`:** `mx-works` opens or closes it (the focus back on the button after drawing); a click outside the list and the button closes it; `work-pick` closes it. **Escape:** closes it, the focus on its button.
+- **CSS:** `.dci-mx-wpickbtn` (yellow like the list), `.dci-mx-wlist` (shadow; `[hidden]` none).
+- **Texts (English):** `matrix.worksPick.one` / `.other`.
+- **Tests:** `t_works_more.py` new case `workpick` (the button in the line, hidden list, opened below the line, closed by a click elsewhere and Esc with the focus back, one at a time, a single work not set, Link plans it).
 
 ## Import 3.38.14 · 2026-11-02
 

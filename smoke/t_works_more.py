@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3); `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), workpick (3.38.15); `python3 t_works_more.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -718,6 +718,73 @@ def case_livegroup():
             and c1['bg'] == 'rgb(115, 109, 171)' and c1['color'] == 'rgb(255, 255, 255)' and c2['bg'] in ('rgb(115, 109, 171)', 'rgb(75, 69, 133)')
         print('A)', ok_a, '| B)', ok_b, '| C)', ok_c)
         results += [ok_a, ok_b, ok_c]
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_workpick():
+    """Credits Importer 3.38.15 (collected item 180, F-180): the works found for a track are a choice "n works ▾" in its line.
+    A) Track 1.4 (two works of the release artist with its title): "2 works ▾" in the line of "no work yet" (same line), its list hidden;
+       track 1.3 (one work): "1 work ▾" – offered, not set (still "no work yet").
+    B) A click on "2 works ▾": the list below the line (both works, the second with its disambiguation), aria-expanded; the focus
+       stays on the button. A click elsewhere closes it; opened again, Esc closes it (the dashboard stays) and the focus is on the
+       button; one list at a time (track 1.3 opened: 1.4 closes).
+    C) "Link" of the second work in the open list: the track's work is planned ("chosen for linking" in the log), the choice is gone."""
+    TB = H.uid('dddddddd', 60)
+    W3, W4, W5 = H.uid('cccccccc', 73), H.uid('cccccccc', 74), H.uid('cccccccc', 75)
+    H.RELEASE_AC[:] = [(TB, 'Test Band', 'Test Band', '')]
+    H.ARTIST_WORKS.update({TB: [{'id': W4, 'title': H.TITLES[3], 'type': 'Song', 'aliases': []},
+                                {'id': W5, 'title': H.TITLES[3], 'type': 'Song', 'aliases': [], 'disambiguation': 'instrumental'},
+                                {'id': W3, 'title': H.TITLES[2], 'type': 'Song', 'aliases': []}]})
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    STATE = """(i) => { const tr = document.querySelector(`tr[data-work="${i}"]`); if (!tr) return null;
+      const b = tr.querySelector('[data-act=mx-works]'); const l = tr.querySelector('.dci-mx-wlist'); const badge = tr.querySelector('.dci-mx-line .dci-badge');
+      const mid = (e) => { const r = e.getBoundingClientRect(); return Math.round(r.top + r.height / 2); };
+      return { btn: b ? b.textContent.replace(/\\s+/g, ' ').trim() : null, exp: b ? b.getAttribute('aria-expanded') : null,
+        shown: !!(l && l.getClientRects().length), gids: l ? [...l.querySelectorAll('[data-act=work-pick]')].map(x => x.dataset.gid) : [],
+        disamb: l ? [...l.querySelectorAll('.dci-disamb')].map(x => x.textContent) : [], badge: badge ? badge.textContent.trim() : null,
+        sameLine: !!(b && badge && Math.abs(mid(b) - mid(badge)) <= 4), focus: document.activeElement === b,
+        below: !!(b && l && l.getClientRects().length && l.getBoundingClientRect().top >= b.getBoundingClientRect().bottom - 1) }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 90)
+        pg.add_style_tag(content='#dci-log { display: none !important; }')
+        pg.wait_for_timeout(400)
+        st = lambda i: pg.evaluate(f"({STATE})({i})")
+        a4, a3 = st(3), st(2)
+        print('A) Track 1.4:', a4, '\n   Track 1.3:', a3)
+        results.append(a4 and a4['btn'] == '2 works ▾' and a4['exp'] == 'false' and not a4['shown'] and a4['sameLine'] and a4['badge'] == 'no work yet'
+                       and a3 and a3['btn'] == '1 work ▾' and a3['badge'] == 'no work yet' and not a3['shown'])
+        pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        b1 = st(3)
+        pg.locator('.dci-works-head').first.click(position={'x': 5, 'y': 5}); pg.wait_for_timeout(300)
+        b2 = st(3)
+        pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+        b3, still = st(3), pg.evaluate("!document.getElementById('dci-overlay').hidden")
+        pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        pg.locator('tr[data-work="2"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        b4, b5 = st(3), st(2)
+        print('B) offen:', b1, '\n   daneben geklickt:', b2['shown'], '| Esc:', b3['shown'], b3['focus'], still, '| eine zur Zeit:', b4['shown'], b5['shown'])
+        results.append(b1['shown'] and b1['exp'] == 'true' and b1['below'] and b1['gids'] == [W4, W5] and b1['disamb'] == ['(instrumental)'] and b1['focus']
+                       and b1['btn'] == '2 works ▴' and not b2['shown'] and b2['exp'] == 'false' and not b3['shown'] and b3['focus'] and still
+                       and not b4['shown'] and b5['shown'])
+        pg.locator('tr[data-work="2"] [data-act=mx-works]').click(); pg.wait_for_timeout(200)
+        pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        pg.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W5}"]').click(); pg.wait_for_timeout(500)
+        c = st(3)
+        picked = [x for x in pg.evaluate(LOGS) if 'chosen for linking' in x]
+        planned = pg.evaluate("(() => { const tr = document.querySelector('tr[data-work=\"3\"]'); return tr.querySelector('.dci-badge-plan') ? tr.querySelector('.dci-mblink').textContent : null; })()")
+        print('C) gewählt:', picked, '| geplant:', planned, '| Auswahl:', c['btn'])
+        results.append(picked == [f'Track 1.4: work “{H.TITLES[3]}” chosen for linking'] and planned and c['btn'] is None)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

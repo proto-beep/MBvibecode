@@ -296,6 +296,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #   livegroup: 3.38.3: two media – "Live recordings: CD 2, track 1.2", one group line of three (▸ the tracks, its
                                 #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third;
                                 #     3.38.13: "track 1.2, CD 2" (F-2, by positions – the track's index, not its number), the heading purple (F-1)
+                                #   workpick: 3.38.15 (180): "n works ▾" in the track's line, the list hidden; opened below the line, closed by a
+                                #     click elsewhere and Esc (focus back), one at a time; "1 work ▾" not set; Link plans the work
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
