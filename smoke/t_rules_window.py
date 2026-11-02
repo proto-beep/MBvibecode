@@ -560,8 +560,9 @@ def case_wqedit():
         pg.click('#dci-rules [data-redit-cancel]')
         pg.wait_for_timeout(200)
         print('D) Tabelle:', d1[0], '| gespeichert:', d1[1], '| ohne Typ:', d2)
-        results.append(d1[0] == 'creative direction (release) · conductor (recording) · miscellaneous support (task “director”) (recording) · spoken words (recording)'
-                       and d1[1] == [{'type': 'creative direction', 'level': 'release'}, {'type': 'conductor', 'level': 'recording'},
+        # (3.39.6) creative direction on the release group (Q003; MusicBrainz has none on the release)
+        results.append(d1[0] == 'creative direction (release_group) · conductor (recording) · miscellaneous support (task “director”) (recording) · spoken words (recording)'
+                       and d1[1] == [{'type': 'creative direction', 'level': 'release_group'}, {'type': 'conductor', 'level': 'recording'},
                                      {'type': 'misc', 'level': 'recording', 'task': 'director', 'label': 'miscellaneous support (task “director”)'},
                                      {'type': 'vocal', 'level': 'recording', 'instrument': 'spoken vocals', 'label': 'spoken words', 'credit': True, 'suggested': True}]
                        and d2.startswith('Q003: the field “options”'))

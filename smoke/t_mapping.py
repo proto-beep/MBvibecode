@@ -1,6 +1,6 @@
 """Mapping: roles, questions, suggestions, mastering, special artists, fixes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10), oldfile (3.39.2), assistants (3.39.4), voices (3.39.5), companyperson (3.39.6), listkeys (3.39.6) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
+Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10), oldfile (3.39.2), assistants (3.39.4), voices (3.39.5), companyperson (3.39.6), listkeys (3.39.6), toys (3.39.7) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
 import json
 import os
 import harness as H  # noqa: F401 – used by the cases
@@ -1257,6 +1257,53 @@ console.log(JSON.stringify({ cands: r.primaryCands }));
     print('A)', out.returncode, out.stdout.strip(), out.stderr.strip()[-300:])
     r = json.loads(out.stdout) if out.returncode == 0 else {}
     results = ['lap steel guitar' in (r.get('cands') or [])]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_toys():
+    """Credits Importer 3.39.7 (Q-j, Q-ac; list T058): Discogs "Toys" asks "as which one?" – percussion “toys” · electronic instruments
+    “toys” · other instruments “toys”; "Found Objects" – percussion “found objects” · other instruments “found objects”."""
+    for i, n in ((9701, 'percussion'), (9702, 'electronic instruments'), (9703, 'other instruments')):
+        H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    CREDITS = [('Toy Man', 'Toys', 3601), ('Obj Man', 'Found Objects', 3602)]
+    for n, _r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3100), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    ASK = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const d = g && g.querySelector('.dci-instr-guess'); return d ? [d.textContent.replace(/\\s+/g, ' ').trim().split(' – ')[1] || '', [...d.querySelectorAll('button')].map(b => b.textContent.trim())] : null; }"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+            pg.wait_for_timeout(400)
+            t, o = pg.evaluate(ASK, 'Toy Man'), pg.evaluate(ASK, 'Obj Man')
+            print('Toys:', t, '| Found Objects:', o)
+            results.append(t is not None and t[1][:3] == ['percussion “toys”', 'electronic instruments “toys”', 'other instruments “toys”']
+                           and o is not None and o[1][:2] == ['percussion “found objects”', 'other instruments “found objects”'])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

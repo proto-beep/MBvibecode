@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.6
+// @version      3.39.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.6
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.6
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.7
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.7
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -342,7 +342,9 @@
       "group.creditAllAria": "Artist credit for all roles of {name}",
       "group.creditAllOther": "Credited as for all roles",
       "group.initials": "{said} = {name} (initials)",
-      "group.initialsMany": "{said}: the initials of {names} – not set; choose the artist",
+      "group.initialsOf": "{said}: the initials of",
+      "group.initialsUseTitle": "{said} stands for {name}: the rows go to {name}, credited “{said}” on this release",
+      "log.initialsUsed": "Initials {said}: {name} chosen – credited “{said}”",
       "group.creditAllOtherAria": "Credited as for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
@@ -5039,15 +5041,20 @@
       });
       const ini = (n) => n.trim().split(/\s+/).filter((w) => /^\p{Lu}/u.test(w)).map((w) => w[0]).join('');
       for (const c of credits) {
-        const said = c.who && !c.who.id && c.who.name;
-        if (!said || !/^(?:\p{Lu}\.?){2,4}$/u.test(said)) continue;
+        const said0 = c.who && !c.who.id && c.who.name;
+        if (!said0 || !/^(?:\p{Lu}\.?){2,4}$/u.test(said0)) continue;
+        // [3.39.7] "R.R." keeps its last dot (reading the line took it as the end of a sentence: "R.R"; collected item K-11)
+        const said = /^(?:\p{Lu}\.){1,3}\p{Lu}$/u.test(said0) ? `${said0}.` : said0;
         const key = said.replace(/\./g, '');
         const hits = full.filter((n) => ini(n) === key);
         if (hits.length === 1) {
           c.who = { ...c.who, name: hits[0], rawName: hits[0] };
           c.credited = said;
           c.initials = said;
-        } else if (hits.length > 1) c.initialsFor = hits;
+        } else if (hits.length > 1) {
+          c.initialsFor = hits;
+          if (said !== said0) c.who = { ...c.who, name: said, rawName: said };
+        }
       }
     }
     const emptyDateFields = () => ({ by: '', bm: '', bd: '', ey: '', em: '', ed: '', ended: false, poolId: null });
@@ -6591,7 +6598,8 @@
       }
       const group = groups.get(gKey);
       // [S063] (3.38.18) initials read as this name ("RR"), or of several names
-      if (c.initials) group.initials = c.initials;
+      // [3.39.7] each spelling of the initials once ("RR, R.R. = Robert Rich")
+      if (c.initials && !(group.initials || '').split(', ').includes(c.initials)) group.initials = group.initials ? `${group.initials}, ${c.initials}` : c.initials;
       if (c.initialsFor) group.initialsFor = c.initialsFor;
       // [S054] (3.37.0) a name only from the Discogs notes: searched by its name
       if (c.fromNotes && !who.id && group.fromNotes !== false) group.fromNotes = true;
@@ -18425,9 +18433,42 @@
   }
 
   /** [3.32.2] The name in the head of an entry: the release's spelling with "*" (the entry's name in the tooltip), or the name. */
-  /** [S063] (3.38.18) "RR = Robert Rich (initials)" – or the names initials of several stand for. */
+  /**
+   * [S063] (3.38.18) "RR = Robert Rich (initials)" – or the names initials of several stand for; [3.39.7] those to click: the entry
+   * becomes the one chosen, credited as the initials (collected item K-8).
+   */
   const initialsHtml = (a) => (a.initials ? ` <span class="dci-sub dci-initials">${esc(tr('group.initials', { said: a.initials, name: a.name }))}</span>`
-    : a.initialsFor ? ` <span class="dci-sub dci-initials">${esc(tr('group.initialsMany', { said: a.name, names: a.initialsFor.join(', ') }))}</span>` : '');
+    : a.initialsFor ? ` <span class="dci-sub dci-initials">${esc(tr('group.initialsOf', { said: a.name }))} ${a.initialsFor.map((n) => `<button type="button"
+      class="dci-textbtn dci-initials-use" data-act="initials-use" data-name="${esc(n)}" title="${esc(tr('group.initialsUseTitle', { said: a.name, name: n }))}">${esc(n)}</button>`).join(' · ')}</span>` : '');
+
+  /**
+   * [3.39.7] Initials of several names (collected item K-8): the name clicked – its rows go to its entry (one of that name already
+   * there) or this entry becomes it, looked up in MusicBrainz by that name; credited as the initials.
+   */
+  function initialsUse(a, name) {
+    const said = a.name;
+    const rows = S.rows.filter((r) => r.artistKey === a.key);
+    const target = [...S.artists.values()].find((x) => x !== a && !x.company && !x.other && norm(x.name) === norm(name));
+    if (target) {
+      rows.forEach((r) => Object.assign(r, { artistKey: target.key, anv: said, credit: said }));
+      S.artists.delete(a.key);
+      target.anvs = uniq(S.rows.filter((x) => x.artistKey === target.key).map((x) => x.anv).filter(Boolean));
+      log('ok', 'initialsUsed', { said, name });
+      renderGroups();
+      refresh();
+      return;
+    }
+    Object.assign(a, { name, rawName: name, initials: said, status: 'pending', mbid: null, mbName: '', mbComment: '', candidates: [], nameHits: null, error: '' });
+    delete a.initialsFor;
+    rows.forEach((r) => Object.assign(r, { anv: said, credit: said }));
+    a.anvs = [said];
+    log('ok', 'initialsUsed', { said, name });
+    renderGroups();
+    resolveArtists({ only: [a] }).then(() => {
+      renderGroups();
+      refresh();
+    });
+  }
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
     if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
@@ -27917,6 +27958,10 @@
         // [3.15.2] the suggestions folded behind "+ n more"
         artist.suggOpen = !artist.suggOpen;
         updateGroupHeader(artist);
+        break;
+      case 'initials-use':
+        // [3.39.7] initials of several names: the one they stand for (collected item K-8)
+        if (artist) initialsUse(artist, btn.dataset.name);
         break;
       case 'name-use': {
         const h = (artist.nameHits || []).find((x) => x.mbid === btn.dataset.mbid);
