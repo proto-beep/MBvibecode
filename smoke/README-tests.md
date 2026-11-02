@@ -343,6 +343,9 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #     Photographer" credited "assistant photographer"
                                 #   voices: 3.39.5 (K-3 – K-5): "Countertenor" countertenor vocals, "Vocals [Tenor]"; "Liner Notes [Translation]"
                                 #     with translator; "Creative Direction" on the release group, for one track on its recording, no edit note
+                                #   companyperson: 3.39.6 (K-6, S066): "Mixed At" / "Recorded At" / "Mastered At" at a person – what the person did, the
+                                #     note, no place; "Pressed By", "Distributed By" left out (Skip, note); "Licensed From" licensor
+                                #   listkeys: 3.39.6 (K-13): T001 changed with "Lap Steel2" (as an imported file writes it) is found (Node)
                                 #   oldfile: 3.39.2 (review): a mapping file without T058 / T059 and changes of your own (Node, files copied):
                                 #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again
 

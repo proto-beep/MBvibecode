@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.39.5 | – |
+| 2026-11-02 | 3.38.13 – 3.39.6 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,18 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.39.6
+
+#### Changed
+
+- **Roles of companies at a person** (collected item K-6, rule S066): "Mixed At", "Recorded At", "Mastered At", "Engineered At", "Produced At", "Remixed At" given to a person on Discogs are what the person did (mix, recording, mastering …); "Pressed By", "Manufactured By", "Distributed By", "Printed By", "Licensed To" are left out (no relationship of MusicBrainz for a person) – the row says so. Until now unknown instruments.
+- **The Bandcamp tag** (Q-i): a darker blue, legible, with the logo's blue as its rim.
+
+#### Fixed
+
+- **The tables T001 and T058 changed by an imported file** (collected item K-13): words in capitals ("Lap Steel") are found.
+- **After the independent review of block AV:** a role typed again by hand loses an "assistant" it no longer has; "Assistant Creative Director" puts "assistant creative director" into the edit note as its row says; "Directed By" answered creative direction goes to the release group; "Printed by X" in a pasted text is a company again (not a person left out).
 
 ### Import 3.39.5
 

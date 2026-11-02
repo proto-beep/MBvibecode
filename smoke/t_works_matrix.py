@@ -49,8 +49,20 @@ def case_mxdrop():
         pg, errs = H.open_mb_edit(ctx, companion=False)
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
-        pg.wait_for_timeout(1500)
+        # (3.39.6, K-7) the import complete and the matrix drawn – under load 1.5 s were not always enough
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent)) && !!document.querySelector('.dci-matrix th[data-colhead]')", 60)
+        pg.wait_for_timeout(800)
         cols = lambda: pg.evaluate(COLS)
+
+        def settle(read, want, ms=4000):
+            # (3.39.6, K-7) after a drop: read again until it is as expected or the time is up (the drop is drawn later under load)
+            got = read()
+            for _ in range(ms // 200):
+                if got == want:
+                    break
+                pg.wait_for_timeout(200)
+                got = read()
+            return got
         colkey = lambda name: pg.evaluate(f"[...document.querySelectorAll('.dci-matrix th[data-colhead]')].find(th => th.textContent.includes({name!r})).dataset.colhead")
         cell = lambda name, track: f'.dci-matrix tr[data-work="{track - 1}"] .dci-mx-cell[data-col="{colkey(name)}"]'
         pool = lambda: pg.evaluate("[...new Set([...document.querySelectorAll('.dci-pchip-tg')].map(c => c.textContent.replace(/\\s+/g, ' ').trim()))]")
@@ -82,7 +94,7 @@ def case_mxdrop():
         wz = colkey('Writer Z')
         print('B0) Writer Z vorher:', cols().get('Writer Z'))
         drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', f'[data-colhead="{wz}"] .dci-mx-card .dci-mx-credit')
-        b1 = cols().get('Writer Z')
+        b1 = settle(lambda: cols().get('Writer Z'), ['1+', '2+'])
         # Shift: the group of track 4 added (synthetic events carry the Shift key)
         g4 = pg.evaluate("[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes('Ghostpub')).dataset.id")
         hints = pg.evaluate(f"""(() => {{
@@ -100,7 +112,7 @@ def case_mxdrop():
       src.dispatchEvent(new DragEvent('dragend', {{ bubbles: true, dataTransfer: dt }}));
       return out; }})()""")
         pg.wait_for_timeout(300)
-        b2 = cols().get('Writer Z')
+        b2 = settle(lambda: cols().get('Writer Z'), ['1+', '2+', '4+'])
         print('B1) „Side A“ auf Writer Z:', b1, '| mit Umschalt Track 4 dazu:', b2, '| Hinweise:', hints)
         ok_b = b1 == ['1+', '2+'] and b2 == ['1+', '2+', '4+'] and hints[0] == 'dashed' and 'only the works of these tracks' in hints[1] and 'adds the works' in hints[2]
         # onto one role: lyricist only on the works of track 1 (group "Pub Co · 1, 3" → track 1 has a work, 3 waits)
@@ -109,7 +121,8 @@ def case_mxdrop():
         drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{g13}"] .dci-chip-main', f'[data-colhead="{wz}"] [data-tgrole="{lyr}"]')
         # [3.31.8] a moment for the drop to be drawn (under load the reading came too early now and then)
         pg.wait_for_timeout(400)
-        roles = pg.evaluate(f"""[1, 2, 3, 4].map(t => [...document.querySelectorAll('.dci-matrix tr[data-work="' + (t - 1) + '"] .dci-mx-cell[data-col="{wz}"] .dci-mxchip')].map(c => c.textContent.trim().split(' ')[0]).sort())""")
+        roles = settle(lambda: pg.evaluate(f"""[1, 2, 3, 4].map(t => [...document.querySelectorAll('.dci-matrix tr[data-work="' + (t - 1) + '"] .dci-mx-cell[data-col="{wz}"] .dci-mxchip')].map(c => c.textContent.trim().split(' ')[0]).sort())"""),
+                       [['composer', 'lyricist'], ['composer'], ['lyricist'], ['composer']])
         print('B2) „Pub Co · 1, 3“ auf die Rolle lyricist – Rollen je Track:', roles)
         ok_b = ok_b and roles == [['composer', 'lyricist'], ['composer'], ['lyricist'], ['composer']]
         results.append(ok_b)
@@ -118,8 +131,8 @@ def case_mxdrop():
         pg.click('tr[data-work="1"] [data-act=work-pending]'); pg.wait_for_timeout(300)
         pg.click('tr[data-work="2"] [data-act=work-pending]'); pg.wait_for_timeout(300)
         drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', '.dci-wattrs-all [data-tgattr=live]')
-        live = pg.evaluate("""[...document.querySelectorAll('.dci-matrix tbody tr[data-mrow]')].filter(tr => tr.dataset.mrow.match(/^[wp]:/))
-      .map(tr => [Number(tr.dataset.work) + 1, [...tr.querySelectorAll('.dci-wpill-on, .dci-wpill-mb')].map(b => b.textContent.trim())])""")
+        live = settle(lambda: pg.evaluate("""[...document.querySelectorAll('.dci-matrix tbody tr[data-mrow]')].filter(tr => tr.dataset.mrow.match(/^[wp]:/))
+      .map(tr => [Number(tr.dataset.work) + 1, [...tr.querySelectorAll('.dci-wpill-on, .dci-wpill-mb')].map(b => b.textContent.trim())])"""), [[1, ['li✎']], [2, ['li']], [3, []]])
         print('C1) „Side A“ auf „li“:', live)
         ok_c = live == [[1, ['li✎']], [2, ['li']], [3, []]]
         results.append(ok_c)
@@ -139,7 +152,8 @@ def case_matrixcols():
     LYRIC = H.uid('dddddddd', 50)
     H.lt(158, '91fa6e73-0b22-4f35-a9ab-8a7d1e8c7b02', 'chorus master', 'artist', 'recording', (1,))
     H.lt(927, 'df4b4d3e-0b5c-4f8e-9a7b-1c2d3e4f5a60', 'conductor', 'artist', 'recording', (1,))
-    H.lt(146, '0e2d1e4b-1d3a-4f7e-8f2c-6a5b4c3d2e10', 'creative direction', 'artist', 'release', (1,))
+    # (3.39.6) as on MusicBrainz: creative direction on the release group, not on the release (Q003 answers it there)
+    H.lt(146, '0e2d1e4b-1d3a-4f7e-8f2c-6a5b4c3d2e10', 'creative direction', 'artist', 'release_group', (1,))
     H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     orig_rel, orig_ws = H.discogs_release, H.ws_release
@@ -183,7 +197,7 @@ def case_matrixcols():
             rc = row().locator('[data-f=role-credit]').input_value() if row().locator('[data-f=role-credit]').count() else ''
             picks.append((typ(), row().get_attribute('class').split('dci-lv-')[1].split()[0], rc, row().locator('.dci-type-ask [aria-pressed=true]').inner_text()))
         print('A2) gewählt:', picks)
-        ok_a = ok_a and picks[0][:2] == ('chorus master', 'recording') and picks[1][:2] == ('creative direction', 'release') \
+        ok_a = ok_a and picks[0][:2] == ('chorus master', 'recording') and picks[1][:2] == ('creative direction', 'release_group') \
             and picks[2][0] == 'misc' and picks[2][2] == 'director' and 'miscellaneous support' in picks[2][3]
         results.append(ok_a)
 

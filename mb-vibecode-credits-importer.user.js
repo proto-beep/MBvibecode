@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.5
+// @version      3.39.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.6
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.6
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -385,6 +385,8 @@
       "log.perfTracks": "{name}: “Performer” on {list} – the instruments for the whole release go onto these tracks (S046)",
       "role.unresolved": "Not matched: {list}",
       "note.uncredited": "According to {src} not named on the release (Uncredited).",
+      "note.atPerson": "Discogs gives this person a role of a company (“… At”): read as what the person did (“… By”) – a person linked on Discogs is no place (S066).",
+      "note.companyPerson": "Discogs gives this person a role of a company (pressing, manufacturing, distribution, printing, licence): MusicBrainz has no such relationship for a person – left out (S066).",
       "note.prefixCredit": "MusicBrainz has no “{word}” for this type: credited “{credit}”.",
       "note.prefixNote": "MusicBrainz has no “{word}” and no role credit for this type: “{credit}” goes into the edit note.",
       "note.featuring": "“Featuring” is usually part of the artist credit already. Please check.",
@@ -2866,7 +2868,8 @@
         now.clear();
         to.forEach((x) => now.add(x));
       } else if (Array.isArray(now)) now.splice(0, now.length, ...to);
-      else refill(now, to);
+      // [3.39.6] the words of a table (T001, T058) as the code looks them up: in lower case – also from a file imported as written (K-13)
+      else refill(now, L.shape === 'map' ? Object.fromEntries(Object.entries(to).map(([k, v]) => [norm(k), v])) : to);
     }
   }
   // [3.39.2] (review) a list a mapping file of an older version does not have yet (the script installed before its file): empty
@@ -3116,6 +3119,7 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S066', where: 'mapRole (PERSON_AT_ROLE, PERSON_COMPANY_SKIP)', note: 'Roles (3.39.6): a role of "Companies, etc." Discogs gives a person – "Recorded At", "Mixed At", "Mastered At", "Engineered At", "Produced At", "Remixed At": what the person did ("Mixed By"; a person linked on Discogs is always a person, no place); "Pressed By", "Manufactured By", "Distributed By", "Printed By", "Licensed To": no relationship of MusicBrainz for a person – left out (Skip), the row says so ("Licensed From" stays licensor, R093)' },
     { id: 'S065', where: 'mapRole, applyDetailFlags, roleCreditForInner', note: 'Roles (3.39.4): a word before a role – "Assistant Engineer", "Asst. Mixing Engineer", "Associate Producer", "Co-Arranger": the role after it with MusicBrainz\'s attribute assistant, associate or co where its type has it; else the word with the role as role credit ("assistant arranger"), only in the edit note where the type has no role credit (the row says so). Roles the register knows with the word ("Assistant Producer", "Co-Producer") keep their rule' },
     { id: 'S064', where: 'TEXT.parse (readClause)', note: 'Texts (3.38.18): "Cover © X", "Cover art © X", "Cover image © X", "Artwork © X" – X\'s artwork credited "cover", no ℗ / © of a label; "Photo © X", "Photos © X" – photography credited "photo"; "detail used with permission" and the like after it are left out. Off: as before ("© X" a name, the line not recognized)' },
     { id: 'S063', where: 'TEXT.parse (initialsOf), groupCredits, entryNameHtml', note: 'Texts (3.38.18): initials as a name – two to four capitals ("RR", "R.R.", "HRG") that are the initials of one release artist or of one name of the text: that artist, credited as the initials, and the head of the entry says "RR = Robert Rich (initials)"; the initials of several names: not set, the head names them. Off: the initials are a name of their own (looked up in MusicBrainz)' },
@@ -3443,6 +3447,8 @@
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T060', where: 'PERSON_AT_ROLE, PERSON_COMPANY_SKIP, mapRole', note: 'Roles (3.39.6): the roles of companies Discogs may give a person (S066) – read as what the person did, or left out',
+      show: () => ({ pairs: [['… At → … By', PERSON_AT_ROLE], ['left out', PERSON_COMPANY_SKIP]] }) },
     { id: 'T059', where: 'TEXT_REGIONS, areaOf', note: 'Texts (3.39.2): regions read as an area however they are written – "Ambisonic recordings by RR 2022-2025 Pacific coast": the area "Pacific Coast" (recorded in), also when MusicBrainz has no such area (the entry then stays to be linked by hand); first only "Pacific Coast"',
       show: () => ({ pairs: [['words', TEXT_REGIONS.join(' · ')]] }) },
     { id: 'T058', where: 'INSTRUMENT_ASK, guessInstrument', note: 'Words that are no instrument of MusicBrainz and the instruments they are offered as first (137d), each credited as written – "objects": percussion “objects” · other instruments “objects”',
@@ -3467,6 +3473,9 @@
   const INSTRUMENT_ALIASES = MAP.INSTRUMENT_ALIASES;
   // [T058] (3.39.2) words MusicBrainz does not know and the instruments they are offered as first (✎ – changed in place)
   const INSTRUMENT_ASK = MAP.INSTRUMENT_ASK;
+  // [T060] (3.39.6) roles of companies at a person (S066): "Mixed At" → "Mixed By"; those left out
+  const PERSON_AT_ROLE = MAP.PERSON_AT_ROLE;
+  const PERSON_COMPANY_SKIP = MAP.PERSON_COMPANY_SKIP;
 
   // [T002] (S011)
   const GENERIC_WORDS = MAP.GENERIC_WORDS;
@@ -4018,13 +4027,28 @@
     // [S065] (3.39.4) "Assistant Engineer", "Asst. Mixing Engineer", "Associate Producer", "Co-Arranger" (collected items K-1, K-2): the
     // role after the word, with MusicBrainz's attribute where its type has it (applyDetailFlags), else the word as role credit;
     // a role the register knows with the word ("Assistant Producer" R023, "Co-Producer" R020) keeps its rule
-    const pre = ruleOn('S065') && (res.fallback || res.rule === 'R096') && String(baseIn || '').match(/^\s*(assistant|asst\.?|associate|co-)\s*(\S.*)$/i);
+    const pre = ruleOn('S065') && (res.fallback || res.rule === 'R096') && String(baseIn || '').replace(/[‐‑–]/g, '-').match(/^\s*(assistant|asst\.?|associate|co-)\s*(\S.*)$/i);
     if (pre) {
       const rest = mapRole(pre[2], modsIn, { noTranslation });
       if (rest.rule && rest.rule !== 'R096' && !rest.fallback) {
         const flag = /^asst/i.test(pre[1]) ? 'assistant' : norm(pre[1]).replace(/-$/, '');
         const word = /^asst/i.test(pre[1]) ? 'assistant' : pre[1].toLowerCase();
         return { ...rest, base: String(baseIn).trim(), flags: uniq([...(rest.flags || []), flag]), prefix: { flag, word, rest: pre[2].trim() } };
+      }
+    }
+    // [S066] (3.39.6) a role of "Companies, etc." Discogs gives a person (collected item K-6): "Mixed At" what the person did – read as
+    // "Mixed By" –, "Pressed By", "Distributed By", "Licensed To" … left out (no relationship of MusicBrainz for a person; "Licensed From"
+    // is licensor, R093)
+    if (ruleOn('S066') && (res.fallback || res.rule === 'R096')) {
+      const base0 = String(baseIn || '').trim();
+      // (not in a mapping file of an older version: nothing)
+      const at = PERSON_AT_ROLE && base0.match(PERSON_AT_ROLE);
+      if (at) {
+        const by = mapRole(`${at[1]} By`, modsIn, { noTranslation });
+        if (by.rule && by.rule !== 'R096' && !by.fallback) return { ...by, base: base0, notes: [...(by.notes || []), 'atPerson'] };
+      }
+      if (PERSON_COMPANY_SKIP && PERSON_COMPANY_SKIP.test(base0)) {
+        return { types: [], level: 'skip', flags: [], primaryCands: [], notes: ['companyPerson'], work: false, credit: '', base: base0, consumed: [], rule: 'S066' };
       }
     }
     // [3.37.2] a hyphen between two words as a space, when only so a rule knows the role ("Cover-Photo" = "Cover Photo"; item 152)
@@ -4035,8 +4059,14 @@
     return res;
   }
 
-  /** [S065] (3.39.4) The role credit of a word before a role whose type has no attribute for it: "assistant arranger", "co-composer". */
-  const prefixCredit = (p) => (p.word.endsWith('-') ? `${p.word}${p.rest}` : `${p.word} ${p.rest}`).toLowerCase();
+  /**
+   * [S065] (3.39.4) The role credit of a word before a role whose type has no attribute for it: "assistant arranger", "co-composer";
+   * (3.39.6, review) without a "by" at the end ("Co-Written By" → "co-written"), of the task where the row has one ("co-director").
+   */
+  const prefixCredit = (p, rest = p.rest) => {
+    const r = String(rest || '').replace(/\s+by$/i, '').trim();
+    return (p.word.endsWith('-') ? `${p.word}${r}` : `${p.word} ${r}`).toLowerCase();
+  };
 
   function mapRoleInner(baseIn, modsIn0) {
     let b = norm(baseIn).replace(/[‐‑–]/g, '-');
@@ -8778,6 +8808,15 @@
       if (norm(row.primaryText) === norm(g.other || 'other instruments')) return guessCredit(g);
       return norm(row.primaryText) && primaryIsValid(row) && guessSpelling(g, row.primaryText) === 'own' ? guessCredit(g) : '';
     }
+    // [S065] (3.39.4) the word before the role where the type has no attribute for it: "assistant arranger" (collected item K-1);
+    // (3.39.6, review) before the rules below that give no role credit (an instrument technician, creative direction), with the task
+    // where the row has one ("co-director")
+    if (row.prefix && row.prefixCredit) {
+      const raw0 = suggestRoleCredit(row.mods, [...(row.consumed || []), ...(row.flagMods || []), ...repeatedDetails(row)], row.primaryText);
+      const det = raw0 ? creditCasing(currentLinkType(row))(raw0) : '';
+      const pc = prefixCredit(row.prefix, row.creditFromRole && row.typeAnswer != null ? row.creditFromRole : row.prefix.rest);
+      return det ? `${det} ${pc}` : pc;
+    }
     // [137f] (3.34.25) an instrument technician with its instrument: MusicBrainz says "guitar technician" – no role credit but
     // "tuner" ("Piano Tuner": piano, credited "piano tuner")
     if (row.ruleId === 'R086' && norm(row.primaryText)) return row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole, { quiet: true })) : '';
@@ -8795,8 +8834,6 @@
     const raw = suggestRoleCredit(row.mods, [...(row.consumed || []), ...(row.flagMods || []), ...repeatedDetails(row)], row.primaryText);
     // [S011]; [S034] (3.28.2) the kind of a voice is written in lower case ("Vocals [Screams]" → screams, "[Clean]" → clean)
     const details = raw ? creditCasing(currentLinkType(row))(raw) : '';
-    // [S065] (3.39.4) the word before the role where the type has no attribute for it: "assistant arranger" (collected item K-1)
-    if (row.prefix && row.prefixCredit) return details ? `${details} ${prefixCredit(row.prefix)}` : prefixCredit(row.prefix);
     // [S052] (3.34.27) the task in lower case, proper names of MusicBrainz's instruments and models kept; (3.34.28) noted at the row
     // only for a role the register does not know (miscellaneous support)
     const task = row.creditFromRole ? withoutBy(lowerCredit(row.creditFromRole, { quiet: !(row.notes || []).includes('unknownRole') })) : '';
@@ -19627,8 +19664,10 @@
     if (!row.prefix || !row.prefixCredit || row.level === 'skip') return '';
     const lt = currentLinkType(row);
     if (!lt) return '';
-    const credit = prefixCredit(row.prefix);
-    const key = canRoleCredit(lt) ? 'note.prefixCredit' : 'note.prefixNote';
+    const credit = row.roleCredit || prefixCredit(row.prefix);
+    // (3.39.6, review) where the role credit really goes, not only whether the type could take one
+    const target = roleCreditTarget(row, lt);
+    const key = target && target.kind !== 'note' ? 'note.prefixCredit' : 'note.prefixNote';
     return `<div class="dci-note dci-prefix-note" data-prefix="${esc(row.prefix.flag)}">${esc(tr(key, { word: row.prefix.flag, credit }))}
       <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S065" title="${esc(tr('rules.gotoTitle'))}">S065</button></div>`;
   }
@@ -26818,7 +26857,7 @@
       }
       Object.assign(row, {
         raw, base: raw, mods: [], consumed: [], types: [name], notes: [], work: level === 'work', primaryCands: [],
-        flags: new Set(), creditFromRole: '', defaultLevel: level,
+        flags: new Set(), creditFromRole: '', defaultLevel: level, prefix: null, prefixCredit: false, // [S065] (3.39.6, review) none
         typeOptions: row.company ? { ...(row.typeOptions || {}), [row.entityType]: [name] } : row.typeOptions,
       });
       if (!row.levelTouched) row.level = level;
@@ -32480,7 +32519,7 @@
       .dci-src { display: inline-block; margin-right: 0.35em; padding: 0 0.4em; border-radius: 3px; font-size: 0.8em; font-weight: 700; letter-spacing: 0.02em; line-height: 1.5; vertical-align: 0.1em; color: #fff; text-decoration: none; }
       .dci-src-dg { background: #333; }
       /* [3.39.1] Bandcamp's blue (its logo), a pasted text grey – the dark one is Discogs' (collected item 185) */
-      .dci-src-bc { background: #629aa9; }
+      .dci-src-bc { background: #3a7a89; box-shadow: inset 0 0 0 1px #629aa9; } /* [3.39.6] darker, legible; the logo's blue as its rim (Q-i) */
       .dci-src-tx { background: #6b6b6b; }
       a.dci-dglink .dci-src-bc + .dci-dglink-ico { color: #4f8794; }
       .dci-src-mb { background: var(--purple); }

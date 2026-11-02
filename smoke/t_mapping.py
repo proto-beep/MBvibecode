@@ -1,6 +1,6 @@
 """Mapping: roles, questions, suggestions, mastering, special artists, fixes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10), oldfile (3.39.2), assistants (3.39.4), voices (3.39.5) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
+Cases: rules, v217, v219, mastering, special, recheck, engineers, poems, poemlevels, perftracks, mbnames (3.38.10), oldfile (3.39.2), assistants (3.39.4), voices (3.39.5), companyperson (3.39.6), listkeys (3.39.6) – each the former smoke/t_<case>.py, unchanged (from 3.31.3 new cases); `python3 t_mapping.py <case> …` runs only those."""
 import json
 import os
 import harness as H  # noqa: F401 – used by the cases
@@ -1015,7 +1015,8 @@ def case_assistants():
     B) "Assistant Arranger": arranger has no "assistant" and no role credit – nothing ticked, the row says "MusicBrainz has no
        “assistant” and no role credit for this type: “assistant arranger” goes into the edit note."; the preview "edit note only:
        “assistant arranger”".
-    C) "Assistant Photographer": photography has no "assistant" but a task – credited "assistant photographer", the row says so."""
+    C) "Assistant Photographer": photography has no "assistant" but a task – credited "assistant photographer", the row says so.
+       (3.39.6, review) A row added by hand as "Assistant Engineer" and typed again as "engineer": "assistant" not ticked any more."""
     for i, n in ((9421, 'co'), (9422, 'associate'), (9423, 'executive')):
         H.attr(i, n, i)
     H.lt(9501, H.uid('1a1a1a1a', 9501), 'engineer', 'artist', 'recording', (1, 526, 9422, 9421, 9423))
@@ -1027,6 +1028,8 @@ def case_assistants():
                ('Photo As', 'Assistant Photographer', 3307)]
     for n, _r, i in CREDITS:
         H.ARTISTS[i] = (H.uid('dddddddd', i - 3100), n)
+    MANUAL = H.uid('dddddddd', 3399)
+    H.ARTISTS[3399] = (MANUAL, 'Man Ual')
     orig = H.discogs_release
 
     def rel():
@@ -1068,12 +1071,25 @@ def case_assistants():
             arr = one('Arr As')
             pg.click('[data-act=preview]') if pg.locator('[data-act=preview]').count() else None
             pg.wait_for_timeout(500)
-            prev = pg.evaluate("[...document.querySelectorAll('.dci-preview li, [data-el=preview] li')].map(l => l.textContent.replace(/\\\\s+/g, ' ').trim()).filter(t => /Arr As/.test(t))")
+            prev = pg.evaluate("[...document.querySelectorAll('.dci-preview li, [data-el=preview] li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /Arr As/.test(t))")
             print('B)', arr, '| Vorschau:', prev)
             results.append(arr.get('type') == 'arranger' and arr.get('flags') == [] and arr.get('note') == 'MusicBrainz has no “assistant” and no role credit for this type: “assistant arranger” goes into the edit note.'
                            and any('edit note only: “assistant arranger”' in x for x in prev))
             ph = one('Photo As')
-            print('C)', ph)
+            # (3.39.6, review) a row added by hand: "Assistant Engineer", then typed as "engineer" – no "assistant" any more
+            pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/artist/{MANUAL}')
+            pg.fill('[data-f=manual-role]', 'Assistant Engineer')
+            pg.locator('[data-act=add-manual]').evaluate('b => b.click()')
+            H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Man Ual')", 20)
+            pg.wait_for_timeout(400)
+            man = lambda: (pg.evaluate(ROWS).get('Man Ual') or [{}])[0]
+            m1 = man()
+            pg.fill('section.dci-group:has(.dci-gname strong:text-is("Man Ual")) [data-f=role-text]', 'engineer')
+            pg.press('section.dci-group:has(.dci-gname strong:text-is("Man Ual")) [data-f=role-text]', 'Tab')
+            pg.wait_for_timeout(600)
+            m2 = man()
+            print('C) Photo:', ph, '| von Hand:', m1, '→', m2)
+            results.append(m1.get('type') == 'engineer' and m1.get('flags') == ['assistant'] and m2.get('type') == 'engineer' and m2.get('flags') == [] and not m2.get('note'))
             results.append(ph.get('type') == 'photography' and ph.get('flags') == [] and ph.get('credit') == 'assistant photographer'
                            and ph.get('note') == 'MusicBrainz has no “assistant” for this type: credited “assistant photographer”.')
             print('Fehler:', errs)
@@ -1090,7 +1106,10 @@ def case_voices():
        "tenor vocals", no role credit "tenor".
     B) "Liner Notes [Translation]" → liner notes with "translator" ticked, no role credit.
     C) "Creative Direction" for the release → the release group, creative direction (until 3.39.4 art direction on the release);
-       for track 2 only → creative direction on that recording; no role credit (also not in the edit note)."""
+       for track 2 only → creative direction on that recording; no role credit (also not in the edit note).
+    D) (3.39.6, review) "Assistant Creative Director": creative direction has no "assistant" – "assistant creative director" into the
+       edit note (until then nothing, though the row said so); "Directed By" answered creative direction: on the release group (Q003;
+       until then on the release, where MusicBrainz has no such type)."""
     H.attr(9601, 'countertenor vocals', 3, 3)
     H.attr(9602, 'tenor vocals', 3, 3)
     H.attr(1018, 'translator', 1018)
@@ -1101,7 +1120,8 @@ def case_voices():
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     CREDITS = [('Counter Man', 'Countertenor', 3401, ''), ('Voc Ten', 'Vocals [Tenor]', 3402, ''), ('Liner Tr', 'Liner Notes [Translation]', 3403, ''),
-               ('Cre Dir', 'Creative Direction', 3404, ''), ('Cre Trk', 'Creative Direction', 3405, '2')]
+               ('Cre Dir', 'Creative Direction', 3404, ''), ('Cre Trk', 'Creative Direction', 3405, '2'), ('Cre As', 'Assistant Creative Director', 3406, ''),
+               ('Dir Ed', 'Directed By', 3407, '')]
     for n, _r, i, _t in CREDITS:
         H.ARTISTS[i] = (H.uid('dddddddd', i - 3100), n)
     orig = H.discogs_release
@@ -1146,12 +1166,97 @@ def case_voices():
             print('C) Vorschau:', prev)
             results.append(one('Cre Dir').get('type') == 'creative direction' and one('Cre Dir').get('level') == 'release_group'
                            and one('Cre Trk').get('type') == 'creative direction' and one('Cre Trk').get('level') == 'recording'
-                           and prev and not any('edit note' in x for x in prev))
+                           and prev and not any('edit note' in x for x in prev if x.startswith('Cre Dir') or x.startswith('Cre Trk')))
+            # D)
+            note = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Cre As'); const n = g && g.querySelector('.dci-prefix-note'); return n ? n.textContent.replace(/\\s+/g, ' ').replace(/ S065$/, '').trim() : ''; })()")
+            pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Dir Ed'); [...g.querySelectorAll('[data-act=type-pick]')].find(b => b.textContent.trim() === 'creative direction').click(); })()")
+            pg.wait_for_timeout(500)
+            de = (pg.evaluate(ROWS).get('Dir Ed') or [{}])[0]
+            print('D) Cre As:', note, '| Vorschau:', [x for x in prev if x.startswith('Cre As')], '| Dir Ed:', de)
+            results.append(note == 'MusicBrainz has no “assistant” and no role credit for this type: “assistant creative director” goes into the edit note.'
+                           and any('edit note only: “assistant creative director”' in x for x in prev) and de.get('type') == 'creative direction' and de.get('level') == 'release_group')
             print('Fehler:', errs)
             results.append(not errs)
             b.close()
     finally:
         H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_companyperson():
+    """Credits Importer 3.39.6 (collected item K-6, rule S066; Q-l, Q-v): roles of "Companies, etc." Discogs gives a person.
+    A) "Mixed At" → mix, "Recorded At" → recording engineer, "Mastered At" → mastering (on the release) – the person who did it, the row
+       says so (until 3.39.5 unknown instruments); no place entry.
+    B) "Pressed By", "Distributed By" → left out (Skip), the row says that MusicBrainz has no such relationship for a person;
+       "Licensed From" stays licensor (R093)."""
+    H.lt(9520, H.uid('1a1a1a1a', 9520), 'licensor', 'artist', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    CREDITS = [('Mix Pers', 'Mixed At', 3501), ('Rec Pers', 'Recorded At', 3502), ('Mas Pers', 'Mastered At', 3503),
+               ('Press Pers', 'Pressed By', 3504), ('Dist Pers', 'Distributed By', 3505), ('Lic Pers', 'Licensed From', 3506)]
+    for n, _r, i in CREDITS:
+        H.ARTISTS[i] = (H.uid('dddddddd', i - 3100), n)
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, r, i in CREDITS]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    H.discogs_release = rel
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      { place: g.className.includes('dci-kind-place'), rows: [...g.querySelectorAll('tr.dci-row')].map(r => ({ type: ((r.querySelector('[data-f=type]') || {}).selectedOptions || [])[0]?.dataset.name || '',
+        level: ([...r.querySelectorAll('[data-act=level][aria-pressed=true]')][0] || { dataset: {} }).dataset.level || '',
+        notes: [...r.querySelectorAll('.dci-note')].map(n => n.textContent.trim()) })) }])))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+            pg.wait_for_timeout(400)
+            g = pg.evaluate(ROWS)
+            for k in [c[0] for c in CREDITS]:
+                print('  ', k, g.get(k))
+            one = lambda k: ((g.get(k) or {}).get('rows') or [{}])[0]
+            at = lambda k: any('read as what the person did' in n for n in one(k).get('notes', []))
+            results.append(one('Mix Pers').get('type') == 'mix' and one('Rec Pers').get('type') in ('recording', 'engineer')
+                           and one('Mas Pers').get('type') == 'mastering' and one('Mas Pers').get('level') == 'release'
+                           and all(at(k) for k in ('Mix Pers', 'Rec Pers', 'Mas Pers')) and not any((g.get(k) or {}).get('place') for k in ('Mix Pers', 'Rec Pers', 'Mas Pers')))
+            skip = lambda k: one(k).get('level') == 'skip' and any('MusicBrainz has no such relationship for a person' in n for n in one(k).get('notes', []))
+            results.append(skip('Press Pers') and skip('Dist Pers') and one('Lic Pers').get('type') == 'licensor')
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_listkeys():
+    """Credits Importer 3.39.6 (collected item K-13): the words of the tables T001 (instrument spellings) and T058 (words offered as
+    instruments) as changed by an imported file – in capitals ("Lap Steel2") – are found (in Node, with the changes in the storage)."""
+    import subprocess
+    node = r"""
+const changes = process.argv[2];
+global.localStorage = { getItem: (k) => (k === 'dci-mapping-changes' ? changes : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const r = m.mapRole('Lap Steel2', []);
+console.log(JSON.stringify({ cands: r.primaryCands }));
+"""
+    own = {'rules': {}, 'lists': {'T001': {'add': [['Lap Steel2', ['lap steel guitar']]]}}}
+    out = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(own)], capture_output=True, text=True)
+    print('A)', out.returncode, out.stdout.strip(), out.stderr.strip()[-300:])
+    r = json.loads(out.stdout) if out.returncode == 0 else {}
+    results = ['lap steel guitar' in (r.get('cands') or [])]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
