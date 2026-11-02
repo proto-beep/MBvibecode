@@ -139,6 +139,11 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     GUY / DOUBLE BASS" – three entries in normal case; the instruments above; "Jane Roe / PIANO / John Doe" not
                                 #     clear: the note, the log, ⇅ (John Doe), another text (Jane Roe again); one line with capitals; the Discogs notes;
                                 #     3.38.12 (F-5): ⇅ in the dashboard – no new import, Max Mix put on Skip stays; "ABBA – piano" → Abba (S060)
+                                #   withline: 3.38.17 (181, S061): "With Apple Logic, Sequential PX, flutes …" – the release artist's instruments,
+                                #     "objects" asked, software left out; "with Oliver Lake" guest, "Jane Roe on saxophone" guest saxophone
+                                #   cloudpond: 3.38.18 (182 – 184): "Ambisonic recordings by RR 2022-2025 …" field recordist with the period,
+                                #     "Pacific coast" not recognized; RR = Robert Rich (initials, credited "RR"), "Recorded Mixed and Mastered";
+                                #     "Cover © X" artwork "cover", "Photos © X" photography "photo", the permission left out; "JR" of two names
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
 
@@ -296,6 +301,10 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #   livegroup: 3.38.3: two media – "Live recordings: CD 2, track 1.2", one group line of three (▸ the tracks, its
                                 #     text and tick for all), the heading at the bottom right (also folded, the same place), the list ≤ a third;
                                 #     3.38.13: "track 1.2, CD 2" (F-2, by positions – the track's index, not its number), the heading purple (F-1)
+                                #   workpick: 3.38.15 (180): "n works ▾" in the track's line, the list hidden; opened below the line, closed by a
+                                #     click elsewhere and Esc (focus back), one at a time; "1 work ▾" not set; Link plans the work
+                                #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
+                                #     name of the title looked up, a surname only of an artist of the release, the log; "co?" and its click; Node
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
@@ -382,7 +391,8 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     per spelling, compact "as “O. Lake”", lines joined; a place: "Credited as for all roles", set for all
                                 #   capsnames: 3.38.12 (F-4, S060): Discogs names in capitals in normal case ("TORBEN SNEKKESTAD", "DJ SHADOW"),
                                 #     ABBA linked to "ABBA" as MusicBrainz writes it, "LAKE" → credited "Lake", the log; "↺ in capitals" and back;
-                                #     "LAKE" with ↺, "DOOM" linked to "MF DOOM" credited "DOOM", a credit typed by hand stays
+                                #     "LAKE" with ↺, "DOOM" linked to "MF DOOM" credited "DOOM", a credit typed by hand stays;
+                                #     3.38.14 (Q-a, Q-b): personCase in Node – "AL DI MEOLA" → "Al di Meola", "DJ SHADOW" stays "DJ", particles
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
                                 #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds;
@@ -493,7 +503,8 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     ✕, staged together with the date
                                 #   remember: 3.36.0: a remembered release – the order dragged, an opened event's tracks, one row each: back after the
                                 #     page is loaded again, staged the same
-                                #   companies: 3.35.5 (AE-4): a place ("Recorded At") and a label (℗) as matrices, publishing on works keeps its
+                                #   companies: 3.35.5 (AE-4): a place ("Recorded At") and a label (℗) as matrices (3.38.14, Q-c: the block
+                                #     "recorded at", "from Discogs: Recorded At" in its tooltip), publishing on works keeps its
                                 #     rows, compact, staged the same as legacy, a date typed into the place's event
                                 #   flagcols: 3.36.6 (148): add. / guest / solo a column each, every word centred over its checkboxes (±2 px)
                                 #     and not wider than its cell, at 100 % and A+ ×3
@@ -569,6 +580,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #   navlink: the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
                                 #   mappingload: 3.33.0: the mapping file from the manager; fetched from GitHub (kept, one reload); missing → the
                                 #     message with "Update script"
+                                #   gapline: 3.39.0 (172): the line of the release page (estimate, parts, the dashboard's number), Discogs kept,
+                                #     ✕ until the number changes, the setting off, "Import credits …" → the dashboard (its number kept)
                                 #   languagesload: 3.34.0: the languages file from the manager (German); fetched from GitHub (kept, one reload);
                                 #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
 

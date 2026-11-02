@@ -94,8 +94,7 @@
    * on Discogs and Bandcamp: a map **per release** and a beat **per page** (`statusMap:<id>`, `statusBeat:<id>:<page>`) instead
    * of one for all –
    * with two imports open, both wrote the same `statusMap` and `statusBeat` every 2 s and a Discogs or Bandcamp tab saw its
-   * release's status and the other one's by turns: marks and underlines went off and on (collected item 173; maintainer: "wäre
-   * es möglich mehrere imports (gerne eine beliebige anzahl …) gleichzeitig offen zu haben ohne dass das passiert?").
+   * release's status and the other one's by turns: marks and underlines went off and on (collected item 173).
    * `statusPing` tells the Discogs and Bandcamp tabs that a map changed.
    */
   const PER_RELEASE_MAX = 30;

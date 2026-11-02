@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.13, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.39.0, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,77 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.39.0 · 2026-11-02
+
+The release page: relationships of the Discogs credits not on MusicBrainz yet (collected item 172).
+
+- **New (before the page dispatch, so the release page has them):** `initReleaseGap(mbid)` (from `initReleasePageHook`; only on `/release/<MBID>`, setting `GAP_ON_KEY`): `/ws/2/release/<MBID>?inc=url-rels+artist-rels+label-rels+place-rels+recordings+recording-level-rels+work-rels+work-level-rels` by `fetch`; its Discogs link (`sourceLinksOf` – what is Discogs stays in its adapter); `DISCOGS.release(id)` → `gapCreditsOf(rel)` (each role of a credit – `mapRole`, companies `mapCompanyRole` – with its level, names – the name and the credited name, `gapName` – and tracks), kept in `dci-gap:<MBID>` a week (`GAP_KEEP_MS`) with `dismissed`; `gapMbNames(ws)` (names on the release, each recording, its works); `gapEstimate` (per credit and track: missing when none of its names is there; parts recordings, release, works, companies); `showReleaseGap` (`.dci-gapline` after the `h1` of `#content`, inline styles: ▸ the parts, "Import credits …" – `AUTOSTART_KEY` and the relationship editor –, ✕ – `dismissed`).
+- **The summary of the footer:** the number of new relationships of a release from Discogs into `dci-gap-exact:<MBID>` (`{ n, at }`, when it changes – `S.gapExactLast`).
+- **Settings:** ⚙ Settings → Sources `data-set="gap-on"` (`settings.gapOn`); `GAP_ON_KEY` among the keys of the topic and of "Reset all settings".
+- **Texts (English):** `gap.missing` (one / other), `gap.missingNotes` (one / other), `gap.none`, `gap.noneNotes`, `gap.incomplete`, `gap.exact` (one / other), `gap.partsLabel`, `gap.recordings`, `gap.release`, `gap.works`, `gap.companies`, `gap.how`, `gap.import`, `gap.closeTitle`, `settings.gapOn`, `settings.gapOnTitle`.
+- **After the independent review of block AS:** "Import credits …" hands over the link as the dashboard takes it (`sourceLinksOf`; until then the dashboard chose its source by itself); a release MusicBrainz does not answer in full (fewer tracks than its `track-count`, recordings without relationships – as `completeMedia` knows) gets no number (`gap.incomplete`); the release group's relationships count for the release (`release-groups+release-group-level-rels`); the page's own links first (a page with links but none of Discogs asks nothing); a failed Discogs request kept (an hour, a week for 404) and 2.5 s between the line's Discogs requests in every tab (`dci-gap-last`); old entries swept (`gapSweep`: Discogs credits after four weeks, all after thirteen, at most 300); the dashboard's number written once per import (at "Import complete" and the summary after it, `S.gapExactPending`, with the Discogs id – shown only for that release), not after staging or changes by hand; a release with Discogs notes says they are not counted (`gap.missingNotes`, `gap.noneNotes`); plural texts, the date in the browser's format, the line after `.releaseheader`, its text colour; the same credit once (`gapCreditsOf`); not started while the page goes on to the relationship editor.
+- **Tests:** `t_start.py` new case `gapline` (the line and its parts, the dashboard's number, kept Discogs credits, ✕ and the number changing, the setting off, "Import credits …" and the number the dashboard keeps; after the review: the Discogs link handed over, the number with its Discogs id, the notes not counted); `t_ui_settings.py` reset: the keys of the line are release data, no settings. A request to Discogs broken off (the page left) is not kept as a failure.
+
+## Import 3.38.18 · 2026-11-02
+
+Field recordings, initials, cover and photo (collected items 182 – 184).
+
+- **`TEXT.parse` (readClause, at its start):** rule **S064** – "Cover ©", "Cover art ©", "Cover image ©", "Cover painting ©", "Artwork ©", "Photo(s) ©", "Photograph(s) ©" + names: `Artwork` / `Photography By` with `roleCredit` "cover" / "photo"; a tail "detail used with permission", "courtesy" … into `ignored` (why `permission`). Rule **S062** – "<kind> recordings by X [year[–year]] [rest]" with a kind of `TEXT_FIELD_KINDS` (T057): `Field Recordings By` (R085) with `date` { by, ey }; the rest into the parts not recognized.
+- **`byRoles`:** verbs one after another are each a role ("Recorded Mixed" → Recorded By, Mixed By; until 3.38.17 `byRole` made "Mixed By [Recorded]").
+- **New `initialsOf(credits, artistNames)`** (S063, at the end of the parse): a name of two to four capitals (dots allowed) that are the initials of exactly one release artist or one name of the text with two words or more → that name, `credited` and `initials` the initials; of several → `initialsFor`.
+- **`groupCredits`:** a role keeps `date` and `roleCredit`; the group `initials` / `initialsFor`; **`addCreditRows`:** `row.date` (open) and `row.roleCredit`; **`newPersonEntry`:** `initials`, `initialsFor`; **`entryNameHtml`:** new `initialsHtml(a)` (`.dci-initials`: `group.initials`, `group.initialsMany`).
+- **Mapping:** new list `TEXT_FIELD_KINDS` (T057, editable).
+- **Register:** rules S062, S063, S064, list T057.
+- **Texts (English):** `ignored.why.permission`, `group.initials`, `group.initialsMany`.
+- **After the independent review of block AT:** S062 – a name of several words without a year is whole (the rest only after a year; until then "Field recordings by Jane Roe" gave "Jane", a regression of R085), the years in order, an area after them "Recorded In" (`areaOf`); S064 – the tail only after a separator ("Focused" is no "used"), "all rights reserved", "by kind permission" and `TEXT_PC_STRIP` out, no name that is a sentence (`TEXT_NOT_NAME`); the role credit of the text kept as one typed (`roleCreditTouched`); initials stay as written (no S060 for `initials` / `initialsFor`), the names compared without case (`personCase`); register notes of S061, S062 corrected.
+- **Tests:** `t_text_basics.py` new case `cloudpond` (all lines of "Cloud Pond Sky River" and more; after the review: a two-word field recordist, "Focused", "all rights reserved", "AJ"); `register_golden.json` anew (the rules and lists).
+
+## Import 3.38.17 · 2026-11-02
+
+A line "With …" of a text (collected item 181).
+
+- **`TEXT.parse` (readClause):** new rule **S061** before S055 – a clause "With …" split at commas and and / & / und / et / y; music software (`isSoftware`, list T056) left out (`ignored`, why `software`); "Name on X" / "Name (X)" with instruments a guest (the roles with the detail Guest); an instrument or voice (`playable`) the release's artist's (`artistNames`: one – `addCredit`, several – `addPlaceholder`, offered to each); a name of two to four words in capitals a guest performer; words that may be instruments (`maybePlayable`) with `guess` when there are no more of them than instruments; the rest not recognized. Only when an instrument or a guest was found (else the clause is read as before).
+- **Mapping:** new list `TEXT_SOFTWARE` (T056, editable: `EDITABLE_LISTS`); `INSTRUMENT_ALIASES` "sequential px", "sequential prophet x" → Sequential Prophet X, Prophet X, synthesizer; `PROPER_WORDS` "Sequential PX", "Sequential Prophet X".
+- **Register:** rule S061, list T056.
+- **Texts (English):** `ignored.why.software`.
+- **After the independent review of block AT:** the parts of the line at commas outside brackets – a part "Name on A and B" or "Name (A, B)" one guest with all its instruments (until then the instruments after "and" went to the release's artist), the instruments right after a name his ("with Kenny Wheeler, trumpet"); software also by its start ("Apple Logic Pro"), a line only of software left out; no guest with a make of T052 before the name, no rule for a line with a colon; with several release artists words that may be instruments are not recognized (until then they were lost). (The clause is split at semicolons before, by `clauses`.)
+- **Tests:** `t_text_basics.py` new case `withline` (after the review: a guest's two instruments, "Name, instrument", software by its start); `register_golden.json` anew (S061, T056, the aliases and proper words).
+
+## Import 3.38.16 · 2026-11-02
+
+Works of a track's composer (collected item 179, 179b, F-179b – F-179d).
+
+- **New (main level, exported for Node):** `titleComposerNames(title)` (names in brackets – also "… cover" – or after "by" / "after", one to four words in capitals, version words left out; `{ name, full }`), `similarWorkTitle(trackTitle, workTitles, names)` (via `titleWithoutComposer`: the names – in brackets, after by / of / after, after a dash at the end – and all brackets out; equal within one letter, or the work's title whole in the track's title from two words or six letters). `normTitle` is a function now (until 3.38.15 a const – not reachable in Node before it).
+- **New:** `titleComposersOf(i)` (a full name from `S.titleComposerCache`, a surname only when one artist of the release has it; logs `titleComposer` once per track and artist), `resolveTitleComposers()` (looks the full names up, `artist?query=artist:"…"`, an exact name or alias; at the start of `runArtistWorks`). `artistWorkTargets` adds them (`why: 'title'`).
+- **`matchArtistWorks`:** per track its composers (`creditedWritersOf` and `titleComposersOf`); their works also by `similarWorkTitle` (names: theirs and their surnames); the hit's text `works.viaComposer` / `works.viaTitleComposer`, and `composer` / `composerName`, which `work-pick` keeps in the plan (`data-composer`, `data-composer-name`).
+- **"co?":** new `performersOf(i)` (the release's artists, instrument / vocal / performer rows on the track) and `coverComposers(i, work)` (a planned work chosen with a composer who is none of them, "cover" not set, not a new work); `linkAttrsOpen` and `linkAttrsHtml` offer the pill (state `hint`, `matrix.coverOffer`); a click sets it as any attribute.
+- **Texts (English):** `works.viaComposer`, `works.viaTitleComposer`, `log.titleComposer`, `matrix.coverOffer`.
+- **After the independent review of block AR:**
+  - "co?" only for a work found through its composer – a song by a similar title, or the composer named in the title (until then also a writer's work of the track's own title); the composers of a track are its writing roles only (`composersOfTrack`: composer, lyricist, writer, librettist – not arrangers); a work the search found too gets what the works of the artists know of it (`sameNamed`).
+  - A similar title only when none of the composer's works has the track's title (`exact`); the cleaned titles once per names (`namePatterns` – the patterns of a set of names, a cache on the function, reachable in Node –, `similarCleaned`, `S.wtCache`, emptied with each import): a release of 50 tracks against 4,000 works no longer takes seconds each time.
+  - `runArtistWorks`: the look-up of names in titles runs as part of the run (`S.artistWorksRunning` set before it; a refresh meanwhile runs it again after) – until then the works were read several times at once; `resolveTitleComposers`: `artist:"…" OR alias:"…"`, exactly one hit (two of the same name: none), an artist of the release of that name without a request, a failed request not kept, stopped when the works matrix rests; `titleComposersOf` logs only from the run (`logIt`), surnames only of writers, musicians and the release's artists; `S.titleComposerLogged` anew with each import.
+  - `titleComposerNames`: more words that are no names (by, after, for, to, from, vs, ft, prod, session, title, credits, act, tribute, dub, skit, medley, prelude …, Roman numerals); no name after "produced / prod. / remix / mixed / arranged / edited / conducted / performed … by"; after "by" the words in capitals up to the first that is none ("Theme By Monk For Piano" → Monk); particles inside a name ("Ludwig van Beethoven"); "BY" in capitals too.
+  - From 3.38.15: `setWorksList(i, open)`, `closeWorksList()` open and close the list in the page (no redraw: a click elsewhere closes it and does what it was on – until then the first click on "＋ New work" or the fold only closed the list); Esc only while a list is shown and no dialog is open; `S.mxWorksOpen` anew with each import; after **Link** the focus on the track's "remove" button.
+- **Tests:** `t_works_more.py` new case `coverworks` (the three tracks, the log, "co?" and a click, Node: titleComposerNames and similarWorkTitle; after the review: a writer's own work without "co?", one comparison only, the titles that are no names); `workpick`: a click on "＋ New work" with a list open acts at once.
+
+## Import 3.38.15 · 2026-11-02
+
+The works found for a track as a choice (collected item 180).
+
+- **`workFrontCell`:** with works found (`sameNamed(i)`: the search, the works of the artists) a button `[data-act=mx-works]` ("n works ▾", `matrix.worksPick`, `aria-expanded`, `aria-controls`) in the line of the track, right after the badge; the list (`.dci-same.dci-mx-wlist`, its id `dci-mx-wlist-<i>`) below the line, `hidden` while closed (until 3.38.14 always shown). New state `S.mxWorksOpen` (one track at a time).
+- **`onClick`:** `mx-works` opens or closes it (the focus back on the button after drawing); a click outside the list and the button closes it; `work-pick` closes it. **Escape:** closes it, the focus on its button.
+- **CSS:** `.dci-mx-wpickbtn` (yellow like the list), `.dci-mx-wlist` (shadow; `[hidden]` none).
+- **Texts (English):** `matrix.worksPick.one` / `.other`.
+- **Tests:** `t_works_more.py` new case `workpick` (the button in the line, hidden list, opened below the line, closed by a click elsewhere and Esc with the focus back, one at a time, a single work not set, Link plans it).
+
+## Import 3.38.14 · 2026-11-02
+
+Names in capitals (Q-a) and the head of a block (Q-c).
+
+- **`personCase`:** in a name all in capitals (S060) a word of two letters with a vowel is written in normal case too (the minimum is 2 letters there, 3 in a name with words in normal case, S059, as until now); without a vowel it stays.
+- **`emBlockHtml`:** the head is the block as MusicBrainz names it – one line: `roleLabel(r0)` (its text, its tooltip "from …: …"); several lines of instruments or voices: "n instruments" / "n voices"; several lines of another type: `mbPhraseOf(lt0)` with the source's roles of all its rows (not added by hand) in the tooltip (`role.fromSource`); then "· from n rows · n events" (until 3.38.13 "<source's role> → <MusicBrainz's>").
+- **Tests:** `t_ui_head.py` capsnames D (personCase in Node: "AL DI MEOLA" → "Al di Meola", "DJ SHADOW", "MC SOLAAR", "MF DOOM", particles, "ED O'BRIEN", "J. DOE", "BMS", "Go KUROSAWA"); `t_entries.py` matrix ("3 instruments · from 3 rows", the tooltip) and companies ("recorded at", its tooltip "from Discogs: Recorded At").
 
 ## Import 3.38.13 · 2026-11-02
 
@@ -1968,7 +2039,7 @@ The role rules as data (collect item 4, step 2). Milestone.
 
 ## Import 3.11.0 · 2026-10-17
 
-The mapping register in one section (collect item 4, step 1; the maintainer: "vor den Punkten 1-3").
+The mapping register in one section (collect item 4, step 1).
 
 - **Sections:** new **2. Mapping register** before the sources (the sources are **3** now, the date and MusicBrainz form helpers that stayed behind them **3b**), with 2a role notation (`splitTopLevel`, `parseRoleNotation`, `parseRoles`, `splitEngineerTasks` – from the old section 2), 2b own rules and switches, 2c rule lists, 2d tables and word lists, 2e functions that apply the rules (`mapRole`, `mapCompanyRole`, wording, role credits …), 2f dates in free text (`DATE_MATCHERS`, `findDates`). Everything of the old sections 3/3a moved there unchanged; orphaned doc comments went to their functions (`mapRole`, `suggestRoleCredit`, `caseWord`, `COMPANY_ROLES`, `lucenePhrase`).
 - **Moved into 2d:** from the text adapter `NAME_SEP`, `ROLE_SEP`, `AND_SEP`, `TRACK_WORDS`, `MONTHS` (renamed `TEXT_NAME_SEP`, `TEXT_ROLE_SEP`, `TEXT_AND_SEP`, `TEXT_TRACK_WORDS`, `TEXT_MONTHS`), `INSTRUMENT_MODIFIER`, `PRIVATE_PLACE`; `ENGINEER_TASK_RE` (from section 2); `TEXT_COMPANY_RE` (from the core; `isTextCompanyRole` stays there); `DATE_GROUPS` (from the date matrix); `LIVE_TITLE` (was local in `applyLiveDefault`); `NOTE_ROLES` (from the notes' track lists). The adapters read these directly (the register is defined before them); `isRole`/`isCompanyRole` still come through the context, as they need MusicBrainz.

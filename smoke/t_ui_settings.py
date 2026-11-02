@@ -250,9 +250,7 @@ def case_settings():
 
 def case_pressed():
     """Credits Importer 3.36.5 (until 3.36.4 the case "bridge", 3.30.4): the symbols of the head show what is open, without a bridge
-    (collected items 147, 149; maintainer: "dass das symbol im oberen bereich lila dunkler wird wenn die "keyboard shortcuts"
-    geklickt werden finde ich ganz gut. können wir das bei allen anderen symbolen auch einführen? dann also auch auf die visuelle
-    verbindung bei den einstellung verzichten", "Brücke weg", "Alle Umschalter dieser Art bitte").
+    (collected items 147, 149).
     A) ⚙ Settings open: ⚙ pressed (tinted), no bridge (until 3.36.4: a strip from the symbol to the box of the settings).
     B) Every tab: the tab joins the side of the content and reaches into its frame – at 100 % and at 90 % text size; [3.34.3]
        the content as high as it can be: at the top of the tabs, or (too short for that) just low enough that the tab joins it
@@ -370,8 +368,7 @@ def case_pressed():
 
 def case_settingsscroll():
     """Credits Importer 3.34.3: scrolling up in the dashboard with ⚙ Settings → ⓘ Connections open and "Dates & tracks"
-    expanded (collected item 122; maintainer: "ich habe das I Fenster in den Einstellungen offen und kann nicht mehr hochscrollen
-    wenn der Dates & Tracks Pool aufgeklappt ist. Der Scrollbalken zappelt und wird sozusagen zurückgehalten.").
+    expanded (collected item 122).
     A) Scrolled down, then up in small steps with the wheel: never back down, up to the top (until 3.34.2 every scroll event took
        the margin of the settings' content away and set it again; the browser's scroll anchoring answered by scrolling back,
        278px, again and again).
@@ -542,7 +539,8 @@ def case_reset():
         print('   Cover auf Discogs (Position, eingeklappt):', art, '| Daten & Tracks offen:', pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'),
               '| automatisch anwenden:', pg.locator('[data-f=dm-auto]').is_checked() if pg.locator('[data-f=dm-auto]').count() else '–')
         # [3.36.0] what is remembered for a release (its rows, the index of the releases) is no setting either
-        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index')]  # [3.26.0] the question of the language is no setting
+        # [3.39.0] the line of the release page: the dashboard's number of a release is no setting either
+        settings = [k for k in after if not re.match(r'dci-(date-pool|date-matrix|track-pool|created-works|remember|gap|gap-exact):', k) and k not in ('dci-store-epoch', 'dci-notice-version', 'dci-lang-ask', 'dci-remember-index')]  # [3.26.0] the question of the language is no setting
         ok1 = set(settings) <= {'dci-log-open'} and 'dci-date-pool:other' in after and 'dci-created-works:other' in after \
             and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
             and art == [None, None]
@@ -623,10 +621,7 @@ def case_notice():
 
 
 def case_cache():
-    """Credits Importer 3.36.0 (collected item 146; maintainer: "global einen schalter … der sich änderungen und import
-    einstellungen an releases merkt oder eben nicht. standardmäßig auf jeden fall aus", "ja genau, soll alles wieder kommen",
-    "bitte nach deinem vorschlag", "setting -> Cache", "50 releases ist gut, aber lass das doch auch einstellen … den gebrauchten
-    speicher anzeigen in KB oder MB mit einer kommazahl", "bitte 1-100. 0=aus", 146d "ja einverstanden"): remembered per release.
+    """Credits Importer 3.36.0 (collected item 146): remembered per release.
     A) The script's default: ⚙ Settings → "Cache" (after Beta), "Remember changes and import settings per release" off, 50
        releases, "Forget all …" not to click, "0 releases · 0.0 KB · all data of the script in this browser: … KB".
     B) Off: a role credit typed (Bass Man "fretless"), Photo Guy taken out (Skip), a date in the pool – the page loaded again:
@@ -837,9 +832,7 @@ def case_cache2():
 
 
 def case_logdiag():
-    """Credits Importer 3.36.2 (maintainer: "Bitte eine Option, die die Diagnose Funktion im Log ermöglicht oder den Button
-    ausblendet. Standardmäßig aus."): the diagnosis in the log as a setting – [171] (3.38.5) "Developer mode" (maintainer: "lass uns
-    doch einfach einen zentralen developer schalter einführen. der dann auch im log den Diagnose button ermöglicht", "Übernahme: ja").
+    """Credits Importer 3.36.2: the diagnosis in the log as a setting – [171] (3.38.5) "Developer mode".
     A) The log open: no "Start diagnosis"; ⚙ Settings → General "Developer mode" off (until 3.38.4 "Diagnosis in the log").
     B) On: the button in the log, stored (dci-dev).
     C) Diagnosis started, the setting off: it stops (the log says so), the button goes.
@@ -924,10 +917,7 @@ def js_release_of(added):
 
 
 def case_stats():
-    """Credits Importer 3.38.0 (E8, milestone "Statistics"; maintainer: "die statistiken sollen erstmal in den einstellung sein",
-    "von Musicbrainz bestätigt", "Nein das Sammeln soll an sein (und natürlich ausschaltbar). Bei den Resetfunktionen soll es geben:
-    "keep statistics"", "der erste Import zählt, sofern die seite nicht neu geladen wurde", "ja soll angehakt sein", "ich glaube
-    einen export brauchen wir nicht", "Setze mal alle Ideen für die Statistik um und erstelle die Statistik.").
+    """Credits Importer 3.38.0 (E8, milestone "Statistics").
     A) ⚙ Settings → "Statistics" (after "Cache"): "Collect statistics" on, nothing counted yet.
     B) Everything staged, "Enter edit": the relationships in MusicBrainz's /ws/js/release – counted once (log "Statistics: n
        relationships confirmed by MusicBrainz and counted"; the job gone; one record in the database dci-stats with the time from
@@ -1068,7 +1058,7 @@ def stat_rel(k, lt, lv, et, tg, tn, i=(), d='', ds='', lk='', ru='', nw=0):
 
 
 def case_statsmore():
-    """Credits Importer 3.38.1 (E8; maintainer: "Setze mal alle Ideen für die Statistik um"): the further statistics of the tab,
+    """Credits Importer 3.38.1 (E8): the further statistics of the tab,
     from three stored submissions of two releases (today, yesterday, three days ago).
     Sources (Discogs, pasted text, text from cover art; with a supplement 1) · how the entries were found (unique: link 2, name 1,
     hand 1, created 1) · dates (3 of 8 = 38 %, day / month / year 1 each, notes 2, by hand 1; the place Zojoji Hall) · levels
@@ -1133,8 +1123,7 @@ def case_statsmore():
 
 
 def case_statsdev():
-    """Credits Importer 3.38.2 (E8; maintainer: "Die zur Verbesserung sollen gesammelt aber extra einschaltbar sein wegen Developer
-    Interessen."): the developer statistics.
+    """Credits Importer 3.38.2 (E8): the developer statistics.
     A) A real submission: "Guitar" answered (electric guitar, Q002), a role credit typed by hand (Bass Man) – its record has, per
        relationship, what was changed by hand ("roleCredit" for Bass Man, none for the others – an answer is no change) and the answers;
        and for the import what was not recognized and the duplicates avoided.

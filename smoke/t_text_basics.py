@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7), withline (3.38.17), cloudpond (3.38.18) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -586,8 +586,7 @@ def case_instrguess():
 
 def case_voicetech():
     """Credits Importer 3.34.25: "Voice" asks from every source with four answers, instrument technicians get their instrument
-    (collected items 137e, 137f; maintainer: "generell soll das mapping wirklich gleich behandelt werden", "alle vier rollen sollen
-    angeboten werden", "wenn vocals da steht, dann immer vocals ohne credit", "ja genau").
+    (collected items 137e, 137f).
     A) Discogs "Voice": asks vocals · other vocals “voice” · lead vocals “voice” · spoken vocals “voice” – until then vocal without
        voice and role credit (before: spoken vocals at once); "spoken vocals “voice”" → spoken vocals credited "voice".
        "Vocals": vocal without a question and without role credit.
@@ -655,9 +654,7 @@ def case_voicetech():
 
 
 def case_unknownask():
-    """Credits Importer 3.34.26: words that are no instrument ask in every source (collected item 137d, (c); maintainer: "also c.
-    sticks-and-stones bspw. könnte auch einfach "other instruments" werden. wir wollen das auf keinen fall verlieren", "behalte das
-    als letzte Antwort bei. auch bei discogs other instruments. aber miscellaneous support auch anbieten", "passt").
+    """Credits Importer 3.34.26: words that are no instrument ask in every source (collected item 137d, (c)).
     A) Discogs "Chaims" (before: miscellaneous support at once) asks chimes · wind chimes · tubular bells · other instruments
        “Chaims” · miscellaneous support (task “Chaims”), nothing chosen; "miscellaneous support" chosen – type miscellaneous
        support with the task "chaims" (in small letters, as before); then "chimes" – an instrument row again (recording), chimes,
@@ -667,7 +664,7 @@ def case_unknownask():
     C) A pasted text "Barry Guy – double bass, sticks-and-stones": double bass and other instruments “sticks-and-stones” (before:
        "→ ? “sticks-and-stones”" not recognized); "Jane Roe – guitar, kalimba, buddha machine" (more unknown words than
        instruments): guitar, the rest not recognized as before.
-    3.34.27 (S052; maintainer: "instrumente und role credits immer kleinschreiben außer bei eigennamen"): the credit and the task
+    3.34.27 (S052): the credit and the task
     of such a word in lower case – "other instruments “chaims”", "miscellaneous support (task “chaims”)", Sticks-And-Stones
     credited "sticks-and-stones" (before: as written); D) "Tambourine [Additional, Toy]": the suggestions of the role credit
     field written like the credit (toy · additional, toy · additional · additional tambourine · toy tambourine; before: "Additional,
@@ -762,9 +759,7 @@ def case_unknownask():
 
 
 def case_casenote():
-    """Credits Importer 3.34.28 (S052a/b; maintainer: ""Buddha" ist natürlich ein eigenname also großgeschrieben. generell müssen
-    instrumente kleingeschrieben werden. also vielleicht deutlich machen, dass gerade etwas lowercased wurde wenn die rolle oder das
-    instrument nicht bekannt ist", "S052b, Discogs-Klammern (S011): klein schreiben").
+    """Credits Importer 3.34.28 (S052a/b).
     A) Discogs "Guitar [Gretsch Duo Jet]" (until 3.35.2 "Gibson Les Paul", now a proper name of the register itself, item 144):
        guitar credited "Gretsch duo jet" (Gretsch a proper name of the register, T052), the row says "Written small – unknown to
        MusicBrainz: Duo Jet → duo jet · keep “Duo Jet” · always write “Duo Jet” · Duo → duo · keep “Duo” · … · Jet → jet …" (the
@@ -866,8 +861,7 @@ def case_casenote():
 
 
 def case_casephrase():
-    """Credits Importer 3.35.2 (item 144; maintainer: ""Gibson Les Paul" in dieser Groß- und Kleinschreibung bitte zu Ausnahmen
-    hinzufügen, das ist ja der korrekte name.", on the hint offering the whole: "ja bitte").
+    """Credits Importer 3.35.2 (item 144, on the hint offering the whole).
     A) Discogs "Guitar [Gibson Les Paul]": the credit "Gibson Les Paul" (a proper name of several words in T052), no note.
     B) "Guitar [Les Paul Junior]": "Les Paul junior" – the name as a whole, "Junior" written small with its own note (a name of
        the register ends the words one after another). C) "Guitar [Paul Reed Smith]": "paul reed smith", the note offers the three
@@ -1019,11 +1013,156 @@ Bob Blue on Piano and Saxophone"""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_withline():
+    """Credits Importer 3.38.17 (collected item 181, F-181a – F-181d, rule S061, list T056): a line "With …" of a pasted text.
+    A) "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" (Robert Rich, Bandcamp "Cloud Pond Sky River"),
+       the release's artist Robert Rich: his instruments – "Sequential PX" a synthesizer credited "Sequential PX" (MusicBrainz has
+       no Prophet X here), flute, lap steel guitar, bells; "objects" asked like a word of a list (other instruments “objects”);
+       "Apple Logic" left out as music software (the list of lines left out: "software").
+    B) "with Oliver Lake": a guest performer; "With piano and Jane Roe on saxophone": piano for Robert Rich, Jane Roe guest saxophone;
+       nothing not recognized. (Review) "with Ann Blow on alto saxophone and flute": both hers, as a guest; "with Kenny Wheeler, flute":
+       his flute; "With Apple Logic Pro": left out as software (no artist)."""
+    H.RELEASE_AC[:] = [(H.uid('dddddddd', 3420), 'Robert Rich', 'Robert Rich', '')]
+    H.attr(9301, 'flute', 14)
+    H.attr(9302, 'lap steel guitar', 14, aliases=['lap steel'])
+    H.attr(9303, 'bells', 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    TEXT = """With Apple Logic, Sequential PX, flutes, lap steel, bells and objects
+with Oliver Lake
+With piano and Jane Roe on saxophone
+with Ann Blow on alto saxophone and flute
+with Kenny Wheeler, flute
+With Apple Logic Pro"""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+  [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
+    (r.querySelector('[data-f=role-credit]') || {}).value || '', (r.querySelector('[data-f=primary]') || {}).value || '',
+    [...r.querySelectorAll('input[data-f=flag]:checked')].map(x => x.value).join(',')])])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+        pg.wait_for_timeout(500)
+        g = pg.evaluate(GROUPS)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+        ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())")
+        for k in ('Robert Rich', 'Oliver Lake', 'Jane Roe', 'Ann Blow', 'Kenny Wheeler', 'With Apple Logic'):
+            print(f'  {k}:', g.get(k))
+        print('nicht erkannt:', unrec, '| weggelassen:', ign)
+        rr = g.get('Robert Rich') or []
+        prim = [r[3] for r in rr]
+        results.append(('synthesizer', 'Sequential PX') in [(r[3], r[2]) for r in rr] and 'flute' in prim and 'lap steel guitar' in prim and 'bells' in prim
+                       and 'piano' in prim and any('objects' in (r[0] + r[2]).lower() for r in rr)
+                       and not any('logic' in (r[0] + r[2]).lower() for r in rr) and 'With Apple Logic' not in g
+                       and any('Apple Logic' in x and 'software' in x for x in ign))
+        ol, jr = g.get('Oliver Lake') or [], g.get('Jane Roe') or []
+        ab, kw = g.get('Ann Blow') or [], g.get('Kenny Wheeler') or []
+        results.append([r[1] for r in ol] == ['performer'] and 'guest' in ol[0][4] and [r[3] for r in jr] == ['saxophone'] and 'guest' in jr[0][4] and not unrec
+                       # (3.38.17, review) a guest's instruments are his: "on alto saxophone and flute", "Kenny Wheeler, flute"
+                       and sorted(r[3] for r in ab) == ['alto saxophone', 'flute'] and all('guest' in r[4] for r in ab)
+                       and [r[3] for r in kw] == ['flute'] and 'guest' in kw[0][4] and prim.count('flute') == 1
+                       and any(x.startswith('Apple Logic Pro') and 'software' in x for x in ign) and 'Apple Logic Pro' not in g)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_cloudpond():
+    """Credits Importer 3.38.18 (collected items 182 – 184, F-182a, F-182b, F-183, F-184; rules S062 – S064, list T057): all lines of
+    Robert Rich "Cloud Pond Sky River" (Bandcamp) as a pasted text, Robert Rich the release's artist.
+    A) "Ambisonic recordings by RR 2022-2025 Pacific coast": Robert Rich (initials RR) field recordist, credited "RR", the period
+       2022 – 2025 at the row; "Pacific coast" (no area of MusicBrainz) named as not recognized. "Recorded by Jane Roe" stays recording
+       engineer.
+    B) "Recorded Mixed and Mastered by RR at Soundscape, Carmel CA": Robert Rich (RR) recording engineer, mixer, mastering; the place
+       Soundscape; the entry says "RR = Robert Rich (initials)".
+    C) "Cover © Maksimillian Novak-Zemplinski, detail used with permission.": artwork credited "cover" (no ℗/© of a label), "detail
+       used with permission" left out; "Photos © Ann Blow": photography credited "photo"; "©2026 Robert Rich" as before.
+    D) Initials of two names ("JR" for Jane Roe and Jim Rye): not set by themselves – the entry "JR" names both.
+    E) (Review) "Field recordings by Kim Lowe": the whole name; "Photo © Focused Pictures": no permission in "Focused"; "Artwork © Ann
+       Jones, all rights reserved": no artist "all rights reserved"; "Design by AJ": Ann Jones credited "AJ" (not "Aj")."""
+    H.RELEASE_AC[:] = [(H.uid('dddddddd', 3420), 'Robert Rich', 'Robert Rich', '')]
+    H.attr(9301, 'flute', 14)
+    H.attr(9302, 'lap steel guitar', 14, aliases=['lap steel'])
+    H.attr(9303, 'bells', 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.lt(9993, H.uid('1a1a1a1a', 9993), 'artwork', 'artist', 'release', (1150,))
+    H.lt(9994, H.uid('1a1a1a1a', 9994), 'field recordist', 'artist', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """With Apple Logic, Sequential PX, flutes, lap steel, bells and objects
+Ambisonic recordings by RR 2022-2025 Pacific coast
+Recorded Mixed and Mastered by RR at Soundscape, Carmel CA
+Cover © Maksimillian Novak-Zemplinski, detail used with permission.
+Photos © Ann Blow
+©2026 Robert Rich
+Recorded by Jane Roe
+Flute: Jim Rye
+Liner notes by JR
+Field recordings by Kim Lowe
+Photo © Focused Pictures
+Artwork © Ann Jones, all rights reserved
+Design by AJ"""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim() + (g.querySelector('.dci-gname').textContent.includes('Label') ? ' (label)' : ''),
+  { hint: (g.querySelector('.dci-initials') || { textContent: '' }).textContent.trim(), ac: [...g.querySelectorAll('[data-f=credit], [data-f=em-ac]')].map(x => x.value).filter(Boolean),
+    rows: [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
+    (r.querySelector('[data-f=role-credit]') || {}).value || '', [...r.querySelectorAll('[data-f$=by], [data-f$=ey]')].map(x => x.value).join('-')])}])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+        pg.wait_for_timeout(500)
+        g = pg.evaluate(GROUPS)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+        ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())")
+        for k, v in g.items():
+            print(f'  {k}:', v)
+        print('nicht erkannt:', unrec, '| weggelassen:', ign)
+        rr = g.get('Robert Rich') or {'rows': [], 'hint': ''}
+        rows = {r[1]: r for r in rr['rows']}
+        fr = rows.get('field recordist')
+        results.append(fr is not None and fr[3] == '2022-2025' and any('Pacific coast' in u for u in unrec) and 'Ambisonic' not in ''.join(g)
+                       and [r[1] for r in (g.get('Jane Roe') or {'rows': []})['rows']] == ['recording'])
+        results.append(all(t in rows for t in ('recording', 'mix', 'mastering')) and rr['hint'] == 'RR = Robert Rich (initials)' and 'RR' not in g
+                       and 'RR' in rr['ac'] and [r[1] for r in (g.get('Soundscape') or {'rows': []})['rows']] == ['recorded at'])
+        mk, ab, lab = g.get('Maksimillian Novak-Zemplinski') or {'rows': []}, g.get('Ann Blow') or {'rows': []}, g.get('Robert Rich (label)') or {'rows': []}
+        results.append([r[1:3] for r in mk['rows']] == [['artwork', 'cover']] and [r[1:3] for r in ab['rows']] == [['photography', 'photo']]
+                       and [r[1] for r in lab['rows']] == ['copyright'] and any(x.startswith('detail used with permission') for x in ign))
+        jr = g.get('JR') or {'hint': '', 'rows': []}
+        results.append(jr['hint'] == 'JR: the initials of Jane Roe, Jim Rye – not set; choose the artist')
+        # (3.38.18, review) a name of two words without a year; "Focused" no permission; the rights out; initials with a vowel stay
+        kl, fp, aj = g.get('Kim Lowe') or {'rows': []}, g.get('Focused Pictures') or {'rows': []}, g.get('Ann Jones') or {'rows': [], 'ac': [], 'hint': ''}
+        results.append([r[1] for r in kl['rows']] == ['field recordist'] and [r[1:3] for r in fp['rows']] == [['photography', 'photo']]
+                       and ['artwork', 'cover'] in [r[1:3] for r in aj['rows']] and 'AJ' in aj['ac'] and aj['hint'] == 'AJ = Ann Jones (initials)'
+                       and not any('rights' in k for k in g) and 'Aj' not in g)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_typonote():
-    """Credits Importer 3.37.13 (collected item 164; maintainer: "bei "“Taischigoto” is no instrument of MusicBrainz – chosen:"
-    soll nach der Auswahl "taischigoto" im role credit sein. neben role credit soll generell ein kleines x sein womit es geleert
-    werden kann", "bei reinen Tippfehlern soll die korrekte rolle gesetzt werden. eine info kann ausgegeben werden, dass es sich
-    wahrscheinlich um einen tippfehler handelte", "Nur 1 Buchstabe").
+    """Credits Importer 3.37.13 (collected item 164).
     A) Discogs "Sxaophone" (one slip off: two letters swapped) – saxophone chosen: no role credit, the note "Probably a typo of
        “saxophone”: no role credit." and a line in the log; "credit “sxaophone” as written" – credited "sxaophone", the note "A
        spelling of its own …"; "a typo: no role credit" – empty again.
@@ -1145,11 +1284,7 @@ def case_typonote():
 
 
 def case_stacked():
-    """Credits Importer 3.38.7: names above (or below) the line with their instruments (collected item 167, rules S058, S059;
-    maintainer: "folgendes muss insbesondere bei der Bilderkennung erkannt werden: "Torben SNEKKESTAD / SAXOPHONES & TRUMPET /
-    Agusti FERNANDEZ / PIANO / Barry GUY / DOUBLE BASS" also die Artists stehen über der Zeile mit ihnen betreffenden
-    instrumenten", "Großbuchstaben: immer in normale Schreibweise bringen", "umgekehrte Reihenfolge: ja bitte", "Behelfsknopf:
-    passt", "mach erstmal nur eindeutiges").
+    """Credits Importer 3.38.7: names above (or below) the line with their instruments (collected item 167, rules S058, S059).
     A) The example pasted: Torben Snekkestad – saxophone (“saxophones”), trumpet –, Agusti Fernandez – piano –, Barry Guy – double
        bass (the names in normal case; until 3.38.6 an entry "& TRUMPET" with saxophone and five lines not recognized); nothing not
        recognized, no note, nothing in the log.
@@ -1268,7 +1403,7 @@ def case_stacked():
 
 
 def case_stackflip():
-    """Credits Importer 3.38.12 (F-5; maintainer: "wie vorschlag, gezielt"; the independent review of block AP): ⇅ in the dashboard.
+    """Credits Importer 3.38.12 (F-5; the independent review of block AP): ⇅ in the dashboard.
     A) "Jane Roe – piano" (clear) and "Jane Roe / PIANO / John Doe" (not clear): Jane Roe has two piano rows – the clear one and
        the one of the lines not clear; ⇅: John Doe piano, Jane Roe keeps her clear row; ⇅ again: as at first (John Doe gone).
     B) ⇅, then the same text imported again (remembered for the release): John Doe piano once, Jane Roe her clear row once.
