@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.39.8
+// @version      3.39.9
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.8
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.8
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.9
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.9
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.8';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.9';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -8539,6 +8539,8 @@
   // 5. State
   // ===========================================================================
 
+  /** [179] (3.38.16) The types of who performs a track ("co?": no cover of one of them); [3.39.9] conductor, orchestra … too (Q-w). */
+  const PERFORMING_TYPES = ['instrument', 'vocal', 'performer', 'conductor', 'performing orchestra', 'orchestra', 'chorus master', 'concertmaster'];
   const S = {
     overlay: null,
     initialized: false,
@@ -8599,6 +8601,11 @@
     noteLines: new Set(),
     // Works: planned recording→work links (track index → { gid, title, origin, flags })
     workPlan: new Map(),
+    // [3.39.9] "member of band" of the artists looked up for "co?" (mbid → Set of artists, or 'wait')
+    bandOf: new Map(),
+    // (3.39.9, review) the artists still to look up, and whether the loop runs
+    bandQueue: [],
+    bandRunning: false,
     workSearch: new Map(),
     // [3.15.0] works of artists (release artists, writers, performers): kept for the session; matches per track
     artistWorks: new Map(),
@@ -14890,6 +14897,9 @@
           recordingGid: track.recording && track.recording.id,
           // [3.32.9] its disambiguation comment (live comments, item 113)
           recordingComment: (track.recording && track.recording.disambiguation) || '',
+          // [3.39.9] its artists and the performers MusicBrainz has for the recording ("co?" – no cover of one of them; K-9)
+          trackArtists: (track['artist-credit'] || []).map((c) => c.artist && c.artist.id).filter(Boolean),
+          mbPerformers: rels.filter((r) => r['target-type'] === 'artist' && r.artist && PERFORMING_TYPES.includes(norm(r.type))).map((r) => r.artist.id),
           works: rels.filter((r) => r['target-type'] === 'work' && r.work).map((r) => ({
             gid: r.work.id,
             title: r.work.title,
@@ -14912,6 +14922,8 @@
       S.linked = linkedInRelease(ws);
       // [rule 4] The release's artist credit, as named below its title (names from Bandcamp must match it exactly)
       S.releaseCredit = (ws['artist-credit'] || []).map((p) => ({ mbid: (p.artist && p.artist.id) || '', name: p.name || (p.artist && p.artist.name) || '', join: p.joinphrase || '' }));
+      // (3.39.9, review) the performers MusicBrainz has for the whole release ("co?": no cover of one of them)
+      S.mbReleasePerformers = (ws.relations || []).filter((r) => r['target-type'] === 'artist' && r.artist && PERFORMING_TYPES.includes(norm(r.type))).map((r) => r.artist.id);
       // [3.22.1] the labels of the release (a Bandcamp page of one of them is named so, 46)
       S.releaseLabels = (ws['label-info'] || []).map((li) => li && li.label && li.label.id).filter(Boolean);
       S.workOptions = await loadWorkOptions();
@@ -23595,13 +23607,47 @@
   /** [179] (3.38.16) The performers of a track with a MusicBrainz entry: the release's artists, instruments, voices, performers. */
   function performersOf(i) {
     const out = new Set((S.releaseCredit || []).map((p) => p.mbid).filter(Boolean));
+    // [3.39.9] the track's artists and MusicBrainz's performers of its recording (K-9, Q-w)
+    const t = S.mbTracks[i] || {};
+    [...(t.trackArtists || []), ...(t.mbPerformers || []), ...(S.mbReleasePerformers || [])].forEach((x) => out.add(x));
     for (const r of S.rows) {
       const a = S.artists.get(r.artistKey);
-      if (!a || !a.mbid || r.level === 'skip' || !['instrument', 'vocal', 'performer'].includes(norm(rowTypeName(r)))) continue;
+      if (!a || !a.mbid || r.level === 'skip' || !PERFORMING_TYPES.includes(norm(rowTypeName(r)))) continue;
       if (r.level === 'recording' && !(r.tracks && r.tracks.has(i))) continue;
       out.add(a.mbid);
     }
     return out;
+  }
+
+  /**
+   * [3.39.9] Who is linked by "member of band" with an artist (its members, or the groups it is a member of; former ones too):
+   * MusicBrainz's relationships, looked up once per artist, in the background (S.bandOf: mbid → Set, 'wait', or { failAt } when
+   * MusicBrainz did not answer). Only asked when "co?" would be offered (Q-m); the works matrix is drawn again once they are there.
+   */
+  function bandLinks(ids) {
+    // (3.39.9, review) one answer that failed is asked again after five minutes (until then: as without members)
+    const due = (id) => !S.bandOf.has(id) || (S.bandOf.get(id).failAt && Date.now() - S.bandOf.get(id).failAt > 5 * 60 * 1000);
+    const todo = uniq(ids.filter((id) => id && due(id)));
+    if (!todo.length) return;
+    todo.forEach((id) => S.bandOf.set(id, 'wait'));
+    S.bandQueue.push(...todo);
+    // (3.39.9, review) one loop for all lookups (a render with several tracks asks once each, one after the other)
+    if (S.bandRunning) return;
+    S.bandRunning = true;
+    (async () => {
+      while (S.bandQueue.length) {
+        const id = S.bandQueue.shift();
+        try {
+          const a = await mbWsIdle(`artist/${id}?inc=artist-rels`);
+          S.bandOf.set(id, new Set(((a && a.relations) || []).filter((r) => norm(r.type) === 'member of band' && r.artist && r.artist.id).map((r) => r.artist.id)));
+        } catch {
+          S.bandOf.set(id, { failAt: Date.now() });
+        }
+        // (3.39.9, review) drawn again as other results of the background (not while typing in the matrix or dragging)
+        if (!S.bandQueue.length) renderWorksBackground();
+      }
+      S.bandRunning = false;
+    })();
   }
   /**
    * [179] (3.38.16) "cover?" at the link of a work (F-179b): a work chosen among the works of the track's composer (credited for
@@ -23612,7 +23658,15 @@
     if (!work || !work.planned || work.origin === 'pending' || linkAttrsOf(i, work).has('cover')) return [];
     const plan = S.workPlan.get(i);
     if (!plan || !plan.composer || !linkAttrTypes().some((a) => norm(a.name) === 'cover')) return [];
-    if (performersOf(i).has(plan.composer)) return [];
+    const perf = performersOf(i);
+    if (perf.has(plan.composer)) return [];
+    // [3.39.9] a member of a performing band (or the band of a performing member) who wrote it: no cover (K-9, Q-m) – not offered
+    // until MusicBrainz said who is a member of whom. (review) "member of band" is one relationship of both artists: the
+    // composer's own relationships name its bands and its members – one lookup
+    bandLinks([plan.composer]);
+    const linked = S.bandOf.get(plan.composer);
+    if (linked === 'wait') return [];
+    if (linked instanceof Set && [...linked].some((id) => perf.has(id))) return [];
     return [plan.composerName || plan.composer];
   }
   const coverHint = (i, work) => coverComposers(i, work).length > 0;

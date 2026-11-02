@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.39.8, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.39.9, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.39.9 · 2026-11-02
+
+"co?" and who performs a track (collected item K-9; Q-e, Q-m, Q-w).
+
+- **New `PERFORMING_TYPES`** (instrument, vocal, performer, conductor, performing orchestra, orchestra, chorus master, concertmaster).
+- **The import:** `S.mbTracks[i].trackArtists` (the track's artist credit) and `mbPerformers` (MusicBrainz's performers of the recording, `PERFORMING_TYPES`).
+- **`performersOf(i)`:** also the track's artists and MusicBrainz's performers; the dashboard's rows of all `PERFORMING_TYPES`.
+- **New `bandLinks(ids)`:** "member of band" of each artist (`artist/<mbid>?inc=artist-rels`, `mbWsIdle`), once (`S.bandOf`: mbid → Set or 'wait'); the works matrix drawn again when they are there.
+- **`coverComposers`:** no "co?" while a lookup waits, nor when the composer is linked by "member of band" with a performer (either way).
+- **Tests:** `harness.BAND_MEMBERS` (group → members, both directions in `/ws/2/artist/`), `harness.TRACK_AC` (a track's artist credit); `t_works_more.py` `coverworks` D (without them "co?"; a member of the release's band, the pianist of the recording in MusicBrainz, the track's artist: none), B waits for the lookups.
+- **After the independent review of block AX:** `bandLinks` – one lookup, the composer's own (the relationship "member of band" is one of both artists: its bands and its members), one loop for all lookups (`S.bandQueue`, `S.bandRunning`), the matrix drawn again with `renderWorksBackground` (not while typing in it or dragging; until then `renderWorks`), an answer that failed asked again after five minutes (`{ failAt }`); new `S.mbReleasePerformers` – MusicBrainz's performers of the whole release count too (`performersOf`). Test: `coverworks` D the lookups counted (the composer's only), the other direction (the composer's band, the release's artist a member of it), MusicBrainz's pianist of the release.
 
 ## Import 3.39.8 · 2026-11-02
 
