@@ -688,6 +688,10 @@ def case_gapmore():
     C) "Count exactly": the relationship editor of the release in a tab in the background (#dci-count), its dashboard imports
        Discogs by itself and counts – a release of two media without the dialog of the media (review); the line takes the number
        ("The dashboard counted N new ones on …") and closes the tab. An import that fails: "The count failed …", the tab closed.
+    E) (3.40.2) A Discogs release without credits in its list: Bandcamp steps in, the line says so ("Discogs has no credits to import
+       in its list for this release (its notes are not read here). Bandcamp: …"); (3.40.3, review) "Import credits …" imports Bandcamp; a
+       release Discogs does not have (404): Bandcamp too ("Discogs does not have this release (any more). …"). Three Bandcamp pages (a label's with one credit, the
+       artist's, one that cannot be read): the one with more credits, the others under ▸; ✕ holds for it.
     D) Without a Discogs link: Bandcamp's album page, a rough estimate ("Bandcamp: about N relationships … (a rough estimate)."),
        its parts and how it is counted, instruments in capitals ("Jane Roe – Electric Guitar", "Tenor Saxophone – Max Mustermann");
        "Count exactly" counts Bandcamp (its rows without a MusicBrainz entry named: still missing). An album page without credits
@@ -697,6 +701,7 @@ def case_gapmore():
     REL = H.REL
     DID = str(H.DISCOGS_ID)
     KEY = f'dci-gap:{REL}'
+    BCKEY = f'dci-gap:{REL}:bandcamp'
     EXACT = f'dci-gap-exact:{REL}'
     LINE = """(() => { const b = document.querySelector('.dci-gapline'); if (!b) return null;
       return { src: b.dataset.src, text: b.querySelector('[data-gap-text]').textContent, count: !!b.querySelector('[data-gap=count]'),
@@ -717,13 +722,15 @@ def case_gapmore():
     H.MEDIA = [2, 2]
     H.BC_PAGES[ALBUM] = None
     orig_ws = H.ws_release
-    BC_ONLY = {'on': False}
+    # the release's links: Discogs (or not), Bandcamp pages ((3.40.2) several)
+    MODE = {'discogs': True, 'bc': []}
 
     def ws(full=False):
         d = orig_ws(full)
-        if BC_ONLY['on']:
+        if not MODE['discogs']:
             d['relations'] = [r for r in d['relations'] if not (r.get('url') and 'discogs.com' in r['url']['resource'])]
-            d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        for u in MODE['bc']:
+            d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': u}})
         return d
     H.ws_release = ws
     results = []
@@ -741,6 +748,7 @@ def case_gapmore():
             def seed(kept=None, exact=None, none=None):
                 js = []
                 js.append(f"localStorage.setItem('{KEY}', {repr(__import__('json').dumps(kept))})" if kept is not None else f"localStorage.removeItem('{KEY}')")
+                js.append(f"localStorage.removeItem('{BCKEY}')")
                 js.append(f"localStorage.setItem('{EXACT}', {repr(__import__('json').dumps(exact))})" if exact is not None else f"localStorage.removeItem('{EXACT}')")
                 js.append("localStorage.setItem('dci-gap-none', 'true')" if none else "localStorage.removeItem('dci-gap-none')")
                 pr.evaluate('; '.join(js))
@@ -801,7 +809,9 @@ def case_gapmore():
                 H.wait_for(pr, "(() => { const t = document.querySelector('.dci-gapline [data-gap-text]'); return !!t && /The dashboard counted/.test(t.textContent); })()", 150)
                 pr.wait_for_timeout(500)
                 after = pr.evaluate(LINE)
-                ex = pr.evaluate(f"[JSON.parse(localStorage.getItem('{EXACT}') || 'null'), localStorage.getItem('dci-gap-count:{REL}'), localStorage.getItem('t-closed')]")
+                # (3.40.3, review) the dashboard's number per source
+                exk = EXACT if expect_src == 'discogs' else f'{EXACT}:{expect_src}'
+                ex = pr.evaluate(f"[JSON.parse(localStorage.getItem('{exk}') || 'null'), localStorage.getItem('dci-gap-count:{REL}'), localStorage.getItem('t-closed')]")
                 tlog = tab.evaluate("[location.hash, [...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /Count exactly|Import complete/.test(t)), (document.querySelector('.dci-sum-new') || {}).textContent || '']")
                 tab.close()
                 print('   zählt:', during and during['text'], during and during['disabled'], '| Tab:', opened, '| im Tab:', tlog, '| danach:', after and after['text'],
@@ -834,14 +844,14 @@ def case_gapmore():
             print('C2) fehlgeschlagen:', cf)
             results.append(cf[0] == 'The count failed – the dashboard in the relationship editor says why.' and cf[1] is False and cf[2] == opened[0] and cf[3] is None)
             # D) Bandcamp only
-            BC_ONLY['on'] = True
+            MODE.update(discogs=False, bc=[ALBUM])
             H.BC_PAGES[ALBUM] = H.bc_html({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': BC_CREDITS['text']}, 'trackinfo': TRACKS}, ALBUM)
             n1 = len(dg)
             seed()
             d = line()
             pr.click('.dci-gapline [data-gap=parts]'); pr.wait_for_timeout(200)
             d2 = pr.evaluate(LINE)
-            stored = pr.evaluate(f"JSON.parse(localStorage.getItem('{KEY}') || 'null')")
+            stored = pr.evaluate(f"(JSON.parse(localStorage.getItem('{BCKEY}') || '{{}}').pages || {{}})['{ALBUM}'] || null")
             m = re.match(r'Bandcamp: about (\d+) relationships of its credits are not on MusicBrainz yet \(a rough estimate\)\.$', d['text'] if d else '')
             nums = [int(re.search(r'(\d+)', x).group(1)) for x in (d2 or {'parts': []})['parts'][:4]]
             print('D) Bandcamp:', d, '\n   ▸', d2 and d2['parts'], '| gespeichert:', stored and {k: v for k, v in stored.items() if k != 'credits'},
@@ -849,12 +859,12 @@ def case_gapmore():
             names = sorted(n for c in stored['credits'] for n in c['names'])
             print('   Namen:', names)
             results.append(bool(m) and d['src'] == 'bandcamp' and len(nums) == 4 and sum(nums) == int(m.group(1)) and nums[0] > 0
-                           and d2['parts'][4].startswith('A rough estimate: the credits of the album page') and stored.get('bId') == ALBUM
+                           and d2['parts'][4].startswith('A rough estimate: the credits of the album page') and stored
                            and not stored.get('failAt') and len(dg) == n1 and any(ALBUM in u for u in bcq)
                            and 'max mustermann' in names and names.count('jane roe') == 2 and not [n for n in names if 'guitar' in n or 'saxophone' in n])
             print('D2)')
             d2c = count('bandcamp')
-            exb = pr.evaluate(f"JSON.parse(localStorage.getItem('{EXACT}') || 'null')")
+            exb = pr.evaluate(f"JSON.parse(localStorage.getItem('{EXACT}:bandcamp') || 'null')")
             after = pr.evaluate(LINE)
             # Jane Roe, Max Mustermann, Peter Evans, Drum Guy: no MusicBrainz entry chosen – rows open, named in the line
             results.append(d2c and exb['open'] > 0 and after['text'].endswith(f"{exb['open']} of its rows still need a MusicBrainz entry or a type."))
@@ -863,11 +873,61 @@ def case_gapmore():
                                            'about': 'Stream: Spotify, Apple Music\nLength: 45 minutes\nDigital: 24bit/96kHz\nPre-order: out on Friday'}, 'trackinfo': TRACKS}, ALBUM)
             seed()
             d3 = line(False)
-            d3k = pr.evaluate(f"JSON.parse(localStorage.getItem('{KEY}') || 'null')")
+            d3k = pr.evaluate(f"(JSON.parse(localStorage.getItem('{BCKEY}') || '{{}}').pages || {{}})['{ALBUM}'] || null")
             print('D3) ohne Credits:', d3, d3k and d3k.get('credits'))
             results.append(d3 is None and d3k and d3k.get('credits') == [])
+            # E1) (3.40.2, Z-AD) a Discogs release without credits in its list (its notes kept): Bandcamp steps in, the line says so
+            H.BC_PAGES[ALBUM] = H.bc_html({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': BC_CREDITS['text']}, 'trackinfo': TRACKS}, ALBUM)
+            empty = H.discogs_release()
+            empty['extraartists'], empty['companies'] = [], []
+            empty['tracklist'] = [dict(t, extraartists=[]) for t in empty['tracklist']]
+            H.DG_API[f'/releases/{DID}'] = empty
+            MODE.update(discogs=True, bc=[ALBUM])
+            seed()
+            e1 = line()
+            print('E1) Discogs ohne Credits:', e1 and e1['text'])
+            results.append(bool(e1) and e1['src'] == 'bandcamp' and bool(re.match(r'Discogs has no credits to import in its list for this release \(its notes are not read here\)\. '
+                                                                      r'Bandcamp: about \d+ relationships of its credits are not on MusicBrainz yet \(a rough estimate\)\.', e1['text'])))
+            # (3.40.3, review) "Import credits …" of that line: the dashboard imports Bandcamp (not the Discogs release without credits)
+            pr.click('.dci-gapline [data-gap=import]')
+            pr.wait_for_url('**/edit-relationships', timeout=20000)
+            H.answer_media(pr)
+            H.wait_for(pr, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            e1i = pr.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(t => / read: /.test(t))")
+            print('   Import credits …:', e1i)
+            results.append(bool(e1i) and e1i[-1].startswith('Bandcamp read:'))
+            pr.goto(f'https://musicbrainz.org/release/{REL}')
+            # (review) a release Discogs does not have (404): Bandcamp steps in too
+            H.DG_API[f'/releases/{DID}'] = None
+            seed()
+            e1m = line()
+            print('E1b) Discogs 404:', e1m and e1m['text'][:80])
+            results.append(bool(e1m) and e1m['text'].startswith('Discogs does not have this release (any more). Bandcamp: about '))
+            H.DG_API.pop(f'/releases/{DID}', None)
+            # E2) (Z-AE) three Bandcamp pages – a label's with one credit, the artist's, one that cannot be read: the one with more credits
+            LABEL = 'https://somelabel.bandcamp.com/album/testalbum'
+            GONE = 'https://gone.bandcamp.com/album/testalbum'
+            H.BC_PAGES[LABEL] = H.bc_html({'artist': 'Some Label', 'current': {'title': 'Testalbum', 'credits': 'Mixed by Jane Roe'}, 'trackinfo': TRACKS}, LABEL)
+            MODE.update(discogs=False, bc=[LABEL, ALBUM, GONE])
+            seed()
+            e2 = line()
+            pr.click('.dci-gapline [data-gap=parts]'); pr.wait_for_timeout(200)
+            e2p = pr.evaluate(LINE)
+            pages = pr.evaluate(f"Object.keys((JSON.parse(localStorage.getItem('{BCKEY}') || '{{}}').pages || {{}})).sort()")
+            print('E2) drei Seiten:', e2 and e2['text'], '\n   ▸', e2p and e2p['parts'][4:], '| gemerkt:', pages)
+            results.append(bool(e2 and m) and e2['text'].startswith(d['text']) and e2p['parts'][4:6] == [
+                'Also linked: somelabel.bandcamp.com/album/testalbum – 1 credit there (the page with more credits is counted).',
+                'Also linked: gone.bandcamp.com/album/testalbum – it could not be read.'] and pages == sorted([ALBUM, LABEL, GONE]))
+            # ✕ hides it for the page counted (also loaded again)
+            pr.click('.dci-gapline [data-gap=close]'); pr.wait_for_timeout(200)
+            pr.reload()
+            e3 = line(False)
+            print('E3) ✕, neu geladen:', e3)
+            results.append(e3 is None)
             print('Fehler:', errs, '| Warnungen:', warns)
-            results.append(not errs and not warns)
+            # the page that cannot be read is said in the console (as each failed request of the line)
+            # (and the Discogs release that does not exist, E1b)
+            results.append(not errs and not [w for w in warns if 'gone.bandcamp.com' not in w and f'Discogs release {DID} does not exist' not in w])
             b.close()
     finally:
         H.ws_release = orig_ws

@@ -785,6 +785,11 @@ def case_workpick():
                        and not b4['shown'] and b5['shown'] and not b6['shown'] and pend)
         pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
         pg.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W5}"]').click(); pg.wait_for_timeout(500)
+        # (3.40.3) under load the matrix may be drawn anew by a result of the background just then: once more while the list is still open
+        for _ in range(2):
+            if [x for x in pg.evaluate(LOGS) if 'chosen for linking' in x] or not st(3)['shown']:
+                break
+            pg.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W5}"]').click(); pg.wait_for_timeout(1500)
         c = st(3)
         picked = [x for x in pg.evaluate(LOGS) if 'chosen for linking' in x]
         planned = pg.evaluate("(() => { const tr = document.querySelector('tr[data-work=\"3\"]'); return tr.querySelector('.dci-badge-plan') ? tr.querySelector('.dci-mblink').textContent : null; })()")
@@ -869,8 +874,8 @@ def case_coverworks():
                                                    'Track 1.4: the title names “Monk” – the works of Thelonious Monk are compared']))
         pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
         pg.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W6}"]').click(); pg.wait_for_timeout(500)
-        # [3.39.9] "co?" once MusicBrainz said who is a member of whom (looked up in the background)
-        H.wait_for(pg, f"!!({PILL})(3)", 20)
+        # [3.39.9] "co?" once MusicBrainz said who is a member of whom (looked up in the background; (3.40.3) 45 s under load)
+        H.wait_for(pg, f"!!({PILL})(3)", 45)
         b0 = pg.evaluate(f"({PILL})(3)")
         pg.locator('tr[data-work="3"] .dci-wpill[data-attr=cover]').click(); pg.wait_for_timeout(300)
         b1 = pg.evaluate(f"({PILL})(3)")
@@ -886,7 +891,7 @@ def case_coverworks():
 
         # D) (3.39.9, K-9, Q-m, Q-w) no "co?" when Monk performs: a member of the release's band, MusicBrainz's pianist of the
         # recording, or the track's artist
-        def pill_with(setup):
+        def pill_with(setup, look=None):
             setup()
             c2 = H.new_context(b)
             # (3.39.9, review) the lookups of "member of band": the composer's only
@@ -899,12 +904,26 @@ def case_coverworks():
             H.wait_for(p2, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 90)
             p2.add_style_tag(content='#dci-log { display: none !important; }')
             p2.wait_for_timeout(400)
-            p2.locator('tr[data-work="3"] [data-act=mx-works]').click(); p2.wait_for_timeout(300)
-            p2.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W6}"]').click()
-            p2.wait_for_timeout(6000)
+            # (3.40.3) under load: the button there first (60 s)
+            p2.wait_for_selector('tr[data-work="3"] [data-act=mx-works]', timeout=60000)
+            pick = p2.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W6}"]')
+            for _ in range(3):
+                p2.locator('tr[data-work="3"] [data-act=mx-works]').click(); p2.wait_for_timeout(300)
+                if pick.is_visible():
+                    break
+                p2.wait_for_timeout(1500)
+            pick.click()
+            p2.wait_for_timeout(3000)
+            # (3.40.1) the lookups (the composer's, (3.40.1) its other names'): until they are asked (30 s at most, under load), then a
+            # moment for their answers and the matrix (the cases without a lookup wait as long as before)
+            for _ in range(120):
+                if len(looked) >= len(look or [MONK]):
+                    break
+                p2.wait_for_timeout(250)
+            p2.wait_for_timeout(3000)
             out = p2.evaluate(f"({PILL})(3)")
             c2.close()
-            return out, e2 + ([] if looked == [MONK] else [f'lookups: {looked}'])
+            return out, e2 + ([] if looked == (look or [MONK]) else [f'lookups: {looked}'])
         d0, e0 = pill_with(lambda: None)  # the same page without any of them: "co?" (so the three below say something)
         d1, e1 = pill_with(lambda: H.BAND_MEMBERS.update({TB: [MONK]}))
         H.BAND_MEMBERS.clear()
@@ -920,11 +939,30 @@ def case_coverworks():
         d4, e4 = pill_with(lambda: H.MB_EXTRA.setdefault(H.REL, []).append({'target-type': 'artist', 'type': 'instrument', 'type-id': '67555849-61e5-455b-96e3-29733f0115f5',
                                                                                'attributes': ['piano'], 'attribute-values': {}, 'artist': {'id': MONK, 'name': 'Thelonious Monk'}}))
         H.MB_EXTRA.pop(H.REL, None)
+        # [Z-AF] (3.40.1) "is person": Monk's other name is the release's artist; Monk's other name is a member of the release's band
+        # (Q-ah – the bands of the other name looked up too)
+        ALIAS = H.uid('dddddddd', 3411)
+        d5, e5 = pill_with(lambda: H.IS_PERSON.update({MONK: [TB]}))
+        H.IS_PERSON.clear()
+        d6, e6 = pill_with(lambda: (H.IS_PERSON.update({MONK: [ALIAS]}), H.BAND_MEMBERS.update({TB: [ALIAS]})), look=[MONK, ALIAS])
+        H.IS_PERSON.clear()
+        H.BAND_MEMBERS.clear()
+        # the control: the other name in no band of the release – "co?" (after both lookups)
+        d7, e7 = pill_with(lambda: H.IS_PERSON.update({MONK: [ALIAS]}), look=[MONK, ALIAS])
+        H.IS_PERSON.clear()
+        H.BAND_MEMBERS.clear()
+        # (3.40.3, review) two performance names of one person: Monk and the release's artist both "is person" of LEGAL – from LEGAL's
+        # answer, no lookup more
+        LEGAL = H.uid('dddddddd', 3412)
+        d8, e8 = pill_with(lambda: H.IS_PERSON.update({LEGAL: [MONK, TB]}), look=[MONK, LEGAL])
+        H.IS_PERSON.clear()
+        print('   is person:', d5, '| anderer Name in der Band:', d6, '| anderer Name, keine Band (Gegenprobe):', d7, '| zwei Künstlernamen:', d8, '| Fehler:', e5, e6, e7, e8)
         print('D) ohne:', d0, '| Mitglied der Band:', d1, '| Band des Komponisten:', d1b, '| Pianist in MB:', d2, '| Track-Artist:', d3, '| Pianist des Release:', d4, '| Fehler:', e0, e1, e1b, e2, e3, e4)
         no_co = lambda x: x is None or x[0] != 'hint'
         # d2, d3: performers known without a lookup – none asked then (the lookups list says [MONK] only where one is made)
         results.append(d0 is not None and d0[0] == 'hint' and no_co(d1) and no_co(d1b) and no_co(d2) and no_co(d3) and no_co(d4)
                        and not (e0 or e1 or e1b) and all(not [x for x in e if not x.startswith('lookups')] for e in (e2, e3, e4)))
+        results.append(no_co(d5) and no_co(d6) and d7 is not None and d7[0] == 'hint' and no_co(d8) and not (e5 or e6 or e7 or e8))
         b.close()
     TITLES = ['Round Midnight (Thelonious Monk cover)', 'Epistrophy By Monk', 'Song (Live)', 'Song (Theme)', 'Stand By Me', 'Song (Part 2)',
               'Money (Prod. By Metro Boomin)', 'Song (Main Title)', 'Song (Dub)', 'Theme By Monk For Piano', 'Ode (Ludwig van Beethoven cover)',

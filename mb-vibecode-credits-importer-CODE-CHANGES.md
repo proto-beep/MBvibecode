@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.0, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.3, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,41 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.3 · 2026-11-02
+
+"Credited as" in the head of a block of the entries matrix (collected item Z-AK; Q-ak – Q-aq).
+
+- **New `emBlockAcHtml(a, b, title)`:** in `emBlockHtml`, in the head of a block of several lines (`many`): a field `data-f="em-bac"` with `data-rows` (all rows of all its lines, also those on Skip), `list="dci-ac-<key>"` (the entry's spellings), prefilled with the spelling all its rows carry; several: empty, placeholder `em.blockAcSeveral`, the spellings in its tooltip (`em.blockAcSeveralTitle`).
+- **New `emBlockAc(a, rows, value)`:** credit and `creditTouched` for all the rows (lines of one role with two spellings join, `lineKeyOf`); `S.emUndo` with `{ id, fields }` and the message `em.blockAcSet` / `em.blockAcClear` with ↶ (`em-undo`); nothing when nothing changes. **`emUndoDrop`** restores `fields` too.
+- **`entryMatrixChange`:** `em-bac` → `emBlockAc` (the field's `change`: left or Enter); **`onKeydown`:** Enter in an unchanged `em-bac` applies it too ("several" left empty: the MusicBrainz name for all) – a changed one only through its `change` (once).
+- **CSS:** `.dci-em-bac`.
+- **Texts (English):** `em.blockAcLabel`, `em.blockAcTitle`, `em.blockAcSeveral`, `em.blockAcSeveralTitle`, `em.blockAcSet`, `em.blockAcClear`.
+- **After the independent review of block AZ (3.40.1 – 3.40.3):**
+  - **"Import credits …" of the line** imports the source it counted: the autostart entry has `force`, `S.editorLinks` sets `S.gapCountLink` from it, and `startSource` takes it first (until then the order of the sources chose – the Discogs release without credits, or the dialog of several Bandcamp pages).
+  - **The dashboard's number per source:** new `gapExactKey(mbid, kind)` – Bandcamp's in `dci-gap-exact:<MBID>:bandcamp` (an import of the empty Discogs release took its place); `gapCount` listens to the key of its source.
+  - **Discogs 404:** Bandcamp steps in too (`dgEmpty.missing`, `gap.dgMissing`); `gap.dgNone` / `gap.dgNoneNotes` "no credits to import" (also credits that are all left out). The Bandcamp page of 3.40.0 (`dci-gap:<MBID>` with `bId`) is taken over into `:bandcamp`, its ✕ with it.
+  - **"co?":** the other names' own "is person" names count too (two performance names of one person, no lookup more); at most five other names looked up.
+  - **Z-AK:** the field only with several roles (`emRoleKey`; not one role in two spellings); `emBlockAc` – Undo for the rows changed, as they were (`creditTouched` and `caseCredit`; undefined removed again), only for rows that still carry the value set (`set`); `caseCredit` false (↺ in capitals no longer takes it back); the message counts the roles changed; a draft of what is typed (`S.emBacDraft`, `onInput`) and `data-dirty` – Enter in an unchanged field only after typing in it; `rerenderGroup` gives the focus back to the field of the same block (`.dci-em-block[data-block]`).
+- **Tests:** `t_ui_head.py` new case `blockac` (Oliver Lake's instruments: the field with "several"; "Lake" + Enter – the flutes join, the message with ↶; Undo; a line changed by hand keeps its own, also against the older ↶; emptied – typed in, cleared, Enter: the MusicBrainz name, the focus in the field again; Carl Allen's blocks of one role: none; compact: no field, the chips with their "as …"); after the review also `t_start.py` `gapmore` E ("Import credits …" imports Bandcamp; Discogs 404: Bandcamp; the number per source), `t_works_more.py` `coverworks` d8 (two performance names of one person), its waits longer under load (45 s for "co?", the lookups up to 30 s, the button of the works first, the list opened again when a redraw closed it), `workpick` clicks "Link" once more when a redraw took the first click; `t_entries.py` reads the head of a block without its new field.
+
+## Import 3.40.2 · 2026-11-02
+
+The line of the release page: Bandcamp in place of a Discogs release without credits, several Bandcamp pages (collected items Z-AD, Z-AE; Q-ad, Q-ae, Q-ag).
+
+- **New `gapRead(src, prev, ws)`:** the credits of one page of a source kept a week – read again when older, a failed answer kept (404 a week, else an hour) – `{ kept, changed, failed }`, or null when the request was broken off; the `since` of 3.40.0 kept with the same credits. Until 3.40.1 inline in `initReleaseGap`.
+- **`initReleaseGap`:** Discogs first (`dci-gap:<MBID>`, as before); a Discogs release read without credits → `dgEmpty` (`{ notes }`) and Bandcamp steps in; Discogs failed → no line (as before). Bandcamp: all its pages linked (three at most), each kept in `dci-gap:<MBID>:bandcamp` (`{ at, pages: { <url>: kept } }`; pages no longer linked dropped; until 3.40.1 one page in `dci-gap:<MBID>` with `bId`), the one with the most credits counts (`others`: the rest, with their number of credits or null when not read). The dismissal (✕) through `use.dismiss` – on the Discogs entry or the Bandcamp page counted.
+- **`showReleaseGap(opts)`:** `opts.key` replaced by `opts.dismiss`; new `opts.dgEmpty` (the text first: `gap.dgNone`, `gap.dgNoneNotes`) and `opts.others` (under ▸: `gap.bc.other`, `gap.bc.otherFailed`).
+- **Texts (English):** `gap.dgNone`, `gap.dgNoneNotes`, `gap.bc.other`, `gap.bc.otherFailed`.
+- **Tests:** `t_start.py` `gapmore` E (a Discogs release without credits, its notes kept: Bandcamp with the text first; three Bandcamp pages – a label's with one credit, the artist's, one not found: the artist's counted, the others under ▸, all three kept; ✕ holds over a reload); D reads the Bandcamp page from `dci-gap:<MBID>:bandcamp`.
+
+## Import 3.40.1 · 2026-11-02
+
+"co?" and "is person" (collected item Z-AF; Q-af, Q-ah).
+
+- **`bandLinks`:** `S.bandOf` holds `{ band, person }` per artist (until 3.40.0 a Set of "member of band"): the same answer of `artist/<mbid>?inc=artist-rels` gives "is person" too (`person`), either way.
+- **`coverComposers`:** the composer's names – the composer and its "is person" names: one of them a performer → no "co?"; their groups looked up too (`bandLinks(others)`, one lookup each; no "co?" while one waits), a group of one of them performing → no "co?".
+- **Tests:** `harness.IS_PERSON` (legal name → performance names, both directions in `/ws/2/artist/`); `t_works_more.py` `coverworks` D – the release's artist the composer's other name, the other name a member of the release's band (the lookups of both names counted), the control: the other name in no band of the release ("co?"); `pill_with` waits for the lookups.
 
 ## Import 3.40.0 · 2026-11-02
 
