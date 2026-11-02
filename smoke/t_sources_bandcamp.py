@@ -1019,7 +1019,10 @@ def case_cloudpondbc():
     """Credits Importer 3.40.4 (collected item Z-LU): Robert Rich's "Cloud Pond Sky River" from his own Bandcamp page (its credits
     as on the page): two entries "Robert Rich" with the same link – the person (RR, "With …") and "©2026 Robert Rich" (Copyright (c),
     as an artist): both found through the link (until 3.40.3 the second took the place of the first, which stayed "Looking up MB
-    artist …"); no entry left waiting."""
+    artist …"); no entry left waiting.
+    B) (3.40.5, collected item Z-RG) "Pacific coast" (T059): the area Pacific Coast, MusicBrainz's area United States its first
+       suggestion ("the area the region “Pacific Coast” lies in (T059) …"), not set by itself; chosen: the row credited "Pacific Coast"
+       (as in the list)."""
     BAND = 'https://robertrich.bandcamp.com'
     ALBUM = f'{BAND}/album/cloud-pond-sky-river'
     RR = H.uid('dddddddd', 777)
@@ -1027,6 +1030,8 @@ def case_cloudpondbc():
     H.BC_ARTISTS[BAND + '/'] = H.ARTISTS[777]
     H.RELEASE_AC[:] = [(RR, 'Robert Rich', 'Robert Rich', '')]
     H.TITLES[:] = ['Cloud Pond Sky River'] + H.TITLES[1:]
+    US = H.uid('eeeeeeee', 840)
+    H.MB_SEARCH.setdefault('area', []).append({'id': US, 'name': 'United States', 'disambiguation': '', 'score': 100, 'type': 'Country'})
     tracks = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/t{i + 1}', 'duration': 3600.0} for i, t in enumerate(H.TITLES)]
     credits = ('released October 30, 2026\n©2026 Robert Rich\nRecorded Mixed and Mastered by RR at Soundscape, Carmel CA\n'
                'With Apple Logic, Sequential PX, flutes, lap steel, bells and objects\nAmbisonic recordings by RR 2022-2025 Pacific coast\n'
@@ -1058,6 +1063,19 @@ def case_cloudpondbc():
         logs = [x for x in pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))") if x.startswith('Robert Rich: found via Bandcamp link')]
         print('A) Einträge:', e, '\n   Protokoll:', logs)
         results.append(len(rr) == 2 and all(x[1] == 'linked' for x in rr) and not [x for x in e if x[1] == 'pending'] and len(logs) == 2)
+        sec = "section.dci-group:has(.dci-gname strong:text-is('Pacific Coast'))"
+        G = "[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Pacific Coast')"
+        sugg = pg.evaluate(f"[...({G}).querySelectorAll('.dci-suggbtn[data-act=name-use]')].map(b => [b.dataset.mbid, b.closest('.dci-suggitem').textContent.replace(/\\s+/g, ' ').trim()])")
+        st0 = pg.evaluate(f"(({G}).className.match(/dci-st-(\\w+)/) || [])[1]")
+        pg.locator(f'{sec} .dci-suggbtn[data-act=name-use][data-mbid="{US}"]').first.click()
+        pg.wait_for_timeout(800)
+        st1 = pg.evaluate(f"(({G}).className.match(/dci-st-(\\w+)/) || [])[1]")
+        # the credit of its rows: the chip in the head of the entry ("as “…”")
+        ac = pg.evaluate(f"(c => c && !c.hidden ? c.textContent.trim() : '')(({G}).querySelector('.dci-gcredit'))")
+        rlog = [x for x in pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))") if 'region' in x]
+        print('B) Pacific Coast:', st0, sugg[:2], '→', st1, '| credited as:', ac, '| Protokoll:', rlog)
+        results.append(bool(sugg) and sugg[0][0] == US and 'the area the region “Pacific Coast” lies in (T059)' in sugg[0][1] and st0 == 'missing'
+                       and st1 in ('linked', 'manual', 'chosen') and ac.startswith('as “Pacific Coast”') and rlog == ['Pacific Coast: a region – United States suggested (T059)'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

@@ -356,7 +356,8 @@ python3 t_mapping.py            # Mapping: roles, questions, suggestions, master
                                 #   listkeys: 3.39.6 (K-13): T001 changed with "Lap Steel2" (as an imported file writes it) is found (Node)
                                 #   toys: 3.39.7 (T058): "Toys" asks percussion · electronic instruments · other instruments “toys”; "Found Objects"
                                 #   oldfile: 3.39.2 (review): a mapping file without T058 / T059 and changes of your own (Node, files copied):
-                                #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again
+                                #     the script loads, "Pacific coast" not recognized; T059 changed by hand → the region again;
+                                #     3.40.5 (Z-RG): a file whose T059 is a list of words (3.40.4) – the region read
 
 python3 t_rules_window.py       # The window "Mapping rules": its words, in the dashboard, rule ids at rows, quick switches, ✎, export and import
                                 #   rulesname: "Mapping rules" says "Discogs" only with Discogs loaded, "role" with a text (3.13.2), follows at once
@@ -589,7 +590,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     and the log name Bandcamp, no "Discogs" in the head; the tag "Bandcamp" in Bandcamp's blue (#629aa9);
                                 #     3.39.2 (187): the line "With …" from Bandcamp – the release's artist's, "objects" asked, nothing not recognized
                                 #   cloudpondbc: 3.40.4 (Z-LU): "Cloud Pond Sky River" from Robert Rich's own page – two entries "Robert Rich" with
-                                #     the same link (the person, "©2026 Robert Rich"): both found, none "Looking up MB artist …"
+                                #     the same link (the person, "©2026 Robert Rich"): both found, none "Looking up MB artist …"; 3.40.5 (Z-RG):
+                                #     "Pacific coast" – United States first among the suggestions, not set; chosen: "as “Pacific Coast”"
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
