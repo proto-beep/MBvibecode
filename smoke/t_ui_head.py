@@ -23,8 +23,10 @@ def case_head():
     HEAD = """(() => { const h = document.querySelector('.dci-head'); const kids = [...h.children].filter(k => k.offsetParent !== null);
   const tops = kids.map(k => Math.round(k.getBoundingClientRect().top + k.getBoundingClientRect().height / 2));
   const btns = [...h.querySelectorAll('.dci-head-tools .dci-ibtn')].map(b => [b.dataset.act, !!b.querySelector('svg.dci-ico'), b.getAttribute('aria-label'), b.title]);
+  // (3.40.6) the groups: what stands between the separators
+  const groups = [...h.querySelector('.dci-head-tools').children].reduce((g, k) => { if (k.classList.contains('dci-head-sep')) g.push([]); else g[g.length - 1].push(k.dataset.act || k.className); return g; }, [[]]);
   const label = h.querySelector('.dci-hlabel');
-  return { spread: Math.max(...tops) - Math.min(...tops), btns, zoom: h.querySelector('[data-el=zoom]').textContent.trim(),
+  return { spread: Math.max(...tops) - Math.min(...tops), btns, groups, zoom: h.querySelector('[data-el=zoom]').textContent.trim(),
     lang: h.querySelectorAll('[data-f=lang]').length, place: h.querySelectorAll('[data-act=place-toggle]').length,
     switches: h.querySelectorAll('[data-sync-mode], [data-dg-status], [data-click-toggle]').length, status: !!h.querySelector('.dci-syncstatus'),
     label: getComputedStyle(label).display }; })()"""
@@ -68,9 +70,12 @@ def case_head():
         a2 = pg.evaluate(HEAD)
         print('A) Kopf:', {k: v for k, v in a1.items() if k != 'btns'}, '\n   Knöpfe:', a1['btns'], '\n   breit:', a2['spread'], a2['label'])
         # [3.27.2] the symbol of the compact view first, left of the text size (item 60); [3.36.3] ⌨ the keyboard shortcuts;
-        # [3.36.5] no ⓘ any more (collected item 147c: ⚙ → ⓘ Connections); [189] (3.39.3) the statistics after ⚙
-        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'settings-open', 'stats-open', 'rules', 'log', 'keys-open', 'window-reset', 'close']
-                       and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][1][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
+        # [3.36.5] no ⓘ any more (collected item 147c: ⚙ → ⓘ Connections); [189] (3.39.3) the statistics after ⚙; [Z-HB] (3.40.6) in groups:
+        # the view | the work | help and settings | ✕ (Q-ay)
+        print('   Gruppen:', a1['groups'])
+        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'window-reset', 'rules', 'log', 'stats-open', 'keys-open', 'settings-open', 'close']
+                       and a1['groups'] == [['view-toggle', 'dci-zoom', 'window-reset'], ['rules', 'log'], ['stats-open', 'keys-open', 'settings-open'], ['close']]
+                       and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][6][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
                        and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
                        and a2['spread'] <= 6 and a2['label'] != 'none')
         pg.set_viewport_size({'width': 1500, 'height': 1000})
