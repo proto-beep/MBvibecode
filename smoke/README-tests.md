@@ -580,6 +580,8 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #   navlink: the source in the navigation bar (3.17.4): link, "open in background", "Load the release there"; ↗ at suggestions
                                 #   mappingload: 3.33.0: the mapping file from the manager; fetched from GitHub (kept, one reload); missing → the
                                 #     message with "Update script"
+                                #   gapline: 3.39.0 (172): the line of the release page (estimate, parts, the dashboard's number), Discogs kept,
+                                #     ✕ until the number changes, the setting off, "Import credits …" → the dashboard (its number kept)
                                 #   languagesload: 3.34.0: the languages file from the manager (German); fetched from GitHub (kept, one reload);
                                 #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
 

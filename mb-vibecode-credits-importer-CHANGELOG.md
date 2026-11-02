@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.38.18 | – |
+| 2026-11-02 | 3.38.13 – 3.39.0 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,14 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.39.0
+
+Milestone: the release page says what is missing.
+
+#### Added
+
+- **A line on the page of a release with a Discogs link** (collected item 172): "Discogs: about 40 relationships of its credits are not on MusicBrainz yet." – each credit counted on each of its tracks (F-172a), by the names MusicBrainz has on each level: recordings, release, works, labels and places (F-172b, F-172f – the credits of the Discogs notes only in the dashboard's number), with the exact number of the dashboard's last import when there is one; ▸ shows the parts (F-172g); "Import credits …" opens the relationship editor with the dashboard; ✕ hides it for the release until the number changes (F-172d). Automatic, the Discogs credits kept a week (F-172c); Discogs only, a setting in ⚙ Settings → Sources (F-172e).
 
 ### Import 3.38.18
 
