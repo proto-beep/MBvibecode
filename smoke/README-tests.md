@@ -588,6 +588,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #   bcspell: 3.39.1 (185): Robert Rich credited "RR" from Bandcamp – "(the Bandcamp spelling *)", the tooltips
                                 #     and the log name Bandcamp, no "Discogs" in the head; the tag "Bandcamp" in Bandcamp's blue (#629aa9);
                                 #     3.39.2 (187): the line "With …" from Bandcamp – the release's artist's, "objects" asked, nothing not recognized
+                                #   cloudpondbc: 3.40.4 (Z-LU): "Cloud Pond Sky River" from Robert Rich's own page – two entries "Robert Rich" with
+                                #     the same link (the person, "©2026 Robert Rich"): both found, none "Looking up MB artist …"
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium

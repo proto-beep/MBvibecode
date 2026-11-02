@@ -1,6 +1,6 @@
 """Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6), bcspell (3.39.1) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources_bandcamp.py <case> …` runs only those."""
+Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6), bcspell (3.39.1), cloudpondbc (3.40.4) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources_bandcamp.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1013,5 +1013,55 @@ def case_bcspell():
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_cloudpondbc():
+    """Credits Importer 3.40.4 (collected item Z-LU): Robert Rich's "Cloud Pond Sky River" from his own Bandcamp page (its credits
+    as on the page): two entries "Robert Rich" with the same link – the person (RR, "With …") and "©2026 Robert Rich" (Copyright (c),
+    as an artist): both found through the link (until 3.40.3 the second took the place of the first, which stayed "Looking up MB
+    artist …"); no entry left waiting."""
+    BAND = 'https://robertrich.bandcamp.com'
+    ALBUM = f'{BAND}/album/cloud-pond-sky-river'
+    RR = H.uid('dddddddd', 777)
+    H.ARTISTS[777] = (RR, 'Robert Rich')
+    H.BC_ARTISTS[BAND + '/'] = H.ARTISTS[777]
+    H.RELEASE_AC[:] = [(RR, 'Robert Rich', 'Robert Rich', '')]
+    H.TITLES[:] = ['Cloud Pond Sky River'] + H.TITLES[1:]
+    tracks = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/t{i + 1}', 'duration': 3600.0} for i, t in enumerate(H.TITLES)]
+    credits = ('released October 30, 2026\n©2026 Robert Rich\nRecorded Mixed and Mastered by RR at Soundscape, Carmel CA\n'
+               'With Apple Logic, Sequential PX, flutes, lap steel, bells and objects\nAmbisonic recordings by RR 2022-2025 Pacific coast\n'
+               'Cover © Maksimillian Novak-Zemplinski, detail used with permission.')
+    H.BC_PAGES[ALBUM] = H.bc_html({'artist': 'Robert Rich', 'current': {'title': 'Cloud Pond Sky River', 'credits': credits, 'about': ''}, 'trackinfo': tracks}, ALBUM)
+    for t in tracks:
+        H.BC_PAGES[f'{BAND}{t["title_link"]}'] = H.bc_html({'artist': 'Robert Rich', 'current': {'title': t['title'], 'credits': ''}}, f'{BAND}{t["title_link"]}')
+    orig = H.ws_release
+
+    def ws(full=False):
+        d = orig(full)
+        d['relations'] = [r for r in d['relations'] if not (r.get('url') and 'discogs.com' in r['url']['resource'])]
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        return d
+    H.ws_release = ws
+    ENTRIES = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      (g.className.match(/dci-st-(\\w+)/) || [])[1], (g.querySelector('.dci-badge') || {}).textContent || ''])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1500)
+        e = pg.evaluate(ENTRIES)
+        rr = [x for x in e if x[0] == 'Robert Rich']
+        logs = [x for x in pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))") if x.startswith('Robert Rich: found via Bandcamp link')]
+        print('A) Einträge:', e, '\n   Protokoll:', logs)
+        results.append(len(rr) == 2 and all(x[1] == 'linked' for x in rr) and not [x for x in e if x[1] == 'pending'] and len(logs) == 2)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    H.ws_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())
