@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.0
+// @version      3.40.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -274,6 +274,12 @@
       "gap.bc.none": "Bandcamp: its credits seem to be on MusicBrainz (a rough estimate, counted by names).",
       "gap.bc.incomplete": "Bandcamp: MusicBrainz does not give all relationships of this large release at once – the dashboard counts them.",
       "gap.bc.how": "A rough estimate: the credits of the album page (not those of its track pages) read as a text – instruments known by their names (all of MusicBrainz's once its relationship editor was opened) –, each counted on each of its tracks by the names MusicBrainz has there.",
+      "gap.dgNone": "Discogs has no credits to import for this release.",
+      "gap.dgNoneNotes": "Discogs has no credits to import in its list for this release (its notes are not read here).",
+      "gap.dgMissing": "Discogs does not have this release (any more).",
+      "gap.bc.other.one": "Also linked: {page} – {n} credit there (the page with more credits is counted).",
+      "gap.bc.other.other": "Also linked: {page} – {n} credits there (the page with more credits is counted).",
+      "gap.bc.otherFailed": "Also linked: {page} – it could not be read.",
       "gap.count": "Count exactly",
       "gap.countTitle": "The dashboard counts the new relationships in a tab in the background (the relationship editor of this release, closed again when it is done)",
       "gap.counting": "Counting in a tab in the background …",
@@ -2025,6 +2031,14 @@
       "em.creditLabel": "Role credit of {name}",
       "em.colAc": "Credited as",
       "em.acLabel": "Credited as – {name}",
+      "em.blockAcLabel": "Credited as – all roles of “{block}” of {name}",
+      "em.blockAcTitle": "For all roles of this block at once (also those taken out), when the field is left or with Enter – ↶ Undo in the message; a role changed afterwards keeps its own. Empty: the MusicBrainz name ({name}).",
+      "em.blockAcSeveral": "several",
+      "em.blockAcSeveralTitle": "Several spellings in this block: {list}",
+      "em.blockAcSet.one": "Credited as “{text}” for {n} role of {name}",
+      "em.blockAcSet.other": "Credited as “{text}” for {n} roles of {name}",
+      "em.blockAcClear.one": "Credited as the MusicBrainz name for {n} role of {name}",
+      "em.blockAcClear.other": "Credited as the MusicBrainz name for {n} roles of {name}",
       "em.flagLabel": "{flag}: {name}",
       "em.tickLabel": "{name} in event {n}",
       "em.tickNo": "MusicBrainz has no “{type}” on the level {level}",
@@ -7449,8 +7463,10 @@
    * its rows that cannot be staged yet (no MusicBrainz entry, no type …) – relationships missing all the same.
    */
   function gapExactWrite(mbid, p, n, open) {
-    writeJson('localStorage', `${GAP_EXACT_PREFIX}${mbid.toLowerCase()}`, { n, open, at: Date.now(), src: p.src, id: p.id, ...(p.src === 'discogs' ? { dId: p.id } : {}) });
+    writeJson('localStorage', gapExactKey(mbid, p.src), { n, open, at: Date.now(), src: p.src, id: p.id, ...(p.src === 'discogs' ? { dId: p.id } : {}) });
   }
+  /** (3.40.3, review) The dashboard's number per source (Bandcamp's of its own: an import of the Discogs release does not take it). */
+  const gapExactKey = (mbid, kind) => `${GAP_EXACT_PREFIX}${String(mbid).toLowerCase()}${kind && kind !== 'discogs' ? `:${kind}` : ''}`;
 
   /** Discogs allows about 25 requests a minute without a login: at least 2.5 s between those of the line (in every tab). */
   async function gapDiscogs(dId) {
@@ -7535,6 +7551,32 @@
     };
   }
 
+  /**
+   * The credits of one page of a source for the line, kept a week (prev: what is kept of this page, or null): { kept, changed,
+   * failed }, or null when the request was broken off (the page left, no network). [Z-AD/Z-AE] (3.40.2) one function for Discogs and
+   * each Bandcamp page (until 3.40.1 inline, one source).
+   */
+  async function gapRead(src, prev, ws) {
+    if (prev && prev.failAt && Date.now() - prev.failAt < (prev.failStatus === 404 ? GAP_KEEP_MS : 3600 * 1000)) return { kept: prev, failed: true };
+    if (prev && prev.credits && !prev.failAt && Date.now() - (prev.at || 0) <= GAP_KEEP_MS) return { kept: prev };
+    let rel;
+    try {
+      rel = src.kind === 'discogs' ? await gapDiscogs(src.id) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
+    } catch (e) {
+      // an answer that says no (429, 404, 5xx) is kept; a request broken off is not
+      if (!e || e.name === 'TypeError' || e.name === 'AbortError') return null;
+      const status = /404|not found|missing|does not exist/i.test(String(e.message)) ? 404 : 0;
+      console.warn('[Discogs-Credits] release gap', src.kind, e);
+      return { kept: { ...(prev || {}), failAt: Date.now(), failStatus: status }, changed: true, failed: true };
+    }
+    // Bandcamp's page has no notes apart from its credits (its "about" text is read with them)
+    const read = { ...gapCreditsOf(rel), ...(src.kind === 'bandcamp' ? { notes: false } : {}) };
+    // (3.40.0, review) since: when the credits were first read like this – the same credits a week later keep it (a count of the
+    // dashboard since then still holds)
+    const same = !!prev && !!prev.credits && JSON.stringify(prev.credits) === JSON.stringify(read.credits);
+    return { kept: { ...(prev && prev.dismissed != null ? { dismissed: prev.dismissed } : {}), at: Date.now(), since: same ? (prev.since || prev.at) : Date.now(), ...read }, changed: true };
+  }
+
   async function initReleaseGap(mbid) {
     if (readJson('localStorage', GAP_ON_KEY, true) === false || !/^\/release\/[0-9a-f-]{36}\/?$/i.test(location.pathname)) return;
     // the page's own links first: a release page without a Discogs or Bandcamp link asks nothing
@@ -7548,40 +7590,81 @@
     const ws = await res.json();
     const links = sourceLinksOf((ws.relations || []).filter((r) => r.url).map((r) => r.url.resource));
     const dLink = links.find((l) => l.source === 'discogs');
-    // [AY] (3.40.0) without a Discogs link: one album page of Bandcamp (Q-o)
     const bLinks = links.filter((l) => l.source === 'bandcamp');
-    const src = dLink ? { kind: 'discogs', id: String(dLink.id), url: dLink.url } : bLinks.length === 1 ? { kind: 'bandcamp', id: String(bLinks[0].id), url: bLinks[0].url } : null;
-    if (!src) return;
-    const idKey = src.kind === 'discogs' ? 'dId' : 'bId';
-    const key = `${GAP_PREFIX}${mbid.toLowerCase()}`;
-    let kept = readJson('localStorage', key, null);
-    const mine = !!kept && kept[idKey] === src.id;
-    if (mine && kept.failAt && Date.now() - kept.failAt < (kept.failStatus === 404 ? GAP_KEEP_MS : 3600 * 1000)) return;
-    if (!mine || !kept.credits || Date.now() - (kept.at || 0) > GAP_KEEP_MS) {
-      let rel;
-      try {
-        rel = src.kind === 'discogs' ? await gapDiscogs(src.id) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
-      } catch (e) {
-        // an answer that says no (429, 404, 5xx) is kept; a request broken off (the page left, no network) is not
-        if (!e || e.name === 'TypeError' || e.name === 'AbortError') return;
-        const status = /404|not found|missing|does not exist/i.test(String(e.message)) ? 404 : 0;
-        console.warn('[Discogs-Credits] release gap', src.kind, e);
-        writeJson('localStorage', key, { ...(mine ? kept : { [idKey]: src.id }), failAt: Date.now(), failStatus: status });
-        return;
+    const rel = mbid.toLowerCase();
+    let use = null;
+    // [Z-AD] (3.40.2) Discogs read, without credits in its list: { notes } – Bandcamp steps in, the line says so (Q-ad)
+    let dgEmpty = null;
+    if (dLink) {
+      const src = { kind: 'discogs', id: String(dLink.id), url: dLink.url };
+      const key = `${GAP_PREFIX}${rel}`;
+      const old = readJson('localStorage', key, null);
+      const r = await gapRead(src, old && old.dId === src.id ? old : null, ws);
+      if (!r) return;
+      if (r.changed) writeJson('localStorage', key, { ...r.kept, dId: src.id });
+      // Discogs did not answer: no line (Bandcamp steps in only when Discogs has nothing); (3.40.3, review) a release Discogs does
+      // not have (404) has nothing
+      if (r.failed && r.kept.failStatus !== 404) return;
+      if (r.failed) dgEmpty = { missing: true };
+      else if ((r.kept.credits || []).length) {
+        use = {
+          src, kept: r.kept,
+          dismiss: (n) => {
+            const k = readJson('localStorage', key, null);
+            if (k) writeJson('localStorage', key, { ...k, dismissed: n });
+          },
+        };
+      } else dgEmpty = { notes: !!r.kept.notes };
+    }
+    if (!use && bLinks.length) {
+      // [AY] (3.40.0) without a Discogs link (or [Z-AD] one without credits): Bandcamp, a rough estimate (Q-o). [Z-AE] (3.40.2) all
+      // its pages linked (three at most), each kept a week (`dci-gap:<MBID>:bandcamp`); the page with the most credits counts, as the
+      // dialog of several linked releases chooses the one with the most data (Q-ae, Q-ag) – the others named under ▸
+      const key = `${GAP_PREFIX}${rel}:bandcamp`;
+      const store = readJson('localStorage', key, null) || {};
+      const pages = { ...(store.pages || {}) };
+      // (3.40.3, review) the page of 3.40.0 (in `dci-gap:<MBID>` with bId) taken over, its ✕ with it
+      const old = !store.pages && readJson('localStorage', `${GAP_PREFIX}${rel}`, null);
+      if (old && old.bId && !old.dId) {
+        const { bId, ...kept } = old;
+        pages[bId] = kept;
       }
-      // Bandcamp's page has no notes apart from its credits (its "about" text is read with them)
-      const read = { ...gapCreditsOf(rel), ...(src.kind === 'bandcamp' ? { notes: false } : {}) };
-      // (review) since: when the credits were first read like this – the same credits a week later keep it (a count of the dashboard
-      // since then still holds)
-      const same = mine && kept.credits && JSON.stringify(kept.credits) === JSON.stringify(read.credits);
-      kept = { ...(mine ? { dismissed: kept.dismissed } : {}), [idKey]: src.id, at: Date.now(), since: same ? (kept.since || kept.at) : Date.now(), ...read };
-      writeJson('localStorage', key, kept);
+      let changed = false;
+      const read = [];
+      for (const l of bLinks.slice(0, 3)) {
+        const src = { kind: 'bandcamp', id: String(l.id), url: l.url };
+        const r = await gapRead(src, pages[src.id] || null, ws);
+        if (!r) return;
+        if (r.changed) {
+          pages[src.id] = r.kept;
+          changed = true;
+        }
+        read.push({ src, kept: r.kept, failed: !!r.failed });
+      }
+      Object.keys(pages).filter((u) => !read.some((x) => x.src.id === u)).forEach((u) => {
+        delete pages[u];
+        changed = true;
+      });
+      if (changed) writeJson('localStorage', key, { at: Date.now(), pages });
+      const ok = read.filter((x) => !x.failed && (x.kept.credits || []).length).sort((a, b) => b.kept.credits.length - a.kept.credits.length);
+      if (ok.length) {
+        const best = ok[0];
+        use = {
+          src: best.src, kept: best.kept, dgEmpty,
+          others: read.filter((x) => x !== best).map((x) => ({ url: x.src.url, n: x.failed ? null : (x.kept.credits || []).length })),
+          dismiss: (n) => {
+            const k = readJson('localStorage', key, null);
+            if (k && k.pages && k.pages[best.src.id]) writeJson('localStorage', key, { ...k, pages: { ...k.pages, [best.src.id]: { ...k.pages[best.src.id], dismissed: n } } });
+          },
+        };
+      }
     }
     // [AY] (3.40.0) nothing in it: no line (Q-o, Q-x)
-    if (!(kept.credits || []).length) return;
+    if (!use) return;
+    const { src, kept } = use;
     const mb = gapMbNames(ws);
     const est = mb.incomplete ? null : gapEstimate(kept, mb);
-    let exact = readJson('localStorage', `${GAP_EXACT_PREFIX}${mbid.toLowerCase()}`, null);
+    let exact = readJson('localStorage', gapExactKey(rel, src.kind), null);
     if (!gapExactOf(exact, src)) exact = null;
     // [AY] (3.40.0) nothing missing – about none, or the dashboard counted none since the credits were read (review: and none of
     // its rows open – a name without a MusicBrainz entry is missing all the same): no line (Q-x), unless the setting says so
@@ -7589,11 +7672,11 @@
     if (none && readJson('localStorage', GAP_NONE_KEY, false) !== true) return;
     // ✕: hidden until the number changes
     if (est && kept.dismissed != null && kept.dismissed === est.total) return;
-    showReleaseGap({ mbid, src, est, exact, key, notes: kept.notes });
+    showReleaseGap({ mbid, src, est, exact, notes: kept.notes, dismiss: use.dismiss, dgEmpty: use.dgEmpty || null, others: use.others || [] });
   }
 
   function showReleaseGap(opts) {
-    const { mbid, src, est, exact, key, notes } = opts;
+    const { mbid, src, est, exact, notes, dismiss, dgEmpty, others } = opts;
     const host = document.querySelector('#content') || document.body;
     host.querySelectorAll('.dci-gapline').forEach((x) => x.remove());
     const box = document.createElement('div');
@@ -7605,13 +7688,17 @@
     // a release of many tracks MusicBrainz does not answer in full: no number; the credits of the Discogs notes are not read here
     // [AY] (3.40.0) Bandcamp: a rough estimate, said so
     const bc = src.kind === 'bandcamp';
-    const text = !est ? tr(bc ? 'gap.bc.incomplete' : 'gap.incomplete')
+    // [Z-AD] (3.40.2) Bandcamp in place of a Discogs release without credits: said first
+    const text = (dgEmpty ? `${tr(dgEmpty.missing ? 'gap.dgMissing' : dgEmpty.notes ? 'gap.dgNoneNotes' : 'gap.dgNone')} ` : '') + (!est ? tr(bc ? 'gap.bc.incomplete' : 'gap.incomplete')
       : est.total ? tr(bc ? 'gap.bc.missing' : notes ? 'gap.missingNotes' : 'gap.missing', { n: est.total })
-        : tr(bc ? 'gap.bc.none' : notes ? 'gap.noneNotes' : 'gap.none');
+        : tr(bc ? 'gap.bc.none' : notes ? 'gap.noneNotes' : 'gap.none'));
     const exactText = exact && exact.n != null ? ` ${tr('gap.exact', { n: exact.n, date: new Date(exact.at).toLocaleDateString() })}`
       + (exact.open ? ` ${tr('gap.exactOpen', { n: exact.open })}` : '') : '';
-    const parts = est ? [['recordings', 'gap.recordings'], ['release', 'gap.release'], ['works', 'gap.works'], ['companies', 'gap.companies']]
-      .map(([k, t]) => `<li>${esc(tr(t, { n: est[k] }))}</li>`).join('') : '';
+    const parts = (est ? [['recordings', 'gap.recordings'], ['release', 'gap.release'], ['works', 'gap.works'], ['companies', 'gap.companies']]
+      .map(([k, t]) => `<li>${esc(tr(t, { n: est[k] }))}</li>`).join('') : '')
+      // [Z-AE] (3.40.2) the other Bandcamp pages of the release
+      + (others || []).map((o) => `<li>${esc(o.n == null ? tr('gap.bc.otherFailed', { page: String(o.url).replace(/^https?:\/\//, '') })
+        : tr('gap.bc.other', { page: String(o.url).replace(/^https?:\/\//, ''), n: o.n }))}</li>`).join('');
     const btn = 'background:none;border:0;padding:0 4px;color:#4a2f99;cursor:pointer;font:inherit;';
     box.innerHTML = `<button type="button" data-gap="parts" aria-expanded="false" aria-controls="dci-gap-parts" aria-label="${esc(tr('gap.partsLabel'))}" style="${btn}">▸</button>
       <span data-gap-text>${esc(text)}${esc(exactText)}</span>
@@ -7627,12 +7714,13 @@
     });
     box.querySelector('[data-gap=count]').addEventListener('click', () => gapCount(opts, box));
     box.querySelector('[data-gap=import]').addEventListener('click', () => {
-      writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: sourceLinksOf([src.url]), at: Date.now() });
+      // (3.40.3, review) the source of the line (force) – also when the release has others (the Discogs release without credits,
+      // several Bandcamp pages)
+      writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: sourceLinksOf([src.url]), at: Date.now(), force: true });
       location.assign(`/release/${mbid}/edit-relationships`);
     });
     box.querySelector('[data-gap=close]').addEventListener('click', () => {
-      const kept = readJson('localStorage', key, null);
-      if (kept && est) writeJson('localStorage', key, { ...kept, dismissed: est.total });
+      if (est && dismiss) dismiss(est.total);
       box.remove();
     });
     // on MusicBrainz below the head of the release (its title and "~ Release by …"), else below the title
@@ -7649,7 +7737,7 @@
    */
   function gapCount(opts, box) {
     const { mbid, src } = opts;
-    const exactKey = `${GAP_EXACT_PREFIX}${mbid.toLowerCase()}`;
+    const exactKey = gapExactKey(mbid, src.kind);
     const countKey = `${GAP_COUNT_PREFIX}${mbid.toLowerCase()}`;
     const say = (k) => {
       const t = box.querySelector('[data-gap-text]');
@@ -10127,7 +10215,10 @@
     if (!a) return null;
     writeJson('sessionStorage', AUTOSTART_KEY, null);
     if (String(a.release).toLowerCase() !== releaseMbid.toLowerCase() || Date.now() - (Number(a.at) || 0) >= AFTER_EDIT_MAX_MS) return null;
-    return (Array.isArray(a.links) ? a.links : []).filter((l) => l && LINKED_SOURCES.includes(l.source) && l.id);
+    const links = (Array.isArray(a.links) ? a.links : []).filter((l) => l && LINKED_SOURCES.includes(l.source) && l.id);
+    // (3.40.3, review) "Import credits …" of the line of the release page: its source first
+    if (a.force && links.length) S.gapCountLink = links[0];
+    return links;
   })();
   S.autostart = !!S.editorLinks;
   S.datePool = relRead(POOL_KEY, null) || [];
@@ -14991,7 +15082,8 @@
    * source of the preference list (physical or digital media) that is linked – one link: load it; several: ask.
    */
   function startSource() {
-    // [AY] (3.40.0) "Count exactly" of the release page: the source of its line (also when the release has others)
+    // [AY] (3.40.0) "Count exactly" of the release page: the source of its line (also when the release has others); (3.40.3, review)
+    // also "Import credits …" of that line
     if (S.gapCountLink) {
       const same = (a, b) => a.source === b.source && String(a.id) === String(b.id);
       const l = S.gapCountLink;
@@ -19312,14 +19404,23 @@
   }
   let emUndoSeq = 0;
 
-  /** [E4] (3.34.31) ↶ of a dropped date: the rows moved get their date back, the rows added go. */
+  /** [E4] (3.34.31) ↶ of a dropped date: the rows moved get their date back, the rows added go; [Z-AK] (3.40.3) or of a block's "credited as". */
   function emUndoDrop(id) {
     const undo = S.emUndo.get(id);
     if (!undo) return;
     S.emUndo.delete(id);
     for (const u of undo) {
       if (u.add) S.rows = S.rows.filter((r) => r.id !== u.add);
-      else {
+      else if (u.fields) {
+        // [Z-AK] (3.40.3) the fields of a row as they were ("credited as" of a block) – only while it still carries what was set
+        const r = S.rows.find((x) => x.id === u.id);
+        if (r && (u.set == null || String(r.credit || '').trim() === u.set)) {
+          Object.entries(u.fields).forEach(([k, val]) => {
+            if (val === undefined) delete r[k];
+            else r[k] = val;
+          });
+        }
+      } else {
         const r = S.rows.find((x) => x.id === u.id);
         if (r) Object.assign(r, { date: u.date, dateOpen: !!u.open, ...(u.tracks ? { tracks: u.tracks } : {}), dateKeyed: !!u.keyed });
       }
@@ -19462,7 +19563,9 @@
     const folded = !m.shared && S.emFold.has(fk);
     const fold = m.shared ? '' : `<button type="button" class="dci-textbtn dci-em-fold" data-act="em-fold" data-block="${esc(b.key)}" aria-expanded="${!folded}" title="${esc(tr(folded ? 'em.unfold' : 'em.fold'))}">${folded ? '▸' : '▾'}</button> `;
     const split = many && (b.kind === 'instrument' || b.kind === 'vocal') ? ` <button type="button" class="dci-textbtn" data-act="em-split" title="${esc(tr('em.splitTitle'))}">${esc(tr('em.split'))}</button>` : '';
-    const head = `<div class="dci-em-bhead">${fold}<strong${tip ? ` title="${esc(tip)}"` : ''}>${esc(title)}</strong>${sub ? ` <span class="dci-sub">· ${esc(sub)}</span>` : ''}${split}</div>`;
+    // [Z-AK] (3.40.3) "Credited as" of the block: several roles (Q-ak; review: not one role in two spellings)
+    const roles = uniq(b.lines.flatMap((l) => l.rows).map(emRoleKey)).length;
+    const head = `<div class="dci-em-bhead">${fold}<strong${tip ? ` title="${esc(tip)}"` : ''}>${esc(title)}</strong>${sub ? ` <span class="dci-sub">· ${esc(sub)}</span>` : ''}${roles > 1 ? emBlockAcHtml(a, b, title) : ''}${split}</div>`;
     if (folded) return `<div class="dci-em-block dci-em-folded" data-block="${esc(b.key)}">${head}</div>`;
     const flagNames = uniq(b.lines.flatMap((l) => {
       const lt = ltOf(l.rows[0]);
@@ -19491,6 +19594,48 @@
       ${hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
         : more ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.less'))}</button>` : ''}
     </div>`;
+  }
+
+  /**
+   * [Z-AK] (3.40.3) "Credited as" in the head of a block of several roles (Q-ak): for all its roles at once – also those taken out –,
+   * as soon as the field is left or Enter is pressed (Q-al), also roles with a spelling of their own (they join; Q-am); ↶ Undo in the
+   * message. Prefilled with the spelling all its rows carry; several: empty, "several" (Q-aq) and the spellings in its tooltip; empty
+   * = MusicBrainz's name. A role changed afterwards keeps its own; the compact view shows "as …" at each chip, as before (Q-an).
+   */
+  function emBlockAcHtml(a, b, title) {
+    const rows = b.lines.flatMap((l) => l.rows);
+    const spellings = uniq(rows.map((r) => String(r.credit || '').trim()));
+    const common = spellings.length === 1 ? spellings[0] : null;
+    // (review) what is being typed there stays when the entry is drawn anew meanwhile
+    const draft = S.emBacDraft && S.emBacDraft.key === `${a.key}|${b.key}` ? S.emBacDraft : null;
+    const name = a.mbName || a.name;
+    const several = common == null ? tr('em.blockAcSeveralTitle', { list: spellings.map((x) => (x ? tr('common.quoted', { text: x }) : name)).join(', ') }) : '';
+    return ` <label class="dci-em-bac">${esc(tr('em.colAc'))} <input type="text" data-f="em-bac" data-rows="${rows.map((r) => r.id).join(',')}" data-block="${esc(b.key)}" list="dci-ac-${esc(a.key)}"
+      value="${esc(draft ? draft.value : common || '')}"${draft ? ' data-dirty="1"' : ''} placeholder="${esc(common == null ? tr('em.blockAcSeveral') : tr('credit.placeholder'))}"
+      aria-label="${esc(tr('em.blockAcLabel', { block: title, name }))}" title="${esc([tr('em.blockAcTitle', { name }), several].filter(Boolean).join('\n'))}"></label>`;
+  }
+
+  /** [Z-AK] (3.40.3) A role of a block (a role in two spellings is two lines, one role). */
+  const emRoleKey = (r) => `${norm(rowTypeName(r))}|${norm(r.primaryText || r.raw || '')}`;
+
+  /**
+   * [Z-AK] (3.40.3) The block's "credited as" for all its rows, with ↶ Undo – (review) the spellings before, as they were (a row
+   * without creditTouched gets none back; caseCredit too), for the rows that still carry the value set (a role changed meanwhile
+   * keeps its own).
+   */
+  function emBlockAc(a, rows, value) {
+    const v = value.trim();
+    S.emBacDraft = null;
+    const changed = rows.filter((r) => String(r.credit || '').trim() !== v || !r.creditTouched);
+    if (!changed.length) return;
+    const undo = changed.map((r) => ({ id: r.id, set: v, fields: { credit: r.credit, creditTouched: r.creditTouched, caseCredit: r.caseCredit } }));
+    // (review) the case of a name switched back (↺ in capitals, S060) no longer takes what is typed here
+    rows.forEach((r) => Object.assign(r, { credit: v, creditTouched: true, caseCredit: false }));
+    const id = `u${++emUndoSeq}`;
+    S.emUndo.set(id, undo);
+    // (review) the roles changed
+    const n = uniq(changed.map(emRoleKey)).length;
+    showMessage('ok', v ? 'em.blockAcSet' : 'em.blockAcClear', { text: v, n, name: a.mbName || a.name }, { action: { act: 'em-undo', arg: id, label: 'em.undo' } });
   }
 
   /** [E4] The body of an entry as a matrix (instead of its table of rows): its blocks and a foot with the count. */
@@ -19798,7 +19943,8 @@
     }
     const rows = lineRows(el);
     if (!rows.length) return true;
-    if (f === 'em-tick') emTick(a, rows, el.dataset.ev, el.checked);
+    if (f === 'em-bac') emBlockAc(a, rows, el.value);
+    else if (f === 'em-tick') emTick(a, rows, el.dataset.ev, el.checked);
     else if (f === 'em-flag') rows.forEach((r) => (el.checked ? r.flags.add(el.value) : r.flags.delete(el.value)));
     else if (f === 'em-primary') {
       rows.forEach((r) => {
@@ -22843,8 +22989,9 @@
     const inEdit = act && section.contains(act) && act.closest && act.closest('.dci-em-evedit');
     if (inEdit && act.dataset.f) again = { edit: true, f: act.dataset.f, i: act.dataset.i || '' };
     else if (act && section.contains(act) && act.dataset && act.dataset.f) {
-      const holder = act.closest('[data-row], [data-line], [data-evhead]');
-      const attr = holder ? (holder.dataset.row ? 'data-row' : holder.dataset.line ? 'data-line' : 'data-evhead') : '';
+      // (3.40.3, review) the field in the head of a block: its block
+      const holder = act.closest('[data-row], [data-line], [data-evhead], .dci-em-block[data-block]');
+      const attr = holder ? (holder.dataset.row ? 'data-row' : holder.dataset.line ? 'data-line' : holder.dataset.evhead ? 'data-evhead' : 'data-block') : '';
       again = { f: act.dataset.f, attr, id: holder ? holder.getAttribute(attr) : '', ev: act.dataset.ev || '' };
     }
     const tmp = document.createElement('div');
@@ -23904,8 +24051,10 @@
 
   /**
    * [3.39.9] Who is linked by "member of band" with an artist (its members, or the groups it is a member of; former ones too):
-   * MusicBrainz's relationships, looked up once per artist, in the background (S.bandOf: mbid → Set, 'wait', or { failAt } when
-   * MusicBrainz did not answer). Only asked when "co?" would be offered (Q-m); the works matrix is drawn again once they are there.
+   * MusicBrainz's relationships, looked up once per artist, in the background (S.bandOf: mbid → { band, person }, 'wait', or
+   * { failAt } when MusicBrainz did not answer). Only asked when "co?" would be offered (Q-m); the works matrix is drawn again once
+   * they are there. [Z-AF] (3.40.1) Also "is person" (a performance name and the person's legal name, either way; Q-af) – the
+   * same answer: person.
    */
   function bandLinks(ids) {
     // (3.39.9, review) one answer that failed is asked again after five minutes (until then: as without members)
@@ -23922,7 +24071,8 @@
         const id = S.bandQueue.shift();
         try {
           const a = await mbWsIdle(`artist/${id}?inc=artist-rels`);
-          S.bandOf.set(id, new Set(((a && a.relations) || []).filter((r) => norm(r.type) === 'member of band' && r.artist && r.artist.id).map((r) => r.artist.id)));
+          const of = (type) => new Set(((a && a.relations) || []).filter((r) => norm(r.type) === type && r.artist && r.artist.id).map((r) => r.artist.id));
+          S.bandOf.set(id, { band: of('member of band'), person: of('is person') });
         } catch {
           S.bandOf.set(id, { failAt: Date.now() });
         }
@@ -23947,9 +24097,20 @@
     // until MusicBrainz said who is a member of whom. (review) "member of band" is one relationship of both artists: the
     // composer's own relationships name its bands and its members – one lookup
     bandLinks([plan.composer]);
-    const linked = S.bandOf.get(plan.composer);
-    if (linked === 'wait') return [];
-    if (linked instanceof Set && [...linked].some((id) => perf.has(id))) return [];
+    const own = S.bandOf.get(plan.composer);
+    if (own === 'wait') return [];
+    // [Z-AF] (3.40.1) the composer under another name (is person: "Richard D. James" – Aphex Twin) performs, or is a member of a
+    // performing band under it (Q-ah): the bands of those names looked up too (one more lookup each)
+    const names = new Set([plan.composer, ...((own && own.person) || [])]);
+    if ([...names].some((id) => perf.has(id))) return [];
+    // (review) at most five other names looked up
+    const others = [...names].filter((id) => id !== plan.composer).slice(0, 5);
+    bandLinks(others);
+    if (others.some((id) => S.bandOf.get(id) === 'wait')) return [];
+    // (review) the names of those names too ("Aphex Twin" and "AFX", both "is person" of Richard D. James) – from the same answers
+    others.forEach((id) => ((S.bandOf.get(id) || {}).person || []).forEach((x) => names.add(x)));
+    if ([...names].some((id) => perf.has(id))) return [];
+    if ([...names].some((id) => [...((S.bandOf.get(id) || {}).band || [])].some((x) => perf.has(x)))) return [];
     return [plan.composerName || plan.composer];
   }
   const coverHint = (i, work) => coverComposers(i, work).length > 0;
@@ -29628,6 +29789,13 @@
       applyKindColors();
       return;
     }
+    // [Z-AK] (3.40.3, review) typing in a block's "credited as": kept as a draft, marked as typed in
+    if (f === 'em-bac') {
+      const a = artistOf(el);
+      el.dataset.dirty = '1';
+      if (a) S.emBacDraft = { key: `${a.key}|${el.dataset.block}`, value: el.value };
+      return;
+    }
     // [E4] (3.34.30) typing in a line of an entry's matrix
     if (f === 'em-primary' || f === 'em-credit' || f === 'em-ac') {
       entryMatrixInput(f, el);
@@ -29761,6 +29929,17 @@
     }
     if (e.key !== 'Enter') return;
     const f = e.target.dataset && e.target.dataset.f;
+    // [Z-AK] (3.40.3) Enter in a block's "credited as": for all its roles, also when the field did not change ("several" left empty:
+    // the MusicBrainz name for all)
+    if (f === 'em-bac') {
+      // changed: its "change" (Enter fires it) does it – once; (review) unchanged only after typing in it (not an Enter in a field the
+      // focus came back to)
+      if (e.target.value === e.target.defaultValue && e.target.dataset.dirty) {
+        e.preventDefault();
+        entryMatrixChange(f, e.target);
+      }
+      return;
+    }
     const map = {
       'artist-credit-all': '[data-act="artist-credit-all"]',
       'artist-input': '[data-act="artist-set"]',
@@ -33378,6 +33557,8 @@
       .dci-em-block { border: 1px solid var(--line); border-radius: 4px; background: #fff; }
       .dci-em-bhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border-bottom: 1px solid var(--line); }
       .dci-em-folded .dci-em-bhead { border-bottom: 0; }
+      .dci-em-bac { display: inline-flex; align-items: baseline; gap: calc(var(--u, 1px) * 4); margin-left: calc(var(--u, 1px) * 8); color: var(--muted); font-size: 0.92em; }
+      .dci-em-bac input { width: calc(var(--u, 1px) * 150); font-size: 1em; }
       .dci-em-scroll { overflow-x: auto; }
       .dci-em-grid { border-collapse: collapse; min-width: 100%; font-size: calc(var(--u, 1px) * 13); }
       .dci-em-grid th, .dci-em-grid td { padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 6); border-bottom: 1px solid var(--row); text-align: left; vertical-align: middle; }

@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac; `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -764,6 +764,107 @@ def case_spellings():
         results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_blockac():
+    """Credits Importer 3.40.3 (collected item Z-AK; Q-ak – Q-aq): "Credited as" in the head of a block of the entries matrix.
+    A) Oliver Lake – Flute and Soprano Saxophone as "Oliver Lake", Flute on track 3 as "O. Lake": the head of his instruments (three
+       lines) has the field, empty with "several" and the spellings in its tooltip; Carl Allen (drums, producer – a role each block):
+       none.
+    B) "Lake" + Enter: every line "Lake" – the two flutes join –, the field "Lake"; the message "Credited as “Lake” for 2 roles of
+       Oliver Lake" with ↶ Undo.
+    C) ↶ Undo: the spellings back (flute, flute "O. Lake", soprano saxophone).
+    D) "Lake" again, then a line changed by hand ("Ollie" for soprano saxophone): it keeps its own, the field "several" again;
+       (review) the older ↶ then: the flutes get their spellings back, "Ollie" stays; emptied in the head (typed in, cleared, Enter):
+       every line the MusicBrainz name ("Credited as the MusicBrainz name for 2 roles of Oliver Lake"), the focus in the field again.
+    E) Compact: no field, the chips with their "as …" ("flute as “Lake”", "soprano saxophone as “Ollie”"; Q-an)."""
+    H.ENTRIES_VIEW = 'matrix'
+    orig = H.discogs_release
+    H.ARTISTS[3301] = (H.uid('dddddddd', 3301), 'Oliver Lake')
+    H.ARTISTS[3302] = (H.uid('dddddddd', 3302), 'Carl Allen')
+    H.attr(9201, 'flute', 14, 14)
+    H.attr(9202, 'soprano saxophone', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    ex = lambda name, role, i, anv='', tracks='': {'name': name, 'anv': anv, 'role': role, 'tracks': tracks, 'id': i, 'join': ''}
+
+    def rel():
+        d = orig()
+        d['extraartists'] += [ex('Oliver Lake', 'Flute', 3301), ex('Oliver Lake', 'Soprano Saxophone', 3301), ex('Carl Allen', 'Drums', 3302, 'C. Allen'),
+                              ex('Carl Allen', 'Producer', 3302, 'C. Allen')]
+        d['tracklist'][2]['extraartists'].append(ex('Oliver Lake', 'Flute', 3301, 'O. Lake'))
+        return d
+
+    H.discogs_release = rel
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(s => { const st = s.querySelector('.dci-gname strong'); return (st.dataset.name || st.textContent.trim()) === name; })"
+    STATE = """(name) => { const g = (%s)(name); if (!g) return null; const f = [...g.querySelectorAll('[data-f=em-bac]')];
+      return { fields: f.map(x => [x.value, x.placeholder, x.title.split('\\n').pop()]),
+        lines: [...g.querySelectorAll('tr.dci-em-line')].map(tr => [(tr.querySelector('[data-f=em-primary]') || {}).value, (tr.querySelector('[data-f=em-ac]') || {}).value]).sort(),
+        msg: [...document.querySelectorAll('[data-act=em-undo]')].map(x => x.closest('.dci-msg').textContent.replace(/\\s+/g, ' ').trim()) }; }""" % SEC
+    sec = "section.dci-group:has(.dci-gname strong:text-is('Oliver Lake'))"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(600)
+        a = pg.evaluate(STATE, 'Oliver Lake')
+        ca = pg.evaluate(STATE, 'Carl Allen')
+        print('A)', a, '| Carl Allen:', ca and ca['fields'])
+        results.append(a and a['fields'] == [['', 'several', 'Several spellings in this block: Oliver Lake, “O. Lake”']]
+                       and a['lines'] == [['flute', ''], ['flute', 'O. Lake'], ['soprano saxophone', '']] and ca and ca['fields'] == [])
+        f = pg.locator(f'{sec} [data-f=em-bac]')
+        f.fill('Lake')
+        f.press('Enter')
+        pg.wait_for_timeout(600)
+        bb = pg.evaluate(STATE, 'Oliver Lake')
+        print('B) Lake:', bb)
+        results.append(bb and bb['lines'] == [['flute', 'Lake'], ['soprano saxophone', 'Lake']] and bb['fields'][0][0] == 'Lake'
+                       and bb['msg'] and bb['msg'][-1].startswith('Credited as “Lake” for 2 roles of Oliver Lake') and bb['msg'][-1].endswith('↶ Undo'))
+        pg.locator('[data-act=em-undo]').last.click()
+        pg.wait_for_timeout(600)
+        c = pg.evaluate(STATE, 'Oliver Lake')
+        print('C) Undo:', c)
+        results.append(c and c['lines'] == [['flute', ''], ['flute', 'O. Lake'], ['soprano saxophone', '']] and c['fields'][0][1] == 'several' and not c['msg'])
+        f = pg.locator(f'{sec} [data-f=em-bac]')
+        f.fill('Lake')
+        f.press('Tab')
+        pg.wait_for_timeout(600)
+        i = pg.evaluate("(name) => { const g = (%s)(name); return [...g.querySelectorAll('tr.dci-em-line')].findIndex(tr => tr.querySelector('[data-f=em-primary]').value === 'soprano saxophone'); }" % SEC, 'Oliver Lake')
+        lf = pg.locator(f'{sec} tr.dci-em-line').nth(i).locator('[data-f=em-ac]')
+        lf.fill('Ollie')
+        lf.press('Tab')
+        pg.wait_for_timeout(600)
+        d1 = pg.evaluate(STATE, 'Oliver Lake')
+        # E) compact: no field, each chip with its "as …" (Q-an)
+        pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+        e = pg.evaluate("(name) => { const g = (%s)(name); return g ? [g.querySelectorAll('[data-f=em-bac]').length, [...g.querySelectorAll('.dci-em-chipname')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())] : null; }" % SEC, 'Oliver Lake')
+        pg.click('.dci-head [data-act=view-toggle]'); pg.wait_for_timeout(600)
+        # (review) the older ↶ after a change in a line: the flutes get their spellings back, the line changed by hand keeps "Ollie"
+        pg.locator('[data-act=em-undo]').last.click()
+        pg.wait_for_timeout(600)
+        d1u = pg.evaluate(STATE, 'Oliver Lake')
+        # emptied in the head – "several" shown empty: typed in and cleared, Enter
+        f = pg.locator(f'{sec} [data-f=em-bac]')
+        f.fill('x')
+        f.fill('')
+        f.press('Enter')
+        pg.wait_for_timeout(600)
+        d2 = pg.evaluate(STATE, 'Oliver Lake')
+        focus = pg.evaluate("document.activeElement && document.activeElement.dataset.f")
+        print('D) eine Zeile von Hand:', d1, '\n   älteres Undo danach:', d1u, '\n   geleert:', d2, '| Fokus:', focus, '\nE) kompakt:', e)
+        results.append(d1 and d1['lines'] == [['flute', 'Lake'], ['soprano saxophone', 'Ollie']] and d1['fields'][0][:2] == ['', 'several']
+                       and d1u and d1u['lines'] == [['flute', ''], ['flute', 'O. Lake'], ['soprano saxophone', 'Ollie']]
+                       and d2 and d2['lines'] == [['flute', ''], ['soprano saxophone', '']] and d2['msg'] and d2['msg'][-1].startswith('Credited as the MusicBrainz name for 2 roles of Oliver Lake')
+                       and focus == 'em-bac')
+        results.append(e and e[0] == 0 and 'flute as “Lake”' in e[1] and 'soprano saxophone as “Ollie”' in e[1])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 def case_capsnames():
     """Credits Importer 3.38.12 (F-4, rule S060).
