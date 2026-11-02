@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-02 | 3.38.13 – 3.39.2 | – |
+| 2026-11-02 | 3.38.13 – 3.40.0 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -98,6 +98,83 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-02
+
+### Import 3.40.0
+
+#### Added
+
+- **"Count exactly"** on the line of the release page (block AY, Q-n): the relationship editor opens in a tab in the background, the dashboard counts the new relationships, the line shows the number and the tab closes again.
+- **Bandcamp on the release page** (Q-o): a release without a Discogs link but with a Bandcamp album gets the line too – a rough estimate from the album page's credits.
+- **Setting "Also when nothing seems to be missing"** (⚙ Settings → Sources, off): the line also when MusicBrainz seems to have everything.
+
+#### Changed
+
+- **The line of the release page only when something is missing** (Q-x): no line when the source has no credits, nor when nothing seems to be missing. Names the dashboard has no MusicBrainz entry for yet count as missing; after a count the line names those rows. The credits of the Discogs notes are still not counted there (Q-g).
+- **The estimate counts two roles of one person on the same tracks twice** (until now once).
+
+### Import 3.39.9
+
+#### Changed
+
+- **"co?" (cover) knows more performers** (collected item K-9; Q-e, Q-m, Q-w): no "co?" when the composer is a track's artist, a performer MusicBrainz has for the recording, a conductor, orchestra, chorus master or concertmaster, or a member of a performing group (former ones too) – "member of band" of MusicBrainz, looked up in the background only when "co?" would be offered (one lookup, the composer's), also a performer MusicBrainz has for the whole release.
+
+### Import 3.39.8
+
+#### Changed
+
+- **A heading with several names below it** (collected item Z-1, rule S067): "VIOLIN / Anna Berg / Clara Stein / Ben Holt", "RECORDED BY / Jonas Kerr" – as booklets have them – each name the heading's instrument or role (until now only one name below an instrument was read). Checked with two booklet pages built for it and read with Tesseract (the engine of "Text from cover art").
+- **The release's artist as a line of its own** (rule S068): a booklet's title line is left out, not named as not recognized.
+- **After the independent review:** names above their instruments are not taken by the heading below them; below a role heading only the names right below it, no track titles and no release artist after an empty line; "Producer:" is a heading too; a block of publishers keeps the release's artist; the name chosen for initials is remembered with the release, a credit typed by hand stays.
+
+### Import 3.39.7
+
+#### Changed
+
+- **Initials of several names to click** (collected item K-8): "JR: the initials of Jane Roe · Jim Rye" – a click gives the rows to the one chosen, credited "JR".
+- **T058** (Q-j, Q-ac): "toys" and "toy instruments" ask percussion · electronic instruments · other instruments, "found objects" and "household objects" percussion · other instruments, each credited as written. **T059**: "West Coast", "East Coast".
+
+#### Fixed
+
+- **"R.R."** keeps its last dot (collected item K-11); several spellings of one person's initials are named together ("RR, R.R. = Robert Rich").
+
+### Import 3.39.6
+
+#### Changed
+
+- **Roles of companies at a person** (collected item K-6, rule S066): "Mixed At", "Recorded At", "Mastered At", "Engineered At", "Produced At", "Remixed At" given to a person on Discogs are what the person did (mix, recording, mastering …); "Pressed By", "Manufactured By", "Distributed By", "Printed By", "Licensed To" are left out (no relationship of MusicBrainz for a person) – the row says so. Until now unknown instruments.
+- **The Bandcamp tag** (Q-i): a darker blue, legible, with the logo's blue as its rim.
+
+#### Fixed
+
+- **The tables T001 and T058 changed by an imported file** (collected item K-13): words in capitals ("Lap Steel") are found.
+- **After the independent review of block AV:** a role typed again by hand loses an "assistant" it no longer has; "Assistant Creative Director" puts "assistant creative director" into the edit note as its row says; "Directed By" answered creative direction goes to the release group; "Printed by X" in a pasted text is a company again (not a person left out).
+
+### Import 3.39.5
+
+#### Changed
+
+- **Creative direction** (collected item K-5): "Creative Direction" for the release goes to the release group – MusicBrainz has creative direction there and on recordings, not on releases (until now art direction on the release, credited "creative direction"); for single tracks onto those recordings; no role credit.
+- **Voices** (collected item K-3): "Countertenor", "Contralto", "Mezzo-Soprano", "Bass-Baritone" alone are those voices ("countertenor vocals") without role credit (until now unknown instruments); "Vocals [Tenor]" and the like give "tenor vocals" without role credit.
+
+#### Checked
+
+- **"Liner Notes [Translation]"** (collected item K-4): liner notes with "translator" ticked – already so in the dashboard (the check of 3.38.10 looked at the mapping without MusicBrainz's types); now with a test.
+
+### Import 3.39.4
+
+#### Changed
+
+- **A word before the role** (collected items K-1, K-2, rule S065): "Assistant Engineer" → engineer with "assistant", "Asst. Mixing Engineer" → mix with "assistant", "Co-Arranger" → arranger with "co" (until now unknown instruments). Where the type has no such checkbox, the word goes into the role credit ("assistant photographer"), and where it has no role credit either, into the edit note – the row says so ("Assistant Arranger").
+
+#### Fixed
+
+- **"Arranged By [Co]"**: arranger with "co" (until now an instrument arranger of the instrument "co").
+
+### Import 3.39.3
+
+#### Changed
+
+- **The statistics have their own button** (collected item 189): a small bar chart in the dashboard's head right after ⚙ Settings; the statistics open below the head like the settings (not as a window), one of ⚙ Settings, the mapping rules in the dashboard and the statistics at a time; the button is pressed while they are open, their heading folds them in. Only **Collect statistics** is in their head; the developer statistics show in Developer mode (⚙ Settings → General) and are collected in any case. Until 3.39.2 the tab ⚙ Settings → Statistics.
 
 ### Import 3.39.2
 

@@ -1812,6 +1812,166 @@
         "unrecognized": [],
         "ignored": []
       }
+    },
+    {
+      "text": "Printed by Druckerei Fischer",
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Druckerei Fischer",
+            "Printed By"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Hydrophone recordings by Kim Lowe 2020 East coast",
+      "expect": {
+        "credits": [
+          [
+            "Kim Lowe",
+            "Field Recordings By"
+          ]
+        ],
+        "companies": [
+          [
+            "East Coast",
+            "Recorded In"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Anna Berg\nPIANO\nBen Holt\nClara Stein\nVIOLA",
+      "expect": {
+        "credits": [
+          [
+            "Anna Berg",
+            "PIANO"
+          ],
+          [
+            "Clara Stein",
+            "VIOLA"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Ben Holt"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "RECORDED BY\nJonas Kerr\n\nNordlicht Quartett",
+      "artists": [
+        "Nordlicht Quartett"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Jonas Kerr",
+            "Recorded By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Nordlicht Quartett",
+            "why": "releaseArtist"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Produced by\nJane Roe\n\nSide A\nMorning Light",
+      "expect": {
+        "credits": [
+          [
+            "Jane Roe",
+            "Produced By"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [
+          "Side A",
+          "Morning Light"
+        ],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Producer:\nRobert Rich",
+      "artists": [
+        "Robert Rich"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Robert Rich",
+            "Producer"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "Publishers:\nRobert Rich\nJane Roe Music",
+      "artists": [
+        "Robert Rich"
+      ],
+      "expect": {
+        "credits": [],
+        "companies": [
+          [
+            "Robert Rich",
+            "Published By"
+          ],
+          [
+            "Jane Roe Music",
+            "Published By"
+          ]
+        ],
+        "unrecognized": [],
+        "ignored": []
+      }
+    },
+    {
+      "text": "VIOLA\nAnna Berg\n\nNordlicht Quartett\n\nPiano\nBen Holt\nClara Stein",
+      "artists": [
+        "Nordlicht Quartett"
+      ],
+      "expect": {
+        "credits": [
+          [
+            "Anna Berg",
+            "VIOLA"
+          ],
+          [
+            "Ben Holt",
+            "Piano"
+          ],
+          [
+            "Clara Stein",
+            "Piano"
+          ]
+        ],
+        "companies": [],
+        "unrecognized": [],
+        "ignored": [
+          {
+            "text": "Nordlicht Quartett",
+            "why": "releaseArtist"
+          }
+        ]
+      }
     }
   ]
 }

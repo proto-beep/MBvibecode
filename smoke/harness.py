@@ -223,7 +223,8 @@ def ws_release(full=False):
             rels.append({'target-type': 'artist', 'type': 'instrument', 'type-id': LTS[148]['gid'], 'attributes': ['drums (drum set)'],
                          'attribute-values': {}, 'artist': {'id': ARTISTS[3004][0], 'name': 'Drum Guy'}})
         tracks.append({'position': i + 1, 'number': str(i + 1), 'title': TITLES[i],
-                       'recording': {'id': gid, 'title': TITLES[i], 'relations': rels + MB_EXTRA.get(gid, [])}})
+                       'recording': {'id': gid, 'title': TITLES[i], 'relations': rels + MB_EXTRA.get(gid, [])},
+                       **({'artist-credit': [{'name': n, 'joinphrase': '', 'artist': {'id': g, 'name': n}} for g, n in TRACK_AC[i]]} if i in TRACK_AC else {})})
     return {'id': REL, 'title': 'Testalbum', 'date': '2001', 'text-representation': {'language': 'eng'},
             'release-group': {'id': RG, 'title': 'Testalbum', 'relations': MB_EXTRA.get(RG, [])},
             'artist-credit': [{'name': n, 'joinphrase': j, 'artist': {'id': g, 'name': mbn}} for g, mbn, n, j in RELEASE_AC],
@@ -375,6 +376,9 @@ def js_tracks(medium_id, page):
 
 # Relationships "submitted" in a test (as if "Enter edit" had been clicked): target gid -> relations
 MB_EXTRA = {}
+# [3.39.9] "member of band": group mbid → [member mbids]; the artists of a track (its index → [(mbid, name)])
+BAND_MEMBERS = {}
+TRACK_AC = {}
 # True: submitted relationships of the work are missing in the release lookup (e.g. its link is still an open
 # edit) and only a lookup of the work itself has them. WORK_LOOKUPS records those lookups.
 WORK_RELS_DIRECT_ONLY = False
@@ -791,9 +795,13 @@ def install_routes(ctx):
                  'artist': {'id': r['artist'], 'name': r['name']}} for r in PERSONAL_PUBLISHERS if r['label'] == m.group(1)]})
         m = re.match(r'/ws/2/artist/([0-9a-f-]{36})', p)
         if m:
-            return json_route(route, {'id': m.group(1), 'relations': [
+            # [3.39.9] "member of band" (BAND_MEMBERS: group → [member mbids]) in both directions
+            a = m.group(1)
+            band = [{'target-type': 'artist', 'type': 'member of band', 'direction': 'backward', 'artist': {'id': x, 'name': x}} for x in BAND_MEMBERS.get(a, [])]
+            band += [{'target-type': 'artist', 'type': 'member of band', 'direction': 'forward', 'artist': {'id': g, 'name': g}} for g, ms in BAND_MEMBERS.items() if a in ms]
+            return json_route(route, {'id': a, 'relations': [
                 {'target-type': 'label', 'type': PP_TYPE, 'direction': 'forward', 'label': {'id': r['label'], 'name': r['lname']}}
-                for r in PERSONAL_PUBLISHERS if r['artist'] == m.group(1)]})
+                for r in PERSONAL_PUBLISHERS if r['artist'] == a] + band})
         m = re.match(r'/ws/2/work/([0-9a-f-]{36})', p)
         if m:
             return json_route(route, ws_work(m.group(1)))
@@ -1135,6 +1143,13 @@ def open_settings(pg, tab=None):
     if tab:
         pg.click(f'[data-el=settings] .dci-set-tab[data-topic={tab}]')
         pg.wait_for_timeout(150)
+
+
+def open_stats(pg):
+    """[189] (3.39.3) The statistics opened below the head (their own button next to ⚙; until 3.39.2 a tab of ⚙ Settings)."""
+    if pg.evaluate("!document.querySelector('[data-el=stats]') || document.querySelector('[data-el=stats]').hidden"):
+        pg.locator('.dci-head [data-act=stats-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(200)
 
 
 def nav_switch(pg, attr):

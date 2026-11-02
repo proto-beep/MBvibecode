@@ -68,8 +68,8 @@ def case_head():
         a2 = pg.evaluate(HEAD)
         print('A) Kopf:', {k: v for k, v in a1.items() if k != 'btns'}, '\n   Knöpfe:', a1['btns'], '\n   breit:', a2['spread'], a2['label'])
         # [3.27.2] the symbol of the compact view first, left of the text size (item 60); [3.36.3] ⌨ the keyboard shortcuts;
-        # [3.36.5] no ⓘ any more (collected item 147c: ⚙ → ⓘ Connections)
-        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'settings-open', 'rules', 'log', 'keys-open', 'window-reset', 'close']
+        # [3.36.5] no ⓘ any more (collected item 147c: ⚙ → ⓘ Connections); [189] (3.39.3) the statistics after ⚙
+        results.append(a1['spread'] <= 6 and [x[0] for x in a1['btns']] == ['view-toggle', 'settings-open', 'stats-open', 'rules', 'log', 'keys-open', 'window-reset', 'close']
                        and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][1][2] == 'Settings' and a1['btns'][0][2] == 'Compact' and a1['zoom'] == '100 %'
                        and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
                        and a2['spread'] <= 6 and a2['label'] != 'none')
