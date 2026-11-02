@@ -612,7 +612,9 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #   gapmore: 3.40.0 (AY): no line without credits or when nothing is missing (setting dci-gap-none, one missing, the
                                 #     dashboard counted none – rows open: the line –, the same credits a week later); "Count exactly" (Discogs with two
                                 #     media, Bandcamp): the tab #dci-count imports and counts, the line takes the number, the tab is closed; an import
-                                #     that fails; Bandcamp's rough estimate, its parts, instruments in capitals; a page without credits ("Stream: …")
+                                #     that fails; Bandcamp's rough estimate, its parts, instruments in capitals; a page without credits ("Stream: …");
+                                #     3.40.2 (Z-AD, Z-AE): Discogs without credits → Bandcamp with the text first; three Bandcamp pages → the one with
+                                #     more credits, the others under ▸, ✕ holds
                                 #   languagesload: 3.34.0: the languages file from the manager (German); fetched from GitHub (kept, one reload);
                                 #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
 

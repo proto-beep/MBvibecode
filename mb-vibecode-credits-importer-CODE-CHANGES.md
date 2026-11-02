@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.1, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.2, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.2 · 2026-11-02
+
+The line of the release page: Bandcamp in place of a Discogs release without credits, several Bandcamp pages (collected items Z-AD, Z-AE; Q-ad, Q-ae, Q-ag).
+
+- **New `gapRead(src, prev, ws)`:** the credits of one page of a source kept a week – read again when older, a failed answer kept (404 a week, else an hour) – `{ kept, changed, failed }`, or null when the request was broken off; the `since` of 3.40.0 kept with the same credits. Until 3.40.1 inline in `initReleaseGap`.
+- **`initReleaseGap`:** Discogs first (`dci-gap:<MBID>`, as before); a Discogs release read without credits → `dgEmpty` (`{ notes }`) and Bandcamp steps in; Discogs failed → no line (as before). Bandcamp: all its pages linked (three at most), each kept in `dci-gap:<MBID>:bandcamp` (`{ at, pages: { <url>: kept } }`; pages no longer linked dropped; until 3.40.1 one page in `dci-gap:<MBID>` with `bId`), the one with the most credits counts (`others`: the rest, with their number of credits or null when not read). The dismissal (✕) through `use.dismiss` – on the Discogs entry or the Bandcamp page counted.
+- **`showReleaseGap(opts)`:** `opts.key` replaced by `opts.dismiss`; new `opts.dgEmpty` (the text first: `gap.dgNone`, `gap.dgNoneNotes`) and `opts.others` (under ▸: `gap.bc.other`, `gap.bc.otherFailed`).
+- **Texts (English):** `gap.dgNone`, `gap.dgNoneNotes`, `gap.bc.other`, `gap.bc.otherFailed`.
+- **Tests:** `t_start.py` `gapmore` E (a Discogs release without credits, its notes kept: Bandcamp with the text first; three Bandcamp pages – a label's with one credit, the artist's, one not found: the artist's counted, the others under ▸, all three kept; ✕ holds over a reload); D reads the Bandcamp page from `dci-gap:<MBID>:bandcamp`.
 
 ## Import 3.40.1 · 2026-11-02
 
