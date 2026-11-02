@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.1
+// @version      3.40.2
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.1
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.1
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.2
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.2
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.1';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.2';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -274,6 +274,11 @@
       "gap.bc.none": "Bandcamp: its credits seem to be on MusicBrainz (a rough estimate, counted by names).",
       "gap.bc.incomplete": "Bandcamp: MusicBrainz does not give all relationships of this large release at once – the dashboard counts them.",
       "gap.bc.how": "A rough estimate: the credits of the album page (not those of its track pages) read as a text – instruments known by their names (all of MusicBrainz's once its relationship editor was opened) –, each counted on each of its tracks by the names MusicBrainz has there.",
+      "gap.dgNone": "Discogs has no credits for this release.",
+      "gap.dgNoneNotes": "Discogs has no credits in its list for this release (its notes are not read here).",
+      "gap.bc.other.one": "Also linked: {page} – {n} credit there (the page with more credits is counted).",
+      "gap.bc.other.other": "Also linked: {page} – {n} credits there (the page with more credits is counted).",
+      "gap.bc.otherFailed": "Also linked: {page} – it could not be read.",
       "gap.count": "Count exactly",
       "gap.countTitle": "The dashboard counts the new relationships in a tab in the background (the relationship editor of this release, closed again when it is done)",
       "gap.counting": "Counting in a tab in the background …",
@@ -7535,6 +7540,32 @@
     };
   }
 
+  /**
+   * The credits of one page of a source for the line, kept a week (prev: what is kept of this page, or null): { kept, changed,
+   * failed }, or null when the request was broken off (the page left, no network). [Z-AD/Z-AE] (3.40.2) one function for Discogs and
+   * each Bandcamp page (until 3.40.1 inline, one source).
+   */
+  async function gapRead(src, prev, ws) {
+    if (prev && prev.failAt && Date.now() - prev.failAt < (prev.failStatus === 404 ? GAP_KEEP_MS : 3600 * 1000)) return { kept: prev, failed: true };
+    if (prev && prev.credits && !prev.failAt && Date.now() - (prev.at || 0) <= GAP_KEEP_MS) return { kept: prev };
+    let rel;
+    try {
+      rel = src.kind === 'discogs' ? await gapDiscogs(src.id) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
+    } catch (e) {
+      // an answer that says no (429, 404, 5xx) is kept; a request broken off is not
+      if (!e || e.name === 'TypeError' || e.name === 'AbortError') return null;
+      const status = /404|not found|missing|does not exist/i.test(String(e.message)) ? 404 : 0;
+      console.warn('[Discogs-Credits] release gap', src.kind, e);
+      return { kept: { ...(prev || {}), failAt: Date.now(), failStatus: status }, changed: true, failed: true };
+    }
+    // Bandcamp's page has no notes apart from its credits (its "about" text is read with them)
+    const read = { ...gapCreditsOf(rel), ...(src.kind === 'bandcamp' ? { notes: false } : {}) };
+    // (3.40.0, review) since: when the credits were first read like this – the same credits a week later keep it (a count of the
+    // dashboard since then still holds)
+    const same = !!prev && !!prev.credits && JSON.stringify(prev.credits) === JSON.stringify(read.credits);
+    return { kept: { ...(prev && prev.dismissed != null ? { dismissed: prev.dismissed } : {}), at: Date.now(), since: same ? (prev.since || prev.at) : Date.now(), ...read }, changed: true };
+  }
+
   async function initReleaseGap(mbid) {
     if (readJson('localStorage', GAP_ON_KEY, true) === false || !/^\/release\/[0-9a-f-]{36}\/?$/i.test(location.pathname)) return;
     // the page's own links first: a release page without a Discogs or Bandcamp link asks nothing
@@ -7548,40 +7579,73 @@
     const ws = await res.json();
     const links = sourceLinksOf((ws.relations || []).filter((r) => r.url).map((r) => r.url.resource));
     const dLink = links.find((l) => l.source === 'discogs');
-    // [AY] (3.40.0) without a Discogs link: one album page of Bandcamp (Q-o)
     const bLinks = links.filter((l) => l.source === 'bandcamp');
-    const src = dLink ? { kind: 'discogs', id: String(dLink.id), url: dLink.url } : bLinks.length === 1 ? { kind: 'bandcamp', id: String(bLinks[0].id), url: bLinks[0].url } : null;
-    if (!src) return;
-    const idKey = src.kind === 'discogs' ? 'dId' : 'bId';
-    const key = `${GAP_PREFIX}${mbid.toLowerCase()}`;
-    let kept = readJson('localStorage', key, null);
-    const mine = !!kept && kept[idKey] === src.id;
-    if (mine && kept.failAt && Date.now() - kept.failAt < (kept.failStatus === 404 ? GAP_KEEP_MS : 3600 * 1000)) return;
-    if (!mine || !kept.credits || Date.now() - (kept.at || 0) > GAP_KEEP_MS) {
-      let rel;
-      try {
-        rel = src.kind === 'discogs' ? await gapDiscogs(src.id) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
-      } catch (e) {
-        // an answer that says no (429, 404, 5xx) is kept; a request broken off (the page left, no network) is not
-        if (!e || e.name === 'TypeError' || e.name === 'AbortError') return;
-        const status = /404|not found|missing|does not exist/i.test(String(e.message)) ? 404 : 0;
-        console.warn('[Discogs-Credits] release gap', src.kind, e);
-        writeJson('localStorage', key, { ...(mine ? kept : { [idKey]: src.id }), failAt: Date.now(), failStatus: status });
-        return;
+    const rel = mbid.toLowerCase();
+    let use = null;
+    // [Z-AD] (3.40.2) Discogs read, without credits in its list: { notes } – Bandcamp steps in, the line says so (Q-ad)
+    let dgEmpty = null;
+    if (dLink) {
+      const src = { kind: 'discogs', id: String(dLink.id), url: dLink.url };
+      const key = `${GAP_PREFIX}${rel}`;
+      const old = readJson('localStorage', key, null);
+      const r = await gapRead(src, old && old.dId === src.id ? old : null, ws);
+      if (!r) return;
+      if (r.changed) writeJson('localStorage', key, { ...r.kept, dId: src.id });
+      // Discogs did not answer: no line (Bandcamp steps in only when Discogs has nothing)
+      if (r.failed) return;
+      if ((r.kept.credits || []).length) {
+        use = {
+          src, kept: r.kept,
+          dismiss: (n) => {
+            const k = readJson('localStorage', key, null);
+            if (k) writeJson('localStorage', key, { ...k, dismissed: n });
+          },
+        };
+      } else dgEmpty = { notes: !!r.kept.notes };
+    }
+    if (!use && bLinks.length) {
+      // [AY] (3.40.0) without a Discogs link (or [Z-AD] one without credits): Bandcamp, a rough estimate (Q-o). [Z-AE] (3.40.2) all
+      // its pages linked (three at most), each kept a week (`dci-gap:<MBID>:bandcamp`); the page with the most credits counts, as the
+      // dialog of several linked releases chooses the one with the most data (Q-ae, Q-ag) – the others named under ▸
+      const key = `${GAP_PREFIX}${rel}:bandcamp`;
+      const store = readJson('localStorage', key, null) || {};
+      const pages = { ...(store.pages || {}) };
+      let changed = false;
+      const read = [];
+      for (const l of bLinks.slice(0, 3)) {
+        const src = { kind: 'bandcamp', id: String(l.id), url: l.url };
+        const r = await gapRead(src, pages[src.id] || null, ws);
+        if (!r) return;
+        if (r.changed) {
+          pages[src.id] = r.kept;
+          changed = true;
+        }
+        read.push({ src, kept: r.kept, failed: !!r.failed });
       }
-      // Bandcamp's page has no notes apart from its credits (its "about" text is read with them)
-      const read = { ...gapCreditsOf(rel), ...(src.kind === 'bandcamp' ? { notes: false } : {}) };
-      // (review) since: when the credits were first read like this – the same credits a week later keep it (a count of the dashboard
-      // since then still holds)
-      const same = mine && kept.credits && JSON.stringify(kept.credits) === JSON.stringify(read.credits);
-      kept = { ...(mine ? { dismissed: kept.dismissed } : {}), [idKey]: src.id, at: Date.now(), since: same ? (kept.since || kept.at) : Date.now(), ...read };
-      writeJson('localStorage', key, kept);
+      Object.keys(pages).filter((u) => !read.some((x) => x.src.id === u)).forEach((u) => {
+        delete pages[u];
+        changed = true;
+      });
+      if (changed) writeJson('localStorage', key, { at: Date.now(), pages });
+      const ok = read.filter((x) => !x.failed && (x.kept.credits || []).length).sort((a, b) => b.kept.credits.length - a.kept.credits.length);
+      if (ok.length) {
+        const best = ok[0];
+        use = {
+          src: best.src, kept: best.kept, dgEmpty,
+          others: read.filter((x) => x !== best).map((x) => ({ url: x.src.url, n: x.failed ? null : (x.kept.credits || []).length })),
+          dismiss: (n) => {
+            const k = readJson('localStorage', key, null);
+            if (k && k.pages && k.pages[best.src.id]) writeJson('localStorage', key, { ...k, pages: { ...k.pages, [best.src.id]: { ...k.pages[best.src.id], dismissed: n } } });
+          },
+        };
+      }
     }
     // [AY] (3.40.0) nothing in it: no line (Q-o, Q-x)
-    if (!(kept.credits || []).length) return;
+    if (!use) return;
+    const { src, kept } = use;
     const mb = gapMbNames(ws);
     const est = mb.incomplete ? null : gapEstimate(kept, mb);
-    let exact = readJson('localStorage', `${GAP_EXACT_PREFIX}${mbid.toLowerCase()}`, null);
+    let exact = readJson('localStorage', `${GAP_EXACT_PREFIX}${rel}`, null);
     if (!gapExactOf(exact, src)) exact = null;
     // [AY] (3.40.0) nothing missing – about none, or the dashboard counted none since the credits were read (review: and none of
     // its rows open – a name without a MusicBrainz entry is missing all the same): no line (Q-x), unless the setting says so
@@ -7589,11 +7653,11 @@
     if (none && readJson('localStorage', GAP_NONE_KEY, false) !== true) return;
     // ✕: hidden until the number changes
     if (est && kept.dismissed != null && kept.dismissed === est.total) return;
-    showReleaseGap({ mbid, src, est, exact, key, notes: kept.notes });
+    showReleaseGap({ mbid, src, est, exact, notes: kept.notes, dismiss: use.dismiss, dgEmpty: use.dgEmpty || null, others: use.others || [] });
   }
 
   function showReleaseGap(opts) {
-    const { mbid, src, est, exact, key, notes } = opts;
+    const { mbid, src, est, exact, notes, dismiss, dgEmpty, others } = opts;
     const host = document.querySelector('#content') || document.body;
     host.querySelectorAll('.dci-gapline').forEach((x) => x.remove());
     const box = document.createElement('div');
@@ -7605,13 +7669,17 @@
     // a release of many tracks MusicBrainz does not answer in full: no number; the credits of the Discogs notes are not read here
     // [AY] (3.40.0) Bandcamp: a rough estimate, said so
     const bc = src.kind === 'bandcamp';
-    const text = !est ? tr(bc ? 'gap.bc.incomplete' : 'gap.incomplete')
+    // [Z-AD] (3.40.2) Bandcamp in place of a Discogs release without credits: said first
+    const text = (dgEmpty ? `${tr(dgEmpty.notes ? 'gap.dgNoneNotes' : 'gap.dgNone')} ` : '') + (!est ? tr(bc ? 'gap.bc.incomplete' : 'gap.incomplete')
       : est.total ? tr(bc ? 'gap.bc.missing' : notes ? 'gap.missingNotes' : 'gap.missing', { n: est.total })
-        : tr(bc ? 'gap.bc.none' : notes ? 'gap.noneNotes' : 'gap.none');
+        : tr(bc ? 'gap.bc.none' : notes ? 'gap.noneNotes' : 'gap.none'));
     const exactText = exact && exact.n != null ? ` ${tr('gap.exact', { n: exact.n, date: new Date(exact.at).toLocaleDateString() })}`
       + (exact.open ? ` ${tr('gap.exactOpen', { n: exact.open })}` : '') : '';
-    const parts = est ? [['recordings', 'gap.recordings'], ['release', 'gap.release'], ['works', 'gap.works'], ['companies', 'gap.companies']]
-      .map(([k, t]) => `<li>${esc(tr(t, { n: est[k] }))}</li>`).join('') : '';
+    const parts = (est ? [['recordings', 'gap.recordings'], ['release', 'gap.release'], ['works', 'gap.works'], ['companies', 'gap.companies']]
+      .map(([k, t]) => `<li>${esc(tr(t, { n: est[k] }))}</li>`).join('') : '')
+      // [Z-AE] (3.40.2) the other Bandcamp pages of the release
+      + (others || []).map((o) => `<li>${esc(o.n == null ? tr('gap.bc.otherFailed', { page: String(o.url).replace(/^https?:\/\//, '') })
+        : tr('gap.bc.other', { page: String(o.url).replace(/^https?:\/\//, ''), n: o.n }))}</li>`).join('');
     const btn = 'background:none;border:0;padding:0 4px;color:#4a2f99;cursor:pointer;font:inherit;';
     box.innerHTML = `<button type="button" data-gap="parts" aria-expanded="false" aria-controls="dci-gap-parts" aria-label="${esc(tr('gap.partsLabel'))}" style="${btn}">▸</button>
       <span data-gap-text>${esc(text)}${esc(exactText)}</span>
@@ -7631,8 +7699,7 @@
       location.assign(`/release/${mbid}/edit-relationships`);
     });
     box.querySelector('[data-gap=close]').addEventListener('click', () => {
-      const kept = readJson('localStorage', key, null);
-      if (kept && est) writeJson('localStorage', key, { ...kept, dismissed: est.total });
+      if (est && dismiss) dismiss(est.total);
       box.remove();
     });
     // on MusicBrainz below the head of the release (its title and "~ Release by …"), else below the title
