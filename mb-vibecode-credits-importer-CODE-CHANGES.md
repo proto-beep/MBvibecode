@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.39.0, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.39.1, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.39.1 · 2026-11-02
+
+The spelling and the tag of an entry's source (collected item 185).
+
+- **New (after `trSrc`):** `entrySource(a)` (`a.src` of a supplement's entry, else `S.source`), `sourceLabel(src)` ("pasted text" for `TEXT`), `trSrcOf(src, key, params)` (`trSrc` for a given source: the text as it is for Discogs, else its `…Any` form with `{src}`), `srcTagClass(src)` (`dci-src-dg` / `dci-src-bc` / `dci-src-tx`).
+- **`entryNameHtml`, `creditChipHtml`:** `group.discogsName`, `group.anvStar`, `group.creditedSpelling`, `group.creditedSpellingTitle` through `trSrcOf` with the entry's source; **the import** logs `anvCreditsAny` (with `src`) unless all those entries are Discogs'.
+- **The head of an entry (`groupHtml`):** the tag of the source link `srcTagClass` of the entry's source, its tooltip `link.discogsTitle` with that source's name (until now `SOURCE_NAME`); **`attrCell`:** the tag "from the source" of a role credit and the tooltip of its field through `trSrc` / `srcTagClass(S.source)` (the field's tooltip said "Taken from Discogs" with every source); **`seriesLabelHtml`:** the tag `srcTagClass(S.source)`.
+- **CSS:** `.dci-src-bc` (Bandcamp's blue `#629aa9`), `.dci-src-tx` (grey), the ↗ after a Bandcamp tag in a darker blue.
+- **Texts (English):** `group.discogsNameAny`, `group.creditedSpellingAny`, `group.creditedSpellingTitleAny`, `group.anvStarAny`, `log.anvCreditsAny`.
+- **Tests:** `t_sources_bandcamp.py` new case `bcspell` (Robert Rich credited "RR" from Bandcamp: the chip, the tooltips, the log, the tag's colours and tooltip, no "Discogs" in the head).
 
 ## Import 3.39.0 · 2026-11-02
 
