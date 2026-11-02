@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.5
+// @version      3.40.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.6
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.6
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1569,6 +1569,8 @@
       "stats.loading": "Reading the statistics …",
       "stats.empty": "Nothing counted yet – the statistics begin with the next “Enter edit” of relationships staged with the dashboard.",
       "stats.title": "Statistics",
+      "stats.local": "this browser only",
+      "stats.localTitle": "These statistics are kept only in this browser (its storage for musicbrainz.org): another browser or computer has statistics of its own, and nothing is sent anywhere.",
       "stats.buttonTitle": "Statistics: what you entered into MusicBrainz with the dashboard",
       "stats.foldTitle": "Fold the statistics in (as their button does)",
       "stats.t.releases": "releases",
@@ -30238,18 +30240,22 @@
           <div class="dci-source" data-el="source"></div>
           <div class="dci-sync" data-el="sync" aria-live="polite"></div>
           <div class="dci-head-tools">
+            ${'' /* [Z-HB] (3.40.6) in groups (Q-ay): the view (☰, A− A+, ⤢) | the work (Mapping rules, Log) | help and settings (Statistics, ⌨, ⚙) | ✕ */}
             ${headBtn('view-toggle', 'compact', tr('view.compact'), tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact'), `aria-pressed="${S.view === 'compact'}"`)}
             <span class="dci-zoom" role="group" aria-label="${esc(tr('zoom.label'))}">
               <button type="button" class="dci-headbtn" data-act="zoom-out" title="${esc(tr('zoom.smaller'))}" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
               <span data-el="zoom" aria-live="polite">${Math.round(S.scale * 100)} %</span>
               <button type="button" class="dci-headbtn" data-act="zoom-in" title="${esc(tr('zoom.larger'))}" aria-label="${esc(tr('zoom.larger'))}">A+</button>
             </span>
-            ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
-            ${headBtn('stats-open', 'stats', tr('stats.title'), tr('stats.buttonTitle'), 'aria-expanded="false"')}
+            ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
+            <span class="dci-head-sep" aria-hidden="true"></span>
             ${headBtn('rules', 'rules', tr('rules.title'), tr('rules.title'), 'aria-expanded="false"')}
             ${headBtn('log', 'log', tr('log.title'), tr('log.title'), 'aria-pressed="false"')}
+            <span class="dci-head-sep" aria-hidden="true"></span>
+            ${headBtn('stats-open', 'stats', tr('stats.title'), tr('stats.buttonTitle'), 'aria-expanded="false"')}
             ${headBtn('keys-open', 'keys', '', tr('keys.open'), 'aria-expanded="false" aria-controls="dci-keys"')}
-            ${headBtn('window-reset', 'fit', '', tr('window.reset'))}
+            ${headBtn('settings-open', 'gear', tr('settings.title'), tr('settings.buttonTitle'), 'aria-expanded="false"')}
+            <span class="dci-head-sep" aria-hidden="true"></span>
             ${headBtn('close', 'close', tr('common.close'), tr('common.close'), '', 'dci-close')}
           </div>
         </header>
@@ -31545,7 +31551,8 @@
     const active = document.activeElement;
     const key = active && el.contains(active) ? (active.dataset.set ? `[data-set="${active.dataset.set}"]`
       : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.period ? `[data-period="${active.dataset.period}"]` : ''}` : '') : '';
-    el.innerHTML = `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button></div>
+    // [Z-ST] (3.40.6) "this browser only" in the head (Q-au)
+    el.innerHTML = `<div class="dci-set-head"><button type="button" class="dci-set-title" data-act="stats-fold" title="${esc(tr('stats.foldTitle'))}" aria-label="${esc(tr('stats.foldTitle'))}">${esc(tr('stats.title'))}</button><span class="dci-sub dci-stats-local" title="${esc(tr('stats.localTitle'))}">${esc(tr('stats.local'))}</span></div>
       <div class="dci-stats-pane">${statsHtml().join('')}</div>`;
     const again = key && el.querySelector(key);
     if (again) again.focus();
@@ -32828,6 +32835,8 @@
       }
       .dci-head, #dci-log .dci-log-head { cursor: move; touch-action: none; }
       .dci-moving { user-select: none; opacity: 0.97; }
+      .dci-head-sep { width: 1px; align-self: stretch; margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 2); background: var(--line); }
+      .dci-stats-local { margin-left: calc(var(--u, 1px) * 6); font-weight: normal; }
       .dci-zoom { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: calc(var(--u, 1px) * 12); font-variant-numeric: tabular-nums; }
       .dci-zoom [data-el="zoom"] { min-width: 3.4em; text-align: center; }
       /* [3.26.0] the head in one line (collected item 30): title · source · Source ▾ · + Supplement · status · tools */

@@ -1075,13 +1075,16 @@ def case_statsbutton():
        pressed (tinted).
     C) ⚙ Settings opened: the statistics close; the statistics opened again: ⚙ closes. The mapping rules in the dashboard opened: the
        statistics close; the statistics opened: the rules close.
-    D) The heading folds them in, the focus on the button."""
+    D) The heading folds them in, the focus on the button.
+    (3.40.6) The button in the group of help and settings: Statistics · ⌨ · ⚙ (Z-HB); "this browser only" in the head of the
+    statistics, its tooltip says why (Z-ST)."""
     HEAD = """(() => [...document.querySelectorAll('.dci-head .dci-headbtn')].map(b => b.dataset.act))()"""
     STATE = """(() => { const st = document.querySelector('[data-el=stats]'), se = document.querySelector('[data-el=settings]'), r = document.querySelector('[data-el=rules-dock]');
       const btn = document.querySelector('.dci-head [data-act=stats-open]');
       return { stats: !st.hidden, settings: !se.hidden, rules: !!document.querySelector('#dci-rules.dci-rules-docked:not([hidden])'), pressed: btn.getAttribute('aria-expanded'),
         bg: getComputedStyle(btn).backgroundColor, title: btn.title, label: btn.getAttribute('aria-label'), svg: !!btn.querySelector('svg'),
-        heading: (st.querySelector('.dci-set-title') || { textContent: '' }).textContent.trim(), switches: [...st.querySelectorAll('[data-set]')].map(x => x.dataset.set),
+        heading: (st.querySelector('.dci-set-title') || { textContent: '' }).textContent.trim(),
+        local: (st.querySelector('.dci-stats-local') || { textContent: '' }).textContent.trim(), localTitle: (st.querySelector('.dci-stats-local') || {}).title || '', switches: [...st.querySelectorAll('[data-set]')].map(x => x.dataset.set),
         tabs: [...se.querySelectorAll('.dci-set-tab')].map(t => t.dataset.topic), tab: (se.querySelector('.dci-set-tab[aria-selected=true]') || { dataset: {} }).dataset.topic }; })()"""
     TINT = 'rgb(236, 235, 246)'
     results = []
@@ -1100,16 +1103,18 @@ def case_statsbutton():
         H.open_settings(pg)
         a1 = pg.evaluate(STATE)
         print('A) Kopf:', head, '| zu:', {k: a0[k] for k in ('stats', 'pressed', 'title', 'label', 'svg')}, '| Reiter:', a1['tabs'], a1['tab'])
+        # (3.40.6, Z-HB) with ⌨ and ⚙ in the group of help and settings: Statistics · ⌨ · ⚙
         i = head.index('settings-open') if 'settings-open' in head else -9
-        results.append(head[i + 1:i + 2] == ['stats-open'] and not a0['stats'] and a0['pressed'] == 'false' and a0['svg'] and a0['label'] == 'Statistics'
+        results.append(head[i - 2:i] == ['stats-open', 'keys-open'] and not a0['stats'] and a0['pressed'] == 'false' and a0['svg'] and a0['label'] == 'Statistics'
                        and a0['title'].startswith('Statistics:') and 'statistics' not in a1['tabs'] and a1['tab'] == 'general')
         # B) and C) – ⚙ is open now: the statistics close it
         pg.click('.dci-head [data-act=stats-open]')
         pg.wait_for_timeout(500)
         b1 = pg.evaluate(STATE)
         print('B) offen:', b1)
+        # (3.40.6, Z-ST) "this browser only" in the head of the statistics (Q-au)
         results.append(b1['stats'] and not b1['settings'] and b1['pressed'] == 'true' and b1['bg'] == TINT and b1['heading'] == 'Statistics'
-                       and b1['switches'] == ['stats-on'])
+                       and b1['switches'] == ['stats-on'] and b1['local'] == 'this browser only' and b1['localTitle'].startswith('These statistics are kept only in this browser'))
         pg.click('.dci-head [data-act=settings-open]')
         pg.wait_for_timeout(300)
         c1 = pg.evaluate(STATE)

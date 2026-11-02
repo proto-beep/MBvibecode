@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.40.5 | – |
+| 2026-11-03 | 3.40.4 – 3.40.6 | – |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.40.6
+
+#### Changed
+
+- **The symbols of the dashboard's head in groups** (collected item Z-HB): the view (☰, A− A+, ⤢) | Mapping rules, Log | Statistics, ⌨, ⚙ Settings | ✕, a thin line between the groups.
+- **The statistics say "this browser only"** (Z-ST): in their head, with a tooltip – another browser or computer keeps statistics of its own.
 
 ### Import 3.40.5
 

@@ -388,7 +388,8 @@ python3 t_rules_window.py       # The window "Mapping rules": its words, in the 
                                 #     · ⚠", built-in value then and now, Keep mine / Discard; a rule no longer in the file; reset with own rules
 
 python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼
-                                #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple): symbols with names (words only when wide), no language / place / switches in
+                                #   head: the head in one line (3.26.0; 3.27.2: ☰ first, "open in background" purple; 3.40.6, Z-HB: in groups – ☰ A− A+ ⤢ |
+                                #     Mapping rules, Log | Statistics, ⌨, ⚙ | ✕): symbols with names (words only when wide), no language / place / switches in
                                 #     the head; "Source ▾" (Escape, a click elsewhere, "Paste text …" below the head); "+ Supplement"; the language
                                 #     asked after the installation (en / fr-FR preselected, OK, gone after reloading, not after an update);
                                 #     3.36.5: no ⓘ among the symbols
@@ -468,6 +469,7 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     changed by hand, the rules changed most, not recognized (once per release), the answers, duplicates avoided
                                 #   statsbutton: 3.39.3 (189): the statistics' own button after ⚙ (bar chart), pressed while open; one of ⚙, the
                                 #     docked rules and the statistics open; their heading folds them in; only "Collect statistics"; no tab
+                                #     3.40.6 (Z-HB, Z-ST): the button before ⌨ and ⚙; "this browser only" in their head, its tooltip
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
