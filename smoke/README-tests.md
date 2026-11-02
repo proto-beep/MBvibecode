@@ -313,7 +313,9 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #   coverworks: 3.38.16 (179): works of the track's composer by a similar title ("By Monk", "(… cover)"), a full
                                 #     name of the title looked up, a surname only of an artist of the release, the log; "co?" and its click; Node
                                 #     3.39.9 (K-9): no "co?" when Monk is a member of the release's band (or the release's artist a member of his), the
-                                #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's
+                                #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's;
+                                #     3.40.1 (Z-AF): "is person" – the release's artist Monk's other name, the other name a member of the release's
+                                #     band (both looked up), the control without a band ("co?")
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,

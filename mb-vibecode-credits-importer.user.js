@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.0
+// @version      3.40.1
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.1
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.1
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.1';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -23904,8 +23904,10 @@
 
   /**
    * [3.39.9] Who is linked by "member of band" with an artist (its members, or the groups it is a member of; former ones too):
-   * MusicBrainz's relationships, looked up once per artist, in the background (S.bandOf: mbid → Set, 'wait', or { failAt } when
-   * MusicBrainz did not answer). Only asked when "co?" would be offered (Q-m); the works matrix is drawn again once they are there.
+   * MusicBrainz's relationships, looked up once per artist, in the background (S.bandOf: mbid → { band, person }, 'wait', or
+   * { failAt } when MusicBrainz did not answer). Only asked when "co?" would be offered (Q-m); the works matrix is drawn again once
+   * they are there. [Z-AF] (3.40.1) Also "is person" (a performance name and the person's legal name, either way; Q-af) – the
+   * same answer: person.
    */
   function bandLinks(ids) {
     // (3.39.9, review) one answer that failed is asked again after five minutes (until then: as without members)
@@ -23922,7 +23924,8 @@
         const id = S.bandQueue.shift();
         try {
           const a = await mbWsIdle(`artist/${id}?inc=artist-rels`);
-          S.bandOf.set(id, new Set(((a && a.relations) || []).filter((r) => norm(r.type) === 'member of band' && r.artist && r.artist.id).map((r) => r.artist.id)));
+          const of = (type) => new Set(((a && a.relations) || []).filter((r) => norm(r.type) === type && r.artist && r.artist.id).map((r) => r.artist.id));
+          S.bandOf.set(id, { band: of('member of band'), person: of('is person') });
         } catch {
           S.bandOf.set(id, { failAt: Date.now() });
         }
@@ -23947,9 +23950,16 @@
     // until MusicBrainz said who is a member of whom. (review) "member of band" is one relationship of both artists: the
     // composer's own relationships name its bands and its members – one lookup
     bandLinks([plan.composer]);
-    const linked = S.bandOf.get(plan.composer);
-    if (linked === 'wait') return [];
-    if (linked instanceof Set && [...linked].some((id) => perf.has(id))) return [];
+    const own = S.bandOf.get(plan.composer);
+    if (own === 'wait') return [];
+    // [Z-AF] (3.40.1) the composer under another name (is person: "Richard D. James" – Aphex Twin) performs, or is a member of a
+    // performing band under it (Q-ah): the bands of those names looked up too (one more lookup each)
+    const names = new Set([plan.composer, ...((own && own.person) || [])]);
+    if ([...names].some((id) => perf.has(id))) return [];
+    const others = [...names].filter((id) => id !== plan.composer);
+    bandLinks(others);
+    if (others.some((id) => S.bandOf.get(id) === 'wait')) return [];
+    if ([...names].some((id) => [...((S.bandOf.get(id) || {}).band || [])].some((x) => perf.has(x)))) return [];
     return [plan.composerName || plan.composer];
   }
   const coverHint = (i, work) => coverComposers(i, work).length > 0;

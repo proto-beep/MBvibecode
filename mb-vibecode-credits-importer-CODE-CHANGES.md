@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.0, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.1, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.1 · 2026-11-02
+
+"co?" and "is person" (collected item Z-AF; Q-af, Q-ah).
+
+- **`bandLinks`:** `S.bandOf` holds `{ band, person }` per artist (until 3.40.0 a Set of "member of band"): the same answer of `artist/<mbid>?inc=artist-rels` gives "is person" too (`person`), either way.
+- **`coverComposers`:** the composer's names – the composer and its "is person" names: one of them a performer → no "co?"; their groups looked up too (`bandLinks(others)`, one lookup each; no "co?" while one waits), a group of one of them performing → no "co?".
+- **Tests:** `harness.IS_PERSON` (legal name → performance names, both directions in `/ws/2/artist/`); `t_works_more.py` `coverworks` D – the release's artist the composer's other name, the other name a member of the release's band (the lookups of both names counted), the control: the other name in no band of the release ("co?"); `pill_with` waits for the lookups.
 
 ## Import 3.40.0 · 2026-11-02
 
