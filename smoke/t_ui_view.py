@@ -151,14 +151,14 @@ def case_compact():
 
 def case_fold():
     """Credits Importer 3.29.3: the arrow next to "Artist credit for all roles" (collected item 82; the maintainer's
-    answer of 2026-10-24 19:33: "nur bis zum nächsten Import").
+    answer of 2026-10-24 19:33).
     A) Full view: the arrow ▾ of "Bass Man" folds his rows to compact lines (▸, the tooltip says so); "Artist credit for
        all roles" stays; the other entries keep their fields; the focus stays on the arrow.
     B) A click on a line of the folded entry opens that row with all its fields; "▴ compact" closes it again.
     C) ▸ shows the rows with their fields again.
     D) Folded, then imported again: every entry full again.
     E) Compact view: the arrow of an entry with an open row closes its open rows.
-    3.37.15 (collected item 166; maintainer: "der falten knopf soll immer an der gleichen stelle erscheinen"): in the full view
+    3.37.15 (collected item 166): in the full view
     the arrow is the first thing of the entry's head, before the name, at the same place in every entry (before: after
     "Spelling on Discogs: …", next to "Artist credit for all roles")."""
     SEC = "section.dci-group:has(.dci-gname strong:text-is('{name}'))"
@@ -568,8 +568,7 @@ def case_rows():
 
 
 def case_clineask():
-    """Credits Importer 3.32.3: a type question in the compact line (collected item 102; maintainer: "die Abfragen wie "Bass:
-    which instrument?" in der kompakt Ansicht sollen komplett dargestellt und klickbar sein", "ok ab 5"): "Directed By"
+    """Credits Importer 3.32.3: a type question in the compact line (collected item 102): "Directed By"
     (Q003) shows "type to choose" with its four possibilities as buttons; "conductor" clicked → the row is conductor, the
     question gone, the row still closed."""
     orig = H.discogs_release
@@ -611,8 +610,7 @@ def case_clineask():
 
 
 def case_kindcolors():
-    """Credits Importer 3.32.4: the colours of the kinds (collected items 107, 108; maintainer: "die farblogik von artists und
-    labels sollte auch in der work-matrix erhalten bleiben", "ja bitte blasser", a setting for the colours).
+    """Credits Importer 3.32.4: the colours of the kinds (collected items 107, 108, a setting for the colours).
     A) Works matrix: the head of Writer W in the colour of artists, with the tag "Artist"; Pub Co in the colour of labels,
        "Label"; the cells stay neutral.
     B) ⚙ Settings → Appearance: "Colours for the kinds of entries" (on) and a colour per kind (artist, label, place, area,
@@ -662,10 +660,7 @@ def case_kindcolors():
 
 
 def case_foot():
-    """Credits Importer 3.38.4: the footer compact (collected item 169; maintainer: "die untere leiste nimmt noch zu viel platz weg
-    (siehe screenshot). kann man das nicht etwas mehr und smart nebeneinander anordnen. so dass es sich aber passend verschiebt,
-    falls die bildschirmauflösung in der breite oder die größe des dashboard fensters "zu klein" für die anzeige ist?", "Häkchen ins
-    Menü: schon bei mittlerer breite").
+    """Credits Importer 3.38.4: the footer compact (collected item 169).
     A) 1500 px (window): one line, at most 60 px high (until 3.38.3 about 200) – ▲▼, the summary in one line ("25 new relationships ·
        ‹ 1 row incomplete › · 1 already on MB"; the levels in the tooltip), the chip "2 tracks without a work" (the whole message in
        its tooltip; clicked: shown below, again: hidden), "Preview", the short checkboxes (the long texts in their tooltips),

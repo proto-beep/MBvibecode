@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3); `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), workpick (3.38.15), coverworks (3.38.16); `python3 t_works_more.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -349,10 +349,7 @@ def case_worksskip():
 
 
 def case_livecom():
-    """Credits Importer 3.32.9: disambiguation comments of live recordings – the proposals (collected item 113; maintainer: "kannst
-    du das feature bei live recordings als abfrage das disambiguation comment zu ergänzen in die optionen mit einbinden?
-    standardmäßig aus. die infos kommen aus dem im dashboard eingegebenen alias des recording places und des datums.", "ja bitte
-    mit Kommentar. unter staging. nur "live"").
+    """Credits Importer 3.32.9: disambiguation comments of live recordings – the proposals (collected item 113).
     A) ⚙ Settings → Staging: "Live recordings: add a disambiguation comment" is off – no list above "Stage …" ([3.37.3] the offer
        instead, case liveoffer); switched on (stored).
     B) The release group is Live: tracks 2–4 (planned links with "live" preselected, S021) are listed – track 1 (a link in
@@ -447,9 +444,7 @@ def case_livecom():
 
 
 def case_livecomrun():
-    """Credits Importer 3.32.10: disambiguation comments of live recordings – entered after "Enter edit" (collected item 113;
-    maintainer: "es soll mit einem klick auf enter edit aus dem relationship editor erst ausgeführt werden", "falls nachträglich im
-    relationship editor das alias verändert wird bitte rote nachricht im log ausgeben", "ja bitte mit Kommentar").
+    """Credits Importer 3.32.10: disambiguation comments of live recordings – entered after "Enter edit" (collected item 113).
     A) Staged with the setting on: the job of the release holds the ticked comments (tracks 2 and 3) and the edit note – the
        script's block and "MB: QoL: Seed the batch recording comments script v2022.6.13: Seed live comments"; nothing is sent.
     B) "Enter edit" (the form of the edit note submitted): MusicBrainz has the relationships – the place credited "The Iridium"
@@ -564,8 +559,7 @@ def case_livecomrun():
 
 
 def case_liveoffer():
-    """Credits Importer 3.37.3: the comments of live recordings offered while the setting is off (collected item 150b; maintainer:
-    "so als abfrage/angebot für den jeweiligen fall. per mouseover tooltip wo das standardmäßig eingestellt werden kann").
+    """Credits Importer 3.37.3: the comments of live recordings offered while the setting is off (collected item 150b).
     A) The setting off, the release group Live: above "Stage …" the offer "Tracks 2–4 are live recordings. Propose
        disambiguation comments for them (“live: Abbey Road Studios, New York, NY, USA”)?" – no list; its tooltip names
        ⚙ Settings → Staging → “Live recordings: add a disambiguation comment”.
@@ -657,11 +651,7 @@ def case_liveoffer():
 
 
 def case_livegroup():
-    """Credits Importer 3.38.3: the comments of live recordings in short (collected items 168, 170; maintainer: ""Tracks 1, 2, 3, 4,
-    5 are live recordings." -> kanns du die tracks gruppieren? "1-5"? kannst du medien erwähnen, falls sie komplett live sind?",
-    "bei einem release mit nur einem medium nur die tracks. es kann auch mediengruppen geben bspw. CD 1-5", "da viele tracks die
-    gleichen live-Disambiguation notes bekommen", "rechts unten im kasten soll immer die Überschrift stehen", "Live disambiguation
-    comments: 5 of 5").
+    """Credits Importer 3.38.3: the comments of live recordings in short (collected items 168, 170).
     A) Two media of two tracks, the release group Live, the setting off: the offer names the whole medium and the other track –
        "Live recordings: track 1.2, CD 2. Propose disambiguation comments for them (“live: Abbey Road Studios”)?" (the positions
        as in the list; [3.38.13] F-2: in their order, until 3.38.12 "CD 2, track 1.2").
@@ -731,6 +721,185 @@ def case_livegroup():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_workpick():
+    """Credits Importer 3.38.15 (collected item 180, F-180): the works found for a track are a choice "n works ▾" in its line.
+    A) Track 1.4 (two works of the release artist with its title): "2 works ▾" in the line of "no work yet" (same line), its list hidden;
+       track 1.3 (one work): "1 work ▾" – offered, not set (still "no work yet").
+    B) A click on "2 works ▾": the list below the line (both works, the second with its disambiguation), aria-expanded; the focus
+       stays on the button. A click elsewhere closes it; opened again, Esc closes it (the dashboard stays) and the focus is on the
+       button; one list at a time (track 1.3 opened: 1.4 closes); with a list open, "＋ New work" of track 1.2 acts at the first click
+       (3.38.16).
+    C) "Link" of the second work in the open list: the track's work is planned ("chosen for linking" in the log), the choice is gone."""
+    TB = H.uid('dddddddd', 60)
+    W3, W4, W5 = H.uid('cccccccc', 73), H.uid('cccccccc', 74), H.uid('cccccccc', 75)
+    H.RELEASE_AC[:] = [(TB, 'Test Band', 'Test Band', '')]
+    H.ARTIST_WORKS.update({TB: [{'id': W4, 'title': H.TITLES[3], 'type': 'Song', 'aliases': []},
+                                {'id': W5, 'title': H.TITLES[3], 'type': 'Song', 'aliases': [], 'disambiguation': 'instrumental'},
+                                {'id': W3, 'title': H.TITLES[2], 'type': 'Song', 'aliases': []}]})
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    STATE = """(i) => { const tr = document.querySelector(`tr[data-work="${i}"]`); if (!tr) return null;
+      const b = tr.querySelector('[data-act=mx-works]'); const l = tr.querySelector('.dci-mx-wlist'); const badge = tr.querySelector('.dci-mx-line .dci-badge');
+      const mid = (e) => { const r = e.getBoundingClientRect(); return Math.round(r.top + r.height / 2); };
+      return { btn: b ? b.textContent.replace(/\\s+/g, ' ').trim() : null, exp: b ? b.getAttribute('aria-expanded') : null,
+        shown: !!(l && l.getClientRects().length), gids: l ? [...l.querySelectorAll('[data-act=work-pick]')].map(x => x.dataset.gid) : [],
+        disamb: l ? [...l.querySelectorAll('.dci-disamb')].map(x => x.textContent) : [], badge: badge ? badge.textContent.trim() : null,
+        sameLine: !!(b && badge && Math.abs(mid(b) - mid(badge)) <= 4), focus: document.activeElement === b,
+        below: !!(b && l && l.getClientRects().length && l.getBoundingClientRect().top >= b.getBoundingClientRect().bottom - 1) }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 90)
+        pg.add_style_tag(content='#dci-log { display: none !important; }')
+        pg.wait_for_timeout(400)
+        st = lambda i: pg.evaluate(f"({STATE})({i})")
+        a4, a3 = st(3), st(2)
+        print('A) Track 1.4:', a4, '\n   Track 1.3:', a3)
+        results.append(a4 and a4['btn'] == '2 works ▾' and a4['exp'] == 'false' and not a4['shown'] and a4['sameLine'] and a4['badge'] == 'no work yet'
+                       and a3 and a3['btn'] == '1 work ▾' and a3['badge'] == 'no work yet' and not a3['shown'])
+        pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        b1 = st(3)
+        pg.locator('tr[data-work="3"] .dci-mx-title strong').click(); pg.wait_for_timeout(300)
+        b2 = st(3)
+        pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+        b3, still = st(3), pg.evaluate("!document.getElementById('dci-overlay').hidden")
+        pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        pg.locator('tr[data-work="2"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        b4, b5 = st(3), st(2)
+        # (3.38.16, review) with a list open, a click on another button acts at once: "＋ New work" of track 1.2
+        pg.locator('tr[data-work="1"] [data-act=work-pending]').click(); pg.wait_for_timeout(400)
+        b6, pend = st(2), pg.evaluate("!!document.querySelector('tr[data-work=\"1\"] .dci-badge-plan')")
+        print('B) offen:', b1, '\n   daneben geklickt:', b2['shown'], '| Esc:', b3['shown'], b3['focus'], still, '| eine zur Zeit:', b4['shown'], b5['shown'],
+              '| anderer Knopf:', b6['shown'], pend)
+        results.append(b1['shown'] and b1['exp'] == 'true' and b1['below'] and b1['gids'] == [W4, W5] and b1['disamb'] == ['(instrumental)'] and b1['focus']
+                       and b1['btn'] == '2 works ▴' and not b2['shown'] and b2['exp'] == 'false' and not b3['shown'] and b3['focus'] and still
+                       and not b4['shown'] and b5['shown'] and not b6['shown'] and pend)
+        pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        pg.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W5}"]').click(); pg.wait_for_timeout(500)
+        c = st(3)
+        picked = [x for x in pg.evaluate(LOGS) if 'chosen for linking' in x]
+        planned = pg.evaluate("(() => { const tr = document.querySelector('tr[data-work=\"3\"]'); return tr.querySelector('.dci-badge-plan') ? tr.querySelector('.dci-mblink').textContent : null; })()")
+        print('C) gewählt:', picked, '| geplant:', planned, '| Auswahl:', c['btn'])
+        results.append(picked == [f'Track 1.4: work “{H.TITLES[3]}” chosen for linking'] and planned and c['btn'] is None)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_coverworks():
+    """Credits Importer 3.38.16 (collected item 179, 179b, F-179b – F-179d): works of a track's composer by a similar title.
+    A) Track 1.4 "Variants On A Theme By Monk", Discogs "Written-By [Theme] – Monk" (Thelonious Monk) on it: of Monk's four works
+       only "Variants on a Theme of Thelonious Monk (Criss-Cross)" is offered ("… the composer of the track (similar title)") –
+       not all his works. Track 1.3 "Round Midnight (Thelonious Monk cover)" (no credit of Monk): the full name of the title looked
+       up in MusicBrainz – "'Round Midnight" offered ("the title names “Thelonious Monk”"). Track 1.2 "Epistrophy By Monk": the
+       surname matches an artist of the release – "Epistrophy" offered. The log names the three titles (1.4: "By Monk" too).
+    B) "Link" of Monk's work for track 1.4: the link offers "co?" (dashed; Monk is none of the performers), a click sets "cover";
+       the credited writer's own work of the same title ("Epistrophy By Monk" by Writer W) gets no "co?"; the works of the artists are
+       compared once (the name in the title looked up within the same run).
+    C) In Node: titleComposerNames – "(Thelonious Monk cover)" → Thelonious Monk (full), "By Monk" → Monk (surname), "(Live)",
+       "(Theme)", "Stand By Me", "(Part 2)" → none; (3.38.16, review) "(Prod. By Metro Boomin)", "(Main Title)", "(Dub)", "Stand By Your
+       Man", "(Act II)" → none, "Theme By Monk For Piano" → Monk, "(Ludwig van Beethoven cover)" → the full name, "BY MONK" → MONK; similarWorkTitle – the composer's names and brackets left out, a work's title
+       whole in the track's title from two words or six letters ("Theme" alone not)."""
+    import json
+    import subprocess
+    MONK = H.uid('dddddddd', 3410)
+    TB = H.uid('dddddddd', 60)
+    W6, W7, W8, W9, W10, W11 = (H.uid('cccccccc', n) for n in (86, 87, 88, 89, 90, 91))
+    WW = H.ARTISTS[3007][0]
+    H.ARTISTS[3410] = (MONK, 'Thelonious Monk')
+    H.TITLES[1:4] = ['Epistrophy By Monk', 'Round Midnight (Thelonious Monk cover)', 'Variants On A Theme By Monk']
+    H.RELEASE_AC[:] = [(TB, 'Test Band', 'Test Band', '')]
+    for i, n in [(567, 'cover'), (578, 'live')]:
+        H.attr(i, n, i)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (567, 578))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTIST_WORKS.update({MONK: [{'id': W6, 'title': 'Variants on a Theme of Thelonious Monk (Criss-Cross)', 'type': 'Song', 'aliases': []},
+                                  {'id': W7, 'title': 'Criss Cross', 'type': 'Song', 'aliases': []},
+                                  {'id': W8, 'title': "'Round Midnight", 'type': 'Song', 'aliases': []},
+                                  {'id': W9, 'title': 'Epistrophy', 'type': 'Song', 'aliases': []}],
+                           TB: [{'id': W10, 'title': 'Song One', 'type': 'Song', 'aliases': []}],
+                           WW: [{'id': W11, 'title': 'Epistrophy By Monk', 'type': 'Song', 'aliases': []}]})
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['tracklist'][3]['extraartists'] = [{'name': 'Thelonious Monk', 'anv': 'Monk', 'role': 'Written-By [Theme]', 'tracks': '', 'id': 3410, 'join': ''}]
+        return d
+
+    H.discogs_release = rel
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    SAME = """(i) => { const tr = document.querySelector(`tr[data-work="${i}"]`); const s = tr && tr.querySelector('.dci-same');
+      return s ? [...s.querySelectorAll('li')].map(li => [li.querySelector('[data-act=work-pick]').dataset.gid, li.querySelector('.dci-sub').textContent.trim()]) : null; }"""
+    PILL = """(i) => { const tr = document.querySelector(`tr[data-work="${i}"]`); const p = tr && tr.querySelector('.dci-wpill[data-attr=cover]');
+      return p ? [p.className.replace(/.*dci-wpill-(\\w+).*/, '$1'), p.textContent.trim(), p.title] : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Works of the artists compared/.test(x))", 90)
+        pg.add_style_tag(content='#dci-log { display: none !important; }')
+        pg.wait_for_timeout(400)
+        same = lambda i: pg.evaluate(f"({SAME})({i})")
+        s4, s3, s2 = same(3), same(2), same(1)
+        logs = [x for x in pg.evaluate(LOGS) if 'the title names' in x]
+        print('A) 1.4:', s4, '\n   1.3:', s3, '\n   1.2:', s2, '\n   Protokoll:', logs)
+        results.append(s4 == [[W6, 'Song – work of Thelonious Monk, the composer of the track (similar title)']]
+                       and s3 == [[W8, 'Song – work of Thelonious Monk – the title names “Thelonious Monk”']]
+                       and sorted(s2 or []) == sorted([[W9, 'Song – work of Thelonious Monk – the title names “Monk”'], [W11, 'Song – work of Writer W']])
+                       and len([x for x in pg.evaluate(LOGS) if 'Works of the artists compared' in x]) == 1
+                       and sorted(logs) == sorted(['Track 1.3: the title names “Thelonious Monk” – the works of Thelonious Monk are compared',
+                                                   'Track 1.2: the title names “Monk” – the works of Thelonious Monk are compared',
+                                                   'Track 1.4: the title names “Monk” – the works of Thelonious Monk are compared']))
+        pg.locator('tr[data-work="3"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        pg.locator(f'tr[data-work="3"] .dci-mx-wlist [data-act=work-pick][data-gid="{W6}"]').click(); pg.wait_for_timeout(500)
+        b0 = pg.evaluate(f"({PILL})(3)")
+        pg.locator('tr[data-work="3"] .dci-wpill[data-attr=cover]').click(); pg.wait_for_timeout(300)
+        b1 = pg.evaluate(f"({PILL})(3)")
+        # the credited writer's own work of the same title: no "co?" (a songwriter's song is no cover)
+        pg.locator('tr[data-work="1"] [data-act=mx-works]').click(); pg.wait_for_timeout(300)
+        pg.locator(f'tr[data-work="1"] .dci-mx-wlist [data-act=work-pick][data-gid="{W11}"]').click(); pg.wait_for_timeout(500)
+        b2 = pg.evaluate(f"({PILL})(1)")
+        print('B) co:', b0, '→', b1, '| eigenes Werk von Writer W:', b2)
+        results.append(b0 and b0[0] == 'hint' and b0[1] == 'co?' and b0[2].startswith('Cover? The composer (Thelonious Monk) is none of the performers')
+                       and b1 and b1[0] == 'on' and (b2 is None or b2[0] != 'hint'))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    TITLES = ['Round Midnight (Thelonious Monk cover)', 'Epistrophy By Monk', 'Song (Live)', 'Song (Theme)', 'Stand By Me', 'Song (Part 2)',
+              'Money (Prod. By Metro Boomin)', 'Song (Main Title)', 'Song (Dub)', 'Theme By Monk For Piano', 'Ode (Ludwig van Beethoven cover)',
+              'Stand By Your Man', 'Overture (Act II)', 'Theme BY MONK']
+    SIM = [['Variants On A Theme By Monk', ['Variants on a Theme of Thelonious Monk (Criss-Cross)'], ['Thelonious Monk', 'Monk']],
+           ['Round Midnight (Thelonious Monk cover)', ["'Round Midnight"], ['Thelonious Monk', 'Monk']],
+           ['Variants On A Theme By Monk', ['Criss Cross'], ['Thelonious Monk', 'Monk']],
+           ['A Theme For Ernie', ['Theme'], ['Fred Lacey', 'Lacey']],
+           ['Blue Monk Live At Newport', ['Blue Monk'], ['Thelonious Monk', 'Monk']]]
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const t = JSON.parse(process.argv[2]).map((x) => m.titleComposerNames(x));
+const s = JSON.parse(process.argv[3]).map(([a, b, c]) => m.similarWorkTitle(a, b, c));
+console.log(JSON.stringify([t, s]));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(TITLES), json.dumps(SIM)], capture_output=True, text=True)
+    got = json.loads(js.stdout) if not js.returncode else [js.stderr[-500:], None]
+    print('C) Namen:', got[0], '| ähnlich:', got[1])
+    results.append(got[0] == [[{'name': 'Thelonious Monk', 'full': True}], [{'name': 'Monk', 'full': False}], [], [], [], [], [], [], [],
+                              [{'name': 'Monk', 'full': False}], [{'name': 'Ludwig van Beethoven', 'full': True}], [], [], [{'name': 'MONK', 'full': False}]]
+                   and got[1] == [True, True, False, False, True])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

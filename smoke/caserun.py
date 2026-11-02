@@ -1,4 +1,4 @@
-"""[3.31.1] Cases of a test file (collected item 103: "führe die Tests zusammen").
+"""[3.31.1] Cases of a test file (collected item 103).
 
 A test file of a topic holds several cases, each a function `case_<name>()` – the body of what was one test file before,
 unchanged. `run_cases(globals())` at the end of the file runs them one after another:

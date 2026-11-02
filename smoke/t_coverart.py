@@ -49,9 +49,9 @@ def drag_img(pg, x0, y0, x1, y1):
 
 
 def case_ocrsetting():
-    """⚙ Settings → Beta (between "Dates & tracks" and "ⓘ Connections"; maintainer: "Die Beta Funktion muss im Einstellungsmenü
-    aktiviert werden"): "Text from cover art (beta)" is off – "Source ▾" has no item for it; switched on (stored): the item
-    "Text from cover art … beta"; off again: gone. The connections name the Cover Art Archive (X013) and Tesseract.js (X014)."""
+    """⚙ Settings → Beta (between "Dates & tracks" and "ⓘ Connections"): "Text from cover art (beta)" is off – "Source ▾" has no item
+    for it; switched on (stored): the item "Text from cover art … beta"; off again: gone. The connections name the Cover Art Archive
+    (X013) and Tesseract.js (X014)."""
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -84,7 +84,7 @@ def case_ocrsetting():
 
 
 def case_ocrpick():
-    """The images of the release (maintainer: "die Vorauswahl klingt gut"): in the order of the Cover Art Archive, Back,
+    """The images of the release: in the order of the Cover Art Archive, Back,
     Booklet and Tray ticked, Front and Medium not ("rarely has credits"); English ticked (German too with a German
     dashboard); "Recognize text in 3 images"; a click on a card ticks it. A release without images says so."""
     results = []
@@ -214,7 +214,7 @@ def case_ocrerror():
 
 
 def case_ocrframes():
-    """[3.34.2] Frames around the credits (maintainer: "Rahmen Standardmäßig aber mit Option auf komplettes Bild lesen"): "Draw a
+    """[3.34.2] Frames around the credits: "Draw a
     frame around the credits on each image" is ticked – "Next: frames for 3 images →". The Back (1500 px) in a view of 560 px: a
     frame dragged across it (1200 × 300 px), its corner moved (1200 × 375), a second frame (600 × 225) moved by dragging inside it;
     the image says "2 frames". The Booklet turned right and read whole; the Tray left out – "Recognize text in 2 images". Read:
@@ -287,9 +287,7 @@ def case_ocrframes():
 
 
 def case_ocrown():
-    """[3.34.5] "All images" and own images (collected items 125, 123; maintainer: "wir brauchen einen knopf im bilderkennungsmenü,
-    der alles abwählt oder alles anwählt", "bei der Bilderkennung soll auch die Möglichkeit bestehen eigene Files oder Bilder per
-    URL zu analysieren", "ja alle drei möglichkeiten").
+    """[3.34.5] "All images" and own images (collected items 125, 123).
     A) "All images (5)" half ticked (3 of 5); a click ticks all (Next: frames for 5 images), again none (the button off), again all.
     B) Files chosen: an image is a card of its own (its name, "your file", ticked); a text file is left out with a message.
     C) An image pasted (Ctrl+V) and one dropped onto the window: cards "pasted image 1" and "drop.png"; "remove" takes the pasted
@@ -419,7 +417,7 @@ def case_ocrown():
 
 
 def case_ocrpdf():
-    """[3.34.6] A booklet as PDF (collected item 123; maintainer: "und auch pdf booklets!"), with the real pdf.js (a local copy
+    """[3.34.6] A booklet as PDF (collected item 123), with the real pdf.js (a local copy
     served as from jsDelivr).
     A) A PDF chosen: pdf.js loaded from jsDelivr (and its worker); each page a card – "booklet.pdf · p. 1" "PDF page with its own
        text", p. 2 (a drawing only) "PDF page (an image)", p. 3 with its own text.
@@ -517,8 +515,7 @@ def discogs_image(rel, n, size):
 
 
 def case_ocrdiscogs():
-    """[3.34.7] Discogs images only on request (collected item 123; maintainer: "nur wenn eingegeben. nicht automatisch. evtl einen
-    button mit "load discogs artworks" oder ähnlich").
+    """[3.34.7] Discogs images only on request (collected item 123).
     A) Opened: nothing of Discogs is fetched; "Load Discogs images (r<id>)" for the release linked to this one.
     B) A click: the release's page on discogs.com is read – its two images, each once at its largest size (600 px, not the 150 px
        thumbnails), not the image of another release on the page; cards "Discogs r<id> · 1" "from Discogs", ticked; the button off.
@@ -597,8 +594,7 @@ def case_ocrdiscogs():
 
 
 def case_ocrstart():
-    """[3.34.8] "… from cover art" beside "Import credits …" (collected item 124; maintainer: "der dann die Bilderkennung triggert
-    bevor bspw. von discogs importiert wird", "nur wenn beta an ist", "A").
+    """[3.34.8] "… from cover art" beside "Import credits …" (collected item 124).
     A) Beta off: no such button; beta on: "… from cover art" with "beta", joined to "Import credits …".
     B) A click: the dashboard without the import (nothing asked of Discogs, nothing imported), a message that offers "Start
        import", and the window of the text recognition with the release's images; "Load Discogs images (r1234)" from the
@@ -661,9 +657,7 @@ def case_ocrstart():
 
 
 def case_ocrpeek():
-    """[3.34.9] Images in their proportions, larger on mouse-over (collected item 129; maintainer: "nicht alle Bilder sind
-    quadratisch! alle Bildverhältnisse müssen angezeigt werden. und bei Mouseover etwas größere darstellung.", "gleich hohe /
-    breite kacheln").
+    """[3.34.9] Images in their proportions, larger on mouse-over (collected item 129).
     A) The tiles of the images are alike (square), each image whole in its tile (contain, nothing cut off).
     B) The mouse rests on the Booklet (1246 × 1634): after a short pause (300 ms) its larger view beside the tile – the 1200 px image of
        the Cover Art Archive, in its proportions, its longer side 480 px; the mouse leaves: gone.
@@ -724,9 +718,7 @@ def case_ocrpeek():
 
 
 def case_ocrload():
-    """[3.34.10] Loading the images: how far, and ahead (collected item 128; maintainer: "Fortschrittsanzeige beim Laden der
-    Bilder", "überall", "ja, aber wenn etwas abgehakt wird und noch nicht geladen wird soll das natürlich aus der queue raus",
-    "das vorladen soll ein und ausstellbar sein in den einstellungen").
+    """[3.34.10] Loading the images: how far, and ahead (collected item 128).
     A) The window opened: the previews counted ("Previews: 0 of 5 loaded") until they are there; the three images ticked are
        loaded ahead, two at a time – Back and Booklet "loading …", Tray "waiting to load"; Front and Medium nothing.
     B) Tray unticked: out of the queue, never asked for; Booklet unticked while it loads ahead: it stops; Back comes: "loaded".
@@ -810,8 +802,7 @@ def case_ocrload():
 
 
 def case_ocrthumbs():
-    """[3.34.13] The images beside the frames clicked (collected item 132; maintainer: "im draw a frame screen möchte ich die
-    bilder oben durch anklicken anwählen zum frame drawen können"; before, a click on them went nowhere).
+    """[3.34.13] The images beside the frames clicked (collected item 132; before, a click on them went nowhere).
     A) Frames for the Back, Booklet, Tray: a click on the Tray shows it ("image 3 of 3 · Tray", marked as current); a frame drawn
        on it.
     B) The Booklet chosen with the keyboard (Enter on its small image), then the Back by a click: each shown; the Tray keeps its
@@ -864,9 +855,7 @@ def case_ocrthumbs():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_ocrwindow():
-    """[3.34.14] The window "Text from cover art" (collected item 134; maintainer: "die untere navigationsleiste soll immer
-    angezeigt werden und damit statisch sein", "ich meinte alle cover art importfenster", "je nachdem wie groß man den cover
-    art import dialog gestellt hat").
+    """[3.34.14] The window "Text from cover art" (collected item 134).
     A) The same size in every step: the bar at its foot at the same place while choosing, beside the frames of the Back, the
        Booklet, the Tray (there "Next image →" is greyed out, not gone) and while checking the text.
     B) The image of the frames step takes the room there (the Back larger than the 560 px before, square); the window made
@@ -989,7 +978,7 @@ def case_ocrwindow():
 
 def case_ocrtextfit():
     """[3.34.14] A) The hint "Reads best: text on a plain, even background …" while choosing and beside the frames (collected
-    item 135). B) Each text field as high as its text (collected item 130; maintainer: "es soll sich nach dem text richten"):
+    item 135). B) Each text field as high as its text (collected item 130):
     one line – a low field (two lines high, lower than its image); six lines typed – it grows, no scroll bar. C) Many words read uncertainly on the Back (5 of
     7): a yellow box names it ("Many words were read uncertainly in: Back") with the hint, the part is marked and says "5 of 7
     words"; the Booklet (1 of 6) not."""
@@ -1043,10 +1032,7 @@ def case_ocrtextfit():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_ocrauto():
-    """[3.34.15] No image ticked at first; "Auto-select" (collected item 136; maintainer: "komplett auf die vorauswahl verzichten
-    … einen auto-auswahl knopf einführen und die auto-auswahl auch triggerbar sein", "zusätzliche einstellung die das gleiche
-    zeigt wie der knopf … wenn man den status der einstellung ändert, dass dann auch die auto-auswahl ausgeführt wird", "a, gehen
-    wieder weg"); loading ahead at most 24 (collected item 128b).
+    """[3.34.15] No image ticked at first; "Auto-select" (collected item 136); loading ahead at most 24 (collected item 128b).
     A) Opened: nothing ticked ("0 of 5 images"), "Next" greyed out, "Auto-select" not pressed.
     B) "Auto-select": pressed, Back, Booklet, Tray ticked (Front and Medium not), stored.
     C) The Booklet unticked and the Front ticked by hand; "Auto-select" off: the Back and the Tray untick again – the Booklet stays
@@ -1132,9 +1118,7 @@ def case_ocrauto():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_ocrmore():
-    """[3.34.16] Large collections a part at a time (collected item 131; maintainer: "bei großen cover art collections müssten
-    sie evtl auf mehreren seiten angezeigt werden. zumindest als angebot", "weitere laden", "12 bilder pro seite", "ja passt",
-    "ja" (beside the frames, PDF pages)).
+    """[3.34.16] Large collections a part at a time (collected item 131 (beside the frames, PDF pages)).
     A) 30 images, nothing ticked: 12 shown, only their previews asked for, "Load 12 more (18 not shown yet)"; "All shown (12)"
        beside "All images (30)".
     B) Load more: 24 shown (24 previews); "All shown (24)" ticks those 24 – "24 of 30 images"; Load more: 30, the button and
@@ -1231,7 +1215,7 @@ def case_ocrmore():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_ocrremember():
-    """[3.34.17] The frames remembered for each release and image (collected item 133; maintainer: "(B)", "ja ok").
+    """[3.34.17] The frames remembered for each release and image (collected item 133).
     A) Two frames on the Back, the Booklet turned right and read whole; the window closed: both stored for the release.
     B) Opened again ([3.37.5] as it was left – "↺ Start over": the frames stored stay): beside the frames "Back 2 frames",
        "Booklet the whole image" (before it is loaded); read: the Back's two
@@ -1310,8 +1294,7 @@ def case_ocrremember():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_ocrzoom():
-    """[3.34.11] Each part read beside its text, with zoom (collected item 130; maintainer: "kann der vergrößerte Bildbereich
-    nach der Auswahl neben dem erkannten text dargestellt werden? mit zoom in funktion?", "je Rahmen").
+    """[3.34.11] Each part read beside its text, with zoom (collected item 130).
     A) The Back with two frames, the Booklet whole: in "check the text" (the window wide: 3.34.14, the same in every step) the Back has two parts ("Frame 1",
        "Frame 2"), each its part of the image (fitted, the image there) beside its own text; the Booklet one part.
     B) + zooms in (×1.5), − back, Ctrl + wheel and a double click zoom in at the mouse, ⤢ fits again.
@@ -1387,11 +1370,11 @@ def case_ocrzoom():
 
 
 def case_ocrlocate():
-    """[3.34.12] Where a line or a word is in the image (collected item 130b; maintainer: "klingt gut, bitte einbauen").
+    """[3.34.12] Where a line or a word is in the image (collected item 130b).
     A) The Back with a frame (on its canvas at 150, 150; read as it is), the Tray whole (500 px: read ×3). "Bob", read
        uncertainly twice, clicked: its first place selected in the text, marked in the image and zoomed in on; clicked again:
        its second place.
-    B) The caret in the Back's text: Ctrl + Home – the first line marked where Tesseract read it and ([3.34.15] "auch heranzoomen")
+    B) The caret in the Back's text: Ctrl + Home – the first line marked where Tesseract read it and ([3.34.15])
        zoomed in on, ↓ – the second, zoomed in on as a whole; ⤢: fitted, the mark still drawn there; a letter taken away: still the line; the line replaced by
        other words: no mark.
     C) A click into the Tray's text: its line marked, its place read ×3 brought back to the canvas; the dash corrected in the
@@ -1584,9 +1567,7 @@ def case_ocrorigin():
 
 def case_ocrlinepeek():
     """[3.37.4] The lines not recognized and left out, from the cover art: each in the image while the mouse rests on it
-    (collected item 154; maintainer: "kannst du bei den "3 lines not recognized", sofern sie aus der bilderkennung, stammen jede
-    zeile per mouseover die ausschnitte mit den betroffenen zeilen … anzeigen lassen? (und ein wenig raum um die zeile herum
-    zusätzlich)").
+    (collected item 154).
     A) The Back read whole ("Mixed by Bob Lee", a line not recognized, "Thanks to all our friends") and imported: both lists
        mark their line (data-line-peek, focusable) and say "hover over one to see it in the image".
     B) The mouse on the line not recognized: after a moment the cut-out of its line below it – a JPEG, "Back: …", with about a
@@ -1673,11 +1654,7 @@ def case_ocrlinepeek():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_ocrkeep():
-    """[3.37.5] The window "Text from cover art" kept (collected item 155; maintainer: "falls ich übrigens immernoch im dashboard
-    bin, nachdem ich from image importiert habe soll alles im cache bleiben was ich im bildimport eingestellt habe", "wenn das
-    release gemerkt soll je nach cache einstellungen es auch ein neuladen überstehen. ansonsten nur bis zum neuladen", "nicht
-    mitspeichern bitte. aber anmerken, dass bilder hochgeladen wurden. vielleicht lassen sich ausschnitte merken sofern der
-    dateiname … übereinstimmt?").
+    """[3.37.5] The window "Text from cover art" kept (collected item 155).
     A) The Back and an own file "credits.png" read (whole), the Back's text changed ("Mixed by Bob Leeds"), imported: the window
        goes; opened again: the texts as left (nothing read again), both images drawn beside them; the log says so.
     B) The page loaded again (⚙ Cache "Remember …" on, the tests' default): opened – the texts as left, the Back loaded anew and
@@ -1814,9 +1791,7 @@ def case_ocrkeep():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_ocrnonsense():
-    """[3.37.6] "Remove nonsensical words and signs" (collected item 156; maintainer: "gibt es eine möglichkeit beim textimport aus
-    bildern "delete nonsensical words and signs" (erneuter klick holt text zurück)", "je Bild und unten in der leiste für alle
-    bilder. Eigene Änderungen so wie du vorschlägst.").
+    """[3.37.6] "Remove nonsensical words and signs" (collected item 156).
     A) Back and Tray read; the Back's switch: "~" and "|" at the end of a line go, a line of signs only goes, the words read
        uncertainly without a vowel ("Rrrt", "Qx") go – "Jo" (uncertain, a word), "»", "|" between words, "℗" and "Grmbl" (read
        surely) stay; "7 removed", the buttons of "Rrrt" and "Qx" struck through; the Tray and the switch for all untouched.
@@ -1884,7 +1859,7 @@ def case_ocrnonsense():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_ocrentry():
-    """[3.34.24] The origin from the cover art in the head of an entry (collected item 130d; maintainer: "ja ok").
+    """[3.34.24] The origin from the cover art in the head of an entry (collected item 130d).
     A) Bob Lee on the Back ("Mixed by Bob Lee") and on the Tray ("Bob Lee - drums"): the head of his entry says "From the cover
        art · Back, Tray" with ⓘ; each of his rows names its own image.
     B) ⓘ in the head: the crops of both lines (Back, Tray) below it; ⓘ again hides them. An entry from a pasted text afterwards:

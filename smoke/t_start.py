@@ -1,6 +1,6 @@
 """Starting: from the release editor, from Harmony, the source in the navigation (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: afteredit, harmony, navlink, mappingload (3.33.0) – each the former smoke/t_<case>.py, unchanged; `python3 t_start.py <case> …` runs only those."""
+Cases: afteredit, harmony, navlink, mappingload (3.33.0) – each the former smoke/t_<case>.py, unchanged –, languagesload, gapline (3.39.0); `python3 t_start.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -446,7 +446,7 @@ def case_navlink():
 
 
 def case_mappingload():
-    """Credits Importer 3.33.0 (milestone "Mapping file"): where the mapping file comes from (maintainer: Block W, "erst b dann a").
+    """Credits Importer 3.33.0 (milestone "Mapping file"): where the mapping file comes from (Block W).
     A) Loaded by the userscript manager (GM_getResourceText): the dashboard works; "Mapping rules" says where the data comes from
        ("version <the script's>, loaded by the userscript manager"), the log "Mapping file <version> (loaded by the userscript manager)".
     B) The manager did not load it: the script fetches it from GitHub (…/main/mb-vibecode-credits-importer-mapping.json?v=…),
@@ -511,7 +511,7 @@ def case_mappingload():
 
 
 def case_languagesload():
-    """Credits Importer 3.34.0 (milestone "Languages file", item E6; maintainer: "erst b dann a"): where the texts in German,
+    """Credits Importer 3.34.0 (milestone "Languages file", item E6): where the texts in German,
     Spanish and French come from.
     A) Loaded by the userscript manager, German chosen: the dashboard speaks German; the log notes the file (key
        languagesLoaded, "loaded by the userscript manager", its version the script's).
@@ -599,6 +599,80 @@ def case_languagesload():
                     and opened == ['https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer.user.js']
                     and log_d and log_d[0][0] == 'languagesMissing', not errs]
         ctx.close()
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_gapline():
+    """Credits Importer 3.39.0 (collected item 172, F-172a – F-172g): the line of the release page.
+    A) The release page (with its Discogs link): below the title "Discogs: about N relationships of its credits are not on
+       MusicBrainz yet." – every credit counted on each of its tracks, by the names MusicBrainz has there (Drum Guy's drums on
+       track 1 are there: 3 of his 4); ▸ shows the parts (recordings, release, works, labels and places, they add up to N); with the
+       dashboard's number of its last check ("The dashboard counted 25 new ones on …").
+    B) Loaded again: the Discogs credits are kept (no request to Discogs); ✕ hides the line – also loaded again; one relationship
+       more on MusicBrainz (the number changes): the line is back.
+    C) The setting off (⚙ Settings → Sources): no line, no request.
+    D) "Import credits …": the relationship editor of the release, the dashboard opens and imports from Discogs; its number of new
+       relationships is kept for the line."""
+    REL = H.REL
+    LINE = """(() => { const b = document.querySelector('.dci-gapline'); if (!b) return null; const h1 = document.querySelector('#content h1');
+      return { text: b.querySelector('span').textContent, after: h1 && h1.nextElementSibling === b, parts: [...b.querySelectorAll('[data-gap-parts] li')].map(l => l.textContent),
+        hidden: b.querySelector('[data-gap-parts]').hidden }; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        dg = []
+        pr, errs = H.open_mb_any(ctx, f'https://musicbrainz.org/release/{REL}')
+        pr.on('request', lambda r: dg.append(r.url) if 'api.discogs.com' in r.url else None)
+        pr.evaluate(f"localStorage.setItem('dci-gap-exact:{REL}', JSON.stringify({{ n: 25, at: Date.parse('2026-11-02T10:00:00Z') }}))")
+        pr.reload(); pr.wait_for_timeout(500)
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
+        a = pr.evaluate(LINE)
+        pr.click('.dci-gapline [data-gap=parts]'); pr.wait_for_timeout(200)
+        a2 = pr.evaluate(LINE)
+        print('A)', a, '\n  ▸', a2)
+        import re
+        # (3.39.0, review) its notes are not counted (the test release has notes); the date in the format of the browser
+        m = re.match(r'Discogs: about (\d+) relationships of its credits are not on MusicBrainz yet \(the credits of its notes not counted\)\. The dashboard counted 25 new ones on \S+\.$', a['text'] if a else '')
+        nums = [int(re.search(r'(\d+)', x).group(1)) for x in (a2 or {'parts': []})['parts'][:4]]
+        results.append(bool(m) and a['after'] and a['hidden'] and not a2['hidden'] and len(nums) == 4 and sum(nums) == int(m.group(1)) and nums[0] > 0)
+        n0 = len(dg)
+        pr.reload(); pr.wait_for_timeout(500)
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
+        kept = len(dg) == n0
+        pr.click('.dci-gapline [data-gap=close]'); pr.wait_for_timeout(200)
+        gone = pr.evaluate("!document.querySelector('.dci-gapline')")
+        pr.reload(); pr.wait_for_timeout(2500)
+        still = pr.evaluate("!document.querySelector('.dci-gapline')")
+        H.MB_EXTRA.setdefault(H.REC[1], []).append({'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[148]['gid'], 'attributes': ['bass'],
+                                                    'attribute-values': {}, 'artist': {'id': H.ARTISTS[3001][0], 'name': 'Bass Man'}})
+        pr.reload(); pr.wait_for_timeout(500)
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
+        back = pr.evaluate(LINE)
+        print('B) Discogs-Anfragen:', n0, len(dg), '| ✕:', gone, '| neu geladen weg:', still, '| eine mehr auf MB:', back and back['text'][:60])
+        results.append(n0 >= 1 and kept and gone and still and back is not None and int(re.search(r'about (\d+)', back['text']).group(1)) == int(m.group(1)) - 1)
+        pr.evaluate("localStorage.setItem('dci-gap-on', 'false')")
+        n1 = len(dg)
+        pr.reload(); pr.wait_for_timeout(2500)
+        c = pr.evaluate("!document.querySelector('.dci-gapline')")
+        print('C) aus:', c, len(dg) == n1)
+        results.append(c and len(dg) == n1)
+        pr.evaluate("localStorage.removeItem('dci-gap-on')")
+        pr.reload(); pr.wait_for_timeout(500)
+        H.wait_for(pr, "!!document.querySelector('.dci-gapline')", 20)
+        pr.click('.dci-gapline [data-gap=import]')
+        pr.wait_for_url('**/edit-relationships', timeout=20000)
+        H.wait_for(pr, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        d = pr.evaluate("[location.pathname, !document.getElementById('dci-overlay').hidden, [...document.querySelectorAll('#dci-log li')].map(li => li.textContent).filter(t => /links there/.test(t)).join(' | ')]")
+        pr.wait_for_timeout(800)
+        ex = pr.evaluate(f"[JSON.parse(localStorage.getItem('dci-gap-exact:{REL}') || 'null'), (document.querySelector('.dci-sum-new') || {{}}).textContent || '']")
+        print('D)', d, '| Zahl des Dashboards:', ex)
+        # (review) the Discogs link goes with it (the dashboard does not choose the source by itself); the number once, with the Discogs release
+        results.append(d[0] == f'/release/{REL}/edit-relationships' and d[1] and 'links there: –' not in d[2] and 'Discogs' in d[2]
+                       and ex[0] and f"{ex[0]['n']} new relationships" == ex[1].strip() and ex[0].get('dId') == str(H.DISCOGS_ID))
+        print('Fehler:', errs)
+        results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

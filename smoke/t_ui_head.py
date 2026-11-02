@@ -506,9 +506,7 @@ def case_jump():
 
 
 def case_compacthint():
-    """Credits Importer 3.34.23: an arrow at "Compact | Full" (collected item 143; maintainer: "falls man das skript zum ersten
-    mal startet soll ein pfeil auf den kompaktmodus hinweisen. er soll verschwinden sobald zum ersten mal umgestellt wird", "ja
-    auch für alle die es schon haben. und auch zurücksetzen bitte", "ja ok").
+    """Credits Importer 3.34.23: an arrow at "Compact | Full" (collected item 143).
     A) Nothing stored about it: the dashboard's head shows the arrow below the symbol (its tip below the symbol), the text says
        what the compact view is; what lies below it can still be clicked (the pointer goes through, only ✕ is a button).
     B) The symbol switches to compact: the arrow is gone, stored; back to full and a new page: still gone.
@@ -585,8 +583,7 @@ def case_compacthint():
 
 
 def case_keys():
-    """Credits Importer 3.36.3 (maintainer: "Bitte einen neuen Infoknopf oben in der Leiste der die aktuelle Tastaturbelegung aller
-    shortcuts zeigt."): ⌨ in the head.
+    """Credits Importer 3.36.3: ⌨ in the head.
     A) ⌨ (before ⤢; until 3.36.4 before ⓘ) opens the shortcuts below the head: the groups (the pages, the release editor, the dashboard, the media
        choice, the window "Text from cover art"), Alt+⇧ Shift+D, Esc, Ctrl+Alt+Enter, Alt+↑ / Alt+↓ … – the keys of this
        computer (Linux here: "Windows, Linux").
@@ -641,9 +638,7 @@ def case_keys():
 
 
 def case_anvcredit():
-    """Credits Importer 3.37.11: the Discogs spelling as the artist credit in MusicBrainz, in the matrix view (collected item 161;
-    maintainer, Discogs 3139201 "Facets": "Kenneth Ansell* wurde so im Dashboard dargestellt, es war aber nicht ersichtlich, dass das
-    Dashboard diesen Artist Credit auch für MB übernimmt (obwohl es das gemacht hat)").
+    """Credits Importer 3.37.11: the Discogs spelling as the artist credit in MusicBrainz, in the matrix view (collected item 161).
     A) "Ken Ansell" credited "Kenneth Ansell" on the release: the head "Kenneth Ansell*" with the chip "artist credit in MusicBrainz:
        “Kenneth Ansell” (the Discogs spelling *)"; the field "Artist credit for all roles" has it; the log names it.
     B) The credit emptied in that field: the chip goes (the MusicBrainz name), the * stays (the spelling of the release)."""
@@ -687,10 +682,7 @@ def case_anvcredit():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_spellings():
-    """Credits Importer 3.38.11 (collected items 175, 176; maintainer, Discogs 2631299 "Boston Duets": "die artistnamen in den
-    instrumentenfeldern werden als "Lake*" bei Discgos angezeigt, dabei ist das nur der name, der in den writing credits steckt", "nein
-    ich meinte das Lake* das von Discogs gezogen wurde und im Kopf des Eintrags stand.", "es fehlt noch die möglichkeit alle entities,
-    also artists, labels, places mit artist etc. credits zu benennen", F-176a "erst mal wie vorschlag", F-176b "ja eigene Zeile").
+    """Credits Importer 3.38.11 (collected items 175, 176).
     A) Oliver Lake – Written-By "Lake*" on tracks 1–2, Flute and Soprano Saxophone as "Oliver Lake", Flute on track 3 as "O. Lake*":
        the head "Oliver Lake" (no "Lake*"), the chip "as “Lake” (+1)"; "Artist credit for all roles" empty.
     B) Carl Allen credited "C. Allen*" in all his roles: the head "C. Allen*", the field "C. Allen" (as before).
@@ -774,9 +766,7 @@ def case_spellings():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_capsnames():
-    """Credits Importer 3.38.12 (F-4, rule S060; maintainer: "bitte schreibe Großbuchstaben immer Klein, es sei denn, der Artistname
-    auf MB ist ebenfalls komplett capslock … anbieten alles in großbuchstaben zu setzen", "ja normale schreibweise … ja überall",
-    "Wörter aus zwei Buchstaben bleiben").
+    """Credits Importer 3.38.12 (F-4, rule S060).
     A) Discogs credits "TORBEN SNEKKESTAD" (Saxophone), "DJ SHADOW" (Scratches), "ABBA" (linked: MusicBrainz "ABBA"), Oliver Lake
        credited "LAKE": the heads "Torben Snekkestad" with "↺ in capitals", "DJ Shadow", "ABBA" (MusicBrainz's spelling, no button),
        "Lake*" credited "Lake" (all its roles carry it); the log "Names in capitals written in normal case (5): …" (the spellings too).
@@ -784,7 +774,10 @@ def case_capsnames():
        more: "Torben Snekkestad", credited as empty again (the MusicBrainz name).
     C) Oliver Lake credited "LAKE" (head "Lake*"): "↺ in capitals" too – "LAKE*", credited "LAKE"; "DOOM" linked to MusicBrainz "MF
        DOOM" (all in capitals): the head "MF DOOM", no ↺, credited "DOOM"; a "credited as" typed by hand ("T. S.") stays at "↺ in
-       capitals"."""
+       capitals".
+    D) In Node, personCase ([Q-a], [Q-b] 3.38.14): "AL DI MEOLA" → "Al di Meola", "DJ SHADOW" → "DJ Shadow", "MC SOLAAR" → "MC
+       Solaar", "MF DOOM" → "MF Doom", "PACO DE LUCÍA" → "Paco de Lucía", "DE LA SOUL" → "De la Soul", "ED O'BRIEN" → "Ed O'Brien",
+       "J. DOE" → "J. Doe", "BMS" stays, "Go KUROSAWA" → "Go Kurosawa" (normal case beside: two letters stay as they are)."""
     H.ENTRIES_VIEW = 'matrix'
     orig = H.discogs_release
     H.ARTISTS[3401] = (H.uid('dddddddd', 3401), 'ABBA')
@@ -857,12 +850,23 @@ def case_capsnames():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    # D) [Q-a], [Q-b] (3.38.14) personCase in Node
+    import json
+    import subprocess
+    NAMES = ['AL DI MEOLA', 'DJ SHADOW', 'MC SOLAAR', 'MF DOOM', 'PACO DE LUCÍA', 'DE LA SOUL', "ED O'BRIEN", 'J. DOE', 'BMS', 'Go KUROSAWA']
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+console.log(JSON.stringify(JSON.parse(process.argv[2]).map((n) => m.personCase(n))));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps(NAMES)], capture_output=True, text=True)
+    got = json.loads(js.stdout) if not js.returncode else js.stderr[-500:]
+    print('D) personCase:', got)
+    results.append(got == ['Al di Meola', 'DJ Shadow', 'MC Solaar', 'MF Doom', 'Paco de Lucía', 'De la Soul', "Ed O'Brien", 'J. Doe', 'BMS', 'Go Kurosawa'])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_poolbar():
-    """Credits Importer 3.37.15 (collected items 165, 166; maintainer: ""+ New date"/"+new track" group soll in der leiste oben auch
-    sichtbar sein wenn sie eingefaltet ist.", "der falten knopf soll immer an der gleichen stelle erscheinen", "ich meinte (b)",
-    "Nur oben", "ganz eingefaltet: ja ok").
+    """Credits Importer 3.37.15 (collected items 165, 166).
     A) "▲ fold" of "Dates & tracks" is in its head (no longer at its foot below the matrix); folded it reads "▼ show" at the same
        place (±1 px); the foot keeps "keep the pools in the bar when folded". [178] (3.38.13) The head is the last line of the block
        (open and folded), "▲ fold" / "▼ show" in its middle (±2 px), the arrow at the title ▲ open, ▼ folded (until 3.38.12 the head

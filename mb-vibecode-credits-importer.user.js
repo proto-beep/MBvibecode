@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.13
+// @version      3.39.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.13
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.13
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.39.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.39.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.13';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.39.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -248,6 +248,25 @@
       "ignored.why.endorsement": "a maker’s note",
       "ignored.why.courtesy": "“appears courtesy of …”",
       "ignored.why.web": "only web addresses",
+      "ignored.why.software": "music software – no instrument and no relationship of MusicBrainz (T056)",
+      "ignored.why.permission": "a permission – no credit",
+      "gap.none": "Discogs: its credits seem to be on MusicBrainz (counted by names).",
+      "gap.missing.one": "Discogs: about {n} relationship of its credits is not on MusicBrainz yet.",
+      "gap.missing.other": "Discogs: about {n} relationships of its credits are not on MusicBrainz yet.",
+      "gap.missingNotes.one": "Discogs: about {n} relationship of its credits is not on MusicBrainz yet (the credits of its notes not counted).",
+      "gap.missingNotes.other": "Discogs: about {n} relationships of its credits are not on MusicBrainz yet (the credits of its notes not counted).",
+      "gap.noneNotes": "Discogs: the credits of its list seem to be on MusicBrainz (counted by names); its notes are not counted here.",
+      "gap.incomplete": "Discogs: MusicBrainz does not give all relationships of this large release at once – the dashboard counts them.",
+      "gap.exact.one": "The dashboard counted {n} new one on {date}.",
+      "gap.exact.other": "The dashboard counted {n} new ones on {date}.",
+      "gap.partsLabel": "Show the parts",
+      "gap.recordings": "recordings: about {n}",
+      "gap.release": "release: about {n}",
+      "gap.works": "works: about {n}",
+      "gap.companies": "labels and places: about {n}",
+      "gap.how": "Each credit counted on each of its tracks, by the names MusicBrainz has there; the credits of the Discogs notes are counted by the dashboard only.",
+      "gap.import": "Import credits …",
+      "gap.closeTitle": "Hide this line for this release until the number changes",
       "ignored.why.medium": "for {medium} – this release: {release}",
       "msg.textEmpty": "The text is empty.",
       "busy.source": "Reading {source} …",
@@ -322,6 +341,8 @@
       "group.closeAll": "Close all roles of {name}",
       "group.creditAllAria": "Artist credit for all roles of {name}",
       "group.creditAllOther": "Credited as for all roles",
+      "group.initials": "{said} = {name} (initials)",
+      "group.initialsMany": "{said}: the initials of {names} – not set; choose the artist",
       "group.creditAllOtherAria": "Credited as for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
@@ -626,6 +647,7 @@
       "log.workSearch.one": "Work search for track {track}: {n} result",
       "log.workSearch.other": "Work search for track {track}: {n} results",
       "log.workPicked": "Track {track}: work “{title}” chosen for linking",
+      "log.titleComposer": "Track {track}: the title names “{said}” – the works of {name} are compared",
       "log.workUnplanned": "Track {track}: planned work link removed",
       "log.applyStart.one": "Staging {n} relationship in the editor …",
       "log.applyStart.other": "Staging {n} relationships in the editor …",
@@ -1034,6 +1056,7 @@
       "matrix.attrsShort": "Attributes",
       "matrix.attrsNone": "none",
       "matrix.liveOffer": "Live release ({reason}): click to add “live” to this link that exists in MusicBrainz (an edit). It is not set by itself, so a studio track stays as it is.",
+      "matrix.coverOffer": "Cover? The composer ({names}) is none of the performers of this track: a click adds “cover” to the link. It is not set by itself.",
       "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "matrix.attrShort": "abbreviate",
       "matrix.attrLong": "spell out",
@@ -1134,8 +1157,12 @@
       "matrix.same.other": "{n} works with the same title by these writers exist:",
       "matrix.sameArtists.one": "{n} work with the same title exists (of the writers, the release's artists or its musicians):",
       "matrix.sameArtists.other": "{n} works with the same title exist (of the writers, the release's artists or its musicians):",
+      "matrix.worksPick.one": "{n} work",
+      "matrix.worksPick.other": "{n} works",
       "works.viaLinked": "work of {name}",
       "works.viaRecorded": "recorded by {name} (“{recording}”)",
+      "works.viaComposer": "work of {name}, the composer of the track (similar title)",
+      "works.viaTitleComposer": "work of {name} – the title names “{said}”",
       "msg.artistWorksSlow": "Comparing the tracks with the works of {name} takes a while: a large catalogue ({n} recordings, {done} read so far). It goes on in the background.",
       "msg.artistWorksCapped": "{name} has {n} works and recordings; only the first {max} were compared with the tracks.",
       "log.artistWorksSlow": "Works of {name}: a large catalogue ({n} recordings, {done} read so far)",
@@ -1251,6 +1278,8 @@
       "afterEdit.keysMac": "Control+Option+Return",
       "settings.afterEdit": "Release editor: the button “Enter edit & import credits” next to “Enter edit” (Ctrl+Alt+Enter) – submits, then opens the relationship editor with the import",
       "settings.afterEditBg": "Imported with Harmony (Bandcamp, Discogs): open it in a background tab, Harmony’s page stays in front",
+      "settings.gapOn": "On the page of a release with a Discogs link, say how many of its relationships are missing",
+      "settings.gapOnTitle": "A line at the top of the release page: about how many relationships of the Discogs credits MusicBrainz does not have yet (the Discogs credits are kept a week). ✕ hides it for the release until the number changes.",
       "settings.webLinksShow": "Show the web links found next to names in a text at their entries",
       "settings.webLinksShowTitle": "Profiles such as instagram.com/… or open.spotify.com/artist/… next to a name in a pasted text or Bandcamp credits. They are kept in any case: “Create artist …” and “Create label …” fill them in, and MusicBrainz is asked for artists with them (not for streaming pages).",
       "settings.aboutCredits": "Bandcamp: read the credits in the “about” text",
@@ -2393,9 +2422,9 @@
   /* eslint-enable quote-props */
 
   // --- 1c. [3.34.0] The languages file --------------------------------------------------------------------------------
-  // (collected item E6, milestone "Languages file"; maintainer: "Bei E6 sollen alle Sprachen in einem einzelnen add on File
-  // sein", "erst b dann a") German, Spanish and French are in mb-vibecode-credits-importer-languages.json, which the userscript
-  // manager loads with the script (@resource languages); English stays above – the keys, and what shows when a text or the
+  // (collected item E6, milestone "Languages file") German, Spanish and French are in mb-vibecode-credits-importer-languages.json,
+  // which the userscript manager loads with the script (@resource languages); English stays above – the keys, and what shows when a
+  // text or the
   // file is missing. Missing, the script fetches it itself as the mapping file (section 2·): with a language other than
   // English chosen it loads the page once more; if that fails, a message, and the dashboard speaks English.
 
@@ -2445,7 +2474,7 @@
   }
 
   /**
-   * [3.33.0, 3.34.0] A missing file fetched by the script (maintainer: "erst b dann a"): through the manager (Greasemonkey:
+   * [3.33.0, 3.34.0] A missing file fetched by the script: through the manager (Greasemonkey:
    * GM.getResourceUrl), else from GitHub (GM_xmlhttpRequest / GM.xmlHttpRequest, @connect raw.githubusercontent.com, else the
    * browser's fetch); kept in this browser for this version. → a promise of its text (checked with `ok`).
    */
@@ -2598,7 +2627,7 @@
   }
 
   /**
-   * [3.33.0] Without the mapping file the script cannot read any credits (maintainer: "erst b dann a"): (b) it fetches the file
+   * [3.33.0] Without the mapping file the script cannot read any credits: (b) it fetches the file
    * itself (fetchScriptFile, section 1c), keeps it for this version and loads the page again; (a) if that fails, a message
    * "Mapping file missing" with "Update script" (opens the script's address: the manager offers it again, with the file).
    */
@@ -2622,7 +2651,7 @@
   const MAP = mappingRevive(MAPPING.raw);
 
   // --- 2·. [3.33.1] Your changes of the register: three layers -------------------------------------------------------
-  // (collected item E7; maintainer: "auch direkt an der Regel") built in – the mapping file, read only (MAPPING.raw) ·
+  // (collected item E7) built in – the mapping file, read only (MAPPING.raw) ·
   // your changes – per rule id in this browser (dci-mapping-changes; with your own rules U… and the switches) · effective –
   // MAP: the file with your changes, which every rule below uses. Only data changes, never code: of a role rule its
   // pattern, types, level, role credit, instrument; of a company rule its pattern, its types and level; of a word list
@@ -2635,9 +2664,9 @@
   const RULE_LEVELS = ['recording', 'release', 'release_group', 'work'];
   const ROLE_RULE_FIELDS = ['re', 'types', 'level', 'credit', 'primaryCands'];
   const COMPANY_RULE_FIELDS = ['re', 'label', 'place', 'area', 'artist', 'level'];
-  // [3.34.4] ✎ also at the wording rules and the questions (collected item 121; maintainer: "bitte gib W und Q auch eine edit
-  // funktion", "passt so"): of a wording rule (W) its phrases and role credit; of an instrument question (Q001 …) its word,
-  // role credit and the instruments to choose; of a type question (Q003 …) its choices – type, level, instrument, task, label,
+  // [3.34.4] ✎ also at the wording rules and the questions (collected item 121): of a wording rule (W) its phrases and role credit; of
+  // an instrument question (Q001 …) its word, role credit and the instruments to choose; of a type question (Q003 …) its choices –
+  // type, level, instrument, task, label,
   // role credit, suggested. What asks a type question (its rule, flag, the question's text) stays, code depends on it.
   const WORDING_RULE_FIELDS = ['phrases', 'credit'];
   const QUESTION_RULE_FIELDS = ['base', 'credit', 'options'];
@@ -2653,6 +2682,10 @@
     T045: { key: 'RIGHTS_SOCIETIES', shape: 'pairs', reload: true },
     T048: { key: 'ROLE_WORDS', shape: 'words' },
     T052: { key: 'PROPER_WORDS', shape: 'words' },
+    // [S061] (3.38.17) music software left out of a line "With …"
+    T056: { key: 'TEXT_SOFTWARE', shape: 'words' },
+    // [S062] (3.38.18) the kinds of field recordings
+    T057: { key: 'TEXT_FIELD_KINDS', shape: 'words' },
   };
   const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
@@ -2877,7 +2910,7 @@
    * logo and art) – or in a text's role ("Logo og kunst: X"): each task its own role as Discogs writes it in English (T040):
    * design with the credit "logo" and artwork with the credit "art". Only when every part is such a task. [3.28.4] Tasks
    * of one MusicBrainz type stay one role of that type, credited with the tasks in English ("Artwork [Design And Layout]"
-   * → design "design and layout"; maintainer: "beides ein design credit").
+   * → design "design and layout").
    */
   function splitArtTasks(role) {
     if (!ruleOn('S033')) return [role];
@@ -3047,29 +3080,26 @@
     { id: 'S043', where: 'TEXT.parse (PUBLISHER_HEAD, SOCIETY_AFTER_NAME, SOCIETY_LINE), addNotesCompanies, resolveArtists', note: 'Publishers below a heading ("[Publishers & Rights Societies]", "Publishers:", "Publishing (all BMI):") – one per line with its rights society and tracks ("FlizmoMusic-BMI : tracks 2, 4, 5"; outside a block a line with a society after the name too): publishing on those tracks; the society (T045) is the release\'s rights society, once each, also from "Published by X (BMI)" and a line of societies only ("BIEM/GEMA"). In the Discogs notes the tracks go onto Discogs\'s publisher of that name (also written together or with a number as a word, T046) as suggestions; publishers and societies not found through their link are searched by name (3.31.0)' },
     { id: 'S044', where: 'mergePersonPublishers, computePublisherEvidence, roleCell', note: 'A person as publisher: a publisher with the name of a person of the dashboard ("Published By – Tomas Fujiwara", "Tomas Fujiwara-BMI : tracks 1, 6, 8") is no company – its publishing becomes a role of the person (artist–work "publishing", MusicBrainz\'s "published / publisher"), in the person\'s column of the works matrix next to writer or composer; the company entry is left out, the row says that Discogs lists it as a company; without tracks of its own, the works the person writes are suggested (3.31.5; 3.31.0–3.31.4: a part of the person\'s column with a label of its own)' },
     { id: 'S048', where: 'personLikeName, suggestByName, matchHtmlInner, startCompanyCreate', note: 'A publisher with the name of a person and no entry of the dashboard (two to four words with capitals, no word of a company such as "Music", "Publishing", "Songs", no legal form – T044): MusicBrainz\'s artists of that name are offered first and "Create artist …"; when MusicBrainz has an artist of exactly that name, a label of that name only when its type is "Publisher", and no "Create label …" (otherwise both, as the name may be a company\'s: "Pub House") (3.31.5)' },
-    // [3.32.0] collected item 97 (maintainer: "Gesellschaft hinter einem Schreiber: ja ok. bitte lass das aber an- und abstellen.
-    // im mapping ganz oben evtl. (mit klickbarem verweis dann wo es verwendet wird)")
+    // [3.32.0] collected item 97
     { id: 'S045', where: 'TEXT.parse (WRITER_WORDS_IN, stripWriterSocieties)', note: 'A rights society after the name of a writer ("Composed by Tomas Fujiwara (BMI)", "Music: Jane Doe-ASCAP", "Lyrics by Ann Poe / GEMA" – composer, lyricist, writer, arranger, librettist, translator): the society is the release\'s rights society (once each, T045), the name is taken without it. In pasted texts, Bandcamp credits and the Discogs notes (3.32.0)' },
-    // [3.31.8] collected item 111 (maintainer, Discogs 8613662: "führt unter den tracks die performer aber die instrumente erst in
-    // den relationships. gäbe es eine möglichkeit beides zu verknüpfen? mit quick switch. standardeinstellung = aus")
+    // [3.31.8] collected item 111
     { id: 'S046', where: 'applyPerformerTracks', note: 'Performers on tracks, instruments for the release: a person credited "Performer" on some tracks only and with instruments or voices for the whole release only ("Performer – Barry Guy" on 4-3 and 4-5, "Bass – Barry Guy" for the release) gets the instruments on the tracks of the "Performer" credits, across all media; the "performer" rows go (they would say the same). Someone without an instrument keeps "performer"; instruments without a "Performer" credit stay on all tracks. Who plays which of several instruments where, Discogs does not say: all of them on all of these tracks. Off until switched on (3.31.8)' },
     { id: 'S047', where: 'mapRoleInner', note: 'The kind of engineer said twice: "Engineer [Recording Engineer]" is read as "Engineer [Recording]" – recording without role credit; "[Mix Engineer]" mix, "[Mastering Engineer]" mastering, "[Assistant Engineer]" engineer with "assistant", "[Sound Engineer]" sound engineer (3.31.3)' },
-    // [3.32.6] collected item 115 (maintainer: "hier stehen die credits im "falschen" feld ich möchte ermöglichen dass diese auch
-    // abgerufen werden", "mach immer lesen bitte. an/ausschaltbar in den einstellungen")
+    // [3.32.6] collected item 115
     { id: 'S049', where: 'BANDCAMP.toRelease (aboutRes), linerNotes, artistSignature', note: 'Credits in Bandcamp\'s "about" text: every credit line of it is read like those of the credits field ("Music and cover art by j4vaman" → composer, cover art) – also when the credits field has credits; prose gives nothing, its lines are not listed as not recognized; the rows say "from the about text" and go with "Leave out the about text". Before only its places and areas, the members of the band (S041) and the liner notes. Switch also in ⚙ Settings → Texts' },
-    // [3.32.5] collected item 115 (maintainer: "muisc hat einen schreibfehler", "Wir probieren es mal mit Tippefehler allgemein
-    // erkennen")
+    // [3.32.5] collected item 115
     { id: 'S050', where: 'TEXT.parse (typoMode, readRole), fixRoleTypo, roleVocab, roleCell', note: 'Typos in role words: a part of a text that gives nothing is read again with each unknown word of five letters or more that is one letter off a role word (T048) – a letter swapped, missing, too many or wrong – read as that word, when the role is known then ("Muisc and cover art by X" → Music By, cover art); only role words, never names; the row says "Read as “Music” (written “Muisc”)". All texts (pasted, Bandcamp, Discogs notes); switch also in ⚙ Settings → Texts' },
-    // [3.34.19] collected item 137a (maintainer: "gibt es eine nachhaltige möglichkeit folgendes zu interpretieren", Go Kurosawa
-    // "soft shakes" on Bandcamp; "ja passt", "ja okay")
+    // [3.34.19] collected item 137a
     { id: 'S051', where: 'TEXT.parse (roleBlock, readBlock, linkOf, chainOf, playedList, PLAYS_LIST)', note: 'Instruments and the name they are played by: lines that are only instruments or voices (one or several each, empty lines between them), then a line "are played, mixed and produced by X" (also "played by X", "All instruments played by X"): each instrument a row of X, the other verbs roles of their own ("Mixed By", "Produced By"), "played" none (T049). In one line too: "Electric guitar, drums and piano are played by X", "X plays guitar, bass and drums". Lines without an instrument before the first one are read as usual; words that are no instrument MusicBrainz knows are listed as not recognized. Words like "are", "is", "were" before a verb are never a part of the role (T050: "are played by X" is "Played By", before "Played By [Are]")' },
-    // [3.34.27] maintainer: "bitte nicht vergessen, instrumente und role credits immer kleinschreiben außer bei eigennamen"
     { id: 'S052', where: 'lowerCredit, lowerWord, roleCreditFor, guessCredit, guessTask, roleCreditOptions (creditCasing), caseNoteHtml, caseKeep, caseAlways', note: 'Role credits and tasks in lower case, proper names keep their capitals: only the proper names of MusicBrainz\'s instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay as written. So the role credit of "other instruments" for a word MusicBrainz does not know ("Chaims" → chaims, "Sticks-And-Stones" → sticks-and-stones), the task of miscellaneous support and of other text attributes ("Tour Manager" → tour manager) and the suggestions of the role credit field, which are written like the role credit (S011; before: as written on Discogs). From 3.34.28 also the words of Discogs brackets and wordings MusicBrainz does not know ("Guitar [Gibson Les Paul]" → Gibson les paul) and the proper names of the register keep theirs (T052: "Buddha machine"); a word of an unknown role or instrument or of a bracket written small says so at the row – "Written small – unknown to MusicBrainz: Les → les · keep “Les” · always write “Les”" (always: into T052). Off: tasks all in lower case, "other instruments" credited as written and the brackets as S011 says, as before' },
     { id: 'S053', where: 'TEXT.parse (LEAD_POS), addNotesCompanies', note: 'Positions in front of a sentence, without "Tracks" and a colon ("A1 to B2 recorded 22nd May 1981 in live concert at Goldsmith\'s College, London", "C1 to D recorded …", D a whole side): the tracks of the sentence. In the Discogs notes a place (or another company) that Discogs lists for the whole release gets the tracks a line of the notes gives it, set – ⓘ shows the line; a place only in the notes has its tracks too (3.36.7; before: the sentence was not read, Discogs\'s place stayed on all tracks). [3.37.7] Also after a word for tracks ("Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall"), and a side alone after such a word everywhere – "Tracks A2 & B:", the tracks of a date in the notes ("Track B …": until 3.37.6 the date was for all tracks)' },
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
-    // [167] (3.38.7) maintainer: "die Artists stehen über der Zeile mit ihnen betreffenden instrumenten", "Großbuchstaben: immer in normale Schreibweise bringen"
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S064', where: 'TEXT.parse (readClause)', note: 'Texts (3.38.18): "Cover © X", "Cover art © X", "Cover image © X", "Artwork © X" – X\'s artwork credited "cover", no ℗ / © of a label; "Photo © X", "Photos © X" – photography credited "photo"; "detail used with permission" and the like after it are left out. Off: as before ("© X" a name, the line not recognized)' },
+    { id: 'S063', where: 'TEXT.parse (initialsOf), groupCredits, entryNameHtml', note: 'Texts (3.38.18): initials as a name – two to four capitals ("RR", "R.R.", "HRG") that are the initials of one release artist or of one name of the text: that artist, credited as the initials, and the head of the entry says "RR = Robert Rich (initials)"; the initials of several names: not set, the head names them. Off: the initials are a name of their own (looked up in MusicBrainz)' },
+    { id: 'S062', where: 'TEXT.parse (readClause; TEXT_FIELD_KINDS)', note: 'Texts (3.38.18): "<kind> recordings by X" with a kind of T057 ("Ambisonic recordings by RR 2022-2025 Pacific coast") – X field recordist, a year or two after the name the period of the relationship; what follows that is an area ("Big Sur, California") is "recorded in", anything else ("Pacific coast") is named as not recognized. "Recorded by X" stays recording engineer. Off: "Field recordings by X" by its role rule (R085), other kinds not recognized' },
+    { id: 'S061', where: 'TEXT.parse (readClause; TEXT_SOFTWARE)', note: 'Texts (3.38.17): a line "With …" names what the release\'s artist plays – "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects": its instruments and voices the release\'s artist\'s (several artists: offered to each), words that may be instruments asked as in a list (S051); a name in it a guest ("with Oliver Lake": guest performer; "with Oliver Lake on saxophone" / "(saxophone)": guest saxophone); music software (T056) is left out ("software"). A line with a colon ("With Strings: …") and a make before a name ("Gibson Les Paul") are no such guests. Off: such a line is read as before (mostly not recognized)' },
     { id: 'S060', where: 'personCase, personCaseOf, groupCredits, entryNameHtml, caseBackHtml, setCaseUp, sourceCreditFor', note: 'A person\'s name all in capitals ("TORBEN SNEKKESTAD", "ABBA") and a name variation in capitals ("LAKE") in normal case – "Torben Snekkestad" – from every source (Discogs names and their spellings, texts, text from cover art, the Discogs notes, Bandcamp): a word of three letters or more with a vowel (also Cyrillic, Greek); two letters ("DJ", "MC"), letters without a vowel ("BMS") and initials stay, a particle between the names is small ("Paco de Lucía"). "↺ in capitals" in the head of the entry takes the spelling of the source again, also as the "credited as" of its roles (one typed by hand stays), and back. Linked to a MusicBrainz name all in capitals ("ABBA", "MF DOOM"): that name is shown, the source\'s capitals are the "credited as" ("DOOM"; none for "ABBA"). Persons only (3.38.12)' },
     { id: 'S057', where: 'personCopyright, mergePersonCopyrights, suggestByName', note: '℗ / © of a person Discogs lists as a label (3.37.10): a company entry with a person\'s name and only ℗ / © rows ("Copyright © – Martin Davidson", "Phonographic Copyright ℗ – Martin Davidson") whose Discogs link MusicBrainz does not know – a person of that name in the dashboard (another Discogs credit) takes the rows (artist–release copyright, phonographic copyright; the row says so, "As the label instead" gives them back); an artist of that name linked in this release becomes the entry\'s MB entity; otherwise the name is searched: artists and labels of that name, each named as such' },
     { id: 'S056', where: 'findFestivals, festivalHtml', note: 'Festival recordings (3.37.8): a sentence of the text or the notes with a festival (T055) – "… during the du Maurier, Ltd. International Jazz Festival Vancouver" – gives a hint above the entries: MusicBrainz prefers the event to the place (the event is linked to its place); with a date in the sentence, MusicBrainz\'s events of that name whose time holds the date are offered – never set, a click adds one as an entry' },
@@ -3256,7 +3286,7 @@
       R086: { run: () => {
       // [137f] (3.34.25) with its instrument: the word before "technician" ("Guitar Technician", "Drum Tech", "Piano Tuner") or a
       // detail ("Technician [Guitar]"), in the spellings of T001 ("Drum" → drums (drum set)); MusicBrainz says "guitar
-      // technician" itself – no role credit, "tuner" stays its credit (collected item 137f; maintainer: "ja genau")
+      // technician" itself – no role credit, "tuner" stays its credit (collected item 137f)
       const word = ((b.match(/^(.+?)\s+(?:technician|tech|tuner)$/) || [])[1] || '').replace(/^instruments?$/, '');
       const det = word ? '' : ms.find((x) => !CHECKBOX_DETAILS.includes(x)) || '';
       if (det) consumed.add(det);
@@ -3373,11 +3403,14 @@
       show: () => ({ pairs: [['words', ROLE_WORDS.join(' · ')]] }) },
     { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area. [3.37.7] The place also after its city: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" gives Zojoji Hall with its area Tokyo (a date between the verb and "in" is fine)',
       show: () => ({ pattern: TEXT_PLACE_WORDS }) },
-    // [3.34.28] maintainer: ""Buddha" ist natürlich ein eigenname also großgeschrieben"
     { id: 'T052', where: 'PROPER_WORDS, properSpelling, properPhrases, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). From 3.35.2 also names of several words ("Gibson Les Paul", "Les Paul"): only as a whole in this spelling, a "les" elsewhere stays small. "always write “…”" at a row adds a word or a name',
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T057', where: 'TEXT_FIELD_KINDS, readClause', note: 'Texts (3.38.18): the kinds of recordings of a field recordist (S062) – ambisonic, binaural, field, hydrophone, location, nature, environmental',
+      show: () => ({ pairs: [['words', TEXT_FIELD_KINDS.join(' · ')]] }) },
+    { id: 'T056', where: 'TEXT_SOFTWARE, readClause', note: 'Texts (3.38.17): music software – left out of a line "With …" (S061) and named as left out ("software"): "Apple Logic", "Logic Pro", "Ableton Live", "Pro Tools", "Cubase", "Reaper", "FL Studio", "Bitwig", "Max/MSP" … – no instrument and no relationship of MusicBrainz ("computer" and "laptop" stay instruments)',
+      show: () => ({ pairs: [['words', TEXT_SOFTWARE.join(' · ')]] }) },
     { id: 'T055', where: 'TEXT_FESTIVAL_WORDS, findFestivals', note: 'Texts (3.37.8): the words of festivals – "Festival", "Jazzfestival", "Festspiele", "Jazzfest" – for S056', show: () => ({ pattern: TEXT_FESTIVAL_WORDS }) },
     { id: 'T054', where: 'TEXT_CREDIT_SEPS, sentencesOf', note: 'Texts (3.37.2): signs between the credits of one line – » « • · | ("Cover-Photo: Photorama International » Photos: Dirk Glawe « Cover Design: Payola « Layout: Bernd Struckmeyer"); only when every part is a credit ("Role: Name", "… by Name"), so a « in a title or "℗ 2019 X · CAT 1" stays as it is',
       show: () => ({ pattern: TEXT_CREDIT_SEPS }) },
@@ -3528,6 +3561,11 @@
   const TEXT_CREDIT_SEPS = MAP.TEXT_CREDIT_SEPS;
   // [T055] (3.37.8) words of festivals ("Festival", "Jazzfestival", "Festspiele", "Jazzfest"; item 158)
   const TEXT_FESTIVAL_WORDS = MAP.TEXT_FESTIVAL_WORDS;
+  // [S061] (3.38.17) music software (T056; ✎ – the list is changed in place)
+  const TEXT_SOFTWARE = MAP.TEXT_SOFTWARE;
+  // [S062] (3.38.18) the kinds of field recordings (T057; ✎)
+  const TEXT_FIELD_KINDS = MAP.TEXT_FIELD_KINDS;
+  const isSoftware = (x) => { const k = norm(x).replace(/\s*\/\s*/g, '/'); return TEXT_SOFTWARE.some((w) => norm(w).replace(/\s*\/\s*/g, '/') === k); };
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
@@ -3733,8 +3771,7 @@
   // [S043] (3.31.0) The heading of a block of publishers: "[Publishers & Rights Societies]", "Publishers:", "Publishing:",
   // "Music publishers (all BMI)", "Verlage:", "Éditeurs :" – the lines below it name publishers ("Name-BMI : tracks 1, 6, 8")
   const PUBLISHER_HEAD = MAP.PUBLISHER_HEAD;
-  // [T046] (3.31.0) A name written together ("FlizmoMusic", "4WordSeaMusic", "Fourwordseamusic", collected item 97:
-  // "es ist auffällig, dass häufiger Leerzeichen fehlen. das soll berücksichtigt werden bei der abfrage."): MusicBrainz's
+  // [T046] (3.31.0) A name written together ("FlizmoMusic", "4WordSeaMusic", "Fourwordseamusic", collected item 97): MusicBrainz's
   // search is also asked for it written apart, a number as a word too ("4 Word Sea Music", "Four Word Sea Music")
   const NUMBER_WORDS = MAP.NUMBER_WORDS;
   const COMPANY_KIND_END = MAP.COMPANY_KIND_END;
@@ -3800,8 +3837,7 @@
       only: (n, row) => (n === 'mastering' && row.flags.has('re')) || (n === 'mastered at' && /^remastered/i.test(row.raw || '')), releaseOnly: true },
     { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at'], releaseOnly: true },
     { key: 'copyright', label: '℗/©', types: ['phonographic copyright', 'copyright'] },
-    // [3.37.9] the artwork: "Cover Painting: “View at Nice” (1992)" for "Painting [Cover Painting] – Mary Vernon" (collected item 159;
-    // maintainer: "können wir bei Mary Vernon - illustration das datum hinzufügen. Painting ist übrigens immer illustration.");
+    // [3.37.9] the artwork: "Cover Painting: “View at Nice” (1992)" for "Painting [Cover Painting] – Mary Vernon" (collected item 159);
     // photographs are not in it (their date is the concert's, see rowDateSugg)
     { key: 'artwork', label: 'Artwork', types: ['design/illustration', 'illustration', 'design', 'graphic design', 'art direction', 'artwork'], releaseOnly: true },
   ];
@@ -4077,8 +4113,7 @@
   }
 
   /**
-   * [144] (3.35.2) Proper names of several words (maintainer: ""Gibson Les Paul" in dieser Groß- und Kleinschreibung bitte zu
-   * Ausnahmen hinzufügen, das ist ja der korrekte name."): those of the register (T052) and those kept at the row ("keep “Les
+   * [144] (3.35.2) Proper names of several words: those of the register (T052) and those kept at the row ("keep “Les
    * Paul”"), the longest first, each as { re, spelling } – a match is written as a whole in this spelling.
    */
   let phraseCache = { key: null, list: [] };
@@ -4287,8 +4322,7 @@
     { id: 'D012', note: 'Month and year as numbers: 3/1996 · 03.1996 · 03/1996 → 1996-03' },
     { id: 'D013', note: 'Several days: June 23 and 24, 2025 · 23 and 25 June 2025 · 23. und 24. Juni 2025 · June 16/17 2018 · [3.28.5] 19 & 20. 01. 2009 · 19./20.01.2009 – consecutive days give one period (2025-06-23 – 2025-06-24, can be split into single dates), other days give several dates and so several rows – (3.31.2) also days with commas only, right before the year ("November 7, 8, 2016", "7, 8, 9 November 2016", "7., 8. November 2016")' },
     { id: 'D014', note: 'Recording dates as a period or separate days within one year: the pool also gets what they have in common – the month (2001-01-20 – 2001-01-25 → 2001-01) or the year (2012-03-01 – 2012-09-30 → 2012); different years give nothing' },
-    // [3.32.0] collected item 97d (maintainer: "auf jeden fall noch die regel, dass performance dates die über mehrere tage
-    // hinweg gehen nach meinen regeln auf den kleinsten gemeinsamen nenner gekürzt werden")
+    // [3.32.0] collected item 97d
     { id: 'D022', note: 'Performance on several days ("December 11 & 12, 2015", "2012-03-01 – 2012-09-30") from the notes: the column Performance of the date matrix gets what they have in common at once (D014) – the month (2015-12) or the year (2012); across years the period stays. The period and the single days stay in the pool, to be used instead (3.32.0)' },
     { id: 'D015', note: '℗ / © wins: keywords count only as whole words ("Fuzzoramarecords", "… Records" are names), capitalised keywords after a ℗ / © sign belong to a name ("℗ Fuzzorama Recordings 2005"), and "©©" (often a typo for ℗ ©) counts as ℗ and ©' },
     { id: 'D016', note: 'A year right after a title in quotation marks – “Madison” 1988 by Albert Irvin (a painting on the cover) – is no date of the release (3.21.0); [3.37.9] after a word of the artwork in its line ("Cover Painting: “View at Nice” (1992)") it is the artwork\'s year (the date group Artwork)' },
@@ -4297,8 +4331,7 @@
     { id: 'D019', note: 'The word naming the group of a date is looked for in its own sentence only ("Mixed May 2001. Released 2003." – 2003 is no mix date); a line ending in ":" counts as part of the next one (3.28.5)' },
     { id: 'D021', note: 'A list of dates after one word naming their group ("recorded … on May 27, 2016 (Disc 1), May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)") gives the group to each; a medium in brackets right after a date ("(Disc 2)", "(CD 2)") is the track group of that date (3.30.8)' },
     { id: 'D020', note: 'Words naming groups joined by "and", "&" or commas give the date to each group: "Mixed and mastered by X in March 2026" → Mix and Mastering, "Recorded, mixed and mastered 2001" → Performance, Mix and Mastering (3.28.5)' },
-    // [3.31.7] collected item 110 (maintainer, Bandcamp "At Iridium 2004": "wir brauchen eine option um daten von tracknamen in den
-    // datums/trackpool aufzunehmen. die Tracknummern hat man dann ja direkt. … standardeinstellung = aus")
+    // [3.31.7] collected item 110
     { id: 'D023', note: 'Dates in the titles of the tracks ("March 23, 2004 (Set 1)", "March 23, 2004 (Set 2)"): each date with a day goes into the date pool, the tracks with that date into the track pool ("March 23, 2004 · 1–2") and, as a suggestion, under Performance into the date matrix ("Apply" as usual); "(Set 1)" is no part of the date. Off until switched on (3.31.7)' },
     { id: 'D024', note: 'The year before the month: 2024 March · 2024 January - July · 2024 Jan – Jul · 2024 January and February · 2024 March 3–5 · 2024 March 30 – April 2 (3.34.18; the day alone, 2024 March 3, is D017); a name in capitals right after the month ("© 2019 March Records") leaves the year only' },
   ];
@@ -4623,10 +4656,9 @@
       const onTracks = [];
       for (const t of d.tracklist || []) {
         if (t.type_ === 'heading') continue;
-        // [145] (3.35.1) an index track without a position of its own whose sub-tracks are on tracks of their own (maintainer:
-        // "wahrscheinlich wird es nicht erkannt weil Discogs alle Tracks unter Werken gruppiert … kann das Dashboard alle tracks
-        // abnehmen?"; "First Encounter": A1, A2, B1, B2): each of them a track – the index's credits on all of them, the work
-        // kept as `work`. Parts of one track ("C1a", "C1b") and an index with a position stay one track, as before.
+        // [145] (3.35.1) an index track without a position of its own whose sub-tracks are on tracks of their own ("First Encounter": A1, A2, B1, B2):
+        // each of them a track – the index's credits on all of them, the work kept as `work`. Parts of one track ("C1a", "C1b") and an
+        // index with a position stay one track, as before.
         const subs = t.type_ === 'index' ? (t.sub_tracks || []) : [];
         const bases = [];
         subs.forEach((x) => {
@@ -4873,9 +4905,9 @@
 
     /**
      * [S059] (3.38.7) A person's name with a word in capitals beside words in normal case – "Torben SNEKKESTAD", "Agusti FERNANDEZ"
-     * – in normal case: "Torben Snekkestad" (collected item 167; maintainer: "Großbuchstaben: immer in normale Schreibweise
-     * bringen"): a word of three letters or more with a vowel (also with - or '), first in the name only from four letters ("KUROSAWA
-     * Go"); never a name all in capitals ("ABBA", "RZA"), short words ("DJ Shadow", "AC Williams") nor letters first ("BMS
+     * – in normal case: "Torben Snekkestad" (collected item 167): a word of three letters or more with a vowel (also with - or '),
+     * first in the name only from four letters ("KUROSAWA Go"); never a name all in capitals ("ABBA", "RZA"), short words ("DJ
+     * Shadow", "AC Williams") nor letters first ("BMS
      * Illustration"). MusicBrainz's spelling ("Agustí Fernández") counts once the name is linked.
      */
     // [S060] (3.38.12) the same for every source: personCase (a name all in capitals there, S060, in groupCredits)
@@ -4898,6 +4930,32 @@
       }
       return out.map(clean).filter(Boolean);
     }
+    /**
+     * [S063] (3.38.18) A name of two to four capitals ("RR", "R.R.", "HRG") that are the initials of exactly one release artist or one
+     * name of the text: that name, credited as the initials (`initials`); of several: `initialsFor` names them (not set).
+     */
+    function initialsOf(credits, artistNames) {
+      const seen = new Set();
+      const full = [...artistNames, ...credits.map((c) => c.who && c.who.name)].filter((n) => {
+        const k = n && norm(personCase(n));
+        if (!k || n.trim().split(/\s+/).length < 2 || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+      const ini = (n) => n.trim().split(/\s+/).filter((w) => /^\p{Lu}/u.test(w)).map((w) => w[0]).join('');
+      for (const c of credits) {
+        const said = c.who && !c.who.id && c.who.name;
+        if (!said || !/^(?:\p{Lu}\.?){2,4}$/u.test(said)) continue;
+        const key = said.replace(/\./g, '');
+        const hits = full.filter((n) => ini(n) === key);
+        if (hits.length === 1) {
+          c.who = { ...c.who, name: hits[0], rawName: hits[0] };
+          c.credited = said;
+          c.initials = said;
+        } else if (hits.length > 1) c.initialsFor = hits;
+      }
+    }
+    const emptyDateFields = () => ({ by: '', bm: '', bd: '', ey: '', em: '', ed: '', ended: false, poolId: null });
     /** Dates and numbers out of a role phrase ("Recorded 12 May 2019" → "Recorded"). */
     const noDates = (s) => clean(String(s || '').replace(/\d+(?:[./–—-]\d+)*(?:st|nd|rd|th)?/g, ' ').replace(TEXT_MONTHS, ' ').replace(/\s+(?:on|am|le|el)\s*$/i, ''));
 
@@ -5152,7 +5210,12 @@
         if (isRole(`${cap(l)} By`)) return [`${cap(l)} By`];
         // [3.14.0] "Layout by X": the role is "Layout"
         if (isRole(cap(l))) return [cap(l)];
-        const parts = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map(byRole);
+        // [183] (3.38.18) verbs one after another are each a role ("Recorded Mixed and Mastered by RR"; until 3.38.17 "Mixed By [Recorded]")
+        const verbs = (x) => {
+          const w = x.split(' ');
+          return w.length >= 2 && w.every((y) => /\p{L}ed$/iu.test(y) && isRole(`${cap(y)} By`)) ? w.map((y) => `${cap(y)} By`) : null;
+        };
+        const parts = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).flatMap((x) => verbs(x) || [byRole(x)]);
         if (parts.length && parts.every(isRole)) return parts;
         // [3.21.4] roles with their medium ("Vinyl LP mastering and digital mastering by X")
         const withM = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map((x) => (isRole(byRole(x)) ? byRole(x) : withMedium(x)));
@@ -5311,6 +5374,37 @@
           pi0 = pi + ci;
           // [3.22.0] the tracks of this clause: those of the line, or those its titles name (T036)
           let cScope = scope;
+          // [S064] (3.38.18) "Cover © Maksimillian Novak-Zemplinski, detail used with permission." (collected item 184): artwork
+          // credited "cover"; "Photos © X" photography credited "photo" (F-184); no ℗ / © of a label
+          if (ruleOn('S064') && (m = clause.match(/^(cover(?:\s+(?:art|artwork|image|painting))?|artwork|photos?|photographs?)\s*(?:©|\(c\))\s*(?:(?:19|20)\d{2}\s+)?(.+)$/iu))) {
+            const photo = /^photo/i.test(m[1]);
+            const tail = /(?:[,;.]\s*|\s+\(\s*|\s+)(?:(?:a\s+)?details?\b|used\b|reproduced\b|courtesy\b|(?:by|with)\s+(?:kind\s+)?permission\b|all\s+rights\b).*$/iu;
+            const rest = clean(m[2].replace(tail, '').replace(TEXT_PC_STRIP, '')).replace(/[.,;]+$/, '');
+            const n = names(rest).map(clean).filter((x) => looksLikeName(x) && !TEXT_NOT_NAME.test(x));
+            if (n.length) {
+              n.forEach((x) => { if (addCredit(x, photo ? 'Photography By' : 'Artwork', cScope, { roleCredit: photo ? 'photo' : 'cover' })) found++; });
+              const said = clean(m[2].slice(m[2].indexOf(rest) + rest.length)).replace(/^[,;.]\s*/, '');
+              if (said) ignored.push({ text: said, why: 'permission' });
+              return;
+            }
+          }
+          // [S062] (3.38.18) "Ambisonic recordings by RR 2022-2025 Pacific coast" (collected item 182): a field recordist with the
+          // period of the relationship; the rest (no area of MusicBrainz) not recognized
+          if (ruleOn('S062') && (m = clause.match(/^(\p{L}+)\s+recordings?\s+(?:by|von|par|por)\s+(.+)$/iu)) && TEXT_FIELD_KINDS.some((k) => norm(k) === norm(m[1]))) {
+            const t = m[2].match(/^(.+?)(?:,?\s+((?:19|20)\d{2})(?:\s*[-–—]\s*((?:19|20)\d{2}))?(?:,?\s+(.+))?)?$/u);
+            const who0 = t ? clean(t[1]) : '';
+            if (who0 && looksLikeName(who0)) {
+              const [y1, y2] = [t[2], t[3] || t[2]].sort();
+              const date = t[2] ? { ...emptyDateFields(), by: y1, ey: y2 } : null;
+              names(who0).forEach((x) => { if (addCredit(x, 'Field Recordings By', cScope, date ? { date } : {})) found++; });
+              // what follows: an area ("Big Sur, California") recorded in, else not recognized ("Pacific coast")
+              const where = t[4] ? areaOf(clean(t[4])) : null;
+              if (where && looksLikeName(where.name) && isCompanyRole('Recorded In')) {
+                companies.push({ who: { ...who(where.name), area: where.area || '' }, role: 'Recorded In', catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at() });
+              } else if (t[4]) unknownParts.push(clean(t[4]));
+              return;
+            }
+          }
           // [3.17.3] "Distribué par X", "Distribuido por X", "Vertrieben durch X", "Distributed through X" (T028)
           if ((m = clause.match(/^(\S+(?:\s+\S+)?)\s+(?:par|por|da|durch|via|through)\s+(.+)$/i)) && distribution(m[1])) {
             for (const n of names(m[2])) if (addCredit(n, 'Distributed By', cScope)) found++;
@@ -5490,9 +5584,86 @@
               return;
             }
           }
+          // [S061] (3.38.17) "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects" (collected item 181): what the
+          // release's artist plays (one artist: his; several: offered to each), a name a guest ("with Oliver Lake" – guest performer;
+          // "with Oliver Lake on saxophone" / "(saxophone)" – guest saxophone), music software (T056) left out ("software")
+          if (ruleOn('S061') && (m = clause.match(/^with\s+([^:]+)$/i))) {
+            // the parts at commas outside brackets; a part "Name on A and B" or "Name (A, B)" is one guest with his instruments
+            const chunks = [];
+            let depth = 0;
+            let cur = '';
+            for (const ch of m[1]) {
+              if (ch === '(') depth++;
+              if (ch === ')') depth = Math.max(0, depth - 1);
+              if (ch === ',' && !depth) {
+                chunks.push(clean(cur));
+                cur = '';
+              } else cur += ch;
+            }
+            chunks.push(clean(cur));
+            const makeWord = (n) => PROPER_WORDS.some((w) => norm(w) === norm(n.split(' ')[0]));
+            const soft = [];
+            const band = [];
+            const guests = [];
+            const guess = [];
+            const unknown = [];
+            const person = (n) => looksLikeName(n) && n.split(' ').length >= 2 && n.split(' ').length <= 4 && !isRole(n) && !TEXT_NOT_NAME.test(n) && !makeWord(n)
+              && n.split(' ').every((w) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w) || /^(?:van|von|de|der|den|da|di|del|la|le|du)$/i.test(w));
+            let last = null;
+            for (const chunk of chunks.filter(Boolean)) {
+              const it = chunk.match(/^(.+?)\s+on\s+(.+)$/i) || chunk.match(/^(.+?)\s*\(([^)]+)\)$/);
+              const roles = it ? listRoles(clean(it[2])) : null;
+              if (it && roles && roles.every(playable) && person(clean(it[1]))) {
+                guests.push([clean(it[1]), roles]);
+                last = null;
+                continue;
+              }
+              for (const item of chunk.split(/\s+(?:and|&|und|et|y)\s+/i).map(clean).filter(Boolean)) {
+                const iit = item.match(/^(.+?)\s+on\s+(.+)$/i) || item.match(/^(.+?)\s*\(([^)]+)\)$/);
+                const iroles = iit ? listRoles(clean(iit[2])) : null;
+                if (iit && iroles && iroles.every(playable) && person(clean(iit[1]))) {
+                  guests.push([clean(iit[1]), iroles]);
+                  last = null;
+                  continue;
+                }
+                if (isSoftware(item) || TEXT_SOFTWARE.some((w) => norm(item).startsWith(`${norm(w)} `))) soft.push(item);
+                // "with Kenny Wheeler, trumpet": the instruments right after a name are his
+                else if (playable(item) && last) last[1].push(item);
+                else if (playable(item)) band.push(item);
+                else if (person(item)) {
+                  last = [item, []];
+                  guests.push(last);
+                  continue;
+                } else if (maybePlayable(item)) guess.push(item);
+                else unknown.push(item);
+                if (!playable(item)) last = null;
+              }
+            }
+            if (band.length || guests.length) {
+              const ours = artistNames.filter(Boolean);
+              const toBand = (r) => (ours.length === 1 ? addCredit(ours[0], r, cScope) : addPlaceholder(clean(clause), r, cScope));
+              band.forEach((r) => { if (toBand(r)) found++; });
+              // words that may be instruments ask like those of a list (137d) – one release artist, no more of them than known ones
+              if (ours.length === 1 && guess.length <= band.length) guess.forEach((r) => { if (addCredit(ours[0], r, cScope, { guess: true })) found++; });
+              else unknown.push(...guess);
+              const asGuest = (r) => {
+                const p = parseRoleNotation(r)[0];
+                return p ? `${p.base} [${[...p.mods, 'Guest'].join(', ')}]` : r;
+              };
+              guests.forEach(([n, roles]) => (roles && roles.length ? roles.map(asGuest) : ['Guest']).forEach((r) => { if (addCredit(n, r, cScope)) found++; }));
+              if (soft.length) ignored.push({ text: soft.join(', '), why: 'software' });
+              unknownParts.push(...unknown);
+              return;
+            }
+            // only software: left out as such
+            if (soft.length && !unknown.length && !guess.length) {
+              ignored.push({ text: soft.join(', '), why: 'software' });
+              found++;
+              return;
+            }
+          }
           // [S055] (3.37.2) "Special Guest: M. Osswald on Sax and Clarinet" (T053): the words before the colon are no person;
-          // "Special Guest(s)", "Guest(s)" … give the attribute guest, "featuring", "with" … none (collected item 153; maintainer:
-          // "Special guest und Guest lösen auf jeden fall das attribut "guest" aus!", "ich würde erst mal auf "guest" verzichten")
+          // "Special Guest(s)", "Guest(s)" … give the attribute guest, "featuring", "with" … none (collected item 153)
           if (ruleOn('S055') && (m = clause.match(/^([^:–—]{2,25}?)\s*[:–—]\s*(.+)$/u)) && (TEXT_GUEST_HEAD.test(clean(m[1])) || TEXT_FEAT_HEAD.test(clean(m[1])))) {
             const guest = TEXT_GUEST_HEAD.test(clean(m[1]));
             const asGuest = (r) => {
@@ -5549,8 +5720,8 @@
             const rp = roleParts(right);
             if (rp.known.length) {
               // [137d] (3.34.26) words that may be instruments – at least as many instruments known as such words – ask like the
-              // words of a list of instruments ("Barry Guy – double bass, sticks-and-stones": other instruments “sticks-and-stones”;
-              // maintainer: "also c … wir wollen das auf keinen fall verlieren", "passt"); the rest stays not recognized
+              // words of a list of instruments ("Barry Guy – double bass, sticks-and-stones": other instruments “sticks-and-stones”);
+              // the rest stays not recognized
               const maybe = ruleOn('S051') ? rp.unknown.filter(maybePlayable) : [];
               const guess = maybe.length && rp.known.filter(playable).length >= maybe.length ? new Set(maybe) : new Set();
               rp.parts.forEach((r) => {
@@ -5623,10 +5794,9 @@
       };
 
       // [S043] (3.31.0) Publishers (collected item 97, Discogs 6303626: "[Publishers & Rights Societies] • Tomas Fujiwara-BMI :
-      // tracks 1, 6, 8 • FlizmoMusic-BMI : tracks 2, 4, 5 …" – maintainer: "die Publisher sollen alle korrekt zugewiesen
-      // werden"): below a heading (PUBLISHER_HEAD) each line names one, with its rights society and its tracks; outside a
-      // block a line with a society after the name does too. The society is the release's rights society (T045; "BMI soll
-      // auf release ebene ebene angeboten werden"), once each.
+      // tracks 1, 6, 8 • FlizmoMusic-BMI : tracks 2, 4, 5 …"): below a heading (PUBLISHER_HEAD) each line names one, with its rights
+      // society and its tracks; outside a block a line with a society after the name does too. The society is the release's rights
+      // society (T045), once each.
       let pubBlock = null;
       const societiesIn = (t) => uniq([...String(t || '').matchAll(SOCIETY_WORD)].map((x) => societyName(x[1])));
       const addSociety = (name) => {
@@ -5815,11 +5985,9 @@
       };
 
       /**
-       * [S058] (3.38.7) Names above (or below) the line with their instruments (collected item 167; maintainer: "folgendes muss
-       * insbesondere bei der Bilderkennung erkannt werden: "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO /
-       * Barry GUY / DOUBLE BASS" also die Artists stehen über der Zeile mit ihnen betreffenden instrumenten", "umgekehrte
-       * Reihenfolge: ja bitte", "mach erstmal nur eindeutiges"): a line that looks like a name (2 – 4 words in capitals, a
-       * particle between them, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows
+       * [S058] (3.38.7) Names above (or below) the line with their instruments (collected item 167): a line that looks like a name (2
+       * – 4 words in capitals, a particle between them, no role, place, digit or sign) and a line only of instruments or voices
+       * MusicBrainz knows
        * ("SAXOPHONES & TRUMPET": never "role & name") pair up within a block (the lines between empty or other ones). A block that
        * pairs up wholly with the names above – or wholly with the instruments above – is read so; any other (an odd number of
        * lines, one missing, two columns read into each other) is ambiguous: the names above (with `stackUp` the instruments),
@@ -5920,9 +6088,10 @@
         readLine(raw);
       }
       flushBlock();
+      // [S063] (3.38.18) initials as a name ("RR"): the one release artist or name of the text they stand for (collected item 183)
+      if (ruleOn('S063')) initialsOf(credits, artistNames);
       // [S058] (3.38.12) blocks whose order was not clear: the text read the other way round too – its credits of those blocks and
-      // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5; maintainer: "wie
-      // vorschlag, gezielt"), the changes made there stay
+      // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
         const alt = parse(text, { ...ctx0, stackUp: !stackUp, noAlt: true });
         return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized };
@@ -6121,10 +6290,8 @@
       // its dates are found in the notes like those of the credits
       // [3.22.0] and its areas ("recorded in Berlin")
       const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
-      // [3.30.7] the members of the band from the "about" text too (S041); [S049] (3.32.6) every credit of it (collected item 115:
-      // "hier stehen die credits im "falschen" feld ich möchte ermöglichen dass diese auch abgerufen werden", "mach immer lesen
-      // bitte. an/ausschaltbar in den einstellungen") – marked as from there, left out with it; its lines not recognized are not
-      // listed (mostly prose)
+      // [3.30.7] the members of the band from the "about" text too (S041); [S049] (3.32.6) every credit of it (collected item 115) –
+      // marked as from there, left out with it; its lines not recognized are not listed (mostly prose)
       const aboutAll = ruleOn('S049');
       credits.push(...aboutRes.credits.filter((c) => aboutAll || c.members).map((c) => (c.members ? c : { ...c, fromAbout: true })));
       // [S058] (3.38.12) the other reading of the "about" text too, taken the same way
@@ -6256,13 +6423,12 @@
   // --- From the neutral release to the dashboard's entries (core) ---------------------------------------
 
   /**
-   * [S059] (3.38.7) / [S060] (3.38.12) A person's name in normal case (F-4; maintainer: "Großbuchstaben: immer in normale
-   * Schreibweise bringen", "bitte schreibe Großbuchstaben immer Klein, es sei denn, der Artistname auf MB ist ebenfalls komplett
-   * capslock … anbieten alles in großbuchstaben zu setzen", "ja normale schreibweise … ja überall", "Wörter aus zwei Buchstaben
-   * bleiben"): a word of three letters or more in capitals with a vowel (also with - or ') – "SNEKKESTAD" → "Snekkestad",
-   * "O'BRIEN" → "O'Brien", "JEAN-LUC" → "Jean-Luc". mixed (S059): a name with words in normal case beside it ("Torben SNEKKESTAD"),
+   * [S059] (3.38.7) / [S060] (3.38.12) A person's name in normal case (F-4): a word of three letters or more in capitals with a vowel
+   * (also with - or ') – "SNEKKESTAD" → "Snekkestad", "O'BRIEN" → "O'Brien", "JEAN-LUC" → "Jean-Luc". mixed (S059): a name with words
+   * in normal case beside it ("Torben SNEKKESTAD"),
    * its first word only from four letters ("KUROSAWA Go"); all (S060): a name all in capitals ("TORBEN SNEKKESTAD", "ABBA").
-   * Two letters ("DJ Shadow", "MC Solaar"), letters without a vowel ("BMS") and initials ("J.") stay. MusicBrainz's spelling
+   * Letters without a vowel ("DJ Shadow", "MC Solaar", "BMS") and initials ("J.") stay; two letters with a vowel stay in a name
+   * with words in normal case and are written in normal case in a name all in capitals ("Al di Meola", Q-a). MusicBrainz's spelling
    * counts once the name is linked (an all-capitals name of MusicBrainz too: no "credited as", S031).
    */
   // [S060] (3.38.12) a particle between the names of a name all in capitals: small ("PACO DE LUCÍA" → "Paco de Lucía")
@@ -6283,7 +6449,9 @@
         if (i < words.length - 1) return lead + core.toLowerCase() + trail;
       }
       const letters = core.replace(/[^\p{L}]/gu, '').length;
-      if (letters < 3 || !PERSON_VOWEL.test(core) || (isMixed && i === 0 && letters < 4)) return w;
+      // [Q-a] (3.38.14) a name all in capitals: two letters with a vowel in normal case too ("AL DI MEOLA" → "Al di Meola"); without
+      // a vowel they stay ("DJ", "MC", "MF"); until 3.38.13 every word of two letters stayed
+      if (letters < (isMixed ? 3 : 2) || !PERSON_VOWEL.test(core) || (isMixed && i === 0 && letters < 4)) return w;
       return lead + core.toLowerCase().replace(/(^|[-'’])(\p{L})/gu, (x, sep, c) => sep + c.toUpperCase()) + trail;
     }).join(' ');
   }
@@ -6314,7 +6482,7 @@
       const gKey = who.id ? `id:${who.id}` : who.placeholder ? `ph:${norm(who.name)}` : `name:${norm(who.name)}`;
       if (!groups.has(gKey)) {
         // [S060] (3.38.12) a name in capitals in normal case (F-4), the source's spelling kept ("in capitals" in the head)
-        const nc = who.placeholder ? { name: who.name, from: '' } : personCaseOf(who.name);
+        const nc = who.placeholder || c.initialsFor ? { name: who.name, from: '' } : personCaseOf(who.name);
         if (!nc.from && who.caseFrom) nc.from = who.caseFrom;
         groups.set(gKey, { dId: who.id || 0, name: nc.name, ...(nc.from ? { caseFrom: nc.from } : {}), rawName: who.rawName, links: who.links || [], roles: new Map(),
           // [3.14.0] a credit without a name, given to one of the release's artists (placeholderCredits)
@@ -6323,6 +6491,9 @@
           ...(who.pageOf ? { pageOf: who.pageOf } : {}) });
       }
       const group = groups.get(gKey);
+      // [S063] (3.38.18) initials read as this name ("RR"), or of several names
+      if (c.initials) group.initials = c.initials;
+      if (c.initialsFor) group.initialsFor = c.initialsFor;
       // [S054] (3.37.0) a name only from the Discogs notes: searched by its name
       if (c.fromNotes && !who.id && group.fromNotes !== false) group.fromNotes = true;
       if (!c.fromNotes) group.fromNotes = false;
@@ -6330,7 +6501,8 @@
       if (!who.id && (who.links || []).length) group.links = uniq([...group.links, ...who.links]);
       if (!c.role) continue;
       // [S060] (3.38.12) a name variation in capitals too ("LAKE" → "Lake")
-      const ac = personCaseOf(c.credited || '');
+      // [S063] (3.38.18) initials stay as written ("AJ", not "Aj")
+      const ac = c.initials ? { name: c.credited, from: '' } : personCaseOf(c.credited || '');
       const anv = ac.name;
       const at = c.tracks || { all: true };
       for (const role of splitEngineerTasks({ raw: c.role, base: c.base, mods: [...(c.details || [])] }).flatMap(splitArtTasks)) {
@@ -6353,6 +6525,9 @@
         if (c.guess) entry.guess = true;
         // [S058] (3.38.7) from lines whose order of names and instruments is not clear
         if (c.stackAmbig) entry.stackAmbig = true;
+        // [S062] (3.38.18) the period of the relationship ("2022-2025"); [S064] a role credit of the text ("cover", "photo")
+        if (c.date && !entry.date) entry.date = c.date;
+        if (c.roleCredit && !entry.roleCredit) entry.roleCredit = c.roleCredit;
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
@@ -6657,7 +6832,7 @@
       hosts: ['instagram.com', 'facebook.com', 'twitter.com', 'x.com', 'soundcloud.com', 'youtube.com', 'tiktok.com', 'bsky.app', 'threads.com', 'threads.net', 'mixcloud.com',
         'vimeo.com', 'myspace.com', 'open.spotify.com', 'music.apple.com', 'deezer.com', 'tidal.com', 'music.youtube.com', 'qobuz.com', 'music.amazon.*', 'linktr.ee'] },
     { id: 'X010', kind: 'site', name: 'GitHub', home: 'https://github.com/proto-beep/MBvibecode', hosts: ['github.com', 'raw.githubusercontent.com'], perms: '@updateURL · @downloadURL · @resource mapping · @resource languages · @connect raw.githubusercontent.com · GM_getResourceText', since: '0.9.2' },
-    // [3.32.10] the comments of live recordings (item 113; maintainer: "das natürlich in den Connections ergänzen")
+    // [3.32.10] the comments of live recordings (item 113)
     { id: 'X011', kind: 'script', name: 'MusicBrainz: Set recording comments for a release', home: 'https://github.com/murdos/musicbrainz-userscripts/blob/master/set-recording-comments.user.js',
       hosts: ['github.com'], perms: '– (MusicBrainz: /ws/js/release, /ws/js/edit/create)', since: '3.32.10' },
     { id: 'X012', kind: 'script', name: 'MB: QoL: Seed the batch recording comments script', home: 'https://github.com/ROpdebee/mb-userscripts/blob/main/mb_qol_seed_recording_disambiguation.user.js',
@@ -6705,7 +6880,7 @@
       isPlaceholderTitle: (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || '')),
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
-      titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase,
+      titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle,
     };
     return;
   }
@@ -6928,12 +7103,17 @@
    */
   function initReleasePageHook() {
     const mbid = (location.pathname.match(MBID_RE) || [])[0];
+    // [172] (3.39.0) how many relationships of the Discogs credits MusicBrainz does not have yet (not while going on to the editor)
+    const gap = () => { if (mbid) initReleaseGap(mbid).catch((e) => console.warn('[Discogs-Credits] release gap', e)); };
     // [3.32.10] comments of live recordings waiting for the relationships of this release (item 113)
     if (mbid) runLiveJob(mbid, { tries: 5 });
     // [E8] (3.38.0) the statistics of a submission waiting for MusicBrainz's confirmation
     if (mbid) runStatJob(mbid, { tries: 5, final: true });
     const go = readJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
-    if (!go || !mbid) return;
+    if (!go || !mbid) {
+      gap();
+      return;
+    }
     writeJson('sessionStorage', AFTER_EDIT_GO_KEY, null);
     let from = '';
     try {
@@ -6942,9 +7122,195 @@
     const fresh = Date.now() - (Number(go.at) || 0) < AFTER_EDIT_MAX_MS;
     // a new release: only the page MusicBrainz opens from "Add release" (not one typed in or opened otherwise meanwhile)
     const mine = go.release === 'new' ? /^\/release\/add/i.test(from) : String(go.release).toLowerCase() === mbid.toLowerCase();
-    if (!fresh || !mine) return;
+    if (!fresh || !mine) {
+      gap();
+      return;
+    }
     writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: Array.isArray(go.links) ? go.links : [], at: Date.now() });
     location.assign(`/release/${mbid}/edit-relationships`);
+  }
+
+  // --- [172] (3.39.0) The release page: relationships of the Discogs credits not on MusicBrainz yet --------------------------
+  // A line at the top of the page of a release with a Discogs link (setting, on): about how many relationships of the Discogs
+  // credits MusicBrainz does not have yet – every credit counted on each of its tracks (a guitarist on 10 tracks: 10), by the
+  // names on each level (recordings, release, works, labels and places); with the exact number of the dashboard's last check of
+  // this release, when it was made. ▸ the parts; "Import credits …" opens the relationship editor with the dashboard; ✕ hides the
+  // line for this release until the number changes. The Discogs credits are kept a week (GAP_PREFIX), MusicBrainz is asked each time.
+  const GAP_ON_KEY = 'dci-gap-on';
+  const GAP_PREFIX = 'dci-gap:';
+  const GAP_EXACT_PREFIX = 'dci-gap-exact:';
+  const GAP_KEEP_MS = 7 * 24 * 3600 * 1000;
+  const gapName = (n) => norm(String(n || '').replace(/\s\(\d+\)$/, '').replace(/\*$/, '')).replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+
+  /** The Discogs credits of a release in short: [{ names, level, tracks: [index] | null (all), kind }] and the number of tracks. */
+  function gapCreditsOf(rel) {
+    const out = [];
+    const nTracks = (rel.tracks || []).length;
+    const tracksOf = (t) => (!t || t.all ? null : [...(t.indexes || [])]);
+    for (const c of rel.credits || []) {
+      if (!c.who || !c.role) continue;
+      const parts = String(c.role).split(/\s*,\s*(?![^[]*\])/).filter(Boolean);
+      for (const part of parts) {
+        const pr = parseRoleNotation(part)[0];
+        const m = pr ? mapRole(pr.base, pr.mods) : null;
+        const level = (m && m.level) || 'recording';
+        if (level === 'skip') continue;
+        out.push({ names: uniq([gapName(c.who.name), gapName(c.credited)].filter(Boolean)), level, tracks: tracksOf(c.tracks), kind: 'person' });
+      }
+    }
+    for (const c of rel.companies || []) {
+      if (!c.who || !c.role) continue;
+      const m = mapCompanyRole(c.role);
+      if (!m || m.level === 'skip') continue;
+      out.push({ names: [gapName(c.who.name)].filter(Boolean), level: m.level || 'release', tracks: tracksOf(c.tracks), kind: m.prefer === 'place' ? 'place' : 'label' });
+    }
+    // the same name, role level and tracks once (a credit listed for the release and for a track)
+    const seen = new Set();
+    const credits = out.filter((c) => {
+      const k = JSON.stringify([c.names, c.level, c.tracks, c.kind]);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    return { credits, nTracks, notes: !!String(rel.notes || '').trim() };
+  }
+
+  /** What MusicBrainz has: the names linked to the release, to each recording and to its works (by the track's index). */
+  function gapMbNames(ws) {
+    const names = (rels) => (rels || []).flatMap((r) => [r.artist && r.artist.name, r['target-credit'], r.label && r.label.name, r.place && r.place.name]).filter(Boolean).map(gapName);
+    const tracks = (ws.media || []).flatMap((m) => m.tracks || []);
+    // a large release: MusicBrainz's answer leaves out tracks or their relationships (as completeMedia knows) – no count then
+    const incomplete = (ws.media || []).some((m) => (m.tracks || []).length < (m['track-count'] || 0))
+      || tracks.some((t) => t.recording && !Array.isArray(t.recording.relations));
+    return {
+      incomplete,
+      release: new Set([...names(ws.relations), ...names(ws['release-group'] && ws['release-group'].relations)]),
+      recordings: tracks.map((t) => new Set(names(t.recording && t.recording.relations))),
+      works: tracks.map((t) => new Set(((t.recording && t.recording.relations) || []).filter((r) => r.work).flatMap((r) => names(r.work.relations)))),
+      n: tracks.length,
+    };
+  }
+
+  /** About how many relationships are missing, by part: { recordings, release, works, companies, total }. */
+  function gapEstimate(dg, mb) {
+    const out = { recordings: 0, release: 0, works: 0, companies: 0, total: 0 };
+    const n = mb.n || dg.nTracks;
+    for (const c of dg.credits) {
+      const idx = c.tracks ? c.tracks.filter((i) => i < n) : [...Array(n).keys()];
+      const has = (set) => c.names.some((x) => set.has(x));
+      let miss = 0;
+      if (c.level === 'recording') miss = idx.filter((i) => !has(mb.recordings[i] || new Set())).length;
+      else if (c.level === 'work') miss = idx.filter((i) => !has(mb.works[i] || new Set())).length;
+      else miss = has(mb.release) ? 0 : 1;
+      const part = c.kind !== 'person' ? 'companies' : c.level === 'recording' ? 'recordings' : c.level === 'work' ? 'works' : 'release';
+      out[part] += miss;
+      out.total += miss;
+    }
+    return out;
+  }
+
+  /** [172] (3.39.0) Old entries of the line out of the browser's storage (a week; at most 150 releases). */
+  function gapSweep() {
+    try {
+      const list = [];
+      for (let k = 0; k < localStorage.length; k++) {
+        const key = localStorage.key(k);
+        if (!key || (!key.startsWith(GAP_PREFIX) && !key.startsWith(GAP_EXACT_PREFIX))) continue;
+        const v = readJson('localStorage', key, null);
+        list.push([key, (v && (v.at || v.failAt)) || 0]);
+      }
+      const old = Date.now() - GAP_KEEP_MS * (1 + 12);
+      list.sort((a, b) => b[1] - a[1]).forEach(([key, at], n) => {
+        if (n >= 300 || at < old || (key.startsWith(GAP_PREFIX) && !key.startsWith(GAP_EXACT_PREFIX) && at < Date.now() - GAP_KEEP_MS * 4)) localStorage.removeItem(key);
+      });
+    } catch {
+      // storage not reachable
+    }
+  }
+
+  async function initReleaseGap(mbid) {
+    if (readJson('localStorage', GAP_ON_KEY, true) === false || !/^\/release\/[0-9a-f-]{36}\/?$/i.test(location.pathname)) return;
+    // the page's own links first: a release page without a Discogs link asks nothing
+    // (the links read by the adapters: what is Discogs stays in DISCOGS)
+    const box = document.querySelector('ul.external_links');
+    if (box && !sourceLinksOf([...box.querySelectorAll('a[href]')].map((x) => x.href)).some((l) => l.source === 'discogs')) return;
+    gapSweep();
+    const res = await fetch(`${location.origin}/ws/2/release/${mbid}?inc=url-rels+artist-rels+label-rels+place-rels+recordings+recording-level-rels+work-rels+work-level-rels`
+      + '+release-groups+release-group-level-rels&fmt=json', { credentials: 'same-origin' });
+    if (!res.ok) return;
+    const ws = await res.json();
+    const dLink = sourceLinksOf((ws.relations || []).filter((r) => r.url).map((r) => r.url.resource)).find((l) => l.source === 'discogs');
+    if (!dLink) return;
+    const link = { resource: dLink.url };
+    const dId = String(dLink.id);
+    const key = `${GAP_PREFIX}${mbid.toLowerCase()}`;
+    let kept = readJson('localStorage', key, null);
+    if (kept && kept.dId === dId && kept.failAt && Date.now() - kept.failAt < (kept.failStatus === 404 ? GAP_KEEP_MS : 3600 * 1000)) return;
+    if (!kept || kept.dId !== dId || !kept.credits || Date.now() - (kept.at || 0) > GAP_KEEP_MS) {
+      // Discogs allows about 25 requests a minute without a login: at least 2.5 s between those of the line (in every tab)
+      const wait = 2500 - (Date.now() - (Number(readJson('localStorage', 'dci-gap-last', 0)) || 0));
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      writeJson('localStorage', 'dci-gap-last', Date.now());
+      let rel;
+      try {
+        rel = await DISCOGS.release(dId);
+      } catch (e) {
+        // an answer of Discogs that says no (429, 404, 5xx) is kept; a request broken off (the page left, no network) is not
+        if (!e || e.name === 'TypeError' || e.name === 'AbortError') return;
+        const status = /404|not found|missing|does not exist/i.test(String(e.message)) ? 404 : 0;
+        writeJson('localStorage', key, { ...(kept && kept.dId === dId ? kept : { dId }), failAt: Date.now(), failStatus: status });
+        return;
+      }
+      kept = { ...(kept && kept.dId === dId ? { dismissed: kept.dismissed } : {}), dId, at: Date.now(), ...gapCreditsOf(rel) };
+      writeJson('localStorage', key, kept);
+    }
+    const mb = gapMbNames(ws);
+    const est = mb.incomplete ? null : gapEstimate(kept, mb);
+    let exact = readJson('localStorage', `${GAP_EXACT_PREFIX}${mbid.toLowerCase()}`, null);
+    if (exact && exact.dId && exact.dId !== dId) exact = null;
+    // ✕: hidden until the number changes
+    if (est && kept.dismissed != null && kept.dismissed === est.total) return;
+    showReleaseGap(mbid, link.resource, est, exact, key, kept.notes);
+  }
+
+  function showReleaseGap(mbid, url, est, exact, key, notes) {
+    const host = document.querySelector('#content') || document.body;
+    host.querySelectorAll('.dci-gapline').forEach((x) => x.remove());
+    const box = document.createElement('div');
+    box.className = 'dci-gapline';
+    box.setAttribute('role', 'note');
+    const style = 'margin:6px 0 10px;padding:6px 10px;border:1px solid #c9c2e8;border-left:4px solid #6b4bbf;border-radius:4px;background:#f7f5ff;color:#222;font-size:13px;line-height:1.5;';
+    box.setAttribute('style', style);
+    // a release of many tracks MusicBrainz does not answer in full: no number; the credits of the Discogs notes are not read here
+    const text = !est ? tr('gap.incomplete') : est.total ? tr(notes ? 'gap.missingNotes' : 'gap.missing', { n: est.total }) : tr(notes ? 'gap.noneNotes' : 'gap.none');
+    const exactText = exact && exact.n != null ? ` ${tr('gap.exact', { n: exact.n, date: new Date(exact.at).toLocaleDateString() })}` : '';
+    const parts = est ? [['recordings', 'gap.recordings'], ['release', 'gap.release'], ['works', 'gap.works'], ['companies', 'gap.companies']]
+      .map(([k, t]) => `<li>${esc(tr(t, { n: est[k] }))}</li>`).join('') : '';
+    const btn = 'background:none;border:0;padding:0 4px;color:#4a2f99;cursor:pointer;font:inherit;';
+    box.innerHTML = `<button type="button" data-gap="parts" aria-expanded="false" aria-controls="dci-gap-parts" aria-label="${esc(tr('gap.partsLabel'))}" style="${btn}">▸</button>
+      <span>${esc(text)}${esc(exactText)}</span>
+      <button type="button" data-gap="import" style="${btn}text-decoration:underline;">${esc(tr('gap.import'))}</button>
+      <button type="button" data-gap="close" title="${esc(tr('gap.closeTitle'))}" aria-label="${esc(tr('gap.closeTitle'))}" style="${btn}float:right;">✕</button>
+      <ul data-gap-parts id="dci-gap-parts" hidden style="margin:4px 0 0 18px;padding:0;">${parts}<li>${esc(tr('gap.how'))}</li></ul>`;
+    box.querySelector('[data-gap=parts]').addEventListener('click', (e) => {
+      const ul = box.querySelector('[data-gap-parts]');
+      ul.hidden = !ul.hidden;
+      e.currentTarget.textContent = ul.hidden ? '▸' : '▾';
+      e.currentTarget.setAttribute('aria-expanded', String(!ul.hidden));
+    });
+    box.querySelector('[data-gap=import]').addEventListener('click', () => {
+      writeJson('sessionStorage', AUTOSTART_KEY, { release: mbid.toLowerCase(), links: sourceLinksOf([url]), at: Date.now() });
+      location.assign(`/release/${mbid}/edit-relationships`);
+    });
+    box.querySelector('[data-gap=close]').addEventListener('click', () => {
+      const kept = readJson('localStorage', key, null);
+      if (kept && est) writeJson('localStorage', key, { ...kept, dismissed: est.total });
+      box.remove();
+    });
+    // on MusicBrainz below the head of the release (its title and "~ Release by …"), else below the title
+    const head = host.querySelector('.releaseheader') || host.querySelector('h1');
+    if (head && head.parentNode) head.parentNode.insertBefore(box, head.nextSibling);
+    else host.prepend(box);
   }
 
   // --- [3.32.10] Comments of live recordings: entered after "Enter edit" (collected item 113) -------------------------
@@ -7124,8 +7490,7 @@
           continue;
         }
         let comment = it.manual ? it.comment : mb.comment;
-        // the place's credit (alias) changed in the relationship editor (maintainer: "falls nachträglich im relationship editor
-        // das alias verändert wird bitte rote nachricht im log ausgeben", "ja bitte mit Kommentar")
+        // the place's credit (alias) changed in the relationship editor
         if (it.place && mb.venue && mb.venue.gid === it.place.mbid && (it.place.credit || '') !== (mb.venue.credit || '')) {
           const was = it.place.credit || it.place.name;
           const now2 = mb.venue.credit || mb.venue.name;
@@ -7191,8 +7556,7 @@
   // --- [E8] (3.38.0) Statistics: what MusicBrainz confirmed, kept in this browser --------------------------------------
   // At "Enter edit" the dashboard writes what is submitted as a job of the release (STAT_JOB_PREFIX); the editor's page – or
   // the release page MusicBrainz shows next – looks in /ws/js/release for the relationships, and what is there goes into the
-  // database dci-stats (IndexedDB of musicbrainz.org). Nothing leaves the browser (maintainer: "von Musicbrainz bestätigt",
-  // "ich glaube einen export brauchen wir nicht").
+  // database dci-stats (IndexedDB of musicbrainz.org). Nothing leaves the browser.
 
   const STATS_ON_KEY = 'dci-stats-on';
   const STATS_PERIOD_KEY = 'dci-stats-period';
@@ -7202,7 +7566,7 @@
   // what cannot be looked up counts on the release page shown within 2 minutes of "Enter edit" (MusicBrainz shows it after a successful one)
   const STAT_FRESH_MS = 2 * 60 * 1000;
   const STATS_DB = 'dci-stats';
-  /** [E8] Collecting is on unless switched off (maintainer: "Nein das Sammeln soll an sein (und natürlich ausschaltbar).") */
+  /** [E8] Collecting is on unless switched off */
   const statsOn = () => readJson('localStorage', STATS_ON_KEY, true) !== false;
   let statDbPromise = null;
   /** [E8] The database of the statistics (one record per submission MusicBrainz confirmed), or null where the browser does not allow it. */
@@ -7847,9 +8211,7 @@
   }
 
   /**
-   * [177] (3.38.10) A relationship as MusicBrainz names it on the page of the recording, release or work (collected item 177;
-   * maintainer: "es soll IMMER der Name des MB relationships dastehen und nicht des discogs relationships … bitte prüfe da alle
-   * rollen mit discogs ab und siehe zu, dass das dashboard das anzeigt, was in MB ankommt", "Zusätze im Namen? ja genau"): the
+   * [177] (3.38.10) A relationship as MusicBrainz names it on the page of the recording, release or work (collected item 177): the
    * link phrase of its type (linkPhraseOf) with the attributes that are staged, each under the name of its root attribute
    * ("additional", "instrument", "vocal" …).
    */
@@ -8148,9 +8510,7 @@
 
   /**
    * [E5a] (3.37.1) The entities MusicBrainz links to this release – its artist credit and labels, the artist credits of its tracks,
-   * the relationships of the release, its recordings and their works – each with where (maintainer: "wenn der name im text schon an
-   * anderer stelle im datensatz verknüpft ist mit musicbrainz soll der vorschlag stärker hervorgehoben werden als andere
-   * namensvorschläge", "überall"): mbid → { name, where: [...] }.
+   * the relationships of the release, its recordings and their works – each with where: mbid → { name, where: [...] }.
    */
   function linkedInRelease(ws) {
     const out = new Map();
@@ -8263,9 +8623,9 @@
   }
 
   /**
-   * [S052] (3.34.27) Role credits and tasks are written in lower case, proper names keep their capitals (maintainer:
-   * "instrumente und role credits immer kleinschreiben außer bei eigennamen"): the proper names of MusicBrainz's instruments
-   * ("Hammond", "Rhodes") and models with digits ("TR-808") stay, every other word is written small ("Chaims" → chaims,
+   * [S052] (3.34.27) Role credits and tasks are written in lower case, proper names keep their capitals: the proper names of
+   * MusicBrainz's instruments ("Hammond", "Rhodes") and models with digits ("TR-808") stay, every other word is written small
+   * ("Chaims" → chaims,
    * "Sticks-And-Stones" → sticks-and-stones, "Tour Manager" → tour manager). Off: all in lower case, as before (tasks) or as
    * written (the credit of "other instruments"). [T052] (3.34.28) also the proper names of the register ("Buddha"); quiet: the
    * words of a role the register knows, not noted at the row.
@@ -8280,7 +8640,7 @@
    * [S011, S034] How the details of a role become its role credit for a relationship type: artwork in lower case, the kind
    * of a voice in lower case, otherwise the words MusicBrainz knows in lower case and the others as written. [S052]
    * (3.34.27) Also used for the suggestions of the role credit field, so that they are written like the credit; (3.34.28)
-   * the words MusicBrainz does not know in lower case too (maintainer: "S052b, Discogs-Klammern (S011): klein schreiben").
+   * the words MusicBrainz does not know in lower case too.
    */
   function creditCasing(lt) {
     const vocab = instrumentVocabulary();
@@ -8642,8 +9002,8 @@
     // [121b] (3.34.21) also a word a question asks about (a question of your own: "keys" – keyboard, synthesizer …)
     if (m.fallback && !primaryIsValid(row) && !guess && !questionRuleFor(row)) {
       // Not an MB instrument either: [137d] (3.34.26) it asks for similar instruments, "other instruments" credited as written or
-      // "miscellaneous support" with the role as task (before: miscellaneous support at once; maintainer: "also c … wir wollen
-      // das auf keinen fall verlieren"); without "other instruments" in MusicBrainz and without similar ones: miscellaneous support
+      // "miscellaneous support" with the role as task (before: miscellaneous support at once); without "other instruments" in
+      // MusicBrainz and without similar ones: miscellaneous support
       guessInstrument(row, { word: String(raw || base).replace(/\s*\[.*$/, '').trim() });
     }
     refreshRowDetails(row);
@@ -9081,9 +9441,7 @@
   // --- [146] (3.36.0) What is stored for a release: only while it is remembered ------------------------------------------
 
   /**
-   * [146] (3.36.0) Remembered per release (maintainer: "vielleicht können wir global einen schalter einführen, der sich änderungen
-   * und import einstellungen an releases merkt oder eben nicht. standardmäßig auf jeden fall aus", "ja genau, soll alles wieder
-   * kommen. aber nur wenn man das ausdrücklich in den einstellungen aktiviert hat", "bitte nach deinem vorschlag"): with
+   * [146] (3.36.0) Remembered per release: with
    * ⚙ Settings → Cache → "Remember changes and import settings per release" (off) the stores of a release – its pools and date
    * matrix, the source and the media chosen, "Skip works", "Leave out the about text", the credits switched off on the source
    * pages, the frames of its images and (new) its rows and entries with what was changed in them – are written and read; off,
@@ -9227,7 +9585,7 @@
     return { releases: rememberedReleases().length, rel, all };
   }
 
-  /** "1.3 MB", "640.2 KB" – one decimal, in the number format of the language (maintainer: "in KB oder MB mit einer kommazahl"). */
+  /** "1.3 MB", "640.2 KB" – one decimal, in the number format of the language. */
   function bytesText(n) {
     const mb = n >= 1024 * 1024;
     const v = mb ? n / (1024 * 1024) : n / 1024;
@@ -9386,12 +9744,9 @@
   // works"), so the dashboard can later use the same internal steps. It only observes; nothing changes.
 
   const DIAG = { timer: null, last: null, lastDialog: '', step: 0, origDispatch: null };
-  // [3.36.2] "Start diagnosis" in the log only with a setting (off; maintainer: "Bitte eine Option, die die Diagnose Funktion im Log
-  // ermöglicht oder den Button ausblendet. Standardmäßig aus."). [171] (3.38.5) One switch for developers: ⚙ Settings → General →
+  // [3.36.2] "Start diagnosis" in the log only with a setting (off). [171] (3.38.5) One switch for developers: ⚙ Settings → General →
   // "Developer mode" (off) – "Start diagnosis" in the log and the developer statistics (3.38.2; collected always) – in place of
-  // "Diagnosis in the log" (dci-log-diag) and "Developer statistics" (dci-stats-dev); on when one of them was on (maintainer: "lass uns
-  // doch einfach einen zentralen developer schalter einführen. der dann auch im log den Diagnose button ermöglicht", "Übernahme: ja",
-  // "bleibt bei den beiden").
+  // "Diagnosis in the log" (dci-log-diag) and "Developer statistics" (dci-stats-dev); on when one of them was on.
   const DEV_KEY = 'dci-dev';
   const DEV_OLD_KEYS = ['dci-log-diag', 'dci-stats-dev'];
   if (DEV_OLD_KEYS.some((k) => readJson('localStorage', k, null) != null)) {
@@ -9617,7 +9972,7 @@
   }
 
   // --- [3.33.1] ✎ built-in data rules, your changes, export and import (collected item E7) ---------------------------------
-  // (maintainer: "auch direkt an der Regel") ✎ at every role rule without code, every company rule and the lists T001, T002,
+  //  ✎ at every role rule without code, every company rule and the lists T001, T002,
   // T003, T038, T045, T048 opens a form below it; what is saved goes into your changes (section 2·, ↺ back to the built-in
   // rule). Export: your changes (mb-vibecode-credits-importer-mapping-changes.json: own rules, switches, changed rules and
   // lists, with the versions they were made on) or the whole effective register (the layout of the mapping file, for a pull
@@ -10163,7 +10518,7 @@
       <button type="button" class="dci-textbtn" data-mchg-resetall>↺ ${esc(tr('mapping.resetAll'))}</button></section>`;
   }
 
-  /** ↺ a change (asked first – maintainer: "frag mich in zukunft ob ich wirklich einen reset machen möchte"). */
+  /** ↺ a change (asked first). */
   function resetMappingChange(id) {
     if (!confirm(tr(ownDataKind(id) ? 'mapping.deleteOwnAsk' : 'mapping.resetAsk', { id }))) return;
     delete mappingChanges.rules[id];
@@ -10621,16 +10976,13 @@
   }
 
   /**
-   * [3.32.0] Quick switches at the top of "Mapping rules" (collected item 97d; maintainer: "im mapping ganz oben evtl. (mit
-   * klickbarem verweis dann wo es verwendet wird)"): rules switched often, each with its id – a click shows the rule, which
-   * says where it acts. The same switches as in the lists below (`dci-rules-off`).
+   * [3.32.0] Quick switches at the top of "Mapping rules" (collected item 97d): rules switched often, each with its id – a click shows
+   * the rule, which says where it acts. The same switches as in the lists below (`dci-rules-off`).
    */
   const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
   function quickSwitchesHtml() {
     const notes = ruleNotes();
-    // [3.32.8] a box of its own, each switch a button with its state (collected item 116; maintainer: "die quick switches bitte
-    // visuell in einem eigenen fenster (rechteck mit oder ohne runde ecken, deine wahl je nach konsistenz). vielleicht alle visuell
-    // mit jeweils eigenem button könnte besser sein … als checkboxen") – before, a line of checkboxes
+    // [3.32.8] a box of its own, each switch a button with its state (collected item 116) – before, a line of checkboxes
     const one = (id) => {
       const on = ruleOn(id);
       return `<span class="dci-qbtn-wrap"><button type="button" class="dci-qbtn" data-qs-toggle="${esc(id)}" aria-pressed="${on}" title="${esc(`${id}: ${notes.get(id) || ''}`)}">
@@ -10710,14 +11062,12 @@
   }
 
   /**
-   * [3.30.0] Where "Mapping rules" open (item 75; maintainer: "ja standardmäßig im Dashboard und ja soll sich die
-   * Einstellung merken. ja nur eines öffnen und das andere schließen"): below the head of the dashboard like ⚙ Settings
+   * [3.30.0] Where "Mapping rules" open (item 75): below the head of the dashboard like ⚙ Settings
    * (the default; never together with them), or as a window of its own (until 3.29: always). Only "window" is stored.
    */
   const RULES_PLACE_KEY = 'dci-rules-place';
   S.rulesPlace = readJson('localStorage', RULES_PLACE_KEY, 'dashboard') === 'window' ? 'window' : 'dashboard';
-  // [3.30.2] rule ids and ⓘ at the rows open the rules as a window (item 75b; maintainer: "bitte bei Klick auf Regel-ID das
-  // Mapping als fenster öffnen standardmäßig aber option in den einstellungen anbieten") – the row stays in view; with the
+  // [3.30.2] rule ids and ⓘ at the rows open the rules as a window (item 75b) – the row stays in view; with the
   // setting "like the symbol" where the symbol opens them. Only "symbol" is stored.
   const RULES_ROW_KEY = 'dci-rules-rowplace';
   S.rulesRowPlace = readJson('localStorage', RULES_ROW_KEY, 'window') === 'symbol' ? 'symbol' : 'window';
@@ -10774,9 +11124,8 @@
 
   /**
    * [3.36.5] What follows the boxes below the head: the content of the settings joins its tab. Until 3.36.4 also a bridge from ⚙
-   * (or "Mapping rules") in the head to its box (3.30.4, item 87); gone (collected item 147b; maintainer: "dann also auch auf
-   * die visuelle verbindung bei den einstellung verzichten", "Brücke weg") – the symbols only show that their box is open,
-   * like ⌨.
+   * (or "Mapping rules") in the head to its box (3.30.4, item 87); gone (collected item 147b) – the symbols only show that their box
+   * is open, like ⌨.
    */
   function alignPanes() {
     if (!S.overlay || S.overlay.hidden) return;
@@ -10784,16 +11133,12 @@
   }
 
   /**
-   * [3.30.4] The content of the settings joins the chosen tab (item 87; maintainer: "vielleicht könnte man den menüinhalt immer
-   * auf höhe der punkte starten lassen"); tabs in a row (narrow): at the top.
+   * [3.30.4] The content of the settings joins the chosen tab (item 87); tabs in a row (narrow): at the top.
    * [3.34.3] As high as it can be while the tab still joins its side – at the top, in the middle or near its foot; lower only
-   * when it is too short for that (collected item 127; maintainer: "die rot markierte fläche soll auch genutzt werden … dies soll
-   * aber nur der fall sein, sofern die visuelle markierung nicht mehr aligned ist. es kann aber auch mittig visuell markiert
-   * sein. gerade im reiter connections wird viel platz verschwendet"); its upper left corner round unless the tab joins there.
-   * Worked out without taking the margin away first, and written only when it changes (collected item 122; maintainer: "ich habe
-   * das I Fenster in den Einstellungen offen und kann nicht mehr hochscrollen wenn der Dates & Tracks Pool aufgeklappt ist. Der
-   * Scrollbalken zappelt"): until 3.34.2 every scroll event took it away and set it again, and the browser's scroll anchoring
-   * answered the short shift by scrolling back (278px at ⓘ Connections).
+   * when it is too short for that (collected item 127); its upper left corner round unless the tab joins there.
+   * Worked out without taking the margin away first, and written only when it changes (collected item 122): until 3.34.2 every scroll
+   * event took it away and set it again, and the browser's scroll anchoring answered the short shift by scrolling back (278px at ⓘ
+   * Connections).
    */
   function alignSettingsPane() {
     const el = S.overlay && $('settings');
@@ -11107,8 +11452,7 @@
   }
 
   // --- [3.34.1] Text from cover art (beta; collected item E3) -------------------------------------------------------------
-  // (maintainer: "kannst Du die Bilderkennung mal als Beta Funktion einbauen? Die Beta Funktion muss im Einstellungsmenü
-  // aktiviert werden", "die Vorauswahl klingt gut") ⚙ Settings → Beta switches it on; then "Source ▾" has "Text from cover
+  //  ⚙ Settings → Beta switches it on; then "Source ▾" has "Text from cover
   // art …": the images of the release on the Cover Art Archive (Back, Booklet, Liner and Tray ticked), read in this browser
   // with Tesseract.js (loaded from jsDelivr at the first use, the language data then kept by the browser), the text
   // corrected (℗ read as ©, dashes, empty lines – the test of 2026-10-28) and checked, then imported like a pasted text or
@@ -11120,7 +11464,7 @@
   const CAA_URL = 'https://coverartarchive.org/release/';
   const TESSERACT_VERSION = '5.1.1';
   const TESSERACT_URL = `https://cdn.jsdelivr.net/npm/tesseract.js@${TESSERACT_VERSION}/dist/tesseract.min.js`;
-  // [3.34.6] booklets as PDF (collected item 123; maintainer: "und auch pdf booklets!"): pdf.js (its legacy build, also for
+  // [3.34.6] booklets as PDF (collected item 123): pdf.js (its legacy build, also for
   // older browsers), loaded from jsDelivr at the first PDF; a page with a text of its own is read from it, exactly and at once,
   // a scanned page with the text recognition
   const PDFJS_VERSION = '6.2.108';
@@ -11131,7 +11475,7 @@
   const OCR_PDF_PX = 2400;
   const OCR_PDF_PAGES = 60;
   const OCR_PDF_TEXT = 20;
-  // the types of images that mostly carry credits: ticked at first ("die Vorauswahl klingt gut")
+  // the types of images that mostly carry credits: ticked at first
   const OCR_CREDIT_TYPES = ['Back', 'Booklet', 'Liner', 'Tray'];
   const OCR_LANGS = { en: 'eng', de: 'deu', es: 'spa', fr: 'fra' };
   // images narrower than this are read enlarged ×3 (500 px gave nothing, enlarged 83 % of the words); longer sides are
@@ -11264,8 +11608,7 @@
     });
   }
 
-  // --- [3.34.5] Own images (collected item 123; maintainer: "bei der Bilderkennung soll auch die Möglichkeit bestehen eigene
-  // Files oder Bilder per URL zu analysieren", "ja alle drei möglichkeiten"): files chosen, dropped onto the window or pasted
+  // --- [3.34.5] Own images (collected item 123): files chosen, dropped onto the window or pasted
   // (Ctrl+V), and images by their address (@connect *: Tampermonkey asks once for each new site). Read like the release's
   // images; they stay in this browser – nothing is uploaded, nothing goes to the Cover Art Archive.
 
@@ -11371,9 +11714,7 @@
     if (f && o.error) f.focus();
   }
 
-  // --- [3.34.7] Discogs images on request (collected item 123; maintainer: "Discogs könnte schon angeboten werden", "nur wenn
-  // eingegeben. nicht automatisch. evtl einen button mit "load discogs artworks" oder ähnlich. da die discogs auflösung gering ist,
-  // wird das ohnehin nicht wirklich funktionieren"): the address of a Discogs release, or "Load Discogs images" for a release
+  // --- [3.34.7] Discogs images on request (collected item 123): the address of a Discogs release, or "Load Discogs images" for a release
   // linked to this one – its images from its page on discogs.com (the API gives their addresses only to a signed-in app), at most
   // 600 px, so read enlarged ×3 with the warning.
 
@@ -11733,15 +12074,11 @@
     return img.canvas;
   }
 
-  // --- [3.34.10] Loading the images: how far, and ahead in the background (collected item 128; maintainer: "Wir brauchen eine
-  // Fortschrittsanzeige beim Laden der Bilder beim Bild-Import", "überall", "ja, aber wenn etwas abgehakt wird und noch nicht
-  // geladen wird soll das natürlich aus der queue raus. -> das vorladen soll ein und ausstellbar sein in den einstellungen"):
+  // --- [3.34.10] Loading the images: how far, and ahead in the background (collected item 128):
   // each image shows how much of it has come (%, MB) on its tile, beside the frames and in the list while reading; the images
   // ticked are loaded ahead, two at a time (⚙ Settings → Beta, on by default); one unticked leaves the queue, and one being
   // loaded ahead stops.
-  // [3.34.15] (collected item 128b; maintainer: "das automatische Laden von Bildern muss erst einmal aktiv aktiviert werden. falls
-  // nicht aktiviert werden die bilder geladen sobald man auf weiter klickt", "nur 24 maximal auch vorladen", "ja zwei zugleich und
-  // das gezeigte zuerst", "in der beta standardmäßig aus"): loading ahead is off by default and takes at most the first
+  // [3.34.15] (collected item 128b): loading ahead is off by default and takes at most the first
   // OCR_PRELOAD_MAX images ticked; after "Next" (the frames, the reading) all images ticked are loaded, two at a time, the one
   // shown first. Only their files are kept until an image is shown or read.
 
@@ -11819,12 +12156,9 @@
     if ((img.filePromise || img.loadPromise) && img.ahead && img.ctl && img.ctl.abort) img.ctl.abort();
   }
 
-  // --- [3.34.15] No images ticked at first; "Auto-select" ticks those that mostly have credits (collected item 136; maintainer:
-  // "ich meinte weiter oben ja, dass wir komplett auf die vorauswahl verzichten. lass doch einfach einen auto-auswahl knopf
-  // einführen und die auto-auswahl auch triggerbar sein", "zusätzliche einstellung die das gleiche zeigt wie der knopf. mit
-  // triggerbar meinte ich aber, wenn man den status der einstellung ändert, dass dann auch die auto-auswahl ausgeführt wird",
-  // "ja bitte" (PDF pages), "a, gehen wieder weg"): a switch in the window and in ⚙ Settings → Beta, one state; switched on,
-  // the release's back covers, booklets, liners and trays and the PDF pages whose own text has credits are ticked at once (and
+  // --- [3.34.15] No images ticked at first; "Auto-select" ticks those that mostly have credits (collected item 136): a switch in the
+  // window and in ⚙ Settings → Beta, one state; switched on, the release's back covers, booklets, liners and trays and the PDF pages
+  // whose own text has credits are ticked at once (and
   // each time the window opens); switched off, the ticks it set go again (those changed by hand stay).
 
   const OCR_AUTO_KEY = 'dci-ocr-auto';
@@ -11935,7 +12269,7 @@
   const ocrChosen = () => S.ocr.images.filter((im) => im.sel && !im.missing);
   const ocrToRead = () => ocrChosen().filter((im) => im.mode !== 'skip');
 
-  // --- [3.34.2] Frames around the credits (maintainer: "Rahmen Standardmäßig aber mit Option auf komplettes Bild lesen") -------
+  // --- [3.34.2] Frames around the credits -------
   // Before reading, each image ticked is shown with its frames: dragged across the image (a new frame), at a corner (its
   // size) or inside it (moved); several frames are read in their order; "the whole image" or "nothing" instead; turned by
   // 90°. An image without a frame is read whole. The frames are on the image's canvas (its pixels, at most OCR_MAX).
@@ -11953,8 +12287,8 @@
   }
 
   /**
-   * [3.34.14] The image of the frames step as large as the window lets it be (collected item 134; maintainer: "je nachdem wie
-   * groß man den cover art import dialog gestellt hat"): the room beside the small images measured, the view sized to it.
+   * [3.34.14] The image of the frames step as large as the window lets it be (collected item 134): the room beside the small images
+   * measured, the view sized to it.
    */
   function ocrFitView() {
     const o = S.ocr;
@@ -12090,7 +12424,7 @@
     Object.assign(img, { canvas: c, w: img.h, h: img.w, frames: [], turn: ((img.turn || 0) + dir + 4) % 4 });
   }
 
-  // --- [3.34.17] The frames remembered (collected item 133; maintainer: "(B)", "ja ok"): for each release and image its frames
+  // --- [3.34.17] The frames remembered (collected item 133): for each release and image its frames
   // (as parts of the image, 0 … 1 – they fit the 1200 px copy and the original alike, and another size no longer drops
   // them), how it is turned and "the whole image"; the images themselves are loaded anew. The last OCR_FRAMES_MAX releases;
   // "Delete stored import …" forgets those of its release, ⚙ Settings → Beta → Reset (and resetting all settings) all of them.
@@ -12157,11 +12491,7 @@
     if (sv.mode === 'whole') img.mode = 'whole';
   }
 
-  // --- [3.37.5] The window kept (collected item 155; maintainer: "falls ich übrigens immernoch im dashboard bin, nachdem ich from
-  // image importiert habe soll alles im cache bleiben was ich im bildimport eingestellt habe (also heruntergeladene bilder,
-  // textauswahl etc.)", "wenn das release gemerkt soll je nach cache einstellungen es auch ein neuladen überstehen. ansonsten nur bis
-  // zum neuladen", "nicht mitspeichern bitte. aber anmerken, dass bilder hochgeladen wurden. vielleicht lassen sich ausschnitte
-  // merken sofern der dateiname (nur lokal im browser gespeichert) übereinstimmt?"): ✕, Esc, "Cancel" and the import only hide
+  // --- [3.37.5] The window kept (collected item 155): ✕, Esc, "Cancel" and the import only hide
   // the window – opened again it is as it was left (the images loaded, chosen and framed, the texts read and changed), until the
   // page is loaded again. With ⚙ Settings → Cache "Remember …" on it is stored for the release too (OCR_STATE_KEY), without the
   // images: those of the release and of addresses are loaded anew; own files (and PDFs) are named – added again, a file of that
@@ -12357,7 +12687,7 @@
       <input type="file" data-ocr-files multiple accept="image/*,application/pdf,.pdf" hidden></div>`;
   }
 
-  /** "↺ Start over" (after asking when something would be lost; maintainer: "frag mich in zukunft ob ich wirklich einen reset machen möchte"). */
+  /** "↺ Start over" (after asking when something would be lost). */
   function ocrRestart() {
     const o = S.ocr;
     if (!o) return;
@@ -12630,7 +12960,7 @@
   /** [130c] (3.34.22) A line's place cut out of its image as a small JPEG (data: address); '' if it cannot be. */
   function ocrCrop(canvas, box, wide = false) {
     try {
-      // [3.37.4] wide: about a line around it (the line peek of item 154; maintainer: "und ein wenig raum um die zeile herum")
+      // [3.37.4] wide: about a line around it (the line peek of item 154)
       const pad = wide ? Math.max(10, Math.round(box.h * 0.9)) : Math.max(4, Math.round(box.h * 0.25));
       const x = Math.max(0, Math.floor(box.x - pad));
       const y = Math.max(0, Math.floor(box.y - pad));
@@ -12649,7 +12979,7 @@
   }
 
   /**
-   * [130c] (3.34.22) Where each line of the text read is (collected item 130c; maintainer: "was verbirgt sich hinter 130c?"):
+   * [130c] (3.34.22) Where each line of the text read is (collected item 130c):
    * { text, lines: Map(line in small letters → [{ what: the image, crop, text }]) }, the crops made now while the images are
    * there – in memory only, for this import (S.ocrLines). [3.37.4] With `box` and `canvas`: the wider cut-out of the line peek
    * (item 154) is made when it is first shown.
@@ -12722,10 +13052,8 @@
         <p class="dci-sub">${esc(tr('ocr.ownHint'))}</p></fieldset>`;
   }
 
-  // --- [3.34.16] Large collections a part at a time (collected item 131; maintainer: "bei großen cover art collections müssten
-  // sie evtl auf mehreren seiten angezeigt werden. zumindest als angebot", "weitere laden", "wollen wir erst einmal 12 bilder pro
-  // seite sagen", "ja passt" (All shown), "ja" (also beside the frames and for PDF pages)): OCR_BATCH images shown at first –
-  // with them only their previews loaded –, "Load 12 more" shows the next ones; images ticked are always shown.
+  // --- [3.34.16] Large collections a part at a time (collected item 131 (also beside the frames and for PDF pages)): OCR_BATCH images
+  // shown at first – with them only their previews loaded –, "Load 12 more" shows the next ones; images ticked are always shown.
   const OCR_BATCH = 12;
 
   function ocrPickHtml() {
@@ -12746,8 +13074,7 @@
         ${im.comment ? `<span class="dci-sub">“${esc(im.comment)}”</span>` : ''}
         ${ocrIsCaa(im) ? (im.sel || OCR_CREDIT_TYPES.some((t) => im.types.includes(t)) ? '' : `<span class="dci-sub">${esc(tr('ocr.rarely'))}</span>`)
           : `<span class="dci-sub">${esc(tr(im.missing ? 'ocr.missingCard' : im.src === 'file' ? 'ocr.ownFile' : im.src === 'pdf' ? (im.textLayer ? 'ocr.pdfText' : 'ocr.pdfScan') : im.src === 'discogs' ? 'ocr.ownDiscogs' : 'ocr.ownUrl'))} <button type="button" class="dci-textbtn" data-ocr-remove="${i}" aria-label="${esc(tr('ocr.removeImage', { what: ocrTypes(im) }))}">${esc(tr('ocr.remove'))}</button></span>`}</label>`;
-    // [3.34.5] "All images" (collected item 125; maintainer: "wir brauchen einen knopf im bilderkennungsmenü, der alles abwählt
-    // oder alles anwählt. viele bookletseiten haben nur bilder oder songtexte"): on – all, off – none, half – some
+    // [3.34.5] "All images" (collected item 125): on – all, off – none, half – some
     const all = o.images.length > 1 ? `<label class="dci-check dci-ocr-all"><input type="checkbox" data-ocr-all ${n === o.images.filter((im) => !im.missing).length ? 'checked' : ''}> ${esc(tr('ocr.all', { n: o.images.length }))}</label>` : '';
     // [3.34.15] "Auto-select": a switch (the same as in ⚙ Settings → Beta)
     const auto = o.images.length ? `<button type="button" class="dci-small dci-ocr-auto" data-ocr="auto" aria-pressed="${S.ocrAuto}" title="${esc(tr('ocr.autoTitle'))}">${esc(tr('ocr.auto'))}</button>` : '';
@@ -12791,9 +13118,7 @@
       <div class="dci-ocr-foot"><span></span><button type="button" class="dci-textbtn" data-ocr="close">${esc(tr('common.cancel'))}</button></div>`;
   }
 
-  // --- [3.37.6] Nonsense taken out (collected item 156; maintainer: "gibt es eine möglichkeit beim textimport aus bildern "delete
-  // nonsensical words and signs" (erneuter klick holt text zurück)", "wie dein vorschlag. je Bild und unten in der leiste für alle
-  // bilder. Eigene Änderungen so wie du vorschlägst."): a switch for each image and one in the bar for all takes out the words
+  // --- [3.37.6] Nonsense taken out (collected item 156): a switch for each image and one in the bar for all takes out the words
   // read uncertainly that are no word and the groups of signs without letters; again: they come back where they were, what was
   // changed by hand in between stays. pt.cut: { runs: [{ n, before, after, text }], gone: [{ n, text }], n }; r.clean: switched on.
 
@@ -12965,8 +13290,7 @@
         ${r.parts.map((pt, j) => ocrPartHtml(r, i, pt, j)).join('')}
         ${fixes.length ? `<p class="dci-sub">${esc(tr('ocr.fixed'))} ${esc(fixes.join(' · '))}</p>` : ''}</section>`;
     };
-    // [3.34.14] the parts read with many uncertain words, named in a yellow box (collected item 135; maintainer: "der automatische
-    // hinweis kann aber auch kommen. evtl irgendwie gelb markiert mit hinweis der betroffenen bilder")
+    // [3.34.14] the parts read with many uncertain words, named in a yellow box (collected item 135)
     const busy = [];
     o.results.forEach((r, i) => (r.status === 'done' ? r.parts : []).forEach((pt, j) => {
       if (pt.busy) busy.push(`<button type="button" class="dci-textbtn" data-ocr-goto="${i}:${j}">${esc(r.parts.length > 1 ? tr('ocr.partOf', { what: ocrTypes(r.img), n: j + 1 }) : ocrTypes(r.img))}</button>`);
@@ -12989,10 +13313,9 @@
         <button type="button" class="dci-apply dci-small" data-ocr="import">${esc(tr('ocr.import'))}</button></div>`;
   }
 
-  // --- [3.34.9] A larger view of an image when the mouse rests on its small one (collected item 129; maintainer: "nicht alle
-  // Bilder sind quadratisch! alle Bildverhältnisse müssen angezeigt werden. und bei Mouseover etwas größere darstellung.",
-  // "gleich hohe / breite kacheln"): the tiles stay alike, each image whole in them; after a short pause its larger view
-  // (at most OCR_PEEK px, its own proportions) beside it – the 1200 px image of the Cover Art Archive, an own file as it is,
+  // --- [3.34.9] A larger view of an image when the mouse rests on its small one (collected item 129): the tiles stay alike, each
+  // image whole in them; after a short pause its larger view (at most OCR_PEEK px, its own proportions) beside it – the 1200 px image
+  // of the Cover Art Archive, an own file as it is,
   // a page of a PDF drawn at that size.
 
   const OCR_PEEK = 480;
@@ -13072,8 +13395,7 @@
     if (thumb && !(e.relatedTarget && thumb.contains(e.relatedTarget))) ocrPeekHide();
   }
 
-  // --- [3.34.11] Each part read beside its text (collected item 130; maintainer: "kann der vergrößerte Bildbereich nach der
-  // Auswahl neben dem erkannten text dargestellt werden? mit zoom in funktion?", "je Rahmen"): for each frame (else the whole
+  // --- [3.34.11] Each part read beside its text (collected item 130): for each frame (else the whole
   // image) its part of the image, fitted, beside its own text; + and − (or Ctrl + wheel, a double click at a place) zoom in
   // and out, dragging moves it, ⤢ fits it again. The window is wider in this step.
 
@@ -13192,7 +13514,7 @@
   }
 
   /**
-   * [3.34.14] A part's text field as high as its text (collected item 130; maintainer: "es soll sich nach dem text richten"),
+   * [3.34.14] A part's text field as high as its text (collected item 130),
    * growing while one types; from OCR_TEXT_LINES lines on it scrolls.
    */
   const OCR_TEXT_LINES = 20;
@@ -13207,7 +13529,7 @@
     ta.style.overflowY = need > max + 1 ? 'auto' : 'hidden';
   }
 
-  // --- [3.34.12] Where a line or a word is in the image (collected item 130b; maintainer: "klingt gut, bitte einbauen"): the
+  // --- [3.34.12] Where a line or a word is in the image (collected item 130b): the
   // caret (or a click) in a line of a part's text marks the line read most like it in the part beside it – [3.34.15] and zooms
   // in on it –; a word read uncertainly, clicked, is selected in the text, marked in the
   // image and zoomed in on (clicked again: its next place). Tesseract gives the places of its lines and words, a PDF of its
@@ -13269,7 +13591,7 @@
     const hit = ocrLineFor(pt.lines, ta.value.split('\n')[n], n);
     if (pt.mark && pt.mark.kind === 'line' && pt.mark.line === hit) return;
     pt.mark = hit ? { kind: 'line', box: hit.box, line: hit } : null;
-    // [3.34.15] zoomed in on the line (collected item 130b; maintainer: "auch heranzoomen")
+    // [3.34.15] zoomed in on the line (collected item 130b)
     if (hit) ocrZoomTo(key, hit.box, 0.95, 0.5);
     ocrZoomDraw(key);
   }
@@ -13333,8 +13655,7 @@
       el.style.setProperty('--dci-fs', `${Math.round(13 * (S.scale || 1))}px`);
       document.body.appendChild(el);
       // [3.34.14] the same size in every step (the bar at its foot stays where it is), moved by its head, its size changed at
-      // the lower right corner – both remembered, like the dashboard (collected item 134; maintainer: "die untere
-      // navigationsleiste soll immer angezeigt werden und damit statisch sein", "ich meinte alle cover art importfenster")
+      // the lower right corner – both remembered, like the dashboard (collected item 134)
       makeMovable(el, '.dci-ocr-head', 'ocr');
       if (ocrResize) ocrResize.disconnect();
       ocrResize = new ResizeObserver(() => {
@@ -13539,8 +13860,7 @@
       return;
     }
     // [3.34.13] an image of the frames step clicked: its frames drawn next (before 3.34.13 the click went nowhere – the small
-    // images have no data-ocr; collected item 132, maintainer: "im draw a frame screen möchte ich die bilder oben durch anklicken
-    // anwählen zum frame drawen können")
+    // images have no data-ocr; collected item 132)
     const thumb = t.closest('[data-ocr-cur]');
     if (thumb && S.ocr) {
       S.ocr.cur = Number(thumb.dataset.ocrCur) || 0;
@@ -13877,8 +14197,7 @@
 
   /**
    * [3.36.5] The symbol of the log in the head of the dashboard: pressed while the log is shown, wherever it is (collected item
-   * 147a; maintainer: "dass das symbol im oberen bereich lila dunkler wird wenn die "keyboard shortcuts" geklickt werden finde ich
-   * ganz gut. können wir das bei allen anderen symbolen auch einführen?").
+   * 147a).
    */
   function syncLogBtn() {
     if (!S.overlay) return;
@@ -14566,7 +14885,7 @@
   /** Imports the source chosen for this release, else the first linked one of the preference list. */
   async function startImport() {
     // [3.34.8] started with "… from cover art": the text read from the images is the source (Discogs or Bandcamp only through
-    // "＋ Supplement" – maintainer: "A")
+    // "＋ Supplement")
     if (S.startText) {
       const { text, origin } = S.startText;
       S.startText = null;
@@ -14828,13 +15147,11 @@
   }
 
   /**
-   * [Q011] (3.34.20) "Voice" alone in a pasted text or Bandcamp credits (collected item 137d; maintainer: "auf vocals ebene lässt
-   * sich kein Role Credit vergeben. Daher kann man bei voice auch "other vocals" oder "lead vocals" jeweils mit role credit
-   * voice vorschlagen. als rückfrage"): asks vocals · other vocals “voice” · lead vocals “voice”; until then plain vocals
-   * without role credit. Discogs keeps spoken vocals (R015).
+   * [Q011] (3.34.20) "Voice" alone in a pasted text or Bandcamp credits (collected item 137d): asks vocals · other vocals “voice” ·
+   * lead vocals “voice”; until then plain vocals without role credit. Discogs keeps spoken vocals (R015).
    */
   function askVoice(row) {
-    // [137e] (3.34.25) every source (maintainer: "generell soll das mapping wirklich gleich behandelt werden")
+    // [137e] (3.34.25) every source
     if (row.company || row.ruleId !== 'R015' || norm(row.base) !== 'voice' || (row.mods || []).length || !ruleOn('Q011')) return;
     Object.assign(row, { askVoice: true, primaryText: '', primaryTouched: false });
     refreshRowDetails(row);
@@ -14883,8 +15200,7 @@
   /**
    * [137d] (3.34.20) A word of a list of instruments that MusicBrainz does not know ("Chaims", "Buddha machine"; S051): the
    * row asks for the similar instruments (similarInstruments) and "other instruments" credited as written – nothing is
-   * assumed –; with none like it, "other instruments" credited as written at once (maintainer: "falls keine ähnlichen
-   * vorschläge vorhanden sind, kann "other instruments" mit role credit vergeben werden"). Without "other instruments" in
+   * assumed –; with none like it, "other instruments" credited as written at once. Without "other instruments" in
    * MusicBrainz and without similar ones: miscellaneous support, as before.
    */
   function guessInstrument(row, { word: word0 = '', misc = true } = {}) {
@@ -14900,8 +15216,7 @@
       refreshRowDetails(row);
       return;
     }
-    // [137d] (3.34.26) "miscellaneous support (task “…”)" as the last answer (maintainer: "behalte das als letzte Antwort bei",
-    // "aber miscellaneous support auch anbieten"); the level kept for an instrument chosen after it
+    // [137d] (3.34.26) "miscellaneous support (task “…”)" as the last answer; the level kept for an instrument chosen after it
     row.instrGuess = { word, options, other: other ? other.name : '', misc, level: row.level, chose: '' };
     if (!options.length) Object.assign(row, { primaryText: other.name, primaryTouched: true });
     refreshRowDetails(row);
@@ -14932,10 +15247,9 @@
   }
 
   /**
-   * [164] (3.37.13) The word of a guess against the instrument chosen for it (collected item 164; maintainer: "bei reinen
-   * Tippfehlern soll die korrekte rolle gesetzt werden. eine info kann ausgegeben werden, dass es sich wahrscheinlich um einen
-   * tippfehler handelte", "Nur 1 Buchstabe"): 'same' – only case or accents apart; 'typo' – one slip off ("Sxaophone",
-   * "Violn"): the instrument without a role credit; 'own' – two letters off or more ("Taischigoto" → taishōgoto, "Chaims" →
+   * [164] (3.37.13) The word of a guess against the instrument chosen for it (collected item 164): 'same' – only case or accents
+   * apart; 'typo' – one slip off ("Sxaophone", "Violn"): the instrument without a role credit; 'own' – two letters off or more
+   * ("Taischigoto" → taishōgoto, "Chaims" →
    * chimes): a spelling of its own, credited as written in lower case. The note of the row turns it round (typoAs).
    */
   function guessSpelling(g, name) {
@@ -15538,11 +15852,9 @@
    * (section 3), and everything from here on works with that – entries and rows, dates, track lists, live, series.
    */
   /**
-   * [S042] (3.30.8) What the Discogs notes name besides the credits (collected item 98; maintainer: "ja tatsächlich wollen
-   * wir die orte hier angeboten bekommen. sie können ähnlich wie die publisher auch mit dem discogs feld companies
-   * entgegengecheckt werden. sofern es sich nicht um eine inhaltliche dopplung handelt können orte aus dem freitextfeld
-   * ergänzt werden."): places ("All music recorded … at Orange Music Sound Studios in West Orange, New Jersey") read like
-   * a pasted text; one Discogs already lists with the same role is left out, one it lists with another role keeps
+   * [S042] (3.30.8) What the Discogs notes name besides the credits (collected item 98): places ("All music recorded … at Orange Music
+   * Sound Studios in West Orange, New Jersey") read like a pasted text; one Discogs already lists with the same role is left out, one
+   * it lists with another role keeps
    * Discogs's entry (its link). Marked `fromNotes`. [3.30.9] Also the label of "℗ / © Name Year" (only the signs named).
    */
   function addNotesCompanies(rel) {
@@ -15558,7 +15870,7 @@
     }
     // [3.30.9] also ℗ and © ("© & ℗ TUM Records Oy 2021": both; one sign: that one – item 99); [S043] (3.31.0) the
     // publishers of a block ("[Publishers & Rights Societies] • FlizmoMusic-BMI : tracks 2, 4, 5") and the rights societies
-    // [S054] (3.37.0) every company of the notes (E5: "alle informationen die sonst noch nicht per relationships vorhanden sind") – with
+    // [S054] (3.37.0) every company of the notes (E5) – with
     // a plain name: what a track list of the notes leaves of a name ("Pub Co (1" of "Published by Pub Co (1, 3); Ghostpub (4)") is
     // no name (S022 reads those lines)
     const known = (c) => /\s(?:At)$/.test(c.role) || /^(?:Phonographic Copyright \(p\)|Copyright \(c\))$/.test(c.role) || (ruleOn('S043') && (c.pubBlock || c.society));
@@ -15610,9 +15922,7 @@
   const plainNotesName = (n) => !!n && !/[()[\]{}]/.test(n) && !/^\s*[\d\s,.–-]+\s*$/.test(n);
 
   /**
-   * [S054] (3.37.0) The credits of people in the Discogs notes (E5; maintainer: "dann nimm E5 bitte auch in die Sammelliste auf",
-   * "gleich als Eintrag mit Transparenzhinweis", "also alle informationen die sonst noch nicht per relationships vorhanden sind
-   * sollen abgegriffen werden. (es soll sich nichts doppeln)"): read like a pasted text, each becomes a credit of the release –
+   * [S054] (3.37.0) The credits of people in the Discogs notes (E5): read like a pasted text, each becomes a credit of the release –
    * marked `fromNotes` with its line. Nothing twice: a credit Discogs lists already (the same name – also as credited – and a
    * role of the same kind: "Produced by X" = "Producer", "Written by X" = "Written-By"; an instrument the same) is left out, and
    * when Discogs gives it for the whole release and the notes name tracks, Discogs's credit gets those (set, ⓘ shows the line);
@@ -15696,12 +16006,12 @@
   // --- [146] (3.36.0) The rows and entries of a release remembered ---------------------------------------------------------
 
   /**
-   * [146] (3.36.0) Its rows and entries come back when the release is imported again from the same source (maintainer: "ja
-   * genau, soll alles wieder kommen"): at the end of an import the rows as the source gave them are noted (S.freshRows: the
-   * line of the source each comes from, its fields); what is stored is how they differ now – and the rows of their own (a
+   * [146] (3.36.0) Its rows and entries come back when the release is imported again from the same source: at the end of an import the
+   * rows as the source gave them are noted (S.freshRows: the line of the source each comes from, its fields); what is stored is how
+   * they differ now – and the rows of their own (a
    * row for another event, a split, a row added by hand) whole, the entries' join / split, their compact view and the
    * MusicBrainz entity chosen by hand, entries added by hand. A row whose line of the source is gone is not brought back
-   * (maintainer, 146d: "ja einverstanden"): the log says how many; new lines of the source come as they are. Not remembered:
+   * the log says how many; new lines of the source come as they are. Not remembered:
    * what was staged, supplements from another source, the choices of the works matrix.
    */
   // not stored: what a row is in this import (its id, its entry, open or not) and what MusicBrainz or "Stage: …" made of it –
@@ -15803,7 +16113,7 @@
   }
 
   /**
-   * [146] (3.36.4) The choices of the works matrix (maintainer, on remembering them: "ja bitte dazu"): the works chosen for tracks
+   * [146] (3.36.4) The choices of the works matrix: the works chosen for tracks
    * and the new ones planned (not those already created – the list of created works keeps them), the attributes of the links
    * set by hand, the dates of columns and those planned for relationships in MusicBrainz, the columns taken out or folded, the
    * options of new works. A column of an entry by the entry (its key changes with each import).
@@ -16084,9 +16394,9 @@
   }
 
   /**
-   * [S058] (3.38.12) "⇅": the lines whose order was not clear read the other way round – in the dashboard (F-5; maintainer: "wie
-   * vorschlag, gezielt"): the rows of the reading shown go, those of the other one come (into the entry of the same name, else a
-   * new entry, looked up as at the import); every other row keeps what was changed in it. Until 3.38.11 the source was read again
+   * [S058] (3.38.12) "⇅": the lines whose order was not clear read the other way round – in the dashboard (F-5): the rows of the
+   * reading shown go, those of the other one come (into the entry of the same name, else a new entry, looked up as at the import);
+   * every other row keeps what was changed in it. Until 3.38.11 the source was read again
    * and the changes were lost. Without the other reading (a source of before): read again, as then.
    */
   async function flipStacks() {
@@ -16158,6 +16468,7 @@
       ...(g.placeholder ? { placeholder: g.placeholder, releaseMbid: g.releaseMbid } : {}),
       ...(g.pageOf ? { pageOf: g.pageOf } : {}),
       ...(g.fromNotes ? { fromNotes: true } : {}),
+      ...(g.initials ? { initials: g.initials } : {}), ...(g.initialsFor ? { initialsFor: g.initialsFor } : {}), // [S063] (3.38.18)
       mbid: null, mbName: '', candidates: [], editing: false, error: '',
       anvs: uniq([...g.roles.values()].map((c) => c.anv).filter(Boolean)),
     };
@@ -16191,6 +16502,9 @@
       if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
       if (c.stackAmbig) row.stackAmbig = true; // [S058] (3.38.7)
       if (c.anvFrom) row.anvFrom = c.anvFrom; // [S060] (3.38.12) the spelling in capitals at the source
+      // [S062] (3.38.18) the period the text gives; [S064] its role credit
+      if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
+      if (c.roleCredit) Object.assign(row, { roleCredit: c.roleCredit, roleCreditTouched: true });
       row.dSpec = c.specs.join(', ');
       row.dPositions = c.positions;
       row.unresolved = c.unresolved;
@@ -16276,6 +16590,10 @@
       S.artistWorkHits = new Map();
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
+      // [179] (3.38.16) the composers of titles logged anew; [180] (3.38.15) no list "n works ▾" open
+      S.titleComposerLogged = new Set();
+      S.wtCache = new Map();
+      S.mxWorksOpen = null;
       if (S.artistWorksRunning) S.artistWorksAgain = true;
       renderSource();
       renderSupp();
@@ -16331,7 +16649,7 @@
           if (some && !row.tracks.size) continue;
           row.suggested = new Set(row.tracks);
           // [S043] (3.31.0) a publisher's tracks from the Discogs notes; [3.31.6] set, not suggested – ⓘ shows the line (collected
-          // item 97c; maintainer: "für alles was in texten erkannt wird")
+          // item 97c)
           if (r.notesLine && some) {
             row.notesTracks = new Set(row.tracks);
             row.notesFrom = r.notesLine;
@@ -16375,10 +16693,8 @@
       placeTitleDates();
       // [145b] (3.35.6) the works of the source as track groups (or out of the pool with the setting off)
       applyWorkGroups({ quiet: true });
-      // [3.32.1] suggestions waiting for "Apply" (collected item 109; maintainer: "automatisch dashboard aufklappen sofern
-      // daten/tracks gefunden wurden die noch auf apply gesetzt werden müssen", "das dashboard muss doch auf sein, damit Dates &
-      // Tracks sichtbar ist?"): the dashboard opens (if it is closed) and "Dates & tracks" with both pools – once for this
-      // import; what is remembered stays and counts again from the next import
+      // [3.32.1] suggestions waiting for "Apply" (collected item 109): the dashboard opens (if it is closed) and "Dates & tracks" with
+      // both pools – once for this import; what is remembered stays and counts again from the next import
       S.poolsForce = dm().cells.some((c) => c.auto) ? { dates: true, tracks: true } : null;
       if (S.poolsForce) log('info', 'poolsOpened');
       if (S.poolsForce && S.overlay && S.overlay.hidden) openDashboard();
@@ -16435,6 +16751,11 @@
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
         finishRemember(seq);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
+        // [172] (3.39.0) the number of new relationships for the line of the release page (the next summary)
+        S.gapExactPending = source === DISCOGS ? String(id) : null;
+        if (S.gapExactPending && releaseMbid && typeof S.lastSumCount === 'number') {
+          writeJson('localStorage', `${GAP_EXACT_PREFIX}${releaseMbid.toLowerCase()}`, { n: S.lastSumCount, at: Date.now(), dId: S.gapExactPending });
+        }
         // [S058] (3.38.7) names and instruments one above the other in an order that is not clear: said in red, "⇅" at the entries
         // [S060] (3.38.12) names in capitals written in normal case
         const caseNames = [...S.artists.values()].filter((a) => !a.company && S.rows.some((r) => r.artistKey === a.key)).flatMap((a) => [
@@ -16868,10 +17189,7 @@
     refresh();
   }
 
-  // --- [S056] (3.37.8) Festival recordings (collected item 158; maintainer: "aus texteinträgen kann bei freitext und dann auch
-  // discogs text zumindest ein hinweis ausgegeben werden, der besagt, dass es sich um eine festivalaufnahme handelt und MB
-  // standardmäßig das Event dem Place vorzieht (weil events ja mit Places verknüpft sind)", "vielleicht dann wirklich nur bei
-  // festivals, wo der name passt und die sich im Zeitraum (Date period) befinden. und immer nur als angebot, nie vorbelegt."):
+  // --- [S056] (3.37.8) Festival recordings (collected item 158):
   // a sentence with a festival gives a hint above the entries; MusicBrainz's events of its name whose time holds the date of
   // the sentence are offered – a click adds one as an entry.
 
@@ -17675,7 +17993,7 @@
       const a = S.artists.get(row.artistKey);
       if (!a || !a.mbid || a.other) continue;
       // [S036] (3.28.4) a name from a text or Bandcamp (no Discogs id) linked to MusicBrainz: credited as written there
-      // (maintainer: "soll er erst einmal so gecredited bleiben wie er auf bandcamp angegeben ist"); not a placeholder
+      // not a placeholder
       if (a.dId ? !ruleOn('S008') : !ruleOn('S036') || a.placeholder || row.supp || !(a.src || S.source || {}).nameSearch) continue;
       const want = sourceCreditFor(row, a);
       if (row.credit === want) continue;
@@ -17805,8 +18123,7 @@
   /**
    * [3.29.3] The arrow of an entry (item 82): folds its rows to compact lines (full view) or closes the open ones (compact
    * view). [166] (3.37.15) In the full view at the front of the head, before the name – the same place in every entry
-   * (maintainer: "der falten knopf soll immer an der gleichen stelle erscheinen", "wenn (a) auch nicht immer stimmt, dann
-   * kann beides verbessert werden"); until 3.37.14 after "Spelling on Discogs: …", which moved it from entry to entry.
+   * until 3.37.14 after "Spelling on Discogs: …", which moved it from entry to entry.
    */
   function groupFoldHtml(a) {
     const folded = groupFolded(a.key);
@@ -17831,11 +18148,9 @@
   }
 
   /**
-   * [176] (3.38.11) "Credited as" for all roles of an entry (collected item 176; maintainer: "es fehlt noch die möglichkeit alle
-   * entities, also artists, labels, places mit artist etc. credits zu benennen"): persons "Artist credit for all roles", labels,
+   * [176] (3.38.11) "Credited as" for all roles of an entry (collected item 176): persons "Artist credit for all roles", labels,
    * places and areas "Credited as for all roles" (until 3.38.10 persons only). [175] Prefilled only with the spelling all its rows
-   * carry (item 175; maintainer: "die artistnamen in den instrumentenfeldern werden als "Lake*" bei Discgos angezeigt, dabei ist
-   * das nur der name, der in den writing credits steckt") – until 3.38.10 with its one name variation, also when only some rows
+   * carry (item 175) – until 3.38.10 with its one name variation, also when only some rows
    * had it ("Set for all" then credited the flute "Lake" too).
    */
   function creditAllHtml(a) {
@@ -17895,14 +18210,11 @@
     return uniq(S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip').map((r) => String(r.credit || '').trim()).filter(Boolean));
   }
   /**
-   * [3.32.2] The spelling of the release in the head of an entry (collected item 100; maintainer: "Der Künstle wird auf dem
-   * Release/bei Discogs Marc D. Rusch genannt. Dann soll das auch so im Dashboard stehen. Also "Marc D. Rusch" evtl auch mit
-   * Sternchen, so wie discogs das macht und wenn ich mit dem Mauszeiger über den Namen gehe im Dashboard soll der Discogs name
-   * des entries angezeigt werden."): the name variation of its rows (the most frequent one), with "*" as Discogs writes it,
-   * when it differs from the name of the entry; null otherwise.
+   * [3.32.2] The spelling of the release in the head of an entry (collected item 100): the name variation of its rows (the most
+   * frequent one), with "*" as Discogs writes it, when it differs from the name of the entry; null otherwise.
    */
   // [175] (3.38.11) only the spelling all its rows carry (commonSpelling): "Lake" of the Written-By credits alone leaves the head
-  // "Oliver Lake" (maintainer: "nein ich meinte das Lake* das von Discogs gezogen wurde und im Kopf des Eintrags stand.") – until
+  // "Oliver Lake" – until
   // 3.38.10 the most frequent one of its rows; the rows with another spelling say theirs ("as “Lake” for writer")
   function releaseSpelling(a) {
     if (!a || a.company || a.other || !a.dId) return null;
@@ -17913,8 +18225,7 @@
 
   /**
    * [S060] (3.38.12) Linked to a name of MusicBrainz all in capitals ("ABBA", "MF DOOM") while the source wrote it, or a spelling of
-   * it, in capitals too: MusicBrainz's spelling – the head shows it, the "credited as" keeps the source's capitals (maintainer: "es
-   * sei denn, der Artistname auf MB ist ebenfalls komplett capslock").
+   * it, in capitals too: MusicBrainz's spelling – the head shows it, the "credited as" keeps the source's capitals.
    */
   const mbCaps = (a) => !!(a && a.mbName && !/\p{Ll}/u.test(a.mbName) && caseSpellingOf(a));
   /** [S060] (3.38.12) Whether an entry has a name or a spelling the dashboard wrote in normal case (the source's in capitals). */
@@ -17963,19 +18274,21 @@
   }
 
   /** [3.32.2] The name in the head of an entry: the release's spelling with "*" (the entry's name in the tooltip), or the name. */
+  /** [S063] (3.38.18) "RR = Robert Rich (initials)" – or the names initials of several stand for. */
+  const initialsHtml = (a) => (a.initials ? ` <span class="dci-sub dci-initials">${esc(tr('group.initials', { said: a.initials, name: a.name }))}</span>`
+    : a.initialsFor ? ` <span class="dci-sub dci-initials">${esc(tr('group.initialsMany', { said: a.name, names: a.initialsFor.join(', ') }))}</span>` : '');
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
-    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}`;
+    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
     // [3.37.11] the * says what it means (collected item 161)
     const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
       ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [tr('group.anvStar')] : [])].join('\n');
-    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${caseBackHtml(a)}`;
+    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
   }
 
   function creditChipHtml(a) {
     // [3.32.2] the spelling already shown in the head (as "Marc D. Rusch*") is not repeated as "as …" – [3.37.11] it says that
-    // MusicBrainz gets it as the artist credit (collected item 161; maintainer: "es war aber nicht ersichtlich, dass das Dashboard
-    // diesen Artist Credit auch für MB übernimmt (obwohl es das gemacht hat)")
+    // MusicBrainz gets it as the artist credit (collected item 161)
     const sp = releaseSpelling(a);
     const all = entryCredits(a);
     const credits = all.filter((c) => !sp || typo(c) !== typo(sp.shown));
@@ -18000,14 +18313,13 @@
   const shownRowsOf = (a) => S.rows.filter((r) => r.artistKey === a.key && inEntry(r) && !r.s046Out && (S.mxSkipRows || !r.mxSkipped));
   /**
    * Work-level rows are shown in the works matrix only; [3.31.5] a publisher's row also in its entry, so that its level can
-   * be chosen there – on the works or on the release (collected item 112: "wir haben ja bereits die möglichkeit in der
-   * kompakt info das durchzuklicken. so soll das laufen.").
+   * be chosen there – on the works or on the release (collected item 112).
    */
   // [3.32.7] rows of poems too (their level is clicked through in the entry, item 104b)
   const inEntry = (r) => r.level !== 'work' || isPublishingRow(r) || isPoemRow(r);
 
   /**
-   * [3.30.2] The arrow in the head of an entry in the compact view (item 82b; maintainer: "ja bitte gib mir den Pfeil"):
+   * [3.30.2] The arrow in the head of an entry in the compact view (item 82b):
    * opens all its rows, or closes them when all are open.
    */
   function openAllHtml(a, rows) {
@@ -18040,8 +18352,7 @@
 
   /**
    * [E4] An entry shown as a matrix (collected items E4, 139, 141): the matrix view, full, the entry not folded to compact lines.
-   * [AE-4] (3.35.5) Not only persons (maintainer: "ja können auch in die matrix", "alle einträge die daten und/oder tracks
-   * anbieten. solche einträge kommen ja eher selten vor."): companies, places, areas and other entries too, when a row of theirs
+   * [AE-4] (3.35.5) Not only persons: companies, places, areas and other entries too, when a row of theirs
    * offers a date and/or tracks – on recordings, or of a type with dates; the others keep their rows (publishing on works).
    */
   const offersEvent = (r) => r.level !== 'work' && (r.level === 'recording' || (ltOf(r) || {}).has_dates !== false);
@@ -18159,8 +18470,7 @@
 
   /**
    * [E4] The head of an event column: ① · its level · its date · its tracks. [3.34.31] The date is a field: changed, the event's
-   * rows get it – one date of the pool for all of them, the pool's own date changed when they had one (maintainer: "das soll
-   * immer das selbe sein. wenn ich also das event hier editiere verändert sich auch der date/track pool"); a date of the pool
+   * rows get it – one date of the pool for all of them, the pool's own date changed when they had one; a date of the pool
    * dropped onto the head gives it to the event.
    */
   function evHeadHtml(e, open = false) {
@@ -18180,8 +18490,7 @@
   const rowsInEvent = (a, evKey) => S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip' && eventKeyOf(r) === evKey);
 
   /**
-   * [AE-3] (3.35.4) An event opened below its block (maintainer: "wenn man den ereigniskopf öffnet soll man datum und tracks
-   * einstellen können", "auch ebene ändern können"): its level (the levels of MusicBrainz its rows' types have), its date (a
+   * [AE-3] (3.35.4) An event opened below its block: its level (the levels of MusicBrainz its rows' types have), its date (a
    * field as in the head, the dates of the pool, no date) and on recordings its tracks (a box per track, the media, the track
    * groups of the pool, all). What is set goes for all rows of the entry in this event.
    */
@@ -18243,7 +18552,7 @@
 
   /**
    * [AE-3] (3.35.4) An event on another level: its rows whose type MusicBrainz has there move (on recordings with all tracks of
-   * the media chosen), the others keep their level and their line says so (maintainer: "ja passt").
+   * the media chosen), the others keep their level and their line says so.
    */
   function emEventLevel(a, evKey, level) {
     const rows = rowsInEvent(a, evKey);
@@ -18374,7 +18683,7 @@
    * [E4] (3.34.31) A date of the pool dropped into an entry's matrix (mockup version 3, board 4): onto a line – its rows; onto
    * the head of a block – the rows of all its lines; onto the head of an event – the rows in it. A row the date covers (the date
    * has no tracks in the date matrix, or all of the row's) moves into the date's event: it gets the date, nothing stays without
-   * it ("ohne und mit Datum auf denselben Tracks: das Instrument wandert"; ↶ in the message). A row the date covers only in part
+   * it (↶ in the message). A row the date covers only in part
    * ("2024-08-14, tracks 2, 5") stays and gets a row of its own in the date's event. With ⇧ Shift a row stays where it is and
    * gets the row of its own too – a yellow question in its line then: "only <date> · keep both".
    */
@@ -18495,7 +18804,7 @@
   }
 
   /**
-   * [AE-3] (3.35.4) A line whose rows stayed on their level when their event went to another one (maintainer: "ja passt"):
+   * [AE-3] (3.35.4) A line whose rows stayed on their level when their event went to another one:
    * "Mastered By stays on Release: MusicBrainz has no mastering on Recording · ok".
    */
   function levelKeptHtml(l) {
@@ -18526,9 +18835,8 @@
     }
     const credit = lt && canRoleCredit(lt)
       ? `<input type="text" data-f="em-credit" value="${esc(r.roleCredit)}" placeholder="${esc(tr('em.noCredit'))}" aria-label="${esc(tr('em.creditLabel', { name }))}">${rcClearHtml()}` : '';
-    // [176] (3.38.11) credited as (F-176a; maintainer: "ich weiß nicht, wo ich eintragen soll bzw. wo steht, falls ein artist etc. auf
-    // den jeweiligen releases/recordings anders genannt wird"): the spelling of the source, empty = the MusicBrainz name; another
-    // spelling on some tracks is a line of its own (lineKeyOf; F-176b: "ja eigene Zeile")
+    // [176] (3.38.11) credited as (F-176a): the spelling of the source, empty = the MusicBrainz name; another
+    // spelling on some tracks is a line of its own (lineKeyOf; F-176b)
     const ac = `<input type="text" data-f="em-ac" list="dci-ac-${esc(a.key)}" value="${esc(r.credit || '')}" placeholder="${esc(tr('credit.placeholder'))}"
       aria-label="${esc(tr('em.acLabel', { name }))}" title="${esc(tr('credit.placeholder'))}: ${esc(a.mbName || a.name)}">`;
     const allowed = new Set(lt ? allowedRoots(lt).filter((x) => !x.hasChildren && !x.attr.free_text).map((x) => norm(x.attr.name)) : []);
@@ -18567,14 +18875,21 @@
     const lt0 = ltOf(r0);
     const nRows = b.lines.reduce((n, l) => n + l.rows.length, 0);
     const many = b.lines.length > 1;
-    const title = (b.kind === 'instrument' || b.kind === 'vocal') && many ? tr(b.kind === 'instrument' ? 'em.instruments' : 'em.voices', { n: b.lines.length })
-      : r0.raw || rowTypeName(r0) || '–';
+    // [Q-c] (3.38.14) the head names the block as MusicBrainz does; the source's roles in its tooltip ("from Discogs: Mixed By"; until
+    // 3.38.13 "Mixed By → mixer")
+    const counted = (b.kind === 'instrument' || b.kind === 'vocal') && many;
+    const raws = uniq(b.lines.flatMap((l) => l.rows.filter((x) => !x.manual).map((x) => String(x.raw || '').trim())).filter(Boolean));
+    const src = r0.supp ? r0.suppName || '' : (S.source || {}).name || '';
+    const label0 = many ? null : roleLabel(r0);
+    const title = counted ? tr(b.kind === 'instrument' ? 'em.instruments' : 'em.voices', { n: b.lines.length })
+      : label0 ? label0.text : (lt0 && (mbPhraseOf(lt0) || lt0.name)) || rowTypeName(r0) || tr('cl.noType');
+    const tip = label0 ? label0.title : raws.length && src ? tr('role.fromSource', { source: src, raw: raws.join(', ') }) : '';
+    const sub = [many || nRows > 1 ? tr('em.joinedFrom', { n: nRows }) : '', !m.shared ? tr('em.evCount', { n: b.events.length }) : ''].filter(Boolean).join(' · ');
     const fk = `${a.key}|${b.key}`;
     const folded = !m.shared && S.emFold.has(fk);
     const fold = m.shared ? '' : `<button type="button" class="dci-textbtn dci-em-fold" data-act="em-fold" data-block="${esc(b.key)}" aria-expanded="${!folded}" title="${esc(tr(folded ? 'em.unfold' : 'em.fold'))}">${folded ? '▸' : '▾'}</button> `;
     const split = many && (b.kind === 'instrument' || b.kind === 'vocal') ? ` <button type="button" class="dci-textbtn" data-act="em-split" title="${esc(tr('em.splitTitle'))}">${esc(tr('em.split'))}</button>` : '';
-    // [177] (3.38.10) the type as MusicBrainz names it ("instruments", "mixer")
-    const head = `<div class="dci-em-bhead">${fold}<strong>${esc(title)}</strong> <span class="dci-sub">→ ${esc((lt0 && (mbPhraseOf(lt0) || lt0.name)) || rowTypeName(r0) || tr('cl.noType'))}${many || nRows > 1 ? ` · ${esc(tr('em.joinedFrom', { n: nRows }))}` : ''}${!m.shared ? ` · ${esc(tr('em.evCount', { n: b.events.length }))}` : ''}</span>${split}</div>`;
+    const head = `<div class="dci-em-bhead">${fold}<strong${tip ? ` title="${esc(tip)}"` : ''}>${esc(title)}</strong>${sub ? ` <span class="dci-sub">· ${esc(sub)}</span>` : ''}${split}</div>`;
     if (folded) return `<div class="dci-em-block dci-em-folded" data-block="${esc(b.key)}">${head}</div>`;
     const flagNames = uniq(b.lines.flatMap((l) => {
       const lt = ltOf(l.rows[0]);
@@ -18582,7 +18897,7 @@
     }));
     // [3.36.6] additional / guest / solo a column each (until 3.36.5 one cell with fixed widths – the words in the head stood
     // beside their checkboxes: their margins pushed them to the right, 4, 11 and 18 px, and "guest" ran into "solo"; collected item
-    // 148, maintainer: "die anzeige hier ist noch nicht gut abgestimmt. solo muss über der rechten checkbox stehen.")
+    // 148)
     const cols = 3 + Math.max(1, flagNames.length) + b.events.length + (b.others.length ? 1 : 0) + 1;
     const more = S.emMore.has(fk);
     const max = Math.max(1, S.emShow);
@@ -18636,8 +18951,7 @@
   }
 
   /**
-   * [163] (3.37.14) The answers of a chip's question, to be chosen at the chip (collected item 163; maintainer: "kann man die
-   * rollenabfragen nicht auch direkt auf dieser ebene durchführen? per drop down menü?", "ja das passt"): the instrument
+   * [163] (3.37.14) The answers of a chip's question, to be chosen at the chip (collected item 163): the instrument
    * question (Q001 …), a word MusicBrainz does not know not answered yet, a type question not answered yet – as in the
    * compact line (clineAskHtml). Other notes (written small, voice, both, level kept) stay in the full matrix.
    */
@@ -18670,7 +18984,7 @@
   /**
    * [163b] (3.38.6) The notes of a chip whose answer is already applied – the instrument chosen for a word MusicBrainz does not
    * know (and whether it was a typo), "none is like it", written small, the type chosen, "voice" offered as role credit – for the
-   * tooltip of a small grey ⓘ after its name (collected item 163; maintainer: "ja dezentes zeichen mit Tooltip", "ja nimm das ⓘ");
+   * tooltip of a small grey ⓘ after its name (collected item 163);
    * changed in the full matrix. Lines, one note each; empty when there is none.
    */
   function chipNoteText(r) {
@@ -18732,7 +19046,7 @@
   }
 
   /**
-   * [E4] (3.35.0) An entry compact as a matrix (mockup board 1: "die kompakte Ansicht ist die Matrix gedreht"): by event – a line
+   * [E4] (3.35.0) An entry compact as a matrix (mockup board 1): by event – a line
    * per event (① Recording · date · tracks) with the roles ticked there as chips, the first S.emShow and "+ n more"; by role – a
    * line per role with its events. A chip opens the entry's full matrix (▸ in the head too), ✕ takes it out of the event, dragged
    * onto another event's line it moves there (⇧ Shift: it stays in both).
@@ -18788,9 +19102,9 @@
   }
 
   /**
-   * [AE-2] (3.35.3) A line moved to another place in its block (maintainer: "bitte noch ziehen ermöglichen", "ja nur bis zum
-   * nächsten import"): dropped before or after another line of the block, or one place up or down (Alt+↑ / Alt+↓ on ⠿). The
-   * order of the lines is the order of their rows, so the rows of the block's lines are put in the new order – in the places
+   * [AE-2] (3.35.3) A line moved to another place in its block: dropped before or after another line of the block, or one place up or
+   * down (Alt+↑ / Alt+↓ on ⠿). The order of the lines is the order of their rows, so the rows of the block's lines are put in the new
+   * order – in the places
    * the entry's rows had in S.rows (rows of other entries and the entry's other rows stay where they are). The compact view
    * follows; the next import starts from the source's order again.
    */
@@ -19040,9 +19354,7 @@
   }
 
   /**
-   * [S058] (3.38.7) An entry from names and instruments one above the other whose order was not clear (collected item 167;
-   * maintainer: "kann man sicher sein immer den Artist korrekt zuzuordnen oder braucht man irgendwo einen behelfsknopf, der die
-   * unten/oben Logik ändert?", "passt, passiert wahrscheinlich eher bei bilderkennung und freitexten als bei discogs"): how it was
+   * [S058] (3.38.7) An entry from names and instruments one above the other whose order was not clear (collected item 167): how it was
    * read, and "⇅ Instruments above the names" – the text read again the other way round (and back).
    */
   function stackNoteHtml(rows) {
@@ -19084,9 +19396,7 @@
     return uniq((refs || []).map((r) => ocrLineKey(r.line))).flatMap((k) => o.lines.get(k) || []);
   }
 
-  // --- [3.37.4] A line of the cover art in the image when the mouse rests on it (collected item 154; maintainer: "kannst du bei den
-  // "3 lines not recognized", sofern sie aus der bilderkennung, stammen jede zeile per mouseover die ausschnitte mit den
-  // betroffenen zeilen … anzeigen lassen? (und ein wenig raum um die zeile herum zusätzlich)"): the lines not recognized and
+  // --- [3.37.4] A line of the cover art in the image when the mouse rests on it (collected item 154): the lines not recognized and
   // those left out, each with the cut-outs of its line (about a line around it), beside it.
 
   let linePeekTimer = 0;
@@ -19172,7 +19482,7 @@
   }
 
   /**
-   * [130d] (3.34.24) The same in the head of an entry (maintainer: "ja ok"): the images of all its lines, ⓘ with the crops of
+   * [130d] (3.34.24) The same in the head of an entry: the images of all its lines, ⓘ with the crops of
    * all of them (six at most).
    */
   function coverFromEntryHtml(a, rows) {
@@ -19182,7 +19492,7 @@
   S.cropOpen = new Set();
 
   /** [3.31.6] Tracks set from the notes: ⓘ with the line they come from (item 97c). */
-  /** [S054] (3.37.0) ⓘ with the line of the Discogs notes a row comes from (the transparency note; maintainer: "gleich als Eintrag mit Transparenzhinweis"). */
+  /** [S054] (3.37.0) ⓘ with the line of the Discogs notes a row comes from (the transparency note). */
   const notesLineInfo = (row) => (row.notesCredit ? `<span class="dci-info dci-notesline" title="${esc(tr('notes.creditLine', { text: row.notesCredit }))}">ⓘ</span>` : '');
   const notesFromHtml = (row) => (row.notesFrom ? `<div class="dci-sub dci-notesfrom"><span class="dci-info" title="${esc(tr('matrix.notesFrom', { text: row.notesFrom }))}">ⓘ</span> ${esc(tr('role.notesTracks', { list: trackListLabel(row.notesTracks || new Set()) }))}</div>` : '');
 
@@ -19317,7 +19627,7 @@
     return parts.join('');
   }
 
-  /** [164] (3.37.13) The small ✕ next to a role credit (maintainer: "neben role credit soll generell ein kleines x sein womit es geleert werden kann"). */
+  /** [164] (3.37.13) The small ✕ next to a role credit. */
   function rcClearHtml() {
     return `<button type="button" class="dci-iconbtn dci-rc-clear" data-act="rc-clear" title="${esc(tr('roleCredit.clear'))}" aria-label="${esc(tr('roleCredit.clear'))}">✕</button>`;
   }
@@ -19436,8 +19746,7 @@
     return S.datePool.find((x) => x.liner === liner.name) || null;
   }
 
-  // [3.37.9] photographs of the concert (collected item 159; maintainer: "manchmal gibt es bei foto-credits sowas wie "at the
-  // concert" oder so, dann kann das datum aus der performance gelesen werden. (mit transparenzhinweis)")
+  // [3.37.9] photographs of the concert (collected item 159)
   const CONCERT_PHOTO = /\b(?:at|during|from)\s+the\s+(?:concert|gig|show|performance|festival)s?\b|\bin\s+concert\b|\b(?:live|concert|gig|stage)\s+(?:photos?|photographs?|photography|shots?|pictures?)\b|\bphotographed\s+live\b|\blive\b/i;
 
   /** The one date of the concert: the Performance dates of the matrix (else of the pool), when there is only one. */
@@ -19993,7 +20302,7 @@
 
   /**
    * [S054] (3.37.0) The rows of credits from the Discogs notes hidden (on "Skip", the level before kept) or shown again as they
-   * were (maintainer: "vielleicht auch noch bei der quelle (falls discogs import) ein quick switch?").
+   * were.
    */
   function setNotesRowsHidden(hide) {
     let n = 0;
@@ -20104,9 +20413,7 @@
   }
 
   /**
-   * [145b] (3.35.6) The works of the source as track groups (maintainer: "ja lass das mal anbieten, aber mit der option das auch
-   * auszuschalten. und mit der option im date track pool auf die interpretation von werken als group hier zu verzichten. an und
-   * abschaltbar jeweils holt es die daten wieder oder schließt sie aus.", "B"): wanted (⚙ Settings → Dates & tracks, on, and not
+   * [145b] (3.35.6) The works of the source as track groups: wanted (⚙ Settings → Dates & tracks, on, and not
    * unticked in the track pool for this import) – they are in the pool, those taken out before come back with their places in
    * the date matrix; not wanted – they leave the pool, and the date matrix loses them (a date only on them goes, kept for coming
    * back). Rows keep the tracks they got from them.
@@ -20892,10 +21199,9 @@
       tr('pools.nTracks', { n: S.trackPool.length }),
       tr('pools.nCells', { n: m.cells.length }),
     ].join(' · ');
-    // [178] (3.38.13) the whole line at the bottom of the block (collected item 178; maintainer: "kannst du die "▶Dates & tracks ▼ show
-    // 1 date · 0 track groups · 1 in the matrix" ans untere ende setzen? und den fold button in die mitte? dann auch das dreieck in die
-    // andere richtung deuten lassen?", "die ganze zeile", "ja"): the title with its arrow – ▲ open (the pools above it), ▼ folded –
-    // and the counts on the left, "▲ fold" / "▼ show" in the middle, the tools on the right; folded, only this line stays (until
+    // [178] (3.38.13) the whole line at the bottom of the block (collected item 178): the title with its arrow – ▲ open (the pools
+    // above it), ▼ folded – and the counts on the left, "▲ fold" / "▼ show" in the middle, the tools on the right; folded, only this
+    // line stays (until
     // 3.38.12 at the top, the arrow ▶ / turned ▼)
     const head = `<div class="dci-pools-head">
         <span class="dci-pools-l"><button type="button" class="dci-pools-toggle" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">
@@ -20935,8 +21241,7 @@
   }
 
   /**
-   * [3.30.3] The name of a pool, a button that folds it (item 93; maintainer: "bitte mach "Date pool" und "track pool" in
-   * der mitscrollenden leiste oben auf und zuklappbar"); folded, only the name and the number of chips stay.
+   * [3.30.3] The name of a pool, a button that folds it (item 93); folded, only the name and the number of chips stay.
    */
   /** [3.32.1] A pool folded (remembered), unless this import opened it for its suggestions (item 109). */
   const poolFolded = (pool) => !!S.poolFold[pool] && !(S.poolsForce && S.poolsForce[pool]);
@@ -21125,8 +21430,8 @@
   }
 
   /**
-   * [3.32.7] The ▾ of a cell that has what several days have in common (D022, collected item 118: "keine Einstellung nur das ▾
-   * je Zelle"): instead the single days (one relationship per day) or the period; the month or year kept.
+   * [3.32.7] The ▾ of a cell that has what several days have in common (D022, collected item 118): instead the single days (one
+   * relationship per day) or the period; the month or year kept.
    */
   function lcdMenuHtml(c) {
     const src = S.datePool.find((d) => d.id === c.lcdOf);
@@ -21148,9 +21453,8 @@
   const splittable = (d) => { const n = singleDaysOf(d, { create: false }).length; return n >= 2 && n <= 31; };
 
   /**
-   * [3.37.12] The ▾ of a cell holding a period of a few days – also one dragged there by hand (collected item 162; maintainer:
-   * "ich habe gerade "2009-01-19 - 2009-01-20" in einen pool gezogen und wollte dann die einzelnen tage haben, das ging aber
-   * nicht."): instead the single days (one relationship per day), or what they have in common (the month or the year).
+   * [3.37.12] The ▾ of a cell holding a period of a few days – also one dragged there by hand (collected item 162): instead the single
+   * days (one relationship per day), or what they have in common (the month or the year).
    */
   function periodMenuHtml(c) {
     const e = cellEntry(c);
@@ -21561,8 +21865,7 @@
   }
 
   /**
-   * [S052] (3.34.28) Words MusicBrainz does not know that the role credit writes small say so (maintainer: "vielleicht deutlich
-   * machen, dass gerade etwas lowercased wurde wenn die rolle oder das instrument nicht bekannt ist"): "Written small –
+   * [S052] (3.34.28) Words MusicBrainz does not know that the role credit writes small say so: "Written small –
    * unknown to MusicBrainz: Buddha → buddha · keep “Buddha” · always write “Buddha”" (always: the proper names of the register,
    * T052); a word kept: "Kept as written: Buddha · write small again". Not once the role credit was typed by hand.
    */
@@ -21676,8 +21979,7 @@
   }
 
   /**
-   * [3.32.3] A question in the compact line, whole and to click (collected item 102; maintainer: "die Abfragen wie "Bass:
-   * which instrument?" in der kompakt Ansicht sollen komplett dargestellt und klickbar sein", "ok ab 5"): up to four
+   * [3.32.3] A question in the compact line, whole and to click (collected item 102): up to four
    * possibilities as buttons, from five a list; a choice is made as in the full row, the row stays closed.
    */
   function clineAskHtml(kind, label, opts) {
@@ -21815,7 +22117,7 @@
   }
 
   /**
-   * [3.29.3] The arrow of an entry (item 82; maintainer: "nur bis zum nächsten Import"): in the full view its rows fold
+   * [3.29.3] The arrow of an entry (item 82): in the full view its rows fold
    * to compact lines and out again; in the compact view it closes the rows of the entry that are open.
    */
   function foldGroup(a) {
@@ -21886,10 +22188,8 @@
   }
 
   /**
-   * [143] (3.34.23) An arrow at "Compact | Full" in the head (collected item 143; maintainer: "falls man das skript zum ersten mal
-   * startet soll ein pfeil auf den kompaktmodus hinweisen. er soll verschwinden sobald zum ersten mal umgestellt wird", "ja auch
-   * für alle die es schon haben. und auch zurücksetzen bitte"): until the view is switched for the first time (in the head or in
-   * ⚙ Settings) or the arrow closed with ✕; not for who stored the compact view; reset settings show it again. It lets the
+   * [143] (3.34.23) An arrow at "Compact | Full" in the head (collected item 143): until the view is switched for the first time (in
+   * the head or in ⚙ Settings) or the arrow closed with ✕; not for who stored the compact view; reset settings show it again. It lets the
    * pointer through to what lies below it (only ✕ is a button).
    */
   const compactHintOn = () => S.view !== 'compact' && readJson('localStorage', HINT_COMPACT_KEY, false) !== true;
@@ -22056,9 +22356,8 @@
   }
 
   /**
-   * [169] (3.38.4) The messages of the footer as short chips in the line of the summary (collected item 169; maintainer: "die untere
-   * leiste nimmt noch zu viel platz weg … smart nebeneinander anordnen"): the rounds of staging, the tracks waiting for a work, what
-   * was staged – the whole text in the tooltip; a click shows it below the line (again: hides it).
+   * [169] (3.38.4) The messages of the footer as short chips in the line of the summary (collected item 169): the rounds of staging,
+   * the tracks waiting for a work, what was staged – the whole text in the tooltip; a click shows it below the line (again: hides it).
    */
   const FOOT_MSGS = [['rounds', 'info'], ['waiting', 'warn'], ['stage-done', 'ok']];
   function renderFootChips() {
@@ -22066,7 +22365,7 @@
     if (!box) return;
     const m = S.footMsgs || {};
     if (S.footMsgOpen && !m[S.footMsgOpen]) S.footMsgOpen = null;
-    // [F-3] (3.38.13) what was staged: its chip flashes once when it comes (maintainer: "so wie Vorschlag")
+    // [F-3] (3.38.13) what was staged: its chip flashes once when it comes
     const done = m['stage-done'] ? m['stage-done'].chip : '';
     const flash = !!done && done !== S.footFlashed;
     const html = FOOT_MSGS.filter(([k]) => m[k]).map(([k, kind]) => `<button type="button" class="dci-foot-chip dci-foot-chip-${kind}${flash && k === 'stage-done' ? ' dci-foot-chip-flash' : ''}" data-act="foot-msg" data-msg="${k}"
@@ -22201,6 +22500,13 @@
       ['kind.work', count((i) => i.target.kind === 'work')],
       ['kind.workLink', count((i) => i.kind === 'work-link')],
     ].filter(([, n]) => n).map(([key, n]) => tr(key, { n }));
+    // [172] (3.39.0) the exact number for the line of the release page (a release from Discogs only)
+    // – once per import, when it is complete (not after staging or changes by hand)
+    S.lastSumCount = items.length;
+    if (S.gapExactPending && S.source === DISCOGS && releaseMbid) {
+      writeJson('localStorage', `${GAP_EXACT_PREFIX}${releaseMbid.toLowerCase()}`, { n: items.length, at: Date.now(), dId: S.gapExactPending });
+      S.gapExactPending = null;
+    }
     // [169] (3.38.4) in one line: the levels in the tooltip
     const sum = [`<strong class="dci-sum-new"${kinds.length ? ` title="${esc(kinds.join(', '))}" tabindex="0"` : ''}>${esc(tr('sum.new', { n: items.length }))}</strong>`];
     // [E4] (3.35.0) joined: how many a relationship per instrument would be
@@ -22679,6 +22985,16 @@
     finishWorkRun();
   }
 
+  /** [179] (3.38.16) The composers of a track: the people credited with a writing role for it (not arrangers). */
+  function composersOfTrack(i) {
+    const out = new Map();
+    for (const r of S.rows) {
+      const a = S.artists.get(r.artistKey);
+      if (r.level === 'work' && r.tracks.has(i) && a && a.mbid && !a.company && !a.other && WRITER_TYPES.includes(norm(rowTypeName(r)))) out.set(a.mbid, a.mbName || a.name);
+    }
+    return out;
+  }
+
   /** The people the source credits for writing this track (MB artists, no publishers). */
   function creditedWritersOf(i) {
     const out = new Map();
@@ -22896,6 +23212,9 @@
   // [3.21.3] the web profiles found next to names in a text are shown at their entries only with this setting (off)
   S.webLinksShow = readJson('localStorage', 'dci-weblinks-show', false) === true;
   S.mxMenu = null;
+  // [180] (3.38.15) the track whose list "n works ▾" is open (one at a time)
+  S.mxWorksOpen = null;
+  S.wtCache = new Map();
   S.pubRels = new Map();
   S.workRowOpts = new Map();
   S.mxAddCol = null;
@@ -22968,6 +23287,30 @@
   }
   /** [S021] An existing link of a live release without "live": offered ("li?"), never set by itself. */
   const liveHint = (i, work) => !!(work && !work.planned && liveReason(i) && !linkAttrsOf(i, work).has('live'));
+  /** [179] (3.38.16) The performers of a track with a MusicBrainz entry: the release's artists, instruments, voices, performers. */
+  function performersOf(i) {
+    const out = new Set((S.releaseCredit || []).map((p) => p.mbid).filter(Boolean));
+    for (const r of S.rows) {
+      const a = S.artists.get(r.artistKey);
+      if (!a || !a.mbid || r.level === 'skip' || !['instrument', 'vocal', 'performer'].includes(norm(rowTypeName(r)))) continue;
+      if (r.level === 'recording' && !(r.tracks && r.tracks.has(i))) continue;
+      out.add(a.mbid);
+    }
+    return out;
+  }
+  /**
+   * [179] (3.38.16) "cover?" at the link of a work (F-179b): a work chosen among the works of the track's composer (credited for
+   * the track or named in its title) who is none of the track's performers. Offered (dashed, "co?"), never set by itself; not
+   * for a new work, nor for the works found otherwise (a songwriter's own song is no cover).
+   */
+  function coverComposers(i, work) {
+    if (!work || !work.planned || work.origin === 'pending' || linkAttrsOf(i, work).has('cover')) return [];
+    const plan = S.workPlan.get(i);
+    if (!plan || !plan.composer || !linkAttrTypes().some((a) => norm(a.name) === 'cover')) return [];
+    if (performersOf(i).has(plan.composer)) return [];
+    return [plan.composerName || plan.composer];
+  }
+  const coverHint = (i, work) => coverComposers(i, work).length > 0;
   /** Switches an attribute of one link on or off (MusicBrainz's own stay). */
   function setLinkAttr(i, work, name, on) {
     const key = linkKey(i, work.gid);
@@ -22990,7 +23333,7 @@
   /** A work's attribute row is open when the link has (or is offered) an attribute, or when opened by hand. */
   function linkAttrsOpen(mrow) {
     if (!mrow.work) return false;
-    const has = linkAttrsOf(mrow.i, mrow.work).size > 0 || liveHint(mrow.i, mrow.work);
+    const has = linkAttrsOf(mrow.i, mrow.work).size > 0 || liveHint(mrow.i, mrow.work) || coverHint(mrow.i, mrow.work);
     return { has, open: has || S.wattrOpenAll || S.wattrOpen.has(mrow.key) };
   }
 
@@ -23023,6 +23366,10 @@
       }
       if (n === 'live' && liveHint(mrow.i, mrow.work)) {
         return attrPillHtml(a, { state: 'hint', act: 'mx-wattr', title: liveOfferText(mrow.i) });
+      }
+      // [179] (3.38.16) "co?": the composer is none of the performers
+      if (n === 'cover' && coverHint(mrow.i, mrow.work)) {
+        return attrPillHtml(a, { state: 'hint', act: 'mx-wattr', title: tr('matrix.coverOffer', { names: coverComposers(mrow.i, mrow.work).join(', ') }) });
       }
       return attrPillHtml(a, { state: 'off', act: 'mx-wattr', title: a.name });
     }).join('');
@@ -23097,18 +23444,15 @@
   }
 
   // --- [3.32.9] Disambiguation comments of live recordings (collected item 113) ----------------------------------------
-  // Maintainer: "kannst du das feature bei live recordings als abfrage das disambiguation comment zu ergänzen in die optionen
-  // mit einbinden? standardmäßig aus. die infos kommen aus dem im dashboard eingegebenen alias des recording places und des
-  // datums." – "ja bitte mit Kommentar. unter staging. nur "live"". The comments are those of "MB: QoL: Seed the batch
+  //  The comments are those of "MB: QoL: Seed the batch
   // recording comments script" (ROpdebee, v2022.6.13) for "Set recording comments for a release" (murdos): "live, 2004‐03‐23:
   // Iridium, New York, NY, USA". Here they are proposed from the dashboard's rows; 3.32.10 enters them after "Enter edit".
 
   const LIVE_COM_KEY = 'dci-live-comments';
   const SEED_NOTE = SEED_NOTE_TEXT;
-  // the setting (⚙ Settings → Staging, off by default; maintainer: "standardmäßig aus", "unter staging")
+  // the setting (⚙ Settings → Staging, off by default)
   S.liveCom = readJson('localStorage', LIVE_COM_KEY, false) === true;
-  // [3.37.3] with the setting off, the comments are offered for the release (item 150b; maintainer: "so als abfrage/angebot
-  // für den jeweiligen fall. per mouseover tooltip wo das standardmäßig eingestellt werden kann"): null (asked), 'yes', 'no'
+  // [3.37.3] with the setting off, the comments are offered for the release (item 150b): null (asked), 'yes', 'no'
   S.liveComOffer = null;
 
   /** [3.37.3] The comments are proposed: the setting is on, or the offer was accepted for this release. */
@@ -23245,7 +23589,6 @@
   /**
    * [3.32.10] The ticked comments as the job of this release, entered after "Enter edit" (runLiveJob): at each staging, and when
    * the list changes while a job waits. The edit note: the script's block (when it writes one) and the line of the seed script
-   * (maintainer: "falls das passiert bitte auch den quellentext des skripts hinzufügen").
    */
   function saveLiveJob({ quiet = false } = {}) {
     const key = `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`;
@@ -23264,9 +23607,7 @@
   }
 
   /**
-   * [168] (3.38.3) Live recordings named in short (collected item 168; maintainer: ""Tracks 1, 2, 3, 4, 5 are live recordings." ->
-   * kanns du die tracks gruppieren? "1-5"? kannst du medien erwähnen, falls sie komplett live sind?", "bei einem release mit nur
-   * einem medium nur die tracks. es kann auch mediengruppen geben bspw. CD 1-5"): with several media, whole media by their format
+   * [168] (3.38.3) Live recordings named in short (collected item 168): with several media, whole media by their format
    * and number ("CD 1", one after another of the same format "CD 1–5", without a format "Medium 3"); the other tracks as ranges.
    */
   function liveWhatText(idxs) {
@@ -23309,7 +23650,7 @@
   }
 
   /** [168] (3.38.3) The offer's or a group's name: "CD 1–5, tracks 6.1–6.3" or "1–5". */
-  // [F-2] (3.38.13) in the order of the positions (maintainer: "nach Positionen"): "track 1.2, CD 2" (until 3.38.12 the media
+  // [F-2] (3.38.13) in the order of the positions: "track 1.2, CD 2" (until 3.38.12 the media
   // first: "CD 2, track 1.2"); tracks one after another between media as one part ("tracks 3.1–3.4, 3.6")
   function liveWhatLabel(idxs, { prefix = true } = {}) {
     const w = liveWhatText(idxs);
@@ -23358,8 +23699,8 @@
    * [3.32.9] The list of live recordings with their comments above "Stage …" (setting "Live recordings: add a disambiguation
    * comment"). [3.37.3] With the setting off: an offer for the release – ✓ shows the list, ✕ hides it (item 150b). [168] (3.38.3)
    * The tracks as ranges and media, the list in groups, at most a third of the dashboard's height (its own scroll bar), and its
-   * heading always at the bottom right of the box – the list opens above it (maintainer: "rechts unten im kasten soll immer die
-   * Überschrift stehen"); [170] the heading shorter ("Live disambiguation comments: 5 of 5").
+   * heading always at the bottom right of the box – the list opens above it; [170] the heading shorter ("Live disambiguation comments:
+   * 5 of 5").
    */
   function renderLiveComments() {
     const el = S.overlay && $('livecom');
@@ -23505,9 +23846,7 @@
   const entryNames = (a) => [a.name, a.mbName, a.rawName, ...(a.anvs || []), ...(a.altNames || [])].filter(Boolean);
 
   /**
-   * [S044] (3.31.5) A person as publisher (collected item 97b; maintainer: "Doch Person gibt es als Publisher in MB mit dem
-   * artist/work relationship "published / publisher" bitte nicht create label für personen anbieten! in discogs ist die
-   * logik da anders und personen publisher werden als labels geführt."): a company whose publishing rows carry the name of a
+   * [S044] (3.31.5) A person as publisher (collected item 97b): a company whose publishing rows carry the name of a
    * person of the dashboard ("Published By – Tomas Fujiwara", the notes' "Tomas Fujiwara-BMI : tracks 1, 6, 8") gives those
    * rows to the person – artist–work "publishing", in the person's column of the works matrix; the company entry is left
    * out when nothing else is left of it. (3.31.0–3.31.4: a part of the person's column with a label of its own.)
@@ -23606,13 +23945,9 @@
   const personPublisher = (a) => ruleOn('S048') && a.company && !a.other && personLikeName(a.name)
     && S.rows.some((r) => r.artistKey === a.key) && S.rows.filter((r) => r.artistKey === a.key).every((r) => r.ruleId === 'C031');
 
-  // --- [S057] (3.37.10) ℗ / © of a person Discogs lists as a label (collected item 160; maintainer: "falls also irgendwo an anderer
-  // stelle Martin Davidson schon als Person verknüpft ist und das label … keinen eigenen Label Eintrag in MB hat, soll der an anderer
-  // Stelle verknüpfte Martin Davidson auf artist ebene für die Copyrights eingetragen werden mit hinweis darauf, dass Discogs das als
-  // label führt und das hier ein vorschlag aus anderen Discogs relationships ist.", "primär bei treffer im release, ansonsten
-  // vorschläge. wenn MB ein Label gleichen namens hat muss das auch in die auswahl. dass es sich label oder artist handelt muss in
-  // solchen seltenen fällen erkennbar sein."): a company entry with a person's name and only ℗ / © rows whose Discogs link
-  // MusicBrainz does not know: a person of that name in the dashboard takes its rows (artist–release copyright, phonographic
+  // --- [S057] (3.37.10) ℗ / © of a person Discogs lists as a label (collected item 160): a company entry with a person's name and
+  // only ℗ / © rows whose Discogs link MusicBrainz does not know: a person of that name in the dashboard takes its rows
+  // (artist–release copyright, phonographic
   // copyright); an artist of that name linked in this release becomes its MB entity; otherwise its name is searched – artists
   // and labels of that name offered, each named as such.
 
@@ -23675,8 +24010,7 @@
 
   const isPublishingRow = (row) => norm(rowTypeName(row)) === 'publishing';
 
-  // [3.32.7] Rows of a credit of poems (R105 "Poems By", R106 read out, R107 "Poems" alone; collected item 104b, maintainer:
-  // "works (lyrics) -> recording (vocals) -> release (auswahl lyrics/vocals)", "ja liner notes ist auch eine möglichkeit"): their
+  // [3.32.7] Rows of a credit of poems (R105 "Poems By", R106 read out, R107 "Poems" alone; collected item 104b): their
   // type follows the level – works lyricist, recordings spoken vocals, the release asks (Q010: lyricist, spoken vocals, liner
   // notes) – and a click on the level goes works → recordings → release → skip; they stay in their entry on the works level
   const POEM_RULES = ['R105', 'R106', 'R107'];
@@ -23974,8 +24308,7 @@
         continue;
       }
       // [3.31.6] the tracks of the notes are set, not suggested; ⓘ at the row and in the column shows the line (collected
-      // item 97c; maintainer: "Tracks aus den Discogs Notizen: ja setze sie fest. mache in diesem fall ein kleines info
-      // zeichen woher die tracks stammen.")
+      // item 97c)
       for (const r of open) {
         const own = (r.dPositions || []).length ? new Set(r.tracks) : new Set();
         r.tracks = new Set([...own, ...tracks]);
@@ -24096,9 +24429,12 @@
 
   // --- Same-named works of the writers (against duplicates) -------------------------------
 
-  const normTitle = (t) => norm(t).replace(/&/g, ' and ')
-    .replace(/[([][^)\]]*(remaster|live|mono|stereo|version|edit|mix|demo|single|instrumental)[^)\]]*[)\]]/g, ' ')
-    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  // [179] (3.38.16) a function (also for the Node test of similarWorkTitle)
+  function normTitle(t) {
+    return norm(t).replace(/&/g, ' and ')
+      .replace(/[([][^)\]]*(remaster|live|mono|stereo|version|edit|mix|demo|single|instrumental)[^)\]]*[)\]]/g, ' ')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  }
 
   /**
    * Equal, or one letter inserted, missing or different ("Trak 1" = "Track 1"). Digits must match,
@@ -24114,14 +24450,90 @@
     return a.length > b.length ? letter(a[i]) && a.slice(i + 1) === b.slice(i) : letter(b[i]) && a.slice(i) === b.slice(i + 1);
   }
 
+  // [179] (3.38.16) A composer the title of a track names – "Round Midnight (Thelonious Monk cover)", "Variants On A Theme By Monk":
+  // a name of one to four words in capitals in brackets (also "… cover") or after "by" / "after"; words of versions ("Live",
+  // "Remastered", "Theme" …) are no names. full: two words or more (looked up in MusicBrainz), else a surname (only when an
+  // artist of the release has it).
+  function titleComposerNames(title) {
+    // words of versions, credits and titles that are no names (also before or after "by")
+    const STOP = /^(?:live|remaster(?:ed)?|demo|edit|version|mix|remix|reprise|intro|outro|interlude|theme|take|part|pt|bonus|single|mono|stereo|instrumental|acoustic|radio|extended|original|cover|alternate|alt|unreleased|feat|featuring|ft|vs|prod|with|and|the|a|an|of|in|on|by|after|for|to|from|me|you|us|them|him|her|it|your|my|our|their|his|love|time|session|sessions|title|titles|credits|act|tribute|dub|skit|clean|explicit|medley|prelude|main|end|en|vivo|bbc|japan|suite|movement|op|no|allegro|andante|adagio|presto|con|brio|minor|major)\.?$/i;
+    const ROMAN = /^[IVXLC]+\.?$/;
+    const PARTICLE = /^(?:van|von|de|der|den|da|di|del|della|la|le|du|dos|das|y)$/i;
+    const nameOf = (words) => {
+      const w = words.filter(Boolean);
+      if (!w.length || w.length > 4 || PARTICLE.test(w[0]) || PARTICLE.test(w[w.length - 1])) return '';
+      return w.every((y) => (PARTICLE.test(y) || (/^\p{Lu}[\p{L}'’.-]*$/u.test(y) && !STOP.test(y) && !ROMAN.test(y)))) ? w.join(' ') : '';
+    };
+    const t = String(title || '');
+    const out = [];
+    // in brackets, the whole bracket (also "… cover")
+    for (const m of t.matchAll(/\(([^()]+?)(?:\s+cover)?\)/giu)) out.push(nameOf(m[1].trim().split(/\s+/)));
+    // after "by" / "after" (not "produced by", "remix by" …): the words in capitals up to the first word that is none
+    for (const m of t.matchAll(/(?:^|\s|\()((?:\p{L}+\.?\s+)?)(?:by|after)\s+(\S+(?:\s+\S+){0,5})/giu)) {
+      if (/^(?:prod\.?|produced|re-?mix(?:ed)?|mix(?:ed)?|arranged|arr\.?|edit(?:ed)?|conducted|performed|played|sung|covered)\s+$/i.test(m[1])) continue;
+      const words = [];
+      for (const w of m[2].replace(/[),;:!?]+.*$/u, '').split(/\s+/)) {
+        if (PARTICLE.test(w) && words.length) words.push(w);
+        else if (/^\p{Lu}[\p{L}'’.-]*$/u.test(w) && !STOP.test(w) && !ROMAN.test(w)) words.push(w);
+        else break;
+      }
+      while (words.length && PARTICLE.test(words[words.length - 1])) words.pop();
+      out.push(nameOf(words));
+    }
+    return uniq(out.filter(Boolean)).map((n) => ({ name: n, full: n.split(' ').length >= 2 }));
+  }
+  /** [179] (3.38.16) A title without the composer's names ("(Thelonious Monk)", "(… cover)", "by Monk") and without brackets. */
+  // (the patterns of a set of names once – they are used for every work of a composer)
+  function namePatterns(names) {
+    // (a property of the function: reachable in Node before the consts further down)
+    const cache = namePatterns.cache || (namePatterns.cache = new Map());
+    const key = names.join('\u0001');
+    if (!cache.has(key)) {
+      if (cache.size > 200) cache.clear();
+      cache.set(key, uniq(names.filter(Boolean)).sort((a, b) => b.length - a.length).map((n) => {
+        const e = String(n).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return [new RegExp(`\\(\\s*${e}(?:\\s+cover)?\\s*\\)`, 'giu'), new RegExp(`(^|\\s)(?:by|of|after)\\s+${e}(?=$|[\\s,.;:!?)])`, 'giu'),
+          new RegExp(`\\s[-–—:]\\s*${e}\\s*$`, 'giu')];
+      }));
+    }
+    return cache.get(key);
+  }
+  function titleWithoutComposer(title, names) {
+    let t = String(title || '');
+    for (const [a, b, c] of namePatterns(names)) t = t.replace(a, ' ').replace(b, ' ').replace(c, ' ');
+    return normTitle(t.replace(/\([^)]*\)|\[[^\]]*\]/g, ' '));
+  }
+  /** [179] Two titles cleaned as above: equal within one letter, or the work's whole in the track's (two words or six letters). */
+  function similarCleaned(tt, wt) {
+    if (!tt || !wt) return false;
+    if (withinOne(wt, tt)) return true;
+    return (wt.includes(' ') || wt.length >= 6) && ` ${tt} `.includes(` ${wt} `);
+  }
+  /**
+   * [179] (3.38.16) A work of the track's composer with a similar title (F-179c): equal without the composer's names and without
+   * brackets ("(Live)", "(Theme)"), or the work's title whole in the track's title – from two words or six letters.
+   */
+  function similarWorkTitle(trackTitle, workTitles, names) {
+    const tt = titleWithoutComposer(trackTitle, names);
+    return !!tt && workTitles.some((x) => similarCleaned(tt, titleWithoutComposer(x, names)));
+  }
+  /** "Thelonious Monk" → ["Thelonious Monk", "Monk"]. */
+  const nameAndSurname = (names) => uniq(names.filter(Boolean).flatMap((n) => [n, String(n).trim().split(/\s+/).pop()]));
+
   function sameNamed(i) {
     const search = S.workSearch.get(i);
     const track = S.mbTracks[i];
     if (!track) return [];
     const own = search && search.state === 'done' ? search.results : [];
     // [3.15.0] and works of the release's artists, its writers and performers with this title
-    const more = (S.artistWorkHits.get(i) || []).filter((w) => !own.some((x) => x.gid === w.gid));
-    return [...own, ...more];
+    const hits = S.artistWorkHits.get(i) || [];
+    const more = hits.filter((w) => !own.some((x) => x.gid === w.gid));
+    // [179] (3.38.16) a work both found: why the works of the artists found it, and its composer, with the search's entry
+    const merged = own.map((x) => {
+      const h = hits.find((w) => w.gid === x.gid);
+      return h ? { ...x, writers: uniq([...x.writers, ...h.writers]), ...(h.composer ? { composer: h.composer, composerName: h.composerName } : {}) } : x;
+    });
+    return [...merged, ...more];
   }
 
   // --- [3.15.0] Works of the artists: release artists, writers, performers --------------------------------
@@ -24147,8 +24559,71 @@
       if (why) found.push([a.mbid, { name: a.mbName || a.name, why }, a.mbName, a.name]);
     }
     found.sort((x, y) => rank[x[1].why] - rank[y[1].why]).forEach(([id, info, ...names]) => add(id, info, ...names));
+    // [179] (3.38.16) the composers named in the titles of tracks without a work
+    for (const t of tracksWithoutWork()) titleComposersOf(t.idx).forEach((c) => add(c.mbid, { name: c.name, why: 'title' }, c.name));
     out.special = special;
     return out;
+  }
+
+  /**
+   * [179] (3.38.16) The composers named in the title of a track (179b, F-179d): a full name as MusicBrainz has it (looked up once,
+   * resolveTitleComposers); a surname alone only when exactly one artist of the release has it. [{ mbid, name, said }]
+   */
+  function titleComposersOf(i, { logIt = false } = {}) {
+    const t = S.mbTracks[i];
+    if (!t) return [];
+    const cache = S.titleComposerCache || new Map();
+    const playing = new Set(S.rows.filter((r) => r.level !== 'skip' && [...WRITER_TYPES, 'instrument', 'vocal', 'performer'].includes(norm(rowTypeName(r)))).map((r) => r.artistKey));
+    const ours = [...(S.releaseCredit || []).filter((p) => p.mbid).map((p) => ({ mbid: p.mbid, names: [p.name] })),
+      ...[...S.artists.values()].filter((a) => a.mbid && !a.company && !a.other && playing.has(a.key)).map((a) => ({ mbid: a.mbid, names: [a.mbName, a.name] }))];
+    const out = [];
+    for (const c of titleComposerNames(workTitleOf(t.title))) {
+      const key = norm(c.name);
+      let hit = null;
+      if (c.full) hit = cache.get(key) || null;
+      else {
+        const same = uniq(ours.filter((o) => o.names.some((n) => n && norm(String(n).trim().split(/\s+/).pop()) === key)).map((o) => o.mbid));
+        if (same.length === 1) {
+          const o = ours.find((x) => x.mbid === same[0]);
+          hit = { mbid: o.mbid, name: o.names.find(Boolean) };
+        }
+      }
+      if (!hit || out.some((x) => x.mbid === hit.mbid)) continue;
+      out.push({ mbid: hit.mbid, name: hit.name, said: c.name });
+      S.titleComposerLogged = S.titleComposerLogged || new Set();
+      const lk = `${i}|${hit.mbid}`;
+      if (logIt && !S.titleComposerLogged.has(lk)) {
+        S.titleComposerLogged.add(lk);
+        log('info', 'titleComposer', { track: trackLabel(t), name: hit.name, said: c.name });
+      }
+    }
+    return out;
+  }
+  /** [179] (3.38.16) Looks up the full names the titles of the tracks without a work name (an artist of that name or alias). */
+  async function resolveTitleComposers() {
+    S.titleComposerCache = S.titleComposerCache || new Map();
+    const names = uniq(tracksWithoutWork().flatMap((t) => titleComposerNames(workTitleOf(t.title)).filter((c) => c.full).map((c) => c.name)));
+    const ours = [...(S.releaseCredit || []).filter((p) => p.mbid).map((p) => ({ mbid: p.mbid, name: p.name })),
+      ...[...S.artists.values()].filter((a) => a.mbid && !a.company && !a.other).map((a) => ({ mbid: a.mbid, name: a.mbName || a.name }))];
+    for (const name of names) {
+      const key = norm(name);
+      if (S.titleComposerCache.has(key) || worksResting()) continue;
+      // an artist of the release of that name: no request
+      const own = ours.find((o) => norm(o.name) === key);
+      if (own) {
+        S.titleComposerCache.set(key, { mbid: own.mbid, name: own.name });
+        continue;
+      }
+      try {
+        const q = name.replace(/"/g, '');
+        const d = await mbWsIdle(`artist?query=${encodeURIComponent(`artist:"${q}" OR alias:"${q}"`)}&limit=5`);
+        const same = ((d && d.artists) || []).filter((a) => norm(a.name) === key || (a.aliases || []).some((x) => norm(x.name) === key));
+        // only one artist of exactly that name or alias (two "John Williams": none)
+        S.titleComposerCache.set(key, same.length === 1 ? { mbid: same[0].id, name: same[0].name } : null);
+      } catch {
+        // not kept: asked again with the next comparison
+      }
+    }
   }
 
   /** Tracks still without a work (those the comparison is for). */
@@ -24219,14 +24694,38 @@
     for (const t of tracksWithoutWork()) {
       const title = normTitle(workTitleOf(t.title));
       const found = new Map();
+      // [179] (3.38.16) the track's composers: its writers (credited for it) and those its title names
+      const composers = new Map([...composersOfTrack(t.idx)].map(([id, n]) => [id, { names: [n], named: false }]));
+      for (const c of titleComposersOf(t.idx)) {
+        const x = composers.get(c.mbid) || { names: [], named: true };
+        x.names.push(c.name, c.said);
+        composers.set(c.mbid, x);
+      }
       for (const [mbid, info] of S.artistWorkTargets) {
         const e = S.artistWorks.get(mbid);
         if (!e) continue;
+        const comp = composers.get(mbid);
+        const names = comp ? nameAndSurname([...comp.names, info.name]) : [];
+        const tt = comp ? titleWithoutComposer(workTitleOf(t.title), names) : '';
+        const exact = comp ? [...e.works.values()].some((w) => [w.title, ...w.aliases].some((x) => withinOne(normTitle(x), title))) : false;
         for (const w of e.works.values()) {
-          if (![w.title, ...w.aliases].some((x) => withinOne(normTitle(x), title))) continue;
-          const via = tr(w.via === 'recorded' ? 'works.viaRecorded' : 'works.viaLinked', { name: info.name, recording: w.recording || '' });
+          const titles = [w.title, ...w.aliases];
+          const same = titles.some((x) => withinOne(normTitle(x), title));
+          // only the works of the track's composer with a similar title, never all of them (F-179c) – and only when none of his has
+          // the track's title
+          const similar = !same && !!comp && !exact && titles.some((x) => {
+            const k = `${names.join('|')}\u0001${x}`;
+            if (!S.wtCache.has(k)) S.wtCache.set(k, titleWithoutComposer(x, names));
+            return similarCleaned(tt, S.wtCache.get(k));
+          });
+          if (!same && !similar) continue;
+          const via = comp && comp.named ? tr('works.viaTitleComposer', { name: info.name, said: comp.names[comp.names.length - 1] })
+            : similar ? tr('works.viaComposer', { name: info.name })
+            : tr(w.via === 'recorded' ? 'works.viaRecorded' : 'works.viaLinked', { name: info.name, recording: w.recording || '' });
           const hit = found.get(w.gid) || { gid: w.gid, title: w.title, type: w.type, disambiguation: w.disambiguation, aliases: w.aliases, writerIds: [], writers: [], artistWork: true };
           if (!hit.writers.includes(via)) hit.writers.push(via);
+          // "co?" only for a work found through its composer: by a similar title of a song, or named in the track's title
+          if (comp && !hit.composer && (comp.named || (similar && /^song$/i.test(w.type || '')))) Object.assign(hit, { composer: mbid, composerName: info.name });
           found.set(w.gid, hit);
         }
       }
@@ -24456,6 +24955,16 @@
     }
     // [3.18.0] the works matrix skipped, "Not now" or the question for many tracks open: no lookups
     if (!worksLookupsAllowed()) return;
+    // [179] (3.38.16) the composers the titles name, first – as part of the run (no second run meanwhile)
+    S.artistWorksRunning = true;
+    await resolveTitleComposers().catch(() => null);
+    S.artistWorksRunning = false;
+    if (S.artistWorksAgain || worksResting()) {
+      S.artistWorksAgain = false;
+      if (!worksResting()) runArtistWorks();
+      return;
+    }
+    tracksWithoutWork().forEach((t) => titleComposersOf(t.idx, { logIt: true }));
     const targets = artistWorkTargets();
     S.artistWorkTargets = targets;
     for (const [id, info] of targets.special || []) {
@@ -24623,18 +25132,43 @@
     else if (search && search.state === 'error') state = `<span class="dci-bad" title="${esc(search.error)}">!</span>`;
     else if (search && search.state === 'done' && !same.length) state = info(tr('matrix.noSame'));
     // [3.15.0] works of the artists are shown also when the writers gave nothing (or there are none)
+    // [180] (3.38.15) all works found for the track – same title by its writers, works of the artists, the search – are a choice
+    // "n works ▾" in the track's line (until 3.38.14 a list below it); open, the list below the line, one track at a time; a single
+    // work is offered the same way, never set by itself
+    let pick = '';
     if (same.length) {
-      found = `<div class="dci-same"><strong>${esc(tr(same.some((w) => w.artistWork) ? 'matrix.sameArtists' : 'matrix.same', { n: same.length }))}</strong><ul class="dci-candidates">${same.map((w) => `<li>
-          <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}">${esc(tr('works.link'))}</button>
+      const open = S.mxWorksOpen === i;
+      const listId = `dci-mx-wlist-${i}`;
+      const what = tr(same.some((w) => w.artistWork) ? 'matrix.sameArtists' : 'matrix.same', { n: same.length });
+      pick = ` <button type="button" class="dci-small dci-mx-wpickbtn" data-act="mx-works" aria-expanded="${open}" aria-controls="${listId}"
+        title="${esc(what)}">${esc(tr('matrix.worksPick', { n: same.length }))} ${open ? '▴' : '▾'}</button>`;
+      found = `<div class="dci-same dci-mx-wlist" id="${listId}"${open ? '' : ' hidden'}><strong>${esc(what)}</strong><ul class="dci-candidates">${same.map((w) => `<li>
+          <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}"${w.composer ? ` data-composer="${esc(w.composer)}" data-composer-name="${esc(w.composerName || '')}"` : ''}>${esc(tr('works.link'))}</button>
           <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
           <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span></li>`).join('')}</ul></div>`;
     }
-    return `${head}<div class="dci-mx-line"><span class="dci-badge">${esc(tr('matrix.noWork'))}</span>
+    return `${head}<div class="dci-mx-line"><span class="dci-badge">${esc(tr('matrix.noWork'))}</span>${pick}
         <button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pending'))}</button>
         <button type="button" class="dci-small" data-act="work-search">${esc(tr('works.search'))}</button>
         <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button>${state} ${o.btn}</div>
       ${found}${o.panel}`;
   }
+
+  /** [180] (3.38.15) Opens or closes the list "n works ▾" of a track in the page (the matrix is not drawn anew). */
+  function setWorksList(i, open) {
+    const tr = S.overlay && S.overlay.querySelector(`tr[data-work="${i}"]`);
+    const b = tr && tr.querySelector('[data-act="mx-works"]');
+    const l = tr && tr.querySelector('.dci-mx-wlist');
+    if (l) l.hidden = !open;
+    if (b) {
+      b.setAttribute('aria-expanded', String(open));
+      b.textContent = b.textContent.replace(open ? '▾' : '▴', open ? '▴' : '▾');
+    }
+    S.mxWorksOpen = open && l ? i : null;
+    return b;
+  }
+  /** [180] (3.38.15) Closes the open list; its button (or null). */
+  const closeWorksList = () => (S.mxWorksOpen === null ? null : setWorksList(S.mxWorksOpen, false));
 
   /** [S020] A small mark next to a work type preselected by a rule. */
   const typeAutoHtml = (opts) => (opts && opts.typeAuto && opts.typeId
@@ -24880,8 +25414,7 @@
   }
 
   /**
-   * [3.30.3] Scroll bars of the works matrix to the right and left (item 94; maintainer: "wir brauchen in der work-matrix
-   * noch eine leiste um von links nach rechts zu scrollen"): one above the matrix, one at the bottom of the visible area
+   * [3.30.3] Scroll bars of the works matrix to the right and left (item 94): one above the matrix, one at the bottom of the visible area
    * while the lower edge of the matrix (with its own bar) is out of view; all three move together.
    */
   function setupMxScroll() {
@@ -26652,6 +27185,8 @@
       }
       renderWorks();
     }
+    // [180] (3.38.15) the list "n works ▾" closes with a click anywhere else – in the page, the click goes on to what it was on
+    if (S.mxWorksOpen !== null && e.target.closest && !e.target.closest('.dci-mx-wlist, [data-act="mx-works"]')) closeWorksList();
     const btn = e.target.closest('[data-act]');
     if (!btn || !S.overlay.contains(btn)) return;
     S.lastActEl = btn;
@@ -27982,13 +28517,27 @@
         renderWorks();
         break;
       }
+      case 'mx-works': {
+        // [180] (3.38.15) "n works ▾" opens the works found for the track (another one open closes); in the page, no redraw
+        const i = workIndexOf(btn);
+        const was = S.mxWorksOpen;
+        closeWorksList();
+        if (was !== i) setWorksList(i, true);
+        return true;
+      }
       case 'work-pick': {
         const i = workIndexOf(btn);
-        S.workPlan.set(i, { gid: btn.dataset.gid, title: btn.dataset.title, origin: 'search', flags: new Set() });
+        S.mxWorksOpen = null;
+        S.workPlan.set(i, { gid: btn.dataset.gid, title: btn.dataset.title, origin: 'search', flags: new Set(), composer: btn.dataset.composer || '', composerName: btn.dataset.composerName || '' });
         log('info', 'workPicked', { track: trackLabel(S.mbTracks[i]), title: btn.dataset.title });
         rememberArtistWork(i, btn.dataset.gid, btn.dataset.title);
         renderWorks();
         refresh();
+        // [180] (3.38.16) the focus on the track's work (its button was drawn anew)
+        {
+          const u = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="work-unplan"]`);
+          if (u) u.focus({ preventScroll: true });
+        }
         break;
       }
       case 'work-unplan': {
@@ -29119,7 +29668,7 @@
   // [3.25.0] tabs (collected item 42): "Texts" and "ⓘ Connections" (item 40) new
   // [3.29.2] "Appearance" new (item 79): text size, the place of the dashboard, the view and the colours of the levels
   // [3.34.1] "Beta" new (item E3): functions to try out, off until switched on
-  // [146] (3.36.0) "Cache" new: what is remembered per release (maintainer: "setting -> Cache vielleicht besser")
+  // [146] (3.36.0) "Cache" new: what is remembered per release
   const SETTING_TOPICS = ['general', 'appearance', 'sources', 'texts', 'discogs', 'works', 'staging', 'dates', 'beta', 'cache', 'statistics', 'connections'];
   const SETTINGS_TAB_KEY = 'dci-settings-tab';
   // [3.27.0] the view of the entries: compact or full ([3.27.2] full by default, item 72)
@@ -29128,8 +29677,7 @@
   const HINT_COMPACT_KEY = 'dci-hint-compact';
   // [138b] (3.34.23) the window "Text from cover art" kept in front of the dashboard (default on; off: stored false)
   const OCR_FRONT_KEY = 'dci-ocr-front';
-  // [E4] (3.34.29) the entries as a matrix (default) or as before, a row per role ("legacy"; maintainer: "Block AE umsetzen und als
-  // standard führen? die alte darstellung aber als "Legacy" darstellung in den einstellungen behalten"); the instruments and voices
+  // [E4] (3.34.29) the entries as a matrix (default) or as before, a row per role ("legacy"); the instruments and voices
   // of an entry joined in one relationship per recording and event (default on; off: stored false)
   const ENTRIES_VIEW_KEY = 'dci-entries-view';
   const JOIN_KEY = 'dci-join';
@@ -29152,13 +29700,13 @@
   // [3.32.4] the colours of the kinds of entries (items 107, 108): on by default; own colours in ⚙ Settings → Appearance
   const KIND_COLORS_KEY = 'dci-kind-colors';
   const KIND_PALETTE_KEY = 'dci-kind-palette';
-  // [3.37.8] events their own colour, plum (collected item 158; maintainer: "also brauchen wir dafür auch eine farbe", "die farbe passt")
+  // [3.37.8] events their own colour, plum (collected item 158)
   const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#2a8a8a', place: '#4e8a3e', area: '#8a6a3e', event: '#8a4f7d', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
     appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY],
-    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY],
+    sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
@@ -29345,7 +29893,7 @@
   /**
    * [E8] At "Enter edit": the relationships of the dashboard still in the editor – those it staged (new) and those it supplemented –
    * each in short, with how it can be looked up in MusicBrainz afterwards (c); the release, the source, the time of the first
-   * import of this page (maintainer: "der erste Import zählt, sofern die seite nicht neu geladen wurde").
+   * import of this page.
    */
   function statSnapshot() {
     const mb = getMB();
@@ -29516,7 +30064,7 @@
   }
 
   /**
-   * [E8] The tab "Statistics" in ⚙ Settings (maintainer: "die statistiken sollen erstmal in den einstellung sein"): collecting
+   * [E8] The tab "Statistics" in ⚙ Settings: collecting
    * on or off, the sums, over days / weeks / months / years, the most frequent artists, instruments and types.
    */
   function statsHtml() {
@@ -29576,7 +30124,7 @@
   }
 
   /**
-   * [E8] (3.38.1) The further statistics (maintainer: "Setze mal alle Ideen für die Statistik um"): sources, how the entries were
+   * [E8] (3.38.1) The further statistics: sources, how the entries were
    * found, dates and places, levels and works, the releases themselves, when you work (days in a row, records), instruments, the
    * text from cover art, own rules.
    */
@@ -29893,6 +30441,8 @@
         // [3.19.2] the release editor and, imported with Harmony, the background tab; [3.23.0] the button instead of the tick
         row(check('data-set="after-edit"', readJson('localStorage', AFTER_EDIT_BTN_KEY, true) !== false, tr('settings.afterEdit'))),
         row(check('data-set="after-edit-bg"', readJson('localStorage', AFTER_EDIT_BG_KEY, true) !== false, tr('settings.afterEditBg'))),
+        // [172] (3.39.0) the line of the release page (Discogs only)
+        row(check('data-set="gap-on"', readJson('localStorage', GAP_ON_KEY, true) !== false, tr('settings.gapOn'), tr('settings.gapOnTitle'))),
       ],
       // [3.25.0] pasted texts and the credits texts of Bandcamp
       texts: () => [
@@ -29901,7 +30451,7 @@
         // [3.32.5] typos in role words (S050, collected item 115: "an/ausschaltbar in den einstellungen") – the rule's switch
         // [3.32.6] the credits of Bandcamp's "about" text (S049, collected item 115)
         row(check('data-set="rule-on" data-rule="S049"', ruleOn('S049'), tr('settings.aboutCredits'), tr('settings.aboutCreditsTitle'))),
-        // [3.37.0] the credits of the Discogs notes (S054, E5; maintainer: "ja bitte mit schalter")
+        // [3.37.0] the credits of the Discogs notes (S054, E5)
         row(check('data-set="rule-on" data-rule="S054"', ruleOn('S054'), tr('settings.notesCredits'), tr('settings.notesCreditsTitle'))),
         row(check('data-set="rule-on" data-rule="S050"', ruleOn('S050'), tr('settings.typos'), tr('settings.typosTitle'))),
         `<p class="dci-sub">${esc(tr('settings.textsHint'))} <button type="button" class="dci-textbtn" data-act="rules">${esc(tr('rules.title'))}</button></p>`,
@@ -29942,7 +30492,7 @@
         // [145b] (3.35.6) the works of the source (index tracks of Discogs) as track groups
         row(check('data-set="work-groups"', S.workGroupsOn, tr('settings.workGroups'), tr('settings.workGroupsTitle'))),
       ],
-      // [3.34.1] functions to try out (maintainer: "Die Beta Funktion muss im Einstellungsmenü aktiviert werden")
+      // [3.34.1] functions to try out
       beta: () => [
         `<p class="dci-sub">${esc(tr('settings.betaHint'))}</p>`,
         row(check('data-set="beta-ocr"', S.betaOcr, tr('settings.betaOcr'), tr('settings.betaOcrTitle'))),
@@ -29951,11 +30501,10 @@
         S.betaOcr ? row(check('data-set="ocr-preload"', S.ocrPreload, tr('settings.ocrPreload'), tr('settings.ocrPreloadTitle'))) : '',
         // [3.34.15] the same state as "Auto-select" in the window (collected item 136)
         S.betaOcr ? row(check('data-set="ocr-auto"', S.ocrAuto, tr('settings.ocrAuto'), tr('settings.ocrAutoTitle'))) : '',
-        // [138b] (3.34.23) the window in front of the dashboard (maintainer: "vielleicht standardmäßig und in den einstellungen umstellbar")
+        // [138b] (3.34.23) the window in front of the dashboard
         S.betaOcr ? row(check('data-set="ocr-front"', S.ocrFront, tr('settings.ocrFront'), tr('settings.ocrFrontTitle'))) : '',
       ],
-      // [146] (3.36.0) remembered per release (maintainer: "50 releases ist gut, aber lass das doch auch einstellen. und lass neben
-      // dem rücksetzen button auch den gebrauchten speicher anzeigen in KB oder MB mit einer kommazahl", "bitte 1-100. 0=aus")
+      // [146] (3.36.0) remembered per release
       cache: () => {
         const z = storageSizes();
         return [
@@ -29967,7 +30516,7 @@
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
         ];
       },
-      // [E8] (3.38.0) the statistics (maintainer: "Statistiken sollen in den EInstellungen aufgeführt werden.")
+      // [E8] (3.38.0) the statistics
       statistics: () => statsHtml(),
     };
     // [3.25.0] the topics as tabs (vertical, at the top in a narrow dashboard); the reset of all settings below them
@@ -30017,8 +30566,7 @@
 
   /** The menu, drawn anew (the field being used keeps the focus). */
   /**
-   * [3.36.3] The keyboard shortcuts (maintainer: "Bitte einen neuen Infoknopf oben in der Leiste der die aktuelle
-   * Tastaturbelegung aller shortcuts zeigt."): ⌨ in the head shows them below it, with the keys of this computer (a Mac:
+   * [3.36.3] The keyboard shortcuts: ⌨ in the head shows them below it, with the keys of this computer (a Mac:
    * ⌥ Option, ⌃ Control, ⌘ Command, ↩ Return); ⌨ again or Esc closes them.
    */
   const IS_MAC = /Mac|iPhone|iPad|iPod/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || navigator.userAgent || '');
@@ -30175,6 +30723,10 @@
       if (k === 'after-edit') writeJson('localStorage', AFTER_EDIT_BTN_KEY, el.checked ? null : false);
       else writeJson('localStorage', AFTER_EDIT_BG_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr(k === 'after-edit' ? 'settings.afterEdit' : 'settings.afterEditBg'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'gap-on') {
+      // [172] (3.39.0) the line of the release page (on unless switched off)
+      writeJson('localStorage', GAP_ON_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.gapOn'), value: tr(el.checked ? 'common.on' : 'common.off') });
     } else if (k === 'stats-on') {
       // [E8] (3.38.0) collecting the statistics (on unless switched off)
       writeJson('localStorage', STATS_ON_KEY, el.checked ? null : false);
@@ -30221,7 +30773,7 @@
       S.rememberMax = v;
       writeJson('localStorage', REMEMBER_MAX_KEY, v === 50 ? null : v);
       log('info', 'settingValue', { what: tr('settings.rememberMax'), value: String(v) });
-      // 0 is off (maintainer: "0=aus"); [3.36.1] fewer releases: the oldest go when something is stored next (not at each step
+      // 0 is off; [3.36.1] fewer releases: the oldest go when something is stored next (not at each step
       // of the field – going down to 0 passed 1)
       S.rememberTouched = 0;
       if (!v && S.rememberOn) setRemember(false);
@@ -30422,6 +30974,8 @@
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
     STATS_ON_KEY, STATS_PERIOD_KEY,
+    // [172] (3.39.0) the line of the release page
+    GAP_ON_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
     BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY,
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
@@ -30488,8 +31042,7 @@
       // [146] (3.36.0) those of this release too, also while it is not remembered
       [POOL_KEY, TRACKPOOL_KEY, MATRIX_KEY].forEach((k) => writeJson('localStorage', k, null));
     }
-    // [E8] (3.38.0) the statistics only when "keep statistics" was unticked (maintainer: "Bei den Resetfunktionen soll es geben:
-    // "keep statistics"", "ja soll angehakt sein")
+    // [E8] (3.38.0) the statistics only when "keep statistics" was unticked
     S.statsPeriod = 'month';
     if (stats) {
       statClear();
@@ -30509,9 +31062,8 @@
   }
 
   /**
-   * `{ settingsOnly }` ([3.30.5], ⚙ in the bar below "Import credits …", collected item 88; maintainer: "wenn das
-   * einstellungsmenü außerhalb des Dashboards geöffnet wird soll auch wirklich nur das Einstellungsmenü gestartet werden",
-   * "Dashboard ohne import reicht an der Stelle"): the dashboard without starting the import – a message offers it.
+   * `{ settingsOnly }` ([3.30.5], ⚙ in the bar below "Import credits …", collected item 88): the dashboard without starting the import
+   * – a message offers it.
    */
   async function openDashboard(opts) {
     const settingsOnly = !!(opts && opts.settingsOnly);
@@ -30543,9 +31095,7 @@
   }
 
   /**
-   * [3.34.8] "… from cover art" beside "Import credits …" (collected item 124; maintainer: "neben dem initialen "Import credits …"
-   * Button soll ein Button "… from cover art" erscheinen, der dann die Bilderkennung triggert bevor bspw. von discogs importiert
-   * wird", "nur wenn beta an ist", "also eigentlich kann das immer da sein sobald man in der beta es anklickt", "A"): the
+   * [3.34.8] "… from cover art" beside "Import credits …" (collected item 124): the
    * dashboard without the import and the window of the text recognition; its text then is the source. Already imported: only
    * the window (its text replaces the source or supplements it).
    */
@@ -30982,6 +31532,13 @@
       S.dmPick = null;
       S.dmEdit = null;
       renderDates();
+      return;
+    }
+    // [180] (3.38.15) the list "n works ▾" of a track (only while it is shown; a dialog of the dashboard first)
+    if (S.mxWorksOpen !== null && !S.subDialog && S.overlay.querySelector('.dci-mx-wlist:not([hidden])')) {
+      e.preventDefault();
+      const b = closeWorksList();
+      if (b) b.focus({ preventScroll: true });
       return;
     }
     // [163] (3.37.14) the answers open at a chip
@@ -31643,6 +32200,11 @@
       #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-dm-over.dci-drop-add::after, #dci-overlay.dci-dm-drag-tg .dci-mx-card.dci-mx-cardover.dci-drop-add::after { content: var(--dci-mx-add); }
       button.dci-primary { background: var(--purple); color: #fff; border-color: var(--purple-d); font-weight: 600; }
       .dci-same { margin-top: calc(var(--u, 1px) * 4); padding: calc(var(--u, 1px) * 4); border-left: 3px solid #e0a800; background: #fffbe8; }
+      /* [180] (3.38.15) "n works ▾": yellow like the choice it opens; the list below the line like a menu */
+      .dci-mx-wpickbtn { border-color: #e0a800; background: #fffbe8; color: #6b5200; font-weight: 600; }
+      .dci-mx-wpickbtn[aria-expanded="true"] { background: #ffe69c; }
+      .dci-mx-wlist { box-shadow: 0 2px 6px rgba(38, 36, 48, 0.12); border-radius: 0 4px 4px 0; }
+      .dci-mx-wlist[hidden] { display: none; }
       .dci-work-note { margin: calc(var(--u, 1px) * 4) 0 0; font-style: italic; }
       .dci-table th { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); text-align: left; font-size: calc(var(--u, 1px) * 12); font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); }
       .dci-table td { padding: calc(var(--u, 1px) * 7) calc(var(--u, 1px) * 8); vertical-align: top; border-bottom: 1px solid var(--row); }
@@ -31726,8 +32288,7 @@
       .dci-seg button { border: 0; background: #fff; color: var(--ink); padding: 3px calc(var(--u, 1px) * 8); }
       .dci-seg button + button { border-left: 1px solid #c8c5d6; }
       .dci-seg button:hover { background: var(--soft); }
-      /* [3.36.5] every switch of this kind shows its choice: the chosen button filled (collected item 149; maintainer: "die "by event /
-         by role" müssen visuell auch hervorgehoben werden je nach zustand", "Alle Umschalter dieser Art bitte"); the levels keep
+      /* [3.36.5] every switch of this kind shows its choice: the chosen button filled (collected item 149); the levels keep
          their colours (below) */
       .dci-seg button[aria-pressed="true"], .dci-seg button[aria-pressed="true"]:hover, .dci-seg button[aria-pressed="true"]:disabled {
         background: #736dab; color: #fff; opacity: 1; cursor: default; }
@@ -31763,7 +32324,7 @@
       .dci-livecom-box:not(.dci-livecom-boxopen) { width: fit-content; margin-left: auto; }
       .dci-livecom-body { overflow: auto; margin-bottom: calc(var(--u, 1px) * 4); }
       .dci-livecom-headrow { display: flex; justify-content: flex-end; }
-      /* [F-1] (3.38.13) a colour that stands out (maintainer: "der button "▸ Live disambiguation comments: 0 of 9" kann aber eine noch präsentere farbe haben") */
+      /* [F-1] (3.38.13) a colour that stands out */
       .dci-livecom-head { border: 1px solid var(--purple-d); border-radius: 10px; background: var(--purple); color: #fff; padding: 1px calc(var(--u, 1px) * 10); font: inherit; font-weight: 600; cursor: pointer; }
       .dci-livecom-head:hover { background: var(--purple-d); }
       .dci-livecom-head:focus-visible { outline: 2px solid var(--purple-d); outline-offset: 2px; }

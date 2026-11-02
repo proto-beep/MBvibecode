@@ -46,8 +46,7 @@ def staged_by(pg, view):
 
 
 def case_join():
-    """Credits Importer 3.34.29 (E4, step 1 of Block AE; maintainer: "kannst du Block AE umsetzen und als standard führen? die
-    alte darstellung aber als "Legacy" darstellung in den einstellungen behalten"): the entries as a matrix are the default; their
+    """Credits Importer 3.34.29 (E4, step 1 of Block AE): the entries as a matrix are the default; their
     instruments and voices are joined when staged – per recording, date, artist credit and additional / guest / solo one
     relationship with all of them (⚙ Settings → Staging "Join the instruments and voices of an entry …", on).
     A) Matrix: Multi Man – one instrument relationship per recording with electric guitar, acoustic guitar, drums (drum set)
@@ -142,6 +141,7 @@ def case_join():
 BLOCKS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
   if (!g) return null;
   return [...g.querySelectorAll('.dci-em-block')].map(b => ({ key: b.dataset.block, head: b.querySelector('.dci-em-bhead').textContent.replace(/\\s+/g, ' ').trim(),
+    tip: b.querySelector('.dci-em-bhead strong').title,
     ev: [...b.querySelectorAll('th.dci-em-ev')].map(h => { const c = h.cloneNode(true); c.querySelectorAll('.dci-em-evtoggle').forEach(x => x.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
     add: [...b.querySelectorAll('[data-f=em-addev] option')].filter(o => o.value).map(o => o.textContent.trim()),
     lines: [...b.querySelectorAll('tr.dci-em-line')].map(t => ({ line: t.dataset.line, n: t.dataset.rows.split(',').length, skip: t.classList.contains('dci-em-skip'),
@@ -162,7 +162,7 @@ def case_matrix():
     Instrumente in einer Zeile (E4)", version 3): an entry as a matrix – its instruments in one block (lines: the instrument of
     MusicBrainz, "written …", role credit, add. / guest / solo, a tick per event, its status, ▸ rows, ✕), the events (level ·
     date · tracks) as columns.
-    A) Multi Man: one block "3 instruments → instrument · from 3 rows · One row each", one event "① Recording all 4 tracks"
+    A) Multi Man: one block "3 instruments · from 3 rows · One row each" ([Q-c] 3.38.14: no longer "→ instrument"), one event "① Recording all 4 tracks"
        (3.34.31: the date a field, empty), electric guitar, acoustic guitar, drums (drum set) “drums” (written “Drums”) – all ticked, "4 new" each.
     B) ▸ rows of the drums line: its row with all its fields (the legacy row) below the line.
     C) Solo Man: saxophone with "solo" ticked; "guest" ticked for electric guitar – stays (its rows).
@@ -190,7 +190,7 @@ def case_matrix():
             a = pg.evaluate(BLOCKS, 'Multi Man')
             print('A) Multi Man:', a)
             b0 = (a or [{}])[0]
-            results.append(bool(a) and len(a) == 1 and b0['head'] == '3 instruments → instrument · from 3 rows One row each'
+            results.append(bool(a) and len(a) == 1 and b0['head'] == '3 instruments · from 3 rows One row each'
                            and b0['ev'] == ['① Recording all 4 tracks']
                            and [(l['role'], l['credit'], l['wrote'], l['ticks'], l['status']) for l in b0['lines']] == [
                                ('electric guitar', '', '', [True], '4 new'), ('acoustic guitar', '', '', [True], '4 new'),
@@ -297,8 +297,7 @@ ADDED_D = """(() => MB.relationshipEditor.state.added.map((r) => ({ a: (r.entity
 
 
 def case_dates():
-    """Credits Importer 3.34.31 (E4, step 3 of Block AE; mockup version 3, board 4; collected item 139, maintainer: "ja mach
-    das mal", "das soll immer das selbe sein. wenn ich also das event hier editiere verändert sich auch der date/track pool"):
+    """Credits Importer 3.34.31 (E4, step 3 of Block AE; mockup version 3, board 4; collected item 139):
     dates in an entry's matrix.
     A) A date of the pool dropped onto the line of acoustic guitar (Multi Man): the line moves into the date's event – a second
        column ② with the date, acoustic guitar ticked there only (the instrument "wanders"); a message with ↶.
@@ -431,9 +430,9 @@ CLINES = """(name) => { const g = [...document.querySelectorAll('section.dci-gro
 
 
 def case_compact():
-    """Credits Importer 3.35.0 (E4, the last step of Block AE, milestone "Entries as a matrix"; mockup version 3, board 1: "die
-    kompakte Ansicht ist die Matrix gedreht"): an entry compact as a matrix.
-    A) ☰ compact: Multi Man – one line "① Recording no date all 4 tracks" with the chips electric guitar · acoustic guitar ·
+    """Credits Importer 3.35.0 (E4, the last step of Block AE, milestone "Entries as a matrix"; mockup version 3, board 1): an entry
+    compact as a matrix. A) ☰ compact: Multi Man – one line "① Recording no date all 4 tracks" with the chips electric guitar ·
+    acoustic guitar ·
        drums (drum set) “drums”; Part Man – ① electric guitar, ② (track 2) piano.
     B) The piano chip dragged onto the line of ①: piano moves there – one line ① with both (in the order of the source); ② is
        gone.
@@ -599,7 +598,7 @@ DROP_AT = """([src, dst, after]) => { const s = document.querySelector(src); con
 
 
 def case_order():
-    """Credits Importer 3.35.3 (AE-2; maintainer: "bitte noch ziehen ermöglichen", "ja nur bis zum nächsten import"): the lines
+    """Credits Importer 3.35.3 (AE-2): the lines
     of a block in another order.
     A) Multi Man: ⠿ at each line of its block (electric guitar · acoustic guitar · drums); drums dragged onto the upper half of
        electric guitar – the mark above it, drums first.
@@ -707,8 +706,7 @@ EVEDIT = """(name) => { const g = [...document.querySelectorAll('section.dci-gro
 
 
 def case_evhead():
-    """Credits Importer 3.35.4 (AE-3; maintainer: "wenn man den ereigniskopf öffnet soll man datum und tracks einstellen können",
-    "auch ebene ändern können", on roles MusicBrainz has not on the new level: "ja passt"): an event opened below its block.
+    """Credits Importer 3.35.4 (AE-3, on roles MusicBrainz has not on the new level): an event opened below its block.
     A) Part Man: ▸ in the head of ② (piano, track 2) opens it – "Event ② – … all its rows (1)", the levels of its types
        (here Recording only – the test's MusicBrainz has instruments on recordings only), the date field, the dates of the
        pool, the tracks with track 2 ticked; the head marked.
@@ -827,10 +825,9 @@ def case_evhead():
 
 
 def case_companies():
-    """Credits Importer 3.35.5 (AE-4; maintainer: "ja können auch in die matrix", "alle einträge die daten und/oder tracks anbieten.
-    solche einträge kommen ja eher selten vor."): companies and places as a matrix when a row of theirs offers a date and/or tracks.
-    A) The test release: Abbey Road Studios (a place, "Recorded At" on the 4 recordings) – a matrix: a block "Recorded At →
-       recorded at", ① Recording all 4 tracks, ticked; Sony ("Phonographic Copyright (p)", a label on the release) – a matrix,
+    """Credits Importer 3.35.5 (AE-4): companies and places as a matrix when a row of theirs offers a date and/or tracks.
+    A) The test release: Abbey Road Studios (a place, "Recorded At" on the 4 recordings) – a matrix: a block "recorded at"
+       ([Q-c] 3.38.14; its tooltip "from Discogs: Recorded At"; until 3.38.13 "Recorded At → recorded at"), ① Recording all 4 tracks, ticked; Sony ("Phonographic Copyright (p)", a label on the release) – a matrix,
        ① Release whole release.
     B) Pub Co ("Published By" on the works): its rows as before (no matrix – nothing on it offers a date or tracks).
     C) ☰ compact: Abbey Road Studios a line "① Recording no date all 4 tracks" with the chip "recorded at".
@@ -855,7 +852,7 @@ def case_companies():
             sony = pg.evaluate(BLOCKS, 'Sony')
             k_abbey, k_sony, k_pub = pg.evaluate(kind, 'Abbey Road Studios'), pg.evaluate(kind, 'Sony'), pg.evaluate(kind, 'Pub Co')
             print('A) Abbey Road:', k_abbey, abbey, '| Sony:', k_sony, sony)
-            results.append(k_abbey == [True, 0] and bool(abbey) and len(abbey) == 1 and abbey[0]['head'].startswith('Recorded At → recorded at')
+            results.append(k_abbey == [True, 0] and bool(abbey) and len(abbey) == 1 and abbey[0]['head'] == 'recorded at' and abbey[0]['tip'] == 'from Discogs: Recorded At'
                            and abbey[0]['ev'] == ['① Recording all 4 tracks'] and abbey[0]['lines'][0]['ticks'] == [True]
                            and k_sony == [True, 0] and bool(sony) and sony[0]['ev'] == ['① Release whole release'] and sony[0]['lines'][0]['ticks'] == [True])
             print('B) Pub Co:', k_pub)
@@ -904,7 +901,7 @@ def case_companies():
 
 
 def case_remember():
-    """Credits Importer 3.36.0 (146; maintainer: "ja genau, soll alles wieder kommen"): the matrix of a remembered release after the
+    """Credits Importer 3.36.0 (146): the matrix of a remembered release after the
     page is loaded again (⚙ Settings → Cache on): Multi Man's lines in the order dragged (drums first), Part Man's event ② on the
     tracks set in the opened event (2–3), Solo Man "One row each" – all as before; staged the same (20)."""
     H.REMEMBER = True
@@ -961,9 +958,9 @@ def case_remember():
 
 
 def case_flagcols():
-    """Credits Importer 3.36.6 (collected item 148; maintainer, with a screenshot of "add. guestsolo" over three checkboxes: "die anzeige
-    hier ist noch nicht gut abgestimmt. solo muss über der rechten checkbox stehen."): in the full matrix each attribute of the
-    lines (add., guest, solo …) is a column of its own – its word centred over the checkboxes of every line (±2 px), not wider
+    """Credits Importer 3.36.6 (collected item 148; with a screenshot of "add. guestsolo" over three checkboxes): in the
+    full matrix each attribute of the lines (add., guest, solo …) is a column of its own – its word centred over the checkboxes of
+    every line (±2 px), not wider
     than its cell, at 100 % and at the largest text size (A+ ×3); until 3.36.5 one cell with fixed widths: the checkboxes 4, 11
     and 18 px to the right of their words."""
     H.ENTRIES_VIEW = 'matrix'
@@ -1009,8 +1006,7 @@ def case_flagcols():
 
 
 def case_chipask():
-    """Credits Importer 3.37.14 (collected item 163; maintainer, with a screenshot of the chips "? bass ✕": "kann man die
-    rollenabfragen nicht auch direkt auf dieser ebene durchführen? per drop down menü?", "ja das passt"): in an entry compact as a
+    """Credits Importer 3.37.14 (collected item 163): in an entry compact as a
     matrix a chip with a question has ▾ – its answers below it.
     A) "Bass" (Q001): "? bass" with ▾ – electric bass guitar · double bass · acoustic bass guitar; "double bass" chosen: the
        chip "double bass “bass”" without "?" and without ▾, the list closed, all rows of the line double bass.
@@ -1126,7 +1122,7 @@ def case_chipask():
 
 
 def case_chipinfo():
-    """Credits Importer 3.38.6 (collected item 163b; maintainer: "ja dezentes zeichen mit Tooltip", "ja nimm das ⓘ"): a chip whose
+    """Credits Importer 3.38.6 (collected item 163b): a chip whose
     note has its answer applied has a small grey ⓘ after its name, the note as its tooltip – none while a question is open ("?").
     A) Before answering: "? bass", "? Taischigoto", "? Directed By" without ⓘ; "Buddha Machine" (none is like it, set to other
        instruments) with ⓘ – "“Buddha Machine” is no instrument of MusicBrainz, and none is like it: other instruments “Buddha
