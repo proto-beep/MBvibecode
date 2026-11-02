@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.38.17, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.38.18, Companion 1.6.0 – 1.10.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.38.18 · 2026-11-02
+
+Field recordings, initials, cover and photo (collected items 182 – 184).
+
+- **`TEXT.parse` (readClause, at its start):** rule **S064** – "Cover ©", "Cover art ©", "Cover image ©", "Cover painting ©", "Artwork ©", "Photo(s) ©", "Photograph(s) ©" + names: `Artwork` / `Photography By` with `roleCredit` "cover" / "photo"; a tail "detail used with permission", "courtesy" … into `ignored` (why `permission`). Rule **S062** – "<kind> recordings by X [year[–year]] [rest]" with a kind of `TEXT_FIELD_KINDS` (T057): `Field Recordings By` (R085) with `date` { by, ey }; the rest into the parts not recognized.
+- **`byRoles`:** verbs one after another are each a role ("Recorded Mixed" → Recorded By, Mixed By; until 3.38.17 `byRole` made "Mixed By [Recorded]").
+- **New `initialsOf(credits, artistNames)`** (S063, at the end of the parse): a name of two to four capitals (dots allowed) that are the initials of exactly one release artist or one name of the text with two words or more → that name, `credited` and `initials` the initials; of several → `initialsFor`.
+- **`groupCredits`:** a role keeps `date` and `roleCredit`; the group `initials` / `initialsFor`; **`addCreditRows`:** `row.date` (open) and `row.roleCredit`; **`newPersonEntry`:** `initials`, `initialsFor`; **`entryNameHtml`:** new `initialsHtml(a)` (`.dci-initials`: `group.initials`, `group.initialsMany`).
+- **Mapping:** new list `TEXT_FIELD_KINDS` (T057, editable).
+- **Register:** rules S062, S063, S064, list T057.
+- **Texts (English):** `ignored.why.permission`, `group.initials`, `group.initialsMany`.
+- **After the independent review of block AT:** S062 – a name of several words without a year is whole (the rest only after a year; until then "Field recordings by Jane Roe" gave "Jane", a regression of R085), the years in order, an area after them "Recorded In" (`areaOf`); S064 – the tail only after a separator ("Focused" is no "used"), "all rights reserved", "by kind permission" and `TEXT_PC_STRIP` out, no name that is a sentence (`TEXT_NOT_NAME`); the role credit of the text kept as one typed (`roleCreditTouched`); initials stay as written (no S060 for `initials` / `initialsFor`), the names compared without case (`personCase`); register notes of S061, S062 corrected.
+- **Tests:** `t_text_basics.py` new case `cloudpond` (all lines of "Cloud Pond Sky River" and more; after the review: a two-word field recordist, "Focused", "all rights reserved", "AJ"); `register_golden.json` anew (the rules and lists).
 
 ## Import 3.38.17 · 2026-11-02
 

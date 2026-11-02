@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.38.17",
+  "version": "3.38.18",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046"]},
   "CHECKBOX_DETAILS": [
@@ -449,6 +449,15 @@
   "TEXT_GUEST_HEAD": {"$re":"^(?:special\\s+guests?|guests?|gäste|gast|invitée?s?|invitad[oa]s?)$","$flags":"iu"},
   "TEXT_FEAT_HEAD": {"$re":"^(?:featuring|feat\\.?|ft\\.?|with)$","$flags":"i"},
   "TEXT_CREDIT_SEPS": {"$re":"\\s+[»«•·|]\\s+","$flags":"u"},
+  "TEXT_FIELD_KINDS": [
+    "ambisonic",
+    "binaural",
+    "field",
+    "hydrophone",
+    "location",
+    "nature",
+    "environmental"
+  ],
   "TEXT_SOFTWARE": [
     "Apple Logic",
     "Logic Pro",

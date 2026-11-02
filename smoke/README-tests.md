@@ -141,6 +141,9 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     3.38.12 (F-5): ⇅ in the dashboard – no new import, Max Mix put on Skip stays; "ABBA – piano" → Abba (S060)
                                 #   withline: 3.38.17 (181, S061): "With Apple Logic, Sequential PX, flutes …" – the release artist's instruments,
                                 #     "objects" asked, software left out; "with Oliver Lake" guest, "Jane Roe on saxophone" guest saxophone
+                                #   cloudpond: 3.38.18 (182 – 184): "Ambisonic recordings by RR 2022-2025 …" field recordist with the period,
+                                #     "Pacific coast" not recognized; RR = Robert Rich (initials, credited "RR"), "Recorded Mixed and Mastered";
+                                #     "Cover © X" artwork "cover", "Photos © X" photography "photo", the permission left out; "JR" of two names
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
 

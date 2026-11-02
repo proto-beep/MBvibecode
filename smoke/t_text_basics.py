@@ -1,6 +1,6 @@
 """Texts, part 1: a pasted text, the rules for free texts, lists of names, "credited as", distribution (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7), withline (3.38.17) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
+Cases: freetext, textrules, names, textcredit, distrib, playedby (3.34.19), instrguess (3.34.20, 3.34.27), voicetech (3.34.25), unknownask (3.34.26, 3.34.27), casenote (3.34.28, 3.35.2), casephrase (3.35.2), guests (3.37.2), typonote (3.37.13), stacked (3.38.7), withline (3.38.17), cloudpond (3.38.18) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_basics.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1072,6 +1072,89 @@ With Apple Logic Pro"""
                        and sorted(r[3] for r in ab) == ['alto saxophone', 'flute'] and all('guest' in r[4] for r in ab)
                        and [r[3] for r in kw] == ['flute'] and 'guest' in kw[0][4] and prim.count('flute') == 1
                        and any(x.startswith('Apple Logic Pro') and 'software' in x for x in ign) and 'Apple Logic Pro' not in g)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_cloudpond():
+    """Credits Importer 3.38.18 (collected items 182 – 184, F-182a, F-182b, F-183, F-184; rules S062 – S064, list T057): all lines of
+    Robert Rich "Cloud Pond Sky River" (Bandcamp) as a pasted text, Robert Rich the release's artist.
+    A) "Ambisonic recordings by RR 2022-2025 Pacific coast": Robert Rich (initials RR) field recordist, credited "RR", the period
+       2022 – 2025 at the row; "Pacific coast" (no area of MusicBrainz) named as not recognized. "Recorded by Jane Roe" stays recording
+       engineer.
+    B) "Recorded Mixed and Mastered by RR at Soundscape, Carmel CA": Robert Rich (RR) recording engineer, mixer, mastering; the place
+       Soundscape; the entry says "RR = Robert Rich (initials)".
+    C) "Cover © Maksimillian Novak-Zemplinski, detail used with permission.": artwork credited "cover" (no ℗/© of a label), "detail
+       used with permission" left out; "Photos © Ann Blow": photography credited "photo"; "©2026 Robert Rich" as before.
+    D) Initials of two names ("JR" for Jane Roe and Jim Rye): not set by themselves – the entry "JR" names both.
+    E) (Review) "Field recordings by Kim Lowe": the whole name; "Photo © Focused Pictures": no permission in "Focused"; "Artwork © Ann
+       Jones, all rights reserved": no artist "all rights reserved"; "Design by AJ": Ann Jones credited "AJ" (not "Aj")."""
+    H.RELEASE_AC[:] = [(H.uid('dddddddd', 3420), 'Robert Rich', 'Robert Rich', '')]
+    H.attr(9301, 'flute', 14)
+    H.attr(9302, 'lap steel guitar', 14, aliases=['lap steel'])
+    H.attr(9303, 'bells', 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.lt(9993, H.uid('1a1a1a1a', 9993), 'artwork', 'artist', 'release', (1150,))
+    H.lt(9994, H.uid('1a1a1a1a', 9994), 'field recordist', 'artist', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    TEXT = """With Apple Logic, Sequential PX, flutes, lap steel, bells and objects
+Ambisonic recordings by RR 2022-2025 Pacific coast
+Recorded Mixed and Mastered by RR at Soundscape, Carmel CA
+Cover © Maksimillian Novak-Zemplinski, detail used with permission.
+Photos © Ann Blow
+©2026 Robert Rich
+Recorded by Jane Roe
+Flute: Jim Rye
+Liner notes by JR
+Field recordings by Kim Lowe
+Photo © Focused Pictures
+Artwork © Ann Jones, all rights reserved
+Design by AJ"""
+    GROUPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim() + (g.querySelector('.dci-gname').textContent.includes('Label') ? ' (label)' : ''),
+  { hint: (g.querySelector('.dci-initials') || { textContent: '' }).textContent.trim(), ac: [...g.querySelectorAll('[data-f=credit], [data-f=em-ac]')].map(x => x.value).filter(Boolean),
+    rows: [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(), (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
+    (r.querySelector('[data-f=role-credit]') || {}).value || '', [...r.querySelectorAll('[data-f$=by], [data-f$=ey]')].map(x => x.value).join('-')])}])))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+        pg.wait_for_timeout(500)
+        g = pg.evaluate(GROUPS)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+        ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())")
+        for k, v in g.items():
+            print(f'  {k}:', v)
+        print('nicht erkannt:', unrec, '| weggelassen:', ign)
+        rr = g.get('Robert Rich') or {'rows': [], 'hint': ''}
+        rows = {r[1]: r for r in rr['rows']}
+        fr = rows.get('field recordist')
+        results.append(fr is not None and fr[3] == '2022-2025' and any('Pacific coast' in u for u in unrec) and 'Ambisonic' not in ''.join(g)
+                       and [r[1] for r in (g.get('Jane Roe') or {'rows': []})['rows']] == ['recording'])
+        results.append(all(t in rows for t in ('recording', 'mix', 'mastering')) and rr['hint'] == 'RR = Robert Rich (initials)' and 'RR' not in g
+                       and 'RR' in rr['ac'] and [r[1] for r in (g.get('Soundscape') or {'rows': []})['rows']] == ['recorded at'])
+        mk, ab, lab = g.get('Maksimillian Novak-Zemplinski') or {'rows': []}, g.get('Ann Blow') or {'rows': []}, g.get('Robert Rich (label)') or {'rows': []}
+        results.append([r[1:3] for r in mk['rows']] == [['artwork', 'cover']] and [r[1:3] for r in ab['rows']] == [['photography', 'photo']]
+                       and [r[1] for r in lab['rows']] == ['copyright'] and any(x.startswith('detail used with permission') for x in ign))
+        jr = g.get('JR') or {'hint': '', 'rows': []}
+        results.append(jr['hint'] == 'JR: the initials of Jane Roe, Jim Rye – not set; choose the artist')
+        # (3.38.18, review) a name of two words without a year; "Focused" no permission; the rights out; initials with a vowel stay
+        kl, fp, aj = g.get('Kim Lowe') or {'rows': []}, g.get('Focused Pictures') or {'rows': []}, g.get('Ann Jones') or {'rows': [], 'ac': [], 'hint': ''}
+        results.append([r[1] for r in kl['rows']] == ['field recordist'] and [r[1:3] for r in fp['rows']] == [['photography', 'photo']]
+                       and ['artwork', 'cover'] in [r[1:3] for r in aj['rows']] and 'AJ' in aj['ac'] and aj['hint'] == 'AJ = Ann Jones (initials)'
+                       and not any('rights' in k for k in g) and 'Aj' not in g)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
