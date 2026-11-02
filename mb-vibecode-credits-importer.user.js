@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.38.17
+// @version      3.38.18
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.17
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.17
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.38.18
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.38.18
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.17';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.38.18';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -249,6 +249,7 @@
       "ignored.why.courtesy": "“appears courtesy of …”",
       "ignored.why.web": "only web addresses",
       "ignored.why.software": "music software – no instrument and no relationship of MusicBrainz (T056)",
+      "ignored.why.permission": "a permission – no credit",
       "ignored.why.medium": "for {medium} – this release: {release}",
       "msg.textEmpty": "The text is empty.",
       "busy.source": "Reading {source} …",
@@ -323,6 +324,8 @@
       "group.closeAll": "Close all roles of {name}",
       "group.creditAllAria": "Artist credit for all roles of {name}",
       "group.creditAllOther": "Credited as for all roles",
+      "group.initials": "{said} = {name} (initials)",
+      "group.initialsMany": "{said}: the initials of {names} – not set; choose the artist",
       "group.creditAllOtherAria": "Credited as for all roles of {name}",
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
@@ -2662,6 +2665,8 @@
     T052: { key: 'PROPER_WORDS', shape: 'words' },
     // [S061] (3.38.17) music software left out of a line "With …"
     T056: { key: 'TEXT_SOFTWARE', shape: 'words' },
+    // [S062] (3.38.18) the kinds of field recordings
+    T057: { key: 'TEXT_FIELD_KINDS', shape: 'words' },
   };
   const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
@@ -3072,6 +3077,9 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    { id: 'S064', where: 'TEXT.parse (readClause)', note: 'Texts (3.38.18): "Cover © X", "Cover art © X", "Cover image © X", "Artwork © X" – X\'s artwork credited "cover", no ℗ / © of a label; "Photo © X", "Photos © X" – photography credited "photo"; "detail used with permission" and the like after it are left out. Off: as before ("© X" a name, the line not recognized)' },
+    { id: 'S063', where: 'TEXT.parse (initialsOf), groupCredits, entryNameHtml', note: 'Texts (3.38.18): initials as a name – two to four capitals ("RR", "R.R.", "HRG") that are the initials of one release artist or of one name of the text: that artist, credited as the initials, and the head of the entry says "RR = Robert Rich (initials)"; the initials of several names: not set, the head names them. Off: the initials are a name of their own (looked up in MusicBrainz)' },
+    { id: 'S062', where: 'TEXT.parse (readClause; TEXT_FIELD_KINDS)', note: 'Texts (3.38.18): "<kind> recordings by X" with a kind of T057 ("Ambisonic recordings by RR 2022-2025 Pacific coast") – X field recordist, a year or two after the name the period of the relationship; what follows that is an area ("Big Sur, California") is "recorded in", anything else ("Pacific coast") is named as not recognized. "Recorded by X" stays recording engineer. Off: "Field recordings by X" by its role rule (R085), other kinds not recognized' },
     { id: 'S061', where: 'TEXT.parse (readClause; TEXT_SOFTWARE)', note: 'Texts (3.38.17): a line "With …" names what the release\'s artist plays – "With Apple Logic, Sequential PX, flutes, lap steel, bells and objects": its instruments and voices the release\'s artist\'s (several artists: offered to each), words that may be instruments asked as in a list (S051); a name in it a guest ("with Oliver Lake": guest performer; "with Oliver Lake on saxophone" / "(saxophone)": guest saxophone); music software (T056) is left out ("software"). A line with a colon ("With Strings: …") and a make before a name ("Gibson Les Paul") are no such guests. Off: such a line is read as before (mostly not recognized)' },
     { id: 'S060', where: 'personCase, personCaseOf, groupCredits, entryNameHtml, caseBackHtml, setCaseUp, sourceCreditFor', note: 'A person\'s name all in capitals ("TORBEN SNEKKESTAD", "ABBA") and a name variation in capitals ("LAKE") in normal case – "Torben Snekkestad" – from every source (Discogs names and their spellings, texts, text from cover art, the Discogs notes, Bandcamp): a word of three letters or more with a vowel (also Cyrillic, Greek); two letters ("DJ", "MC"), letters without a vowel ("BMS") and initials stay, a particle between the names is small ("Paco de Lucía"). "↺ in capitals" in the head of the entry takes the spelling of the source again, also as the "credited as" of its roles (one typed by hand stays), and back. Linked to a MusicBrainz name all in capitals ("ABBA", "MF DOOM"): that name is shown, the source\'s capitals are the "credited as" ("DOOM"; none for "ABBA"). Persons only (3.38.12)' },
     { id: 'S057', where: 'personCopyright, mergePersonCopyrights, suggestByName', note: '℗ / © of a person Discogs lists as a label (3.37.10): a company entry with a person\'s name and only ℗ / © rows ("Copyright © – Martin Davidson", "Phonographic Copyright ℗ – Martin Davidson") whose Discogs link MusicBrainz does not know – a person of that name in the dashboard (another Discogs credit) takes the rows (artist–release copyright, phonographic copyright; the row says so, "As the label instead" gives them back); an artist of that name linked in this release becomes the entry\'s MB entity; otherwise the name is searched: artists and labels of that name, each named as such' },
@@ -3380,6 +3388,8 @@
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T057', where: 'TEXT_FIELD_KINDS, readClause', note: 'Texts (3.38.18): the kinds of recordings of a field recordist (S062) – ambisonic, binaural, field, hydrophone, location, nature, environmental',
+      show: () => ({ pairs: [['words', TEXT_FIELD_KINDS.join(' · ')]] }) },
     { id: 'T056', where: 'TEXT_SOFTWARE, readClause', note: 'Texts (3.38.17): music software – left out of a line "With …" (S061) and named as left out ("software"): "Apple Logic", "Logic Pro", "Ableton Live", "Pro Tools", "Cubase", "Reaper", "FL Studio", "Bitwig", "Max/MSP" … – no instrument and no relationship of MusicBrainz ("computer" and "laptop" stay instruments)',
       show: () => ({ pairs: [['words', TEXT_SOFTWARE.join(' · ')]] }) },
     { id: 'T055', where: 'TEXT_FESTIVAL_WORDS, findFestivals', note: 'Texts (3.37.8): the words of festivals – "Festival", "Jazzfestival", "Festspiele", "Jazzfest" – for S056', show: () => ({ pattern: TEXT_FESTIVAL_WORDS }) },
@@ -3534,6 +3544,8 @@
   const TEXT_FESTIVAL_WORDS = MAP.TEXT_FESTIVAL_WORDS;
   // [S061] (3.38.17) music software (T056; ✎ – the list is changed in place)
   const TEXT_SOFTWARE = MAP.TEXT_SOFTWARE;
+  // [S062] (3.38.18) the kinds of field recordings (T057; ✎)
+  const TEXT_FIELD_KINDS = MAP.TEXT_FIELD_KINDS;
   const isSoftware = (x) => { const k = norm(x).replace(/\s*\/\s*/g, '/'); return TEXT_SOFTWARE.some((w) => norm(w).replace(/\s*\/\s*/g, '/') === k); };
   // [3.30.8] the same at the start of a sentence with a place: "All music recorded ... at X", "The album was mixed at Y"
   const TEXT_WHAT_PREFIX = MAP.TEXT_WHAT_PREFIX;
@@ -4899,6 +4911,32 @@
       }
       return out.map(clean).filter(Boolean);
     }
+    /**
+     * [S063] (3.38.18) A name of two to four capitals ("RR", "R.R.", "HRG") that are the initials of exactly one release artist or one
+     * name of the text: that name, credited as the initials (`initials`); of several: `initialsFor` names them (not set).
+     */
+    function initialsOf(credits, artistNames) {
+      const seen = new Set();
+      const full = [...artistNames, ...credits.map((c) => c.who && c.who.name)].filter((n) => {
+        const k = n && norm(personCase(n));
+        if (!k || n.trim().split(/\s+/).length < 2 || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+      const ini = (n) => n.trim().split(/\s+/).filter((w) => /^\p{Lu}/u.test(w)).map((w) => w[0]).join('');
+      for (const c of credits) {
+        const said = c.who && !c.who.id && c.who.name;
+        if (!said || !/^(?:\p{Lu}\.?){2,4}$/u.test(said)) continue;
+        const key = said.replace(/\./g, '');
+        const hits = full.filter((n) => ini(n) === key);
+        if (hits.length === 1) {
+          c.who = { ...c.who, name: hits[0], rawName: hits[0] };
+          c.credited = said;
+          c.initials = said;
+        } else if (hits.length > 1) c.initialsFor = hits;
+      }
+    }
+    const emptyDateFields = () => ({ by: '', bm: '', bd: '', ey: '', em: '', ed: '', ended: false, poolId: null });
     /** Dates and numbers out of a role phrase ("Recorded 12 May 2019" → "Recorded"). */
     const noDates = (s) => clean(String(s || '').replace(/\d+(?:[./–—-]\d+)*(?:st|nd|rd|th)?/g, ' ').replace(TEXT_MONTHS, ' ').replace(/\s+(?:on|am|le|el)\s*$/i, ''));
 
@@ -5153,7 +5191,12 @@
         if (isRole(`${cap(l)} By`)) return [`${cap(l)} By`];
         // [3.14.0] "Layout by X": the role is "Layout"
         if (isRole(cap(l))) return [cap(l)];
-        const parts = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map(byRole);
+        // [183] (3.38.18) verbs one after another are each a role ("Recorded Mixed and Mastered by RR"; until 3.38.17 "Mixed By [Recorded]")
+        const verbs = (x) => {
+          const w = x.split(' ');
+          return w.length >= 2 && w.every((y) => /\p{L}ed$/iu.test(y) && isRole(`${cap(y)} By`)) ? w.map((y) => `${cap(y)} By`) : null;
+        };
+        const parts = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).flatMap((x) => verbs(x) || [byRole(x)]);
         if (parts.length && parts.every(isRole)) return parts;
         // [3.21.4] roles with their medium ("Vinyl LP mastering and digital mastering by X")
         const withM = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map((x) => (isRole(byRole(x)) ? byRole(x) : withMedium(x)));
@@ -5312,6 +5355,37 @@
           pi0 = pi + ci;
           // [3.22.0] the tracks of this clause: those of the line, or those its titles name (T036)
           let cScope = scope;
+          // [S064] (3.38.18) "Cover © Maksimillian Novak-Zemplinski, detail used with permission." (collected item 184): artwork
+          // credited "cover"; "Photos © X" photography credited "photo" (F-184); no ℗ / © of a label
+          if (ruleOn('S064') && (m = clause.match(/^(cover(?:\s+(?:art|artwork|image|painting))?|artwork|photos?|photographs?)\s*(?:©|\(c\))\s*(?:(?:19|20)\d{2}\s+)?(.+)$/iu))) {
+            const photo = /^photo/i.test(m[1]);
+            const tail = /(?:[,;.]\s*|\s+\(\s*|\s+)(?:(?:a\s+)?details?\b|used\b|reproduced\b|courtesy\b|(?:by|with)\s+(?:kind\s+)?permission\b|all\s+rights\b).*$/iu;
+            const rest = clean(m[2].replace(tail, '').replace(TEXT_PC_STRIP, '')).replace(/[.,;]+$/, '');
+            const n = names(rest).map(clean).filter((x) => looksLikeName(x) && !TEXT_NOT_NAME.test(x));
+            if (n.length) {
+              n.forEach((x) => { if (addCredit(x, photo ? 'Photography By' : 'Artwork', cScope, { roleCredit: photo ? 'photo' : 'cover' })) found++; });
+              const said = clean(m[2].slice(m[2].indexOf(rest) + rest.length)).replace(/^[,;.]\s*/, '');
+              if (said) ignored.push({ text: said, why: 'permission' });
+              return;
+            }
+          }
+          // [S062] (3.38.18) "Ambisonic recordings by RR 2022-2025 Pacific coast" (collected item 182): a field recordist with the
+          // period of the relationship; the rest (no area of MusicBrainz) not recognized
+          if (ruleOn('S062') && (m = clause.match(/^(\p{L}+)\s+recordings?\s+(?:by|von|par|por)\s+(.+)$/iu)) && TEXT_FIELD_KINDS.some((k) => norm(k) === norm(m[1]))) {
+            const t = m[2].match(/^(.+?)(?:,?\s+((?:19|20)\d{2})(?:\s*[-–—]\s*((?:19|20)\d{2}))?(?:,?\s+(.+))?)?$/u);
+            const who0 = t ? clean(t[1]) : '';
+            if (who0 && looksLikeName(who0)) {
+              const [y1, y2] = [t[2], t[3] || t[2]].sort();
+              const date = t[2] ? { ...emptyDateFields(), by: y1, ey: y2 } : null;
+              names(who0).forEach((x) => { if (addCredit(x, 'Field Recordings By', cScope, date ? { date } : {})) found++; });
+              // what follows: an area ("Big Sur, California") recorded in, else not recognized ("Pacific coast")
+              const where = t[4] ? areaOf(clean(t[4])) : null;
+              if (where && looksLikeName(where.name) && isCompanyRole('Recorded In')) {
+                companies.push({ who: { ...who(where.name), area: where.area || '' }, role: 'Recorded In', catno: '', tracks: cScope ? tracksOf(cScope) : null, ...at() });
+              } else if (t[4]) unknownParts.push(clean(t[4]));
+              return;
+            }
+          }
           // [3.17.3] "Distribué par X", "Distribuido por X", "Vertrieben durch X", "Distributed through X" (T028)
           if ((m = clause.match(/^(\S+(?:\s+\S+)?)\s+(?:par|por|da|durch|via|through)\s+(.+)$/i)) && distribution(m[1])) {
             for (const n of names(m[2])) if (addCredit(n, 'Distributed By', cScope)) found++;
@@ -5995,6 +6069,8 @@
         readLine(raw);
       }
       flushBlock();
+      // [S063] (3.38.18) initials as a name ("RR"): the one release artist or name of the text they stand for (collected item 183)
+      if (ruleOn('S063')) initialsOf(credits, artistNames);
       // [S058] (3.38.12) blocks whose order was not clear: the text read the other way round too – its credits of those blocks and
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       if (!ctx0.noAlt && credits.some((c) => c.stackAmbig)) {
@@ -6396,6 +6472,9 @@
           ...(who.pageOf ? { pageOf: who.pageOf } : {}) });
       }
       const group = groups.get(gKey);
+      // [S063] (3.38.18) initials read as this name ("RR"), or of several names
+      if (c.initials) group.initials = c.initials;
+      if (c.initialsFor) group.initialsFor = c.initialsFor;
       // [S054] (3.37.0) a name only from the Discogs notes: searched by its name
       if (c.fromNotes && !who.id && group.fromNotes !== false) group.fromNotes = true;
       if (!c.fromNotes) group.fromNotes = false;
@@ -6427,6 +6506,9 @@
         if (c.guess) entry.guess = true;
         // [S058] (3.38.7) from lines whose order of names and instruments is not clear
         if (c.stackAmbig) entry.stackAmbig = true;
+        // [S062] (3.38.18) the period of the relationship ("2022-2025"); [S064] a role credit of the text ("cover", "photo")
+        if (c.date && !entry.date) entry.date = c.date;
+        if (c.roleCredit && !entry.roleCredit) entry.roleCredit = c.roleCredit;
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
         if (c.line && !entry.lines.includes(c.line)) entry.lines.push(c.line);
@@ -16176,6 +16258,7 @@
       ...(g.placeholder ? { placeholder: g.placeholder, releaseMbid: g.releaseMbid } : {}),
       ...(g.pageOf ? { pageOf: g.pageOf } : {}),
       ...(g.fromNotes ? { fromNotes: true } : {}),
+      ...(g.initials ? { initials: g.initials } : {}), ...(g.initialsFor ? { initialsFor: g.initialsFor } : {}), // [S063] (3.38.18)
       mbid: null, mbName: '', candidates: [], editing: false, error: '',
       anvs: uniq([...g.roles.values()].map((c) => c.anv).filter(Boolean)),
     };
@@ -16209,6 +16292,9 @@
       if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
       if (c.stackAmbig) row.stackAmbig = true; // [S058] (3.38.7)
       if (c.anvFrom) row.anvFrom = c.anvFrom; // [S060] (3.38.12) the spelling in capitals at the source
+      // [S062] (3.38.18) the period the text gives; [S064] its role credit
+      if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
+      if (c.roleCredit) Object.assign(row, { roleCredit: c.roleCredit, roleCreditTouched: true });
       row.dSpec = c.specs.join(', ');
       row.dPositions = c.positions;
       row.unresolved = c.unresolved;
@@ -17973,13 +18059,16 @@
   }
 
   /** [3.32.2] The name in the head of an entry: the release's spelling with "*" (the entry's name in the tooltip), or the name. */
+  /** [S063] (3.38.18) "RR = Robert Rich (initials)" – or the names initials of several stand for. */
+  const initialsHtml = (a) => (a.initials ? ` <span class="dci-sub dci-initials">${esc(tr('group.initials', { said: a.initials, name: a.name }))}</span>`
+    : a.initialsFor ? ` <span class="dci-sub dci-initials">${esc(tr('group.initialsMany', { said: a.name, names: a.initialsFor.join(', ') }))}</span>` : '');
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
-    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}`;
+    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
     // [3.37.11] the * says what it means (collected item 161)
     const title = [tr('group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
       ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [tr('group.anvStar')] : [])].join('\n');
-    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${caseBackHtml(a)}`;
+    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
   }
 
   function creditChipHtml(a) {
