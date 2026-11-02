@@ -315,7 +315,7 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     3.39.9 (K-9): no "co?" when Monk is a member of the release's band (or the release's artist a member of his), the
                                 #     pianist in MusicBrainz (of the recording or of the release) or the track's artist; one lookup, the composer's;
                                 #     3.40.1 (Z-AF): "is person" – the release's artist Monk's other name, the other name a member of the release's
-                                #     band (both looked up), the control without a band ("co?")
+                                #     band (both looked up), the control without a band ("co?"); 3.40.3: two performance names of one person
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
@@ -415,6 +415,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #     ABBA linked to "ABBA" as MusicBrainz writes it, "LAKE" → credited "Lake", the log; "↺ in capitals" and back;
                                 #     "LAKE" with ↺, "DOOM" linked to "MF DOOM" credited "DOOM", a credit typed by hand stays;
                                 #     3.38.14 (Q-a, Q-b): personCase in Node – "AL DI MEOLA" → "Al di Meola", "DJ SHADOW" stays "DJ", particles
+                                #   blockac: 3.40.3 (Z-AK): "Credited as" in the head of a block of several roles – "several", "Lake" + Enter (the
+                                #     flutes join, the message with ↶ Undo), Undo, a line by hand keeps its own (also against the older ↶), emptied
+                                #     with Enter: MusicBrainz's name, the focus back; blocks of one role: none; compact: no field, the chips' "as …"
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
                                 #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds;
@@ -614,7 +617,7 @@ python3 t_start.py              # Starting: from the release editor, from Harmon
                                 #     media, Bandcamp): the tab #dci-count imports and counts, the line takes the number, the tab is closed; an import
                                 #     that fails; Bandcamp's rough estimate, its parts, instruments in capitals; a page without credits ("Stream: …");
                                 #     3.40.2 (Z-AD, Z-AE): Discogs without credits → Bandcamp with the text first; three Bandcamp pages → the one with
-                                #     more credits, the others under ▸, ✕ holds
+                                #     more credits, the others under ▸, ✕ holds; 3.40.3: "Import credits …" imports Bandcamp, Discogs 404 → Bandcamp
                                 #   languagesload: 3.34.0: the languages file from the manager (German); fetched from GitHub (kept, one reload);
                                 #     English chosen → fetched quietly, German at once from ⚙; missing → message, English, the log warns
 
