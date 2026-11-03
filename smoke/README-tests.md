@@ -216,6 +216,8 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     in the rules window), a place on the tracks of the line, a person (a role needed), a series; read again: the rule
                                 #   kindcycle: 3.42.5 (Z-ETC): "Label ↻" of an entry not linked – label → place → artist (an area alone: no button),
                                 #     one search after the clicks (counted), what was found before again without a search, the label chosen
+                                #   unaremember, kindrace, ownrulekind: 3.42.8 (review): words given an entry come back with "Remember changes …",
+                                #     a hand copy of a source's role stays; a late search keeps its kind; an own rule of texts keeps its kind
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
                                 #   discnotes: 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
@@ -644,6 +646,7 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     without the tail
                                 #   evdatefields: 3.42.1 (Z-EDM): the date of an event a button; MB's fields below it (begin, end, ended, ⇣),
                                 #     Apply, a wrong month, a period pasted, ✕, no date
+                                #     (3.42.8, review) E: another entry's event below shows nothing typed in Solo Man's head; an error below no second box
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
@@ -703,7 +706,8 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #   youtube: 3.41.13 (Z-YT): a youtu.be address in "another source" – the video page read, its description as
                                 #     credits (audio, mix, cameras, editor, Host asked), the edit note's Source; no description, no video; statistics
                                 #   ytlinks: 3.42.7 (Z-YTL): the videos a release links to as sources (each once, after Discogs), one alone loaded
-                                #     at once; the order with YouTube last (also an order stored before)
+                                #     at once; the order with YouTube last (also an order stored before); (3.42.8, review) from the release editor
+                                #     with a new video only: Discogs
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
@@ -836,6 +840,10 @@ python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, cred
                                 #     two "Vocals [...]" lines of one artist
                                 #   multibc: 3.38.9 / companion 1.10.0 (173): three imports, two sources (a Bandcamp album here, a Discogs release
                                 #     and another one in two other editors) – for 10 s the marks on the Bandcamp tab and the Discogs tab stay
+                                #   ytview: 3.42.8 / companion 1.11.0 (Z-YTC): a YouTube tab – no tab, another video, "Load the release there",
+                                #     marks in the unfolded description, a click shows the row, jump, off and on, another video without loading and
+                                #     back, the description drawn anew; an old companion: "needs 1.11.0"; (review) the jump's line goes with another
+                                #     video, a description coming later gets its marks, folded by the user stays folded
 
 python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file, the languages file
                                 #   i18n: the texts (3.27.1; 3.34.0: English from the script, de / es / fr from the languages file): every key

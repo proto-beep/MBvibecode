@@ -270,11 +270,37 @@ RELEASE_AC = []
 WS_FAIL = {}
 
 
-def yt_page(vid, title, channel, description):
-    """[3.41.13] A YouTube video page with its data as YouTube writes it ("var ytInitialPlayerResponse = {…};" in a script)."""
+def yt_desc_html(description):
+    """[3.42.8] The description of a video as YouTube draws it (2025/26): folded ("…more") – the first lines in
+    "#attributed-snippet-text", the whole text in "#expanded" (hidden until "#expand" is clicked) – a text with its "\n", a link
+    in a span of its own."""
+    import html as _html
+    def body(text):
+        out = []
+        for part in re.split(r'(https?://\S+)', text):
+            if re.match(r'https?://', part):
+                out.append(f'<span class="yt-core-attributed-string--link-inherit-color"><a class="yt-core-attributed-string__link" href="{_html.escape(part)}">{_html.escape(part)}</a></span>')
+            elif part:
+                out.append(_html.escape(part))
+        return ''.join(out)
+    first = '\n'.join(description.split('\n')[:2])
+    return ('<ytd-text-inline-expander id="description-inline-expander">'
+            f'<div id="attributed-snippet-text"><span class="yt-core-attributed-string">{body(first)}</span></div>'
+            '<tp-yt-paper-button id="expand" onclick="var b=this.parentNode;b.querySelector(\'#expanded\').hidden=false;'
+            'b.querySelector(\'#attributed-snippet-text\').hidden=true;b.querySelector(\'#collapse\').hidden=false;this.hidden=true;">…more</tp-yt-paper-button>'
+            f'<div id="expanded" hidden><yt-attributed-string><span class="yt-core-attributed-string" style="white-space:pre-wrap">{body(description)}</span></yt-attributed-string></div>'
+            '<tp-yt-paper-button id="collapse" hidden onclick="var b=this.parentNode;b.querySelector(\'#expanded\').hidden=true;'
+            'b.querySelector(\'#attributed-snippet-text\').hidden=false;b.querySelector(\'#expand\').hidden=false;this.hidden=true;">Show less</tp-yt-paper-button>'
+            '</ytd-text-inline-expander>')
+
+
+def yt_page(vid, title, channel, description, dom=False):
+    """[3.41.13] A YouTube video page with its data as YouTube writes it ("var ytInitialPlayerResponse = {…};" in a script);
+    [3.42.8] dom: with the description drawn as YouTube does (yt_desc_html), for the companion."""
     data = {'videoDetails': {'videoId': vid, 'title': title, 'author': channel, 'shortDescription': description}, 'microformat': {}}
-    return (f'<!doctype html><html><head><title>{title} - YouTube</title></head><body><script>var ytInitialPlayerResponse = {json.dumps(data)};'
-            'var meta = document.createElement("meta");</script><div id="player"></div></body></html>')
+    meta = f'<ytd-watch-metadata><div id="description">{yt_desc_html(description)}</div></ytd-watch-metadata>' if dom else ''
+    return (f'<!doctype html><html><head><meta charset="utf-8"><title>{title} - YouTube</title></head><body><script>var ytInitialPlayerResponse = {json.dumps(data)};'
+            f'var meta = document.createElement("meta");</script><div id="player"></div>{meta}</body></html>')
 
 
 def bc_page(data, band=None):
@@ -1086,6 +1112,17 @@ def open_bandcamp(ctx, url):
     pg = ctx.new_page()
     errs = errors_of(pg)
     # only in the page itself, not in its frames (@noframes)
+    pg.add_init_script(script="if (window.top === window) window.addEventListener('DOMContentLoaded', () => { for (const code of [%s, %s]) {"
+                       " const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
+                       % (json.dumps(GM_SHIM), json.dumps(SYNC)))
+    pg.goto(url)
+    return pg, errs
+
+
+def open_youtube(ctx, url):
+    """[3.42.8] A YouTube tab with the companion (as open_bandcamp)."""
+    pg = ctx.new_page()
+    errs = errors_of(pg)
     pg.add_init_script(script="if (window.top === window) window.addEventListener('DOMContentLoaded', () => { for (const code of [%s, %s]) {"
                        " const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
                        % (json.dumps(GM_SHIM), json.dumps(SYNC)))

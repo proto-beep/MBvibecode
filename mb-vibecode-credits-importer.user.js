@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.7
+// @version      3.42.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.7
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.7
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.8
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.8
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.7';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2363,6 +2363,7 @@
       "sync.dgReleaseTitleSite": "Keep the {site} status marks while the MusicBrainz release page is open (e.g. after “Enter edit”), to check at a glance what arrived; they go when the release page and the editor are closed",
       "log.dgReleaseSite": "{site} status on the release page: {state}",
       "sync.oldSite": "{site} view: needs the companion script 1.8.0 or later – please update “MB x Vibecode: Credits Importer Companion”",
+      "sync.oldSiteV": "{site} view: needs the companion script {version} or later – please update “MB x Vibecode: Credits Importer Companion”",
       "bc.fromTrackPage.one": "From the track page:",
       "bc.fromTrackPage.other": "From the track pages:",
       "bc.trackPageTitle": "Opens the track page on Bandcamp",
@@ -5319,7 +5320,8 @@
     const STATUS_MARKS = /(^|\s)[✓●○✗](?=\s|$)\s*/gu;
     const STATUS_BANG = /^\s*!\s+/;
     // [S071] (3.42.3) a line below a "by" line that names a studio ("All songs mixed by X," / "Skinny Elephant recording"; Z-GON e)
-    const STUDIO_LINE = /^(?:\p{Lu}[\p{L}\p{N}'’.&-]*\s+){1,4}(?:[Rr]ecordings?|[Ss]tudios?|[Ss]ounds?)$/u;
+    // (3.42.8, review) "recording", "studio(s)", "sound" (Q-di) – not "Recordings", "Sounds": names of labels ("Warp Recordings")
+    const STUDIO_LINE = /^(?:\p{Lu}[\p{L}\p{N}'’.&-]*\s+){1,4}(?:[Rr]ecording|[Ss]tudios?|[Ss]ound)$/u;
     // [S072] (3.42.3) left out on purpose: a website (MusicBrainz has no relationship for it; Z-GON g) and a place that is none
     // ("Recorded all over the place"; Z-GON f)
     const WEBSITE_BY = /^(?:the\s+)?(?:web\s*(?:site|page)s?|web\s*design|homepage|site)(?:\s+(?:design(?:ed)?|built|made|programmed))?\s+by\s+\S/i;
@@ -6111,10 +6113,14 @@
             // [S073] (3.42.3) "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, …" (Bandcamp; collected item
             // Z-BZ): a sentence after the comma – five words or more, no roles – makes the line prose, no credit (until 3.42.2 the words
             // after "With" were a guest)
+            // (3.42.8, review) a sentence: its second or third word is a word in small letters that is no word between names ("Stellarium
+            // turns toward …"; not "Kenny Wheeler and members of the Berlin Philharmonic" – names and more)
+            const JOIN_WORD = /^(?:and|or|of|on|the|a|an|with|from|in|at|for|to|und|et|y|de|del|la|le|von|van|der|di|da|du)$/i;
             const prosePart = (x) => {
               const on = x.match(/^(.+?)\s+on\s+(.+)$/i) || x.match(/^(.+?)\s*\(([^)]+)\)$/);
-              return x.split(' ').length >= 5 && !listRoles(x) && !playList(x) && !(on && listRoles(clean(on[2])))
-                && x.split(' ').filter((w) => /^\p{Ll}/u.test(w)).length >= 3;
+              const w = x.split(' ');
+              return w.length >= 5 && !listRoles(x) && !playList(x) && !(on && listRoles(clean(on[2])))
+                && w.filter((y) => /^\p{Ll}/u.test(y)).length >= 3 && w.slice(1, 3).some((y) => /^\p{Ll}[\p{L}'’-]*$/u.test(y) && !JOIN_WORD.test(y));
             };
             if (ruleOn('S073') && chunks.slice(1).some(prosePart)) return;
             const makeWord = (n) => PROPER_WORDS.some((w) => norm(w) === norm(n.split(' ')[0]));
@@ -6338,7 +6344,8 @@
           if (u.entity === 'artist') {
             if (addCredit(m[0], u.role, sc, { own: u.id })) n++;
           } else if (isCompanyRole(u.role)) {
-            companies.push({ who: who(m[0]), role: u.role, catno: '', tracks: sc ? tracksOf(sc) : null, ...at(), own: u.id });
+            // (3.42.8, review) with its kind (a label, place or area – the role alone may allow several)
+            companies.push({ who: who(m[0]), role: u.role, catno: '', tracks: sc ? tracksOf(sc) : null, ...at(), own: u.id, entity: u.entity });
             n++;
           }
         }
@@ -6496,7 +6503,7 @@
         // recording" – the place of its verb (mixed at; Z-GON e); "and Name" – one more name of its roles ("Website by Max Helgemo" / "and
         // Jacob Dawson-Daley": left out with it, Z-GON g)
         if (ruleOn('S071') && before) {
-          if (before.verb && STUDIO_LINE.test(line) && isCompanyRole(`${before.verb} At`)) {
+          if (before.verb && STUDIO_LINE.test(line) && !TEXT_LABEL_LINE.test(line) && isCompanyRole(`${before.verb} At`)) {
             companies.push({ who: who(line), role: `${before.verb} At`, catno: '', tracks: before.scope ? tracksOf(before.scope) : null, ...at() });
             return;
           }
@@ -7215,7 +7222,8 @@
       short: 'YT',
       noteName: 'a YouTube video description',
       creditsName: 'YouTube description',
-      companion: false,
+      // [Z-YTC] (3.42.8) shown by the companion (1.11.0): its marks in the video's description
+      companion: 'youtube',
       readsTrackLists: true,
       nameSearch: true,
       /** The tracks are MusicBrainz's own (a video has no track list). */
@@ -7386,6 +7394,8 @@
       if ((who.altNames || []).length) g.altNames = uniq([...(g.altNames || []), ...who.altNames]);
       // [3.30.9] an entry only from the Discogs notes: searched by its name (S042)
       if (c.fromNotes && !who.id) g.fromNotes = true;
+      // [Z-UNA] (3.42.8, review) the kind an own rule of texts gives it
+      if (c.entity && !g.entity) g.entity = c.entity;
       // [3.21.3] a name without an id: the web profiles found next to it (T032)
       if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
@@ -9535,6 +9545,8 @@
     una: null,
     unaDone: new Map(),
     unaOpen: false,
+    // [Z-UNA] (3.42.8, review) the words given an entry in this import (remembered with the release)
+    unaItems: [],
     // [stage 2] The second source supplementing the loaded one (its list of suggestions), and the sources that did
     supp: null,
     suppSources: new Map(),
@@ -15841,7 +15853,8 @@
       const fresh = S.editorLinks.filter((l) => !S.sourceLinks.some((x) => same(x, l)));
       S.sourceLinks = [...S.sourceLinks, ...fresh];
       S.editorLinks = null;
-      if (fresh.length === 1) return { link: fresh[0], fromEditor: true };
+      // (3.42.8, review) a video only when the release links to no other source (YouTube last)
+      if (fresh.length === 1 && (fresh[0].source !== 'youtube' || !S.sourceLinks.some((x) => x.source !== 'youtube'))) return { link: fresh[0], fromEditor: true };
     }
     const kept = relMapRead(SOURCE_PICK_KEY)[releaseMbid];
     const keptLink = kept && S.sourceLinks.find((x) => x.source === kept.source && x.id === kept.id);
@@ -17468,7 +17481,9 @@
     // [S058] (3.38.12) the reading of "⇅" (the import reads the lines so again, its rows are remembered so)
     return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual, works: worksSnapshot(), ...(S.stackUp ? { stackUp: true } : {}),
       // (3.39.8, review) the names chosen for initials of several names ("JR" → Jane Roe)
-      ...(S.initialsChosen && S.initialsChosen.size ? { initials: [...S.initialsChosen] } : {}) };
+      ...(S.initialsChosen && S.initialsChosen.size ? { initials: [...S.initialsChosen] } : {}),
+      // [Z-UNA] (3.42.8, review) the words given an entry
+      ...(S.unaItems && S.unaItems.length ? { una: S.unaItems.map((it) => ({ ...it })) } : {}) };
   }
 
   /**
@@ -17709,11 +17724,13 @@
         lost++;
         continue;
       }
-      // [Z-UNA] (3.42.4) a row added then that the source gives now itself (an own rule of texts made of the words given an entry):
-      // once
-      const same = (y) => y.artistKey === a.key && norm(y.raw || '') === norm(r.raw || '') && y.level === r.level && y.tracks.size === r.tracks.size
-        && [...r.tracks].every((i) => y.tracks.has(i));
-      if (x.f && S.rows.some((y) => S.freshRows.has(y.id) && same(y))) continue;
+      // [Z-UNA] (3.42.4; 3.42.8, review) a row of words given an entry, added then (with what was changed at it): it takes the place of
+      // the one the import gives its entry now – again (unaReplay) or by an own rule of texts –, not beside it; only such rows (`una`):
+      // a copy made on purpose (another event, another instrument of a role) stays
+      if (r.una) {
+        const y = S.rows.find((z) => S.freshRows.has(z.id) && !used.has(z) && z.artistKey === a.key && norm(z.raw || '') === norm(r.raw || ''));
+        if (y) used.add(y);
+      }
       ids.set(x.i, r.id);
       out.push(r);
       changed++;
@@ -17964,6 +17981,8 @@
       suggestCommissioned(row);
       S.rows.push(row);
     }
+    // [Z-UNA] (3.42.8, review) the kind of an own rule of texts (or of the words given an entry)
+    if (g.entity && ['label', 'place', 'area'].includes(g.entity) && companyTypes(company).includes(g.entity)) setCompanyEntityType(company, g.entity);
     return company;
   }
 
@@ -18017,7 +18036,7 @@
       S.artists = new Map();
       S.rows = [];
       S.festivals = []; // [3.37.8] (S056)
-      Object.assign(S, { una: null, unaDone: new Map(), unaOpen: false }); // [Z-UNA] (3.42.4)
+      Object.assign(S, { una: null, unaDone: new Map(), unaOpen: false, unaItems: [] }); // [Z-UNA] (3.42.4)
       S.rowOpen.clear();
     S.groupCompact.clear();
       S.supp = null;
@@ -18126,6 +18145,8 @@
           renderWorks();
         }
       }
+      // [Z-UNA] (3.42.8, review) the words given an entry before, as the source's (their changes come back with them)
+      if (seq === importSeq) unaReplay(repeat);
       // [3.36.1] the rows as the source gave them – before the entries are looked up (changes made meanwhile are changes)
       if (seq === importSeq) rememberFresh();
       if (S.artists.size) {
@@ -19382,6 +19403,90 @@
    * label, place or area with its company role, a series "part of" the release – looked up by its name; with "Remember …" an own
    * rule of texts.
    */
+  /**
+   * [Z-UNA] (3.42.4; 3.42.8, review: also for what is remembered) The entry of words given one – it: { name, kind, role, line, tracks
+   * ('line' | 'release'), a, b } – a person through the register (like a credit of the text), a label, place or area with its company
+   * role, a series "part of" the release; its rows marked `una`. replay: an entry the import has with that role already (an own rule
+   * of texts, or the text changed) is not added again. → the entry to look up (a new one), or null.
+   */
+  function unaBuild(it, { replay = false } = {}) {
+    const { name, role, kind } = it;
+    const sc = it.tracks === 'line' ? unaScope(it.line) : null;
+    const rel = S.release;
+    const at = { line: it.line, part: name, pi: 0, n: 0 };
+    const has = (pred) => replay && [...S.artists.values()].some((a) => pred(a) && norm(a.name) === norm(name) && S.rows.some((r) => r.artistKey === a.key && norm(r.raw || '') === norm(role)));
+    let entry = null;
+    if (kind === 'artist') {
+      const p = parseRoleNotation(role)[0];
+      if (!p || has((a) => !a.company && !a.other)) return null;
+      const credit = { who: { id: 0, name, rawName: name, links: [] }, role: p.raw, base: p.base, details: p.mods, credited: '',
+        tracks: sc ? { indexes: [...sc.set], spec: sc.spec, unresolved: [] } : { all: true }, ...at };
+      for (const g of groupCredits([credit])) {
+        entry = [...S.artists.values()].find((a) => !a.company && !a.other && norm(a.name) === norm(g.name)) || null;
+        const fresh = !entry;
+        if (fresh) {
+          entry = newPersonEntry(g);
+          S.artists.set(entry.key, entry);
+        }
+        const k0 = S.rows.length;
+        addCreditRows(entry, g, rel, S.source, new Set());
+        S.rows.slice(k0).forEach((r) => { r.una = true; });
+        if (!fresh) entry = null; // looked up already
+      }
+    } else if (kind === 'series') {
+      if (replay && [...S.artists.values()].some((a) => a.other && a.entityType === 'series' && norm(a.name) === norm(name))) return null;
+      entry = { key: nextId('o'), dId: 0, links: [], name, rawName: name, status: 'missing', other: true, entityType: 'series', mbid: null, mbName: '', mbComment: '',
+        candidates: [], editing: false, error: '', anvs: [] };
+      S.artists.set(entry.key, entry);
+      const row = makeRow(entry.key, { manual: true, company: null });
+      Object.assign(row, { other: true, entityType: 'series', types: [], typeOptions: null, notes: [], una: true });
+      applyRoleText(row, 'part of');
+      row.level = 'release';
+      row.tracks = new Set(selIdx());
+      row.suggested = new Set(row.tracks);
+      S.rows.push(row);
+    } else {
+      if (has((a) => a.company)) return null;
+      for (const g of groupCompanies([{ who: { id: 0, name, rawName: name, links: [] }, role, catno: '', tracks: sc ? { indexes: [...sc.set], spec: sc.spec } : null, ...at, entity: kind }])) {
+        entry = addCompanyEntry(g, rel, new Set());
+        if (entry) setCompanyEntityType(entry, kind);
+      }
+      S.rows.filter((r) => entry && r.artistKey === entry.key).forEach((r) => { r.una = true; });
+    }
+    // the words given an entry: marked in the line
+    if (it.a != null && it.b != null) {
+      const done = S.unaDone.get(it.line) || new Set();
+      for (let k = Math.min(it.a, it.b); k <= Math.max(it.a, it.b); k++) done.add(k);
+      S.unaDone.set(it.line, done);
+    }
+    return entry;
+  }
+
+  /**
+   * [Z-UNA] (3.42.8, review) The words given an entry are remembered with the release ("Remember changes …"): at the next import of the
+   * same source they are given it again before the rows are noted as the source's – so its changes come back with them (until 3.42.7
+   * such an entry was lost: no line of the source gave it).
+   */
+  function unaReplay(repeat = null) {
+    const snapIn = repeat && repeat.snap;
+    if (!snapIn && !(remembering() && !S.rememberHold && !(repeat && repeat.fresh))) return;
+    const stored = snapIn ? null : relRead(REMEMBER_ROWS_KEY, null);
+    const snap = snapIn || (stored && stored.v === 2 && stored.by ? stored.by[S.importSrc || ''] : stored && stored.v === 1 ? stored : null);
+    if (!snap || snap.src !== (S.importSrc || '') || !Array.isArray(snap.una)) return;
+    for (const it of snap.una) {
+      if (!it || typeof it.name !== 'string' || !it.name.trim() || !UNA_KINDS.includes(it.kind) || typeof it.role !== 'string' || !it.role.trim()) continue;
+      unaBuild(it, { replay: true });
+      S.unaItems.push(it);
+    }
+    // (the list of the lines not recognized and the entries were drawn before)
+    if (S.unaItems.length) {
+      $('toolbar').hidden = false;
+      renderGroups();
+      renderSource();
+    }
+  }
+
+  /** "Add entry": the words as an entry of their kind with the role, looked up by its name; with "Remember …" an own rule of texts. */
   async function unaApply() {
     const u = S.una;
     if (!u) return;
@@ -19399,58 +19504,23 @@
       return;
     }
     const sc = tracks === 'line' ? unaScope(u.line) : null;
-    const rel = S.release;
-    const at = { line: u.line, part: name, pi: 0, n: 0, una: true };
-    let entry = null;
-    if (u.kind === 'artist') {
-      const p = parseRoleNotation(role)[0];
-      const credit = { who: { id: 0, name, rawName: name, links: [] }, role: p.raw, base: p.base, details: p.mods, credited: '',
-        tracks: sc ? { indexes: [...sc.set], spec: sc.spec, unresolved: [] } : { all: true }, ...at };
-      for (const g of groupCredits([credit])) {
-        entry = [...S.artists.values()].find((a) => !a.company && !a.other && norm(a.name) === norm(g.name)) || null;
-        const fresh = !entry;
-        if (fresh) {
-          entry = newPersonEntry(g);
-          S.artists.set(entry.key, entry);
-        }
-        addCreditRows(entry, g, rel, S.source, new Set());
-        if (!fresh) entry = null; // looked up already
-      }
-    } else if (u.kind === 'series') {
-      entry = { key: nextId('o'), dId: 0, links: [], name, rawName: name, status: 'missing', other: true, entityType: 'series', mbid: null, mbName: '', mbComment: '',
-        candidates: [], editing: false, error: '', anvs: [] };
-      S.artists.set(entry.key, entry);
-      const row = makeRow(entry.key, { manual: true, company: null });
-      Object.assign(row, { other: true, entityType: 'series', types: [], typeOptions: null, notes: [], una: true });
-      applyRoleText(row, 'part of');
-      row.level = 'release';
-      row.tracks = new Set(selIdx());
-      row.suggested = new Set(row.tracks);
-      S.rows.push(row);
-    } else {
-      for (const g of groupCompanies([{ who: { id: 0, name, rawName: name, links: [] }, role, catno: '', tracks: sc ? { indexes: [...sc.set], spec: sc.spec } : null, ...at }])) {
-        entry = addCompanyEntry(g, rel, new Set());
-        if (entry) setCompanyEntityType(entry, u.kind);
-      }
-    }
-    S.rows.filter((r) => entry && r.artistKey === entry.key).forEach((r) => { r.una = true; });
-    // the words given an entry: marked in the line
-    const done = S.unaDone.get(u.line) || new Set();
-    for (let k = Math.min(u.a, u.b); k <= Math.max(u.a, u.b); k++) done.add(k);
-    S.unaDone.set(u.line, done);
+    const it = { name, kind: u.kind, role, line: u.line, tracks: sc ? 'line' : 'release', a: u.a, b: u.b };
+    const entry = unaBuild(it);
+    S.unaItems.push(it);
     if (remember && u.kind !== 'series') {
       const id = nextUserRuleId();
-      userRules().push({ id, kind: 'text', on: true, discogs: norm(name), phrase: name, entity: u.kind, role, tracks: sc && tracks === 'line' ? 'line' : 'release' });
+      userRules().push({ id, kind: 'text', on: true, discogs: norm(name), phrase: name, entity: u.kind, role, tracks: sc ? 'line' : 'release' });
       saveRules();
       refreshRulesWindow();
       log('info', 'unaRule', { id, phrase: name, kind: tr(`entity.${u.kind}`), role });
     }
-    log('info', 'unaAdded', { name, kind: tr(`entity.${u.kind}`), role, tracks: sc && tracks === 'line' ? sc.spec : tr('una.tracksAllShort') });
+    log('info', 'unaAdded', { name, kind: tr(`entity.${u.kind}`), role, tracks: sc ? sc.spec : tr('una.tracksAllShort') });
     S.una = null;
     $('toolbar').hidden = false;
     renderGroups();
     renderSource();
     refresh();
+    scheduleRemember();
     if (entry && entry.status === 'pending') await resolveArtists({ only: [entry] });
     // (a source whose names have links – Discogs – looks up only those of its notes by their names)
     if (entry && entry.status === 'missing' && !(entry.nameHits || []).length) await suggestByName([entry]);
@@ -19889,17 +19959,27 @@
     setCompanyEntityType(a, next);
     a.nameHits = a.etcHits[next] || null;
     clearTimeout(a.etcTimer);
+    a.etcTimer = null;
     a.etcWait = !a.etcHits[next];
     if (a.etcWait) {
       a.etcTimer = setTimeout(async () => {
         a.etcTimer = null;
-        if (a.entityType !== next || a.mbid) return;
+        // (3.42.8, review) chosen meanwhile: nothing to wait for; another kind meanwhile: its own wait
+        if (a.mbid) {
+          a.etcWait = false;
+          rerenderGroup(a);
+          return;
+        }
+        if (a.entityType !== next) return;
         try {
           await suggestByName([a]);
           a.etcHits[next] = a.nameHits || [];
           log('info', 'etcSearched', { name: a.name, kind: tr(`entity.${next}`), n: (a.nameHits || []).length });
         } finally {
-          a.etcWait = false;
+          // (3.42.8, review) clicked on while it searched: the suggestions of the kind shown now, the wait of a newer search kept
+          const cur = groupKindOf(a).type;
+          if (cur !== next && !a.mbid) a.nameHits = a.etcHits[cur] || null;
+          a.etcWait = !!a.etcTimer;
           rerenderGroup(a);
           refresh();
         }
@@ -20249,7 +20329,8 @@
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
     const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
     // [Z-EDM] (3.42.1; Q-db) the date a button: a click opens MusicBrainz's fields below it (begin, end, ended)
-    const dOpen = !!(a && S.emEvDate && S.emEvDate.key === `${a.key}|${e.key}`);
+    // (3.42.8, review) not the box of the event's fields below (an error there opens no second one here)
+    const dOpen = !!(a && S.emEvDate && S.emEvDate.key === `${a.key}|${e.key}` && !S.emEvDate.inline);
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
     // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
     const t = tr(open ? 'em.evClose' : 'em.evOpen', { n: circled(e.n) });
@@ -20257,14 +20338,16 @@
       data-ev="${esc(e.key)}" aria-expanded="${open}" title="${esc(t)}" aria-label="${esc(t)}">${open ? '▾' : '▸'}</button><span class="dci-em-evn">${circled(e.n)}</span>
       <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>${pool && pool.name ? ` <span class="dci-em-evname">${esc(pool.name)}</span>` : ''}
       <button type="button" class="dci-textbtn dci-em-evdate${date ? ' dci-cl-has' : ''}" data-act="em-evdate-open" data-ev="${esc(e.key)}" aria-expanded="${dOpen}"
-        title="${esc(tr('em.evDateOpenTitle'))}" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">${esc(date || tr('cl.noDate'))}</button>${dOpen ? evDateBoxHtml(e) : ''}
+        title="${esc(tr('em.evDateOpenTitle'))}" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">${esc(date || tr('cl.noDate'))}</button>${dOpen ? evDateBoxHtml(e, false, a) : ''}
         ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
   }
 
   /** [Z-EDM] (3.42.1) The fields of an event's date as MusicBrainz has them (begin, end, ended), with "Apply", "No date" and ✕. */
-  function evDateBoxHtml(e, inline = false) {
+  function evDateBoxHtml(e, inline = false, a = null) {
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
-    const st = S.emEvDate && S.emEvDate.ev === e.key ? S.emEvDate : null;
+    // (3.42.8, review) what was typed (and its error) of this entry's event and of this box only – an event of another entry has the
+    // same key ("release||")
+    const st = S.emEvDate && a && S.emEvDate.key === `${a.key}|${e.key}` && !!S.emEvDate.inline === !!inline ? S.emEvDate : null;
     const f = (st && st.f) || (pool ? fieldsFromDate(pool) : e.date ? { ...e.date } : {});
     return `<div class="dci-em-evdatebox${inline ? ' dci-em-evdatebox-inline' : ''}" data-evdate="${esc(e.key)}" role="group" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">
       ${mbDateFields('ed', f, true)}
@@ -20311,7 +20394,7 @@
       <div class="dci-em-evrow dci-em-evtop"><strong>${esc(tr('em.evEditTitle', { n: circled(e.n), rows: rows.length }))}</strong>
         <button type="button" class="dci-iconbtn" data-act="em-evopen" data-ev="${esc(e.key)}" title="${esc(tr('common.close'))}" aria-label="${esc(tr('common.close'))}">✕</button></div>
       <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evLevel'))}</span>${levelSeg}</div>
-      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evDate'))}</span>${evDateBoxHtml(e, true)}
+      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evDate'))}</span>${evDateBoxHtml(e, true, a)}
         ${S.datePool.length ? `<span class="dci-sub">${esc(tr('em.evPool'))}</span> ${poolBtns}` : ''}
         ${dated ? ` <button type="button" class="dci-textbtn" data-act="em-evpool" data-ev="${esc(e.key)}" data-id="">${esc(tr('cl.noDate'))}</button>` : ''}</div>
       ${tracks}
@@ -28632,8 +28715,11 @@
   // --- [3.17.0] The site the companion shows for the loaded source: Discogs or Bandcamp --------------------------
 
   /** 'discogs' or 'bandcamp': the site of the loaded source in the companion (Discogs while none or a text is loaded). */
-  const viewSite = () => (S.source && S.source.companion === 'bandcamp' ? 'bandcamp' : 'discogs');
-  const VIEW_NAMES = { discogs: 'Discogs', bandcamp: 'Bandcamp' };
+  // [Z-YTC] (3.42.8) or 'youtube': the video of a YouTube source (companion 1.11.0)
+  const viewSite = () => (S.source && ['bandcamp', 'youtube'].includes(S.source.companion) ? S.source.companion : 'discogs');
+  const VIEW_NAMES = { discogs: 'Discogs', bandcamp: 'Bandcamp', youtube: 'YouTube' };
+  /** [Z-YTC] (3.42.8) A site whose credits are lines of a text (Bandcamp, YouTube): a credit is found by its line. */
+  const textSite = (site = viewSite()) => site === 'bandcamp' || site === 'youtube';
   /** A text of the Discogs view; with Bandcamp its "…Site" form ({site}: "Bandcamp"), where there is one. */
   function trView(key, params = {}) {
     const site = viewSite();
@@ -28653,6 +28739,8 @@
   function syncSite() {
     const { sites } = S.sync;
     if (!sites) return viewSite() === 'discogs' ? S.sync : { tabs: 0, target: null, releases: [], old: true };
+    // [Z-YTC] (3.42.8) a companion before 1.11.0 knows no YouTube tabs
+    if (viewSite() === 'youtube' && !sites.youtube) return { tabs: 0, target: null, releases: [], old: true, need: '1.11.0' };
     return sites[viewSite()] || { tabs: 0, target: null, releases: [] };
   }
 
@@ -28677,7 +28765,7 @@
           const a = S.artists.get(row.artistKey);
           if (!a || row.manual || !row.raw) continue;
           // Discogs: credits with a Discogs artist or label; Bandcamp: credits of its own text (not of a supplement)
-          const refs = site === 'bandcamp' ? (row.srcRefs || []).filter((r) => !r.about) : [];
+          const refs = textSite(site) ? (row.srcRefs || []).filter((r) => !r.about) : [];
           if (site === 'discogs' ? !a.dId : (row.supp || !refs.length)) continue;
           const info = rowInfo && rowInfo.get(row.id);
           let status = 'open';
@@ -28711,7 +28799,7 @@
             }
             return pt;
           };
-          if (site === 'bandcamp') {
+          if (textSite(site)) {
             items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb, ...(row.srcOff ? { off: true } : {}),
               refs: refs.map((r) => ({ page: r.page, line: r.line, part: r.part, pi: r.pi, n: r.n, ...(r.pos ? { pos: r.pos, ...ofTrack(r.pos) } : { status }) })) });
             continue;
@@ -28819,7 +28907,7 @@
     if (!S.sync.installed) return `<span class="dci-muted" title="${esc(tr('sync.offTitle'))}">${esc(trView('sync.off'))}</span>${srcLinkHtml()}`;
     // [3.17.0] The tabs of the loaded source's site (Discogs or Bandcamp)
     const st = syncSite();
-    if (st.old) return `<span class="dci-muted">${esc(tr('sync.oldSite', { site: VIEW_NAMES[viewSite()] }))}</span>${srcLinkHtml()}`;
+    if (st.old) return `<span class="dci-muted">${esc(st.need ? tr('sync.oldSiteV', { site: VIEW_NAMES[viewSite()], version: st.need }) : tr('sync.oldSite', { site: VIEW_NAMES[viewSite()] }))}</span>${srcLinkHtml()}`;
     const openBtn = `<button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>`;
     if (!st.tabs) return `${esc(trView('sync.noTab'))}${srcLinkHtml()}${companionReleaseId() ? ` ${openBtn}` : ''}`;
     const where = tr(st.target && st.target.visible ? 'sync.visible' : 'sync.background');
@@ -29055,7 +29143,7 @@
   }
 
   function showSourceOf(el) {
-    if (viewSite() === 'bandcamp' && !el.matches('tr[data-work]')) {
+    if (textSite() && !el.matches('tr[data-work]')) {
       // [3.17.0] Bandcamp: the lines of the credit (or of all credits of the entry) on the album or a track page
       const row = el.matches('tr.dci-row') ? rowOf(el) : null;
       const artist = row ? null : artistOf(el);
@@ -30348,7 +30436,7 @@
         f.ended = !!(box && box.querySelector('[data-f="ed-ended"]') && box.querySelector('[data-f="ed-ended"]').checked);
         const res = validateDateFields(f);
         if (res.error) {
-          S.emEvDate = { key: `${artist.key}|${btn.dataset.ev}`, ev: btn.dataset.ev, f, error: dateErrorText(res.error) };
+          S.emEvDate = { key: `${artist.key}|${btn.dataset.ev}`, ev: btn.dataset.ev, f, error: dateErrorText(res.error), inline: !!btn.closest('.dci-em-evdatebox-inline') };
           rerenderGroup(artist);
           break;
         }
