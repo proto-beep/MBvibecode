@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.6
+// @version      3.41.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.6
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.6
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.7
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.7
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -5508,9 +5508,23 @@
         const withM = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map((x) => (isRole(byRole(x)) ? byRole(x) : withMedium(x)));
         return withM.length && withM.every(Boolean) ? withM : [];
       };
+      /**
+       * [Z-AM] (3.41.7) The last word the roles of a list share ("Audio & Mixing Engineer" → Audio Engineer, Mixing Engineer;
+       * "Mixed & Mastered By" → Mixed By, Mastered By): given to each part before it that is no role by itself.
+       */
+      const shareTail = (parts) => {
+        const out = [...parts];
+        for (let i = out.length - 1; i > 0; i--) {
+          const w = out[i].split(' ');
+          if (w.length < 2 || !isRole(out[i])) continue;
+          const tail = w[w.length - 1];
+          for (let j = i - 1; j >= 0 && !isRole(out[j]) && isRole(`${out[j]} ${tail}`); j--) out[j] = `${out[j]} ${tail}`;
+        }
+        return out;
+      };
       const listRoles = (side) => {
         if (distribution(side)) return distribution(side);
-        const parts = splitRoles(side);
+        const parts = shareTail(splitRoles(side));
         if (parts.length && parts.every(isRole)) return parts;
         // [3.21.4] "Vinyl master: X"
         const withM = parts.map((x) => (isRole(x) ? x : withMedium(x)));

@@ -160,6 +160,8 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #   initialsmemo: 3.39.8 (K-8, review): "JR" → Jane Roe chosen, remembered: after a reload and the same text at once
                                 #   stackflip: 3.38.12 (F-5, after the review): a clear and an unclear credit of one role – ⇅ and back, ⇅ and
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
+                                #   ytroles: 3.41.7 (Z-AM, Z-CAM, Q-co): "Audio & Mixing Engineer" → audio, mix; "Mixed & Mastered By" → mix,
+                                #     mastering; "Cameras" misc "cameras", "Camera Operator", "Cinematographer" each their own; "Editor" misc "editor"
 
 python3 t_text_languages.py     # Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members
                                 #   foreign: instruments and voices in German, Spanish, French (3.21.2): mapped as the English term without role credit,
@@ -810,6 +812,7 @@ python3 t_static.py             # Without a browser: the texts of the script, th
 ```
                                 #   round6: 3.41.5 (BE): translation round F-6 – a sample of the blocks AL – BD in de, es, fr (not English, symbols,
                                 #     the French no-break space)
+                                #   legacy: 3.41.7 (Z-LG): the view "Legacy" named "Legacy" in de, es, fr too (and in the note of 3.35.0)
 
 ### Former test → file and case (3.31.1)
 
