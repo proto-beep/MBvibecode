@@ -1,6 +1,6 @@
 """Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6), bcspell (3.39.1), cloudpondbc (3.40.4) – each the former smoke/t_<case>.py, unchanged; `python3 t_sources_bandcamp.py <case> …` runs only those."""
+Cases: bandcamp, about, aboutoff, linernotes, labelpage, bctrack, aboutcredits (3.32.6), bcspell (3.39.1), cloudpondbc (3.40.4) – each the former smoke/t_<case>.py, unchanged; youtube (3.41.13), ytlinks (3.42.7); `python3 t_sources_bandcamp.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -139,8 +139,9 @@ def case_bandcamp():
         stored = pg.evaluate("JSON.parse(localStorage.getItem('dci-source-order'))")
         reopen(pg)
         print('C) digital zuerst:', first, '| Listen:', lists, '| gespeichert:', stored, '| danach:', source(pg))
-        ok_c = 'Testalbum (Bandcamp)' in first and lists[0][1] == ['discogs', 'bandcamp'] and lists[1][1] == ['bandcamp', 'discogs'] \
-            and '(this release)' in lists[1][2] and stored['digital'] == ['discogs', 'bandcamp'] and 'Discogs 1234' in source(pg)
+        # ((3.42.7, Z-YTL) YouTube last in both)
+        ok_c = 'Testalbum (Bandcamp)' in first and lists[0][1] == ['discogs', 'bandcamp', 'youtube'] and lists[1][1] == ['bandcamp', 'discogs', 'youtube'] \
+            and '(this release)' in lists[1][2] and stored['digital'] == ['discogs', 'bandcamp', 'youtube'] and 'Discogs 1234' in source(pg)
         results.append(ok_c)
 
         # D) the Bandcamp menu: no track pages; the page test
@@ -1219,6 +1220,96 @@ Editor: Jim Beckmann"""
         d0 = pg.evaluate("[...document.querySelectorAll('[data-el=stats-sources] li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
         print('D)', d0)
         results.append('YouTube 1' in d0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ytlinks():
+    """Credits Importer 3.42.7 (collected item Z-YTL; Q-da): the YouTube videos a MusicBrainz release links to are sources, the last of
+    the order of the sources.
+    A) A release with its Discogs link and two videos (www.youtube.com/watch?v=…, youtu.be/… – the same video twice is one): Discogs
+       loaded (first in the order); "Source ▾" lists Discogs 1234 and the two videos ("YouTube www.youtube.com/watch?v=…"); a video
+       chosen: its description read (the head names the video, Julian Martlew audio and mix).
+    B) A release that links only to one video: it is loaded at once; "Order of the sources": YouTube last for physical and digital media;
+       an order stored before 3.42.7 (Bandcamp, Discogs) gets YouTube at its end.
+    C) (3.42.8, review) Started from the release editor with a new video only: the Discogs release is loaded (YouTube last), not the video."""
+    V1, V2 = 'Cx-BhTkZf8A', 'Dy-ChUlAg9B'
+    H.YT_PAGES[V1] = H.yt_page(V1, 'Test Band - Full Performance (Live on KEXP)', 'KEXP', 'Audio & Mixing Engineer: Julian Martlew')
+    H.YT_PAGES[V2] = H.yt_page(V2, 'Test Band - Song Two', 'Test Band', 'Mixed By: Max Mix')
+    H.lt(140, 'ca8d6d99-b847-439c-b0ec-33d8a1b942bc', 'audio', 'artist', 'recording', (1, 526))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return t ? (t.options[t.selectedIndex] || {}).text : ''; })])))()"""
+    HEAD = "document.querySelector('[data-el=source]').textContent.replace(/\\s+/g, ' ').trim()"
+    orig_ws = H.ws_release
+    yt = lambda v: {'target-type': 'url', 'type': 'free streaming', 'url': {'resource': v}}
+    mode = {'only': False}
+
+    def ws(full=False):
+        d = orig_ws(full)
+        links = [yt(f'https://www.youtube.com/watch?v={V1}'), yt(f'https://youtu.be/{V2}'), yt(f'https://www.youtube.com/watch?v={V2}')]
+        d['relations'] = links[:1] if mode['only'] else d['relations'] + links
+        return d
+    H.ws_release = ws
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        a0 = pg.evaluate(HEAD)
+        H.src_menu(pg)
+        opts = pg.evaluate("[...document.querySelectorAll('[data-f=discogs-pick] option')].map(o => [o.value, o.textContent.trim()]).filter(o => o[0])")
+        pg.select_option('[data-f=discogs-pick]', f'youtube|{V1}')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
+        pg.wait_for_timeout(1000)
+        a1 = pg.evaluate(HEAD)
+        g = pg.evaluate(ROWS)
+        print('A) zuerst:', a0[:60], '| Liste:', opts, '\n   Video:', a1[:80], '|', g.get('Julian Martlew'))
+        results.append('Discogs' in a0 and opts == [['discogs|1234', 'Discogs 1234'], [f'youtube|{V1}', f'YouTube www.youtube.com/watch?v={V1}'], [f'youtube|{V2}', f'YouTube www.youtube.com/watch?v={V2}']]
+                       and 'Live on KEXP' in a1 and sorted(g.get('Julian Martlew') or []) == ['audio', 'mix'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        ctx.close()
+        # B) only a video; an order stored before
+        mode['only'] = True
+        ctx = H.new_context(b)
+        ctx.add_init_script("""localStorage.setItem('dci-source-order', JSON.stringify({ physical: ['bandcamp', 'discogs'], digital: ['bandcamp', 'discogs'] }))""")
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        b0 = pg.evaluate(HEAD)
+        H.src_menu(pg, 'srcorder-toggle'); pg.wait_for_timeout(200)
+        lists = pg.evaluate("[...document.querySelectorAll('[data-srcorder]')].map(ol => [ol.dataset.srcorder, [...ol.querySelectorAll('li')].map(li => li.dataset.id)])")
+        print('B) nur ein Video:', b0[:80], '| Reihenfolge:', lists)
+        results.append('Live on KEXP' in b0 and lists == [['physical', ['bandcamp', 'discogs', 'youtube']], ['digital', ['bandcamp', 'discogs', 'youtube']]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        ctx.close()
+        # C) (3.42.8, review) started from the release editor with a new video (still an edit there): the release's Discogs release is loaded,
+        # not the video (until the review a single new link was loaded at once, also a video)
+        mode['only'] = False
+        V3 = 'Ez-DiVmBh0C'
+        H.YT_PAGES[V3] = H.yt_page(V3, 'New video', 'New', 'Mixed By: Max Mix')
+        ctx = H.new_context(b)
+        ctx.add_init_script("if (/edit-relationships/.test(location.pathname) && !sessionStorage.getItem('t-set')) { sessionStorage.setItem('t-set', '1');"
+                            f" sessionStorage.setItem('dci-autostart', JSON.stringify({{ release: '{H.REL}', links: [{{ source: 'youtube', id: '{V3}', url: 'https://www.youtube.com/watch?v={V3}' }}], at: Date.now() }})); }}")
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        c0 = pg.evaluate(HEAD)
+        c1 = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'release editor' in x]
+        print('C) aus dem Release-Editor:', c0[:60], '|', c1)
+        results.append('Discogs' in c0 and 'New video' not in c0 and any(V3 in x for x in c1))
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

@@ -227,7 +227,7 @@ def ws_release(full=False):
         tracks.append({'position': i + 1, 'number': str(i + 1), 'title': TITLES[i],
                        'recording': {'id': gid, 'title': TITLES[i], 'relations': rels + MB_EXTRA.get(gid, [])},
                        **({'artist-credit': [{'name': n, 'joinphrase': '', 'artist': {'id': g, 'name': n}} for g, n in TRACK_AC[i]]} if i in TRACK_AC else {})})
-    return {'id': REL, 'title': 'Testalbum', 'date': '2001', 'text-representation': {'language': 'eng'},
+    return {'id': REL, 'title': REL_TITLE, 'date': '2001', 'text-representation': {'language': 'eng'},
             'release-group': {'id': RG, 'title': 'Testalbum', 'relations': MB_EXTRA.get(RG, [])},
             'artist-credit': [{'name': n, 'joinphrase': j, 'artist': {'id': g, 'name': mbn}} for g, mbn, n, j in RELEASE_AC],
             'relations': [{'target-type': 'url', 'type': 'discogs', 'url': {'resource': f'https://www.discogs.com/release/{DISCOGS_ID}'}}]
@@ -254,6 +254,8 @@ PERSONAL_PUBLISHERS = [
 
 # Track counts per medium (None: one medium with all tracks)
 MEDIA = None
+# [3.42.3] the release's title in MusicBrainz (S073: a name of a text equal to it is no person)
+REL_TITLE = 'Testalbum'
 
 # Answers of the Discogs API for a test: path ("/artists/3030") → JSON (None: 404)
 DG_API = {}
@@ -268,11 +270,37 @@ RELEASE_AC = []
 WS_FAIL = {}
 
 
-def yt_page(vid, title, channel, description):
-    """[3.41.13] A YouTube video page with its data as YouTube writes it ("var ytInitialPlayerResponse = {…};" in a script)."""
+def yt_desc_html(description):
+    """[3.42.8] The description of a video as YouTube draws it (2025/26): folded ("…more") – the first lines in
+    "#attributed-snippet-text", the whole text in "#expanded" (hidden until "#expand" is clicked) – a text with its "\n", a link
+    in a span of its own."""
+    import html as _html
+    def body(text):
+        out = []
+        for part in re.split(r'(https?://\S+)', text):
+            if re.match(r'https?://', part):
+                out.append(f'<span class="yt-core-attributed-string--link-inherit-color"><a class="yt-core-attributed-string__link" href="{_html.escape(part)}">{_html.escape(part)}</a></span>')
+            elif part:
+                out.append(_html.escape(part))
+        return ''.join(out)
+    first = '\n'.join(description.split('\n')[:2])
+    return ('<ytd-text-inline-expander id="description-inline-expander">'
+            f'<div id="attributed-snippet-text"><span class="yt-core-attributed-string">{body(first)}</span></div>'
+            '<tp-yt-paper-button id="expand" onclick="var b=this.parentNode;b.querySelector(\'#expanded\').hidden=false;'
+            'b.querySelector(\'#attributed-snippet-text\').hidden=true;b.querySelector(\'#collapse\').hidden=false;this.hidden=true;">…more</tp-yt-paper-button>'
+            f'<div id="expanded" hidden><yt-attributed-string><span class="yt-core-attributed-string" style="white-space:pre-wrap">{body(description)}</span></yt-attributed-string></div>'
+            '<tp-yt-paper-button id="collapse" hidden onclick="var b=this.parentNode;b.querySelector(\'#expanded\').hidden=true;'
+            'b.querySelector(\'#attributed-snippet-text\').hidden=false;b.querySelector(\'#expand\').hidden=false;this.hidden=true;">Show less</tp-yt-paper-button>'
+            '</ytd-text-inline-expander>')
+
+
+def yt_page(vid, title, channel, description, dom=False):
+    """[3.41.13] A YouTube video page with its data as YouTube writes it ("var ytInitialPlayerResponse = {…};" in a script);
+    [3.42.8] dom: with the description drawn as YouTube does (yt_desc_html), for the companion."""
     data = {'videoDetails': {'videoId': vid, 'title': title, 'author': channel, 'shortDescription': description}, 'microformat': {}}
-    return (f'<!doctype html><html><head><title>{title} - YouTube</title></head><body><script>var ytInitialPlayerResponse = {json.dumps(data)};'
-            'var meta = document.createElement("meta");</script><div id="player"></div></body></html>')
+    meta = f'<ytd-watch-metadata><div id="description">{yt_desc_html(description)}</div></ytd-watch-metadata>' if dom else ''
+    return (f'<!doctype html><html><head><meta charset="utf-8"><title>{title} - YouTube</title></head><body><script>var ytInitialPlayerResponse = {json.dumps(data)};'
+            f'var meta = document.createElement("meta");</script><div id="player"></div>{meta}</body></html>')
 
 
 def bc_page(data, band=None):
@@ -486,7 +514,8 @@ def ws_search(kind, query):
             hits = [x for x in hits if all(w in fold((x.get('area') or {}).get('name', '')).split() for w in want)]
     else:
         hits = [x for x in items if x['name'].lower() == name or any(a['name'].lower() == name for a in x.get('aliases', []))]
-    return {kind + 's': hits, 'count': len(hits)}
+    # [3.42.4] the web service names the list of series "series"
+    return {('series' if kind == 'series' else kind + 's'): hits, 'count': len(hits)}
 
 
 # [3.21.0] web profiles MusicBrainz has for artists: url → (gid, name)
@@ -860,7 +889,7 @@ def install_routes(ctx):
             parent = AREA_PARENTS.get(m.group(1))
             return json_route(route, {'id': m.group(1), 'relations': [{'type': 'part of', 'direction': 'backward', 'target-type': 'area',
                                                                        'area': {'id': uid('aaaaaaaa', 1), 'name': parent}}] if parent else []})
-        m = re.match(r'/ws/2/(artist|label|place|area|event)$', p)
+        m = re.match(r'/ws/2/(artist|label|place|area|event|series)$', p)
         if m:
             return json_route(route, ws_search(m.group(1), u.query))
         if p == '/ws/2/url':
@@ -1090,6 +1119,17 @@ def open_bandcamp(ctx, url):
     return pg, errs
 
 
+def open_youtube(ctx, url):
+    """[3.42.8] A YouTube tab with the companion (as open_bandcamp)."""
+    pg = ctx.new_page()
+    errs = errors_of(pg)
+    pg.add_init_script(script="if (window.top === window) window.addEventListener('DOMContentLoaded', () => { for (const code of [%s, %s]) {"
+                       " const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
+                       % (json.dumps(GM_SHIM), json.dumps(SYNC)))
+    pg.goto(url)
+    return pg, errs
+
+
 def submit_staged(pg, leave_out=0):
     """As if "Enter edit" had been clicked: MusicBrainz gets what is staged (except the last \"leave_out\")."""
     added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity1 && r.entity1.gid && r.entity0 && r.entity0.gid)"
@@ -1180,6 +1220,27 @@ def open_settings(pg, tab=None):
     if tab:
         pg.click(f'[data-el=settings] .dci-set-tab[data-topic={tab}]')
         pg.wait_for_timeout(150)
+
+
+# [3.42.1] the date of an event in the head of an entry's matrix (a button since Z-EDM): its text, '' without a date
+EV_DATES = """(sel) => [...document.querySelectorAll(sel + ' th.dci-em-ev button.dci-em-evdate')].map(x => x.classList.contains('dci-cl-has') ? x.textContent.trim() : '')"""
+
+
+def ev_date(pg, scope, text, inline=False):
+    """[3.42.1] The date of an event set (Z-EDM): MusicBrainz's fields (begin, end) filled from "2001-06-05", "2001-03" (begin and
+    end alike) or "2001-03-02 – 2001-03-20" and applied – in the head of the event (scope: the entry's section; its fields opened first) or,
+    inline, in an opened event."""
+    if not inline:
+        pg.click(f'{scope} th.dci-em-ev button.dci-em-evdate')
+        pg.wait_for_timeout(200)
+    box = f'{scope} .dci-em-evedit [data-evdate]' if inline else f'{scope} th.dci-em-ev [data-evdate]'
+    # (one date: begin and end the same, as a date typed into the field was read until 3.42.0)
+    parts = text.split(' – ') if ' – ' in text else [text, text]
+    for pre, val in (('b', parts[0]), ('e', parts[1])):
+        y, m, d = (val.split('-') + ['', '', ''])[:3]
+        for k, v in (('y', y), ('m', m), ('d', d)):
+            pg.fill(f'{box} [data-f=ed-{pre}{k}]', v)
+    pg.click(f'{box} [data-act=em-evdate-apply]')
 
 
 def open_stats(pg):

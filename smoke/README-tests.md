@@ -96,6 +96,7 @@ python3 t_textcorpus.py         # text recognition, part 1 (3.21.0): the corpus 
                                 # it), "Create artist …" with the profile (not Linktree), "Text" answered with lyricist → works matrix
                                 # 3.21.3: links hidden at first, shown with the setting, Spotify only for "Create artist …", "Create place …"
                                 # with a studio's profile
+                                # 3.42.3: "Gondola" (as on the page and with "○") and "Black Zenith" in the corpus (Z-GON, Z-BZ)
                                 # 3.22.0: the corpus with titles ("on “A”, “B”") and areas ("(Asturies, Spain)"), no "later" lines
                                 # 3.31.1: the lines of the cases sounds, members, pcline, discnotes and publishers; a line may name the
                                 # release's artists ("artists") and its number of tracks ("tracks")
@@ -162,6 +163,7 @@ python3 t_text_basics.py        # Texts, part 1: a pasted text, the rules for fr
                                 #     imported again (remembered), the Discogs notes with a credit Discogs lists (no second row)
                                 #   hostask: 3.41.8 (Q-cn): "Host" / "Hosted By" asked (Q012): spoken vocals "host", misc "host", skip the role;
                                 #     "Presenter" stays spoken vocals
+                                #   fieldpool: 3.42.2 (Z-FRD): the periods of field recordings in the date pool, one a line, named after the kind
                                 #   ytroles: 3.41.7 (Z-AM, Z-CAM, Q-co): "Audio & Mixing Engineer" → audio, mix; "Mixed & Mastered By" → mix,
                                 #     mastering; "Cameras" misc "cameras", "Camera Operator", "Cinematographer" each their own; "Editor" misc "editor"
 
@@ -181,6 +183,12 @@ python3 t_text_languages.py     # Texts, part 2: other languages and prose – G
                                 #     effects chosen gives the role credit "sounds"
                                 #   members: 3.30.7: "Vision Fortune are AC Williams, Alex Townend and Andres Ayerbe" – three performers (pasted text
                                 #     and the "about" text of Bandcamp); "The band is now a trio." and "… is back with a new album." nothing
+                                #   gondola: 3.42.3 (Z-GON, S069 – S072, Q013): Ross McReynolds "Gondola" – "• 1, 8" the tracks, lines of roles below a
+                                #     name his, en dash, "All songs mixed by" (no "All songs"), "Skinny Elephant recording" mixed at, website and "all
+                                #     over the place" left out, plurals/sampling/pedal steel/Wurlitzer; the same with "○" before each line; horns →
+                                #     horn "horns", brass chosen
+                                #   blackzenith: 3.42.3 (Z-BZ, S073): "With Black Zenith, Stellarium turns toward …" no guest (pasted and as
+                                #     Bandcamp's "about" text); the release's and a track's title no person
 
 python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials, places with a date
                                 #   areas: text recognition, part 2 (3.22.0): "Recorded by X in Xixon, Asturies, Spain" – X and an area entry (kind Area,
@@ -204,6 +212,12 @@ python3 t_text_places.py        # Texts, part 3: titles and areas, credit pairs,
                                 #     "2024 March 3–5", "2024 March 30 – April 2"; "© 2019 March Records" the year only); "Recorded in Guruguru
                                 #     Brain studio, Rotterdam, 2024 January - July" – the place (Rotterdam), recorded at (T051), 2024-01 –
                                 #     2024-07 in the pool; "Mixed at Studio Sol, Marseille 2023 March" keeps its area; "Recorded in Berlin" an area
+                                #   unawords: 3.42.4 (Z-UNA): words of lines not recognized clicked (⇧) – a place mixed at (with an own rule of texts,
+                                #     in the rules window), a place on the tracks of the line, a person (a role needed), a series; read again: the rule
+                                #   kindcycle: 3.42.5 (Z-ETC): "Label ↻" of an entry not linked – label → place → artist (an area alone: no button),
+                                #     one search after the clicks (counted), what was found before again without a search, the label chosen
+                                #   unaremember, kindrace, ownrulekind: 3.42.8 (review): words given an entry come back with "Remember changes …",
+                                #     a hand copy of a source's role stays; a late search keeps its kind; an own rule of texts keeps its kind
 
 python3 t_notes_companies.py    # Discogs notes: places, ℗ / © and publishers named in the notes
                                 #   discnotes: 3.30.8: Discogs notes of "Sacred Ceremonies" (three CDs) – each date with the tracks of its disc under
@@ -292,6 +306,8 @@ python3 t_dates_matrix.py       # Dates & tracks: the date matrix, dragging date
                                 #     3.40.11 (review): left without a change, "apply automatically" off with a change waiting, a change from
                                 #     ⚙ – open; stored only when off; 3.40.13 (Z-PF2): nothing stored by "Apply", loaded again: open; "▲ fold"
                                 #     by hand, loaded again: folded
+                                #   poolside: 3.42.1 (Z-TP): date pool and track pool side by side at 1500 px, below each other at 600 px or when
+                                #     too long (Zooid)
 
 python3 t_works_matrix.py       # Works matrix: track groups and notes, columns, dates of cells, attributes, publishers
                                 #   mxdrop: track lists from the Discogs notes as track groups and set ([3.31.6] with ⓘ; before suggestions), generous names;
@@ -527,8 +543,12 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     (on / off) leads there (tab remembered, focus on the box); ↺ of Cache: on again
                                 #   statsmore2: 3.41.14 (Z-STS … Z-STC): the new cards from four records (one v 1) – suites, attributes, works,
                                 #     genres, decisions, live, gaps, worked together, "Counted from 3.41.14 on"; a real record v 2 with x and a
-                                #   editnote: 3.41.9 (Z-EN): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple | None (tooltips list
+                                #   conngroups: 3.42.0 (Z-CONS): ⓘ Connections in groups (Sources, Websites, Tools & scripts, Resources, managers, Links)
+                                #   statsdelete: 3.42.0 (Z-DS): "Delete statistics …" in ⚙ Cache with the number; none in the statistics
+                                #   editnote: 3.41.9 (Z-EN), 3.42.0 (Z-EN2: no None, a stored "none" is Simple): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple (tooltips list
                                 #     the lines); Full: Done; Simple: Source + Script only, also in the work form; None: the block goes, no form note
+                                #   statsgenres: 3.42.6 (Z-STG2): Bandcamp's tags (pageTags: links or JSON-LD, without the place's tag) – "Genres and
+                                #     styles" Combined (sources in the tooltip) | Separate, remembered
 
 python3 t_ui_view.py            # View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows, the footer
                                 #   compact: the compact view (3.27.0, milestone; 3.27.2: full by default, ☰ in the head switches and remembers compact):
@@ -624,6 +644,9 @@ python3 t_entries.py            # Entries as a matrix (E4, Block AE, from 3.34.2
                                 #     role), "✓ link" and "✎ works ↓" in the head (tooltips), "✎ works ↓" brings the works matrix into view,
                                 #     "＋ role", full view as before, ↺ of Appearance: beside again; (review) "Joey Bada$$" kept, "Taken out"
                                 #     without the tail
+                                #   evdatefields: 3.42.1 (Z-EDM): the date of an event a button; MB's fields below it (begin, end, ended, ⇣),
+                                #     Apply, a wrong month, a period pasted, ✕, no date
+                                #     (3.42.8, review) E: another entry's event below shows nothing typed in Solo Man's head; an error below no second box
 
 python3 t_sources.py            # Sources: the adapter, several linked releases, supplementing, the tracks of a source
                                 #   adapter: source adapter (3.0.0): no Discogs data outside the adapter; the neutral release in Node (headings,
@@ -682,6 +705,9 @@ python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leavi
                                 #     credit goes; S036 off: credited all the same, another area: it goes
                                 #   youtube: 3.41.13 (Z-YT): a youtu.be address in "another source" – the video page read, its description as
                                 #     credits (audio, mix, cameras, editor, Host asked), the edit note's Source; no description, no video; statistics
+                                #   ytlinks: 3.42.7 (Z-YTL): the videos a release links to as sources (each once, after Discogs), one alone loaded
+                                #     at once; the order with YouTube last (also an order stored before); (3.42.8, review) from the release editor
+                                #     with a new video only: Discogs
 
 python3 t_media_choice.py       # Media: a release with several media, loading media in the editor, the media choice
                                 #   media: release with two media: "CD2, tracks 1–3", "Disc 1", medium headings, track group per medium
@@ -814,6 +840,10 @@ python3 t_companion_bandcamp.py # Companion on Bandcamp: the Bandcamp view, cred
                                 #     two "Vocals [...]" lines of one artist
                                 #   multibc: 3.38.9 / companion 1.10.0 (173): three imports, two sources (a Bandcamp album here, a Discogs release
                                 #     and another one in two other editors) – for 10 s the marks on the Bandcamp tab and the Discogs tab stay
+                                #   ytview: 3.42.8 / companion 1.11.0 (Z-YTC): a YouTube tab – no tab, another video, "Load the release there",
+                                #     marks in the unfolded description, a click shows the row, jump, off and on, another video without loading and
+                                #     back, the description drawn anew; an old companion: "needs 1.11.0"; (review) the jump's line goes with another
+                                #     video, a description coming later gets its marks, folded by the user stays folded
 
 python3 t_static.py             # Without a browser: the texts of the script, the list of connections, the mapping file, the languages file
                                 #   i18n: the texts (3.27.1; 3.34.0: English from the script, de / es / fr from the languages file): every key

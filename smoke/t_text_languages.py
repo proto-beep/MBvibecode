@@ -1,6 +1,6 @@
 """Texts, part 2: other languages and prose – German, Spanish, French, Nordic roles, prose credits, "sounds", band members (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: foreign, nordic, prose, sounds, members – each the former smoke/t_<case>.py, unchanged; `python3 t_text_languages.py <case> …` runs only those."""
+Cases: foreign, nordic, prose, sounds, members – each the former smoke/t_<case>.py, unchanged; gondola, blackzenith (3.42.3); `python3 t_text_languages.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -451,6 +451,219 @@ def case_members():
         b1 = {n: [x[1] for x in g.get(n, [])] for n in MEMBERS}
         print('B) Bandcamp „about“:', b1, '| Einträge:', list(g))
         results.append(all(v == ['performer'] for v in b1.values()) and not any('back' in k for k in g))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+GONDOLA = """Chris Lippincott — pedal steel • 3 
+
+Matt Glassmeyer — saxophones • 1, 8 
+Wurlitzer • 1, 8 
+organ • 1 
+horns • 8 
+percussion • 1, 4 
+
+Raymond Joseph — synthesizer, bass • 6 
+
+Rich Ruth — synthesizer • 2 
+
+Juan Solorzano — guitars • 2, 7 
+zither • 7 
+
+Ross McReynolds – drum programming • 1, 3, 8 
+drums • 2 
+sampling • 3 
+synthesizers • 1, 3, 4, 6, 7, 8, 9 
+percussion • 4, 5 
+piano • 5 
+bass • 8 
+guitar • 9 
+
+All songs mixed by Dylan Alledridge, 
+Skinny Elephant recording 
+All songs mastered by Trevor Richardson 
+Recorded all over the place 
+Artwork by Micah Mathewson 
+Website by Max Helgemo 
+and Jacob Dawson-Daley"""
+# the rows of each entry: [type, instrument, role credit, tracks]
+GON_ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
+  [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '', (r.querySelector('[data-f=primary]') || {}).value || '',
+    (r.querySelector('[data-f=role-credit]') || {}).value || '',
+    [...document.querySelectorAll(`tr[data-tracksrow="${r.dataset.row}"] input[data-f=track]:checked`)].map(x => Number(x.dataset.i) + 1).join(',')])])))()"""
+
+
+def gon_setup():
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 10)]
+    H.TITLES[:] = ['Song One', 'Song Two', 'Song Three', 'Song Four'] + [f'Piece {i}' for i in range(5, 10)]
+    RM = (H.uid('dddddddd', 61), 'Ross McReynolds')
+    H.ARTISTS[3061] = RM
+    H.RELEASE_AC[:] = [(RM[0], 'Ross McReynolds', 'Ross McReynolds', '')]
+    for i, n in [(9310, 'pedal steel guitar'), (9311, 'Wurlitzer electric piano'), (9312, 'organ'), (9313, 'horn'), (9314, 'brass'),
+                 (9315, 'percussion'), (9316, 'zither'), (9317, 'sampler')]:
+        H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.lt(9993, H.uid('1a1a1a1a', 9993), 'artwork', 'artist', 'release', (1150,))
+    H.lt(9995, H.uid('1a1a1a1a', 9995), 'programming', 'artist', 'recording', (1, 526))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+
+
+def gon_read(pg, text):
+    H.src_menu(pg, 'text-open')
+    pg.fill('[data-f=text-src]', text)
+    pg.click('[data-act=text-load]')
+    H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+    pg.wait_for_timeout(1200)
+    pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => b.click())")
+    pg.wait_for_timeout(600)
+    g = pg.evaluate(GON_ROWS)
+    unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
+    ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())")
+    return g, unrec, ign
+
+
+def case_gondola():
+    """Credits Importer 3.42.3 (collected item Z-GON; rules S069 – S072, question Q013): the credits of Ross McReynolds "Gondola"
+    (Bandcamp, https://rossmcreynolds.bandcamp.com/album/gondola) as a pasted text, nine tracks, the release's artist Ross McReynolds.
+    A) As on the page: every line read (until 3.42.2 four credits, 22 lines not recognized) – the tracks after "•" (S070), the lines
+       of roles below a name his until an empty line ("Wurlitzer • 1, 8" … of Matt Glassmeyer), the en dash like the em dash (Ross
+       McReynolds), "All songs mixed by Dylan Alledridge," mix on all tracks without the role credit "All songs", "Skinny Elephant
+       recording" below it the place mixed at (S071); "Recorded all over the place", "Website by Max Helgemo" and "and Jacob
+       Dawson-Daley" left out on purpose (S072); plurals the instruments of MusicBrainz (saxophone, guitar, synthesizer), sampling →
+       sampler, pedal steel → pedal steel guitar, Wurlitzer → Wurlitzer electric piano, horns → horn credited "horns" (Q013: set at
+       once, brass to choose); nothing not recognized.
+    B) The same text with the companion's status mark "○" before each line (S069): the same entries and rows.
+    C) "brass" chosen at the horns: brass, still credited "horns"; the question then offers horn."""
+    gon_setup()
+    marked = '\n'.join(('○ ' + l) if l.strip() else l for l in GONDOLA.split('\n'))
+    ALL = ','.join(str(i) for i in range(1, 10))
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        seen = []
+        for label, text in (('A', GONDOLA), ('B', marked)):
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            g, unrec, ign = gon_read(pg, text)
+            keep = {k: v for k, v in g.items() if k not in ('Drum Guy', 'Writer W')}
+            for k, v in keep.items():
+                print(f'  {label}) {k}:', v)
+            print(f'  {label}) nicht erkannt:', unrec, '| weggelassen:', ign)
+            seen.append(keep)
+            prim = lambda n: sorted((r[1] or r[0], r[3]) for r in keep.get(n, []))
+            mg = {r[1]: r for r in keep.get('Matt Glassmeyer', [])}
+            rm = {(r[1] or r[0]): r for r in keep.get('Ross McReynolds', [])}
+            results.append(prim('Chris Lippincott') == [('pedal steel guitar', '3')]
+                           and sorted(mg) == ['Wurlitzer electric piano', 'horn', 'organ', 'percussion', 'saxophone']
+                           and [mg['saxophone'][3], mg['Wurlitzer electric piano'][3], mg['organ'][3], mg['horn'][3], mg['percussion'][3]] == ['1,8', '1,8', '1', '8', '1,4']
+                           and mg['horn'][2] == 'horns'
+                           and prim('Raymond Joseph') == [('bass', '6'), ('synthesizer', '6')] and prim('Rich Ruth') == [('synthesizer', '2')]
+                           and prim('Juan Solorzano') == [('guitar', '2,7'), ('zither', '7')]
+                           and sorted(rm) == ['bass', 'drums (drum set)', 'guitar', 'percussion', 'piano', 'programming', 'sampler', 'synthesizer']
+                           and [rm['programming'][3], rm['drums (drum set)'][3], rm['sampler'][3], rm['synthesizer'][3], rm['percussion'][3], rm['piano'][3], rm['bass'][3], rm['guitar'][3]]
+                           == ['1,3,8', '2', '3', '1,3,4,6,7,8,9', '4,5', '5', '8', '9'])
+            results.append([r[0] for r in keep.get('Dylan Alledridge', [])] == ['mix'] and not any('all songs' in r[2].lower() for r in keep.get('Dylan Alledridge', []))
+                           and [r[0] for r in keep.get('Trevor Richardson', [])] == ['mastering'] and [r[0] for r in keep.get('Micah Mathewson', [])] == ['artwork']
+                           and [r[0] for r in keep.get('Skinny Elephant recording', [])] == ['mixed at']
+                           and not unrec and len(ign) == 3 and ign[0].startswith('Recorded all over the place') and 'no place named' in ign[0]
+                           and ign[1].startswith('Website by Max Helgemo') and 'a website' in ign[1] and ign[2].startswith('and Jacob Dawson-Daley')
+                           and not any(n in keep for n in ('Max Helgemo', 'Jacob Dawson-Daley', 'All songs')))
+            if label == 'A':
+                # C) the horns: brass chosen
+                ask = pg.evaluate("""(() => { const d = document.querySelector('.dci-bass-ask[data-question=Q013]'); return d ? { text: d.textContent.replace(/\\s+/g, ' ').trim(), btns: [...d.querySelectorAll('button')].map(x => x.textContent.trim()) } : null; })()""")
+                pg.evaluate("document.querySelector('.dci-bass-ask[data-question=Q013] [data-act=instr-pick][data-instr=brass]').click()")
+                pg.wait_for_timeout(600)
+                g2 = pg.evaluate(GON_ROWS)
+                ask2 = pg.evaluate("""(() => { const d = document.querySelector('.dci-bass-ask[data-question=Q013]'); return d ? [...d.querySelectorAll('button')].map(x => x.textContent.trim()) : null; })()""")
+                horn = [r for r in g2.get('Matt Glassmeyer', []) if r[3] == '8']
+                print('C) Frage:', ask, '| brass gewählt:', horn, '| danach:', ask2)
+                results.append(bool(ask) and ask['text'].startswith('“horns” is set as horn (credited “horns”) – or as:') and ask['btns'] == ['brass']
+                               and [r[1:3] for r in horn] == [['brass', 'horns']] and ask2 == ['horn'])
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        results.append(len(seen) == 2 and seen[0] == seen[1])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+BLACK_ZENITH = """With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, where distant suns dissolve, moons become unfamiliar worlds, and the boundaries of observation begin to blur. From the shifting stars of Mira to the depths of Fornax, these eight compositions trace an enigmatic course through the celestial unknown. At its center lies the black zenith: a point of perfect obscuration, where light and darkness meet, and the universe reveals itself through what it conceals."""
+
+
+def case_blackzenith():
+    """Credits Importer 3.42.3 (collected item Z-BZ; rule S073): the liner notes of Stellarium "Black Zenith" (Bandcamp,
+    https://exospheremusic.bandcamp.com/album/black-zenith) – "With Black Zenith, Stellarium turns toward …".
+    A) Pasted as a text, the release "Black Zenith" by Stellarium: no entry "Black Zenith" (until 3.42.2 a guest performer) – the line
+       is prose; "Special Guest: Black Zenith" gives none either (the release's title is no person), "Special Guest: Mira" none (a
+       track's title), "Special Guest: Jane Roe" a guest performer.
+    B) Bandcamp, the text as the "about" text of the album "Black Zenith": no entry "Black Zenith" either."""
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); return t ? (t.options[t.selectedIndex] || {}).text : ''; })])))()"""
+    ST = (H.uid('dddddddd', 62), 'Stellarium')
+    H.ARTISTS[3062] = ST
+    H.RELEASE_AC[:] = [(ST[0], 'Stellarium', 'Stellarium', '')]
+    H.REL_TITLE = 'Black Zenith'
+    H.TITLES[:] = ['Mira', 'Fornax', 'Song Three', 'Song Four']
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', BLACK_ZENITH + '\nSpecial Guest: Black Zenith\nSpecial Guest: Mira\nSpecial Guest: Jane Roe')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        g = pg.evaluate(ROWS)
+        print('A) Text:', {k: v for k, v in g.items() if k not in ('Drum Guy', 'Writer W')})
+        results.append('Black Zenith' not in g and 'Mira' not in g and g.get('Jane Roe') == ['performer'] and not any('Zenith' in k for k in g))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+
+    # B) Bandcamp, the "about" text of the album
+    BAND = 'https://exospheremusic.bandcamp.com'
+    ALBUM = f'{BAND}/album/black-zenith'
+    H.BC_ARTISTS[BAND + '/'] = ST
+    TRACKS = [{'track_num': i + 1, 'title': t, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, t in enumerate(H.TITLES)]
+    H.BC_PAGES[ALBUM] = H.bc_html({'artist': 'Stellarium', 'current': {'title': 'Black Zenith', 'credits': '', 'about': BLACK_ZENITH, 'release_date': '02 Oct 2026 00:00:00 GMT'},
+                                   'trackinfo': TRACKS}, ALBUM)
+    for t in TRACKS:
+        url = f'{BAND}{t["title_link"]}'
+        H.BC_PAGES[url] = H.bc_html({'artist': 'Stellarium', 'album_url': '/album/black-zenith', 'current': {'title': t['title'], 'credits': ''}, 'trackinfo': [t]}, url)
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+
+    H.ws_release = ws
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.click('#dci-open')
+        # (nothing to import: no "Import complete")
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Bandcamp read/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1500)
+        g = pg.evaluate(ROWS)
+        read = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(l => l.textContent).find(t => /Bandcamp read/.test(t)) || ''")
+        print('B) Bandcamp „about“:', {k: v for k, v in g.items() if k not in ('Drum Guy', 'Writer W')}, '|', read[9:])
+        results.append(not any('Zenith' in k for k in g) and 'Bandcamp read: 0 entries' in read)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

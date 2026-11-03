@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.15
+// @version      3.42.8
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.15
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.15
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.8
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.8
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.15';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.8';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -256,6 +256,25 @@
       "unrec.title.one": "{n} line not recognized",
       "unrec.title.other": "{n} lines not recognized",
       "unrec.hint": "Add what is missing by hand (“Add entry manually”) or rewrite the line and read the text again.",
+      "una.hint": "Click a word to give it an entry (⇧-click: the words up to it).",
+      "una.wordTitle": "Click: give this word an entry · ⇧-click: the words up to it",
+      "una.title": "An entry for the words chosen",
+      "una.name": "Name",
+      "una.kind": "Kind",
+      "una.role": "Role",
+      "una.rolePh": "e.g. Mixed By, guitar, Producer",
+      "una.tracksLine": "the tracks of the line ({list})",
+      "una.tracksAll": "the whole release",
+      "una.tracksNone": "the whole release (the line names no tracks)",
+      "una.tracksAllShort": "all tracks",
+      "una.remember": "Remember as a rule of my own",
+      "una.add": "Add entry",
+      "una.noName": "A name is needed.",
+      "una.noRole": "A role is needed.",
+      "log.unaAdded": "{name}: added from a line not recognized ({kind}, {role}; {tracks})",
+      "log.unaRule": "Own rule {id}: “{phrase}” as {kind}, {role} – read so in every text",
+      "rules.kindText": "Text phrase → entry",
+      "rules.textTracksLine": "tracks of the line",
       "ignored.title.one": "{n} line left out on purpose",
       "ignored.title.other": "{n} lines left out on purpose",
       "ignored.hint": "Thanks, endorsements (“plays … strings”) and web addresses give no credit and are left out. If there is a credit after all, add it by hand (“Add entry manually”).",
@@ -267,6 +286,8 @@
       "ignored.why.software": "music software – no instrument and no relationship of MusicBrainz (T056)",
       "ignored.why.permission": "a permission – no credit",
       "ignored.why.releaseArtist": "the release’s artist – a title line, no credit",
+      "ignored.why.website": "a website – no relationship of MusicBrainz",
+      "ignored.why.nowhere": "no place named",
       "gap.none": "Discogs: its credits seem to be on MusicBrainz (counted by names).",
       "gap.missing.one": "Discogs: about {n} relationship of its credits is not on MusicBrainz yet.",
       "gap.missing.other": "Discogs: about {n} relationships of its credits are not on MusicBrainz yet.",
@@ -877,6 +898,12 @@
       "conn.kind.script": "Userscript",
       "conn.kind.manager": "Userscript manager",
       "conn.kind.links": "Links only",
+      "conn.group.sources": "Sources",
+      "conn.group.sites": "Websites",
+      "conn.group.tools": "Tools & scripts",
+      "conn.group.resources": "Resources",
+      "conn.group.managers": "Userscript managers",
+      "conn.group.links": "Links",
       "conn.X001": "Reads the release, its tracks, works and relationships (web service, relationship editor), searches artists, labels, places and areas, stages relationships in the relationship editor and prefills MusicBrainz’s forms for new entries – it never submits.",
       "conn.X002": "Reads the linked Discogs release (credits, companies, notes, tracks) and artists’ aliases through Discogs’ API; the companion shows the release page.",
       "conn.X003": "Reads the linked album page (or track page) and, when switched on, the album’s track pages (credits, “about” text, tracks); the companion shows them.",
@@ -1056,6 +1083,9 @@
       "entity.area": "area",
       "entity.event": "event",
       "entity.series": "series",
+      "etc.title": "{kind} – click: try it as {next} (in turn: {list}); searched by its name once you stop clicking for a second",
+      "etc.wait": "searching in a second …",
+      "log.etcSearched": "{name} as {kind}: {n} found by its name",
       "entity.recording": "recording",
       "entity.release": "release",
       "entity.work": "work",
@@ -1196,10 +1226,8 @@
       "settings.editNote": "Edit note",
       "settings.editNote.full": "Full",
       "settings.editNote.simple": "Simple",
-      "settings.editNote.none": "None",
       "settings.editNote.fullTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
       "settings.editNote.simpleTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\nIn the forms of new artists, works, labels …: Source and Script",
-      "settings.editNote.noneTitle": "Nothing is written into the edit note – neither at staging nor in the forms of new artists, works, labels …",
       "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "matrix.attrShort": "abbreviate",
       "matrix.attrLong": "spell out",
@@ -1737,6 +1765,9 @@
       "stats.more.attrs": "Attributes",
       "stats.more.works2": "Works",
       "stats.more.genres": "Genres and styles",
+      "stats.genresView": "Genres and styles of the sources",
+      "stats.genres.combined": "Combined",
+      "stats.genres.separate": "Separate",
       "stats.more.decisions": "Decisions",
       "stats.more.live": "Live",
       "stats.more.gaps": "Gaps closed",
@@ -2206,7 +2237,8 @@
       "em.countShort": "{n} to stage",
       "em.evTitle": "An event: its level, its date (a date of the pool – change it here, or drop a date of the pool onto this head) and its tracks",
       "em.evDateLabel": "Date of event {n}",
-      "em.badDate": "“{text}” is no date (2024-08-14, 2024-01 – 2024-07, 2024)",
+      "em.evDateOpenTitle": "The date of this event: a click opens its fields as in MusicBrainz (begin, end, ended) – a date of the pool can be dropped here too",
+      "em.evDateApply": "Apply",
       "remember.full": "The browser’s storage for musicbrainz.org is full: releases used longest ago were forgotten, and this one could not be stored completely.",
       "remember.hold": "This release was remembered before, but this tab did not read it (it was opened while nothing was remembered). Load the page again to get it back – until then nothing of this release is stored, so it is not written over.",
       "remember.reload": "Load the page again",
@@ -2262,6 +2294,7 @@
       "pools.reloadAny": "↻ load again from the source ({src})",
       "instrAsk.otherwise": "(otherwise it stays “{credit}”, without a role credit; with another choice the role credit is “{credit}”)",
       "instrAsk.otherwiseTr": "(otherwise it stays “{credit}”; “{word}” is a translation, so there is no role credit)",
+      "instrAsk.preset": "“{name}” is set as {set} (credited “{credit}”) – or as:",
       "log.instrPicked": "{name}: {instrument} (role credit “{credit}”)",
       "log.instrTypo": "“{word}” is probably a typo of {instrument}: no role credit.",
       "log.instrOwn": "“{word}” as a spelling of its own: {instrument}, role credit “{credit}”.",
@@ -2330,6 +2363,7 @@
       "sync.dgReleaseTitleSite": "Keep the {site} status marks while the MusicBrainz release page is open (e.g. after “Enter edit”), to check at a glance what arrived; they go when the release page and the editor are closed",
       "log.dgReleaseSite": "{site} status on the release page: {state}",
       "sync.oldSite": "{site} view: needs the companion script 1.8.0 or later – please update “MB x Vibecode: Credits Importer Companion”",
+      "sync.oldSiteV": "{site} view: needs the companion script {version} or later – please update “MB x Vibecode: Credits Importer Companion”",
       "bc.fromTrackPage.one": "From the track page:",
       "bc.fromTrackPage.other": "From the track pages:",
       "bc.trackPageTitle": "Opens the track page on Bandcamp",
@@ -3327,6 +3361,12 @@
     { id: 'S054', where: 'addNotesCompanies, addNotesPersons, groupCredits, roleCell (notesLineInfo), setNotesOff', note: 'Discogs notes read in full (E5, 3.37.0): every credit line of them – people and companies, with or without tracks – like a pasted text; each becomes an entry or a row marked "From the Discogs notes" (ⓘ shows the line). Nothing twice: a credit Discogs lists already (the same name, also as credited, and a role of the same kind – "Produced by X" = "Producer", "Written by X" = "Written-By", the same instrument) is left out; when Discogs gives it for the whole release and the notes name tracks, it gets those (set, ⓘ). The same name with another role joins Discogs\'s entry; a new name is an entry searched by its name; what MusicBrainz has is skipped as always. Also in ⚙ Settings → Texts; "Leave out the credits of the notes" (menu Source ▾) for one release. Off: only places, ℗ / © and publishers of the notes (S042, S043) and the tracks of entries (S022), as before' },
     { id: 'S058', where: 'TEXT.parse (stackPairs, stackName, stackInstr, readStacked), stackNoteHtml, stack-flip', note: 'Names above (or below) the line with their instruments – "Torben SNEKKESTAD / SAXOPHONES & TRUMPET / Agusti FERNANDEZ / PIANO" – a credit of the name for each instrument: a line like a name (2 – 4 words in capitals, no role, place, digit or sign) and a line only of instruments or voices MusicBrainz knows pair up within a block (the lines between empty or other ones); a block that pairs up wholly with the names above or wholly with the instruments above is read so; any other (an odd number of lines, one missing, columns read into each other) with the names above – the entry says so, "⇅ Instruments above the names" reads the text the other way round. A line of instruments is never "role & name" then. In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
     { id: 'S059', where: 'personCase, TEXT.parse (normalCaseName, addCredit), groupCredits', note: 'A person\'s name with a word in capitals beside words in normal case ("Torben SNEKKESTAD", "Agusti FERNANDEZ", "KUROSAWA Go") in normal case – "Torben Snekkestad" – for the search and a new artist; a word of three letters or more with a vowel, first in the name from four letters; never a name all in capitals ("ABBA"), short words ("DJ Shadow") nor letters first ("BMS Illustration"); MusicBrainz\'s spelling counts once it is linked. Persons only (labels keep "ECM Records"). In pasted texts, text from cover art and the Discogs notes (3.38.7)' },
+    // [3.42.3] collected items Z-GON, Z-BZ
+    { id: 'S073', where: 'TEXT.parse (readClause, addCredit; titleNames)', note: 'Texts (3.42.3): "With X, <sentence>" – "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, …" – is prose, no credit (a part after a comma of five words or more, no roles); and a name that is the title of the release or of one of its tracks ("Black Zenith") is never a person, unless it is the release\'s artist too. Before: "With …" gave the name a guest performer' },
+    { id: 'S072', where: 'TEXT.parse (readLine; WEBSITE_BY, NOWHERE)', note: 'Texts (3.42.3): left out on purpose, not named as not recognized – "Website by X" (also "Web design by", "Site by"; MusicBrainz has no relationship for a website: "a website") and a place that is none, "Recorded all over the place" ("everywhere", "in various places": "no place named")' },
+    { id: 'S071', where: 'TEXT.parse (readLine; prevBy, STUDIO_LINE)', note: 'Texts (3.42.3): a line that goes on the "by" line above it – a studio ("All songs mixed by Dylan Alledridge," / "Skinny Elephant recording": a name in capitals and recording(s), studio(s) or sound(s)) is the place of its verb (mixed at), a suggestion searched by its name; "and Name" one more name of its roles (left out with a website, S072); an empty line ends it' },
+    { id: 'S070', where: 'TEXT.parse (readLine; BULLET, contWho, lineLead)', note: 'Texts (3.42.3): the tracks after a bullet – "Matt Glassmeyer — saxophones • 1, 8" (tracks 1 and 8) – and lines only of roles below "Name — roles" ("Wurlitzer • 1, 8", "organ • 1"): more roles of that name with their tracks, until an empty line (an en dash like an em dash). Before: such lines were not recognized' },
+    { id: 'S069', where: 'TEXT.parse (STATUS_MARKS)', note: 'Texts (3.42.3): the companion\'s status marks (✓ ● ○ ✗, "!" first) in a text copied from a page it marked – "○ Chris Lippincott — pedal steel • 3" – are no part of a line' },
     { id: 'S068', where: 'TEXT.parse (readLine)', note: 'Texts (3.39.8): a line that is only the name of the release\'s artist (the title line of a booklet, "Nordlicht Quartett") is left out ("the release\'s artist") – no credit, not named as not recognized' },
     { id: 'S067', where: 'TEXT.parse (headingLists, readHeading)', note: 'Texts (3.39.8): a heading with several names below it – "VIOLIN / Anna Berg / Clara Stein / Ben Holt" (instruments or voices; a role ending in "by" or with a colon: "RECORDED BY / Jonas Kerr", "Strings:") – each name gets the heading\'s roles; empty lines between the names allowed (as text read from a booklet has them); one name below an instrument stays a pair of lines (S058)' },
     { id: 'S066', where: 'mapRole (PERSON_AT_ROLE, PERSON_COMPANY_SKIP)', note: 'Roles (3.39.6): a role of "Companies, etc." Discogs gives a person – "Recorded At", "Mixed At", "Mastered At", "Engineered At", "Produced At", "Remixed At": what the person did ("Mixed By"; a person linked on Discogs is always a person, no place); "Pressed By", "Manufactured By", "Distributed By", "Printed By", "Licensed To": no relationship of MusicBrainz for a person – left out (Skip), the row says so ("Licensed From" stays licensor, R093)' },
@@ -4203,6 +4243,12 @@
     const used = new Set([...(row.consumed || []), ...(row.flagMods || [])].map(norm));
     return (row.mods || []).filter((m) => !used.has(norm(m)));
   }
+
+  /**
+   * [Q013] (3.42.3) Whether a row's instrument question asks: its instrument is still the family word – or, for a question whose
+   * first answer is set at once (`preset`: "Horns" → horn, or brass), one of its answers.
+   */
+  const questionAsks = (q, row) => norm(row.primaryText) === q.base || (!!q.preset && q.options.some((o) => norm(o) === norm(row.primaryText)));
 
   /** The question for a row: Discogs gives only the family word, without details other than checkboxes. */
   function questionRuleFor(row) {
@@ -5268,6 +5314,18 @@
     const PREFIX = new RegExp(`^${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*[:–—-]\\s*(.+)$`, 'i');
     const SUFFIX = new RegExp(`^(.*?)[\\s,]*\\(?\\s*(?:on\\s+|auf\\s+)?${TEXT_TRACK_WORDS}\\s*(${SPEC_W})\\s*\\)?\\s*\\.?$`, 'i');
     const NUMBERS = new RegExp(`^(.*?)\\s*\\((${SPEC})\\)\\s*\\.?$`);
+    // [S070] (3.42.3) … or after a bullet: "Matt Glassmeyer — saxophones • 1, 8" (collected item Z-GON a)
+    const BULLET = new RegExp(`^(.*?\\S)\\s*[•·]\\s*(${SPEC})\\s*\\.?$`);
+    // [S069] (3.42.3) the companion's status marks, copied with a line of its page ("○ Chris Lippincott — pedal steel • 3"; Z-GON i)
+    const STATUS_MARKS = /(^|\s)[✓●○✗](?=\s|$)\s*/gu;
+    const STATUS_BANG = /^\s*!\s+/;
+    // [S071] (3.42.3) a line below a "by" line that names a studio ("All songs mixed by X," / "Skinny Elephant recording"; Z-GON e)
+    // (3.42.8, review) "recording", "studio(s)", "sound" (Q-di) – not "Recordings", "Sounds": names of labels ("Warp Recordings")
+    const STUDIO_LINE = /^(?:\p{Lu}[\p{L}\p{N}'’.&-]*\s+){1,4}(?:[Rr]ecording|[Ss]tudios?|[Ss]ound)$/u;
+    // [S072] (3.42.3) left out on purpose: a website (MusicBrainz has no relationship for it; Z-GON g) and a place that is none
+    // ("Recorded all over the place"; Z-GON f)
+    const WEBSITE_BY = /^(?:the\s+)?(?:web\s*(?:site|page)s?|web\s*design|homepage|site)(?:\s+(?:design(?:ed)?|built|made|programmed))?\s+by\s+\S/i;
+    const NOWHERE = /^\p{L}+ed\s+(?:all\s+over\s+(?:the\s+)?(?:place|world|map|town)|everywhere|here\s+and\s+there|in\s+(?:many|several|various|different|countless)\s+(?:places|locations|rooms|spaces))$/iu;
     // [S053] (3.36.7) positions in front of a sentence, without "Tracks" and a colon, before its verb ("A1 to B2 recorded 22nd May
     // 1981 in live concert at Goldsmith's College, London", "C1 to D recorded …" – D a whole side; collected item 150)
     const LEAD_POS_ONE = '(?:[A-Z]{1,2}\\d{0,3}|\\d{1,3}(?:\\.\\d{1,3})?)';
@@ -5504,7 +5562,8 @@
     }
 
     function parse(text, ctx0) {
-      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [] } = ctx0;
+      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [], titleNames = [],
+        ownTexts = [] } = ctx0;
       // [3.39.2] each name once: Bandcamp adds its album's artist to the release's, mostly the same – a line "With …" (S061) then
       // went to "one of the release's artists" and its words to ask were not recognized (collected item 187)
       const artistNames = artistNames0.filter((n, i, all) => n && all.findIndex((x) => norm(x) === norm(n)) === i);
@@ -5565,6 +5624,9 @@
         if (!p || !looksLikeName(name)) return false;
         if (isCompanyRoleKnown(p.raw)) companies.push({ who: who(name), role: p.raw, catno: '', tracks: scope ? tracksOf(scope) : null, ...at(), ...extra });
         else {
+          // [S073] (3.42.3) the title of the release or of a track is no person ("With Black Zenith, …" on "Black Zenith"; Z-BZ) –
+          // unless it is the name of the release's artist too (a release named after its artist)
+          if (ruleOn('S073') && titleKeys.has(norm(name)) && !bandNames.has(norm(name))) return false;
           // [S060] (3.38.12) as written kept for "↺ in capitals" in the head
           const nc = ruleOn('S059') ? normalCaseName(name) : name;
           credits.push({ who: { ...who(nc), ...(nc !== name ? { caseFrom: name } : {}) }, role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(scope), ...at(), ...extra });
@@ -5573,6 +5635,8 @@
       };
       // [S041] (3.30.7) the release's artist as the band, or "the band", "we" (collected item 96)
       const bandNames = new Set(artistNames.map((n) => norm(n)).filter(Boolean));
+      // [S073] (3.42.3) the titles of the release and its tracks (no person)
+      const titleKeys = new Set((titleNames || []).map((n) => norm(n)).filter(Boolean));
       const isTheBand = (subject) => bandNames.has(norm(subject)) || TEXT_BAND_SELF.test(clean(subject));
       // [3.14.0] A credit without a name ("… created by a human"): the core offers the release's artists for it
       const addPlaceholder = (said, role0, scope) => {
@@ -5836,7 +5900,9 @@
             if (who0 && looksLikeName(who0)) {
               const [y1, y2] = [t[2], t[3] || t[2]].sort();
               const date = t[2] ? { ...emptyDateFields(), by: y1, ey: y2 } : null;
-              names(who0).forEach((x) => { if (addCredit(x, 'Field Recordings By', cScope, date ? { date } : {})) found++; });
+              // [Z-FRD] (3.42.2) the period a date of the pool of its own, one a line ("Ambisonic recordings 2022 – 2025")
+              const dateOf = date ? { date, dateName: `${cap(m[1])} recordings`, dateKey: `fr:${norm(clause)}` } : {};
+              names(who0).forEach((x) => { if (addCredit(x, 'Field Recordings By', cScope, dateOf)) found++; });
               // what follows: an area ("Big Sur, California"; [T059] 3.39.2 "Pacific coast" → Pacific Coast) recorded in, else not
               // recognized
               const where = t[4] ? areaOf(clean(t[4])) : null;
@@ -6044,6 +6110,19 @@
               } else cur += ch;
             }
             chunks.push(clean(cur));
+            // [S073] (3.42.3) "With Black Zenith, Stellarium turns toward the dark geometry of the cosmos, …" (Bandcamp; collected item
+            // Z-BZ): a sentence after the comma – five words or more, no roles – makes the line prose, no credit (until 3.42.2 the words
+            // after "With" were a guest)
+            // (3.42.8, review) a sentence: its second or third word is a word in small letters that is no word between names ("Stellarium
+            // turns toward …"; not "Kenny Wheeler and members of the Berlin Philharmonic" – names and more)
+            const JOIN_WORD = /^(?:and|or|of|on|the|a|an|with|from|in|at|for|to|und|et|y|de|del|la|le|von|van|der|di|da|du)$/i;
+            const prosePart = (x) => {
+              const on = x.match(/^(.+?)\s+on\s+(.+)$/i) || x.match(/^(.+?)\s*\(([^)]+)\)$/);
+              const w = x.split(' ');
+              return w.length >= 5 && !listRoles(x) && !playList(x) && !(on && listRoles(clean(on[2])))
+                && w.filter((y) => /^\p{Ll}/u.test(y)).length >= 3 && w.slice(1, 3).some((y) => /^\p{Ll}[\p{L}'’-]*$/u.test(y) && !JOIN_WORD.test(y));
+            };
+            if (ruleOn('S073') && chunks.slice(1).some(prosePart)) return;
             const makeWord = (n) => PROPER_WORDS.some((w) => norm(w) === norm(n.split(' ')[0]));
             const soft = [];
             const band = [];
@@ -6156,6 +6235,8 @@
           const rolesLeft = listRoles(left);
           if (rolesRight && !rolesLeft) {
             rolesRight.forEach((r) => { if (addCredit(left, r, cScope)) found++; });
+            // [S070] (3.42.3) "Name — roles": lines of roles below it are his too
+            if (found) lineLead = left;
           } else if (rolesLeft && !rolesRight) {
             for (const n of names(right)) rolesLeft.forEach((r) => { if (addCredit(n, r, cScope)) found++; });
           } else if (!rolesLeft && !rolesRight && looksLikeName(left) && !roleParts(left).known.length) {
@@ -6175,6 +6256,7 @@
                 }
               });
               if (found) unknownParts.push(...rp.unknown.filter((r) => !guess.has(r)));
+              if (found) lineLead = left;
             }
           }
         };
@@ -6241,6 +6323,34 @@
       // society and its tracks; outside a block a line with a society after the name does too. The society is the release's rights
       // society (T045), once each.
       let pubBlock = null;
+      // [S070] (3.42.3) the name of the line above ("Name — roles") whose roles go on in lines of roles only, until an empty line;
+      // [S071] the "by" credits of the line above ({ verb, roles, scope, line, ignored }) a line may go on (a studio, "and Name");
+      // lineLead: the name such a line gives (readClause)
+      let contWho = null;
+      let prevBy = null;
+      let lineLead = null;
+      /**
+       * [Z-UNA] (3.42.4) The own rules of texts whose phrase is in a text (words whole, any case): each its entry – a person with its
+       * role, a label, place or area with its company role; the tracks of the line when the rule says so (`tracks: 'line'`). → how many.
+       */
+      const phraseRe = (x) => String(x).trim().split(/\s+/).map((w) => w.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&')).join('\\s+');
+      const ownRes = ownTexts.filter((u) => u && u.phrase && u.role).map((u) => [u, new RegExp(`(?<![\\p{L}\\p{N}])${phraseRe(u.phrase)}(?![\\p{L}\\p{N}])`, 'iu')]);
+      const readOwnTexts = (t, scope) => {
+        let n = 0;
+        for (const [u, re] of ownRes) {
+          const m = String(t || '').match(re);
+          if (!m) continue;
+          const sc = u.tracks === 'line' ? scope : null;
+          if (u.entity === 'artist') {
+            if (addCredit(m[0], u.role, sc, { own: u.id })) n++;
+          } else if (isCompanyRole(u.role)) {
+            // (3.42.8, review) with its kind (a label, place or area – the role alone may allow several)
+            companies.push({ who: who(m[0]), role: u.role, catno: '', tracks: sc ? tracksOf(sc) : null, ...at(), own: u.id, entity: u.entity });
+            n++;
+          }
+        }
+        return n;
+      };
       const societiesIn = (t) => uniq([...String(t || '').matchAll(SOCIETY_WORD)].map((x) => societyName(x[1])));
       const addSociety = (name) => {
         if (!isCompanyRole('Rights Society')) return false;
@@ -6343,9 +6453,16 @@
         if (!line) {
           // [S043] an empty line after its publishers ends a block
           if (pubBlock && pubBlock.n) pubBlock = null;
+          // [S070] [S071] (3.42.3) … and the roles of a name above, and a credit lines below may go on
+          contWho = null;
+          prevBy = null;
           return;
         }
         startLine(raw);
+        const cont = contWho;
+        const before = prevBy;
+        contWho = null;
+        prevBy = null;
         // [S068] (3.39.8) a line only of the name of the release's artist (a booklet's title): no credit, left out as such
         if (ruleOn('S068') && !pubBlock && artistNames.some((n) => norm(n) === norm(line.replace(/[.:]$/, '')))) {
           ignored.push({ text: line, why: 'releaseArtist' });
@@ -6363,12 +6480,42 @@
         };
         if (!((m = line.match(PREFIX)) && useScope(m[1], m[2]))) {
           if (!((m = line.match(SUFFIX)) && m[1] && useScope(m[2], m[1]))) {
-            if (!((m = line.match(NUMBERS)) && m[1] && useScope(m[2], m[1])) && ruleOn('S053')
+            if (!((m = line.match(NUMBERS)) && m[1] && useScope(m[2], m[1]))
+              && !(ruleOn('S070') && (m = line.match(BULLET)) && useScope(m[2], m[1])) && ruleOn('S053')
               && ((m = line.match(LEAD_POS)) || (m = line.replace(LEAD_TRACK_WORD, '').match(LEAD_POS)))) useScope(m[1], m[2]);
           }
         }
         part0 = line;
         pi0 = 0;
+        // [S070] (3.42.3) a line only of roles below "Name — roles" (no name, colon, dash or "by"): more roles of that name, until an
+        // empty line ("Matt Glassmeyer — saxophones • 1, 8" / "Wurlitzer • 1, 8" / "organ • 1"; collected item Z-GON b)
+        if (ruleOn('S070') && cont && !/:|\s[–—-]\s/.test(line) && !/\sby\s/i.test(` ${line} `)) {
+          const roles = listRoles(line);
+          const list = roles ? null : playList(line);
+          if (roles || list) {
+            // a word that may be an instrument asks like those of a list (137d)
+            (roles || list.parts).forEach((r) => addCredit(cont.name, r, scope, roles || playable(r) ? {} : { guess: true }));
+            contWho = cont;
+            return;
+          }
+        }
+        // [S071] (3.42.3) a line that goes on the "by" line above it: a studio – "All songs mixed by Dylan Alledridge," / "Skinny Elephant
+        // recording" – the place of its verb (mixed at; Z-GON e); "and Name" – one more name of its roles ("Website by Max Helgemo" / "and
+        // Jacob Dawson-Daley": left out with it, Z-GON g)
+        if (ruleOn('S071') && before) {
+          if (before.verb && STUDIO_LINE.test(line) && !TEXT_LABEL_LINE.test(line) && isCompanyRole(`${before.verb} At`)) {
+            companies.push({ who: who(line), role: `${before.verb} At`, catno: '', tracks: before.scope ? tracksOf(before.scope) : null, ...at() });
+            return;
+          }
+          const and = line.match(/^(?:and|&|und|et|y)\s+(.+)$/i);
+          const more = and ? names(and[1]) : [];
+          if (more.length && more.every((n) => looksLikeName(n) && /^\p{Lu}/u.test(n) && !TEXT_NOT_NAME.test(n) && !isRole(cap(n)))) {
+            if (before.ignored) ignored.push({ text: line0, why: before.ignored });
+            else more.forEach((n) => before.roles.forEach((r) => addCredit(n, r, before.scope)));
+            prevBy = before;
+            return;
+          }
+        }
         // [S043] (3.31.0) the heading of a block of publishers ("[Publishers & Rights Societies]", "Publishers (all BMI):"),
         // a line of rights societies only ("BIEM/GEMA"), a publisher below the heading or with its society ("X-BMI : tracks 2, 4")
         if (ruleOn('S043')) {
@@ -6396,11 +6543,24 @@
         let pi = 0;
         const unknownParts = [];
         const missed = [];
+        const c00 = credits.length;
+        lineLead = null;
+        let webBy = false;
         for (const unit of units) {
           const whole = units.length === 1 ? line0 : unit;
           // [3.21.4] with the reason (shown in the list)
           if (TEXT_IGNORE_LINE.test(unit)) {
             ignored.push({ text: whole, why: TEXT_THANKS.test(unit) ? 'thanks' : TEXT_COURTESY_LINE.test(unit) ? 'courtesy' : 'endorsement' });
+            continue;
+          }
+          // [S072] (3.42.3) a website (no relationship of MusicBrainz) and "Recorded all over the place" (no place): left out as such
+          if (ruleOn('S072') && WEBSITE_BY.test(clean(unit))) {
+            ignored.push({ text: whole, why: 'website' });
+            webBy = units.length === 1;
+            continue;
+          }
+          if (ruleOn('S072') && NOWHERE.test(clean(unit))) {
+            ignored.push({ text: whole, why: 'nowhere' });
             continue;
           }
           // [3.30.8] about the package ("Including a 52 p. booklet.")
@@ -6424,11 +6584,29 @@
           // [3.21.3] also to labels and places ("℗ 2023 X Records instagram.com/x": "Create label …" fills it in, 37c)
           else if (web.links.length) giveLinks(web.links, [...credits.slice(c0), ...companies.slice(k0)]);
         }
+        // [Z-UNA] (3.42.4) own rules of texts (U…, kind "text"): a phrase of a part not recognized gives its entry – the line, or
+        // the words not recognized, then are no more
+        if (ownTexts.length) {
+          for (let k = missed.length - 1; k >= 0; k--) if (readOwnTexts(missed[k], scope)) { missed.splice(k, 1); found++; }
+          for (let k = unknownParts.length - 1; k >= 0; k--) if (readOwnTexts(unknownParts[k], scope)) unknownParts.splice(k, 1);
+        }
         if (!found) {
           if (missed.length) unrecognized.push(line0);
         } else {
           missed.forEach((u) => unrecognized.push(u));
           if (unknownParts.length) unrecognized.push(`${line0} → ? ${unknownParts.map((x) => `“${x}”`).join(', ')}`);
+        }
+        // [S070] (3.42.3) one name with its roles ("Name — roles", one part): lines of roles below it go on
+        if (ruleOn('S070') && lineLead && units.length === 1 && pi === 1 && !missed.length) contWho = { name: lineLead };
+        // [S071] (3.42.3) one sentence of "by" credits (one verb: its place may follow) or a website left out: the next line may go on
+        if (ruleOn('S071') && units.length === 1) {
+          const added = credits.slice(c00);
+          const roles = uniq(added.map((c) => c.role));
+          const verbs = uniq(roles.map((r) => (String(r).match(/^(\p{L}+ed) By$/iu) || [])[1]).filter(Boolean).map(cap));
+          if (webBy) prevBy = { ignored: 'website', roles: [], verb: '', scope: null };
+          else if (added.length && !missed.length && /\sby\s/i.test(` ${line} `) && uniq(added.map((c) => norm(c.who.name))).length === 1) {
+            prevBy = { verb: verbs.length === 1 && roles.length === 1 ? verbs[0] : '', roles, scope };
+          }
         }
       };
 
@@ -6566,19 +6744,25 @@
         roleBlock = [];
         held.forEach(readLine);
       };
-      const allLines = String(text || '').split(/\r?\n/);
+      // [S069] (3.42.3) without the companion's status marks (a text copied from a page it marked: "○ Chris Lippincott — …")
+      const allLines = String(text || '').split(/\r?\n/).map((l) => (ruleOn('S069') ? l.replace(STATUS_MARKS, '$1').replace(STATUS_BANG, '') : l));
       // [S067] (3.39.8) headings with several names first; their lines are no pairs of S058
       const heads = headingLists(allLines);
       const stacks = stackPairs(allLines.map((l, i) => (heads.has(i) ? '' : l)));
       for (const [li, raw] of allLines.entries()) {
         if (heads.has(li)) {
           flushBlock();
+          // [S070] [S071] (3.42.3) no line above goes on across a heading or a pair
+          contWho = null;
+          prevBy = null;
           if (heads.get(li)) readHeading(heads.get(li));
           continue;
         }
         // [S058] (3.38.7) a line of a pair: read with the other one
         if (stacks.has(li)) {
           flushBlock();
+          contWho = null;
+          prevBy = null;
           if (stacks.get(li)) readStacked(stacks.get(li));
           continue;
         }
@@ -6593,6 +6777,8 @@
           }
           if (roleBlock.length && readBlock(roleBlock, raw)) {
             roleBlock = [];
+            contWho = null;
+            prevBy = null;
             continue;
           }
           flushBlock();
@@ -6609,6 +6795,27 @@
         return { credits, companies, unrecognized, ignored, stackAlt: alt.credits.filter((c) => c.stackAmbig), stackAltUnrec: alt.unrecognized };
       }
       return { credits, companies, unrecognized, ignored, stackAlt: [], stackAltUnrec: null };
+    }
+
+    /**
+     * [Z-UNA] (3.42.4) The tracks a line names, as readLine finds them – "Tracks 3–5: …", "… (tracks 1, 4)", "… (1, 3)", "… • 1, 8",
+     * "2: …" (a line of a track page as listed) – → { set, spec } (track indexes), null if none; a line listed with its words not
+     * recognized ("… → ? “x”") without them.
+     */
+    function lineTracks(raw, resolveTracks) {
+      const line = clean(String(raw || '').replace(/\s+→\s+\?\s.*$/, ''));
+      const tries = [];
+      let m;
+      if ((m = line.match(/^([A-Za-z]?\d+(?:\.\d+)?):\s+\S/))) tries.push(m[1]);
+      if ((m = line.match(PREFIX))) tries.push(m[1]);
+      if ((m = line.match(SUFFIX)) && m[1]) tries.push(m[2]);
+      if ((m = line.match(NUMBERS)) && m[1]) tries.push(m[2]);
+      if ((m = line.match(BULLET))) tries.push(m[2]);
+      for (const spec of tries) {
+        const set = resolveTracks ? resolveTracks(spec) : null;
+        if (set && set.size) return { set, spec: spec.trim() };
+      }
+      return null;
     }
 
     /** The neutral release of a pasted text (ctx: the MB tracks and the core's helpers, see sourceContext). */
@@ -6655,6 +6862,7 @@
       parseReleaseId: () => '',
       parse,
       toRelease,
+      lineTracks,
       async release(id, ctx) {
         return toRelease(ctx.input, ctx);
       },
@@ -6695,6 +6903,27 @@
       } catch (e) {
         return null;
       }
+    }
+    /**
+     * [Z-STG2] (3.42.6; Q-dj, Q-do) The tags of an album page – its tag links ("tralbum-tags"), else the "keywords" of its JSON-LD –
+     * without the one of the artist's place (Bandcamp adds the location the page shows: "Nashville" of "Nashville, Tennessee").
+     */
+    function pageTags(html) {
+      const h = String(html || '');
+      let tags = [...h.matchAll(/<a\b[^>]*\bclass="[^"]*\btag\b[^"]*"[^>]*>([^<]+)<\/a>/gi)].map((m) => unescapeHtml(m[1]).trim()).filter(Boolean);
+      if (!tags.length) {
+        const ld = h.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i);
+        try {
+          const j = ld ? JSON.parse(ld[1]) : null;
+          const kw = j && j.keywords;
+          tags = (Array.isArray(kw) ? kw : String(kw || '').split(',')).map((x) => String(x || '').trim()).filter(Boolean);
+        } catch {
+          tags = [];
+        }
+      }
+      const loc = unescapeHtml((h.match(/<span[^>]*\bclass="[^"]*\blocation\b[^"]*"[^>]*>([^<]+)<\/span>/i) || [])[1] || '').trim();
+      const where = new Set([loc, ...loc.split(',')].map((x) => norm(x)).filter(Boolean));
+      return tags.filter((t, i, all) => !where.has(norm(t)) && all.findIndex((x) => norm(x) === norm(t)) === i);
     }
     /**
      * [3.22.1] The name of the Bandcamp account an album page is on (its "data-band" JSON, else "og:site_name"): the
@@ -6784,7 +7013,7 @@
      * The neutral release from an album's page data. trackCredits: [credits text of each track page] (or []);
      * ctx: as for a text (see sourceContext), with this album's tracks.
      */
-    function toRelease(data, url, trackCredits, ctx, { pageName = '' } = {}) {
+    function toRelease(data, url, trackCredits, ctx, { pageName = '', tags = [] } = {}) {
       const cur = data.current || {};
       const tracks = (data.trackinfo || []).map((t, i) => ({ position: String(t.track_num || i + 1), title: t.title || '', aliases: [] }));
       const resolveTracks = (spec) => ctx.resolveTracks(spec, tracks);
@@ -6793,7 +7022,9 @@
       // [3.22.1] page: the name of the Bandcamp account, own: whether it is the artist's own page (else a label's, 46)
       const bandName = String(data.artist || '').trim();
       const band = { name: bandName, url: bandUrl(url), page: pageName, own: ownPage(pageName, bandName) };
-      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
+      // [S073] (3.42.3) the album's title and its tracks' are no persons (Z-BZ)
+      const titleNames = [...(ctx.titleNames || []), cur.title || '', ...tracks.map((t) => t.title)].filter(Boolean);
+      const album = TEXT.parse(cur.credits || '', { ...ctx, resolveTracks, resolveTitles, titleNames, artistNames: [...(ctx.artistNames || []), bandName] });
       const credits = [...album.credits];
       // [S058] (3.38.12) the other reading of lines whose order was not clear ("⇅")
       const stackAlt = [...(album.stackAlt || [])];
@@ -6801,7 +7032,7 @@
       // [3.7.0] The "about" text is mostly prose: only its places ("recorded at Loft in Cologne, june 16/17 2018");
       // its dates are found in the notes like those of the credits
       // [3.22.0] and its areas ("recorded in Berlin")
-      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, artistNames: [...(ctx.artistNames || []), bandName] });
+      const aboutRes = TEXT.parse(cur.about || '', { ...ctx, resolveTracks, resolveTitles, titleNames, artistNames: [...(ctx.artistNames || []), bandName] });
       // [3.30.7] the members of the band from the "about" text too (S041); [S049] (3.32.6) every credit of it (collected item 115) –
       // marked as from there, left out with it; its lines not recognized are not listed (mostly prose)
       const aboutAll = ruleOn('S049');
@@ -6817,7 +7048,7 @@
       const trackAltUnrec = new Map();
       (trackCredits || []).forEach((text, i) => {
         if (!text || !tracks[i]) return;
-        const res = TEXT.parse(text, { ...ctx, resolveTracks, resolveTitles });
+        const res = TEXT.parse(text, { ...ctx, resolveTracks, resolveTitles, titleNames });
         const on = { indexes: [i], position: tracks[i].position };
         // [3.17.0] the track page a credit is on (its path), for the companion and the hint in the dashboard
         const page = { page: String(((data.trackinfo || [])[i] || {}).title_link || ''), pos: tracks[i].position };
@@ -6856,6 +7087,8 @@
         // [3.17.2] the liner notes found (their signature in the notes: a date there is named for them in the pool)
         liner: liner ? { name: liner.name, at: aboutAt + liner.at, len: liner.len } : null,
         tags: [],
+        // [Z-STG2] (3.42.6) the album's tags (genres and styles of the statistics; no words of the format, unlike Discogs's `tags`)
+        bcTags: tags,
         tracks,
         credits: credits.map((c) => ({ ...c, who: linkBand(c.who) })),
         companies: companies.map((c) => ({ ...c, who: linkBand(c.who) })),
@@ -6888,6 +7121,7 @@
       pageUrl,
       isTrackPage,
       pageData,
+      pageTags, // [Z-STG2] (3.42.6)
       toRelease,
       linerNotes,
       urlKey: bandUrl,
@@ -6923,7 +7157,7 @@
             trackCredits.push(text);
           }
         }
-        return toRelease(data, id, trackCredits, ctx, { pageName: bandPageName(html) });
+        return toRelease(data, id, trackCredits, ctx, { pageName: bandPageName(html), tags: pageTags(html) });
       },
     };
   })();
@@ -6988,13 +7222,25 @@
       short: 'YT',
       noteName: 'a YouTube video description',
       creditsName: 'YouTube description',
-      companion: false,
+      // [Z-YTC] (3.42.8) shown by the companion (1.11.0): its marks in the video's description
+      companion: 'youtube',
       readsTrackLists: true,
       nameSearch: true,
       /** The tracks are MusicBrainz's own (a video has no track list). */
       usesMbTracks: true,
       urlKey: () => '',
-      releaseLinks: () => [],
+      /**
+       * [Z-YTL] (3.42.7; Q-da) The YouTube videos a MusicBrainz release links to (every link to a video – streaming, free streaming …):
+       * a source like Discogs and Bandcamp, the last of the order of the sources.
+       */
+      releaseLinks(relations) {
+        const links = new Map();
+        for (const r of relations || []) {
+          const id = r['target-type'] === 'url' && r.url ? videoId(r.url.resource) : '';
+          if (id && !links.has(id)) links.set(id, { id, url: videoUrl(id) });
+        }
+        return [...links.values()];
+      },
       parseReleaseId: videoId,
       videoId,
       videoUrl,
@@ -7010,7 +7256,8 @@
   })();
 
   const SOURCES = { discogs: DISCOGS, bandcamp: BANDCAMP, text: TEXT, youtube: YOUTUBE };
-  const LINKED_SOURCES = ['discogs', 'bandcamp'];
+  // [Z-YTL] (3.42.7) YouTube too: the videos the release links to
+  const LINKED_SOURCES = ['discogs', 'bandcamp', 'youtube'];
 
   // --- From the neutral release to the dashboard's entries (core) ---------------------------------------
 
@@ -7119,7 +7366,7 @@
         // [S058] (3.38.7) from lines whose order of names and instruments is not clear
         if (c.stackAmbig) entry.stackAmbig = true;
         // [S062] (3.38.18) the period of the relationship ("2022-2025"); [S064] a role credit of the text ("cover", "photo")
-        if (c.date && !entry.date) entry.date = c.date;
+        if (c.date && !entry.date) Object.assign(entry, { date: c.date, ...(c.dateName ? { dateName: c.dateName, dateKey: c.dateKey } : {}) }); // [Z-FRD] (3.42.2)
         if (c.roleCredit && !entry.roleCredit) entry.roleCredit = c.roleCredit;
         // [3.17.2] from the "about" text only while every credit of it comes from there (liner notes)
         if (!c.fromAbout) entry.fromAbout = false;
@@ -7147,6 +7394,8 @@
       if ((who.altNames || []).length) g.altNames = uniq([...(g.altNames || []), ...who.altNames]);
       // [3.30.9] an entry only from the Discogs notes: searched by its name (S042)
       if (c.fromNotes && !who.id) g.fromNotes = true;
+      // [Z-UNA] (3.42.8, review) the kind an own rule of texts gives it
+      if (c.entity && !g.entity) g.entity = c.entity;
       // [3.21.3] a name without an id: the web profiles found next to it (T032)
       if (!who.id && (who.links || []).length) g.links = uniq([...g.links, ...who.links]);
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
@@ -7442,6 +7691,20 @@
       perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF in the beta)', since: '3.34.6' },
     // [Z-YT] (3.41.13) the description of a video
     { id: 'X017', kind: 'source', name: 'YouTube', home: 'https://www.youtube.com/', hosts: ['youtube.com', 'youtu.be'], perms: '@connect youtube.com · GM_xmlhttpRequest', since: '3.41.13' },
+  ];
+
+  /**
+   * [Z-CONS] (3.42.0) The groups of the connections, in this order (each connection in the first group it fits): the sources (and
+   * images by their address, a source of the text from cover art), websites, tools and other scripts, resources (libraries),
+   * userscript managers, links.
+   */
+  const CONN_GROUPS = [
+    ['sources', (c) => c.kind === 'source' || c.id === 'X015'],
+    ['sites', (c) => c.kind === 'site' && c.id !== 'X015'],
+    ['tools', (c) => c.kind === 'tool' || c.kind === 'script'],
+    ['resources', (c) => c.kind === 'library'],
+    ['managers', (c) => c.kind === 'manager'],
+    ['links', (c) => c.kind === 'links'],
   ];
 
   /**
@@ -8448,6 +8711,8 @@
 
   const STATS_ON_KEY = 'dci-stats-on';
   const STATS_PERIOD_KEY = 'dci-stats-period';
+  // [Z-STG2] (3.42.6) the card "Genres and styles": 'separate' (each source), else combined
+  const STATS_GENRES_KEY = 'dci-stats-genres';
   // ([E8] 3.38.2: the developer statistics are collected with the others; shown in "Developer mode" – DEV_KEY, 3.38.5)
   const STAT_JOB_PREFIX = 'dci-stat-job:';
   const STAT_JOB_MAX_MS = 30 * 60 * 1000;
@@ -9275,6 +9540,13 @@
     // [E1] A pasted text (the source "text") and its form while open
     textInput: null,
     textForm: null,
+    // [Z-UNA] (3.42.4) words of a line not recognized chosen for an entry ({ li, line, a, b, name, kind, role, tracks, remember,
+    // error }), the words given one (line → word indexes) and whether the list stays open
+    una: null,
+    unaDone: new Map(),
+    unaOpen: false,
+    // [Z-UNA] (3.42.8, review) the words given an entry in this import (remembered with the release)
+    unaItems: [],
     // [stage 2] The second source supplementing the loaded one (its list of suggestions), and the sources that did
     supp: null,
     suppSources: new Map(),
@@ -11742,8 +12014,10 @@
       Object.keys(MAPPING.raw).filter((k) => !['format', 'version', 'about', 'ROLE_RULE_DATA', 'COMPANY_ROLES', 'WORDING_RULES', 'QUESTION_RULES', 'TYPE_QUESTIONS'].includes(k) && !editable.has(k))
         .forEach((k) => { if (k in data && encJson(data[k]) !== encJson(MAPPING.raw[k])) skip(k, tr('mapping.skipList')); });
     } else return { error: tr('rules.importBad') };
-    const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit'];
-    out.own = out.own.filter((r) => r && typeof r === 'object' && ['role', 'instrument'].includes(r.kind) && typeof r.discogs === 'string' && r.discogs.trim()
+    // [Z-UNA] (3.42.4) and rules of texts (phrase, entity, role, tracks)
+    const OWN_FIELDS = ['id', 'kind', 'on', 'discogs', 'details', 'detailsMode', 'type', 'level', 'instrument', 'credit', 'phrase', 'entity', 'role', 'tracks'];
+    out.own = out.own.filter((r) => r && typeof r === 'object' && ['role', 'instrument', 'text'].includes(r.kind) && typeof r.discogs === 'string' && r.discogs.trim()
+      && (r.kind !== 'text' || (typeof r.phrase === 'string' && r.phrase.trim() && ['artist', 'label', 'place', 'area'].includes(r.entity) && typeof r.role === 'string' && r.role.trim()))
       && OWN_FIELDS.every((k) => r[k] == null || (['string', 'boolean'].includes(typeof r[k]) && String(r[k]).length <= LIMITS.value)))
       .map((r) => Object.fromEntries(OWN_FIELDS.filter((k) => r[k] != null).map((k) => [k, r[k]])));
     out.off = out.off.filter((id) => typeof id === 'string' && /^\+?[A-Z]\d{3}$/.test(id));
@@ -11832,7 +12106,8 @@
       li('changed', tid, `${added.length ? `+ ${esc(added.map(showItem).join(', '))}` : ''} ${removed.length ? `− ${esc(removed.map(showItem).join(', '))}` : ''}${L.reload ? ` <span class="dci-sub">${esc(tr('mapping.reloadHint'))}</span>` : ''}`);
     }
     const ownNow = new Map(userRules().map((u) => [u.id, u]));
-    const ownText = (u) => esc(`${u.discogs}${u.details ? ` [${u.details}]` : ''} → ${u.kind === 'role' ? `${u.type || ''} · ${u.level || ''}` : u.instrument || ''}`);
+    const ownText = (u) => esc(u.kind === 'text' ? `“${u.phrase || u.discogs}” → ${u.entity || ''} · ${u.role || ''}`
+      : `${u.discogs}${u.details ? ` [${u.details}]` : ''} → ${u.kind === 'role' ? `${u.type || ''} · ${u.level || ''}` : u.instrument || ''}`);
     plan.own.forEach((u) => {
       const w = ownNow.get(u.id);
       if (!w || encJson(w) !== encJson(u)) li(w ? 'changed' : 'new', u.id, ownText(u));
@@ -11926,10 +12201,15 @@
     const f = S.ruleForm || { kind: 'role', detailsMode: 'any', level: 'recording' };
     const opt = (v, label) => `<option value="${esc(v)}" ${String(f[label.k] || '') === v ? 'selected' : ''}>${esc(label.t)}</option>`;
     const list = userRules();
-    const rowsHtml = list.map((u) => `<tr data-rid="${esc(u.id)}"><td><input type="checkbox" data-urule-on="${esc(u.id)}" ${u.on !== false ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id: u.id }))}"></td>
+    // [Z-UNA] (3.42.4) a rule of texts (words of a line not recognized given an entry): its phrase, kind and role – on, off, delete
+    const rowsHtml = list.map((u) => (u.kind === 'text' ? `<tr data-rid="${esc(u.id)}" data-urule-kind="text"><td><input type="checkbox" data-urule-on="${esc(u.id)}" ${u.on !== false ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id: u.id }))}"></td>
+      <td>${esc(u.id)}</td><td>${esc(tr('rules.kindText'))}</td><td>${esc(tr('common.quoted', { text: u.phrase || u.discogs }))}</td>
+      <td>${esc(`${tr(`entity.${u.entity}`)} · ${u.role}${u.tracks === 'line' ? ` · ${tr('rules.textTracksLine')}` : ''}`)}</td><td></td><td></td>
+      <td><button type="button" class="dci-textbtn" data-urule-del="${esc(u.id)}">${esc(tr('rules.delete'))}</button></td></tr>`
+      : `<tr data-rid="${esc(u.id)}"><td><input type="checkbox" data-urule-on="${esc(u.id)}" ${u.on !== false ? 'checked' : ''} aria-label="${esc(tr('rules.onAria', { id: u.id }))}"></td>
       <td>${esc(u.id)}</td><td>${esc(trRules(u.kind === 'role' ? 'rules.kindRole' : 'rules.kindInstrument'))}</td><td>${esc(u.discogs)}${u.details ? ` [${esc(u.details)}]${u.detailsMode === 'exact' ? ' =' : ''}` : (u.detailsMode === 'exact' ? ' []' : '')}</td>
       <td>${esc(u.kind === 'role' ? `${u.type} · ${u.level}` : '')}</td><td>${esc(u.instrument || '')}</td><td>${esc(u.credit || '')}</td>
-      <td><button type="button" class="dci-textbtn" data-urule-edit="${esc(u.id)}">${esc(tr('rules.edit'))}</button> <button type="button" class="dci-textbtn" data-urule-del="${esc(u.id)}">${esc(tr('rules.delete'))}</button></td></tr>`).join('');
+      <td><button type="button" class="dci-textbtn" data-urule-edit="${esc(u.id)}">${esc(tr('rules.edit'))}</button> <button type="button" class="dci-textbtn" data-urule-del="${esc(u.id)}">${esc(tr('rules.delete'))}</button></td></tr>`)).join('');
     const role = (f.kind || 'role') === 'role';
     return `<section data-rsect="own"><h3>${esc(tr('rules.own'))} (U001 … · ${esc(tr('rules.ownWhere'))})</h3>
       ${list.length ? `<div class="dci-rules-wrap"><table><thead><tr><th>${esc(tr('rules.on'))}</th><th>${esc(tr('rules.id'))}</th><th>${esc(tr('rules.kind'))}</th><th>${esc(trRules('rules.discogs'))}</th><th>${esc(tr('rules.mb'))}</th><th>${esc(tr('rules.instrument'))}</th><th>${esc(tr('rules.credit'))}</th><th></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>` : `<p class="dci-sub">${esc(tr('rules.ownEmpty'))}</p>`}
@@ -15411,17 +15691,6 @@
     return true;
   }
 
-  /** [Z-EN] (3.41.9) "None": the block this script wrote into the edit note before is taken out again (the rest stays). */
-  function clearEditNote() {
-    const el = document.getElementById('edit-note-text') || document.querySelector('textarea[name$="edit_note"]');
-    if (!el || !S.lastNoteBlock || !el.value.includes(S.lastNoteBlock)) return;
-    const next = el.value.replace(S.lastNoteBlock, '').replace(/\n{3,}/g, '\n\n').trim();
-    S.lastNoteBlock = '';
-    const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value').set; // (as writeEditNote: React sees the change)
-    setter.call(el, next);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-
   // --- Works created in this browser but not yet linked in MB ------------------------------
   // New works exist in MB right after their form is submitted. Until the link to the recording
   // is submitted too, they are kept here (per release), so they cannot be forgotten.
@@ -15502,7 +15771,8 @@
   const SOURCE_ORDER_KEY = 'dci-source-order';
   const SOURCE_PICK_KEY = 'dci-source-pick';
   /** Default preference: physical media from Discogs first, digital media from Bandcamp first. */
-  const SOURCE_ORDER_DEFAULT = { physical: ['discogs', 'bandcamp'], digital: ['bandcamp', 'discogs'] };
+  // [Z-YTL] (3.42.7; Q-da) YouTube last (an order stored before gets it at its end)
+  const SOURCE_ORDER_DEFAULT = { physical: ['discogs', 'bandcamp', 'youtube'], digital: ['bandcamp', 'discogs', 'youtube'] };
   function readSourceOrder() {
     const stored = readJson('localStorage', SOURCE_ORDER_KEY, null) || {};
     const fix = (list, def) => {
@@ -15583,7 +15853,8 @@
       const fresh = S.editorLinks.filter((l) => !S.sourceLinks.some((x) => same(x, l)));
       S.sourceLinks = [...S.sourceLinks, ...fresh];
       S.editorLinks = null;
-      if (fresh.length === 1) return { link: fresh[0], fromEditor: true };
+      // (3.42.8, review) a video only when the release links to no other source (YouTube last)
+      if (fresh.length === 1 && (fresh[0].source !== 'youtube' || !S.sourceLinks.some((x) => x.source !== 'youtube'))) return { link: fresh[0], fromEditor: true };
     }
     const kept = relMapRead(SOURCE_PICK_KEY)[releaseMbid];
     const keptLink = kept && S.sourceLinks.find((x) => x.source === kept.source && x.id === kept.id);
@@ -15789,6 +16060,8 @@
       }
       renderMediumFilter();
       S.releaseDateMb = parseDate(ws.date);
+      // [S073] (3.42.3) its title (a name of a text equal to it is no person)
+      S.releaseTitleMb = ws.title || '';
       S.releaseGroup = ws['release-group'] || null;
       if (S.releaseGroup) {
         try {
@@ -16929,6 +17202,10 @@
       resolveTitles: (titles, srcTracks = tracks) => tracksByTitles(titles, srcTracks),
       // [3.30.7] the names of the release's artist (S041: "<artist> are A, B and C")
       artistNames: uniq((S.releaseCredit || []).map((p) => p.name).filter(Boolean)),
+      // [S073] (3.42.3) the titles of the release and its tracks in MusicBrainz: no persons (Z-BZ)
+      titleNames: uniq([S.releaseTitleMb || '', ...tracks.map((t) => t.title)].filter(Boolean)),
+      // [Z-UNA] (3.42.4) your own rules of texts (a phrase, its kind and role)
+      ownTexts: userRules().filter((u) => u.kind === 'text' && u.on !== false),
       // [S058] (3.38.7) ambiguous names and instruments one above the other: the instruments above ("⇅" at the entry)
       stackUp: !!S.stackUp,
     };
@@ -17204,7 +17481,9 @@
     // [S058] (3.38.12) the reading of "⇅" (the import reads the lines so again, its rows are remembered so)
     return { v: 1, at: Date.now(), src: S.importSrc || '', media: mediaSig(), rows, entries, manual, works: worksSnapshot(), ...(S.stackUp ? { stackUp: true } : {}),
       // (3.39.8, review) the names chosen for initials of several names ("JR" → Jane Roe)
-      ...(S.initialsChosen && S.initialsChosen.size ? { initials: [...S.initialsChosen] } : {}) };
+      ...(S.initialsChosen && S.initialsChosen.size ? { initials: [...S.initialsChosen] } : {}),
+      // [Z-UNA] (3.42.8, review) the words given an entry
+      ...(S.unaItems && S.unaItems.length ? { una: S.unaItems.map((it) => ({ ...it })) } : {}) };
   }
 
   /**
@@ -17445,6 +17724,13 @@
         lost++;
         continue;
       }
+      // [Z-UNA] (3.42.4; 3.42.8, review) a row of words given an entry, added then (with what was changed at it): it takes the place of
+      // the one the import gives its entry now – again (unaReplay) or by an own rule of texts –, not beside it; only such rows (`una`):
+      // a copy made on purpose (another event, another instrument of a role) stays
+      if (r.una) {
+        const y = S.rows.find((z) => S.freshRows.has(z.id) && !used.has(z) && z.artistKey === a.key && norm(z.raw || '') === norm(r.raw || ''));
+        if (y) used.add(y);
+      }
       ids.set(x.i, r.id);
       out.push(r);
       changed++;
@@ -17608,8 +17894,14 @@
       if (c.typos) row.typos = c.typos; // [S050] (3.32.5)
       if (c.stackAmbig) row.stackAmbig = true; // [S058] (3.38.7)
       if (c.anvFrom) row.anvFrom = c.anvFrom; // [S060] (3.38.12) the spelling in capitals at the source
-      // [S062] (3.38.18) the period the text gives; [S064] its role credit
-      if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
+      // [S062] (3.38.18) the period the text gives; [S064] its role credit; [Z-FRD] (3.42.2; Q-df) a period with a name of its own
+      // (field recordings) is a date of the pool, one a line of the text
+      if (c.date && c.dateName) {
+        const v = validateDateFields({ ...emptyDate(), ...c.date }).value;
+        const entry = v ? poolDateFor(v, null, c.dateKey, c.dateName) : null;
+        if (entry) Object.assign(row, { date: { ...fieldsFromDate(entry), poolId: entry.id }, dateOpen: true });
+        else Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
+      } else if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
       if (c.roleCredit) Object.assign(row, { roleCredit: c.roleCredit, roleCreditTouched: true });
       row.dSpec = c.specs.join(', ');
       row.dPositions = c.positions;
@@ -17640,6 +17932,58 @@
       suggestCommissioned(row);
       S.rows.push(row);
     }
+  }
+
+  /**
+   * A company of the source (label, place, area – a group of groupCompanies) as an entry with its rows, as the import makes it (moved
+   * out of loadRelease in 3.42.4 for Z-UNA, which adds one from words of a line not recognized): null when it is left out (S007).
+   */
+  function addCompanyEntry(g, rel, leftOutKeys) {
+    // [S007]
+    if (ruleOn('S007') && (/festival/i.test(g.name || '') || /festival/i.test(g.rawName || ''))) {
+      log('info', 'festivalSkipped', { name: g.name });
+      return null;
+    }
+    const company = {
+      key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
+      entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], area: g.area || '',
+      ...(g.fromNotes ? { fromNotes: true } : {}), ...(g.altNames ? { altNames: g.altNames } : {}),
+    };
+    S.artists.set(company.key, company);
+    for (const r of g.roles) {
+      const row = makeRow(company.key, { raw: r.role, company });
+      if (r.fromAbout) row.fromAbout = true;
+      // [S054] (3.37.0) a company from the Discogs notes (S042): its line shown at the row, left out with the notes
+      if (r.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: r.line || '' });
+      if (r.typos) row.typos = r.typos; // [S050] (3.32.5)
+      row.srcRefs = r.refs || []; // [3.17.0]
+      // [S026] a place or company for a medium the release does not have ("Lacquer Cut At", the studio of a vinyl mastering)
+      if (companyLeftOutForMedium(row, r, rel, r.line || `${g.name} – ${r.role}`)) {
+        leftOutKeys.add(company.key);
+        continue;
+      }
+      // A company for some tracks only (a text: "Published by X (1, 3)"), otherwise for all of them
+      const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
+      row.dAllTracks = !some;
+      row.tracks = new Set(some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx());
+      // [3.31.5] the tracks it names (not a catalog number: "Catalog number on Discogs: 1, 3" before)
+      if (some && r.tracks.spec) Object.assign(row, { dSpec: r.tracks.spec, dSpecTracks: true });
+      if (some && !row.tracks.size) continue;
+      row.suggested = new Set(row.tracks);
+      // [S043] (3.31.0) a publisher's tracks from the Discogs notes; [3.31.6] set, not suggested – ⓘ shows the line (collected
+      // item 97c)
+      if (r.notesLine && some) {
+        row.notesTracks = new Set(row.tracks);
+        row.notesFrom = r.notesLine;
+      }
+      if (r.catno) Object.assign(row, { dSpec: r.catno, dSpecTracks: false });
+      if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
+      suggestCommissioned(row);
+      S.rows.push(row);
+    }
+    // [Z-UNA] (3.42.8, review) the kind of an own rule of texts (or of the words given an entry)
+    if (g.entity && ['label', 'place', 'area'].includes(g.entity) && companyTypes(company).includes(g.entity)) setCompanyEntityType(company, g.entity);
+    return company;
   }
 
   async function loadRelease(id, { confirmed = false, source = S.source, repeat = null } = {}) {
@@ -17692,6 +18036,7 @@
       S.artists = new Map();
       S.rows = [];
       S.festivals = []; // [3.37.8] (S056)
+      Object.assign(S, { una: null, unaDone: new Map(), unaOpen: false, unaItems: [] }); // [Z-UNA] (3.42.4)
       S.rowOpen.clear();
     S.groupCompact.clear();
       S.supp = null;
@@ -17729,50 +18074,7 @@
       S.stackCur = (rel.credits || []).filter((c) => c.stackAmbig);
       S.stackAlt = rel.stackAlt || [];
       S.stackAltUnrec = rel.stackAltUnrec || null;
-      for (const g of groupCompanies(rel.companies)) {
-        // [S007]
-        if (ruleOn('S007') && (/festival/i.test(g.name || '') || /festival/i.test(g.rawName || ''))) {
-          log('info', 'festivalSkipped', { name: g.name });
-          continue;
-        }
-        const company = {
-          key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
-          entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], area: g.area || '',
-          ...(g.fromNotes ? { fromNotes: true } : {}), ...(g.altNames ? { altNames: g.altNames } : {}),
-        };
-        S.artists.set(company.key, company);
-        for (const r of g.roles) {
-          const row = makeRow(company.key, { raw: r.role, company });
-          if (r.fromAbout) row.fromAbout = true;
-          // [S054] (3.37.0) a company from the Discogs notes (S042): its line shown at the row, left out with the notes
-          if (r.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: r.line || '' });
-          if (r.typos) row.typos = r.typos; // [S050] (3.32.5)
-          row.srcRefs = r.refs || []; // [3.17.0]
-          // [S026] a place or company for a medium the release does not have ("Lacquer Cut At", the studio of a vinyl mastering)
-          if (companyLeftOutForMedium(row, r, rel, r.line || `${g.name} – ${r.role}`)) {
-            leftOutKeys.add(company.key);
-            continue;
-          }
-          // A company for some tracks only (a text: "Published by X (1, 3)"), otherwise for all of them
-          const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
-          row.dAllTracks = !some;
-          row.tracks = new Set(some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx());
-          // [3.31.5] the tracks it names (not a catalog number: "Catalog number on Discogs: 1, 3" before)
-          if (some && r.tracks.spec) Object.assign(row, { dSpec: r.tracks.spec, dSpecTracks: true });
-          if (some && !row.tracks.size) continue;
-          row.suggested = new Set(row.tracks);
-          // [S043] (3.31.0) a publisher's tracks from the Discogs notes; [3.31.6] set, not suggested – ⓘ shows the line (collected
-          // item 97c)
-          if (r.notesLine && some) {
-            row.notesTracks = new Set(row.tracks);
-            row.notesFrom = r.notesLine;
-          }
-          if (r.catno) Object.assign(row, { dSpec: r.catno, dSpecTracks: false });
-          if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
-          suggestCommissioned(row);
-          S.rows.push(row);
-        }
-      }
+      for (const g of groupCompanies(rel.companies)) addCompanyEntry(g, rel, leftOutKeys);
       // [3.7.0] A company with an area ("Loft, Cologne") is a place, when its roles allow one
       for (const c of S.artists.values()) {
         if (c.company && c.area && !c.entityType && companyTypes(c).includes('place')) setCompanyEntityType(c, 'place');
@@ -17843,6 +18145,8 @@
           renderWorks();
         }
       }
+      // [Z-UNA] (3.42.8, review) the words given an entry before, as the source's (their changes come back with them)
+      if (seq === importSeq) unaReplay(repeat);
       // [3.36.1] the rows as the source gave them – before the entries are looked up (changes made meanwhile are changes)
       if (seq === importSeq) rememberFresh();
       if (S.artists.size) {
@@ -18033,7 +18337,8 @@
         log('info', 'placeholderSuggested', { name: a.name, said: a.placeholder });
         continue;
       }
-      const type = a.company ? (a.entityType || companyTypes(a)[0] || 'label') : 'artist';
+      // [Z-UNA] (3.42.4) a series named in a text (words not recognized given an entry): MusicBrainz's series of that name
+      const type = a.company ? (a.entityType || companyTypes(a)[0] || 'label') : a.entityType === 'series' ? 'series' : 'artist';
       try {
         const words = luceneWords(a.name);
         // [3.7.0] A place with the area the source names ("Loft, Cologne"): only places in that area; [3.31.2] only its first
@@ -18044,7 +18349,7 @@
         const query = area && words ? `place:(${words}) AND area:(${area})`
           : words && (!a.company || type === 'area') ? `${type}:(${words}) OR alias:(${words})` : `${type}:${lucenePhrase(a.name)}`;
         const data = await mbWs(`${type}?query=${encodeURIComponent(query)}&limit=25`);
-        const items = (data && data[`${type}s`]) || [];
+        const items = (data && (type === 'series' ? data.series : data[`${type}s`])) || [];
         // [3.31.2] a place: without a hit in that area, by its name (and other names) alone – the area of each hit is shown,
         // those in an area the source names first (item 98b)
         let placeArea = '';
@@ -18958,10 +19263,10 @@
     if (linkAttrN) showMessage('ok', 'msg.linkAttrsAdded', { n: linkAttrN });
     // The edit note after the checks above, so it counts the credits and dates added to existing relationships too
     let noteOk = true;
-    if ((added || fillIds.length || dateFillIds.length || linkAttrN) && S.editNoteMode !== 'none') {
+    if (added || fillIds.length || dateFillIds.length || linkAttrN) {
       noteOk = writeEditNote();
       if (noteOk) log('info', 'noteWritten');
-    } else if (S.editNoteMode === 'none') clearEditNote(); // [Z-EN] (3.41.9) the block written before goes
+    }
     // [3.32.10] the ticked comments of live recordings, entered after "Enter edit" (item 113)
     saveLiveJob();
     log('ok', 'stageSummary', { added, updated, removed, changed: changedInMb.length, remove: toRemove.length });
@@ -19023,8 +19328,208 @@
     }).join('');
   }
 
+  // --- [Z-UNA] (3.42.4) Words of a line not recognized given an entry (collected item Z-UNA; Q-dn, Q-dr) ----------------------
+  // A click on a word of "… lines not recognized" selects it (⇧-click: the words up to it); the form below the line names its kind
+  // (artist, label, place, area, series), a role for that kind and the tracks (those the line names, or the whole release) – the
+  // entry then is one like a recognized one (looked up by its name). "Remember as a rule of my own" stores it as an own rule of
+  // texts (U…, kind "text"): read so in every text from then on.
+
+  /** The roles offered for a kind (a person: any role as a source writes it). */
+  const UNA_ROLES = {
+    label: ['Phonographic Copyright (p)', 'Copyright (c)', 'Published By', 'Distributed By', 'Licensed From', 'Licensed To', 'Marketed By', 'Manufactured By', 'Printed By', 'Pressed By'],
+    place: ['Recorded At', 'Mixed At', 'Mastered At', 'Remixed At', 'Engineered At', 'Pressed At', 'Manufactured At', 'Lacquer Cut At'],
+    area: ['Recorded In', 'Mixed In', 'Mastered In', 'Produced In', 'Remixed In', 'Engineered In'],
+    series: ['part of'],
+  };
+  const UNA_KINDS = ['artist', 'label', 'place', 'area', 'series'];
+  const unaRoles = (kind) => (UNA_ROLES[kind] || []).filter((r) => kind === 'series' || !!mapCompanyRole(r).rule);
+  /** The words of a line as they are clicked (the spaces between them left out). */
+  const unaWords = (line) => String(line || '').split(/\s+/).filter(Boolean);
+  /** A selection as a name: the words without the signs around them ("“Skinny", "recording,"). */
+  const unaName = (line, a, b) => unaWords(line).slice(Math.min(a, b), Math.max(a, b) + 1).join(' ')
+    .replace(/^[\s“”"‘’'(\[«»•·,;:–—-]+/, '').replace(/[\s“”"‘’')\]«»•·,;:.!?–—-]+$/, '').trim();
+
+  function unaWordsHtml(line, li) {
+    const sel = S.una && S.una.li === li && S.una.line === line ? [Math.min(S.una.a, S.una.b), Math.max(S.una.a, S.una.b)] : null;
+    const done = (S.unaDone && S.unaDone.get(line)) || new Set();
+    let w = -1;
+    return String(line).split(/(\s+)/).map((t) => {
+      if (!t || /^\s+$/.test(t)) return esc(t);
+      w++;
+      const on = sel && w >= sel[0] && w <= sel[1];
+      return `<span class="dci-una-w${on ? ' dci-una-sel' : ''}${done.has(w) ? ' dci-una-done' : ''}" data-act="una-word" data-li="${li}" data-w="${w}" title="${esc(tr('una.wordTitle'))}">${esc(t)}</span>`;
+    }).join('');
+  }
+
+  /** The tracks the line names (the text adapter's reading), or null. */
+  const unaScope = (line) => (TEXT.lineTracks ? TEXT.lineTracks(line, (spec) => tracksInText(`tracks ${spec}`, mbTracksAsSource())) : null);
+
+  function unaFormHtml(line) {
+    const u = S.una;
+    const roles = u.kind === 'artist' ? null : unaRoles(u.kind);
+    const sc = unaScope(line);
+    const trackList = sc ? [...sc.set].sort((x, y) => x - y).map((i) => (S.mbTracks[i] ? S.mbTracks[i].number : i + 1)).join(', ') : '';
+    const radio = (v, label) => `<label><input type="radio" name="dci-una-tracks" data-f="una-tracks" value="${v}" ${u.tracks === v ? 'checked' : ''}> ${esc(label)}</label>`;
+    return `<div class="dci-una-form" role="group" aria-label="${esc(tr('una.title'))}">
+      <label>${esc(tr('una.name'))} <input type="text" data-f="una-name" value="${esc(u.name)}"></label>
+      <label>${esc(tr('una.kind'))} <select data-f="una-kind">${UNA_KINDS.map((k) => `<option value="${k}" ${u.kind === k ? 'selected' : ''}>${esc(tr(`entity.${k}`))}</option>`).join('')}</select></label>
+      <label>${esc(tr('una.role'))} ${roles ? `<select data-f="una-role">${roles.map((r) => `<option value="${esc(r)}" ${norm(u.role) === norm(r) ? 'selected' : ''}>${esc(r)}</option>`).join('')}</select>`
+        : `<input type="text" data-f="una-role" value="${esc(u.role)}" placeholder="${esc(tr('una.rolePh'))}">`}</label>
+      <span class="dci-una-tracks">${sc ? `${radio('line', tr('una.tracksLine', { list: trackList }))} ${radio('release', tr('una.tracksAll'))}` : esc(tr('una.tracksNone'))}</span>
+      ${u.kind !== 'series' ? `<label class="dci-una-rule"><input type="checkbox" data-f="una-rule" ${u.remember ? 'checked' : ''}> ${esc(tr('una.remember'))}</label>` : ''}
+      <span class="dci-una-btns"><button type="button" class="dci-apply dci-small" data-act="una-apply">${esc(tr('una.add'))}</button>
+        <button type="button" class="dci-textbtn" data-act="una-close">${esc(tr('common.cancel'))}</button></span>
+      ${u.error ? `<span class="dci-warn" role="alert">${esc(u.error)}</span>` : ''}</div>`;
+  }
+
+  /** A click on a word: it alone, or with ⇧ the words from the one chosen first up to it (in the same line). */
+  function unaPick(btn, extend) {
+    const li = Number(btn.dataset.li);
+    const w = Number(btn.dataset.w);
+    const line = (((S.release && S.release.unrecognized) || [])[li]) || '';
+    if (!line) return;
+    if (extend && S.una && S.una.li === li && S.una.line === line) S.una.b = w;
+    else S.una = { li, line, a: w, b: w, kind: S.una ? S.una.kind : 'artist', role: '', tracks: 'line', remember: false, error: '' };
+    if (S.una.kind !== 'artist' && !S.una.role) S.una.role = unaRoles(S.una.kind)[0] || '';
+    S.una.name = unaName(line, S.una.a, S.una.b);
+    S.unaOpen = true;
+    renderSource();
+    const input = S.overlay.querySelector('.dci-una-form [data-f="una-name"]');
+    if (input) input.focus({ preventScroll: true });
+  }
+
+  /**
+   * "Add entry": the words as an entry of their kind with the role – a person through the register (like a credit of the text), a
+   * label, place or area with its company role, a series "part of" the release – looked up by its name; with "Remember …" an own
+   * rule of texts.
+   */
+  /**
+   * [Z-UNA] (3.42.4; 3.42.8, review: also for what is remembered) The entry of words given one – it: { name, kind, role, line, tracks
+   * ('line' | 'release'), a, b } – a person through the register (like a credit of the text), a label, place or area with its company
+   * role, a series "part of" the release; its rows marked `una`. replay: an entry the import has with that role already (an own rule
+   * of texts, or the text changed) is not added again. → the entry to look up (a new one), or null.
+   */
+  function unaBuild(it, { replay = false } = {}) {
+    const { name, role, kind } = it;
+    const sc = it.tracks === 'line' ? unaScope(it.line) : null;
+    const rel = S.release;
+    const at = { line: it.line, part: name, pi: 0, n: 0 };
+    const has = (pred) => replay && [...S.artists.values()].some((a) => pred(a) && norm(a.name) === norm(name) && S.rows.some((r) => r.artistKey === a.key && norm(r.raw || '') === norm(role)));
+    let entry = null;
+    if (kind === 'artist') {
+      const p = parseRoleNotation(role)[0];
+      if (!p || has((a) => !a.company && !a.other)) return null;
+      const credit = { who: { id: 0, name, rawName: name, links: [] }, role: p.raw, base: p.base, details: p.mods, credited: '',
+        tracks: sc ? { indexes: [...sc.set], spec: sc.spec, unresolved: [] } : { all: true }, ...at };
+      for (const g of groupCredits([credit])) {
+        entry = [...S.artists.values()].find((a) => !a.company && !a.other && norm(a.name) === norm(g.name)) || null;
+        const fresh = !entry;
+        if (fresh) {
+          entry = newPersonEntry(g);
+          S.artists.set(entry.key, entry);
+        }
+        const k0 = S.rows.length;
+        addCreditRows(entry, g, rel, S.source, new Set());
+        S.rows.slice(k0).forEach((r) => { r.una = true; });
+        if (!fresh) entry = null; // looked up already
+      }
+    } else if (kind === 'series') {
+      if (replay && [...S.artists.values()].some((a) => a.other && a.entityType === 'series' && norm(a.name) === norm(name))) return null;
+      entry = { key: nextId('o'), dId: 0, links: [], name, rawName: name, status: 'missing', other: true, entityType: 'series', mbid: null, mbName: '', mbComment: '',
+        candidates: [], editing: false, error: '', anvs: [] };
+      S.artists.set(entry.key, entry);
+      const row = makeRow(entry.key, { manual: true, company: null });
+      Object.assign(row, { other: true, entityType: 'series', types: [], typeOptions: null, notes: [], una: true });
+      applyRoleText(row, 'part of');
+      row.level = 'release';
+      row.tracks = new Set(selIdx());
+      row.suggested = new Set(row.tracks);
+      S.rows.push(row);
+    } else {
+      if (has((a) => a.company)) return null;
+      for (const g of groupCompanies([{ who: { id: 0, name, rawName: name, links: [] }, role, catno: '', tracks: sc ? { indexes: [...sc.set], spec: sc.spec } : null, ...at, entity: kind }])) {
+        entry = addCompanyEntry(g, rel, new Set());
+        if (entry) setCompanyEntityType(entry, kind);
+      }
+      S.rows.filter((r) => entry && r.artistKey === entry.key).forEach((r) => { r.una = true; });
+    }
+    // the words given an entry: marked in the line
+    if (it.a != null && it.b != null) {
+      const done = S.unaDone.get(it.line) || new Set();
+      for (let k = Math.min(it.a, it.b); k <= Math.max(it.a, it.b); k++) done.add(k);
+      S.unaDone.set(it.line, done);
+    }
+    return entry;
+  }
+
+  /**
+   * [Z-UNA] (3.42.8, review) The words given an entry are remembered with the release ("Remember changes …"): at the next import of the
+   * same source they are given it again before the rows are noted as the source's – so its changes come back with them (until 3.42.7
+   * such an entry was lost: no line of the source gave it).
+   */
+  function unaReplay(repeat = null) {
+    const snapIn = repeat && repeat.snap;
+    if (!snapIn && !(remembering() && !S.rememberHold && !(repeat && repeat.fresh))) return;
+    const stored = snapIn ? null : relRead(REMEMBER_ROWS_KEY, null);
+    const snap = snapIn || (stored && stored.v === 2 && stored.by ? stored.by[S.importSrc || ''] : stored && stored.v === 1 ? stored : null);
+    if (!snap || snap.src !== (S.importSrc || '') || !Array.isArray(snap.una)) return;
+    for (const it of snap.una) {
+      if (!it || typeof it.name !== 'string' || !it.name.trim() || !UNA_KINDS.includes(it.kind) || typeof it.role !== 'string' || !it.role.trim()) continue;
+      unaBuild(it, { replay: true });
+      S.unaItems.push(it);
+    }
+    // (the list of the lines not recognized and the entries were drawn before)
+    if (S.unaItems.length) {
+      $('toolbar').hidden = false;
+      renderGroups();
+      renderSource();
+    }
+  }
+
+  /** "Add entry": the words as an entry of their kind with the role, looked up by its name; with "Remember …" an own rule of texts. */
+  async function unaApply() {
+    const u = S.una;
+    if (!u) return;
+    const form = S.overlay.querySelector('.dci-una-form');
+    const val = (f) => ((form && form.querySelector(`[data-f="${f}"]`)) || { value: '' }).value;
+    const name = String(val('una-name') || u.name).trim();
+    const role = String(u.kind === 'artist' ? val('una-role') : (val('una-role') || u.role) || '').trim();
+    const pick = form && form.querySelector('[data-f="una-tracks"]:checked');
+    const tracks = pick ? pick.value : u.tracks;
+    const remember = !!(form && form.querySelector('[data-f="una-rule"]') && form.querySelector('[data-f="una-rule"]').checked);
+    Object.assign(u, { name, role, tracks, remember });
+    if (!name || !role || (u.kind === 'artist' && !parseRoleNotation(role)[0])) {
+      u.error = tr(!name ? 'una.noName' : 'una.noRole');
+      renderSource();
+      return;
+    }
+    const sc = tracks === 'line' ? unaScope(u.line) : null;
+    const it = { name, kind: u.kind, role, line: u.line, tracks: sc ? 'line' : 'release', a: u.a, b: u.b };
+    const entry = unaBuild(it);
+    S.unaItems.push(it);
+    if (remember && u.kind !== 'series') {
+      const id = nextUserRuleId();
+      userRules().push({ id, kind: 'text', on: true, discogs: norm(name), phrase: name, entity: u.kind, role, tracks: sc ? 'line' : 'release' });
+      saveRules();
+      refreshRulesWindow();
+      log('info', 'unaRule', { id, phrase: name, kind: tr(`entity.${u.kind}`), role });
+    }
+    log('info', 'unaAdded', { name, kind: tr(`entity.${u.kind}`), role, tracks: sc ? sc.spec : tr('una.tracksAllShort') });
+    S.una = null;
+    $('toolbar').hidden = false;
+    renderGroups();
+    renderSource();
+    refresh();
+    scheduleRemember();
+    if (entry && entry.status === 'pending') await resolveArtists({ only: [entry] });
+    // (a source whose names have links – Discogs – looks up only those of its notes by their names)
+    if (entry && entry.status === 'missing' && !(entry.nameHits || []).length) await suggestByName([entry]);
+    renderGroups();
+    refresh();
+  }
+
   /** A linked source in words: "Discogs 1234", "Bandcamp band.bandcamp.com/album/name". */
-  const sourceLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : l.id.replace(/^https?:\/\//, '')}`;
+  const sourceLinkLabel = (l) => `${SOURCES[l.source].name} ${l.source === 'discogs' ? l.id : String(l.url || l.id).replace(/^https?:\/\//, '')}`;
 
   function renderSource() {
     if (!S.overlay) return;
@@ -19039,8 +19544,10 @@
     const unrec = (rel && rel.unrecognized) || [];
     // [3.37.4] a line of the cover art: its place in the image while the mouse rests on it (item 154)
     const peekHint = (lines) => (lines.some((l) => linePeekHits(l).length) ? `<p class="dci-sub dci-linepeek-hint">${esc(tr('cover.linePeekHint'))}</p>` : '');
-    const unrecHtml = unrec.length ? `<details class="dci-unrec"><summary>${esc(tr('unrec.title', { n: unrec.length }))}</summary>
-      <ol>${unrec.map((l) => `<li${linePeekAttrs(l)}>${esc(l)}</li>`).join('')}</ol>${peekHint(unrec)}<p class="dci-sub">${esc(tr('unrec.hint'))}</p></details>` : '';
+    // [Z-UNA] (3.42.4) each word to click (⇧: the words up to it), a form below the line gives them an entry
+    const unrecHtml = unrec.length ? `<details class="dci-unrec"${S.una || S.unaOpen ? ' open' : ''}><summary>${esc(tr('unrec.title', { n: unrec.length }))}</summary>
+      <ol>${unrec.map((l, i) => `<li${linePeekAttrs(l)}>${unaWordsHtml(l, i)}${S.una && S.una.li === i && S.una.line === l ? unaFormHtml(l) : ''}</li>`).join('')}</ol>${peekHint(unrec)}
+      <p class="dci-sub">${esc(tr('unrec.hint'))} ${esc(tr('una.hint'))}</p></details>` : '';
     // [3.21.0] lines left out on purpose (thanks, endorsements, web addresses – T030, T032), apart from those not recognized
     const ign = (rel && rel.ignored) || [];
     const ignHtml = ign.length ? `<details class="dci-ignored"><summary>${esc(tr('ignored.title', { n: ign.length }))}</summary>
@@ -19418,11 +19925,69 @@
     }
     return { kind: 'artist', type: 'artist' };
   }
+  // [Z-ETC] (3.42.5; collected item Z-ETC, Q-dd) the kinds an entry not linked can be tried as, in this order: those a row of it has
+  // a relationship for (a place "recorded at" only as a place)
+  const ETC_KINDS = ['label', 'place', 'area', 'artist'];
+  const etcKinds = (a) => (a && a.company && !a.mbid ? ETC_KINDS.filter((k) => S.rows.some((r) => r.artistKey === a.key && r.typeOptions && (r.typeOptions[k] || []).length)) : []);
   const kindTagHtml = (a) => {
     const { type } = groupKindOf(a);
     const text = tr(`entity.${type}`);
-    return `<span class="dci-kind-tag">${esc(text.charAt(0).toUpperCase() + text.slice(1))}</span>`;
+    const label = text.charAt(0).toUpperCase() + text.slice(1);
+    // [Z-ETC] (3.42.5) a label, place or area not linked: a click tries the next kind (searched once no click followed for a second)
+    const kinds = etcKinds(a);
+    if (kinds.length > 1) {
+      const next = kinds[(kinds.indexOf(type) + 1) % kinds.length];
+      const title = tr('etc.title', { kind: tr(`entity.${type}`), next: tr(`entity.${next}`), list: kinds.map((k) => tr(`entity.${k}`)).join(' → ') });
+      // (↻ drawn by the style: the kind's name stays the text of the tag)
+      return `<button type="button" class="dci-kind-tag dci-kind-cycle" data-act="kind-cycle" title="${esc(title)}" aria-label="${esc(title)}">${esc(label)}</button>${a.etcWait ? ` <span class="dci-sub dci-etc-wait" role="status">${esc(tr('etc.wait'))}</span>` : ''}`;
+    }
+    return `<span class="dci-kind-tag">${esc(label)}</span>`;
   };
+
+  /**
+   * [Z-ETC] (3.42.5) The next kind of an entry not linked: its rows of that kind, the suggestions of that kind – those found before
+   * for it again (no new request), else searched by its name once no click followed for a second (MusicBrainz's limit of one request
+   * a second holds for every search).
+   */
+  function etcCycle(a) {
+    const kinds = etcKinds(a);
+    if (kinds.length < 2) return;
+    const now = groupKindOf(a).type;
+    const next = kinds[(kinds.indexOf(now) + 1) % kinds.length];
+    a.etcHits = a.etcHits || {};
+    if (a.nameHits) a.etcHits[now] = a.nameHits;
+    setCompanyEntityType(a, next);
+    a.nameHits = a.etcHits[next] || null;
+    clearTimeout(a.etcTimer);
+    a.etcTimer = null;
+    a.etcWait = !a.etcHits[next];
+    if (a.etcWait) {
+      a.etcTimer = setTimeout(async () => {
+        a.etcTimer = null;
+        // (3.42.8, review) chosen meanwhile: nothing to wait for; another kind meanwhile: its own wait
+        if (a.mbid) {
+          a.etcWait = false;
+          rerenderGroup(a);
+          return;
+        }
+        if (a.entityType !== next) return;
+        try {
+          await suggestByName([a]);
+          a.etcHits[next] = a.nameHits || [];
+          log('info', 'etcSearched', { name: a.name, kind: tr(`entity.${next}`), n: (a.nameHits || []).length });
+        } finally {
+          // (3.42.8, review) clicked on while it searched: the suggestions of the kind shown now, the wait of a newer search kept
+          const cur = groupKindOf(a).type;
+          if (cur !== next && !a.mbid) a.nameHits = a.etcHits[cur] || null;
+          a.etcWait = !!a.etcTimer;
+          rerenderGroup(a);
+          refresh();
+        }
+      }, 1000);
+    }
+    rerenderGroup(a);
+    refresh();
+  }
 
   /**
    * [3.22.1] At the entry of a name whose Bandcamp album is on another account's page (a label's, 46): whose page it is,
@@ -19760,17 +20325,36 @@
    * rows get it – one date of the pool for all of them, the pool's own date changed when they had one; a date of the pool
    * dropped onto the head gives it to the event.
    */
-  function evHeadHtml(e, open = false) {
+  function evHeadHtml(e, open = false, a = null) {
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
     const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
+    // [Z-EDM] (3.42.1; Q-db) the date a button: a click opens MusicBrainz's fields below it (begin, end, ended)
+    // (3.42.8, review) not the box of the event's fields below (an error there opens no second one here)
+    const dOpen = !!(a && S.emEvDate && S.emEvDate.key === `${a.key}|${e.key}` && !S.emEvDate.inline);
     const tracks = e.level === 'recording' ? tracksShort(e) : e.level === 'release' ? tr('tracks.wholeRelease') : '';
     // [AE-3] (3.35.4) ▸ opens the event below the block: its level, its date and its tracks for all its rows
     const t = tr(open ? 'em.evClose' : 'em.evOpen', { n: circled(e.n) });
     return `<th class="dci-em-ev${open ? ' dci-em-evopen' : ''}" scope="col" data-evhead="${esc(e.key)}" title="${esc(tr('em.evTitle'))}"><button type="button" class="dci-textbtn dci-em-evtoggle" data-act="em-evopen"
       data-ev="${esc(e.key)}" aria-expanded="${open}" title="${esc(t)}" aria-label="${esc(t)}">${open ? '▾' : '▸'}</button><span class="dci-em-evn">${circled(e.n)}</span>
       <span class="dci-cl-level" data-level="${e.level}">${esc(tr(`level.${e.level}`))}</span>${pool && pool.name ? ` <span class="dci-em-evname">${esc(pool.name)}</span>` : ''}
-      <input type="text" class="dci-em-evdate${date ? ' dci-cl-has' : ''}" data-f="em-evdate" data-ev="${esc(e.key)}" value="${esc(date)}" placeholder="${esc(tr('cl.noDate'))}"
-        aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}"> ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
+      <button type="button" class="dci-textbtn dci-em-evdate${date ? ' dci-cl-has' : ''}" data-act="em-evdate-open" data-ev="${esc(e.key)}" aria-expanded="${dOpen}"
+        title="${esc(tr('em.evDateOpenTitle'))}" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">${esc(date || tr('cl.noDate'))}</button>${dOpen ? evDateBoxHtml(e, false, a) : ''}
+        ${tracks ? `<span class="dci-em-evtr">${esc(tracks)}</span>` : ''}</th>`;
+  }
+
+  /** [Z-EDM] (3.42.1) The fields of an event's date as MusicBrainz has them (begin, end, ended), with "Apply", "No date" and ✕. */
+  function evDateBoxHtml(e, inline = false, a = null) {
+    const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
+    // (3.42.8, review) what was typed (and its error) of this entry's event and of this box only – an event of another entry has the
+    // same key ("release||")
+    const st = S.emEvDate && a && S.emEvDate.key === `${a.key}|${e.key}` && !!S.emEvDate.inline === !!inline ? S.emEvDate : null;
+    const f = (st && st.f) || (pool ? fieldsFromDate(pool) : e.date ? { ...e.date } : {});
+    return `<div class="dci-em-evdatebox${inline ? ' dci-em-evdatebox-inline' : ''}" data-evdate="${esc(e.key)}" role="group" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">
+      ${mbDateFields('ed', f, true)}
+      <span class="dci-em-evdatebtns"><button type="button" class="dci-small dci-primary" data-act="em-evdate-apply" data-ev="${esc(e.key)}">${esc(tr('em.evDateApply'))}</button>
+        <button type="button" class="dci-small" data-act="em-evdate-clear" data-ev="${esc(e.key)}">${esc(tr('cl.noDate'))}</button>
+        ${inline ? '' : `<button type="button" class="dci-iconbtn" data-act="em-evdate-open" data-ev="${esc(e.key)}" title="${esc(tr('common.close'))}" aria-label="${esc(tr('common.close'))}">✕</button>`}</span>
+      ${st && st.error ? `<span class="dci-err" data-el="evdate-error">${esc(st.error)}</span>` : ''}</div>`;
   }
 
   /** [E4] (3.34.31) The rows of an entry in an event. */
@@ -19787,7 +20371,6 @@
     const levelSeg = `<span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('em.evLevel'))}">${levels.map((lv) => `<button type="button" data-act="em-evlevel"
       data-ev="${esc(e.key)}" data-level="${lv}" aria-pressed="${lv === e.level}">${esc(tr(`level.${lv}`))}</button>`).join('')}</span>`;
     const pool = e.date && e.date.poolId ? S.datePool.find((d) => d.id === e.date.poolId) : null;
-    const date = pool ? formatDateValue(pool) || tr('date.endedOnly') : hasDateInput(e.date) ? fieldsText(e.date) : '';
     const dated = hasDateInput(e.date) || !!pool;
     const poolBtns = S.datePool.map((d) => `<button type="button" class="dci-small dci-em-evpool" data-act="em-evpool" data-ev="${esc(e.key)}" data-id="${esc(d.id)}"
       aria-pressed="${!!pool && pool.id === d.id}">${esc(poolLabel(d))}</button>`).join(' ');
@@ -19811,8 +20394,7 @@
       <div class="dci-em-evrow dci-em-evtop"><strong>${esc(tr('em.evEditTitle', { n: circled(e.n), rows: rows.length }))}</strong>
         <button type="button" class="dci-iconbtn" data-act="em-evopen" data-ev="${esc(e.key)}" title="${esc(tr('common.close'))}" aria-label="${esc(tr('common.close'))}">✕</button></div>
       <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evLevel'))}</span>${levelSeg}</div>
-      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evDate'))}</span><input type="text" class="dci-em-evdate${date ? ' dci-cl-has' : ''}" data-f="em-evdate" data-ev="${esc(e.key)}"
-        value="${esc(date)}" placeholder="${esc(tr('cl.noDate'))}" aria-label="${esc(tr('em.evDateLabel', { n: e.n }))}">
+      <div class="dci-em-evrow"><span class="dci-em-evlab">${esc(tr('em.evDate'))}</span>${evDateBoxHtml(e, true, a)}
         ${S.datePool.length ? `<span class="dci-sub">${esc(tr('em.evPool'))}</span> ${poolBtns}` : ''}
         ${dated ? ` <button type="button" class="dci-textbtn" data-act="em-evpool" data-ev="${esc(e.key)}" data-id="">${esc(tr('cl.noDate'))}</button>` : ''}</div>
       ${tracks}
@@ -19917,24 +20499,17 @@
   }
 
   /** [E4] (3.34.31) The date typed in the head of an event: its rows get it (as a date of the pool); empty – no date. */
-  function emEventDate(a, evKey, text) {
+  /** [Z-EDM] (3.42.1) The date of an event set ({ begin, end, ended }; null: no date) – from its fields or from a text. */
+  function emEventDateValue(a, evKey, value) {
     const rows = rowsInEvent(a, evKey).filter((r) => {
       const lt = currentLinkType(r);
       return !(lt && lt.has_dates === false);
     });
     if (!rows.length) return;
-    const t = String(text || '').trim();
-    if (!t) {
+    if (!value) {
       rows.forEach((r) => Object.assign(r, { date: null, dateOpen: false }));
       log('info', 'emEvDate', { n: rows.length, date: tr('cl.noDate') });
     } else {
-      const p = parseDatePeriod(t);
-      const value = p && (p.single ? single(p.single) : p.period);
-      if (!value) {
-        showMessage('warn', 'em.badDate', { text: t });
-        rerenderGroup(a);
-        return;
-      }
       const ids = uniq(rows.map((r) => r.date && r.date.poolId).filter(Boolean));
       let entry = ids.length === 1 && rows.every((r) => r.date && r.date.poolId === ids[0]) ? S.datePool.find((d) => d.id === ids[0]) : null;
       if (entry) {
@@ -20210,7 +20785,7 @@
     return `<div class="dci-em-block dci-em-k-${b.kind}" data-block="${esc(b.key)}">${head}
       <div class="dci-em-scroll"><table class="dci-em-grid">
         <thead><tr><th class="dci-em-c-role" scope="col">${esc(tr(b.kind === 'role' ? 'em.colRoleOther' : 'em.colRole'))}</th><th class="dci-em-c-credit" scope="col">${esc(tr('em.colCredit'))}</th><th class="dci-em-c-ac" scope="col">${esc(tr('em.colAc'))}</th>
-          ${(flagNames.length ? flagNames : ['']).map((f) => `<th class="dci-em-c-flag" scope="col">${f ? esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f) : ''}</th>`).join('')}${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key)).join('')}${addEv}<th scope="col"></th></tr></thead>
+          ${(flagNames.length ? flagNames : ['']).map((f) => `<th class="dci-em-c-flag" scope="col">${f ? esc(['additional', 'guest', 'solo'].includes(f) ? tr(`em.flag.${f}`) : f) : ''}</th>`).join('')}${b.events.map((e) => evHeadHtml(e, !!openEv && openEv.key === e.key, a)).join('')}${addEv}<th scope="col"></th></tr></thead>
         <tbody>${shown.map((l) => emLineHtml(a, b, l, flagNames, cols)).join('')}</tbody>
       </table></div>${openEv ? emEventHtml(a, openEv) : ''}
       ${hidden.length ? `<button type="button" class="dci-textbtn dci-em-more" data-act="em-more" data-block="${esc(b.key)}">${esc(tr('em.more', { n: hidden.length, list: hidden.map((l) => l.rows[0].primaryText || l.rows[0].raw).join(', ') }))}</button>`
@@ -20301,6 +20876,8 @@
     const q = questionRuleFor(r);
     const instr = (x, text = x) => ({ act: 'instr-pick', attr: 'instr', value: x, text });
     if (q && lt && primaryRootOf(lt) && norm(r.primaryText) === q.base) return q.options.map((x) => instr(x));
+    // [Q013] (3.42.3) an answer set at once: the others to choose at the chip, no open question ("?")
+    if (q && q.preset && lt && primaryRootOf(lt) && questionAsks(q, r)) return Object.assign(q.options.filter((x) => norm(x) !== norm(r.primaryText)).map((x) => instr(x)), { preset: true });
     const g = r.instrGuess;
     if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(r) && norm(r.primaryText))) {
       return [...g.options.map((x) => instr(x, guessLabel(g, x))), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
@@ -20365,7 +20942,7 @@
     const lt = ltOf(r);
     const root = lt && primaryRootOf(lt);
     const answers = chipAnswers(r);
-    const ask = !!answers.length || chipNotesOpen(l);
+    const ask = (!!answers.length && !answers.preset) || chipNotesOpen(l);
     // a word MusicBrainz does not know: as written ("? Chaims")
     // [177] (3.38.10) not an instrument: MusicBrainz's name of the relationship
     const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || rowPhrase(r) || r.raw : rowPhrase(r) || r.raw) || '–';
@@ -20566,10 +21143,6 @@
   function entryMatrixChange(f, el) {
     const a = artistOf(el);
     if (!a) return false;
-    if (f === 'em-evdate') {
-      emEventDate(a, el.dataset.ev, el.value);
-      return true;
-    }
     // [AE-3] (3.35.4) a track of an opened event
     if (f === 'em-evtrack') {
       const e = rowsInEvent(a, el.dataset.ev)[0];
@@ -22771,18 +23344,19 @@
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="tracks" ${S.trackPool.length ? '' : 'disabled'}>${esc(tr('pools.clearTracks'))}</button>
         </span>` : ''}</span>
       </div>`;
+    // [Z-TP] (3.42.1) the date pool and the track pool side by side, one below the other only when they do not fit in one line
     el.innerHTML = `${open ? `<div class="dci-pools-body">
-        ${datePoolHtml()}
-        ${S.poolForm ? poolFormHtml() : ''}
-        ${trackPoolHtml()}
-        ${S.trackForm ? trackFormHtml() : ''}
+        <div class="dci-pools-pair" data-el="pools-pair">
+          <div class="dci-pools-col" data-el="pool-col-dates">${datePoolHtml()}${S.poolForm ? poolFormHtml() : ''}</div>
+          <div class="dci-pools-col" data-el="pool-col-tracks">${trackPoolHtml()}${S.trackForm ? trackFormHtml() : ''}</div>
+        </div>
         ${matrixHtml()}
         ${dateFinderHtml()}
       </div>
       <div class="dci-pools-foot">
         <label class="dci-check" title="${esc(tr('pools.keepTitle'))}"><input type="checkbox" data-f="pools-keep" ${S.poolsKeep ? 'checked' : ''}> ${esc(tr('pools.keep'))}</label>
       </div>` : S.poolsKeep && (S.datePool.length || S.trackPool.length)
-        ? `<div class="dci-pools-kept">${datePoolHtml(true)}${trackPoolHtml(true)}</div>` : ''}
+        ? `<div class="dci-pools-kept dci-pools-pair"><div class="dci-pools-col">${datePoolHtml(true)}</div><div class="dci-pools-col">${trackPoolHtml(true)}</div></div>` : ''}
       ${S.poolClear ? poolClearHtml() : ''}
       ${head}`;
     refreshPoolSelects();
@@ -23377,8 +23951,13 @@
   function instrumentAskHtml(row) {
     const lt = currentLinkType(row);
     const q = questionRuleFor(row);
-    if (row.level === 'skip' || !q || !lt || !primaryRootOf(lt) || norm(row.primaryText) !== q.base) return '';
+    if (row.level === 'skip' || !q || !lt || !primaryRootOf(lt) || !questionAsks(q, row)) return '';
     const pick = (name) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}">${esc(name)}</button>`;
+    // [Q013] (3.42.3) an answer set at once: the others to choose ("Horns" is set as horn – or as: brass)
+    if (q.preset && norm(row.primaryText) !== q.base) {
+      const others = q.options.filter((o) => norm(o) !== norm(row.primaryText));
+      return `<div class="dci-bass-ask" data-question="${q.id}" data-preset="1">${esc(tr('instrAsk.preset', { name: row.base, set: row.primaryText, credit: q.credit }))} ${others.map(pick).join(' · ')}</div>`;
+    }
     return `<div class="dci-bass-ask" data-question="${q.id}">${esc(trSrc('instrAsk.ask', { name: row.base }))} ${q.options.map(pick).join(' · ')}
       <span class="dci-sub">${esc(row.translated ? tr('instrAsk.otherwiseTr', { credit: q.credit, word: row.translated }) : tr('instrAsk.otherwise', { credit: q.credit }))}</span></div>`;
   }
@@ -23848,6 +24427,8 @@
     const keep = ['dci-gcompact', 'dci-about-hidden', 'dci-gskipped'].filter((c) => section.classList.contains(c)).map((c) => ` ${c}`).join('');
     section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${keep}`;
     const tag = section.querySelector('.dci-kind-tag');
+    // [Z-ETC] (3.42.5) with its note while a search waits
+    section.querySelectorAll('.dci-etc-wait').forEach((x) => x.remove());
     if (tag) tag.outerHTML = kindTagHtml(a);
     section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
     const spell = section.querySelector(`[data-spell="${a.key}"]`);
@@ -24312,10 +24893,9 @@
   const prefilledBy = (from) => `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${from ? ` from ${S.source.noteName}` : ''}.`;
   /**
    * [Z-EN] (3.41.9) The edit note of a form the script fills in, by ⚙ Settings → Staging → Edit note: "full" its sources and the line
-   * of the script as before, "simple" the sources and the script with its version, "none" nothing.
+   * of the script as before, "simple" the sources and the script with its version.
    */
   function formEditNote(sources, prefilled) {
-    if (S.editNoteMode === 'none') return '';
     const src = uniq((sources || []).filter(Boolean)).map((u) => `Source: ${u}`);
     return [...src, S.editNoteMode === 'simple' ? `Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})` : prefilled].join('\n');
   }
@@ -25299,7 +25879,7 @@
       if (had) writeJson('localStorage', key, null);
       return;
     }
-    const note = [S.editNoteMode !== 'none' ? editNoteBlock() : '', SEED_NOTE].filter(Boolean).join('\n\n');
+    const note = [editNoteBlock(), SEED_NOTE].filter(Boolean).join('\n\n');
     writeJson('localStorage', key, { release: releaseMbid, at: Date.now(), note, items });
     if (!quiet) log('info', 'liveSaved', { n: items.length });
   }
@@ -28135,8 +28715,11 @@
   // --- [3.17.0] The site the companion shows for the loaded source: Discogs or Bandcamp --------------------------
 
   /** 'discogs' or 'bandcamp': the site of the loaded source in the companion (Discogs while none or a text is loaded). */
-  const viewSite = () => (S.source && S.source.companion === 'bandcamp' ? 'bandcamp' : 'discogs');
-  const VIEW_NAMES = { discogs: 'Discogs', bandcamp: 'Bandcamp' };
+  // [Z-YTC] (3.42.8) or 'youtube': the video of a YouTube source (companion 1.11.0)
+  const viewSite = () => (S.source && ['bandcamp', 'youtube'].includes(S.source.companion) ? S.source.companion : 'discogs');
+  const VIEW_NAMES = { discogs: 'Discogs', bandcamp: 'Bandcamp', youtube: 'YouTube' };
+  /** [Z-YTC] (3.42.8) A site whose credits are lines of a text (Bandcamp, YouTube): a credit is found by its line. */
+  const textSite = (site = viewSite()) => site === 'bandcamp' || site === 'youtube';
   /** A text of the Discogs view; with Bandcamp its "…Site" form ({site}: "Bandcamp"), where there is one. */
   function trView(key, params = {}) {
     const site = viewSite();
@@ -28156,6 +28739,8 @@
   function syncSite() {
     const { sites } = S.sync;
     if (!sites) return viewSite() === 'discogs' ? S.sync : { tabs: 0, target: null, releases: [], old: true };
+    // [Z-YTC] (3.42.8) a companion before 1.11.0 knows no YouTube tabs
+    if (viewSite() === 'youtube' && !sites.youtube) return { tabs: 0, target: null, releases: [], old: true, need: '1.11.0' };
     return sites[viewSite()] || { tabs: 0, target: null, releases: [] };
   }
 
@@ -28180,7 +28765,7 @@
           const a = S.artists.get(row.artistKey);
           if (!a || row.manual || !row.raw) continue;
           // Discogs: credits with a Discogs artist or label; Bandcamp: credits of its own text (not of a supplement)
-          const refs = site === 'bandcamp' ? (row.srcRefs || []).filter((r) => !r.about) : [];
+          const refs = textSite(site) ? (row.srcRefs || []).filter((r) => !r.about) : [];
           if (site === 'discogs' ? !a.dId : (row.supp || !refs.length)) continue;
           const info = rowInfo && rowInfo.get(row.id);
           let status = 'open';
@@ -28214,7 +28799,7 @@
             }
             return pt;
           };
-          if (site === 'bandcamp') {
+          if (textSite(site)) {
             items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb, ...(row.srcOff ? { off: true } : {}),
               refs: refs.map((r) => ({ page: r.page, line: r.line, part: r.part, pi: r.pi, n: r.n, ...(r.pos ? { pos: r.pos, ...ofTrack(r.pos) } : { status }) })) });
             continue;
@@ -28322,7 +28907,7 @@
     if (!S.sync.installed) return `<span class="dci-muted" title="${esc(tr('sync.offTitle'))}">${esc(trView('sync.off'))}</span>${srcLinkHtml()}`;
     // [3.17.0] The tabs of the loaded source's site (Discogs or Bandcamp)
     const st = syncSite();
-    if (st.old) return `<span class="dci-muted">${esc(tr('sync.oldSite', { site: VIEW_NAMES[viewSite()] }))}</span>${srcLinkHtml()}`;
+    if (st.old) return `<span class="dci-muted">${esc(st.need ? tr('sync.oldSiteV', { site: VIEW_NAMES[viewSite()], version: st.need }) : tr('sync.oldSite', { site: VIEW_NAMES[viewSite()] }))}</span>${srcLinkHtml()}`;
     const openBtn = `<button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>`;
     if (!st.tabs) return `${esc(trView('sync.noTab'))}${srcLinkHtml()}${companionReleaseId() ? ` ${openBtn}` : ''}`;
     const where = tr(st.target && st.target.visible ? 'sync.visible' : 'sync.background');
@@ -28558,7 +29143,7 @@
   }
 
   function showSourceOf(el) {
-    if (viewSite() === 'bandcamp' && !el.matches('tr[data-work]')) {
+    if (textSite() && !el.matches('tr[data-work]')) {
       // [3.17.0] Bandcamp: the lines of the credit (or of all credits of the entry) on the album or a track page
       const row = el.matches('tr.dci-row') ? rowOf(el) : null;
       const artist = row ? null : artistOf(el);
@@ -29680,13 +30265,10 @@
       }
       // [Z-EN] (3.41.9) ⚙ Settings → Staging → Edit note
       case 'edit-note-mode': {
-        S.editNoteMode = ['simple', 'none'].includes(btn.dataset.mode) ? btn.dataset.mode : 'full';
+        S.editNoteMode = btn.dataset.mode === 'simple' ? 'simple' : 'full';
         writeJson('localStorage', EDIT_NOTE_KEY, S.editNoteMode === 'full' ? null : S.editNoteMode);
-        // (3.41.15, review) a block written before follows at once ("None": out; else in the new form)
-        if (S.lastNoteBlock) {
-          if (S.editNoteMode === 'none') clearEditNote();
-          else writeEditNote();
-        }
+        // (3.41.15, review) a block written before follows at once
+        if (S.lastNoteBlock) writeEditNote();
         S.rows.forEach(updateHint);
         renderSettings();
         const again = S.overlay.querySelector(`[data-act="edit-note-mode"][data-mode="${S.editNoteMode}"]`);
@@ -29813,6 +30395,53 @@
         rerenderGroup(artist);
         const again = S.overlay.querySelector(`[data-group="${artist.key}"] .dci-em-evedit, [data-group="${artist.key}"] th[data-evhead] .dci-em-evtoggle[aria-expanded="false"]`);
         if (again && S.emEvOpen.has(artist.key)) again.scrollIntoView({ block: 'nearest' });
+        break;
+      }
+      // [Z-EDM] (3.42.1) the date of an event: its fields opened (or closed), applied, taken away
+      case 'em-evdate-open': {
+        if (!artist) break;
+        const key = `${artist.key}|${btn.dataset.ev}`;
+        S.emEvDate = S.emEvDate && S.emEvDate.key === key ? null : { key, ev: btn.dataset.ev, f: null, error: '' };
+        rerenderGroup(artist);
+        const first = S.emEvDate && S.overlay.querySelector(`[data-group="${artist.key}"] th[data-evhead="${CSS.escape(btn.dataset.ev)}"] [data-f="ed-by"]`);
+        if (first) first.focus({ preventScroll: true });
+        else {
+          const b2 = S.overlay.querySelector(`[data-group="${artist.key}"] th[data-evhead="${CSS.escape(btn.dataset.ev)}"] [data-act="em-evdate-open"]`);
+          if (b2) b2.focus({ preventScroll: true });
+        }
+        break;
+      }
+      // [Z-EDM] (3.42.1) "⇣": the begin copied into the end (as in the other date fields)
+      case 'ed-copy': {
+        const box = btn.closest('[data-evdate]');
+        if (!box) break;
+        ['y', 'm', 'd'].forEach((k) => {
+          const from = box.querySelector(`[data-f="ed-b${k}"]`);
+          const to = box.querySelector(`[data-f="ed-e${k}"]`);
+          if (from && to) to.value = from.value;
+        });
+        break;
+      }
+      case 'em-evdate-apply':
+      case 'em-evdate-clear': {
+        if (!artist) break;
+        const box = btn.closest('[data-evdate]');
+        if (act === 'em-evdate-clear') {
+          S.emEvDate = null;
+          emEventDateValue(artist, btn.dataset.ev, null);
+          break;
+        }
+        const f = {};
+        ['by', 'bm', 'bd', 'ey', 'em', 'ed'].forEach((k) => { f[k] = ((box && box.querySelector(`[data-f="ed-${k}"]`)) || { value: '' }).value.trim(); });
+        f.ended = !!(box && box.querySelector('[data-f="ed-ended"]') && box.querySelector('[data-f="ed-ended"]').checked);
+        const res = validateDateFields(f);
+        if (res.error) {
+          S.emEvDate = { key: `${artist.key}|${btn.dataset.ev}`, ev: btn.dataset.ev, f, error: dateErrorText(res.error), inline: !!btn.closest('.dci-em-evdatebox-inline') };
+          rerenderGroup(artist);
+          break;
+        }
+        S.emEvDate = null;
+        emEventDateValue(artist, btn.dataset.ev, res.value);
         break;
       }
       case 'em-evlevel':
@@ -30612,6 +31241,11 @@
         writeJson('localStorage', STATS_PERIOD_KEY, S.statsPeriod === 'month' ? null : S.statsPeriod);
         renderStats();
         break;
+      case 'stats-genres-view':
+        // [Z-STG2] (3.42.6) genres and styles of all sources in one list, or a list for each (remembered)
+        writeJson('localStorage', STATS_GENRES_KEY, btn.dataset.view === 'separate' ? 'separate' : null);
+        renderStats();
+        break;
       case 'stats-delete':
         // [E8] (3.38.0) all statistics deleted (asked first)
         if (!confirm(tr('stats.deleteAsk', { n: (S.statsData || []).length }))) break;
@@ -30619,6 +31253,7 @@
           S.statsData = [];
           log('info', 'statsDeleted', {});
           renderStats();
+          renderSettings(); // [Z-DS] (3.42.0) the button is in ⚙ Settings → Cache
         });
         break;
       case 'remember-forget': {
@@ -30879,6 +31514,21 @@
         S.textForm = null;
         renderSource();
         break;
+      // [Z-ETC] (3.42.5) the kind of an entry not linked tried as the next one
+      case 'kind-cycle':
+        if (artist) etcCycle(artist);
+        break;
+      // [Z-UNA] (3.42.4) words of a line not recognized: chosen (⇧: up to this one), given an entry, or the form closed
+      case 'una-word':
+        unaPick(btn, !!e.shiftKey);
+        break;
+      case 'una-apply':
+        unaApply();
+        break;
+      case 'una-close':
+        S.una = null;
+        renderSource();
+        break;
       // [3.34.1] text from cover art (beta, item E3)
       case 'ocr-open':
         openOcr();
@@ -31055,6 +31705,19 @@
     const el = e.target;
     const f = el.dataset && el.dataset.f;
     if (!f) return;
+    // [Z-UNA] (3.42.4) the form of words not recognized: another kind offers its roles
+    if (/^una-/.test(f)) {
+      if (!S.una) return;
+      if (f === 'una-kind') {
+        const name = S.overlay.querySelector('.dci-una-form [data-f="una-name"]');
+        Object.assign(S.una, { kind: el.value, role: unaRoles(el.value)[0] || '', error: '', ...(name ? { name: name.value } : {}) });
+        renderSource();
+      } else if (f === 'una-role') S.una.role = el.value;
+      else if (f === 'una-tracks') S.una.tracks = el.value;
+      else if (f === 'una-rule') S.una.remember = el.checked;
+      else if (f === 'una-name') S.una.name = el.value;
+      return;
+    }
     if (f === 'tg-track' && S.trackForm) {
       if (el.checked) S.trackForm.tracks.add(Number(el.dataset.i));
       else S.trackForm.tracks.delete(Number(el.dataset.i));
@@ -31346,13 +32009,26 @@
     const el = e.target;
     const act = el.dataset && el.dataset.act;
     const f = (el.dataset && el.dataset.f) || (act === 'date-open' ? 'rd-by' : act === 'wdate-open' ? 'wd-by' : '');
-    const m = f && f.match(/^(rd|pf|wd|cd|xd)-([be])[ymd]$/);
+    const m = f && f.match(/^(rd|pf|wd|cd|xd|ed)-([be])[ymd]$/);
     if (!m) return;
     const text = (e.clipboardData || window.clipboardData).getData('text');
     const parsed = parseDatePeriod(text);
     // A bare year is pasted normally, so month and day already typed stay.
     if (!parsed || (parsed.single && /^\s*\d{4}\s*$/.test(text))) return;
     e.preventDefault();
+    // [Z-EDM] (3.42.1) the fields of an event's date: filled where they are ("Apply" sets them)
+    if (m[1] === 'ed') {
+      const box = el.closest('[data-evdate]');
+      const fields = parsed.period ? fieldsFromDate(parsed.period) : (() => {
+        const one = fieldsFromDate({ begin: parsed.single });
+        return m[2] === 'b' ? { by: one.by, bm: one.bm, bd: one.bd } : { ey: one.by, em: one.bm, ed: one.bd };
+      })();
+      Object.entries(fields).forEach(([k, v]) => {
+        const inp = box && box.querySelector(`[data-f="ed-${k}"]`);
+        if (inp && k !== 'ended') inp.value = v;
+      });
+      return;
+    }
     const target = m[1] === 'pf' ? S.poolForm : null;
     const row = m[1] === 'rd' ? rowOf(el) : null;
     const workIndex = m[1] === 'wd' ? workIndexOf(el) : null;
@@ -32205,7 +32881,7 @@
   const SKIP_HIDE_KEY = 'dci-skip-hide';
   // [Z-SU] (3.41.1) the parts of a suite named "Suite: Part" (default) or "Suite, Part" ("comma": stored)
   const SUITE_NAMING_KEY = 'dci-suite-naming';
-  // [Z-EN] (3.41.9) the edit note the script writes: "simple" or "none" stored (full: nothing)
+  // [Z-EN] (3.41.9) the edit note the script writes: "simple" stored (full: nothing); [Z-EN2] (3.42.0) "none" is gone (read as "simple")
   const EDIT_NOTE_KEY = 'dci-edit-note';
   const JOIN_KEY = 'dci-join';
   // [145b] (3.35.6) the works of the source as track groups (default on; off: stored false)
@@ -32245,7 +32921,7 @@
     // collecting the statistics
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY],
     // [E8] (3.38.0) the period (the statistics stay: "Delete statistics …"; collecting them: cache from 3.40.14)
-    statistics: [STATS_PERIOD_KEY],
+    statistics: [STATS_PERIOD_KEY, STATS_GENRES_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -32267,7 +32943,7 @@
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
   S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
   S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
-  S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? readJson('localStorage', EDIT_NOTE_KEY, 'full') : 'full';
+  S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
@@ -32490,6 +33166,9 @@
    * [Z-STS, Z-STW, Z-STG, Z-STL, Z-STV] (3.41.14) What an import did beyond its relationships, for the statistics: the suites and
    * medleys, the works, the genres and styles of the source, the live comments, the gaps closed in relationships MusicBrainz had.
    */
+  /** [Z-STG2] (3.42.6) The releases of the sources of this import: the one read and the one supplementing it. */
+  const statRels = () => [S.release, S.supp && S.supp.rel].filter(Boolean);
+
   function statExtras(rels = []) {
     const suites = [...S.suiteWorks.values()].filter((sw) => !isPending(sw.gid));
     // (3.41.15, review) the works and the gaps from what is submitted (not from the stagings): a link taken out is not counted
@@ -32511,7 +33190,9 @@
         medleys: [...S.workParts.values()].filter((ps) => ps.length && ps[0].medley).length,
       },
       works: { linked: links.length, created: links.filter((it) => it.tg && created.has(it.tg)).length, pending: links.filter((it) => !it.tg).length },
-      genres: uniq([...((S.release && S.release.genres) || []), ...((S.release && S.release.styles) || []).map(norm)]).slice(0, 12),
+      // [Z-STG2] (3.42.6) Discogs's genres and styles and Bandcamp's tags, each of the source read or supplementing it
+      genres: uniq(statRels().flatMap((r) => [...(r.genres || []), ...(r.styles || []).map(norm)])).slice(0, 12),
+      bcTags: uniq(statRels().flatMap((r) => (r.bcTags || []).map(norm))).slice(0, 12),
       live: { comments: liveCom },
       gaps: { credits: fills('credits'), dates: fills('dates'), attrs: fills('attrs') },
       // [Z-STQ] (3.41.15, review) the answers of the rows, once a row – also of a row an answer put on "Skip"
@@ -32633,6 +33314,9 @@
     S.statsData = Array.isArray(all) ? all : [];
     S.statsLoading = false;
     if (S.statsOpen) renderStats();
+    // [Z-DS] (3.42.0) the number next to "Delete statistics …" in ⚙ Settings → Cache
+    const st = S.overlay && S.overlay.querySelector('[data-el="stats-stored"]');
+    if (st) renderSettings();
   }
 
   /**
@@ -32640,7 +33324,6 @@
    * on or off, the sums, over days / weeks / months / years, the most frequent artists, instruments and types.
    */
   function statsHtml() {
-    const row = (html) => `<div class="dci-set-row">${html}</div>`;
     const on = statsOn();
     // [Z-SC] (3.40.14) "Collect statistics" is in ⚙ Settings → Cache: here a grey line that says so and leads there
     const head = [
@@ -32692,8 +33375,8 @@
     return [...head, tiles,
       `<h4 class="dci-stats-h">${esc(tr('stats.overTime'))} ${seg}</h4>`, table,
       // [E8] (3.38.2) the developer statistics – [171] (3.38.5) in "Developer mode"
-      tops, statsMoreHtml(recs), S.devMode ? statsDevHtml(recs) : '',
-      row(`<button type="button" class="dci-small" data-act="stats-delete">${esc(tr('stats.delete'))}</button> <span class="dci-sub">${esc(tr('stats.stored', { n: recs.length }))}</span>`)];
+      // [Z-DS] (3.42.0) deleting them is in ⚙ Settings → Cache (until 3.41.15 here)
+      tops, statsMoreHtml(recs), S.devMode ? statsDevHtml(recs) : ''];
   }
 
   /**
@@ -32708,7 +33391,7 @@
       own: 0, ownRels: new Map(),
       // [Z-STS …] (3.41.14) the records of 3.41.14 and later (x), and what they count
       x: 0, attrs: new Map(), suites: { n: 0, created: 0, found: 0, manual: 0, parts: 0, medleys: 0, partsRels: 0 }, works2: { linked: 0, created: 0, pending: 0 },
-      genres: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map() };
+      genres: new Map(), bcTags: new Map(), genresAll: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map() };
     const inc = (map, k, by = 1) => {
       if (k || k === 0) map.set(k, (map.get(k) || 0) + by);
     };
@@ -32760,6 +33443,9 @@
         if (!seenGenre.has(r.mbid)) {
           seenGenre.add(r.mbid);
           (x.genres || []).forEach((g) => inc(m.genres, g));
+          // [Z-STG2] (3.42.6) Bandcamp's tags; both together, the same word once (any case)
+          (x.bcTags || []).forEach((g) => inc(m.bcTags, norm(g)));
+          uniq([...(x.genres || []), ...(x.bcTags || [])].map(norm)).forEach((g) => inc(m.genresAll, g));
         }
       }
       // [Z-STC] (3.41.14) the people credited on a release (all its submissions; the pairs below)
@@ -32878,6 +33564,25 @@
    * cards of 3.41.14: suites and medleys, attributes, works, genres, decisions, live, gaps closed, worked together. What only
    * records of 3.41.14 and later hold says so ("counted from 3.41.14") while older ones are there.
    */
+  /**
+   * [Z-STG2] (3.42.6; Q-dj, Q-do) The card "Genres and styles": "Combined | Separate" (remembered; Combined at first) – one list of
+   * Discogs's genres and styles and Bandcamp's tags, the same word once, its sources in its tooltip; or a list for each source.
+   */
+  function statGenresHtml(m, { top, kv, cap }) {
+    const view = readJson('localStorage', STATS_GENRES_KEY, 'combined') === 'separate' ? 'separate' : 'combined';
+    const seg = `<span class="dci-seg dci-seg-small dci-stats-gview" role="group" aria-label="${esc(tr('stats.genresView'))}">${['combined', 'separate'].map((v) => `<button type="button"
+      data-act="stats-genres-view" data-view="${v}" aria-pressed="${view === v}">${esc(tr(`stats.genres.${v}`))}</button>`).join('')}</span>`;
+    if (view === 'separate') {
+      const part = (src, map) => `<h5 class="dci-stats-gsrc">${esc(tr(`stats.src.${src}`))}</h5>${kv(top(map, 8), cap)}`;
+      return `${seg}${part('discogs', m.genres)}${part('bandcamp', m.bcTags)}`;
+    }
+    const pairs = top(m.genresAll, 8);
+    if (!pairs.length) return `${seg}${kv(pairs, cap)}`;
+    const srcs = (g) => [['discogs', m.genres], ['bandcamp', m.bcTags]].map(([k, map]) => [k, map.get(g) || 0]).filter(([, n]) => n)
+      .map(([k, n]) => `${tr(`stats.src.${k}`)} ${statNum(n)}`).join(' · ');
+    return `${seg}<ul class="dci-stats-kv">${pairs.map(([g, n]) => `<li title="${esc(srcs(g))}"><span>${esc(cap(g))}</span> <span class="dci-sub">${statNum(n)}</span></li>`).join('')}</ul>`;
+  }
+
   function statsMore2Html(m, recs, { top, kv, card }) {
     const since = m.x < recs.length ? `<p class="dci-sub dci-stats-since">${esc(tr('stats.since', { v: '3.41.14' }))}</p>` : '';
     const cap = (t) => String(t || '').replace(/^\p{Ll}/u, (c) => c.toUpperCase());
@@ -32891,7 +33596,7 @@
       .filter(([k, n]) => n || k === 'suites' || k === 'medleys'), (k) => tr(`stats.suites.${k}`))}${since}`)}
       ${card('attrs', `${kv(top(m.attrs, 8))}${since}`)}
       ${card('works2', `${kv([['linked', m.works2.linked], ['created', m.works2.created], ['pending', m.works2.pending]], (k) => tr(`stats.works2.${k}`))}${since}`)}
-      ${card('genres', `${kv(top(m.genres, 8), cap)}${since}`)}
+      ${card('genres', `${statGenresHtml(m, { top, kv, cap })}${since}`)}
       ${card('decisions', `<p>${esc(tr('stats.decisionsN', { n: statNum(m.nAnswers) }))}</p>${kv(top(m.answers, 6), answer)}`)}
       ${card('live', `${kv([['links', m.live.links], ['comments', m.live.comments]], (k) => tr(`stats.live.${k}`))}${since}`)}
       ${card('gaps', `${kv([['credits', m.gaps.credits], ['dates', m.gaps.dates], ['attrs', m.gaps.attrs]], (k) => tr(`stats.gaps.${k}`))}${since}`)}
@@ -33133,8 +33838,9 @@
         // [E4] (3.35.0) an entry, compact, at first
         row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
           data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
-        // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script), none – each option's tooltip lists what it writes
-        row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple', 'none'].map((v) => `<button type="button"
+        // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script) – each option's tooltip lists what it writes; [Z-EN2]
+        // (3.42.0) no "none"
+        row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple'].map((v) => `<button type="button"
           data-act="edit-note-mode" data-mode="${v}" aria-pressed="${S.editNoteMode === v}" title="${esc(tr(`settings.editNote.${v}Title`))}">${esc(tr(`settings.editNote.${v}`))}</button>`).join('')}</span>`),
       ],
       dates: () => [
@@ -33169,6 +33875,13 @@
             <span class="dci-sub" data-el="remember-size">${esc(tr('settings.rememberSize', { n: z.releases, size: bytesText(z.rel) }))} · ${esc(tr('settings.rememberAll', { size: bytesText(z.all) }))}</span>`),
           // [Z-SC] (3.40.14) collecting the statistics (until 3.40.13 at the top of the statistics)
           row(check('data-set="stats-on"', statsOn(), tr('stats.on'), tr('stats.onTitle'))),
+          // [Z-DS] (3.42.0) and deleting them (until 3.41.15 at the bottom of the statistics)
+          (() => {
+            if (S.statsData == null) statsLoad();
+            const n = S.statsData == null ? null : S.statsData.length;
+            return row(`<button type="button" class="dci-small" data-act="stats-delete"${n === 0 ? ' disabled' : ''}>${esc(tr('stats.delete'))}</button>
+              <span class="dci-sub" data-el="stats-stored">${n == null ? esc(tr('stats.loading')) : esc(tr('stats.stored', { n }))}</span>`);
+          })(),
         ];
       },
     };
@@ -33209,11 +33922,15 @@
   /** [3.25.0] The tab "ⓘ Connections" (item 40): every site, tool and script the script works with (CONNECTIONS). */
   function connectionsHtml() {
     const link = (c) => (c.home ? `<a href="${esc(c.home)}" target="_blank" rel="noopener">${esc(c.name || tr(`conn.${c.id}.name`))}</a>` : esc(c.name || tr(`conn.${c.id}.name`)));
+    const row = (c) => `<tr data-conn="${c.id}"><td>${link(c)}${(c.more || []).map((m) => ` · <a href="${esc(m.home)}" target="_blank" rel="noopener">${esc(m.name)}</a>`).join('')}</td>
+          <td>${esc(tr(`conn.kind.${c.kind}`))}</td><td>${esc(tr(`conn.${c.id}`))}</td><td><code>${esc(c.perms)}</code></td><td>${esc(c.since)}</td></tr>`;
+    // [Z-CONS] (3.42.0) in groups: sources, websites, tools and scripts, resources, userscript managers, links (by number within)
+    const groups = CONN_GROUPS.map(([key, test]) => [key, CONNECTIONS.filter(test)]).filter(([, cs]) => cs.length);
     return `<p class="dci-sub">${esc(tr('conn.intro'))}</p>
       <div class="dci-tablewrap"><table class="dci-conn">
         <thead><tr><th>${esc(tr('conn.th.name'))}</th><th>${esc(tr('conn.th.kind'))}</th><th>${esc(tr('conn.th.what'))}</th><th>${esc(tr('conn.th.perms'))}</th><th>${esc(tr('conn.th.since'))}</th></tr></thead>
-        <tbody>${CONNECTIONS.map((c) => `<tr data-conn="${c.id}"><td>${link(c)}${(c.more || []).map((m) => ` · <a href="${esc(m.home)}" target="_blank" rel="noopener">${esc(m.name)}</a>`).join('')}</td>
-          <td>${esc(tr(`conn.kind.${c.kind}`))}</td><td>${esc(tr(`conn.${c.id}`))}</td><td><code>${esc(c.perms)}</code></td><td>${esc(c.since)}</td></tr>`).join('')}</tbody>
+        ${groups.map(([key, cs]) => `<tbody data-conn-group="${key}"><tr class="dci-conn-group"><th colspan="5" scope="colgroup">${esc(tr(`conn.group.${key}`))}</th></tr>
+          ${cs.map(row).join('')}</tbody>`).join('')}
       </table></div>`;
   }
 
@@ -33673,7 +34390,7 @@
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
-    STATS_ON_KEY, STATS_PERIOD_KEY,
+    STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY,
     // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
     GAP_ON_KEY, GAP_NONE_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
@@ -34765,6 +35482,14 @@
       .dci-unrec summary { cursor: pointer; color: var(--warn); }
       .dci-unrec ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }
       .dci-unrec li[data-line-peek], .dci-ignored li[data-line-peek] { cursor: zoom-in; text-decoration: underline dotted #9f9bc0; text-underline-offset: 3px; }
+      /* [Z-UNA] (3.42.4) the words of a line not recognized to click, the ones chosen, those given an entry; the form below */
+      .dci-unrec .dci-una-w { cursor: pointer; border-radius: calc(var(--u, 1px) * 3); padding: 0 calc(var(--u, 1px) * 1); }
+      .dci-unrec .dci-una-w:hover { background: var(--row); color: var(--ink); }
+      .dci-unrec .dci-una-sel, .dci-unrec .dci-una-sel:hover { background: var(--purple); color: #fff; }
+      .dci-unrec .dci-una-done { text-decoration: line-through; color: var(--ok); }
+      .dci-una-form { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); margin: calc(var(--u, 1px) * 6) 0;
+        padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 8); border: 1px solid var(--line); border-radius: calc(var(--u, 1px) * 6); color: var(--ink); background: var(--soft); }
+      .dci-una-form input[type=text] { min-width: calc(var(--u, 1px) * 140); }
       .dci-ignored { width: 100%; margin-top: calc(var(--u, 1px) * 4); font-size: calc(var(--u, 1px) * 12); }
       .dci-ignored summary { cursor: pointer; color: var(--muted); }
       .dci-ignored ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }
@@ -34871,6 +35596,10 @@
       .dci-pageof { margin: 0 0 calc(var(--u, 1px) * 6); }
       .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind); color: #fff;
         font-size: calc(var(--u, 1px) * 11); font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }
+      /* [Z-ETC] (3.42.5) the kind of an entry not linked: a button that tries the next one */
+      button.dci-kind-tag.dci-kind-cycle { border: 0; cursor: pointer; font-family: inherit; line-height: inherit; }
+      button.dci-kind-tag.dci-kind-cycle::after { content: " ↻"; }
+      button.dci-kind-tag.dci-kind-cycle:hover, button.dci-kind-tag.dci-kind-cycle:focus-visible { filter: brightness(1.12); outline: 2px solid var(--kind); outline-offset: 1px; }
       /* Not found in MusicBrainz: the bar is red whatever the kind */
       .dci-st-missing, .dci-st-ambiguous { border-left-color: var(--err); }
       .dci-group.dci-all-skip { border-left-color: var(--line); }
@@ -35164,6 +35893,10 @@
       .dci-tg-tag.dci-tag-date { background: var(--date-bg); color: var(--date-d); }
       .dci-tg-tag.dci-tag-track { background: var(--track-bg); color: var(--track-d); }
       .dci-tracks-bar { margin-top: calc(var(--u, 1px) * 4); }
+      /* [Z-TP] (3.42.1) the two pools side by side: each as wide as its line; when both do not fit, the track pool goes below */
+      .dci-pools-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 28); }
+      .dci-pools-col { flex: 1 1 auto; min-width: 0; }
+      .dci-pools-pair .dci-tracks-bar { margin-top: 0; }
       .dci-track-form .dci-chips { max-height: calc(var(--u, 1px) * 220); overflow: auto; }
       /* [3.15.2, 3.15.3] the suggestions: a block of their own below the head line, side by side, wrapping into more lines */
       .dci-sugg-stack { flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 6); }
@@ -35333,6 +36066,8 @@
       .dci-conn { border-collapse: collapse; font-size: calc(var(--u, 1px) * 12); }
       .dci-conn th, .dci-conn td { text-align: left; vertical-align: top; padding: calc(var(--u, 1px) * 3) calc(var(--u, 1px) * 8); border-bottom: 1px solid var(--line); }
       .dci-conn code { font-size: calc(var(--u, 1px) * 11); white-space: normal; }
+      /* [Z-CONS] (3.42.0) the heading of a group of connections */
+      .dci-conn .dci-conn-group th { padding-top: calc(var(--u, 1px) * 10); background: var(--soft); color: var(--purple-d); font-weight: 600; font-size: calc(var(--u, 1px) * 12.5); }
       .dci-set-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 5) 0; }
       .dci-set-row input[type="number"] { width: calc(var(--u, 1px) * 80); }
       /* [E8] (3.38.0) the statistics */
@@ -35354,6 +36089,9 @@
       .dci-stats-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 230), 1fr)); gap: calc(var(--u, 1px) * 10); margin: calc(var(--u, 1px) * 10) 0; }
       .dci-stats-card { border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); font-size: calc(var(--u, 1px) * 12); }
       .dci-stats-card h4 { margin: 0 0 calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 13); }
+      /* [Z-STG2] (3.42.6) "Combined | Separate" of the genres, the heading of each source */
+      .dci-stats-gview { display: inline-flex; margin-bottom: calc(var(--u, 1px) * 6); }
+      .dci-stats-card h5.dci-stats-gsrc { margin: calc(var(--u, 1px) * 6) 0 calc(var(--u, 1px) * 2); font-size: calc(var(--u, 1px) * 12); font-weight: 600; color: var(--muted); }
       .dci-stats-card h5 { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 3); font-size: calc(var(--u, 1px) * 12); font-weight: 600; color: var(--muted); }
       .dci-stats-card p { margin: calc(var(--u, 1px) * 3) 0; }
       .dci-stats-kv { list-style: none; margin: 0; padding: 0; }
@@ -35516,6 +36254,14 @@
       .dci-em-detail-row > td { padding: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 18); background: var(--soft); }
       .dci-em-more { margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-em-ev input.dci-em-evdate { width: calc(var(--u, 1px) * 140); font: inherit; font-size: calc(var(--u, 1px) * 12); padding: 0 calc(var(--u, 1px) * 4); margin: calc(var(--u, 1px) * 2) 0; }
+      /* [Z-EDM] (3.42.1) the date of an event: a button, and MusicBrainz's fields below it */
+      .dci-em-ev { position: relative; }
+      .dci-em-ev .dci-em-evdate { display: inline-block; font-size: calc(var(--u, 1px) * 12); margin: calc(var(--u, 1px) * 2) 0; }
+      .dci-em-ev .dci-em-evdate:not(.dci-cl-has) { color: var(--muted); }
+      .dci-em-evdatebox { position: absolute; left: 0; top: 100%; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 6);
+        padding: calc(var(--u, 1px) * 8); background: #fff; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(38, 36, 48, 0.18); font-weight: normal; white-space: nowrap; }
+      .dci-em-evdatebox.dci-em-evdatebox-inline { position: static; box-shadow: none; border: 0; padding: 0; }
+      .dci-em-evdatebtns { display: inline-flex; gap: calc(var(--u, 1px) * 4); align-items: center; }
       /* [AE-3] (3.35.4) ▸ of an event, the event opened below its block */
       .dci-em-ev .dci-em-evtoggle { padding: 0 calc(var(--u, 1px) * 3) 0 0; }
       .dci-em-ev.dci-em-evopen { background: var(--date-bg); box-shadow: inset 0 -2px 0 var(--purple); }

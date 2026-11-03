@@ -1,6 +1,6 @@
 """Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: areas, v3222, medium, initials, placedate (3.32.5), recordedin (3.34.18) – each the former smoke/t_<case>.py, unchanged; `python3 t_text_places.py <case> …` runs only those."""
+Cases: areas, v3222, medium, initials, placedate (3.32.5), recordedin (3.34.18) – each the former smoke/t_<case>.py, unchanged; unawords (3.42.4), kindcycle (3.42.5), unaremember, kindrace, ownrulekind (3.42.8); `python3 t_text_places.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -541,6 +541,409 @@ Recorded in Berlin"""
                        and sol['kind'] == 'place' and '(Marseille)' in sol['head'] and sol['rows'] == ['mixed at']
                        and ber['kind'] == 'area' and ber['rows'] == ['recorded in'] and not unrec
                        and '[%s,%s]' % (day(2024, 1), day(2024, 7)) in pool and '[%s,%s]' % (day(2023, 3), day(2023, 3)) in pool)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_unawords():
+    """Credits Importer 3.42.4 (collected item Z-UNA; Q-dn, Q-dr): words of a line not recognized given an entry. A pasted text of
+    four lines no rule reads: "Skinny Elephant recording", "Tracks 2–3: Fable Hall", "Kim Lowe made the sounds", "Part of the Quiet
+    Rooms series".
+    A) Each word can be clicked; "Skinny", then ⇧ "recording": the three chosen, the form below the line has the name "Skinny Elephant
+       recording"; kind place, role "Mixed At", "Remember as a rule of my own" ticked (not ticked at first) → the entry Skinny Elephant
+       recording, mixed at on all tracks (the line names none), looked up by its name (MusicBrainz's place offered); its words struck
+       through; the own rule U001 (kind "text") stored and listed in "Mapping rules".
+    B) "Fable", ⇧ "Hall" (Tracks 2–3): place, "Recorded At", the tracks of the line (2, 3) offered and chosen → recorded at on tracks 2, 3.
+    C) "Kim", ⇧ "Lowe": artist (the first kind), no role → "A role is needed."; "Producer" → Kim Lowe producer.
+    D) "Quiet", ⇧ "Rooms": series, "part of" → the entry Quiet Rooms, a series – MusicBrainz's series of that name offered.
+    E) The text read again: "Skinny Elephant recording" is no line not recognized now – the own rule gives the place, mixed at."""
+    H.lt(9996, H.uid('1a1a1a1a', 9996), 'part of', 'release', 'series', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.MB_SEARCH['place'] = H.MB_SEARCH.get('place', []) + [{'id': H.uid('eeeeeeee', 71), 'name': 'Skinny Elephant Recording', 'disambiguation': '', 'score': 100}]
+    H.MB_SEARCH['series'] = [{'id': H.uid('eeeeeeee', 72), 'name': 'Quiet Rooms', 'disambiguation': '', 'score': 100}]
+    TEXT = """Skinny Elephant recording
+Tracks 2–3: Fable Hall
+Kim Lowe made the sounds
+Part of the Quiet Rooms series"""
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+      kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '', sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.trim()).slice(0, 2),
+      rows: [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '',
+        [...document.querySelectorAll(`tr[data-tracksrow="${r.dataset.row}"] input[data-f=track]:checked`)].map(x => Number(x.dataset.i) + 1).join(',')]) }])))()"""
+    UNREC = "[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim())"
+
+    def word(pg, li, text, shift=False):
+        pg.evaluate("""([li, text, shift]) => { const w = [...document.querySelectorAll('.dci-unrec li')][li].querySelectorAll('.dci-una-w');
+          const el = [...w].find(x => x.textContent === text); el.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: shift })); }""", [li, text, shift])
+        pg.wait_for_timeout(300)
+
+    def form(pg):
+        return pg.evaluate("""(() => { const f = document.querySelector('.dci-una-form'); if (!f) return null;
+          return { name: f.querySelector('[data-f=una-name]').value, kind: f.querySelector('[data-f=una-kind]').value,
+            role: (f.querySelector('[data-f=una-role]') || {}).value, roles: [...f.querySelectorAll('select[data-f=una-role] option')].map(o => o.value),
+            tracks: [...f.querySelectorAll('[data-f=una-tracks]')].map(x => x.parentElement.textContent.trim() + (x.checked ? ' ✓' : '')),
+            rule: f.querySelector('[data-f=una-rule]') ? f.querySelector('[data-f=una-rule]').checked : null,
+            sel: [...document.querySelectorAll('.dci-una-sel')].map(x => x.textContent), err: (f.querySelector('.dci-warn') || {}).textContent || '' }; })()""")
+
+    def choose(pg, kind=None, role=None, tracks=None, rule=None):
+        if kind:
+            pg.select_option('.dci-una-form [data-f=una-kind]', kind)
+            pg.wait_for_timeout(300)
+        if role is not None:
+            if pg.evaluate("document.querySelector('.dci-una-form [data-f=una-role]').tagName") == 'SELECT':
+                pg.select_option('.dci-una-form [data-f=una-role]', role)
+            else:
+                pg.fill('.dci-una-form [data-f=una-role]', role)
+        if tracks:
+            pg.check(f'.dci-una-form [data-f=una-tracks][value={tracks}]')
+        if rule:
+            pg.check('.dci-una-form [data-f=una-rule]')
+
+    def add(pg):
+        pg.click('.dci-una-form [data-act=una-apply]')
+        pg.wait_for_timeout(1500)
+
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        # (nothing recognized: no "Import complete")
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Text read/.test(li.textContent))", 90)
+        pg.wait_for_timeout(1000)
+        pg.evaluate("document.querySelector('.dci-unrec').open = true")
+        u0 = pg.evaluate(UNREC)
+        nwords = pg.evaluate("document.querySelectorAll('.dci-unrec .dci-una-w').length")
+        print('Zeilen:', u0, '| Wörter:', nwords)
+        results.append(u0 == ['Skinny Elephant recording', 'Tracks 2–3: Fable Hall', 'Kim Lowe made the sounds', 'Part of the Quiet Rooms series'] and nwords == 18)
+        # A)
+        word(pg, 0, 'Skinny')
+        word(pg, 0, 'recording', shift=True)
+        fa = form(pg)
+        choose(pg, kind='place', role='Mixed At', rule=True)
+        fa2 = form(pg)
+        add(pg)
+        g = pg.evaluate(ROWS)
+        done = pg.evaluate("[...document.querySelectorAll('.dci-unrec .dci-una-done')].map(x => x.textContent)")
+        rules = pg.evaluate("JSON.parse(localStorage.getItem('dci-user-rules') || '[]')")
+        print('A) Form:', fa, '→', fa2, '\n   Eintrag:', g.get('Skinny Elephant recording'), '| erledigt:', done, '| Regeln:', rules)
+        results.append(fa and fa['name'] == 'Skinny Elephant recording' and fa['sel'] == ['Skinny', 'Elephant', 'recording'] and fa['kind'] == 'artist' and fa['rule'] is False
+                       and fa2['roles'][:3] == ['Recorded At', 'Mixed At', 'Mastered At'] and fa2['tracks'] == []
+                       and (g.get('Skinny Elephant recording') or {}).get('rows') == [['mixed at', '1,2,3,4']]
+                       and 'Skinny Elephant Recording' in ' '.join((g.get('Skinny Elephant recording') or {}).get('sugg', []))
+                       and done == ['Skinny', 'Elephant', 'recording']
+                       and [(r['id'], r['kind'], r['phrase'], r['entity'], r['role'], r['tracks']) for r in rules] == [('U001', 'text', 'Skinny Elephant recording', 'place', 'Mixed At', 'release')])
+        # B)
+        word(pg, 1, 'Fable')
+        word(pg, 1, 'Hall', shift=True)
+        choose(pg, kind='place', role='Recorded At')
+        fb = form(pg)
+        choose(pg, tracks='line')
+        add(pg)
+        g = pg.evaluate(ROWS)
+        print('B) Form:', fb, '| Eintrag:', g.get('Fable Hall'))
+        results.append(fb['tracks'] == ['the tracks of the line (2, 3) ✓', 'the whole release'] and (g.get('Fable Hall') or {}).get('rows') == [['recorded at', '2,3']])
+        # C)
+        word(pg, 2, 'Kim')
+        word(pg, 2, 'Lowe', shift=True)
+        add(pg)
+        fc = form(pg)
+        choose(pg, role='Producer')
+        add(pg)
+        g = pg.evaluate(ROWS)
+        print('C) ohne Rolle:', fc, '| Eintrag:', g.get('Kim Lowe'))
+        results.append(fc and fc['err'] == 'A role is needed.' and (g.get('Kim Lowe') or {}).get('rows') == [['producer', '1,2,3,4']])
+        # D)
+        word(pg, 3, 'Quiet')
+        word(pg, 3, 'Rooms', shift=True)
+        choose(pg, kind='series')
+        fd = form(pg)
+        add(pg)
+        g = pg.evaluate(ROWS)
+        print('D) Form:', fd, '| Eintrag:', g.get('Quiet Rooms'))
+        q = g.get('Quiet Rooms') or {}
+        results.append(fd['roles'] == ['part of'] and fd['rule'] is None and q.get('kind') == 'other' and [r[0] for r in q.get('rows', [])] == ['part of']
+                       and any('Quiet Rooms' in x for x in q.get('sugg', [])))
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'added from a line not recognized' in x or 'Own rule U001' in x]
+        # the rules window lists the own rule of texts
+        pg.locator('[data-act=rules]').first.click()
+        pg.wait_for_selector('#dci-rules [data-rsect=own]')
+        own = pg.evaluate("[...document.querySelectorAll('#dci-rules [data-rsect=own] tr[data-urule-kind=text] td')].map(t => t.textContent.trim()).filter(Boolean)")
+        pg.keyboard.press('Escape')
+        pg.wait_for_timeout(300)
+        print('   Log:', logs, '| Regelfenster:', own)
+        results.append(len(logs) == 5 and own == ['U001', 'Text phrase → entry', '“Skinny Elephant recording”', 'place · Mixed At', 'delete'])
+        # E) read again: the own rule
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Text read/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1200)
+        g = pg.evaluate(ROWS)
+        u1 = pg.evaluate(UNREC)
+        print('E) wieder gelesen:', g.get('Skinny Elephant recording'), '| nicht erkannt:', u1)
+        results.append((g.get('Skinny Elephant recording') or {}).get('rows') == [['mixed at', '1,2,3,4']] and not any('Skinny' in x for x in u1) and len(u1) == 3)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_kindcycle():
+    """Credits Importer 3.42.5 (collected item Z-ETC; Q-dd): the kind of an entry not linked tried in turn. A pasted text "Mastered at
+    Quiet Lab" (mastered at: a label, a place or an artist – mastering) and "Recorded in Elsewhere Town" (an area only); MusicBrainz has
+    a label Quiet Lab.
+    A) The head of Quiet Lab has the button "Label ↻" (↻ drawn by the style: its text "Label"; its title names the kinds in turn: label → place → artist), the label offered;
+       Elsewhere Town keeps the tag "Area" (no other kind has its role).
+    B) A click: "Place ↻" and "searching in a second …"; a second click within the second: "Artist ↻" – then one search, of artists
+       (none of places); the row is mastering.
+    C) A click: "Label ↻" – the label of the import offered again, no search; a click: "Place ↻", searched as a place.
+    D) Two clicks (artist, label): no search – what was found before; the label chosen: the entry linked, the tag no button."""
+    H.MB_SEARCH['label'] = H.MB_SEARCH.get('label', []) + [{'id': H.uid('eeeeeeee', 81), 'name': 'Quiet Lab', 'disambiguation': '', 'score': 100}]
+    TEXT = """Mastered at Quiet Lab
+Recorded in Elsewhere Town"""
+    HEAD = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); if (!g) return null;
+      const t = g.querySelector('.dci-kind-tag'); return { tag: t.textContent.trim(), button: t.tagName === 'BUTTON', title: t.title || '', wait: !!g.querySelector('.dci-etc-wait'),
+        sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.trim()),
+        rows: [...g.querySelectorAll('tr.dci-row')].map(r => (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '') }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        searches = []
+        pg.on('request', lambda r: searches.append(r.url.split('/ws/2/')[1].split('?')[0]) if '/ws/2/' in r.url and 'query=' in r.url else None)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        a = pg.evaluate(HEAD, 'Quiet Lab')
+        e = pg.evaluate(HEAD, 'Elsewhere Town')
+        print('A)', a, '|', e)
+        results.append(a and a['button'] and a['tag'] == 'Label' and 'label → place → artist' in a['title'] and a['sugg'] == ['Quiet Lab – label']
+                       and e and not e['button'] and e['tag'] == 'Area')
+        click = lambda: pg.click('section.dci-group .dci-kind-cycle')
+        n0 = len(searches)
+        click()
+        pg.wait_for_timeout(300)
+        b1 = pg.evaluate(HEAD, 'Quiet Lab')
+        click()
+        pg.wait_for_timeout(300)
+        b2 = pg.evaluate(HEAD, 'Quiet Lab')
+        pg.wait_for_timeout(2500)
+        b3 = pg.evaluate(HEAD, 'Quiet Lab')
+        print('B)', b1['tag'], b1['wait'], '|', b2['tag'], b2['wait'], '|', b3, '| Suchen:', searches[n0:])
+        results.append(b1['tag'] == 'Place' and b1['wait'] and b2['tag'] == 'Artist' and b3['tag'] == 'Artist' and not b3['wait'] and b3['rows'] == ['mastering']
+                       and searches[n0:] == ['artist'])
+        n1 = len(searches)
+        click()
+        pg.wait_for_timeout(1500)
+        c1 = pg.evaluate(HEAD, 'Quiet Lab')
+        s_c1 = searches[n1:]
+        click()
+        pg.wait_for_timeout(2800)
+        c2 = pg.evaluate(HEAD, 'Quiet Lab')
+        print('C)', c1['tag'], c1['sugg'], s_c1, '|', c2['tag'], '| Suchen:', searches[n1:])
+        results.append(c1['tag'] == 'Label' and c1['sugg'] == ['Quiet Lab – label'] and not c1['wait'] and s_c1 == []
+                       and c2['tag'] == 'Place' and searches[n1:][:1] == ['place'] and 'label' not in searches[n1:] and 'artist' not in searches[n1:])
+        n2 = len(searches)
+        click()
+        pg.wait_for_timeout(200)
+        click()
+        pg.wait_for_timeout(1500)
+        d0 = pg.evaluate(HEAD, 'Quiet Lab')
+        pg.locator('section.dci-group [data-act=name-use]', has_text='Quiet Lab').first.click()
+        pg.wait_for_timeout(800)
+        d = pg.evaluate(HEAD, 'Quiet Lab')
+        print('D)', d0['tag'], d0['sugg'], '→', d, '| Suchen:', searches[n2:])
+        results.append(d0['tag'] == 'Label' and searches[n2:] == [] and d and not d['button'] and d['tag'] == 'Label')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_unaremember():
+    """Credits Importer 3.42.8 (review of Block BG): what was done with "Remember changes …" (⚙ Cache) on, the page loaded again and
+    the same text pasted again:
+    A) The words given an entry come back – Fable Hall recorded at on the tracks of its line (2, 3; track 3 taken out before: so
+       again, track 2), the series Quiet Rooms (until 3.42.7 both were lost, "remembered changes left out"); their words struck through.
+    B) A row added by hand with the role of a row of the source ("＋ Another role" at Bob Mix: "Mixed By" a second time) stays (from
+       3.42.4 until the review it was taken as the same and left out).
+    C) Nothing "left out" in the log."""
+    H.REMEMBER = True
+    H.lt(9996, H.uid('1a1a1a1a', 9996), 'part of', 'release', 'series', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.MB_SEARCH['series'] = [{'id': H.uid('eeeeeeee', 72), 'name': 'Quiet Rooms', 'disambiguation': '', 'score': 100}]
+    TEXT = """Tracks 2–3: Fable Hall
+Part of the Quiet Rooms series
+Mixed by Bob Mix"""
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), {
+      kind: (g.className.match(/dci-kind-(\\w+)/) || [])[1] || '',
+      rows: [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '', (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || '',
+        [...document.querySelectorAll(`tr[data-tracksrow="${r.dataset.row}"] input[data-f=track]:checked`)].map(x => Number(x.dataset.i) + 1).join(',')]) }])))()"""
+
+    def word(pg, li, text, shift=False):
+        pg.evaluate("""([li, text, shift]) => { const w = [...document.querySelectorAll('.dci-unrec li')][li].querySelectorAll('.dci-una-w');
+          [...w].find(x => x.textContent === text).dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: shift })); }""", [li, text, shift])
+        pg.wait_for_timeout(300)
+
+    def paste(pg, n):
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= {n}", 90)
+        pg.wait_for_timeout(1500)
+        pg.evaluate("document.querySelector('.dci-unrec') && (document.querySelector('.dci-unrec').open = true)")
+        pg.evaluate("[...document.querySelectorAll('tr.dci-row [data-act=row-open], tr.dci-row .dci-row-open')].forEach(b => { if (b.getAttribute('aria-expanded') !== 'true') b.click(); })")
+        pg.wait_for_timeout(500)
+
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+
+        def start():
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        start()
+        paste(pg, 2)
+        word(pg, 0, 'Fable')
+        word(pg, 0, 'Hall', shift=True)
+        pg.select_option('.dci-una-form [data-f=una-kind]', 'place')
+        pg.wait_for_timeout(300)
+        pg.select_option('.dci-una-form [data-f=una-role]', 'Recorded At')
+        pg.check('.dci-una-form [data-f=una-tracks][value=line]')
+        pg.click('.dci-una-form [data-act=una-apply]')
+        pg.wait_for_timeout(1500)
+        word(pg, 1, 'Quiet')
+        word(pg, 1, 'Rooms', shift=True)
+        pg.select_option('.dci-una-form [data-f=una-kind]', 'series')
+        pg.wait_for_timeout(300)
+        pg.click('.dci-una-form [data-act=una-apply]')
+        pg.wait_for_timeout(1500)
+        # Fable Hall's row without track 3 (a change of it)
+        pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Fable Hall');
+          const r = g && g.querySelector('tr.dci-row'); const c = r && document.querySelector(`tr[data-tracksrow="${r.dataset.row}"] input[data-f=track][data-i="2"]`); if (c) c.click(); })()""")
+        pg.wait_for_timeout(400)
+        # B) "＋ Another role" at Bob Mix: "Mixed By" once more
+        key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong').textContent.trim() === 'Bob Mix').dataset.group")
+        pg.click(f'section.dci-group[data-group="{key}"] [data-act=add-role]')
+        pg.wait_for_timeout(400)
+        pg.locator(f'section.dci-group[data-group="{key}"] [data-f=role-text]').last.fill('Mixed By')
+        pg.locator(f'section.dci-group[data-group="{key}"] [data-f=role-text]').last.press('Tab')
+        pg.wait_for_timeout(800)
+        a0 = pg.evaluate(ROWS)
+        pg.wait_for_timeout(2000)
+        print('vorher:', {k: v for k, v in a0.items() if k in ('Fable Hall', 'Quiet Rooms', 'Bob Mix')})
+        pg.reload()
+        pg.add_script_tag(content=H.MAIN)
+        start()
+        paste(pg, 2)
+        a1 = pg.evaluate(ROWS)
+        done = pg.evaluate("[...document.querySelectorAll('.dci-unrec .dci-una-done')].map(x => x.textContent)")
+        lost = [x for x in pg.locator('#dci-log li').all_inner_texts() if 'left out' in x]
+        print('nachher:', {k: v for k, v in a1.items() if k in ('Fable Hall', 'Quiet Rooms', 'Bob Mix')}, '| erledigt:', done, '| ausgelassen:', lost)
+        fh, qr, bm = a1.get('Fable Hall') or {}, a1.get('Quiet Rooms') or {}, a1.get('Bob Mix') or {}
+        results.append(fh.get('rows') == [['recorded at', 'recording', '2']] and (a0.get('Fable Hall') or {}).get('rows') == [['recorded at', 'recording', '2']])
+        results.append(qr.get('kind') == 'other' and [r[0] for r in qr.get('rows', [])] == ['part of'] and done == ['Fable', 'Hall', 'Quiet', 'Rooms'])
+        results.append([r[0] for r in bm.get('rows', [])] == ['mix', 'mix'] and not lost)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_kindrace():
+    """Credits Importer 3.42.8 (review of Block BG): a search of the kind cycle that comes back after the kind was clicked on. "Mastered at
+    Quiet Lab" (MusicBrainz has a label and a place of that name; the places answer after 2.5 s): Label → Place (searched), → Artist,
+    → Label (found before) while the places are still on their way – then still the label offered (until the review the places were
+    shown under "Label" and kept for it), no "searching" left; Place again: the places, no new search."""
+    H.MB_SEARCH['label'] = H.MB_SEARCH.get('label', []) + [{'id': H.uid('eeeeeeee', 81), 'name': 'Quiet Lab', 'disambiguation': '', 'score': 100}]
+    H.MB_SEARCH['place'] = H.MB_SEARCH.get('place', []) + [{'id': H.uid('eeeeeeee', 82), 'name': 'Quiet Lab', 'disambiguation': '', 'score': 100}]
+    HEAD = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); if (!g) return null;
+      const t = g.querySelector('.dci-kind-tag'); return { tag: t.textContent.trim(), wait: !!g.querySelector('.dci-etc-wait'), sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.trim()) }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        searches = []
+        pg.on('request', lambda r: searches.append(r.url.split('/ws/2/')[1].split('?')[0]) if '/ws/2/' in r.url and 'query=' in r.url else None)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Mastered at Quiet Lab')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        # the places answer late
+        pg.evaluate("""(() => { const f = window.fetch; window.fetch = (u, o) => (/\\/ws\\/2\\/place\\?query/.test(String(u)) ? new Promise((r) => setTimeout(r, 2500)).then(() => f(u, o)) : f(u, o)); })()""")
+        a0 = pg.evaluate(HEAD, 'Quiet Lab')
+        click = lambda: pg.click('section.dci-group .dci-kind-cycle')
+        click()
+        pg.wait_for_timeout(1400)
+        click()
+        pg.wait_for_timeout(150)
+        click()
+        pg.wait_for_timeout(300)
+        a1 = pg.evaluate(HEAD, 'Quiet Lab')
+        pg.wait_for_timeout(3500)
+        a2 = pg.evaluate(HEAD, 'Quiet Lab')
+        n = len(searches)
+        click()
+        pg.wait_for_timeout(1800)
+        a3 = pg.evaluate(HEAD, 'Quiet Lab')
+        print('A)', a0, '| gleich danach:', a1, '| nach den Orten:', a2, '| Place wieder:', a3, searches[n:])
+        results.append(a0['tag'] == 'Label' and a1['tag'] == 'Label' and a2['tag'] == 'Label' and a2['sugg'] == ['Quiet Lab – label'] and not a2['wait']
+                       and a3['tag'] == 'Place' and a3['sugg'] == ['Quiet Lab – place'] and searches[n:] == [])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ownrulekind():
+    """Credits Importer 3.42.8 (review of Block BG): an own rule of texts with its kind – "Quiet Lab" as a place, mastered at (a role a
+    label has too): the entry of a text naming it is a place (until the review the role decided: a label)."""
+    TEXT = 'Quiet Lab'
+    HEAD = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [g.querySelector('.dci-kind-tag').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '')] : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("""localStorage.setItem('dci-user-rules', JSON.stringify([{ id: 'U001', kind: 'text', on: true, discogs: 'quiet lab', phrase: 'Quiet Lab', entity: 'place', role: 'Mastered At', tracks: 'release' }]))""")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        a = pg.evaluate(HEAD, 'Quiet Lab')
+        print('A)', a)
+        results.append(a is not None and a[0] == 'Place')
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

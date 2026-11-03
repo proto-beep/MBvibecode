@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.41.15",
+  "version": "3.42.8",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -671,7 +671,6 @@
     "em.countShort": "{n} vorzumerken",
     "em.evTitle": "Ein Event: seine Ebene, sein Datum (ein Datum des Pools – hier ändern oder ein Pool-Datum auf diesen Kopf ziehen) und seine Tracks",
     "em.evDateLabel": "Datum von Event {n}",
-    "em.badDate": "„{text}“ ist kein Datum (2024-08-14, 2024-01 – 2024-07, 2024)",
     "remember.full": "Der Browserspeicher für musicbrainz.org ist voll: Die am längsten nicht benutzten Releases wurden vergessen, und dieses ließ sich nicht vollständig speichern.",
     "remember.hold": "Dieses Release war schon gemerkt, aber dieser Tab hat es nicht gelesen (er wurde geöffnet, als nichts gemerkt war). Die Seite neu laden, um es zurückzuholen – bis dahin wird nichts von diesem Release gespeichert, damit es nicht überschrieben wird.",
     "remember.reload": "Seite neu laden",
@@ -3121,7 +3120,6 @@
     "em.countShort": "{n} por preparar",
     "em.evTitle": "Un evento: su nivel, su fecha (una fecha guardada – cámbiala aquí o suelta una fecha guardada sobre esta cabecera) y sus pistas",
     "em.evDateLabel": "Fecha del evento {n}",
-    "em.badDate": "«{text}» no es una fecha (2024-08-14, 2024-01 – 2024-07, 2024)",
     "remember.full": "El almacenamiento del navegador para musicbrainz.org está lleno: se olvidaron las publicaciones usadas hace más tiempo y esta no se pudo guardar por completo.",
     "remember.hold": "Esta publicación ya estaba recordada, pero esta pestaña no la leyó (se abrió cuando no había nada recordado). Vuelve a cargar la página para recuperarla – hasta entonces no se guarda nada de esta publicación, para no sobrescribirla.",
     "remember.reload": "Volver a cargar la página",
@@ -5571,7 +5569,6 @@
     "em.countShort": "{n} à préparer",
     "em.evTitle": "Un événement : son niveau, sa date (une date enregistrée – modifiez-la ici ou déposez une date enregistrée sur cet en-tête) et ses pistes",
     "em.evDateLabel": "Date de l’événement {n}",
-    "em.badDate": "« {text} » n’est pas une date (2024-08-14, 2024-01 – 2024-07, 2024)",
     "remember.full": "Le stockage du navigateur pour musicbrainz.org est plein : les parutions utilisées il y a le plus longtemps ont été oubliées, et celle-ci n’a pas pu être enregistrée entièrement.",
     "remember.hold": "Cette parution était déjà mémorisée, mais cet onglet ne l’a pas lue (il a été ouvert alors que rien n’était mémorisé). Rechargez la page pour la récupérer – d’ici là, rien de cette parution n’est enregistré, pour ne pas l’écraser.",
     "remember.reload": "Recharger la page",
