@@ -532,6 +532,10 @@ python3 t_ui_view.py            # View: the compact view, folding, the colours o
                                 #     3.38.13 (F-3): the green chip flashes once (not again when its text is opened and closed or the
                                 #     dashboard closed and opened again: one animationstart; the class gone after the flash)
                                 #   addrolebtn: 3.40.13 (Z-AB): "＋ Another role for Bass Man" a framed button below his rows (full view), a new row
+                                #   entryskip: 3.40.15 (Z-SK): "⊘ Skip" in every head; all rows on Skip, grey, "↺ Take again" (the level chosen
+                                #     before back); a level chosen while skipped ends it; "Remove skipped entries …": "1 skipped entry ▸" at
+                                #     the bottom, ↺ there; matrix, compact: beside "by event | by role"
+                                #   entryskipkeep: 3.40.15: remembered with the release (Cache on), loaded again still skipped, ↺ back
 
 python3 t_ui_place.py           # Window or page, the log, staying in place after a form, texts that name the source
                                 #   inline: dashboard in the page instead of a window: placement, sticky dates/footer, switch, reset

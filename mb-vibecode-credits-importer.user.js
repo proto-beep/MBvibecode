@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.14
+// @version      3.40.15
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.14
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.14
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.15
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.15
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.14';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.15';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -371,6 +371,17 @@
       "group.setAll": "Set for all",
       "group.addRole": "+ Another role for {name}",
       "group.addRoleBtn": "＋ Another role for {name}",
+      "group.skip": "⊘ Skip",
+      "group.skipTitle": "All rows of this entry on “Skip”: nothing of it is staged (“↺ Take again” brings their levels back)",
+      "group.unskip": "↺ Take again",
+      "group.unskipTitle": "All rows of this entry back on the levels they had before “⊘ Skip”",
+      "group.skippedN.one": "{n} skipped entry",
+      "group.skippedN.other": "{n} skipped entries",
+      "group.skippedTitle": "Entries skipped with “⊘ Skip” are not shown (⚙ Settings → Appearance → “Remove skipped entries from the dashboard”): ▸ lists them, “↺ Take again” brings one back",
+      "log.entrySkipped.one": "{name} skipped: {n} row on “Skip”",
+      "log.entrySkipped.other": "{name} skipped: {n} rows on “Skip”",
+      "log.entryTaken.one": "{name} taken again: {n} row back on its level",
+      "log.entryTaken.other": "{name} taken again: {n} rows back on their levels",
       "group.addRoleShort": "＋ role",
       "match.searching": "Looking up MB artist …",
       "match.linked": "found via {src} link",
@@ -819,6 +830,8 @@
       "settings.emSide.besideTitle": "The relationships to stage, the notes and “＋ Another role” in a column beside the lines of a compact entry (default).",
       "settings.emSide.lines": "in the lines",
       "settings.emSide.linesTitle": "Lower still: the relationships to stage and “＋ role” at the end of the last line, “✎ works ↓” and “✓ link” in the head.",
+      "settings.skipHide": "Remove skipped entries from the dashboard",
+      "settings.skipHideTitle": "Entries skipped with “⊘ Skip” in their head are not shown; a line “n skipped entries ▸” at the bottom lists them, to take them again",
       "settings.entries.matrix": "Matrix",
       "settings.entries.legacy": "Legacy",
       "settings.entries.matrixTitle": "The roles of an entry as a matrix: the instruments and voices together, the events (level · date · tracks) as columns (E4, the default from 3.34.29)",
@@ -20187,6 +20200,83 @@
     }, 0);
   }
 
+  /**
+   * [Z-SK] (3.40.15) "⊘ Skip" in the head of an entry (collected item Z-SK; Q-bx, Q-ce): all its rows on "Skip", the entry grey;
+   * "↺ Take again" puts each row back on the level it had (also a row skipped with the works matrix or the scope stays so).
+   * Skipped so while every row is on "Skip" and one of them was set there by it; a level chosen for a row ends it for that row.
+   */
+  function entrySkipped(a) {
+    const rows = S.rows.filter((r) => r.artistKey === a.key);
+    return rows.length > 0 && rows.every((r) => r.level === 'skip') && rows.some((r) => r.entrySkip);
+  }
+
+  function entrySkipHtml(a, rows) {
+    if (!rows.length) return '';
+    return entrySkipped(a)
+      ? `<button type="button" class="dci-textbtn dci-gskip dci-gskip-back" data-act="entry-unskip" data-skipkey="${esc(a.key)}" title="${esc(tr('group.unskipTitle'))}">${esc(tr('group.unskip'))}</button>`
+      : `<button type="button" class="dci-textbtn dci-gskip" data-act="entry-skip" data-skipkey="${esc(a.key)}" title="${esc(tr('group.skipTitle'))}">${esc(tr('group.skip'))}</button>`;
+  }
+
+  function skipEntry(a) {
+    let n = 0;
+    for (const r of S.rows.filter((x) => x.artistKey === a.key)) {
+      if (r.entrySkip && r.level === 'skip') continue;
+      const prev = { level: r.level, touched: !!r.levelTouched, mx: !!r.mxSkipped, scope: r.scopeLevel || null };
+      if (r.level !== 'skip') {
+        levelOf(r, 'skip');
+        n += 1;
+      }
+      r.entrySkip = prev;
+    }
+    log('info', 'entrySkipped', { name: a.name || a.rawName || '', n });
+    afterEntrySkip(a);
+  }
+
+  function unskipEntry(a) {
+    let n = 0;
+    for (const r of S.rows.filter((x) => x.artistKey === a.key)) {
+      const p = r.entrySkip;
+      if (!p) continue;
+      if (p.level !== 'skip') {
+        levelOf(r, p.level);
+        n += 1;
+      }
+      delete r.entrySkip;
+      r.levelTouched = p.touched;
+      if (p.mx) r.mxSkipped = true;
+      if (p.scope) r.scopeLevel = p.scope;
+    }
+    log('info', 'entryTaken', { name: a.name || a.rawName || '', n });
+    afterEntrySkip(a);
+  }
+
+  /** The entry, the works matrix (its rows on works) and the counts drawn anew; the focus on the other button of the entry. */
+  function afterEntrySkip(a) {
+    renderGroups();
+    renderWorks();
+    refresh();
+    const b = S.overlay && S.overlay.querySelector(`[data-group="${a.key}"] .dci-gskip`);
+    if (b) b.focus({ preventScroll: true });
+    else {
+      const line = S.overlay && S.overlay.querySelector('[data-el="skipped"] .dci-skipped-toggle');
+      if (line) line.focus({ preventScroll: true });
+    }
+  }
+
+  /** [Z-SK] (3.40.15) The entries skipped and taken out of the dashboard: "n skipped entries ▸", each with "↺ Take again". */
+  function renderSkippedList(list) {
+    const el = S.overlay && $('skipped');
+    if (!el) return;
+    el.hidden = !list.length;
+    if (!list.length) {
+      el.innerHTML = '';
+      return;
+    }
+    const open = !!S.skippedOpen;
+    el.innerHTML = `<button type="button" class="dci-textbtn dci-skipped-toggle" data-act="skipped-toggle" aria-expanded="${open}" title="${esc(tr('group.skippedTitle'))}">${esc(tr('group.skippedN', { n: list.length }))} ${open ? '▾' : '▸'}</button>${open
+      ? `<ul class="dci-skipped-list">${list.map((a) => `<li>${kindTagHtml(a)}<strong>${esc(a.name || a.rawName || '')}</strong> <button type="button" class="dci-textbtn dci-gskip-back" data-act="entry-unskip" data-skipkey="${esc(a.key)}" title="${esc(tr('group.unskipTitle'))}">${esc(tr('group.unskip'))}</button></li>`).join('')}</ul>` : ''}`;
+  }
+
   function groupHtml(a) {
     const allRows = S.rows.filter((r) => r.artistKey === a.key);
     // Work-level roles are shown in the works matrix only (no second place for the same relationship); [3.19.3] those
@@ -20211,11 +20301,11 @@
       : !S.webLinksShow ? '' : (a.links || []).filter((u) => /^https?:\/\//i.test(u)).map((u) => `<a class="dci-weblink" href="${esc(u)}" target="_blank" rel="noopener"
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
-      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}" data-group="${a.key}">
+      <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${entrySkipped(a) ? ' dci-gskipped' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
           ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}</div>
-          ${worksLink}${compact ? `<div class="dci-ghead-r">${emBySegHtml(a)}</div>` : ''}
+          ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${coverFromEntryHtml(a, rows)}
@@ -23167,7 +23257,11 @@
   }
 
   function renderGroups() {
-    const withRows = [...S.artists.values()].filter((a) => S.rows.some((r) => r.artistKey === a.key));
+    const all = [...S.artists.values()].filter((a) => S.rows.some((r) => r.artistKey === a.key));
+    // [Z-SK] (3.40.15) with "Remove skipped entries from the dashboard": those skipped with "⊘ Skip" in a line at the bottom
+    const skipped = S.skipHide ? all.filter(entrySkipped) : [];
+    const withRows = all.filter((a) => !skipped.includes(a));
+    renderSkippedList(skipped);
     $('groups').innerHTML = withRows.filter((a) => !a.company && !a.other).map(groupHtml).join('');
     const others = withRows.filter((a) => a.other);
     const oel = $('others');
@@ -23214,7 +23308,9 @@
     if (!S.overlay) return;
     const section = S.overlay.querySelector(`[data-group="${a.key}"]`);
     if (!section) return;
-    section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}`;
+    // (3.40.15) the classes that do not follow the match kept (folded, text hidden, skipped)
+    const keep = ['dci-gcompact', 'dci-about-hidden', 'dci-gskipped'].filter((c) => section.classList.contains(c)).map((c) => ` ${c}`).join('');
+    section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${keep}`;
     const tag = section.querySelector('.dci-kind-tag');
     if (tag) tag.outerHTML = kindTagHtml(a);
     section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
@@ -23482,6 +23578,18 @@
       // [3.28.0] the credit at the head follows the rows
       const chip = section.querySelector('.dci-gcredit');
       const a = S.artists.get(section.dataset.group);
+      // [Z-SK] (3.40.15) skipped with its entry or not (a level chosen for one of its rows ends it)
+      if (a) {
+        const skipped = entrySkipped(a);
+        section.classList.toggle('dci-gskipped', skipped);
+        const sk = section.querySelector('.dci-ghead-r .dci-gskip');
+        if (sk && sk.dataset.act !== (skipped ? 'entry-unskip' : 'entry-skip')) {
+          const had = document.activeElement === sk;
+          sk.outerHTML = entrySkipHtml(a, rows);
+          const now = had && section.querySelector('.dci-ghead-r .dci-gskip');
+          if (now) now.focus({ preventScroll: true });
+        }
+      }
       if (chip && a) {
         const html = creditChipHtml(a);
         if (chip.outerHTML !== html) chip.outerHTML = html;
@@ -27626,6 +27734,8 @@
   function levelOf(row, level) {
     delete row.scopeLevel;
     delete row.mxSkipped;
+    // [Z-SK] (3.40.15) a level chosen (by hand or by "↺ Take again"): no longer skipped with its entry
+    delete row.entrySkip;
     const toOrFromWork = level === 'work' || row.level === 'work';
     row.level = level;
     row.levelTouched = true;
@@ -28450,6 +28560,23 @@
       case 'entries-view':
         // [E4] (3.34.29) the entries as a matrix or as before
         if (btn.dataset.view !== S.entriesView) setEntriesView(btn.dataset.view);
+        break;
+      // [Z-SK] (3.40.15) an entry on "Skip" and back
+      case 'entry-skip':
+      case 'entry-unskip': {
+        const a = S.artists.get(btn.dataset.skipkey);
+        if (!a) break;
+        if (act === 'entry-skip') skipEntry(a);
+        else unskipEntry(a);
+        break;
+      }
+      case 'skipped-toggle':
+        S.skippedOpen = !S.skippedOpen;
+        renderGroups();
+        {
+          const again = S.overlay.querySelector('[data-el="skipped"] .dci-skipped-toggle');
+          if (again) again.focus({ preventScroll: true });
+        }
         break;
       case 'em-side': {
         // [Z-KH] (3.40.11) the notes of compact entries beside their lines or in them
@@ -30611,6 +30738,7 @@
           <div data-el="groups"></div>
           <section class="dci-companies" data-el="companies" hidden></section>
           <section class="dci-companies dci-others" data-el="others" hidden></section>
+          <div class="dci-skipped" data-el="skipped" hidden></div>
           <section class="dci-works" data-el="works" hidden></section>
           <div data-el="datalists"></div>
         </div>
@@ -30883,6 +31011,8 @@
   const ENTRIES_VIEW_KEY = 'dci-entries-view';
   // [Z-KH] (3.40.11) compact entries: the notes beside the lines (default) or in them ("lines": stored)
   const EM_SIDE_KEY = 'dci-em-side';
+  // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard (off by default; on: stored true)
+  const SKIP_HIDE_KEY = 'dci-skip-hide';
   const JOIN_KEY = 'dci-join';
   // [145b] (3.35.6) the works of the source as track groups (default on; off: stored false)
   const WORK_GROUPS_KEY = 'dci-work-groups';
@@ -30908,7 +31038,7 @@
   /** The stored keys of each topic (its "↺" sets them back). */
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', DEV_KEY],
-    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY],
+    appearance: ['dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY],
     sources: ['dci-source-order', 'dci-bc-tracks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
@@ -30941,6 +31071,7 @@
   S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
+  S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
@@ -31628,6 +31759,8 @@
         // [Z-KH] (3.40.11) compact entries: their notes beside the lines (mockup C, default) or in them (B, lower still)
         row(`${esc(tr('settings.emSide'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emSide'))}">${['beside', 'lines'].map((v) => `<button type="button"
           data-act="em-side" data-side="${v}" aria-pressed="${S.emSide === v}" title="${esc(tr(`settings.emSide.${v}Title`))}">${esc(tr(`settings.emSide.${v}`))}</button>`).join('')}</span>`),
+        // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
+        row(check('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'))),
         // [3.30.0] where the mapping rules open (item 75)
         row(`${esc(tr('settings.rulesPlace'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.rulesPlace'))}">${['dashboard', 'window'].map((pl) => `<button type="button"
           data-act="rules-place" data-place="${pl}" aria-pressed="${S.rulesPlace === pl}">${esc(tr(`settings.rulesPlace.${pl}`))}</button>`).join('')}</span>`),
@@ -31967,6 +32100,12 @@
       // [AY] (3.40.0) the line also when nothing seems to be missing (off unless switched on)
       writeJson('localStorage', GAP_NONE_KEY, el.checked ? true : null);
       log('info', 'settingValue', { what: tr('settings.gapNone'), value: tr(el.checked ? 'common.on' : 'common.off') });
+    } else if (k === 'skip-hide') {
+      // [Z-SK] (3.40.15)
+      S.skipHide = el.checked;
+      writeJson('localStorage', SKIP_HIDE_KEY, el.checked || null);
+      log('info', 'settingValue', { what: tr('settings.skipHide'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderGroups();
     } else if (k === 'stats-on') {
       // [E8] (3.38.0) collecting the statistics (on unless switched off)
       writeJson('localStorage', STATS_ON_KEY, el.checked ? null : false);
@@ -32158,6 +32297,11 @@
         renderGroups();
         refresh();
       }
+      // [Z-SK] (3.40.15) skipped entries in their place again
+      if (S.skipHide) {
+        S.skipHide = false;
+        renderGroups();
+      }
     } else if (t === 'sources') {
       Object.assign(S, { sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true });
       renderSource();
@@ -32227,7 +32371,7 @@
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, EM_SIDE_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
+    ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
@@ -34097,7 +34241,18 @@
       #dci-overlay.dci-dm-drag-em-line tr.dci-em-line.dci-dm-over.dci-em-after > td { box-shadow: inset 0 -2px 0 var(--purple); }
       .dci-em-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
       /* [Z-KH] (3.40.10) a compact entry: the toggle at the right of its head, the notes and the button beside its lines */
-      .dci-ghead-r { margin-left: auto; align-self: center; }
+      .dci-ghead-r { margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 10); }
+      /* [Z-SK] (3.40.15) "⊘ Skip" and "↺ Take again" in the head of an entry; a skipped entry grey */
+      .dci-gskip { white-space: nowrap; padding: 0 calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #6d6a7c;
+        text-decoration: none; font-size: calc(var(--u, 1px) * 12); line-height: 1.5; }
+      .dci-gskip:hover, .dci-gskip:focus-visible { border-color: var(--err); color: var(--err); }
+      .dci-gskip.dci-gskip-back, .dci-skipped-list .dci-gskip-back { border-color: var(--purple); color: var(--purple-d); }
+      .dci-gskip.dci-gskip-back:hover, .dci-gskip.dci-gskip-back:focus-visible { background: var(--date-bg); color: var(--purple-d); }
+      .dci-group.dci-gskipped > :not(.dci-ghead), .dci-group.dci-gskipped .dci-ghead > :not(.dci-ghead-r) { opacity: 0.45; }
+      .dci-skipped { margin: calc(var(--u, 1px) * 8) 0; }
+      .dci-skipped-list { list-style: none; margin: calc(var(--u, 1px) * 4) 0 0; padding: 0; }
+      .dci-skipped-list li { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 2) 0; }
+      .dci-skipped-list .dci-gskip-back { padding: 0 calc(var(--u, 1px) * 6); border: 1px solid; border-radius: 3px; background: #fff; text-decoration: none; font-size: calc(var(--u, 1px) * 12); }
       .dci-em-cwrap { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 calc(var(--u, 1px) * 16); }
       .dci-em-cwrap > .dci-em-compact { flex: 1 1 calc(var(--u, 1px) * 420); min-width: 0; }
       .dci-em-side { flex: 0 0 calc(var(--u, 1px) * 230); display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u, 1px) * 3);
