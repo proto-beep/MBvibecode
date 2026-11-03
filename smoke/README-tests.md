@@ -336,6 +336,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     band (both looked up), the control without a band ("co?"); 3.40.3: two performance names of one person
                                 #     3.40.17 (Z-CV): Monk with only writing credits – "cover" set by itself (yellow "co", staged), a click: "co?";
                                 #     E: classical, or Monk with Liner Notes too – "co?" only
+                                #   suitedata: 3.41.0 (Z-SU): in Node – Discogs headings and sub-tracks as parts, " / " parts, the kinds of headings
+                                #     (T061, a recording, a name), the suites offered (heading, index, the release's title, none)
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
