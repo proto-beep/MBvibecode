@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.40.16 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.40.17 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,17 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.40.17
+
+#### Changed
+
+- **"cover" ticked by itself** (collected item Z-CV): in the works matrix, at the link to a work of MusicBrainz by the track's composer, when that composer has only writing credits on the release and the release is not of the genre "Classical". Shown yellow; a click takes it off. Otherwise "co?" is offered as before.
+
+#### Fixed (after a check of the block)
+
+- **⊘ Skip (3.40.15)** holds with the other ways of skipping: "Stage: all relationships", "Take works matrix again" or showing the about text again no longer bring back rows of a skipped entry, and "↺ Take again" respects them. "Level for all rows" ends the skip of an entry cleanly.
+- **↻ Repeat import (3.40.16):** "Start afresh" also drops the choices of the works matrix; its choice no longer reaches another import started meanwhile.
 
 ### Import 3.40.16
 

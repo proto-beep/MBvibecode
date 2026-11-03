@@ -1,6 +1,6 @@
 """View: the compact view, folding, the colours of the levels, small fixes, the suggestions, rows (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: compact, fold, levels, ui301, suggstack, rows – each the former smoke/t_<case>.py, unchanged –, clineask, kindcolors, foot (3.38.4), addrolebtn (3.40.13), entryskip, entryskipkeep (3.40.15); `python3 t_ui_view.py <case> …` runs only those."""
+Cases: compact, fold, levels, ui301, suggstack, rows – each the former smoke/t_<case>.py, unchanged –, clineask, kindcolors, foot (3.38.4), addrolebtn (3.40.13), entryskip, entryskipkeep (3.40.15), entryskipmodes (3.40.17); `python3 t_ui_view.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -952,6 +952,59 @@ def case_entryskipkeep():
         a1 = pg.evaluate(INFO, 'Bass Man')
         print('neu geladen:', a0, '| ↺:', a1)
         results.append(a0 == ['↺ Take again', True, ['skip']] and a1 == ['⊘ Skip', False, ['recording']])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_entryskipmodes():
+    """Credits Importer 3.40.17 (the check of Block BC): "⊘ Skip" of an entry with the other ways of skipping.
+    A) "Stage: only work relationships", then Bass Man "⊘ Skip", then "all relationships": he stays skipped (until 3.40.16 his row
+       came back); "↺ Take again": "Recording".
+    B) Bass Man skipped, "only work relationships", "↺ Take again": his row stays on "Skip" (it is no work relationship); "all
+       relationships": "Recording".
+    C) Bass Man skipped, "Level for all rows: Recording", then "Skip": "⊘ Skip" in his head, not "↺ Take again" (until 3.40.16 the
+       skip of before came back with it)."""
+    INFO = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(s => s.querySelector('.dci-gname strong') && s.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const b = g.querySelector('.dci-ghead-r .dci-gskip');
+      return [b ? b.dataset.act : null, g.classList.contains('dci-gskipped'), [...g.querySelectorAll('tr.dci-row')].map(tr => (tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level)]; }"""
+    SEC = 'section.dci-group:has(.dci-gname strong:text-is("Bass Man"))'
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(1200)
+        scope = lambda v: (pg.click(f'[data-act=scope][data-scope={v}]'), pg.wait_for_timeout(400))
+        # A)
+        scope('work')
+        pg.click(SEC + ' [data-act=entry-skip]'); pg.wait_for_timeout(300)
+        scope('all')
+        a0 = pg.evaluate(INFO, 'Bass Man')
+        pg.click(SEC + ' [data-act=entry-unskip]'); pg.wait_for_timeout(300)
+        a1 = pg.evaluate(INFO, 'Bass Man')
+        print('A) Bereich wieder alle:', a0, '| ↺:', a1)
+        results.append(a0 == ['entry-unskip', True, ['skip']] and a1 == ['entry-skip', False, ['recording']])
+        # B)
+        pg.click(SEC + ' [data-act=entry-skip]'); pg.wait_for_timeout(300)
+        scope('work')
+        pg.click(SEC + ' [data-act=entry-unskip]'); pg.wait_for_timeout(300)
+        b0 = pg.evaluate(INFO, 'Bass Man')
+        scope('all')
+        b1 = pg.evaluate(INFO, 'Bass Man')
+        print('B) ↺ im Bereich „work“:', b0, '| alle:', b1)
+        results.append(b0 is not None and b0[2] == ['skip'] and not b0[1] and b1 == ['entry-skip', False, ['recording']])
+        # C)
+        pg.click(SEC + ' [data-act=entry-skip]'); pg.wait_for_timeout(300)
+        pg.click('[data-act=bulk-level][data-level=recording]'); pg.wait_for_timeout(400)
+        pg.click('[data-act=bulk-level][data-level=skip]'); pg.wait_for_timeout(400)
+        c0 = pg.evaluate(INFO, 'Bass Man')
+        print('C) alle Recording, dann Skip:', c0)
+        results.append(c0 == ['entry-skip', False, ['skip']])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.16
+// @version      3.40.17
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.16
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.16
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.17
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.17
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.16';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.17';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1125,6 +1125,7 @@
       "matrix.attrsNone": "none",
       "matrix.liveOffer": "Live release ({reason}): click to add “live” to this link that exists in MusicBrainz (an edit). It is not set by itself, so a studio track stays as it is.",
       "matrix.coverOffer": "Cover? The composer ({names}) is none of the performers of this track: a click adds “cover” to the link. It is not set by itself.",
+      "matrix.coverAuto": "Cover – set by itself: the composer ({names}) is none of the performers of this track and has only writing credits on this release (not classical music). A click takes it off.",
       "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "matrix.attrShort": "abbreviate",
       "matrix.attrLong": "spell out",
@@ -4758,6 +4759,7 @@
   //   source     the adapter's id ("discogs"); id and url: the release at the source
   //   notes      free text about the release (liner notes): dates, live, track lists are read from it
   //   tags       words describing the release, in lower case ("cd", "album", "live" …)
+  //   genres     [Z-CV] (3.40.17) the source's genres, in lower case ("jazz", "classical"); none: [] or left out
   //   tracks     [{ position, title, aliases }] in the order of the source, without headings
   //   credits    one per person and role, in the order of the source:
   //              { who, role, base, details, credited, tracks }
@@ -4924,6 +4926,8 @@
         country: d.country || '',
         notes: String(d.notes || ''),
         tags: (d.formats || []).flatMap((f) => [f.name, ...(f.descriptions || []), f.text || '']).map(norm).filter(Boolean),
+        // [Z-CV] (3.40.17) Discogs's genres ("Classical": no "cover" set by itself)
+        genres: (d.genres || []).map(norm).filter(Boolean),
         tracks,
         credits,
         companies,
@@ -15598,6 +15602,7 @@
    */
   async function forgetImport() {
     S.forgetOpen = false;
+    S.repeatOpen = false;
     const dropEntry = (key) => {
       const all = readJson('localStorage', key, {}) || {};
       delete all[releaseMbid];
@@ -16724,7 +16729,8 @@
         o[k] = encField(v);
       } catch (e) { /* not storable */ }
     }
-    const level = r.scopeLevel || (r.existingAll && !r.levelTouched && r.levelBeforeSkip) || r.level;
+    // [Z-SK] (3.40.17, review) a row skipped with its entry stays on "Skip" (its level before in entrySkip)
+    const level = r.entrySkip ? 'skip' : r.scopeLevel || (r.existingAll && !r.levelTouched && r.levelBeforeSkip) || r.level;
     o.level = encField(level);
     return o;
   }
@@ -16896,7 +16902,7 @@
   }
 
   /** [146] (3.36.1) At the end of an import (the last one started): what is remembered taken over, then this one remembered. */
-  function finishRemember(seq) {
+  function finishRemember(seq, repeat = null) {
     if (seq !== importSeq) return;
     // what the lookups of the entries made of the rows counts as the source's; a row changed by hand meanwhile (a level, an
     // instrument, a credit or a role credit set) keeps the first state, so that its change is one
@@ -16908,17 +16914,16 @@
       const cur = rowFieldsOf(r);
       if (TOUCH.every((k) => cur[k] === f.f[k])) f.f = cur;
     });
-    // [Z-RI] (3.40.16) "↻ Repeat import": the changes of the import before (kept), or nothing remembered (afresh)
-    const repeat = S.repeatSnap;
-    const fresh = S.repeatFresh;
-    S.repeatSnap = null;
-    S.repeatFresh = false;
-    if (repeat || (remembering() && !S.rememberHold && !fresh)) {
+    // [Z-RI] (3.40.16) "↻ Repeat import": the changes of the import before (kept), or nothing remembered (afresh); (3.40.17, review)
+    // given with this import only (an import started meanwhile does not take them)
+    const snapIn = repeat && repeat.snap;
+    const fresh = !!(repeat && repeat.fresh);
+    if (snapIn || (remembering() && !S.rememberHold && !fresh)) {
       // what is remembered never stops an import: taken over or not at all
       const before = S.rows;
       const entries = new Map(S.artists);
       try {
-        restoreRemembered(repeat);
+        restoreRemembered(snapIn);
       } catch (e) {
         console.warn('[Credits-Importer] remembered', e);
         S.rows = before;
@@ -17246,7 +17251,7 @@
     }
   }
 
-  async function loadRelease(id, { confirmed = false, source = S.source } = {}) {
+  async function loadRelease(id, { confirmed = false, source = S.source, repeat = null } = {}) {
     if (!confirmed && S.rows.length && !confirm(tr('msg.confirmDiscard'))) {
       renderSource();
       return;
@@ -17263,10 +17268,13 @@
     }
     // [3.21.1] the chosen media are opened in MB's editor at once, while the source is read (before: once it was read)
     if (choice.load) loadMediaInEditor([...choice.media], { quiet: true });
+    S.repeatOpen = false; // (3.40.17, review) its question belongs to the import before
     try {
       clearMessages();
       setBusy(source === DISCOGS ? 'busy.discogs' : 'busy.source', { id, source: source.name });
       const rel = await source.release(id, sourceContext());
+      // [Z-RI] (3.40.17, review) "↻ Repeat import" afresh: the choices of the works matrix go too (once the source was read)
+      if (repeat && repeat.fresh) dropWorkChoices();
       // [3.30.8] places named in the Discogs notes, unless Discogs lists them already (S042)
       if (source === DISCOGS) addNotesCompanies(rel);
       applyMediaChoice(choice);
@@ -17466,7 +17474,7 @@
         if (S.trackPool.length !== pooled) renderDates();
         await computePublisherEvidence();
         // [146] (3.36.0) what was changed in the rows before, if the release is remembered
-        finishRemember(seq);
+        finishRemember(seq, repeat);
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         // [172] (3.39.0) the number of new relationships for the line of the release page (the next summary); [AY] (3.40.0) of
         // Bandcamp too
@@ -17487,7 +17495,7 @@
         runArtistWorks();
       } else {
         // [3.36.1] also a release without credits at the source (rows added by hand)
-        finishRemember(seq);
+        finishRemember(seq, repeat);
         findFestivals(seq);
         // [AY] (3.40.0, review) nothing to import from Discogs or Bandcamp: none new for the line of the release page
         if ((source === DISCOGS || source === BANDCAMP) && releaseMbid) {
@@ -18696,16 +18704,17 @@
    */
   async function repeatImport(keep) {
     if (!S.release) return;
-    S.repeatSnap = keep && S.freshRows ? rememberSnapshot() : null;
-    S.repeatFresh = !keep;
+    const repeat = keep ? { snap: S.freshRows ? rememberSnapshot() : null } : { fresh: true };
     entityCache.clear();
     log('info', keep ? 'repeatKeep' : 'repeatFresh');
-    try {
-      await loadRelease(S.release.id, { source: S.source, confirmed: true });
-    } finally {
-      S.repeatSnap = null;
-      S.repeatFresh = false;
-    }
+    await loadRelease(S.release.id, { source: S.source, confirmed: true, repeat });
+  }
+
+  /** (3.40.17, review) "Start afresh": the works chosen, their attributes, dates and options, the columns taken out or folded, the live comments. */
+  function dropWorkChoices() {
+    for (const [i, p] of [...S.workPlan]) if (!p || p.origin !== 'created') S.workPlan.delete(i);
+    [S.linkAttrOn, S.linkAttrOff, S.mxRemoved, S.workRowOpts, S.mxColDate, S.liveComChoice].forEach((m) => { if (m && m.clear) m.clear(); });
+    if (S.mxCollapsed) S.mxCollapsed.clear();
   }
 
   /** [3.26.0] The bar "Supplement with" shows on "+ Supplement", and while a supplement is loaded. */
@@ -20290,17 +20299,44 @@
     for (const r of S.rows.filter((x) => x.artistKey === a.key)) {
       const p = r.entrySkip;
       if (!p) continue;
-      if (p.level !== 'skip') {
-        levelOf(r, p.level);
-        n += 1;
+      // (3.40.17, review) the level it had – skipped then with the scope or the works matrix: the level before those – placed by
+      // what holds now: a credit switched off at the source, the text or notes left out, the works matrix skipped, the scope
+      let lv = p.level;
+      if (lv === 'skip' && p.scope) lv = p.scope;
+      if (lv === 'skip' && p.mx) lv = 'work';
+      const touched = p.touched;
+      if (lv === 'skip') {
+        delete r.entrySkip;
+      } else {
+        if (r.srcOff) r.srcOffLevel = lv;
+        else if (r.aboutHidden) r.aboutLevel = lv;
+        else if (r.notesHidden) r.notesLevel = lv;
+        else if (S.worksSkip && lv === 'work') {
+          levelOf(r, 'skip');
+          r.mxSkipped = true;
+        } else if (S.scope !== 'all' && (S.scope === 'work') !== (lv === 'work')) {
+          levelOf(r, 'skip');
+          r.scopeLevel = lv;
+        } else {
+          levelOf(r, lv);
+          n += 1;
+        }
+        delete r.entrySkip;
       }
-      delete r.entrySkip;
-      r.levelTouched = p.touched;
-      if (p.mx) r.mxSkipped = true;
-      if (p.scope) r.scopeLevel = p.scope;
+      r.levelTouched = touched;
     }
     log('info', 'entryTaken', { name: a.name || a.rawName || '', n });
     afterEntrySkip(a);
+  }
+
+  /** (3.40.17, review) A level that comes back from another kind of "Skip" while the row is skipped with its entry. */
+  function entrySkipLevel(r, level) {
+    if (r.entrySkip && level && level !== 'skip') r.entrySkip.level = level;
+  }
+
+  /** (3.40.17, review) A row put on a level some other way (all rows at once, a mode switched): no longer skipped with its entry. */
+  function dropStaleEntrySkip() {
+    for (const r of S.rows) if (r.entrySkip && r.level !== 'skip') delete r.entrySkip;
   }
 
   /** The entry, the works matrix (its rows on works) and the counts drawn anew; the focus on the other button of the entry. */
@@ -21329,7 +21365,9 @@
         Object.assign(r, { aboutHidden: true, aboutLevel: r.level, level: 'skip' });
         n++;
       } else if (!hide && r.aboutHidden) {
-        r.level = r.aboutLevel || r.level;
+        // [Z-SK] (3.40.17, review) skipped with its entry: the level for "↺ Take again"
+        if (r.entrySkip) entrySkipLevel(r, r.aboutLevel);
+        else r.level = r.aboutLevel || r.level;
         delete r.aboutHidden;
         delete r.aboutLevel;
         // [3.18.0] the works matrix skipped: a work row stays on "Skip" with it
@@ -21352,7 +21390,8 @@
         Object.assign(r, { notesHidden: true, notesLevel: r.level, level: 'skip' });
         n++;
       } else if (!hide && r.notesHidden) {
-        r.level = r.notesLevel || r.level;
+        if (r.entrySkip) entrySkipLevel(r, r.notesLevel);
+        else r.level = r.notesLevel || r.level;
         delete r.notesHidden;
         delete r.notesLevel;
         if (S.worksSkip && r.level === 'work') Object.assign(r, { level: 'skip', mxSkipped: true });
@@ -23310,6 +23349,7 @@
   }
 
   function renderGroups() {
+    dropStaleEntrySkip();
     const all = [...S.artists.values()].filter((a) => S.rows.some((r) => r.artistKey === a.key));
     // [Z-SK] (3.40.15) with "Remove skipped entries from the dashboard": those skipped with "⊘ Skip" in a line at the bottom
     const skipped = S.skipHide ? all.filter(entrySkipped) : [];
@@ -23505,6 +23545,8 @@
 
   function refresh() {
     if (!S.overlay) return;
+    dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
+    S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review)
     // [146] (3.36.0) the rows remembered soon after a change
     scheduleRemember();
     scheduleWorkRecheck();
@@ -24396,6 +24438,8 @@
     const plan = work.planned ? S.workPlan.get(i) : null;
     if (plan) plan.flags.forEach((f) => out.add(f));
     if (work.planned && liveReason(i) && !off.has('live')) out.add('live');
+    // [Z-CV] (3.40.17) "cover" set by itself (taken off by a click)
+    if (work.planned && !off.has('cover') && !out.has('cover') && coverAuto(i, work)) out.add('cover');
     off.forEach((f) => { if (!mbLinkAttrs(work).has(f)) out.delete(f); });
     return out;
   }
@@ -24443,6 +24487,7 @@
         } catch {
           S.bandOf.set(id, { failAt: Date.now() });
         }
+        S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review) an answer that may set "cover" by itself
         // (3.39.9, review) drawn again as other results of the background (not while typing in the matrix or dragging)
         if (!S.bandQueue.length) renderWorksBackground();
       }
@@ -24455,7 +24500,12 @@
    * for a new work, nor for the works found otherwise (a songwriter's own song is no cover).
    */
   function coverComposers(i, work) {
-    if (!work || !work.planned || work.origin === 'pending' || linkAttrsOf(i, work).has('cover')) return [];
+    if (!work || linkAttrsOf(i, work).has('cover')) return [];
+    return coverCandidates(i, work);
+  }
+  /** [Z-CV] (3.40.17) Who wrote the work and performs nothing on the track – whether "cover" is set or not (see coverComposers). */
+  function coverCandidates(i, work) {
+    if (!work || !work.planned || work.origin === 'pending') return [];
     const plan = S.workPlan.get(i);
     if (!plan || !plan.composer || !linkAttrTypes().some((a) => norm(a.name) === 'cover')) return [];
     const perf = performersOf(i);
@@ -24481,6 +24531,32 @@
     return [plan.composerName || plan.composer];
   }
   const coverHint = (i, work) => coverComposers(i, work).length > 0;
+  /**
+   * [Z-CV] (3.40.17) "cover" set by itself (collected item Z-CV; Q-by): a work of MusicBrainz chosen among those of the track's
+   * composer (as for "co?"), the composer an entry of the source whose credits on the release are all writing credits (composer,
+   * lyricist, writer, librettist) – not on a release of the genre "Classical". Shown yellow; a click takes it off ("co?" again).
+   */
+  // (3.40.17, review) worked out once per drawing or check (linkAttrsOf is asked many times): S.coverPass counts them
+  const coverMemo = { pass: -1, m: new Map() };
+  function coverAuto(i, work) {
+    if (!work || !work.planned) return false;
+    if (coverMemo.pass !== S.coverPass) {
+      coverMemo.pass = S.coverPass;
+      coverMemo.m.clear();
+    }
+    const k = `${i}|${work.gid}`;
+    if (!coverMemo.m.has(k)) coverMemo.m.set(k, coverAutoNow(i, work));
+    return coverMemo.m.get(k);
+  }
+  function coverAutoNow(i, work) {
+    if (((S.release && S.release.genres) || []).includes('classical')) return false;
+    const plan = S.workPlan.get(i);
+    if (!plan || !plan.composer || !coverCandidates(i, work).length) return false;
+    const a = [...S.artists.values()].find((x) => x.mbid === plan.composer && !x.company && !x.manual);
+    if (!a) return false;
+    const rows = S.rows.filter((r) => r.artistKey === a.key && !r.manual && !r.supp);
+    return rows.length > 0 && rows.every((r) => WRITER_TYPES.includes(norm(rowTypeName(r))));
+  }
   /** Switches an attribute of one link on or off (MusicBrainz's own stay). */
   function setLinkAttr(i, work, name, on) {
     const key = linkKey(i, work.gid);
@@ -24528,6 +24604,11 @@
     const pills = types.map((a) => {
       const n = norm(a.name);
       if (inMb.has(n)) return attrPillHtml(a, { state: 'mb', act: 'mx-wattr', title: `${a.name} – ${tr('matrix.attrInMb')}` });
+      // [Z-CV] (3.40.17) "cover" set by itself: yellow, ticked
+      const onByHand = (S.linkAttrOn.get(linkKey(mrow.i, mrow.work.gid)) || new Set()).has(n) || ((S.workPlan.get(mrow.i) || {}).flags || new Set()).has(n);
+      if (have.has(n) && n === 'cover' && mrow.work.planned && !onByHand && coverAuto(mrow.i, mrow.work)) {
+        return attrPillHtml(a, { state: 'auto', act: 'mx-wattr', title: tr('matrix.coverAuto', { names: coverCandidates(mrow.i, mrow.work).join(', ') }) });
+      }
       if (have.has(n)) {
         const auto = n === 'live' && reason && mrow.work.planned && !(S.linkAttrOn.get(linkKey(mrow.i, mrow.work.gid)) || new Set()).has('live');
         const edit = !mrow.work.planned;
@@ -24937,10 +25018,15 @@
       <div class="dci-tablewrap"><table class="dci-livecom-table">${allRow ? `<thead>${allRow}</thead>` : ''}<tbody>${rows}</tbody></table></div></div>` : ''}
       <div class="dci-livecom-headrow">${head}</div></div>`;
     if (el.dataset.html === html) return;
+    // (3.40.17, review) the box focused (a tick or "All") keeps the focus when the list is drawn anew
+    const had = el.contains(document.activeElement) ? document.activeElement : null;
+    const again = had && had.dataset.f === 'livecom-on' ? (had.dataset.all ? '[data-f="livecom-on"][data-all]' : had.dataset.rec ? `[data-f="livecom-on"][data-rec="${had.dataset.rec}"]` : '') : '';
     el.innerHTML = html;
     el.dataset.html = html;
     // [Z-LC] (3.40.13) "mixed" is a property, not an attribute
     el.querySelectorAll('input[data-mixed="1"]').forEach((x) => { x.indeterminate = true; });
+    const back = again && el.querySelector(again);
+    if (back) back.focus({ preventScroll: true });
   }
 
   function applyLiveDefault() {
@@ -26081,6 +26167,8 @@
         if (r.srcOff) r.srcOffLevel = 'work';
         else if (r.aboutHidden) r.aboutLevel = 'work';
         else if (r.notesHidden) r.notesLevel = 'work';
+        // [Z-SK] (3.40.17, review) skipped with its entry: back on "work" with "↺ Take again"
+        else if (r.entrySkip) Object.assign(r.entrySkip, { level: 'work', mx: false });
         else if (r.level === 'skip') {
           r.level = 'work';
           resolveRowType(r);
@@ -26576,6 +26664,7 @@
   }
 
   function renderWorks() {
+    S.coverPass = (S.coverPass || 0) + 1; // [Z-CV] (3.40.17, review) "cover" set by itself worked out anew
     // [3.36.4] the choices of the works matrix remembered too (soon after a change)
     scheduleRemember();
     // Keep the scroll position of the matrix (and of the dashboard) while it is drawn again
@@ -26996,6 +27085,11 @@
         if (!rm) return true;
         S.mxRemoved.delete(rm.key);
         S.rows.filter((r) => rm.rowIds.includes(r.id) && r.level === 'skip').forEach((r) => {
+          // [Z-SK] (3.40.17, review) skipped with its entry: on "work" with "↺ Take again"
+          if (r.entrySkip) {
+            if (r.entrySkip.level === 'skip') r.entrySkip.level = 'work';
+            return;
+          }
           r.level = 'work';
           resolveRowType(r);
           refreshRowDetails(r);
@@ -27761,7 +27855,9 @@
   function setScope(mode) {
     for (const r of S.rows) {
       if (r.scopeLevel) {
-        r.level = r.scopeLevel;
+        // [Z-SK] (3.40.17, review) a row of an entry skipped with "⊘ Skip": its level back for "↺ Take again"
+        if (r.entrySkip) Object.assign(r.entrySkip, { level: r.scopeLevel, scope: null });
+        else r.level = r.scopeLevel;
         delete r.scopeLevel;
         resolveRowType(r);
       }
@@ -29749,6 +29845,7 @@
         break;
       case 'forget-open':
         S.forgetOpen = !S.forgetOpen;
+        if (S.forgetOpen) S.repeatOpen = false; // (3.40.17, review) one question at a time
         renderSource();
         if (S.forgetOpen) S.overlay.querySelector('[data-act="forget-cancel"]').focus();
         break;
@@ -29780,6 +29877,9 @@
         S.repeatOpen = false;
         S.repeatKeep = true; // (asked with "keep" preselected each time)
         renderSource();
+        // (3.40.17, review) the focus back on the button
+        const again = S.overlay.querySelector('[data-act="repeat-open"]');
+        if (again) again.focus();
         repeatImport(keep);
         break;
       }
@@ -32479,6 +32579,8 @@
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
+      // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
+      skipHide: false, poolsFoldApply: false,
     });
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)
     if (DIAG.timer) stopDiag();
@@ -32858,6 +32960,12 @@
     }
     if (rulesDocked() && rulesShown()) closeRules();
     renderSettings();
+    // (3.40.17, review) as ⚙ of the head: the message before the import, the number of works kept
+    onlyHint('settings');
+    awCount().then((n) => {
+      S.awStoreCount = n || 0;
+      if (S.settingsOpen) renderSettings();
+    });
     const el = S.overlay && $('settings');
     if (!el) return;
     const target = (focusSel && el.querySelector(focusSel)) || el.querySelector(`.dci-set-tab[data-topic="${S.settingsTab}"]`);
@@ -33735,6 +33843,8 @@
       .dci-wpill-mixed { border: 1px solid var(--role); background: linear-gradient(135deg, #cddbf6 50%, #fff 50%); color: #2c4a80; }
       .dci-wpill-mb, .dci-wpill-mb:disabled { border-color: var(--ok); background: #e6f3ea; color: #1f5a36; opacity: 1; cursor: default; }
       .dci-wpill-hint { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      /* [Z-CV] (3.40.17) set by itself: ticked, in the colours of a suggestion */
+      .dci-wpill-auto { border: 1px solid var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); font-weight: 600; }
       .dci-mxchip { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); padding: 1px calc(var(--u, 1px) * 7); border: 1px solid; border-left-width: 4px; border-radius: 4px; font-size: calc(var(--u, 1px) * 12); font-weight: 600; line-height: 1.4; white-space: nowrap; }
       .dci-mxchip-mb { border-color: #b9dcc5; border-left-color: var(--ok); background: #e6f3ea; color: #1f5a36; }
       .dci-mxchip-on { border-color: #c7d5f0; border-left-color: var(--role); background: #eef4ff; color: #2c4a80; }

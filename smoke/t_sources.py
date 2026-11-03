@@ -784,7 +784,9 @@ def case_repeat():
     B) Bass Man credited "fretless", Photo Guy's row taken out (✕), "Apply" in the date matrix (the bar folds); a new credit at the
        source meanwhile (Jane Roe – Tambourine): ↻ with "Keep my changes" – the source read again (one more request to Discogs), Jane
        Roe there, Bass Man still "fretless", Photo Guy without a row, "Dates & tracks" open again (Z-PF2); the log says so.
-    C) ↻ with "Start afresh" (the choice kept while the head is drawn anew): Bass Man without credit, Photo Guy's row back."""
+    C) ↻ with "Start afresh" (the choice kept while the head is drawn anew): Bass Man without credit, Photo Guy's row back.
+       (3.40.17, review) A new work planned for track 2 is kept with "Keep my changes", gone with "Start afresh"; the question
+       closes when "Delete stored import …" is opened."""
     H.DM_FOLD = True
     orig = H.discogs_release
     ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
@@ -826,6 +828,9 @@ def case_repeat():
         pg.wait_for_timeout(300)
         pg.click('[data-act=dm-apply]'); pg.wait_for_timeout(600)
         b0 = pg.evaluate(OPEN)
+        PLANNED = "!!document.querySelector('.dci-matrix tr[data-work=\"1\"][data-mrow^=\"p:\"]')"
+        pg.click('tr[data-work="1"] [data-act=work-pending]'); pg.wait_for_timeout(300)
+        p0 = pg.evaluate(PLANNED)
 
         def rel():
             d = orig()
@@ -838,11 +843,16 @@ def case_repeat():
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
         pg.wait_for_timeout(1200)
         b1 = [len(dg) - n0, pg.evaluate(ROWS, 'Jane Roe'), pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'), pg.evaluate(OPEN),
-              [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Import repeated' in x]]
+              [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Import repeated' in x], [p0, pg.evaluate(PLANNED)]]
         print('B) gefaltet:', b0, '| ↻ behalten:', b1)
         results.append(b0 == 'false' and b1[0] == 1 and b1[1] is not None and len(b1[1]) == 1 and b1[2] == ['fretless'] and b1[3] is None
-                       and b1[4] == 'true' and b1[5] == ['Import repeated – your changes are kept'])
+                       and b1[4] == 'true' and b1[5] == ['Import repeated – your changes are kept'] and b1[6] == [True, True])
         # C)
+        pg.click('[data-el=source] [data-act=repeat-open]'); pg.wait_for_timeout(200)
+        # (3.40.17, review) one question at a time
+        H.src_menu(pg, 'forget-open'); pg.wait_for_timeout(200)
+        one = [pg.evaluate("!!document.querySelector('[data-el=repeat]')"), pg.evaluate("!!document.querySelector('.dci-forget:not(.dci-repeat)')")]
+        pg.click('[data-act=forget-cancel]'); pg.wait_for_timeout(200)
         pg.click('[data-el=source] [data-act=repeat-open]'); pg.wait_for_timeout(200)
         pg.check('[data-el=repeat] input[value=fresh]')
         pg.click('[data-el=source] [data-act=srcmenu]'); pg.wait_for_timeout(150)
@@ -852,8 +862,9 @@ def case_repeat():
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 60)
         pg.wait_for_timeout(1200)
         c1 = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Import repeated' in x][-1:]]
-        print('C) Wahl nach „Source ▾“:', kept, '| ↻ neu:', c1)
-        results.append(kept and c1[0] == [''] and c1[1] is not None and len(c1[1]) == 1 and c1[2] == ['Import repeated afresh – your changes are dropped'])
+        c2 = pg.evaluate(PLANNED)
+        print('C) eine Frage:', one, '| Wahl nach „Source ▾“:', kept, '| ↻ neu:', c1, '| neues Werk:', c2)
+        results.append(one == [False, True] and kept and c2 is False and c1[0] == [''] and c1[1] is not None and len(c1[1]) == 1 and c1[2] == ['Import repeated afresh – your changes are dropped'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

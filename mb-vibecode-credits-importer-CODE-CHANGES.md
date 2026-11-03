@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.16, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.17, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,24 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.17 · 2026-11-03
+
+"cover" set by itself for a composer with only writing credits (collected item Z-CV; Q-by).
+
+- **DISCOGS `toRelease`:** `genres` (Discogs's genres in lower case); the neutral release names the field (none: [] or left out).
+- **`coverComposers`** split: **`coverCandidates(i, work)`** (the composer of a work chosen among his works who performs nothing on the track – without the check whether "cover" is set) and `coverComposers` (only while "cover" is not set). **New `coverAuto(i, work)`:** a planned link to a work of MusicBrainz with such a composer, the composer an entry of the source (not added by hand) whose rows of the source are all `WRITER_TYPES`, the release not of the genre "classical".
+- **`linkAttrsOf`:** "cover" in the set while `coverAuto` and not taken off (`S.linkAttrOff`) – so the link is staged with it. **`linkAttrsHtml`:** such a "cover" (not set by hand) as the new pill state `auto` (`.dci-wpill-auto`, yellow, ticked) with `matrix.coverAuto`; a click takes it off as any attribute ("co?" again).
+- **Texts (English):** `matrix.coverAuto`.
+- **Tests:** `t_works_more.py` `coverworks` B (set by itself, staged with "cover" 567, a click: "co?", another: on), D (where it was "co?": set by itself), new E (classical; Monk with a credit Liner Notes: "co?" only); the work of Monk known to `/ws/js/entity` (harness `COMPANIES`). Fails on 3.40.16.
+
+**After the check of Block BC (an independent review):**
+
+- **Entry skip and the other kinds of "Skip"** (Z-SK): `setScope`, `setWorksRowsSkipped(false)`, `setAboutRowsHidden(false)`, `setNotesRowsHidden(false)` and "mx-col-restore" put the level that comes back into `entrySkip` (new `entrySkipLevel`) instead of onto a row skipped with its entry – "all relationships" brought such rows back. **`unskipEntry`** places the level by what holds now (a credit switched off, text or notes left out, the works matrix skipped, the scope; a level skipped then by the scope or the works matrix: the level before those). New **`dropStaleEntrySkip`** (in `renderGroups`, `refresh`): a row put on a level another way (`bulk-level` …) loses `entrySkip`. **`rowFieldsOf`:** a row skipped with its entry is remembered on "Skip".
+- **Repeat import** (Z-RI): the snapshot or "afresh" goes with its import – `loadRelease(…, { repeat })` → `finishRemember(seq, repeat)` (until now `S.repeatSnap`/`S.repeatFresh`, which an import started meanwhile could take); "afresh" also drops the choices of the works matrix (new `dropWorkChoices`, after the source was read; the works created through the dashboard stay); the focus back on "↻ Repeat import"; "Delete stored import …" closes its question, an import and `forgetImport` too.
+- **`coverAuto`** worked out once per drawing (`coverMemo`, `S.coverPass` counted up in `refresh`, `renderWorks` and with each answer of `bandLinks`).
+- **`resetSettings`:** `skipHide`, `poolsFoldApply` back. **`openSettingsAt`:** `onlyHint('settings')` and the number of works kept, as ⚙ of the head. **`renderLiveComments`:** the box focused keeps the focus when the list is drawn anew.
+- **Tests:** `t_ui_view.py` new case `entryskipmodes` (scope and entry skip both ways; all rows on a level and back on "Skip"); `t_sources.py` `repeat` (a new work kept or dropped; one question at a time). Both fail before these fixes.
 
 ## Import 3.40.16 · 2026-11-03
 
