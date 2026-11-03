@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.17
+// @version      3.41.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.17
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.17
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.17';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2794,6 +2794,8 @@
     // [Z-RG] (3.40.5) with the area each one lies in, offered as a suggestion ("Pacific Coast = United States")
     // (3.40.8, review) a region without an area allowed ("Gulf Coast", "Gulf Coast ="); its own hint in the editor
     T059: { key: 'TEXT_REGIONS', shape: 'pairs', emptyValue: true, hint: 'mapping.linesRegions' },
+    // [Z-SU] (3.41.0) headings of a track list that name no suite (a side, a medium, bonus tracks)
+    T061: { key: 'SUITE_SKIP_HEADINGS', shape: 'words' },
   };
   const LIMITS = { re: 400, text: 80, value: 200, items: 1000, names: 8, phrases: 40 };
 
@@ -3555,6 +3557,8 @@
       show: () => ({ words: PROPER_WORDS }) },
     { id: 'T053', where: 'TEXT_GUEST_HEAD, TEXT_FEAT_HEAD', note: 'Texts (3.37.2): the words before a colon that are no person but say who follows (S055) – "Special Guest(s)", "Guest(s)", "Gast", "Gäste", "Invité(s)", "Invitado(s)" give the attribute guest; "featuring", "feat.", "ft.", "with" give none',
       show: () => ({ pairs: [['guest', TEXT_GUEST_HEAD], ['no guest', TEXT_FEAT_HEAD]] }) },
+    { id: 'T061', where: 'SUITE_SKIP_HEADINGS, headingKind, suiteOffers', note: 'Works (3.41.0): headings of a track list that name no suite (Z-SU) – a side, a medium or bonus tracks: "Side A", "CD 1", "Disc Two", "Bonus Tracks", "Encore" (a heading that begins with one of these words); headings with the place or date of a recording ("Recorded at …", "Live at …", a year) are no suite either. Every other heading names a suite of the tracks below it, until the next heading – asked in the works matrix',
+      show: () => ({ pairs: [['words', SUITE_SKIP_HEADINGS.join(' · ')]] }) },
     { id: 'T060', where: 'PERSON_AT_ROLE, PERSON_COMPANY_SKIP, mapRole', note: 'Roles (3.39.6): the roles of companies Discogs may give a person (S066) – read as what the person did, or left out',
       show: () => ({ pairs: [['… At → … By', PERSON_AT_ROLE], ['left out', PERSON_COMPANY_SKIP]] }) },
     { id: 'T059', where: 'TEXT_REGIONS, areaOf, regionOf, suggestByName', note: 'Texts (3.39.2): regions read as an area however they are written – "Ambisonic recordings by RR 2022-2025 Pacific coast": the area "Pacific Coast" (recorded in), also when MusicBrainz has no such area; first only "Pacific Coast". (3.40.5) Each with the area it lies in ("Pacific Coast = United States"): MusicBrainz\'s area of that name is offered first – only a suggestion, the coast of another country can be meant –, credited as the region of the list',
@@ -3722,6 +3726,9 @@
   const TEXT_FESTIVAL_WORDS = MAP.TEXT_FESTIVAL_WORDS;
   // [S061] (3.38.17) music software (T056; ✎ – the list is changed in place)
   const TEXT_SOFTWARE = MAP.TEXT_SOFTWARE;
+  // [Z-SU] (3.41.0) headings that name no suite (T061; ✎), and those of the place or date of a recording (built in)
+  const SUITE_SKIP_HEADINGS = MAP.SUITE_SKIP_HEADINGS;
+  const HEADING_RECORDING = /\b(?:recorded|live\s+(?:at|in|from)|concert|session|sessions)\b|\b(?:1[89]|20)\d\d\b/i;
   // [S062] (3.38.18) the kinds of field recordings (T057; ✎)
   const TEXT_FIELD_KINDS = MAP.TEXT_FIELD_KINDS;
   // [T059] (3.39.2) regions read as an area in any case (✎)
@@ -4760,7 +4767,9 @@
   //   notes      free text about the release (liner notes): dates, live, track lists are read from it
   //   tags       words describing the release, in lower case ("cd", "album", "live" …)
   //   genres     [Z-CV] (3.40.17) the source's genres, in lower case ("jazz", "classical"); none: [] or left out
-  //   tracks     [{ position, title, aliases }] in the order of the source, without headings
+  //   tracks     [{ position, title, aliases }] in the order of the source, without headings; [Z-SU] (3.41.0) `parts`: the titles of the
+  //              parts of one track (sub-tracks "C1a", "C1b"), `indexTitle`: the title of their index track
+  //   headings   [Z-SU] (3.41.0) [{ title, at }] the headings of the track list, `at` the index of the track that follows
   //   credits    one per person and role, in the order of the source:
   //              { who, role, base, details, credited, tracks }
   //                who       { id, name, rawName, links } – the source's own id (0: none), the name to show,
@@ -4855,8 +4864,14 @@
       // Tracks without headings; an index track counts as one track, its sub-tracks become aliases
       const tracks = [];
       const onTracks = [];
+      // [Z-SU] (3.41.0) the headings kept (a suite can be one), with the track they stand before
+      const headings = [];
       for (const t of d.tracklist || []) {
-        if (t.type_ === 'heading') continue;
+        if (t.type_ === 'heading') {
+          const title = String(t.title || '').trim();
+          if (title) headings.push({ title, at: tracks.length });
+          continue;
+        }
         // [145] (3.35.1) an index track without a position of its own whose sub-tracks are on tracks of their own ("First Encounter": A1, A2, B1, B2):
         // each of them a track – the index's credits on all of them, the work kept as `work`. Parts of one track ("C1a", "C1b") and an
         // index with a position stay one track, as before.
@@ -4884,6 +4899,9 @@
             if (sub.position) entry.aliases.push(sub.position);
             people.push(...(sub.extraartists || []));
           }
+          // [Z-SU] (3.41.0) the parts of the track: the titles of its sub-tracks (the index's title may name their suite)
+          const parts = (t.sub_tracks || []).map((x) => String(x.title || '').trim()).filter(Boolean);
+          if (parts.length > 1) Object.assign(entry, { parts, indexTitle: String(t.title || '').trim() });
         }
         tracks.push(entry);
         onTracks.push(people);
@@ -4929,6 +4947,7 @@
         // [Z-CV] (3.40.17) Discogs's genres ("Classical": no "cover" set by itself)
         genres: (d.genres || []).map(norm).filter(Boolean),
         tracks,
+        headings,
         credits,
         companies,
         series,
@@ -7171,6 +7190,7 @@
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
       titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle,
+      titleParts, headingKind, suiteOffers, trackPartsOf,
     };
     return;
   }
@@ -25717,6 +25737,63 @@
   // a name of one to four words in capitals in brackets (also "… cover") or after "by" / "after"; words of versions ("Live",
   // "Remastered", "Theme" …) are no names. full: two words or more (looked up in MusicBrainz), else a surname (only when an
   // artist of the release has it).
+  /** [Z-SU] (3.41.0) The parts of a title: "Phase 2 / Phase 3" → ["Phase 2", "Phase 3"] (" / " with spaces; "AC/DC" stays one); else []. */
+  function titleParts(title) {
+    const parts = String(title || '').split(/\s+\/\s+/).map((x) => x.trim()).filter(Boolean);
+    return parts.length > 1 ? parts : [];
+  }
+  /** [Z-SU] (3.41.0) The parts of a track of the source: its sub-tracks, else the parts of its title. */
+  function trackPartsOf(t) {
+    return t && (t.parts || []).length > 1 ? [...t.parts] : titleParts(t && t.title);
+  }
+  /**
+   * [Z-SU] (3.41.0) What a heading of a track list is: "medium" (a side, medium or bonus heading – T061), "recording" (the place or
+   * date of a recording), "name" (it may name a suite), "none".
+   */
+  function headingKind(title) {
+    const t = norm(title);
+    if (!t) return 'none';
+    // the word, alone or followed by no letter ("Side A", "CD1", "Bonus Tracks"; not "Sidewinder")
+    const word = (w) => {
+      const n = norm(w);
+      return !!n && (t === n || (t.startsWith(n) && !/\p{L}/u.test(t.charAt(n.length))));
+    };
+    if (SUITE_SKIP_HEADINGS.some(word)) return 'medium';
+    if (HEADING_RECORDING.test(String(title || ''))) return 'recording';
+    return 'name';
+  }
+  /**
+   * [Z-SU] (3.41.0) The suites a release may have (collected item Z-SU; Q-ca): [{ name, from, tracks }] – the tracks below a heading
+   * that names one (until the next heading; from two tracks, or one with parts), the tracks of an index track (sub-tracks on tracks
+   * of their own: its title), an index of the parts of one track, else – when a track has parts – all tracks with the release's
+   * title. Only suggestions: the works matrix asks (Q-cc).
+   */
+  function suiteOffers(rel) {
+    const tracks = (rel && rel.tracks) || [];
+    const out = [];
+    const taken = (i) => out.some((o) => o.tracks.includes(i));
+    const heads = ((rel && rel.headings) || []).filter((h) => h && Number.isInteger(h.at)).sort((a, b) => a.at - b.at);
+    heads.forEach((h, k) => {
+      if (headingKind(h.title) !== 'name') return;
+      const next = heads.slice(k + 1).find((x) => x.at > h.at);
+      const idx = [];
+      for (let i = h.at; i < (next ? next.at : tracks.length); i++) idx.push(i);
+      if (idx.length > 1 || (idx.length === 1 && trackPartsOf(tracks[idx[0]]).length)) out.push({ name: h.title, from: 'heading', tracks: idx });
+    });
+    const byWork = new Map();
+    tracks.forEach((t, i) => {
+      if (!t || !t.work || taken(i)) return;
+      if (!byWork.has(t.work)) byWork.set(t.work, []);
+      byWork.get(t.work).push(i);
+    });
+    byWork.forEach((idx, name) => out.push({ name, from: 'index', tracks: idx }));
+    tracks.forEach((t, i) => {
+      if (t && t.indexTitle && (t.parts || []).length > 1 && !taken(i)) out.push({ name: t.indexTitle, from: 'index', tracks: [i] });
+    });
+    if (!out.length && rel && rel.title && tracks.some((t) => trackPartsOf(t).length)) out.push({ name: String(rel.title).trim(), from: 'release', tracks: tracks.map((t, i) => i) });
+    return out;
+  }
+
   function titleComposerNames(title) {
     // words of versions, credits and titles that are no names (also before or after "by")
     const STOP = /^(?:live|remaster(?:ed)?|demo|edit|version|mix|remix|reprise|intro|outro|interlude|theme|take|part|pt|bonus|single|mono|stereo|instrumental|acoustic|radio|extended|original|cover|alternate|alt|unreleased|feat|featuring|ft|vs|prod|with|and|the|a|an|of|in|on|by|after|for|to|from|me|you|us|them|him|her|it|your|my|our|their|his|love|time|session|sessions|title|titles|credits|act|tribute|dub|skit|clean|explicit|medley|prelude|main|end|en|vivo|bbc|japan|suite|movement|op|no|allegro|andante|adagio|presto|con|brio|minor|major)\.?$/i;

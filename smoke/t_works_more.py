@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16); `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0); `python3 t_works_more.py <case> …` runs only those."""
 import re
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -1070,6 +1070,55 @@ console.log(JSON.stringify([t, s]));
     results.append(got[0] == [[{'name': 'Thelonious Monk', 'full': True}], [{'name': 'Monk', 'full': False}], [], [], [], [], [], [], [],
                               [{'name': 'Monk', 'full': False}], [{'name': 'Ludwig van Beethoven', 'full': True}], [], [], [{'name': 'MONK', 'full': False}]]
                    and got[1] == [True, True, False, False, True])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_suitedata():
+    """Credits Importer 3.41.0 (collected item Z-SU; Q-bt, Q-ca, Q-ch): what a suite can be made of – in Node.
+    A) Discogs: the headings of the track list kept ("Side A" before track 1, "Trisect" before track 3 …), the sub-tracks of an
+       index of one track as its parts ("Transition", "Phase 4", "Coda"), the index's title kept (until 3.40.17 headings were left
+       out and the sub-tracks only their positions).
+    B) The parts of a title: "Phase 2 / Phase 3" → two, "AC/DC" none; headings: "Side A", "CD 1", "Bonus Tracks", "Encore" – a side
+       or medium (T061), "Recorded live at Moers, 1981" – a recording, "Trisect", "Sidewinder" – a name.
+    C) The suites offered: below the heading "Trisect" tracks 3–5 (until "Recorded live …"), the index "Suite X" for track 6; a
+       release without headings whose track has parts: all tracks with the release's title; without parts: none."""
+    import json
+    import subprocess
+    sub = lambda pos, title: {'position': pos, 'type_': 'track', 'title': title, 'duration': '', 'extraartists': []}
+    head = lambda title: {'position': '', 'type_': 'heading', 'title': title, 'duration': ''}
+    d = {'id': 1, 'title': 'Live In Moers', 'tracklist': [
+        head('Side A'), sub('A1', 'Introduction'), sub('A2', 'Phase 1'),
+        head('Trisect'), sub('A3', 'Phase 2 / Phase 3'), sub('B1', 'Interlude'), sub('B2', 'Finale'),
+        head('Recorded live at Moers, 1981'),
+        {'position': 'C1', 'type_': 'index', 'title': 'Suite X', 'duration': '', 'sub_tracks': [sub('C1a', 'Transition'), sub('C1b', 'Phase 4'), sub('C1c', 'Coda')]},
+        sub('C2', 'Encore Piece')]}
+    plain = {'id': 2, 'title': 'Trisect', 'tracklist': [sub('1', 'Introduction'), sub('2', 'Phase 1'), sub('3', 'Phase 2 / Phase 3'), sub('4', 'Transition / Phase 4 / Coda')]}
+    none = {'id': 3, 'title': 'Songs', 'tracklist': [sub('1', 'One'), sub('2', 'Two')]}
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const [d, plain, none] = JSON.parse(process.argv[2]);
+const r = m.DISCOGS.toRelease(d, d.id);
+console.log(JSON.stringify({
+  headings: r.headings, tracks: r.tracks.map((t) => [t.position, t.title, t.parts || null, t.indexTitle || null]),
+  parts: [m.titleParts('Phase 2 / Phase 3'), m.titleParts('AC/DC')],
+  kinds: ['Side A', 'CD 1', 'Bonus Tracks', 'Encore', 'Recorded live at Moers, 1981', 'Trisect', 'Sidewinder'].map(m.headingKind),
+  offers: [m.suiteOffers(r), m.suiteOffers(m.DISCOGS.toRelease(plain, 2)), m.suiteOffers(m.DISCOGS.toRelease(none, 3))],
+}));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js'), json.dumps([d, plain, none])], capture_output=True, text=True)
+    got = json.loads(js.stdout) if not js.returncode else {'error': js.stderr[-600:]}
+    print('A)', got.get('headings'), '\n  ', got.get('tracks'))
+    print('B)', got.get('parts'), got.get('kinds'))
+    print('C)', got.get('offers'))
+    results = [
+        got.get('headings') == [{'title': 'Side A', 'at': 0}, {'title': 'Trisect', 'at': 2}, {'title': 'Recorded live at Moers, 1981', 'at': 5}]
+        and got.get('tracks') == [['A1', 'Introduction', None, None], ['A2', 'Phase 1', None, None], ['A3', 'Phase 2 / Phase 3', None, None], ['B1', 'Interlude', None, None],
+                                  ['B2', 'Finale', None, None], ['C1', 'Suite X', ['Transition', 'Phase 4', 'Coda'], 'Suite X'], ['C2', 'Encore Piece', None, None]],
+        got.get('parts') == [['Phase 2', 'Phase 3'], []] and got.get('kinds') == ['medium', 'medium', 'medium', 'medium', 'recording', 'name', 'name'],
+        got.get('offers') == [[{'name': 'Trisect', 'from': 'heading', 'tracks': [2, 3, 4]}, {'name': 'Suite X', 'from': 'index', 'tracks': [5]}],
+                              [{'name': 'Trisect', 'from': 'release', 'tracks': [0, 1, 2, 3]}], []],
+    ]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
