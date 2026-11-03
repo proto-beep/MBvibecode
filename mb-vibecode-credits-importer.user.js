@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.3
+// @version      3.41.4
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.3
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.3
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.4
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.4
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.3';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.4';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1144,6 +1144,9 @@
       "suite.askAgainTitle": "Ask again whether these tracks are parts of a suite",
       "suite.partOf": "part {k} of {n}",
       "suite.partTitle": "A part of the suite “{name}”: a work of its own",
+      "suite.partPick": "Link “{title}”",
+      "suite.partPickTitle": "MusicBrainz has a work of this title by the track's writers – a click links it instead of a new work",
+      "log.partPicked": "Track {track}: “{title}” of MusicBrainz linked as its part",
       "medley.split": "Split into {n} works (medley)",
       "medley.splitTitle": "Each part a work of its own, linked as a medley in the order of the title: {list}",
       "medley.join": "one work",
@@ -1152,7 +1155,7 @@
       "medley.partTitle": "A part of a medley: a work of its own, linked with “medley” in its order",
       "log.medleySplit": "Track {track}: split into {n} works (medley)",
       "log.medleyJoined": "Track {track}: one work again",
-      "log.partsFound": "Track {track}: {n} of its parts found in MusicBrainz",
+      "log.partsFound": "Track {track}: MusicBrainz has works for {n} of its parts – offered at them",
       "log.suiteYes": "Suite “{name}” ({tracks}): {n} parts planned as works",
       "log.suiteUndone": "Suite “{name}”: undone",
       "log.suiteNo": "“{name}”: no suite",
@@ -9805,6 +9808,10 @@
           const key = `suite|${sw.gid}|${p.gid}`;
           planned.add(key);
           if (S.scope === 'nonwork' || !inMedium(i)) return;
+          // (3.41.4, review) a new part only with its own link (held back by an invalid date: the suite's link waits too)
+          const t = S.mbTracks[i];
+          const own = t && `link|${t.recordingGid}|${p.gid}`;
+          if (p.origin !== 'mb' && own && !seen.has(own) && !S.staged.has(own) && !S.appliedKeys.has(own) && !S.existing.workLinks.has(`${t.recordingGid}|${p.gid}`)) return;
           const stagedLink = S.staged.get(key);
           if ((!stagedLink && S.appliedKeys.has(key)) || seen.has(key)) return;
           seen.add(key);
@@ -18503,6 +18510,12 @@
       }
       // [Z-SU] (3.41.2) "parts" of a suite: from the part (in the editor with its recording) to the suite – the suite is entity0
       if (it.kind === 'suite-part') {
+        // (3.41.4, review) its part hangs on a recording: only when that medium is loaded in the editor
+        if (it.target.track && !recordings.get(it.target.track.recordingGid)) {
+          notLoaded.set(it.target.track.medium, (notLoaded.get(it.target.track.medium) || 0) + 1);
+          log('warn', 'skippedNotLoaded', { text });
+          continue;
+        }
         try {
           const partEntity = isPending(it.partGid) ? pendingWorkEntity(it.partGid) : await fetchJsEntity(it.partGid);
           const suiteEntity = isPending(it.suiteGid) ? pendingWorkEntity(it.suiteGid) : await fetchJsEntity(it.suiteGid);
@@ -23772,7 +23785,7 @@
       ['kind.recording', count((i) => i.kind === 'credit' && i.target.kind === 'recording')],
       ['kind.release', count((i) => i.target.kind === 'release')],
       ['kind.releaseGroup', count((i) => i.target.kind === 'release_group')],
-      ['kind.work', count((i) => i.target.kind === 'work')],
+      ['kind.work', count((i) => i.target.kind === 'work' && i.kind !== 'suite-part')],
       ['kind.workLink', count((i) => i.kind === 'work-link')],
     ].filter(([, n]) => n).map(([key, n]) => tr(key, { n }));
     // [172] (3.39.0) the exact number for the line of the release page (a release from Discogs; [AY] (3.40.0) or Bandcamp)
@@ -25876,7 +25889,8 @@
       const n = norm(w);
       return !!n && (t === n || (t.startsWith(n) && !/\p{L}/u.test(t.charAt(n.length))));
     };
-    if (SUITE_SKIP_HEADINGS.some(word)) return 'medium';
+    // (3.41.4, review) bonus tracks wherever the word stands ("Japan Bonus Tracks")
+    if (SUITE_SKIP_HEADINGS.some(word) || /\bbonus\b/i.test(t)) return 'medium';
     if (HEADING_RECORDING.test(String(title || ''))) return 'recording';
     return 'name';
   }
@@ -25893,6 +25907,8 @@
     const heads = ((rel && rel.headings) || []).filter((h) => h && Number.isInteger(h.at)).sort((a, b) => a.at - b.at);
     heads.forEach((h, k) => {
       if (headingKind(h.title) !== 'name') return;
+      // (3.41.4, review) two headings before the same track (a composer, then the work): the one next to the tracks
+      if (heads.slice(k + 1).some((x) => x.at === h.at && headingKind(x.title) === 'name')) return;
       const next = heads.slice(k + 1).find((x) => x.at > h.at);
       const idx = [];
       for (let i = h.at; i < (next ? next.at : tracks.length); i++) idx.push(i);
@@ -25908,7 +25924,9 @@
     tracks.forEach((t, i) => {
       if (t && t.indexTitle && (t.parts || []).length > 1 && !taken(i)) out.push({ name: t.indexTitle, from: 'index', tracks: [i] });
     });
-    if (!out.length && rel && rel.title && tracks.some((t) => trackPartsOf(t).length)) out.push({ name: String(rel.title).trim(), from: 'release', tracks: tracks.map((t, i) => i) });
+    // (3.41.4, review) the release's title only when at least half of its tracks have parts (one "A / B" among twelve: a medley)
+    const withParts = tracks.filter((t) => trackPartsOf(t).length).length;
+    if (!out.length && rel && rel.title && withParts && withParts * 2 >= tracks.length) out.push({ name: String(rel.title).trim(), from: 'release', tracks: tracks.map((t, i) => i) });
     return out;
   }
 
@@ -26581,7 +26599,10 @@
         const badge = n > 1 ? `<span class="dci-mx-part" title="${esc(tr(plan.medley ? 'medley.partTitle' : 'suite.partTitle', { name: plan.suiteName || '' }))}">${esc(tr(plan.medley ? 'medley.partOf' : 'suite.partOf', { k: plan.k, n }))}</span> ` : '';
         // [Z-SU] (3.41.3) a medley: one work again
         const join = plan.medley && plan.k === 1 ? ` <button type="button" class="dci-textbtn" data-act="medley-join" title="${esc(tr('medley.joinTitle'))}">↺ ${esc(tr('medley.join'))}</button>` : '';
-        return `${mrow.k === 1 || n < 2 ? head : ''}${line(`${badge}${what}${join}`)}${linkAttrsHtml(mrow)}`;
+        // (3.41.4, review) a work of MusicBrainz found for the part: offered
+        const pick = pending && plan.offer ? ` <button type="button" class="dci-small" data-act="part-pick" data-pgid="${esc(plan.gid)}" title="${esc(tr('suite.partPickTitle'))}">${esc(tr('suite.partPick', { title: plan.offer.title }))}</button>
+          <a class="dci-mblink" href="/work/${esc(plan.offer.gid)}" target="_blank" rel="noopener" aria-label="${esc(plan.offer.title)}"><span class="dci-src dci-src-mb">MB</span></a>` : '';
+        return `${mrow.k === 1 || n < 2 ? head : ''}${line(`${badge}${what}${pick}${join}`)}${linkAttrsHtml(mrow)}`;
       }
       const o = pending ? rowOptsHtml(i) : { btn: '', panel: '' };
       const badge = pending
@@ -26830,7 +26851,7 @@
    */
   function pendingWorkEntity(ref) {
     // [Z-SU] (3.41.1) by the work's key: "pending:4" (the work of track 4), "pending:4.2" (its second part)
-    const m = /^pending:(\d+)(?:\.(\d+))?$/.exec(String(ref));
+    const m = /^pending:(\d+)((?:\.\d+)*)$/.exec(String(ref));
     // [Z-SU] (3.41.2) a suite ("pending:s1"): the type "Suite", no lyrics language
     const suite = /^pending:s\d+$/.test(String(ref)) ? [...S.suiteWorks.values()].find((w) => w.gid === String(ref)) : null;
     const i = m ? Number(m[1]) : Number(ref);
@@ -26866,10 +26887,16 @@
    */
   function suiteAsks() {
     if (!S.release || S.worksSkip) return [];
-    return suiteOffers(S.release)
+    // (3.41.4, review) the key from the offer itself (a medium filter or the media chosen do not change it); an offer whose tracks all
+    // have their works in MusicBrainz is not asked; one answered stays (its "↺"); a suite accepted for another source of the release
+    // too
+    const out = suiteOffers(S.release).map((o) => ({ ...o, key: `${o.from}|${o.name}|${o.tracks.join(',')}` }))
       .map((o) => ({ ...o, tracks: o.tracks.filter((i) => S.mbTracks[i] && matrixTrack(S.mbTracks[i])) }))
-      .filter((o) => o.tracks.length)
-      .map((o) => ({ ...o, key: `${o.from}|${o.name}|${o.tracks.join(',')}` }));
+      .filter((o) => S.suiteAnswers.has(o.key) || (o.tracks.length && o.tracks.some((i) => !S.mbTracks[i].works.length)));
+    for (const sw of S.suiteWorks.values()) {
+      if (!out.some((o) => o.key === sw.key)) out.push({ key: sw.key, name: sw.title, from: 'release', tracks: [...(sw.tracks || [])] });
+    }
+    return out;
   }
 
   /** [Z-SU] (3.41.1) The name of a part of a suite: "Trisect: Transition", or "Trisect, Transition" (⚙ Settings → Works; Q-bu). */
@@ -26878,14 +26905,27 @@
   function setSuiteNaming(v) {
     S.suiteNaming = v === 'comma' ? 'comma' : 'colon';
     writeJson('localStorage', SUITE_NAMING_KEY, S.suiteNaming === 'comma' ? 'comma' : null);
-    for (const ps of S.workParts.values()) {
+    renameSuiteParts();
+    log('info', 'suiteNaming', { example: suitePartName('Trisect', 'Transition') });
+  }
+  /**
+   * The new works of the parts named by the setting; (3.41.4, review) one already in MusicBrainz's editor gets a key of its own –
+   * the link staged with the old name goes, one with the new name is staged (its entity is not changed behind the editor's back).
+   */
+  function renameSuiteParts() {
+    for (const [i, ps] of S.workParts) {
       for (const p of ps) {
-        if (p.origin !== 'pending') continue;
-        p.title = suitePartName(p.suiteName, p.part);
-        if (p.entity) p.entity.name = p.title;
+        if (p.origin !== 'pending' || !p.suiteName) continue;
+        const title = suitePartName(p.suiteName, p.part);
+        if (title === p.title) continue;
+        p.title = title;
+        if (p.entity) {
+          S.suiteSeq += 1;
+          p.gid = `pending:${i}.${p.k}.${S.suiteSeq}`;
+          delete p.entity;
+        }
       }
     }
-    log('info', 'suiteNaming', { example: suitePartName('Trisect', 'Transition') });
   }
 
   /**
@@ -26904,9 +26944,18 @@
       const parts = trackPartsOf(src && src.title ? src : { title: t.title });
       const titles = parts.length ? parts : [workTitleOf((src && src.title) || t.title)];
       const before = S.workParts.has(i) ? null : S.workPlan.get(i) || null;
+      // (3.41.4, review) a work of MusicBrainz chosen or created for the track is its part (no new work instead of it)
+      if (before && before.origin !== 'pending') {
+        S.workPlan.delete(i);
+        S.workParts.set(i, [{ ...before, flags: new Set(before.flags || []), part: before.title, k: 1, suite: o.key, suiteName: nm, kept: true, before }]);
+        n += 1;
+        continue;
+      }
       S.workPlan.delete(i);
+      // (3.41.4, review) a key of its own each time (a part staged before and taken back is not mistaken for the new one)
+      S.suiteSeq += 1;
       S.workParts.set(i, titles.map((title, k) => ({
-        gid: `pending:${i}.${k + 1}`, title: suitePartName(nm, title), part: title, k: k + 1, origin: 'pending', flags: new Set(),
+        gid: `pending:${i}.${k + 1}.${S.suiteSeq}`, title: suitePartName(nm, title), part: title, k: k + 1, origin: 'pending', flags: new Set(),
         suite: o.key, suiteName: nm, ...(k === 0 && before ? { before } : {}),
       })));
       n += titles.length;
@@ -26949,8 +26998,9 @@
     if (parts.length < 2) return;
     const before = S.workPlan.get(i) || null;
     S.workPlan.delete(i);
+    S.suiteSeq += 1;
     S.workParts.set(i, parts.map((title, k) => ({
-      gid: `pending:${i}.${k + 1}`, title, part: title, k: k + 1, origin: 'pending', flags: new Set(['medley']), medley: true,
+      gid: `pending:${i}.${k + 1}.${S.suiteSeq}`, title, part: title, k: k + 1, origin: 'pending', flags: new Set(['medley']), medley: true,
       ...(k === 0 && before ? { before } : {}),
     })));
     log('info', 'medleySplit', { track: trackLabel(S.mbTracks[i]), n: parts.length });
@@ -26966,7 +27016,8 @@
 
   /**
    * [Z-SU] (3.41.3) Each new part looked up in MusicBrainz among the works of the track's writers (Q-cb): one work of exactly that
-   * title – for a part of a suite also "Suite, Part", "Suite: Part" or the part alone – is taken instead of a new one ("found").
+   * title – for a part of a suite also "Suite, Part", "Suite: Part" or the part alone –; (3.41.4, review) offered at the part
+   * ("Link “Beta”"), not taken by itself (as every work found for a track, 180).
    */
   async function searchParts(i) {
     const ps = S.workParts.get(i);
@@ -26985,8 +27036,7 @@
         }
         const same = hits.filter((w) => norm(w.title) === norm(title) || (w.aliases || []).some((x) => norm(x) === norm(title)));
         if (same.length === 1 && S.workParts.get(i) === ps && p.origin === 'pending') {
-          Object.assign(p, { gid: same[0].gid, title: same[0].title, origin: 'search' });
-          delete p.entity;
+          p.offer = { gid: same[0].gid, title: same[0].title };
           found += 1;
           break;
         }
@@ -27019,7 +27069,7 @@
       <button type="button" class="dci-small" data-act="suite-no">${esc(tr('suite.noBtn'))}</button>
       <label class="dci-suite-other">${esc(tr('suite.other'))} <input type="text" data-f="suite-name" value="${esc(o.name)}" size="24"></label>
       <button type="button" class="dci-small" data-act="suite-yes-name">${esc(tr('suite.yesName'))}</button>
-      <span class="dci-sub" title="${esc(tr('suite.hint'))}">${esc(from)}</span></div>`;
+      <span class="dci-sub">${esc(from)}</span><p class="dci-sub dci-suite-hint">${esc(tr('suite.hint'))}</p></div>`;
   }
 
   /** "Add column": any entry already in the dashboard (artist or label) with a work-level role of your choice. */
@@ -27040,7 +27090,8 @@
   }
 
   function allWorkGids() {
-    return uniq(S.mbTracks.flatMap((t) => [...t.works.map((w) => w.gid), ...(S.workPlan.has(t.idx) ? [S.workPlan.get(t.idx).gid] : [])])).filter((g) => !isPending(g));
+    // (3.41.4, review) the parts of a track too
+    return uniq(S.mbTracks.flatMap((t) => worksForTrack(t.idx).map((w) => w.gid))).filter((g) => !isPending(g));
   }
 
   function renderWorks() {
@@ -29122,6 +29173,20 @@
         if (again) again.focus({ preventScroll: true });
         break;
       }
+      // [Z-SU] (3.41.4, review) the work of MusicBrainz found for a part linked instead of a new one
+      case 'part-pick': {
+        const trw = btn.closest('tr[data-work]');
+        const i = trw ? Number(trw.dataset.work) : -1;
+        const pp = (S.workParts.get(i) || []).find((x) => x.gid === btn.dataset.pgid);
+        if (!pp || !pp.offer) break;
+        Object.assign(pp, { gid: pp.offer.gid, title: pp.offer.title, origin: 'search' });
+        delete pp.offer;
+        delete pp.entity;
+        log('info', 'partPicked', { track: trackLabel(S.mbTracks[i]), title: pp.title });
+        renderWorks();
+        refresh();
+        break;
+      }
       // [Z-SU] (3.41.3) a medley split into its works, or one work again
       case 'medley-split':
       case 'medley-join': {
@@ -29136,12 +29201,16 @@
         if (again) again.focus({ preventScroll: true });
         break;
       }
-      case 'suite-naming':
+      case 'suite-naming': {
         setSuiteNaming(btn.dataset.naming);
         renderSettings();
         renderWorks();
         refresh();
+        // (3.41.4, review) the focus on the button clicked
+        const again = S.overlay.querySelector(`[data-act="suite-naming"][data-naming="${btn.dataset.naming === 'comma' ? 'comma' : 'colon'}"]`);
+        if (again) again.focus({ preventScroll: true });
         break;
+      }
       case 'skipped-toggle':
         S.skippedOpen = !S.skippedOpen;
         renderGroups();
@@ -33012,6 +33081,7 @@
       // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
       skipHide: false, poolsFoldApply: false, suiteNaming: 'colon',
     });
+    renameSuiteParts(); // (3.41.4, review) the parts of a suite named "Suite: Part" again
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)
     if (DIAG.timer) stopDiag();
     renderLog();
@@ -34351,6 +34421,7 @@
       /* [Z-SU] (3.41.1) the question of a suite (yellow: a suggestion), a part of it */
       .dci-mx-ask.dci-mx-suite { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); }
       .dci-mx-suite .dci-suite-other input { margin-left: calc(var(--u, 1px) * 4); }
+      .dci-mx-suite .dci-suite-hint { flex-basis: 100%; margin: 0; }
       .dci-mx-part { display: inline-block; padding: 0 calc(var(--u, 1px) * 6); border: 1px solid var(--line); border-radius: 10px; font-size: calc(var(--u, 1px) * 11); color: var(--muted, #6d6a7c); }
       .dci-mx-ask { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin: calc(var(--u, 1px) * 8) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); border-radius: 4px; background: #eef6fb; border: 1px solid #9cc7e0; }
       .dci-works > p { margin: 0 0 calc(var(--u, 1px) * 8); max-width: 80ch; }

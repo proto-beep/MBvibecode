@@ -343,7 +343,9 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #   suiteparts: 3.41.2: the suite "Trisect" (type Suite) with "parts" (movement) to 7 parts in their order, entity0,
                                 #     no recording with it; the preview; nothing after ↺
                                 #   medley: 3.41.3: "Alpha / Beta" – ✕ No, the offer "Split into 2 works (medley)"; split: Beta found in MB; staged with
-                                #     "medley" in the order of the title; "↺ one work"
+                                #     "medley" in the order of the title; "↺ one work"; 3.41.4: no suite asked (one of four), Beta offered, then linked
+                                #   suiterestage: 3.41.4 (review): staged, undone, accepted again / named anew: one link per part, no "parts" to a
+                                #     new work without its recording
 
 python3 t_mapping.py            # Mapping: roles, questions, suggestions, mastering, special artists, fixes
                                 #   rules: Mix / Recording / Engineer [Mix, Recording] / Trumpet [Pocket Trumpet] without role credit,
