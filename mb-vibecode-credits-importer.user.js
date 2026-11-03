@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.15
+// @version      3.40.16
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.15
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.15
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.16
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.16
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.15';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.16';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -125,6 +125,17 @@
       "msg.noSourceLink": "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text.",
       "srcorder.toggle": "Order of the sources",
       "forget.button": "Delete stored import …",
+      "repeat.button": "Repeat import",
+      "repeat.title": "Read the source again and look up its entries in MusicBrainz anew – for example after a change of the mapping rules",
+      "repeat.ask": "Repeat the import?",
+      "repeat.what": "The source is read again and every entry is looked up in MusicBrainz anew, so changed mapping rules apply.",
+      "repeat.keep": "Keep my changes",
+      "repeat.keepTitle": "What you changed in this import – levels, roles, credits, rows added or taken out, the entries chosen, the works – is put onto the new one, as “Remember per release” does",
+      "repeat.fresh": "Start afresh",
+      "repeat.freshTitle": "The rows as the source and the mapping rules give them now: the changes of this import are dropped",
+      "repeat.do": "↻ Repeat import",
+      "log.repeatKeep": "Import repeated – your changes are kept",
+      "log.repeatFresh": "Import repeated afresh – your changes are dropped",
       "about.off": "Leave out the “about” text",
       "about.offTitle": "Only for this release: the places, liner notes and dates from Bandcamp's “about” text are left out – their rows hidden, their dates out of the pool and the matrix – at once, without a new import. Ticked off again, they are back, with what you changed in them.",
       "notes.credit": "From the Discogs notes",
@@ -16897,12 +16908,17 @@
       const cur = rowFieldsOf(r);
       if (TOUCH.every((k) => cur[k] === f.f[k])) f.f = cur;
     });
-    if (remembering() && !S.rememberHold) {
+    // [Z-RI] (3.40.16) "↻ Repeat import": the changes of the import before (kept), or nothing remembered (afresh)
+    const repeat = S.repeatSnap;
+    const fresh = S.repeatFresh;
+    S.repeatSnap = null;
+    S.repeatFresh = false;
+    if (repeat || (remembering() && !S.rememberHold && !fresh)) {
       // what is remembered never stops an import: taken over or not at all
       const before = S.rows;
       const entries = new Map(S.artists);
       try {
-        restoreRemembered();
+        restoreRemembered(repeat);
       } catch (e) {
         console.warn('[Credits-Importer] remembered', e);
         S.rows = before;
@@ -16949,9 +16965,10 @@
     return !!(snap && snap.stackUp === true);
   }
 
-  function restoreRemembered() {
-    const stored = relRead(REMEMBER_ROWS_KEY, null);
-    const snap = stored && stored.v === 2 && stored.by ? stored.by[S.importSrc || ''] : stored && stored.v === 1 ? stored : null;
+  function restoreRemembered(snapIn = null) {
+    const stored = snapIn ? null : relRead(REMEMBER_ROWS_KEY, null);
+    // [Z-RI] (3.40.16) or the snapshot of "↻ Repeat import"
+    const snap = snapIn || (stored && stored.v === 2 && stored.by ? stored.by[S.importSrc || ''] : stored && stored.v === 1 ? stored : null);
     if (!snap || snap.v !== 1 || !Array.isArray(snap.rows) || snap.src !== (S.importSrc || '')) return;
     // [3.36.1] other media chosen than then: the tracks stay as the source gives them now
     const sameMedia = (snap.media || '') === mediaSig();
@@ -18640,19 +18657,55 @@
     const suppOpen = suppIsOpen();
     const suppBtn = rel && S.rows.length ? `<button type="button" class="dci-headbtn dci-ibtn dci-supp-open${S.supp ? ' dci-on' : ''}" data-act="supp-open" aria-expanded="${suppOpen}"
       title="${esc(tr('supp.openTitle'))}">${ico('plus')}<span>${esc(tr('supp.open'))}</span>${S.supp ? ` <span class="dci-supp-mark">${esc(S.supp.source.short)} ✓</span>` : ''}</button>` : '';
+    // [Z-RI] (3.40.16) "↻ Repeat import" next to "Source ▾" (collected item Z-RI; Q-bw)
+    const repeatBtn = rel ? `<button type="button" class="dci-headbtn dci-ibtn dci-repeat-btn" data-act="repeat-open" aria-expanded="${!!S.repeatOpen}"
+      title="${esc(tr('repeat.title'))}"><span aria-hidden="true">↻</span><span>${esc(tr('repeat.button'))}</span></button>` : '';
     el.innerHTML = `${current}${bcPage}
       <span class="dci-srcwrap"><button type="button" class="dci-headbtn dci-ibtn dci-srcmenu-btn" data-act="srcmenu" aria-expanded="${!!S.srcMenuOpen}" aria-controls="dci-srcmenu"
         title="${esc(tr('srcmenu.title'))}"><span>${esc(tr('srcmenu.button'))}</span>${ico('down')}</button>${menu}</span>
-      ${suppBtn}`;
+      ${repeatBtn}${suppBtn}`;
     const panels = $('srcpanels');
     if (!panels) return;
-    panels.innerHTML = `${S.forgetOpen ? `<div class="dci-forget" role="group" aria-label="${esc(tr('forget.ask'))}"><strong>${esc(tr('forget.ask'))}</strong>
+    panels.innerHTML = `${S.repeatOpen && rel ? repeatAskHtml() : ''}${S.forgetOpen ? `<div class="dci-forget" role="group" aria-label="${esc(tr('forget.ask'))}"><strong>${esc(tr('forget.ask'))}</strong>
         <p class="dci-sub">${esc(tr('forget.what'))}</p><p class="dci-sub">${esc(tr('forget.keeps'))}</p>
         <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="forget-do">${esc(tr('forget.do'))}</button>
           <button type="button" class="dci-textbtn" data-act="forget-cancel">${esc(tr('common.cancel'))}</button></div></div>` : ''}
       ${S.srcOrderOpen ? sourceOrderHtml() : ''}${S.bcOpen ? bandcampSettingsHtml() : ''}
       ${suppOpen ? suppBarHtml() : ''}${festHtml}${unrecHtml}${ignHtml}${textForm}`;
     panels.hidden = !panels.textContent.trim() && !panels.querySelector('input, textarea, button');
+  }
+
+  /**
+   * [Z-RI] (3.40.16) The question of "↻ Repeat import": the source read again and its entries looked up in MusicBrainz anew (so that
+   * changed mapping rules apply) – keeping what was changed in this import (preselected) or afresh.
+   */
+  function repeatAskHtml() {
+    const keep = S.repeatKeep !== false;
+    return `<div class="dci-forget dci-repeat" data-el="repeat" role="group" aria-label="${esc(tr('repeat.ask'))}"><strong>${esc(tr('repeat.ask'))}</strong>
+      <p class="dci-sub">${esc(tr('repeat.what'))}</p>
+      <div class="dci-repeat-opts"><label class="dci-check" title="${esc(tr('repeat.keepTitle'))}"><input type="radio" name="dci-repeat" data-f="repeat-keep" value="keep" ${keep ? 'checked' : ''}> ${esc(tr('repeat.keep'))}</label>
+        <label class="dci-check" title="${esc(tr('repeat.freshTitle'))}"><input type="radio" name="dci-repeat" data-f="repeat-keep" value="fresh" ${keep ? '' : 'checked'}> ${esc(tr('repeat.fresh'))}</label></div>
+      <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="repeat-do">${esc(tr('repeat.do'))}</button>
+        <button type="button" class="dci-textbtn" data-act="repeat-cancel">${esc(tr('common.cancel'))}</button></div></div>`;
+  }
+
+  /**
+   * [Z-RI] (3.40.16) The import again: the source read, the entities of MusicBrainz fetched anew (entityCache), the entries looked
+   * up. "Keep my changes": a snapshot as "Remember per release" makes, put onto the new import (also with ⚙ Settings → Cache off);
+   * afresh: nothing remembered is taken over for this import.
+   */
+  async function repeatImport(keep) {
+    if (!S.release) return;
+    S.repeatSnap = keep && S.freshRows ? rememberSnapshot() : null;
+    S.repeatFresh = !keep;
+    entityCache.clear();
+    log('info', keep ? 'repeatKeep' : 'repeatFresh');
+    try {
+      await loadRelease(S.release.id, { source: S.source, confirmed: true });
+    } finally {
+      S.repeatSnap = null;
+      S.repeatFresh = false;
+    }
   }
 
   /** [3.26.0] The bar "Supplement with" shows on "+ Supplement", and while a supplement is loaded. */
@@ -29706,6 +29759,30 @@
       case 'forget-do':
         forgetImport();
         break;
+      // [Z-RI] (3.40.16)
+      case 'repeat-open':
+        S.repeatOpen = !S.repeatOpen;
+        if (S.repeatOpen) S.forgetOpen = false;
+        renderSource();
+        if (S.repeatOpen) {
+          const x = S.overlay.querySelector('[data-el="repeat"] input[data-f="repeat-keep"]:checked');
+          if (x) x.focus();
+        }
+        break;
+      case 'repeat-cancel':
+        S.repeatOpen = false;
+        renderSource();
+        S.overlay.querySelector('[data-act="repeat-open"]').focus();
+        break;
+      case 'repeat-do': {
+        const fresh = S.overlay.querySelector('[data-el="repeat"] input[data-f="repeat-keep"][value="fresh"]');
+        const keep = !(fresh && fresh.checked);
+        S.repeatOpen = false;
+        S.repeatKeep = true; // (asked with "keep" preselected each time)
+        renderSource();
+        repeatImport(keep);
+        break;
+      }
       case 'text-open':
         S.textForm = S.textForm ? null : { text: (S.textInput && S.textInput.text) || '', origin: (S.textInput && S.textInput.origin) || '' };
         renderSource();
@@ -30111,6 +30188,10 @@
       case 'editnote':
         S.editNote = el.checked;
         S.rows.forEach(updateHint);
+        break;
+      // [Z-RI] (3.40.16) the choice of "↻ Repeat import" (kept while the head is drawn anew)
+      case 'repeat-keep':
+        S.repeatKeep = el.value !== 'fresh';
         break;
       // [3.32.9] a live recording ticked or not for its comment (item 113)
       case 'livecom-on': {
@@ -34243,6 +34324,9 @@
       /* [Z-KH] (3.40.10) a compact entry: the toggle at the right of its head, the notes and the button beside its lines */
       .dci-ghead-r { margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 10); }
       /* [Z-SK] (3.40.15) "⊘ Skip" and "↺ Take again" in the head of an entry; a skipped entry grey */
+      /* [Z-RI] (3.40.16) */
+      .dci-repeat-btn span[aria-hidden] { margin-right: calc(var(--u, 1px) * 4); }
+      .dci-repeat-opts { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 18); margin: calc(var(--u, 1px) * 4) 0; }
       .dci-gskip { white-space: nowrap; padding: 0 calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #6d6a7c;
         text-decoration: none; font-size: calc(var(--u, 1px) * 12); line-height: 1.5; }
       .dci-gskip:hover, .dci-gskip:focus-visible { border-color: var(--err); color: var(--err); }

@@ -612,6 +612,9 @@ python3 t_sources.py            # Sources: the adapter, several linked releases,
                                 #   indextracks: 3.35.1: index tracks of Discogs whose parts are tracks of their own (Discogs 3139201: 13 tracks,
                                 #     not 3; the work's credit on its parts, "C1 to D, F2"), parts of one track ("C1a", "C1b") one track "C1",
                                 #     "AA"/"AB", in the dashboard a credit on "B1" on the third recording, no message about the tracks
+                                #   repeat: 3.40.16 (Z-RI): "↻ Repeat import" after "Source ▾", the question ("Keep my changes" preselected),
+                                #     Cancel; kept: the source read again (a new credit there), "fretless" and the row taken out kept, "Dates &
+                                #     tracks" open again after a fold by "Apply" (Z-PF2); afresh: the changes gone, the choice kept on a redraw
 
 python3 t_sources_bandcamp.py   # Bandcamp: as a source, the "about" text, leaving it out, liner notes, label pages, track pages, credits of the "about" text, the spelling of the source
                                 #   bandcamp: Bandcamp as a source (3.3.0, 3.3.1): physical media → Discogs first, Bandcamp chosen in the picker (album and
