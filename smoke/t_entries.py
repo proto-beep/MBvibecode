@@ -1,9 +1,9 @@
 """Smoke test: the entries as a matrix (E4, Block AE; the default from Credits Importer 3.34.29) – collected items E4, 139, 141.
 
-Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0), flagcols (3.36.6), chipask (3.37.14), chipinfo (3.38.6) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
+Cases: join (3.34.29), matrix (3.34.30), dates (3.34.31), compact (3.35.0), restage (3.35.0), order (3.35.3), evhead (3.35.4), companies (3.35.5), remember (3.36.0), flagcols (3.36.6), chipask (3.37.14), chipinfo (3.38.6), barroom (3.40.8) – `python3 t_entries.py <case> …` runs only those. The other test files keep the entries as before
 ("legacy", harness.ENTRIES_VIEW); the cases here set the matrix (the script's default)."""
 import harness as H  # noqa: F401 – used by the cases
-from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
+from caserun import launch_own, run_cases, sync_playwright  # noqa: F401 – the shared browser
 
 # Credits of one Discogs release: several instruments a person, an instrument with "solo", voices, an instrument on one track
 JOIN_CREDITS = [('Multi Man', 'Electric Guitar, Acoustic Guitar, Drums', 3071, ''), ('Solo Man', 'Electric Guitar, Saxophone [Solo]', 3072, ''),
@@ -1203,6 +1203,61 @@ def case_chipinfo():
             H.ENTRIES_VIEW = 'legacy'
             H.discogs_release = orig
             b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_barroom():
+    """Credits Importer 3.40.8 (collected item Z-SB): a scroll bar drawn over the content (overlay scroll bars of macOS and
+    Windows 11; here Chromium's FluentOverlayScrollbar) no longer covers the last line of the matrix – "written “Drums”"
+    below the role field of Multi Man.
+    A) A wide dashboard: the block fits, no room added.
+    B) A narrow one (700 px): the block scrolls sideways, its bar takes no room – 16 px below the last line, the line
+       "written “Drums”" above the bar; (review) only boxes that scroll get it; wide again: the room goes.
+    C) A classic scroll bar (it takes room of its own): no room added, the line above the bar anyway."""
+    orig, rel = join_release()
+    H.discogs_release = rel
+    results = []
+    INFO = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const s = g.querySelector('.dci-em-scroll'); const r = s.getBoundingClientRect(); const raw = [...s.querySelectorAll('.dci-em-raw')].pop();
+      return { over: s.scrollWidth > s.clientWidth + 1, own: s.offsetHeight - s.clientHeight, room: s.classList.contains('dci-barroom'), pad: getComputedStyle(s).paddingBottom,
+        raw: raw ? raw.textContent.trim() : '', free: Math.round(r.bottom - raw.getBoundingClientRect().bottom) }; }"""
+    try:
+        H.ENTRIES_VIEW = 'matrix'
+        for mode in ('overlay', 'classic'):
+            args = list(H.LAUNCH_ARGS) + (['--enable-features=FluentOverlayScrollbar'] if mode == 'overlay' else [])
+            b = launch_own(args=args, ignore_default_args=['--hide-scrollbars'])
+            try:
+                ctx = H.new_context(b)
+                pg, errs = H.open_mb_edit(ctx, companion=False)
+                pg.on('dialog', lambda d: d.accept())
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(1000)
+                wide = pg.evaluate(INFO, 'Multi Man')
+                pg.set_viewport_size({'width': 700, 'height': 1000})
+                pg.wait_for_timeout(600)
+                narrow = pg.evaluate(INFO, 'Multi Man')
+                # (3.40.8, review) only boxes that scroll sideways get the room (the rows of an entry in a .dci-rowswrap do not scroll)
+                scrolls = pg.evaluate("[...document.querySelectorAll('.dci-barroom')].map(e => getComputedStyle(e).overflowX)")
+                pg.set_viewport_size({'width': 1500, 'height': 1000})
+                pg.click('[data-act=window-reset]')
+                pg.wait_for_timeout(600)
+                again = pg.evaluate(INFO, 'Multi Man')
+                print(f'{mode}: breit:', wide, '\n   schmal:', narrow, '| mit Platz:', scrolls, '\n   wieder breit:', again, '| Fehler:', errs)
+                if mode == 'overlay':
+                    results.append(not wide['over'] and not wide['room'] and wide['pad'] == '0px')
+                    results.append(narrow['over'] and narrow['own'] == 0 and narrow['room'] and narrow['pad'] == '16px' and narrow['raw'] == 'written “Drums”' and narrow['free'] >= 16
+                                   and bool(scrolls) and all(x in ('auto', 'scroll') for x in scrolls))
+                    results.append(not again['room'] and again['pad'] == '0px')
+                else:
+                    results.append(narrow['over'] and narrow['own'] >= 10 and not narrow['room'] and narrow['pad'] == '0px' and narrow['free'] >= narrow['own'])
+                results.append(not errs)
+            finally:
+                b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
