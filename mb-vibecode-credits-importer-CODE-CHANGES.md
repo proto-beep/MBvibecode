@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.0, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.1, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,20 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.1 · 2026-11-03
+
+The question of a suite and its parts as works of their own (collected item Z-SU; Q-bt, Q-bu, Q-bv, Q-cc, Q-ci).
+
+- **State:** `S.workParts` (track → [part plan { gid "pending:<track>.<k>", title, part, k, origin, flags, suite, suiteName, before }]), `S.suiteAnswers` (key → { yes, name }).
+- **`worksForTrack`:** the parts of a track instead of its one planned work. New **`planOf(i, gid)`** (the plan of a planned work: a part or the one work) – used by `linkAttrsOf`, `setLinkAttr`, the "cover" pill, `coverCandidates`, `coverAutoNow`, `workFrontCell`; new **`planEntries()`** (every planned work) for the links staged.
+- **New `suiteAsks()`** (the suites offered for the tracks of the matrix, each with a key), **`suitePartName`**, **`setSuiteNaming`**, **`acceptSuite(o, name)`** (each track without a work in MusicBrainz: its parts – `trackPartsOf` of the source track, else the track – as new works; a work planned before kept in `before`), **`undoSuite(o)`**, **`suiteAskHtml(o)`** (the yellow question at the top of the matrix, `[data-el=suites]`; answered: a line with "↺"). Handlers `suite-yes`, `suite-yes-name`, `suite-no`, `suite-undo`, `suite-naming`.
+- **`workFrontCell`:** a part: "part k of n" (from two parts), its name; the track's head only on its first line. `matrixRows` passes `k`; `matrixTrack` counts tracks with parts.
+- **Staging:** the link of each part with `linkOrder` k (from two parts of a track); **`dispatchAddRelationship(…, linkOrder)`** (until 3.41.0 always 0); **`pendingWorkEntity(ref)`** by the work's key ("pending:4", "pending:4.2"), a part without a work type.
+- **Setting:** `SUITE_NAMING_KEY = 'dci-suite-naming'` (only "comma" stored), ⚙ Works, in `TOPIC_KEYS.works`, `SETTINGS_KEYS`, its ↺, `resetSettings`. `dropWorkChoices` ("Start afresh") clears the parts and answers too.
+- CSS `.dci-mx-suite` (yellow), `.dci-mx-part`.
+- **Texts (English):** `suite.ask`, `suite.yes`, `suite.noBtn`, `suite.other`, `suite.yesName`, `suite.hint`, `suite.from.heading/index/release`, `suite.done`, `suite.undo`, `suite.undoTitle`, `suite.no`, `suite.askAgain`, `suite.askAgainTitle`, `suite.partOf`, `suite.partTitle`, `log.suiteYes`, `log.suiteUndone`, `log.suiteNo`, `log.suiteNaming`, `settings.suiteNaming`, `settings.suiteNaming.colon/comma`, `settings.suiteNamingTitle`.
+- **Tests:** `t_works_more.py` new case `suiteask` (the question; ✓ Yes – the parts in the matrix; staged in their order without a type; ⚙ "Suite, Part" and its ↺; undo, ✕ No, another name); fails on 3.41.0.
 
 ## Import 3.41.0 · 2026-11-03
 

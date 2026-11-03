@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0); `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0), suiteask (3.41.1); `python3 t_works_more.py <case> …` runs only those."""
 import re
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -1119,6 +1119,87 @@ console.log(JSON.stringify({
         got.get('offers') == [[{'name': 'Trisect', 'from': 'heading', 'tracks': [2, 3, 4]}, {'name': 'Suite X', 'from': 'index', 'tracks': [5]}],
                               [{'name': 'Trisect', 'from': 'release', 'tracks': [0, 1, 2, 3]}], []],
     ]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_suiteask():
+    """Credits Importer 3.41.1 (collected item Z-SU; Q-bt, Q-bu, Q-bv, Q-cc, Q-ci): the question of a suite and its parts as works.
+    The release "Trisect" (Discogs 2793066 in short): 1 Introduction · 2 Phase 1 · 3 Phase 2 / Phase 3 · 4 Transition / Phase 4 / Coda;
+    track 1 has a work in MusicBrainz.
+    A) At the top of the works matrix, yellow: "all 4 tracks: parts of the suite “Trisect”?" – ✓ Yes, ✕ No, another name, "from the
+       title of the release".
+    B) ✓ Yes: track 2 one new work "Trisect: Phase 1", track 3 two ("part 1 of 2" "Trisect: Phase 2", "part 2 of 2" "Trisect: Phase 3"),
+       track 4 three; track 1 keeps its work; the line "all 4 tracks: parts of the suite “Trisect” – 6 works ↺ undo"; the log says so.
+    C) Staged: the recording of track 3 with "Trisect: Phase 2" (order 1) and "Trisect: Phase 3" (order 2), of track 4 three in their
+       order, of track 2 one (no order); the new works of the parts have no type.
+    D) ⚙ Settings → Works → "Suite, Part": "Trisect, Phase 2" … (stored); ↺ of the topic: "Suite: Part" again.
+    E) ↺ undo: the parts gone, the question back; ✕ No: "all 4 tracks: no suite “Trisect”" with "↺ ask again"; another name
+       ("Trisect Suite") with "✓ Yes, with this name": "Trisect Suite: Introduction" is not planned (track 1 has its work),
+       "Trisect Suite: Phase 1" is."""
+    H.TITLES[:] = ['Introduction', 'Phase 1', 'Phase 2 / Phase 3', 'Transition / Phase 4 / Coda']
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['title'] = 'Trisect'
+        return d
+
+    H.discogs_release = rel
+    ASK = """(() => { const b = document.querySelector('[data-el=suites]'); if (!b) return null; return [...b.children].map(x => [x.className,
+      x.querySelector('strong') ? x.querySelector('strong').textContent.trim() : x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(y => y.textContent.trim()),
+      (x.querySelector('[data-f=suite-name]') || {}).value || null, getComputedStyle(x).backgroundColor]); })()"""
+    PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => [(tr.querySelector('.dci-mx-part') || {textContent: ''}).textContent.trim(),
+      (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || {textContent: ''}).textContent.trim()])"""
+    STAGED = """(() => MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278).map(r => [r.entity0.gid ? r.entity0.gid.slice(-1) : '', r.entity1.name, r.linkOrder, r.entity1.typeID == null]))()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
+        pg.wait_for_timeout(500)
+        a0 = pg.evaluate(ASK)
+        print('A)', a0)
+        results.append(a0 is not None and len(a0) == 1 and a0[0][1] == 'all 4 tracks: parts of the suite “Trisect”?' and a0[0][2] == ['✓ Yes', '✕ No', '✓ Yes, with this name']
+                       and a0[0][3] == 'Trisect' and a0[0][4] == 'rgb(255, 248, 219)' and 'from the title of the release' in pg.evaluate("document.querySelector('[data-el=suites] .dci-mx-suite').textContent"))
+        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(500)
+        b0 = [pg.evaluate(PARTS, i) for i in range(4)] + [pg.evaluate(ASK)[0][1], [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Suite “' in x]]
+        print('B)', b0)
+        results.append(b0[1] == [['', 'Trisect: Phase 1']] and b0[2] == [['part 1 of 2', 'Trisect: Phase 2'], ['part 2 of 2', 'Trisect: Phase 3']]
+                       and b0[3] == [['part 1 of 3', 'Trisect: Transition'], ['part 2 of 3', 'Trisect: Phase 4'], ['part 3 of 3', 'Trisect: Coda']]
+                       and b0[0] and b0[0][0][0] == '' and b0[4] == 'all 4 tracks: parts of the suite “Trisect” – 6 works ↺ undo'
+                       and b0[5] == ['Suite “Trisect” (all 4 tracks): 6 parts planned as works'])
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        c0 = sorted(pg.evaluate(STAGED))
+        print('C)', c0)
+        results.append([x for x in c0 if x[1].startswith('Trisect')] == sorted([[H.REC[1][-1], 'Trisect: Phase 1', 0, True], [H.REC[2][-1], 'Trisect: Phase 2', 1, True], [H.REC[2][-1], 'Trisect: Phase 3', 2, True],
+                                                                              [H.REC[3][-1], 'Trisect: Coda', 3, True], [H.REC[3][-1], 'Trisect: Phase 4', 2, True], [H.REC[3][-1], 'Trisect: Transition', 1, True]]))
+        H.open_settings(pg, 'works')
+        pg.click('[data-el=settings] [data-act=suite-naming][data-naming=comma]'); pg.wait_for_timeout(400)
+        d0 = [pg.evaluate("localStorage.getItem('dci-suite-naming')"), pg.evaluate(PARTS, 2)]
+        pg.click('[data-el=settings] [data-act=settings-reset][data-topic=works]'); pg.wait_for_timeout(400)
+        d1 = [pg.evaluate("localStorage.getItem('dci-suite-naming')"), pg.evaluate(PARTS, 2)]
+        pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
+        print('D)', d0, d1)
+        results.append(d0 == ['"comma"', [['part 1 of 2', 'Trisect, Phase 2'], ['part 2 of 2', 'Trisect, Phase 3']]] and d1 == [None, [['part 1 of 2', 'Trisect: Phase 2'], ['part 2 of 2', 'Trisect: Phase 3']]])
+        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+        e0 = [pg.evaluate(ASK)[0][0], pg.evaluate(PARTS, 2)]
+        pg.click('[data-el=suites] [data-act=suite-no]'); pg.wait_for_timeout(400)
+        e1 = pg.evaluate(ASK)[0][1:3]
+        pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+        pg.fill('[data-el=suites] [data-f=suite-name]', 'Trisect Suite')
+        pg.click('[data-el=suites] [data-act=suite-yes-name]'); pg.wait_for_timeout(400)
+        e2 = [pg.evaluate(PARTS, 0), pg.evaluate(PARTS, 1)]
+        print('E) ↺:', e0, '| ✕:', e1, '| anderer Name:', e2)
+        results.append('dci-mx-suite' in e0[0] and len(e0[1]) == 1 and e0[1][0][0] == '' and e1 == ['all 4 tracks: no suite “Trisect” ↺ ask again', ['↺ ask again']]
+                       and e2[1] == [['', 'Trisect Suite: Phase 1']] and not any('Trisect Suite' in x[1] for x in e2[0]))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.41.0 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.41.1 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.41.1
+
+#### New
+
+- **Suites: the question and the parts as works** (collected item Z-SU): a yellow line at the top of the works matrix asks "all 4 tracks: parts of the suite “Trisect”?" – **✓ Yes**, **✕ No** or another name. Yes makes each part of these tracks ("Phase 2 / Phase 3", or the sub-tracks at Discogs) a new work of its own, "Trisect: Phase 2", linked to the recording in its order. ⚙ Settings → Works → **Parts of a suite: Suite: Part | Suite, Part**.
 
 ### Import 3.41.0
 
