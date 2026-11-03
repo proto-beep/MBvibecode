@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.6
+// @version      3.41.15
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -22,12 +22,13 @@
 // @grant        GM.getResourceUrl
 // @grant        unsafeWindow
 // @connect      bandcamp.com
+// @connect      youtube.com
 // @connect      raw.githubusercontent.com
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.6
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.6
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.15
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.15
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.15';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -119,7 +120,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "No source loaded yet",
       "source.pick": "Choose a linked source …",
-      "source.other": "Other source: Discogs release (URL or ID) or Bandcamp album or track URL",
+      "source.other": "Other source: Discogs release (URL or ID), Bandcamp album or track URL or YouTube video URL",
       "source.load": "Load",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text.",
@@ -155,7 +156,7 @@
       "log.pubOfPerson": "{name} as publisher is the person {person}: publishing is a role of that entry (MusicBrainz: artist–work “published / publisher”), no company of its own",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
-      "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album or track URL",
+      "supp.urlPh": "or another: Discogs release (URL or ID), Bandcamp album or track URL or YouTube video URL",
       "supp.urlLoad": "Supplement",
       "supp.sameAsLoaded": "That is the source loaded already.",
       "supp.textTitle": "Supplement the loaded source with a pasted text (booklet, liner notes …)",
@@ -223,6 +224,9 @@
       "bc.testRunning": "Loading the page …",
       "bc.testOk": "Read: “{title}”, {n} tracks, {lines} lines of credits, {pages} track pages (via {via}).",
       "err.bandcampData": "No album data found on {url}.",
+      "err.youtubeData": "No video description found on {url}.",
+      "conn.X017": "Reads the page of a YouTube video whose address you enter as another source (or a supplement): its description is read as a text of credits.",
+      "stats.src.youtube": "YouTube",
       "err.pageHttp": "The page answered with HTTP {status}: {url}",
       "err.pageNet": "The page could not be loaded (blocked or offline): {url}",
       "log.artistSpelling": "{name}: found via its {src} link, but MusicBrainz spells it differently ({mb}) – only a suggestion",
@@ -503,14 +507,12 @@
       "footer.jump": "Move in the dashboard",
       "footer.top": "To the top of the dashboard",
       "footer.bottom": "To the bottom of the dashboard",
-      "footer.editNote": "Write source and summary to the edit note",
       "footer.apply": "Stage in the relationship editor",
       "footer.previewShort": "Preview",
-      "footer.editNoteShort": "edit note",
       "footer.fillShort": "fill role credits",
       "footer.capShort": "≤ {n} per staging",
       "footer.options": "⚙ Options",
-      "footer.optionsTitle": "Edit note, role credits of existing relationships, rounds of staging",
+      "footer.optionsTitle": "Role credits of existing relationships, rounds of staging",
       "footer.chipRounds": "round {k} of {x}",
       "footer.chipWaiting.one": "{n} track without a work",
       "footer.chipWaiting.other": "{n} tracks without a work",
@@ -643,7 +645,7 @@
       "msg.tracksDiffer": "{src} differs from the MusicBrainz release: {what}{list}. Tracks are matched in order – check the track selection of recording and work relationships.",
       "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
-      "msg.badDiscogsId": "No Discogs release or Bandcamp album or track recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
+      "msg.badDiscogsId": "No Discogs release, Bandcamp album or track or YouTube video recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name, https://www.youtube.com/watch?v=Cx-BhTkZf8A",
       "msg.badMbid": "No MBID recognized. Paste the URL of an MB artist page or an MBID.",
       "msg.notArtist": "This MBID does not belong to an artist.",
       "msg.editorNotReady": "The relationship editor is not ready yet. Wait until the page has fully loaded and try again.",
@@ -684,6 +686,8 @@
       "log.mbLoaded.one": "MusicBrainz loaded: {n} track ({works} with a work), linked sources: {links}",
       "log.mbLoaded.other": "MusicBrainz loaded: {n} tracks ({works} with a work), linked sources: {links}",
       "log.tracksDiffer": "Tracks differ from MusicBrainz: {src} – {what}{list}",
+      "log.subTracksSplit.one": "{n} index track of {source}: its sub-tracks are tracks of their own in MusicBrainz – read as such",
+      "log.subTracksSplit.other": "{n} index tracks of {source}: their sub-tracks are tracks of their own in MusicBrainz – read as such",
       "log.linkTracksDiffer": "{link}: tracks differ from MusicBrainz – {what}",
       "log.discogsLoaded.one": "Discogs release {id} loaded: {artists} artists, {n} role",
       "log.discogsLoaded.other": "Discogs release {id} loaded: {artists} artists, {n} roles",
@@ -1136,6 +1140,18 @@
       "suite.from.heading": "from a heading of the track list",
       "suite.from.index": "from an index track",
       "suite.from.release": "from the title of the release",
+      "suite.add": "Suite …",
+      "suite.addTitle": "Tracks that are parts of a suite the source does not show (no heading, no index track): choose them and the name",
+      "suite.addAsk": "Parts of a suite:",
+      "suite.addFrom": "tracks",
+      "suite.addTo": "to",
+      "suite.addName": "name:",
+      "suite.addCancel": "Cancel",
+      "suite.addNoName": "Please type the name of the suite.",
+      "suite.addNoTracks": "No track of the works matrix between these.",
+      "suite.addTaken": "Some of these tracks are in another suite or split as a medley – undo that first.",
+      "suite.from.manual": "added by hand",
+      "log.suiteAdded": "Suite “{name}” added by hand ({tracks})",
       "suite.done": "{tracks}: parts of the suite “{name}” – {n} works",
       "suite.undo": "undo",
       "suite.undoTitle": "The parts go again (a work planned for a track before comes back), and the question is asked again",
@@ -1177,6 +1193,13 @@
       "settings.suiteNaming.colon": "Suite: Part",
       "settings.suiteNaming.comma": "Suite, Part",
       "settings.suiteNamingTitle": "How the new works of the parts of a suite are named: “Trisect: Transition” (as classical track titles are) or “Trisect, Transition”",
+      "settings.editNote": "Edit note",
+      "settings.editNote.full": "Full",
+      "settings.editNote.simple": "Simple",
+      "settings.editNote.none": "None",
+      "settings.editNote.fullTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
+      "settings.editNote.simpleTitle": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\nIn the forms of new artists, works, labels …: Source and Script",
+      "settings.editNote.noneTitle": "Nothing is written into the edit note – neither at staging nor in the forms of new artists, works, labels …",
       "matrix.attrAllTitle": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "matrix.attrShort": "abbreviate",
       "matrix.attrLong": "spell out",
@@ -1710,6 +1733,31 @@
       "stats.src.text": "pasted text",
       "stats.src.ocr": "text from cover art",
       "stats.src.other": "other",
+      "stats.more.suites": "Suites and medleys",
+      "stats.more.attrs": "Attributes",
+      "stats.more.works2": "Works",
+      "stats.more.genres": "Genres and styles",
+      "stats.more.decisions": "Decisions",
+      "stats.more.live": "Live",
+      "stats.more.gaps": "Gaps closed",
+      "stats.more.together": "Worked together",
+      "stats.suites.suites": "suites",
+      "stats.suites.created": "created in MusicBrainz",
+      "stats.suites.found": "found in MusicBrainz",
+      "stats.suites.manual": "added by hand",
+      "stats.suites.parts": "their parts",
+      "stats.suites.medleys": "medleys split",
+      "stats.suites.partsRels": "“parts” relationships",
+      "stats.works2.linked": "linked with recordings",
+      "stats.works2.created": "of them created in MusicBrainz’s form",
+      "stats.works2.pending": "new works in the relationship editor",
+      "stats.decisionsN": "{n} answers to the questions of the script",
+      "stats.live.links": "recordings linked live with their works",
+      "stats.live.comments": "live comments set",
+      "stats.gaps.credits": "role credits added",
+      "stats.gaps.dates": "dates added",
+      "stats.gaps.attrs": "attributes added to links of recordings and works",
+      "stats.since": "Counted from {v} on – the imports before do not hold it.",
       "stats.found.link": "through the link of the source",
       "stats.found.search": "by their name",
       "stats.found.hand": "chosen by hand",
@@ -2559,6 +2607,7 @@
       "typeAsk.pendingVoice": "Until you choose, the row stays vocals without role credit.",
       "typeAsk.askPoems": "“{role}” alone: the words of the works, poems printed in the booklet or poems read out? – please choose:",
       "typeAsk.askPoemsRelease": "“{role}” on the release: the words, poems read out or poems printed in the booklet? – please choose:",
+      "typeAsk.askHost": "“{role}”: spoken vocals credited “host” (the host speaks on the recording), miscellaneous support “host”, or no relationship? – please choose:",
       "typeAsk.suggested": "suggested",
       "typeAsk.suggestedTitle": "What it mostly means – a suggestion: the row is added only once you choose",
       "typeAsk.chosen": "“{role}” – chosen (click another to change):",
@@ -3446,6 +3495,8 @@
       return out(['arranger'], { flags: arrFlags });
     } },
       R097: { run: () => out([], { notes: ['askType'] }) },
+      // [Q-cn] (3.41.8) "Host": spoken vocals credited "host", miscellaneous support "host" or skipped – asked (Q012)
+      R108: { run: () => out([], { notes: ['askType'] }) },
       R102: { run: () => ({ ...out([], { notes: ['askType'] }), translated: 'alto' }) },
       R100: { run: () => out([], { notes: ['askType'] }) },
       // [3.31.4] the word of the poet in lower case is the role credit ("Poems By" → "poems")
@@ -4842,6 +4893,21 @@
   const normPos = (p) => String(p || '').toUpperCase().replace(/\s+/g, '');
 
   /** Positions of the source's tracks (and their aliases) → index into its track list. */
+  /**
+   * [Z-SUB] (3.41.15, review) The positions that stand for several tracks: an index of Discogs read as its sub-tracks ("3" for 3a, 3b,
+   * 3c) – its position and their base on each of them (`group`); position → the indexes, in order.
+   */
+  function positionGroups(tracks) {
+    const map = new Map();
+    (tracks || []).forEach((t, i) => (t.group || []).forEach((p) => {
+      const key = normPos(p);
+      if (!key) return;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(i);
+    }));
+    return map;
+  }
+
   function positionIndex(tracks) {
     const map = new Map();
     tracks.forEach((t, i) => {
@@ -4874,22 +4940,27 @@
     }
 
     /** "A1 to A3, B2" → indexes into the track list. */
-    function parseTrackSpec(spec, posMap) {
+    function parseTrackSpec(spec, posMap, groups = null) {
       const indexes = new Set();
       const unresolved = [];
+      // [Z-SUB] (3.41.15, review) a position of a split index stands for all its tracks ("3", "1 to 3")
+      const group = (p) => (groups && groups.get(normPos(p))) || null;
       for (const part of String(spec || '').split(',').map((s) => s.trim()).filter(Boolean)) {
         const range = part.split(/\s+to\s+/i);
         if (range.length === 2) {
-          const a = posMap.get(normPos(range[0]));
-          const b = posMap.get(normPos(range[1]));
+          const ga = group(range[0]);
+          const gb = group(range[1]);
+          const a = ga ? ga[0] : posMap.get(normPos(range[0]));
+          const b = gb ? gb[gb.length - 1] : posMap.get(normPos(range[1]));
           if (a !== undefined && b !== undefined) {
             for (let i = Math.min(a, b); i <= Math.max(a, b); i++) indexes.add(i);
             continue;
           }
         } else {
+          const g = group(part);
           const a = posMap.get(normPos(part));
-          if (a !== undefined) {
-            indexes.add(a);
+          if (g || a !== undefined) {
+            (g || [a]).forEach((i) => indexes.add(i));
             continue;
           }
         }
@@ -4910,8 +4981,52 @@
      */
     const partOf = (p) => String(p || '').trim().replace(/^(.*\d)[.-]?[a-z]$/i, '$1');
 
-    /** The JSON of a Discogs release → the neutral release. */
-    function toRelease(d, releaseId) {
+    /**
+     * [Z-SUB] (3.41.12; Q-cm "as general as can be") The index tracks whose sub-tracks are tracks of their own in MusicBrainz – its
+     * track list (mb: [{ title }]) read alongside Discogs's: an index whose sub-tracks' titles are the next tracks of MusicBrainz (the
+     * first and most of them) is split; without titles that fit, all of them when that gives MusicBrainz's number of tracks. A Set of
+     * indexes in d.tracklist ({} when nothing fits).
+     */
+    function subTrackSplit(d, mb) {
+      const list = d.tracklist || [];
+      const cands = [];
+      list.forEach((t, n) => {
+        if (t.type_ !== 'index' || (t.sub_tracks || []).length < 2) return;
+        const bases = uniq((t.sub_tracks || []).map((x) => normPos(partOf(x.position))).filter(Boolean));
+        // (an index without a position whose sub-tracks are on tracks of their own is split already, 145)
+        if (bases.length > 1 && !String(t.position || '').trim()) return;
+        cands.push(n);
+      });
+      if (!cands.length) return new Set();
+      const out = new Set();
+      let k = 0;
+      list.forEach((t, n) => {
+        if (t.type_ === 'heading') return;
+        if (cands.includes(n)) {
+          const subs = t.sub_tracks;
+          const fit = subs.filter((x, j) => mb[k + j] && titlesFit(x.title, mb[k + j].title)).length;
+          if (mb[k] && titlesFit(subs[0].title, mb[k].title) && fit * 2 > subs.length) {
+            out.add(n);
+            k += subs.length;
+            return;
+          }
+        }
+        const subs = t.type_ === 'index' ? (t.sub_tracks || []) : [];
+        const bases = uniq(subs.map((x) => normPos(partOf(x.position))).filter(Boolean));
+        k += bases.length > 1 && !String(t.position || '').trim() ? bases.length : 1;
+      });
+      if (out.size) return out;
+      // without titles that fit: all of them, when that is MusicBrainz's number of tracks
+      const one = toRelease(d, d.id).tracks.length;
+      const more = cands.reduce((x, n) => x + list[n].sub_tracks.length - 1, 0);
+      return one + more === mb.length ? new Set(cands) : new Set();
+    }
+
+    /**
+     * The JSON of a Discogs release → the neutral release. [Z-SUB] (3.41.12) `split`: the indexes (in d.tracklist) of index tracks
+     * whose sub-tracks are tracks of their own in MusicBrainz (subTrackSplit).
+     */
+    function toRelease(d, releaseId, { split = null } = {}) {
       // Tracks without headings; an index track counts as one track, its sub-tracks become aliases
       const tracks = [];
       const onTracks = [];
@@ -4942,6 +5057,19 @@
           }
           continue;
         }
+        // [Z-SUB] (3.41.12) an index whose sub-tracks are tracks of their own in MusicBrainz ("C1a", "C1b", "C1c" three recordings):
+        // each sub-track a track – the index's credits on all of them, its title as their work (a suite can be one)
+        if (split && split.has(d.tracklist.indexOf(t))) {
+          // (3.41.15, review) the index's position and the base of its sub-tracks stand for all of them (positionGroups)
+          const group = uniq([String(t.position || '').trim(), ...subs.map((x) => partOf(x.position))].filter(Boolean))
+            .filter((p) => !subs.some((x) => normPos(x.position) === normPos(p)));
+          subs.forEach((x, k) => {
+            const aliases = k === 0 && String(t.position || '').trim() ? [String(t.position).trim()] : [];
+            tracks.push({ position: String(x.position || '').trim() || (k === 0 ? String(t.position || '').trim() : ''), title: String(x.title || '').trim(), aliases, work: t.title || '', group });
+            onTracks.push([...(t.extraartists || []), ...(x.extraartists || [])]);
+          });
+          continue;
+        }
         // [145] (3.35.1) an index of the parts of one track without a position of its own: that track's ("C1" for C1a, C1b)
         const entry = { position: t.position || (bases.length === 1 ? bases[0] : ''), title: t.title || '', aliases: [] };
         const people = [...(t.extraartists || [])];
@@ -4958,6 +5086,7 @@
         onTracks.push(people);
       }
       const posMap = positionIndex(tracks);
+      const groups = positionGroups(tracks); // [Z-SUB] (3.41.15, review)
       const credits = [];
       const add = (ea, where) => {
         const who = whoOfArtist(ea);
@@ -4971,7 +5100,7 @@
       for (const ea of d.extraartists || []) {
         const spec = String(ea.tracks || '').trim();
         if (spec) {
-          const { indexes, unresolved } = parseTrackSpec(spec, posMap);
+          const { indexes, unresolved } = parseTrackSpec(spec, posMap, groups);
           add(ea, { indexes: [...indexes], spec, unresolved });
         } else {
           add(ea, { all: true });
@@ -4995,8 +5124,9 @@
         country: d.country || '',
         notes: String(d.notes || ''),
         tags: (d.formats || []).flatMap((f) => [f.name, ...(f.descriptions || []), f.text || '']).map(norm).filter(Boolean),
-        // [Z-CV] (3.40.17) Discogs's genres ("Classical": no "cover" set by itself)
+        // [Z-CV] (3.40.17) Discogs's genres ("Classical": no "cover" set by itself); [Z-STG] (3.41.14) its styles too (the statistics)
         genres: (d.genres || []).map(norm).filter(Boolean),
+        styles: (d.styles || []).map((x) => String(x || '').trim()).filter(Boolean),
         tracks,
         headings,
         credits,
@@ -5048,10 +5178,19 @@
         const m = String(text || '').match(/(?:release\/|^r?)(\d+)/i);
         return m ? m[1] : '';
       },
-      async release(id) {
-        return toRelease(await getJson(`releases/${id}`, { missingId: id }), id);
+      async release(id, ctx) {
+        const d = await getJson(`releases/${id}`, { missingId: id });
+        const r = toRelease(d, id);
+        // [Z-SUB] (3.41.12) MusicBrainz has more tracks: the sub-tracks of an index may be tracks of their own there
+        const mb = (ctx && ctx.tracks) || [];
+        if (!mb.length || r.tracks.length >= mb.length) return r;
+        const split = subTrackSplit(d, mb);
+        if (!split.size) return r;
+        const r2 = toRelease(d, id, { split });
+        return r2.tracks.length === mb.length ? { ...r2, subTracksSplit: split.size } : r;
       },
       toRelease,
+      subTrackSplit,
       /**
        * A person or group for MusicBrainz's "Add artist" form: name, type, its own URLs, and the members (of a
        * group) or groups (of a person) as "related" ({ id, name, links, isGroup: the new artist is the group }).
@@ -5508,9 +5647,23 @@
         const withM = l.split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map((x) => (isRole(byRole(x)) ? byRole(x) : withMedium(x)));
         return withM.length && withM.every(Boolean) ? withM : [];
       };
+      /**
+       * [Z-AM] (3.41.7) The last word the roles of a list share ("Audio & Mixing Engineer" → Audio Engineer, Mixing Engineer;
+       * "Mixed & Mastered By" → Mixed By, Mastered By): given to each part before it that is no role by itself.
+       */
+      const shareTail = (parts) => {
+        const out = [...parts];
+        for (let i = out.length - 1; i > 0; i--) {
+          const w = out[i].split(' ');
+          if (w.length < 2 || !isRole(out[i])) continue;
+          const tail = w[w.length - 1];
+          for (let j = i - 1; j >= 0 && !isRole(out[j]) && isRole(`${out[j]} ${tail}`); j--) out[j] = `${out[j]} ${tail}`;
+        }
+        return out;
+      };
       const listRoles = (side) => {
         if (distribution(side)) return distribution(side);
-        const parts = splitRoles(side);
+        const parts = shareTail(splitRoles(side));
         if (parts.length && parts.every(isRole)) return parts;
         // [3.21.4] "Vinyl master: X"
         const withM = parts.map((x) => (isRole(x) ? x : withMedium(x)));
@@ -6776,7 +6929,87 @@
   })();
 
   /** The sources the dashboard can read; those with links on a MusicBrainz release are ordered by preference. */
-  const SOURCES = { discogs: DISCOGS, bandcamp: BANDCAMP, text: TEXT };
+  // --- Source adapter: YouTube --------------------------------------------------------------------------------------
+  // [Z-YT] (3.41.13) The description of a YouTube video, by its address in "another source" (or "+ Supplement"): read as a text
+  // (E1) – the tracks are MusicBrainz's own. Its data: the JSON "ytInitialPlayerResponse" of the video page (videoDetails: title,
+  // channel, description).
+
+  const YOUTUBE = (() => {
+    const ID_RE = /^https?:\/\/(?:(?:www\.|m\.|music\.)?youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])/i;
+    /** "https://www.youtube.com/watch?v=Cx-BhTkZf8A", "https://youtu.be/Cx-BhTkZf8A?t=3", ".../shorts/…" → "Cx-BhTkZf8A" ('' if none). */
+    const videoId = (text) => {
+      const m = ID_RE.exec(String(text || '').trim());
+      return m ? m[1] : '';
+    };
+    const videoUrl = (id) => `https://www.youtube.com/watch?v=${id}`;
+    /** The JSON object after `name` in a page (its braces counted outside strings); null without. */
+    function jsonAfter(html, name) {
+      // (3.41.15, review) at its assignment ("ytInitialPlayerResponse = {"), not at the first mention of the name
+      const m = new RegExp(`${name}\\s*=\\s*\\{`).exec(html);
+      const start = m ? m.index + m[0].length - 1 : -1;
+      if (start < 0) return null;
+      let depth = 0;
+      let inStr = false;
+      let bs = false;
+      for (let i = start; i < html.length; i++) {
+        const c = html[i];
+        if (inStr) {
+          if (bs) bs = false;
+          else if (c === '\\') bs = true;
+          else if (c === '"') inStr = false;
+        } else if (c === '"') inStr = true;
+        else if (c === '{') depth += 1;
+        else if (c === '}' && --depth === 0) {
+          try {
+            return JSON.parse(html.slice(start, i + 1));
+          } catch {
+            return null;
+          }
+        }
+      }
+      return null;
+    }
+    /** The video of a page: { id, title, channel, description } (null without its data). */
+    function pageData(html) {
+      const p = jsonAfter(String(html || ''), 'ytInitialPlayerResponse');
+      const v = p && p.videoDetails;
+      if (!v) return null;
+      return { id: v.videoId || '', title: String(v.title || ''), channel: String(v.author || ''), description: String(v.shortDescription || '') };
+    }
+    /** The neutral release: the description read as a text, with the video as its source. */
+    function toRelease(data, id, ctx) {
+      const url = videoUrl(id);
+      const rel = TEXT.toRelease({ text: data.description, origin: url }, ctx);
+      return { ...rel, source: 'youtube', id, url, title: data.title || url, noteSource: url, channel: data.channel };
+    }
+    return {
+      id: 'youtube',
+      name: 'YouTube',
+      short: 'YT',
+      noteName: 'a YouTube video description',
+      creditsName: 'YouTube description',
+      companion: false,
+      readsTrackLists: true,
+      nameSearch: true,
+      /** The tracks are MusicBrainz's own (a video has no track list). */
+      usesMbTracks: true,
+      urlKey: () => '',
+      releaseLinks: () => [],
+      parseReleaseId: videoId,
+      videoId,
+      videoUrl,
+      pageData,
+      toRelease,
+      async release(id, ctx) {
+        const html = await ctx.httpGet(videoUrl(id));
+        const data = pageData(html);
+        if (!data || !data.description.trim()) throw new Error(tr('err.youtubeData', { url: videoUrl(id) }));
+        return toRelease(data, id, ctx);
+      },
+    };
+  })();
+
+  const SOURCES = { discogs: DISCOGS, bandcamp: BANDCAMP, text: TEXT, youtube: YOUTUBE };
   const LINKED_SOURCES = ['discogs', 'bandcamp'];
 
   // --- From the neutral release to the dashboard's entries (core) ---------------------------------------
@@ -7207,6 +7440,8 @@
     // [3.34.6] booklets as PDF
     { id: 'X016', kind: 'library', name: 'pdf.js', home: 'https://github.com/mozilla/pdf.js', hosts: ['cdn.jsdelivr.net'],
       perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF in the beta)', since: '3.34.6' },
+    // [Z-YT] (3.41.13) the description of a video
+    { id: 'X017', kind: 'source', name: 'YouTube', home: 'https://www.youtube.com/', hosts: ['youtube.com', 'youtu.be'], perms: '@connect youtube.com · GM_xmlhttpRequest', since: '3.41.13' },
   ];
 
   /**
@@ -7622,11 +7857,12 @@
   const gapExactKey = (mbid, kind) => `${GAP_EXACT_PREFIX}${String(mbid).toLowerCase()}${kind && kind !== 'discogs' ? `:${kind}` : ''}`;
 
   /** Discogs allows about 25 requests a minute without a login: at least 2.5 s between those of the line (in every tab). */
-  async function gapDiscogs(dId) {
+  async function gapDiscogs(dId, ws) {
     const wait = 2500 - (Date.now() - (Number(readJson('localStorage', 'dci-gap-last', 0)) || 0));
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));
     writeJson('localStorage', 'dci-gap-last', Date.now());
-    return DISCOGS.release(dId);
+    // [Z-SUB] (3.41.15, review) with MusicBrainz's tracks: an index whose sub-tracks are tracks there is read as them
+    return DISCOGS.release(dId, { tracks: ((ws && ws.media) || []).flatMap((m) => (m.tracks || []).map((t) => ({ title: t.title || '' }))) });
   }
 
   /**
@@ -7714,7 +7950,7 @@
     if (prev && prev.credits && !prev.failAt && Date.now() - (prev.at || 0) <= GAP_KEEP_MS) return { kept: prev };
     let rel;
     try {
-      rel = src.kind === 'discogs' ? await gapDiscogs(src.id) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
+      rel = src.kind === 'discogs' ? await gapDiscogs(src.id, ws) : await BANDCAMP.release(src.url, gapBandcampCtx(ws));
     } catch (e) {
       // an answer that says no (429, 404, 5xx) is kept; a request broken off is not
       if (!e || e.name === 'TypeError' || e.name === 'AbortError') return null;
@@ -9092,6 +9328,9 @@
     suiteAnswers: new Map(),
     // [Z-SU] (3.41.2) the works of the suites accepted (key of the suite → { gid "pending:s<n>", title, key })
     suiteWorks: new Map(),
+    // [Z-SUM] (3.41.11) the suites added by hand ("＋ Suite …"): key → { key, name, from: 'manual', tracks }; the box open
+    suiteManual: new Map(),
+    suiteAdd: null,
     suiteSeq: 0,
     // [3.39.9] "member of band" of the artists looked up for "co?" (mbid → Set of artists, or 'wait')
     bandOf: new Map(),
@@ -9138,7 +9377,6 @@
     noteDiscogsId: '',
     lastNoteBlock: '',
     panicMode: false,
-    editNote: true,
     previewOpen: false,
     lastFocus: null,
   };
@@ -9605,7 +9843,11 @@
     // [Q003] A type chosen in the question stays
     const tq = typeQuestionFor(row);
     const o = tq && row.typeAnswer != null ? tq.options[row.typeAnswer] : null;
-    if (o) {
+    if (o && o.level === 'skip') {
+      // [Q-cn] (3.41.15, review) an answer that skips the row: it stays on "Skip", without a type
+      Object.assign(row, { types: [], creditFromRole: '' });
+      resolveRowType(row);
+    } else if (o) {
       Object.assign(row, { types: [o.type], creditFromRole: optionCredit(o, row) });
       resolveRowType(row);
       // [Q006] with its instrument or voice
@@ -15124,6 +15366,8 @@
     const supp = suppNoteLines();
     supp.filter((l) => l.startsWith('Also from: ')).forEach((l) => lines.push(l));
     lines.push(`Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})`);
+    // [Z-EN] (3.41.9) "simple": only the sources and the script
+    if (S.editNoteMode === 'simple') return lines.join('\n');
     const done = [];
     const credits = st.recording + st.release + st.release_group + st.work;
     if (credits) {
@@ -15135,6 +15379,7 @@
       done.push(`linked ${st.workLinks} work${st.workLinks === 1 ? '' : 's'} to recordings${st.newWorkLinks ? ` (${st.newWorkLinks} newly created)` : ''}`);
       if (st.pendingWorks) done.push(`created ${st.pendingWorks} new work${st.pendingWorks === 1 ? '' : 's'} in the relationship editor, together with their relationships`);
     }
+    if (st.suiteParts) done.push(`linked ${st.suiteParts} part${st.suiteParts === 1 ? '' : 's'} with ${st.suiteParts === 1 ? 'its suite' : 'their suites'}`);
     if (st.filled) done.push(`added role credits to ${st.filled} existing relationship${st.filled === 1 ? '' : 's'}`);
     if (st.datesFilled) done.push(`added dates to ${st.datesFilled} existing relationship${st.datesFilled === 1 ? '' : 's'} without a date`);
     if (st.linkAttrs) done.push(`added attributes (live, cover …) to ${st.linkAttrs} existing link${st.linkAttrs === 1 ? '' : 's'} between recording and work`);
@@ -15164,6 +15409,17 @@
       el.dispatchEvent(new Event('input', { bubbles: true }));
     }
     return true;
+  }
+
+  /** [Z-EN] (3.41.9) "None": the block this script wrote into the edit note before is taken out again (the rest stays). */
+  function clearEditNote() {
+    const el = document.getElementById('edit-note-text') || document.querySelector('textarea[name$="edit_note"]');
+    if (!el || !S.lastNoteBlock || !el.value.includes(S.lastNoteBlock)) return;
+    const next = el.value.replace(S.lastNoteBlock, '').replace(/\n{3,}/g, '\n\n').trim();
+    S.lastNoteBlock = '';
+    const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value').set; // (as writeEditNote: React sees the change)
+    setter.call(el, next);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   // --- Works created in this browser but not yet linked in MB ------------------------------
@@ -17423,6 +17679,8 @@
       await bandPageInfo(rel);
       refreshRulesWindow();
       S.srcTracks = rel.tracks;
+      // [Z-SUB] (3.41.12) index tracks whose sub-tracks are tracks of their own in MusicBrainz
+      if (rel.subTracksSplit) log('info', 'subTracksSplit', { n: rel.subTracksSplit, source: source.name });
       // [146] (3.36.0) what is remembered of the import before is stored first; this one is remembered once it is complete
       // (an import started while another one still runs: only the last one counts)
       saveRememberNow();
@@ -18378,7 +18636,7 @@
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.linkAttrStaged.set(it.attrFill, it.attrSig);
-          statFill(newState, null, sourceEntity); // [E8] (3.38.0)
+          statFill(newState, null, sourceEntity, 'attrs'); // [E8] (3.38.0)
           S.noteStats.linkAttrs = (S.noteStats.linkAttrs || 0) + 1;
           linkAttrN++;
           log('ok', 'linkAttrsAdded', { text, list: it.attrs.map((a) => a.type.name).join(', ') });
@@ -18411,7 +18669,7 @@
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.filledDates.add(it.fillDate);
-          statFill(newState, it.row || null, sourceEntity); // [E8] (3.38.0)
+          statFill(newState, it.row || null, sourceEntity, 'dates'); // [E8] (3.38.0)
           dateFillIds.push(newState.id);
           stagedDates.push({ id: newState.id, date: it.date, text });
           const fd = S.dateFills.get(it.fillDate);
@@ -18459,7 +18717,7 @@
             creditsToChangeForSource: '', creditsToChangeForTarget: '', oldRelationshipState: current, newRelationshipState: newState,
           });
           S.filled.add(it.key);
-          statFill(newState, it.row || null, sourceEntity); // [E8] (3.38.0)
+          statFill(newState, it.row || null, sourceEntity, 'credits'); // [E8] (3.38.0)
           fillIds.push(newState.id);
           log('ok', 'creditFilled', { text });
         } catch (e) {
@@ -18540,7 +18798,8 @@
             S.staged.set(it.key, { state: st, source: partEntity, sig: itemSig(it), text, rowId: null, track: it.target.track ? it.target.track.idx : null, workLink: true });
             S.appliedKeys.add(it.key);
           }
-          S.noteStats.workLinks++;
+          // (3.41.15, review) a part with its suite is no link of a work with a recording (the edit note, the statistics)
+          S.noteStats.suiteParts = (S.noteStats.suiteParts || 0) + 1;
           added++;
           log('ok', 'staged', { text });
         } catch (e) {
@@ -18699,10 +18958,10 @@
     if (linkAttrN) showMessage('ok', 'msg.linkAttrsAdded', { n: linkAttrN });
     // The edit note after the checks above, so it counts the credits and dates added to existing relationships too
     let noteOk = true;
-    if ((added || fillIds.length || dateFillIds.length || linkAttrN) && S.editNote) {
+    if ((added || fillIds.length || dateFillIds.length || linkAttrN) && S.editNoteMode !== 'none') {
       noteOk = writeEditNote();
       if (noteOk) log('info', 'noteWritten');
-    }
+    } else if (S.editNoteMode === 'none') clearEditNote(); // [Z-EN] (3.41.9) the block written before goes
     // [3.32.10] the ticked comments of live recordings, entered after "Enter edit" (item 113)
     saveLiveJob();
     log('ok', 'stageSummary', { added, updated, removed, changed: changedInMb.length, remove: toRemove.length });
@@ -18880,6 +19139,7 @@
     S.workParts.clear(); // [Z-SU] (3.41.1)
     S.suiteAnswers.clear();
     S.suiteWorks.clear();
+    S.suiteManual.clear(); // [Z-SUM] (3.41.11)
   }
 
   /** [3.26.0] The bar "Supplement with" shows on "+ Supplement", and while a supplement is loaded. */
@@ -20884,7 +21144,7 @@
     if (!target) return '';
     if (target.kind === 'credit') return tr('dest.credit', { name: target.attr.name });
     if (target.kind === 'text') return tr('dest.text', { name: target.attr.name });
-    return tr(S.editNote ? 'dest.note' : 'dest.none');
+    return tr(S.editNoteMode === 'full' ? 'dest.note' : 'dest.none');
   }
 
   function updateHint(row) {
@@ -21253,6 +21513,7 @@
     let named = false;
     const disc = (String(text).match(/\b(?:cd|disc|disk|lp|platte)\s*(\d+)/i) || [])[1];
     const posMap = positionIndex(srcTracks || []);
+    const groups = positionGroups(srcTracks || []); // [Z-SUB] (3.41.15, review) "track 3" of a split index: all its tracks
     const firstMedium = S.mbTracks.length ? S.mbTracks[0].medium : null;
     const resolve = (tok) => {
       const t = plainNo(tok);
@@ -21266,7 +21527,12 @@
       return hit ? hit.idx : undefined;
     };
     const addRange = (ends) => {
-      const idx = ends.map(resolve);
+      const gs = disc ? [] : ends.map((e) => groups.get(normPos(plainNo(e))) || null);
+      if (ends.length === 1 && gs[0]) {
+        gs[0].filter((i) => i < S.mbTracks.length).forEach((i) => out.add(i));
+        return;
+      }
+      const idx = ends.map((e, k) => (gs[k] ? gs[k][k === 0 ? 0 : gs[k].length - 1] : resolve(e)));
       if (idx.some((x) => x === undefined)) return;
       if (idx.length === 2) for (let i = Math.min(...idx); i <= Math.max(...idx); i++) out.add(i);
       else out.add(idx[0]);
@@ -23243,6 +23509,18 @@
     const o = q && q.options[i];
     if (!o) return;
     row.typeAnswer = i;
+    // [Q-cn] (3.41.8) an answer that skips the role ("Host": skip the role, Q012): the row on "Skip", its type kept
+    if (o.level === 'skip') {
+      // (3.41.15, review) no type either (an answer before is gone): taken again, the row is asked again
+      Object.assign(row, { level: 'skip', levelTouched: true, types: [], creditFromRole: '' });
+      if (row.primaryTouched) Object.assign(row, { primaryText: '', primaryTouched: false });
+      resolveRowType(row);
+      delete row.scopeLevel;
+      log('info', 'typePicked', { role: row.raw || row.base, type: o.label || tr('level.skip') });
+      rerenderRow(row);
+      refresh();
+      return;
+    }
     row.types = [o.type];
     row.creditFromRole = optionCredit(o, row);
     // [3.32.7] poems on the release: the answer is kept for the next time the row comes to the release (item 104b)
@@ -24032,6 +24310,15 @@
   /** The page of an entry at the source ('' if none). */
   const srcUrlOf = (a) => (a && a.dId && (a.links || [])[0]) || '';
   const prefilledBy = (from) => `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${from ? ` from ${S.source.noteName}` : ''}.`;
+  /**
+   * [Z-EN] (3.41.9) The edit note of a form the script fills in, by ⚙ Settings → Staging → Edit note: "full" its sources and the line
+   * of the script as before, "simple" the sources and the script with its version, "none" nothing.
+   */
+  function formEditNote(sources, prefilled) {
+    if (S.editNoteMode === 'none') return '';
+    const src = uniq((sources || []).filter(Boolean)).map((u) => `Source: ${u}`);
+    return [...src, S.editNoteMode === 'simple' ? `Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})` : prefilled].join('\n');
+  }
 
   async function startArtistCreate(artist) {
     const x = idx();
@@ -24077,7 +24364,7 @@
       typeId: type === 'group' ? 2 : type === 'person' ? 1 : null,
       sourceLinkTypeId: sourceUrlLtId('artist'),
       rels,
-      editNote: srcUrlOf(artist) ? `Source: ${srcUrlOf(artist)}\n${prefilledBy(true)}` : '',
+      editNote: srcUrlOf(artist) ? formEditNote([srcUrlOf(artist)], prefilledBy(true)) : '',
     });
     const urlCount = params.filter(([k]) => /^edit-artist\.url\.\d+\.text$/.test(k)).length;
     const displayName = (person && person.name) || artist.name;
@@ -24134,10 +24421,8 @@
       if (lt) params.push([`edit-${path}.url.0.link_type_id`, String(lt)]);
     }
     if (owner.srcSeries) params.push(...seriesLabelParams(owner));
-    params.push([`edit-${path}.edit_note`, [
-      owner.srcSeries && srcUrlOf(owner) ? `Source: ${srcUrlOf(owner)}` : '',
-      prefilledBy(!!owner.dId),
-    ].filter(Boolean).join('\n')]);
+    const otherNote = formEditNote([owner.srcSeries && srcUrlOf(owner)], prefilledBy(!!owner.dId));
+    if (otherNote) params.push([`edit-${path}.edit_note`, otherNote]);
     const type = tr(`entity.${et}`);
     log('info', 'otherForm', { name: owner.name, type });
     openCreateDialog({
@@ -24180,10 +24465,8 @@
     // [3.21.3] a name from a text: the web profiles found next to it (T032, 37c)
     const web = company.dId ? [] : (company.links || []).filter((u) => /^https?:\/\//i.test(u));
     web.forEach((u, i) => params.push([`edit-${entityType}.url.${i + (srcUrlOf(company) && !person ? 1 : 0)}.text`, u]));
-    params.push([`edit-${entityType}.edit_note`, [
-      srcUrlOf(company) ? `Source: ${srcUrlOf(company)}` : '',
-      prefilledBy(true),
-    ].filter(Boolean).join('\n')]);
+    const companyNote = formEditNote([srcUrlOf(company)], prefilledBy(true));
+    if (companyNote) params.push([`edit-${entityType}.edit_note`, companyNote]);
     // [3.21.3] without a link of the source (a text): the name and the web links found next to it
     const what = srcUrlOf(company) && !person ? tr('companyDlg.prefilled')
       : tr('artistDlg.prefilled', { list: [tr('part.name'), ...(web.length ? [tr('part.webUrls', { n: web.length })] : [])].join(', ') });
@@ -24247,10 +24530,7 @@
       typeId: opts.typeId,
       languageIds: opts.languageIds,
       writers,
-      editNote: [
-        sourceUrl ? `Source: ${sourceUrl}` : '',
-        `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${writers.length ? `; writers from ${S.source.creditsName} credits` : ''}.`,
-      ].filter(Boolean).join('\n'),
+      editNote: formEditNote([sourceUrl], `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${writers.length ? `; writers from ${S.source.creditsName} credits` : ''}.`),
     });
     const prefilled = [tr('part.title', { title: track.title })];
     if (typeName) prefilled.push(tr('part.workType', { name: typeName }));
@@ -25019,7 +25299,7 @@
       if (had) writeJson('localStorage', key, null);
       return;
     }
-    const note = [S.editNote ? editNoteBlock() : '', SEED_NOTE].filter(Boolean).join('\n\n');
+    const note = [S.editNoteMode !== 'none' ? editNoteBlock() : '', SEED_NOTE].filter(Boolean).join('\n\n');
     writeJson('localStorage', key, { release: releaseMbid, at: Date.now(), note, items });
     if (!quiet) log('info', 'liveSaved', { n: items.length });
   }
@@ -26906,6 +27186,8 @@
     const out = suiteOffers(S.release).map((o) => ({ ...o, key: `${o.from}|${o.name}|${o.tracks.join(',')}` }))
       .map((o) => ({ ...o, tracks: o.tracks.filter((i) => S.mbTracks[i] && matrixTrack(S.mbTracks[i])) }))
       .filter((o) => S.suiteAnswers.has(o.key) || (o.tracks.length && o.tracks.some((i) => !S.mbTracks[i].works.length)));
+    // [Z-SUM] (3.41.11) the suites added by hand
+    for (const o of S.suiteManual.values()) if (!out.some((x) => x.key === o.key)) out.push({ ...o, tracks: [...o.tracks] });
     for (const sw of S.suiteWorks.values()) {
       if (!out.some((o) => o.key === sw.key)) out.push({ key: sw.key, name: sw.title, from: 'release', tracks: [...(sw.tracks || [])] });
     }
@@ -26953,6 +27235,9 @@
     for (const i of o.tracks) {
       const t = S.mbTracks[i];
       if (!t || t.works.length) continue;
+      // (3.41.15, review) a track in another suite, or split as a medley, keeps its parts
+      const had = S.workParts.get(i);
+      if (had && had.length && had[0].suite !== o.key) continue;
       const src = (S.srcTracks || [])[i] || null;
       const parts = trackPartsOf(src && src.title ? src : { title: t.title });
       const titles = parts.length ? parts : [workTitleOf((src && src.title) || t.title)];
@@ -27025,10 +27310,7 @@
       typeId: suiteType ? suiteType.id : 6, // (6: "Suite" in MusicBrainz)
       languageIds: [],
       writers,
-      editNote: [
-        sourceUrl ? `Source: ${sourceUrl}` : '',
-        `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL}); a suite of ${sw.tracks.length} tracks${writers.length ? `, writers from ${S.source.creditsName} credits` : ''}.`,
-      ].filter(Boolean).join('\n'),
+      editNote: formEditNote([sourceUrl], `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL}); a suite of ${sw.tracks.length} tracks${writers.length ? `, writers from ${S.source.creditsName} credits` : ''}.`),
     });
     const tracks = tracksShort({ level: 'recording', tracks: new Set(sw.tracks) });
     const prefilled = [tr('part.title', { title: sw.title }), tr('part.workType', { name: suiteType ? suiteType.name : 'Suite' })];
@@ -27073,6 +27355,7 @@
     }
     S.suiteAnswers.delete(o.key);
     S.suiteWorks.delete(o.key);
+    S.suiteManual.delete(o.key); // [Z-SUM] (3.41.11) a suite added by hand goes (nothing to ask again)
     log('info', 'suiteUndone', { name: o.name });
   }
 
@@ -27173,6 +27456,50 @@
       <label class="dci-suite-other">${esc(tr('suite.other'))} <input type="text" data-f="suite-name" value="${esc(o.name)}" size="24"></label>
       <button type="button" class="dci-small" data-act="suite-yes-name">${esc(tr('suite.yesName'))}</button>
       <span class="dci-sub">${esc(from)}</span><p class="dci-sub dci-suite-hint">${esc(tr('suite.hint'))}</p></div>`;
+  }
+
+  /**
+   * [Z-SUM] (3.41.11; Q-ck, Q-cq) "＋ Suite …": a suite the source does not show (no heading, no index track) – the same yellow
+   * question, with the tracks from – to and the name; "✓ Yes" accepts it as one found in the source.
+   */
+  function suiteAddHtml() {
+    const tracks = S.mbTracks.filter((t) => matrixTrack(t));
+    if (tracks.length < 2) return '';
+    if (!S.suiteAdd) {
+      return `<p class="dci-sub dci-mx-suite-add"><button type="button" class="dci-small" data-act="suite-add-open" title="${esc(tr('suite.addTitle'))}">＋ ${esc(tr('suite.add'))}</button></p>`;
+    }
+    const a = S.suiteAdd;
+    const opt = (sel) => tracks.map((t) => `<option value="${t.idx}" ${sel === t.idx ? 'selected' : ''}>${esc(`${trackLabel(t)} ${t.title}`)}</option>`).join('');
+    return `<div class="dci-mx-ask dci-mx-suite" data-el="suite-add" role="group" aria-label="${esc(tr('suite.add'))}">
+      <strong>${esc(tr('suite.addAsk'))}</strong>
+      <label>${esc(tr('suite.addFrom'))} <select data-f="mx-suite-from">${opt(a.from)}</select></label>
+      <label>${esc(tr('suite.addTo'))} <select data-f="mx-suite-to">${opt(a.to)}</select></label>
+      <label class="dci-suite-other">${esc(tr('suite.addName'))} <input type="text" data-f="mx-suite-name" value="${esc(a.name || '')}" size="24"></label>
+      <button type="button" class="dci-primary dci-small" data-act="suite-add-yes">${esc(tr('suite.yes'))}</button>
+      <button type="button" class="dci-small" data-act="suite-add-cancel">${esc(tr('suite.addCancel'))}</button>
+      ${a.error ? `<span class="dci-err" data-el="suite-add-error">${esc(tr(a.error))}</span>` : ''}
+      <p class="dci-sub dci-suite-hint">${esc(tr('suite.hint'))}</p></div>`;
+  }
+
+  /** [Z-SUM] (3.41.11) "✓ Yes" of "＋ Suite …": the tracks from – to (of the works matrix), named; false (with its error) if not. */
+  function addSuite(fromIdx, toIdx, name) {
+    const nm = String(name || '').trim();
+    const [a, b] = [Number(fromIdx), Number(toIdx)].sort((x, y) => x - y);
+    const tracks = S.mbTracks.filter((t) => matrixTrack(t) && t.idx >= a && t.idx <= b).map((t) => t.idx);
+    S.suiteAdd = { ...S.suiteAdd, from: Number(fromIdx), to: Number(toIdx), name: nm, error: '' };
+    // (3.41.15, review) a track in another suite or split as a medley: that one is undone first
+    const taken = tracks.filter((i) => (S.workParts.get(i) || []).length || [...S.suiteWorks.values()].some((sw) => (sw.tracks || []).includes(i)));
+    if (!nm) S.suiteAdd.error = 'suite.addNoName';
+    else if (tracks.length < 1) S.suiteAdd.error = 'suite.addNoTracks';
+    else if (taken.length) S.suiteAdd.error = 'suite.addTaken';
+    if (S.suiteAdd.error) return false;
+    const o = { key: `manual|${nm}|${tracks.join(',')}`, name: nm, from: 'manual', tracks };
+    if (S.suiteAnswers.has(o.key)) undoSuite(o);
+    S.suiteManual.set(o.key, o);
+    S.suiteAdd = null;
+    log('info', 'suiteAdded', { name: nm, tracks: tracksShort({ level: 'recording', tracks: new Set(tracks) }) });
+    acceptSuite(o, nm);
+    return o;
   }
 
   /** "Add column": any entry already in the dashboard (artist or label) with a work-level role of your choice. */
@@ -27331,7 +27658,7 @@
         <button type="button" data-act="mx-lookups" data-on="0">${esc(tr('matrix.lookupsNo'))}</button></div>` : ''}
       ${!skipped && S.worksLookups === 'no' && tracksWithoutWork().length ? `<p class="dci-sub" data-el="works-lookups-off">${esc(tr('matrix.lookupsOff'))}
         <button type="button" class="dci-textbtn" data-act="mx-lookups" data-on="1">${esc(tr('matrix.lookupsNow'))}</button></p>` : ''}
-      ${skipped || folded ? '' : `<div data-el="suites">${suiteAsks().map(suiteAskHtml).join('')}</div>`}`;
+      ${skipped || folded ? '' : `<div data-el="suites">${suiteAsks().map(suiteAskHtml).join('')}${suiteAddHtml()}</div>`}`;
     if (folded) {
       el.innerHTML = head;
       return;
@@ -27688,6 +28015,12 @@
     const col = cellEl && matrixColumns().find((c) => c.key === cellEl.dataset.col);
     const mrow = cellEl && matrixRows().find((m) => m.key === cellEl.dataset.mrow);
     switch (f) {
+      // [Z-SUM] (3.41.11) the box "＋ Suite …" keeps what was chosen while the matrix is drawn again
+      case 'mx-suite-from':
+      case 'mx-suite-to':
+      case 'mx-suite-name':
+        if (S.suiteAdd) S.suiteAdd[f === 'mx-suite-name' ? 'name' : f === 'mx-suite-from' ? 'from' : 'to'] = f === 'mx-suite-name' ? el.value : Number(el.value);
+        return true; // (not drawn again: a click on "✓ Yes" right after typing the name lands)
       case 'mx-codes':
         S.roleCodes = el.value;
         writeJson('localStorage', 'dci-role-codes', el.value);
@@ -28421,6 +28754,11 @@
     // [Z-SK] (3.40.15) a level chosen (by hand or by "↺ Take again"): no longer skipped with its entry
     delete row.entrySkip;
     const toOrFromWork = level === 'work' || row.level === 'work';
+    // [Q-cn] (3.41.15, review) taken off "Skip" that a question's answer set: the question is asked again
+    if (level !== 'skip' && row.typeAnswer != null) {
+      const tq = typeQuestionFor(row);
+      if (tq && tq.options[row.typeAnswer] && tq.options[row.typeAnswer].level === 'skip') delete row.typeAnswer;
+    }
     row.level = level;
     row.levelTouched = true;
     // [3.32.7] a row of poems: the type of this level (item 104b)
@@ -29254,6 +29592,29 @@
         else unskipEntry(a);
         break;
       }
+      // [Z-SUM] (3.41.11) "＋ Suite …": its box opened, a suite added, closed
+      case 'suite-add-open': {
+        const ts = S.mbTracks.filter((t) => matrixTrack(t));
+        S.suiteAdd = { from: ts[0].idx, to: ts[ts.length - 1].idx, name: '', error: '' };
+        renderWorks();
+        const f = S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-from"]');
+        if (f) f.focus({ preventScroll: true });
+        break;
+      }
+      case 'suite-add-cancel':
+        S.suiteAdd = null;
+        renderWorks();
+        break;
+      case 'suite-add-yes': {
+        const box = btn.closest('[data-el="suite-add"]');
+        const val = (f) => (box.querySelector(`[data-f="${f}"]`) || {}).value;
+        const o = addSuite(val('mx-suite-from'), val('mx-suite-to'), val('mx-suite-name'));
+        renderWorks();
+        refresh();
+        const again = o ? S.overlay.querySelector(`[data-el="suites"] [data-suite="${CSS.escape(o.key)}"] button`) : S.overlay.querySelector('[data-el="suite-add"] [data-f="mx-suite-name"]');
+        if (again) again.focus({ preventScroll: true });
+        break;
+      }
       // [Z-SU] (3.41.1) the question of a suite at the top of the works matrix
       case 'suite-yes':
       case 'suite-yes-name':
@@ -29314,6 +29675,21 @@
         renderWorks();
         refresh();
         const again = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="${act === 'medley-split' ? 'medley-join' : 'medley-split'}"]`);
+        if (again) again.focus({ preventScroll: true });
+        break;
+      }
+      // [Z-EN] (3.41.9) ⚙ Settings → Staging → Edit note
+      case 'edit-note-mode': {
+        S.editNoteMode = ['simple', 'none'].includes(btn.dataset.mode) ? btn.dataset.mode : 'full';
+        writeJson('localStorage', EDIT_NOTE_KEY, S.editNoteMode === 'full' ? null : S.editNoteMode);
+        // (3.41.15, review) a block written before follows at once ("None": out; else in the new form)
+        if (S.lastNoteBlock) {
+          if (S.editNoteMode === 'none') clearEditNote();
+          else writeEditNote();
+        }
+        S.rows.forEach(updateHint);
+        renderSettings();
+        const again = S.overlay.querySelector(`[data-act="edit-note-mode"][data-mode="${S.editNoteMode}"]`);
         if (again) again.focus({ preventScroll: true });
         break;
       }
@@ -30361,11 +30737,13 @@
         break;
       }
       case 'discogs-load': {
-        // Another source: a Bandcamp album URL, else a Discogs release (URL or ID); remembered for this release
+        // Another source: a Bandcamp album URL, [Z-YT] (3.41.13) a YouTube video, else a Discogs release (URL or ID); remembered for
+        // this release
         const input = S.overlay.querySelector('[data-f="discogs-input"]');
         const bc = BANDCAMP.pageUrl(input.value);
-        const source = bc ? BANDCAMP : DISCOGS;
-        const id = bc || DISCOGS.parseReleaseId(input.value);
+        const yt = !bc && YOUTUBE.videoId(input.value);
+        const source = bc ? BANDCAMP : yt ? YOUTUBE : DISCOGS;
+        const id = bc || yt || DISCOGS.parseReleaseId(input.value);
         if (id) {
           keepSourcePick(source, id);
           loadRelease(id, { source });
@@ -30397,8 +30775,9 @@
       case 'supp-url': {
         const input = S.overlay.querySelector('[data-f="supp-url"]');
         const bc = BANDCAMP.pageUrl(input.value);
-        const source = bc ? BANDCAMP : DISCOGS;
-        const id = bc || DISCOGS.parseReleaseId(input.value);
+        const yt = !bc && YOUTUBE.videoId(input.value); // [Z-YT] (3.41.13)
+        const source = bc ? BANDCAMP : yt ? YOUTUBE : DISCOGS;
+        const id = bc || yt || DISCOGS.parseReleaseId(input.value);
         if (!id) {
           showMessage('error', 'msg.badDiscogsId');
         } else if (source === S.source && String(id) === String(S.release && S.release.id)) {
@@ -30893,10 +31272,6 @@
         S.onlyMissing = el.checked;
         S.overlay.classList.toggle('dci-only-missing', el.checked);
         break;
-      case 'editnote':
-        S.editNote = el.checked;
-        S.rows.forEach(updateHint);
-        break;
       // [Z-RI] (3.40.16) the choice of "↻ Repeat import" (kept while the head is drawn anew)
       case 'repeat-keep':
         S.repeatKeep = el.value !== 'fresh';
@@ -31283,9 +31658,16 @@
     if (el) el.textContent = `${Math.round(S.scale * 100)} %`;
   }
 
+  /**
+   * [Z-SB2] (3.41.10) The room the windows have: the browser window without its scroll bars (window.innerWidth/innerHeight count
+   * them – the page's horizontal scroll bar covered the footer of the dashboard).
+   */
+  const viewW = () => (document.documentElement && document.documentElement.clientWidth) || window.innerWidth;
+  const viewH = () => (document.documentElement && document.documentElement.clientHeight) || window.innerHeight;
+
   function defaultGeom(kind) {
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    const W = viewW();
+    const H = viewH();
     const unit = basePx() / 13;
     if (kind === 'panel') {
       const w = Math.min(W - 24, Math.round(1280 * unit));
@@ -31311,8 +31693,8 @@
    * with "fit" (opening, screen changes) it is moved fully into view.
    */
   function placeWindow(win, g, fit = false) {
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    const W = viewW();
+    const H = viewH();
     const w = Math.max(160, Math.min(g.w, W));
     const h = Math.max(100, Math.min(g.h, H));
     const x = fit ? Math.min(Math.max(g.x, 0), W - w) : Math.min(Math.max(g.x, 80 - w), W - 80);
@@ -31420,6 +31802,26 @@
   }
 
   window.addEventListener('resize', () => movable.forEach((m) => clampWindow(m.win)));
+  // [Z-SB2] (3.41.10) a scroll bar of the page that comes or goes (its content wider or longer than the window) narrows the room too:
+  // the windows are moved into view again then (no "resize" for it)
+  {
+    let seen = '';
+    const check = () => {
+      const now = `${viewW()}x${viewH()}`;
+      if (now === seen) return;
+      seen = now;
+      movable.forEach((m) => clampWindow(m.win));
+    };
+    // (a box fixed to the room – its size changes with the scroll bars; the page's own boxes do not)
+    if (typeof ResizeObserver !== 'undefined' && document.documentElement && !IS_NODE_TEST) {
+      const room = document.createElement('div');
+      room.id = 'dci-room';
+      room.setAttribute('aria-hidden', 'true');
+      room.style.cssText = 'position: fixed; inset: 0; visibility: hidden; pointer-events: none; z-index: -1;';
+      document.documentElement.appendChild(room);
+      new ResizeObserver(check).observe(room);
+    }
+  }
 
   /**
    * [3.26.0] Small symbols of the head (collected item 30): drawn for this script (no emoji, no icons of others),
@@ -31547,7 +31949,6 @@
               <span class="dci-foot-opts" data-el="foot-opts">
                 <button type="button" class="dci-textbtn dci-foot-optbtn" data-act="foot-opts" aria-expanded="false" aria-controls="dci-foot-optlist" title="${esc(tr('footer.optionsTitle'))}">${esc(tr('footer.options'))} ▾</button>
                 <span class="dci-foot-optlist" id="dci-foot-optlist">
-                  <label class="dci-check" title="${esc(tr('footer.editNote'))}"><input type="checkbox" data-f="editnote" ${S.editNote ? 'checked' : ''}> ${esc(tr('footer.editNoteShort'))}</label>
                   <label class="dci-check" title="${esc(`${tr('footer.fill')} – ${tr('footer.fillTitle')}`)}"><input type="checkbox" data-f="fill-credits" ${S.fillCredits ? 'checked' : ''}> ${esc(tr('footer.fillShort'))}</label>
                   <label class="dci-check" data-el="cap-check" title="${esc(`${tr('footer.cap', { n: S.capLimit })} – ${tr('footer.capTitle')}`)}"><input type="checkbox" data-f="stage-cap" ${S.capOn ? 'checked' : ''}> <span data-el="cap-label">${esc(tr('footer.capShort', { n: S.capLimit }))}</span></label>
                 </span>
@@ -31804,6 +32205,8 @@
   const SKIP_HIDE_KEY = 'dci-skip-hide';
   // [Z-SU] (3.41.1) the parts of a suite named "Suite: Part" (default) or "Suite, Part" ("comma": stored)
   const SUITE_NAMING_KEY = 'dci-suite-naming';
+  // [Z-EN] (3.41.9) the edit note the script writes: "simple" or "none" stored (full: nothing)
+  const EDIT_NOTE_KEY = 'dci-edit-note';
   const JOIN_KEY = 'dci-join';
   // [145b] (3.35.6) the works of the source as track groups (default on; off: stored false)
   const WORK_GROUPS_KEY = 'dci-work-groups';
@@ -31835,7 +32238,7 @@
     connections: [],
     discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY],
-    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY],
+    staging: ['dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EDIT_NOTE_KEY],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY],
     beta: [BETA_OCR_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRAMES_KEY, OCR_FRONT_KEY],
     // [146] (3.36.0) the switch and the number (what is remembered stays: "Forget all remembered releases …"); [Z-SC] (3.40.14)
@@ -31864,6 +32267,7 @@
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
   S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
   S.suiteNaming = readJson('localStorage', SUITE_NAMING_KEY, 'colon') === 'comma' ? 'comma' : 'colon';
+  S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? readJson('localStorage', EDIT_NOTE_KEY, 'full') : 'full';
   S.emChipAsk = null; // [163] (3.37.14) the chip whose answers are open (entry|line|event)
   S.levelColors = readJson('localStorage', LEVEL_COLORS_KEY, true) !== false;
   S.levelPalette = levelPaletteRead();
@@ -31970,7 +32374,7 @@
 
   /** [E8] The kinds of the supplements of this import. */
   function statSuppKinds() {
-    const by = { DG: 'discogs', BC: 'bandcamp', TXT: 'text' };
+    const by = { DG: 'discogs', BC: 'bandcamp', TXT: 'text', YT: 'youtube' }; // [Z-YT] (3.41.13)
     return [...S.suppSources.keys()].map((k) => (k === 'TXT' && S.statOcr && S.statOcr.supp ? 'ocr' : by[k] || String(k).toLowerCase()));
   }
 
@@ -32013,9 +32417,11 @@
   }
 
   /** [E8] A relationship the dashboard supplemented in the editor (a credit, a date, attributes of a work link). */
-  function statFill(state, row, source) {
+  function statFill(state, row, source, kind = '') {
     if (!state || typeof state.id !== 'number') return;
-    S.statFills.set(state.id, { rowId: row ? row.id : null, source: source ? { gid: source.gid, entityType: source.entityType } : null });
+    // [Z-STV] (3.41.15, review) what was added to it (credits, dates, attrs): the "Gaps closed" of the statistics, from what is submitted
+    const kinds = new Set([...((S.statFills.get(state.id) || {}).kinds || []), ...(kind ? [kind] : [])]);
+    S.statFills.set(state.id, { rowId: row ? row.id : null, source: source ? { gid: source.gid, entityType: source.entityType } : null, kinds });
   }
 
   /**
@@ -32034,7 +32440,7 @@
       if (!byId.has(id)) byId.set(id, { k: 'n', source: st.source, rows: [] });
       if (st.rowId) byId.get(id).rows.push(st.rowId);
     }
-    for (const [id, f] of S.statFills) if (!byId.has(id)) byId.set(id, { k: 's', source: f.source, rows: f.rowId ? [f.rowId] : [] });
+    for (const [id, f] of S.statFills) if (!byId.has(id)) byId.set(id, { k: 's', source: f.source, rows: f.rowId ? [f.rowId] : [], kinds: [...(f.kinds || [])] });
     if (!byId.size) return null;
     const cur = findRelationshipStates(re.state, new Set(byId.keys()));
     const had = statExisting(re.state);
@@ -32064,6 +32470,10 @@
         ru: (row && row.ruleId) || '', lk: statLinkOf(entry), nw: entry && entry.status === 'created' ? 1 : 0,
         // [E8] (3.38.2) for the developer statistics: what was changed by hand, the answers to the questions of the script
         h: statHand(row), q: row ? statAnswers(row) : [],
+        // [Z-STA] (3.41.14) the other attributes (additional, guest, solo, live, cover, medley, movement …)
+        a: attrs.filter((a) => a.root !== 'instrument' && a.root !== 'vocal').map((a) => a.name).filter(Boolean),
+        // [Z-STV] (3.41.15, review) a relationship MusicBrainz had: what was added to it
+        ...(x.k === 's' ? { f: x.kinds || [] } : {}),
       };
       if (x.k === 'n' && (src.entityType === 'release' || src.entityType === 'recording') && src.gid && tgt.gid) {
         it.c = { on: src.entityType, src: src.gid, lt: state.linkTypeID, tgt: tgt.gid, n0: had.get(`${src.gid}|${state.linkTypeID}|${tgt.gid}`) || 0 };
@@ -32071,8 +32481,42 @@
       rels.push(it);
     }
     const ocr = S.statOcr ? (({ text, ...o }) => o)(S.statOcr) : null;
-    return { v: 1, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
-      dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, rels };
+    // [Z-STS …] (3.41.14) what the cards of 3.41.14 count (records before have v 1: "counted from 3.41.14")
+    return { v: 2, mbid: releaseMbid, start: S.statStart || null, rel: S.statRel || null, src: statSourceKind(), supp: statSuppKinds(), ocr, own: userRules().length,
+      dev: { unrec: statUnrec(), dupes: S.rows.filter((r) => r.existingAll).length }, x: statExtras(rels), rels };
+  }
+
+  /**
+   * [Z-STS, Z-STW, Z-STG, Z-STL, Z-STV] (3.41.14) What an import did beyond its relationships, for the statistics: the suites and
+   * medleys, the works, the genres and styles of the source, the live comments, the gaps closed in relationships MusicBrainz had.
+   */
+  function statExtras(rels = []) {
+    const suites = [...S.suiteWorks.values()].filter((sw) => !isPending(sw.gid));
+    // (3.41.15, review) the works and the gaps from what is submitted (not from the stagings): a link taken out is not counted
+    const links = rels.filter((it) => it.k === 'n' && it.lt === 'performance' && it.et === 'work');
+    const created = new Set([...S.workPlan.values(), ...[...S.workParts.values()].flat()].filter((p) => p && p.origin === 'created').map((p) => p.gid));
+    const fills = (k) => rels.filter((it) => it.k === 's' && (it.f || []).includes(k)).length;
+    const parts = [...S.workParts.values()].flat();
+    let liveCom = 0;
+    try {
+      const job = readJson('localStorage', `${LIVE_JOB_PREFIX}${releaseMbid.toLowerCase()}`, null);
+      liveCom = job && Array.isArray(job.items) ? job.items.length : 0;
+    } catch {
+      liveCom = 0;
+    }
+    return {
+      suites: {
+        n: suites.length, created: suites.filter((sw) => sw.origin === 'created').length, found: suites.filter((sw) => sw.origin === 'search').length,
+        manual: suites.filter((sw) => S.suiteManual.has(sw.key)).length, parts: parts.filter((p) => p.suite && suites.some((sw) => sw.key === p.suite)).length,
+        medleys: [...S.workParts.values()].filter((ps) => ps.length && ps[0].medley).length,
+      },
+      works: { linked: links.length, created: links.filter((it) => it.tg && created.has(it.tg)).length, pending: links.filter((it) => !it.tg).length },
+      genres: uniq([...((S.release && S.release.genres) || []), ...((S.release && S.release.styles) || []).map(norm)]).slice(0, 12),
+      live: { comments: liveCom },
+      gaps: { credits: fills('credits'), dates: fills('dates'), attrs: fills('attrs') },
+      // [Z-STQ] (3.41.15, review) the answers of the rows, once a row – also of a row an answer put on "Skip"
+      decisions: S.rows.flatMap((r) => statAnswers(r)),
+    };
   }
 
   /**
@@ -32261,11 +32705,15 @@
     const m = { src: new Map(), supp: 0, link: new Map(), seenEnt: new Set(), rels: 0, dated: 0, prec: new Map(), dsrc: new Map(), places: new Map(),
       lv: new Map(), works: 0, decade: new Map(), format: new Map(), country: new Map(), label: new Map(), weekday: new Array(7).fill(0), hour: new Array(24).fill(0),
       days: new Map(), relByRelease: new Map(), fastest: null, instrFirst: new Map(), instrN: new Map(), ocr: { subs: 0, images: 0, lines: 0, corrected: 0 },
-      own: 0, ownRels: new Map() };
+      own: 0, ownRels: new Map(),
+      // [Z-STS …] (3.41.14) the records of 3.41.14 and later (x), and what they count
+      x: 0, attrs: new Map(), suites: { n: 0, created: 0, found: 0, manual: 0, parts: 0, medleys: 0, partsRels: 0 }, works2: { linked: 0, created: 0, pending: 0 },
+      genres: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map() };
     const inc = (map, k, by = 1) => {
       if (k || k === 0) map.set(k, (map.get(k) || 0) + by);
     };
     const seenRelease = new Set();
+    const seenGenre = new Set();
     const sorted = [...recs].sort((x, y) => x.at - y.at);
     for (const r of sorted) {
       const rels = r.rels || [];
@@ -32297,7 +32745,38 @@
         m.ocr.corrected += r.ocr.corrected || 0;
       }
       if (r.own != null) m.own = r.own;
+      // [Z-STS, Z-STW, Z-STG, Z-STL, Z-STV] (3.41.14)
+      if (r.x) {
+        m.x++;
+        const x = r.x;
+        Object.keys(m.suites).forEach((k) => { if (x.suites && x.suites[k]) m.suites[k] += x.suites[k]; });
+        Object.keys(m.works2).forEach((k) => { if (x.works && x.works[k]) m.works2[k] += x.works[k]; });
+        Object.keys(m.gaps).forEach((k) => { if (x.gaps && x.gaps[k]) m.gaps[k] += x.gaps[k]; });
+        if (x.live) m.live.comments += x.live.comments || 0;
+        for (const q of x.decisions || []) {
+          m.nAnswers++;
+          inc(m.answers, `${q.q}\t${q.a}`);
+        }
+        if (!seenGenre.has(r.mbid)) {
+          seenGenre.add(r.mbid);
+          (x.genres || []).forEach((g) => inc(m.genres, g));
+        }
+      }
+      // [Z-STC] (3.41.14) the people credited on a release (all its submissions; the pairs below)
+      if (!m.people.has(r.mbid)) m.people.set(r.mbid, new Set());
+      rels.filter((it) => it.et === 'artist' && it.tg && it.tn).forEach((it) => m.people.get(r.mbid).add(`${it.tg}\t${it.tn}`));
       for (const it of rels) {
+        // [Z-STA, Z-STL, Z-STS, Z-STQ] (3.41.14) attributes, live links, "parts", the answers to the questions
+        (it.a || []).forEach((n) => inc(m.attrs, n));
+        if ((it.a || []).includes('live') && it.et === 'work') m.live.links++;
+        if (it.lt === 'parts') m.suites.partsRels++;
+        // (until 3.41.14 once a relationship; from 3.41.15 the import's own list, once a row)
+        if (!(r.x && r.x.decisions)) {
+          for (const q of it.q || []) {
+            m.nAnswers++;
+            inc(m.answers, `${q.q}\t${q.a}`);
+          }
+        }
         m.rels++;
         if (it.tg && !m.seenEnt.has(it.tg) && it.lk) {
           m.seenEnt.add(it.tg);
@@ -32317,6 +32796,11 @@
         }
         if (/^U\d+$/.test(it.ru || '')) inc(m.ownRels, it.ru);
       }
+    }
+    // [Z-STC] (3.41.14) each pair of people once a release (at most 40 people of a release)
+    for (const set of m.people.values()) {
+      const ps = [...set].sort().slice(0, 40);
+      for (let a = 0; a < ps.length; a++) for (let b = a + 1; b < ps.length; b++) inc(m.pairs, `${ps[a]}\n${ps[b]}`);
     }
     return m;
   }
@@ -32352,7 +32836,7 @@
     };
     const wd = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(LANG, { weekday: 'short' }).format(new Date(2024, 0, 1 + i)));
     const hours = Array.from({ length: 24 }, (_, h) => String(h));
-    const srcName = (k) => tr(`stats.src.${['discogs', 'bandcamp', 'text', 'ocr'].includes(k) ? k : 'other'}`);
+    const srcName = (k) => tr(`stats.src.${['discogs', 'bandcamp', 'text', 'ocr', 'youtube'].includes(k) ? k : 'other'}`);
     const pct = (x) => `${statPct(x, m.rels)} %`;
     const streak = statStreaks(m.days);
     const bestDay = top(m.days, 1)[0];
@@ -32385,7 +32869,33 @@
       ${card('ocr', m.ocr.subs ? `<ul class="dci-stats-kv"><li>${esc(tr('stats.ocr.subs', { n: statNum(m.ocr.subs) }))}</li><li>${esc(tr('stats.ocr.images', { n: statNum(m.ocr.images) }))}</li>
         <li>${esc(tr('stats.ocr.lines', { n: statNum(m.ocr.lines) }))}</li><li>${esc(tr('stats.ocr.corrected', { n: statNum(m.ocr.corrected) }))}</li></ul>` : `<p class="dci-sub">–</p>`)}
       ${card('own', `<p>${esc(tr('stats.own', { n: statNum(m.own) }))}</p>${kv(top(m.ownRels))}`)}
+      ${statsMore2Html(m, recs, { top, kv, card })}
     </div>`;
+  }
+
+  /**
+   * [Z-STS, Z-STA, Z-STW, Z-STG, Z-STQ, Z-STL, Z-STV, Z-STC] (3.41.14; Q-cv, Q-cw – for everyone, not only in "Developer mode") The
+   * cards of 3.41.14: suites and medleys, attributes, works, genres, decisions, live, gaps closed, worked together. What only
+   * records of 3.41.14 and later hold says so ("counted from 3.41.14") while older ones are there.
+   */
+  function statsMore2Html(m, recs, { top, kv, card }) {
+    const since = m.x < recs.length ? `<p class="dci-sub dci-stats-since">${esc(tr('stats.since', { v: '3.41.14' }))}</p>` : '';
+    const cap = (t) => String(t || '').replace(/^\p{Ll}/u, (c) => c.toUpperCase());
+    const answer = (k) => {
+      const [q, a] = String(k).split('\t');
+      return `${q}: ${a}`;
+    };
+    const pair = (k) => String(k).split('\n').map((x) => x.split('\t')[1]).join(' & ');
+    const su = m.suites;
+    return `${card('suites', `${kv([['suites', su.n], ['created', su.created], ['found', su.found], ['manual', su.manual], ['parts', su.parts], ['medleys', su.medleys], ['partsRels', su.partsRels]]
+      .filter(([k, n]) => n || k === 'suites' || k === 'medleys'), (k) => tr(`stats.suites.${k}`))}${since}`)}
+      ${card('attrs', `${kv(top(m.attrs, 8))}${since}`)}
+      ${card('works2', `${kv([['linked', m.works2.linked], ['created', m.works2.created], ['pending', m.works2.pending]], (k) => tr(`stats.works2.${k}`))}${since}`)}
+      ${card('genres', `${kv(top(m.genres, 8), cap)}${since}`)}
+      ${card('decisions', `<p>${esc(tr('stats.decisionsN', { n: statNum(m.nAnswers) }))}</p>${kv(top(m.answers, 6), answer)}`)}
+      ${card('live', `${kv([['links', m.live.links], ['comments', m.live.comments]], (k) => tr(`stats.live.${k}`))}${since}`)}
+      ${card('gaps', `${kv([['credits', m.gaps.credits], ['dates', m.gaps.dates], ['attrs', m.gaps.attrs]], (k) => tr(`stats.gaps.${k}`))}${since}`)}
+      ${card('together', kv(top(new Map([...m.pairs].filter(([, n]) => n >= 2)), 5), pair))}`;
   }
 
   /**
@@ -32623,6 +33133,9 @@
         // [E4] (3.35.0) an entry, compact, at first
         row(`${esc(tr('settings.emBy'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.emBy'))}">${['event', 'role'].map((v) => `<button type="button"
           data-act="em-by-default" data-by="${v}" aria-pressed="${S.emByDefault === v}">${esc(tr(`em.by.${v}`))}</button>`).join('')}</span>`),
+        // [Z-EN] (3.41.9) the edit note: full, simple (the sources and the script), none – each option's tooltip lists what it writes
+        row(`${esc(tr('settings.editNote'))} <span class="dci-seg dci-seg-small" role="group" aria-label="${esc(tr('settings.editNote'))}">${['full', 'simple', 'none'].map((v) => `<button type="button"
+          data-act="edit-note-mode" data-mode="${v}" aria-pressed="${S.editNoteMode === v}" title="${esc(tr(`settings.editNote.${v}Title`))}">${esc(tr(`settings.editNote.${v}`))}</button>`).join('')}</span>`),
       ],
       dates: () => [
         row(check('data-f="dm-auto"', S.dmAuto, tr('dm.auto'), tr('dm.autoTitle'))),
@@ -33122,7 +33635,8 @@
       renderGroups();
       if (!was.on || was.max !== S.awMax) runArtistWorks();
     } else if (t === 'staging') {
-      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event' });
+      Object.assign(S, { fillCredits: false, capOn: true, capLimit: 500, capRun: null, liveCom: false, joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', editNoteMode: 'full' });
+      S.rows.forEach(updateHint);
       renderGroups();
       refresh();
     } else if (t === 'dates') {
@@ -33195,7 +33709,7 @@
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, betaOcr: false, ocrPreload: false, ocrAuto: false, ocrFront: true,
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
       // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
-      skipHide: false, poolsFoldApply: false, suiteNaming: 'colon',
+      skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full',
     });
     renameSuiteParts(); // (3.41.4, review) the parts of a suite named "Suite: Part" again
     // [3.36.2] a diagnosis running stops, its button goes ([171] 3.38.5: "Developer mode" off)
@@ -34180,7 +34694,7 @@
 
       .dci-panel {
         position: fixed; left: 2vw; top: 2vh; width: 96vw; height: 96vh; pointer-events: auto; display: flex; flex-direction: column;
-        min-width: min(calc(var(--u, 1px) * 360), 100vw); min-height: min(calc(var(--u, 1px) * 240), 100vh); max-width: 100vw; max-height: 100vh;
+        min-width: min(calc(var(--u, 1px) * 360), 100vw); min-height: min(calc(var(--u, 1px) * 240), 100vh); max-width: 100%; max-height: 100%;
         resize: both; overflow: hidden; background: #fff; border: 1px solid #c8c5d6; border-top: 4px solid var(--purple); border-radius: 4px;
         box-shadow: 0 8px 32px rgba(38, 36, 48, 0.28);
       }

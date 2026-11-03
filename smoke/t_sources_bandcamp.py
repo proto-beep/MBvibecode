@@ -1118,4 +1118,111 @@ def case_cloudpondbc():
     H.ws_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_youtube():
+    """Credits Importer 3.41.13 (collected item Z-YT): the description of a YouTube video as a source, by its address in "another
+    source" (the video of the user's example, KEXP: "Host: Cheryl Waters", "Audio & Mixing Engineer: Julian Martlew", "Cameras: …",
+    "Editor: Jim Beckmann").
+    A) "https://youtu.be/Cx-BhTkZf8A?t=3" in "Source ▾ → another source", Load: the page of the video read (GM_xmlhttpRequest,
+       www.youtube.com/watch?v=Cx-BhTkZf8A), the head names the video; entries from its description – Julian Martlew audio and mix,
+       Jim Beckmann cameras and editor, Cheryl Waters asked (Q012); the tracks are MusicBrainz's own (no message that they differ).
+    B) Julian Martlew linked (a name of a text is only suggested), staged: the edit note's "Source:" is the video, "from a YouTube
+       video description".
+    C) A video without a description: "No video description found on …"; (3.41.15, review) a page that names the data before it
+       assigns it: read all the same; a URL that is no video: the message names YouTube videos too.
+    D) The statistics name YouTube as a source (a record of a YouTube import and of a supplement from YouTube)."""
+    # (as in t_ui_settings.py: the records of the statistics put into their database)
+    STAT_SEED = """(recs) => new Promise((res) => { const q = indexedDB.open('dci-stats', 1); q.onupgradeneeded = () => q.result.createObjectStore('subs', { keyPath: 'id' });
+  q.onsuccess = () => { const tx = q.result.transaction('subs', 'readwrite'); const st = tx.objectStore('subs'); st.clear(); recs.forEach((r) => st.put(r));
+    tx.oncomplete = () => res(true); tx.onerror = () => res(false); }; q.onerror = () => res(false); })"""
+
+    def stat_rel(k, lt, lv, et, tg, tn):
+        return {'k': k, 'lt': lt, 'lv': lv, 'et': et, 'tg': tg, 'tn': tn, 'i': [], 'v': [], 'd': '', 'ds': '', 'rc': 0, 'ac': 0, 'ru': '', 'lk': '', 'nw': 0}
+    VID = 'Cx-BhTkZf8A'
+    DESC = """Live at KEXP.
+Host: Cheryl Waters
+Audio & Mixing Engineer: Julian Martlew
+Cameras: Jim Beckmann, Carlos Cruz, Luke Knecht & Kendall Rock
+Editor: Jim Beckmann"""
+    H.YT_PAGES[VID] = H.yt_page(VID, 'Test Band - Full Performance (Live on KEXP)', 'KEXP', DESC)
+    H.YT_PAGES['AAAAAAAAAAA'] = H.yt_page('AAAAAAAAAAA', 'Empty', 'X', '')
+    # (3.41.15, review) the name mentioned before its assignment (a script that asks for it)
+    H.YT_PAGES['BBBBBBBBBBB'] = H.yt_page('BBBBBBBBBBB', 'Second', 'Y', 'Mixed By: Max Mix').replace(
+        '<body>', '<body><script>if (window.ytInitialPlayerResponse) { window.x = {}; }</script>', 1)
+    H.lt(138, '5dcc52af-7064-4051-8d62-7d80f4c3c907', 'engineer', 'artist', 'recording', (1, 526))
+    H.lt(140, 'ca8d6d99-b847-439c-b0ec-33d8a1b942bc', 'audio', 'artist', 'recording', (1, 526))
+    H.lt(1130, 'b367fae0-c4b0-48b9-a40c-f3ae4c02cf10', 'misc', 'artist', 'recording', (1150,))
+    H.lt(1131, '0b63af5e-85b2-4891-8234-bddab251399d', 'misc', 'artist', 'release', (1150,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    ROWS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [(g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()),
+      [...g.querySelectorAll('tr.dci-row')].map(tr => { const t = tr.querySelector('[data-f=type]'); const c = tr.querySelector('[data-f=role-credit]');
+        return [t ? (t.options[t.selectedIndex] || {}).text : '', c ? c.value : '-']; })])))()"""
+    JM = H.uid('dddddddd', 82)
+    H.ARTISTS[3082] = (JM, 'Julian Martlew')
+    H.MB_SEARCH['artist'] = [{'id': JM, 'name': 'Julian Martlew', 'disambiguation': '', 'score': 100, 'aliases': []}]
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg)
+        pg.fill('[data-f=discogs-input]', f'https://youtu.be/{VID}?t=3')
+        pg.click('[data-act=discogs-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
+        pg.wait_for_timeout(1200)
+        xhr = pg.evaluate("window.__gmXhr.filter(u => /youtube/.test(u))")
+        head = pg.evaluate("document.querySelector('[data-el=source]').textContent.replace(/\\s+/g, ' ').trim()")
+        g = pg.evaluate(ROWS)
+        msgs = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent).join(' | ')")
+        print('A)', xhr, '|', head[:120], '\n  ', {k: v for k, v in g.items() if k in ('Julian Martlew', 'Jim Beckmann', 'Cheryl Waters')}, '| Meldungen:', msgs[:200])
+        results.append(xhr == [f'https://www.youtube.com/watch?v={VID}'] and 'YouTube' in head and 'Live on KEXP' in head
+                       and sorted(x[0] for x in g.get('Julian Martlew') or []) == ['audio', 'mix'] and sorted(x[1] for x in g.get('Jim Beckmann') or []) == ['cameras', 'editor']
+                       and (g.get('Cheryl Waters') or [['?']])[0][0] == 'Choose type …' and 'tracks instead of' not in msgs)
+        # (a name of a text is only suggested: Julian Martlew linked, so that something is staged)
+        key = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(s => (s.querySelector('.dci-gname strong').dataset.name || s.querySelector('.dci-gname strong').textContent.trim()) === 'Julian Martlew').dataset.group")
+        pg.locator(f'section.dci-group[data-group="{key}"] [data-act=name-use][data-mbid="{JM}"]').first.click()
+        pg.wait_for_timeout(800)
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        note = pg.evaluate("document.getElementById('edit-note-text').value").splitlines()
+        print('B)', note[:3])
+        results.append(note[0] == f'Source: https://www.youtube.com/watch?v={VID}' and any('from a YouTube video description' in l for l in note))
+        H.src_menu(pg)
+        pg.fill('[data-f=discogs-input]', 'https://www.youtube.com/watch?v=AAAAAAAAAAA')
+        pg.click('[data-act=discogs-load]'); pg.wait_for_timeout(1500)
+        c0 = [m for m in pg.locator('.dci-msg').all_inner_texts() if 'description' in m]
+        H.src_menu(pg)
+        pg.fill('[data-f=discogs-input]', 'https://www.youtube.com/watch?v=BBBBBBBBBBB')
+        pg.click('[data-act=discogs-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 60)
+        pg.wait_for_timeout(500)
+        c2 = pg.evaluate("document.querySelector('[data-el=source]').textContent.replace(/\\s+/g, ' ').trim()")
+        print('C2) Name vor der Zuweisung:', c2[:60])
+        results.append('Second' in c2)
+        H.src_menu(pg)
+        pg.fill('[data-f=discogs-input]', 'no video here')
+        pg.click('[data-act=discogs-load]'); pg.wait_for_timeout(500)
+        c1 = [m for m in pg.locator('.dci-msg').all_inner_texts() if 'recognized' in m]
+        print('C)', c0[-1:], '|', [m[:110] for m in c1][-1:])
+        results.append(any('No video description found on https://www.youtube.com/watch?v=AAAAAAAAAAA' in m for m in c0) and c1 and 'YouTube video' in c1[-1])
+        # D) the statistics
+        now = pg.evaluate('Date.now()')
+        rec = lambda i, src, supp: {'id': f'yt{i}', 'v': 1, 'mbid': H.REL, 'at': now - i * 1000, 'src': src, 'supp': supp, 'rel': {'title': 'T', 'before': 0},
+                                    'rels': [stat_rel(f'k{i}', 140, 'recording', 'artist', 'g', 'n')], 'ms': 1000}
+        pg.evaluate(STAT_SEED, [rec(1, 'youtube', []), rec(2, 'discogs', ['youtube'])])
+        pg.evaluate("localStorage.setItem('dci-stats-on', 'true')")
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        d0 = pg.evaluate("[...document.querySelectorAll('[data-el=stats-sources] li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+        print('D)', d0)
+        results.append('YouTube 1' in d0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

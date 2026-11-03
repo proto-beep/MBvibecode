@@ -291,4 +291,26 @@ console.log(JSON.stringify(out));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_legacy():
+    """Credits Importer 3.41.7 (collected item Z-LG): the view "Legacy" of the entries (⚙ Settings → Appearance → Entries) is named
+    "Legacy" in every language – and so in the note of 3.35.0 that names it (until 3.41.6: Klassisch, Clásica, Classique)."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const out = {};
+for (const l of ['en', 'de', 'es', 'fr']) { m.setLang(l); out[l] = [m.tr('settings.entries.legacy'), m.tr('ms.3.35.0')]; }
+console.log(JSON.stringify(out));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    got = json.loads(js.stdout) if not js.returncode else {'error': js.stderr[-400:]}
+    print('A)', {l: v[0] for l, v in got.items() if l != 'error'})
+    old = [l for l, v in got.items() if l != 'error' and any(w in v[1] for w in ('Klassisch', 'Clásica', 'Classique'))]
+    print('B) alte Namen in ms.3.35.0:', old)
+    results = ['error' not in got, all(v[0] == 'Legacy' for l, v in got.items() if l != 'error'), not old,
+               all('Legacy' in v[1] for l, v in got.items() if l != 'error')]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
