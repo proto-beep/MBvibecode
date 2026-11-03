@@ -1432,6 +1432,72 @@ def case_suiteadd():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_subtracks():
+    """Credits Importer 3.41.12 (collected item Z-SUB; Q-cm): an index track of Discogs whose sub-tracks are tracks of their own in
+    MusicBrainz. Discogs: 1 Song One · 2 Song Two · the index "Suite X" with 3a "Song Three" (Writer Z) and 3b "Song Four" (Bass
+    Man, bass) – three tracks; MusicBrainz has four.
+    A) Read as four tracks (the log says so: "1 index track of Discogs: its sub-tracks are tracks of their own …"); no message that
+       the tracks differ (until 3.41.11 "3 tracks instead of 4", Bass Man's bass on track 3 with Song Three).
+    B) Bass Man's bass on track 4 only; Writer Z writes track 3 (the works matrix).
+    C) The index is offered as a suite of tracks 3–4 ("tracks 3–4: parts of the suite “Suite X”?").
+    D) In Node: titles that do not fit, but splitting gives MusicBrainz's number of tracks: split; a number that does not fit: not."""
+    import json
+    import subprocess
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        t3, t4 = d['tracklist'][2], d['tracklist'][3]
+        t3 = dict(t3, position='3a')
+        t4 = dict(t4, position='3b', extraartists=[{'name': 'Bass Man', 'anv': '', 'role': 'Bass', 'tracks': '', 'id': 3001, 'join': ''}])
+        d['tracklist'] = d['tracklist'][:2] + [{'position': '', 'type_': 'index', 'title': 'Suite X', 'duration': '', 'sub_tracks': [t3, t4]}]
+        d['extraartists'] = [x for x in d['extraartists'] if x.get('name') != 'Bass Man']
+        return d
+
+    H.discogs_release = rel
+    TRACKS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => (x.querySelector('.dci-gname strong').dataset.name || x.querySelector('.dci-gname strong').textContent.trim()) === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => tr.querySelector('.dci-cline, .dci-c-tracks') ? (tr.querySelector('.dci-c-tracks') || tr).textContent.replace(/\\s+/g, ' ').trim().slice(0, 80) : '') : null; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, view='full')
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'index track' in x or 'Tracks differ' in x]
+        msgs = pg.evaluate("[...document.querySelectorAll('[data-el=messages] *')].map(x => x.textContent).join(' ')")
+        print('A)', logs, '| Meldung:', 'tracks instead of' in msgs)
+        results.append(logs == ['1 index track of Discogs: its sub-tracks are tracks of their own in MusicBrainz – read as such'] and 'tracks instead of' not in msgs)
+        rows = pg.evaluate("""(() => { const out = {}; for (const g of document.querySelectorAll('section.dci-group')) { const n = (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim());
+          out[n] = [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').dataset.raw.trim(), [...document.querySelectorAll(`tr[data-tracksrow="${tr.dataset.row}"] input[data-f=track]:checked`)].map(x => Number(x.dataset.i))]); } return out; })()""")
+        wz = pg.evaluate("[...document.querySelectorAll('.dci-matrix tr[data-work]')].map(tr => [Number(tr.dataset.work), [...tr.querySelectorAll('td')].map(td => td.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /composer|writer/i.test(t))])")
+        print('B)', rows.get('Bass Man'), '| Matrix:', wz)
+        results.append(rows.get('Bass Man') == [['Bass', [3]]] and wz[2][1] and 'composer' in wz[2][1][0] and wz[3][1] == [])
+        suites = pg.evaluate("[...document.querySelectorAll('[data-el=suites] [data-suite] strong')].map(x => x.textContent.trim())")
+        print('C)', suites)
+        results.append(suites == ['tracks 3–4: parts of the suite “Suite X”?'])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const sub = (pos, title) => ({ position: pos, type_: 'track', title, duration: '', extraartists: [] });
+const d = { id: 7, title: 'X', tracklist: [sub('1', 'Opening'), { position: '', type_: 'index', title: 'Suite', sub_tracks: [sub('2a', 'Prelude'), sub('2b', 'Quartet')] }] };
+const t = (xs) => xs.map((title) => ({ title }));
+console.log(JSON.stringify([[...m.DISCOGS.subTrackSplit(d, t(['Alpha', 'Beta', 'Gamma']))], [...m.DISCOGS.subTrackSplit(d, t(['Alpha', 'Beta', 'Gamma', 'Delta']))],
+  [...m.DISCOGS.subTrackSplit(d, t(['Opening', 'Prelude', 'Quartet']))]]));
+"""
+    js = subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+    got = json.loads(js.stdout) if not js.returncode else {'error': js.stderr[-400:]}
+    print('D)', got)
+    results.append(got == [[1], [], [1]])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_suiterestage():
     """Credits Importer 3.41.4 (the check of Block BD), 3.41.6 (Z-SUW): a suite staged, undone and accepted again, or named anew after
     staging.

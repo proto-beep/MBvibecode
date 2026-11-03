@@ -351,6 +351,8 @@ python3 t_works_more.py         # Works: the works of the artists, skipping the 
                                 #     "medley" in the order of the title; "↺ one work"; 3.41.4: no suite asked (one of four), Beta offered, then linked
                                 #   suiteadd: 3.41.11 (Z-SUM): "＋ Suite …" – the yellow box (tracks from – to, name), without a name an error,
                                 #     "Trisect" for tracks 2–4 accepted as a found suite (parts, create button, log); ↺ undo: gone; Cancel
+                                #   subtracks: 3.41.12 (Z-SUB): an index "Suite X" with 3a, 3b on two MB tracks – four tracks (log, no message),
+                                #     Bass Man on track 4, the suite offered for tracks 3–4; Node: subTrackSplit by titles, by count, not
                                 #   suiterestage: 3.41.4 (review): staged, undone, accepted again / named anew: one link per part, no "parts" to a
                                 #     new work without its recording; 3.41.6: the suite created first, then found in MB ("Link “Trisect”")
 
