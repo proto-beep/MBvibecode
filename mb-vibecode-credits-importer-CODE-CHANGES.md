@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.5, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.6, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.6 · 2026-11-03
+
+Collected item Z-SUW (user report): MusicBrainz's relationship editor does not create a new work that is linked by "parts" only – "Enter edit" ended with "An error occurred: unknown Work id:". The suite is created in MusicBrainz first.
+
+- **`startSuiteCreate(sw)`** (new): MusicBrainz's form for a new work in the dashboard (`openCreateDialog`, as `startWorkCreate`), prefilled by `buildWorkSeed` with the suite's name, the type "Suite" (`S.workOptions.types`, else 6), no language and **`suiteWriters(sw)`** (new: the writers – `WRITER_TYPES` – credited for every track of the suite); its edit note as for a work. Created: the suite's entry in `S.suiteWorks` takes the MBID (`origin 'created'`), a message, the log (`suiteCreated`).
+- **`searchSuite(sw)`** (new, called by `acceptSuite`): the suite looked up among the works of its writers (`searchWorks`); one work of exactly its name (or alias) is offered (`sw.offer`), not taken by itself.
+- **`suiteAskHtml`:** the line of an accepted suite has **"＋ Create the suite in MusicBrainz …"** (`data-act=suite-create`), the offer **"Link “…”"** (`suite-pick`) and "Its “parts” wait …" while the suite is pending; then a link "Suite in MusicBrainz: …" (`a.dci-suite-mb`). The click handler of the suite's buttons knows `suite-create` and `suite-pick`.
+- **`computePlan`:** no `suite-part` item while the suite's gid is pending (the parts and their links with the recordings as before). **The stage loop:** the suite always with `fetchJsEntity`. **`pendingWorkEntity`:** the branch of a pending suite ("pending:s1") is gone.
+- **Texts (English):** `suite.createBtn`, `suite.createBtnTitle`, `suite.wait`, `suite.pickTitle`, `suite.inMb`, `suite.createTitle`, `suite.createNoWriters`, `suite.createAfter`, `suite.created`, `log.suiteFound`, `log.suiteForm`, `log.suiteCreated`, `log.suitePicked`.
+- **Tests:** `smoke/harness.py` `WORK_TITLES` (the title `/ws/2/work/<gid>` answers for a work a test knows). `t_works_more.py` `suiteparts` anew (no "parts" before the suite exists; the form: name, type 6, Writer W – not Writer Z; created: the link, the message; staged: "parts" from the work of MusicBrainz), `suiterestage` (created, staged; undone and accepted again: "Link “Trisect”" offered and taken; every "parts" from that work), `suiteask` (the line with the button); all three fail on 3.41.5.
 
 ## Import 3.41.5 · 2026-11-03
 

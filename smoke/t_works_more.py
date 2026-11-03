@@ -2,6 +2,7 @@
 
 Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0), suiteask (3.41.1), suiteparts (3.41.2), medley (3.41.3), suiterestage (3.41.4); `python3 t_works_more.py <case> …` runs only those."""
 import re
+import urllib.parse
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1178,7 +1179,7 @@ def case_suiteask():
         print('B)', b0)
         results.append(b0[1] == [['', 'Trisect: Phase 1']] and b0[2] == [['part 1 of 2', 'Trisect: Phase 2'], ['part 2 of 2', 'Trisect: Phase 3']]
                        and b0[3] == [['part 1 of 3', 'Trisect: Transition'], ['part 2 of 3', 'Trisect: Phase 4'], ['part 3 of 3', 'Trisect: Coda']]
-                       and b0[0] and b0[0][0][0] == '' and b0[4] == 'all 4 tracks: parts of the suite “Trisect” – 6 works ↺ undo'
+                       and b0[0] and b0[0][0][0] == '' and b0[4].startswith('all 4 tracks: parts of the suite “Trisect” – 6 works ＋ Create the suite in MusicBrainz …') and b0[4].endswith('↺ undo')
                        and b0[5] == ['Suite “Trisect” (all 4 tracks): 6 parts planned as works'])
         pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
@@ -1212,30 +1213,46 @@ def case_suiteask():
 
 
 def case_suiteparts():
-    """Credits Importer 3.41.2 (collected item Z-SU; Q-bv): the suite itself – a new work of the type "Suite" with "parts".
-    The release "Trisect" (as in suiteask), ✓ Yes, staged:
-    A) The work "Trisect" (type Suite) with "parts" to each part, in the order of the parts – the work of track 1 in MusicBrainz
-       ("Introduction") first, then "Trisect: Phase 1", "Trisect: Phase 2", "Trisect: Phase 3", "Trisect: Transition", … (order 1–7),
-       each with "movement"; the suite is entity0 (it has the parts); no recording is linked with it.
-    B) The preview names them ("part 1 of the suite “Trisect” (movement)").
-    C) ↺ undo of the suite (before staging): nothing of it is planned."""
+    """Credits Importer 3.41.2 (collected item Z-SU; Q-bv), 3.41.6 (Z-SUW, user report): the suite itself – a work of the type "Suite"
+    with "parts". The release "Trisect" (as in suiteask; Writer W credited for all four tracks, Writer Z for track 3 too), ✓ Yes:
+    A) The line of the suite: "＋ Create the suite in MusicBrainz …" and "Its “parts” wait …"; staged: the parts with their recordings,
+       no "parts" yet (until 3.41.5 "parts" to a new work "Trisect" – MusicBrainz does not create a work linked by "parts" only:
+       "An error occurred: unknown Work id:" on "Enter edit").
+    B) "＋ Create …": MusicBrainz's form in the dashboard with the name "Trisect", the type Suite (6) and Writer W (the writer of all
+       its tracks; not Writer Z); submitted (the frame on /work/<mbid>): "Suite in MusicBrainz: Trisect" (a link to it), the message
+       says so.
+    C) Staged again: "parts" from the work "Trisect" of MusicBrainz to each part, in the order of the parts – the work of track 1 in
+       MusicBrainz ("Introduction") first, then "Trisect: Phase 1", "Trisect: Phase 2", … (order 1–7), each with "movement"; no
+       recording is linked with it; the preview names them ("part 1 of the suite “Trisect” (movement)").
+    D) ↺ undo of the suite (before staging): nothing of it is planned."""
     H.TITLES[:] = ['Introduction', 'Phase 1', 'Phase 2 / Phase 3', 'Transition / Phase 4 / Coda']
     H.attr(1105, 'movement', 1105)
     H.lt(281, 'ca8d3642-ce5f-49f8-91f2-125d72524e6a', 'parts', 'work', 'work', (1105,))
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
+    SUITE = H.uid('cccccccc', 96)
+    WW = H.ARTISTS[3007][0]
     orig = H.discogs_release
 
     def rel():
         d = orig()
         d['title'] = 'Trisect'
+        for t in d['tracklist'][2:]:
+            t['extraartists'] = list(t.get('extraartists') or []) + [{'name': 'Writer W', 'anv': '', 'role': 'Written-By', 'tracks': '', 'id': 3007, 'join': ''}]
         return d
 
     H.discogs_release = rel
     PARTS = """(() => { const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
-      return MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 281).map(r => [r.entity0.name, r.entity0.typeID, r.entity1.name, r.linkOrder, ids(r)])
+      return MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 281).map(r => [r.entity0.name, r.entity0.gid, r.entity1.name, r.linkOrder, ids(r)])
         .sort((a, b) => a[3] - b[3]); })()"""
+    LINE = "(x => x ? [x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(b => b.dataset.act), (x.querySelector('a.dci-suite-mb') || {}).href || null] : null)(document.querySelector('[data-el=suites] .dci-mx-suite-done'))"
+    PREVIEW = "[...document.querySelectorAll('li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /of the suite/.test(t))"
+
+    def stage():
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(300)
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -1246,27 +1263,51 @@ def case_suiteparts():
         H.open_dashboard(pg)
         H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
         pg.wait_for_timeout(500)
-        # C) first: undone, nothing planned
+        # D) first: undone, nothing planned
         pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(300)
         pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(300)
         pg.click('[data-act=preview]'); pg.wait_for_timeout(500)
-        c0 = pg.evaluate("[...document.querySelectorAll('.dci-preview li, [data-el=preview] li')].map(li => li.textContent).filter(t => /suite/.test(t)).length")
+        d0 = pg.evaluate("[...document.querySelectorAll('.dci-preview li, [data-el=preview] li')].map(li => li.textContent).filter(t => /suite/.test(t)).length")
         pg.click('[data-act=preview]'); pg.wait_for_timeout(300)
         pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(500)
+        a0 = pg.evaluate(LINE)
         pg.click('[data-act=preview]'); pg.wait_for_timeout(500)
-        b0 = pg.evaluate("[...document.querySelectorAll('li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()).filter(t => /of the suite/.test(t))")
+        a1 = pg.evaluate(PREVIEW)
         pg.click('[data-act=preview]'); pg.wait_for_timeout(300)
-        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
-        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
-        a0 = pg.evaluate(PARTS)
+        stage()
+        a2 = [pg.evaluate(PARTS), pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && /^Trisect: /.test(r.entity1.name)).length")]
+        print('A)', a0, '| Vorschau:', a1, '| vorgemerkt:', a2)
+        results.append(a0 is not None and '＋ Create the suite in MusicBrainz …' in a0[0] and 'Its “parts” wait until the suite exists in MusicBrainz' in a0[0]
+                       and a0[1] == ['suite-create', 'suite-undo'] and a0[2] is None and a1 == [] and a2 == [[], 6])
+        pg.click('[data-el=suites] [data-act=suite-create]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]') && /work\\/create/.test(document.querySelector('[data-el=sub-frame]').src)", 20)
+        src = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(src).query)
+        info = pg.evaluate("(document.querySelector('.dci-subdlg') || {textContent: ''}).textContent.replace(/\\s+/g, ' ')")
+        b0 = [q.get('edit-work.name'), q.get('edit-work.type_id'), q.get('rels.0.target'), q.get('rels.1.target'), 'edit-work.languages.0' in q]
+        H.COMPANIES[7096] = ('work', SUITE, 'Trisect')
+        H.WORK_TITLES[SUITE] = 'Trisect'
+        pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/work/{SUITE}'")
+        H.wait_for(pg, "!!document.querySelector('[data-el=suites] a.dci-suite-mb')", 20)
+        pg.wait_for_timeout(400)
+        b1 = [pg.evaluate(LINE), pg.evaluate("[...document.querySelectorAll('.dci-msg, [data-el=messages] *')].map(x => x.textContent).join(' ')")]
+        print('B)', b0, '| Info:', info[:160], '\n  ', b1[0], '|', 'Suite “Trisect” has been created' in b1[1])
+        results.append(b0 == [['Trisect'], ['6'], [WW], None, False] and 'work type Suite, writer: Writer W.' in info and 'Writer Z' not in info
+                       and b1[0][1] == ['suite-undo'] and b1[0][2] and b1[0][2].endswith(f'/work/{SUITE}') and 'Suite in MusicBrainz: Trisect' in b1[0][0]
+                       and 'Suite “Trisect” has been created' in b1[1])
+        pg.click('[data-act=preview]'); pg.wait_for_timeout(500)
+        c1 = pg.evaluate(PREVIEW)
+        pg.click('[data-act=preview]'); pg.wait_for_timeout(300)
+        stage()
+        c0 = pg.evaluate(PARTS)
         rec = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && r.entity1 && r.entity1.name === 'Trisect').length")
-        print('A)', a0, '| Aufnahme mit der Suite:', rec)
-        print('B)', b0[:3], len(b0))
-        print('C) nach ↺:', c0)
+        print('C)', c0, '| Aufnahme mit der Suite:', rec, '| Vorschau:', c1[:2], len(c1))
+        print('D) nach ↺:', d0)
         want = ['Introduction', 'Trisect: Phase 1', 'Trisect: Phase 2', 'Trisect: Phase 3', 'Trisect: Transition', 'Trisect: Phase 4', 'Trisect: Coda']
-        results.append(len(a0) == 7 and [x[2] for x in a0] == want and [x[3] for x in a0] == [1, 2, 3, 4, 5, 6, 7] and all(x[0] == 'Trisect' and x[1] == 6 and x[4] == [1105] for x in a0) and rec == 0)
-        results.append(len(b0) == 7 and any('part 1 of the suite “Trisect”' in t and 'movement' in t for t in b0))
-        results.append(c0 == 0)
+        results.append(len(c0) == 7 and [x[2] for x in c0] == want and [x[3] for x in c0] == [1, 2, 3, 4, 5, 6, 7]
+                       and all(x[0] == 'Trisect' and x[1] == SUITE and x[4] == [1105] for x in c0) and rec == 0)
+        results.append(len(c1) == 7 and any('part 1 of the suite “Trisect”' in t and 'movement' in t for t in c1))
+        results.append(d0 == 0)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -1337,10 +1378,13 @@ def case_medley():
 
 
 def case_suiterestage():
-    """Credits Importer 3.41.4 (the check of Block BD): a suite staged, undone and accepted again, or named anew after staging.
-    A) "Trisect": ✓ Yes, staged; ↺ undo, ✓ Yes, staged again: in the editor one link of the recording of track 3 to "Trisect: Phase 2"
-       (until 3.41.3 the link staged before was kept for the new part, and the suite's "parts" pointed to another new work – two works
-       on "Enter edit"); each "parts" of the suite to a new work points to a work a recording is linked with.
+    """Credits Importer 3.41.4 (the check of Block BD), 3.41.6 (Z-SUW): a suite staged, undone and accepted again, or named anew after
+    staging.
+    A) "Trisect": ✓ Yes, the suite created in MusicBrainz's form, staged; ↺ undo, ✓ Yes: (3.41.6) MusicBrainz has the work "Trisect"
+       by Writer W now – "Link “Trisect”" offered at the suite (not taken by itself), clicked; staged again: in the editor one link of
+       the recording of track 3 to "Trisect: Phase 2" (until 3.41.3 the link staged before was kept for the new part, and the suite's
+       "parts" pointed to another new work – two works on "Enter edit"); each "parts" of the suite to a new work points to a work a
+       recording is linked with, and comes from the work "Trisect" of MusicBrainz.
     B) ⚙ "Suite, Part" after staging: the links with the new names are staged, those with the old names are gone; again each "parts"
        points to a work a recording is linked with."""
     H.TITLES[:] = ['Introduction', 'Phase 1', 'Phase 2 / Phase 3', 'Transition / Phase 4 / Coda']
@@ -1349,11 +1393,15 @@ def case_suiterestage():
     H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
     H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
+    SUITE = H.uid('cccccccc', 96)
+    WW = H.ARTISTS[3007][0]
     orig = H.discogs_release
 
     def rel():
         d = orig()
         d['title'] = 'Trisect'
+        for t in d['tracklist'][2:]:
+            t['extraartists'] = list(t.get('extraartists') or []) + [{'name': 'Writer W', 'anv': '', 'role': 'Written-By', 'tracks': '', 'id': 3007, 'join': ''}]
         return d
 
     H.discogs_release = rel
@@ -1361,7 +1409,7 @@ def case_suiterestage():
       const parts = add.filter(r => r.linkTypeID === 281 && r._status !== 3);
       const linked = new Set(links.map(r => r.entity1.id));
       return { phase2: links.filter(r => /^Trisect[:,] Phase 2$/.test(r.entity1.name)).map(r => r.entity1.name), parts: parts.length,
-        orphans: parts.filter(r => !r.entity1.gid && !linked.has(r.entity1.id)).map(r => r.entity1.name) }; })()"""
+        orphans: parts.filter(r => !r.entity1.gid && !linked.has(r.entity1.id)).map(r => r.entity1.name), suites: [...new Set(parts.map(r => r.entity0.gid))] }; })()"""
 
     def stage():
         pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
@@ -1378,20 +1426,34 @@ def case_suiterestage():
         H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
         pg.wait_for_timeout(500)
         pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(400)
+        pg.click('[data-el=suites] [data-act=suite-create]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]')", 20)
+        H.COMPANIES[7096] = ('work', SUITE, 'Trisect')
+        H.WORK_TITLES[SUITE] = 'Trisect'
+        pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/work/{SUITE}'")
+        H.wait_for(pg, "!!document.querySelector('[data-el=suites] a.dci-suite-mb')", 20)
         stage()
+        a1 = pg.evaluate(CHECK)['parts']
+        # MusicBrainz has the suite now (by Writer W)
+        H.WORK_SEARCH[:] = [{'id': SUITE, 'title': 'Trisect', 'type': 'Suite', 'aliases': [], 'relations': [{'target-type': 'artist', 'type': 'writer', 'artist': {'id': WW, 'name': 'Writer W'}}]}]
         pg.click('[data-el=suites] [data-act=suite-undo]'); pg.wait_for_timeout(400)
-        pg.click('[data-el=suites] [data-act=suite-yes]'); pg.wait_for_timeout(400)
+        pg.click('[data-el=suites] [data-act=suite-yes]')
+        H.wait_for(pg, "!!document.querySelector('[data-el=suites] [data-act=suite-pick]')", 20)
+        a2 = [pg.evaluate("document.querySelector('[data-el=suites] [data-act=suite-pick]').textContent.trim()"), pg.evaluate("!!document.querySelector('[data-el=suites] a.dci-suite-mb')")]
+        pg.click('[data-el=suites] [data-act=suite-pick]'); pg.wait_for_timeout(400)
+        a3 = pg.evaluate("(document.querySelector('[data-el=suites] a.dci-suite-mb') || {}).href || null")
         stage()
         a0 = pg.evaluate(CHECK)
-        print('A)', a0)
-        results.append(a0['phase2'] == ['Trisect: Phase 2'] and a0['parts'] == 7 and a0['orphans'] == [])
+        print('A)', a1, a2, a3, a0)
+        results.append(a1 == 7 and a2 == ['Link “Trisect”', False] and a3 and a3.endswith(SUITE)
+                       and a0['phase2'] == ['Trisect: Phase 2'] and a0['parts'] == 7 and a0['orphans'] == [] and a0['suites'] == [SUITE])
         H.open_settings(pg, 'works')
         pg.click('[data-el=settings] [data-act=suite-naming][data-naming=comma]'); pg.wait_for_timeout(400)
         pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(200)
         stage()
         b0 = pg.evaluate(CHECK)
         print('B)', b0)
-        results.append(b0['phase2'] == ['Trisect, Phase 2'] and b0['parts'] == 7 and b0['orphans'] == [])
+        results.append(b0['phase2'] == ['Trisect, Phase 2'] and b0['parts'] == 7 and b0['orphans'] == [] and b0['suites'] == [SUITE])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
