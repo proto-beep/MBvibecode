@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.8, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.9, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.9 · 2026-11-03
+
+"Fold bar after Apply" next to "apply automatically" (collected item Z-PF; Q-bl, Q-bn).
+
+- **State and storage:** `S.dmFold` (`DM_FOLD_KEY` `dci-dm-fold`, default on – stored `false` when off; defined before its first read), `S.dmFoldWait`; in `TOPIC_KEYS.dates`, `SETTINGS_KEYS`, `resetTopic('dates')` and `resetSettings`.
+- **`matrixHtml`:** the box `data-f="dm-fold"` after "apply automatically"; ⚙ Settings → Dates and tracks the same box. Change handler `dm-fold`: stored, logged (`dmFoldSwitch`), the bar drawn anew when switched in ⚙.
+- **New `foldPoolsAfterApply(focus)`:** folds "Dates & tracks" as `pools-toggle` does (`S.poolsOpen` false, stored; `S.poolsForce` null; log `poolsFolded`); not while a form of the pools is open (`poolForm`, `trackForm`, `poolClear`); with `focus` the focus onto "▼ show". Called by `dm-apply`.
+- **`dmChanged`:** with "apply automatically" `S.dmFoldWait` after `applyMatrix`. **New `watchPoolsLeave(el, overlay)`** (in `buildOverlay`, on `[data-el="dates"]`): `mouseleave`, `focusout` to outside the bar, and a `focusin` outside it (the bar is drawn anew after each change, so the focus may have gone with the field) fold while `dmFoldWait`.
+- **Texts (English):** `dm.fold`, `dm.foldTitle`, `log.dmFoldSwitch`, `log.poolsFolded`; `reset.what` names the box (English only until the translation round).
+- **Tests:** `t_dates_matrix.py` new case `foldapply` (A box below the matrix and in ⚙, on; B "Apply" folds, focus, log; C off: stays open; D with "apply automatically": open while the pointer is in the bar, folded when it leaves; by keyboard, a field outside focused: folded; E ↺ of the topic: on again). `harness.py` `DM_FOLD` (False: `dci-dm-fold` stored off before the script starts – the cases written before work on in the open bar after "Apply"; `foldapply` sets True).
 
 ## Companion 1.10.1 · 2026-11-03
 
