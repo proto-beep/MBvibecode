@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.11, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.12, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.12 · 2026-11-03
+
+The notes of "Assist" (Discogs 3749161): a place instead of the area of its city, and the dates of areas (collected item Z-AP).
+
+- **`DATE_GROUPS`:** `recorded in` in Performance, `mixed in` in Mix, `mastered in` in Mastering and Remastering (its `only` also for `mastered in`) – the date of a row of an area ("Recorded In – Hiroshima") was in no column, "Apply" left it out.
+- **`TEXT.parse`:** context `placeNames` (the names of places the source lists itself); `placeIn`'s `isPlace` also true for such a name – "in Tokyo, Shinjuku Pit Inn" is that place in Tokyo, not the area "Tokyo (Shinjuku Pit Inn)". **`addNotesCompanies`** passes the release's companies with a role "… At".
+- **Mapping:** T051 `TEXT_PLACE_WORDS` + `cent(?:er|re)`, `kaikan`; its register note.
+- **Tests:** `t_notes_dates.py` new case `assistnotes` (A the area Hiroshima, the places Meguro Fukushi Center and Zojoji Hall, no area Tokyo; B "Apply": each row its date, the area too; C a place Discogs lists without a word of places; fails on 3.40.11); `harness.py` the type `recorded in` (area – recording, as on MusicBrainz); `register_golden.json` renewed (T051).
 
 ## Import 3.40.11 · 2026-11-03
 
