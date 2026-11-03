@@ -1,6 +1,6 @@
 """Works: the works of the artists, skipping the works matrix (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0), suiteask (3.41.1), suiteparts (3.41.2); `python3 t_works_more.py <case> …` runs only those."""
+Cases: artistworks, worksskip, livecom (3.32.9), livecomrun (3.32.10), liveoffer (3.37.3) – each the former smoke/t_<case>.py, unchanged –, livegroup (3.38.3), liveall (3.40.13), workpick (3.38.15), coverworks (3.38.16), suitedata (3.41.0), suiteask (3.41.1), suiteparts (3.41.2), medley (3.41.3); `python3 t_works_more.py <case> …` runs only those."""
 import re
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
@@ -1259,6 +1259,65 @@ def case_suiteparts():
         results.append(len(a0) == 7 and [x[2] for x in a0] == want and [x[3] for x in a0] == [1, 2, 3, 4, 5, 6, 7] and all(x[0] == 'Trisect' and x[1] == 6 and x[4] == [1105] for x in a0) and rec == 0)
         results.append(len(b0) == 7 and any('part 1 of the suite “Trisect”' in t and 'movement' in t for t in b0))
         results.append(c0 == 0)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_medley():
+    """Credits Importer 3.41.3 (collected item Z-SU; Q-cb, Q-cd, Q-cg): a track of several works – a medley.
+    Track 3 "Alpha / Beta" (Writer Z composed it); MusicBrainz has Writer Z's work "Beta".
+    A) The suite of the release's title asked, ✕ No; track 3 (no work yet): "Split into 2 works (medley)" in its line (its tooltip
+       names the parts) – not done by itself.
+    B) Clicked: "medley 1 of 2" Alpha (a new work), "medley 2 of 2" Beta – found in MusicBrainz (Writer Z's work), "↺ one work"; the
+       log says so.
+    C) Staged: the recording of track 3 with "Alpha" (order 1) and "Beta" (order 2), both with "medley".
+    D) "↺ one work": the track without work again (the split offered again)."""
+    H.TITLES[2] = 'Alpha / Beta'
+    WZ = H.ARTISTS[3009][0]
+    BETA = H.uid('cccccccc', 95)
+    H.attr(757, 'medley', 757)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (757,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.WORK_SEARCH[:] = [{'id': BETA, 'title': 'Beta', 'type': 'Song', 'aliases': [], 'relations': [{'target-type': 'artist', 'type': 'composer', 'artist': {'id': WZ, 'name': 'Writer Z'}}]}]
+    H.COMPANIES[7095] = ('work', BETA, 'Beta')
+    ROWS = """() => [...document.querySelectorAll('.dci-matrix tr[data-work="2"]')].map(tr => [(tr.querySelector('.dci-mx-part') || {textContent: ''}).textContent.trim(),
+      (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || {textContent: ''}).textContent.trim(),
+      [...tr.querySelectorAll('.dci-mx-line button')].map(b => b.textContent.trim()).filter(t => /medley|one work/.test(t))])"""
+    STAGED = """(() => { const ids = (r) => r && r.attributes && r.attributes.__tree ? r.attributes.__tree.map(a => a.typeID || a.type.id) : [];
+      return MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && r.entity0.gid === '%s').map(r => [r.entity1.name, r.linkOrder, ids(r)]).sort((a, b) => a[1] - b[1]); })()""" % H.REC[2]
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "!!document.querySelector('[data-el=suites] .dci-mx-suite')", 60)
+        pg.wait_for_timeout(500)
+        pg.click('[data-el=suites] [data-act=suite-no]'); pg.wait_for_timeout(400)
+        a0 = [pg.evaluate(ROWS), pg.evaluate("(b => b ? b.title : null)(document.querySelector('.dci-matrix tr[data-work=\"2\"] [data-act=medley-split]'))")]
+        print('A)', a0)
+        results.append(a0[0] == [['', '', ['Split into 2 works (medley)']]] and a0[1] == 'Each part a work of its own, linked as a medley in the order of the title: Alpha · Beta')
+        pg.click('.dci-matrix tr[data-work="2"] [data-act=medley-split]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /parts found/.test(li.textContent))", 30)
+        pg.wait_for_timeout(500)
+        b0 = [pg.evaluate(ROWS), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'medley' in x or 'parts found' in x]]
+        print('B)', b0)
+        results.append(b0[0] == [['medley 1 of 2', 'Alpha', ['↺ one work']], ['medley 2 of 2', 'MBBeta', []]]
+                       and b0[1] == ['Track 1.3: split into 2 works (medley)', 'Track 1.3: 1 of its parts found in MusicBrainz'])
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(3500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        c0 = pg.evaluate(STAGED)
+        print('C)', c0)
+        results.append(c0 == [['Alpha', 1, [757]], ['Beta', 2, [757]]])
+        pg.click('.dci-matrix tr[data-work="2"] [data-act=medley-join]'); pg.wait_for_timeout(400)
+        d0 = pg.evaluate(ROWS)
+        print('D)', d0)
+        results.append(d0 == [['', '', ['Split into 2 works (medley)']]])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

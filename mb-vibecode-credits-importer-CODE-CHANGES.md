@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.2, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.3, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.3 · 2026-11-03
+
+Medleys, and the parts looked up in MusicBrainz (collected item Z-SU; Q-cb, Q-cd, Q-cg).
+
+- **New `medleyParts(i)`** (the parts of a track without a work in MusicBrainz), **`splitMedley(i)`** (each part a part plan with the flag "medley" and `medley: true`, a work planned before kept in `before`), **`joinMedley(i)`**. Handlers `medley-split`, `medley-join`.
+- **`workFrontCell`:** "Split into n works (medley)" (`.dci-mx-split`) in the line of a track without a work and next to one new work, when its title has parts; a part of a medley "medley k of n", the first with "↺ one work". The flag "medley" goes onto the link through `linkAttrsOf` (the plan's flags), the order through `linkOrder` (3.41.1).
+- **New `searchParts(i)`:** each new part looked up with `searchWorks` among the works of the track's writers (`writerMbidsOfTrack`) – for a part of a suite also "Suite: Part", "Suite, Part" and the part alone; one work of exactly that title or alias: taken (`origin: 'search'`). After `acceptSuite` and `splitMedley`.
+- **Texts (English):** `medley.split`, `medley.splitTitle`, `medley.join`, `medley.joinTitle`, `medley.partOf`, `medley.partTitle`, `log.medleySplit`, `log.medleyJoined`, `log.partsFound`.
+- **Tests:** `t_works_more.py` new case `medley` (✕ No, the offer; split – a part found in MusicBrainz; staged with "medley" in the order of the title; one work again); fails on 3.41.2.
 
 ## Import 3.41.2 · 2026-11-03
 

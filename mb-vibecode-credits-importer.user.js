@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.2
+// @version      3.41.3
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.2
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.2
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.3
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.3
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.2';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.3';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1144,6 +1144,15 @@
       "suite.askAgainTitle": "Ask again whether these tracks are parts of a suite",
       "suite.partOf": "part {k} of {n}",
       "suite.partTitle": "A part of the suite “{name}”: a work of its own",
+      "medley.split": "Split into {n} works (medley)",
+      "medley.splitTitle": "Each part a work of its own, linked as a medley in the order of the title: {list}",
+      "medley.join": "one work",
+      "medley.joinTitle": "One work for the track again",
+      "medley.partOf": "medley {k} of {n}",
+      "medley.partTitle": "A part of a medley: a work of its own, linked with “medley” in its order",
+      "log.medleySplit": "Track {track}: split into {n} works (medley)",
+      "log.medleyJoined": "Track {track}: one work again",
+      "log.partsFound": "Track {track}: {n} of its parts found in MusicBrainz",
       "log.suiteYes": "Suite “{name}” ({tracks}): {n} parts planned as works",
       "log.suiteUndone": "Suite “{name}”: undone",
       "log.suiteNo": "“{name}”: no suite",
@@ -26569,14 +26578,19 @@
         const n = (S.workParts.get(i) || []).length;
         const what = pending ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>`
           : `<span class="dci-badge dci-badge-plan">${esc(tr('works.plannedFound'))}</span> ${mbLink(work)}`;
-        const badge = n > 1 ? `<span class="dci-mx-part" title="${esc(tr('suite.partTitle', { name: plan.suiteName || '' }))}">${esc(tr('suite.partOf', { k: plan.k, n }))}</span> ` : '';
-        return `${mrow.k === 1 || n < 2 ? head : ''}${line(`${badge}${what}`)}${linkAttrsHtml(mrow)}`;
+        const badge = n > 1 ? `<span class="dci-mx-part" title="${esc(tr(plan.medley ? 'medley.partTitle' : 'suite.partTitle', { name: plan.suiteName || '' }))}">${esc(tr(plan.medley ? 'medley.partOf' : 'suite.partOf', { k: plan.k, n }))}</span> ` : '';
+        // [Z-SU] (3.41.3) a medley: one work again
+        const join = plan.medley && plan.k === 1 ? ` <button type="button" class="dci-textbtn" data-act="medley-join" title="${esc(tr('medley.joinTitle'))}">↺ ${esc(tr('medley.join'))}</button>` : '';
+        return `${mrow.k === 1 || n < 2 ? head : ''}${line(`${badge}${what}${join}`)}${linkAttrsHtml(mrow)}`;
       }
       const o = pending ? rowOptsHtml(i) : { btn: '', panel: '' };
       const badge = pending
         ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('works.plannedPending'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>`
         : `<span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span> ${mbLink(work)}`;
-      return `${head}${line(`${badge} ${unplan} ${o.btn}`)}${linkAttrsHtml(mrow)}
+      // [Z-SU] (3.41.3) one new work "A / B": split into works of their own (a medley)
+      const mParts = pending ? medleyParts(i) : [];
+      const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr('medley.splitTitle', { list: mParts.join(' · ') }))}">${esc(tr('medley.split', { n: mParts.length }))}</button>` : '';
+      return `${head}${line(`${badge} ${unplan} ${o.btn}${split}`)}${linkAttrsHtml(mrow)}
         <div class="dci-c-date dci-w-date">${plan ? workDateCell(i, plan) : ''}</div>${o.panel}`;
     }
     const search = S.workSearch.get(i);
@@ -26606,8 +26620,11 @@
           <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
           <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span></li>`).join('')}</ul></div>`;
     }
+    // [Z-SU] (3.41.3) a title of parts ("A / B"): split into works of their own (a medley) – offered, not done by itself (Q-cg)
+    const mParts = medleyParts(i);
+    const split = mParts.length > 1 ? ` <button type="button" class="dci-small dci-mx-split" data-act="medley-split" title="${esc(tr('medley.splitTitle', { list: mParts.join(' · ') }))}">${esc(tr('medley.split', { n: mParts.length }))}</button>` : '';
     return `${head}<div class="dci-mx-line"><span class="dci-badge">${esc(tr('matrix.noWork'))}</span>${pick}
-        <button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pending'))}</button>
+        <button type="button" class="dci-primary dci-small" data-act="work-pending" title="${esc(tr('works.pendingTitle'))}">＋ ${esc(tr('works.pending'))}</button>${split}
         <button type="button" class="dci-small" data-act="work-search">${esc(tr('works.search'))}</button>
         <button type="button" class="dci-textbtn" data-act="work-create">${esc(tr('works.viaForm'))}</button>${state} ${o.btn}</div>
       ${found}${o.panel}`;
@@ -26899,6 +26916,8 @@
     S.suiteSeq += 1;
     S.suiteWorks.set(o.key, { gid: `pending:s${S.suiteSeq}`, title: nm, key: o.key, tracks: [...o.tracks], origin: 'pending', flags: new Set(), suite: true });
     log('info', 'suiteYes', { name: nm, tracks: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }), n });
+    // [Z-SU] (3.41.3) the parts looked up in MusicBrainz
+    o.tracks.forEach((i) => { if (S.workParts.has(i)) searchParts(i); });
   }
 
   /** [Z-SU] (3.41.1) "↺": the parts of the suite go (a work planned before for a track comes back); asked again. */
@@ -26911,6 +26930,73 @@
     S.suiteAnswers.delete(o.key);
     S.suiteWorks.delete(o.key);
     log('info', 'suiteUndone', { name: o.name });
+  }
+
+  /** [Z-SU] (3.41.3) The parts of a track that is in no suite accepted: its sub-tracks or the parts of its title ([] without). */
+  function medleyParts(i) {
+    const t = S.mbTracks[i];
+    if (!t || t.works.length) return [];
+    const src = (S.srcTracks || [])[i] || null;
+    return trackPartsOf(src && src.title ? src : { title: t.title });
+  }
+
+  /**
+   * [Z-SU] (3.41.3) "Split into n works (medley)" (Q-cb, Q-cd, Q-cg): each part of the track a work of its own, every link with
+   * "medley", in the order of the title; "↺ one work" again. A work planned for the track before comes back with it.
+   */
+  function splitMedley(i) {
+    const parts = medleyParts(i);
+    if (parts.length < 2) return;
+    const before = S.workPlan.get(i) || null;
+    S.workPlan.delete(i);
+    S.workParts.set(i, parts.map((title, k) => ({
+      gid: `pending:${i}.${k + 1}`, title, part: title, k: k + 1, origin: 'pending', flags: new Set(['medley']), medley: true,
+      ...(k === 0 && before ? { before } : {}),
+    })));
+    log('info', 'medleySplit', { track: trackLabel(S.mbTracks[i]), n: parts.length });
+    searchParts(i);
+  }
+  function joinMedley(i) {
+    const ps = S.workParts.get(i);
+    if (!ps || !ps.length || !ps[0].medley) return;
+    S.workParts.delete(i);
+    if (ps[0].before) S.workPlan.set(i, ps[0].before);
+    log('info', 'medleyJoined', { track: trackLabel(S.mbTracks[i]) });
+  }
+
+  /**
+   * [Z-SU] (3.41.3) Each new part looked up in MusicBrainz among the works of the track's writers (Q-cb): one work of exactly that
+   * title – for a part of a suite also "Suite, Part", "Suite: Part" or the part alone – is taken instead of a new one ("found").
+   */
+  async function searchParts(i) {
+    const ps = S.workParts.get(i);
+    const writers = [...writerMbidsOfTrack(i)];
+    if (!ps || !writers.length) return;
+    let found = 0;
+    for (const p of ps) {
+      if (p.origin !== 'pending') continue;
+      const titles = uniq([p.title, ...(p.suiteName ? [`${p.suiteName}: ${p.part}`, `${p.suiteName}, ${p.part}`, p.part] : [])]);
+      for (const title of titles) {
+        let hits = [];
+        try {
+          hits = await searchWorks(title, writers);
+        } catch {
+          hits = []; // (not answered: a new work, as without a hit)
+        }
+        const same = hits.filter((w) => norm(w.title) === norm(title) || (w.aliases || []).some((x) => norm(x) === norm(title)));
+        if (same.length === 1 && S.workParts.get(i) === ps && p.origin === 'pending') {
+          Object.assign(p, { gid: same[0].gid, title: same[0].title, origin: 'search' });
+          delete p.entity;
+          found += 1;
+          break;
+        }
+      }
+    }
+    if (found) {
+      log('info', 'partsFound', { track: trackLabel(S.mbTracks[i]), n: found });
+      renderWorksBackground();
+      refresh();
+    }
   }
 
   /** [Z-SU] (3.41.1) The question of a suite (or what was answered) at the top of the works matrix. */
@@ -29033,6 +29119,20 @@
         renderWorks();
         refresh();
         const again = S.overlay.querySelector(`[data-el="suites"] [data-suite="${CSS.escape(o.key)}"] button`);
+        if (again) again.focus({ preventScroll: true });
+        break;
+      }
+      // [Z-SU] (3.41.3) a medley split into its works, or one work again
+      case 'medley-split':
+      case 'medley-join': {
+        const trw = btn.closest('tr[data-work]');
+        if (!trw) break;
+        const i = Number(trw.dataset.work);
+        if (act === 'medley-split') splitMedley(i);
+        else joinMedley(i);
+        renderWorks();
+        refresh();
+        const again = S.overlay.querySelector(`tr[data-work="${i}"] [data-act="${act === 'medley-split' ? 'medley-join' : 'medley-split'}"]`);
         if (again) again.focus({ preventScroll: true });
         break;
       }
