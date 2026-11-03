@@ -260,10 +260,19 @@ DG_API = {}
 # Bandcamp for a test: page URL ("https://band.bandcamp.com/album/x") → HTML; band page URL → (MB gid, MB name)
 BC_PAGES = {}
 BC_ARTISTS = {}
+# [3.41.13] YouTube for a test: the id of a video → its page (yt_page)
+YT_PAGES = {}
 # The release's artist credit (below its title): [(MB gid, MB name, name as credited, join phrase)]
 RELEASE_AC = []
 # [3.17.3] lookups to fail: {'release': n} – the next n lookups of the release answer 503
 WS_FAIL = {}
+
+
+def yt_page(vid, title, channel, description):
+    """[3.41.13] A YouTube video page with its data as YouTube writes it ("var ytInitialPlayerResponse = {…};" in a script)."""
+    data = {'videoDetails': {'videoId': vid, 'title': title, 'author': channel, 'shortDescription': description}, 'microformat': {}}
+    return (f'<!doctype html><html><head><title>{title} - YouTube</title></head><body><script>var ytInitialPlayerResponse = {json.dumps(data)};'
+            'var meta = document.createElement("meta");</script><div id="player"></div></body></html>')
 
 
 def bc_page(data, band=None):
@@ -962,6 +971,16 @@ def install_routes(ctx):
         return route.fulfill(body=page, content_type='text/html', headers={'Access-Control-Allow-Origin': '*'})
 
     ctx.route(re.compile(r'https://[a-z0-9-]+\.bandcamp\.com/.*'), bc_web)
+
+    def yt_web(route):
+        u = urllib.parse.urlparse(route.request.url)
+        vid = (urllib.parse.parse_qs(u.query).get('v') or [''])[0]
+        page = YT_PAGES.get(vid) if u.path == '/watch' else None
+        if page is None:
+            return route.fulfill(status=404, body='', headers={'Access-Control-Allow-Origin': '*'})
+        return route.fulfill(body=page, content_type='text/html', headers={'Access-Control-Allow-Origin': '*'})
+
+    ctx.route('https://www.youtube.com/**', yt_web)
     png = bytes.fromhex('89504e470d0a1a0a0000000d4948445200000001000000010806000000'
                         '1f15c4890000000d49444154789c6360f8cf00000301010018dd8db40000000049454e44ae426082')
     ctx.route('https://i.discogs.com/**', lambda route: route.fulfill(body=png, content_type='image/png'))

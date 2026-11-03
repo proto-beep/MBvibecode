@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.41.12
+// @version      3.41.13
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -22,12 +22,13 @@
 // @grant        GM.getResourceUrl
 // @grant        unsafeWindow
 // @connect      bandcamp.com
+// @connect      youtube.com
 // @connect      raw.githubusercontent.com
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.12
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.12
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.41.13
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.41.13
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.12';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.41.13';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -119,7 +120,7 @@
       "source.current": "{title} (Discogs {id})",
       "source.none": "No source loaded yet",
       "source.pick": "Choose a linked source …",
-      "source.other": "Other source: Discogs release (URL or ID) or Bandcamp album or track URL",
+      "source.other": "Other source: Discogs release (URL or ID), Bandcamp album or track URL or YouTube video URL",
       "source.load": "Load",
       "source.currentLink": "{title} ({src})",
       "msg.noSourceLink": "This release is not linked to Discogs or Bandcamp yet. Enter a URL above or paste a text.",
@@ -155,7 +156,7 @@
       "log.pubOfPerson": "{name} as publisher is the person {person}: publishing is a role of that entry (MusicBrainz: artist–work “published / publisher”), no company of its own",
       "supp.with": "Supplement with",
       "supp.text": "Text …",
-      "supp.urlPh": "or another: Discogs release (URL or ID) or Bandcamp album or track URL",
+      "supp.urlPh": "or another: Discogs release (URL or ID), Bandcamp album or track URL or YouTube video URL",
       "supp.urlLoad": "Supplement",
       "supp.sameAsLoaded": "That is the source loaded already.",
       "supp.textTitle": "Supplement the loaded source with a pasted text (booklet, liner notes …)",
@@ -223,6 +224,9 @@
       "bc.testRunning": "Loading the page …",
       "bc.testOk": "Read: “{title}”, {n} tracks, {lines} lines of credits, {pages} track pages (via {via}).",
       "err.bandcampData": "No album data found on {url}.",
+      "err.youtubeData": "No video description found on {url}.",
+      "conn.X017": "Reads the page of a YouTube video whose address you enter as another source (or a supplement): its description is read as a text of credits.",
+      "stats.src.youtube": "YouTube",
       "err.pageHttp": "The page answered with HTTP {status}: {url}",
       "err.pageNet": "The page could not be loaded (blocked or offline): {url}",
       "log.artistSpelling": "{name}: found via its {src} link, but MusicBrainz spells it differently ({mb}) – only a suggestion",
@@ -641,7 +645,7 @@
       "msg.tracksDiffer": "{src} differs from the MusicBrainz release: {what}{list}. Tracks are matched in order – check the track selection of recording and work relationships.",
       "msg.noCredits": "{src} has no credits for this release. You can add entries manually below.",
       "msg.confirmDiscard": "The current selection in the dashboard will be discarded. Continue?",
-      "msg.badDiscogsId": "No Discogs release or Bandcamp album or track recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name",
+      "msg.badDiscogsId": "No Discogs release, Bandcamp album or track or YouTube video recognized. Examples: https://www.discogs.com/release/1234567, https://artist.bandcamp.com/album/name, https://artist.bandcamp.com/track/name, https://www.youtube.com/watch?v=Cx-BhTkZf8A",
       "msg.badMbid": "No MBID recognized. Paste the URL of an MB artist page or an MBID.",
       "msg.notArtist": "This MBID does not belong to an artist.",
       "msg.editorNotReady": "The relationship editor is not ready yet. Wait until the page has fully loaded and try again.",
@@ -6874,7 +6878,86 @@
   })();
 
   /** The sources the dashboard can read; those with links on a MusicBrainz release are ordered by preference. */
-  const SOURCES = { discogs: DISCOGS, bandcamp: BANDCAMP, text: TEXT };
+  // --- Source adapter: YouTube --------------------------------------------------------------------------------------
+  // [Z-YT] (3.41.13) The description of a YouTube video, by its address in "another source" (or "+ Supplement"): read as a text
+  // (E1) – the tracks are MusicBrainz's own. Its data: the JSON "ytInitialPlayerResponse" of the video page (videoDetails: title,
+  // channel, description).
+
+  const YOUTUBE = (() => {
+    const ID_RE = /^https?:\/\/(?:(?:www\.|m\.|music\.)?youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])/i;
+    /** "https://www.youtube.com/watch?v=Cx-BhTkZf8A", "https://youtu.be/Cx-BhTkZf8A?t=3", ".../shorts/…" → "Cx-BhTkZf8A" ('' if none). */
+    const videoId = (text) => {
+      const m = ID_RE.exec(String(text || '').trim());
+      return m ? m[1] : '';
+    };
+    const videoUrl = (id) => `https://www.youtube.com/watch?v=${id}`;
+    /** The JSON object after `name` in a page (its braces counted outside strings); null without. */
+    function jsonAfter(html, name) {
+      const at = html.indexOf(name);
+      const start = at < 0 ? -1 : html.indexOf('{', at);
+      if (start < 0) return null;
+      let depth = 0;
+      let inStr = false;
+      let bs = false;
+      for (let i = start; i < html.length; i++) {
+        const c = html[i];
+        if (inStr) {
+          if (bs) bs = false;
+          else if (c === '\\') bs = true;
+          else if (c === '"') inStr = false;
+        } else if (c === '"') inStr = true;
+        else if (c === '{') depth += 1;
+        else if (c === '}' && --depth === 0) {
+          try {
+            return JSON.parse(html.slice(start, i + 1));
+          } catch {
+            return null;
+          }
+        }
+      }
+      return null;
+    }
+    /** The video of a page: { id, title, channel, description } (null without its data). */
+    function pageData(html) {
+      const p = jsonAfter(String(html || ''), 'ytInitialPlayerResponse');
+      const v = p && p.videoDetails;
+      if (!v) return null;
+      return { id: v.videoId || '', title: String(v.title || ''), channel: String(v.author || ''), description: String(v.shortDescription || '') };
+    }
+    /** The neutral release: the description read as a text, with the video as its source. */
+    function toRelease(data, id, ctx) {
+      const url = videoUrl(id);
+      const rel = TEXT.toRelease({ text: data.description, origin: url }, ctx);
+      return { ...rel, source: 'youtube', id, url, title: data.title || url, noteSource: url, channel: data.channel };
+    }
+    return {
+      id: 'youtube',
+      name: 'YouTube',
+      short: 'YT',
+      noteName: 'a YouTube video description',
+      creditsName: 'YouTube description',
+      companion: false,
+      readsTrackLists: true,
+      nameSearch: true,
+      /** The tracks are MusicBrainz's own (a video has no track list). */
+      usesMbTracks: true,
+      urlKey: () => '',
+      releaseLinks: () => [],
+      parseReleaseId: videoId,
+      videoId,
+      videoUrl,
+      pageData,
+      toRelease,
+      async release(id, ctx) {
+        const html = await ctx.httpGet(videoUrl(id));
+        const data = pageData(html);
+        if (!data || !data.description.trim()) throw new Error(tr('err.youtubeData', { url: videoUrl(id) }));
+        return toRelease(data, id, ctx);
+      },
+    };
+  })();
+
+  const SOURCES = { discogs: DISCOGS, bandcamp: BANDCAMP, text: TEXT, youtube: YOUTUBE };
   const LINKED_SOURCES = ['discogs', 'bandcamp'];
 
   // --- From the neutral release to the dashboard's entries (core) ---------------------------------------
@@ -7305,6 +7388,8 @@
     // [3.34.6] booklets as PDF
     { id: 'X016', kind: 'library', name: 'pdf.js', home: 'https://github.com/mozilla/pdf.js', hosts: ['cdn.jsdelivr.net'],
       perms: '– (loaded into the page from cdn.jsdelivr.net, only for a PDF in the beta)', since: '3.34.6' },
+    // [Z-YT] (3.41.13) the description of a video
+    { id: 'X017', kind: 'source', name: 'YouTube', home: 'https://www.youtube.com/', hosts: ['youtube.com', 'youtu.be'], perms: '@connect youtube.com · GM_xmlhttpRequest', since: '3.41.13' },
   ];
 
   /**
@@ -30569,11 +30654,13 @@
         break;
       }
       case 'discogs-load': {
-        // Another source: a Bandcamp album URL, else a Discogs release (URL or ID); remembered for this release
+        // Another source: a Bandcamp album URL, [Z-YT] (3.41.13) a YouTube video, else a Discogs release (URL or ID); remembered for
+        // this release
         const input = S.overlay.querySelector('[data-f="discogs-input"]');
         const bc = BANDCAMP.pageUrl(input.value);
-        const source = bc ? BANDCAMP : DISCOGS;
-        const id = bc || DISCOGS.parseReleaseId(input.value);
+        const yt = !bc && YOUTUBE.videoId(input.value);
+        const source = bc ? BANDCAMP : yt ? YOUTUBE : DISCOGS;
+        const id = bc || yt || DISCOGS.parseReleaseId(input.value);
         if (id) {
           keepSourcePick(source, id);
           loadRelease(id, { source });
@@ -30605,8 +30692,9 @@
       case 'supp-url': {
         const input = S.overlay.querySelector('[data-f="supp-url"]');
         const bc = BANDCAMP.pageUrl(input.value);
-        const source = bc ? BANDCAMP : DISCOGS;
-        const id = bc || DISCOGS.parseReleaseId(input.value);
+        const yt = !bc && YOUTUBE.videoId(input.value); // [Z-YT] (3.41.13)
+        const source = bc ? BANDCAMP : yt ? YOUTUBE : DISCOGS;
+        const id = bc || yt || DISCOGS.parseReleaseId(input.value);
         if (!id) {
           showMessage('error', 'msg.badDiscogsId');
         } else if (source === S.source && String(id) === String(S.release && S.release.id)) {
@@ -32203,7 +32291,7 @@
 
   /** [E8] The kinds of the supplements of this import. */
   function statSuppKinds() {
-    const by = { DG: 'discogs', BC: 'bandcamp', TXT: 'text' };
+    const by = { DG: 'discogs', BC: 'bandcamp', TXT: 'text', YT: 'youtube' }; // [Z-YT] (3.41.13)
     return [...S.suppSources.keys()].map((k) => (k === 'TXT' && S.statOcr && S.statOcr.supp ? 'ocr' : by[k] || String(k).toLowerCase()));
   }
 
@@ -32585,7 +32673,7 @@
     };
     const wd = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(LANG, { weekday: 'short' }).format(new Date(2024, 0, 1 + i)));
     const hours = Array.from({ length: 24 }, (_, h) => String(h));
-    const srcName = (k) => tr(`stats.src.${['discogs', 'bandcamp', 'text', 'ocr'].includes(k) ? k : 'other'}`);
+    const srcName = (k) => tr(`stats.src.${['discogs', 'bandcamp', 'text', 'ocr', 'youtube'].includes(k) ? k : 'other'}`);
     const pct = (x) => `${statPct(x, m.rels)} %`;
     const streak = statStreaks(m.days);
     const bestDay = top(m.days, 1)[0];

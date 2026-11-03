@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.41.12, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.41.13, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.41.13 · 2026-11-03
+
+Block BF, part 7 – collected item Z-YT: the description of a YouTube video as a source.
+
+- **Source adapter `YOUTUBE`** (new; `SOURCES.youtube`): `videoId(text)` (watch?v=, youtu.be/, shorts/, live/, embed/, m. and music.), `videoUrl(id)`, `pageData(html)` (the JSON "ytInitialPlayerResponse" of the page, found by counting its braces outside strings: `videoDetails` title, author, shortDescription), `toRelease(data, id, ctx)` (the description through `TEXT.toRelease`, the video as source, `noteSource` its address), `release(id, ctx)` (the page by `ctx.httpGet`; `err.youtubeData` without a description). `usesMbTracks`, `nameSearch`, no companion, no linked releases (only by address for now).
+- **"another source"** (`discogs-load`) and **"+ Supplement"** (`supp-url`): a YouTube address picks `YOUTUBE`.
+- **Header:** `@connect youtube.com`; **CONNECTIONS:** X017 YouTube (`conn.X017`).
+- **Statistics:** `stats.src.youtube` ("YouTube") in the sources; `statSuppKinds` knows "YT".
+- **Texts:** new `err.youtubeData`, `conn.X017`, `stats.src.youtube` (English); `source.other`, `supp.urlPh`, `msg.badDiscogsId` name YouTube videos (in all four languages).
+- **Tests:** `smoke/harness.py` `YT_PAGES`, `yt_page()` and the route of www.youtube.com; `t_sources_bandcamp.py` new case `youtube` (fails on 3.41.12); `t_ui_settings.py` `settabs`: 17 connections.
 
 ## Import 3.41.12 · 2026-11-03
 
