@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.40.13, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.40.14, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.40.14 · 2026-11-03
+
+"Collect statistics" in ⚙ Settings → Cache, Log | Statistics · ⚙ next to "Import credits …" (collected items Z-SC, Z-LS; Q-bz).
+
+- **`statsHtml`:** no box any more; at the top `p.dci-sub.dci-stats-where[data-el=stats-where]` (`stats.whereOn` / `stats.whereOff`) with `button[data-act=stats-where]` (`stats.whereBtn`). The handler **`stats-where`** calls the new **`openSettingsAt(topic, focusSel)`** (⚙ Settings open at a topic, stored as a click on its tab, the statistics and the docked rules closed, the focus on `focusSel` or the tab).
+- **⚙ Settings → Cache:** the box `data-set=stats-on` (handler `settingsChange` unchanged). **`TOPIC_KEYS`:** `STATS_ON_KEY` from `statistics` to `cache` (its ↺).
+- **`insertLauncher`:** `span.dci-launch-tools` – `#dci-log-open` (now `.dci-launch-ico` with `ico('log')`, `aria-pressed`), `.dci-launch-sep`, `#dci-stats-open` (`ico('stats')`), `#dci-set-open` (`ico('gear')`); **`renderLauncher`** sets their `aria-label` and `title` (`log.title`; `stats.title`, `stats.buttonTitle`; `settings.title`, `settings.buttonTitle`) and calls `syncLogBtn`. **`syncLogBtn`** also presses `#dci-log-open` (before the check for the dashboard).
+- **`openFromBar(what)`:** `openDashboard({ settingsOnly: true, only: what })` when it is closed, then the statistics (read anew, ⚙ and the docked rules closed, the focus on their heading) or `openSettingsAt` at the remembered tab. **`openDashboard`:** with `only: 'stats'` the message `statsOnly.hint`; one of the two messages at most. **`onlyHint(what)`** (before the import): the message names what is open – also from `stats-open` and `settings-open` of the head.
+- CSS `#dci-launcher .dci-launch-tools`, `.dci-launch-ico`, `.dci-launch-sep`.
+- **Texts (English):** `stats.whereOn`, `stats.whereOff`, `stats.whereBtn`, `statsOnly.hint`.
+- **Tests:** `t_ui_settings.py` new case `statswhere`; `stats` A/E and `statsbutton` B with the box in ⚙ → Cache; `t_ui_head.py` new case `launchtools` (without the companion: the three symbols; Log pressed; Statistics and ⚙ without the import, the message; "Start import"). Both new cases fail on 3.40.13.
 
 ## Import 3.40.13 · 2026-11-03
 

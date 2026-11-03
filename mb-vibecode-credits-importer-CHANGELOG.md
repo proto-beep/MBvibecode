@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.40.13 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.40.14 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,13 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.40.14
+
+#### Changed
+
+- **"Collect statistics" moved to ⚙ Settings → Cache** (collected item Z-SC). A grey line at the top of the statistics says whether they are collected and leads there.
+- **Log | Statistics · ⚙ next to "Import credits …"** (collected item Z-LS): symbols in the order of the dashboard's head, the word "Log" replaced. Statistics and ⚙ open the dashboard without starting the import, also without the companion.
 
 ### Import 3.40.13
 
