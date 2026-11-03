@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.6
+// @version      3.40.7
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.6
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.6
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.7
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.7
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.6';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.7';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -912,6 +912,9 @@
       "group.otherSpellings": "Also on this release as: {list}",
       "group.creditedAsMore": "as {name} (+{n})",
       "group.creditedAsFor": "as {name} for {roles}",
+      "group.copyName": "Copy “{name}” (to search for it or create it in MusicBrainz)",
+      "group.copiedName": "Copied: “{name}”",
+      "group.copyFailed": "The browser did not allow copying “{name}”",
       "area.regionHit": "the area the region “{region}” lies in (T059) – a suggestion; credited as “{region}”",
       "group.creditedAsTitle": "How the dashboard credits this entry on the release: {list} – from the spelling in the source; change it in the rows (“credited as”). Empty: the MusicBrainz name.",
       "group.creditedSpelling": "artist credit in MusicBrainz: {name} (the Discogs spelling *)",
@@ -18976,14 +18979,22 @@
       });
     }
   }
+  /**
+   * [Z-CP] (3.40.7) ⧉ next to the name of an entry without a MusicBrainz entry chosen (Q-av): copies the name of the entry at the
+   * source (Q-aw; at Discogs the artist name without its number "(2)", not the release's spelling of the head) – to search or
+   * create it in MusicBrainz; hidden once one is chosen. The symbol is drawn by CSS: the text of the head stays the name.
+   */
+  const copyNameHtml = (a) => (a.placeholder ? '' : `<button type="button" class="dci-textbtn dci-copyname" data-act="name-copy" data-name="${esc(a.name)}"${a.mbid ? ' hidden' : ''}
+    title="${esc(tr('group.copyName', { name: a.name }))}" aria-label="${esc(tr('group.copyName', { name: a.name }))}"></button>`);
+
   function entryNameHtml(a) {
     const sp = releaseSpelling(a);
-    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
+    if (!sp) return `<strong${mbCaps(a) ? ` data-name="${esc(a.name)}"` : ''}>${esc(mbCaps(a) ? a.mbName : a.name)}</strong>${copyNameHtml(a)}${caseBackHtml(a)}${initialsHtml(a)}`;
     // [3.37.11] the * says what it means (collected item 161); [3.39.1] in the words of the entry's source (collected item 185)
     const src = entrySource(a);
     const title = [trSrcOf(src, 'group.discogsName', { name: a.rawName || a.name }), ...(sp.others.length ? [tr('group.otherSpellings', { list: sp.others.join(', ') })] : []),
       ...(entryCredits(a).some((c) => typo(c) === typo(sp.shown)) ? [trSrcOf(src, 'group.anvStar')] : [])].join('\n');
-    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${caseBackHtml(a)}${initialsHtml(a)}`;
+    return `<strong class="dci-gname-anv" data-name="${esc(a.name)}" title="${esc(title)}">${esc(sp.shown)}*</strong>${copyNameHtml(a)}${caseBackHtml(a)}${initialsHtml(a)}`;
   }
 
   function creditChipHtml(a) {
@@ -23053,6 +23064,8 @@
     section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
     const spell = section.querySelector(`[data-spell="${a.key}"]`);
     if (spell) spell.innerHTML = spellHtml(a);
+    // [Z-CP] (3.40.7) ⧉ only while no MusicBrainz entry is chosen
+    section.querySelectorAll('.dci-gname .dci-copyname').forEach((b) => { b.hidden = !!a.mbid; });
     const list = section.querySelector(`#dci-ac-${a.key}`);
     if (list) list.innerHTML = artistVariants(a).map((v) => `<option value="${esc(v)}"></option>`).join('');
   }
@@ -28589,6 +28602,19 @@
         // [3.39.7] initials of several names: the one they stand for (collected item K-8)
         if (artist) initialsUse(artist, btn.dataset.name);
         break;
+      case 'name-copy': {
+        // [Z-CP] (3.40.7) the name into the clipboard; "✓" for a moment
+        const name = btn.dataset.name || '';
+        const shown = (ok) => {
+          // the symbol is drawn by CSS (⧉, ✓ while .dci-copied), so the text of the entry's head stays its name
+          btn.classList.toggle('dci-copied', ok);
+          btn.title = tr(ok ? 'group.copiedName' : 'group.copyFailed', { name });
+          if (ok) setTimeout(() => { btn.classList.remove('dci-copied'); btn.title = tr('group.copyName', { name }); }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(name).then(() => shown(true), () => shown(false));
+        else shown(false);
+        break;
+      }
       case 'name-use': {
         const h = (artist.nameHits || []).find((x) => x.mbid === btn.dataset.mbid);
         if (!h) break;
@@ -32835,6 +32861,9 @@
       }
       .dci-head, #dci-log .dci-log-head { cursor: move; touch-action: none; }
       .dci-moving { user-select: none; opacity: 0.97; }
+      .dci-copyname { margin-left: calc(var(--u, 1px) * 4); color: var(--muted); font-size: 0.95em; text-decoration: none; }
+      .dci-copyname::before { content: "⧉"; }
+      .dci-copyname.dci-copied::before { content: "✓"; color: var(--ok); }
       .dci-head-sep { width: 1px; align-self: stretch; margin: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 2); background: var(--line); }
       .dci-stats-local { margin-left: calc(var(--u, 1px) * 6); font-weight: normal; }
       .dci-zoom { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: calc(var(--u, 1px) * 12); font-variant-numeric: tabular-nums; }

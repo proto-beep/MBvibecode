@@ -420,6 +420,9 @@ python3 t_ui_head.py            # Dashboard: its head, the head of an entry, "Ad
                                 #   blockac: 3.40.3 (Z-AK): "Credited as" in the head of a block of several roles – "several", "Lake" + Enter (the
                                 #     flutes join, the message with ↶ Undo), Undo, a line by hand keeps its own (also against the older ↶), emptied
                                 #     with Enter: MusicBrainz's name, the focus back; blocks of one role: none; compact: no field, the chips' "as …"
+                                #   copyname: 3.40.7 (Z-CP): ⧉ at the entry not linked, none at the linked; a click: the name in the clipboard,
+                                #     ✓, ⧉ again (drawn by CSS: the head's text stays the name); a pasted text: ⧉ also at a name with a
+                                #     suggestion, gone once the suggestion is chosen
                                 #   poolbar: 3.37.15 (165, 166): a pool open for the import's suggestions folds at one click; "▲ fold" in the
                                 #     head after the title, "▼ show" folded at the same x, none at the foot; folded pools with "+ New date" (form,
                                 #     saved: counted) and "+ New track group"; the kept bar with both, "+ New date" opens the block, Cancel folds;

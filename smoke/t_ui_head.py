@@ -1,6 +1,6 @@
 """Dashboard: its head, the head of an entry, "Add entry manually", messages, the page bar, ▲ ▼ (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac; `python3 t_ui_head.py <case> …` runs only those."""
+Cases: head, entryhead, manualtop, msgs, bar, jump – each the former smoke/t_<case>.py, unchanged –, [3.34.23] compacthint, [3.36.3] keys, [3.37.11] anvcredit, [3.37.15] poolbar, [3.40.3] blockac, [3.40.7] copyname; `python3 t_ui_head.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -865,6 +865,62 @@ def case_blockac():
                        and d2 and d2['lines'] == [['flute', ''], ['soprano saxophone', '']] and d2['msg'] and d2['msg'][-1].startswith('Credited as the MusicBrainz name for 2 roles of Oliver Lake')
                        and focus == 'em-bac')
         results.append(e and e[0] == 0 and 'flute as “Lake”' in e[1] and 'soprano saxophone as “Ollie”' in e[1])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_copyname():
+    """Credits Importer 3.40.7 (collected item Z-CP; Q-av, Q-aw): ⧉ next to the name of an entry without a MusicBrainz entry chosen.
+    A) After the import: ⧉ at every entry not linked (also companies and places), none shown at those linked; its tooltip names it.
+    B) A click: the name of the source in the clipboard (without Discogs's number), "✓" for a moment; the symbols drawn by CSS –
+       the text of the head stays the name (the other test files read it).
+    C) A pasted text: its names only suggested – ⧉ still shown (a suggestion is not a chosen entry); one suggestion chosen: its ⧉ goes."""
+    results = []
+    STATE = """(() => [...document.querySelectorAll('section.dci-group')].map(g => { const b = g.querySelector('.dci-gname .dci-copyname');
+      return [g.querySelector('.dci-gname strong').textContent.trim(), (g.className.match(/dci-st-(\\w+)/) || [])[1], b ? !b.hidden : null, b ? b.dataset.name : '', b ? b.title : '']; }))()"""
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.grant_permissions(['clipboard-read', 'clipboard-write'], origin='https://musicbrainz.org')
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        a = pg.evaluate(STATE)
+        linked = [x for x in a if x[1] in ('linked', 'manual')]
+        open_ = [x for x in a if x[1] not in ('linked', 'manual')]
+        print('A) verknüpft:', [(x[0], x[2]) for x in linked], '\n   ohne:', [(x[0], x[1], x[2], x[3]) for x in open_])
+        results.append(bool(linked) and bool(open_) and all(x[2] is False for x in linked) and all(x[2] is True and x[3] == x[0].rstrip('*') for x in open_)
+                       and all(x[4].startswith(f'Copy “{x[3]}”') for x in open_))
+        name = open_[0][0]
+        sec = f"section.dci-group:has(.dci-gname strong:text-is('{name}'))"
+        pg.locator(f'{sec} .dci-gname .dci-copyname').click()
+        pg.wait_for_timeout(200)
+        clip = pg.evaluate("navigator.clipboard.readText()")
+        mark = pg.locator(f'{sec} .dci-gname .dci-copyname').evaluate("b => getComputedStyle(b, '::before').content.replace(/\"/g, '')")
+        pg.wait_for_timeout(1800)
+        back = pg.locator(f'{sec} .dci-gname .dci-copyname').evaluate("b => getComputedStyle(b, '::before').content.replace(/\"/g, '')")
+        head = pg.locator(f'{sec} .dci-gname').evaluate("g => g.textContent.replace(/\\s+/g, ' ').trim()")
+        print('B) kopiert:', name, '→', repr(clip), '| Zeichen:', mark, '→', back, '| Text des Kopfs:', repr(head))
+        results.append(clip == open_[0][3] and mark == '✓' and back == '⧉' and '⧉' not in head and '✓' not in head)
+        # C) a pasted text: names are only suggested, a suggestion is not a chosen entry; once chosen, its ⧉ goes
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', 'Bass Man: bass\nNobody Known: guitar')
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(800)
+        c0 = {x[0]: x for x in pg.evaluate(STATE)}
+        bm = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Bass Man').dataset.group")
+        pg.click(f'section[data-group="{bm}"] [data-act=name-use]')
+        pg.wait_for_timeout(500)
+        c1 = {x[0]: x for x in pg.evaluate(STATE)}
+        print('C) vorher:', {k: c0[k][1:3] for k in ('Bass Man', 'Nobody Known') if k in c0}, '| nach der Wahl:', {k: c1[k][1:3] for k in ('Bass Man', 'Nobody Known') if k in c1})
+        results.append('Bass Man' in c0 and c0['Bass Man'][2] is True and c0.get('Nobody Known', [0, 0, None])[2] is True
+                       and c1['Bass Man'][1] == 'manual' and c1['Bass Man'][2] is False and c1['Nobody Known'][2] is True)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
