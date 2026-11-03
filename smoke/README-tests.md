@@ -523,6 +523,8 @@ python3 t_ui_settings.py        # Settings: tabs, the menu, the head symbols pre
                                 #     3.40.14: no switch in the statistics
                                 #   statswhere: 3.40.14 (Z-SC): "Collect statistics" in ⚙ → Cache; the grey line at the top of the statistics
                                 #     (on / off) leads there (tab remembered, focus on the box); ↺ of Cache: on again
+                                #   statsmore2: 3.41.14 (Z-STS … Z-STC): the new cards from four records (one v 1) – suites, attributes, works,
+                                #     genres, decisions, live, gaps, worked together, "Counted from 3.41.14 on"; a real record v 2 with x and a
                                 #   editnote: 3.41.9 (Z-EN): no "edit note" in the footer; ⚙ Staging → Edit note Full | Simple | None (tooltips list
                                 #     the lines); Full: Done; Simple: Source + Script only, also in the work form; None: the block goes, no form note
 

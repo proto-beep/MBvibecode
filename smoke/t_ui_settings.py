@@ -1269,6 +1269,91 @@ def case_statsmore():
 
 
 
+def case_statsmore2():
+    """Credits Importer 3.41.14 (collected items Z-STS, Z-STA, Z-STW, Z-STG, Z-STQ, Z-STL, Z-STV, Z-STC; Q-cv, Q-cw): the cards of
+    3.41.14, for everyone (not only in "Developer mode"), from four stored submissions – one of 3.41.13 (v 1) and three of 3.41.14:
+    A) "Suites and medleys": suites 2, created in MusicBrainz 1, found in MusicBrainz 1, added by hand 1, their parts 5, medleys split 1,
+       "parts" relationships 3 · "Attributes": live 2, additional 1, medley 1, movement 3 · "Works": linked 4, created 1, new in the
+       editor 2 · "Genres and styles": Jazz 2 (once a release), Free Jazz 1 · "Decisions": 3 answers – Q012: spoken vocals …, Q002:
+       electric guitar 2 · "Live": 2 links, 3 comments · "Gaps closed": 4 role credits, 2 dates, 1 attribute · "Worked together":
+       Ann & Bob (2 releases; a pair on one release only is not listed). The cards that need 3.41.14 say "Counted from 3.41.14 on".
+    B) A real submission (the release of the harness, staged, "Enter edit"): its record is v 2, with x (suites, works, genres, live,
+       gaps) and the attributes of each relationship (a) – until 3.41.13 none of them."""
+    import re
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+        def r2(i, mbid, rels, x):
+            return {'v': 2, 'id': f'x:{i}', 'mbid': mbid, 'at': now - i * 1000, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None, 'x': x, 'rels': rels}
+
+        def rl(tn, tg, a=(), q=(), et='artist', lt='instrument'):
+            d = stat_rel('n', lt, 'recording', et, tg, tn)
+            d['a'] = list(a)
+            d['q'] = [{'q': k, 'a': v} for k, v in q]
+            return d
+        X = lambda **kw: {'suites': kw.get('suites', {}), 'works': kw.get('works', {}), 'genres': kw.get('genres', []), 'live': kw.get('live', {}), 'gaps': kw.get('gaps', {})}
+        recs = [
+            {'v': 1, 'id': 'old:1', 'mbid': 'm0', 'at': now - 9000, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': [], 'rel': rel, 'own': 0, 'ocr': None,
+             'rels': [stat_rel('n', 'instrument', 'recording', 'artist', 'g9', 'Zed')]},
+            r2(1, 'm1', [rl('Ann', 'g1', ['additional'], [('Q002', 'electric guitar')]), rl('Bob', 'g2'), rl('Cy', 'g3'),
+                         rl('Song', 'w1', ['live'], et='work', lt='performance'), rl('Suite', 'w2', ['movement'], et='work', lt='parts'), rl('Suite', 'w2', ['movement'], et='work', lt='parts')],
+               X(suites={'n': 1, 'created': 1, 'parts': 3}, works={'linked': 3, 'created': 1, 'pending': 2}, genres=['jazz', 'free jazz'], live={'comments': 2}, gaps={'credits': 3, 'dates': 2})),
+            r2(2, 'm2', [rl('Ann', 'g1', q=[('Q002', 'electric guitar')]), rl('Bob', 'g2', q=[('Q012', 'spoken vocals (credited “host”)')]),
+                         rl('Song', 'w3', ['live', 'medley'], et='work', lt='performance'), rl('Suite', 'w4', ['movement'], et='work', lt='parts')],
+               X(suites={'n': 1, 'found': 1, 'manual': 1, 'parts': 2, 'medleys': 1}, works={'linked': 1}, genres=['jazz'], live={'comments': 1}, gaps={'credits': 1, 'attrs': 1})),
+            # the same release again (a supplement): its genres not counted twice
+            r2(3, 'm2', [rl('Dee', 'g4')], X(genres=['jazz'])),
+        ]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        CARDS = """Object.fromEntries([...document.querySelectorAll('.dci-stats-card')].map(c => [c.dataset.el.replace('stats-', ''),
+          [...c.querySelectorAll('li, p')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())]))"""
+        c = pg.evaluate(CARDS)
+        for k in ('suites', 'attrs', 'works2', 'genres', 'decisions', 'live', 'gaps', 'together'):
+            print(f'   {k}:', c.get(k))
+        since = 'Counted from 3.41.14 on – the imports before do not hold it.'
+        ok = lambda k, *want: all(w in c.get(k, []) for w in want)
+        results.append(seeded and ok('suites', 'suites 2', 'created in MusicBrainz 1', 'found in MusicBrainz 1', 'added by hand 1', 'their parts 5', 'medleys split 1', '“parts” relationships 3', since)
+                       and ok('attrs', 'movement 3', 'live 2', 'additional 1', 'medley 1', since))
+        results.append(ok('works2', 'linked with recordings 4', 'of them created in MusicBrainz’s form 1', 'new works in the relationship editor 2', since)
+                       and ok('genres', 'Jazz 2', 'Free jazz 1', since) and ok('decisions', '3 answers to the questions of the script', 'Q002: electric guitar 2', 'Q012: spoken vocals (credited “host”) 1')
+                       and since not in c.get('decisions', []))
+        results.append(ok('live', 'recordings linked live with their works 2', 'live comments set 3', since)
+                       and ok('gaps', 'role credits added 4', 'dates added 2', 'attributes added to links of recordings and works 1', since)
+                       and c.get('together') == ['Ann & Bob 2'])
+        # B) a real submission
+        H.open_stats(pg)
+        pg.evaluate(STAT_SEED, [])
+        pg.click('[data-act=apply]'); pg.wait_for_timeout(2500)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        pg.wait_for_timeout(800)
+        added = pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity0 && r.entity1).map(r => ({ lt: r.linkTypeID, e0: r.entity0.gid, e1: r.entity1.gid }))")
+        H.WS_JS_RELEASE.clear()
+        H.WS_JS_RELEASE.update(js_release_of(added))
+        pg.evaluate(ENTER_EDIT)
+        pg.evaluate("document.getElementById('test-enter-edit').click()")
+        pg.wait_for_timeout(2500)
+        recs2 = pg.evaluate(STAT_COUNT) or []
+        r = recs2[0] if recs2 else {}
+        print('B)', r.get('v'), r.get('x'), [it.get('a') for it in r.get('rels', [])][:6])
+        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'live', 'gaps'}
+                       and all(isinstance(it.get('a'), list) for it in r.get('rels', [])) and (r.get('x') or {}).get('works', {}).get('linked', 0) >= 1)
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_statsdev():
     """Credits Importer 3.38.2 (E8): the developer statistics.
     A) A real submission: "Guitar" answered (electric guitar, Q002), a role credit typed by hand (Bass Man) – its record has, per
