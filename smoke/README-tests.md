@@ -28,6 +28,7 @@ MBvibecode/ (this repository)
                                       {instrument:%|instrument}": rows named "bass", "guest saxophone"; the bare form the type's name)
                                       [Companion 1.10.1] the Discogs page writes "Phonographic Copyright ℗" as the real one (the
                                       data "(p)")
+                                      [3.40.12] the type "recorded in" (area – recording)
   smoke/zooid.py                      scenario after Discogs release 38282688 (10 tracks, two sessions, two studios)
   smoke/common_rows.py                helpers for the date tests: rows (tracks, date), matrix cells, staging, drag with the mouse
                                       (the target is scrolled to the middle first: near the edges the dashboard scrolls while dragging);
@@ -254,6 +255,9 @@ python3 t_notes_dates.py        # Discogs notes: dates and track groups found in
                                 #   trackside: 3.37.7: "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" (A1, A2, A3, B) – the date on
                                 #     track B only, Zojoji Hall (Tokyo) from the notes on B; listed by Discogs: its entry with B; a pasted
                                 #     "Tracks A2 & B:" on tracks 2 and 4
+                                #   assistnotes: 3.40.12 (Z-AP): the three lines of "Assist" – the area Hiroshima, the places Meguro Fukushi
+                                #     Center (Tokyo) and Zojoji Hall (Tokyo), no area Tokyo; "Apply": each its date, the area too; a place
+                                #     Discogs lists without a word of places ("Shinjuku Pit Inn"): that place, no area Tokyo
                                 #   artwork: 3.37.9: "Cover Painting: “View at Nice” (1992)" – the column Artwork, applied to Mary Vernon's
                                 #     illustration (R078), not to the photographer; "Photography By [Live Photos]": the concert's date suggested, ✓
                                 #   lcdmenu: 3.32.7: ▾ at the month D022 placed – single days (a cell each; Apply: a row per day), the period

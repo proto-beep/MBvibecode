@@ -1,6 +1,6 @@
 """Discogs notes: dates and track groups found in the notes (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: datewords, facets, choose, lcdmenu (3.32.7), trackpool, reldate, trackside (3.37.7), artwork (3.37.9), periodsplit (3.37.12) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
+Cases: datewords, facets, choose, lcdmenu (3.32.7), trackpool, reldate, trackside (3.37.7), artwork (3.37.9), periodsplit (3.37.12), assistnotes (3.40.12) – each the former smoke/t_<case>.py, unchanged; `python3 t_notes_dates.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -626,6 +626,85 @@ def case_reldate():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_assistnotes():
+    """Credits Importer 3.40.12 (collected item Z-AP): the notes of Discogs 3749161 "Assist" – "Tracks A1 and A2 recorded on 9 November
+    1985 in Hiroshima", "Track A3 … in Tokyo, Meguro Fukushi Center", "Track B … in Tokyo, Zojoji Hall".
+    A) The area Hiroshima (A1–A2), the places Meguro Fukushi Center (Tokyo) (A3; "Center" a word of places, T051) and Zojoji Hall
+       (Tokyo) (B) – no area Tokyo (until 3.40.11 "Tokyo (Meguro Fukushi Center)").
+    B) "Apply": each row its date – also the area's "recorded in" (until 3.40.11 in no date group: no date).
+    C) Discogs lists "Recorded At – Shinjuku Pit Inn" (no word of places) and the notes say "… in Tokyo, Shinjuku Pit Inn": that place,
+       one entry (Discogs's), no area Tokyo."""
+    POS = ['A1', 'A2', 'A3', 'B']
+    NOTES = ('Tracks A1 and A2 recorded on 9 November 1985 in Hiroshima\nTrack A3 recorded on 21 November 1985 in Tokyo, Meguro Fukushi Center\n'
+             'Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall')
+    orig = H.discogs_release
+    run = {'listed': False}
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES.replace('Meguro Fukushi Center', 'Shinjuku Pit Inn') if run['listed'] else NOTES
+        for t, pos in zip(d['tracklist'], POS):
+            t['position'] = pos
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At']
+        if run['listed']:
+            d['companies'].append({'name': 'Shinjuku Pit Inn', 'entity_type_name': 'Recorded At', 'id': 1031, 'catno': ''})
+        return d
+    H.discogs_release = rel
+    ws0 = H.ws_release
+
+    def ws(full=False):
+        d = ws0(full)
+        for m in d['media']:
+            for t, pos in zip(m['tracks'], POS):
+                t['number'] = pos
+        return d
+    H.ws_release = ws
+    H.COMPANIES[1031] = ('place', H.uid('eeeeeeee', 31), 'Shinjuku Pit Inn')
+    H.MB_SEARCH.setdefault('area', []).append({'id': H.uid('eeeeeeee', 81), 'name': 'Hiroshima', 'disambiguation': '', 'score': 100, 'type': 'City'})
+    ENT = """[...document.querySelectorAll('section.dci-group')].filter(g => /Hiroshima|Tokyo|Meguro|Zojoji|Shinjuku/.test(g.querySelector('.dci-gname').textContent))
+      .map(g => [g.querySelector('.dci-gname').textContent.replace(/\\s+/g, ' ').trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
+        ((r.querySelector('.dci-notesfrom') || {}).textContent || '').replace(/\\s+/g, ' ').trim(), ((r.querySelector('.dci-c-date') || {}).textContent || '').replace(/\\s+/g, ' ').trim()])])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for listed in (False, True):
+            run['listed'] = listed
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            if not listed:
+                e = pg.evaluate(ENT)
+                names = [x[0] for x in e]
+                print('A) Einträge:', names)
+                results.append(names == ['AreaHiroshima', 'PlaceMeguro Fukushi Center (Tokyo)', 'PlaceZojoji Hall (Tokyo)'] or sorted(names) == sorted(['AreaHiroshima', 'PlaceMeguro Fukushi Center (Tokyo)', 'PlaceZojoji Hall (Tokyo)']))
+                hs = pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Hiroshima'); return g ? g.dataset.group : ''; })()")
+                pg.locator(f'section[data-group="{hs}"] [data-act=name-use]').first.click()
+                pg.wait_for_timeout(600)
+                pg.click('[data-act=dm-apply]')
+                pg.wait_for_timeout(1500)
+                e2 = {x[0].split(' (')[0]: x[1][0][2] for x in pg.evaluate(ENT)}
+                print('B) Daten:', e2)
+                results.append('1985-11-09' in e2.get('AreaHiroshima', '') and '1985-11-21' in e2.get('PlaceMeguro Fukushi Center', '') and '1985-11-12' in e2.get('PlaceZojoji Hall', ''))
+            else:
+                e = pg.evaluate(ENT)
+                print('C) gelistet:', e)
+                pit = [x for x in e if 'Shinjuku' in x[0]]
+                results.append(len(pit) == 1 and pit[0][0].startswith('PlaceShinjuku Pit Inn') and not any(x[0].startswith('AreaTokyo') for x in e)
+                               and 'Tracks A3 from the notes' in pit[0][1][0][1])
+            print('Fehler:', errs)
+            results.append(not errs)
+            pg.close()
+            ctx.close()
+        b.close()
+    H.discogs_release = orig
+    H.ws_release = ws0
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

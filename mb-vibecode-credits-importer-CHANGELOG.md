@@ -14,7 +14,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | Date | Import | COMPANION |
 |---|---|---|
 | 2026-11-02 | 3.38.13 – 3.40.3 | – |
-| 2026-11-03 | 3.40.4 – 3.40.11 | 1.10.1 |
+| 2026-11-03 | 3.40.4 – 3.40.12 | 1.10.1 |
 | 2026-11-01 | 3.38.8 – 3.38.12 | 1.9.2 – 1.10.0 |
 | 2026-10-31 | 3.38.0 – 3.38.7 | – |
 | 2026-10-30 | 3.36.4 – 3.37.15 | – |
@@ -99,6 +99,12 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-03
+
+### Import 3.40.12
+
+#### Fixed
+
+- **Places and areas from the notes** (collected item Z-AP, Discogs 3749161 "Assist"): "in Tokyo, Meguro Fukushi Center" is the place Meguro Fukushi Center in Tokyo, no longer the area "Tokyo (Meguro Fukushi Center)" – "center", "centre" and "kaikan" count as words of places, and a place Discogs lists under "Companies, etc." counts without one. **The date of an area** ("Tracks A1 and A2 recorded on 9 November 1985 in Hiroshima") now goes onto its row with "Apply", as for places.
 
 ### Import 3.40.11
 

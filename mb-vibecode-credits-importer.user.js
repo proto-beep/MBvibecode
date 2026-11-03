@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.40.11
+// @version      3.40.12
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -26,8 +26,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.11
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.11
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.40.12
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.40.12
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -40,7 +40,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.11';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.40.12';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3518,7 +3518,7 @@
       show: () => ({ pattern: PLACE_DATE_TAIL }) },
     { id: 'T048', where: 'ROLE_WORDS, roleVocab, fixRoleTypo', note: 'Texts (3.32.5): the words of roles a typo is read as (S050: "Muisc" → "Music"); on MusicBrainz also the words of its relationship types and attributes',
       show: () => ({ pairs: [['words', ROLE_WORDS.join(' · ')]] }) },
-    { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area. [3.37.7] The place also after its city: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" gives Zojoji Hall with its area Tokyo (a date between the verb and "in" is fine)',
+    { id: 'T051', where: 'TEXT_PLACE_WORDS, placeIn', note: 'Texts (3.34.18): a name after "in" with a word of places (studio, hall, church, club, theatre …) and a word in capitals besides it is a place, not an area – "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July" gives the place Guruguru Brain studio (recorded at) with its area Rotterdam; "Recorded in Berlin" stays an area. [3.37.7] The place also after its city: "recorded on 12 November 1985 in Tokyo, Zojoji Hall" gives Zojoji Hall with its area Tokyo (a date between the verb and "in" is fine). [3.40.12] Also center, centre, kaikan; and a place the source lists itself (Discogs "Recorded At – Meguro Fukushi Center") without such a word: "in Tokyo, Meguro Fukushi Center" is that place in Tokyo, not the area Tokyo',
       show: () => ({ pattern: TEXT_PLACE_WORDS }) },
     { id: 'T052', where: 'PROPER_WORDS, properSpelling, properPhrases, lowerWord, caseWord', note: 'Proper names in role credits (3.34.28): words that keep their capitals although MusicBrainz\'s instruments do not hold them ("Buddha machine", makes such as Fender, Moog, Wurlitzer; peoples such as Irish, Tibetan) – every other word MusicBrainz does not know is written small (S052). From 3.35.2 also names of several words ("Gibson Les Paul", "Les Paul"): only as a whole in this spelling, a "les" elsewhere stays small. "always write “…”" at a row adds a word or a name',
       show: () => ({ words: PROPER_WORDS }) },
@@ -3961,13 +3961,14 @@
    * overwritten; those rows are named in the warning. [T016]
    */
   const DATE_GROUPS = [
-    { key: 'performance', label: 'Performance', types: ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at'] },
-    { key: 'mix', label: 'Mix', types: ['mix', 'mixed at'] },
+    // [Z-AP] (3.40.12) the areas too ("recorded in", "mixed in", "mastered in": a date of the notes for "… in Hiroshima" went nowhere)
+    { key: 'performance', label: 'Performance', types: ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at', 'recorded in'] },
+    { key: 'mix', label: 'Mix', types: ['mix', 'mixed at', 'mixed in'] },
     // [3.15.1] releaseOnly: MusicBrainz has mastering on the release only (on recordings it is deprecated, "mastered at"
     // does not exist there) – every date of the column is for the release level, a track group only says which row
-    { key: 'remastering', label: 'Remastering', types: ['mastering', 'mastered at'], onlyNote: 'mastering with "re", or a role "Remastered …"',
-      only: (n, row) => (n === 'mastering' && row.flags.has('re')) || (n === 'mastered at' && /^remastered/i.test(row.raw || '')), releaseOnly: true },
-    { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at'], releaseOnly: true },
+    { key: 'remastering', label: 'Remastering', types: ['mastering', 'mastered at', 'mastered in'], onlyNote: 'mastering with "re", or a role "Remastered …"',
+      only: (n, row) => (n === 'mastering' && row.flags.has('re')) || ((n === 'mastered at' || n === 'mastered in') && /^remastered/i.test(row.raw || '')), releaseOnly: true },
+    { key: 'mastering', label: 'Mastering', types: ['mastering', 'mastered at', 'mastered in'], releaseOnly: true },
     { key: 'copyright', label: '℗/©', types: ['phonographic copyright', 'copyright'] },
     // [3.37.9] the artwork: "Cover Painting: “View at Nice” (1992)" for "Painting [Cover Painting] – Mary Vernon" (collected item 159);
     // photographs are not in it (their date is the concert's, see rowDateSugg)
@@ -5260,7 +5261,7 @@
     }
 
     function parse(text, ctx0) {
-      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false } = ctx0;
+      const { isRole: isRoleKnown, isCompanyRole: isCompanyRoleKnown, resolveTracks, resolveTitles, artistNames: artistNames0 = [], stackUp = false, placeNames = [] } = ctx0;
       // [3.39.2] each name once: Bandcamp adds its album's artist to the release's, mostly the same – a line "With …" (S061) then
       // went to "one of the release's artists" and its words to ask were not recognized (collected item 187)
       const artistNames = artistNames0.filter((n, i, all) => n && all.findIndex((x) => norm(x) === norm(n)) === i);
@@ -5618,7 +5619,9 @@
           // [T051] (3.34.18) "Recorded in Guruguru Brain studio, Rotterdam, 2024 January - July": a name with a word of places and
           // a word in capitals besides it is a place ("recorded at"), the part after the comma its area (collected item 137b)
           const placeIn = (verb, text) => {
-            const isPlace = (x) => TEXT_PLACE_WORDS.test(x) && /\p{Lu}/u.test(x.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), ''));
+            // [Z-AP] (3.40.12) also a place the source lists itself ("Recorded At – Meguro Fukushi Center" of Discogs; placeNames)
+            const isPlace = (x) => (TEXT_PLACE_WORDS.test(x) && /\p{Lu}/u.test(x.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), '')))
+              || placeNames.some((n) => norm(n) === norm(x));
             const parts = String(text || '').replace(PLACE_DATE_TAIL, '').split(/\s*,\s*/).map((x) => clean(x).replace(/^the\s+/i, ''));
             if (isPlace(parts[0])) return place(verb, placeOf(text));
             // [3.37.7] the place after its city: "in Tokyo, Zojoji Hall" → Zojoji Hall, its area Tokyo (collected item 157)
@@ -16518,7 +16521,9 @@
     try {
       // [S053] (3.36.7) the positions of the notes are Discogs's ("A1 to B2", "C1 to D" – vinyl sides), not MusicBrainz's numbers
       const own = rel.tracks || [];
-      res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles) => tracksByTitles(titles, own) });
+      // [Z-AP] (3.40.12) the places Discogs lists ("Recorded At – …"): "in Tokyo, Meguro Fukushi Center" is that place in Tokyo
+      const placeNames = (rel.companies || []).filter((c) => /\b(?:at)$/i.test(String(c.role || '').trim())).map((c) => c.who && c.who.name).filter(Boolean);
+      res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles) => tracksByTitles(titles, own), placeNames });
     } catch (e) {
       console.warn('[Discogs-Credits] notes', e);
       return;
