@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.42.5, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.42.6, Companion 1.6.0 – 1.10.1 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -22,11 +22,21 @@ How far back the entries go:
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
 
+## Import 3.42.6 · 2026-11-03
+
+Block BG, part 7 – collected item Z-STG2 (Q-dj, Q-do).
+
+- **The Bandcamp adapter:** `pageTags(html)` (new, exported for the tests) – the album's tag links (`a.tag`), else the `keywords` of its JSON-LD, without the tag of the artist's place (the page's `span.location`, also its first part: "Nashville" of "Nashville, Tennessee"), each once; `release()` passes them to `toRelease`, the neutral release has them as **`bcTags`** (Discogs's `tags` – words of the format – unchanged).
+- **The statistics:** `statExtras` stores `genres` (Discogs's genres and styles) and `bcTags` (Bandcamp's tags), each from the source read and the one supplementing it (`statRels`, new); `statsData` counts `m.bcTags` and `m.genresAll` (both, the same word once a release, any case).
+- **`statGenresHtml(m, …)`** (new; the card "Genres and styles"): "Combined | Separate" (`data-act=stats-genres-view`; stored in `dci-stats-genres`, `STATS_GENRES_KEY` – only "separate", Combined is the default; a setting of the statistics, reset with the others) – one list, its sources in each item's tooltip ("Discogs 3 · Bandcamp 1"), or a list for each source.
+- **Texts:** `stats.genresView`, `stats.genres.combined`, `stats.genres.separate` (English). **CSS:** `.dci-stats-gview`, `h5.dci-stats-gsrc`.
+- **Tests:** `t_ui_settings.py` new case `statsgenres` (fails on 3.42.5); `statsmore2` B: the record's `x` has `bcTags` too.
+
 ## Import 3.42.5 · 2026-11-03
 
 Block BG, part 6 – collected item Z-ETC (Q-dd).
 
-- **`kindTagHtml(a)`:** an entry not linked (a company without `mbid`) whose rows have relationships for more than one kind (`etcKinds`: of `ETC_KINDS` – label, place, area, artist – those with a type in `typeOptions`) shows its kind as a button (`button.dci-kind-tag.dci-kind-cycle`, `data-act=kind-cycle`, "Label ↻"; its title names the next kind and the order), with "searching in a second …" (`.dci-etc-wait`) while a search waits.
+- **`kindTagHtml(a)`:** an entry not linked (a company without `mbid`) whose rows have relationships for more than one kind (`etcKinds`: of `ETC_KINDS` – label, place, area, artist – those with a type in `typeOptions`) shows its kind as a button (`button.dci-kind-tag.dci-kind-cycle`, `data-act=kind-cycle`, "Label ↻" – ↻ drawn by `::after`, so the tag's text stays the kind's name, as the readers of the heads and the register's golden file read it; its title names the next kind and the order), with "searching in a second …" (`.dci-etc-wait`) while a search waits.
 - **`etcCycle(a)`** (new): the next kind – `setCompanyEntityType`; the suggestions of each kind kept in `a.etcHits` (those of the import too): a kind found before shows them again without a request, else `suggestByName([a])` runs once no click followed for a second (`a.etcTimer`; MusicBrainz's limit of one request a second as for every search, `mbWs`); log `etcSearched`.
 - **`updateGroupHeader`:** the note of the wait replaced with the tag.
 - **Texts:** `etc.title`, `etc.wait`, `log.etcSearched` (English). **CSS:** `button.dci-kind-tag.dci-kind-cycle`.

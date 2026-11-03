@@ -1,6 +1,6 @@
 """Settings: tabs, the menu, the symbols of the head pressed (until 3.36.4: the bridge to ⚙), settings without an import, reset, the update notice (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; `python3 t_ui_settings.py <case> …` runs only those."""
+Cases: settabs, settings, pressed (until 3.36.4: bridge), ui305, reset, notice, cache (3.36.0), cache2 (3.36.1), logdiag (3.36.2), stats (3.38.0), statsmore (3.38.1), statsdev (3.38.2), statsbutton (3.39.3), statswhere (3.40.14) – each the former smoke/t_<case>.py, unchanged; statsgenres (3.42.6); `python3 t_ui_settings.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -1353,11 +1353,84 @@ def case_statsmore2():
         r = recs2[0] if recs2 else {}
         print('B)', r.get('v'), r.get('x'), [it.get('a') for it in r.get('rels', [])][:6])
         perf = [it for it in r.get('rels', []) if it.get('k') == 'n' and it.get('lt') == 'performance' and it.get('et') == 'work']
-        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'live', 'gaps', 'decisions'}
+        # ((3.42.6, Z-STG2) and the tags of Bandcamp)
+        results.append(len(recs2) == 1 and r.get('v') == 2 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions'}
                        and all(isinstance(it.get('a'), list) for it in r.get('rels', []))
                        # (3.41.15, review) the works from what is submitted: the links of the record, those of new works without a gid
                        and (r.get('x') or {}).get('works') == {'linked': len(perf), 'created': 0, 'pending': len([it for it in perf if not it.get('tg')])} and len(perf) >= 1
                        and isinstance((r.get('x') or {}).get('decisions'), list))
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_statsgenres():
+    """Credits Importer 3.42.6 (collected item Z-STG2; Q-dj, Q-do): "Genres and styles" with Bandcamp's tags.
+    A) In Node: the tags of a Bandcamp album page – its tag links without the tag of the artist's place ("Nashville" of "Nashville,
+       Tennessee"); without links the "keywords" of its JSON-LD (also without the place).
+    B) Three stored submissions – Discogs jazz, free jazz with Bandcamp jazz, ambient; Discogs jazz with Bandcamp ambient, drone; one of
+       3.41.14 (genres only): "Combined" first – Jazz 3 (its tooltip "Discogs 3 · Bandcamp 1"; once a release, also when both name it),
+       Ambient 2, Drone 1, Free jazz 1; "Separate": Discogs (Jazz 3, Free jazz 1) and Bandcamp (Ambient 2, Drone 1, Jazz 1) – remembered
+       (dci-stats-genres) when the statistics are shown again; "Combined" again: forgotten (the default)."""
+    import json
+    import subprocess
+    NODE = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const links = '<div id="band-name-location"><span class="title">Ross McReynolds</span><span class="location secondaryText">Nashville, Tennessee</span></div>'
+  + '<div class="tralbumData tralbum-tags tralbum-tags-nu"><span class="tags-inline-label">tags:</span> <a class="tag" href="https://bandcamp.com/discover/ambient">ambient</a>'
+  + '<a class="tag" href="https://bandcamp.com/discover/jazz">jazz</a> <a class="tag" href="https://bandcamp.com/discover/nashville">Nashville</a> <a class="tag" href="https://bandcamp.com/discover/new-age">new age</a></div>';
+const ld = '<span class="location secondaryText">Berlin, Germany</span><script type="application/ld+json">{"@type":"MusicAlbum","keywords":["drone","Berlin","field recordings","drone"]}</script>';
+console.log(JSON.stringify([m.SOURCES.bandcamp.pageTags(links), m.SOURCES.bandcamp.pageTags(ld), m.SOURCES.bandcamp.pageTags('<p>none</p>')]));
+"""
+    a = json.loads(subprocess.run(['node', '-e', NODE, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True, check=True).stdout)
+    print('A) Node:', a)
+    results = [a == [['ambient', 'jazz', 'new age'], ['drone', 'field recordings'], []]]
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        now = pg.evaluate("Date.now()")
+        rel = {'title': 'A', 'year': 2020, 'country': 'US', 'formats': ['CD'], 'labels': ['L'], 'before': 0}
+
+        def r2(i, mbid, x):
+            return {'v': 2, 'id': f'x:{i}', 'mbid': mbid, 'at': now - i * 1000, 'start': None, 'ms': 1000, 'src': 'discogs', 'supp': ['bandcamp'], 'rel': rel, 'own': 0, 'ocr': None,
+                    'x': {'suites': {}, 'works': {}, 'live': {}, 'gaps': {}, **x}, 'rels': [stat_rel('n', 'instrument', 'recording', 'artist', f'g{i}', 'Ann')]}
+        recs = [r2(1, 'm1', {'genres': ['jazz', 'free jazz'], 'bcTags': ['jazz', 'ambient']}), r2(2, 'm2', {'genres': ['jazz'], 'bcTags': ['ambient', 'drone']}),
+                r2(3, 'm3', {'genres': ['jazz']})]
+        seeded = pg.evaluate(STAT_SEED, recs)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(600)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        CARD = """(() => { const c = document.querySelector('[data-el=stats-genres]'); return { seg: [...c.querySelectorAll('[data-act=stats-genres-view]')].map(x => x.textContent.trim() + (x.getAttribute('aria-pressed') === 'true' ? ' ✓' : '')),
+          heads: [...c.querySelectorAll('h5')].map(x => x.textContent.trim()), items: [...c.querySelectorAll('li')].map(x => [x.textContent.replace(/\\s+/g, ' ').trim(), x.title || '']) }; })()"""
+        b1 = pg.evaluate(CARD)
+        print('B) Combined:', b1)
+        results.append(seeded and b1['seg'] == ['Combined ✓', 'Separate'] and not b1['heads']
+                       and b1['items'] == [['Jazz 3', 'Discogs 3 · Bandcamp 1'], ['Ambient 2', 'Bandcamp 2'], ['Drone 1', 'Bandcamp 1'], ['Free jazz 1', 'Discogs 1']])
+        pg.click('[data-el=stats-genres] [data-act=stats-genres-view][data-view=separate]')
+        pg.wait_for_timeout(500)
+        b2 = pg.evaluate(CARD)
+        stored = pg.evaluate("localStorage.getItem('dci-stats-genres')")
+        # the statistics closed and shown again
+        pg.locator('.dci-head [data-act=stats-open]').evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        H.open_stats(pg)
+        pg.wait_for_timeout(600)
+        b3 = pg.evaluate(CARD)
+        print('   Separate:', b2, '| gespeichert:', stored, '| wieder:', b3['seg'])
+        results.append(b2['seg'] == ['Combined', 'Separate ✓'] and b2['heads'] == ['Discogs', 'Bandcamp']
+                       and [x[0] for x in b2['items']] == ['Jazz 3', 'Free jazz 1', 'Ambient 2', 'Drone 1', 'Jazz 1'] and stored == '"separate"' and b3['seg'] == ['Combined', 'Separate ✓'])
+        pg.click('[data-el=stats-genres] [data-act=stats-genres-view][data-view=combined]')
+        pg.wait_for_timeout(500)
+        b4 = pg.evaluate(CARD)
+        stored2 = pg.evaluate("localStorage.getItem('dci-stats-genres')")
+        print('   Combined wieder:', b4['seg'], stored2)
+        results.append(b4['seg'] == ['Combined ✓', 'Separate'] and stored2 is None)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

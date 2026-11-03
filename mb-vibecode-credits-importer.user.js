@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.5
+// @version      3.42.6
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.5
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.5
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.6
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.6
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.5';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.6';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1765,6 +1765,9 @@
       "stats.more.attrs": "Attributes",
       "stats.more.works2": "Works",
       "stats.more.genres": "Genres and styles",
+      "stats.genresView": "Genres and styles of the sources",
+      "stats.genres.combined": "Combined",
+      "stats.genres.separate": "Separate",
       "stats.more.decisions": "Decisions",
       "stats.more.live": "Live",
       "stats.more.gaps": "Gaps closed",
@@ -6895,6 +6898,27 @@
       }
     }
     /**
+     * [Z-STG2] (3.42.6; Q-dj, Q-do) The tags of an album page – its tag links ("tralbum-tags"), else the "keywords" of its JSON-LD –
+     * without the one of the artist's place (Bandcamp adds the location the page shows: "Nashville" of "Nashville, Tennessee").
+     */
+    function pageTags(html) {
+      const h = String(html || '');
+      let tags = [...h.matchAll(/<a\b[^>]*\bclass="[^"]*\btag\b[^"]*"[^>]*>([^<]+)<\/a>/gi)].map((m) => unescapeHtml(m[1]).trim()).filter(Boolean);
+      if (!tags.length) {
+        const ld = h.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i);
+        try {
+          const j = ld ? JSON.parse(ld[1]) : null;
+          const kw = j && j.keywords;
+          tags = (Array.isArray(kw) ? kw : String(kw || '').split(',')).map((x) => String(x || '').trim()).filter(Boolean);
+        } catch {
+          tags = [];
+        }
+      }
+      const loc = unescapeHtml((h.match(/<span[^>]*\bclass="[^"]*\blocation\b[^"]*"[^>]*>([^<]+)<\/span>/i) || [])[1] || '').trim();
+      const where = new Set([loc, ...loc.split(',')].map((x) => norm(x)).filter(Boolean));
+      return tags.filter((t, i, all) => !where.has(norm(t)) && all.findIndex((x) => norm(x) === norm(t)) === i);
+    }
+    /**
      * [3.22.1] The name of the Bandcamp account an album page is on (its "data-band" JSON, else "og:site_name"): the
      * artist's own page, or a label's (collected item 46: "Grabaciones Autobombo" with an album of Yunclas); '' if none.
      */
@@ -6982,7 +7006,7 @@
      * The neutral release from an album's page data. trackCredits: [credits text of each track page] (or []);
      * ctx: as for a text (see sourceContext), with this album's tracks.
      */
-    function toRelease(data, url, trackCredits, ctx, { pageName = '' } = {}) {
+    function toRelease(data, url, trackCredits, ctx, { pageName = '', tags = [] } = {}) {
       const cur = data.current || {};
       const tracks = (data.trackinfo || []).map((t, i) => ({ position: String(t.track_num || i + 1), title: t.title || '', aliases: [] }));
       const resolveTracks = (spec) => ctx.resolveTracks(spec, tracks);
@@ -7056,6 +7080,8 @@
         // [3.17.2] the liner notes found (their signature in the notes: a date there is named for them in the pool)
         liner: liner ? { name: liner.name, at: aboutAt + liner.at, len: liner.len } : null,
         tags: [],
+        // [Z-STG2] (3.42.6) the album's tags (genres and styles of the statistics; no words of the format, unlike Discogs's `tags`)
+        bcTags: tags,
         tracks,
         credits: credits.map((c) => ({ ...c, who: linkBand(c.who) })),
         companies: companies.map((c) => ({ ...c, who: linkBand(c.who) })),
@@ -7088,6 +7114,7 @@
       pageUrl,
       isTrackPage,
       pageData,
+      pageTags, // [Z-STG2] (3.42.6)
       toRelease,
       linerNotes,
       urlKey: bandUrl,
@@ -7123,7 +7150,7 @@
             trackCredits.push(text);
           }
         }
-        return toRelease(data, id, trackCredits, ctx, { pageName: bandPageName(html) });
+        return toRelease(data, id, trackCredits, ctx, { pageName: bandPageName(html), tags: pageTags(html) });
       },
     };
   })();
@@ -8662,6 +8689,8 @@
 
   const STATS_ON_KEY = 'dci-stats-on';
   const STATS_PERIOD_KEY = 'dci-stats-period';
+  // [Z-STG2] (3.42.6) the card "Genres and styles": 'separate' (each source), else combined
+  const STATS_GENRES_KEY = 'dci-stats-genres';
   // ([E8] 3.38.2: the developer statistics are collected with the others; shown in "Developer mode" – DEV_KEY, 3.38.5)
   const STAT_JOB_PREFIX = 'dci-stat-job:';
   const STAT_JOB_MAX_MS = 30 * 60 * 1000;
@@ -31111,6 +31140,11 @@
         writeJson('localStorage', STATS_PERIOD_KEY, S.statsPeriod === 'month' ? null : S.statsPeriod);
         renderStats();
         break;
+      case 'stats-genres-view':
+        // [Z-STG2] (3.42.6) genres and styles of all sources in one list, or a list for each (remembered)
+        writeJson('localStorage', STATS_GENRES_KEY, btn.dataset.view === 'separate' ? 'separate' : null);
+        renderStats();
+        break;
       case 'stats-delete':
         // [E8] (3.38.0) all statistics deleted (asked first)
         if (!confirm(tr('stats.deleteAsk', { n: (S.statsData || []).length }))) break;
@@ -32786,7 +32820,7 @@
     // collecting the statistics
     cache: [REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY],
     // [E8] (3.38.0) the period (the statistics stay: "Delete statistics …"; collecting them: cache from 3.40.14)
-    statistics: [STATS_PERIOD_KEY],
+    statistics: [STATS_PERIOD_KEY, STATS_GENRES_KEY],
   };
   S.settingsTab = readJson('localStorage', SETTINGS_TAB_KEY, 'general') || 'general';
   S.view = readJson('localStorage', VIEW_KEY, 'full') === 'compact' ? 'compact' : 'full';
@@ -33031,6 +33065,9 @@
    * [Z-STS, Z-STW, Z-STG, Z-STL, Z-STV] (3.41.14) What an import did beyond its relationships, for the statistics: the suites and
    * medleys, the works, the genres and styles of the source, the live comments, the gaps closed in relationships MusicBrainz had.
    */
+  /** [Z-STG2] (3.42.6) The releases of the sources of this import: the one read and the one supplementing it. */
+  const statRels = () => [S.release, S.supp && S.supp.rel].filter(Boolean);
+
   function statExtras(rels = []) {
     const suites = [...S.suiteWorks.values()].filter((sw) => !isPending(sw.gid));
     // (3.41.15, review) the works and the gaps from what is submitted (not from the stagings): a link taken out is not counted
@@ -33052,7 +33089,9 @@
         medleys: [...S.workParts.values()].filter((ps) => ps.length && ps[0].medley).length,
       },
       works: { linked: links.length, created: links.filter((it) => it.tg && created.has(it.tg)).length, pending: links.filter((it) => !it.tg).length },
-      genres: uniq([...((S.release && S.release.genres) || []), ...((S.release && S.release.styles) || []).map(norm)]).slice(0, 12),
+      // [Z-STG2] (3.42.6) Discogs's genres and styles and Bandcamp's tags, each of the source read or supplementing it
+      genres: uniq(statRels().flatMap((r) => [...(r.genres || []), ...(r.styles || []).map(norm)])).slice(0, 12),
+      bcTags: uniq(statRels().flatMap((r) => (r.bcTags || []).map(norm))).slice(0, 12),
       live: { comments: liveCom },
       gaps: { credits: fills('credits'), dates: fills('dates'), attrs: fills('attrs') },
       // [Z-STQ] (3.41.15, review) the answers of the rows, once a row – also of a row an answer put on "Skip"
@@ -33251,7 +33290,7 @@
       own: 0, ownRels: new Map(),
       // [Z-STS …] (3.41.14) the records of 3.41.14 and later (x), and what they count
       x: 0, attrs: new Map(), suites: { n: 0, created: 0, found: 0, manual: 0, parts: 0, medleys: 0, partsRels: 0 }, works2: { linked: 0, created: 0, pending: 0 },
-      genres: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map() };
+      genres: new Map(), bcTags: new Map(), genresAll: new Map(), answers: new Map(), nAnswers: 0, live: { links: 0, comments: 0 }, gaps: { credits: 0, dates: 0, attrs: 0 }, people: new Map(), pairs: new Map() };
     const inc = (map, k, by = 1) => {
       if (k || k === 0) map.set(k, (map.get(k) || 0) + by);
     };
@@ -33303,6 +33342,9 @@
         if (!seenGenre.has(r.mbid)) {
           seenGenre.add(r.mbid);
           (x.genres || []).forEach((g) => inc(m.genres, g));
+          // [Z-STG2] (3.42.6) Bandcamp's tags; both together, the same word once (any case)
+          (x.bcTags || []).forEach((g) => inc(m.bcTags, norm(g)));
+          uniq([...(x.genres || []), ...(x.bcTags || [])].map(norm)).forEach((g) => inc(m.genresAll, g));
         }
       }
       // [Z-STC] (3.41.14) the people credited on a release (all its submissions; the pairs below)
@@ -33421,6 +33463,25 @@
    * cards of 3.41.14: suites and medleys, attributes, works, genres, decisions, live, gaps closed, worked together. What only
    * records of 3.41.14 and later hold says so ("counted from 3.41.14") while older ones are there.
    */
+  /**
+   * [Z-STG2] (3.42.6; Q-dj, Q-do) The card "Genres and styles": "Combined | Separate" (remembered; Combined at first) – one list of
+   * Discogs's genres and styles and Bandcamp's tags, the same word once, its sources in its tooltip; or a list for each source.
+   */
+  function statGenresHtml(m, { top, kv, cap }) {
+    const view = readJson('localStorage', STATS_GENRES_KEY, 'combined') === 'separate' ? 'separate' : 'combined';
+    const seg = `<span class="dci-seg dci-seg-small dci-stats-gview" role="group" aria-label="${esc(tr('stats.genresView'))}">${['combined', 'separate'].map((v) => `<button type="button"
+      data-act="stats-genres-view" data-view="${v}" aria-pressed="${view === v}">${esc(tr(`stats.genres.${v}`))}</button>`).join('')}</span>`;
+    if (view === 'separate') {
+      const part = (src, map) => `<h5 class="dci-stats-gsrc">${esc(tr(`stats.src.${src}`))}</h5>${kv(top(map, 8), cap)}`;
+      return `${seg}${part('discogs', m.genres)}${part('bandcamp', m.bcTags)}`;
+    }
+    const pairs = top(m.genresAll, 8);
+    if (!pairs.length) return `${seg}${kv(pairs, cap)}`;
+    const srcs = (g) => [['discogs', m.genres], ['bandcamp', m.bcTags]].map(([k, map]) => [k, map.get(g) || 0]).filter(([, n]) => n)
+      .map(([k, n]) => `${tr(`stats.src.${k}`)} ${statNum(n)}`).join(' · ');
+    return `${seg}<ul class="dci-stats-kv">${pairs.map(([g, n]) => `<li title="${esc(srcs(g))}"><span>${esc(cap(g))}</span> <span class="dci-sub">${statNum(n)}</span></li>`).join('')}</ul>`;
+  }
+
   function statsMore2Html(m, recs, { top, kv, card }) {
     const since = m.x < recs.length ? `<p class="dci-sub dci-stats-since">${esc(tr('stats.since', { v: '3.41.14' }))}</p>` : '';
     const cap = (t) => String(t || '').replace(/^\p{Ll}/u, (c) => c.toUpperCase());
@@ -33434,7 +33495,7 @@
       .filter(([k, n]) => n || k === 'suites' || k === 'medleys'), (k) => tr(`stats.suites.${k}`))}${since}`)}
       ${card('attrs', `${kv(top(m.attrs, 8))}${since}`)}
       ${card('works2', `${kv([['linked', m.works2.linked], ['created', m.works2.created], ['pending', m.works2.pending]], (k) => tr(`stats.works2.${k}`))}${since}`)}
-      ${card('genres', `${kv(top(m.genres, 8), cap)}${since}`)}
+      ${card('genres', `${statGenresHtml(m, { top, kv, cap })}${since}`)}
       ${card('decisions', `<p>${esc(tr('stats.decisionsN', { n: statNum(m.nAnswers) }))}</p>${kv(top(m.answers, 6), answer)}`)}
       ${card('live', `${kv([['links', m.live.links], ['comments', m.live.comments]], (k) => tr(`stats.live.${k}`))}${since}`)}
       ${card('gaps', `${kv([['credits', m.gaps.credits], ['dates', m.gaps.dates], ['attrs', m.gaps.attrs]], (k) => tr(`stats.gaps.${k}`))}${since}`)}
@@ -34228,7 +34289,7 @@
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
     KIND_COLORS_KEY, KIND_PALETTE_KEY, LIVE_COM_KEY,
     // [E8] (3.38.0) the switch and the period of the statistics (the statistics themselves: "keep statistics")
-    STATS_ON_KEY, STATS_PERIOD_KEY,
+    STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY,
     // [172] (3.39.0) the line of the release page; [AY] (3.40.0) also when nothing seems to be missing
     GAP_ON_KEY, GAP_NONE_KEY,
     // [3.34.1] the beta of the text from cover art; [3.34.10] loading its images ahead; [3.34.15] choosing them by themselves
@@ -35927,6 +35988,9 @@
       .dci-stats-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 230), 1fr)); gap: calc(var(--u, 1px) * 10); margin: calc(var(--u, 1px) * 10) 0; }
       .dci-stats-card { border: 1px solid var(--line); border-radius: 4px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10); font-size: calc(var(--u, 1px) * 12); }
       .dci-stats-card h4 { margin: 0 0 calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 13); }
+      /* [Z-STG2] (3.42.6) "Combined | Separate" of the genres, the heading of each source */
+      .dci-stats-gview { display: inline-flex; margin-bottom: calc(var(--u, 1px) * 6); }
+      .dci-stats-card h5.dci-stats-gsrc { margin: calc(var(--u, 1px) * 6) 0 calc(var(--u, 1px) * 2); font-size: calc(var(--u, 1px) * 12); font-weight: 600; color: var(--muted); }
       .dci-stats-card h5 { margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 3); font-size: calc(var(--u, 1px) * 12); font-weight: 600; color: var(--muted); }
       .dci-stats-card p { margin: calc(var(--u, 1px) * 3) 0; }
       .dci-stats-kv { list-style: none; margin: 0; padding: 0; }
