@@ -1,6 +1,6 @@
 """Texts, part 3: titles and areas, credit pairs, the medium of the release, names with initials (Credits Importer 3.31.1: the tests of this topic as cases, collected item 103).
 
-Cases: areas, v3222, medium, initials, placedate (3.32.5), recordedin (3.34.18) – each the former smoke/t_<case>.py, unchanged; unawords (3.42.4); `python3 t_text_places.py <case> …` runs only those."""
+Cases: areas, v3222, medium, initials, placedate (3.32.5), recordedin (3.34.18) – each the former smoke/t_<case>.py, unchanged; unawords (3.42.4), kindcycle (3.42.5); `python3 t_text_places.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 
@@ -696,5 +696,83 @@ Part of the Quiet Rooms series"""
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_kindcycle():
+    """Credits Importer 3.42.5 (collected item Z-ETC; Q-dd): the kind of an entry not linked tried in turn. A pasted text "Mastered at
+    Quiet Lab" (mastered at: a label, a place or an artist – mastering) and "Recorded in Elsewhere Town" (an area only); MusicBrainz has
+    a label Quiet Lab.
+    A) The head of Quiet Lab has the button "Label ↻" (↻ drawn by the style: its text "Label"; its title names the kinds in turn: label → place → artist), the label offered;
+       Elsewhere Town keeps the tag "Area" (no other kind has its role).
+    B) A click: "Place ↻" and "searching in a second …"; a second click within the second: "Artist ↻" – then one search, of artists
+       (none of places); the row is mastering.
+    C) A click: "Label ↻" – the label of the import offered again, no search; a click: "Place ↻", searched as a place.
+    D) Two clicks (artist, label): no search – what was found before; the label chosen: the entry linked, the tag no button."""
+    H.MB_SEARCH['label'] = H.MB_SEARCH.get('label', []) + [{'id': H.uid('eeeeeeee', 81), 'name': 'Quiet Lab', 'disambiguation': '', 'score': 100}]
+    TEXT = """Mastered at Quiet Lab
+Recorded in Elsewhere Town"""
+    HEAD = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); if (!g) return null;
+      const t = g.querySelector('.dci-kind-tag'); return { tag: t.textContent.trim(), button: t.tagName === 'BUTTON', title: t.title || '', wait: !!g.querySelector('.dci-etc-wait'),
+        sugg: [...g.querySelectorAll('[data-act=name-use]')].map(b => b.textContent.trim()),
+        rows: [...g.querySelectorAll('tr.dci-row')].map(r => (r.querySelector('[data-f=type]') || {}).selectedOptions?.[0]?.text || '') }; }"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        searches = []
+        pg.on('request', lambda r: searches.append(r.url.split('/ws/2/')[1].split('?')[0]) if '/ws/2/' in r.url and 'query=' in r.url else None)
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 90)
+        pg.wait_for_timeout(1500)
+        a = pg.evaluate(HEAD, 'Quiet Lab')
+        e = pg.evaluate(HEAD, 'Elsewhere Town')
+        print('A)', a, '|', e)
+        results.append(a and a['button'] and a['tag'] == 'Label' and 'label → place → artist' in a['title'] and a['sugg'] == ['Quiet Lab – label']
+                       and e and not e['button'] and e['tag'] == 'Area')
+        click = lambda: pg.click('section.dci-group .dci-kind-cycle')
+        n0 = len(searches)
+        click()
+        pg.wait_for_timeout(300)
+        b1 = pg.evaluate(HEAD, 'Quiet Lab')
+        click()
+        pg.wait_for_timeout(300)
+        b2 = pg.evaluate(HEAD, 'Quiet Lab')
+        pg.wait_for_timeout(2500)
+        b3 = pg.evaluate(HEAD, 'Quiet Lab')
+        print('B)', b1['tag'], b1['wait'], '|', b2['tag'], b2['wait'], '|', b3, '| Suchen:', searches[n0:])
+        results.append(b1['tag'] == 'Place' and b1['wait'] and b2['tag'] == 'Artist' and b3['tag'] == 'Artist' and not b3['wait'] and b3['rows'] == ['mastering']
+                       and searches[n0:] == ['artist'])
+        n1 = len(searches)
+        click()
+        pg.wait_for_timeout(1500)
+        c1 = pg.evaluate(HEAD, 'Quiet Lab')
+        s_c1 = searches[n1:]
+        click()
+        pg.wait_for_timeout(2800)
+        c2 = pg.evaluate(HEAD, 'Quiet Lab')
+        print('C)', c1['tag'], c1['sugg'], s_c1, '|', c2['tag'], '| Suchen:', searches[n1:])
+        results.append(c1['tag'] == 'Label' and c1['sugg'] == ['Quiet Lab – label'] and not c1['wait'] and s_c1 == []
+                       and c2['tag'] == 'Place' and searches[n1:][:1] == ['place'] and 'label' not in searches[n1:] and 'artist' not in searches[n1:])
+        n2 = len(searches)
+        click()
+        pg.wait_for_timeout(200)
+        click()
+        pg.wait_for_timeout(1500)
+        d0 = pg.evaluate(HEAD, 'Quiet Lab')
+        pg.locator('section.dci-group [data-act=name-use]', has_text='Quiet Lab').first.click()
+        pg.wait_for_timeout(800)
+        d = pg.evaluate(HEAD, 'Quiet Lab')
+        print('D)', d0['tag'], d0['sugg'], '→', d, '| Suchen:', searches[n2:])
+        results.append(d0['tag'] == 'Label' and searches[n2:] == [] and d and not d['button'] and d['tag'] == 'Label')
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())

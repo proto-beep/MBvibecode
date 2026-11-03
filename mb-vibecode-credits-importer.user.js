@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.42.4
+// @version      3.42.5
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -27,8 +27,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.4
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.4
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.42.5
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.42.5
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -41,7 +41,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.4';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.42.5';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1083,6 +1083,9 @@
       "entity.area": "area",
       "entity.event": "event",
       "entity.series": "series",
+      "etc.title": "{kind} – click: try it as {next} (in turn: {list}); searched by its name once you stop clicking for a second",
+      "etc.wait": "searching in a second …",
+      "log.etcSearched": "{name} as {kind}: {n} found by its name",
       "entity.recording": "recording",
       "entity.release": "release",
       "entity.work": "work",
@@ -19810,11 +19813,59 @@
     }
     return { kind: 'artist', type: 'artist' };
   }
+  // [Z-ETC] (3.42.5; collected item Z-ETC, Q-dd) the kinds an entry not linked can be tried as, in this order: those a row of it has
+  // a relationship for (a place "recorded at" only as a place)
+  const ETC_KINDS = ['label', 'place', 'area', 'artist'];
+  const etcKinds = (a) => (a && a.company && !a.mbid ? ETC_KINDS.filter((k) => S.rows.some((r) => r.artistKey === a.key && r.typeOptions && (r.typeOptions[k] || []).length)) : []);
   const kindTagHtml = (a) => {
     const { type } = groupKindOf(a);
     const text = tr(`entity.${type}`);
-    return `<span class="dci-kind-tag">${esc(text.charAt(0).toUpperCase() + text.slice(1))}</span>`;
+    const label = text.charAt(0).toUpperCase() + text.slice(1);
+    // [Z-ETC] (3.42.5) a label, place or area not linked: a click tries the next kind (searched once no click followed for a second)
+    const kinds = etcKinds(a);
+    if (kinds.length > 1) {
+      const next = kinds[(kinds.indexOf(type) + 1) % kinds.length];
+      const title = tr('etc.title', { kind: tr(`entity.${type}`), next: tr(`entity.${next}`), list: kinds.map((k) => tr(`entity.${k}`)).join(' → ') });
+      // (↻ drawn by the style: the kind's name stays the text of the tag)
+      return `<button type="button" class="dci-kind-tag dci-kind-cycle" data-act="kind-cycle" title="${esc(title)}" aria-label="${esc(title)}">${esc(label)}</button>${a.etcWait ? ` <span class="dci-sub dci-etc-wait" role="status">${esc(tr('etc.wait'))}</span>` : ''}`;
+    }
+    return `<span class="dci-kind-tag">${esc(label)}</span>`;
   };
+
+  /**
+   * [Z-ETC] (3.42.5) The next kind of an entry not linked: its rows of that kind, the suggestions of that kind – those found before
+   * for it again (no new request), else searched by its name once no click followed for a second (MusicBrainz's limit of one request
+   * a second holds for every search).
+   */
+  function etcCycle(a) {
+    const kinds = etcKinds(a);
+    if (kinds.length < 2) return;
+    const now = groupKindOf(a).type;
+    const next = kinds[(kinds.indexOf(now) + 1) % kinds.length];
+    a.etcHits = a.etcHits || {};
+    if (a.nameHits) a.etcHits[now] = a.nameHits;
+    setCompanyEntityType(a, next);
+    a.nameHits = a.etcHits[next] || null;
+    clearTimeout(a.etcTimer);
+    a.etcWait = !a.etcHits[next];
+    if (a.etcWait) {
+      a.etcTimer = setTimeout(async () => {
+        a.etcTimer = null;
+        if (a.entityType !== next || a.mbid) return;
+        try {
+          await suggestByName([a]);
+          a.etcHits[next] = a.nameHits || [];
+          log('info', 'etcSearched', { name: a.name, kind: tr(`entity.${next}`), n: (a.nameHits || []).length });
+        } finally {
+          a.etcWait = false;
+          rerenderGroup(a);
+          refresh();
+        }
+      }, 1000);
+    }
+    rerenderGroup(a);
+    refresh();
+  }
 
   /**
    * [3.22.1] At the entry of a name whose Bandcamp album is on another account's page (a label's, 46): whose page it is,
@@ -24251,6 +24302,8 @@
     const keep = ['dci-gcompact', 'dci-about-hidden', 'dci-gskipped'].filter((c) => section.classList.contains(c)).map((c) => ` ${c}`).join('');
     section.className = `dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${keep}`;
     const tag = section.querySelector('.dci-kind-tag');
+    // [Z-ETC] (3.42.5) with its note while a search waits
+    section.querySelectorAll('.dci-etc-wait').forEach((x) => x.remove());
     if (tag) tag.outerHTML = kindTagHtml(a);
     section.querySelector(`[data-match="${a.key}"]`).innerHTML = matchHtml(a);
     const spell = section.querySelector(`[data-spell="${a.key}"]`);
@@ -31326,6 +31379,10 @@
         S.textForm = null;
         renderSource();
         break;
+      // [Z-ETC] (3.42.5) the kind of an entry not linked tried as the next one
+      case 'kind-cycle':
+        if (artist) etcCycle(artist);
+        break;
       // [Z-UNA] (3.42.4) words of a line not recognized: chosen (⇧: up to this one), given an entry, or the form closed
       case 'una-word':
         unaPick(btn, !!e.shiftKey);
@@ -35377,6 +35434,10 @@
       .dci-pageof { margin: 0 0 calc(var(--u, 1px) * 6); }
       .dci-kind-tag { display: inline-block; margin-right: calc(var(--u, 1px) * 8); padding: 0 calc(var(--u, 1px) * 7); border-radius: 10px; background: var(--kind); color: #fff;
         font-size: calc(var(--u, 1px) * 11); font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }
+      /* [Z-ETC] (3.42.5) the kind of an entry not linked: a button that tries the next one */
+      button.dci-kind-tag.dci-kind-cycle { border: 0; cursor: pointer; font-family: inherit; line-height: inherit; }
+      button.dci-kind-tag.dci-kind-cycle::after { content: " ↻"; }
+      button.dci-kind-tag.dci-kind-cycle:hover, button.dci-kind-tag.dci-kind-cycle:focus-visible { filter: brightness(1.12); outline: 2px solid var(--kind); outline-offset: 1px; }
       /* Not found in MusicBrainz: the bar is red whatever the kind */
       .dci-st-missing, .dci-st-ambiguous { border-left-color: var(--err); }
       .dci-group.dci-all-skip { border-left-color: var(--line); }
